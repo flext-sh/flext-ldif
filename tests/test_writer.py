@@ -255,8 +255,8 @@ class TestWriterErrorHandling:
 
         result = FlextLDIFWriter.write_entries_to_file(invalid_path, entries)
         assert result.is_failure
-        assert result.error_message is not None
-        assert "Failed to write LDIF" in result.error_message
+        assert result.error is not None
+        assert "Failed to write LDIF" in result.error
 
     def test_write_schema_to_invalid_path(self) -> None:
         """Test writing schema to invalid path."""
@@ -264,8 +264,8 @@ class TestWriterErrorHandling:
 
         result = FlextLDIFWriter.write_schema_to_file(invalid_path, "test content")
         assert result.is_failure
-        assert result.error_message is not None
-        assert "Failed to write schema" in result.error_message
+        assert result.error is not None
+        assert "Failed to write schema" in result.error
 
     def test_write_text_to_invalid_path(self) -> None:
         """Test writing text to invalid path."""
@@ -273,8 +273,8 @@ class TestWriterErrorHandling:
 
         result = FlextLDIFWriter.write_text_lines_to_file(invalid_path, ["test"])
         assert result.is_failure
-        assert result.error_message is not None
-        assert "Failed to write text" in result.error_message
+        assert result.error is not None
+        assert "Failed to write text" in result.error
 
 
 @pytest.mark.integration
