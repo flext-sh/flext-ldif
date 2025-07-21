@@ -10,11 +10,11 @@ Provides centralized, standardized LDIF file operations for all FLEXT projects.
 from __future__ import annotations
 
 import logging
-from pathlib import Path  # noqa: TC003 - needed for runtime Path operations
 from typing import TYPE_CHECKING, Any, TextIO
 
 if TYPE_CHECKING:
     from io import StringIO
+    from pathlib import Path
 
 from flext_core import ServiceResult
 

@@ -53,7 +53,7 @@ class LDIFProcessor:
             if not parse_result.is_success:
                 return parse_result
 
-            entries = parse_result.value
+            entries = parse_result.data
             if entries is None:
                 return ServiceResult.fail(
                     "Failed to parse entries: no data returned",
