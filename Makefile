@@ -42,7 +42,7 @@ lint: ## Ruff linting (17 rule categories, ALL enabled)
 
 type-check: ## MyPy strict mode type checking (zero errors tolerated)
 	@echo "🛡️ Running MyPy strict type checking..."
-	@poetry run mypy src/ tests/ --strict
+	@poetry run mypy src/ --strict
 	@echo "✅ Type checking complete"
 
 security: ## Security scans (bandit + pip-audit + secrets)

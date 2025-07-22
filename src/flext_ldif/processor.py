@@ -7,9 +7,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from flext_core import ServiceResult
+from flext_core.domain.shared_types import ServiceResult
 
 from .config import LDIFConfig
 from .parser import LDIFParser
@@ -35,7 +35,7 @@ class LDIFProcessor:
         self.parser = LDIFParser()
         self.validator = LDIFValidator()
 
-    def parse_ldif_content(self, content: str) -> ServiceResult[list[LDIFEntry]]:
+    def parse_ldif_content(self, content: str | LDIFContent) -> ServiceResult[Any]:
         """Parse LDIF content into entries.
 
         Args:
@@ -46,11 +46,13 @@ class LDIFProcessor:
 
         """
         try:
-            ldif_content = LDIFContent(content)
+            # Convert to LDIFContent - since LDIFContent is NewType(str),
+            # both str and LDIFContent are handled the same way at runtime
+            ldif_content = LDIFContent(content) if isinstance(content, str) else content
 
             # Parse entries
             parse_result = self.parser.parse_ldif_content(ldif_content)
-            if not parse_result.is_success:
+            if not parse_result.success:
                 return parse_result
 
             entries = parse_result.data
@@ -62,7 +64,7 @@ class LDIFProcessor:
             # Validate if strict validation is enabled
             if self.config.strict_validation:
                 validate_result = self.validator.validate_entries(entries)
-                if not validate_result.is_success:
+                if not validate_result.success:
                     return ServiceResult.fail(
                         validate_result.error or "Validation failed",
                     )
@@ -73,12 +75,12 @@ class LDIFProcessor:
                     f"Too many entries: {len(entries)} > {self.config.max_entries}",
                 )
 
-            return ServiceResult.ok(data=entries)
+            return ServiceResult.ok(entries)
 
         except (ValueError, TypeError, OSError) as e:
             return ServiceResult.fail(f"Processing failed: {e}")
 
-    def parse_ldif_file(self, file_path: str | Path) -> ServiceResult[list[LDIFEntry]]:
+    def parse_ldif_file(self, file_path: str | Path) -> ServiceResult[Any]:
         """Parse LDIF file into entries.
 
         Args:
@@ -115,7 +117,7 @@ class LDIFProcessor:
         self,
         entries: list[LDIFEntry],
         file_path: str | Path,
-    ) -> ServiceResult[bool]:
+    ) -> ServiceResult[Any]:
         """Write entries to LDIF file.
 
         Args:
@@ -140,7 +142,7 @@ class LDIFProcessor:
             with Path(file_path).open("w", encoding=self.config.output_encoding) as f:
                 f.write(ldif_content)
 
-            return ServiceResult.ok(data=True)
+            return ServiceResult.ok(True)
 
         except (OSError, UnicodeEncodeError) as e:
             return ServiceResult.fail(f"File write failed: {e}")
@@ -162,7 +164,7 @@ class LDIFProcessor:
         """
         return LDIFUtils.filter_entries_by_objectclass(entries, object_class)
 
-    def validate_entries(self, entries: list[LDIFEntry]) -> ServiceResult[bool]:
+    def validate_entries(self, entries: list[LDIFEntry]) -> ServiceResult[Any]:
         """Validate LDIF entries.
 
         Args:

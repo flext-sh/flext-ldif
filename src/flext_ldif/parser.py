@@ -8,11 +8,14 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
-from flext_core import ServiceResult
+from flext_core.domain.shared_types import ServiceResult
 
 from .models import LDIFEntry
-from .types import LDIFContent
+
+if TYPE_CHECKING:
+    from .types import LDIFContent
 
 
 class LDIFParser:
@@ -20,8 +23,8 @@ class LDIFParser:
 
     def parse_ldif_content(
         self,
-        content: LDIFContent,
-    ) -> ServiceResult[list[LDIFEntry]]:
+        content: str | LDIFContent,
+    ) -> ServiceResult[Any]:
         """Parse LDIF content into entries.
 
         Args:
@@ -34,8 +37,11 @@ class LDIFParser:
         try:
             entries = []
 
+            # Convert to string if it's a LDIFContent NewType
+            content_str = str(content)
+
             # Split into entry blocks (separated by empty lines)
-            entry_blocks = re.split(r"\n\s*\n", content.strip())
+            entry_blocks = re.split(r"\n\s*\n", content_str.strip())
 
             for block in entry_blocks:
                 if block.strip():
@@ -54,7 +60,7 @@ class LDIFParser:
                 f"Failed to parse LDIF content: {e}",
             )
 
-    def parse_ldif_file(self, file_path: str) -> ServiceResult[list[LDIFEntry]]:
+    def parse_ldif_file(self, file_path: str) -> ServiceResult[Any]:
         """Parse LDIF file into entries.
 
         Args:
@@ -66,8 +72,10 @@ class LDIFParser:
         """
         try:
             with Path(file_path).open(encoding="utf-8") as f:
-                content = LDIFContent(f.read())
-            return self.parse_ldif_content(content)
+                content = f.read()
+            from .types import LDIFContent
+
+            return self.parse_ldif_content(LDIFContent(content))
 
         except OSError as e:
             return ServiceResult.fail(

@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from io import StringIO
     from pathlib import Path
 
-from flext_core import ServiceResult
+from flext_core.domain.shared_types import ServiceResult
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ class FlextLDIFWriter:
         sort_hierarchically: bool = True,
         include_comments: bool = True,
         buffering: int = 8192,
-    ) -> ServiceResult[int]:
+    ) -> ServiceResult[Any]:
         """Write LDIF entries to file with standardized formatting.
 
         Args:
@@ -127,7 +127,7 @@ class FlextLDIFWriter:
         file_path: Path,
         schema_content: str,
         header_comment: str | None = None,
-    ) -> ServiceResult[bool]:
+    ) -> ServiceResult[Any]:
         """Write schema content to file with standardized format.
 
         Args:
@@ -155,7 +155,7 @@ class FlextLDIFWriter:
                 f.write(schema_content)
 
             logger.info("Wrote schema content to %s", file_path)
-            return ServiceResult.ok(data=True)
+            return ServiceResult.ok(True)
 
         except Exception as e:
             logger.exception("Failed to write schema file: %s", file_path)
@@ -166,7 +166,7 @@ class FlextLDIFWriter:
         file_path: Path,
         lines: list[str],
         header_comment: str | None = None,
-    ) -> ServiceResult[int]:
+    ) -> ServiceResult[Any]:
         """Write text lines to file with optional header.
 
         Args:

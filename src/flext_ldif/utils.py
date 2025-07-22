@@ -6,12 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from .types import LDIFContent
+from flext_core.domain.shared_types import ServiceResult
 
 if TYPE_CHECKING:
     from .models import LDIFEntry
+    from .types import LDIFContent
 
 
 class LDIFUtils:
@@ -28,8 +29,9 @@ class LDIFUtils:
             LDIF content string
 
         """
-        ldif_blocks = [entry.to_ldif() for entry in entries]
+        from .types import LDIFContent
 
+        ldif_blocks = [entry.to_ldif() for entry in entries]
         return LDIFContent("\n".join(ldif_blocks))
 
     @staticmethod
@@ -67,11 +69,58 @@ class LDIFUtils:
 
         """
         for entry in entries:
-            if entry.dn == dn:
+            if str(entry.dn) == dn:
                 return entry
         return None
 
 
+class LDIFHierarchicalSorter:
+    """Hierarchical sorter for LDIF entries using FLEXT patterns.
+
+    Sorts LDIF entries based on hierarchical relationships to ensure
+    parent entries come before child entries in the DN hierarchy.
+    """
+
+    def __init__(self) -> None:
+        """Initialize the hierarchical sorter."""
+
+    def sort_entries(self, entries: list[LDIFEntry]) -> ServiceResult[Any]:
+        """Sort entries hierarchically.
+
+        Args:
+            entries: List of LDIF entries to sort
+
+        Returns:
+            ServiceResult containing sorted entries or error
+
+        """
+        try:
+            # Sort by DN depth (number of components) to ensure hierarchy
+            sorted_entries = sorted(
+                entries,
+                key=lambda entry: (
+                    str(entry.dn).count(","),  # Primary sort: depth (parents first)
+                    str(entry.dn).lower(),  # Secondary sort: alphabetical
+                ),
+            )
+            return ServiceResult.ok(sorted_entries)
+        except Exception as e:
+            return ServiceResult.fail(f"Failed to sort entries hierarchically: {e}")
+
+    def sort_by_hierarchy(self, entries: list[LDIFEntry]) -> ServiceResult[Any]:
+        """Alternative method name for compatibility.
+
+        Args:
+            entries: List of LDIF entries to sort
+
+        Returns:
+            ServiceResult containing sorted entries or error
+
+        """
+        return self.sort_entries(entries)
+
+
 __all__ = [
+    "LDIFHierarchicalSorter",
     "LDIFUtils",
 ]
