@@ -34,7 +34,7 @@ class TestFlextLDIFWriter:
         try:
             result = FlextLDIFWriter.write_entries_to_file(file_path, entries)
 
-            assert result.is_success
+            assert result.success
             assert result.data == 1
             assert file_path.exists()
 
@@ -70,7 +70,7 @@ class TestFlextLDIFWriter:
                 include_comments=True,
             )
 
-            assert result.is_success
+            assert result.success
             content = file_path.read_text(encoding="utf-8")
             assert "# This is a test entry" in content
         finally:
@@ -101,7 +101,7 @@ class TestFlextLDIFWriter:
                 include_comments=False,
             )
 
-            assert result.is_success
+            assert result.success
             content = file_path.read_text(encoding="utf-8")
             assert "# This should not appear" not in content
         finally:
@@ -128,7 +128,7 @@ class TestFlextLDIFWriter:
                 "Test Schema",
             )
 
-            assert result.is_success
+            assert result.success
             assert result.data is True
 
             content = file_path.read_text(encoding="utf-8")
@@ -158,7 +158,7 @@ class TestFlextLDIFWriter:
                 "Test Header",
             )
 
-            assert result.is_success
+            assert result.success
             assert result.data == 3
 
             content = file_path.read_text(encoding="utf-8")
@@ -237,7 +237,7 @@ class TestLDIFWriterAlias:
 
         try:
             result = LDIFWriter.write_entries_to_file(file_path, entries)
-            assert result.is_success
+            assert result.success
             assert result.data == 1
         finally:
             file_path.unlink(missing_ok=True)
@@ -316,7 +316,7 @@ class TestWriterIntegration:
                 sort_hierarchically=True,
             )
 
-            assert result.is_success
+            assert result.success
             assert result.data == 3
 
             content = file_path.read_text(encoding="utf-8")

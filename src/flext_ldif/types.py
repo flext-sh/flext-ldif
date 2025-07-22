@@ -8,15 +8,14 @@ from __future__ import annotations
 
 from typing import NewType
 
-# LDIF-specific types
+# Simple type aliases that don't conflict with domain value objects
 LDIFContent = NewType("LDIFContent", str)
 LDIFLines = NewType("LDIFLines", list[str])
-LDIFAttributes = NewType("LDIFAttributes", dict[str, list[str]])
-DistinguishedName = NewType("DistinguishedName", str)
+
+# Note: DistinguishedName and LDIFAttributes are proper domain value objects
+# defined in domain/values.py, not simple type aliases
 
 __all__ = [
-    "DistinguishedName",
-    "LDIFAttributes",
     "LDIFContent",
     "LDIFLines",
 ]

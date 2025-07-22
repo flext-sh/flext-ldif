@@ -6,9 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import DomainValueObject, Field
+from typing import Any
 
-from .types import DistinguishedName, LDIFAttributes
+from flext_core import DomainValueObject
+from pydantic import Field, field_validator
+
+from .domain.values import DistinguishedName, LDIFAttributes
 
 
 class LDIFEntry(DomainValueObject):
@@ -16,9 +19,31 @@ class LDIFEntry(DomainValueObject):
 
     dn: DistinguishedName = Field(..., description="Distinguished Name")
     attributes: LDIFAttributes = Field(
-        default_factory=lambda: LDIFAttributes({}),
+        default_factory=lambda: LDIFAttributes(attributes={}),
         description="LDIF attributes dictionary",
     )
+
+    @field_validator("dn", mode="before")
+    @classmethod
+    def validate_dn(cls, v: Any) -> DistinguishedName:
+        """Convert string DN to DistinguishedName object."""
+        if isinstance(v, str):
+            return DistinguishedName(value=v)
+        if isinstance(v, DistinguishedName):
+            return v
+        msg = f"Invalid DN type: {type(v)}"
+        raise ValueError(msg)
+
+    @field_validator("attributes", mode="before")
+    @classmethod
+    def validate_attributes(cls, v: Any) -> LDIFAttributes:
+        """Convert dict attributes to LDIFAttributes object."""
+        if isinstance(v, dict):
+            return LDIFAttributes(attributes=v)
+        if isinstance(v, LDIFAttributes):
+            return v
+        msg = f"Invalid attributes type: {type(v)}"
+        raise ValueError(msg)
 
     def get_attribute(self, name: str) -> list[str] | None:
         """Get LDIF attribute values by name.
@@ -30,14 +55,15 @@ class LDIFEntry(DomainValueObject):
             List of attribute values if found, None otherwise
 
         """
-        return self.attributes.get(name)
+        values = self.attributes.get_values(name)
+        return values or None
 
     def set_attribute(self, name: str, values: list[str]) -> None:
         """Set an attribute with the given name and values."""
-        new_attrs = dict(self.attributes)
+        new_attrs = self.attributes.attributes.copy()
         new_attrs[name] = values
         # Use property setter instead of direct assignment
-        object.__setattr__(self, "attributes", LDIFAttributes(new_attrs))
+        object.__setattr__(self, "attributes", LDIFAttributes(attributes=new_attrs))
 
     def has_attribute(self, name: str) -> bool:
         """Check if LDIF entry has a specific attribute.
@@ -49,7 +75,7 @@ class LDIFEntry(DomainValueObject):
             True if attribute exists, False otherwise
 
         """
-        return name in self.attributes
+        return self.attributes.has_attribute(name)
 
     def get_single_attribute(self, name: str) -> str | None:
         """Get single value from an LDIF attribute.
@@ -61,8 +87,7 @@ class LDIFEntry(DomainValueObject):
             First attribute value if found, None otherwise
 
         """
-        values = self.get_attribute(name)
-        return values[0] if values else None
+        return self.attributes.get_single_value(name)
 
     def to_ldif(self) -> str:
         """Convert entry to LDIF string format.
@@ -73,7 +98,7 @@ class LDIFEntry(DomainValueObject):
         """
         lines = [f"dn: {self.dn}"]
 
-        for attr_name, attr_values in self.attributes.items():
+        for attr_name, attr_values in self.attributes.attributes.items():
             lines.extend(f"{attr_name}: {value}" for value in attr_values)
 
         lines.append("")  # Empty line after entry
@@ -119,8 +144,8 @@ class LDIFEntry(DomainValueObject):
                 attributes[attr_name].append(attr_value)
 
         return cls(
-            dn=DistinguishedName(dn),
-            attributes=LDIFAttributes(attributes),
+            dn=DistinguishedName(value=dn),
+            attributes=LDIFAttributes(attributes=attributes),
         )
 
 
