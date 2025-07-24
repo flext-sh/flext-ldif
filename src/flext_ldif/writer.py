@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 from flext_core import FlextResult
 
 try:
-    from ldif3 import LDIFWriter as Ldif3Writer  # type: ignore[import-untyped]
+    from ldif3 import LDIFWriter as Ldif3Writer
 except ImportError:
     Ldif3Writer = None
 
