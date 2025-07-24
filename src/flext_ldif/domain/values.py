@@ -10,15 +10,18 @@ from __future__ import annotations
 
 from typing import NewType
 
-from flext_core import DomainValueObject
+# 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root namespace imports
+from flext_core import FlextValueObject
 from pydantic import Field, field_validator
+
+DomainValueObject = FlextValueObject
 
 # Type aliases for LDIF-specific concepts
 LDIFContent = NewType("LDIFContent", str)
 LDIFLines = NewType("LDIFLines", list[str])
 
 
-class DistinguishedName(DomainValueObject):
+class FlextLdifDistinguishedName(DomainValueObject):
     """Distinguished Name value object for LDIF entries.
 
     Represents an immutable LDAP distinguished name.
@@ -69,10 +72,10 @@ class DistinguishedName(DomainValueObject):
         return self.value
 
     def __eq__(self, other: object) -> bool:
-        """Compare with string or other DistinguishedName."""
+        """Compare with string or other FlextLdifDistinguishedName."""
         if isinstance(other, str):
             return self.value == other
-        if isinstance(other, DistinguishedName):
+        if isinstance(other, FlextLdifDistinguishedName):
             return self.value == other.value
         return False
 
@@ -89,7 +92,7 @@ class DistinguishedName(DomainValueObject):
         """
         return self.value.split(",")[0].strip()
 
-    def get_parent_dn(self) -> DistinguishedName | None:
+    def get_parent_dn(self) -> FlextLdifDistinguishedName | None:
         """Get parent DN.
 
         Returns:
@@ -101,9 +104,9 @@ class DistinguishedName(DomainValueObject):
             return None
 
         parent_dn = ",".join(components[1:]).strip()
-        return DistinguishedName(value=parent_dn)
+        return FlextLdifDistinguishedName.model_validate({"value": parent_dn})
 
-    def is_child_of(self, parent: DistinguishedName) -> bool:
+    def is_child_of(self, parent: FlextLdifDistinguishedName) -> bool:
         """Check if this DN is a child of another DN.
 
         Args:
@@ -124,8 +127,32 @@ class DistinguishedName(DomainValueObject):
         """
         return len(self.value.split(","))
 
+    def validate_domain_rules(self) -> None:
+        """Validate DN domain rules and constraints.
 
-class LDIFAttributes(DomainValueObject):
+        Raises:
+            ValueError: If DN violates domain rules
+
+        """
+        if not self.value or not isinstance(self.value, str):
+            raise ValueError("DN must be a non-empty string")
+
+        if "=" not in self.value:
+            raise ValueError("DN must contain at least one attribute=value pair")
+
+        # Validate each DN component
+        components = self.value.split(",")
+        for raw_component in components:
+            component = raw_component.strip()
+            if "=" not in component:
+                raise ValueError(f"Invalid DN component: {component}")
+
+            attr_name, attr_value = component.split("=", 1)
+            if not attr_name.strip() or not attr_value.strip():
+                raise ValueError(f"Invalid DN component: {component}")
+
+
+class FlextLdifAttributes(DomainValueObject):
     """LDIF attributes value object.
 
     Represents the attributes of an LDIF entry as immutable data.
@@ -173,7 +200,7 @@ class LDIFAttributes(DomainValueObject):
         """
         return name in self.attributes
 
-    def add_value(self, name: str, value: str) -> LDIFAttributes:
+    def add_value(self, name: str, value: str) -> FlextLdifAttributes:
         """Add value to attribute.
 
         Args:
@@ -181,16 +208,21 @@ class LDIFAttributes(DomainValueObject):
             value: Value to add
 
         Returns:
-            New LDIFAttributes instance with added value
+            New FlextLdifAttributes instance with added value
 
         """
-        new_attrs = self.attributes.copy()
+        new_attrs = {}
+        for attr_name, attr_values in self.attributes.items():
+            new_attrs[attr_name] = attr_values.copy()  # Deep copy the list
+
         if name not in new_attrs:
             new_attrs[name] = []
-        new_attrs[name] += [value]
-        return LDIFAttributes(attributes=new_attrs)
+        new_attrs[name] = new_attrs[name] + [
+            value,
+        ]  # Create new list instead of modifying
+        return FlextLdifAttributes.model_validate({"attributes": new_attrs})
 
-    def remove_value(self, name: str, value: str) -> LDIFAttributes:
+    def remove_value(self, name: str, value: str) -> FlextLdifAttributes:
         """Remove value from attribute.
 
         Args:
@@ -198,17 +230,19 @@ class LDIFAttributes(DomainValueObject):
             value: Value to remove
 
         Returns:
-            New LDIFAttributes instance with removed value
+            New FlextLdifAttributes instance with removed value
 
         """
-        new_attrs = self.attributes.copy()
-        if name in new_attrs:
-            new_values = [v for v in new_attrs[name] if v != value]
-            if new_values:
-                new_attrs[name] = new_values
+        new_attrs = {}
+        for attr_name, attr_values in self.attributes.items():
+            if attr_name == name:
+                new_values = [v for v in attr_values if v != value]
+                if new_values:
+                    new_attrs[attr_name] = new_values
+                # If no values left, don't add this attribute
             else:
-                del new_attrs[name]
-        return LDIFAttributes(attributes=new_attrs)
+                new_attrs[attr_name] = attr_values.copy()  # Deep copy the list
+        return FlextLdifAttributes.model_validate({"attributes": new_attrs})
 
     def get_attribute_names(self) -> list[str]:
         """Get all attribute names.
@@ -238,10 +272,10 @@ class LDIFAttributes(DomainValueObject):
         return len(self.attributes) == 0
 
     def __eq__(self, other: object) -> bool:
-        """Compare with dict or other LDIFAttributes."""
+        """Compare with dict or other FlextLdifAttributes."""
         if isinstance(other, dict):
             return self.attributes == other
-        if isinstance(other, LDIFAttributes):
+        if isinstance(other, FlextLdifAttributes):
             return self.attributes == other.attributes
         return False
 
@@ -252,8 +286,32 @@ class LDIFAttributes(DomainValueObject):
             frozenset((key, tuple(values)) for key, values in self.attributes.items()),
         )
 
+    def validate_domain_rules(self) -> None:
+        """Validate LDIF attributes domain rules.
 
-class LDIFChangeType(DomainValueObject):
+        Raises:
+            ValueError: If attributes violate domain rules
+
+        """
+        if not isinstance(self.attributes, dict):
+            raise TypeError("Attributes must be a dictionary")
+
+        # Validate attribute names and values
+        for attr_name, attr_values in self.attributes.items():
+            if not isinstance(attr_name, str) or not attr_name.strip():
+                raise ValueError(f"Invalid attribute name: {attr_name}")
+
+            if not isinstance(attr_values, list):
+                raise TypeError(f"Attribute values must be a list: {attr_name}")
+
+            for value in attr_values:
+                if not isinstance(value, str):
+                    raise TypeError(
+                        f"All attribute values must be strings: {attr_name}",
+                    )
+
+
+class FlextLdifChangeType(DomainValueObject):
     """LDIF change type value object."""
 
     value: str = Field(..., description="Change type")
@@ -299,8 +357,21 @@ class LDIFChangeType(DomainValueObject):
         """Check if this is a modify RDN operation."""
         return self.value == "modrdn"
 
+    def validate_domain_rules(self) -> None:
+        """Validate change type domain rules.
 
-class LDIFVersion(DomainValueObject):
+        Raises:
+            ValueError: If change type violates domain rules
+
+        """
+        valid_types = {"add", "modify", "delete", "modrdn"}
+        if self.value not in valid_types:
+            raise ValueError(
+                f"Invalid change type: {self.value}. Must be one of {valid_types}",
+            )
+
+
+class FlextLdifVersion(DomainValueObject):
     """LDIF version value object."""
 
     value: int = Field(default=1, description="LDIF version number")
@@ -333,8 +404,18 @@ class LDIFVersion(DomainValueObject):
         """Check if this is the current LDIF version."""
         return self.value == 1
 
+    def validate_domain_rules(self) -> None:
+        """Validate version domain rules.
 
-class LDIFEncoding(DomainValueObject):
+        Raises:
+            ValueError: If version violates domain rules
+
+        """
+        if self.value < 1:
+            raise ValueError("LDIF version must be >= 1")
+
+
+class FlextLdifEncoding(DomainValueObject):
     """LDIF encoding value object."""
 
     value: str = Field(default="utf-8", description="Character encoding")
@@ -370,8 +451,21 @@ class LDIFEncoding(DomainValueObject):
         """Check if encoding is UTF-8."""
         return self.value.lower() in {"utf-8", "utf8"}
 
+    def validate_domain_rules(self) -> None:
+        """Validate encoding domain rules.
 
-class LDIFLineLength(DomainValueObject):
+        Raises:
+            ValueError: If encoding violates domain rules
+
+        """
+        try:
+            # Test if encoding is valid
+            "test".encode(self.value)
+        except (LookupError, TypeError) as e:
+            raise ValueError(f"Invalid encoding: {self.value}") from e
+
+
+class FlextLdifLineLength(DomainValueObject):
     """LDIF line length limit value object."""
 
     value: int = Field(default=79, description="Maximum line length")
@@ -406,3 +500,27 @@ class LDIFLineLength(DomainValueObject):
     def is_standard(self) -> bool:
         """Check if this is the standard LDIF line length."""
         return self.value == 79
+
+    def validate_domain_rules(self) -> None:
+        """Validate line length domain rules.
+
+        Raises:
+            ValueError: If line length violates domain rules
+
+        """
+        if self.value < 10:
+            raise ValueError("Line length must be at least 10 characters")
+        if self.value > 1000:
+            raise ValueError("Line length cannot exceed 1000 characters")
+
+
+__all__ = [
+    "FlextLdifAttributes",
+    "FlextLdifChangeType",
+    "FlextLdifDistinguishedName",
+    "FlextLdifEncoding",
+    "FlextLdifLineLength",
+    "FlextLdifVersion",
+    "LDIFContent",
+    "LDIFLines",
+]

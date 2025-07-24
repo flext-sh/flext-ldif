@@ -6,28 +6,26 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import DomainError
 
-
-class LDIFError(DomainError):
+class FlextLdifError(Exception):
     """Base exception for LDIF operations."""
 
 
-class LDIFParseError(LDIFError):
+class FlextLdifParseError(FlextLdifError):
     """Exception raised when LDIF parsing fails."""
 
 
-class LDIFValidationError(LDIFError):
+class FlextLdifValidationError(FlextLdifError):
     """Exception raised when LDIF validation fails."""
 
 
-class LDIFEntryError(LDIFError):
+class FlextLdifEntryError(FlextLdifError):
     """Exception raised for LDIF entry operations."""
 
 
 __all__ = [
-    "LDIFEntryError",
-    "LDIFError",
-    "LDIFParseError",
-    "LDIFValidationError",
+    "FlextLdifEntryError",
+    "FlextLdifError",
+    "FlextLdifParseError",
+    "FlextLdifValidationError",
 ]

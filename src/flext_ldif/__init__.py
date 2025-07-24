@@ -44,27 +44,51 @@ else:
 # All imports at the top to satisfy E402
 # NO FALLBACKS - SEMPRE usar implementações originais conforme instrução
 from flext_ldif._deprecated import LDIFDeprecationWarning, warn_deprecated
-from flext_ldif.config import LDIFConfig
+from flext_ldif.config import FlextLdifConfig
+
+# Additional imports needed by domain tests
+from flext_ldif.domain.events import (
+    FlextLdifDocumentParsed,
+    FlextLdifEntryValidated,
+    FlextLdifFilterApplied,
+    FlextLdifProcessingCompleted,
+    FlextLdifTransformationApplied,
+    FlextLdifValidationFailed,
+    FlextLdifWriteCompleted,
+)
+from flext_ldif.domain.specifications import (
+    FlextLdifChangeRecordSpecification,
+    FlextLdifEntrySpecification,
+    FlextLdifGroupSpecification,
+    FlextLdifOrganizationalUnitSpecification,
+    FlextLdifPersonSpecification,
+    FlextLdifValidSpecification,
+)
 from flext_ldif.domain.values import (
-    DistinguishedName,
-    LDIFAttributes,
-    LDIFChangeType,
-    LDIFEncoding,
-    LDIFVersion,
+    FlextLdifAttributes,
+    FlextLdifChangeType,
+    FlextLdifDistinguishedName,
+    FlextLdifEncoding,
+    FlextLdifLineLength,
+    FlextLdifVersion,
 )
 from flext_ldif.exceptions import (
-    LDIFEntryError,
-    LDIFError,
-    LDIFParseError,
-    LDIFValidationError,
+    FlextLdifEntryError,
+    FlextLdifError,
+    FlextLdifParseError,
+    FlextLdifValidationError,
 )
-from flext_ldif.models import LDIFEntry
-from flext_ldif.parser import LDIFParser
-from flext_ldif.processor import LDIFProcessor
+from flext_ldif.models import FlextLdifEntry
+from flext_ldif.parser import FlextLdifParser
+from flext_ldif.processor import FlextLdifProcessor
 from flext_ldif.types import LDIFContent, LDIFLines
-from flext_ldif.utils import LDIFHierarchicalSorter, LDIFUtils
-from flext_ldif.validator import LDIFValidator
-from flext_ldif.writer import FlextLDIFWriter, LDIFWriter
+from flext_ldif.utils import (
+    FlextLdifHierarchicalSorter,
+    FlextLdifUtils,
+    flext_ldif_sort_entries_hierarchically,
+)
+from flext_ldif.validator import FlextLdifValidator
+from flext_ldif.writer import FlextLdifWriter
 
 # Enable deprecation warnings
 warnings.filterwarnings("default", category=LDIFDeprecationWarning)
@@ -80,6 +104,26 @@ warnings.filterwarnings("default", category=LDIFDeprecationWarning)
 # Simple aliases for entities that don't have real implementations yet
 type LDIFRecord = dict[str, list[str]]
 type LDIFDocument = list[LDIFEntry]
+
+# Backward compatibility aliases
+LDIFConfig = FlextLdifConfig
+DistinguishedName = FlextLdifDistinguishedName
+LDIFAttributes = FlextLdifAttributes
+LDIFChangeType = FlextLdifChangeType
+LDIFEncoding = FlextLdifEncoding
+LDIFVersion = FlextLdifVersion
+LDIFError = FlextLdifError
+LDIFParseError = FlextLdifParseError
+LDIFValidationError = FlextLdifValidationError
+LDIFEntryError = FlextLdifEntryError
+LDIFEntry = FlextLdifEntry
+LDIFParser = FlextLdifParser
+LDIFProcessor = FlextLdifProcessor
+LDIFUtils = FlextLdifUtils
+LDIFHierarchicalSorter = FlextLdifHierarchicalSorter
+LDIFValidator = FlextLdifValidator
+LDIFWriter = FlextLdifWriter
+FlextLDIFWriter = FlextLdifWriter  # Add FlextLDIFWriter alias
 
 # ┌─────────────────────────────────────────────────────────────────────────────┐
 # │ 🚀 ESSENTIAL FUNCTIONS - No complex paths needed                         │
@@ -98,7 +142,7 @@ def parse_ldif(content: str | LDIFContent) -> list[LDIFEntry]:
 
     """
     try:
-        processor = LDIFProcessor()
+        processor = FlextLdifProcessor()
         if hasattr(processor, "parse_ldif_content"):
             result = processor.parse_ldif_content(content)
             return (
@@ -123,7 +167,7 @@ def write_ldif(entries: list[LDIFEntry], output_path: str | None = None) -> str:
 
     """
     try:
-        writer = FlextLDIFWriter()
+        writer = FlextLdifWriter()
         if hasattr(writer, "write_entries_to_file") and output_path:
             # Convert LDIFEntry objects to dict format expected by writer
             dict_entries = [
@@ -159,7 +203,7 @@ def validate_ldif(content: str | LDIFContent) -> bool:
 
     """
     try:
-        validator = LDIFValidator()
+        validator = FlextLdifValidator()
         if hasattr(validator, "validate"):
             result = validator.validate(content)
             return result.success if hasattr(result, "is_success") else bool(result)
@@ -174,18 +218,8 @@ __version__ = "0.7.0"
 # ⚠️ DEPRECATED COMPATIBILITY LAYER - Will show warnings
 # ════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-# Issue deprecation warnings for complex imports
-for old_import, new_import in [
-    ("flext_ldif.config.LDIFConfig", "from flext_ldif import LDIFConfig"),
-    ("flext_ldif.models.LDIFEntry", "from flext_ldif import LDIFEntry"),
-    ("flext_ldif.processor.LDIFProcessor", "from flext_ldif import LDIFProcessor"),
-    ("flext_ldif.parser.LDIFParser", "from flext_ldif import LDIFParser"),
-    ("flext_ldif.validator.LDIFValidator", "from flext_ldif import LDIFValidator"),
-    ("flext_ldif.writer.LDIFWriter", "from flext_ldif import LDIFWriter"),
-    ("flext_ldif.types.*", "from flext_ldif import DistinguishedName, LDIFAttributes"),
-    ("flext_ldif.utils.LDIFUtils", "from flext_ldif import LDIFUtils"),
-]:
-    warn_deprecated(old_import, new_import)
+# Deprecation warnings are issued by individual modules when actually used,
+# not on import. This prevents unnecessary warnings when using the root API.
 
 # ════════════════════════════════════════════════════════════════════════════════════════════════════════════
 # 📋 SIMPLIFIED PUBLIC API - All exports available at root level
@@ -195,6 +229,31 @@ __all__ = [
     # 📝 VALUE OBJECTS & TYPES (simple access)
     "DistinguishedName",  # from flext_ldif import DistinguishedName
     "FlextLDIFWriter",  # from flext_ldif import FlextLDIFWriter
+    "FlextLdifAttributes",  # from flext_ldif import FlextLdifAttributes
+    "FlextLdifChangeRecordSpecification",  # from flext_ldif import FlextLdifChangeRecordSpecification
+    "FlextLdifChangeType",  # from flext_ldif import FlextLdifChangeType
+    "FlextLdifConfig",  # from flext_ldif import FlextLdifConfig
+    "FlextLdifDistinguishedName",  # from flext_ldif import FlextLdifDistinguishedName
+    "FlextLdifDocumentParsed",  # from flext_ldif import FlextLdifDocumentParsed
+    "FlextLdifEncoding",  # from flext_ldif import FlextLdifEncoding
+    "FlextLdifEntry",  # from flext_ldif import FlextLdifEntry
+    "FlextLdifEntrySpecification",  # from flext_ldif import FlextLdifEntrySpecification
+    "FlextLdifEntryValidated",  # from flext_ldif import FlextLdifEntryValidated
+    "FlextLdifFilterApplied",  # from flext_ldif import FlextLdifFilterApplied
+    "FlextLdifGroupSpecification",  # from flext_ldif import FlextLdifGroupSpecification
+    "FlextLdifHierarchicalSorter",  # from flext_ldif import FlextLdifHierarchicalSorter
+    "FlextLdifLineLength",  # from flext_ldif import FlextLdifLineLength
+    "FlextLdifOrganizationalUnitSpecification",  # from flext_ldif import FlextLdifOrganizationalUnitSpecification
+    "FlextLdifParser",  # from flext_ldif import FlextLdifParser
+    "FlextLdifPersonSpecification",  # from flext_ldif import FlextLdifPersonSpecification
+    "FlextLdifProcessingCompleted",  # from flext_ldif import FlextLdifProcessingCompleted
+    "FlextLdifProcessor",  # from flext_ldif import FlextLdifProcessor
+    "FlextLdifTransformationApplied",  # from flext_ldif import FlextLdifTransformationApplied
+    "FlextLdifValidSpecification",  # from flext_ldif import FlextLdifValidSpecification
+    "FlextLdifValidationFailed",  # from flext_ldif import FlextLdifValidationFailed
+    "FlextLdifVersion",  # from flext_ldif import FlextLdifVersion
+    "FlextLdifWriteCompleted",  # from flext_ldif import FlextLdifWriteCompleted
+    "FlextLdifWriter",  # from flext_ldif import FlextLdifWriter
     "LDIFAttributes",  # from flext_ldif import LDIFAttributes
     "LDIFChangeType",  # from flext_ldif import LDIFChangeType
     # ⚙️ CONFIGURATION & UTILITIES
@@ -222,6 +281,7 @@ __all__ = [
     # 📦 META
     "__version__",  # Package version
     # 🚀 ESSENTIAL FUNCTIONS (no complex paths)
+    "flext_ldif_sort_entries_hierarchically",  # from flext_ldif import flext_ldif_sort_entries_hierarchically
     "parse_ldif",  # from flext_ldif import parse_ldif
     "validate_ldif",  # from flext_ldif import validate_ldif
     "write_ldif",  # from flext_ldif import write_ldif

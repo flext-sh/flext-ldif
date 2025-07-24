@@ -175,17 +175,17 @@ def ldif_binary_file(test_ldif_dir: Path, sample_ldif_with_binary: str) -> Path:
 @pytest.fixture
 async def ldif_parser() -> Any:
     """Provide a LDIF parser for testing."""
-    from flext_ldif.parser import LDIFParser
+    from flext_ldif import FlextLdifParser
 
-    return LDIFParser()
+    return FlextLdifParser()
 
 
 @pytest.fixture
 async def ldif_writer() -> Any:
     """Provide a LDIF writer for testing."""
-    from flext_ldif.writer import FlextLDIFWriter
+    from flext_ldif import FlextLdifWriter
 
-    return FlextLDIFWriter()
+    return FlextLdifWriter()
 
 
 # Schema validation fixtures

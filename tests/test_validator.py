@@ -13,13 +13,15 @@ class TestLDIFValidator:
 
     def test_validate_entry_valid(self) -> None:
         """Test validating a valid LDIF entry."""
-        entry = LDIFEntry(
-            dn="cn=test,dc=example,dc=com",
-            attributes={
-                "cn": ["test"],
-                "objectClass": ["person"],
-                "mail": ["test@example.com"],
-            },
+        entry = LDIFEntry.model_validate(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {
+                    "cn": ["test"],
+                    "objectClass": ["person"],
+                    "mail": ["test@example.com"],
+                },
+            }
         )
 
         validator = LDIFValidator()
@@ -35,12 +37,14 @@ class TestLDIFValidator:
         from pydantic import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
-            LDIFEntry(
-                dn="invalid-dn-format",
-                attributes={
-                    "cn": ["test"],
-                    "objectClass": ["person"],
-                },
+            LDIFEntry.model_validate(
+                {
+                    "dn": "invalid-dn-format",
+                    "attributes": {
+                        "cn": ["test"],
+                        "objectClass": ["person"],
+                    },
+                }
             )
 
         # Verify the error message contains DN validation error
@@ -55,12 +59,14 @@ class TestLDIFValidator:
         from pydantic import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
-            LDIFEntry(
-                dn="",
-                attributes={
-                    "cn": ["test"],
-                    "objectClass": ["person"],
-                },
+            LDIFEntry.model_validate(
+                {
+                    "dn": "",
+                    "attributes": {
+                        "cn": ["test"],
+                        "objectClass": ["person"],
+                    },
+                }
             )
 
         # Verify the error message contains DN validation error
@@ -73,12 +79,14 @@ class TestLDIFValidator:
         from pydantic import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
-            LDIFEntry(
-                dn="=invalid,dc=example,dc=com",
-                attributes={
-                    "cn": ["test"],
-                    "objectClass": ["person"],
-                },
+            LDIFEntry.model_validate(
+                {
+                    "dn": "=invalid,dc=example,dc=com",
+                    "attributes": {
+                        "cn": ["test"],
+                        "objectClass": ["person"],
+                    },
+                }
             )
 
         # Verify the error message contains DN validation error
@@ -96,9 +104,8 @@ class TestLDIFValidator:
         validator = LDIFValidator()
 
         for dn in valid_dns:
-            entry = LDIFEntry(
-                dn=dn,
-                attributes={"objectClass": ["person"]},
+            entry = LDIFEntry.model_validate(
+                {"dn": dn, "attributes": {"objectClass": ["person"]}}
             )
 
             result = validator.validate_entry(entry)
@@ -106,12 +113,14 @@ class TestLDIFValidator:
 
     def test_validate_entry_invalid_attribute_name(self) -> None:
         """Test validating entry with invalid attribute name."""
-        entry = LDIFEntry(
-            dn="cn=test,dc=example,dc=com",
-            attributes={
-                "123invalid": ["value"],  # Starts with number
-                "objectClass": ["person"],
-            },
+        entry = LDIFEntry.model_validate(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {
+                    "123invalid": ["value"],  # Starts with number
+                    "objectClass": ["person"],
+                },
+            }
         )
 
         validator = LDIFValidator()
@@ -124,12 +133,14 @@ class TestLDIFValidator:
 
     def test_validate_entry_invalid_attribute_name_special_chars(self) -> None:
         """Test validating entry with special characters in attribute name."""
-        entry = LDIFEntry(
-            dn="cn=test,dc=example,dc=com",
-            attributes={
-                "invalid@attr": ["value"],  # Contains @
-                "objectClass": ["person"],
-            },
+        entry = LDIFEntry.model_validate(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {
+                    "invalid@attr": ["value"],  # Contains @
+                    "objectClass": ["person"],
+                },
+            }
         )
 
         validator = LDIFValidator()
@@ -142,18 +153,20 @@ class TestLDIFValidator:
 
     def test_validate_entry_valid_attribute_names(self) -> None:
         """Test validating entries with various valid attribute names."""
-        entry = LDIFEntry(
-            dn="cn=test,dc=example,dc=com",
-            attributes={
-                "cn": ["test"],
-                "mail": ["test@example.com"],
-                "objectClass": ["person"],
-                "givenName": ["Test"],
-                "sn": ["User"],
-                "telephoneNumber": ["123-456-7890"],
-                "attribute-with-dashes": ["value"],
-                "attr123": ["value"],
-            },
+        entry = LDIFEntry.model_validate(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {
+                    "cn": ["test"],
+                    "mail": ["test@example.com"],
+                    "objectClass": ["person"],
+                    "givenName": ["Test"],
+                    "sn": ["User"],
+                    "telephoneNumber": ["123-456-7890"],
+                    "attribute-with-dashes": ["value"],
+                    "attr123": ["value"],
+                },
+            }
         )
 
         validator = LDIFValidator()
@@ -163,13 +176,15 @@ class TestLDIFValidator:
 
     def test_validate_entry_missing_objectclass(self) -> None:
         """Test validating entry without objectClass attribute."""
-        entry = LDIFEntry(
-            dn="cn=test,dc=example,dc=com",
-            attributes={
-                "cn": ["test"],
-                "mail": ["test@example.com"],
-                # No objectClass
-            },
+        entry = LDIFEntry.model_validate(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {
+                    "cn": ["test"],
+                    "mail": ["test@example.com"],
+                    # No objectClass
+                },
+            }
         )
 
         validator = LDIFValidator()
@@ -181,12 +196,14 @@ class TestLDIFValidator:
 
     def test_validate_entry_empty_objectclass(self) -> None:
         """Test validating entry with empty objectClass attribute."""
-        entry = LDIFEntry(
-            dn="cn=test,dc=example,dc=com",
-            attributes={
-                "cn": ["test"],
-                "objectClass": [],  # Empty list
-            },
+        entry = LDIFEntry.model_validate(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {
+                    "cn": ["test"],
+                    "objectClass": [],  # Empty list
+                },
+            }
         )
 
         validator = LDIFValidator()
@@ -224,20 +241,24 @@ class TestLDIFValidator:
     def test_validate_entries_all_valid(self) -> None:
         """Test validating multiple valid entries."""
         entries = [
-            LDIFEntry(
-                dn="cn=user1,dc=example,dc=com",
-                attributes={
-                    "cn": ["user1"],
-                    "objectClass": ["person"],
-                },
+            LDIFEntry.model_validate(
+                {
+                    "dn": "cn=user1,dc=example,dc=com",
+                    "attributes": {
+                        "cn": ["user1"],
+                        "objectClass": ["person"],
+                    },
+                }
             ),
-            LDIFEntry(
-                dn="cn=user2,dc=example,dc=com",
-                attributes={
-                    "cn": ["user2"],
-                    "objectClass": ["inetOrgPerson"],
-                    "mail": ["user2@example.com"],
-                },
+            LDIFEntry.model_validate(
+                {
+                    "dn": "cn=user2,dc=example,dc=com",
+                    "attributes": {
+                        "cn": ["user2"],
+                        "objectClass": ["inetOrgPerson"],
+                        "mail": ["user2@example.com"],
+                    },
+                }
             ),
         ]
 
@@ -254,12 +275,14 @@ class TestLDIFValidator:
         from pydantic import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
-            LDIFEntry(
-                dn="invalid-dn",
-                attributes={
-                    "cn": ["user1"],
-                    "objectClass": ["person"],
-                },
+            LDIFEntry.model_validate(
+                {
+                    "dn": "invalid-dn",
+                    "attributes": {
+                        "cn": ["user1"],
+                        "objectClass": ["person"],
+                    },
+                }
             )
 
         # Verify the error message contains DN validation error
@@ -269,19 +292,23 @@ class TestLDIFValidator:
 
         # Test validator with a valid entry that has invalid attribute name instead
         entries = [
-            LDIFEntry(
-                dn="cn=user1,dc=example,dc=com",
-                attributes={
-                    "123invalid": ["user1"],  # Invalid attribute name
-                    "objectClass": ["person"],
-                },
+            LDIFEntry.model_validate(
+                {
+                    "dn": "cn=user1,dc=example,dc=com",
+                    "attributes": {
+                        "123invalid": ["user1"],  # Invalid attribute name
+                        "objectClass": ["person"],
+                    },
+                }
             ),
-            LDIFEntry(
-                dn="cn=user2,dc=example,dc=com",
-                attributes={
-                    "cn": ["user2"],
-                    "objectClass": ["person"],
-                },
+            LDIFEntry.model_validate(
+                {
+                    "dn": "cn=user2,dc=example,dc=com",
+                    "attributes": {
+                        "cn": ["user2"],
+                        "objectClass": ["person"],
+                    },
+                }
             ),
         ]
 
@@ -296,19 +323,23 @@ class TestLDIFValidator:
     def test_validate_entries_second_invalid(self) -> None:
         """Test validating entries where second entry is invalid."""
         entries = [
-            LDIFEntry(
-                dn="cn=user1,dc=example,dc=com",
-                attributes={
-                    "cn": ["user1"],
-                    "objectClass": ["person"],
-                },
+            LDIFEntry.model_validate(
+                {
+                    "dn": "cn=user1,dc=example,dc=com",
+                    "attributes": {
+                        "cn": ["user1"],
+                        "objectClass": ["person"],
+                    },
+                }
             ),
-            LDIFEntry(
-                dn="cn=user2,dc=example,dc=com",
-                attributes={
-                    "cn": ["user2"],
-                    # Missing objectClass
-                },
+            LDIFEntry.model_validate(
+                {
+                    "dn": "cn=user2,dc=example,dc=com",
+                    "attributes": {
+                        "cn": ["user2"],
+                        # Missing objectClass
+                    },
+                }
             ),
         ]
 
@@ -406,6 +437,6 @@ class TestLDIFValidator:
         ]
 
         for attr in invalid_attrs:
-            assert not validator.ATTR_NAME_PATTERN.match(attr), (
-                f"Should not match: {attr}"
-            )
+            assert not validator.ATTR_NAME_PATTERN.match(
+                attr
+            ), f"Should not match: {attr}"

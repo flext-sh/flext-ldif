@@ -9,8 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.adapters.ldif_adapter import FlextLDIFProcessorAdapter
+from flext_ldif.adapters.ldif_adapter import FlextLdifAdapter
 
 __all__ = [
-    "FlextLDIFProcessorAdapter",
+    "FlextLdifAdapter",
 ]

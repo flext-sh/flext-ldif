@@ -11,13 +11,15 @@ class TestLDIFUtils:
 
     def test_entries_to_ldif_single_entry(self) -> None:
         """Test converting single entry to LDIF."""
-        entry = LDIFEntry(
-            dn="cn=test,dc=example,dc=com",
-            attributes={
-                "cn": ["test"],
-                "objectClass": ["person"],
-                "mail": ["test@example.com"],
-            },
+        entry = LDIFEntry.model_validate(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {
+                    "cn": ["test"],
+                    "objectClass": ["person"],
+                    "mail": ["test@example.com"],
+                },
+            }
         )
 
         result = LDIFUtils.entries_to_ldif([entry])
@@ -32,20 +34,24 @@ class TestLDIFUtils:
     def test_entries_to_ldif_multiple_entries(self) -> None:
         """Test converting multiple entries to LDIF."""
         entries = [
-            LDIFEntry(
-                dn="cn=user1,dc=example,dc=com",
-                attributes={
-                    "cn": ["user1"],
-                    "objectClass": ["person"],
-                },
+            LDIFEntry.model_validate(
+                {
+                    "dn": "cn=user1,dc=example,dc=com",
+                    "attributes": {
+                        "cn": ["user1"],
+                        "objectClass": ["person"],
+                    },
+                }
             ),
-            LDIFEntry(
-                dn="cn=user2,dc=example,dc=com",
-                attributes={
-                    "cn": ["user2"],
-                    "objectClass": ["inetOrgPerson"],
-                    "mail": ["user2@example.com"],
-                },
+            LDIFEntry.model_validate(
+                {
+                    "dn": "cn=user2,dc=example,dc=com",
+                    "attributes": {
+                        "cn": ["user2"],
+                        "objectClass": ["inetOrgPerson"],
+                        "mail": ["user2@example.com"],
+                    },
+                }
             ),
         ]
 
@@ -74,9 +80,11 @@ class TestLDIFUtils:
 
     def test_entries_to_ldif_entry_with_no_attributes(self) -> None:
         """Test converting entry with no attributes to LDIF."""
-        entry = LDIFEntry(
-            dn="cn=test,dc=example,dc=com",
-            attributes={},
+        entry = LDIFEntry.model_validate(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {},
+            }
         )
 
         result = LDIFUtils.entries_to_ldif([entry])
@@ -90,17 +98,23 @@ class TestLDIFUtils:
     def test_filter_entries_by_objectclass_found(self) -> None:
         """Test filtering entries by objectClass when matches exist."""
         entries = [
-            LDIFEntry(
-                dn="cn=person1,dc=example,dc=com",
-                attributes={"objectClass": ["person"]},
+            LDIFEntry.model_validate(
+                {
+                    "dn": "cn=person1,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person"]},
+                }
             ),
-            LDIFEntry(
-                dn="cn=group1,dc=example,dc=com",
-                attributes={"objectClass": ["groupOfNames"]},
+            LDIFEntry.model_validate(
+                {
+                    "dn": "cn=group1,dc=example,dc=com",
+                    "attributes": {"objectClass": ["groupOfNames"]},
+                }
             ),
-            LDIFEntry(
-                dn="cn=person2,dc=example,dc=com",
-                attributes={"objectClass": ["person", "inetOrgPerson"]},
+            LDIFEntry.model_validate(
+                {
+                    "dn": "cn=person2,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person", "inetOrgPerson"]},
+                }
             ),
         ]
 
@@ -113,13 +127,17 @@ class TestLDIFUtils:
     def test_filter_entries_by_objectclass_not_found(self) -> None:
         """Test filtering entries by objectClass when no matches exist."""
         entries = [
-            LDIFEntry(
-                dn="cn=person1,dc=example,dc=com",
-                attributes={"objectClass": ["person"]},
+            LDIFEntry.model_validate(
+                {
+                    "dn": "cn=person1,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person"]},
+                }
             ),
-            LDIFEntry(
-                dn="cn=group1,dc=example,dc=com",
-                attributes={"objectClass": ["groupOfNames"]},
+            LDIFEntry.model_validate(
+                {
+                    "dn": "cn=group1,dc=example,dc=com",
+                    "attributes": {"objectClass": ["groupOfNames"]},
+                }
             ),
         ]
 
@@ -136,13 +154,17 @@ class TestLDIFUtils:
     def test_filter_entries_by_objectclass_no_objectclass_attribute(self) -> None:
         """Test filtering entries without objectClass attribute."""
         entries = [
-            LDIFEntry(
-                dn="cn=test1,dc=example,dc=com",
-                attributes={"cn": ["test1"]},  # No objectClass
+            LDIFEntry.model_validate(
+                {
+                    "dn": "cn=test1,dc=example,dc=com",
+                    "attributes": {"cn": ["test1"]},  # No objectClass
+                }
             ),
-            LDIFEntry(
-                dn="cn=test2,dc=example,dc=com",
-                attributes={"objectClass": ["person"]},
+            LDIFEntry.model_validate(
+                {
+                    "dn": "cn=test2,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person"]},
+                }
             ),
         ]
 
@@ -154,13 +176,17 @@ class TestLDIFUtils:
     def test_filter_entries_by_objectclass_empty_objectclass(self) -> None:
         """Test filtering entries with empty objectClass attribute."""
         entries = [
-            LDIFEntry(
-                dn="cn=test1,dc=example,dc=com",
-                attributes={"objectClass": []},  # Empty objectClass
+            LDIFEntry.model_validate(
+                {
+                    "dn": "cn=test1,dc=example,dc=com",
+                    "attributes": {"objectClass": []},  # Empty objectClass
+                }
             ),
-            LDIFEntry(
-                dn="cn=test2,dc=example,dc=com",
-                attributes={"objectClass": ["person"]},
+            LDIFEntry.model_validate(
+                {
+                    "dn": "cn=test2,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person"]},
+                }
             ),
         ]
 
@@ -172,13 +198,11 @@ class TestLDIFUtils:
     def test_get_entry_by_dn_found(self) -> None:
         """Test getting entry by DN when it exists."""
         entries = [
-            LDIFEntry(
-                dn="cn=user1,dc=example,dc=com",
-                attributes={"cn": ["user1"]},
+            LDIFEntry.model_validate(
+                {"dn": "cn=user1,dc=example,dc=com", "attributes": {"cn": ["user1"]}}
             ),
-            LDIFEntry(
-                dn="cn=user2,dc=example,dc=com",
-                attributes={"cn": ["user2"]},
+            LDIFEntry.model_validate(
+                {"dn": "cn=user2,dc=example,dc=com", "attributes": {"cn": ["user2"]}}
             ),
         ]
 
@@ -191,9 +215,8 @@ class TestLDIFUtils:
     def test_get_entry_by_dn_not_found(self) -> None:
         """Test getting entry by DN when it doesn't exist."""
         entries = [
-            LDIFEntry(
-                dn="cn=user1,dc=example,dc=com",
-                attributes={"cn": ["user1"]},
+            LDIFEntry.model_validate(
+                {"dn": "cn=user1,dc=example,dc=com", "attributes": {"cn": ["user1"]}}
             ),
         ]
 
@@ -210,9 +233,8 @@ class TestLDIFUtils:
     def test_get_entry_by_dn_case_sensitive(self) -> None:
         """Test getting entry by DN is case sensitive."""
         entries = [
-            LDIFEntry(
-                dn="cn=User1,dc=example,dc=com",
-                attributes={"cn": ["User1"]},
+            LDIFEntry.model_validate(
+                {"dn": "cn=User1,dc=example,dc=com", "attributes": {"cn": ["User1"]}}
             ),
         ]
 
@@ -227,15 +249,18 @@ class TestLDIFUtils:
     def test_get_entry_by_dn_exact_match(self) -> None:
         """Test getting entry by DN requires exact match."""
         entries = [
-            LDIFEntry(
-                dn="cn=user1,ou=people,dc=example,dc=com",
-                attributes={"cn": ["user1"]},
+            LDIFEntry.model_validate(
+                {
+                    "dn": "cn=user1,ou=people,dc=example,dc=com",
+                    "attributes": {"cn": ["user1"]},
+                }
             ),
         ]
 
         # Exact match should work
         entry = LDIFUtils.get_entry_by_dn(
-            entries, "cn=user1,ou=people,dc=example,dc=com",
+            entries,
+            "cn=user1,ou=people,dc=example,dc=com",
         )
         assert entry is not None
 

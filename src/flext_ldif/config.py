@@ -8,11 +8,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_core import BaseSettings, Field
+# 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root namespace imports
+from flext_core import FlextCoreSettings
+from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
+BaseSettings = FlextCoreSettings
 
-class LDIFConfig(BaseSettings):
+
+class FlextLdifConfig(BaseSettings):
     """LDIF processing configuration."""
 
     model_config = SettingsConfigDict(
@@ -52,5 +56,5 @@ class LDIFConfig(BaseSettings):
 
 
 __all__ = [
-    "LDIFConfig",
+    "FlextLdifConfig",
 ]
