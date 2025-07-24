@@ -1,4 +1,4 @@
-"""LDIF utilities using flext-core patterns.
+"""FlextLdif utilities using flext-core patterns.
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
@@ -8,22 +8,23 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from flext_core.domain.shared_types import ServiceResult
+# 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root namespace imports
+from flext_core import FlextResult
 
 if TYPE_CHECKING:
-    from .models import LDIFEntry
+    from .models import FlextLdifEntry
     from .types import LDIFContent
 
 
-class LDIFUtils:
+class FlextLdifUtils:
     """LDIF utility functions."""
 
     @staticmethod
-    def entries_to_ldif(entries: list[LDIFEntry]) -> LDIFContent:
+    def entries_to_ldif(entries: list[FlextLdifEntry]) -> LDIFContent:
         """Convert multiple entries to LDIF content.
 
         Args:
-            entries: List of LDIFEntry objects
+            entries: List of FlextLdifEntry objects
 
         Returns:
             LDIF content string
@@ -36,13 +37,13 @@ class LDIFUtils:
 
     @staticmethod
     def filter_entries_by_objectclass(
-        entries: list[LDIFEntry],
+        entries: list[FlextLdifEntry],
         object_class: str,
-    ) -> list[LDIFEntry]:
+    ) -> list[FlextLdifEntry]:
         """Filter entries by objectClass.
 
         Args:
-            entries: List of LDIFEntry objects
+            entries: List of FlextLdifEntry objects
             object_class: ObjectClass to filter by
 
         Returns:
@@ -57,15 +58,17 @@ class LDIFUtils:
         return filtered
 
     @staticmethod
-    def get_entry_by_dn(entries: list[LDIFEntry], dn: str) -> LDIFEntry | None:
+    def get_entry_by_dn(
+        entries: list[FlextLdifEntry], dn: str,
+    ) -> FlextLdifEntry | None:
         """Get entry by DN.
 
         Args:
-            entries: List of LDIFEntry objects
+            entries: List of FlextLdifEntry objects
             dn: Distinguished name to search for
 
         Returns:
-            LDIFEntry if found, None otherwise
+            FlextLdifEntry if found, None otherwise
 
         """
         for entry in entries:
@@ -74,7 +77,7 @@ class LDIFUtils:
         return None
 
 
-class LDIFHierarchicalSorter:
+class FlextLdifHierarchicalSorter:
     """Hierarchical sorter for LDIF entries using FLEXT patterns.
 
     Sorts LDIF entries based on hierarchical relationships to ensure
@@ -84,14 +87,14 @@ class LDIFHierarchicalSorter:
     def __init__(self) -> None:
         """Initialize the hierarchical sorter."""
 
-    def sort_entries(self, entries: list[LDIFEntry]) -> ServiceResult[Any]:
+    def sort_entries(self, entries: list[FlextLdifEntry]) -> FlextResult[Any]:
         """Sort entries hierarchically.
 
         Args:
             entries: List of LDIF entries to sort
 
         Returns:
-            ServiceResult containing sorted entries or error
+            FlextResult containing sorted entries or error
 
         """
         try:
@@ -103,24 +106,81 @@ class LDIFHierarchicalSorter:
                     str(entry.dn).lower(),  # Secondary sort: alphabetical
                 ),
             )
-            return ServiceResult.ok(sorted_entries)
+            return FlextResult.ok(sorted_entries)
         except Exception as e:
-            return ServiceResult.fail(f"Failed to sort entries hierarchically: {e}")
+            return FlextResult.fail(f"Failed to sort entries hierarchically: {e}")
 
-    def sort_by_hierarchy(self, entries: list[LDIFEntry]) -> ServiceResult[Any]:
+    def sort_by_hierarchy(self, entries: list[FlextLdifEntry]) -> FlextResult[Any]:
         """Alternative method name for compatibility.
 
         Args:
             entries: List of LDIF entries to sort
 
         Returns:
-            ServiceResult containing sorted entries or error
+            FlextResult containing sorted entries or error
 
         """
         return self.sort_entries(entries)
 
 
+# Helper functions with flext_ldif_ prefix following FLEXT naming conventions
+def flext_ldif_sort_entries_hierarchically(
+    entries: list[FlextLdifEntry],
+) -> FlextResult[Any]:
+    """Sort LDIF entries hierarchically using helper function naming convention.
+
+    Args:
+        entries: List of FlextLdifEntry objects to sort
+
+    Returns:
+        FlextResult containing sorted entries or error
+
+    """
+    sorter = FlextLdifHierarchicalSorter()
+    return sorter.sort_entries(entries)
+
+
+def flext_ldif_filter_by_objectclass(
+    entries: list[FlextLdifEntry],
+    object_class: str,
+) -> list[FlextLdifEntry]:
+    """Filter LDIF entries by objectClass using helper function naming convention.
+
+    Args:
+        entries: List of FlextLdifEntry objects
+        object_class: ObjectClass to filter by
+
+    Returns:
+        Filtered list of entries
+
+    """
+    utils = FlextLdifUtils()
+    return utils.filter_entries_by_objectclass(entries, object_class)
+
+
+def flext_ldif_find_entry_by_dn(
+    entries: list[FlextLdifEntry],
+    dn: str,
+) -> FlextLdifEntry | None:
+    """Find LDIF entry by DN using helper function naming convention.
+
+    Args:
+        entries: List of FlextLdifEntry objects
+        dn: Distinguished name to search for
+
+    Returns:
+        FlextLdifEntry if found, None otherwise
+
+    """
+    utils = FlextLdifUtils()
+    return utils.get_entry_by_dn(entries, dn)
+
+
 __all__ = [
-    "LDIFHierarchicalSorter",
-    "LDIFUtils",
+    "FlextLdifHierarchicalSorter",
+    "FlextLdifUtils",
+    "flext_ldif_filter_by_objectclass",
+    "flext_ldif_find_entry_by_dn",
+    # Helper functions with flext_ldif_ prefix
+    "flext_ldif_sort_entries_hierarchically",
 ]

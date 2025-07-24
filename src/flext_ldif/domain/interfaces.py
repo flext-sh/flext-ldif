@@ -1,9 +1,12 @@
-"""LDIF Domain Interfaces - Abstract Contracts.
+"""FlextLdif Domain Interfaces - Abstract Contracts.
 
 🏗️ CLEAN ARCHITECTURE: Domain Interfaces
 Built on flext-core foundation patterns.
 
 Interfaces define contracts for infrastructure implementations.
+
+Copyright (c) 2025 FLEXT Contributors
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -11,245 +14,169 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
+# 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root namespace imports
+
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from flext_core.domain.shared_types import ServiceResult
+    from flext_core import FlextResult
 
-    from flext_ldif.domain.entities import LDIFEntry
+    from flext_ldif.domain.entities import FlextLdifEntry
     from flext_ldif.domain.values import LDIFContent
 
 
-class LDIFParser(ABC):
-    """Abstract interface for LDIF parsing."""
+class FlextLdifParserInterface(ABC):
+    """Abstract interface for FlextLdif parsing."""
 
     @abstractmethod
-    def parse_content(self, content: LDIFContent) -> ServiceResult[Any]:
+    def parse_content(self, content: LDIFContent) -> FlextResult[Any]:
         """Parse LDIF content into entries.
 
         Args:
             content: LDIF content to parse
 
         Returns:
-            ServiceResult containing list of LDIF entries
+            FlextResult containing list of FlextLdif entries
 
         """
 
     @abstractmethod
-    def parse_file(self, file_path: Path) -> ServiceResult[Any]:
+    def parse_file(self, file_path: Path) -> FlextResult[Any]:
         """Parse LDIF file into entries.
 
         Args:
             file_path: Path to LDIF file
 
         Returns:
-            ServiceResult containing list of LDIF entries
+            FlextResult containing list of FlextLdif entries
 
         """
 
+
+class FlextLdifValidatorInterface(ABC):
+    """Abstract interface for FlextLdif validation."""
+
     @abstractmethod
-    def parse_lines(self, lines: list[str]) -> ServiceResult[Any]:
-        """Parse LDIF lines into entries.
+    def validate_entry(self, entry: FlextLdifEntry) -> FlextResult[Any]:
+        """Validate single LDIF entry.
 
         Args:
-            lines: List of LDIF lines
+            entry: FlextLdif entry to validate
 
         Returns:
-            ServiceResult containing list of LDIF entries
-
-        """
-
-
-class LDIFValidator(ABC):
-    """Abstract interface for LDIF validation."""
-
-    @abstractmethod
-    def validate_entry(self, entry: LDIFEntry) -> ServiceResult[Any]:
-        """Validate a single LDIF entry.
-
-        Args:
-            entry: LDIF entry to validate
-
-        Returns:
-            ServiceResult indicating validation success
+            FlextResult indicating validation success
 
         """
 
     @abstractmethod
-    def validate_entries(self, entries: list[LDIFEntry]) -> ServiceResult[Any]:
+    def validate_entries(self, entries: list[FlextLdifEntry]) -> FlextResult[Any]:
         """Validate multiple LDIF entries.
 
         Args:
-            entries: List of LDIF entries to validate
+            entries: List of FlextLdif entries to validate
 
         Returns:
-            ServiceResult indicating validation success
-
-        """
-
-    @abstractmethod
-    def validate_dn(self, dn: str) -> ServiceResult[Any]:
-        """Validate distinguished name format.
-
-        Args:
-            dn: Distinguished name to validate
-
-        Returns:
-            ServiceResult indicating validation success
-
-        """
-
-    @abstractmethod
-    def validate_attribute_syntax(
-        self,
-        attribute_name: str,
-        value: str,
-    ) -> ServiceResult[Any]:
-        """Validate attribute value syntax.
-
-        Args:
-            attribute_name: Name of the attribute
-            value: Value to validate
-
-        Returns:
-            ServiceResult indicating validation success
+            FlextResult indicating validation success
 
         """
 
 
-class LDIFWriter(ABC):
-    """Abstract interface for LDIF writing."""
+class FlextLdifWriterInterface(ABC):
+    """Abstract interface for FlextLdif writing."""
 
     @abstractmethod
-    def write_entries(self, entries: list[LDIFEntry]) -> ServiceResult[Any]:
+    def write_entries(self, entries: list[FlextLdifEntry]) -> FlextResult[Any]:
         """Write entries to LDIF format.
 
         Args:
-            entries: List of LDIF entries to write
+            entries: List of FlextLdif entries to write
 
         Returns:
-            ServiceResult containing LDIF content string
+            FlextResult containing LDIF string
 
         """
 
     @abstractmethod
     def write_to_file(
         self,
-        entries: list[LDIFEntry],
+        entries: list[FlextLdifEntry],
         file_path: Path,
-    ) -> ServiceResult[Any]:
+    ) -> FlextResult[Any]:
         """Write entries to LDIF file.
 
         Args:
-            entries: List of LDIF entries to write
+            entries: List of FlextLdif entries to write
             file_path: Output file path
 
         Returns:
-            ServiceResult indicating success
-
-        """
-
-    @abstractmethod
-    def format_entry(self, entry: LDIFEntry) -> ServiceResult[Any]:
-        """Format single entry as LDIF.
-
-        Args:
-            entry: LDIF entry to format
-
-        Returns:
-            ServiceResult containing formatted LDIF string
+            FlextResult indicating success
 
         """
 
 
-class LDIFTransformer(ABC):
-    """Abstract interface for LDIF transformation."""
+class FlextLdifTransformerInterface(ABC):
+    """Abstract interface for FlextLdif transformation."""
 
     @abstractmethod
     def transform_entries(
         self,
-        entries: list[LDIFEntry],
+        entries: list[FlextLdifEntry],
         transformation_rules: dict[str, Any],
-    ) -> ServiceResult[Any]:
-        """Transform LDIF entries according to rules.
+    ) -> FlextResult[Any]:
+        """Transform entries using rules.
 
         Args:
-            entries: List of LDIF entries to transform
-            transformation_rules: Transformation rules to apply
+            entries: List of FlextLdif entries to transform
+            transformation_rules: Transformation rules
 
         Returns:
-            ServiceResult containing transformed entries
-
-        """
-
-    @abstractmethod
-    def apply_attribute_mapping(
-        self,
-        entry: LDIFEntry,
-        attribute_mapping: dict[str, str],
-    ) -> ServiceResult[Any]:
-        """Apply attribute name mapping to entry.
-
-        Args:
-            entry: LDIF entry to transform
-            attribute_mapping: Mapping from old to new attribute names
-
-        Returns:
-            ServiceResult containing transformed entry
+            FlextResult containing transformed entries
 
         """
 
 
-class LDIFFilter(ABC):
-    """Abstract interface for LDIF filtering."""
+class FlextLdifFilterInterface(ABC):
+    """Abstract interface for FlextLdif filtering."""
 
     @abstractmethod
     def filter_entries(
         self,
-        entries: list[LDIFEntry],
-        filter_criteria: str,
-    ) -> ServiceResult[Any]:
-        """Filter entries based on criteria.
+        entries: list[FlextLdifEntry],
+        criteria: dict[str, Any],
+    ) -> FlextResult[Any]:
+        """Filter entries by criteria.
 
         Args:
-            entries: List of LDIF entries to filter
-            filter_criteria: Filter criteria
+            entries: List of FlextLdif entries to filter
+            criteria: Filter criteria
 
         Returns:
-            ServiceResult containing filtered entries
+            FlextResult containing filtered entries
 
         """
 
     @abstractmethod
     def filter_by_objectclass(
         self,
-        entries: list[LDIFEntry],
+        entries: list[FlextLdifEntry],
         object_class: str,
-    ) -> ServiceResult[Any]:
+    ) -> FlextResult[Any]:
         """Filter entries by object class.
 
         Args:
-            entries: List of LDIF entries to filter
+            entries: List of FlextLdif entries to filter
             object_class: Object class to filter by
 
         Returns:
-            ServiceResult containing filtered entries
+            FlextResult containing filtered entries
 
         """
 
-    @abstractmethod
-    def filter_by_dn_pattern(
-        self,
-        entries: list[LDIFEntry],
-        dn_pattern: str,
-    ) -> ServiceResult[Any]:
-        """Filter entries by DN pattern.
 
-        Args:
-            entries: List of LDIF entries to filter
-            dn_pattern: DN pattern to match
-
-        Returns:
-            ServiceResult containing filtered entries
-
-        """
+__all__ = [
+    "FlextLdifFilterInterface",
+    "FlextLdifParserInterface",
+    "FlextLdifTransformerInterface",
+    "FlextLdifValidatorInterface",
+    "FlextLdifWriterInterface",
+]

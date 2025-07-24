@@ -7,11 +7,16 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif.writer import FlextLDIFWriter, LDIFHierarchicalSorter, LDIFWriter
+from flext_ldif import (
+    FlextLdifHierarchicalSorter,
+    FlextLdifWriter,
+    LDIFWriter,
+    flext_ldif_sort_entries_hierarchically,
+)
 
 
-class TestFlextLDIFWriter:
-    """Test FlextLDIFWriter functionality."""
+class TestFlextLdifWriter:
+    """Test FlextLdifWriter functionality."""
 
     def test_write_entries_to_file_basic(self) -> None:
         """Test basic entry writing functionality."""
@@ -20,7 +25,7 @@ class TestFlextLDIFWriter:
                 "dn": "cn=test,dc=example,dc=com",
                 "cn": "test",
                 "objectClass": ["person"],
-            },
+            }
         ]
 
         with tempfile.NamedTemporaryFile(
@@ -32,7 +37,7 @@ class TestFlextLDIFWriter:
             file_path = Path(f.name)
 
         try:
-            result = FlextLDIFWriter.write_entries_to_file(file_path, entries)
+            result = FlextLdifWriter.write_entries_to_file(file_path, entries)
 
             assert result.success
             assert result.data == 1
@@ -52,7 +57,7 @@ class TestFlextLDIFWriter:
                 "dn": "cn=test,dc=example,dc=com",
                 "cn": "test",
                 "_comments": ["# This is a test entry"],
-            },
+            }
         ]
 
         with tempfile.NamedTemporaryFile(
@@ -64,7 +69,7 @@ class TestFlextLDIFWriter:
             file_path = Path(f.name)
 
         try:
-            result = FlextLDIFWriter.write_entries_to_file(
+            result = FlextLdifWriter.write_entries_to_file(
                 file_path,
                 entries,
                 include_comments=True,
@@ -83,7 +88,7 @@ class TestFlextLDIFWriter:
                 "dn": "cn=test,dc=example,dc=com",
                 "cn": "test",
                 "_comments": ["# This should not appear"],
-            },
+            }
         ]
 
         with tempfile.NamedTemporaryFile(
@@ -95,7 +100,7 @@ class TestFlextLDIFWriter:
             file_path = Path(f.name)
 
         try:
-            result = FlextLDIFWriter.write_entries_to_file(
+            result = FlextLdifWriter.write_entries_to_file(
                 file_path,
                 entries,
                 include_comments=False,
@@ -122,7 +127,7 @@ class TestFlextLDIFWriter:
             file_path = Path(f.name)
 
         try:
-            result = FlextLDIFWriter.write_schema_to_file(
+            result = FlextLdifWriter.write_schema_to_file(
                 file_path,
                 schema_content,
                 "Test Schema",
@@ -152,7 +157,7 @@ class TestFlextLDIFWriter:
             file_path = Path(f.name)
 
         try:
-            result = FlextLDIFWriter.write_text_lines_to_file(
+            result = FlextLdifWriter.write_text_lines_to_file(
                 file_path,
                 lines,
                 "Test Header",
@@ -170,61 +175,108 @@ class TestFlextLDIFWriter:
             file_path.unlink(missing_ok=True)
 
 
-class TestLDIFHierarchicalSorter:
-    """Test LDIFHierarchicalSorter functionality."""
+class TestFlextLdifHierarchicalSorter:
+    """Test FlextLdifHierarchicalSorter functionality."""
 
     def test_sort_entries_hierarchically(self) -> None:
         """Test hierarchical sorting of entries."""
+        from flext_ldif import (
+            FlextLdifAttributes,
+            FlextLdifDistinguishedName,
+            FlextLdifEntry,
+        )
+
+        # Create real FlextLdifEntry objects
         entries = [
-            {"dn": "cn=child,ou=people,dc=example,dc=com"},
-            {"dn": "dc=example,dc=com"},
-            {"dn": "ou=people,dc=example,dc=com"},
+            FlextLdifEntry(
+                dn=FlextLdifDistinguishedName.model_validate({"value": "cn=child,ou=people,dc=example,dc=com"}),
+                attributes=FlextLdifAttributes.model_validate({"attributes": {"objectClass": ["person"]}})
+            ),
+            FlextLdifEntry(
+                dn=FlextLdifDistinguishedName.model_validate({"value": "dc=example,dc=com"}),
+                attributes=FlextLdifAttributes.model_validate({"attributes": {"objectClass": ["domain"]}})
+            ),
+            FlextLdifEntry(
+                dn=FlextLdifDistinguishedName.model_validate({"value": "ou=people,dc=example,dc=com"}),
+                attributes=FlextLdifAttributes.model_validate({"attributes": {"objectClass": ["organizationalUnit"]}})
+            ),
         ]
 
-        sorted_entries = LDIFHierarchicalSorter.sort_entries_hierarchically(entries)
+        result = flext_ldif_sort_entries_hierarchically(entries)
 
         # Should be sorted by depth (shallow first)
-        assert sorted_entries[0]["dn"] == "dc=example,dc=com"  # depth 2
-        assert sorted_entries[1]["dn"] == "ou=people,dc=example,dc=com"  # depth 3
-        assert (
-            sorted_entries[2]["dn"] == "cn=child,ou=people,dc=example,dc=com"
-        )  # depth 4
+        assert result.success
+        sorted_entries = result.data
+        assert sorted_entries is not None
+        assert str(sorted_entries[0].dn) == "dc=example,dc=com"  # depth 2
+        assert str(sorted_entries[1].dn) == "ou=people,dc=example,dc=com"  # depth 3
+        assert str(sorted_entries[2].dn) == "cn=child,ou=people,dc=example,dc=com"  # depth 4
 
     def test_sort_entries_with_list_dn(self) -> None:
         """Test sorting with DN as list."""
+        from flext_ldif import (
+            FlextLdifAttributes,
+            FlextLdifDistinguishedName,
+            FlextLdifEntry,
+        )
+
         entries = [
-            {"dn": ["cn=child,ou=people,dc=example,dc=com"]},
-            {"dn": ["dc=example,dc=com"]},
+            FlextLdifEntry(
+                dn=FlextLdifDistinguishedName.model_validate({"value": "cn=child,ou=people,dc=example,dc=com"}),
+                attributes=FlextLdifAttributes.model_validate({"attributes": {"objectClass": ["person"]}})
+            ),
+            FlextLdifEntry(
+                dn=FlextLdifDistinguishedName.model_validate({"value": "dc=example,dc=com"}),
+                attributes=FlextLdifAttributes.model_validate({"attributes": {"objectClass": ["domain"]}})
+            ),
         ]
 
-        sorted_entries = LDIFHierarchicalSorter.sort_entries_hierarchically(entries)
+        result = flext_ldif_sort_entries_hierarchically(entries)
 
-        assert sorted_entries[0]["dn"] == ["dc=example,dc=com"]
-        assert sorted_entries[1]["dn"] == ["cn=child,ou=people,dc=example,dc=com"]
+        assert result.success
+        sorted_entries = result.data
+        assert sorted_entries is not None
+        assert str(sorted_entries[0].dn) == "dc=example,dc=com"
+        assert str(sorted_entries[1].dn) == "cn=child,ou=people,dc=example,dc=com"
 
-    def test_sort_entries_empty_dn(self) -> None:
-        """Test sorting with empty DN."""
+    def test_sort_entries_simple_dn(self) -> None:
+        """Test sorting with simple DN."""
+        from flext_ldif import (
+            FlextLdifAttributes,
+            FlextLdifDistinguishedName,
+            FlextLdifEntry,
+        )
+
         entries = [
-            {"dn": ""},
-            {"dn": "dc=example,dc=com"},
+            FlextLdifEntry(
+                dn=FlextLdifDistinguishedName.model_validate({"value": "cn=simple"}),
+                attributes=FlextLdifAttributes.model_validate({"attributes": {"objectClass": ["person"]}})
+            ),
+            FlextLdifEntry(
+                dn=FlextLdifDistinguishedName.model_validate({"value": "dc=example,dc=com"}),
+                attributes=FlextLdifAttributes.model_validate({"attributes": {"objectClass": ["domain"]}})
+            ),
         ]
 
-        sorted_entries = LDIFHierarchicalSorter.sort_entries_hierarchically(entries)
+        result = flext_ldif_sort_entries_hierarchically(entries)
 
-        # Empty DN should come first (depth 0)
-        assert sorted_entries[0]["dn"] == ""
-        assert sorted_entries[1]["dn"] == "dc=example,dc=com"
+        # Simple DN should come first (depth 0 - no commas)
+        assert result.success
+        sorted_entries = result.data
+        assert sorted_entries is not None
+        assert str(sorted_entries[0].dn) == "cn=simple"
+        assert str(sorted_entries[1].dn) == "dc=example,dc=com"
 
 
 class TestLDIFWriterAlias:
     """Test LDIFWriter alias."""
 
     def test_ldif_writer_is_alias(self) -> None:
-        """Test that LDIFWriter is an alias for FlextLDIFWriter."""
-        assert LDIFWriter is FlextLDIFWriter
+        """Test that LDIFWriter is an alias for FlextLdifWriter."""
+        assert LDIFWriter is FlextLdifWriter
 
     def test_ldif_writer_functionality(self) -> None:
-        """Test that LDIFWriter works the same as FlextLDIFWriter."""
+        """Test that LDIFWriter works the same as FlextLdifWriter."""
         entries = [{"dn": "cn=test,dc=example,dc=com", "cn": "test"}]
 
         with tempfile.NamedTemporaryFile(
@@ -253,7 +305,7 @@ class TestWriterErrorHandling:
         # Try to write to a path that can't be created
         invalid_path = Path("/root/invalid/path/file.ldif")
 
-        result = FlextLDIFWriter.write_entries_to_file(invalid_path, entries)
+        result = FlextLdifWriter.write_entries_to_file(invalid_path, entries)
         assert result.is_failure
         assert result.error is not None
         assert "Failed to write LDIF" in result.error
@@ -262,7 +314,7 @@ class TestWriterErrorHandling:
         """Test writing schema to invalid path."""
         invalid_path = Path("/root/invalid/path/schema.ldif")
 
-        result = FlextLDIFWriter.write_schema_to_file(invalid_path, "test content")
+        result = FlextLdifWriter.write_schema_to_file(invalid_path, "test content")
         assert result.is_failure
         assert result.error is not None
         assert "Failed to write schema" in result.error
@@ -271,7 +323,7 @@ class TestWriterErrorHandling:
         """Test writing text to invalid path."""
         invalid_path = Path("/root/invalid/path/text.txt")
 
-        result = FlextLDIFWriter.write_text_lines_to_file(invalid_path, ["test"])
+        result = FlextLdifWriter.write_text_lines_to_file(invalid_path, ["test"])
         assert result.is_failure
         assert result.error is not None
         assert "Failed to write text" in result.error
@@ -310,7 +362,7 @@ class TestWriterIntegration:
             file_path = Path(f.name)
 
         try:
-            result = FlextLDIFWriter.write_entries_to_file(
+            result = FlextLdifWriter.write_entries_to_file(
                 file_path,
                 entries,
                 sort_hierarchically=True,

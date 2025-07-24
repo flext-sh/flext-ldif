@@ -12,7 +12,7 @@ from typing import NewType
 LDIFContent = NewType("LDIFContent", str)
 LDIFLines = NewType("LDIFLines", list[str])
 
-# Note: DistinguishedName and LDIFAttributes are proper domain value objects
+# Note: FlextLdifDistinguishedName and FlextLdifAttributes are proper domain value objects
 # defined in domain/values.py, not simple type aliases
 
 __all__ = [

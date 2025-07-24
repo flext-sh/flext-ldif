@@ -1,4 +1,4 @@
-"""LDIF models using flext-core patterns.
+"""FlextLdif models using flext-core patterns.
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
@@ -8,39 +8,40 @@ from __future__ import annotations
 
 from typing import Any
 
-from flext_core import DomainValueObject
+# 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root namespace imports
+from flext_core import FlextValueObject
 from pydantic import Field, field_validator
 
-from .domain.values import DistinguishedName, LDIFAttributes
+from .domain.values import FlextLdifAttributes, FlextLdifDistinguishedName
 
 
-class LDIFEntry(DomainValueObject):
+class FlextLdifEntry(FlextValueObject):
     """LDIF entry model using flext-core patterns."""
 
-    dn: DistinguishedName = Field(..., description="Distinguished Name")
-    attributes: LDIFAttributes = Field(
-        default_factory=lambda: LDIFAttributes(attributes={}),
+    dn: FlextLdifDistinguishedName = Field(..., description="Distinguished Name")
+    attributes: FlextLdifAttributes = Field(
+        default_factory=lambda: FlextLdifAttributes.model_validate({"attributes": {}}),
         description="LDIF attributes dictionary",
     )
 
     @field_validator("dn", mode="before")
     @classmethod
-    def validate_dn(cls, v: Any) -> DistinguishedName:
-        """Convert string DN to DistinguishedName object."""
+    def validate_dn(cls, v: Any) -> FlextLdifDistinguishedName:
+        """Convert string DN to FlextLdifDistinguishedName object."""
         if isinstance(v, str):
-            return DistinguishedName(value=v)
-        if isinstance(v, DistinguishedName):
+            return FlextLdifDistinguishedName.model_validate({"value": v})
+        if isinstance(v, FlextLdifDistinguishedName):
             return v
         msg = f"Invalid DN type: {type(v)}"
         raise ValueError(msg)
 
     @field_validator("attributes", mode="before")
     @classmethod
-    def validate_attributes(cls, v: Any) -> LDIFAttributes:
-        """Convert dict attributes to LDIFAttributes object."""
+    def validate_attributes(cls, v: Any) -> FlextLdifAttributes:
+        """Convert dict attributes to FlextLdifAttributes object."""
         if isinstance(v, dict):
-            return LDIFAttributes(attributes=v)
-        if isinstance(v, LDIFAttributes):
+            return FlextLdifAttributes.model_validate({"attributes": v})
+        if isinstance(v, FlextLdifAttributes):
             return v
         msg = f"Invalid attributes type: {type(v)}"
         raise ValueError(msg)
@@ -63,7 +64,11 @@ class LDIFEntry(DomainValueObject):
         new_attrs = self.attributes.attributes.copy()
         new_attrs[name] = values
         # Use property setter instead of direct assignment
-        object.__setattr__(self, "attributes", LDIFAttributes(attributes=new_attrs))
+        object.__setattr__(
+            self,
+            "attributes",
+            FlextLdifAttributes.model_validate({"attributes": new_attrs}),
+        )
 
     def has_attribute(self, name: str) -> bool:
         """Check if LDIF entry has a specific attribute.
@@ -76,6 +81,51 @@ class LDIFEntry(DomainValueObject):
 
         """
         return self.attributes.has_attribute(name)
+
+    def get_object_classes(self) -> list[str]:
+        """Get object classes for this entry.
+
+        Returns:
+            List of object class names
+
+        """
+        return self.attributes.get_values("objectClass")
+
+    def has_object_class(self, object_class: str) -> bool:
+        """Check if entry has specific object class.
+
+        Args:
+            object_class: Object class to check
+
+        Returns:
+            True if entry has the object class
+
+        """
+        return object_class in self.get_object_classes()
+
+    def get_attribute_values(self, name: str) -> list[str]:
+        """Get attribute values by name.
+
+        Args:
+            name: Attribute name
+
+        Returns:
+            List of attribute values
+
+        """
+        return self.attributes.get_values(name)
+
+    def is_modify_operation(self) -> bool:
+        """Check if this is a modify operation."""
+        return False  # Model entries are not change operations
+
+    def is_add_operation(self) -> bool:
+        """Check if this is an add operation."""
+        return False  # Model entries are not change operations
+
+    def is_delete_operation(self) -> bool:
+        """Check if this is a delete operation."""
+        return False  # Model entries are not change operations
 
     def get_single_attribute(self, name: str) -> str | None:
         """Get single value from an LDIF attribute.
@@ -104,8 +154,18 @@ class LDIFEntry(DomainValueObject):
         lines.append("")  # Empty line after entry
         return "\n".join(lines)
 
+    def validate_domain_rules(self) -> None:
+        """Validate LDIF entry domain rules."""
+        # Validate DN is not empty
+        if not self.dn or not self.dn.value:
+            raise ValueError("LDIF entry must have a valid DN")
+
+        # Validate at least one attribute exists
+        if not self.attributes or not self.attributes.attributes:
+            raise ValueError("LDIF entry must have at least one attribute")
+
     @classmethod
-    def from_ldif_block(cls, ldif_block: str) -> LDIFEntry:
+    def from_ldif_block(cls, ldif_block: str) -> FlextLdifEntry:
         """Create entry from LDIF block.
 
         Args:
@@ -144,11 +204,11 @@ class LDIFEntry(DomainValueObject):
                 attributes[attr_name].append(attr_value)
 
         return cls(
-            dn=DistinguishedName(value=dn),
-            attributes=LDIFAttributes(attributes=attributes),
+            dn=FlextLdifDistinguishedName.model_validate({"value": dn}),
+            attributes=FlextLdifAttributes.model_validate({"attributes": attributes}),
         )
 
 
 __all__ = [
-    "LDIFEntry",
+    "FlextLdifEntry",
 ]

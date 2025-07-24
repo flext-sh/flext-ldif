@@ -6,8 +6,7 @@ import tempfile
 from pathlib import Path
 from typing import Never
 
-from flext_ldif import LDIFParser
-from flext_ldif.types import LDIFContent
+from flext_ldif import LDIFContent, LDIFParser
 
 
 class TestLDIFParser:
@@ -15,10 +14,12 @@ class TestLDIFParser:
 
     def test_parse_single_entry(self) -> None:
         """Test parsing single LDIF entry."""
-        content = LDIFContent("""dn: cn=test,dc=example,dc=com
+        content = LDIFContent(
+            """dn: cn=test,dc=example,dc=com
 cn: test
 objectClass: person
-mail: test@example.com""")
+mail: test@example.com"""
+        )
 
         parser = LDIFParser()
         result = parser.parse_ldif_content(content)
@@ -36,14 +37,16 @@ mail: test@example.com""")
 
     def test_parse_multiple_entries(self) -> None:
         """Test parsing multiple LDIF entries."""
-        content = LDIFContent("""dn: cn=user1,dc=example,dc=com
+        content = LDIFContent(
+            """dn: cn=user1,dc=example,dc=com
 cn: user1
 objectClass: person
 
 dn: cn=user2,dc=example,dc=com
 cn: user2
 objectClass: person
-mail: user2@example.com""")
+mail: user2@example.com"""
+        )
 
         parser = LDIFParser()
         result = parser.parse_ldif_content(content)
@@ -92,8 +95,10 @@ mail: user2@example.com""")
 
     def test_parse_invalid_entry_no_dn(self) -> None:
         """Test parsing invalid entry without DN."""
-        content = LDIFContent("""cn: test
-objectClass: person""")
+        content = LDIFContent(
+            """cn: test
+objectClass: person"""
+        )
 
         parser = LDIFParser()
         result = parser.parse_ldif_content(content)
@@ -104,11 +109,13 @@ objectClass: person""")
 
     def test_parse_invalid_entry_empty_block(self) -> None:
         """Test parsing with empty block between entries."""
-        content = LDIFContent("""dn: cn=user1,dc=example,dc=com
+        content = LDIFContent(
+            """dn: cn=user1,dc=example,dc=com
 cn: user1
 
 dn: cn=user2,dc=example,dc=com
-cn: user2""")
+cn: user2"""
+        )
 
         parser = LDIFParser()
         result = parser.parse_ldif_content(content)
@@ -120,13 +127,15 @@ cn: user2""")
 
     def test_parse_entries_with_extra_whitespace(self) -> None:
         """Test parsing entries with extra whitespace."""
-        content = LDIFContent("""
+        content = LDIFContent(
+            """
 
 dn: cn=test,dc=example,dc=com
 cn: test
 objectClass: person
 
-        """)
+        """
+        )
 
         parser = LDIFParser()
         result = parser.parse_ldif_content(content)
@@ -142,11 +151,13 @@ objectClass: person
 
     def test_parse_multiple_values_same_attribute(self) -> None:
         """Test parsing entry with multiple values for same attribute."""
-        content = LDIFContent("""dn: cn=test,dc=example,dc=com
+        content = LDIFContent(
+            """dn: cn=test,dc=example,dc=com
 objectClass: person
 objectClass: inetOrgPerson
 mail: test@example.com
-mail: test2@example.com""")
+mail: test2@example.com"""
+        )
 
         parser = LDIFParser()
         result = parser.parse_ldif_content(content)
@@ -235,9 +246,9 @@ mail: test@example.com"""
         # This will test the exception handling in parse_ldif_content
         parser = LDIFParser()
 
-        # Mock the LDIFContent to cause an issue
+        # Mock the LDIFContent to cause an issue during __str__ conversion
         class BadContent:
-            def strip(self) -> Never:
+            def __str__(self) -> str:
                 msg = "Simulated type error"
                 raise TypeError(msg)
 
@@ -251,28 +262,18 @@ mail: test@example.com"""
 
     def test_parse_content_with_attribute_error(self) -> None:
         """Test parsing content that causes attribute error in LDIFEntry creation."""
+        from unittest.mock import patch
+
         # Create content that will cause LDIFEntry.from_ldif_block to fail
         content = LDIFContent("dn: cn=test,dc=example,dc=com")
 
         parser = LDIFParser()
 
-        # Patch LDIFEntry.from_ldif_block to raise AttributeError using monkeypatch
-        # Use simplified imports from root level
-        from flext_ldif import LDIFEntry
+        # Mock the from_ldif_block method to raise AttributeError
+        with patch("flext_ldif.LDIFEntry.from_ldif_block") as mock_from_ldif:
+            mock_from_ldif.side_effect = AttributeError("Simulated attribute error")
 
-        original_from_ldif = LDIFEntry.from_ldif_block
-
-        def mock_from_ldif(block: str) -> Never:
-            msg = "Simulated attribute error"
-            raise AttributeError(msg)
-
-        LDIFEntry.from_ldif_block = mock_from_ldif
-
-        try:
             result = parser.parse_ldif_content(content)
             assert not result.success
             assert result.error is not None
             assert "Failed to parse LDIF" in result.error
-        finally:
-            # Restore original method
-            LDIFEntry.from_ldif_block = original_from_ldif
