@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Any
 from flext_core import FlextResult
 
 try:
-    from ldif3 import LDIFParser as Ldif3Parser  # type: ignore[import-untyped]
+    from ldif3 import LDIFParser as Ldif3Parser
 except ImportError:
     Ldif3Parser = None
 
