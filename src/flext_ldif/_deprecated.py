@@ -45,7 +45,7 @@ def warn_deprecated(
         f"Use simple root-level imports for better developer experience.\n\n"
         f"Examples:\n"
         f"✅ from flext_ldif import LDIFParser, LDIFWriter, LDIFEntry\n"
-        f"✅ from flext_ldif import LDIFProcessor, LDIFValidator\n"
+        f"✅ from flext_ldif import FlextLDIFProcessor, LDIFValidator\n"
         f"✅ from flext_ldif import DistinguishedName, LDIFAttributes\n",
         LDIFDeprecationWarning,
         stacklevel=3,
@@ -53,7 +53,9 @@ def warn_deprecated(
 
 
 def warn_deprecated_path(
-    old_path: str, recommendation: str, version: str = "1.0.0",
+    old_path: str,
+    recommendation: str,
+    version: str = "1.0.0",
 ) -> None:
     """Issue deprecation warning for complex import paths.
 
@@ -78,7 +80,7 @@ def warn_deprecated_path(
         f"Use simple root-level imports for better developer experience.\n\n"
         f"Examples:\n"
         f"✅ from flext_ldif import LDIFParser\n"
-        f"✅ from flext_ldif import LDIFEntry, LDIFProcessor\n"
+        f"✅ from flext_ldif import LDIFEntry, FlextLDIFProcessor\n"
         f"✅ from flext_ldif import DistinguishedName\n",
         LDIFDeprecationWarning,
         stacklevel=3,

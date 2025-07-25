@@ -102,7 +102,8 @@ class FlextLdifEntry(FlextEntity):
         """
         # Validate DN exists and is valid
         if not self.dn or not self.dn.value:
-            raise ValueError("LDIF entry must have a valid distinguished name")
+            msg = "LDIF entry must have a valid distinguished name"
+            raise ValueError(msg)
 
         # Validate DN domain rules
         self.dn.validate_domain_rules()
@@ -113,17 +114,20 @@ class FlextLdifEntry(FlextEntity):
         # Validate object class requirements
         object_classes = self.get_object_classes()
         if not object_classes:
-            raise ValueError("LDIF entry must have at least one objectClass")
+            msg = "LDIF entry must have at least one objectClass"
+            raise ValueError(msg)
 
         # For standard LDIF entries (not change operations), validate required attributes
         if not self.change_type:
             # Standard entry - ensure it has meaningful attributes beyond objectClass
             non_object_class_attrs = [
-                name for name in self.attributes.get_attribute_names()
+                name
+                for name in self.attributes.get_attribute_names()
                 if name.lower() != "objectclass"
             ]
             if not non_object_class_attrs:
-                raise ValueError("LDIF entry must have attributes beyond objectClass")
+                msg = "LDIF entry must have attributes beyond objectClass"
+                raise ValueError(msg)
 
 
 class FlextLdifRecord(FlextEntity):
@@ -133,7 +137,8 @@ class FlextLdifRecord(FlextEntity):
     """
 
     entries: list[FlextLdifEntry] = Field(
-        default_factory=list, description="LDIF entries",
+        default_factory=list,
+        description="LDIF entries",
     )
     ldif_version: int = Field(default=1, description="LDIF version")
     encoding: str = Field(default="utf-8", description="Character encoding")
@@ -184,14 +189,17 @@ class FlextLdifRecord(FlextEntity):
         """
         # Validate LDIF version
         if self.ldif_version < 1:
-            raise ValueError("LDIF version must be >= 1")
+            msg = "LDIF version must be >= 1"
+            raise ValueError(msg)
 
         # Validate encoding
         import codecs
+
         try:
             codecs.lookup(self.encoding)
         except LookupError as e:
-            raise ValueError(f"Unsupported encoding: {self.encoding}") from e
+            msg = f"Unsupported encoding: {self.encoding}"
+            raise ValueError(msg) from e
 
         # Track DNs to check for duplicates
         seen_dns: set[str] = set()
@@ -205,22 +213,31 @@ class FlextLdifRecord(FlextEntity):
                 # Check for duplicate DNs
                 dn_str = str(entry.dn)
                 if dn_str in seen_dns:
-                    raise ValueError(f"Duplicate DN found: {dn_str}")
+                    msg = f"Duplicate DN found: {dn_str}"
+                    raise ValueError(msg)
                 seen_dns.add(dn_str)
 
             except Exception as e:
-                raise ValueError(f"Entry {i} validation failed: {e}") from e
+                msg = f"Entry {i} validation failed: {e}"
+                raise ValueError(msg) from e
 
         # Additional business rule: For non-empty records, ensure we have meaningful content
         if self.entries:
             # Check if we have at least one entry with actual data (beyond just objectClass)
             has_meaningful_entries = any(
-                len([name for name in entry.attributes.get_attribute_names()
-                    if name.lower() != "objectclass"]) > 0
+                len(
+                    [
+                        name
+                        for name in entry.attributes.get_attribute_names()
+                        if name.lower() != "objectclass"
+                    ],
+                )
+                > 0
                 for entry in self.entries
             )
             if not has_meaningful_entries:
-                raise ValueError("LDIF record must contain entries with meaningful attributes beyond objectClass")
+                msg = "LDIF record must contain entries with meaningful attributes beyond objectClass"
+                raise ValueError(msg)
 
 
 __all__ = [

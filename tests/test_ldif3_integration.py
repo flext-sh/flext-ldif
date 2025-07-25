@@ -4,9 +4,6 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
-from typing import Any
-
-import pytest
 
 from flext_ldif import FlextLdifParser, FlextLdifWriter, LDIFContent
 
@@ -23,7 +20,7 @@ replace: mail
 mail: john.doe.new@example.com
 -
 replace: telephoneNumber
-telephoneNumber: +1 555 999 8888"""
+telephoneNumber: +1 555 999 8888""",
         )
 
         parser = FlextLdifParser()
@@ -54,7 +51,7 @@ uid: new.user
 cn: New User
 sn: User
 givenName: New
-mail: new.user@example.com"""
+mail: new.user@example.com""",
         )
 
         parser = FlextLdifParser()
@@ -76,7 +73,7 @@ mail: new.user@example.com"""
         """Test parsing LDIF change record with delete operation."""
         content = LDIFContent(
             """dn: uid=old.user,ou=people,dc=example,dc=com
-changetype: delete"""
+changetype: delete""",
         )
 
         parser = FlextLdifParser()
@@ -101,7 +98,7 @@ objectClass: person
 objectClass: top
 uid: user.photo
 cn: User Photo
-jpegPhoto:: /9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEB"""
+jpegPhoto:: /9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEB""",
         )
 
         parser = FlextLdifParser()
@@ -141,7 +138,7 @@ mail: john.doe.new@example.com
 dn: cn=group,ou=groups,dc=example,dc=com
 objectClass: groupOfNames
 cn: group
-member: cn=test,dc=example,dc=com"""
+member: cn=test,dc=example,dc=com""",
         )
 
         parser = FlextLdifParser()
@@ -176,7 +173,7 @@ member: cn=test,dc=example,dc=com"""
         content = LDIFContent(
             """dn: cn=test,dc=example,dc=com
 cn: test
-objectClass: person"""
+objectClass: person""",
         )
 
         parser = FlextLdifParser()
@@ -208,13 +205,15 @@ class TestLdif3WriterIntegration:
                 "cn": ["Test User"],
                 "uid": ["test"],
                 "description": [
-                    "This is a very long description that should be folded when using ldif3 writer at the specified column width to demonstrate proper line folding functionality"
+                    "This is a very long description that should be folded when using ldif3 writer at the specified column width to demonstrate proper line folding functionality",
                 ],
                 "mail": ["test@example.com"],
-            }
+            },
         ]
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False,
+        ) as f:
             temp_path = Path(f.name)
 
         try:
@@ -229,7 +228,7 @@ class TestLdif3WriterIntegration:
             assert result.data == 1  # One entry written
 
             # Read the generated content
-            content = temp_path.read_text()
+            content = temp_path.read_text(encoding="utf-8")
 
             # In Python 3.13+, ldif3 is not available, so fallback writer is used
             # Verify that the entry was written correctly without line folding
@@ -256,10 +255,12 @@ class TestLdif3WriterIntegration:
                 "cn": ["Test User"],
                 "userPassword": ["secret123"],
                 "description": ["Normal text"],
-            }
+            },
         ]
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False,
+        ) as f:
             temp_path = Path(f.name)
 
         try:
@@ -268,12 +269,12 @@ class TestLdif3WriterIntegration:
                 temp_path,
                 entries,
                 base64_attrs={
-                    "userPassword"
+                    "userPassword",
                 },  # This will be ignored in fallback writer
             )
 
             assert result.success
-            content = temp_path.read_text()
+            content = temp_path.read_text(encoding="utf-8")
 
             # Verify entry was written correctly (fallback writer uses normal formatting)
             assert "uid=test,ou=people,dc=example,dc=com" in content
@@ -303,18 +304,23 @@ class TestLdif3WriterIntegration:
             },
         ]
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False,
+        ) as f:
             temp_path = Path(f.name)
 
         try:
             result = FlextLdifWriter.write_entries_to_file(
-                temp_path, entries, sort_hierarchically=True, cols=78
+                temp_path,
+                entries,
+                sort_hierarchically=True,
+                cols=78,
             )
 
             assert result.success
             assert result.data == 2  # Two entries written
 
-            content = temp_path.read_text()
+            content = temp_path.read_text(encoding="utf-8")
             assert "uid=test1,ou=people,dc=example,dc=com" in content
             assert "uid=test2,ou=people,dc=example,dc=com" in content
             assert "cn: Test User 1" in content
@@ -331,10 +337,12 @@ class TestLdif3WriterIntegration:
                 "objectClass": ["person"],
                 "uid": ["test"],
                 "cn": ["Test User"],
-            }
+            },
         ]
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False,
+        ) as f:
             temp_path = Path(f.name)
 
         try:
@@ -342,7 +350,7 @@ class TestLdif3WriterIntegration:
             result = FlextLdifWriter.write_entries_to_file(temp_path, entries)
 
             assert result.success
-            content = temp_path.read_text()
+            content = temp_path.read_text(encoding="utf-8")
 
             # Should contain the entry data using fallback writer
             assert "uid=test,ou=people,dc=example,dc=com" in content
@@ -363,7 +371,7 @@ class TestLdif3ErrorHandling:
         content = LDIFContent(
             """dn: invalid dn format without proper structure
 invalidattribute: value
-: empty attribute name"""
+: empty attribute name""",
         )
 
         parser = FlextLdifParser()
@@ -381,7 +389,7 @@ invalidattribute: value
                 "dn": "uid=test,ou=people,dc=example,dc=com",
                 "objectClass": ["person"],
                 "uid": ["test"],
-            }
+            },
         ]
 
         # Test with invalid path to trigger error
@@ -417,16 +425,20 @@ class TestLdif3PerformanceFeatures:
             },
         ]
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False,
+        ) as f:
             temp_path = Path(f.name)
 
         try:
             result = FlextLdifWriter.write_entries_to_file(
-                temp_path, entries, sort_hierarchically=True
+                temp_path,
+                entries,
+                sort_hierarchically=True,
             )
 
             assert result.success
-            content = temp_path.read_text()
+            content = temp_path.read_text(encoding="utf-8")
 
             # Verify order: shallow DNs should come first
             dc_pos = content.find("dc=example,dc=com")

@@ -17,7 +17,8 @@ from .domain.specifications import (
     FlextLdifPersonSpecification,
     FlextLdifValidSpecification,
 )
-from .infrastructure.di_container import flext_ldif_get_service_result
+
+# REMOVED: Unnecessary DI abstraction for FlextResult
 from .parser import FlextLdifParser
 from .types import LDIFContent
 from .utils import FlextLdifUtils
@@ -41,8 +42,7 @@ class FlextLdifProcessor:
         self.parser = FlextLdifParser()
         self.validator = FlextLdifValidator()
 
-        # Use DI container to get FlextResult service
-        self._result_service = flext_ldif_get_service_result()
+        # REMOVED: Unnecessary DI abstraction - use FlextResult directly
 
         # Initialize domain specifications
         self.valid_spec = FlextLdifValidSpecification()
@@ -138,7 +138,7 @@ class FlextLdifProcessor:
             file_path: Output file path
 
         Returns:
-            ServiceResult indicating success
+            FlextResult indicating success
 
         """
         try:
@@ -184,13 +184,14 @@ class FlextLdifProcessor:
             entries: List of LDIFEntry objects
 
         Returns:
-            ServiceResult indicating validation success
+            FlextResult indicating validation success
 
         """
         return self.validator.validate_entries(entries)
 
     def filter_valid_entries(
-        self, entries: list[FlextLdifEntry],
+        self,
+        entries: list[FlextLdifEntry],
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter entries using domain specifications for valid entries.
 
@@ -205,12 +206,13 @@ class FlextLdifProcessor:
             valid_entries = [
                 entry for entry in entries if self.valid_spec.is_satisfied_by(entry)
             ]
-            return self._result_service.ok(valid_entries)
+            return FlextResult.ok(valid_entries)
         except Exception as e:
-            return self._result_service.fail(f"Failed to filter valid entries: {e}")
+            return FlextResult.fail(f"Failed to filter valid entries: {e}")
 
     def filter_person_entries(
-        self, entries: list[FlextLdifEntry],
+        self,
+        entries: list[FlextLdifEntry],
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter entries using domain specifications for person entries.
 
@@ -225,12 +227,13 @@ class FlextLdifProcessor:
             person_entries = [
                 entry for entry in entries if self.person_spec.is_satisfied_by(entry)
             ]
-            return self._result_service.ok(person_entries)
+            return FlextResult.ok(person_entries)
         except Exception as e:
-            return self._result_service.fail(f"Failed to filter person entries: {e}")
+            return FlextResult.fail(f"Failed to filter person entries: {e}")
 
     def validate_entry_with_specifications(
-        self, entry: FlextLdifEntry,
+        self,
+        entry: FlextLdifEntry,
     ) -> FlextResult[dict[str, bool]]:
         """Validate single entry using all domain specifications.
 
@@ -246,9 +249,9 @@ class FlextLdifProcessor:
                 "is_valid": self.valid_spec.is_satisfied_by(entry),
                 "is_person": self.person_spec.is_satisfied_by(entry),
             }
-            return self._result_service.ok(results)
+            return FlextResult.ok(results)
         except Exception as e:
-            return self._result_service.fail(
+            return FlextResult.fail(
                 f"Failed to validate entry with specifications: {e}",
             )
 

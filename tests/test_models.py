@@ -44,7 +44,7 @@ class TestLDIFEntry:
                     "cn": ["test"],
                     "mail": ["test@example.com", "test2@example.com"],
                 },
-            }
+            },
         )
 
         assert entry.get_attribute("cn") == ["test"]
@@ -53,7 +53,7 @@ class TestLDIFEntry:
     def test_get_attribute_not_exists(self) -> None:
         """Test getting a non-existing attribute."""
         entry = LDIFEntry.model_validate(
-            {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
+            {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}},
         )
 
         assert entry.get_attribute("nonexistent") is None
@@ -61,7 +61,7 @@ class TestLDIFEntry:
     def test_set_attribute(self) -> None:
         """Test setting an attribute."""
         entry = LDIFEntry.model_validate(
-            {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
+            {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}},
         )
 
         entry.set_attribute("mail", ["test@example.com"])
@@ -72,7 +72,7 @@ class TestLDIFEntry:
     def test_set_attribute_overwrites(self) -> None:
         """Test setting an attribute overwrites existing values."""
         entry = LDIFEntry.model_validate(
-            {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
+            {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}},
         )
 
         entry.set_attribute("cn", ["new_value"])
@@ -82,7 +82,7 @@ class TestLDIFEntry:
     def test_has_attribute_true(self) -> None:
         """Test has_attribute returns True for existing attribute."""
         entry = LDIFEntry.model_validate(
-            {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
+            {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}},
         )
 
         assert entry.has_attribute("cn") is True
@@ -90,7 +90,7 @@ class TestLDIFEntry:
     def test_has_attribute_false(self) -> None:
         """Test has_attribute returns False for non-existing attribute."""
         entry = LDIFEntry.model_validate(
-            {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
+            {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}},
         )
 
         assert entry.has_attribute("nonexistent") is False
@@ -104,7 +104,7 @@ class TestLDIFEntry:
                     "cn": ["test"],
                     "mail": ["test@example.com", "test2@example.com"],
                 },
-            }
+            },
         )
 
         assert entry.get_single_attribute("cn") == "test"
@@ -113,7 +113,7 @@ class TestLDIFEntry:
     def test_get_single_attribute_not_exists(self) -> None:
         """Test getting single attribute value when it doesn't exist."""
         entry = LDIFEntry.model_validate(
-            {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
+            {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}},
         )
 
         assert entry.get_single_attribute("nonexistent") is None
@@ -121,7 +121,7 @@ class TestLDIFEntry:
     def test_get_single_attribute_empty_list(self) -> None:
         """Test getting single attribute value from empty list."""
         entry = LDIFEntry.model_validate(
-            {"dn": "cn=test,dc=example,dc=com", "attributes": {"empty": []}}
+            {"dn": "cn=test,dc=example,dc=com", "attributes": {"empty": []}},
         )
 
         assert entry.get_single_attribute("empty") is None
@@ -136,7 +136,7 @@ class TestLDIFEntry:
                     "objectClass": ["person", "inetOrgPerson"],
                     "mail": ["test@example.com"],
                 },
-            }
+            },
         )
 
         ldif_str = entry.to_ldif()

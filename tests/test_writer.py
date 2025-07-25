@@ -8,7 +8,6 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import (
-    FlextLdifHierarchicalSorter,
     FlextLdifWriter,
     LDIFWriter,
     flext_ldif_sort_entries_hierarchically,
@@ -25,7 +24,7 @@ class TestFlextLdifWriter:
                 "dn": "cn=test,dc=example,dc=com",
                 "cn": "test",
                 "objectClass": ["person"],
-            }
+            },
         ]
 
         with tempfile.NamedTemporaryFile(
@@ -57,7 +56,7 @@ class TestFlextLdifWriter:
                 "dn": "cn=test,dc=example,dc=com",
                 "cn": "test",
                 "_comments": ["# This is a test entry"],
-            }
+            },
         ]
 
         with tempfile.NamedTemporaryFile(
@@ -88,7 +87,7 @@ class TestFlextLdifWriter:
                 "dn": "cn=test,dc=example,dc=com",
                 "cn": "test",
                 "_comments": ["# This should not appear"],
-            }
+            },
         ]
 
         with tempfile.NamedTemporaryFile(
@@ -189,16 +188,28 @@ class TestFlextLdifHierarchicalSorter:
         # Create real FlextLdifEntry objects
         entries = [
             FlextLdifEntry(
-                dn=FlextLdifDistinguishedName.model_validate({"value": "cn=child,ou=people,dc=example,dc=com"}),
-                attributes=FlextLdifAttributes.model_validate({"attributes": {"objectClass": ["person"]}})
+                dn=FlextLdifDistinguishedName.model_validate(
+                    {"value": "cn=child,ou=people,dc=example,dc=com"},
+                ),
+                attributes=FlextLdifAttributes.model_validate(
+                    {"attributes": {"objectClass": ["person"]}},
+                ),
             ),
             FlextLdifEntry(
-                dn=FlextLdifDistinguishedName.model_validate({"value": "dc=example,dc=com"}),
-                attributes=FlextLdifAttributes.model_validate({"attributes": {"objectClass": ["domain"]}})
+                dn=FlextLdifDistinguishedName.model_validate(
+                    {"value": "dc=example,dc=com"},
+                ),
+                attributes=FlextLdifAttributes.model_validate(
+                    {"attributes": {"objectClass": ["domain"]}},
+                ),
             ),
             FlextLdifEntry(
-                dn=FlextLdifDistinguishedName.model_validate({"value": "ou=people,dc=example,dc=com"}),
-                attributes=FlextLdifAttributes.model_validate({"attributes": {"objectClass": ["organizationalUnit"]}})
+                dn=FlextLdifDistinguishedName.model_validate(
+                    {"value": "ou=people,dc=example,dc=com"},
+                ),
+                attributes=FlextLdifAttributes.model_validate(
+                    {"attributes": {"objectClass": ["organizationalUnit"]}},
+                ),
             ),
         ]
 
@@ -210,7 +221,9 @@ class TestFlextLdifHierarchicalSorter:
         assert sorted_entries is not None
         assert str(sorted_entries[0].dn) == "dc=example,dc=com"  # depth 2
         assert str(sorted_entries[1].dn) == "ou=people,dc=example,dc=com"  # depth 3
-        assert str(sorted_entries[2].dn) == "cn=child,ou=people,dc=example,dc=com"  # depth 4
+        assert (
+            str(sorted_entries[2].dn) == "cn=child,ou=people,dc=example,dc=com"
+        )  # depth 4
 
     def test_sort_entries_with_list_dn(self) -> None:
         """Test sorting with DN as list."""
@@ -222,12 +235,20 @@ class TestFlextLdifHierarchicalSorter:
 
         entries = [
             FlextLdifEntry(
-                dn=FlextLdifDistinguishedName.model_validate({"value": "cn=child,ou=people,dc=example,dc=com"}),
-                attributes=FlextLdifAttributes.model_validate({"attributes": {"objectClass": ["person"]}})
+                dn=FlextLdifDistinguishedName.model_validate(
+                    {"value": "cn=child,ou=people,dc=example,dc=com"},
+                ),
+                attributes=FlextLdifAttributes.model_validate(
+                    {"attributes": {"objectClass": ["person"]}},
+                ),
             ),
             FlextLdifEntry(
-                dn=FlextLdifDistinguishedName.model_validate({"value": "dc=example,dc=com"}),
-                attributes=FlextLdifAttributes.model_validate({"attributes": {"objectClass": ["domain"]}})
+                dn=FlextLdifDistinguishedName.model_validate(
+                    {"value": "dc=example,dc=com"},
+                ),
+                attributes=FlextLdifAttributes.model_validate(
+                    {"attributes": {"objectClass": ["domain"]}},
+                ),
             ),
         ]
 
@@ -250,11 +271,17 @@ class TestFlextLdifHierarchicalSorter:
         entries = [
             FlextLdifEntry(
                 dn=FlextLdifDistinguishedName.model_validate({"value": "cn=simple"}),
-                attributes=FlextLdifAttributes.model_validate({"attributes": {"objectClass": ["person"]}})
+                attributes=FlextLdifAttributes.model_validate(
+                    {"attributes": {"objectClass": ["person"]}},
+                ),
             ),
             FlextLdifEntry(
-                dn=FlextLdifDistinguishedName.model_validate({"value": "dc=example,dc=com"}),
-                attributes=FlextLdifAttributes.model_validate({"attributes": {"objectClass": ["domain"]}})
+                dn=FlextLdifDistinguishedName.model_validate(
+                    {"value": "dc=example,dc=com"},
+                ),
+                attributes=FlextLdifAttributes.model_validate(
+                    {"attributes": {"objectClass": ["domain"]}},
+                ),
             ),
         ]
 

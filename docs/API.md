@@ -35,12 +35,15 @@ from flext_ldif.domain.entities import FlextLdifEntry  # Use root import
 Parse LDIF content into entry objects.
 
 **Parameters:**
+
 - `content`: LDIF content as string or LDIFContent type
 
 **Returns:**
+
 - `list[FlextLdifEntry]`: List of parsed LDIF entries
 
 **Example:**
+
 ```python
 from flext_ldif import parse_ldif
 
@@ -69,13 +72,16 @@ for entry in entries:
 Write LDIF entries to string or file.
 
 **Parameters:**
+
 - `entries`: List of FlextLdifEntry objects to write
 - `output_path`: Optional file path to write to
 
 **Returns:**
+
 - `str`: LDIF content as string, or success message if writing to file
 
 **Example:**
+
 ```python
 from flext_ldif import parse_ldif, write_ldif
 
@@ -96,12 +102,15 @@ print(result)  # "Written to /tmp/output.ldif"
 Validate LDIF content format and structure.
 
 **Parameters:**
+
 - `content`: LDIF content to validate
 
 **Returns:**
+
 - `bool`: True if valid, False otherwise
 
 **Example:**
+
 ```python
 from flext_ldif import validate_ldif
 
@@ -133,9 +142,11 @@ FlextLdifEntry.model_validate(data: dict) -> FlextLdifEntry
 ```
 
 **Parameters:**
+
 - `data`: Dictionary with `dn` and `attributes` keys
 
 **Example:**
+
 ```python
 from flext_ldif import FlextLdifEntry
 

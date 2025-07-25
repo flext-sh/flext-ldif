@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root namespace imports
-from flext_core import FlextResult
+from flext_core import FlextResult, get_logger
 
 try:
     from ldif3 import LDIFParser as Ldif3Parser
@@ -92,7 +92,9 @@ class FlextLdifParser:
                         self.errors.append(f"Error processing entry {dn}: {e}")
 
                 def _handle_entry_record(
-                    self, dn: str, entry: dict[str, list[str]],
+                    self,
+                    dn: str,
+                    entry: dict[str, list[str]],
                 ) -> None:
                     """Handle standard LDIF entry records."""
                     self.parsed_records.append(
@@ -100,7 +102,9 @@ class FlextLdifParser:
                     )
 
                 def _handle_change_record(
-                    self, dn: str, entry: dict[str, list[str]],
+                    self,
+                    dn: str,
+                    entry: dict[str, list[str]],
                 ) -> None:
                     """Handle LDIF change records (modify, add, delete, modrdn)."""
                     changetype = entry.get("changetype", [""])[0]
@@ -143,9 +147,8 @@ class FlextLdifParser:
                         entries.append(entry)
                 except Exception as ex:
                     # Log error but continue processing other entries
-                    import logging
 
-                    logger = logging.getLogger(__name__)
+                    logger = get_logger(__name__)
                     logger.warning("Failed to create entry from record: %s", ex)
                     continue
 
@@ -156,7 +159,8 @@ class FlextLdifParser:
             return FlextResult.fail(f"ldif3 parsing failed: {e}")
 
     def _create_entry_from_record(
-        self, record: dict[str, Any],
+        self,
+        record: dict[str, Any],
     ) -> FlextLdifEntry | None:
         """Create FlextLdifEntry from parsed ldif3 record."""
         try:

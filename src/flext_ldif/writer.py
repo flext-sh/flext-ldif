@@ -9,7 +9,6 @@ Provides centralized, standardized LDIF file operations for all FLEXT projects.
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING, Any, TextIO
 
 if TYPE_CHECKING:
@@ -17,21 +16,21 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root namespace imports
-from flext_core import FlextResult
+from flext_core import FlextResult, get_logger
 
 try:
     from ldif3 import LDIFWriter as Ldif3Writer
 except ImportError:
     Ldif3Writer = None
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class FlextLdifWriter:
     """Enterprise LDIF writer utility following FLEXT patterns.
 
     Provides standardized LDIF file writing operations with hierarchical sorting,
-    proper error handling, and ServiceResult patterns. Uses ldif3 library for
+    proper error handling, and FlextResult patterns. Uses ldif3 library for
     proper LDIF formatting, base64 encoding, and line folding when available.
     Designed for use across all FLEXT projects to eliminate code duplication.
     """
@@ -173,7 +172,8 @@ class FlextLdifWriter:
                 logger.warning(
                     "ldif3 is not compatible with Python 3.13+, using fallback writer",
                 )
-                raise ImportError("ldif3 not compatible with Python 3.13")
+                msg = "ldif3 not compatible with Python 3.13"
+                raise ImportError(msg)
 
             # Create ldif3 writer with enhanced options
             writer = Ldif3Writer(
