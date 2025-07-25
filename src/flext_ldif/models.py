@@ -158,11 +158,13 @@ class FlextLdifEntry(FlextValueObject):
         """Validate LDIF entry domain rules."""
         # Validate DN is not empty
         if not self.dn or not self.dn.value:
-            raise ValueError("LDIF entry must have a valid DN")
+            msg = "LDIF entry must have a valid DN"
+            raise ValueError(msg)
 
         # Validate at least one attribute exists
         if not self.attributes or not self.attributes.attributes:
-            raise ValueError("LDIF entry must have at least one attribute")
+            msg = "LDIF entry must have at least one attribute"
+            raise ValueError(msg)
 
     @classmethod
     def from_ldif_block(cls, ldif_block: str) -> FlextLdifEntry:

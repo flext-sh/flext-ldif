@@ -25,7 +25,7 @@ class TestInitHelpers:
             """dn: cn=test,dc=example,dc=com
 cn: test
 objectClass: person
-mail: test@example.com"""
+mail: test@example.com""",
         )
 
         result = parse_ldif(content)
@@ -51,9 +51,13 @@ objectClass: person"""
         """Test write_ldif without output path."""
         entries = [
             FlextLdifEntry(
-                dn=FlextLdifDistinguishedName.model_validate({"value": "cn=test,dc=example,dc=com"}),
-                attributes=FlextLdifAttributes.model_validate({"attributes": {"objectClass": ["person"], "cn": ["test"]}})
-            )
+                dn=FlextLdifDistinguishedName.model_validate(
+                    {"value": "cn=test,dc=example,dc=com"},
+                ),
+                attributes=FlextLdifAttributes.model_validate(
+                    {"attributes": {"objectClass": ["person"], "cn": ["test"]}},
+                ),
+            ),
         ]
 
         result = write_ldif(entries)
@@ -64,12 +68,18 @@ objectClass: person"""
         """Test write_ldif with output path."""
         entries = [
             FlextLdifEntry(
-                dn=FlextLdifDistinguishedName.model_validate({"value": "cn=test,dc=example,dc=com"}),
-                attributes=FlextLdifAttributes.model_validate({"attributes": {"objectClass": ["person"], "cn": ["test"]}})
-            )
+                dn=FlextLdifDistinguishedName.model_validate(
+                    {"value": "cn=test,dc=example,dc=com"},
+                ),
+                attributes=FlextLdifAttributes.model_validate(
+                    {"attributes": {"objectClass": ["person"], "cn": ["test"]}},
+                ),
+            ),
         ]
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False,
+        ) as f:
             temp_path = f.name
 
         try:
@@ -90,7 +100,7 @@ objectClass: person"""
         content = LDIFContent(
             """dn: cn=test,dc=example,dc=com
 cn: test
-objectClass: person"""
+objectClass: person""",
         )
 
         result = validate_ldif(content)

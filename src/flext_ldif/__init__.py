@@ -9,7 +9,7 @@ from flext_ldif import LDIFEntry, LDIFDocument, LDIFRecord
 from flext_ldif import parse_ldif, write_ldif, validate_ldif
 
 # Processors and services (direct access)
-from flext_ldif import LDIFProcessor, LDIFValidator, LDIFWriter
+from flext_ldif import FlextLDIFProcessor, LDIFValidator, LDIFWriter
 
 # Value objects and types
 from flext_ldif import DistinguishedName, LDIFAttributes, LDIFContent
@@ -19,7 +19,7 @@ from flext_ldif import DistinguishedName, LDIFAttributes, LDIFContent
 ✅ from flext_ldif import LDIFParser
 
 ❌ from flext_ldif.application.services.processing import LDIFProcessingService
-✅ from flext_ldif import LDIFProcessor
+✅ from flext_ldif import FlextLDIFProcessor
 
 ❌ from flext_ldif.domain.entities.ldif_entry import LDIFEntry
 ✅ from flext_ldif import LDIFEntry
@@ -118,7 +118,7 @@ LDIFValidationError = FlextLdifValidationError
 LDIFEntryError = FlextLdifEntryError
 LDIFEntry = FlextLdifEntry
 LDIFParser = FlextLdifParser
-LDIFProcessor = FlextLdifProcessor
+FlextLDIFProcessor = FlextLdifProcessor
 LDIFUtils = FlextLdifUtils
 LDIFHierarchicalSorter = FlextLdifHierarchicalSorter
 LDIFValidator = FlextLdifValidator
@@ -228,6 +228,8 @@ __version__ = "0.7.0"
 __all__ = [
     # 📝 VALUE OBJECTS & TYPES (simple access)
     "DistinguishedName",  # from flext_ldif import DistinguishedName
+    # 🔧 PROCESSORS & SERVICES (direct access)
+    "FlextLDIFProcessor",  # from flext_ldif import FlextLDIFProcessor
     "FlextLDIFWriter",  # from flext_ldif import FlextLDIFWriter
     "FlextLdifAttributes",  # from flext_ldif import FlextLdifAttributes
     "FlextLdifChangeRecordSpecification",  # from flext_ldif import FlextLdifChangeRecordSpecification
@@ -270,8 +272,6 @@ __all__ = [
     "LDIFLines",  # from flext_ldif import LDIFLines
     "LDIFParseError",  # from flext_ldif import LDIFParseError
     "LDIFParser",  # from flext_ldif import LDIFParser
-    # 🔧 PROCESSORS & SERVICES (direct access)
-    "LDIFProcessor",  # from flext_ldif import LDIFProcessor
     "LDIFRecord",  # from flext_ldif import LDIFRecord
     "LDIFUtils",  # from flext_ldif import LDIFUtils
     "LDIFValidationError",  # from flext_ldif import LDIFValidationError

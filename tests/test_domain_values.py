@@ -20,7 +20,7 @@ class TestFlextLdifDistinguishedName:
     def test_valid_dn_creation(self) -> None:
         """Test creating a valid DN."""
         dn = FlextLdifDistinguishedName.model_validate(
-            {"value": "uid=test,ou=people,dc=example,dc=com"}
+            {"value": "uid=test,ou=people,dc=example,dc=com"},
         )
         assert dn.value == "uid=test,ou=people,dc=example,dc=com"
         assert str(dn) == "uid=test,ou=people,dc=example,dc=com"
@@ -33,7 +33,8 @@ class TestFlextLdifDistinguishedName:
     def test_invalid_dn_no_equals(self) -> None:
         """Test creating DN without equals sign."""
         with pytest.raises(
-            ValueError, match="must contain at least one attribute=value pair"
+            ValueError,
+            match="must contain at least one attribute=value pair",
         ):
             FlextLdifDistinguishedName.model_validate({"value": "invalid-dn"})
 
@@ -41,20 +42,20 @@ class TestFlextLdifDistinguishedName:
         """Test creating DN with invalid component."""
         with pytest.raises(ValueError, match="Invalid DN component"):
             FlextLdifDistinguishedName.model_validate(
-                {"value": "uid=test,invalid-component"}
+                {"value": "uid=test,invalid-component"},
             )
 
     def test_get_rdn(self) -> None:
         """Test getting relative DN."""
         dn = FlextLdifDistinguishedName.model_validate(
-            {"value": "uid=test,ou=people,dc=example,dc=com"}
+            {"value": "uid=test,ou=people,dc=example,dc=com"},
         )
         assert dn.get_rdn() == "uid=test"
 
     def test_get_parent_dn(self) -> None:
         """Test getting parent DN."""
         dn = FlextLdifDistinguishedName.model_validate(
-            {"value": "uid=test,ou=people,dc=example,dc=com"}
+            {"value": "uid=test,ou=people,dc=example,dc=com"},
         )
         parent = dn.get_parent_dn()
         assert parent is not None
@@ -69,61 +70,61 @@ class TestFlextLdifDistinguishedName:
     def test_is_child_of(self) -> None:
         """Test checking if DN is child of another."""
         child = FlextLdifDistinguishedName.model_validate(
-            {"value": "uid=test,ou=people,dc=example,dc=com"}
+            {"value": "uid=test,ou=people,dc=example,dc=com"},
         )
         parent = FlextLdifDistinguishedName.model_validate(
-            {"value": "ou=people,dc=example,dc=com"}
+            {"value": "ou=people,dc=example,dc=com"},
         )
         assert child.is_child_of(parent)
 
     def test_is_not_child_of(self) -> None:
         """Test checking if DN is not child of another."""
         dn1 = FlextLdifDistinguishedName.model_validate(
-            {"value": "uid=test,ou=users,dc=example,dc=com"}
+            {"value": "uid=test,ou=users,dc=example,dc=com"},
         )
         dn2 = FlextLdifDistinguishedName.model_validate(
-            {"value": "ou=people,dc=example,dc=com"}
+            {"value": "ou=people,dc=example,dc=com"},
         )
         assert not dn1.is_child_of(dn2)
 
     def test_get_depth(self) -> None:
         """Test getting DN depth."""
         dn = FlextLdifDistinguishedName.model_validate(
-            {"value": "uid=test,ou=people,dc=example,dc=com"}
+            {"value": "uid=test,ou=people,dc=example,dc=com"},
         )
         assert dn.get_depth() == 4
 
     def test_equality_with_string(self) -> None:
         """Test DN equality with string."""
         dn = FlextLdifDistinguishedName.model_validate(
-            {"value": "uid=test,ou=people,dc=example,dc=com"}
+            {"value": "uid=test,ou=people,dc=example,dc=com"},
         )
         assert dn == "uid=test,ou=people,dc=example,dc=com"
 
     def test_equality_with_other_dn(self) -> None:
         """Test DN equality with another DN."""
         dn1 = FlextLdifDistinguishedName.model_validate(
-            {"value": "uid=test,ou=people,dc=example,dc=com"}
+            {"value": "uid=test,ou=people,dc=example,dc=com"},
         )
         dn2 = FlextLdifDistinguishedName.model_validate(
-            {"value": "uid=test,ou=people,dc=example,dc=com"}
+            {"value": "uid=test,ou=people,dc=example,dc=com"},
         )
         assert dn1 == dn2
 
     def test_hash(self) -> None:
         """Test DN hashing."""
         dn1 = FlextLdifDistinguishedName.model_validate(
-            {"value": "uid=test,ou=people,dc=example,dc=com"}
+            {"value": "uid=test,ou=people,dc=example,dc=com"},
         )
         dn2 = FlextLdifDistinguishedName.model_validate(
-            {"value": "uid=test,ou=people,dc=example,dc=com"}
+            {"value": "uid=test,ou=people,dc=example,dc=com"},
         )
         assert hash(dn1) == hash(dn2)
 
     def test_validate_domain_rules(self) -> None:
         """Test domain rules validation."""
         dn = FlextLdifDistinguishedName.model_validate(
-            {"value": "uid=test,ou=people,dc=example,dc=com"}
+            {"value": "uid=test,ou=people,dc=example,dc=com"},
         )
         # Should not raise
         dn.validate_domain_rules()
@@ -131,7 +132,8 @@ class TestFlextLdifDistinguishedName:
     def test_validate_domain_rules_invalid(self) -> None:
         """Test domain rules validation with invalid DN."""
         with pytest.raises(
-            ValueError, match="DN must contain at least one attribute=value pair"
+            ValueError,
+            match="DN must contain at least one attribute=value pair",
         ):
             FlextLdifDistinguishedName.model_validate({"value": "invalid"})
 
@@ -155,7 +157,7 @@ class TestFlextLdifAttributes:
     def test_get_single_value(self) -> None:
         """Test getting single value."""
         attrs = FlextLdifAttributes.model_validate(
-            {"attributes": {"cn": ["test", "test2"]}}
+            {"attributes": {"cn": ["test", "test2"]}},
         )
         assert attrs.get_single_value("cn") == "test"
         assert attrs.get_single_value("missing") is None
@@ -163,7 +165,7 @@ class TestFlextLdifAttributes:
     def test_get_values(self) -> None:
         """Test getting all values."""
         attrs = FlextLdifAttributes.model_validate(
-            {"attributes": {"cn": ["test", "test2"]}}
+            {"attributes": {"cn": ["test", "test2"]}},
         )
         assert attrs.get_values("cn") == ["test", "test2"]
         assert attrs.get_values("missing") == []
@@ -191,7 +193,7 @@ class TestFlextLdifAttributes:
     def test_remove_value(self) -> None:
         """Test removing value from attribute."""
         attrs = FlextLdifAttributes.model_validate(
-            {"attributes": {"cn": ["test", "test2"]}}
+            {"attributes": {"cn": ["test", "test2"]}},
         )
         new_attrs = attrs.remove_value("cn", "test")
         assert new_attrs.get_values("cn") == ["test2"]
@@ -205,7 +207,7 @@ class TestFlextLdifAttributes:
     def test_get_attribute_names(self) -> None:
         """Test getting attribute names."""
         attrs = FlextLdifAttributes.model_validate(
-            {"attributes": {"cn": ["test"], "uid": ["test"]}}
+            {"attributes": {"cn": ["test"], "uid": ["test"]}},
         )
         names = attrs.get_attribute_names()
         assert set(names) == {"cn", "uid"}
@@ -213,7 +215,7 @@ class TestFlextLdifAttributes:
     def test_get_total_values(self) -> None:
         """Test getting total number of values."""
         attrs = FlextLdifAttributes.model_validate(
-            {"attributes": {"cn": ["test", "test2"], "uid": ["test"]}}
+            {"attributes": {"cn": ["test", "test2"], "uid": ["test"]}},
         )
         assert attrs.get_total_values() == 3
 

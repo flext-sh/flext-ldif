@@ -28,11 +28,14 @@ class FlextLdifDocumentParsed(DomainEvent):
     def validate_domain_rules(self) -> None:
         """Validate document parsed event domain rules."""
         if not self.aggregate_id or not isinstance(self.aggregate_id, str):
-            raise ValueError("aggregate_id must be a non-empty string")
+            msg = "aggregate_id must be a non-empty string"
+            raise ValueError(msg)
         if self.entry_count < 0:
-            raise ValueError("entry_count must be non-negative")
+            msg = "entry_count must be non-negative"
+            raise ValueError(msg)
         if self.content_length < 0:
-            raise ValueError("content_length must be non-negative")
+            msg = "content_length must be non-negative"
+            raise ValueError(msg)
 
 
 class FlextLdifEntryValidated(DomainEvent):
@@ -46,11 +49,12 @@ class FlextLdifEntryValidated(DomainEvent):
     def validate_domain_rules(self) -> None:
         """Validate entry validated event domain rules."""
         if not self.aggregate_id or not isinstance(self.aggregate_id, str):
-            raise ValueError("aggregate_id must be a non-empty string")
+            msg = "aggregate_id must be a non-empty string"
+            raise ValueError(msg)
         if not self.entry_dn or not isinstance(self.entry_dn, str):
-            raise ValueError("entry_dn must be a non-empty string")
-        if not isinstance(self.is_valid, bool):
-            raise TypeError("is_valid must be a boolean")
+            msg = "entry_dn must be a non-empty string"
+            raise ValueError(msg)
+        # is_valid is already typed as bool, no need to validate
 
 
 class FlextLdifProcessingCompleted(DomainEvent):
@@ -65,11 +69,12 @@ class FlextLdifProcessingCompleted(DomainEvent):
     def validate_domain_rules(self) -> None:
         """Validate processing completed event domain rules."""
         if not self.aggregate_id or not isinstance(self.aggregate_id, str):
-            raise ValueError("aggregate_id must be a non-empty string")
+            msg = "aggregate_id must be a non-empty string"
+            raise ValueError(msg)
         if self.entry_count < 0:
-            raise ValueError("entry_count must be non-negative")
-        if not isinstance(self.success, bool):
-            raise TypeError("success must be a boolean")
+            msg = "entry_count must be non-negative"
+            raise ValueError(msg)
+        # success is already typed as bool, no need to validate
 
 
 class FlextLdifWriteCompleted(DomainEvent):
@@ -83,13 +88,17 @@ class FlextLdifWriteCompleted(DomainEvent):
     def validate_domain_rules(self) -> None:
         """Validate write completed event domain rules."""
         if not self.aggregate_id or not isinstance(self.aggregate_id, str):
-            raise ValueError("aggregate_id must be a non-empty string")
+            msg = "aggregate_id must be a non-empty string"
+            raise ValueError(msg)
         if not self.output_path or not isinstance(self.output_path, str):
-            raise ValueError("output_path must be a non-empty string")
+            msg = "output_path must be a non-empty string"
+            raise ValueError(msg)
         if self.entry_count < 0:
-            raise ValueError("entry_count must be non-negative")
+            msg = "entry_count must be non-negative"
+            raise ValueError(msg)
         if self.bytes_written < 0:
-            raise ValueError("bytes_written must be non-negative")
+            msg = "bytes_written must be non-negative"
+            raise ValueError(msg)
 
 
 class FlextLdifTransformationApplied(DomainEvent):
@@ -103,13 +112,17 @@ class FlextLdifTransformationApplied(DomainEvent):
     def validate_domain_rules(self) -> None:
         """Validate transformation applied event domain rules."""
         if not self.aggregate_id or not isinstance(self.aggregate_id, str):
-            raise ValueError("aggregate_id must be a non-empty string")
+            msg = "aggregate_id must be a non-empty string"
+            raise ValueError(msg)
         if not self.transformation_type or not isinstance(
-            self.transformation_type, str,
+            self.transformation_type,
+            str,
         ):
-            raise ValueError("transformation_type must be a non-empty string")
+            msg = "transformation_type must be a non-empty string"
+            raise ValueError(msg)
         if self.entries_affected < 0:
-            raise ValueError("entries_affected must be non-negative")
+            msg = "entries_affected must be non-negative"
+            raise ValueError(msg)
 
 
 class FlextLdifValidationFailed(DomainEvent):
@@ -123,9 +136,11 @@ class FlextLdifValidationFailed(DomainEvent):
     def validate_domain_rules(self) -> None:
         """Validate validation failed event domain rules."""
         if not self.aggregate_id or not isinstance(self.aggregate_id, str):
-            raise ValueError("aggregate_id must be a non-empty string")
+            msg = "aggregate_id must be a non-empty string"
+            raise ValueError(msg)
         if not self.error_message or not isinstance(self.error_message, str):
-            raise ValueError("error_message must be a non-empty string")
+            msg = "error_message must be a non-empty string"
+            raise ValueError(msg)
 
 
 class FlextLdifFilterApplied(DomainEvent):
@@ -139,15 +154,20 @@ class FlextLdifFilterApplied(DomainEvent):
     def validate_domain_rules(self) -> None:
         """Validate filter applied event domain rules."""
         if not self.aggregate_id or not isinstance(self.aggregate_id, str):
-            raise ValueError("aggregate_id must be a non-empty string")
+            msg = "aggregate_id must be a non-empty string"
+            raise ValueError(msg)
         if not self.filter_criteria or not isinstance(self.filter_criteria, str):
-            raise ValueError("filter_criteria must be a non-empty string")
+            msg = "filter_criteria must be a non-empty string"
+            raise ValueError(msg)
         if self.entries_matched < 0:
-            raise ValueError("entries_matched must be non-negative")
+            msg = "entries_matched must be non-negative"
+            raise ValueError(msg)
         if self.total_entries < 0:
-            raise ValueError("total_entries must be non-negative")
+            msg = "total_entries must be non-negative"
+            raise ValueError(msg)
         if self.entries_matched > self.total_entries:
-            raise ValueError("entries_matched cannot exceed total_entries")
+            msg = "entries_matched cannot exceed total_entries"
+            raise ValueError(msg)
 
 
 __all__ = [

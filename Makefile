@@ -1,9 +1,10 @@
-# FLEXT LDIF - LDIF Data Interchange Format Processing
-# ====================================================
+# FLEXT LDIF - LDIF Data Interchange Format Processing Library
+# ============================================================
 # Enterprise LDIF processing library with parsing, generation, validation, and transformation
+# PROJECT_TYPE: python-library
 # Python 3.13 + Clean Architecture + LDIF + Zero Tolerance Quality Gates
 
-.PHONY: help check validate test lint type-check security format format-check fix
+.PHONY: help info diagnose check validate test lint type-check security format format-check fix
 .PHONY: install dev-install setup pre-commit build clean
 .PHONY: coverage coverage-html test-unit test-integration test-ldif
 .PHONY: deps-update deps-audit deps-tree deps-outdated
@@ -24,6 +25,37 @@ help: ## Show this help message
 	@echo "🧪 90%+ test coverage requirement with LDIF format compliance"
 	@echo ""
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\\033[36m%-20s\\033[0m %s\\n", $$1, $$2}'
+
+
+info: ## Mostrar informações do projeto
+	@echo "📊 Informações do Projeto"
+	@echo "======================"
+	@echo "Nome: flext-ldif"
+	@echo "Título: FLEXT LDIF"
+	@echo "Versão: $(shell poetry version -s 2>/dev/null || echo "0.7.0")"
+	@echo "Python: $(shell python3.13 --version 2>/dev/null || echo "Não encontrado")"
+	@echo "Poetry: $(shell poetry --version 2>/dev/null || echo "Não instalado")"
+	@echo "Venv: $(shell poetry env info --path 2>/dev/null || echo "Não ativado")"
+	@echo "Diretório: $(CURDIR)"
+	@echo "Git Branch: $(shell git branch --show-current 2>/dev/null || echo "Não é repo git")"
+	@echo "Git Status: $(shell git status --porcelain 2>/dev/null | wc -l | xargs echo) arquivos alterados"
+
+diagnose: ## Executar diagnósticos completos
+	@echo "🔍 Executando diagnósticos para flext-ldif..."
+	@echo "Informações do Sistema:"
+	@echo "OS: $(shell uname -s)"
+	@echo "Arquitetura: $(shell uname -m)"
+	@echo "Python: $(shell python3.13 --version 2>/dev/null || echo "Não encontrado")"
+	@echo "Poetry: $(shell poetry --version 2>/dev/null || echo "Não instalado")"
+	@echo ""
+	@echo "Estrutura do Projeto:"
+	@ls -la
+	@echo ""
+	@echo "Configuração Poetry:"
+	@poetry config --list 2>/dev/null || echo "Poetry não configurado"
+	@echo ""
+	@echo "Status das Dependências:"
+	@poetry show --outdated 2>/dev/null || echo "Nenhuma dependência desatualizada"
 
 # ============================================================================
 # 🎯 CORE QUALITY GATES - ZERO TOLERANCE
@@ -143,6 +175,30 @@ pre-commit: ## Setup pre-commit hooks
 	@poetry run pre-commit install
 	@poetry run pre-commit run --all-files || true
 	@echo "✅ Pre-commit hooks installed"
+
+# ============================================================================
+# 🎯 LIBRARY SPECIFIC OPERATIONS
+# ============================================================================
+
+lib-test: test-ldif ## Run comprehensive library tests
+
+lib-validate: validate ## Alias for complete validation
+
+lib-examples: ## Run library usage examples
+	@echo "📚 Running library examples..."
+	@poetry run python examples/basic_ldif_usage.py
+	@poetry run python examples/advanced_ldif_processing.py
+	@echo "✅ Library examples complete"
+
+lib-benchmarks: ## Run library performance benchmarks
+	@echo "⚡ Running library benchmarks..."
+	@poetry run python -m flext_ldif.benchmarks.performance
+	@echo "✅ Library benchmarks complete"
+
+lib-compatibility: ## Test library compatibility
+	@echo "🔄 Testing library compatibility..."
+	@poetry run python -m flext_ldif.compatibility.test_versions
+	@echo "✅ Library compatibility test complete"
 
 # ============================================================================
 # 📁 LDIF OPERATIONS - CORE FUNCTIONALITY
@@ -362,8 +418,9 @@ export RUFF_CACHE_DIR := .ruff_cache
 
 # Project information
 PROJECT_NAME := flext-ldif
+PROJECT_TYPE := python-library
 PROJECT_VERSION := $(shell poetry version -s)
-PROJECT_DESCRIPTION := FLEXT LDIF - LDIF Data Interchange Format Processing
+PROJECT_DESCRIPTION := FLEXT LDIF - LDIF Data Interchange Format Processing Library
 
 .DEFAULT_GOAL := help
 

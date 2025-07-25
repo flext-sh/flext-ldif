@@ -59,7 +59,8 @@ class FlextLdifUtils:
 
     @staticmethod
     def get_entry_by_dn(
-        entries: list[FlextLdifEntry], dn: str,
+        entries: list[FlextLdifEntry],
+        dn: str,
     ) -> FlextLdifEntry | None:
         """Get entry by DN.
 

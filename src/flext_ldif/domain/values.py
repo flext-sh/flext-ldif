@@ -10,18 +10,22 @@ from __future__ import annotations
 
 from typing import NewType
 
-# 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root namespace imports
 from flext_core import FlextValueObject
 from pydantic import Field, field_validator
 
-DomainValueObject = FlextValueObject
+# FlextValueObject = FlextValueObject
 
 # Type aliases for LDIF-specific concepts
 LDIFContent = NewType("LDIFContent", str)
 LDIFLines = NewType("LDIFLines", list[str])
 
+# Constants for magic numbers
+MIN_ENTRY_COUNT = 10
+MAX_ENTRY_COUNT = 1000
+MAX_LINE_LENGTH = 79
 
-class FlextLdifDistinguishedName(DomainValueObject):
+
+class FlextLdifDistinguishedName(FlextValueObject):
     """Distinguished Name value object for LDIF entries.
 
     Represents an immutable LDAP distinguished name.
@@ -135,24 +139,28 @@ class FlextLdifDistinguishedName(DomainValueObject):
 
         """
         if not self.value or not isinstance(self.value, str):
-            raise ValueError("DN must be a non-empty string")
+            msg = "DN must be a non-empty string"
+            raise ValueError(msg)
 
         if "=" not in self.value:
-            raise ValueError("DN must contain at least one attribute=value pair")
+            msg = "DN must contain at least one attribute=value pair"
+            raise ValueError(msg)
 
         # Validate each DN component
         components = self.value.split(",")
         for raw_component in components:
             component = raw_component.strip()
             if "=" not in component:
-                raise ValueError(f"Invalid DN component: {component}")
+                msg = f"Invalid DN component: {component}"
+                raise ValueError(msg)
 
             attr_name, attr_value = component.split("=", 1)
             if not attr_name.strip() or not attr_value.strip():
-                raise ValueError(f"Invalid DN component: {component}")
+                msg = f"Invalid DN component: {component}"
+                raise ValueError(msg)
 
 
-class FlextLdifAttributes(DomainValueObject):
+class FlextLdifAttributes(FlextValueObject):
     """LDIF attributes value object.
 
     Represents the attributes of an LDIF entry as immutable data.
@@ -217,7 +225,7 @@ class FlextLdifAttributes(DomainValueObject):
 
         if name not in new_attrs:
             new_attrs[name] = []
-        new_attrs[name] = new_attrs[name] + [
+        new_attrs[name] += [
             value,
         ]  # Create new list instead of modifying
         return FlextLdifAttributes.model_validate({"attributes": new_attrs})
@@ -293,25 +301,14 @@ class FlextLdifAttributes(DomainValueObject):
             ValueError: If attributes violate domain rules
 
         """
-        if not isinstance(self.attributes, dict):
-            raise TypeError("Attributes must be a dictionary")
-
-        # Validate attribute names and values
-        for attr_name, attr_values in self.attributes.items():
-            if not isinstance(attr_name, str) or not attr_name.strip():
-                raise ValueError(f"Invalid attribute name: {attr_name}")
-
-            if not isinstance(attr_values, list):
-                raise TypeError(f"Attribute values must be a list: {attr_name}")
-
-            for value in attr_values:
-                if not isinstance(value, str):
-                    raise TypeError(
-                        f"All attribute values must be strings: {attr_name}",
-                    )
+        # Validate attribute names
+        for attr_name in self.attributes:
+            if not attr_name.strip():
+                msg = f"Invalid attribute name: {attr_name}"
+                raise ValueError(msg)
 
 
-class FlextLdifChangeType(DomainValueObject):
+class FlextLdifChangeType(FlextValueObject):
     """LDIF change type value object."""
 
     value: str = Field(..., description="Change type")
@@ -366,12 +363,13 @@ class FlextLdifChangeType(DomainValueObject):
         """
         valid_types = {"add", "modify", "delete", "modrdn"}
         if self.value not in valid_types:
+            msg = f"Invalid change type: {self.value}. Must be one of {valid_types}"
             raise ValueError(
-                f"Invalid change type: {self.value}. Must be one of {valid_types}",
+                msg,
             )
 
 
-class FlextLdifVersion(DomainValueObject):
+class FlextLdifVersion(FlextValueObject):
     """LDIF version value object."""
 
     value: int = Field(default=1, description="LDIF version number")
@@ -412,10 +410,11 @@ class FlextLdifVersion(DomainValueObject):
 
         """
         if self.value < 1:
-            raise ValueError("LDIF version must be >= 1")
+            msg = "LDIF version must be >= 1"
+            raise ValueError(msg)
 
 
-class FlextLdifEncoding(DomainValueObject):
+class FlextLdifEncoding(FlextValueObject):
     """LDIF encoding value object."""
 
     value: str = Field(default="utf-8", description="Character encoding")
@@ -462,10 +461,11 @@ class FlextLdifEncoding(DomainValueObject):
             # Test if encoding is valid
             "test".encode(self.value)
         except (LookupError, TypeError) as e:
-            raise ValueError(f"Invalid encoding: {self.value}") from e
+            msg = f"Invalid encoding: {self.value}"
+            raise ValueError(msg) from e
 
 
-class FlextLdifLineLength(DomainValueObject):
+class FlextLdifLineLength(FlextValueObject):
     """LDIF line length limit value object."""
 
     value: int = Field(default=79, description="Maximum line length")
@@ -509,9 +509,11 @@ class FlextLdifLineLength(DomainValueObject):
 
         """
         if self.value < 10:
-            raise ValueError("Line length must be at least 10 characters")
+            msg = "Line length must be at least 10 characters"
+            raise ValueError(msg)
         if self.value > 1000:
-            raise ValueError("Line length cannot exceed 1000 characters")
+            msg = "Line length cannot exceed 1000 characters"
+            raise ValueError(msg)
 
 
 __all__ = [

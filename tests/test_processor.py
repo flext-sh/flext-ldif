@@ -10,8 +10,6 @@ import tempfile
 from pathlib import Path
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root namespace imports
-from flext_core import FlextResult
-
 from flext_ldif import FlextLdifConfig, FlextLdifEntry, FlextLdifProcessor
 
 
@@ -31,7 +29,7 @@ class TestFlextLdifProcessor:
         """Test processor initialization with custom config."""
         # Create config with desired values directly
         config = FlextLdifConfig.model_validate(
-            {"strict_validation": True, "max_entries": 100}
+            {"strict_validation": True, "max_entries": 100},
         )
 
         processor = FlextLdifProcessor(config)
@@ -100,7 +98,9 @@ cn: test
 objectClass: person
 mail: test@example.com"""
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False,
+        ) as f:
             f.write(content)
             temp_file = f.name
 
@@ -135,12 +135,12 @@ mail: test@example.com"""
             FlextLdifEntry.from_ldif_block(
                 """dn: cn=person1,dc=example,dc=com
 cn: person1
-objectClass: person"""
+objectClass: person""",
             ),
             FlextLdifEntry.from_ldif_block(
                 """dn: cn=group1,dc=example,dc=com
 cn: group1
-objectClass: group"""
+objectClass: group""",
             ),
         ]
 
@@ -156,8 +156,8 @@ objectClass: group"""
             FlextLdifEntry.from_ldif_block(
                 """dn: cn=test,dc=example,dc=com
 cn: test
-objectClass: person"""
-            )
+objectClass: person""",
+            ),
         ]
 
         processor = FlextLdifProcessor()

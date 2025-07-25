@@ -19,7 +19,7 @@ class TestLDIFUtils:
                     "objectClass": ["person"],
                     "mail": ["test@example.com"],
                 },
-            }
+            },
         )
 
         result = LDIFUtils.entries_to_ldif([entry])
@@ -41,7 +41,7 @@ class TestLDIFUtils:
                         "cn": ["user1"],
                         "objectClass": ["person"],
                     },
-                }
+                },
             ),
             LDIFEntry.model_validate(
                 {
@@ -51,7 +51,7 @@ class TestLDIFUtils:
                         "objectClass": ["inetOrgPerson"],
                         "mail": ["user2@example.com"],
                     },
-                }
+                },
             ),
         ]
 
@@ -84,7 +84,7 @@ class TestLDIFUtils:
             {
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {},
-            }
+            },
         )
 
         result = LDIFUtils.entries_to_ldif([entry])
@@ -102,19 +102,19 @@ class TestLDIFUtils:
                 {
                     "dn": "cn=person1,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"]},
-                }
+                },
             ),
             LDIFEntry.model_validate(
                 {
                     "dn": "cn=group1,dc=example,dc=com",
                     "attributes": {"objectClass": ["groupOfNames"]},
-                }
+                },
             ),
             LDIFEntry.model_validate(
                 {
                     "dn": "cn=person2,dc=example,dc=com",
                     "attributes": {"objectClass": ["person", "inetOrgPerson"]},
-                }
+                },
             ),
         ]
 
@@ -131,13 +131,13 @@ class TestLDIFUtils:
                 {
                     "dn": "cn=person1,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"]},
-                }
+                },
             ),
             LDIFEntry.model_validate(
                 {
                     "dn": "cn=group1,dc=example,dc=com",
                     "attributes": {"objectClass": ["groupOfNames"]},
-                }
+                },
             ),
         ]
 
@@ -158,13 +158,13 @@ class TestLDIFUtils:
                 {
                     "dn": "cn=test1,dc=example,dc=com",
                     "attributes": {"cn": ["test1"]},  # No objectClass
-                }
+                },
             ),
             LDIFEntry.model_validate(
                 {
                     "dn": "cn=test2,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"]},
-                }
+                },
             ),
         ]
 
@@ -180,13 +180,13 @@ class TestLDIFUtils:
                 {
                     "dn": "cn=test1,dc=example,dc=com",
                     "attributes": {"objectClass": []},  # Empty objectClass
-                }
+                },
             ),
             LDIFEntry.model_validate(
                 {
                     "dn": "cn=test2,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"]},
-                }
+                },
             ),
         ]
 
@@ -199,10 +199,10 @@ class TestLDIFUtils:
         """Test getting entry by DN when it exists."""
         entries = [
             LDIFEntry.model_validate(
-                {"dn": "cn=user1,dc=example,dc=com", "attributes": {"cn": ["user1"]}}
+                {"dn": "cn=user1,dc=example,dc=com", "attributes": {"cn": ["user1"]}},
             ),
             LDIFEntry.model_validate(
-                {"dn": "cn=user2,dc=example,dc=com", "attributes": {"cn": ["user2"]}}
+                {"dn": "cn=user2,dc=example,dc=com", "attributes": {"cn": ["user2"]}},
             ),
         ]
 
@@ -216,7 +216,7 @@ class TestLDIFUtils:
         """Test getting entry by DN when it doesn't exist."""
         entries = [
             LDIFEntry.model_validate(
-                {"dn": "cn=user1,dc=example,dc=com", "attributes": {"cn": ["user1"]}}
+                {"dn": "cn=user1,dc=example,dc=com", "attributes": {"cn": ["user1"]}},
             ),
         ]
 
@@ -234,7 +234,7 @@ class TestLDIFUtils:
         """Test getting entry by DN is case sensitive."""
         entries = [
             LDIFEntry.model_validate(
-                {"dn": "cn=User1,dc=example,dc=com", "attributes": {"cn": ["User1"]}}
+                {"dn": "cn=User1,dc=example,dc=com", "attributes": {"cn": ["User1"]}},
             ),
         ]
 
@@ -253,7 +253,7 @@ class TestLDIFUtils:
                 {
                     "dn": "cn=user1,ou=people,dc=example,dc=com",
                     "attributes": {"cn": ["user1"]},
-                }
+                },
             ),
         ]
 

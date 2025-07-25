@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from flext_ldif import (
     FlextLdifChangeRecordSpecification,
     FlextLdifEntry,
@@ -23,7 +21,7 @@ class TestFlextLdifEntrySpecification:
         entry = FlextLdifEntry.from_ldif_block(
             """dn: cn=test,dc=example,dc=com
 cn: test
-objectClass: person"""
+objectClass: person""",
         )
 
         spec = FlextLdifEntrySpecification()
@@ -45,7 +43,7 @@ class TestFlextLdifValidSpecification:
         entry = FlextLdifEntry.from_ldif_block(
             """dn: cn=test,dc=example,dc=com
 cn: test
-objectClass: person"""
+objectClass: person""",
         )
 
         spec = FlextLdifValidSpecification()
@@ -55,7 +53,7 @@ objectClass: person"""
         """Test invalid entry without objectClass."""
         entry = FlextLdifEntry.from_ldif_block(
             """dn: cn=test,dc=example,dc=com
-cn: test"""
+cn: test""",
         )
 
         spec = FlextLdifValidSpecification()
@@ -68,7 +66,7 @@ cn: test"""
         # but removing objectClass to make it invalid
         entry = FlextLdifEntry.from_ldif_block(
             """dn: cn=test,dc=example,dc=com
-cn: test"""
+cn: test""",
         )
 
         spec = FlextLdifValidSpecification()
@@ -81,7 +79,7 @@ cn: test"""
         entry = FlextLdifEntry.from_ldif_block(
             """dn: cn=test,dc=example,dc=com
 cn: test
-objectClass: person"""
+objectClass: person""",
         )
 
         # This should be valid
@@ -99,7 +97,7 @@ class TestFlextLdifPersonSpecification:
 uid: john
 cn: John Doe
 objectClass: person
-objectClass: inetOrgPerson"""
+objectClass: inetOrgPerson""",
         )
 
         spec = FlextLdifPersonSpecification()
@@ -111,7 +109,7 @@ objectClass: inetOrgPerson"""
             """dn: uid=jane,ou=people,dc=example,dc=com
 uid: jane
 cn: Jane Smith
-objectClass: organizationalPerson"""
+objectClass: organizationalPerson""",
         )
 
         spec = FlextLdifPersonSpecification()
@@ -123,7 +121,7 @@ objectClass: organizationalPerson"""
             """dn: uid=bob,ou=people,dc=example,dc=com
 uid: bob
 cn: Bob Wilson
-objectClass: inetOrgPerson"""
+objectClass: inetOrgPerson""",
         )
 
         spec = FlextLdifPersonSpecification()
@@ -135,7 +133,7 @@ objectClass: inetOrgPerson"""
             """dn: uid=alice,ou=people,dc=example,dc=com
 uid: alice
 cn: Alice Brown
-objectClass: user"""
+objectClass: user""",
         )
 
         spec = FlextLdifPersonSpecification()
@@ -147,7 +145,7 @@ objectClass: user"""
             """dn: uid=charlie,ou=people,dc=example,dc=com
 uid: charlie
 cn: Charlie Green
-objectClass: posixAccount"""
+objectClass: posixAccount""",
         )
 
         spec = FlextLdifPersonSpecification()
@@ -158,7 +156,7 @@ objectClass: posixAccount"""
         entry = FlextLdifEntry.from_ldif_block(
             """dn: cn=groups,dc=example,dc=com
 cn: groups
-objectClass: organizationalUnit"""
+objectClass: organizationalUnit""",
         )
 
         spec = FlextLdifPersonSpecification()
@@ -169,7 +167,7 @@ objectClass: organizationalUnit"""
         entry = FlextLdifEntry.from_ldif_block(
             """dn: uid=test,ou=people,dc=example,dc=com
 uid: test
-cn: Test User"""
+cn: Test User""",
         )
 
         spec = FlextLdifPersonSpecification()
@@ -184,7 +182,7 @@ class TestFlextLdifGroupSpecification:
         entry = FlextLdifEntry.from_ldif_block(
             """dn: cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com
 cn: REDACTED_LDAP_BIND_PASSWORDs
-objectClass: group"""
+objectClass: group""",
         )
 
         spec = FlextLdifGroupSpecification()
@@ -196,7 +194,7 @@ objectClass: group"""
             """dn: cn=developers,ou=groups,dc=example,dc=com
 cn: developers
 objectClass: groupOfNames
-member: uid=john,ou=people,dc=example,dc=com"""
+member: uid=john,ou=people,dc=example,dc=com""",
         )
 
         spec = FlextLdifGroupSpecification()
@@ -208,7 +206,7 @@ member: uid=john,ou=people,dc=example,dc=com"""
             """dn: cn=managers,ou=groups,dc=example,dc=com
 cn: managers
 objectClass: groupOfUniqueNames
-uniqueMember: uid=jane,ou=people,dc=example,dc=com"""
+uniqueMember: uid=jane,ou=people,dc=example,dc=com""",
         )
 
         spec = FlextLdifGroupSpecification()
@@ -220,7 +218,7 @@ uniqueMember: uid=jane,ou=people,dc=example,dc=com"""
             """dn: cn=users,ou=groups,dc=example,dc=com
 cn: users
 objectClass: posixGroup
-gidNumber: 100"""
+gidNumber: 100""",
         )
 
         spec = FlextLdifGroupSpecification()
@@ -231,7 +229,7 @@ gidNumber: 100"""
         entry = FlextLdifEntry.from_ldif_block(
             """dn: cn=REDACTED_LDAP_BIND_PASSWORD,ou=roles,dc=example,dc=com
 cn: REDACTED_LDAP_BIND_PASSWORD
-objectClass: organizationalRole"""
+objectClass: organizationalRole""",
         )
 
         spec = FlextLdifGroupSpecification()
@@ -242,7 +240,7 @@ objectClass: organizationalRole"""
         entry = FlextLdifEntry.from_ldif_block(
             """dn: uid=john,ou=people,dc=example,dc=com
 uid: john
-objectClass: person"""
+objectClass: person""",
         )
 
         spec = FlextLdifGroupSpecification()
@@ -257,7 +255,7 @@ class TestFlextLdifOrganizationalUnitSpecification:
         entry = FlextLdifEntry.from_ldif_block(
             """dn: ou=people,dc=example,dc=com
 ou: people
-objectClass: organizationalUnit"""
+objectClass: organizationalUnit""",
         )
 
         spec = FlextLdifOrganizationalUnitSpecification()
@@ -268,7 +266,7 @@ objectClass: organizationalUnit"""
         entry = FlextLdifEntry.from_ldif_block(
             """dn: cn=manager,ou=roles,dc=example,dc=com
 cn: manager
-objectClass: organizationalRole"""
+objectClass: organizationalRole""",
         )
 
         spec = FlextLdifOrganizationalUnitSpecification()
@@ -279,7 +277,7 @@ objectClass: organizationalRole"""
         entry = FlextLdifEntry.from_ldif_block(
             """dn: dc=example,dc=com
 dc: example
-objectClass: dcObject"""
+objectClass: dcObject""",
         )
 
         spec = FlextLdifOrganizationalUnitSpecification()
@@ -290,7 +288,7 @@ objectClass: dcObject"""
         entry = FlextLdifEntry.from_ldif_block(
             """dn: dc=com
 dc: com
-objectClass: domain"""
+objectClass: domain""",
         )
 
         spec = FlextLdifOrganizationalUnitSpecification()
@@ -301,7 +299,7 @@ objectClass: domain"""
         entry = FlextLdifEntry.from_ldif_block(
             """dn: uid=john,ou=people,dc=example,dc=com
 uid: john
-objectClass: person"""
+objectClass: person""",
         )
 
         spec = FlextLdifOrganizationalUnitSpecification()
@@ -318,7 +316,7 @@ class TestFlextLdifChangeRecordSpecification:
 changetype: add
 uid: newuser
 cn: New User
-objectClass: person"""
+objectClass: person""",
         )
 
         spec = FlextLdifChangeRecordSpecification()
@@ -330,7 +328,7 @@ objectClass: person"""
             """dn: uid=john,ou=people,dc=example,dc=com
 changetype: modify
 replace: mail
-mail: john.new@example.com"""
+mail: john.new@example.com""",
         )
 
         spec = FlextLdifChangeRecordSpecification()
@@ -340,7 +338,7 @@ mail: john.new@example.com"""
         """Test delete change record."""
         entry = FlextLdifEntry.from_ldif_block(
             """dn: uid=olduser,ou=people,dc=example,dc=com
-changetype: delete"""
+changetype: delete""",
         )
 
         spec = FlextLdifChangeRecordSpecification()
@@ -352,7 +350,7 @@ changetype: delete"""
             """dn: uid=john,ou=people,dc=example,dc=com
 changetype: modrdn
 newrdn: uid=john.doe
-deleteoldrdn: 1"""
+deleteoldrdn: 1""",
         )
 
         spec = FlextLdifChangeRecordSpecification()
@@ -362,7 +360,7 @@ deleteoldrdn: 1"""
         """Test invalid change record."""
         entry = FlextLdifEntry.from_ldif_block(
             """dn: uid=john,ou=people,dc=example,dc=com
-changetype: invalid"""
+changetype: invalid""",
         )
 
         spec = FlextLdifChangeRecordSpecification()
@@ -374,7 +372,7 @@ changetype: invalid"""
             """dn: uid=john,ou=people,dc=example,dc=com
 uid: john
 cn: John Doe
-objectClass: person"""
+objectClass: person""",
         )
 
         spec = FlextLdifChangeRecordSpecification()
@@ -385,7 +383,7 @@ objectClass: person"""
         entry = FlextLdifEntry.from_ldif_block(
             """dn: uid=john,ou=people,dc=example,dc=com
 uid: john
-objectClass: person"""
+objectClass: person""",
         )
 
         spec = FlextLdifChangeRecordSpecification()

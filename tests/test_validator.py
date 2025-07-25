@@ -21,7 +21,7 @@ class TestLDIFValidator:
                     "objectClass": ["person"],
                     "mail": ["test@example.com"],
                 },
-            }
+            },
         )
 
         validator = LDIFValidator()
@@ -44,7 +44,7 @@ class TestLDIFValidator:
                         "cn": ["test"],
                         "objectClass": ["person"],
                     },
-                }
+                },
             )
 
         # Verify the error message contains DN validation error
@@ -66,7 +66,7 @@ class TestLDIFValidator:
                         "cn": ["test"],
                         "objectClass": ["person"],
                     },
-                }
+                },
             )
 
         # Verify the error message contains DN validation error
@@ -86,7 +86,7 @@ class TestLDIFValidator:
                         "cn": ["test"],
                         "objectClass": ["person"],
                     },
-                }
+                },
             )
 
         # Verify the error message contains DN validation error
@@ -105,7 +105,7 @@ class TestLDIFValidator:
 
         for dn in valid_dns:
             entry = LDIFEntry.model_validate(
-                {"dn": dn, "attributes": {"objectClass": ["person"]}}
+                {"dn": dn, "attributes": {"objectClass": ["person"]}},
             )
 
             result = validator.validate_entry(entry)
@@ -120,7 +120,7 @@ class TestLDIFValidator:
                     "123invalid": ["value"],  # Starts with number
                     "objectClass": ["person"],
                 },
-            }
+            },
         )
 
         validator = LDIFValidator()
@@ -140,7 +140,7 @@ class TestLDIFValidator:
                     "invalid@attr": ["value"],  # Contains @
                     "objectClass": ["person"],
                 },
-            }
+            },
         )
 
         validator = LDIFValidator()
@@ -166,7 +166,7 @@ class TestLDIFValidator:
                     "attribute-with-dashes": ["value"],
                     "attr123": ["value"],
                 },
-            }
+            },
         )
 
         validator = LDIFValidator()
@@ -184,7 +184,7 @@ class TestLDIFValidator:
                     "mail": ["test@example.com"],
                     # No objectClass
                 },
-            }
+            },
         )
 
         validator = LDIFValidator()
@@ -203,7 +203,7 @@ class TestLDIFValidator:
                     "cn": ["test"],
                     "objectClass": [],  # Empty list
                 },
-            }
+            },
         )
 
         validator = LDIFValidator()
@@ -248,7 +248,7 @@ class TestLDIFValidator:
                         "cn": ["user1"],
                         "objectClass": ["person"],
                     },
-                }
+                },
             ),
             LDIFEntry.model_validate(
                 {
@@ -258,7 +258,7 @@ class TestLDIFValidator:
                         "objectClass": ["inetOrgPerson"],
                         "mail": ["user2@example.com"],
                     },
-                }
+                },
             ),
         ]
 
@@ -282,7 +282,7 @@ class TestLDIFValidator:
                         "cn": ["user1"],
                         "objectClass": ["person"],
                     },
-                }
+                },
             )
 
         # Verify the error message contains DN validation error
@@ -299,7 +299,7 @@ class TestLDIFValidator:
                         "123invalid": ["user1"],  # Invalid attribute name
                         "objectClass": ["person"],
                     },
-                }
+                },
             ),
             LDIFEntry.model_validate(
                 {
@@ -308,7 +308,7 @@ class TestLDIFValidator:
                         "cn": ["user2"],
                         "objectClass": ["person"],
                     },
-                }
+                },
             ),
         ]
 
@@ -330,7 +330,7 @@ class TestLDIFValidator:
                         "cn": ["user1"],
                         "objectClass": ["person"],
                     },
-                }
+                },
             ),
             LDIFEntry.model_validate(
                 {
@@ -339,7 +339,7 @@ class TestLDIFValidator:
                         "cn": ["user2"],
                         # Missing objectClass
                     },
-                }
+                },
             ),
         ]
 
@@ -438,5 +438,5 @@ class TestLDIFValidator:
 
         for attr in invalid_attrs:
             assert not validator.ATTR_NAME_PATTERN.match(
-                attr
+                attr,
             ), f"Should not match: {attr}"

@@ -35,7 +35,8 @@ class FlextLdifDocument(FlextAggregateRoot):
 
     content: LDIFContent = Field(..., description="LDIF content")
     entries: list[FlextLdifEntry] = Field(
-        default_factory=list, description="Parsed entries",
+        default_factory=list,
+        description="Parsed entries",
     )
     version: int = Field(default=1, description="LDIF version")
     encoding: str = Field(default="utf-8", description="Character encoding")
@@ -63,7 +64,9 @@ class FlextLdifDocument(FlextAggregateRoot):
         self.add_domain_event(event)
 
     def complete_processing(
-        self, success: bool, errors: list[str] | None = None,
+        self,
+        success: bool,
+        errors: list[str] | None = None,
     ) -> None:
         """Complete document processing.
 
@@ -119,43 +122,52 @@ class FlextLdifDocument(FlextAggregateRoot):
         """
         # Validate document version
         if self.version < 1:
-            raise ValueError("LDIF document version must be >= 1")
+            msg = "LDIF document version must be >= 1"
+            raise ValueError(msg)
 
         # Validate encoding
         import codecs
+
         try:
             codecs.lookup(self.encoding)
         except LookupError as e:
-            raise ValueError(f"Unsupported encoding: {self.encoding}") from e
+            msg = f"Unsupported encoding: {self.encoding}"
+            raise ValueError(msg) from e
 
         # Validate content exists
         if not self.content:
-            raise ValueError("LDIF document must have content")
+            msg = "LDIF document must have content"
+            raise ValueError(msg)
 
         # If document is marked as parsed, validate entries
         if self.is_parsed:
             if not self.entries:
-                raise ValueError("Parsed document must have entries")
+                msg = "Parsed document must have entries"
+                raise ValueError(msg)
 
             # Validate all entries
             for i, entry in enumerate(self.entries):
                 try:
                     entry.validate_domain_rules()
                 except Exception as e:
-                    raise ValueError(f"Entry {i} validation failed: {e}") from e
+                    msg = f"Entry {i} validation failed: {e}"
+                    raise ValueError(msg) from e
 
         # Business rule: If marked as validated, must also be parsed
         if self.is_validated and not self.is_parsed:
-            raise ValueError("Document cannot be validated without being parsed first")
+            msg = "Document cannot be validated without being parsed first"
+            raise ValueError(msg)
 
         # Business rule: Ensure content length is reasonable
         content_str = str(self.content)
         if len(content_str) > 100_000_000:  # 100MB limit
-            raise ValueError("LDIF document content exceeds maximum size limit")
+            msg = "LDIF document content exceeds maximum size limit"
+            raise ValueError(msg)
 
         # Business rule: Non-empty content should result in entries when parsed
         if self.is_parsed and content_str.strip() and not self.entries:
-            raise ValueError("Non-empty LDIF content should produce at least one entry when parsed")
+            msg = "Non-empty LDIF content should produce at least one entry when parsed"
+            raise ValueError(msg)
 
 
 __all__ = [

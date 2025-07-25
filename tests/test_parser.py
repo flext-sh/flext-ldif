@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
-from typing import Never
 
 from flext_ldif import LDIFContent, LDIFParser
 
@@ -18,7 +17,7 @@ class TestLDIFParser:
             """dn: cn=test,dc=example,dc=com
 cn: test
 objectClass: person
-mail: test@example.com"""
+mail: test@example.com""",
         )
 
         parser = LDIFParser()
@@ -45,7 +44,7 @@ objectClass: person
 dn: cn=user2,dc=example,dc=com
 cn: user2
 objectClass: person
-mail: user2@example.com"""
+mail: user2@example.com""",
         )
 
         parser = LDIFParser()
@@ -97,7 +96,7 @@ mail: user2@example.com"""
         """Test parsing invalid entry without DN."""
         content = LDIFContent(
             """cn: test
-objectClass: person"""
+objectClass: person""",
         )
 
         parser = LDIFParser()
@@ -114,7 +113,7 @@ objectClass: person"""
 cn: user1
 
 dn: cn=user2,dc=example,dc=com
-cn: user2"""
+cn: user2""",
         )
 
         parser = LDIFParser()
@@ -134,7 +133,7 @@ dn: cn=test,dc=example,dc=com
 cn: test
 objectClass: person
 
-        """
+        """,
         )
 
         parser = LDIFParser()
@@ -156,7 +155,7 @@ objectClass: person
 objectClass: person
 objectClass: inetOrgPerson
 mail: test@example.com
-mail: test2@example.com"""
+mail: test2@example.com""",
         )
 
         parser = LDIFParser()
