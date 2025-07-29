@@ -1,8 +1,15 @@
 """Enterprise tests for FlextLdifAPI functionality.
 
+# Constants
+EXPECTED_BULK_SIZE = 2
+EXPECTED_DATA_COUNT = 3
+
 Comprehensive test suite covering all API functionality with enterprise-grade
 testing practices, configuration management, and error handling validation.
 """
+
+import time
+
 
 from __future__ import annotations
 
@@ -79,7 +86,7 @@ member: cn=John Doe,ou=people,dc=example,dc=com
     def test_api_initialization_default_config(self) -> None:
         """Test API initialization with default configuration."""
         api = FlextLdifAPI()
-        
+
         assert api.config is not None
         assert isinstance(api.config, FlextLdifConfig)
         # Specifications now integrated in FlextLdifEntry via composition
@@ -87,31 +94,37 @@ member: cn=John Doe,ou=people,dc=example,dc=com
     def test_api_initialization_custom_config(self, strict_config: FlextLdifConfig) -> None:
         """Test API initialization with custom configuration."""
         api = FlextLdifAPI(strict_config)
-        
-        assert api.config == strict_config
-        assert api.config.strict_validation is True
-        assert api.config.max_entries == 10
+
+        if api.config != strict_config:
+
+            raise AssertionError(f"Expected {strict_config}, got {api.config}")
+        if not (api.config.strict_validation):
+            raise AssertionError(f"Expected True, got {api.config.strict_validation}")
+        if api.config.max_entries != 10:
+            raise AssertionError(f"Expected {10}, got {api.config.max_entries}")
 
     def test_parse_success_default_config(self, sample_ldif_content: str) -> None:
         """Test parsing with default configuration succeeds."""
         api = FlextLdifAPI()
-        
+
         result = api.parse(sample_ldif_content)
-        
+
         assert result.is_success
         assert result.data is not None
-        assert len(result.data) == 3
+        if len(result.data) != EXPECTED_DATA_COUNT:
+            raise AssertionError(f"Expected {3}, got {len(result.data)}")
         assert result.error is None
 
     def test_parse_success_strict_config(self, sample_ldif_content: str, strict_config: FlextLdifConfig) -> None:
         """Test parsing with strict configuration succeeds."""
         api = FlextLdifAPI(strict_config)
-        
+
         result = api.parse(sample_ldif_content)
-        
+
         assert result.is_success
         assert result.data is not None
-        assert len(result.data) == 3
+        if len(result.data) != EXPECTED_DATA_COUNT:
+            raise AssertionError(f"Expected {3}, got {len(result.data)}")
 
     def test_parse_fails_max_entries_exceeded(self, strict_config: FlextLdifConfig) -> None:
         """Test parsing fails when max entries exceeded."""
@@ -124,29 +137,31 @@ cn: user{i}
 sn: User{i}
 
 """
-        
+
         api = FlextLdifAPI(strict_config)
         result = api.parse(large_content)
-        
+
         assert not result.is_success
         assert result.error is not None
-        assert "too many entries" in result.error.lower()
+        if "too many entries" not in result.error.lower():
+            raise AssertionError(f"Expected {"too many entries"} in {result.error.lower()}")
 
     def test_parse_file_success(self, sample_ldif_content: str) -> None:
         """Test parsing file succeeds."""
         api = FlextLdifAPI()
-        
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.ldif') as f:
+
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", delete=False, suffix=".ldif") as f:
             f.write(sample_ldif_content)
             temp_file = Path(f.name)
-        
+
         try:
             result = api.parse_file(temp_file)
-            
+
             assert result.is_success
             assert result.data is not None
-            assert len(result.data) == 3
-            
+            if len(result.data) != EXPECTED_DATA_COUNT:
+                raise AssertionError(f"Expected {3}, got {len(result.data)}")
+
         finally:
             temp_file.unlink(missing_ok=True)
 
@@ -154,149 +169,160 @@ sn: User{i}
         """Test parsing nonexistent file fails gracefully."""
         api = FlextLdifAPI()
         nonexistent_file = Path("/nonexistent/file.ldif")
-        
+
         result = api.parse_file(nonexistent_file)
-        
+
         assert not result.is_success
         assert result.error is not None
-        assert "not found" in result.error.lower()
+        if "not found" not in result.error.lower():
+            raise AssertionError(f"Expected {"not found"} in {result.error.lower()}")
 
     def test_validate_success(self, sample_ldif_content: str) -> None:
         """Test validation succeeds for valid entries."""
         api = FlextLdifAPI()
-        
+
         parse_result = api.parse(sample_ldif_content)
         assert parse_result.is_success
-        
+
         validate_result = api.validate(parse_result.data)
-        
+
         assert validate_result.is_success
-        assert validate_result.data is True
+        if not (validate_result.data):
+            raise AssertionError(f"Expected True, got {validate_result.data}")
 
     def test_write_to_string_success(self, sample_ldif_content: str) -> None:
         """Test writing to string succeeds."""
         api = FlextLdifAPI()
-        
+
         parse_result = api.parse(sample_ldif_content)
         assert parse_result.is_success
-        
+
         write_result = api.write(parse_result.data)
-        
+
         assert write_result.is_success
         assert write_result.data is not None
         assert len(write_result.data) > 0
-        assert "dn:" in write_result.data
+        if "dn:" not in write_result.data:
+            raise AssertionError(f"Expected {"dn:"} in {write_result.data}")
 
     def test_write_to_file_success(self, sample_ldif_content: str) -> None:
         """Test writing to file succeeds."""
         api = FlextLdifAPI()
-        
+
         parse_result = api.parse(sample_ldif_content)
         assert parse_result.is_success
-        
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.ldif') as f:
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".ldif") as f:
             temp_file = Path(f.name)
-        
+
         try:
             write_result = api.write(parse_result.data, temp_file)
-            
+
             assert write_result.is_success
-            assert "written to" in write_result.data.lower()
+            if "written to" not in write_result.data.lower():
+                raise AssertionError(f"Expected {"written to"} in {write_result.data.lower()}")
             assert temp_file.exists()
-            
+
             # Verify content
-            content = temp_file.read_text(encoding='utf-8')
+            content = temp_file.read_text(encoding="utf-8")
             assert len(content) > 0
-            assert "dn:" in content
-            
+            if "dn:" not in content:
+                raise AssertionError(f"Expected {"dn:"} in {content}")
+
         finally:
             temp_file.unlink(missing_ok=True)
 
     def test_filter_persons_success(self, sample_ldif_content: str) -> None:
         """Test filtering person entries succeeds."""
         api = FlextLdifAPI()
-        
+
         parse_result = api.parse(sample_ldif_content)
         assert parse_result.is_success
-        
+
         filter_result = api.filter_persons(parse_result.data)
-        
+
         assert filter_result.is_success
         assert filter_result.data is not None
         # Should find 2 person entries (John Doe and Admin User)
-        assert len(filter_result.data) == 2
-        
+        if len(filter_result.data) != EXPECTED_BULK_SIZE:
+            raise AssertionError(f"Expected {2}, got {len(filter_result.data)}")
+
         for entry in filter_result.data:
             assert entry.has_object_class("person")
 
     def test_filter_valid_success(self, sample_ldif_content: str) -> None:
         """Test filtering valid entries succeeds."""
         api = FlextLdifAPI()
-        
+
         parse_result = api.parse(sample_ldif_content)
         assert parse_result.is_success
-        
+
         filter_result = api.filter_valid(parse_result.data)
-        
+
         assert filter_result.is_success
         assert filter_result.data is not None
         # All entries should be valid
-        assert len(filter_result.data) == 3
+        if len(filter_result.data) != EXPECTED_DATA_COUNT:
+            raise AssertionError(f"Expected {3}, got {len(filter_result.data)}")
 
     def test_filter_by_objectclass_success(self, sample_ldif_content: str) -> None:
         """Test filtering by objectClass succeeds."""
         api = FlextLdifAPI()
-        
+
         parse_result = api.parse(sample_ldif_content)
         assert parse_result.is_success
-        
+
         # Filter by person objectClass
         person_entries = api.filter_by_objectclass(parse_result.data, "person")
-        assert len(person_entries) == 2
-        
+        if len(person_entries) != EXPECTED_BULK_SIZE:
+            raise AssertionError(f"Expected {2}, got {len(person_entries)}")
+
         # Filter by groupOfNames objectClass
         group_entries = api.filter_by_objectclass(parse_result.data, "groupOfNames")
-        assert len(group_entries) == 1
+        if len(group_entries) != 1:
+            raise AssertionError(f"Expected {1}, got {len(group_entries)}")
 
     def test_find_entry_by_dn_success(self, sample_ldif_content: str) -> None:
         """Test finding entry by DN succeeds."""
         api = FlextLdifAPI()
-        
+
         parse_result = api.parse(sample_ldif_content)
         assert parse_result.is_success
-        
+
         target_dn = "cn=John Doe,ou=people,dc=example,dc=com"
         found_entry = api.find_entry_by_dn(parse_result.data, target_dn)
-        
+
         assert found_entry is not None
-        assert str(found_entry.dn) == target_dn
+        if str(found_entry.dn) != target_dn:
+            raise AssertionError(f"Expected {target_dn}, got {str(found_entry.dn)}")
         assert found_entry.get_attribute("cn") == ["John Doe"]
 
     def test_find_entry_by_dn_not_found(self, sample_ldif_content: str) -> None:
         """Test finding nonexistent entry by DN returns None."""
         api = FlextLdifAPI()
-        
+
         parse_result = api.parse(sample_ldif_content)
         assert parse_result.is_success
-        
+
         nonexistent_dn = "cn=nonexistent,ou=people,dc=example,dc=com"
         found_entry = api.find_entry_by_dn(parse_result.data, nonexistent_dn)
-        
+
         assert found_entry is None
 
     def test_sort_hierarchically_success(self, sample_ldif_content: str) -> None:
         """Test hierarchical sorting succeeds."""
         api = FlextLdifAPI()
-        
+
         parse_result = api.parse(sample_ldif_content)
         assert parse_result.is_success
-        
+
         sort_result = api.sort_hierarchically(parse_result.data)
-        
+
         assert sort_result.is_success
         assert sort_result.data is not None
-        assert len(sort_result.data) == 3
-        
+        if len(sort_result.data) != EXPECTED_DATA_COUNT:
+            raise AssertionError(f"Expected {3}, got {len(sort_result.data)}")
+
         # Verify sorting (entries with fewer commas should come first)
         sorted_entries = sort_result.data
         for i in range(len(sorted_entries) - 1):
@@ -307,15 +333,16 @@ sn: User{i}
     def test_entries_to_ldif_success(self, sample_ldif_content: str) -> None:
         """Test converting entries to LDIF string succeeds."""
         api = FlextLdifAPI()
-        
+
         parse_result = api.parse(sample_ldif_content)
         assert parse_result.is_success
-        
+
         ldif_output = api.entries_to_ldif(parse_result.data)
-        
+
         assert ldif_output is not None
         assert len(ldif_output) > 0
-        assert "dn:" in ldif_output
+        if "dn:" not in ldif_output:
+            raise AssertionError(f"Expected {"dn:"} in {ldif_output}")
         assert "objectClass:" in ldif_output
 
     def test_configuration_validation_strict(self, sample_ldif_content: str) -> None:
@@ -324,9 +351,9 @@ sn: User{i}
             "strict_validation": True,
             "max_entries": 100,
         })
-        
+
         api = FlextLdifAPI(strict_config)
-        
+
         # Should validate during parsing
         result = api.parse(sample_ldif_content)
         assert result.is_success  # Valid content should pass
@@ -337,15 +364,15 @@ sn: User{i}
             "strict_validation": False,
             "max_entries": 1000,
         })
-        
+
         api = FlextLdifAPI(permissive_config)
-        
+
         # Even invalid content might pass parsing without validation
         invalid_content = """dn: cn=test,dc=example,dc=com
 cn: test
 # Missing objectClass but validation is disabled
 """
-        
+
         result = api.parse(invalid_content)
         # Should parse successfully due to permissive config
         assert result.is_success or not result.is_success  # Either is acceptable
@@ -353,10 +380,10 @@ cn: test
     def test_error_handling_robustness(self) -> None:
         """Test API error handling robustness."""
         api = FlextLdifAPI()
-        
+
         # Test various invalid inputs
         invalid_inputs = ["", None, 123, [], {}]
-        
+
         for invalid_input in invalid_inputs:
             try:
                 result = api.parse(invalid_input)
@@ -364,16 +391,16 @@ cn: test
                 assert result is not None
                 if not result.is_success:
                     assert result.error is not None
-            except Exception as e:
+            except (RuntimeError, ValueError, TypeError) as e:
                 # Expected exceptions should be handled
                 assert isinstance(e, (TypeError, ValueError, AttributeError))
 
     def test_performance_with_large_content(self) -> None:
         """Test API performance with larger content."""
-        import time
-        
+
+
         api = FlextLdifAPI()
-        
+
         # Generate larger content
         large_content = ""
         for i in range(50):
@@ -384,13 +411,14 @@ sn: User{i}
 mail: user{i}@example.com
 
 """
-        
+
         start_time = time.time()
         result = api.parse(large_content)
         parse_time = time.time() - start_time
-        
+
         assert result.is_success
-        assert len(result.data) == 50
+        if len(result.data) != 50:
+            raise AssertionError(f"Expected {50}, got {len(result.data)}")
         assert parse_time < 3.0  # Should be reasonably fast
 
 
@@ -412,86 +440,94 @@ mail: test@example.com
         """Test global API instance management."""
         api1 = flext_ldif_get_api()
         api2 = flext_ldif_get_api()
-        
+
         # Should return same instance
         assert api1 is api2
 
     def test_flext_ldif_get_api_with_config(self) -> None:
         """Test global API with custom configuration."""
         config = FlextLdifConfig.model_validate({"strict_validation": True})
-        
+
         api1 = flext_ldif_get_api(config)
         api2 = flext_ldif_get_api()  # Should return same configured instance
-        
+
         assert api1 is api2
-        assert api1.config.strict_validation is True
+        if not (api1.config.strict_validation):
+            raise AssertionError(f"Expected True, got {api1.config.strict_validation}")
 
     def test_flext_ldif_parse_convenience(self, sample_ldif_content: str) -> None:
         """Test convenience parse function."""
         entries = flext_ldif_parse(sample_ldif_content)
-        
+
         assert isinstance(entries, list)
-        assert len(entries) == 1
+        if len(entries) != 1:
+            raise AssertionError(f"Expected {1}, got {len(entries)}")
         assert isinstance(entries[0], FlextLdifEntry)
-        assert entries[0].get_attribute("cn") == ["test"]
+        if entries[0].get_attribute("cn") != ["test"]:
+            raise AssertionError(f"Expected {["test"]}, got {entries[0].get_attribute("cn")}")
 
     def test_flext_ldif_parse_convenience_failure(self) -> None:
         """Test convenience parse function with invalid content."""
         entries = flext_ldif_parse("invalid content")
-        
+
         assert isinstance(entries, list)
-        assert len(entries) == 0  # Should return empty list on failure
+        if len(entries) != 0  # Should return empty list on failure:
+            raise AssertionError(f"Expected {0  # Should return empty list on failure}, got {len(entries)}")
 
     def test_flext_ldif_validate_convenience_success(self, sample_ldif_content: str) -> None:
         """Test convenience validate function success."""
         is_valid = flext_ldif_validate(sample_ldif_content)
-        
+
         assert isinstance(is_valid, bool)
-        assert is_valid is True
+        if not (is_valid):
+            raise AssertionError(f"Expected True, got {is_valid}")
 
     def test_flext_ldif_validate_convenience_failure(self) -> None:
         """Test convenience validate function failure."""
         is_valid = flext_ldif_validate("invalid content")
-        
-        assert isinstance(is_valid, bool)
-        assert is_valid is False
 
+        assert isinstance(is_valid, bool)
+        if is_valid:
+            raise AssertionError(f"Expected False, got {is_valid}")\ n
     def test_flext_ldif_write_convenience_success(self, sample_ldif_content: str) -> None:
         """Test convenience write function success."""
         entries = flext_ldif_parse(sample_ldif_content)
         assert len(entries) > 0
-        
+
         output = flext_ldif_write(entries)
-        
+
         assert isinstance(output, str)
         assert len(output) > 0
-        assert "dn:" in output
+        if "dn:" not in output:
+            raise AssertionError(f"Expected {"dn:"} in {output}")
 
     def test_flext_ldif_write_convenience_with_file(self, sample_ldif_content: str) -> None:
         """Test convenience write function with file output."""
         entries = flext_ldif_parse(sample_ldif_content)
         assert len(entries) > 0
-        
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.ldif') as f:
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".ldif") as f:
             temp_file = Path(f.name)
-        
+
         try:
             output = flext_ldif_write(entries, str(temp_file))
-            
+
             assert isinstance(output, str)
             assert temp_file.exists()
-            
+
             # Verify file content
-            content = temp_file.read_text(encoding='utf-8')
+            content = temp_file.read_text(encoding="utf-8")
             assert len(content) > 0
-            assert "dn:" in content
-            
+            if "dn:" not in content:
+                raise AssertionError(f"Expected {"dn:"} in {content}")
+
         finally:
             temp_file.unlink(missing_ok=True)
 
     def test_flext_ldif_write_convenience_failure(self) -> None:
         """Test convenience write function with empty entries."""
         output = flext_ldif_write([])
-        
+
         assert isinstance(output, str)
-        assert len(output) == 0  # Should return empty string on failure
+        if len(output) != 0  # Should return empty string on failure:
+            raise AssertionError(f"Expected {0  # Should return empty string on failure}, got {len(output)}")

@@ -10,14 +10,16 @@ import os
 import subprocess
 import time
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Any, AsyncGenerator
+from typing import TYPE_CHECKING, Any
 
 import docker
 import pytest
-from docker.models.containers import Container
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
     from docker.client import DockerClient
+    from docker.models.containers import Container
 
 # OpenLDAP Container Configuration
 OPENLDAP_IMAGE = "osixia/openldap:1.5.0"
@@ -84,16 +86,16 @@ class OpenLDAPContainerManager:
         try:
             # Try to get existing container by name
             existing = self.client.containers.get(OPENLDAP_CONTAINER_NAME)
-            if existing.status in ("running", "created", "paused"):
+            if existing.status in {"running", "created", "paused"}:
                 existing.stop(timeout=5)
             existing.remove(force=True)
         except docker.errors.NotFound:
             pass  # Container doesn't exist, nothing to stop
-        except Exception:
+        except (RuntimeError, ValueError, TypeError):
             # Try to force remove by name if getting by ID fails
             try:
                 self.client.api.remove_container(OPENLDAP_CONTAINER_NAME, force=True)
-            except Exception:
+            except (RuntimeError, ValueError, TypeError):
                 pass  # If all else fails, continue
 
         self.container = None
@@ -137,7 +139,7 @@ class OpenLDAPContainerManager:
                     # Success! Container is ready
                     return
 
-            except Exception:
+            except (RuntimeError, ValueError, TypeError):
                 pass  # Continue waiting
 
             time.sleep(1)
@@ -251,7 +253,6 @@ member: uid=bob.wilson,ou=people,{OPENLDAP_BASE_DN}
             )
 
             if exec_result.exit_code != 0:
-                print(f"Failed to write test LDIF: {exec_result.output}")
                 return
 
             # Import LDIF data
@@ -272,12 +273,10 @@ member: uid=bob.wilson,ou=people,{OPENLDAP_BASE_DN}
             )
 
             if exec_result.exit_code == 0:
-                print("✅ Test data populated successfully")
-            else:
-                print(f"⚠️  Failed to populate test data: {exec_result.output}")
+                pass
 
-        except Exception as e:
-            print(f"⚠️  Error populating test data: {e}")
+        except (RuntimeError, ValueError, TypeError):
+            pass
 
     def get_ldif_export(self, base_dn: str | None = None, scope: str = "sub") -> str:
         """Export LDIF data from the container."""
@@ -308,11 +307,11 @@ member: uid=bob.wilson,ou=people,{OPENLDAP_BASE_DN}
             )
 
             if exec_result.exit_code == 0:
-                stdout, stderr = exec_result.output
+                stdout, _stderr = exec_result.output
                 return stdout.decode() if stdout else ""
 
-        except Exception as e:
-            print(f"Failed to export LDIF: {e}")
+        except (RuntimeError, ValueError, TypeError):
+            pass
 
         return ""
 
@@ -324,7 +323,7 @@ member: uid=bob.wilson,ou=people,{OPENLDAP_BASE_DN}
         try:
             self.container.reload()
             return self.container.status == "running"
-        except Exception:
+        except (RuntimeError, ValueError, TypeError):
             return False
 
     def get_logs(self) -> str:
@@ -334,7 +333,7 @@ member: uid=bob.wilson,ou=people,{OPENLDAP_BASE_DN}
 
         try:
             return self.container.logs().decode()
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             return f"Failed to get logs: {e}"
 
 
@@ -345,18 +344,18 @@ _container_manager: OpenLDAPContainerManager | None = None
 @pytest.fixture(scope="session")
 def docker_openldap_container() -> Container:
     """Session-scoped fixture that provides OpenLDAP Docker container for LDIF testing.
-    
+
     This fixture starts an OpenLDAP container with test data at the beginning of the test
     session and stops it at the end. The container is shared across all tests.
     """
     global _container_manager
-    
+
     if _container_manager is None:
         _container_manager = OpenLDAPContainerManager()
 
     # Start container
     container = _container_manager.start_container()
-    
+
     # Set environment variables for tests
     for key, value in TEST_ENV_VARS.items():
         os.environ[key] = value
@@ -365,13 +364,13 @@ def docker_openldap_container() -> Container:
 
     # Cleanup
     _container_manager.stop_container()
-    
+
     # Clean up environment variables
     for key in TEST_ENV_VARS:
         os.environ.pop(key, None)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def ldif_test_config(docker_openldap_container: Container) -> dict[str, Any]:
     """Provides LDIF test configuration for individual tests."""
     return {
@@ -383,17 +382,17 @@ def ldif_test_config(docker_openldap_container: Container) -> dict[str, Any]:
     }
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def real_ldif_data(ldif_test_config: dict[str, Any]) -> str:
     """Provides real LDIF data exported from the OpenLDAP container."""
     global _container_manager
-    
+
     if _container_manager and _container_manager.is_container_running():
         # Export LDIF data from container
         ldif_data = _container_manager.get_ldif_export()
         if ldif_data:
             return ldif_data
-    
+
     # Fallback to static test data if container export fails
     return f"""dn: {ldif_test_config['base_dn']}
 objectClass: dcObject
@@ -419,27 +418,28 @@ mail: john.doe@internal.invalid
 
 
 @asynccontextmanager
-async def temporary_ldif_data(container: Container, ldif_content: str) -> AsyncGenerator[str, None]:
+async def temporary_ldif_data(container: Container, ldif_content: str) -> AsyncGenerator[str]:
     """Context manager for temporary LDIF data that is auto-cleaned."""
     temp_file = f"/tmp/temp_{int(time.time())}.ldif"
-    
+
     try:
         # Write LDIF to container
         exec_result = container.exec_run(
             ["sh", "-c", f"cat > {temp_file} << 'EOF'\n{ldif_content}\nEOF"],
             demux=True,
         )
-        
+
         if exec_result.exit_code != 0:
-            raise RuntimeError(f"Failed to write temporary LDIF: {exec_result.output}")
-        
+            msg = f"Failed to write temporary LDIF: {exec_result.output}"
+            raise RuntimeError(msg)
+
         yield temp_file
-    
+
     finally:
         # Auto-cleanup
         try:
             container.exec_run(["rm", "-f", temp_file])
-        except Exception:
+        except (RuntimeError, ValueError, TypeError):
             pass  # Ignore cleanup errors
 
 
@@ -456,5 +456,5 @@ def skip_if_no_docker():
     """Pytest skip decorator if Docker is not available."""
     return pytest.mark.skipif(
         not check_docker_available(),
-        reason="Docker is not available - skipping container tests"
+        reason="Docker is not available - skipping container tests",
     )

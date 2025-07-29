@@ -6,29 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-# Core processing functionality
-from .core import TLdif
-
-# Configuration and models
-from .config import FlextLdifConfig
-from .models import FlextLdifEntry
-
-# Models (consolidated specifications and values)
-from .models import (
-    FlextLdifAttributes,
-    FlextLdifDistinguishedName,
-    LDIFContent,
-    LDIFLines,
-)
-
-# Exceptions
-from .exceptions import (
-    FlextLdifEntryError,
-    FlextLdifError,
-    FlextLdifParseError,
-    FlextLdifValidationError,
-)
-
 # Unified API
 from .api import (
     FlextLdifAPI,
@@ -38,37 +15,54 @@ from .api import (
     flext_ldif_write,
 )
 
+# Configuration and models
+from .config import FlextLdifConfig
+
+# Core processing functionality
+from .core import TLdif
+
+# Exceptions
+from .exceptions import (
+    FlextLdifEntryError,
+    FlextLdifError,
+    FlextLdifParseError,
+    FlextLdifValidationError,
+)
+
+# Models (consolidated specifications and values)
+from .models import (
+    FlextLdifAttributes,
+    FlextLdifDistinguishedName,
+    FlextLdifEntry,
+    LDIFContent,
+    LDIFLines,
+)
+
 __version__ = "0.8.0"
 
 __all__ = [
-    # Core functionality
-    "TLdif",
-    
     # API
     "FlextLdifAPI",
-    "flext_ldif_get_api",
-    "flext_ldif_parse",
-    "flext_ldif_validate", 
-    "flext_ldif_write",
-    
+    # Domain values (consolidated in models)
+    "FlextLdifAttributes",
     # Core classes
     "FlextLdifConfig",
-    "FlextLdifEntry",
-    
-    # Types
-    "LDIFContent",
-    "LDIFLines",
-    
-    # Domain values (consolidated in models)
-    "FlextLdifAttributes", 
     "FlextLdifDistinguishedName",
-    
+    "FlextLdifEntry",
     # Exceptions
     "FlextLdifEntryError",
     "FlextLdifError",
     "FlextLdifParseError",
     "FlextLdifValidationError",
-    
+    # Types
+    "LDIFContent",
+    "LDIFLines",
+    # Core functionality
+    "TLdif",
     # Meta
     "__version__",
+    "flext_ldif_get_api",
+    "flext_ldif_parse",
+    "flext_ldif_validate",
+    "flext_ldif_write",
 ]

@@ -24,7 +24,9 @@ class TestLDIFEntry:
 
         entry = LDIFEntry.model_validate({"dn": dn, "attributes": attributes})
 
-        assert entry.dn == dn
+        if entry.dn != dn:
+
+            raise AssertionError(f"Expected {dn}, got {entry.dn}")
         assert entry.attributes == attributes
 
     def test_ldif_entry_default_attributes(self) -> None:
@@ -32,7 +34,9 @@ class TestLDIFEntry:
         dn = "cn=test,dc=example,dc=com"
         entry = LDIFEntry.model_validate({"dn": dn})
 
-        assert entry.dn == dn
+        if entry.dn != dn:
+
+            raise AssertionError(f"Expected {dn}, got {entry.dn}")
         assert entry.attributes == {}
 
     def test_get_attribute_exists(self) -> None:
@@ -47,7 +51,9 @@ class TestLDIFEntry:
             },
         )
 
-        assert entry.get_attribute("cn") == ["test"]
+        if entry.get_attribute("cn") != ["test"]:
+
+            raise AssertionError(f"Expected {["test"]}, got {entry.get_attribute("cn")}")
         assert entry.get_attribute("mail") == ["test@example.com", "test2@example.com"]
 
     def test_get_attribute_not_exists(self) -> None:
@@ -66,7 +72,9 @@ class TestLDIFEntry:
 
         entry.set_attribute("mail", ["test@example.com"])
 
-        assert entry.get_attribute("mail") == ["test@example.com"]
+        if entry.get_attribute("mail") != ["test@example.com"]:
+
+            raise AssertionError(f"Expected {["test@example.com"]}, got {entry.get_attribute("mail")}")
         assert entry.get_attribute("cn") == ["test"]  # Original should remain
 
     def test_set_attribute_overwrites(self) -> None:
@@ -77,7 +85,9 @@ class TestLDIFEntry:
 
         entry.set_attribute("cn", ["new_value"])
 
-        assert entry.get_attribute("cn") == ["new_value"]
+        if entry.get_attribute("cn") != ["new_value"]:
+
+            raise AssertionError(f"Expected {["new_value"]}, got {entry.get_attribute("cn")}")
 
     def test_has_attribute_true(self) -> None:
         """Test has_attribute returns True for existing attribute."""
@@ -85,7 +95,9 @@ class TestLDIFEntry:
             {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}},
         )
 
-        assert entry.has_attribute("cn") is True
+        if not (entry.has_attribute("cn")):
+
+            raise AssertionError(f"Expected True, got {entry.has_attribute("cn")}")
 
     def test_has_attribute_false(self) -> None:
         """Test has_attribute returns False for non-existing attribute."""
@@ -93,8 +105,9 @@ class TestLDIFEntry:
             {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}},
         )
 
-        assert entry.has_attribute("nonexistent") is False
+        if entry.has_attribute("nonexistent"):
 
+            raise AssertionError(f"Expected False, got {entry.has_attribute("nonexistent")}")\ n
     def test_get_single_attribute_exists(self) -> None:
         """Test getting single attribute value when it exists."""
         entry = LDIFEntry.model_validate(
@@ -107,7 +120,9 @@ class TestLDIFEntry:
             },
         )
 
-        assert entry.get_single_attribute("cn") == "test"
+        if entry.get_single_attribute("cn") != "test":
+
+            raise AssertionError(f"Expected {"test"}, got {entry.get_single_attribute("cn")}")
         assert entry.get_single_attribute("mail") == "test@example.com"  # First value
 
     def test_get_single_attribute_not_exists(self) -> None:
@@ -141,11 +156,15 @@ class TestLDIFEntry:
 
         ldif_str = entry.to_ldif()
 
-        assert "dn: cn=test,dc=example,dc=com" in ldif_str
+        if "dn: cn=test,dc=example,dc=com" not in ldif_str:
+
+            raise AssertionError(f"Expected {"dn: cn=test,dc=example,dc=com"} in {ldif_str}")
         assert "cn: test" in ldif_str
-        assert "objectClass: person" in ldif_str
+        if "objectClass: person" not in ldif_str:
+            raise AssertionError(f"Expected {"objectClass: person"} in {ldif_str}")
         assert "objectClass: inetOrgPerson" in ldif_str
-        assert "mail: test@example.com" in ldif_str
+        if "mail: test@example.com" not in ldif_str:
+            raise AssertionError(f"Expected {"mail: test@example.com"} in {ldif_str}")
         assert ldif_str.endswith("\n")
 
     def test_from_ldif_block_valid(self) -> None:
@@ -158,9 +177,12 @@ mail: test@example.com"""
 
         entry = LDIFEntry.from_ldif_block(ldif_block)
 
-        assert entry.dn == "cn=test,dc=example,dc=com"
+        if entry.dn != "cn=test,dc=example,dc=com":
+
+            raise AssertionError(f"Expected {"cn=test,dc=example,dc=com"}, got {entry.dn}")
         assert entry.get_attribute("cn") == ["test"]
-        assert entry.get_attribute("objectClass") == ["person", "inetOrgPerson"]
+        if entry.get_attribute("objectClass") != ["person", "inetOrgPerson"]:
+            raise AssertionError(f"Expected {["person", "inetOrgPerson"]}, got {entry.get_attribute("objectClass")}")
         assert entry.get_attribute("mail") == ["test@example.com"]
 
     def test_from_ldif_block_empty(self) -> None:
@@ -187,7 +209,9 @@ objectClass: person"""
 
         entry = LDIFEntry.from_ldif_block(ldif_block)
 
-        assert entry.dn == "cn=test,dc=example,dc=com"
+        if entry.dn != "cn=test,dc=example,dc=com":
+
+            raise AssertionError(f"Expected {"cn=test,dc=example,dc=com"}, got {entry.dn}")
         assert entry.attributes == {}
 
     def test_from_ldif_block_with_whitespace(self) -> None:
@@ -201,9 +225,12 @@ objectClass: person"""
 
         entry = LDIFEntry.from_ldif_block(ldif_block)
 
-        assert entry.dn == "cn=test,dc=example,dc=com"
+        if entry.dn != "cn=test,dc=example,dc=com":
+
+            raise AssertionError(f"Expected {"cn=test,dc=example,dc=com"}, got {entry.dn}")
         assert entry.get_attribute("cn") == ["test"]
-        assert entry.get_attribute("objectClass") == ["person"]
+        if entry.get_attribute("objectClass") != ["person"]:
+            raise AssertionError(f"Expected {["person"]}, got {entry.get_attribute("objectClass")}")
 
     def test_from_ldif_block_multiple_values(self) -> None:
         """Test creating entry with multiple values for same attribute."""
@@ -215,7 +242,9 @@ mail: test2@example.com"""
 
         entry = LDIFEntry.from_ldif_block(ldif_block)
 
-        assert entry.get_attribute("objectClass") == ["person", "inetOrgPerson"]
+        if entry.get_attribute("objectClass") != ["person", "inetOrgPerson"]:
+
+            raise AssertionError(f"Expected {["person", "inetOrgPerson"]}, got {entry.get_attribute("objectClass")}")
         assert entry.get_attribute("mail") == ["test@example.com", "test2@example.com"]
 
     def test_from_ldif_block_colon_in_value(self) -> None:
@@ -226,7 +255,9 @@ url: http://example.com:8080/path"""
 
         entry = LDIFEntry.from_ldif_block(ldif_block)
 
-        assert entry.get_attribute("description") == ["This is a test: with colon"]
+        if entry.get_attribute("description") != ["This is a test: with colon"]:
+
+            raise AssertionError(f"Expected {["This is a test: with colon"]}, got {entry.get_attribute("description")}")
         assert entry.get_attribute("url") == ["http://example.com:8080/path"]
 
     def test_from_ldif_block_invalid_line_no_colon(self) -> None:
@@ -238,5 +269,7 @@ invalid line without colon"""
         # Should ignore lines without colons
         entry = LDIFEntry.from_ldif_block(ldif_block)
 
-        assert entry.dn == "cn=test,dc=example,dc=com"
+        if entry.dn != "cn=test,dc=example,dc=com":
+
+            raise AssertionError(f"Expected {"cn=test,dc=example,dc=com"}, got {entry.dn}")
         assert entry.get_attribute("cn") == ["test"]
