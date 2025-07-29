@@ -6,10 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any, NewType
+from typing import NewType
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root namespace imports
-from flext_core import FlextValueObject
+from flext_core import FlextResult, FlextValueObject
 from pydantic import Field, field_validator
 
 # Type aliases for LDIF-specific concepts
@@ -86,12 +86,12 @@ class FlextLdifDistinguishedName(FlextValueObject):
         """Get depth of DN (number of components)."""
         return len(self.value.split(","))
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate DN domain rules (required by FlextValueObject)."""
         # Validation is done in field_validator, so just check final state
         if not self.value or "=" not in self.value:
-            msg = "DN must contain at least one attribute=value pair"  
-            raise ValueError(msg)
+            return FlextResult.fail("DN must contain at least one attribute=value pair")
+        return FlextResult.ok(None)
 
 
 class FlextLdifAttributes(FlextValueObject):
@@ -164,13 +164,13 @@ class FlextLdifAttributes(FlextValueObject):
             frozenset((key, tuple(values)) for key, values in self.attributes.items()),
         )
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate attributes domain rules (required by FlextValueObject)."""
         # Validate attribute names
         for attr_name in self.attributes:
             if not attr_name.strip():
-                msg = f"Invalid attribute name: {attr_name}"
-                raise ValueError(msg)
+                return FlextResult.fail(f"Invalid attribute name: {attr_name}")
+        return FlextResult.ok(None)
 
 
 class FlextLdifEntry(FlextValueObject):
@@ -184,7 +184,7 @@ class FlextLdifEntry(FlextValueObject):
 
     @field_validator("dn", mode="before")
     @classmethod
-    def validate_dn(cls, v: Any) -> FlextLdifDistinguishedName:
+    def validate_dn(cls, v: str | FlextLdifDistinguishedName | dict[str, str]) -> FlextLdifDistinguishedName:
         """Convert string DN to FlextLdifDistinguishedName object."""
         if isinstance(v, str):
             return FlextLdifDistinguishedName.model_validate({"value": v})
@@ -195,14 +195,11 @@ class FlextLdifEntry(FlextValueObject):
 
     @field_validator("attributes", mode="before")
     @classmethod
-    def validate_attributes(cls, v: Any) -> FlextLdifAttributes:
+    def validate_attributes(cls, v: dict[str, list[str]] | FlextLdifAttributes) -> FlextLdifAttributes:
         """Convert dict attributes to FlextLdifAttributes object."""
         if isinstance(v, dict):
             return FlextLdifAttributes.model_validate({"attributes": v})
-        if isinstance(v, FlextLdifAttributes):
-            return v
-        msg = f"Invalid attributes type: {type(v)}"
-        raise ValueError(msg)
+        return v  # Must be FlextLdifAttributes based on type annotation
 
     def get_attribute(self, name: str) -> list[str] | None:
         """Get LDIF attribute values by name.
@@ -312,17 +309,17 @@ class FlextLdifEntry(FlextValueObject):
         lines.append("")  # Empty line after entry
         return "\n".join(lines)
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate LDIF entry domain rules."""
         # Validate DN is not empty
         if not self.dn or not self.dn.value:
-            msg = "LDIF entry must have a valid DN"
-            raise ValueError(msg)
+            return FlextResult.fail("LDIF entry must have a valid DN")
 
         # Validate at least one attribute exists
         if not self.attributes or not self.attributes.attributes:
-            msg = "LDIF entry must have at least one attribute"
-            raise ValueError(msg)
+            return FlextResult.fail("LDIF entry must have at least one attribute")
+
+        return FlextResult.ok(None)
 
     @classmethod
     def from_ldif_block(cls, ldif_block: str) -> FlextLdifEntry:
@@ -378,6 +375,7 @@ class FlextLdifEntry(FlextValueObject):
 
         Returns:
             FlextLdifEntry instance
+
         """
         return cls(
             dn=FlextLdifDistinguishedName.model_validate({"value": dn}),
@@ -410,7 +408,7 @@ class FlextLdifEntry(FlextValueObject):
         # Check for person-related object classes
         person_classes = {
             "person",
-            "organizationalPerson", 
+            "organizationalPerson",
             "inetOrgPerson",
             "user",
             "posixAccount",
@@ -431,7 +429,7 @@ class FlextLdifEntry(FlextValueObject):
         group_classes = {
             "group",
             "groupOfNames",
-            "groupOfUniqueNames", 
+            "groupOfUniqueNames",
             "posixGroup",
             "organizationalRole",
         }
@@ -450,7 +448,7 @@ class FlextLdifEntry(FlextValueObject):
         # Check for OU-related object classes
         ou_classes = {
             "organizationalUnit",
-            "organizationalRole", 
+            "organizationalRole",
             "dcObject",
             "domain",
         }
@@ -477,11 +475,10 @@ class FlextLdifEntry(FlextValueObject):
 
 
 __all__ = [
+    "FlextLdifAttributes",
+    "FlextLdifDistinguishedName",
     # Core models and value objects
     "FlextLdifEntry",
-    "FlextLdifDistinguishedName", 
-    "FlextLdifAttributes",
-    
     # Type aliases
     "LDIFContent",
     "LDIFLines",

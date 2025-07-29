@@ -13,6 +13,8 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
+from flext_ldif import FlextLdifParser, FlextLdifWriter
+
 if TYPE_CHECKING:
     from collections.abc import Generator
 
@@ -26,16 +28,16 @@ try:
         temporary_ldif_data,
     )
     DOCKER_AVAILABLE = True
-    
+
     # Make fixtures available by importing them into this module's namespace
     __all__ = [
-        'docker_openldap_container',
-        'ldif_test_config', 
-        'real_ldif_data',
-        'skip_if_no_docker',
-        'temporary_ldif_data',
+        "docker_openldap_container",
+        "ldif_test_config",
+        "real_ldif_data",
+        "skip_if_no_docker",
+        "temporary_ldif_data",
     ]
-    
+
 except ImportError:
     DOCKER_AVAILABLE = False
 
@@ -198,7 +200,6 @@ def ldif_binary_file(test_ldif_dir: Path, sample_ldif_with_binary: str) -> Path:
 @pytest.fixture
 async def ldif_parser() -> Any:
     """Provide a LDIF parser for testing."""
-    from flext_ldif import FlextLdifParser
 
     return FlextLdifParser()
 
@@ -206,7 +207,6 @@ async def ldif_parser() -> Any:
 @pytest.fixture
 async def ldif_writer() -> Any:
     """Provide a LDIF writer for testing."""
-    from flext_ldif import FlextLdifWriter
 
     return FlextLdifWriter()
 

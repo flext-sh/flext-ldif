@@ -6,10 +6,14 @@ exports LDIF, and demonstrates FLEXT-LDIF processing capabilities.
 Perfect for testing and demonstration without needing a manual LDAP setup.
 """
 
+from flext_ldif import (
+from flext_ldif.domain.specifications import (
+import time
+
+
 from __future__ import annotations
 
 import asyncio
-import os
 import subprocess
 import sys
 import tempfile
@@ -36,8 +40,6 @@ def start_openldap_container() -> bool:
             shell=True,
         )
 
-        print("🐳 Starting OpenLDAP container for FLEXT-LDIF demo...")
-        
         # Start new container
         subprocess.run([
             "docker", "run", "-d",
@@ -52,44 +54,39 @@ def start_openldap_container() -> bool:
             "-e", "LDAP_BACKEND=mdb",
             "-e", "LDAP_TLS=false",
             "-e", "LDAP_REMOVE_CONFIG_AFTER_SETUP=true",
-            "osixia/openldap:1.5.0"
+            "osixia/openldap:1.5.0",
         ], check=True)
 
         # Wait for container to be ready
-        print("⏳ Waiting for OpenLDAP to be ready...")
-        for attempt in range(30):
+        for _attempt in range(30):
             try:
                 result = subprocess.run([
                     "docker", "exec", "flext-ldif-demo",
-                    "ldapsearch", "-x", 
+                    "ldapsearch", "-x",
                     "-H", "ldap://localhost:389",
                     "-D", "cn=admin,dc=flext-ldif,dc=demo",
                     "-w", "admin123",
                     "-b", "dc=flext-ldif,dc=demo",
                     "-s", "base",
-                    "(objectClass=*)"
+                    "(objectClass=*)",
                 ], capture_output=True, check=True)
-                
+
                 if result.returncode == 0:
-                    print("✅ OpenLDAP container is ready!")
                     return True
-                    
+
             except subprocess.CalledProcessError:
                 time.sleep(1)
-                
-        print("❌ OpenLDAP container failed to start properly")
+
         return False
-        
-    except Exception as e:
-        print(f"❌ Failed to start OpenLDAP container: {e}")
+
+    except (RuntimeError, ValueError, TypeError):
         return False
 
 
 def populate_test_data() -> bool:
     """Populate OpenLDAP container with comprehensive test data."""
     try:
-        print("📊 Populating OpenLDAP with comprehensive test data...")
-        
+
         test_ldif = """
 # Base organization
 dn: dc=flext-ldif,dc=demo
@@ -302,13 +299,13 @@ member: uid=grace.taylor,ou=people,dc=flext-ldif,dc=demo
 """
 
         # Write LDIF to temporary file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write(test_ldif)
             temp_file = f.name
 
         # Copy LDIF to container
         subprocess.run([
-            "docker", "cp", temp_file, "flext-ldif-demo:/tmp/test_data.ldif"
+            "docker", "cp", temp_file, "flext-ldif-demo:/tmp/test_data.ldif",
         ], check=True)
 
         # Import LDIF data
@@ -318,29 +315,22 @@ member: uid=grace.taylor,ou=people,dc=flext-ldif,dc=demo
             "-H", "ldap://localhost:389",
             "-D", "cn=admin,dc=flext-ldif,dc=demo",
             "-w", "admin123",
-            "-f", "/tmp/test_data.ldif"
-        ], capture_output=True)
+            "-f", "/tmp/test_data.ldif",
+        ], check=False, capture_output=True)
 
         # Clean up temp file
-        os.unlink(temp_file)
+        Path(temp_file).unlink()
 
-        if result.returncode == 0:
-            print("✅ Test data populated successfully")
-            return True
-        else:
-            print(f"⚠️  Failed to populate test data: {result.stderr.decode()}")
-            return False
+        return result.returncode == 0
 
-    except Exception as e:
-        print(f"⚠️  Error populating test data: {e}")
+    except (RuntimeError, ValueError, TypeError):
         return False
 
 
 def export_ldif_from_container() -> str:
     """Export LDIF data from the container."""
     try:
-        print("📤 Exporting LDIF data from container...")
-        
+
         result = subprocess.run([
             "docker", "exec", "flext-ldif-demo",
             "ldapsearch", "-x",
@@ -350,207 +340,153 @@ def export_ldif_from_container() -> str:
             "-b", "dc=flext-ldif,dc=demo",
             "-s", "sub",
             "(objectClass=*)",
-            "-LLL"  # LDIF format without comments
+            "-LLL",  # LDIF format without comments
         ], capture_output=True, check=True)
-        
-        ldif_data = result.stdout.decode()
-        print(f"✅ Exported {len(ldif_data.splitlines())} lines of LDIF data")
-        return ldif_data
-        
-    except Exception as e:
-        print(f"❌ Failed to export LDIF data: {e}")
+
+        return result.stdout.decode()
+
+    except (RuntimeError, ValueError, TypeError):
         return ""
 
 
 def stop_openldap_container() -> None:
     """Stop and remove OpenLDAP container."""
     try:
-        print("🛑 Stopping OpenLDAP container...")
         subprocess.run(["docker", "stop", "flext-ldif-demo"], check=False)
         subprocess.run(["docker", "rm", "flext-ldif-demo"], check=False)
-        print("✅ Container stopped and removed")
-    except Exception as e:
-        print(f"⚠️  Error stopping container: {e}")
+    except (RuntimeError, ValueError, TypeError):
+        pass
 
 
 async def run_flext_ldif_examples(ldif_data: str) -> None:
     """Run FLEXT-LDIF examples against real OpenLDAP data."""
-    from flext_ldif import (
-        FlextLdifParser,
+
         FlextLdifProcessor,
         FlextLdifValidator,
         parse_ldif,
         validate_ldif,
         write_ldif,
     )
-    from flext_ldif.domain.specifications import (
-        FlextLdifPersonSpecification,
+
         FlextLdifGroupSpecification,
         FlextLdifOrganizationalUnitSpecification,
+        FlextLdifPersonSpecification,
     )
-    
-    print("\n🚀 Running FLEXT-LDIF Examples with Real OpenLDAP Data")
-    print("=" * 60)
-    
+
     # Example 1: Simple parsing
-    print("\n📋 Example 1: Simple LDIF Parsing")
-    print("-" * 40)
-    
+
     entries = parse_ldif(ldif_data)
-    print(f"✅ Parsed {len(entries)} entries from OpenLDAP")
-    
+
     # Show some entry details
-    for i, entry in enumerate(entries[:3]):
-        print(f"   Entry {i+1}: {entry.dn}")
-        if entry.has_attribute('cn'):
-            print(f"      CN: {entry.get_single_attribute('cn')}")
-        if entry.has_attribute('objectClass'):
-            print(f"      Object Classes: {', '.join(entry.get_attribute_values('objectClass'))}")
-    
+    for _i, entry in enumerate(entries[:3]):
+        if entry.has_attribute("cn"):
+            pass
+        if entry.has_attribute("objectClass"):
+            pass
+
     if len(entries) > 3:
-        print(f"   ... and {len(entries) - 3} more entries")
-    
+        pass
+
     # Example 2: Advanced processing
-    print("\n🔧 Example 2: Advanced Processing with FlextLdifProcessor")
-    print("-" * 55)
-    
+
     processor = FlextLdifProcessor()
     result = processor.parse_ldif_content(ldif_data)
-    
+
     if result.is_success:
-        print(f"✅ FlextLdifProcessor parsed {len(result.data)} entries")
-        
+
         # Filter person entries
         person_result = processor.filter_person_entries(result.data)
         if person_result.is_success:
-            print(f"✅ Found {len(person_result.data)} person entries")
-            
+
             # Show person details
             for person in person_result.data[:3]:
-                if person.has_attribute('cn'):
-                    name = person.get_single_attribute('cn')
-                    title = person.get_single_attribute('title') or 'N/A'
-                    dept = person.get_single_attribute('departmentNumber') or 'N/A'
-                    print(f"   👤 {name} - {title} ({dept})")
-        
+                if person.has_attribute("cn"):
+                    person.get_single_attribute("cn")
+                    person.get_single_attribute("title") or "N/A"
+                    person.get_single_attribute("departmentNumber") or "N/A"
+
         # Filter valid entries
         valid_result = processor.filter_valid_entries(result.data)
         if valid_result.is_success:
-            print(f"✅ Found {len(valid_result.data)} valid entries")
-    
+            pass
+
     # Example 3: Domain specifications
-    print("\n🎯 Example 3: Domain Specifications")
-    print("-" * 38)
-    
+
     person_spec = FlextLdifPersonSpecification()
     group_spec = FlextLdifGroupSpecification()
     ou_spec = FlextLdifOrganizationalUnitSpecification()
-    
-    person_count = sum(1 for entry in entries if person_spec.is_satisfied_by(entry))
-    group_count = sum(1 for entry in entries if group_spec.is_satisfied_by(entry))
-    ou_count = sum(1 for entry in entries if ou_spec.is_satisfied_by(entry))
-    
-    print(f"✅ Domain specifications results:")
-    print(f"   👥 Person entries: {person_count}")
-    print(f"   🏢 Group entries: {group_count}")
-    print(f"   📁 Organizational Unit entries: {ou_count}")
-    print(f"   📊 Total entries: {len(entries)}")
-    
+
+    sum(1 for entry in entries if person_spec.is_satisfied_by(entry))
+    sum(1 for entry in entries if group_spec.is_satisfied_by(entry))
+    sum(1 for entry in entries if ou_spec.is_satisfied_by(entry))
+
     # Example 4: Validation
-    print("\n✅ Example 4: LDIF Validation")
-    print("-" * 32)
-    
-    is_valid = validate_ldif(ldif_data)
-    print(f"✅ LDIF validation result: {'VALID' if is_valid else 'INVALID'}")
-    
+
+    validate_ldif(ldif_data)
+
     validator = FlextLdifValidator()
     validation_result = validator.validate_entries(entries)
     if validation_result.is_success:
-        print("✅ All entries passed detailed validation")
-    else:
-        print(f"⚠️  Validation issues: {validation_result.error}")
-    
+        pass
+
     # Example 5: Write LDIF
-    print("\n📝 Example 5: Writing LDIF")
-    print("-" * 28)
-    
+
     # Filter person entries for writing
     person_entries = [entry for entry in entries if person_spec.is_satisfied_by(entry)]
-    
+
     if person_entries:
         output_ldif = write_ldif(person_entries)
-        
+
         # Save to file
         output_file = Path("flext_ldif_demo_output.ldif")
-        output_file.write_text(output_ldif)
-        
-        print(f"✅ Wrote {len(person_entries)} person entries to {output_file}")
-        print(f"✅ Output file size: {len(output_ldif)} bytes")
-        
+        output_file.write_text(output_ldif, encoding="utf-8")
+
         # Show a sample of the output
-        print("\n📄 Sample output (first 5 lines):")
-        for line in output_ldif.split('\n')[:5]:
+        for line in output_ldif.split("\n")[:5]:
             if line.strip():
-                print(f"   {line}")
-        print("   ...")
-    
+                pass
+
     # Example 6: Performance measurement
-    print("\n⚡ Example 6: Performance Measurement")
-    print("-" * 38)
-    
-    import time
-    
+
+
+
     # Measure parsing performance
     start_time = time.time()
     for _ in range(10):
         parse_ldif(ldif_data)
     parse_time = (time.time() - start_time) / 10
-    
+
     # Measure validation performance
     start_time = time.time()
     for _ in range(10):
         validate_ldif(ldif_data)
-    validation_time = (time.time() - start_time) / 10
-    
-    entries_per_second = len(entries) / max(parse_time, 0.001)
-    
-    print(f"✅ Performance results (average of 10 runs):")
-    print(f"   📊 Entries processed: {len(entries)}")
-    print(f"   ⏱️  Parse time: {parse_time:.4f}s")
-    print(f"   ✅ Validation time: {validation_time:.4f}s")
-    print(f"   🚀 Processing rate: {entries_per_second:.1f} entries/second")
+    (time.time() - start_time) / 10
+
+    len(entries) / max(parse_time, 0.001)
 
 
 async def main() -> None:
     """Main execution function."""
-    print("🌟 FLEXT-LDIF Docker OpenLDAP Demo")
-    print("=" * 50)
-    
     # Start container
     if not start_openldap_container():
-        print("💥 Failed to start OpenLDAP container. Exiting.")
         return
-    
+
     # Populate with test data
     if not populate_test_data():
-        print("💥 Failed to populate test data. Continuing with basic data.")
-    
+        pass
+
     try:
         # Export LDIF data
         ldif_data = export_ldif_from_container()
         if not ldif_data:
-            print("💥 Failed to export LDIF data. Exiting.")
             return
-        
+
         # Run examples
         await run_flext_ldif_examples(ldif_data)
-        
+
     finally:
         # Always cleanup
         stop_openldap_container()
-        
-    print("\n🎉 FLEXT-LDIF Demo completed successfully!")
-    print("\n📁 Check the generated file: flext_ldif_demo_output.ldif")
 
 
 if __name__ == "__main__":
@@ -558,7 +494,6 @@ if __name__ == "__main__":
     try:
         subprocess.run(["docker", "--version"], check=True, capture_output=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
-        print("❌ Docker is not available. Please install Docker to run this demo.")
         sys.exit(1)
-        
+
     asyncio.run(main())
