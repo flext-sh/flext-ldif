@@ -1,4 +1,4 @@
-"""FlextLdif models using flext-core patterns.
+"""FlextLdif models and value objects using flext-core patterns.
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
@@ -6,13 +6,171 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, NewType
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root namespace imports
 from flext_core import FlextValueObject
 from pydantic import Field, field_validator
 
-from .domain.values import FlextLdifAttributes, FlextLdifDistinguishedName
+# Type aliases for LDIF-specific concepts
+LDIFContent = NewType("LDIFContent", str)
+LDIFLines = NewType("LDIFLines", list[str])
+
+
+class FlextLdifDistinguishedName(FlextValueObject):
+    """Distinguished Name value object for LDIF entries."""
+
+    value: str = Field(..., description="DN string value")
+
+    @field_validator("value")
+    @classmethod
+    def validate_dn(cls, v: str) -> str:
+        """Validate DN format."""
+        if not v or not isinstance(v, str):
+            msg = "DN must be a non-empty string"
+            raise ValueError(msg)
+
+        if "=" not in v:
+            msg = "DN must contain at least one attribute=value pair"
+            raise ValueError(msg)
+
+        # Validate each component
+        components = v.split(",")
+        for raw_component in components:
+            component = raw_component.strip()
+            if "=" not in component:
+                msg = f"Invalid DN component: {component}"
+                raise ValueError(msg)
+
+            attr_name, attr_value = component.split("=", 1)
+            if not attr_name.strip() or not attr_value.strip():
+                msg = f"Invalid DN component: {component}"
+                raise ValueError(msg)
+
+        return v
+
+    def __str__(self) -> str:
+        """Return DN string value."""
+        return self.value
+
+    def __eq__(self, other: object) -> bool:
+        """Compare with string or other FlextLdifDistinguishedName."""
+        if isinstance(other, str):
+            return self.value == other
+        if isinstance(other, FlextLdifDistinguishedName):
+            return self.value == other.value
+        return False
+
+    def __hash__(self) -> int:
+        """Return hash of DN value."""
+        return hash(self.value)
+
+    def get_rdn(self) -> str:
+        """Get relative distinguished name (first component)."""
+        return self.value.split(",")[0].strip()
+
+    def get_parent_dn(self) -> FlextLdifDistinguishedName | None:
+        """Get parent DN."""
+        components = self.value.split(",")
+        if len(components) <= 1:
+            return None
+
+        parent_dn = ",".join(components[1:]).strip()
+        return FlextLdifDistinguishedName.model_validate({"value": parent_dn})
+
+    def is_child_of(self, parent: FlextLdifDistinguishedName) -> bool:
+        """Check if this DN is a child of another DN."""
+        return self.value.lower().endswith(parent.value.lower())
+
+    def get_depth(self) -> int:
+        """Get depth of DN (number of components)."""
+        return len(self.value.split(","))
+
+    def validate_domain_rules(self) -> None:
+        """Validate DN domain rules (required by FlextValueObject)."""
+        # Validation is done in field_validator, so just check final state
+        if not self.value or "=" not in self.value:
+            msg = "DN must contain at least one attribute=value pair"  
+            raise ValueError(msg)
+
+
+class FlextLdifAttributes(FlextValueObject):
+    """LDIF attributes value object."""
+
+    attributes: dict[str, list[str]] = Field(
+        default_factory=dict,
+        description="LDIF attributes as name-value pairs",
+    )
+
+    def get_single_value(self, name: str) -> str | None:
+        """Get single value for attribute."""
+        values = self.attributes.get(name, [])
+        return values[0] if values else None
+
+    def get_values(self, name: str) -> list[str]:
+        """Get all values for attribute."""
+        return self.attributes.get(name, [])
+
+    def has_attribute(self, name: str) -> bool:
+        """Check if attribute exists."""
+        return name in self.attributes
+
+    def add_value(self, name: str, value: str) -> FlextLdifAttributes:
+        """Add value to attribute (returns new instance)."""
+        new_attrs = {}
+        for attr_name, attr_values in self.attributes.items():
+            new_attrs[attr_name] = attr_values.copy()
+
+        if name not in new_attrs:
+            new_attrs[name] = []
+        new_attrs[name] += [value]
+        return FlextLdifAttributes.model_validate({"attributes": new_attrs})
+
+    def remove_value(self, name: str, value: str) -> FlextLdifAttributes:
+        """Remove value from attribute (returns new instance)."""
+        new_attrs = {}
+        for attr_name, attr_values in self.attributes.items():
+            if attr_name == name:
+                new_values = [v for v in attr_values if v != value]
+                if new_values:
+                    new_attrs[attr_name] = new_values
+            else:
+                new_attrs[attr_name] = attr_values.copy()
+        return FlextLdifAttributes.model_validate({"attributes": new_attrs})
+
+    def get_attribute_names(self) -> list[str]:
+        """Get all attribute names."""
+        return list(self.attributes.keys())
+
+    def get_total_values(self) -> int:
+        """Get total number of attribute values."""
+        return sum(len(values) for values in self.attributes.values())
+
+    def is_empty(self) -> bool:
+        """Check if attributes are empty."""
+        return len(self.attributes) == 0
+
+    def __eq__(self, other: object) -> bool:
+        """Compare with dict or other FlextLdifAttributes."""
+        if isinstance(other, dict):
+            return self.attributes == other
+        if isinstance(other, FlextLdifAttributes):
+            return self.attributes == other.attributes
+        return False
+
+    def __hash__(self) -> int:
+        """Return hash of attributes for use in sets/dicts."""
+        return hash(
+            frozenset((key, tuple(values)) for key, values in self.attributes.items()),
+        )
+
+    def validate_domain_rules(self) -> None:
+        """Validate attributes domain rules (required by FlextValueObject)."""
+        # Validate attribute names
+        for attr_name in self.attributes:
+            if not attr_name.strip():
+                msg = f"Invalid attribute name: {attr_name}"
+                raise ValueError(msg)
 
 
 class FlextLdifEntry(FlextValueObject):
@@ -210,7 +368,121 @@ class FlextLdifEntry(FlextValueObject):
             attributes=FlextLdifAttributes.model_validate({"attributes": attributes}),
         )
 
+    @classmethod
+    def from_ldif_dict(cls, dn: str, attributes: dict[str, list[str]]) -> FlextLdifEntry:
+        """Create entry from DN string and attributes dict (ldif3 format).
+
+        Args:
+            dn: Distinguished name string
+            attributes: Dictionary of attributes with list values
+
+        Returns:
+            FlextLdifEntry instance
+        """
+        return cls(
+            dn=FlextLdifDistinguishedName.model_validate({"value": dn}),
+            attributes=FlextLdifAttributes.model_validate({"attributes": attributes}),
+        )
+
+    # ==========================================================================
+    # SPECIFICATION METHODS (Consolidated from specifications.py)
+    # Using composition pattern to integrate business rules
+    # ==========================================================================
+
+    def is_valid_entry(self) -> bool:
+        """Check if entry is valid (consolidated specification logic)."""
+        if not self.dn or not self.attributes or self.attributes.is_empty():
+            return False
+
+        # Must have at least objectClass attribute
+        if not self.has_attribute("objectClass"):
+            return False
+
+        # DN must be properly formatted
+        dn_str = str(self.dn)
+        return not (not dn_str or "=" not in dn_str)
+
+    def is_person_entry(self) -> bool:
+        """Check if entry represents a person (consolidated specification logic)."""
+        if not self.is_valid_entry():
+            return False
+
+        # Check for person-related object classes
+        person_classes = {
+            "person",
+            "organizationalPerson", 
+            "inetOrgPerson",
+            "user",
+            "posixAccount",
+        }
+        object_classes_attr = self.get_attribute("objectClass")
+        if not object_classes_attr:
+            return False
+
+        object_classes = set(object_classes_attr)
+        return bool(person_classes & object_classes)
+
+    def is_group_entry(self) -> bool:
+        """Check if entry represents a group (consolidated specification logic)."""
+        if not self.is_valid_entry():
+            return False
+
+        # Check for group-related object classes
+        group_classes = {
+            "group",
+            "groupOfNames",
+            "groupOfUniqueNames", 
+            "posixGroup",
+            "organizationalRole",
+        }
+        object_classes_attr = self.get_attribute("objectClass")
+        if not object_classes_attr:
+            return False
+
+        object_classes = set(object_classes_attr)
+        return bool(group_classes & object_classes)
+
+    def is_organizational_unit(self) -> bool:
+        """Check if entry represents an organizational unit (consolidated specification logic)."""
+        if not self.is_valid_entry():
+            return False
+
+        # Check for OU-related object classes
+        ou_classes = {
+            "organizationalUnit",
+            "organizationalRole", 
+            "dcObject",
+            "domain",
+        }
+        object_classes_attr = self.get_attribute("objectClass")
+        if not object_classes_attr:
+            return False
+
+        object_classes = set(object_classes_attr)
+        return bool(ou_classes & object_classes)
+
+    def is_change_record(self) -> bool:
+        """Check if entry is a change record (consolidated specification logic)."""
+        if not self.is_valid_entry():
+            return False
+
+        # Check for changetype attribute
+        changetype = self.get_attribute("changetype")
+        if not changetype:
+            return False
+
+        # Valid change types
+        valid_change_types = {"add", "modify", "delete", "modrdn"}
+        return changetype[0] in valid_change_types
+
 
 __all__ = [
+    # Core models and value objects
     "FlextLdifEntry",
+    "FlextLdifDistinguishedName", 
+    "FlextLdifAttributes",
+    
+    # Type aliases
+    "LDIFContent",
+    "LDIFLines",
 ]

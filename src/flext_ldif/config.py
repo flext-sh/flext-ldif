@@ -9,11 +9,11 @@ from __future__ import annotations
 from pathlib import Path
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root namespace imports
-from flext_core import FlextCoreSettings
+from flext_core import FlextBaseSettings
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
-BaseSettings = FlextCoreSettings
+BaseSettings = FlextBaseSettings
 
 
 class FlextLdifConfig(BaseSettings):
