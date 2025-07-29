@@ -1,22 +1,20 @@
 """Enterprise E2E tests for complete LDIF processing workflows.
 
-# Constants
-EXPECTED_DATA_COUNT = 3
-
 End-to-end tests that validate complete workflows from input to output,
 covering real-world scenarios and enterprise use cases.
 """
 
-import time
-import gc
-import sys
-import queue
-import threading
-
-
 from __future__ import annotations
 
+# Constants
+EXPECTED_DATA_COUNT = 3
+
+import gc
+import queue
+import sys
 import tempfile
+import threading
+import time
 from pathlib import Path
 
 import pytest
@@ -137,8 +135,9 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         parse_result = api.parse(enterprise_ldif_sample)
 
         assert parse_result.is_success
-        if len(parse_result.data) != 9  # 9 entries total:
-            raise AssertionError(f"Expected {9  # 9 entries total}, got {len(parse_result.data)}")
+        if len(parse_result.data) != 9:  # 9 entries total
+            msg = f"Expected 9 entries total, got {len(parse_result.data)}"
+            raise AssertionError(msg)
         entries = parse_result.data
 
         # Step 2: Validate all entries
@@ -149,13 +148,15 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         person_filter_result = api.filter_persons(entries)
         assert person_filter_result.is_success
         person_entries = person_filter_result.data
-        if len(person_entries) != EXPECTED_DATA_COUNT  # John, Alice, Bob:
-            raise AssertionError(f"Expected {3  # John, Alice, Bob}, got {len(person_entries)}")
+        if len(person_entries) != EXPECTED_DATA_COUNT:  # John, Alice, Bob
+            msg = f"Expected 3 (John, Alice, Bob), got {len(person_entries)}"
+            raise AssertionError(msg)
 
         # Step 4: Filter by specific objectClass
         inetorg_entries = api.filter_by_objectclass(entries, "inetOrgPerson")
         if len(inetorg_entries) != EXPECTED_DATA_COUNT:
-            raise AssertionError(f"Expected {3}, got {len(inetorg_entries)}")
+            msg = f"Expected {3}, got {len(inetorg_entries)}"
+            raise AssertionError(msg)
 
         # Step 5: Sort hierarchically
         sort_result = api.sort_hierarchically(entries)
@@ -165,14 +166,16 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         # Root domain should come first (fewer commas in DN)
         root_entry = sorted_entries[0]
         if str(root_entry.dn) != "dc=enterprise,dc=com":
-            raise AssertionError(f"Expected {"dc=enterprise,dc=com"}, got {str(root_entry.dn)}")
+            msg = f"Expected dc=enterprise,dc=com, got {root_entry.dn!s}"
+            raise AssertionError(msg)
 
         # Step 6: Find specific entry by DN
         target_dn = "cn=John Smith,ou=people,dc=enterprise,dc=com"
         found_entry = api.find_entry_by_dn(entries, target_dn)
         assert found_entry is not None
         if found_entry.get_attribute("employeeNumber") != ["EMP001"]:
-            raise AssertionError(f"Expected {["EMP001"]}, got {found_entry.get_attribute("employeeNumber")}")
+            msg = f"Expected ['EMP001'], got {found_entry.get_attribute('employeeNumber')}"
+            raise AssertionError(msg)
 
         # Step 7: Write back to LDIF
         write_result = api.write(sorted_entries)
@@ -183,7 +186,8 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         reparse_result = api.parse(output_ldif)
         assert reparse_result.is_success
         if len(reparse_result.data) != len(sorted_entries):
-            raise AssertionError(f"Expected {len(sorted_entries)}, got {len(reparse_result.data)}")
+            msg = f"Expected {len(sorted_entries)}, got {len(reparse_result.data)}"
+            raise AssertionError(msg)
 
     def test_e2e_file_processing_workflow(self, enterprise_ldif_sample: str) -> None:
         """Test complete file processing workflow."""
@@ -222,13 +226,15 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
             output_content = output_path.read_text(encoding="utf-8")
             assert len(output_content) > 0
             if "cn=John Smith" not in output_content:
-                raise AssertionError(f"Expected {"cn=John Smith"} in {output_content}")
+                msg = f"Expected 'cn=John Smith' in {output_content}"
+                raise AssertionError(msg)
 
             # Step 5: Re-read and validate
             reread_result = api.parse_file(output_path)
             assert reread_result.is_success
             if len(reread_result.data) != len(sorted_persons):
-                raise AssertionError(f"Expected {len(sorted_persons)}, got {len(reread_result.data)}")
+                msg = f"Expected {len(sorted_persons)}, got {len(reread_result.data)}"
+                raise AssertionError(msg)
 
         finally:
             input_path.unlink(missing_ok=True)
@@ -254,7 +260,8 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         reparse_result = TLdif.parse(output_content)
         assert reparse_result.is_success
         if len(reparse_result.data) != len(entries):
-            raise AssertionError(f"Expected {len(entries)}, got {len(reparse_result.data)}")
+            msg = f"Expected {len(entries)}, got {len(reparse_result.data)}"
+            raise AssertionError(msg)
 
         # Step 5: File operations
         with tempfile.NamedTemporaryFile(delete=False, suffix=".ldif") as temp_file:
@@ -269,7 +276,8 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
             file_read_result = TLdif.read_file(temp_path)
             assert file_read_result.is_success
             if len(file_read_result.data) != len(entries):
-                raise AssertionError(f"Expected {len(entries)}, got {len(file_read_result.data)}")
+                msg = f"Expected {len(entries)}, got {len(file_read_result.data)}"
+                raise AssertionError(msg)
 
         finally:
             temp_path.unlink(missing_ok=True)
@@ -279,12 +287,14 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         # Step 1: Parse using convenience function
         entries = flext_ldif_parse(enterprise_ldif_sample)
         if len(entries) != 9:
-            raise AssertionError(f"Expected {9}, got {len(entries)}")
+            msg = f"Expected {9}, got {len(entries)}"
+            raise AssertionError(msg)
 
         # Step 2: Validate using convenience function
         is_valid = flext_ldif_validate(enterprise_ldif_sample)
         if not (is_valid):
-            raise AssertionError(f"Expected True, got {is_valid}")
+            msg = f"Expected True, got {is_valid}"
+            raise AssertionError(msg)
 
         # Step 3: Write using convenience function
         output_content = flext_ldif_write(entries)
@@ -293,7 +303,8 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         # Step 4: Round-trip with convenience functions
         reparsed_entries = flext_ldif_parse(output_content)
         if len(reparsed_entries) != len(entries):
-            raise AssertionError(f"Expected {len(entries)}, got {len(reparsed_entries)}")
+            msg = f"Expected {len(entries)}, got {len(reparsed_entries)}"
+            raise AssertionError(msg)
 
         # Step 5: File output with convenience function
         with tempfile.NamedTemporaryFile(delete=False, suffix=".ldif") as temp_file:
@@ -369,11 +380,11 @@ objectClass: person
         file_result = api.parse_file(nonexistent_file)
         assert not file_result.is_success
         if "not found" not in file_result.error.lower():
-            raise AssertionError(f"Expected {"not found"} in {file_result.error.lower()}")
+            msg = f"Expected 'not found' in {file_result.error.lower()}"
+            raise AssertionError(msg)
 
     def test_e2e_performance_workflow(self) -> None:
         """Test E2E workflow performance with larger datasets."""
-
 
         # Generate larger LDIF content
         large_content = """dn: dc=performance,dc=com
@@ -443,17 +454,16 @@ employeeNumber: EMP{i:03d}
         assert write_duration < 2.0  # Write should be under 2 seconds
 
         # Verify results
-        if len(parse_result.data) != 52  # 2 structure + 50 people:
-            raise AssertionError(f"Expected
-            {52  # 2 structure + 50 people}, got {len(parse_result.data)}")
+        if len(parse_result.data) != 52:  # 2 structure + 50 people
+            msg = f"Expected 52 (2 structure + 50 people), got {len(parse_result.data)}"
+            raise AssertionError(msg)
         assert len(person_result.data) == 50  # 50 people
-        if len(sort_result.data) != 50  # Same after sorting:
-            raise AssertionError(f"Expected {50  # Same after sorting}, got {len(sort_result.data)}")
+        if len(sort_result.data) != 50:  # Same after sorting
+            msg = f"Expected 50 (same after sorting), got {len(sort_result.data)}"
+            raise AssertionError(msg)
 
     def test_e2e_memory_efficiency_workflow(self) -> None:
         """Test E2E workflow memory efficiency."""
-
-
 
         # Generate medium-sized LDIF content
         content = ""
@@ -494,8 +504,6 @@ description: User number {i} for memory testing
 
     def test_e2e_concurrent_workflows(self, enterprise_ldif_sample: str) -> None:
         """Test concurrent E2E workflows."""
-
-
 
         results = queue.Queue()
 
@@ -541,9 +549,9 @@ description: User number {i} for memory testing
             if results.get():
                 success_count += 1
 
-        if success_count != 5  # All workflows should succeed:
-
-            raise AssertionError(f"Expected {5  # All workflows should succeed}, got {success_count}")
+        if success_count != 5:  # All workflows should succeed
+            msg = f"Expected 5 (all workflows should succeed), got {success_count}"
+            raise AssertionError(msg)
 
     def test_e2e_real_world_scenario(self) -> None:
         """Test real-world enterprise scenario workflow."""
@@ -582,7 +590,8 @@ description: User number {i} for memory testing
         assert len(persons_ldif) > 0
         assert len(groups_ldif) > 0
         if "objectClass: person" not in persons_ldif:
-            raise AssertionError(f"Expected {"objectClass: person"} in {persons_ldif}")
+            msg = f"Expected 'objectClass: person' in {persons_ldif}"
+            raise AssertionError(msg)
         assert "objectClass: groupOfNames" in groups_ldif
 
     def _create_realistic_enterprise_data(self) -> str:
