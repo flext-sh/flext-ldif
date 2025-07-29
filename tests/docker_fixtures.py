@@ -6,6 +6,7 @@ a real OpenLDAP server, enabling full integration testing.
 
 from __future__ import annotations
 
+import contextlib
 import os
 import subprocess
 import time
@@ -25,7 +26,7 @@ if TYPE_CHECKING:
 OPENLDAP_IMAGE = "osixia/openldap:1.5.0"
 OPENLDAP_CONTAINER_NAME = "flext-ldif-test-server"
 OPENLDAP_PORT = 3390  # Use unique port to avoid conflicts with flext-ldap
-OPENLDAP_ADMIN_PASSWORD = "admin123"
+OPENLDAP_ADMIN_PASSWORD = "admin123"  # noqa: S105
 OPENLDAP_DOMAIN = "flext-ldif.local"
 OPENLDAP_BASE_DN = f"dc={',dc='.join(OPENLDAP_DOMAIN.split('.'))}"
 OPENLDAP_ADMIN_DN = f"cn=admin,{OPENLDAP_BASE_DN}"
@@ -93,10 +94,8 @@ class OpenLDAPContainerManager:
             pass  # Container doesn't exist, nothing to stop
         except (RuntimeError, ValueError, TypeError):
             # Try to force remove by name if getting by ID fails
-            try:
+            with contextlib.suppress(RuntimeError, ValueError, TypeError):
                 self.client.api.remove_container(OPENLDAP_CONTAINER_NAME, force=True)
-            except (RuntimeError, ValueError, TypeError):
-                pass  # If all else fails, continue
 
         self.container = None
 
@@ -267,7 +266,7 @@ member: uid=bob.wilson,ou=people,{OPENLDAP_BASE_DN}
                     "-w",
                     OPENLDAP_ADMIN_PASSWORD,
                     "-f",
-                    "/tmp/test_data.ldif",
+                    "/tmp/test_data.ldif",  # noqa: S108
                 ],
                 demux=True,
             )
@@ -420,7 +419,7 @@ mail: john.doe@flext-ldif.local
 @asynccontextmanager
 async def temporary_ldif_data(container: Container, ldif_content: str) -> AsyncGenerator[str]:
     """Context manager for temporary LDIF data that is auto-cleaned."""
-    temp_file = f"/tmp/temp_{int(time.time())}.ldif"
+    temp_file = f"/tmp/temp_{int(time.time())}.ldif"  # noqa: S108
 
     try:
         # Write LDIF to container
@@ -437,10 +436,8 @@ async def temporary_ldif_data(container: Container, ldif_content: str) -> AsyncG
 
     finally:
         # Auto-cleanup
-        try:
+        with contextlib.suppress(RuntimeError, ValueError, TypeError):
             container.exec_run(["rm", "-f", temp_file])
-        except (RuntimeError, ValueError, TypeError):
-            pass  # Ignore cleanup errors
 
 
 def check_docker_available() -> bool:

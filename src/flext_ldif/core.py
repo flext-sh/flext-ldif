@@ -7,19 +7,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from io import StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from flext_core import FlextResult, get_logger
 
-try:
-    from ldif3 import LDIFParser as Ldif3Parser, LDIFWriter as Ldif3Writer
-except ImportError:
-    Ldif3Parser = None
-    Ldif3Writer = None
-
 from .models import FlextLdifEntry
+from .modernized_ldif import modernized_ldif_parse, modernized_ldif_write
 
 if TYPE_CHECKING:
     from .models import LDIFContent
@@ -48,49 +42,35 @@ class TLdif:
         try:
             content_str = str(content)
 
-            # Try ldif3 library first for better parsing
-            if Ldif3Parser is not None:
-                return cls._parse_with_ldif3(content_str)
-
-            # Fallback to custom parser
-            return cls._parse_custom(content_str)
+            # Use modernized LDIF parser (no external dependencies)
+            return cls._parse_with_modernized_ldif(content_str)
 
         except (ValueError, TypeError, AttributeError, OSError, ImportError) as e:
             return FlextResult.fail(f"Parse failed: {e}")
 
     @classmethod
-    def _parse_with_ldif3(cls, content: str) -> FlextResult[list[FlextLdifEntry]]:
-        """Parse using ldif3 library."""
+    def _parse_with_modernized_ldif(cls, content: str) -> FlextResult[list[FlextLdifEntry]]:
+        """Parse using modernized LDIF parser with full string compatibility."""
         try:
+            # Use modernized parser that handles all string/bytes issues internally
+            parse_result = modernized_ldif_parse(content)
+            
+            if not parse_result.is_success:
+                return FlextResult.fail(parse_result.error or "Modernized LDIF parse failed")
+            
+            raw_entries = parse_result.data or []
             entries = []
-            parser = Ldif3Parser(StringIO(content))
-
-            for dn, attrs in parser.parse():
-                if dn and attrs:
-                    entry = FlextLdifEntry.from_ldif_dict(dn, attrs)
-                    entries.append(entry)
-
+            
+            # Convert to FlextLdifEntry objects
+            for dn, attrs in raw_entries:
+                entry = FlextLdifEntry.from_ldif_dict(dn, attrs)
+                entries.append(entry)
+            
             return FlextResult.ok(entries)
 
         except (ValueError, TypeError, AttributeError, ImportError) as e:
-            return FlextResult.fail(f"ldif3 parse failed: {e}")
+            return FlextResult.fail(f"Modernized LDIF parse failed: {e}")
 
-    @classmethod
-    def _parse_custom(cls, content: str) -> FlextResult[list[FlextLdifEntry]]:
-        """Parse LDIF content using custom parser."""
-        try:
-            entries = []
-            blocks = content.strip().split("\n\n")
-
-            for block in blocks:
-                if block.strip():
-                    entry = FlextLdifEntry.from_ldif_block(block)
-                    entries.append(entry)
-
-            return FlextResult.ok(entries)
-
-        except (ValueError, TypeError, AttributeError) as e:
-            return FlextResult.fail(f"Custom parse failed: {e}")
 
     @classmethod
     def validate(cls, entry: FlextLdifEntry) -> FlextResult[bool]:
@@ -156,42 +136,34 @@ class TLdif:
 
         """
         try:
-            # Try ldif3 library first
-            if Ldif3Writer is not None:
-                return cls._write_with_ldif3(entries)
-
-            # Fallback to custom writer
-            return cls._write_custom(entries)
+            # Use modernized LDIF writer (no external dependencies)
+            return cls._write_with_modernized_ldif(entries)
 
         except (ValueError, TypeError, AttributeError, OSError, ImportError) as e:
             return FlextResult.fail(f"Write failed: {e}")
 
     @classmethod
-    def _write_with_ldif3(cls, entries: list[FlextLdifEntry]) -> FlextResult[str]:
-        """Write using ldif3 library."""
+    def _write_with_modernized_ldif(cls, entries: list[FlextLdifEntry]) -> FlextResult[str]:
+        """Write using modernized LDIF writer with full string compatibility."""
         try:
-            output = StringIO()
-            writer = Ldif3Writer(output)
-
+            # Convert FlextLdifEntry objects to (dn, attrs) tuples
+            raw_entries = []
             for entry in entries:
                 dn = str(entry.dn)
                 attrs = entry.attributes.attributes
-                writer.unparse(dn, attrs)
-
-            return FlextResult.ok(output.getvalue())
+                raw_entries.append((dn, attrs))
+            
+            # Use modernized writer
+            write_result = modernized_ldif_write(raw_entries)
+            
+            if not write_result.is_success:
+                return FlextResult.fail(write_result.error or "Modernized LDIF write failed")
+            
+            return FlextResult.ok(write_result.data or "")
 
         except (ValueError, TypeError, AttributeError, ImportError) as e:
-            return FlextResult.fail(f"ldif3 write failed: {e}")
+            return FlextResult.fail(f"Modernized LDIF write failed: {e}")
 
-    @classmethod
-    def _write_custom(cls, entries: list[FlextLdifEntry]) -> FlextResult[str]:
-        """Write LDIF entries using custom writer."""
-        try:
-            ldif_blocks = [entry.to_ldif() for entry in entries]
-            return FlextResult.ok("\n".join(ldif_blocks))
-
-        except (ValueError, TypeError, AttributeError) as e:
-            return FlextResult.fail(f"Custom write failed: {e}")
 
     @classmethod
     def write_file(cls, entries: list[FlextLdifEntry], file_path: str | Path) -> FlextResult[bool]:

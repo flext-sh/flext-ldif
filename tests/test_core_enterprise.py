@@ -1,22 +1,20 @@
 """Enterprise tests for TLdif core functionality.
 
-# Constants
-EXPECTED_DATA_COUNT = 3
-
 Comprehensive test suite covering all core LDIF processing functionality
 using enterprise-grade testing practices with full coverage and validation.
 """
 
-import time
-import gc
-import sys
-import queue
-import threading
-
-
 from __future__ import annotations
 
+# Constants
+EXPECTED_DATA_COUNT = 3
+
+import gc
+import queue
+import sys
 import tempfile
+import threading
+import time
 from pathlib import Path
 
 import pytest
@@ -84,16 +82,19 @@ invalid: line: format
         assert result.is_success
         assert result.data is not None
         if len(result.data) != EXPECTED_DATA_COUNT:
-            raise AssertionError(f"Expected {3}, got {len(result.data)}")
+            msg = f"Expected {3}, got {len(result.data)}"
+            raise AssertionError(msg)
         assert result.error is None
 
         # Verify first entry
         entry = result.data[0]
         if str(entry.dn) != "cn=John Doe,ou=people,dc=example,dc=com":
-            raise AssertionError(f"Expected {"cn=John Doe,ou=people,dc=example,dc=com"}, got {str(entry.dn)}")
+            msg = f"Expected {"cn=John Doe,ou=people,dc=example,dc=com"}, got {entry.dn!s}"
+            raise AssertionError(msg)
         assert entry.get_attribute("cn") == ["John Doe"]
         if entry.get_attribute("mail") != ["john.doe@example.com"]:
-            raise AssertionError(f"Expected {["john.doe@example.com"]}, got {entry.get_attribute("mail")}")
+            msg = f"Expected {["john.doe@example.com"]}, got {entry.get_attribute("mail")}"
+            raise AssertionError(msg)
         assert entry.has_object_class("person")
         assert entry.has_object_class("inetOrgPerson")
 
@@ -103,7 +104,8 @@ invalid: line: format
 
         assert result.is_success
         if result.data != []:
-            raise AssertionError(f"Expected {[]}, got {result.data}")
+            msg = f"Expected {[]}, got {result.data}"
+            raise AssertionError(msg)
         assert result.error is None
 
     def test_parse_malformed_content_fails(self, malformed_ldif_content: str) -> None:
@@ -123,7 +125,8 @@ invalid: line: format
 
         assert validate_result.is_success
         if not (validate_result.data):
-            raise AssertionError(f"Expected True, got {validate_result.data}")
+            msg = f"Expected True, got {validate_result.data}"
+            raise AssertionError(msg)
         assert validate_result.error is None
 
     def test_validate_invalid_entries_fails(self, invalid_ldif_content: str) -> None:
@@ -145,7 +148,8 @@ invalid: line: format
 
         assert validate_result.is_success
         if not (validate_result.data):
-            raise AssertionError(f"Expected True, got {validate_result.data}")
+            msg = f"Expected True, got {validate_result.data}"
+            raise AssertionError(msg)
 
     def test_write_entries_success(self, sample_ldif_content: str) -> None:
         """Test writing entries to LDIF string succeeds."""
@@ -158,7 +162,8 @@ invalid: line: format
         assert write_result.data is not None
         assert len(write_result.data) > 0
         if "dn:" not in write_result.data:
-            raise AssertionError(f"Expected {"dn:"} in {write_result.data}")
+            msg = f"Expected {"dn:"} in {write_result.data}"
+            raise AssertionError(msg)
         assert "objectClass:" in write_result.data
 
     def test_round_trip_parsing_writing(self, sample_ldif_content: str) -> None:
@@ -180,11 +185,13 @@ invalid: line: format
 
         # Verify integrity
         if len(reparsed_entries) != len(original_entries):
-            raise AssertionError(f"Expected {len(original_entries)}, got {len(reparsed_entries)}")
+            msg = f"Expected {len(original_entries)}, got {len(reparsed_entries)}"
+            raise AssertionError(msg)
 
         for original, reparsed in zip(original_entries, reparsed_entries, strict=False):
             if str(original.dn) != str(reparsed.dn):
-                raise AssertionError(f"Expected {str(reparsed.dn)}, got {str(original.dn)}")
+                msg = f"Expected {reparsed.dn!s}, got {original.dn!s}"
+                raise AssertionError(msg)
             assert original.attributes.attributes == reparsed.attributes.attributes
 
     def test_write_file_success(self, sample_ldif_content: str) -> None:
@@ -200,14 +207,16 @@ invalid: line: format
             write_result = TLdif.write_file(parse_result.data, temp_file)
             assert write_result.is_success
             if not (write_result.data):
-                raise AssertionError(f"Expected True, got {write_result.data}")
+                msg = f"Expected True, got {write_result.data}"
+                raise AssertionError(msg)
 
             # Verify file exists and has content
             assert temp_file.exists()
             content = temp_file.read_text(encoding="utf-8")
             assert len(content) > 0
             if "dn:" not in content:
-                raise AssertionError(f"Expected {"dn:"} in {content}")
+                msg = f"Expected {"dn:"} in {content}"
+                raise AssertionError(msg)
 
         finally:
             temp_file.unlink(missing_ok=True)
@@ -224,12 +233,14 @@ invalid: line: format
             assert read_result.is_success
             assert read_result.data is not None
             if len(read_result.data) != EXPECTED_DATA_COUNT:
-                raise AssertionError(f"Expected {3}, got {len(read_result.data)}")
+                msg = f"Expected {3}, got {len(read_result.data)}"
+                raise AssertionError(msg)
 
             # Verify content
             entry = read_result.data[0]
             if entry.get_attribute("cn") != ["John Doe"]:
-                raise AssertionError(f"Expected {["John Doe"]}, got {entry.get_attribute("cn")}")
+                msg = f"Expected {["John Doe"]}, got {entry.get_attribute("cn")}"
+                raise AssertionError(msg)
 
         finally:
             temp_file.unlink(missing_ok=True)
@@ -243,7 +254,8 @@ invalid: line: format
         assert not read_result.is_success
         assert read_result.data is None
         if "not found" not in read_result.error.lower():
-            raise AssertionError(f"Expected {"not found"} in {read_result.error.lower()}")
+            msg = f"Expected {"not found"} in {read_result.error.lower()}"
+            raise AssertionError(msg)
 
     def test_write_file_to_nonexistent_directory_fails(self, sample_ldif_content: str) -> None:
         """Test writing to nonexistent directory fails gracefully."""
@@ -255,7 +267,8 @@ invalid: line: format
 
         assert not write_result.is_success
         if "failed" not in write_result.error.lower():
-            raise AssertionError(f"Expected {"failed"} in {write_result.error.lower()}")
+            msg = f"Expected {"failed"} in {write_result.error.lower()}"
+            raise AssertionError(msg)
 
     def test_parse_with_ldif3_fallback(self, sample_ldif_content: str) -> None:
         """Test parsing works with both ldif3 and custom parser."""
@@ -279,7 +292,6 @@ invalid: line: format
     def test_performance_large_ldif(self) -> None:
         """Test performance with larger LDIF content."""
 
-
         # Generate larger LDIF content
         large_content = ""
         for i in range(100):
@@ -299,14 +311,14 @@ mail: user{i}@example.com
 
         assert result.is_success
         if len(result.data) != 100:
-            raise AssertionError(f"Expected {100}, got {len(result.data)}")
-        if parse_time < 5.0  # Should parse 100 entries not in under 5 seconds:
-            raise AssertionError(f"Expected {parse_time < 5.0  # Should parse 100 entries} in {under 5 seconds}")
+            msg = f"Expected {100}, got {len(result.data)}"
+            raise AssertionError(msg)
+        if not (parse_time < 5.0):  # Should parse 100 entries in under 5 seconds
+            msg = f"Expected parse time < 5.0 seconds, got {parse_time}"
+            raise AssertionError(msg)
 
     def test_memory_usage_large_ldif(self) -> None:
         """Test memory usage with larger LDIF content."""
-
-
 
         # Generate content and measure memory
         large_content = ""
@@ -333,8 +345,6 @@ sn: User{i}
     def test_concurrent_parsing(self, sample_ldif_content: str) -> None:
         """Test concurrent parsing operations."""
 
-
-
         results = queue.Queue()
 
         def parse_worker():
@@ -360,7 +370,8 @@ sn: User{i}
 
         if success_count != 10:
 
-            raise AssertionError(f"Expected {10}, got {success_count}")
+            msg = f"Expected {10}, got {success_count}"
+            raise AssertionError(msg)
 
     def test_edge_cases_special_characters(self) -> None:
         """Test parsing LDIF with special characters."""
@@ -377,11 +388,13 @@ mail: special@example.com
 
         assert result.is_success
         if len(result.data) != 1:
-            raise AssertionError(f"Expected {1}, got {len(result.data)}")
+            msg = f"Expected {1}, got {len(result.data)}"
+            raise AssertionError(msg)
 
         entry = result.data[0]
         if "Üser" not in entry.get_attribute("cn")[0]:
-            raise AssertionError(f"Expected {"Üser"} in {entry.get_attribute("cn")[0]}")
+            msg = f"Expected {"Üser"} in {entry.get_attribute("cn")[0]}"
+            raise AssertionError(msg)
         assert "àáâãäåæçèéêë" in entry.get_attribute("description")[0]
 
     def test_edge_cases_long_lines(self) -> None:
@@ -398,11 +411,13 @@ description: {long_value}
 
         assert result.is_success
         if len(result.data) != 1:
-            raise AssertionError(f"Expected {1}, got {len(result.data)}")
+            msg = f"Expected {1}, got {len(result.data)}"
+            raise AssertionError(msg)
 
         entry = result.data[0]
         if len(entry.get_attribute("description")[0]) != 1000:
-            raise AssertionError(f"Expected {1000}, got {len(entry.get_attribute("description")[0])}")
+            msg = f"Expected {1000}, got {len(entry.get_attribute("description")[0])}"
+            raise AssertionError(msg)
 
     def test_error_handling_robustness(self) -> None:
         """Test error handling robustness with various invalid inputs."""

@@ -4,11 +4,10 @@ Comprehensive test suite covering all model functionality with enterprise-grade
 validation, edge cases, and domain rule enforcement.
 """
 
-import time
-import sys
-
-
 from __future__ import annotations
+
+import sys
+import time
 
 import pytest
 
@@ -52,7 +51,8 @@ class TestFlextLdifEntryEnterprise:
 
         assert entry is not None
         if str(entry.dn) != sample_entry_data["dn"]:
-            raise AssertionError(f"Expected {sample_entry_data["dn"]}, got {str(entry.dn)}")
+            msg = f"Expected {sample_entry_data["dn"]}, got {entry.dn!s}"
+            raise AssertionError(msg)
         assert entry.attributes.attributes == sample_entry_data["attributes"]
 
     def test_entry_creation_with_string_dn(self, sample_entry_data: dict) -> None:
@@ -61,7 +61,8 @@ class TestFlextLdifEntryEnterprise:
 
         assert isinstance(entry.dn, FlextLdifDistinguishedName)
         if str(entry.dn) != sample_entry_data["dn"]:
-            raise AssertionError(f"Expected {sample_entry_data["dn"]}, got {str(entry.dn)}")
+            msg = f"Expected {sample_entry_data["dn"]}, got {entry.dn!s}"
+            raise AssertionError(msg)
 
     def test_entry_creation_with_dict_attributes(self, sample_entry_data: dict) -> None:
         """Test entry creation with dict attributes (auto-conversion)."""
@@ -69,7 +70,8 @@ class TestFlextLdifEntryEnterprise:
 
         assert isinstance(entry.attributes, FlextLdifAttributes)
         if entry.attributes.attributes != sample_entry_data["attributes"]:
-            raise AssertionError(f"Expected {sample_entry_data["attributes"]}, got {entry.attributes.attributes}")
+            msg = f"Expected {sample_entry_data["attributes"]}, got {entry.attributes.attributes}"
+            raise AssertionError(msg)
 
     def test_entry_validation_invalid_dn_type(self) -> None:
         """Test entry validation fails with invalid DN type."""
@@ -93,15 +95,18 @@ class TestFlextLdifEntryEnterprise:
 
         cn_values = entry.get_attribute("cn")
         if cn_values != ["John Doe"]:
-            raise AssertionError(f"Expected {["John Doe"]}, got {cn_values}")
+            msg = f"Expected {["John Doe"]}, got {cn_values}"
+            raise AssertionError(msg)
 
         mail_values = entry.get_attribute("mail")
         if mail_values != ["john.doe@example.com"]:
-            raise AssertionError(f"Expected {["john.doe@example.com"]}, got {mail_values}")
+            msg = f"Expected {["john.doe@example.com"]}, got {mail_values}"
+            raise AssertionError(msg)
 
         objectclass_values = entry.get_attribute("objectClass")
         if objectclass_values != ["person", "inetOrgPerson"]:
-            raise AssertionError(f"Expected {["person", "inetOrgPerson"]}, got {objectclass_values}")
+            msg = f"Expected {["person", "inetOrgPerson"]}, got {objectclass_values}"
+            raise AssertionError(msg)
 
     def test_get_attribute_nonexistent(self, sample_entry_data: dict) -> None:
         """Test getting nonexistent attribute returns None."""
@@ -117,12 +122,14 @@ class TestFlextLdifEntryEnterprise:
         # Set new attribute
         entry.set_attribute("telephoneNumber", ["+1-555-0123"])
         if entry.get_attribute("telephoneNumber") != ["+1-555-0123"]:
-            raise AssertionError(f"Expected {["+1-555-0123"]}, got {entry.get_attribute("telephoneNumber")}")
+            msg = f"Expected {["+1-555-0123"]}, got {entry.get_attribute("telephoneNumber")}"
+            raise AssertionError(msg)
 
         # Modify existing attribute
         entry.set_attribute("mail", ["newemail@example.com"])
         if entry.get_attribute("mail") != ["newemail@example.com"]:
-            raise AssertionError(f"Expected {["newemail@example.com"]}, got {entry.get_attribute("mail")}")
+            msg = f"Expected {["newemail@example.com"]}, got {entry.get_attribute("mail")}"
+            raise AssertionError(msg)
 
     def test_has_attribute_success(self, sample_entry_data: dict) -> None:
         """Test checking attribute existence succeeds."""
@@ -130,12 +137,15 @@ class TestFlextLdifEntryEnterprise:
 
         if not (entry.has_attribute("cn")):
 
-            raise AssertionError(f"Expected True, got {entry.has_attribute("cn")}")
+            msg = f"Expected True, got {entry.has_attribute("cn")}"
+            raise AssertionError(msg)
         assert entry.has_attribute("mail") is True
         if not (entry.has_attribute("objectClass")):
-            raise AssertionError(f"Expected True, got {entry.has_attribute("objectClass")}")
+            msg = f"Expected True, got {entry.has_attribute("objectClass")}"
+            raise AssertionError(msg)
         if entry.has_attribute("nonexistent"):
-            raise AssertionError(f"Expected False, got {entry.has_attribute("nonexistent")}")
+            msg = f"Expected False, got {entry.has_attribute("nonexistent")}"
+            raise AssertionError(msg)
 
     def test_get_object_classes_success(self, sample_entry_data: dict) -> None:
         """Test getting object classes succeeds."""
@@ -143,7 +153,8 @@ class TestFlextLdifEntryEnterprise:
 
         object_classes = entry.get_object_classes()
         if object_classes != ["person", "inetOrgPerson"]:
-            raise AssertionError(f"Expected {["person", "inetOrgPerson"]}, got {object_classes}")
+            msg = f"Expected {["person", "inetOrgPerson"]}, got {object_classes}"
+            raise AssertionError(msg)
 
     def test_has_object_class_success(self, sample_entry_data: dict) -> None:
         """Test checking object class existence succeeds."""
@@ -151,10 +162,12 @@ class TestFlextLdifEntryEnterprise:
 
         if not (entry.has_object_class("person")):
 
-            raise AssertionError(f"Expected True, got {entry.has_object_class("person")}")
+            msg = f"Expected True, got {entry.has_object_class("person")}"
+            raise AssertionError(msg)
         assert entry.has_object_class("inetOrgPerson") is True
         if entry.has_object_class("organizationalPerson"):
-            raise AssertionError(f"Expected False, got {entry.has_object_class("organizationalPerson")}")
+            msg = f"Expected False, got {entry.has_object_class("organizationalPerson")}"
+            raise AssertionError(msg)
 
     def test_get_attribute_values_success(self, sample_entry_data: dict) -> None:
         """Test getting attribute values (alternative method)."""
@@ -162,7 +175,8 @@ class TestFlextLdifEntryEnterprise:
 
         cn_values = entry.get_attribute_values("cn")
         if cn_values != ["John Doe"]:
-            raise AssertionError(f"Expected {["John Doe"]}, got {cn_values}")
+            msg = f"Expected {["John Doe"]}, got {cn_values}"
+            raise AssertionError(msg)
 
     def test_operation_methods_return_false(self, sample_entry_data: dict) -> None:
         """Test operation check methods return False for model entries."""
@@ -170,10 +184,12 @@ class TestFlextLdifEntryEnterprise:
 
         if entry.is_modify_operation():
 
-            raise AssertionError(f"Expected False, got {entry.is_modify_operation()}")
+            msg = f"Expected False, got {entry.is_modify_operation()}"
+            raise AssertionError(msg)
         assert entry.is_add_operation() is False
         if entry.is_delete_operation():
-            raise AssertionError(f"Expected False, got {entry.is_delete_operation()}")
+            msg = f"Expected False, got {entry.is_delete_operation()}"
+            raise AssertionError(msg)
 
     def test_get_single_attribute_success(self, sample_entry_data: dict) -> None:
         """Test getting single attribute value succeeds."""
@@ -181,11 +197,13 @@ class TestFlextLdifEntryEnterprise:
 
         cn_value = entry.get_single_attribute("cn")
         if cn_value != "John Doe":
-            raise AssertionError(f"Expected {"John Doe"}, got {cn_value}")
+            msg = f"Expected {"John Doe"}, got {cn_value}"
+            raise AssertionError(msg)
 
         uid_value = entry.get_single_attribute("uid")
         if uid_value != "johndoe":
-            raise AssertionError(f"Expected {"johndoe"}, got {uid_value}")
+            msg = f"Expected {"johndoe"}, got {uid_value}"
+            raise AssertionError(msg)
 
     def test_get_single_attribute_nonexistent(self, sample_entry_data: dict) -> None:
         """Test getting single value from nonexistent attribute returns None."""
@@ -204,7 +222,8 @@ class TestFlextLdifEntryEnterprise:
         assert len(ldif_output) > 0
         assert ldif_output.startswith(f"dn: {sample_entry_data['dn']}")
         if "objectClass: person" not in ldif_output:
-            raise AssertionError(f"Expected {"objectClass: person"} in {ldif_output}")
+            msg = f"Expected {"objectClass: person"} in {ldif_output}"
+            raise AssertionError(msg)
         assert "cn: John Doe" in ldif_output
         assert ldif_output.endswith("\n")
 
@@ -245,10 +264,12 @@ mail: test@example.com"""
 
         if str(entry.dn) != "cn=test,ou=people,dc=example,dc=com":
 
-            raise AssertionError(f"Expected {"cn=test,ou=people,dc=example,dc=com"}, got {str(entry.dn)}")
+            msg = f"Expected {"cn=test,ou=people,dc=example,dc=com"}, got {entry.dn!s}"
+            raise AssertionError(msg)
         assert entry.get_attribute("cn") == ["test"]
         if entry.get_attribute("sn") != ["user"]:
-            raise AssertionError(f"Expected {["user"]}, got {entry.get_attribute("sn")}")
+            msg = f"Expected {["user"]}, got {entry.get_attribute("sn")}"
+            raise AssertionError(msg)
         assert entry.get_attribute("mail") == ["test@example.com"]
         assert entry.has_object_class("person")
         assert entry.has_object_class("inetOrgPerson")
@@ -279,7 +300,8 @@ description: With multiple descriptions"""
 
         if entry.get_attribute("cn") != ["test", "Test User"]:
 
-            raise AssertionError(f"Expected {["test", "Test User"]}, got {entry.get_attribute("cn")}")
+            msg = f"Expected {["test", "Test User"]}, got {entry.get_attribute("cn")}"
+            raise AssertionError(msg)
         assert entry.get_attribute("description") == [
             "This is a test user",
             "With multiple descriptions",
@@ -299,10 +321,12 @@ description: With multiple descriptions"""
 
         if str(entry.dn) != dn:
 
-            raise AssertionError(f"Expected {dn}, got {str(entry.dn)}")
+            msg = f"Expected {dn}, got {entry.dn!s}"
+            raise AssertionError(msg)
         assert entry.attributes.attributes == attributes
         if entry.get_attribute("cn") != ["test"]:
-            raise AssertionError(f"Expected {["test"]}, got {entry.get_attribute("cn")}")
+            msg = f"Expected {["test"]}, got {entry.get_attribute("cn")}"
+            raise AssertionError(msg)
         assert entry.has_object_class("person")
 
     def test_entry_immutability_via_pydantic(self, sample_entry_data: dict) -> None:
@@ -316,11 +340,13 @@ description: With multiple descriptions"""
         # Test that we can use set_attribute (which creates new objects)
         entry.set_attribute("newAttr", ["newValue"])
         if entry.get_attribute("newAttr") != ["newValue"]:
-            raise AssertionError(f"Expected {["newValue"]}, got {entry.get_attribute("newAttr")}")
+            msg = f"Expected {["newValue"]}, got {entry.get_attribute("newAttr")}"
+            raise AssertionError(msg)
 
         # DN should remain unchanged
         if str(entry.dn) != original_dn:
-            raise AssertionError(f"Expected {original_dn}, got {str(entry.dn)}")
+            msg = f"Expected {original_dn}, got {entry.dn!s}"
+            raise AssertionError(msg)
 
     def test_entry_equality_and_hashing(self, sample_entry_data: dict) -> None:
         """Test entry equality and hash behavior."""
@@ -329,16 +355,19 @@ description: With multiple descriptions"""
 
         # Should be equal with same data
         if entry1 != entry2:
-            raise AssertionError(f"Expected {entry2}, got {entry1}")
+            msg = f"Expected {entry2}, got {entry1}"
+            raise AssertionError(msg)
 
         # Should have same hash
         if hash(entry1) != hash(entry2):
-            raise AssertionError(f"Expected {hash(entry2)}, got {hash(entry1)}")
+            msg = f"Expected {hash(entry2)}, got {hash(entry1)}"
+            raise AssertionError(msg)
 
         # Should be usable in sets
         entry_set = {entry1, entry2}
-        if len(entry_set) != 1  # Same entries:
-            raise AssertionError(f"Expected {1  # Same entries}, got {len(entry_set)}")
+        if len(entry_set) != 1:  # Same entries
+            msg = f"Expected 1 (same entries), got {len(entry_set)}"
+            raise AssertionError(msg)
 
     def test_entry_serialization_deserialization(self, sample_entry_data: dict) -> None:
         """Test entry serialization and deserialization."""
@@ -348,13 +377,15 @@ description: With multiple descriptions"""
         entry_dict = entry.model_dump()
         assert isinstance(entry_dict, dict)
         if "dn" not in entry_dict:
-            raise AssertionError(f"Expected {"dn"} in {entry_dict}")
+            msg = f"Expected {"dn"} in {entry_dict}"
+            raise AssertionError(msg)
         assert "attributes" in entry_dict
 
         # Note: Pydantic model_dump() creates nested structure that requires
         # original data format for deserialization
         if str(entry.dn) != sample_entry_data["dn"]:
-            raise AssertionError(f"Expected {sample_entry_data["dn"]}, got {str(entry.dn)}")
+            msg = f"Expected {sample_entry_data["dn"]}, got {entry.dn!s}"
+            raise AssertionError(msg)
         assert entry.attributes.attributes == sample_entry_data["attributes"]
 
     def test_entry_json_serialization(self, sample_entry_data: dict) -> None:
@@ -368,12 +399,12 @@ description: With multiple descriptions"""
 
         # Should contain expected data
         if sample_entry_data["dn"] not in json_str:
-            raise AssertionError(f"Expected {sample_entry_data["dn"]} in {json_str}")
+            msg = f"Expected {sample_entry_data["dn"]} in {json_str}"
+            raise AssertionError(msg)
         assert "objectClass" in json_str
 
     def test_entry_performance_large_attributes(self) -> None:
         """Test entry performance with large number of attributes."""
-
 
         # Create entry with many attributes
         attributes = {"objectClass": ["top"]}
@@ -397,14 +428,14 @@ description: With multiple descriptions"""
         for i in range(100):
             value = entry.get_attribute(f"attr{i}")
             if value != [f"value{i}"]:
-                raise AssertionError(f"Expected {[f"value{i}"]}, got {value}")
+                msg = f"Expected {[f"value{i}"]}, got {value}"
+                raise AssertionError(msg)
         access_time = time.time() - start_time
 
         assert access_time < 0.5  # Under 0.5 seconds
 
     def test_entry_memory_efficiency(self) -> None:
         """Test entry memory efficiency."""
-
 
         # Create multiple similar entries
         entries = []
@@ -441,9 +472,11 @@ description: With multiple descriptions"""
 
         if "Üser Spëcial" not in str(entry.dn):
 
-            raise AssertionError(f"Expected {"Üser Spëcial"} in {str(entry.dn)}")
+            msg = f"Expected {"Üser Spëcial"} in {entry.dn!s}"
+            raise AssertionError(msg)
         if entry.get_attribute("cn") != ["Üser Spëcial"]:
-            raise AssertionError(f"Expected {["Üser Spëcial"]}, got {entry.get_attribute("cn")}")
+            msg = f"Expected {["Üser Spëcial"]}, got {entry.get_attribute("cn")}"
+            raise AssertionError(msg)
 
     def test_edge_cases_long_attribute_values(self) -> None:
         """Test entry with very long attribute values."""
@@ -462,7 +495,8 @@ description: With multiple descriptions"""
 
         if entry.get_attribute("description") != [long_value]:
 
-            raise AssertionError(f"Expected {[long_value]}, got {entry.get_attribute("description")}")
+            msg = f"Expected {[long_value]}, got {entry.get_attribute("description")}"
+            raise AssertionError(msg)
         assert len(entry.get_attribute("description")[0]) == 10000
 
     def test_edge_cases_empty_attribute_values(self) -> None:
@@ -480,6 +514,8 @@ description: With multiple descriptions"""
 
         if entry.get_attribute("description") != [""]:
 
-            raise AssertionError(f"Expected {[""]}, got {entry.get_attribute("description")}")
+            msg = f"Expected {[""]}, got {entry.get_attribute("description")}"
+            raise AssertionError(msg)
         if not (entry.has_attribute("description")):
-            raise AssertionError(f"Expected True, got {entry.has_attribute("description")}")
+            msg = f"Expected True, got {entry.has_attribute("description")}"
+            raise AssertionError(msg)
