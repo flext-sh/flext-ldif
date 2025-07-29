@@ -135,7 +135,8 @@ class TestFlextLdifEntryEnterprise:
         if not (entry.has_attribute("objectClass")):
             raise AssertionError(f"Expected True, got {entry.has_attribute("objectClass")}")
         if entry.has_attribute("nonexistent"):
-            raise AssertionError(f"Expected False, got {entry.has_attribute("nonexistent")}")\ n
+            raise AssertionError(f"Expected False, got {entry.has_attribute("nonexistent")}")
+
     def test_get_object_classes_success(self, sample_entry_data: dict) -> None:
         """Test getting object classes succeeds."""
         entry = FlextLdifEntry.model_validate(sample_entry_data)
@@ -153,7 +154,8 @@ class TestFlextLdifEntryEnterprise:
             raise AssertionError(f"Expected True, got {entry.has_object_class("person")}")
         assert entry.has_object_class("inetOrgPerson") is True
         if entry.has_object_class("organizationalPerson"):
-            raise AssertionError(f"Expected False, got {entry.has_object_class("organizationalPerson")}")\ n
+            raise AssertionError(f"Expected False, got {entry.has_object_class("organizationalPerson")}")
+
     def test_get_attribute_values_success(self, sample_entry_data: dict) -> None:
         """Test getting attribute values (alternative method)."""
         entry = FlextLdifEntry.model_validate(sample_entry_data)
@@ -168,9 +170,11 @@ class TestFlextLdifEntryEnterprise:
 
         if entry.is_modify_operation():
 
-            raise AssertionError(f"Expected False, got {entry.is_modify_operation()}")\ n        assert entry.is_add_operation() is False
+            raise AssertionError(f"Expected False, got {entry.is_modify_operation()}")
+        assert entry.is_add_operation() is False
         if entry.is_delete_operation():
-            raise AssertionError(f"Expected False, got {entry.is_delete_operation()}")\ n
+            raise AssertionError(f"Expected False, got {entry.is_delete_operation()}")
+
     def test_get_single_attribute_success(self, sample_entry_data: dict) -> None:
         """Test getting single attribute value succeeds."""
         entry = FlextLdifEntry.model_validate(sample_entry_data)

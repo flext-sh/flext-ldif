@@ -488,7 +488,8 @@ mail: test@example.com
 
         assert isinstance(is_valid, bool)
         if is_valid:
-            raise AssertionError(f"Expected False, got {is_valid}")\ n
+            raise AssertionError(f"Expected False, got {is_valid}")
+
     def test_flext_ldif_write_convenience_success(self, sample_ldif_content: str) -> None:
         """Test convenience write function success."""
         entries = flext_ldif_parse(sample_ldif_content)
