@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 # Unified API
 from .api import (
     FlextLdifAPI,
@@ -38,29 +40,38 @@ from .models import (
     LDIFLines,
 )
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+# Import cli_main with specific ImportError handling
+cli_main: Callable[[], None] | None = None
+try:
+    from .cli import main as cli_main
+except ImportError as e:
+    # Only catch specific import errors related to click/cli dependencies
+    if "click" in str(e) or "flext_cli" in str(e):
+        cli_main = None
+    else:
+        # Re-raise unexpected import errors
+        raise
+
 __version__ = "0.9.0"
 
 __all__ = [
-    # API
     "FlextLdifAPI",
-    # Domain values (consolidated in models)
     "FlextLdifAttributes",
-    # Core classes
     "FlextLdifConfig",
     "FlextLdifDistinguishedName",
     "FlextLdifEntry",
-    # Exceptions
     "FlextLdifEntryError",
     "FlextLdifError",
     "FlextLdifParseError",
     "FlextLdifValidationError",
-    # Types
     "LDIFContent",
     "LDIFLines",
-    # Core functionality
     "TLdif",
-    # Meta
     "__version__",
+    "cli_main",
     "flext_ldif_get_api",
     "flext_ldif_parse",
     "flext_ldif_validate",

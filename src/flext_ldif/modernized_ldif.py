@@ -425,6 +425,7 @@ class FlextLDIFParser:
                 # Skip version lines
                 continue
             else:
+                # Standard attribute processing
                 if dn is None:
                     self._error(f"Attribute before dn: line: {attr_type}")
 
@@ -468,21 +469,33 @@ def modernized_ldif_parse(
         FlextResult containing list of (dn, attributes) tuples
 
     """
+    logger.debug("Starting modernized LDIF parsing")
+    logger.trace("Content length: %d characters", len(content))
+    logger.trace("Content lines count: %d", len(content.splitlines()))
+
     try:
+        logger.debug("Creating FlextLDIFParser with strict=True")
         parser = FlextLDIFParser(content, strict=True)
+        logger.trace("Parser initialized successfully")
+
+        logger.debug("Parsing LDIF content into entries")
         entries = list(parser.parse())
 
+        logger.debug("Successfully parsed %d LDIF entries", len(entries))
+        logger.trace("Entry DNs: %s", [dn for dn, _ in entries[:5]])  # First 5 for trace
         logger.info("Successfully parsed %d LDIF entries", len(entries))
         return FlextResult.ok(entries)
 
     except Exception as e:
         error_msg = f"Modernized LDIF parse failed: {e}"
-        logger.exception(error_msg)
+        logger.exception("Modernized LDIF parsing failed")
+        logger.debug("Exception type: %s", type(e).__name__)
+        logger.trace("Full parsing exception details", exc_info=True)
         return FlextResult.fail(error_msg)
 
 
 def modernized_ldif_write(
-    entries: list[tuple[str, dict[str, list[str]]]],
+    entries: list[tuple[str, dict[str, list[str]]]] | None,
 ) -> FlextResult[str]:
     """Write LDIF entries using modernized writer.
 
@@ -493,19 +506,38 @@ def modernized_ldif_write(
         FlextResult containing LDIF string
 
     """
-    try:
-        writer = FlextLDIFWriter()
+    if entries is None:
+        logger.error("Cannot write None entries")
+        return FlextResult.fail("Entries cannot be None")
 
-        for dn, attrs in entries:
+    logger.debug("Starting modernized LDIF writing for %d entries", len(entries))
+    logger.trace("Entry DNs to write: %s", [dn for dn, _ in entries[:5]])  # First 5 for trace
+
+    try:
+        logger.debug("Creating FlextLDIFWriter")
+        writer = FlextLDIFWriter()
+        logger.trace("Writer initialized successfully")
+
+        logger.debug("Writing %d entries to LDIF format", len(entries))
+        for i, (dn, attrs) in enumerate(entries):
+            logger.trace("Writing entry %d: DN=%s, attrs_count=%d", i, dn, len(attrs))
             writer.unparse(dn, attrs)
 
+        logger.debug("Getting output from writer")
         output = writer.get_output()
+        output_size = len(output)
+
+        logger.debug("Successfully wrote %d LDIF entries, output size: %d chars",
+                    writer.records_written, output_size)
+        logger.trace("Output preview: %s...", output[:100].replace("\n", "\\n"))
         logger.info("Successfully wrote %d LDIF entries", writer.records_written)
         return FlextResult.ok(output)
 
     except Exception as e:
         error_msg = f"Modernized LDIF write failed: {e}"
-        logger.exception(error_msg)
+        logger.exception("Modernized LDIF writing failed")
+        logger.debug("Exception type: %s", type(e).__name__)
+        logger.trace("Full writing exception details", exc_info=True)
         return FlextResult.fail(error_msg)
 
 
