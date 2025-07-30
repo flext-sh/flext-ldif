@@ -36,7 +36,7 @@ from pathlib import Path
 # Types com prefixes corretos
 # Simple API aliases (validated)
 from flext_ldif import (
-    DistinguishedName,  # Alias para FlextLdifDistinguishedName
+    FlextLdapDistinguishedName,  # Alias para FlextLdifDistinguishedName
     FlextLdifAttributes,
     FlextLdifChangeRecordSpecification,
     FlextLdifChangeType,
@@ -324,9 +324,9 @@ def test_6_simple_api_aliases_validation() -> None:
     except (RuntimeError, ValueError, TypeError):
         pass
 
-    # Test DistinguishedName alias
+    # Test FlextLdapDistinguishedName alias
     with contextlib.suppress(Exception):
-        dn = DistinguishedName(value="uid=test,dc=example,dc=com")
+        dn = FlextLdapDistinguishedName(value="uid=test,dc=example,dc=com")
 
     # Test LDIFAttributes alias
     with contextlib.suppress(Exception):

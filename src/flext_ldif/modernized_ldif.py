@@ -17,53 +17,51 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
-import logging
 import re
 from collections import OrderedDict
-from io import StringIO
-from typing import TYPE_CHECKING, Iterator
-from urllib.parse import urlparse
+from typing import TYPE_CHECKING
 from urllib.request import urlopen
 
 from flext_core import FlextResult, get_logger
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Iterator, Sequence
 
 logger = get_logger(__name__)
 
 # LDIF Pattern Constants
-ATTRTYPE_PATTERN = r'[\w;.-]+(;[\w_-]+)*'
+ATTRTYPE_PATTERN = r"[\w;.-]+(;[\w_-]+)*"
 ATTRVALUE_PATTERN = r'(([^,]|\\,)+|".*?")'
-ATTR_PATTERN = ATTRTYPE_PATTERN + r'[ ]*=[ ]*' + ATTRVALUE_PATTERN
-RDN_PATTERN = ATTR_PATTERN + r'([ ]*\+[ ]*' + ATTR_PATTERN + r')*[ ]*'
-DN_PATTERN = RDN_PATTERN + r'([ ]*,[ ]*' + RDN_PATTERN + r')*[ ]*'
-DN_REGEX = re.compile(f'^{DN_PATTERN}$')
+ATTR_PATTERN = ATTRTYPE_PATTERN + r"[ ]*=[ ]*" + ATTRVALUE_PATTERN
+RDN_PATTERN = ATTR_PATTERN + r"([ ]*\+[ ]*" + ATTR_PATTERN + r")*[ ]*"
+DN_PATTERN = RDN_PATTERN + r"([ ]*,[ ]*" + RDN_PATTERN + r")*[ ]*"
+DN_REGEX = re.compile(f"^{DN_PATTERN}$")
 
 LDIF_PATTERN = (
-    f'^((dn(:|::) {DN_PATTERN})|({ATTRTYPE_PATTERN}s(:|::) .*)$)+'
+    f"^((dn(:|::) {DN_PATTERN})|({ATTRTYPE_PATTERN}s(:|::) .*)$)+"
 )
 
-MOD_OPS = ['add', 'delete', 'replace']
-CHANGE_TYPES = ['add', 'delete', 'modify', 'modrdn']
+MOD_OPS = ["add", "delete", "replace"]
+CHANGE_TYPES = ["add", "delete", "modify", "modrdn"]
 
 UNSAFE_STRING_PATTERN = (
-    r'(^[^\x01-\x09\x0b-\x0c\x0e-\x1f\x21-\x39\x3b\x3d-\x7f]'
-    r'|[^\x01-\x09\x0b-\x0c\x0e-\x7f])'
+    r"(^[^\x01-\x09\x0b-\x0c\x0e-\x1f\x21-\x39\x3b\x3d-\x7f]"
+    r"|[^\x01-\x09\x0b-\x0c\x0e-\x7f])"
 )
 UNSAFE_STRING_RE = re.compile(UNSAFE_STRING_PATTERN)
 
 
 def is_dn(s: str) -> bool:
     """Return True if s is a valid LDAP DN.
-    
+
     Args:
         s: String to validate as DN
-        
+
     Returns:
         True if valid DN format
+
     """
-    if s == '':
+    if s == "":
         return True
     match = DN_REGEX.match(s)
     return match is not None and match.group(0) == s
@@ -71,19 +69,20 @@ def is_dn(s: str) -> bool:
 
 def lower_list(items: Sequence[str] | None) -> list[str]:
     """Return a list with the lowercased items.
-    
+
     Args:
         items: List of strings to lowercase
-        
+
     Returns:
         List of lowercased strings
+
     """
     return [item.lower() for item in items or []]
 
 
 class FlextLDIFWriter:
     """Modernized LDIF writer with full string compatibility.
-    
+
     Writes LDIF entry or change records to string output with proper
     encoding handling and zero bytes/string compatibility issues.
     """
@@ -92,16 +91,17 @@ class FlextLDIFWriter:
         self,
         base64_attrs: list[str] | None = None,
         cols: int = 76,
-        line_sep: str = '\n',
-        encoding: str = 'utf-8',
+        line_sep: str = "\n",
+        encoding: str = "utf-8",
     ) -> None:
         """Initialize LDIF writer.
-        
+
         Args:
             base64_attrs: List of attribute types to be base64-encoded
             cols: Maximum columns before line folding
             line_sep: Line separator string
             encoding: Character encoding to use
+
         """
         self._base64_attrs = lower_list(base64_attrs)
         self._cols = cols
@@ -118,22 +118,23 @@ class FlextLDIFWriter:
             # Write first part
             self._output_lines.append(line[:self._cols])
             pos = self._cols
-            
+
             # Write continuation lines with leading space
             while pos < len(line):
                 end = min(len(line), pos + self._cols - 1)
-                self._output_lines.append(' ' + line[pos:end])
+                self._output_lines.append(" " + line[pos:end])
                 pos = end
 
     def _needs_base64_encoding(self, attr_type: str, attr_value: str) -> bool:
         """Return True if attr_value needs base64 encoding.
-        
+
         Args:
             attr_type: Attribute type name
             attr_value: Attribute value
-            
+
         Returns:
             True if base64 encoding is needed
+
         """
         return (
             attr_type.lower() in self._base64_attrs or
@@ -145,18 +146,19 @@ class FlextLDIFWriter:
         if self._needs_base64_encoding(attr_type, attr_value):
             # Encode to bytes then base64
             attr_bytes = attr_value.encode(self._encoding)
-            encoded = base64.b64encode(attr_bytes).decode('ascii')
-            line = f'{attr_type}:: {encoded}'
+            encoded = base64.b64encode(attr_bytes).decode("ascii")
+            line = f"{attr_type}:: {encoded}"
         else:
-            line = f'{attr_type}: {attr_value}'
-        
+            line = f"{attr_type}: {attr_value}"
+
         self._fold_line(line)
 
     def _unparse_entry_record(self, entry: dict[str, list[str]]) -> None:
         """Write entry record.
-        
+
         Args:
             entry: Dictionary holding entry attributes
+
         """
         for attr_type in sorted(entry.keys()):
             for attr_value in entry[attr_type]:
@@ -164,14 +166,15 @@ class FlextLDIFWriter:
 
     def unparse(self, dn: str, record: dict[str, list[str]]) -> None:
         """Write an entry record.
-        
+
         Args:
             dn: Distinguished name
             record: Dictionary holding entry attributes
+
         """
-        self._unparse_attr('dn', dn)
+        self._unparse_attr("dn", dn)
         self._unparse_entry_record(record)
-        self._output_lines.append('')  # Blank line separator
+        self._output_lines.append("")  # Blank line separator
         self.records_written += 1
 
     def get_output(self) -> str:
@@ -181,7 +184,7 @@ class FlextLDIFWriter:
 
 class FlextLDIFParser:
     """Modernized LDIF parser with full string compatibility.
-    
+
     Reads LDIF entry records from string input with enhanced error handling
     and zero bytes/string compatibility issues.
     """
@@ -190,28 +193,29 @@ class FlextLDIFParser:
         self,
         input_content: str,
         ignored_attr_types: list[str] | None = None,
-        encoding: str = 'utf-8',
+        encoding: str = "utf-8",
         strict: bool = True,
     ) -> None:
         """Initialize LDIF parser.
-        
+
         Args:
             input_content: LDIF content as string
             ignored_attr_types: List of attribute types to ignore
             encoding: Character encoding
             strict: If False, log warnings instead of raising exceptions
+
         """
         self._input_lines = input_content.splitlines()
         self._ignored_attr_types = lower_list(ignored_attr_types)
         self._encoding = encoding
         self._strict = strict
-        
+
         self.line_counter = 0
         self.records_read = 0
 
     def _strip_line_sep(self, line: str) -> str:
         """Strip trailing line separators from string."""
-        return line.rstrip('\r\n')
+        return line.rstrip("\r\n")
 
     def _iter_unfolded_lines(self) -> Iterator[str]:
         """Iterate input unfolded lines, skipping comments."""
@@ -219,22 +223,22 @@ class FlextLDIFParser:
         while i < len(self._input_lines):
             line = self._strip_line_sep(self._input_lines[i])
             self.line_counter += 1
-            
+
             # Handle line continuation (lines starting with space)
             i += 1
-            while i < len(self._input_lines) and self._input_lines[i].startswith(' '):
+            while i < len(self._input_lines) and self._input_lines[i].startswith(" "):
                 continuation = self._strip_line_sep(self._input_lines[i])
                 line += continuation[1:]  # Remove leading space
                 i += 1
-            
+
             # Skip comments
-            if not line.startswith('#'):
+            if not line.startswith("#"):
                 yield line
 
     def _iter_blocks(self) -> Iterator[list[str]]:
         """Iterate input lines in blocks separated by blank lines."""
         lines: list[str] = []
-        
+
         for line in self._iter_unfolded_lines():
             if line.strip():  # Non-empty line
                 lines.append(line)
@@ -242,7 +246,7 @@ class FlextLDIFParser:
                 self.records_read += 1
                 yield lines
                 lines = []
-        
+
         # Handle final block if no trailing empty line
         if lines:
             self.records_read += 1
@@ -250,64 +254,70 @@ class FlextLDIFParser:
 
     def _decode_value(self, attr_type: str, attr_value: str) -> tuple[str, str]:
         """Decode attribute value, handling encoding issues.
-        
+
         Args:
             attr_type: Attribute type name
             attr_value: Raw attribute value
-            
+
         Returns:
             Tuple of (attr_type, decoded_value)
+
         """
         # For DN attributes, ensure UTF-8 compliance
-        if attr_type == 'dn':
+        if attr_type == "dn":
             # Value is already a string, just validate UTF-8 encoding
             try:
-                attr_value.encode('utf-8').decode('utf-8')
+                attr_value.encode("utf-8").decode("utf-8")
                 return attr_type, attr_value
             except UnicodeError as err:
                 if self._strict:
-                    raise ValueError(f"DN encoding error: {err}") from err
+                    msg = f"DN encoding error: {err}"
+                    raise ValueError(msg) from err
                 logger.warning("DN encoding issue: %s", err)
                 return attr_type, attr_value
-        
+
         return attr_type, attr_value
 
     def _parse_attr(self, line: str) -> tuple[str, str]:
         """Parse a single attribute type/value pair.
-        
+
         Args:
             line: LDIF line to parse
-            
+
         Returns:
             Tuple of (attr_type, attr_value)
+
         """
-        if ':' not in line:
-            raise ValueError(f"Invalid LDIF line format: {line}")
-        
-        colon_pos = line.index(':')
+        if ":" not in line:
+            msg = f"Invalid LDIF line format: {line}"
+            raise ValueError(msg)
+
+        colon_pos = line.index(":")
         attr_type = line[:colon_pos].strip()
-        
+
         # Handle base64 encoded values (::)
-        if line[colon_pos:].startswith('::'):
+        if line[colon_pos:].startswith("::"):
             encoded_value = line[colon_pos + 2:].strip()
             try:
                 attr_value = base64.b64decode(encoded_value).decode(self._encoding)
             except Exception as e:
-                raise ValueError(f"Base64 decode error: {e}") from e
-        
+                msg = f"Base64 decode error: {e}"
+                raise ValueError(msg) from e
+
         # Handle URL references (:<)
-        elif line[colon_pos:].startswith(':<'):
+        elif line[colon_pos:].startswith(":<"):
             url = line[colon_pos + 2:].strip()
             try:
                 with urlopen(url) as response:
                     attr_value = response.read().decode(self._encoding)
             except Exception as e:
-                raise ValueError(f"URL fetch error: {e}") from e
-        
+                msg = f"URL fetch error: {e}"
+                raise ValueError(msg) from e
+
         # Handle regular values (:)
         else:
             attr_value = line[colon_pos + 1:].strip()
-        
+
         return self._decode_value(attr_type, attr_value)
 
     def _error(self, msg: str) -> None:
@@ -318,122 +328,128 @@ class FlextLDIFParser:
 
     def _check_dn(self, dn: str | None, attr_value: str) -> None:
         """Check DN attribute for validity.
-        
+
         Args:
             dn: Current DN (should be None for first occurrence)
             attr_value: DN value to validate
+
         """
         if dn is not None:
-            self._error('Multiple dn: lines in one record.')
-        
+            self._error("Multiple dn: lines in one record.")
+
         if not is_dn(attr_value):
-            self._error(f'Invalid distinguished name format: {attr_value}')
+            self._error(f"Invalid distinguished name format: {attr_value}")
 
     def _parse_entry_record(self, lines: list[str]) -> tuple[str, dict[str, list[str]]]:
         """Parse a single entry record from lines.
-        
+
         Args:
             lines: List of LDIF lines for one record
-            
+
         Returns:
             Tuple of (dn, entry_dict)
+
         """
         dn: str | None = None
         entry: dict[str, list[str]] = OrderedDict()
-        
+
         for line in lines:
             if not line.strip():
                 continue
-                
+
             attr_type, attr_value = self._parse_attr(line)
-            
-            if attr_type == 'dn':
+
+            if attr_type == "dn":
                 self._check_dn(dn, attr_value)
                 dn = attr_value
-            elif attr_type == 'version' and dn is None:
+            elif attr_type == "version" and dn is None:
                 # Skip version lines
                 continue
             else:
                 if dn is None:
-                    self._error(f'Attribute before dn: line: {attr_type}')
-                
+                    self._error(f"Attribute before dn: line: {attr_type}")
+
                 if attr_type.lower() not in self._ignored_attr_types:
                     if attr_type in entry:
                         entry[attr_type].append(attr_value)
                     else:
                         entry[attr_type] = [attr_value]
-        
+
         if dn is None:
-            raise ValueError("Record missing dn: line")
-        
+            msg = "Record missing dn: line"
+            raise ValueError(msg)
+
         return dn, entry
 
     def parse(self) -> Iterator[tuple[str, dict[str, list[str]]]]:
         """Iterate LDIF entry records.
-        
+
         Yields:
             Tuple of (dn, entry_dict) for each record
+
         """
         try:
             for block in self._iter_blocks():
                 if block:  # Skip empty blocks
                     yield self._parse_entry_record(block)
         except Exception as e:
-            logger.error("LDIF parsing failed: %s", str(e))
+            logger.exception("LDIF parsing failed: %s", str(e))
             raise
 
 
 def modernized_ldif_parse(content: str) -> FlextResult[list[tuple[str, dict[str, list[str]]]]]:
     """Parse LDIF content using modernized parser.
-    
+
     Args:
         content: LDIF content as string
-        
+
     Returns:
         FlextResult containing list of (dn, attributes) tuples
+
     """
     try:
         parser = FlextLDIFParser(content, strict=True)
         entries = list(parser.parse())
-        
+
         logger.info("Successfully parsed %d LDIF entries", len(entries))
         return FlextResult.ok(entries)
-        
+
     except Exception as e:
         error_msg = f"Modernized LDIF parse failed: {e}"
-        logger.error(error_msg)
+        logger.exception(error_msg)
         return FlextResult.fail(error_msg)
 
 
 def modernized_ldif_write(entries: list[tuple[str, dict[str, list[str]]]]) -> FlextResult[str]:
     """Write LDIF entries using modernized writer.
-    
+
     Args:
         entries: List of (dn, attributes) tuples
-        
+
     Returns:
         FlextResult containing LDIF string
+
     """
     try:
         writer = FlextLDIFWriter()
-        
+
         for dn, attrs in entries:
             writer.unparse(dn, attrs)
-        
+
         output = writer.get_output()
         logger.info("Successfully wrote %d LDIF entries", writer.records_written)
         return FlextResult.ok(output)
-        
+
     except Exception as e:
         error_msg = f"Modernized LDIF write failed: {e}"
-        logger.error(error_msg)
+        logger.exception(error_msg)
         return FlextResult.fail(error_msg)
 
 
 __all__ = [
-    'FlextLDIFParser',
-    'FlextLDIFWriter', 
-    'modernized_ldif_parse',
-    'modernized_ldif_write',
-    'is_dn',
+    "FlextLDIFParser",
+    "FlextLDIFWriter",
+    "is_dn",
+    "modernized_ldif_parse",
+    "modernized_ldif_write",
 ]
