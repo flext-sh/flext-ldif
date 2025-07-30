@@ -20,8 +20,9 @@ import base64
 import re
 from collections import OrderedDict
 from typing import TYPE_CHECKING
-from urllib.request import urlopen
+from urllib.parse import urlparse
 
+import urllib3
 from flext_core import FlextResult, get_logger
 
 if TYPE_CHECKING:
@@ -47,6 +48,66 @@ UNSAFE_STRING_PATTERN = (
     r"|[^\x01-\x09\x0b-\x0c\x0e-\x7f])"
 )
 UNSAFE_STRING_RE = re.compile(UNSAFE_STRING_PATTERN)
+
+# Allowed URL schemes for LDIF URL references
+ALLOWED_URL_SCHEMES = {"http", "https"}
+
+# HTTP status codes
+HTTP_OK = 200
+
+
+def _validate_url_scheme(url: str) -> None:
+    """Validate URL scheme for security.
+
+    Args:
+        url: URL to validate
+
+    Raises:
+        ValueError: If URL scheme is not allowed
+
+    """
+    parsed = urlparse(url)
+    if parsed.scheme not in ALLOWED_URL_SCHEMES:
+        schemes_str = ", ".join(ALLOWED_URL_SCHEMES)
+        msg = (
+            f"URL scheme '{parsed.scheme}' not allowed. "
+            f"Only {schemes_str} schemes are permitted."
+        )
+        raise ValueError(msg)
+
+
+def _safe_url_fetch(url: str, encoding: str = "utf-8") -> str:
+    """Safely fetch URL content using urllib3.
+
+    Args:
+        url: URL to fetch
+        encoding: Character encoding for response
+
+    Returns:
+        Decoded content as string
+
+    Raises:
+        ValueError: If fetch fails
+
+    """
+    _validate_url_scheme(url)
+
+    # Use urllib3 for better security and modern HTTP handling
+    http = urllib3.PoolManager()
+
+    def _handle_http_error(status: int, url: str) -> None:
+        """Handle HTTP error responses."""
+        msg = f"HTTP {status}: Failed to fetch {url}"
+        raise ValueError(msg)
+
+    try:
+        response = http.request("GET", url)
+        if response.status != HTTP_OK:
+            _handle_http_error(response.status, url)
+        return response.data.decode(encoding)
+    except Exception as e:
+        msg = f"urllib3 fetch error for {url}: {e}"
+        raise ValueError(msg) from e
 
 
 def is_dn(s: str) -> bool:
@@ -307,8 +368,7 @@ class FlextLDIFParser:
         elif line[colon_pos:].startswith(":<"):
             url = line[colon_pos + 2 :].strip()
             try:
-                with urlopen(url) as response:
-                    attr_value = response.read().decode(self._encoding)
+                attr_value = _safe_url_fetch(url, self._encoding)
             except Exception as e:
                 msg = f"URL fetch error: {e}"
                 raise ValueError(msg) from e

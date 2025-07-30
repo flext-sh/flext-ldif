@@ -49,14 +49,19 @@ class TLdif:
             return FlextResult.fail(f"Parse failed: {e}")
 
     @classmethod
-    def _parse_with_modernized_ldif(cls, content: str) -> FlextResult[list[FlextLdifEntry]]:
+    def _parse_with_modernized_ldif(
+        cls,
+        content: str,
+    ) -> FlextResult[list[FlextLdifEntry]]:
         """Parse using modernized LDIF parser with full string compatibility."""
         try:
             # Use modernized parser that handles all string/bytes issues internally
             parse_result = modernized_ldif_parse(content)
 
             if not parse_result.is_success:
-                return FlextResult.fail(parse_result.error or "Modernized LDIF parse failed")
+                return FlextResult.fail(
+                    parse_result.error or "Modernized LDIF parse failed",
+                )
 
             raw_entries = parse_result.data or []
             entries = []
@@ -142,7 +147,10 @@ class TLdif:
             return FlextResult.fail(f"Write failed: {e}")
 
     @classmethod
-    def _write_with_modernized_ldif(cls, entries: list[FlextLdifEntry]) -> FlextResult[str]:
+    def _write_with_modernized_ldif(
+        cls,
+        entries: list[FlextLdifEntry],
+    ) -> FlextResult[str]:
         """Write using modernized LDIF writer with full string compatibility."""
         try:
             # Convert FlextLdifEntry objects to (dn, attrs) tuples
@@ -156,7 +164,9 @@ class TLdif:
             write_result = modernized_ldif_write(raw_entries)
 
             if not write_result.is_success:
-                return FlextResult.fail(write_result.error or "Modernized LDIF write failed")
+                return FlextResult.fail(
+                    write_result.error or "Modernized LDIF write failed",
+                )
 
             return FlextResult.ok(write_result.data or "")
 
@@ -164,7 +174,11 @@ class TLdif:
             return FlextResult.fail(f"Modernized LDIF write failed: {e}")
 
     @classmethod
-    def write_file(cls, entries: list[FlextLdifEntry], file_path: str | Path) -> FlextResult[bool]:
+    def write_file(
+        cls,
+        entries: list[FlextLdifEntry],
+        file_path: str | Path,
+    ) -> FlextResult[bool]:
         """Write entries to LDIF file.
 
         Args:

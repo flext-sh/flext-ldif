@@ -128,7 +128,10 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
 
 """
 
-    def test_e2e_complete_ldif_processing_workflow(self, enterprise_ldif_sample: str) -> None:
+    def test_e2e_complete_ldif_processing_workflow(
+        self,
+        enterprise_ldif_sample: str,
+    ) -> None:
         """Test complete LDIF processing workflow from input to output."""
         # Step 1: Parse LDIF content
         api = FlextLdifAPI()
@@ -194,7 +197,12 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         api = FlextLdifAPI()
 
         # Create temporary input file
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", delete=False, suffix=".ldif") as input_file:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            delete=False,
+            suffix=".ldif",
+        ) as input_file:
             input_file.write(enterprise_ldif_sample)
             input_path = Path(input_file.name)
 
@@ -282,7 +290,10 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         finally:
             temp_path.unlink(missing_ok=True)
 
-    def test_e2e_convenience_functions_workflow(self, enterprise_ldif_sample: str) -> None:
+    def test_e2e_convenience_functions_workflow(
+        self,
+        enterprise_ldif_sample: str,
+    ) -> None:
         """Test complete workflow using convenience functions."""
         # Step 1: Parse using convenience function
         entries = flext_ldif_parse(enterprise_ldif_sample)
@@ -321,31 +332,37 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
     def test_e2e_configuration_scenarios(self, enterprise_ldif_sample: str) -> None:
         """Test E2E workflows with different configurations."""
         # Scenario 1: Strict configuration
-        strict_config = FlextLdifConfig.model_validate({
-            "strict_validation": True,
-            "max_entries": 20,
-            "max_entry_size": 2048,
-        })
+        strict_config = FlextLdifConfig.model_validate(
+            {
+                "strict_validation": True,
+                "max_entries": 20,
+                "max_entry_size": 2048,
+            },
+        )
 
         strict_api = FlextLdifAPI(strict_config)
         strict_result = strict_api.parse(enterprise_ldif_sample)
         assert strict_result.is_success  # Should pass with valid data
 
         # Scenario 2: Permissive configuration
-        permissive_config = FlextLdifConfig.model_validate({
-            "strict_validation": False,
-            "max_entries": 1000,
-            "max_entry_size": 10240,
-        })
+        permissive_config = FlextLdifConfig.model_validate(
+            {
+                "strict_validation": False,
+                "max_entries": 1000,
+                "max_entry_size": 10240,
+            },
+        )
 
         permissive_api = FlextLdifAPI(permissive_config)
         permissive_result = permissive_api.parse(enterprise_ldif_sample)
         assert permissive_result.is_success
 
         # Scenario 3: Restrictive configuration
-        restrictive_config = FlextLdifConfig.model_validate({
-            "max_entries": 5,  # Less than our sample
-        })
+        restrictive_config = FlextLdifConfig.model_validate(
+            {
+                "max_entries": 5,  # Less than our sample
+            },
+        )
 
         restrictive_api = FlextLdifAPI(restrictive_config)
         restrictive_result = restrictive_api.parse(enterprise_ldif_sample)
@@ -492,10 +509,10 @@ description: User number {i} for memory testing
         # Measure memory after
         gc.collect()
         total_memory = (
-            sys.getsizeof(parse_result.data) +
-            sys.getsizeof(person_result.data) +
-            sys.getsizeof(sort_result.data) +
-            sys.getsizeof(write_result.data)
+            sys.getsizeof(parse_result.data)
+            + sys.getsizeof(person_result.data)
+            + sys.getsizeof(sort_result.data)
+            + sys.getsizeof(write_result.data)
         )
 
         # Memory usage should be reasonable (not more than 5x input)
@@ -561,11 +578,13 @@ description: User number {i} for memory testing
         enterprise_data = self._create_realistic_enterprise_data()
 
         # Step 2: Process with enterprise requirements
-        config = FlextLdifConfig.model_validate({
-            "strict_validation": True,
-            "max_entries": 500,
-            "create_output_dir": True,
-        })
+        config = FlextLdifConfig.model_validate(
+            {
+                "strict_validation": True,
+                "max_entries": 500,
+                "create_output_dir": True,
+            },
+        )
 
         api = FlextLdifAPI(config)
 

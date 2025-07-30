@@ -79,7 +79,6 @@ def test_with_docker_container() -> bool | None:
 
 
 if __name__ == "__main__":
-
     success = test_with_docker_container()
 
     if success:

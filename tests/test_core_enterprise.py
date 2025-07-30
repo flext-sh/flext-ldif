@@ -89,11 +89,11 @@ invalid: line: format
         # Verify first entry
         entry = result.data[0]
         if str(entry.dn) != "cn=John Doe,ou=people,dc=example,dc=com":
-            msg = f"Expected {"cn=John Doe,ou=people,dc=example,dc=com"}, got {entry.dn!s}"
+            msg = f"Expected {'cn=John Doe,ou=people,dc=example,dc=com'}, got {entry.dn!s}"
             raise AssertionError(msg)
         assert entry.get_attribute("cn") == ["John Doe"]
         if entry.get_attribute("mail") != ["john.doe@example.com"]:
-            msg = f"Expected {["john.doe@example.com"]}, got {entry.get_attribute("mail")}"
+            msg = f"Expected {['john.doe@example.com']}, got {entry.get_attribute('mail')}"
             raise AssertionError(msg)
         assert entry.has_object_class("person")
         assert entry.has_object_class("inetOrgPerson")
@@ -162,7 +162,7 @@ invalid: line: format
         assert write_result.data is not None
         assert len(write_result.data) > 0
         if "dn:" not in write_result.data:
-            msg = f"Expected {"dn:"} in {write_result.data}"
+            msg = f"Expected {'dn:'} in {write_result.data}"
             raise AssertionError(msg)
         assert "objectClass:" in write_result.data
 
@@ -199,7 +199,12 @@ invalid: line: format
         parse_result = TLdif.parse(sample_ldif_content)
         assert parse_result.is_success
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", delete=False, suffix=".ldif") as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            delete=False,
+            suffix=".ldif",
+        ) as f:
             temp_file = Path(f.name)
 
         try:
@@ -215,7 +220,7 @@ invalid: line: format
             content = temp_file.read_text(encoding="utf-8")
             assert len(content) > 0
             if "dn:" not in content:
-                msg = f"Expected {"dn:"} in {content}"
+                msg = f"Expected {'dn:'} in {content}"
                 raise AssertionError(msg)
 
         finally:
@@ -223,7 +228,12 @@ invalid: line: format
 
     def test_read_file_success(self, sample_ldif_content: str) -> None:
         """Test reading entries from file succeeds."""
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", delete=False, suffix=".ldif") as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            delete=False,
+            suffix=".ldif",
+        ) as f:
             f.write(sample_ldif_content)
             temp_file = Path(f.name)
 
@@ -239,7 +249,7 @@ invalid: line: format
             # Verify content
             entry = read_result.data[0]
             if entry.get_attribute("cn") != ["John Doe"]:
-                msg = f"Expected {["John Doe"]}, got {entry.get_attribute("cn")}"
+                msg = f"Expected {['John Doe']}, got {entry.get_attribute('cn')}"
                 raise AssertionError(msg)
 
         finally:
@@ -254,10 +264,13 @@ invalid: line: format
         assert not read_result.is_success
         assert read_result.data is None
         if "not found" not in read_result.error.lower():
-            msg = f"Expected {"not found"} in {read_result.error.lower()}"
+            msg = f"Expected {'not found'} in {read_result.error.lower()}"
             raise AssertionError(msg)
 
-    def test_write_file_to_nonexistent_directory_fails(self, sample_ldif_content: str) -> None:
+    def test_write_file_to_nonexistent_directory_fails(
+        self,
+        sample_ldif_content: str,
+    ) -> None:
         """Test writing to nonexistent directory fails gracefully."""
         parse_result = TLdif.parse(sample_ldif_content)
         assert parse_result.is_success
@@ -267,7 +280,7 @@ invalid: line: format
 
         assert not write_result.is_success
         if "failed" not in write_result.error.lower():
-            msg = f"Expected {"failed"} in {write_result.error.lower()}"
+            msg = f"Expected {'failed'} in {write_result.error.lower()}"
             raise AssertionError(msg)
 
     def test_parse_with_ldif3_fallback(self, sample_ldif_content: str) -> None:
@@ -369,7 +382,6 @@ sn: User{i}
                 success_count += 1
 
         if success_count != 10:
-
             msg = f"Expected {10}, got {success_count}"
             raise AssertionError(msg)
 
@@ -393,7 +405,7 @@ mail: special@example.com
 
         entry = result.data[0]
         if "Üser" not in entry.get_attribute("cn")[0]:
-            msg = f"Expected {"Üser"} in {entry.get_attribute("cn")[0]}"
+            msg = f"Expected {'Üser'} in {entry.get_attribute('cn')[0]}"
             raise AssertionError(msg)
         assert "àáâãäåæçèéêë" in entry.get_attribute("description")[0]
 
@@ -416,7 +428,7 @@ description: {long_value}
 
         entry = result.data[0]
         if len(entry.get_attribute("description")[0]) != 1000:
-            msg = f"Expected {1000}, got {len(entry.get_attribute("description")[0])}"
+            msg = f"Expected {1000}, got {len(entry.get_attribute('description')[0])}"
             raise AssertionError(msg)
 
     def test_error_handling_robustness(self) -> None:

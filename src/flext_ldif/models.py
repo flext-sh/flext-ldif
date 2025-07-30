@@ -184,7 +184,10 @@ class FlextLdifEntry(FlextValueObject):
 
     @field_validator("dn", mode="before")
     @classmethod
-    def validate_dn(cls, v: str | FlextLdifDistinguishedName | dict[str, str]) -> FlextLdifDistinguishedName:
+    def validate_dn(
+        cls,
+        v: str | FlextLdifDistinguishedName | dict[str, str],
+    ) -> FlextLdifDistinguishedName:
         """Convert string DN to FlextLdifDistinguishedName object."""
         if isinstance(v, str):
             return FlextLdifDistinguishedName.model_validate({"value": v})
@@ -195,7 +198,10 @@ class FlextLdifEntry(FlextValueObject):
 
     @field_validator("attributes", mode="before")
     @classmethod
-    def validate_attributes(cls, v: dict[str, list[str]] | FlextLdifAttributes) -> FlextLdifAttributes:
+    def validate_attributes(
+        cls,
+        v: dict[str, list[str]] | FlextLdifAttributes,
+    ) -> FlextLdifAttributes:
         """Convert dict attributes to FlextLdifAttributes object."""
         if isinstance(v, dict):
             return FlextLdifAttributes.model_validate({"attributes": v})
@@ -366,7 +372,11 @@ class FlextLdifEntry(FlextValueObject):
         )
 
     @classmethod
-    def from_ldif_dict(cls, dn: str, attributes: dict[str, list[str]]) -> FlextLdifEntry:
+    def from_ldif_dict(
+        cls,
+        dn: str,
+        attributes: dict[str, list[str]],
+    ) -> FlextLdifEntry:
         """Create entry from DN string and attributes dict (ldif3 format).
 
         Args:
