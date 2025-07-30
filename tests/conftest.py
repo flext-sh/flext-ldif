@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
-from flext_ldif import FlextLdifParser, FlextLdifWriter
+from flext_ldif import FlextLdifAPI, TLdif
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -199,17 +199,15 @@ def ldif_binary_file(test_ldif_dir: Path, sample_ldif_with_binary: str) -> Path:
 
 # LDIF parsing fixtures
 @pytest.fixture
-async def ldif_parser() -> Any:
-    """Provide a LDIF parser for testing."""
-
-    return FlextLdifParser()
+def ldif_api() -> FlextLdifAPI:
+    """Provide a LDIF API for testing."""
+    return FlextLdifAPI()
 
 
 @pytest.fixture
-async def ldif_writer() -> Any:
-    """Provide a LDIF writer for testing."""
-
-    return FlextLdifWriter()
+def ldif_core() -> type[TLdif]:
+    """Provide LDIF core functionality for testing."""
+    return TLdif
 
 
 # Schema validation fixtures

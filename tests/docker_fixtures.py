@@ -107,12 +107,15 @@ class OpenLDAPContainerManager:
 
         start_time = time.time()
         while time.time() - start_time < timeout:
-            try:
-                # Check if container is still running
-                self.container.reload()
+            def _check_container_status() -> None:
                 if self.container.status != "running":
                     msg = f"Container failed to start: {self.container.status}"
                     raise RuntimeError(msg)
+
+            try:
+                # Check if container is still running
+                self.container.reload()
+                _check_container_status()
 
                 # Try to connect to LDAP port
                 exec_result = self.container.exec_run(
@@ -321,9 +324,10 @@ member: uid=bob.wilson,ou=people,{OPENLDAP_BASE_DN}
 
         try:
             self.container.reload()
-            return self.container.status == "running"
         except (RuntimeError, ValueError, TypeError):
             return False
+        else:
+            return self.container.status == "running"
 
     def get_logs(self) -> str:
         """Get container logs for debugging."""
@@ -347,7 +351,7 @@ def docker_openldap_container() -> Container:
     This fixture starts an OpenLDAP container with test data at the beginning of the test
     session and stops it at the end. The container is shared across all tests.
     """
-    global _container_manager
+    global _container_manager  # noqa: PLW0603
 
     if _container_manager is None:
         _container_manager = OpenLDAPContainerManager()
@@ -384,8 +388,6 @@ def ldif_test_config(docker_openldap_container: Container) -> dict[str, Any]:
 @pytest.fixture
 def real_ldif_data(ldif_test_config: dict[str, Any]) -> str:
     """Provides real LDIF data exported from the OpenLDAP container."""
-    global _container_manager
-
     if _container_manager and _container_manager.is_container_running():
         # Export LDIF data from container
         ldif_data = _container_manager.get_ldif_export()
@@ -446,10 +448,11 @@ async def temporary_ldif_data(
 def check_docker_available() -> bool:
     """Check if Docker is available on the system."""
     try:
-        subprocess.run(["docker", "--version"], check=True, capture_output=True)
-        return True
+        subprocess.run(["docker", "--version"], check=True, capture_output=True)  # noqa: S607
     except (subprocess.CalledProcessError, FileNotFoundError):
         return False
+    else:
+        return True
 
 
 def skip_if_no_docker():

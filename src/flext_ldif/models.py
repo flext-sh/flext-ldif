@@ -9,8 +9,11 @@ from __future__ import annotations
 from typing import NewType
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root namespace imports
-from flext_core import FlextResult, FlextValueObject
+from flext_core import FlextResult, FlextValueObject, get_logger
 from pydantic import Field, field_validator
+
+# Logger for models module
+logger = get_logger(__name__)
 
 # Type aliases for LDIF-specific concepts
 LDIFContent = NewType("LDIFContent", str)
@@ -214,11 +217,12 @@ class FlextLdifEntry(FlextValueObject):
             name: The attribute name to retrieve
 
         Returns:
-            List of attribute values if found, None otherwise
+            List of attribute values if found, None if attribute doesn't exist
 
         """
-        values = self.attributes.get_values(name)
-        return values or None
+        if not self.attributes.has_attribute(name):
+            return None
+        return self.attributes.get_values(name)
 
     def set_attribute(self, name: str, values: list[str]) -> None:
         """Set an attribute with the given name and values."""
@@ -278,15 +282,19 @@ class FlextLdifEntry(FlextValueObject):
 
     def is_modify_operation(self) -> bool:
         """Check if this is a modify operation."""
-        return False  # Model entries are not change operations
+        changetype = self.get_attribute("changetype")
+        return bool(changetype and changetype[0].lower() == "modify")
 
     def is_add_operation(self) -> bool:
         """Check if this is an add operation."""
-        return False  # Model entries are not change operations
+        changetype = self.get_attribute("changetype")
+        # Default to add operation when no changetype is specified (standard LDIF behavior)
+        return not changetype or changetype[0].lower() == "add"
 
     def is_delete_operation(self) -> bool:
         """Check if this is a delete operation."""
-        return False  # Model entries are not change operations
+        changetype = self.get_attribute("changetype")
+        return bool(changetype and changetype[0].lower() == "delete")
 
     def get_single_attribute(self, name: str) -> str | None:
         """Get single value from an LDIF attribute.
@@ -324,6 +332,10 @@ class FlextLdifEntry(FlextValueObject):
         # Validate at least one attribute exists
         if not self.attributes or not self.attributes.attributes:
             return FlextResult.fail("LDIF entry must have at least one attribute")
+
+        # Validate required objectClass attribute for standard LDIF entries
+        if not self.has_attribute("objectClass"):
+            return FlextResult.fail("Entry missing required objectClass attribute")
 
         return FlextResult.ok(None)
 
@@ -387,10 +399,31 @@ class FlextLdifEntry(FlextValueObject):
             FlextLdifEntry instance
 
         """
-        return cls(
-            dn=FlextLdifDistinguishedName.model_validate({"value": dn}),
-            attributes=FlextLdifAttributes.model_validate({"attributes": attributes}),
-        )
+        logger.debug("Creating FlextLdifEntry from LDIF dict: DN=%s", dn)
+        logger.trace("Attributes count: %d", len(attributes))
+        logger.trace("Attribute names: %s", list(attributes.keys()))
+
+        try:
+            logger.debug("Validating DN: %s", dn)
+            dn_obj = FlextLdifDistinguishedName.model_validate({"value": dn})
+            logger.trace("DN validation successful")
+
+            logger.debug("Validating attributes dictionary")
+            attrs_obj = FlextLdifAttributes.model_validate({"attributes": attributes})
+            logger.trace("Attributes validation successful")
+
+            entry = cls(dn=dn_obj, attributes=attrs_obj)
+            logger.debug("FlextLdifEntry created successfully: %s", entry.dn)
+            logger.info("LDIF entry created from dict",
+                       dn=dn,
+                       attributes_count=len(attributes),
+                       total_values=sum(len(values) for values in attributes.values()))
+            return entry
+        except Exception as e:
+            logger.debug("Exception type: %s", type(e).__name__)
+            logger.trace("Entry creation exception details", exc_info=True)
+            logger.exception("Failed to create FlextLdifEntry from dict")
+            raise
 
     # ==========================================================================
     # SPECIFICATION METHODS (Consolidated from specifications.py)

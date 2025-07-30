@@ -8,11 +8,14 @@ Domain-specific exceptions for LDIF operations inheriting from flext-core.
 
 from __future__ import annotations
 
+from flext_core import get_logger
 from flext_core.exceptions import (
     FlextError,
     FlextProcessingError,
     FlextValidationError,
 )
+
+logger = get_logger(__name__)
 
 
 class FlextLdifError(FlextError):
@@ -20,7 +23,10 @@ class FlextLdifError(FlextError):
 
     def __init__(self, message: str = "LDIF error", **kwargs: object) -> None:
         """Initialize LDIF error with context."""
+        logger.debug("Creating FlextLdifError: %s", message)
+        logger.trace("Error context: %s", kwargs)
         super().__init__(message, error_code="LDIF_ERROR", context=kwargs)
+        logger.debug("FlextLdifError created successfully")
 
 
 class FlextLdifParseError(FlextProcessingError):
@@ -34,13 +40,18 @@ class FlextLdifParseError(FlextProcessingError):
         **kwargs: object,
     ) -> None:
         """Initialize LDIF parse error with context."""
+        logger.debug("Creating FlextLdifParseError: %s", message)
+        logger.trace("Parse error details - line: %s, DN: %s", line_number, entry_dn)
+
         context = kwargs.copy()
         if line_number is not None:
             context["line_number"] = line_number
         if entry_dn is not None:
             context["entry_dn"] = entry_dn
 
+        logger.trace("Parse error context: %s", context)
         super().__init__(f"LDIF parse: {message}", **context)
+        logger.debug("FlextLdifParseError created successfully")
 
 
 class FlextLdifValidationError(FlextValidationError):
@@ -55,7 +66,7 @@ class FlextLdifValidationError(FlextValidationError):
         **kwargs: object,
     ) -> None:
         """Initialize LDIF validation error with context."""
-        validation_details = {}
+        validation_details: dict[str, object] = {}
         if attribute_name is not None:
             validation_details["field"] = attribute_name
         if attribute_value is not None:

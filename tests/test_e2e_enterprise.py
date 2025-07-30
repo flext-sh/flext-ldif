@@ -6,9 +6,6 @@ covering real-world scenarios and enterprise use cases.
 
 from __future__ import annotations
 
-# Constants
-EXPECTED_DATA_COUNT = 3
-
 import gc
 import queue
 import sys
@@ -27,6 +24,9 @@ from flext_ldif import (
     flext_ldif_validate,
     flext_ldif_write,
 )
+
+# Constants
+EXPECTED_DATA_COUNT = 3
 
 
 class TestE2EEnterpriseWorkflows:
@@ -519,35 +519,34 @@ description: User number {i} for memory testing
         memory_ratio = total_memory / memory_before
         assert memory_ratio < 5.0
 
+    def _execute_workflow(self, ldif_sample: str) -> str:
+        """Execute a single LDIF workflow."""
+        try:
+            api = FlextLdifAPI()
+
+            parse_result = api.parse(ldif_sample)
+            if not parse_result.is_success:
+                return "failed"
+
+            person_result = api.filter_persons(parse_result.data)
+            if not person_result.is_success:
+                return "failed"
+
+            write_result = api.write(person_result.data)
+            if not write_result.is_success:
+                return "failed"
+        except (RuntimeError, ValueError, TypeError):
+            return "failed"
+        else:
+            return "success"
+
     def test_e2e_concurrent_workflows(self, enterprise_ldif_sample: str) -> None:
         """Test concurrent E2E workflows."""
-
         results = queue.Queue()
 
         def worker_workflow():
-            try:
-                api = FlextLdifAPI()
-
-                # Complete workflow
-                parse_result = api.parse(enterprise_ldif_sample)
-                if not parse_result.is_success:
-                    results.put(False)
-                    return
-
-                person_result = api.filter_persons(parse_result.data)
-                if not person_result.is_success:
-                    results.put(False)
-                    return
-
-                write_result = api.write(person_result.data)
-                if not write_result.is_success:
-                    results.put(False)
-                    return
-
-                results.put(True)
-
-            except (RuntimeError, ValueError, TypeError):
-                results.put(False)
+            result = self._execute_workflow(enterprise_ldif_sample)
+            results.put(result)
 
         # Start multiple worker threads
         threads = []
@@ -563,7 +562,7 @@ description: User number {i} for memory testing
         # Verify all succeeded
         success_count = 0
         while not results.empty():
-            if results.get():
+            if results.get() == "success":
                 success_count += 1
 
         if success_count != 5:  # All workflows should succeed

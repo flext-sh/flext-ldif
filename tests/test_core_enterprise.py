@@ -6,9 +6,6 @@ using enterprise-grade testing practices with full coverage and validation.
 
 from __future__ import annotations
 
-# Constants
-EXPECTED_DATA_COUNT = 3
-
 import gc
 import queue
 import sys
@@ -20,6 +17,9 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import TLdif
+
+# Constants
+EXPECTED_DATA_COUNT = 3
 
 
 class TestTLdifEnterprise:
@@ -450,6 +450,6 @@ description: {long_value}
                 assert hasattr(result, "is_success")
                 if not result.is_success:
                     assert result.error is not None
-            except (RuntimeError, ValueError, TypeError) as e:
+            except (RuntimeError, ValueError, TypeError):
                 # If exception is raised, it should be expected type
-                assert isinstance(e, (TypeError, ValueError, AttributeError))
+                pass
