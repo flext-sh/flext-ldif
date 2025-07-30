@@ -577,10 +577,10 @@ processor = FlextLdifProcessor()
 result = processor.parse_ldif_content(ldif_content)
 if result.success:
     entries = result.data
-    
+
     # Filter for person entries only
     person_entries = processor.filter_person_entries(entries)
-    
+
     # Validate all entries
     validation_result = processor.validate_entries(entries)
 ```

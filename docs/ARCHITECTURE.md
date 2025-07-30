@@ -119,10 +119,10 @@ class FlextLdifEntry(FlextEntity):
     dn: FlextLdifDistinguishedName
     attributes: FlextLdifAttributes
     change_type: str | None
-    
+
     def get_object_classes(self) -> list[str]:
         """Business logic for object class extraction"""
-    
+
     def validate_domain_rules(self) -> None:
         """Domain-specific validation rules"""
 ```
@@ -134,7 +134,7 @@ class FlextLdifRecord(FlextEntity):
     entries: list[FlextLdifEntry]
     ldif_version: int
     encoding: str
-    
+
     def validate_domain_rules(self) -> None:
         """Ensure record consistency and business rules"""
 ```
@@ -146,13 +146,13 @@ class FlextLdifRecord(FlextEntity):
 ```python
 class FlextLdifDistinguishedName(FlextValueObject):
     value: str
-    
+
     def get_rdn(self) -> str:
         """Extract relative distinguished name"""
-    
+
     def get_parent_dn(self) -> FlextLdifDistinguishedName | None:
         """Navigate DN hierarchy"""
-    
+
     def is_child_of(self, parent: FlextLdifDistinguishedName) -> bool:
         """Check hierarchical relationships"""
 ```
@@ -162,10 +162,10 @@ class FlextLdifDistinguishedName(FlextValueObject):
 ```python
 class FlextLdifAttributes(FlextValueObject):
     attributes: dict[str, list[str]]
-    
+
     def add_value(self, name: str, value: str) -> FlextLdifAttributes:
         """Return new instance with added value (immutable)"""
-    
+
     def get_values(self, name: str) -> list[str]:
         """Retrieve attribute values"""
 ```
@@ -180,10 +180,10 @@ class FlextLdifDocument(FlextAggregateRoot):
     entries: list[FlextLdifEntry]
     is_parsed: bool
     is_validated: bool
-    
+
     def parse_content(self, entries: list[FlextLdifEntry]) -> None:
         """Parse content and raise domain events"""
-        
+
     def complete_processing(self, success: bool, errors: list[str]) -> None:
         """Complete processing and raise completion event"""
 ```
@@ -210,14 +210,14 @@ Business rules encoded as specifications:
 ```python
 class FlextLdifPersonSpecification(FlextSpecification[FlextLdifEntry]):
     """Specification for person entries"""
-    
+
     def is_satisfied_by(self, entry: FlextLdifEntry) -> bool:
         person_classes = {"person", "organizationalPerson", "inetOrgPerson"}
         return any(oc in person_classes for oc in entry.get_object_classes())
 
 class FlextLdifValidSpecification(FlextSpecification[FlextLdifEntry]):
     """Specification for valid LDIF entries"""
-    
+
     def is_satisfied_by(self, entry: FlextLdifEntry) -> bool:
         try:
             entry.validate_domain_rules()
@@ -239,14 +239,14 @@ class FlextLdifProcessor:
         self._validator = FlextLdifValidator()
         self._person_spec = FlextLdifPersonSpecification()
         self._valid_spec = FlextLdifValidSpecification()
-    
+
     def parse_ldif_content(self, content: str) -> FlextResult[list[FlextLdifEntry]]:
         """Parse LDIF content using domain objects"""
-    
+
     def validate_entries(self, entries: list[FlextLdifEntry]) -> FlextResult[bool]:
         """Validate entries using domain specifications"""
-    
-    def filter_entries(self, entries: list[FlextLdifEntry], 
+
+    def filter_entries(self, entries: list[FlextLdifEntry],
                       spec: FlextSpecification[FlextLdifEntry]) -> list[FlextLdifEntry]:
         """Filter entries using specification pattern"""
 ```
@@ -260,10 +260,10 @@ Facade functions providing simple interface:
 ```python
 def parse_ldif(content: str | LDIFContent) -> list[FlextLdifEntry]:
     """Simple parsing function - internally uses FlextLdifProcessor"""
-    
+
 def write_ldif(entries: list[FlextLdifEntry], output_path: str | None = None) -> str:
     """Simple writing function - internally uses FlextLdifWriter"""
-    
+
 def validate_ldif(content: str | LDIFContent) -> bool:
     """Simple validation function - internally uses FlextLdifValidator"""
 ```
@@ -277,11 +277,11 @@ class FlextLdifEntry(FlextValueObject):
     """Public API model for LDIF entries"""
     dn: FlextLdifDistinguishedName
     attributes: FlextLdifAttributes
-    
+
     # Convenience methods delegating to domain objects
     def get_object_classes(self) -> list[str]:
         return self.attributes.get_values("objectClass")
-    
+
     def to_ldif(self) -> str:
         """Convert to LDIF string format"""
 ```
@@ -294,7 +294,7 @@ class FlextLdifEntry(FlextValueObject):
 class FlextLdifParser:
     def parse_ldif_content(self, content: str) -> FlextResult[list[FlextLdifEntry]]:
         """Parse LDIF content with error handling"""
-    
+
     def parse_ldif_file(self, file_path: Path) -> FlextResult[list[FlextLdifEntry]]:
         """Parse LDIF file with error handling"""
 ```
@@ -303,10 +303,10 @@ class FlextLdifParser:
 
 ```python
 class FlextLdifWriter:
-    def write_entries_to_file(self, file_path: Path, 
+    def write_entries_to_file(self, file_path: Path,
                              entries: list[dict]) -> FlextResult[str]:
         """Write entries to file with error handling"""
-    
+
     def write_flext_entries_to_file(self, file_path: Path,
                                    entries: list[FlextLdifEntry]) -> FlextResult[str]:
         """Write FlextLdifEntry objects to file"""
@@ -335,30 +335,37 @@ def flext_ldif_get_service_result() -> type[FlextResult]:
 ## 🎯 Design Patterns Used
 
 ### 1. **Repository Pattern**
+
 - Abstract data access through domain interfaces
 - Concrete implementations in infrastructure layer
 
 ### 2. **Specification Pattern**
+
 - Encapsulate business rules as specifications
 - Composable and reusable validation logic
 
 ### 3. **Factory Pattern**
+
 - `FlextLdifEntry.from_ldif_block()` - Create entries from LDIF text
 - `FlextLdifDistinguishedName.model_validate()` - Value object creation
 
 ### 4. **Strategy Pattern**
+
 - Different parsing strategies for various LDIF formats
 - Pluggable validation strategies
 
 ### 5. **Observer Pattern**
+
 - Domain events for integration and side effects
 - Event-driven architecture support
 
 ### 6. **Facade Pattern**
+
 - Simple API functions (`parse_ldif`, `write_ldif`) hiding complexity
 - Clean interface for common operations
 
 ### 7. **Value Object Pattern**
+
 - Immutable domain values (DN, Attributes)
 - Equality based on value, not identity
 
@@ -367,6 +374,7 @@ def flext_ldif_get_service_result() -> type[FlextResult]:
 ### Adding New Domain Entities
 
 1. Create entity in `domain/entities.py`:
+
 ```python
 class FlextLdifSchema(FlextEntity):
     def validate_domain_rules(self) -> None: ...
@@ -378,6 +386,7 @@ class FlextLdifSchema(FlextEntity):
 ### Adding New Specifications
 
 1. Create specification in `domain/specifications.py`:
+
 ```python
 class FlextLdifGroupSpecification(FlextSpecification[FlextLdifEntry]):
     def is_satisfied_by(self, entry: FlextLdifEntry) -> bool: ...
@@ -388,6 +397,7 @@ class FlextLdifGroupSpecification(FlextSpecification[FlextLdifEntry]):
 ### Adding New Domain Events
 
 1. Create event in `domain/events.py`:
+
 ```python
 class FlextLdifSchemaValidated(FlextDomainEvent):
     schema_name: str
@@ -399,17 +409,20 @@ class FlextLdifSchemaValidated(FlextDomainEvent):
 ## 🔒 Quality Assurance
 
 ### Type Safety
+
 - **MyPy strict mode**: All code type-checked
 - **Pydantic models**: Runtime validation
 - **Generic types**: Parameterized specifications and results
 
 ### Testing Strategy
+
 - **Unit tests**: Each domain object and service
 - **Integration tests**: Cross-layer interactions
 - **Property-based tests**: Domain invariants
 - **Contract tests**: Interface compliance
 
 ### Code Quality
+
 - **Ruff linting**: Comprehensive static analysis
 - **PEP compliance**: Python style standards
 - **Architecture tests**: Dependency direction validation
@@ -418,16 +431,19 @@ class FlextLdifSchemaValidated(FlextDomainEvent):
 ## 📈 Performance Considerations
 
 ### Memory Efficiency
+
 - **Immutable value objects**: Safe sharing across contexts
 - **Lazy loading**: Parse only when needed
 - **Efficient collections**: Optimized data structures
 
 ### Processing Efficiency
+
 - **Batch operations**: Process multiple entries together
 - **Streaming support**: Handle large LDIF files
 - **Caching**: Memoize expensive operations
 
 ### Scalability
+
 - **Stateless design**: Easy horizontal scaling
 - **Event-driven**: Asynchronous processing support
 - **Clean interfaces**: Easy to add caching layers

@@ -247,7 +247,7 @@ def validate_required_attributes(entry: FlextLdifEntry) -> bool:
 for entry in entries:
     if not validate_email_format(entry):
         print(f"Invalid email in entry: {entry.dn}")
-    
+
     if not validate_required_attributes(entry):
         print(f"Missing required attributes in entry: {entry.dn}")
 ```
@@ -267,7 +267,7 @@ writer = FlextLdifWriter()
 
 # Write FlextLdifEntry objects to file
 result = writer.write_flext_entries_to_file(
-    Path("/tmp/employees.ldif"), 
+    Path("/tmp/employees.ldif"),
     entries
 )
 
@@ -348,7 +348,7 @@ if dn.is_child_of(dept_dn):
 # DN comparison and sorting
 dns = [
     "cn=Alice,ou=Engineering,dc=company,dc=com",
-    "ou=Engineering,dc=company,dc=com", 
+    "ou=Engineering,dc=company,dc=com",
     "cn=Bob,ou=Engineering,dc=company,dc=com",
     "dc=company,dc=com"
 ]
@@ -418,23 +418,23 @@ processor = FlextLdifProcessor()
 result = processor.parse_ldif_content(ldif_content)
 if result.success:
     entries = result.data
-    
+
     # Filter person entries
     person_entries = processor.filter_person_entries(entries)
     print(f"Found {len(person_entries)} person entries")
-    
+
     # Filter valid entries
     valid_entries = processor.filter_valid_entries(entries)
     print(f"Found {len(valid_entries)} valid entries")
-    
+
     # Use specifications directly
     person_spec = FlextLdifPersonSpecification()
     valid_spec = FlextLdifValidSpecification()
-    
+
     for entry in entries:
         if person_spec.is_satisfied_by(entry):
             print(f"Person: {entry.get_single_attribute('cn')}")
-        
+
         if not valid_spec.is_satisfied_by(entry):
             print(f"Invalid entry: {entry.dn}")
 ```
@@ -449,7 +449,7 @@ entries = parse_ldif(ldif_content)
 # Filter by object class
 def filter_by_object_class(entries, object_class):
     return [
-        entry for entry in entries 
+        entry for entry in entries
         if entry.has_object_class(object_class)
     ]
 
@@ -521,10 +521,10 @@ def process_ldif_files(directory: Path) -> dict:
         "total_entries": 0,
         "files": []
     }
-    
+
     for ldif_file in directory.glob("*.ldif"):
         logger.info(f"Processing {ldif_file}")
-        
+
         try:
             # Parse file
             parse_result = processor.parse_ldif_file(ldif_file)
@@ -532,17 +532,17 @@ def process_ldif_files(directory: Path) -> dict:
                 logger.error(f"Parse failed for {ldif_file}: {parse_result.error}")
                 results["errors"] += 1
                 continue
-            
+
             entries = parse_result.data
-            
+
             # Validate entries
             validation_result = processor.validate_entries(entries)
             if not validation_result.success:
                 logger.warning(f"Validation issues in {ldif_file}: {validation_result.error}")
-            
+
             # Filter valid entries
             valid_entries = processor.filter_valid_entries(entries)
-            
+
             results["processed"] += 1
             results["total_entries"] += len(valid_entries)
             results["files"].append({
@@ -550,13 +550,13 @@ def process_ldif_files(directory: Path) -> dict:
                 "entries": len(entries),
                 "valid_entries": len(valid_entries)
             })
-            
+
             logger.info(f"Processed {len(valid_entries)}/{len(entries)} valid entries")
-            
+
         except Exception as e:
             logger.error(f"Error processing {ldif_file}: {e}")
             results["errors"] += 1
-    
+
     return results
 
 # Usage
@@ -573,21 +573,21 @@ from typing import List, Callable
 
 class LDIFTransformationPipeline:
     """Pipeline for transforming LDIF data"""
-    
+
     def __init__(self):
         self.transformations: List[Callable[[FlextLdifEntry], FlextLdifEntry]] = []
-    
+
     def add_transformation(self, transform_func: Callable[[FlextLdifEntry], FlextLdifEntry]):
         """Add a transformation function to the pipeline"""
         self.transformations.append(transform_func)
-    
+
     def process(self, entries: List[FlextLdifEntry]) -> List[FlextLdifEntry]:
         """Apply all transformations to entries"""
         result = entries.copy()
-        
+
         for transform in self.transformations:
             result = [transform(entry) for entry in result]
-        
+
         return result
 
 # Example transformations
@@ -601,7 +601,7 @@ def normalize_email_addresses(entry: FlextLdifEntry) -> FlextLdifEntry:
             new_attrs = new_attrs.remove_value("mail", email)
         for email in normalized_emails:
             new_attrs = new_attrs.add_value("mail", email)
-        
+
         return FlextLdifEntry.model_validate({
             "dn": entry.dn,
             "attributes": new_attrs
@@ -641,7 +641,7 @@ from datetime import datetime
 
 class LDIFProcessingMonitor:
     """Monitor LDIF processing operations"""
-    
+
     def __init__(self):
         self.stats = {
             "processed": 0,
@@ -650,17 +650,17 @@ class LDIFProcessingMonitor:
             "error_details": []
         }
         self.logger = logging.getLogger(__name__)
-    
+
     def start_processing(self):
         """Start processing timer"""
         self.stats["start_time"] = datetime.now()
         self.logger.info("LDIF processing started")
-    
+
     def record_success(self, entry_count: int):
         """Record successful processing"""
         self.stats["processed"] += entry_count
         self.logger.info(f"Successfully processed {entry_count} entries")
-    
+
     def record_error(self, error: Exception, context: str = ""):
         """Record processing error"""
         self.stats["errors"] += 1
@@ -672,20 +672,20 @@ class LDIFProcessingMonitor:
         }
         self.stats["error_details"].append(error_detail)
         self.logger.error(f"Processing error in {context}: {error}")
-    
+
     def get_summary(self) -> Dict[str, Any]:
         """Get processing summary"""
         if self.stats["start_time"]:
             duration = datetime.now() - self.stats["start_time"]
             self.stats["duration_seconds"] = duration.total_seconds()
-        
+
         return self.stats.copy()
 
 def robust_ldif_processing(ldif_content: str) -> Dict[str, Any]:
     """Robust LDIF processing with comprehensive error handling"""
     monitor = LDIFProcessingMonitor()
     monitor.start_processing()
-    
+
     processor = FlextLdifProcessor()
     results = {
         "entries": [],
@@ -693,17 +693,17 @@ def robust_ldif_processing(ldif_content: str) -> Dict[str, Any]:
         "person_entries": [],
         "success": False
     }
-    
+
     try:
         # Parse content
         parse_result = processor.parse_ldif_content(ldif_content)
         if not parse_result.success:
             raise FlextLdifError(f"Parse failed: {parse_result.error}")
-        
+
         entries = parse_result.data
         results["entries"] = entries
         monitor.record_success(len(entries))
-        
+
         # Validate entries
         try:
             validation_result = processor.validate_entries(entries)
@@ -714,28 +714,28 @@ def robust_ldif_processing(ldif_content: str) -> Dict[str, Any]:
                 valid_entries = processor.filter_valid_entries(entries)
                 results["valid_entries"] = valid_entries
                 monitor.logger.warning(f"Some entries failed validation: {validation_result.error}")
-        
+
         except Exception as e:
             monitor.record_error(e, "validation")
             # Continue with unvalidated entries
             results["valid_entries"] = entries
-        
+
         # Filter person entries
         try:
             person_entries = processor.filter_person_entries(results["valid_entries"])
             results["person_entries"] = person_entries
         except Exception as e:
             monitor.record_error(e, "person_filtering")
-        
+
         results["success"] = True
-        
+
     except Exception as e:
         monitor.record_error(e, "main_processing")
         results["success"] = False
-    
+
     # Add monitoring stats to results
     results["stats"] = monitor.get_summary()
-    
+
     return results
 
 # Usage
@@ -763,50 +763,50 @@ print(f"Processing stats: {results['stats']}")
 
 ```python
 from flext_ldif import (
-    parse_ldif, 
-    FlextLdifError, 
-    FlextLdifParseError, 
+    parse_ldif,
+    FlextLdifError,
+    FlextLdifParseError,
     FlextLdifValidationError,
     FlextLdifEntry
 )
 
 def safe_ldif_processing(ldif_content: str):
     """Demonstrate comprehensive error handling"""
-    
+
     try:
         # Attempt to parse LDIF
         entries = parse_ldif(ldif_content)
         print(f"Successfully parsed {len(entries)} entries")
-        
+
         # Process each entry safely
         for i, entry in enumerate(entries):
             try:
                 # Validate domain rules
                 entry.validate_domain_rules()
-                
+
                 # Process entry
                 process_entry_safely(entry)
-                
+
             except ValueError as e:
                 print(f"Entry {i} domain validation failed: {e}")
                 continue
             except Exception as e:
                 print(f"Unexpected error processing entry {i}: {e}")
                 continue
-    
+
     except FlextLdifParseError as e:
         print(f"LDIF parsing failed: {e}")
         # Try to recover or provide fallback
         return handle_parse_error(ldif_content, e)
-    
+
     except FlextLdifValidationError as e:
         print(f"LDIF validation failed: {e}")
         return handle_validation_error(e)
-    
+
     except FlextLdifError as e:
         print(f"General FLEXT LDIF error: {e}")
         return handle_general_error(e)
-    
+
     except Exception as e:
         print(f"Unexpected error: {e}")
         return handle_unexpected_error(e)
@@ -817,20 +817,20 @@ def process_entry_safely(entry: FlextLdifEntry):
         # Check required attributes
         if not entry.has_attribute("cn"):
             raise ValueError("Entry missing required cn attribute")
-        
+
         # Validate email format if present
         emails = entry.get_attribute_values("mail")
         for email in emails:
             if "@" not in email:
                 raise ValueError(f"Invalid email format: {email}")
-        
+
         # Validate object classes
         object_classes = entry.get_object_classes()
         if not object_classes:
             raise ValueError("Entry missing objectClass")
-        
+
         print(f"Entry validated: {entry.get_single_attribute('cn')}")
-        
+
     except Exception as e:
         print(f"Entry processing error: {e}")
         raise
@@ -838,18 +838,18 @@ def process_entry_safely(entry: FlextLdifEntry):
 def handle_parse_error(content: str, error: FlextLdifParseError):
     """Handle parsing errors with recovery attempts"""
     print("Attempting to recover from parse error...")
-    
+
     # Try to clean up common issues
     lines = content.strip().split('\n')
     cleaned_lines = []
-    
+
     for line in lines:
         # Skip empty lines and comments
         if line.strip() and not line.startswith('#'):
             # Basic cleanup
             if ':' in line:
                 cleaned_lines.append(line)
-    
+
     if cleaned_lines:
         try:
             # Retry with cleaned content
@@ -857,7 +857,7 @@ def handle_parse_error(content: str, error: FlextLdifParseError):
             return parse_ldif(cleaned_content)
         except Exception:
             print("Recovery attempt failed")
-    
+
     return []
 
 def handle_validation_error(error: FlextLdifValidationError):
@@ -909,7 +909,7 @@ from typing import Iterator
 
 def process_large_ldif_file(file_path: Path, batch_size: int = 1000):
     """Process large LDIF files in batches"""
-    
+
     def ldif_entry_generator(file_path: Path) -> Iterator[str]:
         """Generator to read LDIF entries one by one"""
         with open(file_path, 'r') as f:
@@ -927,41 +927,41 @@ def process_large_ldif_file(file_path: Path, batch_size: int = 1000):
                     # Empty line - end of entry
                     yield '\n'.join(entry_lines)
                     entry_lines = []
-            
+
             # Yield last entry if exists
             if entry_lines:
                 yield '\n'.join(entry_lines)
-    
+
     processor = FlextLdifProcessor()
     processed_count = 0
     batch = []
-    
+
     start_time = time.time()
-    
+
     for entry_text in ldif_entry_generator(file_path):
         batch.append(entry_text)
-        
+
         if len(batch) >= batch_size:
             # Process batch
             batch_ldif = '\n\n'.join(batch)
             result = processor.parse_ldif_content(batch_ldif)
-            
+
             if result.success:
                 processed_count += len(result.data)
                 print(f"Processed batch: {processed_count} total entries")
-            
+
             batch = []
-    
+
     # Process remaining entries
     if batch:
         batch_ldif = '\n\n'.join(batch)
         result = processor.parse_ldif_content(batch_ldif)
         if result.success:
             processed_count += len(result.data)
-    
+
     end_time = time.time()
     processing_time = end_time - start_time
-    
+
     print(f"Processed {processed_count} entries in {processing_time:.2f} seconds")
     print(f"Rate: {processed_count / processing_time:.2f} entries/second")
 
@@ -978,36 +978,36 @@ from typing import Callable, Any
 
 class MemoryEfficientProcessor:
     """Memory-efficient LDIF processor for large datasets"""
-    
+
     def __init__(self, batch_size: int = 500):
         self.batch_size = batch_size
         self.processor = FlextLdifProcessor()
-    
+
     def process_with_callback(
-        self, 
-        ldif_content: str, 
+        self,
+        ldif_content: str,
         entry_callback: Callable[[Any], None]
     ):
         """Process LDIF with callback for each entry to minimize memory usage"""
-        
+
         # Split content into entries
         entries_text = ldif_content.split('\n\n')
         batch = []
-        
+
         for i, entry_text in enumerate(entries_text):
             if entry_text.strip():
                 batch.append(entry_text.strip())
-            
+
             # Process batch when full
             if len(batch) >= self.batch_size or i == len(entries_text) - 1:
                 if batch:
                     batch_content = '\n\n'.join(batch)
                     result = self.processor.parse_ldif_content(batch_content)
-                    
+
                     if result.success:
                         for entry in result.data:
                             entry_callback(entry)
-                    
+
                     # Clear batch and force garbage collection
                     batch = []
                     gc.collect()
@@ -1017,7 +1017,7 @@ def process_entry(entry):
     """Process individual entry"""
     print(f"Processing: {entry.get_single_attribute('cn')}")
     # Do something with entry
-    
+
 processor = MemoryEfficientProcessor(batch_size=100)
 
 large_ldif_content = """
@@ -1029,7 +1029,7 @@ processor.process_with_callback(large_ldif_content, process_entry)
 
 ## 🔄 Migration Examples
 
-### From python-ldap
+### From Python-ldap
 
 ```python
 # Before (python-ldap)
@@ -1099,7 +1099,7 @@ def parse_custom_ldif(content):
     lines = content.split('\n')
     current_entry = {}
     current_dn = None
-    
+
     for line in lines:
         if line.startswith('dn:'):
             if current_entry:
@@ -1114,10 +1114,10 @@ def parse_custom_ldif(content):
                 current_entry[key].append(value)
             else:
                 current_entry[key] = [value]
-    
+
     if current_entry:
         entries.append((current_dn, current_entry))
-    
+
     return entries
 
 # After (FLEXT LDIF)

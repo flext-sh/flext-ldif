@@ -51,7 +51,7 @@ class TestFlextLdifEntryEnterprise:
 
         assert entry is not None
         if str(entry.dn) != sample_entry_data["dn"]:
-            msg = f"Expected {sample_entry_data["dn"]}, got {entry.dn!s}"
+            msg = f"Expected {sample_entry_data['dn']}, got {entry.dn!s}"
             raise AssertionError(msg)
         assert entry.attributes.attributes == sample_entry_data["attributes"]
 
@@ -61,7 +61,7 @@ class TestFlextLdifEntryEnterprise:
 
         assert isinstance(entry.dn, FlextLdifDistinguishedName)
         if str(entry.dn) != sample_entry_data["dn"]:
-            msg = f"Expected {sample_entry_data["dn"]}, got {entry.dn!s}"
+            msg = f"Expected {sample_entry_data['dn']}, got {entry.dn!s}"
             raise AssertionError(msg)
 
     def test_entry_creation_with_dict_attributes(self, sample_entry_data: dict) -> None:
@@ -70,24 +70,28 @@ class TestFlextLdifEntryEnterprise:
 
         assert isinstance(entry.attributes, FlextLdifAttributes)
         if entry.attributes.attributes != sample_entry_data["attributes"]:
-            msg = f"Expected {sample_entry_data["attributes"]}, got {entry.attributes.attributes}"
+            msg = f"Expected {sample_entry_data['attributes']}, got {entry.attributes.attributes}"
             raise AssertionError(msg)
 
     def test_entry_validation_invalid_dn_type(self) -> None:
         """Test entry validation fails with invalid DN type."""
         with pytest.raises(ValueError, match="Invalid DN type"):
-            FlextLdifEntry.model_validate({
-                "dn": 123,  # Invalid type
-                "attributes": {"objectClass": ["top"]},
-            })
+            FlextLdifEntry.model_validate(
+                {
+                    "dn": 123,  # Invalid type
+                    "attributes": {"objectClass": ["top"]},
+                },
+            )
 
     def test_entry_validation_invalid_attributes_type(self) -> None:
         """Test entry validation fails with invalid attributes type."""
         with pytest.raises(ValueError, match="Invalid attributes type"):
-            FlextLdifEntry.model_validate({
-                "dn": "cn=test,dc=example,dc=com",
-                "attributes": "invalid",  # Invalid type
-            })
+            FlextLdifEntry.model_validate(
+                {
+                    "dn": "cn=test,dc=example,dc=com",
+                    "attributes": "invalid",  # Invalid type
+                },
+            )
 
     def test_get_attribute_success(self, sample_entry_data: dict) -> None:
         """Test getting attribute values succeeds."""
@@ -95,17 +99,17 @@ class TestFlextLdifEntryEnterprise:
 
         cn_values = entry.get_attribute("cn")
         if cn_values != ["John Doe"]:
-            msg = f"Expected {["John Doe"]}, got {cn_values}"
+            msg = f"Expected {['John Doe']}, got {cn_values}"
             raise AssertionError(msg)
 
         mail_values = entry.get_attribute("mail")
         if mail_values != ["john.doe@example.com"]:
-            msg = f"Expected {["john.doe@example.com"]}, got {mail_values}"
+            msg = f"Expected {['john.doe@example.com']}, got {mail_values}"
             raise AssertionError(msg)
 
         objectclass_values = entry.get_attribute("objectClass")
         if objectclass_values != ["person", "inetOrgPerson"]:
-            msg = f"Expected {["person", "inetOrgPerson"]}, got {objectclass_values}"
+            msg = f"Expected {['person', 'inetOrgPerson']}, got {objectclass_values}"
             raise AssertionError(msg)
 
     def test_get_attribute_nonexistent(self, sample_entry_data: dict) -> None:
@@ -122,13 +126,13 @@ class TestFlextLdifEntryEnterprise:
         # Set new attribute
         entry.set_attribute("telephoneNumber", ["+1-555-0123"])
         if entry.get_attribute("telephoneNumber") != ["+1-555-0123"]:
-            msg = f"Expected {["+1-555-0123"]}, got {entry.get_attribute("telephoneNumber")}"
+            msg = f"Expected {['+1-555-0123']}, got {entry.get_attribute('telephoneNumber')}"
             raise AssertionError(msg)
 
         # Modify existing attribute
         entry.set_attribute("mail", ["newemail@example.com"])
         if entry.get_attribute("mail") != ["newemail@example.com"]:
-            msg = f"Expected {["newemail@example.com"]}, got {entry.get_attribute("mail")}"
+            msg = f"Expected {['newemail@example.com']}, got {entry.get_attribute('mail')}"
             raise AssertionError(msg)
 
     def test_has_attribute_success(self, sample_entry_data: dict) -> None:
@@ -136,15 +140,14 @@ class TestFlextLdifEntryEnterprise:
         entry = FlextLdifEntry.model_validate(sample_entry_data)
 
         if not (entry.has_attribute("cn")):
-
-            msg = f"Expected True, got {entry.has_attribute("cn")}"
+            msg = f"Expected True, got {entry.has_attribute('cn')}"
             raise AssertionError(msg)
         assert entry.has_attribute("mail") is True
         if not (entry.has_attribute("objectClass")):
-            msg = f"Expected True, got {entry.has_attribute("objectClass")}"
+            msg = f"Expected True, got {entry.has_attribute('objectClass')}"
             raise AssertionError(msg)
         if entry.has_attribute("nonexistent"):
-            msg = f"Expected False, got {entry.has_attribute("nonexistent")}"
+            msg = f"Expected False, got {entry.has_attribute('nonexistent')}"
             raise AssertionError(msg)
 
     def test_get_object_classes_success(self, sample_entry_data: dict) -> None:
@@ -153,7 +156,7 @@ class TestFlextLdifEntryEnterprise:
 
         object_classes = entry.get_object_classes()
         if object_classes != ["person", "inetOrgPerson"]:
-            msg = f"Expected {["person", "inetOrgPerson"]}, got {object_classes}"
+            msg = f"Expected {['person', 'inetOrgPerson']}, got {object_classes}"
             raise AssertionError(msg)
 
     def test_has_object_class_success(self, sample_entry_data: dict) -> None:
@@ -161,12 +164,13 @@ class TestFlextLdifEntryEnterprise:
         entry = FlextLdifEntry.model_validate(sample_entry_data)
 
         if not (entry.has_object_class("person")):
-
-            msg = f"Expected True, got {entry.has_object_class("person")}"
+            msg = f"Expected True, got {entry.has_object_class('person')}"
             raise AssertionError(msg)
         assert entry.has_object_class("inetOrgPerson") is True
         if entry.has_object_class("organizationalPerson"):
-            msg = f"Expected False, got {entry.has_object_class("organizationalPerson")}"
+            msg = (
+                f"Expected False, got {entry.has_object_class('organizationalPerson')}"
+            )
             raise AssertionError(msg)
 
     def test_get_attribute_values_success(self, sample_entry_data: dict) -> None:
@@ -175,7 +179,7 @@ class TestFlextLdifEntryEnterprise:
 
         cn_values = entry.get_attribute_values("cn")
         if cn_values != ["John Doe"]:
-            msg = f"Expected {["John Doe"]}, got {cn_values}"
+            msg = f"Expected {['John Doe']}, got {cn_values}"
             raise AssertionError(msg)
 
     def test_operation_methods_return_false(self, sample_entry_data: dict) -> None:
@@ -183,7 +187,6 @@ class TestFlextLdifEntryEnterprise:
         entry = FlextLdifEntry.model_validate(sample_entry_data)
 
         if entry.is_modify_operation():
-
             msg = f"Expected False, got {entry.is_modify_operation()}"
             raise AssertionError(msg)
         assert entry.is_add_operation() is False
@@ -197,12 +200,12 @@ class TestFlextLdifEntryEnterprise:
 
         cn_value = entry.get_single_attribute("cn")
         if cn_value != "John Doe":
-            msg = f"Expected {"John Doe"}, got {cn_value}"
+            msg = f"Expected {'John Doe'}, got {cn_value}"
             raise AssertionError(msg)
 
         uid_value = entry.get_single_attribute("uid")
         if uid_value != "johndoe":
-            msg = f"Expected {"johndoe"}, got {uid_value}"
+            msg = f"Expected {'johndoe'}, got {uid_value}"
             raise AssertionError(msg)
 
     def test_get_single_attribute_nonexistent(self, sample_entry_data: dict) -> None:
@@ -222,7 +225,7 @@ class TestFlextLdifEntryEnterprise:
         assert len(ldif_output) > 0
         assert ldif_output.startswith(f"dn: {sample_entry_data['dn']}")
         if "objectClass: person" not in ldif_output:
-            msg = f"Expected {"objectClass: person"} in {ldif_output}"
+            msg = f"Expected {'objectClass: person'} in {ldif_output}"
             raise AssertionError(msg)
         assert "cn: John Doe" in ldif_output
         assert ldif_output.endswith("\n")
@@ -237,18 +240,25 @@ class TestFlextLdifEntryEnterprise:
     def test_validate_domain_rules_empty_dn_fails(self) -> None:
         """Test domain rules validation fails for empty DN."""
         with pytest.raises(ValueError, match="DN must be a non-empty string"):
-            FlextLdifEntry.model_validate({
-                "dn": "",
-                "attributes": {"objectClass": ["top"]},
-            })
+            FlextLdifEntry.model_validate(
+                {
+                    "dn": "",
+                    "attributes": {"objectClass": ["top"]},
+                },
+            )
 
     def test_validate_domain_rules_no_attributes_fails(self) -> None:
         """Test domain rules validation fails for no attributes."""
-        with pytest.raises(ValueError, match="LDIF entry must have at least one attribute"):
-            entry = FlextLdifEntry.model_validate({
-                "dn": "cn=test,dc=example,dc=com",
-                "attributes": {},
-            })
+        with pytest.raises(
+            ValueError,
+            match="LDIF entry must have at least one attribute",
+        ):
+            entry = FlextLdifEntry.model_validate(
+                {
+                    "dn": "cn=test,dc=example,dc=com",
+                    "attributes": {},
+                },
+            )
             entry.validate_domain_rules()
 
     def test_from_ldif_block_success(self) -> None:
@@ -263,12 +273,11 @@ mail: test@example.com"""
         entry = FlextLdifEntry.from_ldif_block(ldif_block)
 
         if str(entry.dn) != "cn=test,ou=people,dc=example,dc=com":
-
-            msg = f"Expected {"cn=test,ou=people,dc=example,dc=com"}, got {entry.dn!s}"
+            msg = f"Expected {'cn=test,ou=people,dc=example,dc=com'}, got {entry.dn!s}"
             raise AssertionError(msg)
         assert entry.get_attribute("cn") == ["test"]
         if entry.get_attribute("sn") != ["user"]:
-            msg = f"Expected {["user"]}, got {entry.get_attribute("sn")}"
+            msg = f"Expected {['user']}, got {entry.get_attribute('sn')}"
             raise AssertionError(msg)
         assert entry.get_attribute("mail") == ["test@example.com"]
         assert entry.has_object_class("person")
@@ -299,8 +308,7 @@ description: With multiple descriptions"""
         entry = FlextLdifEntry.from_ldif_block(ldif_block)
 
         if entry.get_attribute("cn") != ["test", "Test User"]:
-
-            msg = f"Expected {["test", "Test User"]}, got {entry.get_attribute("cn")}"
+            msg = f"Expected {['test', 'Test User']}, got {entry.get_attribute('cn')}"
             raise AssertionError(msg)
         assert entry.get_attribute("description") == [
             "This is a test user",
@@ -320,12 +328,11 @@ description: With multiple descriptions"""
         entry = FlextLdifEntry.from_ldif_dict(dn, attributes)
 
         if str(entry.dn) != dn:
-
             msg = f"Expected {dn}, got {entry.dn!s}"
             raise AssertionError(msg)
         assert entry.attributes.attributes == attributes
         if entry.get_attribute("cn") != ["test"]:
-            msg = f"Expected {["test"]}, got {entry.get_attribute("cn")}"
+            msg = f"Expected {['test']}, got {entry.get_attribute('cn')}"
             raise AssertionError(msg)
         assert entry.has_object_class("person")
 
@@ -340,7 +347,7 @@ description: With multiple descriptions"""
         # Test that we can use set_attribute (which creates new objects)
         entry.set_attribute("newAttr", ["newValue"])
         if entry.get_attribute("newAttr") != ["newValue"]:
-            msg = f"Expected {["newValue"]}, got {entry.get_attribute("newAttr")}"
+            msg = f"Expected {['newValue']}, got {entry.get_attribute('newAttr')}"
             raise AssertionError(msg)
 
         # DN should remain unchanged
@@ -377,14 +384,14 @@ description: With multiple descriptions"""
         entry_dict = entry.model_dump()
         assert isinstance(entry_dict, dict)
         if "dn" not in entry_dict:
-            msg = f"Expected {"dn"} in {entry_dict}"
+            msg = f"Expected {'dn'} in {entry_dict}"
             raise AssertionError(msg)
         assert "attributes" in entry_dict
 
         # Note: Pydantic model_dump() creates nested structure that requires
         # original data format for deserialization
         if str(entry.dn) != sample_entry_data["dn"]:
-            msg = f"Expected {sample_entry_data["dn"]}, got {entry.dn!s}"
+            msg = f"Expected {sample_entry_data['dn']}, got {entry.dn!s}"
             raise AssertionError(msg)
         assert entry.attributes.attributes == sample_entry_data["attributes"]
 
@@ -399,7 +406,7 @@ description: With multiple descriptions"""
 
         # Should contain expected data
         if sample_entry_data["dn"] not in json_str:
-            msg = f"Expected {sample_entry_data["dn"]} in {json_str}"
+            msg = f"Expected {sample_entry_data['dn']} in {json_str}"
             raise AssertionError(msg)
         assert "objectClass" in json_str
 
@@ -428,7 +435,7 @@ description: With multiple descriptions"""
         for i in range(100):
             value = entry.get_attribute(f"attr{i}")
             if value != [f"value{i}"]:
-                msg = f"Expected {[f"value{i}"]}, got {value}"
+                msg = f"Expected {[f'value{i}']}, got {value}"
                 raise AssertionError(msg)
         access_time = time.time() - start_time
 
@@ -471,11 +478,10 @@ description: With multiple descriptions"""
         entry = FlextLdifEntry.model_validate(entry_data)
 
         if "Üser Spëcial" not in str(entry.dn):
-
-            msg = f"Expected {"Üser Spëcial"} in {entry.dn!s}"
+            msg = f"Expected {'Üser Spëcial'} in {entry.dn!s}"
             raise AssertionError(msg)
         if entry.get_attribute("cn") != ["Üser Spëcial"]:
-            msg = f"Expected {["Üser Spëcial"]}, got {entry.get_attribute("cn")}"
+            msg = f"Expected {['Üser Spëcial']}, got {entry.get_attribute('cn')}"
             raise AssertionError(msg)
 
     def test_edge_cases_long_attribute_values(self) -> None:
@@ -494,8 +500,7 @@ description: With multiple descriptions"""
         entry = FlextLdifEntry.model_validate(entry_data)
 
         if entry.get_attribute("description") != [long_value]:
-
-            msg = f"Expected {[long_value]}, got {entry.get_attribute("description")}"
+            msg = f"Expected {[long_value]}, got {entry.get_attribute('description')}"
             raise AssertionError(msg)
         assert len(entry.get_attribute("description")[0]) == 10000
 
@@ -513,9 +518,8 @@ description: With multiple descriptions"""
         entry = FlextLdifEntry.model_validate(entry_data)
 
         if entry.get_attribute("description") != [""]:
-
-            msg = f"Expected {[""]}, got {entry.get_attribute("description")}"
+            msg = f"Expected {['']}, got {entry.get_attribute('description')}"
             raise AssertionError(msg)
         if not (entry.has_attribute("description")):
-            msg = f"Expected True, got {entry.has_attribute("description")}"
+            msg = f"Expected True, got {entry.has_attribute('description')}"
             raise AssertionError(msg)

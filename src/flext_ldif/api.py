@@ -43,11 +43,15 @@ class FlextLdifAPI:
             if self.config.strict_validation:
                 validate_result = TLdif.validate_entries(entries)
                 if not validate_result.is_success:
-                    return FlextResult.fail(validate_result.error or "Validation failed")
+                    return FlextResult.fail(
+                        validate_result.error or "Validation failed",
+                    )
 
             # Check limits
             if len(entries) > self.config.max_entries:
-                return FlextResult.fail(f"Too many entries: {len(entries)} > {self.config.max_entries}")
+                return FlextResult.fail(
+                    f"Too many entries: {len(entries)} > {self.config.max_entries}",
+                )
 
             return FlextResult.ok(entries)
 
@@ -68,12 +72,16 @@ class FlextLdifAPI:
 
             # Apply config limits and validation
             if len(entries) > self.config.max_entries:
-                return FlextResult.fail(f"Too many entries: {len(entries)} > {self.config.max_entries}")
+                return FlextResult.fail(
+                    f"Too many entries: {len(entries)} > {self.config.max_entries}",
+                )
 
             if self.config.strict_validation:
                 validate_result = TLdif.validate_entries(entries)
                 if not validate_result.is_success:
-                    return FlextResult.fail(validate_result.error or "Validation failed")
+                    return FlextResult.fail(
+                        validate_result.error or "Validation failed",
+                    )
 
             return FlextResult.ok(entries)
 
@@ -122,25 +130,36 @@ class FlextLdifAPI:
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult.fail(f"Failed to filter valid entries: {e}")
 
-    def filter_by_objectclass(self, entries: list[FlextLdifEntry], object_class: str) -> list[FlextLdifEntry]:
+    def filter_by_objectclass(
+        self,
+        entries: list[FlextLdifEntry],
+        object_class: str,
+    ) -> list[FlextLdifEntry]:
         """Filter entries by objectClass using intelligent filtering."""
         return [entry for entry in entries if entry.has_object_class(object_class)]
 
-    def find_entry_by_dn(self, entries: list[FlextLdifEntry], dn: str) -> FlextLdifEntry | None:
+    def find_entry_by_dn(
+        self,
+        entries: list[FlextLdifEntry],
+        dn: str,
+    ) -> FlextLdifEntry | None:
         """Find entry by DN with intelligent search."""
         for entry in entries:
             if str(entry.dn) == dn:
                 return entry
         return None
 
-    def sort_hierarchically(self, entries: list[FlextLdifEntry]) -> FlextResult[list[FlextLdifEntry]]:
+    def sort_hierarchically(
+        self,
+        entries: list[FlextLdifEntry],
+    ) -> FlextResult[list[FlextLdifEntry]]:
         """Sort entries hierarchically using intelligent sorting."""
         try:
             sorted_entries = sorted(
                 entries,
                 key=lambda entry: (
                     str(entry.dn).count(","),  # Primary: depth (parents first)
-                    str(entry.dn).lower(),     # Secondary: alphabetical
+                    str(entry.dn).lower(),  # Secondary: alphabetical
                 ),
             )
             return FlextResult.ok(sorted_entries)
@@ -156,7 +175,10 @@ class FlextLdifAPI:
     # INTELLIGENT FILTERING METHODS (Using integrated composition)
     # ==========================================================================
 
-    def filter_groups(self, entries: list[FlextLdifEntry]) -> FlextResult[list[FlextLdifEntry]]:
+    def filter_groups(
+        self,
+        entries: list[FlextLdifEntry],
+    ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter group entries using integrated composition logic."""
         try:
             group_entries = [entry for entry in entries if entry.is_group_entry()]
@@ -164,7 +186,10 @@ class FlextLdifAPI:
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult.fail(f"Failed to filter group entries: {e}")
 
-    def filter_organizational_units(self, entries: list[FlextLdifEntry]) -> FlextResult[list[FlextLdifEntry]]:
+    def filter_organizational_units(
+        self,
+        entries: list[FlextLdifEntry],
+    ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter organizational unit entries using integrated composition logic."""
         try:
             ou_entries = [entry for entry in entries if entry.is_organizational_unit()]
@@ -172,7 +197,10 @@ class FlextLdifAPI:
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult.fail(f"Failed to filter OU entries: {e}")
 
-    def filter_change_records(self, entries: list[FlextLdifEntry]) -> FlextResult[list[FlextLdifEntry]]:
+    def filter_change_records(
+        self,
+        entries: list[FlextLdifEntry],
+    ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter change record entries using integrated composition logic."""
         try:
             change_entries = [entry for entry in entries if entry.is_change_record()]
@@ -224,7 +252,10 @@ def flext_ldif_validate(content: str | LDIFContent) -> bool:
     return validate_result.is_success and bool(validate_result.data)
 
 
-def flext_ldif_write(entries: list[FlextLdifEntry], output_path: str | None = None) -> str:
+def flext_ldif_write(
+    entries: list[FlextLdifEntry],
+    output_path: str | None = None,
+) -> str:
     """Write LDIF entries - convenience function."""
     result = flext_ldif_get_api().write(entries, output_path)
     return result.data or ""

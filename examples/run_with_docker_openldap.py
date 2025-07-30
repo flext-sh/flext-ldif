@@ -8,7 +8,12 @@ Perfect for testing and demonstration without needing a manual LDAP setup.
 
 from __future__ import annotations
 
+import asyncio
+import subprocess
+import sys
+import tempfile
 import time
+from pathlib import Path
 
 from flext_ldif import (
     FlextLdifProcessor,
@@ -16,16 +21,8 @@ from flext_ldif import (
     parse_ldif,
 )
 from flext_ldif.domain.specifications import (
-    FlextLdifEntrySpecification,
     FlextLdifPersonSpecification,
 )
-
-import asyncio
-import subprocess
-import sys
-import tempfile
-import time
-from pathlib import Path
 
 # Add src to path for local testing
 src_path = Path(__file__).parent.parent / "src"
@@ -48,35 +45,63 @@ def start_openldap_container() -> bool:
         )
 
         # Start new container
-        subprocess.run([
-            "docker", "run", "-d",
-            "--name", "flext-ldif-demo",
-            "-p", "3391:389",
-            "-e", "LDAP_ORGANISATION=FLEXT LDIF Demo Org",
-            "-e", "LDAP_DOMAIN=flext-ldif.demo",
-            "-e", "LDAP_ADMIN_PASSWORD=REDACTED_LDAP_BIND_PASSWORD123",
-            "-e", "LDAP_CONFIG_PASSWORD=config123",
-            "-e", "LDAP_READONLY_USER=false",
-            "-e", "LDAP_RFC2307BIS_SCHEMA=true",
-            "-e", "LDAP_BACKEND=mdb",
-            "-e", "LDAP_TLS=false",
-            "-e", "LDAP_REMOVE_CONFIG_AFTER_SETUP=true",
-            "osixia/openldap:1.5.0",
-        ], check=True)
+        subprocess.run(
+            [
+                "docker",
+                "run",
+                "-d",
+                "--name",
+                "flext-ldif-demo",
+                "-p",
+                "3391:389",
+                "-e",
+                "LDAP_ORGANISATION=FLEXT LDIF Demo Org",
+                "-e",
+                "LDAP_DOMAIN=flext-ldif.demo",
+                "-e",
+                "LDAP_ADMIN_PASSWORD=REDACTED_LDAP_BIND_PASSWORD123",
+                "-e",
+                "LDAP_CONFIG_PASSWORD=config123",
+                "-e",
+                "LDAP_READONLY_USER=false",
+                "-e",
+                "LDAP_RFC2307BIS_SCHEMA=true",
+                "-e",
+                "LDAP_BACKEND=mdb",
+                "-e",
+                "LDAP_TLS=false",
+                "-e",
+                "LDAP_REMOVE_CONFIG_AFTER_SETUP=true",
+                "osixia/openldap:1.5.0",
+            ],
+            check=True,
+        )
 
         # Wait for container to be ready
         for _attempt in range(30):
             try:
-                result = subprocess.run([
-                    "docker", "exec", "flext-ldif-demo",
-                    "ldapsearch", "-x",
-                    "-H", "ldap://localhost:389",
-                    "-D", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext-ldif,dc=demo",
-                    "-w", "REDACTED_LDAP_BIND_PASSWORD123",
-                    "-b", "dc=flext-ldif,dc=demo",
-                    "-s", "base",
-                    "(objectClass=*)",
-                ], capture_output=True, check=True)
+                result = subprocess.run(
+                    [
+                        "docker",
+                        "exec",
+                        "flext-ldif-demo",
+                        "ldapsearch",
+                        "-x",
+                        "-H",
+                        "ldap://localhost:389",
+                        "-D",
+                        "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext-ldif,dc=demo",
+                        "-w",
+                        "REDACTED_LDAP_BIND_PASSWORD123",
+                        "-b",
+                        "dc=flext-ldif,dc=demo",
+                        "-s",
+                        "base",
+                        "(objectClass=*)",
+                    ],
+                    capture_output=True,
+                    check=True,
+                )
 
                 if result.returncode == 0:
                     return True
@@ -93,7 +118,6 @@ def start_openldap_container() -> bool:
 def populate_test_data() -> bool:
     """Populate OpenLDAP container with comprehensive test data."""
     try:
-
         test_ldif = """
 # Base organization
 dn: dc=flext-ldif,dc=demo
@@ -306,24 +330,46 @@ member: uid=grace.taylor,ou=people,dc=flext-ldif,dc=demo
 """
 
         # Write LDIF to temporary file
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write(test_ldif)
             temp_file = f.name
 
         # Copy LDIF to container
-        subprocess.run([
-            "docker", "cp", temp_file, "flext-ldif-demo:/tmp/test_data.ldif",
-        ], check=True)
+        subprocess.run(
+            [
+                "docker",
+                "cp",
+                temp_file,
+                "flext-ldif-demo:/tmp/test_data.ldif",
+            ],
+            check=True,
+        )
 
         # Import LDIF data
-        result = subprocess.run([
-            "docker", "exec", "flext-ldif-demo",
-            "ldapadd", "-x",
-            "-H", "ldap://localhost:389",
-            "-D", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext-ldif,dc=demo",
-            "-w", "REDACTED_LDAP_BIND_PASSWORD123",
-            "-f", "/tmp/test_data.ldif",
-        ], check=False, capture_output=True)
+        result = subprocess.run(
+            [
+                "docker",
+                "exec",
+                "flext-ldif-demo",
+                "ldapadd",
+                "-x",
+                "-H",
+                "ldap://localhost:389",
+                "-D",
+                "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext-ldif,dc=demo",
+                "-w",
+                "REDACTED_LDAP_BIND_PASSWORD123",
+                "-f",
+                "/tmp/test_data.ldif",
+            ],
+            check=False,
+            capture_output=True,
+        )
 
         # Clean up temp file
         Path(temp_file).unlink()
@@ -337,18 +383,29 @@ member: uid=grace.taylor,ou=people,dc=flext-ldif,dc=demo
 def export_ldif_from_container() -> str:
     """Export LDIF data from the container."""
     try:
-
-        result = subprocess.run([
-            "docker", "exec", "flext-ldif-demo",
-            "ldapsearch", "-x",
-            "-H", "ldap://localhost:389",
-            "-D", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext-ldif,dc=demo",
-            "-w", "REDACTED_LDAP_BIND_PASSWORD123",
-            "-b", "dc=flext-ldif,dc=demo",
-            "-s", "sub",
-            "(objectClass=*)",
-            "-LLL",  # LDIF format without comments
-        ], capture_output=True, check=True)
+        result = subprocess.run(
+            [
+                "docker",
+                "exec",
+                "flext-ldif-demo",
+                "ldapsearch",
+                "-x",
+                "-H",
+                "ldap://localhost:389",
+                "-D",
+                "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext-ldif,dc=demo",
+                "-w",
+                "REDACTED_LDAP_BIND_PASSWORD123",
+                "-b",
+                "dc=flext-ldif,dc=demo",
+                "-s",
+                "sub",
+                "(objectClass=*)",
+                "-LLL",  # LDIF format without comments
+            ],
+            capture_output=True,
+            check=True,
+        )
 
         return result.stdout.decode()
 
@@ -368,17 +425,8 @@ def stop_openldap_container() -> None:
 async def run_flext_ldif_examples(ldif_data: str) -> None:
     """Run FLEXT-LDIF examples against real OpenLDAP data."""
     from flext_ldif import (
-        FlextLdifProcessor,
-        FlextLdifValidator,
-        parse_ldif,
-        validate_ldif,
-    )
-        write_ldif,
-    )
-
-        FlextLdifGroupSpecification,
-        FlextLdifOrganizationalUnitSpecification,
-        FlextLdifPersonSpecification,
+        modernized_ldif_parse,
+        modernized_ldif_write,
     )
 
     # Example 1: Simple parsing
@@ -401,11 +449,9 @@ async def run_flext_ldif_examples(ldif_data: str) -> None:
     result = processor.parse_ldif_content(ldif_data)
 
     if result.is_success:
-
         # Filter person entries
         person_result = processor.filter_person_entries(result.data)
         if person_result.is_success:
-
             # Show person details
             for person in person_result.data[:3]:
                 if person.has_attribute("cn"):
@@ -421,16 +467,12 @@ async def run_flext_ldif_examples(ldif_data: str) -> None:
     # Example 3: Domain specifications
 
     person_spec = FlextLdifPersonSpecification()
-    group_spec = FlextLdifGroupSpecification()
-    ou_spec = FlextLdifOrganizationalUnitSpecification()
 
     sum(1 for entry in entries if person_spec.is_satisfied_by(entry))
-    sum(1 for entry in entries if group_spec.is_satisfied_by(entry))
-    sum(1 for entry in entries if ou_spec.is_satisfied_by(entry))
 
     # Example 4: Validation
 
-    validate_ldif(ldif_data)
+    modernized_ldif_parse(ldif_data)
 
     validator = FlextLdifValidator()
     validation_result = validator.validate_entries(entries)
@@ -443,7 +485,7 @@ async def run_flext_ldif_examples(ldif_data: str) -> None:
     person_entries = [entry for entry in entries if person_spec.is_satisfied_by(entry)]
 
     if person_entries:
-        output_ldif = write_ldif(person_entries)
+        output_ldif = modernized_ldif_write(person_entries)
 
         # Save to file
         output_file = Path("flext_ldif_demo_output.ldif")
@@ -456,8 +498,6 @@ async def run_flext_ldif_examples(ldif_data: str) -> None:
 
     # Example 6: Performance measurement
 
-
-
     # Measure parsing performance
     start_time = time.time()
     for _ in range(10):
@@ -467,7 +507,7 @@ async def run_flext_ldif_examples(ldif_data: str) -> None:
     # Measure validation performance
     start_time = time.time()
     for _ in range(10):
-        validate_ldif(ldif_data)
+        modernized_ldif_parse(ldif_data)
     (time.time() - start_time) / 10
 
     len(entries) / max(parse_time, 0.001)

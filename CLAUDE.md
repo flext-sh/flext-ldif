@@ -9,10 +9,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Key Architecture Patterns
 
 ### Clean Architecture Structure
+
 ```
 src/flext_ldif/
 ├── domain/                    # Core business logic (currently consolidated in models.py)
-├── infrastructure/            # External concerns & DI container  
+├── infrastructure/            # External concerns & DI container
 ├── api.py                     # Application layer - main processing logic
 ├── models.py                  # Domain entities and value objects
 ├── core.py                    # Core LDIF processing functionality
@@ -21,12 +22,14 @@ src/flext_ldif/
 ```
 
 ### Core Domain Objects
+
 - **FlextLdifEntry**: Main domain entity representing LDIF entries
 - **FlextLdifDistinguishedName**: Value object for DN handling
 - **FlextLdifAttributes**: Value object for attribute collections
 - **FlextLdifAPI**: Application service orchestrating operations
 
 ### Design Patterns Used
+
 - **Clean Architecture**: Clear separation of concerns with dependency inversion
 - **Domain-Driven Design**: Rich domain model with business logic
 - **Value Object Pattern**: Immutable domain values (DN, Attributes)
@@ -37,6 +40,7 @@ src/flext_ldif/
 ## Development Commands
 
 ### Essential Development Workflow
+
 ```bash
 # Complete setup and validation
 make setup                    # Full development environment setup
@@ -92,6 +96,7 @@ make test                     # Run tests with 90% coverage requirement
 ```
 
 ### Testing Commands
+
 ```bash
 # Run specific test categories (defined in conftest.py)
 pytest -m unit               # Unit tests only
@@ -108,6 +113,7 @@ pytest --cov=src/flext_ldif --cov-report=html  # Coverage report
 ```
 
 ### LDIF-Specific Operations
+
 ```bash
 # Test core LDIF functionality
 make ldif-parse              # Test LDIF parsing
@@ -123,6 +129,7 @@ make validate-schema         # Validate schema compliance
 ```
 
 ### Build and Package Management
+
 ```bash
 make build                   # Build distribution packages
 make clean                   # Remove all artifacts
@@ -133,6 +140,7 @@ make deps-audit              # Security audit of dependencies
 ## Code Quality Standards
 
 ### Zero Tolerance Quality Gates
+
 - **90% Test Coverage**: Minimum required coverage with comprehensive test suite
 - **MyPy Strict Mode**: All code must pass strict type checking
 - **Ruff ALL Rules**: Comprehensive linting with all rule categories enabled
@@ -140,6 +148,7 @@ make deps-audit              # Security audit of dependencies
 - **Pre-commit Hooks**: Automated quality checks on every commit
 
 ### Configuration Files
+
 - **pyproject.toml**: Poetry dependencies, tool configuration, quality settings
 - **Makefile**: Development commands and quality gates
 - **conftest.py**: Test configuration with comprehensive fixtures
@@ -147,22 +156,27 @@ make deps-audit              # Security audit of dependencies
 ## Architecture Guidelines
 
 ### Domain Layer (models.py)
+
 All domain objects should:
+
 - Inherit from flext-core base classes (FlextEntity, FlextValueObject)
 - Implement `validate_domain_rules()` for business logic validation
 - Use immutable value objects for data integrity
 - Follow DDD principles with rich domain models
 
 ### API Layer (api.py)
+
 Application services should:
+
 - Orchestrate domain operations
 - Handle error cases with FlextResult pattern
 - Maintain clean interfaces for external consumers
 - Delegate business logic to domain objects
 
 ### Testing Strategy
+
 - **Unit Tests**: Test individual domain objects and services
-- **Integration Tests**: Test cross-layer interactions  
+- **Integration Tests**: Test cross-layer interactions
 - **LDIF-Specific Tests**: Comprehensive LDIF format testing
 - **Performance Tests**: Benchmark critical operations
 - **Error Handling Tests**: Validate exception scenarios
@@ -170,13 +184,16 @@ Application services should:
 ## Common Patterns
 
 ### LDIF Processing Flow
+
 1. **Parse**: Convert LDIF text to domain objects
 2. **Validate**: Apply business rules and schema validation
 3. **Transform**: Apply transformations and filters
 4. **Write**: Convert back to LDIF format
 
 ### Error Handling
+
 Use FlextResult pattern from flext-core:
+
 ```python
 def parse_ldif(content: str) -> FlextResult[list[FlextLdifEntry]]:
     try:
@@ -187,7 +204,9 @@ def parse_ldif(content: str) -> FlextResult[list[FlextLdifEntry]]:
 ```
 
 ### Domain Validation
+
 Implement business rules in domain objects:
+
 ```python
 def validate_domain_rules(self) -> None:
     if not self.dn.value:
@@ -198,12 +217,14 @@ def validate_domain_rules(self) -> None:
 ## Dependencies
 
 ### Core Dependencies
+
 - **Python 3.13**: Required Python version
 - **pydantic**: Data validation and parsing
 - **flext-core**: Foundation library with base patterns
 - **ldif3**: LDIF format handling
 
 ### Development Dependencies
+
 - **pytest**: Testing framework with extensive plugins
 - **ruff**: Fast Python linter and formatter
 - **mypy**: Static type checker
@@ -213,11 +234,13 @@ def validate_domain_rules(self) -> None:
 ## File Structure Notes
 
 ### Test Organization
+
 - **conftest.py**: Comprehensive fixtures for LDIF testing scenarios
 - **docker_fixtures.py**: Docker-based integration test fixtures (optional)
 - Test files follow `test_*.py` pattern with descriptive names
 
 ### Source Organization
+
 - **Unified API**: All public functionality available at root level import
 - **Domain Consolidation**: Core domain objects consolidated in models.py
 - **Clean Interfaces**: Simple functions (flext_ldif_parse, etc.) for common operations
@@ -225,13 +248,16 @@ def validate_domain_rules(self) -> None:
 ## Performance Considerations
 
 ### LDIF Processing Optimizations
+
 - **Streaming Support**: Handle large LDIF files efficiently
 - **Batch Operations**: Process multiple entries together
 - **Memory Management**: Efficient handling of large datasets
 - **Caching**: Memoize expensive validation operations
 
 ### Configuration Settings
+
 Environment variables for LDIF processing:
+
 - `LDIF_ENCODING=utf-8`: Default encoding
 - `LDIF_BUFFER_SIZE=8192`: Buffer size for file operations
 - `LDIF_MAX_LINE_LENGTH=76`: Standard LDIF line wrapping
@@ -240,6 +266,7 @@ Environment variables for LDIF processing:
 ## Integration with FLEXT Ecosystem
 
 This project is part of the larger FLEXT ecosystem and:
+
 - Follows FLEXT architectural patterns
 - Uses flext-core foundation classes
 - Maintains compatibility with other FLEXT projects
@@ -248,12 +275,14 @@ This project is part of the larger FLEXT ecosystem and:
 ## Troubleshooting
 
 ### Common Issues
+
 - **Import Errors**: Ensure flext-core dependency is available locally
 - **Test Failures**: Check Docker availability for integration tests
 - **Type Errors**: Run `make type-check` for detailed MyPy analysis
 - **Quality Gate Failures**: Use `make validate` to see all issues
 
 ### Debug Commands
+
 ```bash
 poetry run python -c "from flext_ldif import FlextLdifAPI; print('Import successful')"
 make diagnose                # System diagnostics

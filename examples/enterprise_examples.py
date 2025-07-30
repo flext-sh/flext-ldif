@@ -96,10 +96,12 @@ member: cn=Alice Johnson,ou=people,dc=company,dc=com
 """
 
     # Initialize API with configuration
-    config = FlextLdifConfig.model_validate({
-        "strict_validation": True,
-        "max_entries": 100,
-    })
+    config = FlextLdifConfig.model_validate(
+        {
+            "strict_validation": True,
+            "max_entries": 100,
+        },
+    )
     api = FlextLdifAPI(config)
 
     parse_result = api.parse(ldif_content)
@@ -153,7 +155,12 @@ mail: test.user@filetest.com
 """
 
     # Create temporary files
-    with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", delete=False, suffix=".ldif") as input_file:
+    with tempfile.NamedTemporaryFile(
+        encoding="utf-8",
+        mode="w",
+        delete=False,
+        suffix=".ldif",
+    ) as input_file:
         input_file.write(ldif_content)
         input_path = Path(input_file.name)
 
@@ -161,7 +168,6 @@ mail: test.user@filetest.com
         output_path = Path(output_file.name)
 
     try:
-
         # Using TLdif for file operations
         read_result = TLdif.read_file(input_path)
         if read_result.is_success:
@@ -176,7 +182,6 @@ mail: test.user@filetest.com
                 # Write to output file
                 write_result = TLdif.write_file(person_entries, output_path)
                 if write_result.is_success:
-
                     # Verify output
                     if output_path.exists():
                         output_path.read_text(encoding="utf-8")
@@ -231,22 +236,26 @@ sn: user{i:02d}
 
 """
 
-    strict_config = FlextLdifConfig.model_validate({
-        "strict_validation": True,
-        "max_entries": 10,
-        "max_entry_size": 1024,
-    })
+    strict_config = FlextLdifConfig.model_validate(
+        {
+            "strict_validation": True,
+            "max_entries": 10,
+            "max_entry_size": 1024,
+        },
+    )
 
     strict_api = FlextLdifAPI(strict_config)
     strict_result = strict_api.parse(large_ldif)
     if strict_result.is_success:
         pass
 
-    permissive_config = FlextLdifConfig.model_validate({
-        "strict_validation": False,
-        "max_entries": 100,
-        "max_entry_size": 10240,
-    })
+    permissive_config = FlextLdifConfig.model_validate(
+        {
+            "strict_validation": False,
+            "max_entries": 100,
+            "max_entry_size": 10240,
+        },
+    )
 
     permissive_api = FlextLdifAPI(permissive_config)
     permissive_result = permissive_api.parse(large_ldif)
@@ -369,7 +378,9 @@ member: cn=Mary Manager,ou=people,dc=advanced,dc=com
             result = []
             for entry in entries:
                 title_attr = entry.get_attribute("title")
-                if title_attr and any(keyword.lower() in title.lower() for title in title_attr):
+                if title_attr and any(
+                    keyword.lower() in title.lower() for title in title_attr
+                ):
                     result.append(entry)
             return result
 
@@ -384,16 +395,21 @@ member: cn=Mary Manager,ou=people,dc=advanced,dc=com
             for entry in sorted_entries:
                 depth = str(entry.dn).count(",")
                 "   " + "  " * depth
-                "domain" if entry.has_object_class("domain") else \
-                            "OU" if entry.has_object_class("organizationalUnit") else \
-                            "person" if entry.has_object_class("person") else \
-                            "group" if entry.has_object_class("groupOfNames") else "other"
+                "domain" if entry.has_object_class(
+                    "domain",
+                ) else "OU" if entry.has_object_class(
+                    "organizationalUnit",
+                ) else "person" if entry.has_object_class(
+                    "person",
+                ) else "group" if entry.has_object_class("groupOfNames") else "other"
 
 
 def example_performance_monitoring() -> None:
     """Example: Performance monitoring and optimization."""
     # Generate larger dataset
-    large_ldif = "dn: dc=perf,dc=com\nobjectClass: top\nobjectClass: domain\ndc: perf\n\n"
+    large_ldif = (
+        "dn: dc=perf,dc=com\nobjectClass: top\nobjectClass: domain\ndc: perf\n\n"
+    )
 
     for i in range(100):
         large_ldif += f"""dn: cn=user{i:03d},dc=perf,dc=com
@@ -426,14 +442,12 @@ description: Test user {i:03d} for performance monitoring
         filter_time = time.time() - start_time
 
         if person_result.is_success:
-
             # Measure writing performance
             start_time = time.time()
             write_result = TLdif.write(person_result.data)
             write_time = time.time() - start_time
 
             if write_result.is_success:
-
                 # Total performance
                 parse_time + filter_time + write_time
 

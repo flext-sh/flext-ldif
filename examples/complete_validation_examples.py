@@ -360,7 +360,6 @@ def test_7_flext_core_integration_validation() -> None:
     try:
         # ✅ Verificar se flext-core ainda funciona independentemente
 
-
         # Test FlextResult (core functionality)
         FlextResult.ok("test data")
 
@@ -458,7 +457,12 @@ member: uid=user1,ou=people,dc=comprehensive,dc=test"""
                 [{"dn": str(e.dn)} for e in entries if hasattr(e, "dn")],
             )
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             temp_file = f.name
 
         try:
@@ -494,7 +498,6 @@ def main() -> bool | None:
         return True
 
     except (RuntimeError, ValueError, TypeError):
-
         traceback.print_exc()
         return False
 

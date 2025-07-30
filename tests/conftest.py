@@ -27,6 +27,7 @@ try:
         skip_if_no_docker,
         temporary_ldif_data,
     )
+
     DOCKER_AVAILABLE = True
 
     # Make fixtures available by importing them into this module's namespace
@@ -339,7 +340,10 @@ def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line("markers", "validation: Schema validation tests")
     config.addinivalue_line("markers", "performance: Performance tests")
     config.addinivalue_line("markers", "slow: Slow tests")
-    config.addinivalue_line("markers", "docker: Tests requiring Docker OpenLDAP container")
+    config.addinivalue_line(
+        "markers",
+        "docker: Tests requiring Docker OpenLDAP container",
+    )
     config.addinivalue_line("markers", "real_ldap: Tests using real LDAP server")
 
 

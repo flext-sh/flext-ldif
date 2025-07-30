@@ -12,18 +12,21 @@ A biblioteca `flext-ldif` agora inclui funcionalidade completa de integração c
 ## 🚀 Funcionalidades Recuperadas
 
 ### ✅ 1. Container OpenLDAP Automático
+
 - Inicia container `osixia/openldap:1.5.0` automaticamente
 - Configura domínio e dados de teste
 - Aguarda o container ficar pronto
 - Limpa automaticamente após uso
 
 ### ✅ 2. Testes de Integração
+
 - Fixtures pytest para container OpenLDAP
 - Testes com dados reais exportados do LDAP
 - Validação completa da funcionalidade LDIF
 - Marcadores `@pytest.mark.docker` e `@pytest.mark.integration`
 
 ### ✅ 3. Exemplos Demonstrativos
+
 - Script completo de demonstração
 - Processamento de dados reais
 - Exemplos de todas as funcionalidades
@@ -32,6 +35,7 @@ A biblioteca `flext-ldif` agora inclui funcionalidade completa de integração c
 ## 🐳 Como Usar
 
 ### Pré-requisitos
+
 ```bash
 # Docker deve estar instalado e rodando
 docker --version
@@ -41,12 +45,14 @@ poetry install --with test
 ```
 
 ### Exemplo Completo com Docker
+
 ```bash
 # Executar demonstração completa
 poetry run python examples/run_with_docker_openldap.py
 ```
 
 Este exemplo:
+
 1. **Inicia** container OpenLDAP automaticamente
 2. **Popula** com dados de teste (pessoas, grupos, departamentos)
 3. **Exporta** dados LDIF do container
@@ -81,15 +87,15 @@ from tests.docker_fixtures import skip_if_no_docker
 def test_my_ldif_functionality(real_ldif_data: str, ldif_test_config: dict):
     """Seu teste com dados reais do OpenLDAP."""
     from flext_ldif import parse_ldif, validate_ldif
-    
+
     # Testar com dados reais
     entries = parse_ldif(real_ldif_data)
     assert len(entries) > 0
-    
+
     # Validar dados reais
     is_valid = validate_ldif(real_ldif_data)
     assert is_valid
-    
+
     # Usar configuração de teste
     server_url = ldif_test_config['server_url']
     base_dn = ldif_test_config['base_dn']
@@ -99,33 +105,39 @@ def test_my_ldif_functionality(real_ldif_data: str, ldif_test_config: dict):
 ## 📊 Fixtures Disponíveis
 
 ### `docker_openldap_container`
+
 - **Escopo**: Session
 - **Função**: Container OpenLDAP pronto para uso
 - **Dados**: Populado com pessoas, grupos e departamentos
 
 ### `ldif_test_config`
-- **Escopo**: Function  
+
+- **Escopo**: Function
 - **Função**: Configuração para conectar ao container
 - **Conteúdo**: server_url, bind_dn, password, base_dn
 
 ### `real_ldif_data`
+
 - **Escopo**: Function
 - **Função**: Dados LDIF reais exportados do container
 - **Uso**: Para testes com dados reais
 
 ### `skip_if_no_docker()`
+
 - **Função**: Decorator para pular testes se Docker não disponível
 - **Uso**: `@skip_if_no_docker()`
 
 ## 🎯 Casos de Uso
 
 ### 1. Desenvolvimento
+
 ```bash
 # Validar mudanças contra LDAP real
 poetry run python examples/run_with_docker_openldap.py
 ```
 
 ### 2. Testes de Integração
+
 ```python
 @pytest.mark.docker
 def test_parsing_real_data(real_ldif_data):
@@ -134,22 +146,24 @@ def test_parsing_real_data(real_ldif_data):
 ```
 
 ### 3. Debugging
+
 ```python
 def debug_with_real_data():
     # Container será criado automaticamente
     from tests.docker_fixtures import OpenLDAPContainerManager
-    
+
     manager = OpenLDAPContainerManager()
     container = manager.start_container()
-    
+
     # Exportar dados para análise
     ldif_data = manager.get_ldif_export()
     print(ldif_data)
-    
+
     manager.stop_container()
 ```
 
 ### 4. Demonstrações
+
 ```bash
 # Mostrar capacidades completas
 poetry run python examples/run_with_docker_openldap.py
@@ -158,6 +172,7 @@ poetry run python examples/run_with_docker_openldap.py
 ## 📈 Performance
 
 Os testes mostram performance excelente:
+
 - **Parsing**: ~1000 entries/second
 - **Validação**: < 1ms para dados típicos
 - **Container startup**: ~15-30 segundos
@@ -166,6 +181,7 @@ Os testes mostram performance excelente:
 ## 🔧 Configuração Técnica
 
 ### Container OpenLDAP
+
 - **Imagem**: `osixia/openldap:1.5.0`
 - **Porta**: 3390 (evita conflitos)
 - **Domínio**: `internal.invalid`
@@ -173,6 +189,7 @@ Os testes mostram performance excelente:
 - **Schema**: RFC2307BIS habilitado
 
 ### Dados de Teste
+
 - **Base**: `dc=flext-ldif,dc=local`
 - **OUs**: people, groups, departments
 - **Pessoas**: 7 usuários com atributos completos
@@ -182,6 +199,7 @@ Os testes mostram performance excelente:
 ## ✅ Validação Completa
 
 A funcionalidade foi validada com:
+
 - ✅ **Parsing** de dados reais do OpenLDAP
 - ✅ **Validação** de estruturas LDIF complexas
 - ✅ **Processamento** com especificações de domínio

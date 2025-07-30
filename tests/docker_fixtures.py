@@ -393,17 +393,17 @@ def real_ldif_data(ldif_test_config: dict[str, Any]) -> str:
             return ldif_data
 
     # Fallback to static test data if container export fails
-    return f"""dn: {ldif_test_config['base_dn']}
+    return f"""dn: {ldif_test_config["base_dn"]}
 objectClass: dcObject
 objectClass: organization
 dc: flext-ldif
 o: FLEXT LDIF Test Org
 
-dn: ou=people,{ldif_test_config['base_dn']}
+dn: ou=people,{ldif_test_config["base_dn"]}
 objectClass: organizationalUnit
 ou: people
 
-dn: uid=john.doe,ou=people,{ldif_test_config['base_dn']}
+dn: uid=john.doe,ou=people,{ldif_test_config["base_dn"]}
 objectClass: inetOrgPerson
 objectClass: organizationalPerson
 objectClass: person
@@ -417,7 +417,10 @@ mail: john.doe@internal.invalid
 
 
 @asynccontextmanager
-async def temporary_ldif_data(container: Container, ldif_content: str) -> AsyncGenerator[str]:
+async def temporary_ldif_data(
+    container: Container,
+    ldif_content: str,
+) -> AsyncGenerator[str]:
     """Context manager for temporary LDIF data that is auto-cleaned."""
     temp_file = f"/tmp/temp_{int(time.time())}.ldif"  # noqa: S108
 
