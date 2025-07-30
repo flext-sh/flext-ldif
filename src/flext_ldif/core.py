@@ -54,23 +54,22 @@ class TLdif:
         try:
             # Use modernized parser that handles all string/bytes issues internally
             parse_result = modernized_ldif_parse(content)
-            
+
             if not parse_result.is_success:
                 return FlextResult.fail(parse_result.error or "Modernized LDIF parse failed")
-            
+
             raw_entries = parse_result.data or []
             entries = []
-            
+
             # Convert to FlextLdifEntry objects
             for dn, attrs in raw_entries:
                 entry = FlextLdifEntry.from_ldif_dict(dn, attrs)
                 entries.append(entry)
-            
+
             return FlextResult.ok(entries)
 
         except (ValueError, TypeError, AttributeError, ImportError) as e:
             return FlextResult.fail(f"Modernized LDIF parse failed: {e}")
-
 
     @classmethod
     def validate(cls, entry: FlextLdifEntry) -> FlextResult[bool]:
@@ -152,18 +151,17 @@ class TLdif:
                 dn = str(entry.dn)
                 attrs = entry.attributes.attributes
                 raw_entries.append((dn, attrs))
-            
+
             # Use modernized writer
             write_result = modernized_ldif_write(raw_entries)
-            
+
             if not write_result.is_success:
                 return FlextResult.fail(write_result.error or "Modernized LDIF write failed")
-            
+
             return FlextResult.ok(write_result.data or "")
 
         except (ValueError, TypeError, AttributeError, ImportError) as e:
             return FlextResult.fail(f"Modernized LDIF write failed: {e}")
-
 
     @classmethod
     def write_file(cls, entries: list[FlextLdifEntry], file_path: str | Path) -> FlextResult[bool]:
