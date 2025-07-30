@@ -13,16 +13,15 @@ Prefixos obrigatórios:
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 """
 
-from flext_core import FlextContainer, FlextResult
-import traceback
-
-
 from __future__ import annotations
 
 import contextlib
 import sys
 import tempfile
+import traceback
 from pathlib import Path
+
+from flext_core import FlextContainer, FlextResult
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 🎯 IMPORTS - Validando todos os prefixos corretos
@@ -446,8 +445,12 @@ member: uid=user1,ou=people,dc=comprehensive,dc=test"""
             for entry in entries:
                 if hasattr(entry, "dn"):
                     dn_str = str(entry.dn)
-                    if "uid=" in dn_str or ("cn=" in dn_str and (
-                        "ou=groups" in dn_str) or "ou=" in dn_str or "dc=" in dn_str:)
+                    if (
+                        "uid=" in dn_str
+                        or ("cn=" in dn_str and "ou=groups" in dn_str)
+                        or "ou=" in dn_str
+                        or "dc=" in dn_str
+                    ):
                         pass
 
         if entries:

@@ -1,82 +1,12 @@
-# ============================================================================
-# FLEXT-LDIF - LDIF Parser Library .gitignore
-# Python 3.13 | Poetry | LDIF | Data Processing | Text Parsing
-# ============================================================================
-
-# ============================================================================
-# JUNK FILES - NEVER COMMIT THESE
-# ============================================================================
-
-# Archive and backup directories  
-archive/
-archives/
-backup/
-backups/
-.backup/
-*_backup/
-*_backup_*/
-
-# AI-generated files and reports
-*_REPORT*.md
-*_ANALYSIS*.md
-*_SUMMARY*.md  
-*_FINDINGS*.md
-CLAUDE*.md
-CONFIG_MIGRATION*.md
-DEVELOPMENT_STANDARDS*.md
-DUPLICATION_REPORT*.md
-LINT_CORRECTIONS*.md
-*.ai.md
-*.ai.txt
-
-# Backup files with timestamps
-*_20250*.bak
-*_202507*.bak
-*_202506*.bak
-*.md_20250*
-README_20250*.bak
-
-# Generic backup patterns
-*.bak
-*.backup
-*.orig
-*.syntax_backup  
-*.broken
-*.tmp.bak
-*_temp.py
-*_temp.md
-
-# Fix scripts and validation files
-fix_*.py
-*_fix.py
-*_validation.py
-validate_*.py
-investigate_*.py
-temp_*.py
-debug_*.py
-
-# Tool reports and analysis
-*_analysis.txt
-*_report.txt
-*_output.txt
-analysis_temp/
-report_*/
-reports/
-reports_*/
-temp_test_*/
-
-# ============================================================================
-# PYTHON ARTIFACTS
-# ============================================================================
-
-# Python artifacts
+# Python
 __pycache__/
 *.py[cod]
 *.pyc
 *.pyo
 *.pyd
+*.so
 
-# Distribution / packaging
+# Build
 build/
 dist/
 *.egg-info/
@@ -84,98 +14,53 @@ dist/
 *.egg
 MANIFEST
 
-# Testing and coverage
+# Testing
 htmlcov/
+.tox/
+.nox/
 .coverage
 .coverage.*
 coverage.xml
 *.cover
+.hypothesis/
 .pytest_cache/
 
-# Development tools
+# Tools
 .mypy_cache/
 .ruff_cache/
+.pyre/
+.pytype/
 
 # Virtual environments
 .env
 .venv/
 env/
 venv/
+ENV/
 
-# IDEs and editors
+# Editors
 .vscode/
 .idea/
 *.swp
+*.swo
 *~
 
-# System files
+# System
 .DS_Store
 Thumbs.db
+Desktop.ini
 
-# ============================================================================
-# LDIF DATA PROCESSING
-# ============================================================================
-
-# LDIF input/output files
+# LDIF specific
 *.ldif
 *.ldif.bak
-*.ldif.backup
-*.ldif.orig
 *.ldif.tmp
-*.ldif.processed
-*.ldif.parsed
-*.ldif.converted
-
-# LDIF directories
 ldif_input/
 ldif_output/
-ldif_processed/
-ldif_backup/
 ldif_temp/
-ldif_work/
 
-# LDIF processing logs
-ldif_parse.log
-ldif_convert.log
-ldif_validation.log
-
-# Large LDIF files (often auto-generated)
-*.big.ldif
-*_export.ldif
-*_dump.ldif
-migration_*.ldif
-
-# LDIF schema validation
-*.schema.ldif
-*.schema.ldif.bak
-
-# ============================================================================
-# DATA PROCESSING ARTIFACTS
-# ============================================================================
-
-# Processed data files
-processed/
-output/
-converted/
-parsed/
-
-# Data transformation logs
-transform.log
-parse.log
-validation.log
-
-# Intermediate data formats
-*.csv.tmp
-*.json.tmp
-*.xml.tmp
-
-# Data quality reports
-quality_report/
-validation_report/
-
-# ============================================================================
-# LOGS AND TEMPORARY FILES
-# ============================================================================
+# Documentation
+docs/_build/
+site/
 
 # Logs
 *.log
@@ -186,10 +71,19 @@ logs/
 *.key
 *.pem
 *.crt
+credentials.json
 
-# Force include critical files
-!pyproject.toml
-!Makefile
-!README.md
-!example.ldif
-!test_data.ldif
+# Archive/backup
+archive/
+backup/
+*.bak
+*.backup
+*.orig
+*_temp.*
+temp_*
+fix_*
+
+# Reports
+*_REPORT*.md
+*_ANALYSIS*.md
+*_SUMMARY*.md

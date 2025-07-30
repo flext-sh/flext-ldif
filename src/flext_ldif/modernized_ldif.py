@@ -37,9 +37,7 @@ RDN_PATTERN = ATTR_PATTERN + r"([ ]*\+[ ]*" + ATTR_PATTERN + r")*[ ]*"
 DN_PATTERN = RDN_PATTERN + r"([ ]*,[ ]*" + RDN_PATTERN + r")*[ ]*"
 DN_REGEX = re.compile(f"^{DN_PATTERN}$")
 
-LDIF_PATTERN = (
-    f"^((dn(:|::) {DN_PATTERN})|({ATTRTYPE_PATTERN}s(:|::) .*)$)+"
-)
+LDIF_PATTERN = f"^((dn(:|::) {DN_PATTERN})|({ATTRTYPE_PATTERN}s(:|::) .*)$)+"
 
 MOD_OPS = ["add", "delete", "replace"]
 CHANGE_TYPES = ["add", "delete", "modify", "modrdn"]
@@ -116,7 +114,7 @@ class FlextLDIFWriter:
             self._output_lines.append(line)
         else:
             # Write first part
-            self._output_lines.append(line[:self._cols])
+            self._output_lines.append(line[: self._cols])
             pos = self._cols
 
             # Write continuation lines with leading space
@@ -137,8 +135,8 @@ class FlextLDIFWriter:
 
         """
         return (
-            attr_type.lower() in self._base64_attrs or
-            UNSAFE_STRING_RE.search(attr_value) is not None
+            attr_type.lower() in self._base64_attrs
+            or UNSAFE_STRING_RE.search(attr_value) is not None
         )
 
     def _unparse_attr(self, attr_type: str, attr_value: str) -> None:
@@ -194,6 +192,7 @@ class FlextLDIFParser:
         input_content: str,
         ignored_attr_types: list[str] | None = None,
         encoding: str = "utf-8",
+        *,
         strict: bool = True,
     ) -> None:
         """Initialize LDIF parser.
@@ -268,12 +267,12 @@ class FlextLDIFParser:
             # Value is already a string, just validate UTF-8 encoding
             try:
                 attr_value.encode("utf-8").decode("utf-8")
-                return attr_type, attr_value
             except UnicodeError as err:
                 if self._strict:
-                    msg = f"DN encoding error: {err}"
+                    msg = f"Invalid UTF-8 in {attr_type}: {err}"
                     raise ValueError(msg) from err
-                logger.warning("DN encoding issue: %s", err)
+                return attr_type, attr_value
+            else:
                 return attr_type, attr_value
 
         return attr_type, attr_value
@@ -297,7 +296,7 @@ class FlextLDIFParser:
 
         # Handle base64 encoded values (::)
         if line[colon_pos:].startswith("::"):
-            encoded_value = line[colon_pos + 2:].strip()
+            encoded_value = line[colon_pos + 2 :].strip()
             try:
                 attr_value = base64.b64decode(encoded_value).decode(self._encoding)
             except Exception as e:
@@ -306,7 +305,7 @@ class FlextLDIFParser:
 
         # Handle URL references (:<)
         elif line[colon_pos:].startswith(":<"):
-            url = line[colon_pos + 2:].strip()
+            url = line[colon_pos + 2 :].strip()
             try:
                 with urlopen(url) as response:
                     attr_value = response.read().decode(self._encoding)
@@ -316,7 +315,7 @@ class FlextLDIFParser:
 
         # Handle regular values (:)
         else:
-            attr_value = line[colon_pos + 1:].strip()
+            attr_value = line[colon_pos + 1 :].strip()
 
         return self._decode_value(attr_type, attr_value)
 
@@ -392,12 +391,14 @@ class FlextLDIFParser:
             for block in self._iter_blocks():
                 if block:  # Skip empty blocks
                     yield self._parse_entry_record(block)
-        except Exception as e:
-            logger.exception("LDIF parsing failed: %s", str(e))
+        except Exception:
+            logger.exception("LDIF parsing failed")
             raise
 
 
-def modernized_ldif_parse(content: str) -> FlextResult[list[tuple[str, dict[str, list[str]]]]]:
+def modernized_ldif_parse(
+    content: str,
+) -> FlextResult[list[tuple[str, dict[str, list[str]]]]]:
     """Parse LDIF content using modernized parser.
 
     Args:
@@ -420,7 +421,9 @@ def modernized_ldif_parse(content: str) -> FlextResult[list[tuple[str, dict[str,
         return FlextResult.fail(error_msg)
 
 
-def modernized_ldif_write(entries: list[tuple[str, dict[str, list[str]]]]) -> FlextResult[str]:
+def modernized_ldif_write(
+    entries: list[tuple[str, dict[str, list[str]]]],
+) -> FlextResult[str]:
     """Write LDIF entries using modernized writer.
 
     Args:

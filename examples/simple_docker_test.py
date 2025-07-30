@@ -5,15 +5,13 @@ This demonstrates how to manually use the Docker container functionality
 for testing and development purposes.
 """
 
-from docker_fixtures import OpenLDAPContainerManager, check_docker_available
-from flext_ldif import parse_ldif, validate_ldif
-from flext_ldif.domain.specifications import (
-
-
 from __future__ import annotations
 
 import sys
 from pathlib import Path
+
+from docker_fixtures import OpenLDAPContainerManager, check_docker_available
+from flext_ldif import parse_ldif, validate_ldif
 
 # Add src and tests to path for local testing
 src_path = Path(__file__).parent.parent / "src"
@@ -24,9 +22,6 @@ sys.path.insert(0, str(tests_path))
 
 def test_with_docker_container() -> bool | None:
     """Example of manual Docker container usage for testing."""
-
-
-
     # Check if Docker is available
     if not check_docker_available():
         return False
@@ -59,7 +54,7 @@ def test_with_docker_container() -> bool | None:
         validate_ldif(ldif_data)
 
         # Test domain specifications
-
+        from flext_ldif.domain.specifications import (
             FlextLdifGroupSpecification,
             FlextLdifOrganizationalUnitSpecification,
             FlextLdifPersonSpecification,
