@@ -6,12 +6,19 @@ exports LDIF, and demonstrates FLEXT-LDIF processing capabilities.
 Perfect for testing and demonstration without needing a manual LDAP setup.
 """
 
-from flext_ldif import (
-from flext_ldif.domain.specifications import (
+from __future__ import annotations
+
 import time
 
-
-from __future__ import annotations
+from flext_ldif import (
+    FlextLdifProcessor,
+    FlextLdifValidator,
+    parse_ldif,
+)
+from flext_ldif.domain.specifications import (
+    FlextLdifEntrySpecification,
+    FlextLdifPersonSpecification,
+)
 
 import asyncio
 import subprocess
@@ -360,11 +367,12 @@ def stop_openldap_container() -> None:
 
 async def run_flext_ldif_examples(ldif_data: str) -> None:
     """Run FLEXT-LDIF examples against real OpenLDAP data."""
-
+    from flext_ldif import (
         FlextLdifProcessor,
         FlextLdifValidator,
         parse_ldif,
         validate_ldif,
+    )
         write_ldif,
     )
 
