@@ -108,6 +108,7 @@ def handle_common_exceptions(
         Decorator function
 
     """
+
     def decorator(func: Callable[P, T]) -> Callable[P, FlextResult[T]]:
         @functools.wraps(func)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> FlextResult[T]:
@@ -124,6 +125,7 @@ def handle_common_exceptions(
                 return FlextResult.fail(f"{fallback_error}: {e}")
 
         return wrapper
+
     return decorator
 
 
@@ -141,6 +143,7 @@ def handle_async_exceptions(
         Decorator function for async operations
 
     """
+
     def decorator(
         func: Callable[P, Awaitable[T]],
     ) -> Callable[P, Awaitable[FlextResult[T]]]:
@@ -159,6 +162,7 @@ def handle_async_exceptions(
                 return FlextResult.fail(f"{fallback_error}: {e}")
 
         return wrapper
+
     return decorator
 
 

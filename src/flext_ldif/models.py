@@ -333,7 +333,9 @@ class FlextLdifEntry(FlextValueObject):
         validation_errors = self._collect_ldif_entry_validation_errors()
 
         if validation_errors:
-            return FlextResult.fail(validation_errors[0])  # Return first error for clarity
+            return FlextResult.fail(
+                validation_errors[0]
+            )  # Return first error for clarity
 
         return FlextResult.ok(None)
 

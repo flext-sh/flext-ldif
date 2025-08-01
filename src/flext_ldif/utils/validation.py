@@ -28,17 +28,24 @@ class LdifValidator:
 
     # Object class sets for entry type validation
     PERSON_CLASSES: ClassVar[set[str]] = {
-        "person", "organizationalPerson", "inetOrgPerson",
-        "user", "posixAccount",
+        "person",
+        "organizationalPerson",
+        "inetOrgPerson",
+        "user",
+        "posixAccount",
     }
 
     OU_CLASSES: ClassVar[set[str]] = {
-        "organizationalUnit", "top",
+        "organizationalUnit",
+        "top",
     }
 
     GROUP_CLASSES: ClassVar[set[str]] = {
-        "group", "groupOfNames", "groupOfUniqueNames",
-        "posixGroup", "groupOfMembers",
+        "group",
+        "groupOfNames",
+        "groupOfUniqueNames",
+        "posixGroup",
+        "groupOfMembers",
     }
 
     @classmethod
@@ -218,7 +225,8 @@ class LdifSchemaValidator:
 
         """
         missing_attrs = [
-            attr_name for attr_name in required_attrs
+            attr_name
+            for attr_name in required_attrs
             if not entry.has_attribute(attr_name)
         ]
 

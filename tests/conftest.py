@@ -57,7 +57,7 @@ def set_test_environment() -> Generator[None]:
 
 # LDIF processing fixtures
 @pytest.fixture
-def ldif_processor_config() -> dict[str, Any]:
+def ldif_processor_config() -> dict[str, object]:
     """LDIF processor configuration for testing."""
     return {
         "encoding": "utf-8",
@@ -212,7 +212,7 @@ def ldif_core() -> type[TLdif]:
 
 # Schema validation fixtures
 @pytest.fixture
-def ldap_schema_config() -> dict[str, Any]:
+def ldap_schema_config() -> dict[str, object]:
     """LDAP schema configuration for validation."""
     return {
         "validate_object_classes": True,
@@ -237,7 +237,7 @@ def ldap_schema_config() -> dict[str, Any]:
 
 # Entry transformation fixtures
 @pytest.fixture
-def transformation_rules() -> dict[str, Any]:
+def transformation_rules() -> dict[str, object]:
     """Transformation rules for LDIF processing."""
     return {
         "attribute_mappings": {
@@ -261,7 +261,7 @@ def transformation_rules() -> dict[str, Any]:
 
 # Filter fixtures
 @pytest.fixture
-def ldif_filters() -> dict[str, Any]:
+def ldif_filters() -> dict[str, object]:
     """LDIF entry filters for testing."""
     return {
         "include_object_classes": ["inetOrgPerson", "groupOfNames"],
@@ -276,7 +276,7 @@ def ldif_filters() -> dict[str, Any]:
 
 # Statistics fixtures
 @pytest.fixture
-def expected_ldif_stats() -> dict[str, Any]:
+def expected_ldif_stats() -> dict[str, object]:
     """Expected LDIF processing statistics."""
     return {
         "total_entries": 4,
@@ -314,7 +314,7 @@ objectClass: person
 
 # Performance fixtures
 @pytest.fixture
-def large_ldif_config() -> dict[str, Any]:
+def large_ldif_config() -> dict[str, object]:
     """Configuration for large LDIF processing tests."""
     return {
         "batch_size": 1000,
@@ -351,24 +351,24 @@ def mock_ldif_service() -> Any:
     """Mock LDIF service for testing."""
 
     class MockLdifService:
-        async def parse_ldif(self, content: str) -> list[dict[str, Any]]:
+        async def parse_ldif(self, content: str) -> list[dict[str, object]]:
             return [{"dn": "test", "attributes": {}}]
 
-        async def write_ldif(self, entries: list[dict[str, Any]]) -> str:
+        async def write_ldif(self, entries: list[dict[str, object]]) -> str:
             return "dn: test\nobjectClass: top\n"
 
         async def transform_entries(
             self,
-            entries: list[dict[str, Any]],
-            rules: dict[str, Any],
-        ) -> list[dict[str, Any]]:
+            entries: list[dict[str, object]],
+            rules: dict[str, object],
+        ) -> list[dict[str, object]]:
             return entries
 
         async def validate_entries(
             self,
-            entries: list[dict[str, Any]],
-            schema: dict[str, Any],
-        ) -> dict[str, Any]:
+            entries: list[dict[str, object]],
+            schema: dict[str, object],
+        ) -> dict[str, object]:
             return {"valid": True, "errors": []}
 
     return MockLdifService()
@@ -379,7 +379,7 @@ def mock_schema_validator() -> Any:
     """Mock schema validator for testing."""
 
     class MockSchemaValidator:
-        def validate_entry(self, entry: dict[str, Any]) -> dict[str, Any]:
+        def validate_entry(self, entry: dict[str, object]) -> dict[str, object]:
             return {"valid": True, "errors": []}
 
         def validate_object_class(self, object_class: str) -> bool:

@@ -54,8 +54,6 @@ class FlextLdifParseError(FlextProcessingError):
         logger.debug("FlextLdifParseError created successfully")
 
 
-
-
 class FlextLdifEntryError(FlextProcessingError):
     """Exception raised for LDIF entry operations."""
 
