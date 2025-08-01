@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     from flext_core import FlextResult
@@ -23,6 +23,7 @@ from flext_core import get_logger
 
 from .api import FlextLdifAPI
 from .config import FlextLdifConfig
+from .utils.cli_utils import handle_parse_result, safe_click_echo
 
 # Logger for CLI module
 logger = get_logger(__name__)
@@ -305,6 +306,61 @@ def cli(
     )
 
 
+def _parse_and_log_file(api: FlextLdifAPI, input_file: str, max_entries: int | None) -> list[FlextLdifEntry]:
+    """Parse LDIF file with logging and return entries."""
+    logger.debug("Parsing LDIF file: %s", input_file)
+    result = api.parse_file(input_file)
+    logger.trace(
+        "Parse result success: %s",
+        hasattr(result, "is_success") and result.is_success,
+    )
+
+    # Handle parsing result with utility
+    handle_parse_result(cast("FlextResult[Any]", result), input_file)
+
+    entries = cast("FlextResult[list[FlextLdifEntry]]", result).data
+    if entries is None:  # Safety check
+        safe_click_echo("Internal error: entries is None after successful parse", err=True)
+        sys.exit(1)
+
+    logger.info(
+        "LDIF file parsed successfully",
+        input_file=input_file,
+        entry_count=len(entries),
+        max_entries=max_entries or "unlimited",
+    )
+    safe_click_echo(f"Successfully parsed {len(entries)} entries from {input_file}")
+    return entries
+
+
+def _handle_optional_validation(entries: list[FlextLdifEntry], *, validate: bool) -> None:
+    """Handle optional validation of entries."""
+    if validate:
+        logger.debug("Performing validation as requested")
+        handle_validation_errors(entries)
+    else:
+        logger.trace("Skipping validation (not requested)")
+
+
+def _handle_output_generation(
+    ctx: click.Context,
+    api: FlextLdifAPI,
+    entries: list[FlextLdifEntry],
+    output: str | None,
+) -> None:
+    """Handle output generation - file or statistics display."""
+    if output:
+        logger.debug("Writing parsed entries to output file: %s", output)
+        write_entries_to_file(api, entries, output)
+    else:
+        logger.debug("Displaying statistics instead of writing to file")
+        try:
+            display_statistics(ctx, api, entries)
+        except (TypeError, AttributeError) as e:
+            logger.exception("Statistics display failed")
+            safe_click_echo(f"Statistics display failed: {e}", err=True)
+
+
 @cli.command()
 @click.argument("input_file", type=click.Path(exists=True))
 @click.option("--output", "-o", type=click.Path(), help="Output file path")
@@ -333,64 +389,64 @@ def parse(
         logger.debug("Creating API with parse configuration")
         api = create_api_with_config(max_entries=max_entries)
 
-        # Parse the file
-        logger.debug("Parsing LDIF file: %s", input_file)
-        result = api.parse_file(input_file)
-        logger.trace(
-            "Parse result success: %s",
-            hasattr(result, "is_success") and result.is_success,
-        )
+        # Parse file and get entries
+        entries = _parse_and_log_file(api, input_file, max_entries)
 
-        if (
-            not hasattr(result, "is_success")
-            or not result.is_success
-            or not hasattr(result, "data")
-            or result.data is None
-        ):
-            error_msg = (
-                getattr(result, "error", "Unknown parsing error")
-                if hasattr(result, "error")
-                else "Unknown parsing error"
-            )
-            logger.error("LDIF parsing failed: %s", error_msg)
-            logger.debug("Parse failure for file: %s", input_file)
-            click.echo(f"LDIF parsing failed: {error_msg}", err=True)
-            sys.exit(1)
-
-        entries = result.data
-        logger.info(
-            "LDIF file parsed successfully",
-            input_file=input_file,
-            entry_count=len(entries),
-            max_entries=max_entries or "unlimited",
-        )
-        click.echo(f"Successfully parsed {len(entries)} entries from {input_file}")
-
-        # Optional validation
-        if validate:
-            logger.debug("Performing validation as requested")
-            handle_validation_errors(entries)
-        else:
-            logger.trace("Skipping validation (not requested)")
+        # Handle optional validation
+        _handle_optional_validation(entries, validate=validate)
 
         # Generate output
-        if output:
-            logger.debug("Writing parsed entries to output file: %s", output)
-            write_entries_to_file(api, entries, output)
-        else:
-            logger.debug("Displaying statistics instead of writing to file")
-            try:
-                display_statistics(ctx, api, entries)
-            except (TypeError, AttributeError) as e:
-                logger.exception("Statistics display failed")
-                click.echo(f"Statistics display failed: {e}", err=True)
+        _handle_output_generation(ctx, api, entries, output)
 
         logger.info("Parse command completed successfully")
 
     except Exception as e:  # Broad exception for CLI robustness
         logger.exception("Parse operation failed with unexpected exception")
-        click.echo(f"Parse operation failed: {e}", err=True)
+        safe_click_echo(f"Parse operation failed: {e}", err=True)
         sys.exit(1)
+
+
+def _create_validation_api(ctx: click.Context, *, strict: bool) -> FlextLdifAPI:
+    """Create API instance for validation with appropriate config."""
+    if strict:
+        config = FlextLdifConfig()
+        config.strict_validation = strict
+        return FlextLdifAPI(config)
+    return cast("FlextLdifAPI", ctx.obj["api"])
+
+
+def _validate_entries(entries: list[FlextLdifEntry]) -> list[str]:
+    """Validate entries and return list of error messages."""
+    validation_errors = []
+    for i, entry in enumerate(entries):
+        validation_result = entry.validate_domain_rules()
+        if not validation_result.is_success:
+            validation_errors.append(
+                f"Entry {i + 1} ({entry.dn}): {validation_result.error}",
+            )
+    return validation_errors
+
+
+def _display_validation_results(
+    entries: list[FlextLdifEntry],
+    validation_errors: list[str],
+    *,
+    strict: bool,
+) -> None:
+    """Display validation results and exit if errors found."""
+    mode = "strict" if strict else "standard"
+    safe_click_echo(f"Validation mode: {mode}")
+
+    if validation_errors:
+        safe_click_echo(
+            f"Validation failed with {len(validation_errors)} errors:",
+            err=True,
+        )
+        for error in validation_errors:
+            safe_click_echo(f"  - {error}", err=True)
+        sys.exit(1)
+    else:
+        safe_click_echo(f"✓ All {len(entries)} entries are valid ({mode} mode)")
 
 
 @cli.command()
@@ -407,75 +463,34 @@ def validate(
 ) -> None:
     """Validate LDIF file entries against schema rules."""
     try:
-        # Create API with validation configuration
-        config = FlextLdifConfig()
-        config.strict_validation = strict
+        # Create API with appropriate configuration
+        api = _create_validation_api(ctx, strict=strict)
 
-        # Create API with custom config for validation
-        api = FlextLdifAPI(config) if strict else ctx.obj["api"]
-
-        # Parse and validate
+        # Parse file and handle errors
         parse_result = api.parse_file(input_file)
-        if (
-            not hasattr(parse_result, "is_success")
-            or not parse_result.is_success
-            or not hasattr(parse_result, "data")
-            or parse_result.data is None
-        ):
-            error_msg = (
-                getattr(parse_result, "error", "Unknown parsing error")
-                if hasattr(parse_result, "error")
-                else "Unknown parsing error"
-            )
-            click.echo(f"Failed to parse file for validation: {error_msg}", err=True)
-            sys.exit(1)
+        handle_parse_result(cast("FlextResult[Any]", parse_result), input_file)
 
-        # Type assertion: we know parse_result is FlextResult from our API and data is not None
+        # Type assertion: we know parse_result is successful from handle_parse_result
         parse_result_typed = cast("FlextResult[list[FlextLdifEntry]]", parse_result)
         entries = parse_result_typed.data
-        if (
-            entries is None
-        ):  # Safety check - should never happen due to validation above
-            click.echo(
-                "Internal error: entries is None after successful parse",
-                err=True,
-            )
+
+        if entries is None:  # Safety check
+            safe_click_echo("Internal error: entries is None after successful parse", err=True)
             sys.exit(1)
-        validation_errors = []
 
         # Schema validation info (informational for now)
         if schema:
-            click.echo(f"Using schema validation rules: {schema}")
-            # NOTE: Schema-based validation requires LDAP schema integration
-            click.echo(
+            safe_click_echo(f"Using schema validation rules: {schema}")
+            safe_click_echo(
                 "Note: Schema-based validation will be implemented with flext-ldap integration",
             )
 
-        # Domain validation
-        for i, entry in enumerate(entries):
-            validation_result = entry.validate_domain_rules()
-            if not validation_result.is_success:
-                validation_errors.append(
-                    f"Entry {i + 1} ({entry.dn}): {validation_result.error}",
-                )
-
-        # Show validation mode
-        mode = "strict" if strict else "standard"
-        click.echo(f"Validation mode: {mode}")
-
-        if validation_errors:
-            click.echo(
-                f"Validation failed with {len(validation_errors)} errors:",
-                err=True,
-            )
-            for error in validation_errors:
-                click.echo(f"  - {error}", err=True)
-            sys.exit(1)
-        else:
-            click.echo(f"✓ All {len(entries)} entries are valid ({mode} mode)")
+        # Validate entries and display results
+        validation_errors = _validate_entries(entries)
+        _display_validation_results(entries, validation_errors, strict=strict)
 
     except (OSError, ValueError, TypeError) as e:
-        click.echo(f"Validation failed: {e}", err=True)
+        safe_click_echo(f"Validation failed: {e}", err=True)
         sys.exit(1)
 
 

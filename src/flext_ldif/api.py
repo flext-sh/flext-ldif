@@ -490,87 +490,81 @@ class FlextLdifAPI:
         # Perform core validation
         return self._perform_core_validation(entries)
 
-    def write(
-        self,
-        entries: list[FlextLdifEntry],
-        file_path: str | Path | None = None,
-    ) -> FlextResult[str]:
-        """Write LDIF entries to string or file with intelligent formatting using configuration."""
-        self.logger.debug("Starting write operation for %d entries", len(entries))
-        self.logger.trace("Write target: %s", "file" if file_path else "string")
+    def _resolve_output_path(self, file_path: str | Path) -> Path:
+        """Resolve output file path using configuration."""
+        original_path = str(file_path)
+        file_path = Path(file_path)
+        self.logger.trace("Original file path: %s", original_path)
 
-        if file_path:
-            self.logger.debug("Writing to file: %s", file_path)
+        if not file_path.is_absolute() and self.config.output_directory:
+            self.logger.debug(
+                "Resolving relative path with output_directory: %s",
+                self.config.output_directory,
+            )
+            file_path = self.config.output_directory / file_path
+            self.logger.trace("Resolved absolute path: %s", file_path)
+        else:
+            self.logger.trace(
+                "Using path as-is (absolute or no output_directory configured)",
+            )
+        return file_path
 
-            # Use output directory configuration if relative path
-            original_path = str(file_path)
-            file_path = Path(file_path)
-            self.logger.trace("Original file path: %s", original_path)
-
-            if not file_path.is_absolute() and self.config.output_directory:
-                self.logger.debug(
-                    "Resolving relative path with output_directory: %s",
-                    self.config.output_directory,
-                )
-                file_path = self.config.output_directory / file_path
-                self.logger.trace("Resolved absolute path: %s", file_path)
-            else:
+    def _create_output_directory(self, file_path: Path) -> None:
+        """Create output directory if configured and needed."""
+        if self.config.create_output_dir and file_path.parent:
+            self.logger.debug(
+                "Creating output directory if needed: %s",
+                file_path.parent,
+            )
+            try:
+                file_path.parent.mkdir(parents=True, exist_ok=True)
                 self.logger.trace(
-                    "Using path as-is (absolute or no output_directory configured)",
-                )
-
-            # Create output directory if configured to do so and parent is valid
-            if self.config.create_output_dir and file_path.parent:
-                self.logger.debug(
-                    "Creating output directory if needed: %s",
+                    "Directory created/verified: %s",
                     file_path.parent,
                 )
-                try:
-                    file_path.parent.mkdir(parents=True, exist_ok=True)
-                    self.logger.trace(
-                        "Directory created/verified: %s",
-                        file_path.parent,
-                    )
-                except (OSError, PermissionError) as e:
-                    # If can't create directory, let the write operation fail naturally
-                    self.logger.warning(
-                        "Failed to create output directory %s: %s",
-                        file_path.parent,
-                        e,
-                    )
-                    self.logger.debug(
-                        "Continuing with write operation, may fail if directory doesn't exist",
-                    )
-            else:
-                self.logger.trace(
-                    "Skipping directory creation (disabled or no parent directory)",
+            except (OSError, PermissionError) as e:
+                # If can't create directory, let the write operation fail naturally
+                self.logger.warning(
+                    "Failed to create output directory %s: %s",
+                    file_path.parent,
+                    e,
                 )
-
-            # Write to file using core functionality with encoding
-            self.logger.debug(
-                "Delegating to TLdif.write_file with encoding: %s",
-                self.config.output_encoding,
-            )
+                self.logger.debug(
+                    "Continuing with write operation, may fail if directory doesn't exist",
+                )
+        else:
             self.logger.trace(
-                "Writing entries to file: %s",
-                [str(entry.dn) for entry in entries[:3]],
-            )  # First 3 for trace
+                "Skipping directory creation (disabled or no parent directory)",
+            )
 
-            result = TLdif.write_file(entries, file_path, self.config.output_encoding)
-            if result.is_success:
-                self.logger.debug("File write successful: %s", file_path)
-                self.logger.info(
-                    "LDIF entries written to file",
-                    entries_count=len(entries),
-                    file_path=str(file_path),
-                    encoding=self.config.output_encoding,
-                )
-                return FlextResult.ok(f"Written to {file_path}")
-            self.logger.error("File write failed: %s", result.error)
-            self.logger.debug("TLdif.write_file returned failure")
-            return FlextResult.fail(result.error or "Write failed")
+    def _write_to_file(self, entries: list[FlextLdifEntry], file_path: Path) -> FlextResult[str]:
+        """Write entries to file with proper logging."""
+        self.logger.debug(
+            "Delegating to TLdif.write_file with encoding: %s",
+            self.config.output_encoding,
+        )
+        self.logger.trace(
+            "Writing entries to file: %s",
+            [str(entry.dn) for entry in entries[:3]],
+        )  # First 3 for trace
 
-        # Return LDIF string using core functionality
+        result = TLdif.write_file(entries, file_path, self.config.output_encoding)
+        if result.is_success:
+            self.logger.debug("File write successful: %s", file_path)
+            self.logger.info(
+                "LDIF entries written to file",
+                entries_count=len(entries),
+                file_path=str(file_path),
+                encoding=self.config.output_encoding,
+            )
+            return FlextResult.ok(f"Written to {file_path}")
+
+        self.logger.error("File write failed: %s", result.error)
+        self.logger.debug("TLdif.write_file returned failure")
+        return FlextResult.fail(result.error or "Write failed")
+
+    def _write_to_string(self, entries: list[FlextLdifEntry]) -> FlextResult[str]:
+        """Write entries to string with proper logging."""
         self.logger.debug("Writing to string (no file path provided)")
         self.logger.trace("Delegating to TLdif.write for string output")
 
@@ -588,9 +582,31 @@ class FlextLdifAPI:
                 output_size_chars=output_size,
             )
             return FlextResult.ok(string_result.data)
+
         self.logger.error("String write failed: %s", string_result.error)
         self.logger.debug("TLdif.write returned failure")
         return FlextResult.fail(string_result.error or "String write failed")
+
+    def write(
+        self,
+        entries: list[FlextLdifEntry],
+        file_path: str | Path | None = None,
+    ) -> FlextResult[str]:
+        """Write LDIF entries to string or file with intelligent formatting using configuration."""
+        self.logger.debug("Starting write operation for %d entries", len(entries))
+        self.logger.trace("Write target: %s", "file" if file_path else "string")
+
+        if file_path:
+            self.logger.debug("Writing to file: %s", file_path)
+
+            # Resolve and prepare file path
+            resolved_path = self._resolve_output_path(file_path)
+            self._create_output_directory(resolved_path)
+
+            # Write to file
+            return self._write_to_file(entries, resolved_path)
+        # Write to string
+        return self._write_to_string(entries)
 
     @flext_monitor_function(metric_name="ldif_filter_persons")
     def filter_persons(

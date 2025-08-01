@@ -370,6 +370,12 @@ class TLdif:
             logger.debug("Delegating to parse method for content processing")
             result = cls.parse(content)
 
+        except (OSError, ValueError, TypeError, AttributeError) as e:
+            logger.debug("Exception type: %s", type(e).__name__)
+            logger.trace("File read exception details", exc_info=True)
+            logger.exception("Exception during file read")
+            return FlextResult.fail(f"File read failed: {e}")
+        else:
             # Log result based on success/failure
             if result.is_success:
                 entries_count = len(result.data or [])
@@ -386,18 +392,12 @@ class TLdif:
                     entries_parsed=entries_count,
                     encoding=encoding,
                 )
-                return result
+            else:
+                # Handle parse failure
+                logger.error("File content parsing failed: %s", result.error)
+                logger.debug("Parse method returned failure after successful file read")
 
-            # Handle parse failure
-            logger.error("File content parsing failed: %s", result.error)
-            logger.debug("Parse method returned failure after successful file read")
             return result
-
-        except (OSError, ValueError, TypeError, AttributeError) as e:
-            logger.debug("Exception type: %s", type(e).__name__)
-            logger.trace("File read exception details", exc_info=True)
-            logger.exception("Exception during file read")
-            return FlextResult.fail(f"File read failed: {e}")
 
 
 __all__ = [
