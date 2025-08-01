@@ -44,7 +44,10 @@ class TLdif:
         try:
             content_str = str(content)
             logger.debug("Content converted to string, length: %d", len(content_str))
-            logger.trace("Content preview: %s...", content_str[:200].replace("\n", "\\n"))
+            logger.trace(
+                "Content preview: %s...",
+                content_str[:200].replace("\n", "\\n"),
+            )
 
             # Use modernized LDIF parser (no external dependencies)
             logger.debug("Delegating to modernized LDIF parser")
@@ -78,21 +81,34 @@ class TLdif:
 
             raw_entries = parse_result.data or []
             logger.debug("Modernized parser returned %d raw entries", len(raw_entries))
-            logger.trace("Raw entries DNs: %s", [dn for dn, _ in raw_entries[:5]])  # First 5 for trace
+            logger.trace(
+                "Raw entries DNs: %s",
+                [dn for dn, _ in raw_entries[:5]],
+            )  # First 5 for trace
 
             entries = []
 
             # Convert to FlextLdifEntry objects
             logger.debug("Converting raw entries to FlextLdifEntry objects")
             for i, (dn, attrs) in enumerate(raw_entries):
-                logger.trace("Processing entry %d: DN=%s, attrs_count=%d", i, dn, len(attrs))
+                logger.trace(
+                    "Processing entry %d: DN=%s, attrs_count=%d",
+                    i,
+                    dn,
+                    len(attrs),
+                )
                 entry = FlextLdifEntry.from_ldif_dict(dn, attrs)
                 entries.append(entry)
 
-            logger.debug("Successfully converted %d entries to FlextLdifEntry objects", len(entries))
-            logger.info("Modernized LDIF parsing completed successfully",
-                       raw_entries_count=len(raw_entries),
-                       converted_entries_count=len(entries))
+            logger.debug(
+                "Successfully converted %d entries to FlextLdifEntry objects",
+                len(entries),
+            )
+            logger.info(
+                "Modernized LDIF parsing completed successfully",
+                raw_entries_count=len(raw_entries),
+                converted_entries_count=len(entries),
+            )
             return FlextResult.ok(entries)
 
         except (ValueError, TypeError, AttributeError, ImportError) as e:
@@ -129,7 +145,10 @@ class TLdif:
             logger.trace("DN format validation passed")
 
             # Validate attribute names
-            logger.debug("Validating %d attribute names", len(entry.attributes.attributes))
+            logger.debug(
+                "Validating %d attribute names",
+                len(entry.attributes.attributes),
+            )
             for attr_name in entry.attributes.attributes:
                 logger.trace("Validating attribute name: %s", attr_name)
                 if not cls.ATTR_NAME_PATTERN.match(attr_name):
@@ -141,17 +160,22 @@ class TLdif:
             # Validate required objectClass attribute
             logger.trace("Checking for required objectClass attribute")
             if not entry.has_attribute("objectClass"):
-                logger.warning("Entry missing required objectClass attribute: %s", entry.dn)
+                logger.warning(
+                    "Entry missing required objectClass attribute: %s",
+                    entry.dn,
+                )
                 logger.debug("objectClass attribute is required but not found")
                 return FlextResult.fail("Entry missing required objectClass attribute")
 
             object_classes = entry.get_attribute("objectClass")
             logger.trace("Found objectClass values: %s", object_classes)
             logger.debug("Entry validation passed for: %s", entry.dn)
-            logger.info("LDIF entry validation successful",
-                       dn=str(entry.dn),
-                       attributes_count=len(entry.attributes.attributes),
-                       object_classes=object_classes)
+            logger.info(
+                "LDIF entry validation successful",
+                dn=str(entry.dn),
+                attributes_count=len(entry.attributes.attributes),
+                object_classes=object_classes,
+            )
 
             return FlextResult.ok(data=True)
 
@@ -257,7 +281,10 @@ class TLdif:
             logger.debug("Converting entries to LDIF content")
             content_result = cls.write(entries)
             if not content_result.is_success:
-                logger.error("Failed to convert entries to LDIF content: %s", content_result.error)
+                logger.error(
+                    "Failed to convert entries to LDIF content: %s",
+                    content_result.error,
+                )
                 logger.debug("Content generation failed, aborting file write")
                 return FlextResult.fail(content_result.error or "Write failed")
 
@@ -269,17 +296,22 @@ class TLdif:
 
             content_size = len(content_result.data)
             logger.debug("Writing %d characters to file", content_size)
-            logger.trace("Content preview: %s...", content_result.data[:100].replace("\n", "\\n"))
+            logger.trace(
+                "Content preview: %s...",
+                content_result.data[:100].replace("\n", "\\n"),
+            )
 
             with file_path.open("w", encoding=encoding) as f:
                 f.write(content_result.data)
 
             logger.debug("File write completed successfully: %s", file_path)
-            logger.info("LDIF entries written to file",
-                       entries_count=len(entries),
-                       file_path=str(file_path),
-                       content_size_chars=content_size,
-                       encoding=encoding)
+            logger.info(
+                "LDIF entries written to file",
+                entries_count=len(entries),
+                file_path=str(file_path),
+                content_size_chars=content_size,
+                encoding=encoding,
+            )
 
             return FlextResult.ok(data=True)
 
@@ -290,7 +322,11 @@ class TLdif:
             return FlextResult.fail(f"File write failed: {e}")
 
     @classmethod
-    def read_file(cls, file_path: str | Path, encoding: str = "utf-8") -> FlextResult[list[FlextLdifEntry]]:
+    def read_file(
+        cls,
+        file_path: str | Path,
+        encoding: str = "utf-8",
+    ) -> FlextResult[list[FlextLdifEntry]]:
         """Read and parse LDIF file.
 
         Args:
@@ -323,7 +359,11 @@ class TLdif:
 
             content_size = len(content)
             lines_count = len(content.splitlines())
-            logger.debug("File content read: %d characters, %d lines", content_size, lines_count)
+            logger.debug(
+                "File content read: %d characters, %d lines",
+                content_size,
+                lines_count,
+            )
             logger.trace("Content preview: %s...", content[:200].replace("\n", "\\n"))
 
             # Parse content
@@ -333,14 +373,19 @@ class TLdif:
             # Log result based on success/failure
             if result.is_success:
                 entries_count = len(result.data or [])
-                logger.debug("File read and parse successful: %d entries", entries_count)
-                logger.info("LDIF file processed successfully",
-                           file_path=str(file_path),
-                           file_size_bytes=file_size,
-                           content_size_chars=content_size,
-                           lines_count=lines_count,
-                           entries_parsed=entries_count,
-                           encoding=encoding)
+                logger.debug(
+                    "File read and parse successful: %d entries",
+                    entries_count,
+                )
+                logger.info(
+                    "LDIF file processed successfully",
+                    file_path=str(file_path),
+                    file_size_bytes=file_size,
+                    content_size_chars=content_size,
+                    lines_count=lines_count,
+                    entries_parsed=entries_count,
+                    encoding=encoding,
+                )
                 return result
 
             # Handle parse failure

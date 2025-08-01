@@ -138,7 +138,9 @@ def demonstrate_file_error_handling() -> None:
 
     # Create a temporary file
     temp_file = Path(__file__).parent / "temp_test.ldif"
-    temp_file.write_text("dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n")
+    temp_file.write_text(
+        "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n",
+    )
 
     try:
         # Try to parse valid file
@@ -190,7 +192,6 @@ description:
 
     result = api.parse(empty_attr_ldif)
     if result.is_success and result.data:
-
         # Test validation
         for entry in result.data:
             validation_result = entry.validate_domain_rules()

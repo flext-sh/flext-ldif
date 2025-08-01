@@ -79,7 +79,12 @@ class TestCLIComprehensiveCoverage:
         """Test CLI statistics display in different formats."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write("dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test")
             temp_path = f.name
 
@@ -103,7 +108,12 @@ class TestCLIComprehensiveCoverage:
         """Test convert command comprehensive scenarios."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write("dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test")
             input_path = f.name
 
@@ -112,12 +122,18 @@ class TestCLIComprehensiveCoverage:
 
         try:
             # Test YAML conversion
-            result = runner.invoke(cli, [
-                "convert",
-                "--input-format", "ldif",
-                "--output-format", "yaml",
-                input_path, output_path,
-            ])
+            result = runner.invoke(
+                cli,
+                [
+                    "convert",
+                    "--input-format",
+                    "ldif",
+                    "--output-format",
+                    "yaml",
+                    input_path,
+                    output_path,
+                ],
+            )
             assert result.exit_code == 0
             assert "Converted" in result.output
         finally:
@@ -143,7 +159,12 @@ objectClass: organizationalUnit
 ou: test
 """
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write(ldif_content)
             input_path = f.name
 
@@ -152,9 +173,16 @@ ou: test
 
         try:
             # Test filtering and output to file
-            result = runner.invoke(cli, [
-                "filter-by-class", input_path, "person", "--output", output_path,
-            ])
+            result = runner.invoke(
+                cli,
+                [
+                    "filter-by-class",
+                    input_path,
+                    "person",
+                    "--output",
+                    output_path,
+                ],
+            )
             assert result.exit_code == 0
             assert "Found" in result.output
         finally:
@@ -179,7 +207,12 @@ objectClass: person
 cn: user1
 """
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write(ldif_content)
             input_path = f.name
 
@@ -188,11 +221,20 @@ cn: user1
 
         try:
             # Test transform with sort
-            result = runner.invoke(cli, [
-                "transform", input_path, output_path, "--sort",
-            ])
+            result = runner.invoke(
+                cli,
+                [
+                    "transform",
+                    input_path,
+                    output_path,
+                    "--sort",
+                ],
+            )
             assert result.exit_code == 0
-            assert "sorted hierarchically" in result.output or "Entries written" in result.output
+            assert (
+                "sorted hierarchically" in result.output
+                or "Entries written" in result.output
+            )
         finally:
             Path(input_path).unlink()
             Path(output_path).unlink(missing_ok=True)
@@ -219,22 +261,37 @@ objectClass: person
 cn: other
 """
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write(ldif_content)
             input_path = f.name
 
         try:
             # Test finding existing entry
-            result = runner.invoke(cli, [
-                "find", input_path, "cn=findme,dc=example,dc=com",
-            ])
+            result = runner.invoke(
+                cli,
+                [
+                    "find",
+                    input_path,
+                    "cn=findme,dc=example,dc=com",
+                ],
+            )
             assert result.exit_code == 0
             assert "Found entry" in result.output
 
             # Test finding non-existent entry
-            result = runner.invoke(cli, [
-                "find", input_path, "cn=nonexistent,dc=example,dc=com",
-            ])
+            result = runner.invoke(
+                cli,
+                [
+                    "find",
+                    input_path,
+                    "cn=nonexistent,dc=example,dc=com",
+                ],
+            )
             assert result.exit_code == 1
             assert "not found" in result.output
         finally:
@@ -244,7 +301,12 @@ cn: other
         """Test stats command with different output formats."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write("dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test")
             input_path = f.name
 
@@ -282,7 +344,9 @@ class TestAPICoverageEdgeCases:
         # Test with configuration that allows empty attributes
         entry = FlextLdifEntry(
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={"cn": [""], "objectClass": ["person"]}),
+            attributes=FlextLdifAttributes(
+                attributes={"cn": [""], "objectClass": ["person"]},
+            ),
         )
 
         result = api.validate([entry])

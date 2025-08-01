@@ -414,10 +414,12 @@ class FlextLdifEntry(FlextValueObject):
 
             entry = cls(dn=dn_obj, attributes=attrs_obj)
             logger.debug("FlextLdifEntry created successfully: %s", entry.dn)
-            logger.info("LDIF entry created from dict",
-                       dn=dn,
-                       attributes_count=len(attributes),
-                       total_values=sum(len(values) for values in attributes.values()))
+            logger.info(
+                "LDIF entry created from dict",
+                dn=dn,
+                attributes_count=len(attributes),
+                total_values=sum(len(values) for values in attributes.values()),
+            )
         except Exception as e:
             logger.debug("Exception type: %s", type(e).__name__)
             logger.trace("Entry creation exception details", exc_info=True)

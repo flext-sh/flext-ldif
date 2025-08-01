@@ -43,7 +43,12 @@ class TestAPICoverageTargeted:
         api = FlextLdifAPI()
 
         # Create temp file
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write("dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test")
             temp_path = f.name
 
@@ -69,19 +74,24 @@ class TestAPICoverageTargeted:
 
         entry = FlextLdifEntry(
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={"cn": ["test"], "objectClass": ["person"]}),
+            attributes=FlextLdifAttributes(
+                attributes={"cn": ["test"], "objectClass": ["person"]},
+            ),
         )
 
         try:
             # Should create directory and succeed
             result = api.write([entry], "test.ldif")
-            assert result.is_success or "Permission denied" in result.error  # May fail on permission
+            assert (
+                result.is_success or "Permission denied" in result.error
+            )  # May fail on permission
         except PermissionError:
             # Expected on systems with restricted /tmp access
             pass
         finally:
             # Clean up created temporary directory
             import shutil
+
             if Path(temp_dir).exists():
                 shutil.rmtree(temp_dir)
 
@@ -91,7 +101,9 @@ class TestAPICoverageTargeted:
 
         entry = FlextLdifEntry(
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={"cn": ["test"], "objectClass": ["person"]}),
+            attributes=FlextLdifAttributes(
+                attributes={"cn": ["test"], "objectClass": ["person"]},
+            ),
         )
 
         # Mock observability to fail
@@ -112,7 +124,12 @@ class TestCLICoverageTargeted:
         runner = CliRunner()
 
         # Create LDIF with multiple entries
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write("""dn: cn=test1,dc=example,dc=com
 objectClass: person
 cn: test1
@@ -132,7 +149,9 @@ cn: test3
             result = runner.invoke(cli, ["parse", temp_path, "--max-entries", "2"])
             # Should exit with error when exceeding limit
             assert result.exit_code == 1
-            assert "Too many entries" in result.output or "exceeded limit" in result.output
+            assert (
+                "Too many entries" in result.output or "exceeded limit" in result.output
+            )
         finally:
             Path(temp_path).unlink()
 
@@ -140,7 +159,12 @@ cn: test3
         """Test convert command with unsupported scenarios."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write("dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test")
             input_path = f.name
 
@@ -149,12 +173,18 @@ cn: test3
 
         try:
             # Test successful conversion to JSON format
-            result = runner.invoke(cli, [
-                "convert",
-                "--input-format", "ldif",
-                "--output-format", "json",
-                input_path, output_path,
-            ])
+            result = runner.invoke(
+                cli,
+                [
+                    "convert",
+                    "--input-format",
+                    "ldif",
+                    "--output-format",
+                    "json",
+                    input_path,
+                    output_path,
+                ],
+            )
             # Should succeed for supported format combination
             assert result.exit_code == 0
             assert "Converted" in result.output
@@ -176,7 +206,9 @@ class TestModelsCoverageTargeted:
             FlextLdifDistinguishedName(value="cn=,dc=example,dc=com")  # Empty value
 
         with pytest.raises(ValueError, match="Invalid DN component"):
-            FlextLdifDistinguishedName(value="=value,dc=example,dc=com")  # Empty attribute
+            FlextLdifDistinguishedName(
+                value="=value,dc=example,dc=com",
+            )  # Empty attribute
 
     def test_ldif_entry_domain_validation_edge_cases(self) -> None:
         """Test entry domain validation edge cases."""
@@ -203,7 +235,9 @@ class TestModelsCoverageTargeted:
         # Test entry with empty objectClass list
         entry = FlextLdifEntry(
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={"objectClass": []}),  # Empty objectClass
+            attributes=FlextLdifAttributes(
+                attributes={"objectClass": []},
+            ),  # Empty objectClass
         )
 
         # All specification methods should return False for empty objectClass
@@ -223,7 +257,9 @@ class TestCoreCoverageTargeted:
         # Test with entry that has invalid attribute names
         entry = FlextLdifEntry(
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={"invalid-attr!": ["value"], "objectClass": ["person"]}),
+            attributes=FlextLdifAttributes(
+                attributes={"invalid-attr!": ["value"], "objectClass": ["person"]},
+            ),
         )
 
         result = TLdif.validate(entry)
@@ -235,7 +271,12 @@ class TestCoreCoverageTargeted:
         from flext_ldif.core import TLdif
 
         # Create empty file
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write("")  # Empty content
             temp_path = f.name
 
@@ -269,11 +310,14 @@ class TestModernizedLdifCoverageTargeted:
         writer = FlextLDIFWriter()
 
         # Test with attribute that needs base64 encoding
-        writer.unparse("cn=test,dc=example,dc=com", {
-            "cn": ["test"],
-            "objectClass": ["person"],
-            "userCertificate": ["\x00\x01\x02\x03"],  # Binary-like data (as string)
-        })
+        writer.unparse(
+            "cn=test,dc=example,dc=com",
+            {
+                "cn": ["test"],
+                "objectClass": ["person"],
+                "userCertificate": ["\x00\x01\x02\x03"],  # Binary-like data (as string)
+            },
+        )
 
         content = writer.get_output()
         assert "userCertificate::" in content  # Should use base64 encoding

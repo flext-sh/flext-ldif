@@ -51,11 +51,14 @@ class TestModernizedLdifCoverage:
         writer = FlextLDIFWriter(base64_attrs=["UserPassword", "PHOTO"])
 
         # Test with attribute that should be base64 encoded
-        writer.unparse("cn=test,dc=example,dc=com", {
-            "objectClass": ["person"],
-            "cn": ["test"],
-            "userPassword": ["secret123"],  # Should be base64 encoded
-        })
+        writer.unparse(
+            "cn=test,dc=example,dc=com",
+            {
+                "objectClass": ["person"],
+                "cn": ["test"],
+                "userPassword": ["secret123"],  # Should be base64 encoded
+            },
+        )
 
         output = writer.get_output()
         assert "userPassword::" in output  # Double colon indicates base64
@@ -66,11 +69,14 @@ class TestModernizedLdifCoverage:
         writer = FlextLDIFWriter()
 
         # Test with unsafe characters that should trigger base64 encoding
-        writer.unparse("cn=test,dc=example,dc=com", {
-            "objectClass": ["person"],
-            "cn": ["test"],
-            "description": ["\x00\x01\x02binary"],  # Binary data
-        })
+        writer.unparse(
+            "cn=test,dc=example,dc=com",
+            {
+                "objectClass": ["person"],
+                "cn": ["test"],
+                "description": ["\x00\x01\x02binary"],  # Binary data
+            },
+        )
 
         output = writer.get_output()
         assert "description::" in output  # Should be base64 encoded
@@ -80,10 +86,13 @@ class TestModernizedLdifCoverage:
         writer = FlextLDIFWriter(cols=20)  # Short line length
 
         long_dn = "cn=" + "x" * 100 + ",dc=example,dc=com"
-        writer.unparse(long_dn, {
-            "objectClass": ["person"],
-            "cn": ["test"],
-        })
+        writer.unparse(
+            long_dn,
+            {
+                "objectClass": ["person"],
+                "cn": ["test"],
+            },
+        )
 
         output = writer.get_output()
         lines = output.split("\n")
@@ -101,10 +110,13 @@ class TestModernizedLdifCoverage:
             encoding="utf-8",
         )
 
-        writer.unparse("cn=test,dc=example,dc=com", {
-            "objectClass": ["person"],
-            "cn": ["test"],
-        })
+        writer.unparse(
+            "cn=test,dc=example,dc=com",
+            {
+                "objectClass": ["person"],
+                "cn": ["test"],
+            },
+        )
 
         output = writer.get_output()
         assert "\r\n" in output  # Custom line separator
@@ -320,8 +332,14 @@ cn: test
     def test_modernized_ldif_write_multiple_entries(self) -> None:
         """Test modernized_ldif_write with multiple entries."""
         entries = [
-            ("cn=user1,dc=example,dc=com", {"objectClass": ["person"], "cn": ["user1"]}),
-            ("cn=user2,dc=example,dc=com", {"objectClass": ["person"], "cn": ["user2"]}),
+            (
+                "cn=user1,dc=example,dc=com",
+                {"objectClass": ["person"], "cn": ["user1"]},
+            ),
+            (
+                "cn=user2,dc=example,dc=com",
+                {"objectClass": ["person"], "cn": ["user2"]},
+            ),
         ]
 
         result = modernized_ldif_write(entries)

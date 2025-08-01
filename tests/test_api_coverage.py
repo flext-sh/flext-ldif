@@ -37,7 +37,12 @@ class TestApiCoverage:
         api = FlextLdifAPI(config)
 
         # Create a temp file with multiple entries
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write("""dn: cn=user1,dc=example,dc=com
 objectClass: person
 cn: user1
@@ -68,7 +73,12 @@ cn: test
         assert parse_result.is_success
 
         # Write to file
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             temp_path = f.name
 
         try:
@@ -229,7 +239,10 @@ cn: test
         assert parse_result.is_success
 
         # Try to find non-existent entry
-        entry = api.find_entry_by_dn(parse_result.data, "cn=nonexistent,dc=example,dc=com")
+        entry = api.find_entry_by_dn(
+            parse_result.data,
+            "cn=nonexistent,dc=example,dc=com",
+        )
         assert entry is None
 
     def test_api_filter_by_objectclass(self) -> None:

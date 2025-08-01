@@ -32,7 +32,8 @@ def run_cli_command(command_args: list[str]) -> tuple[int, str, str]:
         # Execute
         result = subprocess.run(
             cmd,
-            check=False, capture_output=True,
+            check=False,
+            capture_output=True,
             text=True,
             timeout=30,
         )
@@ -55,40 +56,55 @@ def main() -> None:
     output_file = Path(__file__).parent / "cli_output.ldif"
 
     # Test 1: Parse command
-    exit_code, stdout, stderr = run_cli_command([
-        "parse", str(sample_file),
-    ])
+    exit_code, stdout, stderr = run_cli_command(
+        [
+            "parse",
+            str(sample_file),
+        ],
+    )
 
     if exit_code == 0:
         pass
 
     # Test 2: Validation command
-    exit_code, stdout, stderr = run_cli_command([
-        "validate", str(sample_file), "--strict",
-    ])
+    exit_code, stdout, stderr = run_cli_command(
+        [
+            "validate",
+            str(sample_file),
+            "--strict",
+        ],
+    )
 
     if exit_code == 0:
         pass
 
     # Test 3: Statistics command with JSON output
-    exit_code, stdout, stderr = run_cli_command([
-        "stats", str(sample_file), "--format", "json",
-    ])
+    exit_code, stdout, stderr = run_cli_command(
+        [
+            "stats",
+            str(sample_file),
+            "--format",
+            "json",
+        ],
+    )
 
     if exit_code == 0:
         pass
 
     # Test 4: Transform command with filtering
-    exit_code, stdout, stderr = run_cli_command([
-        "transform", str(sample_file), str(output_file),
-        "--filter-type", "persons",
-    ])
+    exit_code, stdout, stderr = run_cli_command(
+        [
+            "transform",
+            str(sample_file),
+            str(output_file),
+            "--filter-type",
+            "persons",
+        ],
+    )
 
     if exit_code == 0:
-
         # Check if output file was created
         if output_file.exists():
-
             # Parse the output file to verify
             api = FlextLdifAPI()
             result = api.parse_file(output_file)
@@ -101,10 +117,15 @@ def main() -> None:
     # Test 5: Convert command to JSON
     json_output = Path(__file__).parent / "cli_output.json"
 
-    exit_code, stdout, stderr = run_cli_command([
-        "convert", str(sample_file), str(json_output),
-        "--output-format", "json",
-    ])
+    exit_code, stdout, stderr = run_cli_command(
+        [
+            "convert",
+            str(sample_file),
+            str(json_output),
+            "--output-format",
+            "json",
+        ],
+    )
 
     if exit_code == 0 and json_output.exists():
         # Clean up
@@ -117,10 +138,16 @@ def main() -> None:
         pass
 
     # Test 7: Global options
-    exit_code, _stdout, _stderr = run_cli_command([
-        "--format", "yaml", "--verbose", "--debug",
-        "stats", str(sample_file),
-    ])
+    exit_code, _stdout, _stderr = run_cli_command(
+        [
+            "--format",
+            "yaml",
+            "--verbose",
+            "--debug",
+            "stats",
+            str(sample_file),
+        ],
+    )
 
     if exit_code == 0:
         pass

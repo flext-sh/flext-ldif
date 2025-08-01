@@ -46,7 +46,12 @@ class TestAPICoverageBoost:
         api = FlextLdifAPI()
 
         # Create temp file
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write("dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test")
             temp_path = f.name
 
@@ -73,7 +78,9 @@ class TestAPICoverageBoost:
         # Create entry with empty attribute
         entry = FlextLdifEntry(
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={"cn": [""], "objectClass": ["person"]}),
+            attributes=FlextLdifAttributes(
+                attributes={"cn": [""], "objectClass": ["person"]},
+            ),
         )
 
         result = api.validate([entry])
@@ -89,11 +96,15 @@ class TestAPICoverageBoost:
         # Create entry with large attribute values
         entry = FlextLdifEntry(
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "cn": ["test"],
-                "objectClass": ["person"],
-                "description": ["This is a very long description that exceeds the size limit set in the configuration for testing purposes"],
-            }),
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "cn": ["test"],
+                    "objectClass": ["person"],
+                    "description": [
+                        "This is a very long description that exceeds the size limit set in the configuration for testing purposes",
+                    ],
+                },
+            ),
         )
 
         result = api.validate([entry])
@@ -110,7 +121,9 @@ class TestAPICoverageBoost:
 
         entry = FlextLdifEntry(
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={"cn": ["test"], "objectClass": ["person"]}),
+            attributes=FlextLdifAttributes(
+                attributes={"cn": ["test"], "objectClass": ["person"]},
+            ),
         )
 
         # Should attempt to create directory but fail gracefully
@@ -124,7 +137,9 @@ class TestAPICoverageBoost:
 
         entry = FlextLdifEntry(
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={"cn": ["test"], "objectClass": ["person"]}),
+            attributes=FlextLdifAttributes(
+                attributes={"cn": ["test"], "objectClass": ["person"]},
+            ),
         )
 
         # Mock TLdif.write to fail
@@ -179,7 +194,9 @@ class TestAPICoverageBoost:
         mock_metrics_result = Mock()
         mock_metrics_result.is_failure = True
         mock_metrics_result.error = "Metrics error"
-        api._observability_monitor.flext_get_metrics_summary.return_value = mock_metrics_result
+        api._observability_monitor.flext_get_metrics_summary.return_value = (
+            mock_metrics_result
+        )
 
         result = api.get_observability_metrics()
         assert not result.is_success
@@ -204,7 +221,12 @@ class TestCLICoverageBoost:
         runner = CliRunner()
 
         # Create invalid LDIF file (missing objectClass)
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write("dn: cn=test,dc=example,dc=com\ncn: test\n")
             temp_path = f.name
 
@@ -220,7 +242,12 @@ class TestCLICoverageBoost:
         runner = CliRunner()
 
         # Create LDIF with multiple entries
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write("""dn: cn=test1,dc=example,dc=com
 objectClass: person
 cn: test1
@@ -244,15 +271,22 @@ cn: test2
         runner = CliRunner()
 
         # Create invalid LDIF file
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write("dn: cn=test,dc=example,dc=com\ncn: test\n")  # Missing objectClass
             temp_path = f.name
 
         try:
             result = runner.invoke(cli, ["validate", temp_path, "--strict"])
             assert result.exit_code == 1
-            assert ("Validation failed" in result.output or
-                   "Failed to parse file for validation" in result.output)
+            assert (
+                "Validation failed" in result.output
+                or "Failed to parse file for validation" in result.output
+            )
         finally:
             Path(temp_path).unlink()
 
@@ -260,7 +294,12 @@ cn: test2
         """Test transform command filter error handling."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write("dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test")
             input_path = f.name
 
@@ -269,12 +308,23 @@ cn: test2
 
         try:
             # Use invalid filter type (Click validates before our code runs)
-            result = runner.invoke(cli, [
-                "transform", input_path, output_path,
-                "--filter-type", "invalid_filter",
-            ])
-            assert result.exit_code == 2  # Click validation error (not graceful handling)
-            assert "Invalid value" in result.output or "invalid choice" in result.output.lower()
+            result = runner.invoke(
+                cli,
+                [
+                    "transform",
+                    input_path,
+                    output_path,
+                    "--filter-type",
+                    "invalid_filter",
+                ],
+            )
+            assert (
+                result.exit_code == 2
+            )  # Click validation error (not graceful handling)
+            assert (
+                "Invalid value" in result.output
+                or "invalid choice" in result.output.lower()
+            )
         finally:
             Path(input_path).unlink()
             Path(output_path).unlink(missing_ok=True)
@@ -283,7 +333,12 @@ cn: test2
         """Test convert command format error handling."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write("dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test")
             input_path = f.name
 
@@ -292,16 +347,24 @@ cn: test2
 
         try:
             # Use unsupported input format (Click validates choices before our code runs)
-            result = runner.invoke(cli, [
-                "convert",
-                "--input-format", "xml",  # Invalid choice - Click will catch this
-                "--output-format", "json",
-                input_path, output_path,
-            ])
+            result = runner.invoke(
+                cli,
+                [
+                    "convert",
+                    "--input-format",
+                    "xml",  # Invalid choice - Click will catch this
+                    "--output-format",
+                    "json",
+                    input_path,
+                    output_path,
+                ],
+            )
             assert result.exit_code == 2  # Click validation error
-            assert ("Invalid value" in result.output or
-                   "invalid choice" in result.output.lower() or
-                   "Choose from" in result.output)
+            assert (
+                "Invalid value" in result.output
+                or "invalid choice" in result.output.lower()
+                or "Choose from" in result.output
+            )
         finally:
             Path(input_path).unlink()
             Path(output_path).unlink(missing_ok=True)
@@ -392,7 +455,9 @@ class TestModelsCoverageBoost:
         """Test FlextLdifEntry model_dump edge cases."""
         entry = FlextLdifEntry(
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={"cn": ["test"], "objectClass": ["person"]}),
+            attributes=FlextLdifAttributes(
+                attributes={"cn": ["test"], "objectClass": ["person"]},
+            ),
         )
 
         # Test model_dump with different options

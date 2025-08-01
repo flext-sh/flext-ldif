@@ -22,7 +22,12 @@ class TestFlextLdifCLIComprehensive:
         """Test validate command with strict mode."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -40,7 +45,12 @@ cn: test
         """Test validate command with schema parameter."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -58,7 +68,12 @@ cn: test
         """Test transform command with filtering."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as input_f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as input_f:
             input_f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -69,10 +84,16 @@ cn: test
             output_path = output_f.name
 
         try:
-            result = runner.invoke(cli, [
-                "transform", input_path, output_path,
-                "--filter-type", "persons",
-            ])
+            result = runner.invoke(
+                cli,
+                [
+                    "transform",
+                    input_path,
+                    output_path,
+                    "--filter-type",
+                    "persons",
+                ],
+            )
             assert result.exit_code in {0, 1}  # May fail due to mock API
         finally:
             Path(input_path).unlink()
@@ -82,7 +103,12 @@ cn: test
         """Test transform command with sorting."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as input_f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as input_f:
             input_f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -93,9 +119,15 @@ cn: test
             output_path = output_f.name
 
         try:
-            result = runner.invoke(cli, [
-                "transform", input_path, output_path, "--sort",
-            ])
+            result = runner.invoke(
+                cli,
+                [
+                    "transform",
+                    input_path,
+                    output_path,
+                    "--sort",
+                ],
+            )
             assert result.exit_code in {0, 1}  # May fail due to mock API
         finally:
             Path(input_path).unlink()
@@ -105,7 +137,12 @@ cn: test
         """Test stats command with JSON output."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -122,7 +159,12 @@ cn: test
         """Test stats command with YAML output."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -139,7 +181,12 @@ cn: test
         """Test find command with existing entry."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -147,7 +194,10 @@ cn: test
             temp_path = f.name
 
         try:
-            result = runner.invoke(cli, ["find", temp_path, "cn=test,dc=example,dc=com"])
+            result = runner.invoke(
+                cli,
+                ["find", temp_path, "cn=test,dc=example,dc=com"],
+            )
             # May succeed or fail depending on API implementation
             assert result.exit_code in {0, 1}
         finally:
@@ -157,7 +207,12 @@ cn: test
         """Test find command with non-existent entry."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -165,7 +220,10 @@ cn: test
             temp_path = f.name
 
         try:
-            result = runner.invoke(cli, ["find", temp_path, "cn=nonexistent,dc=example,dc=com"])
+            result = runner.invoke(
+                cli,
+                ["find", temp_path, "cn=nonexistent,dc=example,dc=com"],
+            )
             assert result.exit_code == 1
             assert "not found" in result.output
         finally:
@@ -175,7 +233,12 @@ cn: test
         """Test filter-by-class command with output file."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as input_f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as input_f:
             input_f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -186,10 +249,16 @@ cn: test
             output_path = output_f.name
 
         try:
-            result = runner.invoke(cli, [
-                "filter-by-class", input_path, "person",
-                "--output", output_path,
-            ])
+            result = runner.invoke(
+                cli,
+                [
+                    "filter-by-class",
+                    input_path,
+                    "person",
+                    "--output",
+                    output_path,
+                ],
+            )
             # May succeed or fail depending on API implementation
             assert result.exit_code in {0, 1}
         finally:
@@ -200,7 +269,12 @@ cn: test
         """Test convert command to JSON format."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as input_f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as input_f:
             input_f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -211,11 +285,16 @@ cn: test
             output_path = output_f.name
 
         try:
-            result = runner.invoke(cli, [
-                "convert",
-                "--output-format", "json",
-                input_path, output_path,
-            ])
+            result = runner.invoke(
+                cli,
+                [
+                    "convert",
+                    "--output-format",
+                    "json",
+                    input_path,
+                    output_path,
+                ],
+            )
             assert result.exit_code == 0
             assert "Converted" in result.output
         finally:
@@ -226,7 +305,12 @@ cn: test
         """Test convert command to YAML format."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as input_f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as input_f:
             input_f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -237,11 +321,16 @@ cn: test
             output_path = output_f.name
 
         try:
-            result = runner.invoke(cli, [
-                "convert",
-                "--output-format", "yaml",
-                input_path, output_path,
-            ])
+            result = runner.invoke(
+                cli,
+                [
+                    "convert",
+                    "--output-format",
+                    "yaml",
+                    input_path,
+                    output_path,
+                ],
+            )
             assert result.exit_code == 0
             assert "Converted" in result.output
         finally:
@@ -252,7 +341,12 @@ cn: test
         """Test convert command with unsupported input format."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as input_f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as input_f:
             input_f.write("test")
             input_path = input_f.name
 
@@ -260,11 +354,16 @@ cn: test
             output_path = output_f.name
 
         try:
-            result = runner.invoke(cli, [
-                "convert",
-                "--input-format", "xml",
-                input_path, output_path,
-            ])
+            result = runner.invoke(
+                cli,
+                [
+                    "convert",
+                    "--input-format",
+                    "xml",
+                    input_path,
+                    output_path,
+                ],
+            )
             # Click returns 2 for invalid argument values
             assert result.exit_code == 2
         finally:
@@ -283,7 +382,12 @@ cn: test
         """Test parse command with max entries limit."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -307,7 +411,12 @@ cn: test
             mock_api.parse_file.return_value.error = "API Error"
             mock_create_api.return_value = mock_api
 
-            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+            with tempfile.NamedTemporaryFile(
+                encoding="utf-8",
+                mode="w",
+                suffix=".ldif",
+                delete=False,
+            ) as f:
                 f.write("test")
                 temp_path = f.name
 
