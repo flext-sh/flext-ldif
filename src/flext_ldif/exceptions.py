@@ -11,7 +11,6 @@ from __future__ import annotations
 from flext_core import get_logger
 from flext_core.exceptions import (
     FlextProcessingError,
-    FlextValidationError,
     create_module_exception_classes,
 )
 
@@ -55,36 +54,9 @@ class FlextLdifParseError(FlextProcessingError):
         logger.debug("FlextLdifParseError created successfully")
 
 
-class FlextLdifValidationError(FlextValidationError):
-    """Exception raised when LDIF validation fails."""
-
-    def __init__(
-        self,
-        message: str = "LDIF validation failed",
-        attribute_name: str | None = None,
-        attribute_value: object = None,
-        entry_dn: str | None = None,
-        **kwargs: object,
-    ) -> None:
-        """Initialize LDIF validation error with context."""
-        validation_details: dict[str, object] = {}
-        if attribute_name is not None:
-            validation_details["field"] = attribute_name
-        if attribute_value is not None:
-            validation_details["value"] = attribute_value
-
-        context = kwargs.copy()
-        if entry_dn is not None:
-            context["entry_dn"] = entry_dn
-
-        super().__init__(
-            f"LDIF validation: {message}",
-            validation_details=validation_details,
-            context=context,
-        )
 
 
-class FlextLdifEntryError(FlextLdifError):
+class FlextLdifEntryError(FlextProcessingError):
     """Exception raised for LDIF entry operations."""
 
     def __init__(

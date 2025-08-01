@@ -22,14 +22,14 @@ class TestFlextLdifExceptions:
     def test_flext_ldif_error_default(self) -> None:
         """Test FlextLdifError with default parameters."""
         error = FlextLdifError()
-        assert "LDIF error" in str(error)
-        assert error.error_code == "LDIF_ERROR"
+        assert "flext_ldif error" in str(error)
+        assert error.error_code == "FLEXT_LDIF_ERROR"
 
     def test_flext_ldif_error_custom_message(self) -> None:
         """Test FlextLdifError with custom message."""
         error = FlextLdifError("Custom LDIF error")
         assert "Custom LDIF error" in str(error)
-        assert error.error_code == "LDIF_ERROR"
+        assert error.error_code == "FLEXT_LDIF_ERROR"
 
     def test_flext_ldif_error_with_context(self) -> None:
         """Test FlextLdifError with context."""
@@ -76,21 +76,21 @@ class TestFlextLdifExceptions:
     def test_flext_ldif_validation_error_default(self) -> None:
         """Test FlextLdifValidationError with default parameters."""
         error = FlextLdifValidationError()
-        assert "LDIF validation: LDIF validation failed" in str(error)
+        assert "flext_ldif: flext_ldif validation failed" in str(error)
 
     def test_flext_ldif_validation_error_custom_message(self) -> None:
         """Test FlextLdifValidationError with custom message."""
         error = FlextLdifValidationError("Custom validation error")
-        assert "LDIF validation: Custom validation error" in str(error)
+        assert "flext_ldif: Custom validation error" in str(error)
 
     def test_flext_ldif_validation_error_with_attribute(self) -> None:
         """Test FlextLdifValidationError with attribute details."""
         error = FlextLdifValidationError(
             "Invalid attribute",
-            attribute_name="cn",
-            attribute_value="invalid value",
+            field="cn",
+            value="invalid value",
         )
-        assert "LDIF validation: Invalid attribute" in str(error)
+        assert "flext_ldif: Invalid attribute" in str(error)
         assert error.field == "cn"
         assert error.value == "invalid value"
 
@@ -100,21 +100,21 @@ class TestFlextLdifExceptions:
             "Validation error",
             entry_dn="cn=test,dc=example,dc=com",
         )
-        assert "LDIF validation: Validation error" in str(error)
+        assert "flext_ldif: Validation error" in str(error)
         assert error.context["entry_dn"] == "cn=test,dc=example,dc=com"
 
     def test_flext_ldif_validation_error_with_all_params(self) -> None:
         """Test FlextLdifValidationError with all parameters."""
         error = FlextLdifValidationError(
             "Complete validation error",
-            attribute_name="objectClass",
-            attribute_value=["invalid"],
+            field="objectClass",
+            value=["invalid"],
             entry_dn="cn=user,dc=example,dc=com",
             schema="test-schema",
         )
-        assert "LDIF validation: Complete validation error" in str(error)
+        assert "flext_ldif: Complete validation error" in str(error)
         assert error.field == "objectClass"
-        assert error.value == ["invalid"]
+        assert error.value == "['invalid']"  # Factory converts to string representation
         assert error.context["entry_dn"] == "cn=user,dc=example,dc=com"
         assert error.context["schema"] == "test-schema"
 
@@ -162,13 +162,12 @@ class TestFlextLdifExceptions:
         parse_error = FlextLdifParseError("Parse error")
         assert isinstance(parse_error, Exception)
 
-        # FlextLdifValidationError inherits from FlextValidationError
+        # FlextLdifValidationError inherits from generated validation error
         validation_error = FlextLdifValidationError("Validation error")
         assert isinstance(validation_error, Exception)
 
-        # FlextLdifEntryError inherits from FlextLdifError
+        # FlextLdifEntryError inherits from FlextProcessingError
         entry_error = FlextLdifEntryError("Entry error")
-        assert isinstance(entry_error, FlextLdifError)
         assert isinstance(entry_error, Exception)
 
     def test_exception_can_be_raised_and_caught(self) -> None:
