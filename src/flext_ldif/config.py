@@ -23,7 +23,10 @@ class FlextLdifConfig(BaseSettings):
     def __init__(self, **data: object) -> None:
         """Initialize configuration with logging."""
         logger.debug("Initializing FlextLdifConfig")
-        logger.trace("Configuration data provided: %s", list(data.keys()) if data else "none")
+        logger.trace(
+            "Configuration data provided: %s",
+            list(data.keys()) if data else "none",
+        )
 
         super().__init__(**data)  # type: ignore[arg-type]
 
@@ -38,11 +41,13 @@ class FlextLdifConfig(BaseSettings):
         logger.debug("  create_output_dir: %s", self.create_output_dir)
 
         logger.trace("Full configuration: %s", self.model_dump())
-        logger.info("LDIF configuration initialized successfully",
-                   encoding=f"{self.input_encoding}→{self.output_encoding}",
-                   validation_mode="strict" if self.strict_validation else "standard",
-                   max_entries=self.max_entries,
-                   max_entry_size_mb=round(self.max_entry_size / 1024 / 1024, 2))
+        logger.info(
+            "LDIF configuration initialized successfully",
+            encoding=f"{self.input_encoding}→{self.output_encoding}",
+            validation_mode="strict" if self.strict_validation else "standard",
+            max_entries=self.max_entries,
+            max_entry_size_mb=round(self.max_entry_size / 1024 / 1024, 2),
+        )
 
     model_config = SettingsConfigDict(
         env_prefix="FLEXT_LDIF_",

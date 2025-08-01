@@ -39,10 +39,12 @@ class TestCoreCoverage:
     def test_tldif_validate_invalid_dn(self) -> None:
         """Test TLdif validate with DN that doesn't match pattern."""
         # Create entry with DN that passes Pydantic validation but fails TLdif pattern
-        entry = FlextLdifEntry.model_validate({
-            "dn": "1invalid=test,dc=example,dc=com",  # Starts with number
-            "attributes": {"objectClass": ["person"]},
-        })
+        entry = FlextLdifEntry.model_validate(
+            {
+                "dn": "1invalid=test,dc=example,dc=com",  # Starts with number
+                "attributes": {"objectClass": ["person"]},
+            },
+        )
 
         result = TLdif.validate(entry)
         assert not result.is_success
@@ -51,10 +53,12 @@ class TestCoreCoverage:
     def test_tldif_validate_invalid_attribute_name(self) -> None:
         """Test TLdif validate with invalid attribute name."""
         # Create entry with invalid attribute name
-        entry = FlextLdifEntry.model_validate({
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": {"123invalid": ["value"], "objectClass": ["person"]},
-        })
+        entry = FlextLdifEntry.model_validate(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {"123invalid": ["value"], "objectClass": ["person"]},
+            },
+        )
 
         result = TLdif.validate(entry)
         assert not result.is_success
@@ -63,10 +67,12 @@ class TestCoreCoverage:
     def test_tldif_validate_missing_objectclass(self) -> None:
         """Test TLdif validate with missing objectClass."""
         # Create entry without objectClass
-        entry = FlextLdifEntry.model_validate({
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": {"cn": ["test"]},
-        })
+        entry = FlextLdifEntry.model_validate(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {"cn": ["test"]},
+            },
+        )
 
         result = TLdif.validate(entry)
         assert not result.is_success
@@ -81,16 +87,20 @@ class TestCoreCoverage:
 
     def test_tldif_validate_entries_with_invalid_entry(self) -> None:
         """Test TLdif validate_entries with one invalid entry."""
-        valid_entry = FlextLdifEntry.model_validate({
-            "dn": "cn=valid,dc=example,dc=com",
-            "attributes": {"objectClass": ["person"], "cn": ["valid"]},
-        })
+        valid_entry = FlextLdifEntry.model_validate(
+            {
+                "dn": "cn=valid,dc=example,dc=com",
+                "attributes": {"objectClass": ["person"], "cn": ["valid"]},
+            },
+        )
 
         # Create an entry with valid DN but invalid attribute name
-        invalid_entry = FlextLdifEntry.model_validate({
-            "dn": "cn=invalid,dc=example,dc=com",
-            "attributes": {"123invalid": ["value"], "objectClass": ["person"]},
-        })
+        invalid_entry = FlextLdifEntry.model_validate(
+            {
+                "dn": "cn=invalid,dc=example,dc=com",
+                "attributes": {"123invalid": ["value"], "objectClass": ["person"]},
+            },
+        )
 
         result = TLdif.validate_entries([valid_entry, invalid_entry])
         assert not result.is_success
@@ -111,10 +121,12 @@ class TestCoreCoverage:
 
     def test_tldif_write_file_invalid_path(self) -> None:
         """Test TLdif write_file with invalid path."""
-        entry = FlextLdifEntry.model_validate({
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": {"objectClass": ["person"], "cn": ["test"]},
-        })
+        entry = FlextLdifEntry.model_validate(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {"objectClass": ["person"], "cn": ["test"]},
+            },
+        )
 
         result = TLdif.write_file([entry], "/invalid/path/file.ldif")
         assert not result.is_success
@@ -124,7 +136,12 @@ class TestCoreCoverage:
         """Test TLdif write_file when write returns no content."""
         # This would need to mock the write method to return None
         # For now, test with empty entries using proper temp file
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             temp_path = f.name
 
         try:
@@ -163,7 +180,12 @@ class TestCoreCoverage:
     def test_tldif_read_file_success(self) -> None:
         """Test TLdif read_file successful case."""
         # Create a temporary LDIF file
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -180,10 +202,12 @@ cn: test
 
     def test_tldif_write_file_success(self) -> None:
         """Test TLdif write_file successful case."""
-        entry = FlextLdifEntry.model_validate({
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": {"objectClass": ["person"], "cn": ["test"]},
-        })
+        entry = FlextLdifEntry.model_validate(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {"objectClass": ["person"], "cn": ["test"]},
+            },
+        )
 
         with tempfile.NamedTemporaryFile(suffix=".ldif", delete=False) as f:
             temp_path = f.name
@@ -221,10 +245,12 @@ cn: test
         assert isinstance(result.is_success, bool)
 
         # Test write with entries that might cause modernized writer to fail
-        entry = FlextLdifEntry.model_validate({
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": {"objectClass": ["person"]},
-        })
+        entry = FlextLdifEntry.model_validate(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {"objectClass": ["person"]},
+            },
+        )
         result = TLdif.write([entry])
         # Should handle gracefully
         assert isinstance(result.is_success, bool)

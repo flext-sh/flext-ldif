@@ -31,16 +31,25 @@ class TestFlextLdifCLIEdgeCases:
 
             mock_api = Mock()
             mock_api.parse_file.return_value.is_success = True
-            mock_api.parse_file.return_value.data = [mock_entry] * 10  # 10 validation errors
+            mock_api.parse_file.return_value.data = [
+                mock_entry,
+            ] * 10  # 10 validation errors
             mock_create_api.return_value = mock_api
 
-            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+            with tempfile.NamedTemporaryFile(
+                encoding="utf-8",
+                mode="w",
+                suffix=".ldif",
+                delete=False,
+            ) as f:
                 f.write("test")
                 temp_path = f.name
 
             try:
                 result = runner.invoke(cli, ["parse", temp_path, "--validate"])
-                assert result.exit_code == 0  # Parse succeeds but shows validation errors
+                assert (
+                    result.exit_code == 0
+                )  # Parse succeeds but shows validation errors
                 assert "Validation found" in result.output
             finally:
                 Path(temp_path).unlink()
@@ -55,7 +64,12 @@ class TestFlextLdifCLIEdgeCases:
             mock_api.parse_file.return_value.data = []
             mock_create_api.return_value = mock_api
 
-            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as input_f:
+            with tempfile.NamedTemporaryFile(
+                encoding="utf-8",
+                mode="w",
+                suffix=".ldif",
+                delete=False,
+            ) as input_f:
                 input_f.write("test")
                 input_path = input_f.name
 
@@ -63,10 +77,16 @@ class TestFlextLdifCLIEdgeCases:
                 output_path = output_f.name
 
             try:
-                result = runner.invoke(cli, [
-                    "transform", input_path, output_path,
-                    "--filter-type", "unknown",
-                ])
+                result = runner.invoke(
+                    cli,
+                    [
+                        "transform",
+                        input_path,
+                        output_path,
+                        "--filter-type",
+                        "unknown",
+                    ],
+                )
                 # Click may return 2 for invalid choice values, or 0 if it processes successfully
                 assert result.exit_code in {0, 2}
             finally:
@@ -89,7 +109,12 @@ class TestFlextLdifCLIEdgeCases:
 
             mock_create_api.return_value = mock_api
 
-            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as input_f:
+            with tempfile.NamedTemporaryFile(
+                encoding="utf-8",
+                mode="w",
+                suffix=".ldif",
+                delete=False,
+            ) as input_f:
                 input_f.write("test")
                 input_path = input_f.name
 
@@ -97,9 +122,15 @@ class TestFlextLdifCLIEdgeCases:
                 output_path = output_f.name
 
             try:
-                result = runner.invoke(cli, [
-                    "transform", input_path, output_path, "--sort",
-                ])
+                result = runner.invoke(
+                    cli,
+                    [
+                        "transform",
+                        input_path,
+                        output_path,
+                        "--sort",
+                    ],
+                )
                 assert result.exit_code == 0
                 assert "Failed to sort" in result.output
             finally:
@@ -121,7 +152,12 @@ class TestFlextLdifCLIEdgeCases:
 
             mock_create_api.return_value = mock_api
 
-            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as input_f:
+            with tempfile.NamedTemporaryFile(
+                encoding="utf-8",
+                mode="w",
+                suffix=".ldif",
+                delete=False,
+            ) as input_f:
                 input_f.write("test")
                 input_path = input_f.name
 
@@ -129,9 +165,15 @@ class TestFlextLdifCLIEdgeCases:
                 output_path = output_f.name
 
             try:
-                result = runner.invoke(cli, [
-                    "parse", input_path, "--output", output_path,
-                ])
+                result = runner.invoke(
+                    cli,
+                    [
+                        "parse",
+                        input_path,
+                        "--output",
+                        output_path,
+                    ],
+                )
                 assert result.exit_code == 1
                 assert "Write failed" in result.output
             finally:
@@ -149,14 +191,21 @@ class TestFlextLdifCLIEdgeCases:
             mock_create_api.return_value = mock_api
 
             result = runner.invoke(cli, ["config-check"])
-            assert result.exit_code == 0  # Config check doesn't fail on API test failure
+            assert (
+                result.exit_code == 0
+            )  # Config check doesn't fail on API test failure
             assert "API test failed" in result.output
 
     def test_cli_global_format_options(self) -> None:
         """Test global format options."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -164,9 +213,15 @@ cn: test
             temp_path = f.name
 
         try:
-            result = runner.invoke(cli, [
-                "--format", "json", "stats", temp_path,
-            ])
+            result = runner.invoke(
+                cli,
+                [
+                    "--format",
+                    "json",
+                    "stats",
+                    temp_path,
+                ],
+            )
             assert result.exit_code == 0
         finally:
             Path(temp_path).unlink()
@@ -175,7 +230,12 @@ cn: test
         """Test debug and verbose global options."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+        ) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -183,9 +243,15 @@ cn: test
             temp_path = f.name
 
         try:
-            result = runner.invoke(cli, [
-                "--debug", "--verbose", "stats", temp_path,
-            ])
+            result = runner.invoke(
+                cli,
+                [
+                    "--debug",
+                    "--verbose",
+                    "stats",
+                    temp_path,
+                ],
+            )
             # Just verify the command runs with debug/verbose flags
             assert result.exit_code == 0
         finally:
@@ -221,7 +287,12 @@ cn: test
 
             mock_create_api.return_value = mock_api
 
-            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as input_f:
+            with tempfile.NamedTemporaryFile(
+                encoding="utf-8",
+                mode="w",
+                suffix=".ldif",
+                delete=False,
+            ) as input_f:
                 input_f.write("test")
                 input_path = input_f.name
 
@@ -229,10 +300,16 @@ cn: test
                 output_path = output_f.name
 
             try:
-                result = runner.invoke(cli, [
-                    "transform", input_path, output_path,
-                    "--filter-type", "persons",
-                ])
+                result = runner.invoke(
+                    cli,
+                    [
+                        "transform",
+                        input_path,
+                        output_path,
+                        "--filter-type",
+                        "persons",
+                    ],
+                )
                 assert result.exit_code == 0
                 assert "Filtered to" in result.output
             finally:
@@ -258,14 +335,22 @@ cn: test
             mock_api.parse_file.return_value.data = mock_entries
             mock_create_api.return_value = mock_api
 
-            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+            with tempfile.NamedTemporaryFile(
+                encoding="utf-8",
+                mode="w",
+                suffix=".ldif",
+                delete=False,
+            ) as f:
                 f.write("test")
                 temp_path = f.name
 
             try:
                 result = runner.invoke(cli, ["parse", temp_path, "--validate"])
                 # Just check that it runs and has some output
-                assert result.exit_code in {0, 1}  # May exit with 1 due to validation errors
+                assert result.exit_code in {
+                    0,
+                    1,
+                }  # May exit with 1 due to validation errors
                 assert "Validation found" in result.output or len(result.output) > 0
             finally:
                 Path(temp_path).unlink()

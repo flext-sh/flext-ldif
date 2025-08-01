@@ -86,7 +86,9 @@ def main() -> None:
         if validation_result.is_success:
             domain_valid += 1
         else:
-            domain_errors.append(f"Entry {i + 1} ({entry.dn}): {validation_result.error}")
+            domain_errors.append(
+                f"Entry {i + 1} ({entry.dn}): {validation_result.error}",
+            )
 
     if domain_errors:
         for _error in domain_errors[:5]:  # Show first 5 errors
@@ -103,7 +105,9 @@ def main() -> None:
         if is_valid:
             business_valid += 1
         else:
-            business_errors.extend(f"Entry {i + 1} ({entry.dn}): {error}" for error in errors)
+            business_errors.extend(
+                f"Entry {i + 1} ({entry.dn}): {error}" for error in errors
+            )
 
     if business_errors:
         for _error in business_errors[:5]:  # Show first 5 errors
@@ -132,7 +136,6 @@ def main() -> None:
         invalid_result = api.parse_file(invalid_file)
 
         if invalid_result.is_success and invalid_result.data:
-
             # Validate each invalid entry
             for i, entry in enumerate(invalid_result.data):
                 validation_result = entry.validate_domain_rules()

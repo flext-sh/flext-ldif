@@ -107,6 +107,7 @@ class OpenLDAPContainerManager:
 
         start_time = time.time()
         while time.time() - start_time < timeout:
+
             def _check_container_status() -> None:
                 if self.container.status != "running":
                     msg = f"Container failed to start: {self.container.status}"

@@ -482,7 +482,10 @@ def modernized_ldif_parse(
         entries = list(parser.parse())
 
         logger.debug("Successfully parsed %d LDIF entries", len(entries))
-        logger.trace("Entry DNs: %s", [dn for dn, _ in entries[:5]])  # First 5 for trace
+        logger.trace(
+            "Entry DNs: %s",
+            [dn for dn, _ in entries[:5]],
+        )  # First 5 for trace
         logger.info("Successfully parsed %d LDIF entries", len(entries))
         return FlextResult.ok(entries)
 
@@ -511,7 +514,10 @@ def modernized_ldif_write(
         return FlextResult.fail("Entries cannot be None")
 
     logger.debug("Starting modernized LDIF writing for %d entries", len(entries))
-    logger.trace("Entry DNs to write: %s", [dn for dn, _ in entries[:5]])  # First 5 for trace
+    logger.trace(
+        "Entry DNs to write: %s",
+        [dn for dn, _ in entries[:5]],
+    )  # First 5 for trace
 
     try:
         logger.debug("Creating FlextLDIFWriter")
@@ -527,8 +533,11 @@ def modernized_ldif_write(
         output = writer.get_output()
         output_size = len(output)
 
-        logger.debug("Successfully wrote %d LDIF entries, output size: %d chars",
-                    writer.records_written, output_size)
+        logger.debug(
+            "Successfully wrote %d LDIF entries, output size: %d chars",
+            writer.records_written,
+            output_size,
+        )
         logger.trace("Output preview: %s...", output[:100].replace("\n", "\\n"))
         logger.info("Successfully wrote %d LDIF entries", writer.records_written)
         return FlextResult.ok(output)

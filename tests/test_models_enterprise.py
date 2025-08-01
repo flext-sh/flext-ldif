@@ -521,12 +521,16 @@ description: With multiple descriptions"""
 
     def test_dn_get_rdn(self) -> None:
         """Test getting relative distinguished name."""
-        dn = FlextLdifDistinguishedName.model_validate({"value": "cn=John Doe,ou=people,dc=example,dc=com"})
+        dn = FlextLdifDistinguishedName.model_validate(
+            {"value": "cn=John Doe,ou=people,dc=example,dc=com"},
+        )
         assert dn.get_rdn() == "cn=John Doe"
 
     def test_dn_get_parent_dn_with_parent(self) -> None:
         """Test getting parent DN when parent exists."""
-        dn = FlextLdifDistinguishedName.model_validate({"value": "cn=John Doe,ou=people,dc=example,dc=com"})
+        dn = FlextLdifDistinguishedName.model_validate(
+            {"value": "cn=John Doe,ou=people,dc=example,dc=com"},
+        )
         parent = dn.get_parent_dn()
         assert parent is not None
         assert parent.value == "ou=people,dc=example,dc=com"
@@ -539,39 +543,61 @@ description: With multiple descriptions"""
 
     def test_dn_is_child_of_true(self) -> None:
         """Test DN is child of another DN."""
-        child = FlextLdifDistinguishedName.model_validate({"value": "cn=John Doe,ou=people,dc=example,dc=com"})
-        parent = FlextLdifDistinguishedName.model_validate({"value": "ou=people,dc=example,dc=com"})
+        child = FlextLdifDistinguishedName.model_validate(
+            {"value": "cn=John Doe,ou=people,dc=example,dc=com"},
+        )
+        parent = FlextLdifDistinguishedName.model_validate(
+            {"value": "ou=people,dc=example,dc=com"},
+        )
         assert child.is_child_of(parent)
 
     def test_dn_is_child_of_false(self) -> None:
         """Test DN is not child of another DN."""
-        dn1 = FlextLdifDistinguishedName.model_validate({"value": "cn=John Doe,ou=people,dc=example,dc=com"})
-        dn2 = FlextLdifDistinguishedName.model_validate({"value": "ou=groups,dc=example,dc=com"})
+        dn1 = FlextLdifDistinguishedName.model_validate(
+            {"value": "cn=John Doe,ou=people,dc=example,dc=com"},
+        )
+        dn2 = FlextLdifDistinguishedName.model_validate(
+            {"value": "ou=groups,dc=example,dc=com"},
+        )
         assert not dn1.is_child_of(dn2)
 
     def test_dn_get_depth(self) -> None:
         """Test getting DN depth."""
-        dn = FlextLdifDistinguishedName.model_validate({"value": "cn=John Doe,ou=people,dc=example,dc=com"})
+        dn = FlextLdifDistinguishedName.model_validate(
+            {"value": "cn=John Doe,ou=people,dc=example,dc=com"},
+        )
         assert dn.get_depth() == 4
 
     def test_dn_equality_with_string(self) -> None:
         """Test DN equality with string."""
-        dn = FlextLdifDistinguishedName.model_validate({"value": "cn=test,dc=example,dc=com"})
+        dn = FlextLdifDistinguishedName.model_validate(
+            {"value": "cn=test,dc=example,dc=com"},
+        )
         assert dn == "cn=test,dc=example,dc=com"
         assert dn != "cn=other,dc=example,dc=com"
 
     def test_dn_equality_with_dn(self) -> None:
         """Test DN equality with another DN."""
-        dn1 = FlextLdifDistinguishedName.model_validate({"value": "cn=test,dc=example,dc=com"})
-        dn2 = FlextLdifDistinguishedName.model_validate({"value": "cn=test,dc=example,dc=com"})
-        dn3 = FlextLdifDistinguishedName.model_validate({"value": "cn=other,dc=example,dc=com"})
+        dn1 = FlextLdifDistinguishedName.model_validate(
+            {"value": "cn=test,dc=example,dc=com"},
+        )
+        dn2 = FlextLdifDistinguishedName.model_validate(
+            {"value": "cn=test,dc=example,dc=com"},
+        )
+        dn3 = FlextLdifDistinguishedName.model_validate(
+            {"value": "cn=other,dc=example,dc=com"},
+        )
         assert dn1 == dn2
         assert dn1 != dn3
 
     def test_dn_hash(self) -> None:
         """Test DN hashing for use in sets and dicts."""
-        dn1 = FlextLdifDistinguishedName.model_validate({"value": "cn=test,dc=example,dc=com"})
-        dn2 = FlextLdifDistinguishedName.model_validate({"value": "cn=test,dc=example,dc=com"})
+        dn1 = FlextLdifDistinguishedName.model_validate(
+            {"value": "cn=test,dc=example,dc=com"},
+        )
+        dn2 = FlextLdifDistinguishedName.model_validate(
+            {"value": "cn=test,dc=example,dc=com"},
+        )
         assert hash(dn1) == hash(dn2)
 
         # Test usage in set
@@ -588,7 +614,9 @@ description: With multiple descriptions"""
 
     def test_attributes_remove_value(self) -> None:
         """Test removing values from attributes."""
-        attrs = FlextLdifAttributes.model_validate({"attributes": {"cn": ["John", "Johnny"]}})
+        attrs = FlextLdifAttributes.model_validate(
+            {"attributes": {"cn": ["John", "Johnny"]}},
+        )
         new_attrs = attrs.remove_value("cn", "Johnny")
         assert new_attrs.get_values("cn") == ["John"]
         # Original should be unchanged (immutable)
@@ -596,17 +624,29 @@ description: With multiple descriptions"""
 
     def test_attributes_get_attribute_names(self) -> None:
         """Test getting all attribute names."""
-        attrs = FlextLdifAttributes.model_validate({
-            "attributes": {"cn": ["John"], "sn": ["Doe"], "mail": ["john@example.com"]},
-        })
+        attrs = FlextLdifAttributes.model_validate(
+            {
+                "attributes": {
+                    "cn": ["John"],
+                    "sn": ["Doe"],
+                    "mail": ["john@example.com"],
+                },
+            },
+        )
         names = attrs.get_attribute_names()
         assert set(names) == {"cn", "sn", "mail"}
 
     def test_attributes_get_total_values(self) -> None:
         """Test getting total number of attribute values."""
-        attrs = FlextLdifAttributes.model_validate({
-            "attributes": {"cn": ["John", "Johnny"], "sn": ["Doe"], "mail": ["john@example.com"]},
-        })
+        attrs = FlextLdifAttributes.model_validate(
+            {
+                "attributes": {
+                    "cn": ["John", "Johnny"],
+                    "sn": ["Doe"],
+                    "mail": ["john@example.com"],
+                },
+            },
+        )
         assert attrs.get_total_values() == 4
 
     def test_attributes_is_empty(self) -> None:
@@ -614,7 +654,9 @@ description: With multiple descriptions"""
         empty_attrs = FlextLdifAttributes.model_validate({"attributes": {}})
         assert empty_attrs.is_empty()
 
-        non_empty_attrs = FlextLdifAttributes.model_validate({"attributes": {"cn": ["John"]}})
+        non_empty_attrs = FlextLdifAttributes.model_validate(
+            {"attributes": {"cn": ["John"]}},
+        )
         assert not non_empty_attrs.is_empty()
 
     def test_attributes_equality(self) -> None:
