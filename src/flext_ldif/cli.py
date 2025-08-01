@@ -306,7 +306,9 @@ def cli(
     )
 
 
-def _parse_and_log_file(api: FlextLdifAPI, input_file: str, max_entries: int | None) -> list[FlextLdifEntry]:
+def _parse_and_log_file(
+    api: FlextLdifAPI, input_file: str, max_entries: int | None
+) -> list[FlextLdifEntry]:
     """Parse LDIF file with logging and return entries."""
     logger.debug("Parsing LDIF file: %s", input_file)
     result = api.parse_file(input_file)
@@ -320,7 +322,9 @@ def _parse_and_log_file(api: FlextLdifAPI, input_file: str, max_entries: int | N
 
     entries = cast("FlextResult[list[FlextLdifEntry]]", result).data
     if entries is None:  # Safety check
-        safe_click_echo("Internal error: entries is None after successful parse", err=True)
+        safe_click_echo(
+            "Internal error: entries is None after successful parse", err=True
+        )
         sys.exit(1)
 
     logger.info(
@@ -333,7 +337,9 @@ def _parse_and_log_file(api: FlextLdifAPI, input_file: str, max_entries: int | N
     return entries
 
 
-def _handle_optional_validation(entries: list[FlextLdifEntry], *, validate: bool) -> None:
+def _handle_optional_validation(
+    entries: list[FlextLdifEntry], *, validate: bool
+) -> None:
     """Handle optional validation of entries."""
     if validate:
         logger.debug("Performing validation as requested")
@@ -475,7 +481,9 @@ def validate(
         entries = parse_result_typed.data
 
         if entries is None:  # Safety check
-            safe_click_echo("Internal error: entries is None after successful parse", err=True)
+            safe_click_echo(
+                "Internal error: entries is None after successful parse", err=True
+            )
             sys.exit(1)
 
         # Schema validation info (informational for now)

@@ -11,7 +11,7 @@ import os
 import subprocess
 import time
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import docker
 import pytest
@@ -375,7 +375,7 @@ def docker_openldap_container() -> Container:
 
 
 @pytest.fixture
-def ldif_test_config(docker_openldap_container: Container) -> dict[str, Any]:
+def ldif_test_config(docker_openldap_container: Container) -> dict[str, object]:
     """Provides LDIF test configuration for individual tests."""
     return {
         "server_url": TEST_ENV_VARS["LDIF_TEST_SERVER"],
@@ -387,7 +387,7 @@ def ldif_test_config(docker_openldap_container: Container) -> dict[str, Any]:
 
 
 @pytest.fixture
-def real_ldif_data(ldif_test_config: dict[str, Any]) -> str:
+def real_ldif_data(ldif_test_config: dict[str, object]) -> str:
     """Provides real LDIF data exported from the OpenLDAP container."""
     if _container_manager and _container_manager.is_container_running():
         # Export LDIF data from container

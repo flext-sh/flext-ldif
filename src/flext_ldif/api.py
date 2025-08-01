@@ -537,7 +537,9 @@ class FlextLdifAPI:
                 "Skipping directory creation (disabled or no parent directory)",
             )
 
-    def _write_to_file(self, entries: list[FlextLdifEntry], file_path: Path) -> FlextResult[str]:
+    def _write_to_file(
+        self, entries: list[FlextLdifEntry], file_path: Path
+    ) -> FlextResult[str]:
         """Write entries to file with proper logging."""
         self.logger.debug(
             "Delegating to TLdif.write_file with encoding: %s",

@@ -673,7 +673,7 @@ class LDIFProcessingMonitor:
         self.stats["error_details"].append(error_detail)
         self.logger.error(f"Processing error in {context}: {error}")
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> Dict[str, object]:
         """Get processing summary"""
         if self.stats["start_time"]:
             duration = datetime.now() - self.stats["start_time"]
@@ -681,7 +681,7 @@ class LDIFProcessingMonitor:
 
         return self.stats.copy()
 
-def robust_ldif_processing(ldif_content: str) -> Dict[str, Any]:
+def robust_ldif_processing(ldif_content: str) -> Dict[str, object]:
     """Robust LDIF processing with comprehensive error handling"""
     monitor = LDIFProcessingMonitor()
     monitor.start_processing()
