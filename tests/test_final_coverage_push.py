@@ -79,7 +79,7 @@ class TestCLIComprehensiveCoverage:
         """Test CLI statistics display in different formats."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test")
             temp_path = f.name
 
@@ -97,13 +97,13 @@ class TestCLIComprehensiveCoverage:
         # Test with invalid file path to trigger error handling
         result = runner.invoke(cli, ["parse", "/nonexistent/file.ldif"])
         # Click may return 2 for invalid arguments/files
-        assert result.exit_code in [1, 2]
+        assert result.exit_code in {1, 2}
 
     def test_cli_convert_comprehensive_scenarios(self) -> None:
         """Test convert command comprehensive scenarios."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test")
             input_path = f.name
 
@@ -143,7 +143,7 @@ objectClass: organizationalUnit
 ou: test
 """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write(ldif_content)
             input_path = f.name
 
@@ -179,7 +179,7 @@ objectClass: person
 cn: user1
 """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write(ldif_content)
             input_path = f.name
 
@@ -219,7 +219,7 @@ objectClass: person
 cn: other
 """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write(ldif_content)
             input_path = f.name
 
@@ -244,7 +244,7 @@ cn: other
         """Test stats command with different output formats."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test")
             input_path = f.name
 

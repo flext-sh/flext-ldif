@@ -43,7 +43,7 @@ class TestAPICoverageTargeted:
         api = FlextLdifAPI()
 
         # Create temp file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test")
             temp_path = f.name
 
@@ -57,10 +57,13 @@ class TestAPICoverageTargeted:
 
     def test_api_write_with_missing_output_dir(self) -> None:
         """Test write method when output directory creation is needed."""
+        import tempfile
+
         config = FlextLdifConfig()
         config.create_output_dir = True
-        # Set to a non-existent subdirectory that can be created
-        test_dir = Path("/tmp/flext_test_missing_dir")
+        # Use secure temporary directory
+        temp_dir = tempfile.mkdtemp(prefix="flext_test_")
+        test_dir = Path(temp_dir) / "missing_dir"
         config.output_directory = test_dir
         api = FlextLdifAPI(config)
 
@@ -72,15 +75,15 @@ class TestAPICoverageTargeted:
         try:
             # Should create directory and succeed
             result = api.write([entry], "test.ldif")
-            # Clean up created directory
-            if test_dir.exists():
-                for file in test_dir.glob("*"):
-                    file.unlink()
-                test_dir.rmdir()
             assert result.is_success or "Permission denied" in result.error  # May fail on permission
         except PermissionError:
             # Expected on systems with restricted /tmp access
             pass
+        finally:
+            # Clean up created temporary directory
+            import shutil
+            if Path(temp_dir).exists():
+                shutil.rmtree(temp_dir)
 
     def test_api_entries_to_ldif_with_observability_errors(self) -> None:
         """Test entries_to_ldif when observability metrics fail."""
@@ -109,7 +112,7 @@ class TestCLICoverageTargeted:
         runner = CliRunner()
 
         # Create LDIF with multiple entries
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=test1,dc=example,dc=com
 objectClass: person
 cn: test1
@@ -137,7 +140,7 @@ cn: test3
         """Test convert command with unsupported scenarios."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test")
             input_path = f.name
 
@@ -232,7 +235,7 @@ class TestCoreCoverageTargeted:
         from flext_ldif.core import TLdif
 
         # Create empty file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("")  # Empty content
             temp_path = f.name
 

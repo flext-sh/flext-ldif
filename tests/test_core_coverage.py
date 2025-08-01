@@ -124,7 +124,7 @@ class TestCoreCoverage:
         """Test TLdif write_file when write returns no content."""
         # This would need to mock the write method to return None
         # For now, test with empty entries using proper temp file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             temp_path = f.name
 
         try:
@@ -143,7 +143,7 @@ class TestCoreCoverage:
     def test_tldif_read_file_with_permission_error(self) -> None:
         """Test TLdif read_file with permission error."""
         # Create a file and try to read it with restricted permissions
-        with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", delete=False) as f:
             f.write("dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n")
             temp_path = f.name
 
@@ -163,7 +163,7 @@ class TestCoreCoverage:
     def test_tldif_read_file_success(self) -> None:
         """Test TLdif read_file successful case."""
         # Create a temporary LDIF file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -194,7 +194,7 @@ cn: test
             assert result.data is True
 
             # Verify file was written correctly
-            with Path(temp_path).open() as f:
+            with Path(temp_path).open(encoding="utf-8") as f:
                 content = f.read()
                 assert "cn=test,dc=example,dc=com" in content
                 assert "objectClass: person" in content

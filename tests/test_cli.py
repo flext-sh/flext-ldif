@@ -105,7 +105,7 @@ class TestFlextLdifCLI:
         runner = CliRunner()
 
         # Create a temporary LDIF file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -126,7 +126,7 @@ cn: test
         runner = CliRunner()
 
         # Create input file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -152,7 +152,7 @@ cn: test
         runner = CliRunner()
 
         # Create a temporary LDIF file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -172,7 +172,7 @@ cn: test
         runner = CliRunner()
 
         # Create a temporary LDIF file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -193,7 +193,7 @@ cn: test
         runner = CliRunner()
 
         # Create a temporary LDIF file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -213,7 +213,7 @@ cn: test
         runner = CliRunner()
 
         # Create a temporary LDIF file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -233,7 +233,7 @@ cn: test
         runner = CliRunner()
 
         # Create a temporary LDIF file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -253,7 +253,7 @@ cn: test
         runner = CliRunner()
 
         # Create a temporary LDIF file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -274,7 +274,7 @@ cn: test
         runner = CliRunner()
 
         # Create input file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=person,dc=example,dc=com
 objectClass: person
 cn: person
@@ -307,7 +307,7 @@ cn: group
         runner = CliRunner()
 
         # Create input file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -335,7 +335,7 @@ cn: test
         runner = CliRunner()
 
         # Create input file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -381,7 +381,7 @@ cn: test
         mock_create_api.return_value = mock_api
 
         # Create a temporary test file for error testing
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("test")
             temp_path = f.name
 
@@ -415,7 +415,7 @@ cn: test
             mock_create_api.return_value = mock_api
 
             # Create a temporary test file for interrupt testing
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
                 f.write("test")
                 temp_path = f.name
 

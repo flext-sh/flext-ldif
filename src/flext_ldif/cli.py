@@ -116,12 +116,12 @@ def handle_validation_errors(entries: list[FlextLdifEntry]) -> None:
     logger.debug("Validating entries for domain rules")
 
     for i, entry in enumerate(entries):
-        logger.trace("Validating entry %d: %s", i+1, entry.dn)
+        logger.trace("Validating entry %d: %s", i + 1, entry.dn)
         validation_result = entry.validate_domain_rules()
         if not validation_result.is_success:
-            error_msg = f"Entry {i+1} ({entry.dn}): {validation_result.error}"
+            error_msg = f"Entry {i + 1} ({entry.dn}): {validation_result.error}"
             validation_errors.append(error_msg)
-            logger.debug("Validation failed for entry %d: %s", i+1, validation_result.error)
+            logger.debug("Validation failed for entry %d: %s", i + 1, validation_result.error)
 
     logger.debug("Validation completed: %d errors found", len(validation_errors))
 
@@ -358,7 +358,7 @@ def validate(
         for i, entry in enumerate(entries):
             validation_result = entry.validate_domain_rules()
             if not validation_result.is_success:
-                validation_errors.append(f"Entry {i+1} ({entry.dn}): {validation_result.error}")
+                validation_errors.append(f"Entry {i + 1} ({entry.dn}): {validation_result.error}")
 
         # Show validation mode
         mode = "strict" if strict else "standard"
@@ -600,10 +600,10 @@ def convert(
 
             output_path = Path(output_file)
             if output_format == "json":
-                with output_path.open("w") as f:
+                with output_path.open("w", encoding="utf-8") as f:
                     json.dump(entries_data, f, indent=2, default=str)
             elif output_format == "yaml":
-                with output_path.open("w") as f:
+                with output_path.open("w", encoding="utf-8") as f:
                     yaml.dump(entries_data, f, default_flow_style=False)
 
             click.echo(f"Converted {len(entries)} entries to {output_format}: {output_file}")

@@ -330,6 +330,7 @@ class TLdif:
             logger.debug("Delegating to parse method for content processing")
             result = cls.parse(content)
 
+            # Log result based on success/failure
             if result.is_success:
                 entries_count = len(result.data or [])
                 logger.debug("File read and parse successful: %d entries", entries_count)
@@ -341,6 +342,8 @@ class TLdif:
                            entries_parsed=entries_count,
                            encoding=encoding)
                 return result
+
+            # Handle parse failure
             logger.error("File content parsing failed: %s", result.error)
             logger.debug("Parse method returned failure after successful file read")
             return result
