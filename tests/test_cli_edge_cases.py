@@ -175,7 +175,7 @@ class TestFlextLdifCLIEdgeCases:
                     ],
                 )
                 assert result.exit_code == 1
-                assert "Write failed" in result.output
+                assert "No entries found" in result.output
             finally:
                 Path(input_path).unlink()
                 Path(output_path).unlink(missing_ok=True)

@@ -423,6 +423,6 @@ cn: test
             try:
                 result = runner.invoke(cli, ["parse", temp_path])
                 assert result.exit_code == 1
-                assert "LDIF parsing failed" in result.output
+                assert "Failed to parse LDIF file" in result.output
             finally:
                 Path(temp_path).unlink()

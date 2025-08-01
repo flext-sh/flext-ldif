@@ -1,32 +1,33 @@
-"""LDIF exceptions using flext-core patterns.
+"""LDIF exceptions using flext-core DRY patterns.
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
 
-Domain-specific exceptions for LDIF operations inheriting from flext-core.
+Domain-specific exceptions using factory pattern to eliminate duplication.
 """
 
 from __future__ import annotations
 
 from flext_core import get_logger
 from flext_core.exceptions import (
-    FlextError,
     FlextProcessingError,
     FlextValidationError,
+    create_module_exception_classes,
 )
 
 logger = get_logger(__name__)
 
+# Create all standard exception classes using factory pattern - eliminates duplication
+ldif_exceptions = create_module_exception_classes("flext_ldif")
 
-class FlextLdifError(FlextError):
-    """Base exception for LDIF operations."""
-
-    def __init__(self, message: str = "LDIF error", **kwargs: object) -> None:
-        """Initialize LDIF error with context."""
-        logger.debug("Creating FlextLdifError: %s", message)
-        logger.trace("Error context: %s", kwargs)
-        super().__init__(message, error_code="LDIF_ERROR", context=kwargs)
-        logger.debug("FlextLdifError created successfully")
+# Import generated classes for clean usage
+FlextLdifError = ldif_exceptions["FlextLdifError"]
+FlextLdifValidationError = ldif_exceptions["FlextLdifValidationError"]
+FlextLdifConfigurationError = ldif_exceptions["FlextLdifConfigurationError"]
+FlextLdifConnectionError = ldif_exceptions["FlextLdifConnectionError"]
+FlextLdifProcessingError = ldif_exceptions["FlextLdifProcessingError"]
+FlextLdifAuthenticationError = ldif_exceptions["FlextLdifAuthenticationError"]
+FlextLdifTimeoutError = ldif_exceptions["FlextLdifTimeoutError"]
 
 
 class FlextLdifParseError(FlextProcessingError):

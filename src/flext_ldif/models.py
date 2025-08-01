@@ -324,20 +324,36 @@ class FlextLdifEntry(FlextValueObject):
         return "\n".join(lines)
 
     def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate LDIF entry domain rules."""
-        # Validate DN is not empty
-        if not self.dn or not self.dn.value:
-            return FlextResult.fail("LDIF entry must have a valid DN")
+        """Validate LDIF entry domain rules using Railway-Oriented Programming.
 
-        # Validate at least one attribute exists
-        if not self.attributes or not self.attributes.attributes:
-            return FlextResult.fail("LDIF entry must have at least one attribute")
-
-        # Validate required objectClass attribute for standard LDIF entries
-        if not self.has_attribute("objectClass"):
-            return FlextResult.fail("Entry missing required objectClass attribute")
-
+        SOLID REFACTORING: Reduced from 4 returns to 2 returns using
+        Railway-Oriented Programming + Strategy Pattern.
+        """
+        # Railway-Oriented Programming: Chain validations with early exit
+        validation_errors = self._collect_ldif_entry_validation_errors()
+        
+        if validation_errors:
+            return FlextResult.fail(validation_errors[0])  # Return first error for clarity
+            
         return FlextResult.ok(None)
+    
+    def _collect_ldif_entry_validation_errors(self) -> list[str]:
+        """DRY helper: Collect all LDIF entry validation errors using Strategy Pattern."""
+        errors = []
+        
+        # Strategy 1: DN validation
+        if not self.dn or not self.dn.value:
+            errors.append("LDIF entry must have a valid DN")
+            
+        # Strategy 2: Attributes existence validation  
+        if not self.attributes or not self.attributes.attributes:
+            errors.append("LDIF entry must have at least one attribute")
+            
+        # Strategy 3: ObjectClass attribute validation
+        if not self.has_attribute("objectClass"):
+            errors.append("Entry missing required objectClass attribute")
+            
+        return errors
 
     @classmethod
     def from_ldif_block(cls, ldif_block: str) -> FlextLdifEntry:
