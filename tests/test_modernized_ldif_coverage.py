@@ -139,7 +139,7 @@ cn: test
         entries = list(parser.parse())
 
         assert len(entries) == 1
-        dn, attrs = entries[0]
+        _dn, attrs = entries[0]
         expected_desc = "This is a very long description that spansmultiple lines using LDIF line continuation"
         assert attrs["description"][0] == expected_desc
 
@@ -159,7 +159,7 @@ description:: {encoded_value}
         entries = list(parser.parse())
 
         assert len(entries) == 1
-        dn, attrs = entries[0]
+        _dn, attrs = entries[0]
         assert attrs["description"][0] == original_value
 
     def test_flext_ldif_parser_with_url_reference(self) -> None:
@@ -188,7 +188,7 @@ ignoredAttr: should be ignored
         entries = list(parser.parse())
 
         assert len(entries) == 1
-        dn, attrs = entries[0]
+        _dn, attrs = entries[0]
         assert "ignoredAttr" not in attrs
         assert "objectClass" in attrs
 
@@ -219,7 +219,7 @@ cn: test
         entries = list(parser.parse())
 
         assert len(entries) == 1
-        dn, attrs = entries[0]
+        dn, _attrs = entries[0]
         assert dn == "cn=test,dc=example,dc=com"
 
     def test_flext_ldif_parser_empty_blocks(self) -> None:

@@ -46,7 +46,7 @@ class TestAPICoverageBoost:
         api = FlextLdifAPI()
 
         # Create temp file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test")
             temp_path = f.name
 
@@ -204,7 +204,7 @@ class TestCLICoverageBoost:
         runner = CliRunner()
 
         # Create invalid LDIF file (missing objectClass)
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("dn: cn=test,dc=example,dc=com\ncn: test\n")
             temp_path = f.name
 
@@ -220,7 +220,7 @@ class TestCLICoverageBoost:
         runner = CliRunner()
 
         # Create LDIF with multiple entries
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=test1,dc=example,dc=com
 objectClass: person
 cn: test1
@@ -244,7 +244,7 @@ cn: test2
         runner = CliRunner()
 
         # Create invalid LDIF file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("dn: cn=test,dc=example,dc=com\ncn: test\n")  # Missing objectClass
             temp_path = f.name
 
@@ -260,7 +260,7 @@ cn: test2
         """Test transform command filter error handling."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test")
             input_path = f.name
 
@@ -283,7 +283,7 @@ cn: test2
         """Test convert command format error handling."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test")
             input_path = f.name
 

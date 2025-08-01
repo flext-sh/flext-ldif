@@ -37,7 +37,7 @@ class TestApiCoverage:
         api = FlextLdifAPI(config)
 
         # Create a temp file with multiple entries
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=user1,dc=example,dc=com
 objectClass: person
 cn: user1
@@ -68,7 +68,7 @@ cn: test
         assert parse_result.is_success
 
         # Write to file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             temp_path = f.name
 
         try:

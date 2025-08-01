@@ -22,7 +22,7 @@ class TestFlextLdifCLIComprehensive:
         """Test validate command with strict mode."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -40,7 +40,7 @@ cn: test
         """Test validate command with schema parameter."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -58,7 +58,7 @@ cn: test
         """Test transform command with filtering."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as input_f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as input_f:
             input_f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -82,7 +82,7 @@ cn: test
         """Test transform command with sorting."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as input_f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as input_f:
             input_f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -105,7 +105,7 @@ cn: test
         """Test stats command with JSON output."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -122,7 +122,7 @@ cn: test
         """Test stats command with YAML output."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -139,7 +139,7 @@ cn: test
         """Test find command with existing entry."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -157,7 +157,7 @@ cn: test
         """Test find command with non-existent entry."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -175,7 +175,7 @@ cn: test
         """Test filter-by-class command with output file."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as input_f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as input_f:
             input_f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -200,7 +200,7 @@ cn: test
         """Test convert command to JSON format."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as input_f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as input_f:
             input_f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -226,7 +226,7 @@ cn: test
         """Test convert command to YAML format."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as input_f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as input_f:
             input_f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -252,7 +252,7 @@ cn: test
         """Test convert command with unsupported input format."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as input_f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as input_f:
             input_f.write("test")
             input_path = input_f.name
 
@@ -283,7 +283,7 @@ cn: test
         """Test parse command with max entries limit."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -307,7 +307,7 @@ cn: test
             mock_api.parse_file.return_value.error = "API Error"
             mock_create_api.return_value = mock_api
 
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
                 f.write("test")
                 temp_path = f.name
 

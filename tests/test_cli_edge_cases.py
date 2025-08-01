@@ -34,7 +34,7 @@ class TestFlextLdifCLIEdgeCases:
             mock_api.parse_file.return_value.data = [mock_entry] * 10  # 10 validation errors
             mock_create_api.return_value = mock_api
 
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
                 f.write("test")
                 temp_path = f.name
 
@@ -55,7 +55,7 @@ class TestFlextLdifCLIEdgeCases:
             mock_api.parse_file.return_value.data = []
             mock_create_api.return_value = mock_api
 
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as input_f:
+            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as input_f:
                 input_f.write("test")
                 input_path = input_f.name
 
@@ -68,7 +68,7 @@ class TestFlextLdifCLIEdgeCases:
                     "--filter-type", "unknown",
                 ])
                 # Click may return 2 for invalid choice values, or 0 if it processes successfully
-                assert result.exit_code in [0, 2]
+                assert result.exit_code in {0, 2}
             finally:
                 Path(input_path).unlink()
                 Path(output_path).unlink(missing_ok=True)
@@ -89,7 +89,7 @@ class TestFlextLdifCLIEdgeCases:
 
             mock_create_api.return_value = mock_api
 
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as input_f:
+            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as input_f:
                 input_f.write("test")
                 input_path = input_f.name
 
@@ -121,7 +121,7 @@ class TestFlextLdifCLIEdgeCases:
 
             mock_create_api.return_value = mock_api
 
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as input_f:
+            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as input_f:
                 input_f.write("test")
                 input_path = input_f.name
 
@@ -156,7 +156,7 @@ class TestFlextLdifCLIEdgeCases:
         """Test global format options."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -175,7 +175,7 @@ cn: test
         """Test debug and verbose global options."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -221,7 +221,7 @@ cn: test
 
             mock_create_api.return_value = mock_api
 
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as input_f:
+            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as input_f:
                 input_f.write("test")
                 input_path = input_f.name
 
@@ -258,14 +258,14 @@ cn: test
             mock_api.parse_file.return_value.data = mock_entries
             mock_create_api.return_value = mock_api
 
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
                 f.write("test")
                 temp_path = f.name
 
             try:
                 result = runner.invoke(cli, ["parse", temp_path, "--validate"])
                 # Just check that it runs and has some output
-                assert result.exit_code in [0, 1]  # May exit with 1 due to validation errors
+                assert result.exit_code in {0, 1}  # May exit with 1 due to validation errors
                 assert "Validation found" in result.output or len(result.output) > 0
             finally:
                 Path(temp_path).unlink()

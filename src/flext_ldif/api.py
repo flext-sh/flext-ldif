@@ -55,30 +55,137 @@ class FlextLdifAPI:
         self.logger.debug("FlextLdifAPI initialization completed successfully")
         # Specifications now integrated in FlextLdifEntry via composition
 
-    @flext_monitor_function(metric_name="ldif_parse_operation")
-    def parse(self, content: str | LDIFContent) -> FlextResult[list[FlextLdifEntry]]:
-        """Parse LDIF content with intelligent processing and real monitoring."""
-        self.logger.debug("Starting LDIF content parsing")
-        self.logger.trace("Parse input type: %s", type(content).__name__)
-
-        # Create distributed trace for operation (handled by monitoring framework)
+    def _create_parse_trace(self, content: str | LDIFContent) -> str:
+        """Create distributed trace for parsing operation."""
         trace_id = f"ldif_parse_{id(content)}"
         self.logger.debug("Creating distributed trace with ID: %s", trace_id)
         _ = flext_create_trace(
             trace_id=trace_id,
             operation="ldif_parse",
         )
+        return trace_id
+
+    def _record_content_metrics(self, content: str | LDIFContent) -> int:
+        """Record content size metrics and return content size."""
+        content_size = len(str(content))
+        self.logger.debug("Content size: %d bytes", content_size)
+        self.logger.trace("Recording content size metric: %d bytes", content_size)
+        self._observability_monitor.flext_record_metric(
+            "ldif_content_size_bytes",
+            float(content_size),
+            "histogram",
+        )
+        return content_size
+
+    def _handle_parse_failure(self, parse_result: FlextResult[list[FlextLdifEntry]]) -> FlextResult[list[FlextLdifEntry]]:
+        """Handle parse failure by recording metrics and returning result."""
+        self.logger.warning("Core parsing failed: %s", parse_result.error)
+        self.logger.debug("Recording parse error metric")
+        self._observability_monitor.flext_record_metric(
+            "ldif_parse_errors_total",
+            1.0,
+            "counter",
+        )
+        return parse_result
+
+    def _record_success_metrics(self, entries_count: int) -> None:
+        """Record successful parsing metrics."""
+        self.logger.debug("Recording successful parsing metrics")
+        self._observability_monitor.flext_record_metric(
+            "ldif_entries_parsed_total",
+            float(entries_count),
+            "counter",
+        )
+        self._observability_monitor.flext_record_metric(
+            "ldif_entries_per_operation",
+            float(entries_count),
+            "histogram",
+        )
+
+    def _perform_strict_validation(self, entries: list[FlextLdifEntry], entries_count: int) -> None:
+        """Perform strict validation if enabled and record warnings."""
+        if not self.config.strict_validation:
+            self.logger.trace("Skipping strict validation (disabled in config)")
+            return
+
+        self.logger.debug("Strict validation enabled, validating %d entries", entries_count)
+        self.logger.trace("Running TLdif.validate_entries with strict mode")
+        validate_result = TLdif.validate_entries(entries)
+
+        if not validate_result.is_success:
+            self.logger.warning("Strict validation warnings: %s", validate_result.error)
+            self.logger.debug("Recording validation warning metric")
+            self._observability_monitor.flext_record_metric(
+                "ldif_validation_warnings_total",
+                1.0,
+                "counter",
+            )
+            self.logger.info("Parse succeeded with validation warnings",
+                           entries_count=entries_count,
+                           validation_warnings=validate_result.error)
+        else:
+            self.logger.debug("Strict validation passed for all entries")
+
+    def _check_entry_limits(self, entries: list[FlextLdifEntry]) -> FlextResult[None]:
+        """Check if entry count is within configured limits."""
+        if len(entries) > self.config.max_entries:
+            self.logger.warning("Entry count %d exceeds max_entries limit %d",
+                              len(entries), self.config.max_entries)
+            self.logger.debug("Recording limit exceeded metric")
+            self._observability_monitor.flext_record_metric(
+                "ldif_limit_exceeded_total",
+                1.0,
+                "counter",
+            )
+            return FlextResult.fail(
+                f"Too many entries: {len(entries)} > {self.config.max_entries}",
+            )
+        self.logger.trace("Entry count %d within limit %d", len(entries), self.config.max_entries)
+        return FlextResult.ok(None)
+
+    def _record_completion_metrics(self, entries_count: int, content_size: int, trace_id: str) -> None:
+        """Record successful completion metrics and log summary."""
+        self.logger.debug("Recording successful completion metrics")
+        self._observability_monitor.flext_record_metric(
+            "ldif_parse_success_total",
+            1.0,
+            "counter",
+        )
+
+        self.logger.info(
+            "LDIF parsing completed successfully",
+            entries_count=entries_count,
+            content_size_bytes=content_size,
+            strict_validation=self.config.strict_validation,
+        )
+        self.logger.trace("Parse operation trace ID %s completed successfully", trace_id)
+
+    def _handle_parse_exception(self, e: Exception, trace_id: str) -> FlextResult[list[FlextLdifEntry]]:
+        """Handle parsing exceptions by recording metrics and returning error."""
+        self.logger.debug("Exception type: %s", type(e).__name__)
+        self.logger.trace("Full exception details", exc_info=True)
+
+        self.logger.debug("Recording parse exception metric")
+        self._observability_monitor.flext_record_metric(
+            "ldif_parse_exceptions_total",
+            1.0,
+            "counter",
+        )
+        self.logger.error("LDIF parsing failed with exception")
+        self.logger.trace("Trace ID %s failed with exception", trace_id)
+
+        return FlextResult.fail(f"Parse failed: {e}")
+
+    @flext_monitor_function(metric_name="ldif_parse_operation")
+    def parse(self, content: str | LDIFContent) -> FlextResult[list[FlextLdifEntry]]:
+        """Parse LDIF content with intelligent processing and real monitoring."""
+        self.logger.debug("Starting LDIF content parsing")
+        self.logger.trace("Parse input type: %s", type(content).__name__)
+
+        trace_id = self._create_parse_trace(content)
 
         try:
-            # Record parsing metrics
-            content_size = len(str(content))
-            self.logger.debug("Content size: %d bytes", content_size)
-            self.logger.trace("Recording content size metric: %d bytes", content_size)
-            self._observability_monitor.flext_record_metric(
-                "ldif_content_size_bytes",
-                float(content_size),
-                "histogram",
-            )
+            content_size = self._record_content_metrics(content)
 
             # Parse using core functionality
             self.logger.debug("Delegating to TLdif.parse for core parsing")
@@ -87,14 +194,7 @@ class FlextLdifAPI:
             parse_result = TLdif.parse(content)
 
             if not parse_result.is_success:
-                self.logger.warning("Core parsing failed: %s", parse_result.error)
-                self.logger.debug("Recording parse error metric")
-                self._observability_monitor.flext_record_metric(
-                    "ldif_parse_errors_total",
-                    1.0,
-                    "counter",
-                )
-                return parse_result
+                return self._handle_parse_failure(parse_result)
 
             entries = parse_result.data
             if entries is None:
@@ -102,99 +202,22 @@ class FlextLdifAPI:
                 self.logger.debug("Returning failure for None entries")
                 return FlextResult.fail("No entries parsed")
 
-            # Record successful parsing metrics
             entries_count = len(entries)
             self.logger.debug("Successfully parsed %d entries", entries_count)
-            self.logger.trace("Parsed entries DNs: %s", [str(entry.dn) for entry in entries[:5]])  # First 5 for trace
+            self.logger.trace("Parsed entries DNs: %s", [str(entry.dn) for entry in entries[:5]])
 
-            self.logger.debug("Recording successful parsing metrics")
-            self._observability_monitor.flext_record_metric(
-                "ldif_entries_parsed_total",
-                float(entries_count),
-                "counter",
-            )
-            self._observability_monitor.flext_record_metric(
-                "ldif_entries_per_operation",
-                float(entries_count),
-                "histogram",
-            )
+            self._record_success_metrics(entries_count)
+            self._perform_strict_validation(entries, entries_count)
 
-            # Record validation warnings if strict validation enabled (parse always succeeds)
-            if self.config.strict_validation:
-                self.logger.debug("Strict validation enabled, validating %d entries", entries_count)
-                self.logger.trace("Running TLdif.validate_entries with strict mode")
-                validate_result = TLdif.validate_entries(entries)
-                if not validate_result.is_success:
-                    self.logger.warning("Strict validation warnings: %s", validate_result.error)
-                    self.logger.debug("Recording validation warning metric")
-                    self._observability_monitor.flext_record_metric(
-                        "ldif_validation_warnings_total",
-                        1.0,
-                        "counter",
-                    )
-                    # Continue with parse success, just log validation warnings
-                    self.logger.info("Parse succeeded with validation warnings",
-                                   entries_count=entries_count,
-                                   validation_warnings=validate_result.error)
-                else:
-                    self.logger.debug("Strict validation passed for all entries")
-            else:
-                self.logger.trace("Skipping strict validation (disabled in config)")
+            limit_check_result = self._check_entry_limits(entries)
+            if not limit_check_result.is_success:
+                return FlextResult.fail(limit_check_result.error or "Entry limit exceeded")
 
-            # Check limits
-            if len(entries) > self.config.max_entries:
-                self.logger.warning("Entry count %d exceeds max_entries limit %d",
-                                  len(entries), self.config.max_entries)
-                self.logger.debug("Recording limit exceeded metric")
-                self._observability_monitor.flext_record_metric(
-                    "ldif_limit_exceeded_total",
-                    1.0,
-                    "counter",
-                )
-                return FlextResult.fail(
-                    f"Too many entries: {len(entries)} > {self.config.max_entries}",
-                )
-            self.logger.trace("Entry count %d within limit %d", len(entries), self.config.max_entries)
-
-            # Record successful completion
-            self.logger.debug("Recording successful completion metrics")
-            self._observability_monitor.flext_record_metric(
-                "ldif_parse_success_total",
-                1.0,
-                "counter",
-            )
-
-            self.logger.info(
-                "LDIF parsing completed successfully",
-                entries_count=entries_count,
-                content_size_bytes=content_size,
-                strict_validation=self.config.strict_validation,
-            )
-            self.logger.trace("Parse operation trace ID %s completed successfully", trace_id)
-
-            # Note: Trace completion handled by observability monitor
-            # The trace is automatically managed by the monitoring framework
-
+            self._record_completion_metrics(entries_count, content_size, trace_id)
             return FlextResult.ok(entries)
 
         except (ValueError, TypeError, AttributeError, OSError, ImportError) as e:
-            # Record error metrics
-            self.logger.debug("Exception type: %s", type(e).__name__)
-            self.logger.trace("Full exception details", exc_info=True)
-
-            self.logger.debug("Recording parse exception metric")
-            self._observability_monitor.flext_record_metric(
-                "ldif_parse_exceptions_total",
-                1.0,
-                "counter",
-            )
-            self.logger.exception("LDIF parsing failed with exception")
-
-            # Note: Trace error handling managed by observability monitor
-            # The trace records errors automatically through the monitoring framework
-            self.logger.trace("Trace ID %s failed with exception", trace_id)
-
-            return FlextResult.fail(f"Parse failed: {e}")
+            return self._handle_parse_exception(e, trace_id)
 
     @flext_monitor_function(metric_name="ldif_parse_file_operation")
     def parse_file(self, file_path: str | Path) -> FlextResult[list[FlextLdifEntry]]:
@@ -294,37 +317,38 @@ class FlextLdifAPI:
 
             return FlextResult.fail(f"File parse failed: {e}")
 
-    def validate(self, entries: list[FlextLdifEntry]) -> FlextResult[bool]:
-        """Validate LDIF entries using configuration settings."""
-        self.logger.debug("Starting validation of %d entries", len(entries))
-        self.logger.trace("Validation config: allow_empty_attributes=%s, max_entry_size=%d, input_encoding=%s",
-                         self.config.allow_empty_attributes, self.config.max_entry_size, self.config.input_encoding)
-
-        # Apply configuration-based validation
-        if not self.config.allow_empty_attributes:
-            self.logger.debug("Checking for empty attributes (not allowed)")
-            empty_attr_count = 0
-            for i, entry in enumerate(entries):
-                self.logger.trace("Validating entry %d: %s", i, entry.dn)
-                for attr_name, attr_values in entry.attributes.attributes.items():
-                    if not attr_values or any(not v.strip() for v in attr_values):
-                        self.logger.warning("Empty attribute value found: %s in %s", attr_name, entry.dn)
-                        self.logger.debug("Failing validation due to empty attribute")
-                        return FlextResult.fail(
-                            f"Empty attribute value not allowed: {attr_name} in {entry.dn}",
-                        )
-                    empty_attr_count += sum(1 for v in attr_values if not v.strip())
-
-            if empty_attr_count == 0:
-                self.logger.debug("No empty attributes found (validation passed)")
-            else:
-                self.logger.trace("Found %d empty attribute values", empty_attr_count)
-        else:
+    def _validate_empty_attributes(self, entries: list[FlextLdifEntry]) -> FlextResult[None]:
+        """Validate empty attributes if not allowed by configuration."""
+        if self.config.allow_empty_attributes:
             self.logger.trace("Skipping empty attribute check (allowed in config)")
+            return FlextResult.ok(None)
 
-        # Check entry size limits
+        self.logger.debug("Checking for empty attributes (not allowed)")
+        empty_attr_count = 0
+
+        for i, entry in enumerate(entries):
+            self.logger.trace("Validating entry %d: %s", i, entry.dn)
+            for attr_name, attr_values in entry.attributes.attributes.items():
+                if not attr_values or any(not v.strip() for v in attr_values):
+                    self.logger.warning("Empty attribute value found: %s in %s", attr_name, entry.dn)
+                    self.logger.debug("Failing validation due to empty attribute")
+                    return FlextResult.fail(
+                        f"Empty attribute value not allowed: {attr_name} in {entry.dn}",
+                    )
+                empty_attr_count += sum(1 for v in attr_values if not v.strip())
+
+        if empty_attr_count == 0:
+            self.logger.debug("No empty attributes found (validation passed)")
+        else:
+            self.logger.trace("Found %d empty attribute values", empty_attr_count)
+
+        return FlextResult.ok(None)
+
+    def _validate_entry_sizes(self, entries: list[FlextLdifEntry]) -> FlextResult[None]:
+        """Validate entry sizes against configured limits."""
         self.logger.debug("Checking entry size limits (max: %d bytes)", self.config.max_entry_size)
         oversized_entries = 0
+
         for i, entry in enumerate(entries):
             entry_ldif = entry.to_ldif()
             entry_size = len(entry_ldif.encode(self.config.input_encoding))
@@ -344,7 +368,10 @@ class FlextLdifAPI:
         else:
             self.logger.debug("All entries within size limits")
 
-        # Use core validation
+        return FlextResult.ok(None)
+
+    def _perform_core_validation(self, entries: list[FlextLdifEntry]) -> FlextResult[bool]:
+        """Perform core validation using TLdif and log results."""
         self.logger.debug("Delegating to TLdif.validate_entries for core validation")
         self.logger.trace("Core validation will check DN format, attribute names, and objectClass presence")
         result = TLdif.validate_entries(entries)
@@ -360,6 +387,25 @@ class FlextLdifAPI:
             self.logger.debug("Validation failure details logged by TLdif.validate_entries")
 
         return result
+
+    def validate(self, entries: list[FlextLdifEntry]) -> FlextResult[bool]:
+        """Validate LDIF entries using configuration settings."""
+        self.logger.debug("Starting validation of %d entries", len(entries))
+        self.logger.trace("Validation config: allow_empty_attributes=%s, max_entry_size=%d, input_encoding=%s",
+                         self.config.allow_empty_attributes, self.config.max_entry_size, self.config.input_encoding)
+
+        # Validate empty attributes
+        empty_attr_result = self._validate_empty_attributes(entries)
+        if not empty_attr_result.is_success:
+            return FlextResult.fail(empty_attr_result.error or "Empty attribute validation failed")
+
+        # Validate entry sizes
+        size_result = self._validate_entry_sizes(entries)
+        if not size_result.is_success:
+            return FlextResult.fail(size_result.error or "Entry size validation failed")
+
+        # Perform core validation
+        return self._perform_core_validation(entries)
 
     def write(
         self,
@@ -465,7 +511,7 @@ class FlextLdifAPI:
                 "Person entries filtered successfully",
                 total_entries=total_entries,
                 person_entries=person_count,
-                filter_ratio=person_count/total_entries if total_entries > 0 else 0,
+                filter_ratio=person_count / total_entries if total_entries > 0 else 0,
             )
 
             return FlextResult.ok(person_entries)

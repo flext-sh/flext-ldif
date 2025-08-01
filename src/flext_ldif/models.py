@@ -418,12 +418,13 @@ class FlextLdifEntry(FlextValueObject):
                        dn=dn,
                        attributes_count=len(attributes),
                        total_values=sum(len(values) for values in attributes.values()))
-            return entry
         except Exception as e:
             logger.debug("Exception type: %s", type(e).__name__)
             logger.trace("Entry creation exception details", exc_info=True)
             logger.exception("Failed to create FlextLdifEntry from dict")
             raise
+        else:
+            return entry
 
     # ==========================================================================
     # SPECIFICATION METHODS (Consolidated from specifications.py)

@@ -43,17 +43,8 @@ from .models import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-# Import cli_main with specific ImportError handling
-cli_main: Callable[[], None] | None = None
-try:
-    from .cli import main as cli_main
-except ImportError as e:
-    # Only catch specific import errors related to click/cli dependencies
-    if "click" in str(e) or "flext_cli" in str(e):
-        cli_main = None
-    else:
-        # Re-raise unexpected import errors
-        raise
+# CLI functionality - import directly since dependencies are required
+from .cli import main as cli_main
 
 __version__ = "0.9.0"
 
