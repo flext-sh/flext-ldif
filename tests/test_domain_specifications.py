@@ -1,4 +1,29 @@
-"""Tests for FlextLdif domain specifications (now integrated via composition)."""
+"""FLEXT-LDIF Domain Specifications Test Suite.
+
+Test suite for domain specifications implementing business rules and validation
+logic for LDIF entries, following Domain-Driven Design specification patterns
+integrated via composition in the main domain entities.
+
+The specification patterns were consolidated into FlextLdifEntry methods to
+reduce complexity while maintaining clean business rule enforcement and
+type safety with comprehensive validation coverage.
+
+Test Coverage:
+    - Valid entry specifications and business rule validation
+    - Person entry classification with objectClass validation
+    - Group entry identification and membership rules
+    - Organizational unit hierarchy and structure validation
+    - Change record specifications and operation validation
+
+Architecture:
+    Tests domain specification logic integrated via composition pattern,
+    ensuring business rules are properly enforced while maintaining
+    clean separation of concerns and enterprise testing standards.
+
+Author: FLEXT Development Team
+Version: 0.9.0
+License: MIT
+"""
 
 from __future__ import annotations
 
