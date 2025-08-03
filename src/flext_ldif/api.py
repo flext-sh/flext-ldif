@@ -1,7 +1,62 @@
-"""FLEXT LDIF - API unified using flext-core patterns.
+"""FLEXT-LDIF Application Service Layer.
 
-This module provides the complete LDIF processing API using flext-core
-patterns for result handling, configuration, and dependency injection.
+This module implements the main application service for LDIF processing operations,
+following Clean Architecture principles and providing a unified API for all LDIF
+operations with comprehensive error handling and observability integration.
+
+The FlextLdifAPI serves as the primary entry point for LDIF processing, orchestrating
+domain services and implementing use cases while maintaining separation of concerns
+and dependency inversion principles.
+
+Key Components:
+    - FlextLdifAPI: Main application service orchestrating LDIF operations
+    - Service integration with flext-core dependency injection container
+    - Observability integration with flext-observability for monitoring
+    - Configuration management with enterprise-grade settings validation
+
+Architecture:
+    Part of Application Layer in Clean Architecture, this module coordinates
+    between domain services and infrastructure concerns without containing
+    business logic. Uses dependency injection for service resolution and
+    FlextResult pattern for consistent error handling.
+
+Performance:
+    Optimized for enterprise workloads with configurable processing limits,
+    memory management, and timeout handling. Supports both synchronous and
+    streaming processing modes based on configuration.
+
+Example:
+    Basic API usage with configuration and error handling:
+
+    >>> from flext_ldif import FlextLdifAPI, FlextLdifConfig
+    >>>
+    >>> # Configure API for production use
+    >>> config = FlextLdifConfig(
+    ...     max_entries=50000,
+    ...     strict_validation=True,
+    ...     enable_observability=True
+    ... )
+    >>>
+    >>> api = FlextLdifAPI(config)
+    >>>
+    >>> # Parse LDIF with comprehensive error handling
+    >>> result = api.parse(ldif_content)
+    >>> if result.is_success:
+    ...     entries = result.data
+    ...     validation_result = api.validate(entries)
+    ...     if validation_result.is_success:
+    ...         output_result = api.write(entries)
+
+Integration:
+    - Uses flext-core FlextResult pattern for railway-oriented programming
+    - Integrates with flext-observability for distributed tracing and metrics
+    - Coordinates with domain services through dependency injection
+    - Provides unified interface for all LDIF processing operations
+
+Author: FLEXT Development Team
+Version: 0.9.0
+License: MIT
+
 """
 
 from __future__ import annotations
@@ -9,7 +64,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from flext_core import FlextResult, get_logger
+from flext_core import FlextResult, get_flext_container, get_logger
 from flext_observability import (
     FlextObservabilityMonitor,
     flext_create_trace,
@@ -17,7 +72,12 @@ from flext_observability import (
 )
 
 from .config import FlextLdifConfig
-from .core import TLdif
+from .services import (
+    FlextLdifParserService,
+    FlextLdifValidatorService,
+    FlextLdifWriterService,
+    register_ldif_services,
+)
 
 if TYPE_CHECKING:
     from .models import FlextLdifEntry, LDIFContent
@@ -40,6 +100,50 @@ class FlextLdifAPI:
             self.config.output_encoding,
         )
         self.logger.trace("Full configuration: %s", self.config.model_dump())
+
+        # Initialize services with DI container
+        self.logger.debug("Registering LDIF services in DI container")
+        register_result = register_ldif_services(config=self.config)
+        if register_result.is_failure:
+            self.logger.error(
+                "Failed to register LDIF services: %s",
+                register_result.error,
+            )
+            msg = f"Service registration failed: {register_result.error}"
+            raise RuntimeError(msg)
+
+        # Get services from container
+        container = get_flext_container()
+
+        parser_result = container.get("ldif_parser")
+        if parser_result.is_success and isinstance(
+            parser_result.data,
+            FlextLdifParserService,
+        ):
+            self._parser_service = parser_result.data
+        else:
+            msg = "Failed to get parser service"
+            raise RuntimeError(msg)
+
+        writer_result = container.get("ldif_writer")
+        if writer_result.is_success and isinstance(
+            writer_result.data,
+            FlextLdifWriterService,
+        ):
+            self._writer_service = writer_result.data
+        else:
+            msg = "Failed to get writer service"
+            raise RuntimeError(msg)
+
+        validator_result = container.get("ldif_validator")
+        if validator_result.is_success and isinstance(
+            validator_result.data,
+            FlextLdifValidatorService,
+        ):
+            self._validator_service = validator_result.data
+        else:
+            msg = "Failed to get validator service"
+            raise RuntimeError(msg)
 
         # Real observability integration
         self.logger.debug("Initializing observability monitor")
@@ -124,8 +228,8 @@ class FlextLdifAPI:
             "Strict validation enabled, validating %d entries",
             entries_count,
         )
-        self.logger.trace("Running TLdif.validate_entries with strict mode")
-        validate_result = TLdif.validate_entries(entries)
+        self.logger.trace("Running validate_entries with strict mode")
+        validate_result = self._validator_service.validate(entries)
 
         if not validate_result.is_success:
             self.logger.warning("Strict validation warnings: %s", validate_result.error)
@@ -223,14 +327,14 @@ class FlextLdifAPI:
         try:
             content_size = self._record_content_metrics(content)
 
-            # Parse using core functionality
-            self.logger.debug("Delegating to TLdif.parse for core parsing")
+            # Parse using service
+            self.logger.debug("Delegating to parser service for core parsing")
             self.logger.trace(
                 "Using configuration: strict_validation=%s, max_entries=%d",
                 self.config.strict_validation,
                 self.config.max_entries,
             )
-            parse_result = TLdif.parse(content)
+            parse_result = self._parser_service.parse(content)
 
             if not parse_result.is_success:
                 return self._handle_parse_failure(parse_result)
@@ -280,8 +384,8 @@ class FlextLdifAPI:
                 "counter",
             )
 
-            # Parse using core functionality with input encoding
-            parse_result = TLdif.read_file(file_path, self.config.input_encoding)
+            # Parse using service with input encoding
+            parse_result = self._parser_service.parse_file(file_path)
             if not parse_result.is_success:
                 self._observability_monitor.flext_record_metric(
                     "ldif_file_parse_errors_total",
@@ -314,7 +418,7 @@ class FlextLdifAPI:
                 )
 
             if self.config.strict_validation:
-                validate_result = TLdif.validate_entries(entries)
+                validate_result = self._validator_service.validate(entries)
                 if not validate_result.is_success:
                     self.logger.warning(
                         "File validation warnings: %s",
@@ -438,33 +542,6 @@ class FlextLdifAPI:
 
         return FlextResult.ok(None)
 
-    def _perform_core_validation(
-        self,
-        entries: list[FlextLdifEntry],
-    ) -> FlextResult[bool]:
-        """Perform core validation using TLdif and log results."""
-        self.logger.debug("Delegating to TLdif.validate_entries for core validation")
-        self.logger.trace(
-            "Core validation will check DN format, attribute names, and objectClass presence",
-        )
-        result = TLdif.validate_entries(entries)
-
-        if result.is_success:
-            self.logger.debug("Core validation passed for all %d entries", len(entries))
-            self.logger.info(
-                "Entry validation completed successfully",
-                entries_validated=len(entries),
-                allow_empty_attributes=self.config.allow_empty_attributes,
-                max_entry_size=self.config.max_entry_size,
-            )
-        else:
-            self.logger.warning("Core validation failed: %s", result.error)
-            self.logger.debug(
-                "Validation failure details logged by TLdif.validate_entries",
-            )
-
-        return result
-
     def validate(self, entries: list[FlextLdifEntry]) -> FlextResult[bool]:
         """Validate LDIF entries using configuration settings."""
         self.logger.debug("Starting validation of %d entries", len(entries))
@@ -488,7 +565,7 @@ class FlextLdifAPI:
             return FlextResult.fail(size_result.error or "Entry size validation failed")
 
         # Perform core validation
-        return self._perform_core_validation(entries)
+        return self._validator_service.validate(entries)
 
     def _resolve_output_path(self, file_path: str | Path) -> Path:
         """Resolve output file path using configuration."""
@@ -537,58 +614,6 @@ class FlextLdifAPI:
                 "Skipping directory creation (disabled or no parent directory)",
             )
 
-    def _write_to_file(
-        self, entries: list[FlextLdifEntry], file_path: Path
-    ) -> FlextResult[str]:
-        """Write entries to file with proper logging."""
-        self.logger.debug(
-            "Delegating to TLdif.write_file with encoding: %s",
-            self.config.output_encoding,
-        )
-        self.logger.trace(
-            "Writing entries to file: %s",
-            [str(entry.dn) for entry in entries[:3]],
-        )  # First 3 for trace
-
-        result = TLdif.write_file(entries, file_path, self.config.output_encoding)
-        if result.is_success:
-            self.logger.debug("File write successful: %s", file_path)
-            self.logger.info(
-                "LDIF entries written to file",
-                entries_count=len(entries),
-                file_path=str(file_path),
-                encoding=self.config.output_encoding,
-            )
-            return FlextResult.ok(f"Written to {file_path}")
-
-        self.logger.error("File write failed: %s", result.error)
-        self.logger.debug("TLdif.write_file returned failure")
-        return FlextResult.fail(result.error or "Write failed")
-
-    def _write_to_string(self, entries: list[FlextLdifEntry]) -> FlextResult[str]:
-        """Write entries to string with proper logging."""
-        self.logger.debug("Writing to string (no file path provided)")
-        self.logger.trace("Delegating to TLdif.write for string output")
-
-        string_result: FlextResult[str] = TLdif.write(entries)
-        if string_result.is_success and string_result.data:
-            output_size = len(string_result.data)
-            self.logger.debug(
-                "String write successful, output size: %d characters",
-                output_size,
-            )
-            self.logger.trace("String output preview: %s...", string_result.data[:100])
-            self.logger.info(
-                "LDIF entries converted to string",
-                entries_count=len(entries),
-                output_size_chars=output_size,
-            )
-            return FlextResult.ok(string_result.data)
-
-        self.logger.error("String write failed: %s", string_result.error)
-        self.logger.debug("TLdif.write returned failure")
-        return FlextResult.fail(string_result.error or "String write failed")
-
     def write(
         self,
         entries: list[FlextLdifEntry],
@@ -605,10 +630,13 @@ class FlextLdifAPI:
             resolved_path = self._resolve_output_path(file_path)
             self._create_output_directory(resolved_path)
 
-            # Write to file
-            return self._write_to_file(entries, resolved_path)
-        # Write to string
-        return self._write_to_string(entries)
+            # Write to file using service
+            write_result = self._writer_service.write_file(entries, resolved_path)
+            if write_result.is_success:
+                return FlextResult.ok(f"Written to {resolved_path}")
+            return FlextResult.fail(write_result.error or "Write failed")
+        # Write to string using service
+        return self._writer_service.write(entries)
 
     @flext_monitor_function(metric_name="ldif_filter_persons")
     def filter_persons(
@@ -705,7 +733,7 @@ class FlextLdifAPI:
 
     def entries_to_ldif(self, entries: list[FlextLdifEntry]) -> str:
         """Convert multiple entries to LDIF content using intelligent formatting."""
-        result = TLdif.write(entries)
+        result = self._writer_service.write(entries)
         if not result.is_success:
             error_msg = result.error or "LDIF write operation failed"
             error_message = f"Failed to convert entries to LDIF: {error_msg}"

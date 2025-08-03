@@ -1,7 +1,18 @@
-"""Validation utilities for flext-ldif to consolidate business logic.
+"""FLEXT-LDIF Validation Utilities
 
-This module provides common validation patterns used throughout the
-flext-ldif codebase, reducing duplication and improving consistency.
+This module provides comprehensive validation utilities for LDIF processing
+operations, implementing reusable validation patterns, business rule validation,
+and data integrity checks across all architectural layers.
+
+Key Components:
+    - DN syntax validation with RFC 4514 compliance
+    - LDIF format validation and structure checking
+    - Attribute name and value validation patterns
+    - Business rule validation with configurable strictness
+
+Author: FLEXT Development Team
+Version: 0.9.0
+License: MIT
 """
 
 from __future__ import annotations

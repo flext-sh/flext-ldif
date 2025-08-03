@@ -232,7 +232,8 @@ class TestFlextLdifEntryEnterprise:
         entry = FlextLdifEntry.model_validate(sample_entry_data)
 
         # Should not raise exception
-        entry.validate_domain_rules()
+        result = entry.validate_semantic_rules()
+        assert result.is_success
 
     def test_validate_domain_rules_empty_dn_fails(self) -> None:
         """Test domain rules validation fails for empty DN."""
@@ -252,7 +253,7 @@ class TestFlextLdifEntryEnterprise:
                 "attributes": {},
             },
         )
-        result = entry.validate_domain_rules()
+        result = entry.validate_semantic_rules()
         assert result.is_failure
         assert "LDIF entry must have at least one attribute" in result.error
 

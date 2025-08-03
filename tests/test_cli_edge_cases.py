@@ -25,8 +25,8 @@ class TestFlextLdifCLIEdgeCases:
         with patch("flext_ldif.cli.create_api_with_config") as mock_create_api:
             # Create a mock entry that fails validation
             mock_entry = Mock()
-            mock_entry.validate_domain_rules.return_value.is_success = False
-            mock_entry.validate_domain_rules.return_value.error = "Invalid DN"
+            mock_entry.validate_semantic_rules.return_value.is_success = False
+            mock_entry.validate_semantic_rules.return_value.error = "Invalid DN"
             mock_entry.dn = "invalid-dn"
 
             mock_api = Mock()
@@ -34,6 +34,12 @@ class TestFlextLdifCLIEdgeCases:
             mock_api.parse_file.return_value.data = [
                 mock_entry,
             ] * 10  # 10 validation errors
+            # Mock get_entry_statistics to return proper dict instead of Mock
+            mock_api.get_entry_statistics.return_value = {
+                "total_entries": 10,
+                "valid_entries": 0,
+                "person_entries": 0,
+            }
             mock_create_api.return_value = mock_api
 
             with tempfile.NamedTemporaryFile(
@@ -325,14 +331,20 @@ cn: test
             mock_entries = []
             for i in range(10):  # More than MAX_DISPLAYED_ERRORS (5)
                 mock_entry = Mock()
-                mock_entry.validate_domain_rules.return_value.is_success = False
-                mock_entry.validate_domain_rules.return_value.error = f"Error {i}"
+                mock_entry.validate_semantic_rules.return_value.is_success = False
+                mock_entry.validate_semantic_rules.return_value.error = f"Error {i}"
                 mock_entry.dn = f"dn{i}"
                 mock_entries.append(mock_entry)
 
             mock_api = Mock()
             mock_api.parse_file.return_value.is_success = True
             mock_api.parse_file.return_value.data = mock_entries
+            # Mock get_entry_statistics to return proper dict instead of Mock
+            mock_api.get_entry_statistics.return_value = {
+                "total_entries": 10,
+                "valid_entries": 0,
+                "person_entries": 0,
+            }
             mock_create_api.return_value = mock_api
 
             with tempfile.NamedTemporaryFile(

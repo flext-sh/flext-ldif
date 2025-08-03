@@ -218,7 +218,7 @@ class TestModelsCoverageTargeted:
             attributes=FlextLdifAttributes(attributes={}),  # Empty attributes
         )
 
-        result = entry.validate_domain_rules()
+        result = entry.validate_semantic_rules()
         assert not result.is_success
         assert "at least one attribute" in result.error
 
@@ -226,7 +226,7 @@ class TestModelsCoverageTargeted:
         """Test attributes validation failures."""
         # Test invalid attribute names
         attrs = FlextLdifAttributes(attributes={"": ["value"]})  # Empty attribute name
-        result = attrs.validate_domain_rules()
+        result = attrs.validate_semantic_rules()
         assert not result.is_success
         assert "Invalid attribute name" in result.error
 

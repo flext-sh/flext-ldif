@@ -1,7 +1,19 @@
-"""Logging utilities for flext-ldif to standardize logger creation.
+"""FLEXT-LDIF Logging Utilities
 
-This module provides common logging patterns to reduce duplication
-across the flext-ldif codebase.
+This module provides standardized logging utilities and patterns for FLEXT-LDIF
+operations, implementing structured logging with flext-core integration and
+enterprise-grade logging configuration for consistent log formatting across
+all architectural layers.
+
+Key Components:
+    - Module logger factory with consistent naming patterns
+    - Performance logging utilities for operation monitoring
+    - Structured logging helpers with correlation IDs
+    - Logger mixins for class-based logging integration
+
+Author: FLEXT Development Team
+Version: 0.9.0
+License: MIT
 """
 
 from __future__ import annotations

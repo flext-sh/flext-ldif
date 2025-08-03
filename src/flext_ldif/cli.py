@@ -1,7 +1,33 @@
-"""FLEXT LDIF Command Line Interface.
+"""FLEXT-LDIF Command Line Interface
 
-Enterprise-grade CLI for LDIF processing using flext-cli foundation.
-Provides comprehensive LDIF parsing, validation, and transformation capabilities.
+This module implements the command-line interface for FLEXT-LDIF operations,
+providing enterprise-grade CLI functionality built on flext-cli foundation
+patterns with comprehensive LDIF processing, validation, and transformation capabilities.
+
+The CLI provides a user-friendly interface for common LDIF operations while
+maintaining enterprise-grade error handling, configuration management, and
+integration with the broader FLEXT ecosystem.
+
+Commands Available:
+    - parse: Parse LDIF files with validation and format conversion
+    - validate: Validate LDIF files against business rules and standards
+    - transform: Transform LDIF data with filtering and modification options
+    - info: Display information about LDIF files and entries
+
+Architecture:
+    Part of Interface Layer in Clean Architecture, this module provides
+    user interface access to application services without containing
+    business logic, delegating all operations to the FlextLdifAPI.
+
+Integration:
+    - Built on flext-cli foundation for consistent CLI patterns
+    - Uses FlextLdifAPI for all LDIF processing operations
+    - Integrates with flext-core logging and error handling
+    - Supports enterprise configuration and environment variables
+
+Author: FLEXT Development Team
+Version: 0.9.0
+License: MIT
 """
 
 from __future__ import annotations
@@ -9,7 +35,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
     from flext_core import FlextResult
@@ -136,7 +162,7 @@ def handle_validation_errors(entries: list[FlextLdifEntry]) -> None:
 
     for i, entry in enumerate(entries):
         logger.trace("Validating entry %d: %s", i + 1, entry.dn)
-        validation_result = entry.validate_domain_rules()
+        validation_result = entry.validate_semantic_rules()
         if not validation_result.is_success:
             error_msg = f"Entry {i + 1} ({entry.dn}): {validation_result.error}"
             validation_errors.append(error_msg)
@@ -307,7 +333,9 @@ def cli(
 
 
 def _parse_and_log_file(
-    api: FlextLdifAPI, input_file: str, max_entries: int | None
+    api: FlextLdifAPI,
+    input_file: str,
+    max_entries: int | None,
 ) -> list[FlextLdifEntry]:
     """Parse LDIF file with logging and return entries."""
     logger.debug("Parsing LDIF file: %s", input_file)
@@ -318,12 +346,13 @@ def _parse_and_log_file(
     )
 
     # Handle parsing result with utility
-    handle_parse_result(cast("FlextResult[Any]", result), input_file)
+    handle_parse_result(cast("FlextResult[list[FlextLdifEntry]]", result), input_file)
 
     entries = cast("FlextResult[list[FlextLdifEntry]]", result).data
     if entries is None:  # Safety check
         safe_click_echo(
-            "Internal error: entries is None after successful parse", err=True
+            "Internal error: entries is None after successful parse",
+            err=True,
         )
         sys.exit(1)
 
@@ -338,7 +367,9 @@ def _parse_and_log_file(
 
 
 def _handle_optional_validation(
-    entries: list[FlextLdifEntry], *, validate: bool
+    entries: list[FlextLdifEntry],
+    *,
+    validate: bool,
 ) -> None:
     """Handle optional validation of entries."""
     if validate:
@@ -425,7 +456,7 @@ def _validate_entries(entries: list[FlextLdifEntry]) -> list[str]:
     """Validate entries and return list of error messages."""
     validation_errors = []
     for i, entry in enumerate(entries):
-        validation_result = entry.validate_domain_rules()
+        validation_result = entry.validate_semantic_rules()
         if not validation_result.is_success:
             validation_errors.append(
                 f"Entry {i + 1} ({entry.dn}): {validation_result.error}",
@@ -474,7 +505,10 @@ def validate(
 
         # Parse file and handle errors
         parse_result = api.parse_file(input_file)
-        handle_parse_result(cast("FlextResult[Any]", parse_result), input_file)
+        handle_parse_result(
+            cast("FlextResult[list[FlextLdifEntry]]", parse_result),
+            input_file,
+        )
 
         # Type assertion: we know parse_result is successful from handle_parse_result
         parse_result_typed = cast("FlextResult[list[FlextLdifEntry]]", parse_result)
@@ -482,7 +516,8 @@ def validate(
 
         if entries is None:  # Safety check
             safe_click_echo(
-                "Internal error: entries is None after successful parse", err=True
+                "Internal error: entries is None after successful parse",
+                err=True,
             )
             sys.exit(1)
 
