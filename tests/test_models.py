@@ -1,4 +1,25 @@
-"""Tests for LDIF models."""
+"""FLEXT-LDIF Domain Models Test Suite.
+
+Comprehensive test suite for FLEXT-LDIF domain models including FlextLdifEntry,
+FlextLdifDistinguishedName, and FlextLdifAttributes, validating business logic,
+domain rules, and value object behaviors following Clean Architecture patterns.
+
+Test Coverage:
+    - Domain entity validation and business rules
+    - Value object immutability and validation
+    - Distinguished Name parsing and hierarchy operations
+    - Attribute collection management and operations
+    - Model serialization and deserialization patterns
+
+Architecture:
+    Tests the Domain Layer components in isolation, ensuring business logic
+    correctness without external dependencies, following enterprise testing
+    standards with comprehensive edge case coverage.
+
+Author: FLEXT Development Team
+Version: 0.9.0
+License: MIT
+"""
 
 from __future__ import annotations
 
