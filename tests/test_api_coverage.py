@@ -98,10 +98,12 @@ cn: test
         # Try to write to invalid path
         result = api.write([], "/invalid/path/file.ldif")
         assert not result.is_success
-        assert ("Write failed" in result.error or
-                "File write failed" in result.error or
-                "Failed to create directory" in result.error or
-                "Permission denied" in result.error)
+        assert (
+            "Write failed" in result.error
+            or "File write failed" in result.error
+            or "Failed to create directory" in result.error
+            or "Permission denied" in result.error
+        )
 
     def test_api_filter_persons_error(self) -> None:
         """Test API filter_persons with error condition."""

@@ -185,23 +185,23 @@ from .events import LdifEntryCreated, LdifEntryModified
 class FlextLdifEntry(FlextEntity):
     """
     Core LDIF entry domain entity encapsulating business logic and invariants.
-    
+
     This entity represents a single LDIF entry with its distinguished name
     and attributes, implementing all business rules and validation logic
     for LDIF data processing.
-    
+
     Attributes:
         dn: Distinguished name value object
         attributes: Attributes value object containing all entry attributes
         change_type: Optional change operation type (add, modify, delete)
-        
+
     Business Rules:
         - DN cannot be empty or None
         - objectClass attribute is required for standard entries
         - Attribute names must follow LDAP naming conventions
         - Change records must have valid change operations
     """
-    
+
     def __init__(
         self,
         dn: FlextLdifDistinguishedName,
@@ -213,53 +213,53 @@ class FlextLdifEntry(FlextEntity):
         self._attributes = attributes
         self._change_type = change_type
         self._validate_invariants()
-        
+
         # Raise domain event
         self._raise_event(LdifEntryCreated(entry_id=self.id, dn=dn.value))
-    
+
     @property
     def dn(self) -> FlextLdifDistinguishedName:
         """Get the distinguished name."""
         return self._dn
-    
+
     @property
     def attributes(self) -> FlextLdifAttributes:
         """Get the attributes collection."""
         return self._attributes
-    
+
     def validate_domain_rules(self) -> None:
         """
         Validate business rules and invariants for this LDIF entry.
-        
+
         Raises:
             FlextLdifDomainError: When business rules are violated
         """
         self._validate_invariants()
         self._validate_object_classes()
         self._validate_attribute_semantics()
-    
+
     def add_attribute(self, name: str, values: List[str]) -> None:
         """
         Add attribute values to this entry with business rule validation.
-        
+
         Args:
             name: Attribute name following LDAP conventions
             values: List of attribute values
-            
+
         Raises:
             FlextLdifDomainError: When attribute addition violates business rules
         """
         self._attributes = self._attributes.add_values(name, values)
         self._raise_event(LdifEntryModified(entry_id=self.id, attribute=name))
-    
+
     def remove_attribute(self, name: str, values: Optional[List[str]] = None) -> None:
         """
         Remove attribute or specific values with business rule validation.
-        
+
         Args:
             name: Attribute name to remove
             values: Specific values to remove, or None to remove entire attribute
-            
+
         Raises:
             FlextLdifDomainError: When removal violates business rules
         """
@@ -267,35 +267,35 @@ class FlextLdifEntry(FlextEntity):
             self._attributes = self._attributes.remove_attribute(name)
         else:
             self._attributes = self._attributes.remove_values(name, values)
-        
+
         self._raise_event(LdifEntryModified(entry_id=self.id, attribute=name))
-    
+
     def get_object_classes(self) -> Set[str]:
         """Get all objectClass values for this entry."""
         return set(self._attributes.get_values("objectClass"))
-    
+
     def has_object_class(self, object_class: str) -> bool:
         """Check if entry has specific objectClass."""
         return object_class.lower() in {oc.lower() for oc in self.get_object_classes()}
-    
+
     def is_structural_entry(self) -> bool:
         """Determine if this is a structural entry (not auxiliary)."""
         structural_classes = {"person", "organizationalPerson", "inetOrgPerson", "organizationalUnit"}
         return bool(self.get_object_classes().intersection(structural_classes))
-    
+
     def _validate_invariants(self) -> None:
         """Validate core business invariants."""
         if not self._dn or not self._dn.value:
             raise FlextLdifDomainError("Distinguished name cannot be empty")
-        
+
         if self._change_type and self._change_type not in {"add", "modify", "delete", "moddn"}:
             raise FlextLdifDomainError(f"Invalid change type: {self._change_type}")
-    
+
     def _validate_object_classes(self) -> None:
         """Validate objectClass requirements."""
         if not self._change_type and not self._attributes.has_attribute("objectClass"):
             raise FlextLdifDomainError("Standard entries must have objectClass attribute")
-    
+
     def _validate_attribute_semantics(self) -> None:
         """Validate attribute semantic rules."""
         for name in self._attributes.get_attribute_names():
@@ -305,11 +305,11 @@ class FlextLdifEntry(FlextEntity):
 class FlextLdifChangeRecord(FlextEntity):
     """
     LDIF change record entity for modification operations.
-    
+
     Represents LDIF change records with proper change semantics and
     business rule validation for modification operations.
     """
-    
+
     def __init__(
         self,
         dn: FlextLdifDistinguishedName,
@@ -321,18 +321,18 @@ class FlextLdifChangeRecord(FlextEntity):
         self._change_type = change_type
         self._modifications = modifications
         self._validate_change_semantics()
-    
+
     def validate_domain_rules(self) -> None:
         """Validate change record business rules."""
         self._validate_change_semantics()
         self._validate_modification_consistency()
-    
+
     def _validate_change_semantics(self) -> None:
         """Validate change operation semantics."""
         valid_changes = {"add", "delete", "modify", "moddn"}
         if self._change_type not in valid_changes:
             raise FlextLdifDomainError(f"Invalid change type: {self._change_type}")
-    
+
     def _validate_modification_consistency(self) -> None:
         """Validate modification consistency rules."""
         # Implementation of complex change validation logic
@@ -387,36 +387,36 @@ from .exceptions import FlextLdifDomainError
 class FlextLdifDistinguishedName(FlextValueObject):
     """
     Immutable distinguished name value object with hierarchy operations.
-    
+
     Represents LDAP distinguished names with business logic for DN manipulation,
     validation, and hierarchical operations following RFC standards.
-    
+
     Attributes:
         value: The DN string value
-        
+
     Business Rules:
         - DN must follow LDAP DN syntax (RFC 4514)
         - Components must be properly formatted (attribute=value)
         - Special characters must be properly escaped
         - Empty DNs are not allowed for standard entries
     """
-    
+
     value: str
-    
+
     def __post_init__(self) -> None:
         """Validate DN format and business rules."""
         if not self.value:
             raise FlextLdifDomainError("Distinguished name cannot be empty")
-        
+
         self._validate_dn_syntax()
-    
+
     def get_rdn(self) -> str:
         """
         Get the relative distinguished name (leftmost component).
-        
+
         Returns:
             The RDN string (e.g., "cn=John Doe")
-            
+
         Example:
             >>> dn = FlextLdifDistinguishedName("cn=user,ou=people,dc=example,dc=com")
             >>> rdn = dn.get_rdn()
@@ -424,14 +424,14 @@ class FlextLdifDistinguishedName(FlextValueObject):
         """
         components = self._parse_components()
         return components[0] if components else ""
-    
+
     def get_parent(self) -> Optional['FlextLdifDistinguishedName']:
         """
         Get parent DN by removing the RDN.
-        
+
         Returns:
             Parent DN or None if this is a root DN
-            
+
         Example:
             >>> dn = FlextLdifDistinguishedName("cn=user,ou=people,dc=example,dc=com")
             >>> parent = dn.get_parent()
@@ -440,34 +440,34 @@ class FlextLdifDistinguishedName(FlextValueObject):
         components = self._parse_components()
         if len(components) <= 1:
             return None
-        
+
         parent_dn = ",".join(components[1:])
         return FlextLdifDistinguishedName(parent_dn)
-    
+
     def get_depth(self) -> int:
         """
         Get DN depth (number of components).
-        
+
         Returns:
             Number of DN components
-            
+
         Example:
             >>> dn = FlextLdifDistinguishedName("cn=user,ou=people,dc=example,dc=com")
             >>> depth = dn.get_depth()
             >>> print(depth)  # 4
         """
         return len(self._parse_components())
-    
+
     def is_child_of(self, parent: 'FlextLdifDistinguishedName') -> bool:
         """
         Check if this DN is a child of the specified parent DN.
-        
+
         Args:
             parent: Potential parent DN
-            
+
         Returns:
             True if this DN is a direct child of parent
-            
+
         Example:
             >>> child = FlextLdifDistinguishedName("cn=user,ou=people,dc=example,dc=com")
             >>> parent = FlextLdifDistinguishedName("ou=people,dc=example,dc=com")
@@ -475,40 +475,40 @@ class FlextLdifDistinguishedName(FlextValueObject):
         """
         my_parent = self.get_parent()
         return my_parent is not None and my_parent.value.lower() == parent.value.lower()
-    
+
     def is_ancestor_of(self, descendant: 'FlextLdifDistinguishedName') -> bool:
         """
         Check if this DN is an ancestor of the specified descendant DN.
-        
+
         Args:
             descendant: Potential descendant DN
-            
+
         Returns:
             True if this DN is an ancestor of descendant
         """
         return descendant.value.lower().endswith(self.value.lower())
-    
+
     def get_components(self) -> List[str]:
         """
         Get all DN components as a list.
-        
+
         Returns:
             List of DN components from RDN to root
-            
+
         Example:
             >>> dn = FlextLdifDistinguishedName("cn=user,ou=people,dc=example,dc=com")
             >>> components = dn.get_components()
             >>> print(components)  # ["cn=user", "ou=people", "dc=example", "dc=com"]
         """
         return self._parse_components()
-    
+
     def get_attribute_type(self) -> str:
         """
         Get the attribute type of the RDN.
-        
+
         Returns:
             Attribute type of the leftmost RDN component
-            
+
         Example:
             >>> dn = FlextLdifDistinguishedName("cn=user,ou=people,dc=example,dc=com")
             >>> attr_type = dn.get_attribute_type()
@@ -517,16 +517,16 @@ class FlextLdifDistinguishedName(FlextValueObject):
         rdn = self.get_rdn()
         if "=" not in rdn:
             raise FlextLdifDomainError(f"Invalid RDN format: {rdn}")
-        
+
         return rdn.split("=", 1)[0].strip()
-    
+
     def get_attribute_value(self) -> str:
         """
         Get the attribute value of the RDN.
-        
+
         Returns:
             Attribute value of the leftmost RDN component
-            
+
         Example:
             >>> dn = FlextLdifDistinguishedName("cn=user,ou=people,dc=example,dc=com")
             >>> attr_value = dn.get_attribute_value()
@@ -535,16 +535,16 @@ class FlextLdifDistinguishedName(FlextValueObject):
         rdn = self.get_rdn()
         if "=" not in rdn:
             raise FlextLdifDomainError(f"Invalid RDN format: {rdn}")
-        
+
         return rdn.split("=", 1)[1].strip()
-    
+
     def _parse_components(self) -> List[str]:
         """Parse DN into components handling escaped characters."""
         # Simplified parsing - in production, use proper LDAP DN parser
         components = []
         current = ""
         escaped = False
-        
+
         for char in self.value:
             if escaped:
                 current += char
@@ -557,26 +557,26 @@ class FlextLdifDistinguishedName(FlextValueObject):
                 current = ""
             else:
                 current += char
-        
+
         if current.strip():
             components.append(current.strip())
-        
+
         return components
-    
+
     def _validate_dn_syntax(self) -> None:
         """Validate DN syntax according to RFC standards."""
         # Basic DN validation - enhance with proper RFC 4514 validation
         components = self._parse_components()
-        
+
         for component in components:
             if "=" not in component:
                 raise FlextLdifDomainError(f"Invalid DN component: {component}")
-            
+
             attr_type, attr_value = component.split("=", 1)
-            
+
             if not attr_type.strip():
                 raise FlextLdifDomainError(f"Empty attribute type in: {component}")
-            
+
             if not attr_value.strip():
                 raise FlextLdifDomainError(f"Empty attribute value in: {component}")
 
@@ -584,54 +584,54 @@ class FlextLdifDistinguishedName(FlextValueObject):
 class FlextLdifAttributes(FlextValueObject):
     """
     Immutable attributes collection with business rule validation.
-    
+
     Represents LDIF entry attributes as an immutable collection with
     business logic for attribute manipulation and validation.
-    
+
     Attributes:
         attributes: Dictionary mapping attribute names to value lists
-        
+
     Business Rules:
         - Attribute names must follow LDAP naming conventions
         - Values cannot be empty unless explicitly allowed
         - objectClass attribute has special validation rules
         - Binary attributes must be properly encoded
     """
-    
+
     attributes: Dict[str, List[str]]
-    
+
     def __post_init__(self) -> None:
         """Validate attributes and business rules."""
         self._validate_attribute_names()
         self._validate_attribute_values()
-    
+
     def get_values(self, name: str) -> List[str]:
         """
         Get all values for an attribute.
-        
+
         Args:
             name: Attribute name (case-insensitive)
-            
+
         Returns:
             List of attribute values, empty list if attribute doesn't exist
-            
+
         Example:
             >>> attrs = FlextLdifAttributes({"mail": ["user@example.com", "alt@example.com"]})
             >>> emails = attrs.get_values("mail")
             >>> print(emails)  # ["user@example.com", "alt@example.com"]
         """
         return self.attributes.get(name.lower(), [])
-    
+
     def get_single_value(self, name: str) -> Optional[str]:
         """
         Get first value of an attribute.
-        
+
         Args:
             name: Attribute name (case-insensitive)
-            
+
         Returns:
             First attribute value or None if attribute doesn't exist
-            
+
         Example:
             >>> attrs = FlextLdifAttributes({"cn": ["John Doe"]})
             >>> name = attrs.get_single_value("cn")
@@ -639,30 +639,30 @@ class FlextLdifAttributes(FlextValueObject):
         """
         values = self.get_values(name)
         return values[0] if values else None
-    
+
     def has_attribute(self, name: str) -> bool:
         """
         Check if attribute exists.
-        
+
         Args:
             name: Attribute name (case-insensitive)
-            
+
         Returns:
             True if attribute exists with at least one value
         """
         return bool(self.get_values(name))
-    
+
     def add_values(self, name: str, values: List[str]) -> 'FlextLdifAttributes':
         """
         Return new instance with added attribute values.
-        
+
         Args:
             name: Attribute name
             values: Values to add
-            
+
         Returns:
             New FlextLdifAttributes instance with added values
-            
+
         Example:
             >>> attrs = FlextLdifAttributes({"cn": ["John"]})
             >>> new_attrs = attrs.add_values("mail", ["john@example.com"])
@@ -671,84 +671,84 @@ class FlextLdifAttributes(FlextValueObject):
         new_attributes = dict(self.attributes)
         existing_values = new_attributes.get(name.lower(), [])
         new_attributes[name.lower()] = existing_values + [v for v in values if v not in existing_values]
-        
+
         return FlextLdifAttributes(new_attributes)
-    
+
     def remove_values(self, name: str, values: List[str]) -> 'FlextLdifAttributes':
         """
         Return new instance with removed attribute values.
-        
+
         Args:
             name: Attribute name
             values: Values to remove
-            
+
         Returns:
             New FlextLdifAttributes instance with removed values
         """
         new_attributes = dict(self.attributes)
         existing_values = new_attributes.get(name.lower(), [])
         new_values = [v for v in existing_values if v not in values]
-        
+
         if new_values:
             new_attributes[name.lower()] = new_values
         else:
             new_attributes.pop(name.lower(), None)
-        
+
         return FlextLdifAttributes(new_attributes)
-    
+
     def remove_attribute(self, name: str) -> 'FlextLdifAttributes':
         """
         Return new instance with entire attribute removed.
-        
+
         Args:
             name: Attribute name to remove
-            
+
         Returns:
             New FlextLdifAttributes instance without the attribute
         """
         new_attributes = dict(self.attributes)
         new_attributes.pop(name.lower(), None)
         return FlextLdifAttributes(new_attributes)
-    
+
     def get_attribute_names(self) -> Set[str]:
         """
         Get all attribute names.
-        
+
         Returns:
             Set of attribute names
         """
         return set(self.attributes.keys())
-    
+
     def get_total_values(self) -> int:
         """
         Get total number of values across all attributes.
-        
+
         Returns:
             Total value count
         """
         return sum(len(values) for values in self.attributes.values())
-    
+
     def is_empty(self) -> bool:
         """
         Check if no attributes are defined.
-        
+
         Returns:
             True if no attributes exist
         """
         return len(self.attributes) == 0
-    
+
     def _validate_attribute_names(self) -> None:
         """Validate attribute naming conventions."""
         for name in self.attributes.keys():
             if not re.match(r'^[a-zA-Z][a-zA-Z0-9-]*$', name):
                 raise FlextLdifDomainError(f"Invalid attribute name: {name}")
-    
+
     def _validate_attribute_values(self) -> None:
         """Validate attribute values according to business rules."""
         for name, values in self.attributes.items():
             if not values:
                 raise FlextLdifDomainError(f"Empty value list for attribute: {name}")
-            
+
             for value in values:
                 if not isinstance(value, str):
                     raise FlextLdifDomainError(f"Non-string value for attribute {name}: {value}")
@@ -808,16 +808,16 @@ logger = get_logger(__name__)
 class FlextLdifAPI:
     """
     Main application service providing unified LDIF operations.
-    
+
     This service orchestrates domain operations and provides a clean API
     for LDIF parsing, validation, transformation, and output generation,
     implementing use cases with proper error handling and logging.
-    
+
     The service follows the Application Service pattern from Clean Architecture,
     delegating business logic to domain objects and coordinating with
     infrastructure services.
     """
-    
+
     def __init__(
         self,
         settings: Optional[FlextLdifSettings] = None,
@@ -827,7 +827,7 @@ class FlextLdifAPI:
     ) -> None:
         """
         Initialize LDIF API with optional service dependencies.
-        
+
         Args:
             settings: Configuration settings, uses defaults if None
             parser_service: LDIF parser service, creates default if None
@@ -838,25 +838,25 @@ class FlextLdifAPI:
         self._parser = parser_service or FlextLdifParserService(self._settings)
         self._validator = validator_service or FlextLdifValidatorService(self._settings)
         self._writer = writer_service or FlextLdifWriterService(self._settings)
-        
+
         logger.info("FlextLdifAPI initialized", extra={
             "max_entries": self._settings.max_entries,
             "strict_validation": self._settings.strict_validation
         })
-    
+
     def parse_ldif(self, content: str) -> FlextResult[List[FlextLdifEntry]]:
         """
         Parse LDIF content into domain entities.
-        
+
         This method implements the "Parse LDIF Content" use case, orchestrating
         the parsing process with proper error handling and validation.
-        
+
         Args:
             content: LDIF content string to parse
-            
+
         Returns:
             FlextResult containing list of parsed entries or error details
-            
+
         Example:
             >>> api = FlextLdifAPI()
             >>> content = "dn: cn=user,dc=example,dc=com\\ncn: user\\n"
@@ -866,11 +866,11 @@ class FlextLdifAPI:
             >>>     print(f"Parsed {len(entries)} entries")
         """
         logger.debug("Starting LDIF parsing", extra={"content_length": len(content)})
-        
+
         # Create and execute parse command
         command = ParseLdifCommand(content=content, settings=self._settings)
         result = self._parser.execute_parse_command(command)
-        
+
         if result.is_success:
             entries = result.value
             logger.info("LDIF parsing completed successfully", extra={
@@ -882,22 +882,22 @@ class FlextLdifAPI:
                 "error": result.error,
                 "content_length": len(content)
             })
-        
+
         return result
-    
+
     def parse_ldif_file(self, file_path: Path) -> FlextResult[List[FlextLdifEntry]]:
         """
         Parse LDIF file into domain entities.
-        
+
         This method implements the "Parse LDIF File" use case, handling
         file I/O operations and delegating parsing to the content parser.
-        
+
         Args:
             file_path: Path to LDIF file
-            
+
         Returns:
             FlextResult containing list of parsed entries or error details
-            
+
         Example:
             >>> api = FlextLdifAPI()
             >>> result = api.parse_ldif_file(Path("data.ldif"))
@@ -905,17 +905,17 @@ class FlextLdifAPI:
             >>>     entries = result.value
         """
         logger.debug("Starting LDIF file parsing", extra={"file_path": str(file_path)})
-        
+
         try:
             if not file_path.exists():
                 return FlextResult.fail(f"LDIF file not found: {file_path}")
-            
+
             # Read file with proper encoding
             content = file_path.read_text(encoding=self._settings.input_encoding)
-            
+
             # Delegate to content parser
             return self.parse_ldif(content)
-            
+
         except Exception as e:
             error_msg = f"Failed to read LDIF file {file_path}: {str(e)}"
             logger.error("LDIF file parsing failed", extra={
@@ -923,20 +923,20 @@ class FlextLdifAPI:
                 "error": str(e)
             })
             return FlextResult.fail(error_msg)
-    
+
     def validate_entries(self, entries: List[FlextLdifEntry]) -> FlextResult[bool]:
         """
         Validate LDIF entries against business rules.
-        
+
         This method implements the "Validate LDIF Entries" use case,
         orchestrating validation across all entries with comprehensive reporting.
-        
+
         Args:
             entries: List of LDIF entries to validate
-            
+
         Returns:
             FlextResult indicating validation success/failure
-            
+
         Example:
             >>> api = FlextLdifAPI()
             >>> result = api.validate_entries(entries)
@@ -944,11 +944,11 @@ class FlextLdifAPI:
             >>>     print("All entries are valid")
         """
         logger.debug("Starting LDIF validation", extra={"entries_count": len(entries)})
-        
+
         # Create and execute validation command
         command = ValidateLdifCommand(entries=entries, settings=self._settings)
         result = self._validator.execute_validate_command(command)
-        
+
         if result.is_success:
             logger.info("LDIF validation completed successfully", extra={
                 "entries_count": len(entries),
@@ -959,22 +959,22 @@ class FlextLdifAPI:
                 "entries_count": len(entries),
                 "error": result.error
             })
-        
+
         return result
-    
+
     def write_ldif(self, entries: List[FlextLdifEntry]) -> FlextResult[str]:
         """
         Generate LDIF output from domain entities.
-        
+
         This method implements the "Generate LDIF Output" use case,
         orchestrating the writing process with proper formatting and validation.
-        
+
         Args:
             entries: List of LDIF entries to write
-            
+
         Returns:
             FlextResult containing generated LDIF string or error details
-            
+
         Example:
             >>> api = FlextLdifAPI()
             >>> result = api.write_ldif(entries)
@@ -983,11 +983,11 @@ class FlextLdifAPI:
             >>>     print(ldif_content)
         """
         logger.debug("Starting LDIF writing", extra={"entries_count": len(entries)})
-        
+
         # Create and execute write command
         command = WriteLdifCommand(entries=entries, settings=self._settings)
         result = self._writer.execute_write_command(command)
-        
+
         if result.is_success:
             content = result.value
             logger.info("LDIF writing completed successfully", extra={
@@ -999,23 +999,23 @@ class FlextLdifAPI:
                 "entries_count": len(entries),
                 "error": result.error
             })
-        
+
         return result
-    
+
     def write_ldif_file(self, entries: List[FlextLdifEntry], file_path: Path) -> FlextResult[bool]:
         """
         Write LDIF entries to file.
-        
+
         This method implements the "Write LDIF File" use case,
         handling file I/O operations and delegating content generation.
-        
+
         Args:
             entries: List of LDIF entries to write
             file_path: Output file path
-            
+
         Returns:
             FlextResult indicating write success/failure
-            
+
         Example:
             >>> api = FlextLdifAPI()
             >>> result = api.write_ldif_file(entries, Path("output.ldif"))
@@ -1026,23 +1026,23 @@ class FlextLdifAPI:
             "entries_count": len(entries),
             "file_path": str(file_path)
         })
-        
+
         try:
             # Generate LDIF content
             content_result = self.write_ldif(entries)
             if content_result.is_failure:
                 return FlextResult.fail(f"Failed to generate LDIF content: {content_result.error}")
-            
+
             # Write to file with proper encoding
             file_path.write_text(content_result.value, encoding=self._settings.output_encoding)
-            
+
             logger.info("LDIF file writing completed successfully", extra={
                 "entries_count": len(entries),
                 "file_path": str(file_path)
             })
-            
+
             return FlextResult.ok(True)
-            
+
         except Exception as e:
             error_msg = f"Failed to write LDIF file {file_path}: {str(e)}"
             logger.error("LDIF file writing failed", extra={
@@ -1050,7 +1050,7 @@ class FlextLdifAPI:
                 "error": str(e)
             })
             return FlextResult.fail(error_msg)
-    
+
     def search_entries(
         self,
         entries: List[FlextLdifEntry],
@@ -1058,17 +1058,17 @@ class FlextLdifAPI:
     ) -> FlextResult[List[FlextLdifEntry]]:
         """
         Search LDIF entries based on filter criteria.
-        
+
         This method implements the "Search LDIF Entries" use case,
         providing flexible entry filtering capabilities.
-        
+
         Args:
             entries: List of entries to search
             filter_criteria: Search criteria (objectClass, attributes, etc.)
-            
+
         Returns:
             FlextResult containing filtered entries or error details
-            
+
         Example:
             >>> api = FlextLdifAPI()
             >>> criteria = {"objectClass": "person", "mail": "*@example.com"}
@@ -1080,30 +1080,30 @@ class FlextLdifAPI:
             "entries_count": len(entries),
             "filter_criteria": filter_criteria
         })
-        
+
         # Create and execute search query
         query = SearchEntriesQuery(entries=entries, criteria=filter_criteria)
         # Implementation would use a query handler service
-        
+
         # Simplified implementation for example
         try:
             filtered_entries = []
             for entry in entries:
                 if self._matches_criteria(entry, filter_criteria):
                     filtered_entries.append(entry)
-            
+
             logger.info("LDIF entry search completed", extra={
                 "entries_count": len(entries),
                 "matches_found": len(filtered_entries)
             })
-            
+
             return FlextResult.ok(filtered_entries)
-            
+
         except Exception as e:
             error_msg = f"Search failed: {str(e)}"
             logger.error("LDIF entry search failed", extra={"error": str(e)})
             return FlextResult.fail(error_msg)
-    
+
     def _matches_criteria(self, entry: FlextLdifEntry, criteria: Dict[str, Any]) -> bool:
         """Check if entry matches search criteria."""
         for key, value in criteria.items():
@@ -1124,7 +1124,7 @@ class FlextLdifAPI:
                 else:
                     if value not in entry_values:
                         return False
-        
+
         return True
 ```
 
@@ -1174,45 +1174,45 @@ from pydantic import Field, validator
 class FlextLdifSettings(FlextBaseSettings):
     """
     LDIF processing configuration extending FLEXT foundation settings.
-    
+
     This configuration class provides comprehensive settings for LDIF processing
     operations, including parsing limits, validation rules, encoding options,
     and performance tuning parameters.
-    
+
     All settings support environment variable override using the LDIF_ prefix
     and provide sensible defaults for production use.
-    
+
     Attributes:
         Processing Limits:
             max_entries: Maximum number of entries to process
             max_attribute_values: Maximum values per attribute
             max_dn_length: Maximum DN length in characters
             max_line_length: Maximum LDIF line length
-            
+
         Validation Settings:
             strict_validation: Enable strict business rule validation
             allow_empty_attributes: Allow attributes with empty values
             validate_object_classes: Validate objectClass requirements
             validate_dn_syntax: Validate DN syntax according to RFC
-            
+
         Encoding Settings:
             input_encoding: File input encoding
             output_encoding: File output encoding
             line_separator: Line separator for output
-            
+
         Performance Settings:
             buffer_size: I/O buffer size for file operations
             enable_streaming: Enable streaming for large files
             parse_timeout: Parse timeout in seconds
             memory_limit_mb: Memory limit for processing
-            
+
         Output Formatting:
             wrap_lines: Wrap long lines at specified length
             sort_attributes: Sort attributes alphabetically in output
             include_empty_lines: Include empty lines between entries
             fold_line_length: Line folding length (RFC 2849)
     """
-    
+
     # Processing Limits
     max_entries: int = Field(
         default=10000,
@@ -1220,70 +1220,70 @@ class FlextLdifSettings(FlextBaseSettings):
         le=1000000,
         description="Maximum number of LDIF entries to process in a single operation"
     )
-    
+
     max_attribute_values: int = Field(
         default=1000,
         ge=1,
         le=10000,
         description="Maximum number of values allowed per attribute"
     )
-    
+
     max_dn_length: int = Field(
         default=1024,
         ge=1,
         le=8192,
         description="Maximum length of distinguished names in characters"
     )
-    
+
     max_line_length: int = Field(
         default=10000,
         ge=76,
         le=100000,
         description="Maximum LDIF line length before folding"
     )
-    
+
     # Validation Settings
     strict_validation: bool = Field(
         default=True,
         description="Enable strict business rule validation for all operations"
     )
-    
+
     allow_empty_attributes: bool = Field(
         default=False,
         description="Allow attributes with empty or whitespace-only values"
     )
-    
+
     validate_object_classes: bool = Field(
         default=True,
         description="Validate objectClass attribute requirements and dependencies"
     )
-    
+
     validate_dn_syntax: bool = Field(
         default=True,
         description="Validate DN syntax according to RFC 4514 standards"
     )
-    
+
     require_dn_for_entries: bool = Field(
         default=True,
         description="Require DN attribute for all non-change entries"
     )
-    
+
     # Encoding Settings
     input_encoding: str = Field(
         default="utf-8",
         description="Character encoding for input LDIF files"
     )
-    
+
     output_encoding: str = Field(
         default="utf-8",
         description="Character encoding for output LDIF files"
     )
-    
+
     line_separator: str = Field(
         default="\n",
         description="Line separator character for output formatting"
     )
-    
+
     # Performance Settings
     buffer_size: int = Field(
         default=8192,
@@ -1291,118 +1291,118 @@ class FlextLdifSettings(FlextBaseSettings):
         le=1048576,
         description="I/O buffer size in bytes for file operations"
     )
-    
+
     enable_streaming: bool = Field(
         default=False,
         description="Enable streaming mode for processing large LDIF files"
     )
-    
+
     parse_timeout: float = Field(
         default=300.0,
         ge=1.0,
         le=3600.0,
         description="Parse operation timeout in seconds"
     )
-    
+
     memory_limit_mb: int = Field(
         default=512,
         ge=64,
         le=8192,
         description="Memory limit in megabytes for LDIF processing"
     )
-    
+
     # Output Formatting
     wrap_lines: bool = Field(
         default=True,
         description="Wrap long lines according to LDIF specification"
     )
-    
+
     fold_line_length: int = Field(
         default=76,
         ge=20,
         le=200,
         description="Line folding length according to RFC 2849"
     )
-    
+
     sort_attributes: bool = Field(
         default=False,
         description="Sort attributes alphabetically in output"
     )
-    
+
     include_empty_lines: bool = Field(
         default=True,
         description="Include empty lines between entries in output"
     )
-    
+
     # Integration Settings
     enable_observability: bool = Field(
         default=True,
         description="Enable observability integration with flext-observability"
     )
-    
+
     enable_ldap_integration: bool = Field(
         default=False,
         description="Enable LDAP server integration with flext-ldap"
     )
-    
+
     log_level: str = Field(
         default="INFO",
         description="Logging level for LDIF operations"
     )
-    
+
     metric_prefix: str = Field(
         default="flext_ldif",
         description="Prefix for metrics collection"
     )
-    
+
     # Feature Flags
     enable_schema_validation: bool = Field(
         default=False,
         description="Enable LDAP schema validation (requires flext-ldap integration)"
     )
-    
+
     enable_change_records: bool = Field(
         default=True,
         description="Enable processing of LDIF change records"
     )
-    
+
     enable_binary_attributes: bool = Field(
         default=True,
         description="Enable processing of binary attributes with base64 encoding"
     )
-    
+
     enable_url_attributes: bool = Field(
         default=False,
         description="Enable processing of URL-based attribute values"
     )
-    
+
     # LDAP Integration Settings (when enabled)
     ldap_server_url: Optional[str] = Field(
         default=None,
         description="LDAP server URL for schema validation and integration"
     )
-    
+
     ldap_bind_dn: Optional[str] = Field(
         default=None,
         description="LDAP bind DN for authenticated operations"
     )
-    
+
     ldap_base_dn: Optional[str] = Field(
         default=None,
         description="Base DN for LDAP operations and validation"
     )
-    
+
     # Development and Testing
     debug_mode: bool = Field(
         default=False,
         description="Enable debug mode with verbose logging and validation"
     )
-    
+
     test_mode: bool = Field(
         default=False,
         description="Enable test mode with relaxed validation"
     )
-    
+
     @validator("log_level")
     def validate_log_level(cls, v: str) -> str:
         """Validate log level values."""
@@ -1410,7 +1410,7 @@ class FlextLdifSettings(FlextBaseSettings):
         if v.upper() not in valid_levels:
             raise ValueError(f"Invalid log level: {v}. Must be one of {valid_levels}")
         return v.upper()
-    
+
     @validator("input_encoding", "output_encoding")
     def validate_encoding(cls, v: str) -> str:
         """Validate encoding names."""
@@ -1420,7 +1420,7 @@ class FlextLdifSettings(FlextBaseSettings):
             return v
         except LookupError:
             raise ValueError(f"Invalid encoding: {v}")
-    
+
     @validator("line_separator")
     def validate_line_separator(cls, v: str) -> str:
         """Validate line separator values."""
@@ -1428,26 +1428,26 @@ class FlextLdifSettings(FlextBaseSettings):
         if v not in valid_separators:
             raise ValueError(f"Invalid line separator. Must be one of {valid_separators}")
         return v
-    
+
     @validator("ldap_server_url")
     def validate_ldap_url(cls, v: Optional[str]) -> Optional[str]:
         """Validate LDAP server URL format."""
         if v is None:
             return v
-        
+
         if not v.lower().startswith(("ldap://", "ldaps://")):
             raise ValueError("LDAP server URL must start with ldap:// or ldaps://")
-        
+
         return v
-    
+
     def get_effective_memory_limit_bytes(self) -> int:
         """Get memory limit in bytes."""
         return self.memory_limit_mb * 1024 * 1024
-    
+
     def is_large_file_mode_enabled(self) -> bool:
         """Check if large file processing optimizations should be enabled."""
         return self.enable_streaming or self.max_entries > 50000
-    
+
     def get_performance_profile(self) -> Dict[str, Any]:
         """Get performance configuration profile."""
         return {
@@ -1458,7 +1458,7 @@ class FlextLdifSettings(FlextBaseSettings):
             "max_entries": self.max_entries,
             "large_file_mode": self.is_large_file_mode_enabled()
         }
-    
+
     def get_validation_profile(self) -> Dict[str, Any]:
         """Get validation configuration profile."""
         return {
@@ -1468,17 +1468,17 @@ class FlextLdifSettings(FlextBaseSettings):
             "allow_empty_attributes": self.allow_empty_attributes,
             "schema_validation": self.enable_schema_validation
         }
-    
+
     class Config:
         """Pydantic configuration for FlextLdifSettings."""
-        
+
         env_prefix = "LDIF_"
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = False
         validate_assignment = True
         extra = "forbid"  # Prevent unknown configuration keys
-        
+
         # JSON schema configuration
         schema_extra = {
             "example": {
@@ -1582,10 +1582,10 @@ CONTEXT_SETTINGS = dict(
 def cli(ctx: click.Context, config: Optional[Path], log_level: str, quiet: bool, verbose: bool):
     """
     FLEXT-LDIF - Enterprise LDIF Processing Tool
-    
+
     A comprehensive command-line tool for LDIF (LDAP Data Interchange Format)
     processing, validation, transformation, and analysis.
-    
+
     Examples:
         flext-ldif parse sample.ldif
         flext-ldif validate --strict users.ldif
@@ -1594,7 +1594,7 @@ def cli(ctx: click.Context, config: Optional[Path], log_level: str, quiet: bool,
     """
     # Initialize CLI context
     ctx.ensure_object(dict)
-    
+
     # Load configuration
     if config:
         try:
@@ -1604,19 +1604,19 @@ def cli(ctx: click.Context, config: Optional[Path], log_level: str, quiet: bool,
             sys.exit(1)
     else:
         settings = FlextLdifSettings()
-    
+
     # Override log level from command line
     settings.log_level = log_level
-    
+
     # Set quiet/verbose modes
     if quiet:
         settings.log_level = "ERROR"
     elif verbose:
         settings.log_level = "DEBUG"
-    
+
     # Initialize API
     api = FlextLdifAPI(settings)
-    
+
     # Store in context
     ctx.obj['api'] = api
     ctx.obj['settings'] = settings
@@ -1657,10 +1657,10 @@ def parse(
 ):
     """
     Parse LDIF file and optionally convert to other formats.
-    
+
     This command parses an LDIF file, validates the content, and can output
     the parsed data in various formats for analysis or integration.
-    
+
     Examples:
         flext-ldif parse users.ldif
         flext-ldif parse --format json --output users.json data.ldif
@@ -1669,13 +1669,13 @@ def parse(
     api: FlextLdifAPI = ctx.obj['api']
     settings: FlextLdifSettings = ctx.obj['settings']
     quiet: bool = ctx.obj['quiet']
-    
+
     # Override settings if specified
     if max_entries:
         settings.max_entries = max_entries
     if encoding:
         settings.input_encoding = encoding
-    
+
     try:
         with Progress(
             SpinnerColumn(),
@@ -1684,20 +1684,20 @@ def parse(
             disable=quiet
         ) as progress:
             task = progress.add_task("Parsing LDIF file...", total=None)
-            
+
             # Parse LDIF file
             result = api.parse_ldif_file(input_file)
-            
+
             if result.is_failure:
                 console.print(f"[red]Parse failed: {result.error}[/red]")
                 sys.exit(1)
-            
+
             entries = result.value
             progress.update(task, description=f"Parsed {len(entries)} entries")
-        
+
         if not quiet:
             console.print(f"[green]✓[/green] Successfully parsed {len(entries)} entries")
-        
+
         # Output results
         if output:
             _write_output(entries, output, format, settings)
@@ -1705,7 +1705,7 @@ def parse(
                 console.print(f"[green]✓[/green] Output written to {output}")
         else:
             _print_output(entries, format, quiet)
-            
+
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
         logger.exception("CLI parse command failed")
@@ -1745,10 +1745,10 @@ def validate(
 ):
     """
     Validate LDIF file against business rules and optionally LDAP schema.
-    
+
     This command performs comprehensive validation of LDIF files, checking
     syntax, business rules, and optionally validating against LDAP schema.
-    
+
     Examples:
         flext-ldif validate users.ldif
         flext-ldif validate --strict --report detailed data.ldif
@@ -1757,13 +1757,13 @@ def validate(
     api: FlextLdifAPI = ctx.obj['api']
     settings: FlextLdifSettings = ctx.obj['settings']
     quiet: bool = ctx.obj['quiet']
-    
+
     # Configure validation settings
     if strict:
         settings.strict_validation = True
         settings.validate_object_classes = True
         settings.validate_dn_syntax = True
-    
+
     try:
         with Progress(
             SpinnerColumn(),
@@ -1774,25 +1774,25 @@ def validate(
             # Parse file first
             parse_task = progress.add_task("Parsing LDIF file...", total=None)
             parse_result = api.parse_ldif_file(input_file)
-            
+
             if parse_result.is_failure:
                 console.print(f"[red]Parse failed: {parse_result.error}[/red]")
                 sys.exit(1)
-            
+
             entries = parse_result.value
             progress.update(parse_task, description=f"Parsed {len(entries)} entries")
-            
+
             # Validate entries
             validate_task = progress.add_task("Validating entries...", total=None)
             validate_result = api.validate_entries(entries)
-            
+
             progress.update(validate_task, description="Validation complete")
-        
+
         # Generate validation report
         validation_report = _generate_validation_report(
             entries, validate_result, report, strict, schema
         )
-        
+
         # Output report
         if output:
             output.write_text(validation_report, encoding='utf-8')
@@ -1800,7 +1800,7 @@ def validate(
                 console.print(f"[green]✓[/green] Validation report saved to {output}")
         else:
             console.print(validation_report)
-        
+
         # Exit with appropriate code
         if validate_result.is_success:
             if not quiet:
@@ -1810,7 +1810,7 @@ def validate(
             if not quiet:
                 console.print("[red]✗ Validation failed[/red]")
             sys.exit(1)
-            
+
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
         logger.exception("CLI validate command failed")
@@ -1849,10 +1849,10 @@ def transform(
 ):
     """
     Transform LDIF file with filtering, sorting, and modification.
-    
+
     This command provides comprehensive LDIF transformation capabilities
     including filtering, attribute modification, sorting, and reformatting.
-    
+
     Examples:
         flext-ldif transform --filter "objectClass=person" input.ldif output.ldif
         flext-ldif transform --sort-by cn --limit 100 users.ldif sorted.ldif
@@ -1860,7 +1860,7 @@ def transform(
     """
     api: FlextLdifAPI = ctx.obj['api']
     quiet: bool = ctx.obj['quiet']
-    
+
     try:
         with Progress(
             SpinnerColumn(),
@@ -1871,17 +1871,17 @@ def transform(
             # Parse input file
             parse_task = progress.add_task("Parsing input file...", total=None)
             parse_result = api.parse_ldif_file(input_file)
-            
+
             if parse_result.is_failure:
                 console.print(f"[red]Parse failed: {parse_result.error}[/red]")
                 sys.exit(1)
-            
+
             entries = parse_result.value
             progress.update(parse_task, description=f"Parsed {len(entries)} entries")
-            
+
             # Apply transformations
             transform_task = progress.add_task("Applying transformations...", total=None)
-            
+
             # Apply filter
             if filter_expr:
                 filter_criteria = _parse_filter_expression(filter_expr)
@@ -1889,34 +1889,34 @@ def transform(
                 if filter_result.is_success:
                     entries = filter_result.value
                     progress.update(transform_task, description=f"Filtered to {len(entries)} entries")
-            
+
             # Apply transformations
             if transform:
                 transform_rules = json.loads(transform)
                 entries = _apply_transformations(entries, transform_rules)
-            
+
             # Apply sorting
             if sort_by:
                 entries = _sort_entries(entries, sort_by)
-            
+
             # Apply limit
             if limit:
                 entries = entries[:limit]
                 progress.update(transform_task, description=f"Limited to {len(entries)} entries")
-            
+
             # Write output
             write_task = progress.add_task("Writing output file...", total=None)
             write_result = api.write_ldif_file(entries, output_file)
-            
+
             if write_result.is_failure:
                 console.print(f"[red]Write failed: {write_result.error}[/red]")
                 sys.exit(1)
-            
+
             progress.update(write_task, description="Output written")
-        
+
         if not quiet:
             console.print(f"[green]✓[/green] Transformed {len(entries)} entries to {output_file}")
-            
+
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
         logger.exception("CLI transform command failed")
@@ -1950,10 +1950,10 @@ def analyze(
 ):
     """
     Analyze LDIF file and generate comprehensive reports.
-    
+
     This command performs detailed analysis of LDIF files, generating
     statistics, validation reports, and data quality assessments.
-    
+
     Examples:
         flext-ldif analyze users.ldif
         flext-ldif analyze --report json --output analysis.json data.ldif
@@ -1961,7 +1961,7 @@ def analyze(
     """
     api: FlextLdifAPI = ctx.obj['api']
     quiet: bool = ctx.obj['quiet']
-    
+
     try:
         with Progress(
             SpinnerColumn(),
@@ -1971,22 +1971,22 @@ def analyze(
         ) as progress:
             # Parse and analyze
             task = progress.add_task("Analyzing LDIF file...", total=None)
-            
+
             parse_result = api.parse_ldif_file(input_file)
             if parse_result.is_failure:
                 console.print(f"[red]Parse failed: {parse_result.error}[/red]")
                 sys.exit(1)
-            
+
             entries = parse_result.value
             progress.update(task, description=f"Analyzing {len(entries)} entries")
-            
+
             # Generate analysis report
             analysis_report = _generate_analysis_report(
                 entries, report, include_stats, input_file
             )
-            
+
             progress.update(task, description="Analysis complete")
-        
+
         # Output report
         if output:
             output.write_text(analysis_report, encoding='utf-8')
@@ -1994,7 +1994,7 @@ def analyze(
                 console.print(f"[green]✓[/green] Analysis report saved to {output}")
         else:
             console.print(analysis_report)
-            
+
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
         logger.exception("CLI analyze command failed")
@@ -2010,17 +2010,17 @@ def _write_output(entries: List[FlextLdifEntry], output_path: Path, format: str,
         result = api.write_ldif_file(entries, output_path)
         if result.is_failure:
             raise Exception(f"Failed to write LDIF: {result.error}")
-    
+
     elif format == 'json':
         # Convert to JSON
         data = [_entry_to_dict(entry) for entry in entries]
         output_path.write_text(json.dumps(data, indent=2), encoding='utf-8')
-    
+
     elif format == 'yaml':
         import yaml
         data = [_entry_to_dict(entry) for entry in entries]
         output_path.write_text(yaml.dump(data, default_flow_style=False), encoding='utf-8')
-    
+
     elif format == 'csv':
         import csv
         with open(output_path, 'w', newline='', encoding='utf-8') as csvfile:
@@ -2029,11 +2029,11 @@ def _write_output(entries: List[FlextLdifEntry], output_path: Path, format: str,
                 all_attrs = set()
                 for entry in entries:
                     all_attrs.update(entry.attributes.get_attribute_names())
-                
+
                 fieldnames = ['dn'] + sorted(all_attrs)
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
-                
+
                 for entry in entries:
                     row = {'dn': entry.dn.value}
                     for attr in all_attrs:
@@ -2045,7 +2045,7 @@ def _print_output(entries: List[FlextLdifEntry], format: str, quiet: bool):
     """Print entries to stdout in specified format."""
     if quiet:
         return
-    
+
     if format == 'ldif':
         for entry in entries:
             # Convert entry back to LDIF format
@@ -2055,18 +2055,18 @@ def _print_output(entries: List[FlextLdifEntry], format: str, quiet: bool):
                 for value in values:
                     print(f"{attr_name}: {value}")
             print()  # Empty line between entries
-    
+
     elif format == 'json':
         data = [_entry_to_dict(entry) for entry in entries]
         print(json.dumps(data, indent=2))
-    
+
     else:
         # Table format for summary
         table = Table(title="LDIF Entries")
         table.add_column("DN", style="cyan")
         table.add_column("Object Classes", style="green")
         table.add_column("Attributes", style="yellow")
-        
+
         for entry in entries[:20]:  # Limit to first 20 for display
             object_classes = ', '.join(entry.get_object_classes())
             attr_count = len(entry.attributes.get_attribute_names())
@@ -2075,9 +2075,9 @@ def _print_output(entries: List[FlextLdifEntry], format: str, quiet: bool):
                 object_classes,
                 str(attr_count)
             )
-        
+
         console.print(table)
-        
+
         if len(entries) > 20:
             console.print(f"... and {len(entries) - 20} more entries")
 
@@ -2092,11 +2092,11 @@ def _parse_filter_expression(filter_expr: str) -> Dict[str, Any]:
     """Parse filter expression into criteria dictionary."""
     # Simple parsing - enhance with proper LDAP filter parsing
     criteria = {}
-    
+
     if '=' in filter_expr:
         key, value = filter_expr.split('=', 1)
         criteria[key.strip()] = value.strip()
-    
+
     return criteria
 
 def _apply_transformations(entries: List[FlextLdifEntry], rules: Dict[str, Any]) -> List[FlextLdifEntry]:
@@ -2113,7 +2113,7 @@ def _sort_entries(entries: List[FlextLdifEntry], sort_by: str) -> List[FlextLdif
         else:
             value = entry.attributes.get_single_value(sort_by)
             return value.lower() if value else ''
-    
+
     return sorted(entries, key=get_sort_key)
 
 def _generate_validation_report(
@@ -2133,7 +2133,7 @@ def _generate_validation_report(
             'errors': [result.error] if result.is_failure else []
         }
         return json.dumps(report, indent=2)
-    
+
     else:
         # Text format
         lines = []
@@ -2143,11 +2143,11 @@ def _generate_validation_report(
         lines.append(f"Strict mode: {'Yes' if strict else 'No'}")
         lines.append(f"Schema validation: {'Yes' if schema else 'No'}")
         lines.append(f"Result: {'PASSED' if result.is_success else 'FAILED'}")
-        
+
         if result.is_failure:
             lines.append("\nErrors:")
             lines.append(f"  - {result.error}")
-        
+
         return '\n'.join(lines)
 
 def _generate_analysis_report(
@@ -2165,23 +2165,23 @@ def _generate_analysis_report(
         'dn_components': {},
         'file_size': input_file.stat().st_size
     }
-    
+
     for entry in entries:
         # Count object classes
         for oc in entry.get_object_classes():
             stats['object_classes'][oc] = stats['object_classes'].get(oc, 0) + 1
-        
+
         # Count attributes
         for attr in entry.attributes.get_attribute_names():
             stats['attributes'][attr] = stats['attributes'].get(attr, 0) + 1
-        
+
         # Count DN components
         depth = entry.dn.get_depth()
         stats['dn_components'][depth] = stats['dn_components'].get(depth, 0) + 1
-    
+
     if format == 'json':
         return json.dumps(stats, indent=2)
-    
+
     elif format == 'html':
         # Generate HTML report
         html = f"""
@@ -2192,7 +2192,7 @@ def _generate_analysis_report(
         <p>File: {input_file}</p>
         <p>Total Entries: {stats['total_entries']}</p>
         <p>File Size: {stats['file_size']} bytes</p>
-        
+
         <h2>Object Classes</h2>
         <ul>
         """
@@ -2200,7 +2200,7 @@ def _generate_analysis_report(
             html += f"<li>{oc}: {count}</li>"
         html += "</ul></body></html>"
         return html
-    
+
     else:
         # Text format
         lines = []
@@ -2209,17 +2209,17 @@ def _generate_analysis_report(
         lines.append(f"File: {input_file}")
         lines.append(f"Total entries: {stats['total_entries']}")
         lines.append(f"File size: {stats['file_size']} bytes")
-        
+
         if include_stats:
             lines.append("\nObject Class Distribution:")
             for oc, count in sorted(stats['object_classes'].items()):
                 lines.append(f"  {oc}: {count}")
-            
+
             lines.append("\nMost Common Attributes:")
             sorted_attrs = sorted(stats['attributes'].items(), key=lambda x: x[1], reverse=True)
             for attr, count in sorted_attrs[:10]:
                 lines.append(f"  {attr}: {count}")
-        
+
         return '\n'.join(lines)
 
 if __name__ == '__main__':
@@ -2236,7 +2236,7 @@ if __name__ == '__main__':
 utils/
 ├── __init__.py                  # Utility exports
 ├── logging.py                   # Structured logging with flext-core
-├── validation.py                # Cross-layer validation utilities  
+├── validation.py                # Cross-layer validation utilities
 ├── transformations.py           # LDIF transformation utilities
 ├── performance.py               # Performance monitoring utilities
 ├── security.py                  # Security and sanitization utilities
@@ -2248,30 +2248,35 @@ utils/
 ## 📋 Migration Roadmap (v0.9.0 → v1.0.0)
 
 ### **Phase 1: Foundation Refactoring**
+
 1. **Create clean directory structure** following target architecture
 2. **Move domain logic** from `models.py` to `domain/` layer
 3. **Separate infrastructure concerns** from application logic
 4. **Implement FlextResult pattern** throughout codebase
 
 ### **Phase 2: Domain Layer Implementation**
+
 1. **Implement proper domain entities** extending FlextEntity
 2. **Create immutable value objects** extending FlextValueObject
 3. **Add domain services** for complex business logic
 4. **Implement domain events** for integration patterns
 
 ### **Phase 3: Application Layer Refactoring**
+
 1. **Refactor FlextLdifAPI** to pure orchestration
 2. **Implement CQRS patterns** with commands and queries
 3. **Add application-level validation** and error handling
 4. **Create workflow orchestration** for complex operations
 
 ### **Phase 4: Infrastructure Integration**
+
 1. **Implement proper configuration** extending FlextBaseSettings
 2. **Add repository implementations** with abstractions
 3. **Integrate observability patterns** with flext-observability
 4. **Add performance monitoring** and metrics collection
 
 ### **Phase 5: Interface Layer Enhancement**
+
 1. **Enhance CLI** with comprehensive commands and options
 2. **Add web interface** for visual LDIF processing
 3. **Implement API endpoints** for service integration
@@ -2284,16 +2289,19 @@ utils/
 ### **1. Naming Conventions**
 
 #### **Modules and Packages**
+
 - Use lowercase with underscores: `domain_services.py`
 - Package names should be singular: `domain/`, `application/`
 - Avoid abbreviations: `application/` not `app/`
 
 #### **Classes and Functions**
+
 - Classes use PascalCase: `FlextLdifEntry`
 - Functions use snake_case: `parse_ldif_content()`
 - Private members use underscore prefix: `_validate_entry()`
 
 #### **Constants and Configuration**
+
 - Constants use UPPER_SNAKE_CASE: `MAX_ENTRIES`
 - Environment variables use prefix: `LDIF_MAX_ENTRIES`
 - Configuration keys use snake_case: `max_entries`
@@ -2321,6 +2329,7 @@ from ..infrastructure import FlextLdifSettings
 ### **3. Documentation Standards**
 
 #### **Module Docstrings**
+
 Every module must have comprehensive docstring following the template:
 
 ```python
@@ -2350,6 +2359,7 @@ License: MIT
 ```
 
 #### **Class and Function Documentation**
+
 - **Comprehensive descriptions** with business context
 - **Complete parameter documentation** with types and constraints
 - **Return value specification** with FlextResult patterns
@@ -2359,6 +2369,7 @@ License: MIT
 ### **4. Error Handling Patterns**
 
 #### **FlextResult Usage**
+
 ```python
 def parse_ldif(content: str) -> FlextResult[List[FlextLdifEntry]]:
     """Parse LDIF with railway-oriented error handling."""
@@ -2373,6 +2384,7 @@ def parse_ldif(content: str) -> FlextResult[List[FlextLdifEntry]]:
 ```
 
 #### **Domain Exception Hierarchy**
+
 ```python
 class FlextLdifError(Exception):
     """Base exception for LDIF operations."""
@@ -2392,6 +2404,7 @@ class FlextLdifParseError(FlextLdifError):
 ### **5. Testing Organization**
 
 #### **Test Structure**
+
 ```python
 tests/
 ├── unit/                        # Unit tests by layer
@@ -2405,6 +2418,7 @@ tests/
 ```
 
 #### **Test Naming**
+
 - Test files: `test_<module_name>.py`
 - Test classes: `TestClassName`
 - Test methods: `test_should_<expected_behavior>_when_<condition>()`
@@ -2412,12 +2426,14 @@ tests/
 ### **6. Configuration Management**
 
 #### **Settings Hierarchy**
+
 1. **Default values** in FlextLdifSettings class
-2. **Environment variables** with LDIF_ prefix
-3. **Configuration files** (.env, config.yaml)
+2. **Environment variables** with LDIF\_ prefix
+3. **Configuration files** (.env, config.YAML)
 4. **Command-line arguments** (highest priority)
 
 #### **Environment Variables**
+
 ```bash
 # Processing limits
 LDIF_MAX_ENTRIES=10000
@@ -2443,18 +2459,21 @@ LDIF_LOG_LEVEL=INFO
 ### **1. Code Quality Metrics**
 
 #### **Coverage Requirements**
+
 - **Unit Tests**: 95% minimum coverage per layer
 - **Integration Tests**: 90% coverage for critical paths
 - **End-to-End Tests**: 80% coverage for user scenarios
 - **Overall Project**: 90% minimum coverage
 
 #### **Type Safety Standards**
+
 - **MyPy Strict Mode**: All code must pass strict type checking
 - **Type Annotation Coverage**: 95% minimum across all modules
 - **Generic Types**: Use proper generic typing for collections
 - **Protocol Usage**: Define protocols for abstract interfaces
 
 #### **Linting Standards**
+
 - **Ruff Configuration**: ALL rule categories enabled
 - **Import Sorting**: isort configuration with proper grouping
 - **Line Length**: 100 characters maximum
@@ -2463,16 +2482,19 @@ LDIF_LOG_LEVEL=INFO
 ### **2. Performance Standards**
 
 #### **Memory Usage**
+
 - **Large File Processing**: Support files up to 1GB without memory issues
 - **Streaming Support**: Implement for files larger than configured threshold
 - **Memory Profiling**: Regular memory usage analysis and optimization
 
 #### **Processing Speed**
+
 - **Parsing Performance**: Minimum 1000 entries/second for standard LDIF
 - **Validation Speed**: Minimum 2000 entries/second for business rules
 - **Output Generation**: Minimum 1500 entries/second for LDIF writing
 
 #### **Scalability Requirements**
+
 - **Concurrent Processing**: Support multiple simultaneous operations
 - **Batch Operations**: Efficient handling of bulk processing
 - **Resource Management**: Proper cleanup and resource disposal
@@ -2480,12 +2502,14 @@ LDIF_LOG_LEVEL=INFO
 ### **3. Security Standards**
 
 #### **Input Validation**
+
 - **LDIF Content**: Comprehensive parsing validation
 - **DN Validation**: RFC-compliant distinguished name checking
 - **Attribute Validation**: LDAP naming convention compliance
 - **Binary Data**: Proper base64 encoding/decoding
 
 #### **Error Handling Security**
+
 - **Information Disclosure**: No sensitive data in error messages
 - **Stack Trace Security**: Sanitized error reporting in production
 - **Logging Security**: No secrets or sensitive data in logs
@@ -2545,15 +2569,15 @@ git push origin --tags
 
 ### **Architecture Compliance Score: Target 9.0/10**
 
-| **Category** | **Current** | **Target** | **Actions Required** |
-|-------------|-------------|------------|---------------------|
-| **Clean Architecture** | 6/10 | 9/10 | Complete layer separation |
-| **DDD Implementation** | 7/10 | 9/10 | Add aggregates, events, specifications |
-| **FLEXT Integration** | 4/10 | 9/10 | Implement all ecosystem patterns |
-| **Type Safety** | 8/10 | 9/10 | Complete type annotation coverage |
-| **Documentation** | 9/10 | 9/10 | Maintain comprehensive documentation |
-| **Testing** | 7/10 | 9/10 | Expand test coverage and categories |
-| **Performance** | 6/10 | 8/10 | Implement streaming and optimization |
+| **Category**           | **Current** | **Target** | **Actions Required**                   |
+| ---------------------- | ----------- | ---------- | -------------------------------------- |
+| **Clean Architecture** | 6/10        | 9/10       | Complete layer separation              |
+| **DDD Implementation** | 7/10        | 9/10       | Add aggregates, events, specifications |
+| **FLEXT Integration**  | 4/10        | 9/10       | Implement all ecosystem patterns       |
+| **Type Safety**        | 8/10        | 9/10       | Complete type annotation coverage      |
+| **Documentation**      | 9/10        | 9/10       | Maintain comprehensive documentation   |
+| **Testing**            | 7/10        | 9/10       | Expand test coverage and categories    |
+| **Performance**        | 6/10        | 8/10       | Implement streaming and optimization   |
 
 ### **Quality Metrics Targets**
 
@@ -2569,17 +2593,20 @@ git push origin --tags
 ## 📚 References and Resources
 
 ### **FLEXT Ecosystem Documentation**
+
 - **[flext-core Standards](../../../flext-core/docs/standards/python-module-organization.md)** - Foundation patterns
 - **[FLEXT Architecture Guide](../../architecture/ARCHITECTURE.md)** - Clean Architecture implementation
 - **[CLAUDE.md Development Guide](../../CLAUDE.md)** - Development standards and patterns
 
 ### **External Standards**
+
 - **[Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)** - Robert C. Martin
 - **[Domain-Driven Design](https://domainlanguage.com/ddd/)** - Eric Evans patterns
 - **[Railway-Oriented Programming](https://fsharpforfunandprofit.com/rop/)** - Scott Wlaschin
 - **[Python Type Hints](https://docs.python.org/3/library/typing.html)** - Official documentation
 
 ### **LDIF and LDAP Standards**
+
 - **[RFC 2849 - LDIF Specification](https://tools.ietf.org/html/rfc2849)** - LDIF format standard
 - **[RFC 4514 - LDAP DN Syntax](https://tools.ietf.org/html/rfc4514)** - DN formatting rules
 - **[RFC 4511 - LDAP Protocol](https://tools.ietf.org/html/rfc4511)** - LDAP technical specification

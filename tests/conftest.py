@@ -25,16 +25,16 @@ Test Categories:
 
 Example:
     Using fixtures for comprehensive testing:
-    
+
     >>> def test_ldif_parsing_with_fixtures(flext_ldif_api, sample_ldif_content):
     ...     # API fixture provides configured instance
     ...     result = flext_ldif_api.parse(sample_ldif_content)
     ...     assert result.is_success
-    ...     
+    ...
     ...     # Sample content fixture provides realistic test data
     ...     entries = result.data
     ...     assert len(entries) > 0
-    ...     
+    ...
     ...     # Validate domain rules
     ...     for entry in entries:
     ...         result = entry.validate_semantic_rules()

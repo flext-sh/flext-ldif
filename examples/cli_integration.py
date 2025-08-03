@@ -94,19 +94,29 @@ class CliIntegrationDemonstrator:
     def _run_file_operations(self) -> None:
         """Run file operation commands (transform, convert)."""
         # Test 4: Transform command with filtering
-        exit_code, _, _ = run_cli_command([
-            "transform", str(self.sample_file), str(self.output_file),
-            "--filter-type", "persons",
-        ])
+        exit_code, _, _ = run_cli_command(
+            [
+                "transform",
+                str(self.sample_file),
+                str(self.output_file),
+                "--filter-type",
+                "persons",
+            ],
+        )
 
         if exit_code == 0 and self.output_file.exists():
             self._verify_transform_output()
 
         # Test 5: Convert command to JSON
-        exit_code, _, _ = run_cli_command([
-            "convert", str(self.sample_file), str(self.json_output),
-            "--output-format", "json",
-        ])
+        exit_code, _, _ = run_cli_command(
+            [
+                "convert",
+                str(self.sample_file),
+                str(self.json_output),
+                "--output-format",
+                "json",
+            ],
+        )
 
         if exit_code == 0 and self.json_output.exists():
             self.json_output.unlink()  # Clean up
@@ -119,10 +129,16 @@ class CliIntegrationDemonstrator:
             pass  # Config check successful
 
         # Test 7: Global options
-        exit_code, _, _ = run_cli_command([
-            "--format", "yaml", "--verbose", "--debug",
-            "stats", str(self.sample_file),
-        ])
+        exit_code, _, _ = run_cli_command(
+            [
+                "--format",
+                "yaml",
+                "--verbose",
+                "--debug",
+                "stats",
+                str(self.sample_file),
+            ],
+        )
         if exit_code == 0:
             pass  # Global options successful
 

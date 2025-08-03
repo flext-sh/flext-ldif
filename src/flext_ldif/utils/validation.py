@@ -1,4 +1,4 @@
-"""FLEXT-LDIF Validation Utilities
+"""FLEXT-LDIF Validation Utilities.
 
 This module provides comprehensive validation utilities for LDIF processing
 operations, implementing reusable validation patterns, business rule validation,

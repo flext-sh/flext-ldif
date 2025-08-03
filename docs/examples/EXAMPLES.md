@@ -72,14 +72,14 @@ result = api.parse(ldif_content)
 if result.is_success:
     entries = result.data
     print(f"✅ Successfully parsed {len(entries)} entries")
-    
+
     # Validate entries
     validation_result = api.validate(entries)
     if validation_result.is_success:
         print("✅ All entries are valid")
     else:
         print(f"❌ Validation failed: {validation_result.error}")
-    
+
     # Generate LDIF output
     output_result = api.write(entries)
     if output_result.is_success:
@@ -124,7 +124,7 @@ print(f"Email Addresses: {entry.get_attribute_values('mail')}")
 # Check entry characteristics
 if entry.has_object_class("person"):
     print("This is a person entry")
-    
+
 if entry.has_attribute("telephoneNumber"):
     print(f"Phone: {entry.get_single_attribute_value('telephoneNumber')}")
 
@@ -163,7 +163,7 @@ large_file_result = api.parse_file("data/large_export.ldif")
 if large_file_result.is_success:
     entries = large_file_result.data
     print(f"Processed {len(entries)} entries from large file")
-    
+
     # Write to output file
     write_result = api.write_file(entries, "output/processed.ldif")
     if write_result.is_success:
@@ -174,8 +174,8 @@ if large_file_result.is_success:
 
 ```python
 from flext_ldif.services import (
-    FlextLdifParserService, 
-    FlextLdifValidatorService, 
+    FlextLdifParserService,
+    FlextLdifValidatorService,
     FlextLdifWriterService
 )
 
@@ -183,20 +183,20 @@ from flext_ldif.services import (
 config = FlextLdifConfig(strict_validation=True)
 
 parser = FlextLdifParserService(config)
-validator = FlextLdifValidatorService(config) 
+validator = FlextLdifValidatorService(config)
 writer = FlextLdifWriterService(config)
 
 # Parse with service
 parse_result = parser.parse(ldif_content)
 if parse_result.is_success:
     entries = parse_result.data
-    
+
     # Validate each entry individually
     for i, entry in enumerate(entries):
         validation_result = validator.validate_entry(entry)
         if validation_result.is_failure:
             print(f"Entry {i} validation failed: {validation_result.error}")
-    
+
     # Write with custom formatting
     write_result = writer.write(entries)
     if write_result.is_success:
@@ -263,10 +263,10 @@ try:
     # Invalid attributes (no objectClass)
     dn = FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com")
     attrs = FlextLdifAttributes(attributes={"cn": ["test"]})  # Missing objectClass
-    
+
     entry = FlextLdifEntry.model_validate({"dn": dn, "attributes": attrs})
     entry.validate_domain_rules()  # Will raise ValueError
-    
+
 except ValueError as e:
     print(f"Domain validation error: {e}")
 
@@ -303,7 +303,7 @@ valid_spec = FlextLdifValidSpecification()
 # Check if entry satisfies business rules
 if person_spec.is_satisfied_by(entry):
     print("Entry represents a person")
-    
+
     # Get specific validation errors for person entries
     person_violations = person_spec.validate_person_entry(entry)
     if person_violations:
@@ -340,18 +340,18 @@ result = api.parse_file("input/users.ldif")
 
 if result.is_success:
     entries = result.data
-    
+
     # Write to string
     ldif_output = api.write(entries)
     if ldif_output.is_success:
         print("LDIF String Output:")
         print(ldif_output.data[:500] + "..." if len(ldif_output.data) > 500 else ldif_output.data)
-    
+
     # Write to file
     file_result = api.write_file(entries, "output/exported_users.ldif")
     if file_result.is_success:
         print("✅ Successfully exported entries to file")
-        
+
         # Verify file was created
         output_path = Path("output/exported_users.ldif")
         if output_path.exists():
@@ -370,15 +370,15 @@ result = api.parse_file("data/organization.ldif")
 
 if result.is_success:
     all_entries = result.data
-    
+
     # Filter for person entries only
     person_entries = [
-        entry for entry in all_entries 
+        entry for entry in all_entries
         if entry.has_object_class("person")
     ]
-    
+
     print(f"Found {len(person_entries)} person entries out of {len(all_entries)} total")
-    
+
     # Export only person entries
     person_export = api.write(person_entries)
     if person_export.is_success:
@@ -386,14 +386,14 @@ if result.is_success:
         with open("output/people_only.ldif", "w", encoding="utf-8") as f:
             f.write(person_export.data)
         print("✅ Exported person entries to people_only.ldif")
-    
+
     # Filter by department
     engineering_entries = [
         entry for entry in person_entries
-        if entry.has_attribute("department") and 
+        if entry.has_attribute("department") and
            "Engineering" in entry.get_attribute_values("department")
     ]
-    
+
     if engineering_entries:
         eng_export = api.write(engineering_entries)
         if eng_export.is_success:
@@ -434,7 +434,7 @@ print(f"User DN depth: {user_dn.get_depth()}")
 parent = user_dn.get_parent_dn()
 if parent:
     print(f"User parent DN: {parent.value}")
-    
+
     # Navigate up the hierarchy
     grandparent = parent.get_parent_dn()
     if grandparent:
@@ -548,46 +548,46 @@ result = api.parse_file("data/organization.ldif")
 if result.is_success:
     all_entries = result.data
     print(f"Total entries: {len(all_entries)}")
-    
+
     # Filter by object class
     people = [entry for entry in all_entries if entry.has_object_class("person")]
     groups = [entry for entry in all_entries if entry.has_object_class("groupOfNames")]
-    
+
     print(f"People: {len(people)}")
     print(f"Groups: {len(groups)}")
-    
+
     # Filter by attribute presence
     with_email = [entry for entry in people if entry.has_attribute("mail")]
     with_phone = [entry for entry in people if entry.has_attribute("telephoneNumber")]
-    
+
     print(f"People with email: {len(with_email)}")
     print(f"People with phone: {len(with_phone)}")
-    
+
     # Filter by attribute value
     engineers = [
-        entry for entry in people 
+        entry for entry in people
         if entry.has_attribute("department") and
            "Engineering" in entry.get_attribute_values("department")
     ]
-    
+
     managers = [
         entry for entry in people
         if entry.has_attribute("title") and
            any("Manager" in title for title in entry.get_attribute_values("title"))
     ]
-    
+
     print(f"Engineers: {len(engineers)}")
     print(f"Managers: {len(managers)}")
-    
+
     # Complex filtering with multiple conditions
     senior_engineers = [
         entry for entry in engineers
         if entry.has_attribute("title") and
            any("Senior" in title for title in entry.get_attribute_values("title"))
     ]
-    
+
     print(f"Senior Engineers: {len(senior_engineers)}")
-    
+
     # Display results
     print("\nSenior Engineers:")
     for entry in senior_engineers:
@@ -609,44 +609,44 @@ result = api.parse_file("data/company.ldif")
 
 if result.is_success:
     all_entries = result.data
-    
+
     # Filter by OU (organizational unit)
     people_entries = [
         entry for entry in all_entries
         if "ou=people" in entry.dn.value.lower()
     ]
-    
+
     groups_entries = [
         entry for entry in all_entries
         if "ou=groups" in entry.dn.value.lower()
     ]
-    
+
     service_entries = [
         entry for entry in all_entries
         if "ou=services" in entry.dn.value.lower()
     ]
-    
+
     print(f"People OU: {len(people_entries)} entries")
     print(f"Groups OU: {len(groups_entries)} entries")
     print(f"Services OU: {len(service_entries)} entries")
-    
+
     # Filter by DN depth (hierarchy level)
     root_entries = [entry for entry in all_entries if entry.dn.get_depth() <= 3]
     deep_entries = [entry for entry in all_entries if entry.dn.get_depth() > 5]
-    
+
     print(f"Root level entries (depth ≤ 3): {len(root_entries)}")
     print(f"Deep entries (depth > 5): {len(deep_entries)}")
-    
+
     # Find entries under specific parent DN
     from flext_ldif import FlextLdifDistinguishedName
-    
+
     people_base = FlextLdifDistinguishedName(value="ou=people,dc=company,dc=com")
-    
+
     people_under_base = [
         entry for entry in all_entries
         if entry.dn.is_child_of(people_base)
     ]
-    
+
     print(f"Entries under {people_base.value}: {len(people_under_base)}")
 ```
 
@@ -675,47 +675,47 @@ def process_ldif_files_batch(input_dir: str, output_dir: str):
     input_path = Path(input_dir)
     output_path = Path(output_dir)
     output_path.mkdir(exist_ok=True)
-    
+
     ldif_files = list(input_path.glob("*.ldif"))
     print(f"Found {len(ldif_files)} LDIF files to process")
-    
+
     results = {
         "processed": 0,
         "failed": 0,
         "total_entries": 0,
         "processing_time": 0
     }
-    
+
     start_time = time.time()
-    
+
     for ldif_file in ldif_files:
         print(f"\nProcessing: {ldif_file.name}")
-        
+
         try:
             # Parse file
             parse_result = api.parse_file(str(ldif_file))
-            
+
             if parse_result.is_success:
                 entries = parse_result.data
                 print(f"  Parsed: {len(entries)} entries")
-                
+
                 # Validate entries
                 validation_result = api.validate(entries)
-                
+
                 if validation_result.is_success:
                     print("  Validation: PASSED")
-                    
+
                     # Process only valid entries
                     valid_entries = [
                         entry for entry in entries
                         if entry.has_object_class("person") and entry.has_attribute("mail")
                     ]
-                    
+
                     if valid_entries:
                         # Write processed entries
                         output_file = output_path / f"processed_{ldif_file.name}"
                         write_result = api.write_file(valid_entries, str(output_file))
-                        
+
                         if write_result.is_success:
                             print(f"  Output: {len(valid_entries)} entries -> {output_file.name}")
                             results["processed"] += 1
@@ -731,13 +731,13 @@ def process_ldif_files_batch(input_dir: str, output_dir: str):
             else:
                 print(f"  ❌ Parse failed: {parse_result.error}")
                 results["failed"] += 1
-                
+
         except Exception as e:
             print(f"  ❌ Processing error: {e}")
             results["failed"] += 1
-    
+
     results["processing_time"] = time.time() - start_time
-    
+
     print(f"\n📊 Batch Processing Results:")
     print(f"  Successfully processed: {results['processed']} files")
     print(f"  Failed: {results['failed']} files")
@@ -770,19 +770,19 @@ def normalize_email_domains(entry: FlextLdifEntry) -> FlextLdifEntry:
     """Transform to standardize email domains."""
     if not entry.has_attribute("mail"):
         return entry
-    
+
     emails = entry.get_attribute_values("mail")
     normalized_emails = []
-    
+
     for email in emails:
         # Replace old domain with new domain
         if "@oldcompany.com" in email:
             normalized_emails.append(email.replace("@oldcompany.com", "@newcompany.com"))
         else:
             normalized_emails.append(email)
-    
+
     new_attrs = entry.attributes.replace_values("mail", normalized_emails)
-    
+
     return FlextLdifEntry.model_validate({
         "dn": entry.dn,
         "attributes": new_attrs
@@ -792,28 +792,28 @@ def add_employee_id(entry: FlextLdifEntry) -> FlextLdifEntry:
     """Add employee ID based on CN."""
     if not entry.has_object_class("person") or entry.has_attribute("employeeId"):
         return entry
-    
+
     cn = entry.get_single_attribute_value("cn")
     if cn:
         # Generate employee ID from name
         employee_id = cn.lower().replace(" ", ".") + ".001"
         new_attrs = entry.attributes.add_value("employeeId", employee_id)
-        
+
         return FlextLdifEntry.model_validate({
             "dn": entry.dn,
             "attributes": new_attrs
         })
-    
+
     return entry
 
 def standardize_phone_numbers(entry: FlextLdifEntry) -> FlextLdifEntry:
     """Standardize phone number format."""
     if not entry.has_attribute("telephoneNumber"):
         return entry
-    
+
     phones = entry.get_attribute_values("telephoneNumber")
     standardized_phones = []
-    
+
     for phone in phones:
         # Remove all non-numeric characters and reformat
         digits = ''.join(filter(str.isdigit, phone))
@@ -822,9 +822,9 @@ def standardize_phone_numbers(entry: FlextLdifEntry) -> FlextLdifEntry:
             standardized_phones.append(formatted)
         else:
             standardized_phones.append(phone)  # Keep original if can't format
-    
+
     new_attrs = entry.attributes.replace_values("telephoneNumber", standardized_phones)
-    
+
     return FlextLdifEntry.model_validate({
         "dn": entry.dn,
         "attributes": new_attrs
@@ -843,38 +843,38 @@ result = api.parse_file("data/employee_export.ldif")
 if result.is_success:
     original_entries = result.data
     print(f"Original entries: {len(original_entries)}")
-    
+
     # Apply transformations
     transformed_entries = transformation_pipeline(original_entries)
-    
+
     # Validate transformed entries
     validation_result = api.validate(transformed_entries)
-    
+
     if validation_result.is_success:
         print("✅ All transformed entries are valid")
-        
+
         # Export transformed data
         export_result = api.write_file(transformed_entries, "output/transformed_employees.ldif")
-        
+
         if export_result.is_success:
             print("✅ Exported transformed data")
-            
+
             # Show transformation results
             print("\nTransformation Summary:")
             for i, (original, transformed) in enumerate(zip(original_entries[:3], transformed_entries[:3])):
                 print(f"\nEntry {i+1}: {original.get_single_attribute_value('cn')}")
-                
+
                 # Compare emails
                 orig_emails = original.get_attribute_values("mail")
                 trans_emails = transformed.get_attribute_values("mail")
                 if orig_emails != trans_emails:
                     print(f"  Email: {orig_emails} → {trans_emails}")
-                
+
                 # Check for employee ID
                 emp_id = transformed.get_single_attribute_value("employeeId")
                 if emp_id:
                     print(f"  Employee ID: {emp_id}")
-                
+
                 # Compare phone numbers
                 orig_phones = original.get_attribute_values("telephoneNumber")
                 trans_phones = transformed.get_attribute_values("telephoneNumber")
@@ -907,17 +907,17 @@ def robust_ldif_processing(file_path: str) -> bool:
             strict_validation=False,  # Continue on validation errors
             max_entries=10000
         )
-        
+
         api = FlextLdifAPI(config)
-        
+
         print(f"Processing LDIF file: {file_path}")
-        
+
         # Parse file with error handling
         parse_result = api.parse_file(file_path)
-        
+
         if parse_result.is_failure:
             print(f"❌ Parse failed: {parse_result.error}")
-            
+
             # Check for specific error types
             if "file not found" in parse_result.error.lower():
                 print("  → File does not exist")
@@ -928,20 +928,20 @@ def robust_ldif_processing(file_path: str) -> bool:
             else:
                 print("  → Check LDIF format")
                 return False
-        
+
         entries = parse_result.data
         print(f"✅ Successfully parsed {len(entries)} entries")
-        
+
         # Validate entries with detailed error reporting
         validation_result = api.validate(entries)
-        
+
         if validation_result.is_failure:
             print(f"⚠️  Validation issues found: {validation_result.error}")
-            
+
             # Validate entries individually to identify specific problems
             valid_entries = []
             invalid_count = 0
-            
+
             for i, entry in enumerate(entries):
                 try:
                     entry.validate_domain_rules()
@@ -949,19 +949,19 @@ def robust_ldif_processing(file_path: str) -> bool:
                 except ValueError as e:
                     invalid_count += 1
                     print(f"  Entry {i+1} ({entry.dn.value}): {e}")
-            
+
             print(f"  Valid entries: {len(valid_entries)}")
             print(f"  Invalid entries: {invalid_count}")
-            
+
             # Continue with valid entries only
             entries = valid_entries
         else:
             print("✅ All entries passed validation")
-        
+
         if entries:
             # Write results
             output_result = api.write_file(entries, "output/processed.ldif")
-            
+
             if output_result.is_success:
                 print("✅ Successfully exported processed entries")
                 return True
@@ -971,7 +971,7 @@ def robust_ldif_processing(file_path: str) -> bool:
         else:
             print("❌ No valid entries to process")
             return False
-            
+
     except FlextLdifParseError as e:
         print(f"❌ LDIF Parse Error: {e}")
         if hasattr(e, 'line_number'):
@@ -979,7 +979,7 @@ def robust_ldif_processing(file_path: str) -> bool:
         if hasattr(e, 'content_snippet'):
             print(f"  Content: {e.content_snippet}")
         return False
-        
+
     except FlextLdifValidationError as e:
         print(f"❌ LDIF Validation Error: {e}")
         if hasattr(e, 'field_name'):
@@ -987,15 +987,15 @@ def robust_ldif_processing(file_path: str) -> bool:
         if hasattr(e, 'field_value'):
             print(f"  Value: {e.field_value}")
         return False
-        
+
     except FlextLdifEntryError as e:
         print(f"❌ LDIF Entry Error: {e}")
         return False
-        
+
     except FlextLdifError as e:
         print(f"❌ FLEXT LDIF Error: {e}")
         return False
-        
+
     except Exception as e:
         print(f"❌ Unexpected error: {e}")
         print("  Please check the LDIF file format and try again")
@@ -1035,11 +1035,11 @@ logger = logging.getLogger('flext_ldif_processor')
 
 def process_with_recovery(file_path: str, max_retries: int = 3) -> bool:
     """Process LDIF with recovery strategies."""
-    
+
     for attempt in range(max_retries + 1):
         try:
             logger.info(f"Processing attempt {attempt + 1}/{max_retries + 1} for {file_path}")
-            
+
             # Adjust configuration based on attempt
             if attempt == 0:
                 # First attempt: strict mode
@@ -1054,19 +1054,19 @@ def process_with_recovery(file_path: str, max_retries: int = 3) -> bool:
                     max_entries=10000,
                     allow_empty_attributes=True
                 )
-            
+
             api = FlextLdifAPI(config)
-            
+
             # Parse with current configuration
             result = api.parse_file(file_path)
-            
+
             if result.is_success:
                 entries = result.data
                 logger.info(f"Successfully parsed {len(entries)} entries on attempt {attempt + 1}")
-                
+
                 # Try to save successful result
                 output_result = api.write_file(entries, f"output/recovered_{attempt+1}.ldif")
-                
+
                 if output_result.is_success:
                     logger.info(f"Successfully saved recovered data on attempt {attempt + 1}")
                     return True
@@ -1074,24 +1074,24 @@ def process_with_recovery(file_path: str, max_retries: int = 3) -> bool:
                     logger.warning(f"Save failed on attempt {attempt + 1}: {output_result.error}")
             else:
                 logger.warning(f"Parse failed on attempt {attempt + 1}: {result.error}")
-                
+
                 if attempt < max_retries:
                     logger.info("Retrying with relaxed configuration...")
                     continue
                 else:
                     logger.error("All recovery attempts failed")
                     return False
-                    
+
         except Exception as e:
             logger.error(f"Attempt {attempt + 1} failed with exception: {e}")
-            
+
             if attempt < max_retries:
                 logger.info("Retrying after exception...")
                 continue
             else:
                 logger.error("Recovery failed after all attempts")
                 return False
-    
+
     return False
 
 # Test recovery strategies
@@ -1126,76 +1126,76 @@ def monitor_performance(func):
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB
         start_time = time.time()
-        
+
         print(f"📈 Starting performance monitoring...")
         print(f"   Initial memory usage: {initial_memory:.2f} MB")
-        
+
         try:
             result = func(*args, **kwargs)
-            
+
             # Get final system state
             end_time = time.time()
             final_memory = process.memory_info().rss / 1024 / 1024  # MB
             duration = end_time - start_time
             memory_increase = final_memory - initial_memory
-            
+
             print(f"📊 Performance Results:")
             print(f"   Execution time: {duration:.2f} seconds")
             print(f"   Memory usage: {final_memory:.2f} MB (Δ {memory_increase:+.2f} MB)")
             print(f"   Peak memory: {max(initial_memory, final_memory):.2f} MB")
-            
+
             return result
-            
+
         except Exception as e:
             end_time = time.time()
             duration = end_time - start_time
             print(f"❌ Performance monitoring failed after {duration:.2f}s: {e}")
             raise
-            
+
     return wrapper
 
 @monitor_performance
 def process_large_file(file_path: str, chunk_size: int = 10000):
     """Process large LDIF files efficiently."""
-    
+
     # Configure for large file processing
     config = FlextLdifConfig(
         max_entries=chunk_size,
         strict_validation=False,
         enable_observability=True
     )
-    
+
     api = FlextLdifAPI(config)
-    
+
     print(f"🔄 Processing large file: {file_path}")
     print(f"   Chunk size: {chunk_size} entries")
-    
+
     # Parse large file
     start_parse = time.time()
     result = api.parse_file(file_path)
     parse_time = time.time() - start_parse
-    
+
     if result.is_success:
         entries = result.data
         print(f"✅ Parsed {len(entries)} entries in {parse_time:.2f}s")
         print(f"   Parse rate: {len(entries) / parse_time:.1f} entries/second")
-        
+
         # Process in chunks for memory efficiency
         chunk_results = []
         total_processed = 0
-        
+
         for i in range(0, len(entries), chunk_size):
             chunk = entries[i:i + chunk_size]
             chunk_start = time.time()
-            
+
             # Validate chunk
             validation_result = api.validate(chunk)
-            
+
             if validation_result.is_success:
                 # Write chunk
                 chunk_output = f"output/chunk_{i//chunk_size + 1}.ldif"
                 write_result = api.write_file(chunk, chunk_output)
-                
+
                 if write_result.is_success:
                     chunk_time = time.time() - chunk_start
                     total_processed += len(chunk)
@@ -1205,14 +1205,14 @@ def process_large_file(file_path: str, chunk_size: int = 10000):
                         'time': chunk_time,
                         'file': chunk_output
                     })
-                    
+
                     print(f"   Chunk {i//chunk_size + 1}: {len(chunk)} entries in {chunk_time:.2f}s")
-        
+
         print(f"\n📊 Chunk Processing Summary:")
         print(f"   Total processed: {total_processed} entries")
         print(f"   Chunks created: {len(chunk_results)}")
         print(f"   Average chunk time: {sum(r['time'] for r in chunk_results) / len(chunk_results):.2f}s")
-        
+
         return chunk_results
     else:
         print(f"❌ Large file processing failed: {result.error}")
@@ -1221,14 +1221,14 @@ def process_large_file(file_path: str, chunk_size: int = 10000):
 # Test with different file sizes and chunk sizes
 performance_tests = [
     ("data/medium.ldif", 5000),    # Medium file, small chunks
-    ("data/large.ldif", 10000),    # Large file, medium chunks  
+    ("data/large.ldif", 10000),    # Large file, medium chunks
     ("data/huge.ldif", 20000),     # Huge file, large chunks
 ]
 
 for file_path, chunk_size in performance_tests:
     print(f"\n{'='*60}")
     results = process_large_file(file_path, chunk_size)
-    
+
     if results:
         print(f"✅ Successfully processed file with {len(results)} chunks")
     else:
@@ -1244,44 +1244,44 @@ import gc
 
 def stream_process_ldif(file_path: str, batch_size: int = 1000) -> Generator[List, None, None]:
     """Stream process LDIF file in batches to minimize memory usage."""
-    
+
     config = FlextLdifConfig(
         max_entries=batch_size * 2,  # Allow some buffer
         strict_validation=False       # Focus on throughput
     )
-    
+
     api = FlextLdifAPI(config)
-    
+
     print(f"🌊 Streaming LDIF file: {file_path}")
     print(f"   Batch size: {batch_size} entries")
-    
+
     try:
         # Read file in text mode first to estimate size
         with open(file_path, 'r', encoding='utf-8') as f:
             # Count entries by counting 'dn:' lines
             entry_count = sum(1 for line in f if line.strip().startswith('dn:'))
-        
+
         print(f"   Estimated entries: {entry_count}")
         print(f"   Estimated batches: {(entry_count + batch_size - 1) // batch_size}")
-        
+
         # Read and process file content
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
-        
+
         # Parse all entries first
         result = api.parse(content)
-        
+
         if result.is_success:
             all_entries = result.data
             print(f"   Actual entries: {len(all_entries)}")
-            
+
             # Yield batches
             for i in range(0, len(all_entries), batch_size):
                 batch = all_entries[i:i + batch_size]
-                
+
                 # Process batch
                 validation_result = api.validate(batch)
-                
+
                 batch_info = {
                     'batch_number': i // batch_size + 1,
                     'entries': batch,
@@ -1289,49 +1289,49 @@ def stream_process_ldif(file_path: str, batch_size: int = 1000) -> Generator[Lis
                     'validation_passed': validation_result.is_success,
                     'validation_error': validation_result.error if validation_result.is_failure else None
                 }
-                
+
                 yield batch_info
-                
+
                 # Force garbage collection to free memory
                 gc.collect()
         else:
             print(f"❌ Failed to parse file: {result.error}")
-            
+
     except Exception as e:
         print(f"❌ Streaming error: {e}")
 
 def process_stream_batches(file_path: str):
     """Process LDIF file using streaming approach."""
-    
+
     batch_count = 0
     total_entries = 0
     successful_batches = 0
     failed_batches = 0
-    
+
     start_time = time.time()
-    
+
     try:
         for batch_info in stream_process_ldif(file_path, batch_size=2000):
             batch_count += 1
             batch_entries = batch_info['entry_count']
             total_entries += batch_entries
-            
+
             print(f"📦 Batch {batch_info['batch_number']}: {batch_entries} entries")
-            
+
             if batch_info['validation_passed']:
                 # Process valid entries
                 person_entries = [
                     entry for entry in batch_info['entries']
                     if entry.has_object_class("person")
                 ]
-                
+
                 if person_entries:
                     # Export person entries from this batch
                     api = FlextLdifAPI()
                     output_file = f"output/stream_batch_{batch_info['batch_number']}_people.ldif"
-                    
+
                     write_result = api.write_file(person_entries, output_file)
-                    
+
                     if write_result.is_success:
                         print(f"   ✅ Exported {len(person_entries)} people to {output_file}")
                         successful_batches += 1
@@ -1344,12 +1344,12 @@ def process_stream_batches(file_path: str):
             else:
                 print(f"   ❌ Validation failed: {batch_info['validation_error']}")
                 failed_batches += 1
-    
+
     except Exception as e:
         print(f"❌ Stream processing error: {e}")
-    
+
     processing_time = time.time() - start_time
-    
+
     print(f"\n📊 Stream Processing Results:")
     print(f"   Total batches: {batch_count}")
     print(f"   Total entries: {total_entries}")
@@ -1406,7 +1406,7 @@ from flext_ldif import FlextLdifAPI
 @flext_monitor_function("ldif_bulk_processing")
 def process_multiple_files(file_paths: list[str]) -> dict:
     """Process multiple LDIF files with observability."""
-    
+
     api = FlextLdifAPI()
     results = {
         "processed_files": 0,
@@ -1414,23 +1414,23 @@ def process_multiple_files(file_paths: list[str]) -> dict:
         "failed_files": 0,
         "processing_errors": []
     }
-    
+
     for file_path in file_paths:
         with flext_create_trace(f"process_file_{file_path}") as trace:
             try:
                 trace.set_attribute("file_path", file_path)
-                
+
                 # Parse file with tracing
                 parse_result = api.parse_file(file_path)
-                
+
                 if parse_result.is_success:
                     entries = parse_result.data
                     trace.set_attribute("entries_count", len(entries))
-                    
+
                     # Validate with tracing
                     validation_result = api.validate(entries)
                     trace.set_attribute("validation_passed", validation_result.is_success)
-                    
+
                     if validation_result.is_success:
                         results["processed_files"] += 1
                         results["total_entries"] += len(entries)
@@ -1443,18 +1443,18 @@ def process_multiple_files(file_paths: list[str]) -> dict:
                     results["failed_files"] += 1
                     results["processing_errors"].append(f"{file_path}: {parse_result.error}")
                     trace.set_status("error", parse_result.error)
-                    
+
             except Exception as e:
                 results["failed_files"] += 1
                 results["processing_errors"].append(f"{file_path}: {str(e)}")
                 trace.set_status("error", str(e))
-    
+
     return results
 
 # Test observability integration
 test_files = [
     "data/users.ldif",
-    "data/groups.ldif", 
+    "data/groups.ldif",
     "data/services.ldif"
 ]
 
@@ -1479,9 +1479,9 @@ from flext_ldif import FlextLdifAPI
 
 def chain_ldif_operations(file_path: str) -> FlextResult[str]:
     """Chain LDIF operations using FlextResult pattern."""
-    
+
     api = FlextLdifAPI()
-    
+
     # Chain operations using bind method
     return (api.parse_file(file_path)
               .bind(lambda entries: api.validate(entries).map(lambda _: entries))
@@ -1512,10 +1512,10 @@ else:
 # Railway-oriented programming with multiple files
 def process_files_railway(*file_paths: str) -> FlextResult[dict]:
     """Process multiple files using railway-oriented programming."""
-    
+
     api = FlextLdifAPI()
     results = {"files": {}, "summary": {"success": 0, "failed": 0}}
-    
+
     for file_path in file_paths:
         file_result = (api.parse_file(file_path)
                          .bind(lambda entries: api.validate(entries).map(lambda _: entries))
@@ -1524,7 +1524,7 @@ def process_files_railway(*file_paths: str) -> FlextResult[dict]:
                              "entries": len(entries),
                              "people": len([e for e in entries if e.has_object_class("person")])
                          })))
-        
+
         if file_result.is_success:
             file_data = file_result.data
             results["files"][file_path] = file_data
@@ -1532,7 +1532,7 @@ def process_files_railway(*file_paths: str) -> FlextResult[dict]:
         else:
             results["files"][file_path] = {"error": file_result.error}
             results["summary"]["failed"] += 1
-    
+
     return FlextResult.success(results)
 
 # Test railway pattern
@@ -1547,7 +1547,7 @@ if railway_result.is_success:
     print("\n🚂 Railway Processing Results:")
     print(f"   Success: {data['summary']['success']} files")
     print(f"   Failed: {data['summary']['failed']} files")
-    
+
     for file_path, file_data in data["files"].items():
         if "error" in file_data:
             print(f"   ❌ {file_path}: {file_data['error']}")
@@ -1572,7 +1572,7 @@ class LDIFProcessor(ldif.LDIFRecordList):
     def __init__(self, input_file):
         self.records = []
         ldif.LDIFRecordList.__init__(self, input_file)
-    
+
     def handle(self, dn, entry):
         self.records.append((dn, entry))
 
@@ -1580,7 +1580,7 @@ class LDIFProcessor(ldif.LDIFRecordList):
 with open('data.ldif', 'r') as f:
     parser = LDIFProcessor(f)
     parser.parse()
-    
+
 for dn, entry in parser.records:
     print(f"DN: {dn}")
     for attr, values in entry.items():
@@ -1592,27 +1592,27 @@ from flext_ldif import FlextLdifAPI
 
 def migrate_from_standard_ldif():
     """Migrate from standard LDIF processing."""
-    
+
     api = FlextLdifAPI()
-    
+
     # Parse LDIF (much simpler)
     result = api.parse_file('data.ldif')
-    
+
     if result.is_success:
         entries = result.data
-        
+
         for entry in entries:
             print(f"DN: {entry.dn.value}")
-            
+
             # Access attributes (type-safe)
             for attr_name in entry.attributes.get_attribute_names():
                 values = entry.attributes.get_values(attr_name)
                 print(f"  {attr_name}: {values}")
-            
+
             # Business logic operations (new capabilities)
             if entry.has_object_class("person"):
                 print(f"  → Person: {entry.get_single_attribute_value('cn')}")
-                
+
                 # Domain validation
                 try:
                     entry.validate_domain_rules()
@@ -1647,10 +1647,10 @@ from flext_ldif import FlextLdifAPI
 
 def migrate_from_legacy_flext():
     """Migrate from legacy FLEXT-LDIF versions."""
-    
+
     # New unified approach
     api = FlextLdifAPI()
-    
+
     # All operations through single API
     content = """
     dn: cn=Test User,ou=people,dc=example,dc=com
@@ -1659,23 +1659,23 @@ def migrate_from_legacy_flext():
     objectClass: person
     objectClass: organizationalPerson
     """
-    
+
     # Parse (with comprehensive error handling)
     parse_result = api.parse(content)
-    
+
     if parse_result.is_success:
         entries = parse_result.data
         print(f"Parsed {len(entries)} entries")
-        
+
         # Validate (integrated validation)
         validation_result = api.validate(entries)
-        
+
         if validation_result.is_success:
             print("✅ Validation passed")
-            
+
             # Generate output (consistent formatting)
             output_result = api.write(entries)
-            
+
             if output_result.is_success:
                 print("✅ Output generated")
                 print(output_result.data)
@@ -1706,7 +1706,7 @@ from flext_ldif import FlextLdifConfig, FlextLdifAPI
 
 def migrate_configuration():
     """Migrate configuration to new structured approach."""
-    
+
     # Environment-specific configurations
     development_config = FlextLdifConfig(
         max_entries=5000,
@@ -1716,7 +1716,7 @@ def migrate_configuration():
         allow_empty_attributes=True,
         enable_observability=False
     )
-    
+
     production_config = FlextLdifConfig(
         max_entries=100000,
         strict_validation=True,
@@ -1725,24 +1725,24 @@ def migrate_configuration():
         allow_empty_attributes=False,
         enable_observability=True
     )
-    
+
     # Use environment-specific API
     import os
     env = os.getenv("ENVIRONMENT", "development")
-    
+
     if env == "production":
         api = FlextLdifAPI(production_config)
         print("🏭 Using production configuration")
     else:
         api = FlextLdifAPI(development_config)
         print("🔧 Using development configuration")
-    
+
     # Configuration is now type-safe and validated
     config = api._config
     print(f"   Max entries: {config.max_entries}")
     print(f"   Strict validation: {config.strict_validation}")
     print(f"   Observability: {config.enable_observability}")
-    
+
     return api
 
 # Test configuration migration
@@ -1783,7 +1783,7 @@ class EnterpriseLdifProcessor:
     """
     Enterprise-grade LDIF processor with comprehensive features.
     """
-    
+
     def __init__(self, config_file: str | None = None):
         """Initialize with configuration."""
         self.config = self._load_config(config_file)
@@ -1796,7 +1796,7 @@ class EnterpriseLdifProcessor:
             "processing_time": 0,
             "errors": []
         }
-    
+
     def _load_config(self, config_file: str | None) -> FlextLdifConfig:
         """Load configuration from file or use defaults."""
         if config_file and Path(config_file).exists():
@@ -1809,73 +1809,73 @@ class EnterpriseLdifProcessor:
                 strict_validation=True,
                 enable_observability=True
             )
-    
+
     def process_directory(self, input_dir: str, output_dir: str) -> dict:
         """Process all LDIF files in a directory."""
         input_path = Path(input_dir)
         output_path = Path(output_dir)
         output_path.mkdir(exist_ok=True)
-        
+
         ldif_files = list(input_path.glob("*.ldif"))
         logger.info(f"Found {len(ldif_files)} LDIF files to process")
-        
+
         start_time = time.time()
-        
+
         for ldif_file in ldif_files:
             logger.info(f"Processing {ldif_file.name}")
-            
+
             try:
                 self._process_single_file(ldif_file, output_path)
                 self.statistics["files_processed"] += 1
-                
+
             except Exception as e:
                 error_msg = f"Failed to process {ldif_file.name}: {e}"
                 logger.error(error_msg)
                 self.statistics["errors"].append(error_msg)
-        
+
         self.statistics["processing_time"] = time.time() - start_time
-        
+
         return self.statistics
-    
+
     def _process_single_file(self, input_file: Path, output_dir: Path):
         """Process a single LDIF file with comprehensive handling."""
-        
+
         # Parse file
         parse_result = self.api.parse_file(str(input_file))
-        
+
         if parse_result.is_failure:
             raise ValueError(f"Parse failed: {parse_result.error}")
-        
+
         entries = parse_result.data
         self.statistics["total_entries"] += len(entries)
         logger.info(f"  Parsed {len(entries)} entries")
-        
+
         # Separate valid and invalid entries
         valid_entries = []
         invalid_entries = []
-        
+
         for entry in entries:
             try:
                 entry.validate_domain_rules()
                 valid_entries.append(entry)
             except ValueError as e:
                 invalid_entries.append((entry, str(e)))
-        
+
         self.statistics["valid_entries"] += len(valid_entries)
         self.statistics["invalid_entries"] += len(invalid_entries)
-        
+
         logger.info(f"  Valid: {len(valid_entries)}, Invalid: {len(invalid_entries)}")
-        
+
         # Process valid entries by category
         self._export_by_category(valid_entries, output_dir, input_file.stem)
-        
+
         # Log invalid entries
         if invalid_entries:
             self._log_invalid_entries(invalid_entries, output_dir, input_file.stem)
-    
+
     def _export_by_category(self, entries: list, output_dir: Path, base_name: str):
         """Export entries categorized by type."""
-        
+
         categories = {
             "people": [e for e in entries if e.has_object_class("person")],
             "groups": [e for e in entries if e.has_object_class("groupOfNames")],
@@ -1886,38 +1886,38 @@ class EnterpriseLdifProcessor:
                 e.has_object_class("applicationProcess")
             ])]
         }
-        
+
         for category, category_entries in categories.items():
             if category_entries:
                 output_file = output_dir / f"{base_name}_{category}.ldif"
-                
+
                 write_result = self.api.write_file(category_entries, str(output_file))
-                
+
                 if write_result.is_success:
                     logger.info(f"  Exported {len(category_entries)} {category} to {output_file.name}")
                 else:
                     logger.error(f"  Failed to export {category}: {write_result.error}")
-    
+
     def _log_invalid_entries(self, invalid_entries: list, output_dir: Path, base_name: str):
         """Log invalid entries with details."""
         log_file = output_dir / f"{base_name}_invalid.log"
-        
+
         with open(log_file, 'w') as f:
             f.write(f"Invalid Entries Log for {base_name}\n")
             f.write("=" * 50 + "\n\n")
-            
+
             for i, (entry, error) in enumerate(invalid_entries, 1):
                 f.write(f"Entry {i}: {entry.dn.value}\n")
                 f.write(f"Error: {error}\n")
                 f.write(f"Object Classes: {entry.get_object_classes()}\n")
                 f.write("-" * 30 + "\n")
-        
+
         logger.info(f"  Logged {len(invalid_entries)} invalid entries to {log_file.name}")
-    
+
     def generate_report(self) -> str:
         """Generate processing report."""
         stats = self.statistics
-        
+
         report = f"""
 Enterprise LDIF Processing Report
 ================================
@@ -1933,40 +1933,40 @@ Processing Summary:
 Quality Metrics:
   Success rate: {(stats['files_processed']/(stats['files_processed']+len(stats['errors'])))*100:.1f}%
   Validation rate: {stats['valid_entries']/stats['total_entries']*100:.1f}%
-  
+
 """
-        
+
         if stats['errors']:
             report += "\nErrors Encountered:\n"
             for error in stats['errors']:
                 report += f"  - {error}\n"
-        
+
         return report
 
 # Usage example
 def main():
     """Main enterprise processing example."""
-    
+
     print("🏢 Enterprise LDIF Processor")
     print("=" * 50)
-    
+
     # Initialize processor
     processor = EnterpriseLdifProcessor("config/production.json")
-    
+
     # Process directory
     try:
         stats = processor.process_directory("input/ldif_files", "output/processed")
-        
+
         # Generate and display report
         report = processor.generate_report()
         print(report)
-        
+
         # Save report
         with open("output/processing_report.txt", "w") as f:
             f.write(report)
-        
+
         print("✅ Processing complete. Report saved to output/processing_report.txt")
-        
+
     except Exception as e:
         logger.error(f"Enterprise processing failed: {e}")
         print(f"❌ Processing failed: {e}")

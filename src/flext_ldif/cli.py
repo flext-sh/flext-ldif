@@ -1,4 +1,4 @@
-"""FLEXT-LDIF Command Line Interface
+"""FLEXT-LDIF Command Line Interface.
 
 This module implements the command-line interface for FLEXT-LDIF operations,
 providing enterprise-grade CLI functionality built on flext-cli foundation
