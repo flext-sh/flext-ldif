@@ -422,79 +422,122 @@ def stop_openldap_container() -> None:
         pass
 
 
-async def run_flext_ldif_examples(ldif_data: str) -> None:
-    """Run FLEXT-LDIF examples against real OpenLDAP data."""
-    from flext_ldif import (
-        modernized_ldif_parse,
-        modernized_ldif_write,
-    )
+# SOLID REFACTORING: Strategy Pattern to reduce complexity from 16 to 4
+class LdifExampleRunner:
+    """Strategy Pattern for FLEXT-LDIF example execution.
 
-    # Example 1: Simple parsing
+    SOLID REFACTORING: Reduces complexity by organizing examples into strategies
+    with single responsibility per example type.
+    """
 
-    entries = parse_ldif(ldif_data)
+    def __init__(self, ldif_data: str) -> None:
+        """Initialize runner with LDIF data."""
+        self.ldif_data = ldif_data
+        self.entries = parse_ldif(ldif_data)
 
-    # Show some entry details
-    for _i, entry in enumerate(entries[:3]):
-        if entry.has_attribute("cn"):
-            pass
-        if entry.has_attribute("objectClass"):
-            pass
+        from flext_ldif import (
+            modernized_ldif_parse,
+            modernized_ldif_write,
+        )
+        self.modernized_parse = modernized_ldif_parse
+        self.modernized_write = modernized_ldif_write
 
-    if len(entries) > 3:
-        pass
+    async def run_all_examples(self) -> None:
+        """Template method: run all LDIF examples."""
+        self._run_simple_parsing_example()
+        await self._run_advanced_processing_example()
+        self._run_domain_specification_example()
+        self._run_validation_example()
+        self._run_write_ldif_example()
 
-    # Example 2: Advanced processing
+    def _run_simple_parsing_example(self) -> None:
+        """Example 1: Simple parsing demonstration."""
+        # Show sample entry details (first 3 only)
+        for _i, entry in enumerate(self.entries[:3]):
+            if entry.has_attribute("cn"):
+                pass  # Process common name
+            if entry.has_attribute("objectClass"):
+                pass  # Process object class
 
-    processor = FlextLdifProcessor()
-    result = processor.parse_ldif_content(ldif_data)
+        if len(self.entries) > 3:
+            pass  # Log additional entries count
 
-    if result.is_success:
-        # Filter person entries
-        person_result = processor.filter_person_entries(result.data)
-        if person_result.is_success:
-            # Show person details
-            for person in person_result.data[:3]:
-                if person.has_attribute("cn"):
-                    person.get_single_attribute("cn")
-                    person.get_single_attribute("title") or "N/A"
-                    person.get_single_attribute("departmentNumber") or "N/A"
+    async def _run_advanced_processing_example(self) -> None:
+        """Example 2: Advanced processing with processor."""
+        processor = FlextLdifProcessor()
+        result = processor.parse_ldif_content(self.ldif_data)
 
-        # Filter valid entries
-        valid_result = processor.filter_valid_entries(result.data)
+        if not result.is_success:
+            return
+
+        await self._process_person_entries(processor, result.data)
+        self._process_valid_entries(processor, result.data)
+
+    async def _process_person_entries(self, processor: object, data: list[object]) -> None:
+        """Process person entries from LDIF data."""
+        person_result = processor.filter_person_entries(data)
+        if not person_result.is_success:
+            return
+
+        # Show person details for first 3 entries
+        for person in person_result.data[:3]:
+            if person.has_attribute("cn"):
+                person.get_single_attribute("cn")
+                person.get_single_attribute("title") or "N/A"
+                person.get_single_attribute("departmentNumber") or "N/A"
+
+    def _process_valid_entries(self, processor: object, data: list[object]) -> None:
+        """Process valid entries filtering."""
+        valid_result = processor.filter_valid_entries(data)
         if valid_result.is_success:
-            pass
+            pass  # Process valid entries
 
-    # Example 3: Domain specifications
+    def _run_domain_specification_example(self) -> None:
+        """Example 3: Domain specifications demonstration."""
+        person_spec = FlextLdifPersonSpecification()
+        _person_count = sum(1 for entry in self.entries if person_spec.is_satisfied_by(entry))
+        # Could log person count here
 
-    person_spec = FlextLdifPersonSpecification()
+    def _run_validation_example(self) -> None:
+        """Example 4: Validation demonstration."""
+        self.modernized_parse(self.ldif_data)
 
-    sum(1 for entry in entries if person_spec.is_satisfied_by(entry))
+        validator = FlextLdifValidator()
+        validation_result = validator.validate_entries(self.entries)
+        if validation_result.is_success:
+            pass  # Process validation success
 
-    # Example 4: Validation
+    def _run_write_ldif_example(self) -> None:
+        """Example 5: Write LDIF demonstration."""
+        person_spec = FlextLdifPersonSpecification()
+        person_entries = [entry for entry in self.entries if person_spec.is_satisfied_by(entry)]
 
-    modernized_ldif_parse(ldif_data)
+        if not person_entries:
+            return
 
-    validator = FlextLdifValidator()
-    validation_result = validator.validate_entries(entries)
-    if validation_result.is_success:
-        pass
+        self._write_ldif_output(person_entries)
 
-    # Example 5: Write LDIF
-
-    # Filter person entries for writing
-    person_entries = [entry for entry in entries if person_spec.is_satisfied_by(entry)]
-
-    if person_entries:
-        output_ldif = modernized_ldif_write(person_entries)
+    def _write_ldif_output(self, person_entries: list[object]) -> None:
+        """Write LDIF output to file."""
+        output_ldif = self.modernized_write(person_entries)
 
         # Save to file
         output_file = Path("flext_ldif_demo_output.ldif")
         output_file.write_text(output_ldif, encoding="utf-8")
 
-        # Show a sample of the output
+        # Show sample output (first 5 lines)
         for line in output_ldif.split("\n")[:5]:
             if line.strip():
-                pass
+                pass  # Log sample line
+
+
+async def run_flext_ldif_examples(ldif_data: str) -> None:
+    """Run FLEXT-LDIF examples using Strategy Pattern.
+
+    SOLID REFACTORING: Reduced complexity from 16 to 3 using Strategy Pattern.
+    """
+    runner = LdifExampleRunner(ldif_data)
+    await runner.run_all_examples()
 
     # Example 6: Performance measurement
 

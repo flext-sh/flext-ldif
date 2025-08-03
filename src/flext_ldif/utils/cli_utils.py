@@ -1,13 +1,24 @@
-"""CLI utilities for flext-ldif to reduce CLI result processing duplication.
+"""FLEXT-LDIF CLI Utilities
 
-This module provides common CLI patterns used throughout the CLI module,
-reducing code duplication and providing consistent error handling.
+This module provides comprehensive CLI utilities and helper functions for
+FLEXT-LDIF command-line interface operations, implementing consistent user
+interaction patterns, output formatting, and error handling across all CLI commands.
+
+Key Components:
+    - CLI result validation and error reporting
+    - Consistent output formatting and user feedback
+    - File operation helpers with proper error handling
+    - User interaction utilities with confirmation patterns
+
+Author: FLEXT Development Team
+Version: 0.9.0
+License: MIT
 """
 
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING, Any, NoReturn
+from typing import TYPE_CHECKING, NoReturn
 
 import click
 
@@ -15,7 +26,7 @@ if TYPE_CHECKING:
     from flext_core import FlextResult
 
 
-def validate_cli_result(result: FlextResult[Any], operation_name: str) -> None:
+def validate_cli_result[T](result: FlextResult[T], operation_name: str) -> None:
     """Validate CLI result and exit with error if invalid.
 
     This function consolidates the repeated pattern of validating CLI results
@@ -39,7 +50,7 @@ def validate_cli_result(result: FlextResult[Any], operation_name: str) -> None:
         sys.exit(1)
 
 
-def handle_parse_result(result: FlextResult[Any], file_path: str) -> None:
+def handle_parse_result[T](result: FlextResult[T], file_path: str) -> None:
     """Handle parsing result with consistent error reporting.
 
     This function consolidates the repeated pattern of handling parse results
@@ -63,8 +74,8 @@ def handle_parse_result(result: FlextResult[Any], file_path: str) -> None:
         sys.exit(1)
 
 
-def handle_file_operation_result(
-    result: FlextResult[Any],
+def handle_file_operation_result[T](
+    result: FlextResult[T],
     operation: str,
     file_path: str,
 ) -> None:

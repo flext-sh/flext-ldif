@@ -1,15 +1,77 @@
-"""FlextLdif models and value objects using flext-core patterns.
+"""FLEXT-LDIF Domain Models and Value Objects.
 
-Copyright (c) 2025 FLEXT Contributors
-SPDX-License-Identifier: MIT
+This module contains the core domain model for LDIF processing, implementing
+Domain-Driven Design patterns with immutable value objects and rich domain
+entities built on flext-core foundation classes.
+
+The domain model encapsulates business logic and invariants for LDIF data
+processing, providing type-safe, validated, and immutable data structures
+with comprehensive business rule enforcement.
+
+Key Components:
+    - FlextLdifEntry: Domain entity representing LDIF entries with business logic
+    - FlextLdifDistinguishedName: Value object for DN validation and operations
+    - FlextLdifAttributes: Immutable attribute collection with business rules
+    - Type definitions: TypedDict structures for type-safe data exchange
+
+Architecture:
+    Part of Domain Layer in Clean Architecture, this module contains pure
+    business logic without external dependencies. All domain objects extend
+    flext-core base classes and implement enterprise-grade validation patterns.
+
+Business Rules:
+    - Distinguished Names must follow RFC 4514 syntax requirements
+    - LDIF entries must have valid DN and consistent attribute structure
+    - Attributes follow LDAP naming conventions and value constraints
+    - Change records must have valid operation types and modification semantics
+
+Example:
+    Creating and validating LDIF domain objects:
+
+    >>> from flext_ldif.models import FlextLdifEntry, FlextLdifDistinguishedName
+    >>>
+    >>> # Create DN with automatic validation
+    >>> dn = FlextLdifDistinguishedName(value="cn=John Doe,ou=people,dc=example,dc=com")
+    >>> print(dn.get_rdn())  # "cn=John Doe"
+    >>> print(dn.get_depth())  # 4
+    >>>
+    >>> # Create entry with business rule validation
+    >>> entry = FlextLdifEntry.model_validate({
+    ...     "dn": dn,
+    ...     "attributes": FlextLdifAttributes(attributes={
+    ...         "cn": ["John Doe"],
+    ...         "objectClass": ["person", "inetOrgPerson"],
+    ...         "mail": ["john@example.com"]
+    ...     })
+    ... })
+    >>>
+    >>> # Validate business rules
+    >>> entry.validate_semantic_rules()  # Raises exception if invalid
+    >>> print(entry.has_object_class("person"))  # True
+
+Integration:
+    - Built on flext-core FlextDomainValueObject and FlextImmutableModel
+    - Provides type-safe interfaces for application and infrastructure layers
+    - Implements immutability patterns for thread-safe operations
+    - Supports serialization for persistence and API integration
+
+Author: FLEXT Development Team
+Version: 0.9.0
+License: MIT
+
 """
 
 from __future__ import annotations
 
-from typing import NewType
+from typing import NewType, NotRequired, TypedDict
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root namespace imports
-from flext_core import FlextResult, FlextValueObject, get_logger
+from flext_core import (
+    FlextDomainValueObject,
+    FlextImmutableModel,
+    FlextResult,
+    get_logger,
+)
 from pydantic import Field, field_validator
 
 # Logger for models module
@@ -20,7 +82,36 @@ LDIFContent = NewType("LDIFContent", str)
 LDIFLines = NewType("LDIFLines", list[str])
 
 
-class FlextLdifDistinguishedName(FlextValueObject):
+# =============================================================================
+# LDIF TYPEDDICT DEFINITIONS - Type-safe dictionaries for LDIF
+# =============================================================================
+
+
+class FlextLdifDNDict(TypedDict):
+    """TypedDict for Distinguished Name structure."""
+
+    value: str
+    components: NotRequired[list[str]]
+    depth: NotRequired[int]
+
+
+class FlextLdifAttributesDict(TypedDict):
+    """TypedDict for LDIF attributes structure."""
+
+    attributes: dict[str, list[str]]
+    count: NotRequired[int]
+
+
+class FlextLdifEntryDict(TypedDict):
+    """TypedDict for LDIF entry structure."""
+
+    dn: str
+    attributes: dict[str, list[str]]
+    object_classes: NotRequired[list[str]]
+    changetype: NotRequired[str]
+
+
+class FlextLdifDistinguishedName(FlextDomainValueObject):
     """Distinguished Name value object for LDIF entries."""
 
     value: str = Field(..., description="DN string value")
@@ -89,15 +180,23 @@ class FlextLdifDistinguishedName(FlextValueObject):
         """Get depth of DN (number of components)."""
         return len(self.value.split(","))
 
-    def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate DN domain rules (required by FlextValueObject)."""
+    def validate_semantic_rules(self) -> FlextResult[None]:
+        """Validate DN semantic business rules."""
         # Validation is done in field_validator, so just check final state
         if not self.value or "=" not in self.value:
             return FlextResult.fail("DN must contain at least one attribute=value pair")
         return FlextResult.ok(None)
 
+    def to_dn_dict(self) -> FlextLdifDNDict:
+        """Convert to FlextLdifDNDict representation."""
+        return FlextLdifDNDict(
+            value=self.value,
+            components=self.value.split(","),
+            depth=self.get_depth(),
+        )
 
-class FlextLdifAttributes(FlextValueObject):
+
+class FlextLdifAttributes(FlextDomainValueObject):
     """LDIF attributes value object."""
 
     attributes: dict[str, list[str]] = Field(
@@ -167,16 +266,23 @@ class FlextLdifAttributes(FlextValueObject):
             frozenset((key, tuple(values)) for key, values in self.attributes.items()),
         )
 
-    def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate attributes domain rules (required by FlextValueObject)."""
+    def validate_semantic_rules(self) -> FlextResult[None]:
+        """Validate attributes semantic business rules."""
         # Validate attribute names
         for attr_name in self.attributes:
             if not attr_name.strip():
                 return FlextResult.fail(f"Invalid attribute name: {attr_name}")
         return FlextResult.ok(None)
 
+    def to_attributes_dict(self) -> FlextLdifAttributesDict:
+        """Convert to FlextLdifAttributesDict representation."""
+        return FlextLdifAttributesDict(
+            attributes=self.attributes.copy(),
+            count=len(self.attributes),
+        )
 
-class FlextLdifEntry(FlextValueObject):
+
+class FlextLdifEntry(FlextImmutableModel):
     """LDIF entry model using flext-core patterns."""
 
     dn: FlextLdifDistinguishedName = Field(..., description="Distinguished Name")
@@ -323,8 +429,8 @@ class FlextLdifEntry(FlextValueObject):
         lines.append("")  # Empty line after entry
         return "\n".join(lines)
 
-    def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate LDIF entry domain rules using Railway-Oriented Programming.
+    def validate_semantic_rules(self) -> FlextResult[None]:
+        """Validate LDIF entry semantic business rules using Railway-Oriented Programming.
 
         SOLID REFACTORING: Reduced from 4 returns to 2 returns using
         Railway-Oriented Programming + Strategy Pattern.
@@ -334,7 +440,7 @@ class FlextLdifEntry(FlextValueObject):
 
         if validation_errors:
             return FlextResult.fail(
-                validation_errors[0]
+                validation_errors[0],
             )  # Return first error for clarity
 
         return FlextResult.ok(None)
@@ -446,6 +552,18 @@ class FlextLdifEntry(FlextValueObject):
         else:
             return entry
 
+    def to_entry_dict(self) -> FlextLdifEntryDict:
+        """Convert to FlextLdifEntryDict representation."""
+        changetype = self.get_single_attribute("changetype")
+        result = FlextLdifEntryDict(
+            dn=str(self.dn),
+            attributes=self.attributes.attributes.copy(),
+            object_classes=self.get_object_classes(),
+        )
+        if changetype is not None:
+            result["changetype"] = changetype
+        return result
+
     # ==========================================================================
     # SPECIFICATION METHODS (Consolidated from specifications.py)
     # Using composition pattern to integrate business rules
@@ -540,10 +658,11 @@ class FlextLdifEntry(FlextValueObject):
 
 __all__ = [
     "FlextLdifAttributes",
+    "FlextLdifAttributesDict",
+    "FlextLdifDNDict",
     "FlextLdifDistinguishedName",
-    # Core models and value objects
     "FlextLdifEntry",
-    # Type aliases
+    "FlextLdifEntryDict",
     "LDIFContent",
     "LDIFLines",
 ]

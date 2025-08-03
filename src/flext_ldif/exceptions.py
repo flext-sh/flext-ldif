@@ -1,9 +1,64 @@
-"""LDIF exceptions using flext-core DRY patterns.
+"""FLEXT-LDIF Domain Exceptions
 
-Copyright (c) 2025 FLEXT Contributors
-SPDX-License-Identifier: MIT
+This module defines domain-specific exceptions for LDIF processing operations,
+implementing a comprehensive exception hierarchy using flext-core exception
+patterns with factory-based generation for consistency and maintainability.
 
-Domain-specific exceptions using factory pattern to eliminate duplication.
+The exception hierarchy provides structured error reporting with proper context,
+error codes, and integration with FlextResult patterns for railway-oriented
+programming throughout the LDIF processing pipeline.
+
+Key Components:
+    - FlextLdifError: Base exception for all LDIF-related errors
+    - FlextLdifValidationError: Business rule and data validation failures
+    - FlextLdifParseError: LDIF format parsing and syntax errors
+    - FlextLdifEntryError: Entry-specific validation and processing errors
+    - Specialized exceptions: Configuration, connection, timeout, and authentication errors
+
+Architecture:
+    Part of Domain Layer in Clean Architecture, these exceptions represent
+    domain-specific error conditions and business rule violations without
+    dependencies on external concerns or infrastructure implementation details.
+
+Exception Hierarchy:
+    - FlextLdifError (base)
+      ├── FlextLdifValidationError (business rule violations)
+      ├── FlextLdifParseError (LDIF format errors)
+      ├── FlextLdifEntryError (entry-specific errors)
+      ├── FlextLdifConfigurationError (configuration validation)
+      ├── FlextLdifProcessingError (processing pipeline errors)
+      ├── FlextLdifConnectionError (external service connectivity)
+      ├── FlextLdifAuthenticationError (authentication failures)
+      └── FlextLdifTimeoutError (operation timeout errors)
+
+Example:
+    Structured exception handling with context information:
+    
+    >>> from flext_ldif.exceptions import FlextLdifValidationError, FlextLdifParseError
+    >>> from flext_core import FlextResult
+    >>> 
+    >>> def validate_entry(entry):
+    ...     try:
+    ...         if not entry.dn.value:
+    ...             raise FlextLdifValidationError(
+    ...                 "DN cannot be empty",
+    ...                 context={"entry_id": entry.id},
+    ...                 error_code="EMPTY_DN"
+    ...             )
+    ...         return FlextResult.ok(entry)
+    ...     except FlextLdifValidationError as e:
+    ...         return FlextResult.fail(str(e))
+
+Integration:
+    - Built on flext-core exception factory patterns for consistency
+    - Integrates with FlextResult for railway-oriented error handling
+    - Provides structured error reporting with context and error codes
+    - Supports observability integration with error tracking and metrics
+
+Author: FLEXT Development Team
+Version: 0.9.0
+License: MIT
+
 """
 
 from __future__ import annotations

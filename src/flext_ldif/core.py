@@ -1,7 +1,59 @@
-"""FlextLdif core functionality using flext-core patterns.
+"""FLEXT-LDIF Core Processing Infrastructure.
 
-Copyright (c) 2025 FLEXT Contributors
-SPDX-License-Identifier: MIT
+This module provides the core infrastructure for LDIF processing operations,
+implementing low-level parsing, validation, and writing functionality with
+comprehensive error handling and performance optimizations.
+
+The core module bridges between domain models and concrete LDIF format handling,
+providing the technical implementation details while maintaining clean interfaces
+for higher-level application services.
+
+Key Components:
+    - TLdif: Core LDIF processing class with parsing and writing operations
+    - LDIF format validation with RFC 2849 compliance checking
+    - Performance-optimized parsing with configurable limits and timeouts
+    - Integration with modernized LDIF extensions for enhanced format support
+
+Architecture:
+    Part of Infrastructure Layer in Clean Architecture, this module handles
+    technical LDIF format concerns and provides concrete implementations for
+    domain repository interfaces. Isolates format-specific logic from business rules.
+
+Performance Features:
+    - Streaming support for large LDIF files with memory management
+    - Regex-based validation with compiled patterns for efficiency
+    - Configurable processing limits to prevent resource exhaustion
+    - Comprehensive error reporting with line number tracking
+
+Example:
+    Direct core processing for performance-critical operations:
+
+    >>> from flext_ldif.core import TLdif
+    >>>
+    >>> # Parse LDIF with core processor
+    >>> ldif_content = '''
+    ... dn: cn=user,dc=example,dc=com
+    ... cn: user
+    ... objectClass: person
+    ... '''
+    >>>
+    >>> result = TLdif.parse(ldif_content)
+    >>> if result.is_success:
+    ...     entries = result.data
+    ...     print(f"Parsed {len(entries)} entries")
+    ... else:
+    ...     print(f"Parse failed: {result.error}")
+
+Integration:
+    - Uses flext-core FlextResult pattern for consistent error handling
+    - Integrates with modernized LDIF extensions for format compatibility
+    - Provides foundation for higher-level application service operations
+    - Supports observability integration through structured logging
+
+Author: FLEXT Development Team
+Version: 0.9.0
+License: MIT
+
 """
 
 from __future__ import annotations

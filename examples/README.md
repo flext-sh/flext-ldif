@@ -1,15 +1,19 @@
-# FLEXT LDIF Examples
+# FLEXT-LDIF Examples
 
-This directory contains comprehensive examples demonstrating the FLEXT LDIF library capabilities using Clean Architecture patterns and flext-core integration.
+This directory contains comprehensive examples demonstrating enterprise-grade LDIF processing capabilities using Clean Architecture patterns, Domain-Driven Design principles, and seamless FLEXT ecosystem integration.
 
 ## Overview
 
-The examples are organized by complexity and use case:
+The examples are organized by complexity level and practical use cases, showcasing real-world scenarios for LDIF processing operations with proper error handling, validation, and performance optimization.
 
-- **Basic Examples**: Simple parsing, validation, and writing
-- **Advanced Examples**: Complex transformations, filtering, and enterprise patterns
-- **Integration Examples**: Usage with flext-cli, error handling, and production patterns
-- **Sample Data**: Realistic LDIF data for testing and demonstration
+### Example Categories
+
+- **Basic Operations**: Fundamental parsing, validation, and writing operations
+- **Advanced Processing**: Complex transformations, filtering, and business rule validation
+- **Enterprise Integration**: Production-ready patterns with flext-core and observability
+- **Performance Optimization**: Large-scale processing and memory-efficient operations
+- **Error Handling**: Comprehensive error scenarios and recovery patterns
+- **Sample Data**: Realistic LDIF datasets for testing and demonstration
 
 ## Running Examples
 

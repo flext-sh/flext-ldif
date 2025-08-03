@@ -31,7 +31,7 @@ class TestAPICoverageBoost:
         api = FlextLdifAPI()
 
         # Mock the TLdif.parse to return success but with None data
-        with patch("flext_ldif.api.TLdif.parse") as mock_parse:
+        with patch("flext_ldif.core.TLdif.parse") as mock_parse:
             mock_result = Mock()
             mock_result.is_success = True
             mock_result.data = None
@@ -57,7 +57,7 @@ class TestAPICoverageBoost:
 
         try:
             # Mock the TLdif.read_file to return success but with None data
-            with patch("flext_ldif.api.TLdif.read_file") as mock_read:
+            with patch("flext_ldif.core.TLdif.read_file") as mock_read:
                 mock_result = Mock()
                 mock_result.is_success = True
                 mock_result.data = None
@@ -143,7 +143,7 @@ class TestAPICoverageBoost:
         )
 
         # Mock TLdif.write to fail
-        with patch("flext_ldif.api.TLdif.write") as mock_write:
+        with patch("flext_ldif.core.TLdif.write") as mock_write:
             mock_result = Mock()
             mock_result.is_success = False
             mock_result.error = "Write error"

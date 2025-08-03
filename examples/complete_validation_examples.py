@@ -232,10 +232,17 @@ def test_4_exceptions_validation() -> None:
         pass
 
 
-def test_5_complete_ldif_processing_workflow() -> None:
-    """Teste 5: Workflow completo de processamento LDIF."""
-    # Sample LDIF content
-    ldif_content = """dn: dc=example,dc=com
+# SOLID REFACTORING: Template Method Pattern to reduce complexity from 11 to 4
+class CompleteLdifWorkflowTester:
+    """Template Method Pattern for complete LDIF workflow testing.
+
+    SOLID REFACTORING: Reduces complexity by organizing workflow tests into stages
+    with single responsibility per processing stage.
+    """
+
+    def __init__(self) -> None:
+        """Initialize workflow tester with sample LDIF content."""
+        self.ldif_content = """dn: dc=example,dc=com
 objectClass: organization
 dc: example
 o: Example Organization
@@ -258,37 +265,51 @@ objectClass: groupOfNames
 cn: REDACTED_LDAP_BIND_PASSWORDs
 member: uid=jdoe,ou=people,dc=example,dc=com"""
 
-    try:
-        # ✅ 1. Parsing com FlextLdifParser
+    def test_complete_workflow(self) -> None:
+        """Template method: test complete LDIF processing workflow."""
+        try:
+            self._test_parsing_stage()
+            self._test_processing_stage()
+            self._test_validation_stage()
+            self._test_writing_stage()
+            self._test_utilities_stage()
+        except (RuntimeError, ValueError, TypeError):
+            pass
+
+    def _test_parsing_stage(self) -> None:
+        """Test parsing stage with FlextLdifParser."""
         parser = FlextLdifParser()
 
-        # Test if parser has expected methods
+        # Test parser capabilities
         if hasattr(parser, "parse"):
             pass
         if hasattr(parser, "parse_ldif_content"):
             pass
 
-        # ✅ 2. Processing com FlextLdifProcessor
+    def _test_processing_stage(self) -> None:
+        """Test processing stage with FlextLdifProcessor."""
         processor = FlextLdifProcessor()
 
         if hasattr(processor, "process"):
             pass
         if hasattr(processor, "parse_ldif_content"):
             try:
-                result = processor.parse_ldif_content(ldif_content)
+                result = processor.parse_ldif_content(self.ldif_content)
                 if hasattr(result, "success") and result.success:
                     result.data if hasattr(result, "data") else []
             except (RuntimeError, ValueError, TypeError):
                 pass
 
-        # ✅ 3. Validation com FlextLdifValidator
+    def _test_validation_stage(self) -> None:
+        """Test validation stage with FlextLdifValidator."""
         validator = FlextLdifValidator()
 
         if hasattr(validator, "validate"):
             with contextlib.suppress(Exception):
-                validator.validate(ldif_content)
+                validator.validate(self.ldif_content)
 
-        # ✅ 4. Writing com FlextLdifWriter
+    def _test_writing_stage(self) -> None:
+        """Test writing stage with FlextLdifWriter."""
         writer = FlextLdifWriter()
 
         if hasattr(writer, "write"):
@@ -296,7 +317,8 @@ member: uid=jdoe,ou=people,dc=example,dc=com"""
         if hasattr(writer, "write_entries_to_file"):
             pass
 
-        # ✅ 5. Utilities testing
+    def _test_utilities_stage(self) -> None:
+        """Test utilities stage with FlextLdifUtils."""
         FlextLdifUtils()
 
         # Test hierarchical sorting function
@@ -309,8 +331,14 @@ member: uid=jdoe,ou=people,dc=example,dc=com"""
         with contextlib.suppress(Exception):
             flext_ldif_sort_entries_hierarchically(test_entries)
 
-    except (RuntimeError, ValueError, TypeError):
-        pass
+
+def test_5_complete_ldif_processing_workflow() -> None:
+    """Teste 5: Workflow completo de processamento LDIF usando Template Method Pattern.
+
+    SOLID REFACTORING: Reduced complexity from 11 to 4 using Template Method Pattern.
+    """
+    tester = CompleteLdifWorkflowTester()
+    tester.test_complete_workflow()
 
 
 def test_6_simple_api_aliases_validation() -> None:

@@ -12,13 +12,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```
 src/flext_ldif/
-├── domain/                    # Core business logic (currently consolidated in models.py)
-├── infrastructure/            # External concerns & DI container
-├── api.py                     # Application layer - main processing logic
+├── api.py                     # Application layer - unified LDIF API
 ├── models.py                  # Domain entities and value objects
+├── services.py                # Infrastructure services (parser, validator, writer)
 ├── core.py                    # Core LDIF processing functionality
 ├── config.py                  # Configuration management
 ├── exceptions.py              # Domain exceptions
+├── cli.py                     # Command-line interface
+├── modernized_ldif.py         # Modern LDIF handling utilities
+└── utils/                     # Utility modules
+    ├── cli_utils.py           # CLI helper functions
+    ├── error_handling.py      # Error handling utilities
+    ├── logging.py             # Logging configuration
+    └── validation.py          # Validation utilities
 ```
 
 ### Core Domain Objects
@@ -53,46 +59,8 @@ make type-check               # MyPy strict type checking
 make security                 # Security scans (bandit + pip-audit)
 make test                     # Run tests with 90% coverage requirement
 
-## TODO: GAPS DE ARQUITETURA IDENTIFICADOS - PRIORIDADE ALTA
-
-### 🚨 GAP 1: LDAP Integration Incomplete
-**Status**: ALTO - LDIF processing não integrado com flext-ldap
-**Problema**:
-- LDIF parsing/generation não connected com LDAP operations
-- Não reutiliza flext-ldap para validation e schema compliance
-- Import/export workflows não integrated
-
-**TODO**:
-- [ ] Integrar com flext-ldap para validation e schema compliance
-- [ ] Implementar LDIF-LDAP import/export workflows
-- [ ] Criar transformation patterns entre LDIF e LDAP
-- [ ] Documentar LDIF-LDAP integration patterns
-
-### 🚨 GAP 2: Singer Integration Missing
-**Status**: ALTO - LDIF não integrado com Singer ecosystem
-**Problema**:
-- LDIF processing não available via flext-tap-ldif/flext-target-ldif
-- File-based Singer streams não implemented para LDIF
-- LDIF catalog generation não available
-
-**TODO**:
-- [ ] Integrar com flext-tap-ldif e flext-target-ldif
-- [ ] Implementar Singer file streams para LDIF processing
-- [ ] Criar LDIF catalog generation patterns
-- [ ] Documentar LDIF Singer integration
-
-### 🚨 GAP 3: Data Transformation Pipeline Gap
-**Status**: ALTO - LDIF não integra com data transformation ecosystem
-**Problema**:
-- LDIF transformations não available via flext-dbt-ldif
-- ETL pipeline não implemented para LDIF data
-- Data quality validation não integrated
-
-**TODO**:
-- [ ] Integrar com flext-dbt-ldif para data transformations
-- [ ] Implementar LDIF ETL pipeline patterns
-- [ ] Criar data quality validation para LDIF
-- [ ] Documentar LDIF transformation workflows
+# Fast testing without full coverage
+make test-fast               # Run tests without coverage analysis
 ```
 
 ### Testing Commands
@@ -101,10 +69,9 @@ make test                     # Run tests with 90% coverage requirement
 # Run specific test categories (defined in conftest.py)
 pytest -m unit               # Unit tests only
 pytest -m integration        # Integration tests only
+pytest -m e2e                # End-to-end tests
 pytest -m ldif               # LDIF-specific tests
-pytest -m parsing            # Parsing tests
-pytest -m validation         # Schema validation tests
-pytest -m performance        # Performance benchmarks
+pytest -m parser             # Parser tests
 
 # Development testing
 pytest --lf                  # Run last failed tests
@@ -116,16 +83,13 @@ pytest --cov=src/flext_ldif --cov-report=html  # Coverage report
 
 ```bash
 # Test core LDIF functionality
-make ldif-parse              # Test LDIF parsing
-make ldif-validate           # Test LDIF validation
-make ldif-transform          # Test LDIF transformations
-make ldif-performance        # Performance benchmarks
+make ldif-parse              # Test LDIF parsing functionality
+make ldif-validate           # Test LDIF validation functionality
 
-# Advanced LDIF operations
-make transform-normalize     # Normalize LDIF data
-make transform-filter        # Filter LDIF entries
-make validate-format         # Validate LDIF format compliance
-make validate-schema         # Validate schema compliance
+# CLI testing
+poetry run flext-ldif --help           # Show CLI help
+poetry run flext-ldif parse sample.ldif      # Parse LDIF file
+poetry run flext-ldif validate sample.ldif   # Validate LDIF file
 ```
 
 ### Build and Package Management
@@ -166,12 +130,21 @@ All domain objects should:
 
 ### API Layer (api.py)
 
-Application services should:
+The FlextLdifAPI class:
 
-- Orchestrate domain operations
-- Handle error cases with FlextResult pattern
-- Maintain clean interfaces for external consumers
-- Delegate business logic to domain objects
+- Orchestrates LDIF operations through service layer
+- Uses flext-core dependency injection container
+- Implements FlextResult pattern for error handling
+- Integrates with flext-observability for monitoring
+- Provides unified interface for all LDIF operations
+
+### Services Layer (services.py)
+
+Infrastructure services include:
+
+- **FlextLdifParserService**: LDIF parsing with validation
+- **FlextLdifValidatorService**: Business rule validation  
+- **FlextLdifWriterService**: LDIF output generation
 
 ### Testing Strategy
 

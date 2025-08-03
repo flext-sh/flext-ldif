@@ -1,8 +1,37 @@
 #!/usr/bin/env python3
-"""Basic LDIF parsing example.
+"""Basic LDIF Parsing Example
 
-Demonstrates simple LDIF parsing and entry manipulation using
-flext-ldif with Clean Architecture patterns.
+This example demonstrates fundamental LDIF parsing operations using the FLEXT-LDIF
+library with Clean Architecture patterns, FlextResult error handling, and
+enterprise-grade configuration management.
+
+The example showcases the most common LDIF processing operations including
+file parsing, entry validation, attribute access, and proper error handling
+using railway-oriented programming patterns.
+
+Operations Demonstrated:
+    - LDIF file parsing with FlextLdifAPI
+    - Configuration setup with FlextLdifConfig
+    - FlextResult pattern for error handling
+    - Domain entity operations and attribute access
+    - Entry validation and business rule enforcement
+
+Example Output:
+    Successfully parsed 3 LDIF entries:
+    ✓ cn=John Doe,ou=people,dc=example,dc=com (person, inetOrgPerson)
+    ✓ cn=Jane Smith,ou=people,dc=example,dc=com (person, inetOrgPerson)
+    ✓ ou=people,dc=example,dc=com (organizationalUnit)
+
+Usage:
+    python examples/basic_parsing.py
+
+Requirements:
+    - sample_basic.ldif file in examples directory
+    - FLEXT-LDIF installed and configured
+
+Author: FLEXT Development Team
+Version: 0.9.0
+License: MIT
 """
 
 from __future__ import annotations

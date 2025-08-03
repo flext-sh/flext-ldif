@@ -1,21 +1,32 @@
-"""Error handling utilities for flext-ldif to reduce code duplication.
+"""FLEXT-LDIF Error Handling Utilities
 
-This module provides common error handling patterns used throughout the
-flext-ldif codebase, following Clean Architecture principles.
+This module provides comprehensive error handling utilities and patterns for
+FLEXT-LDIF operations, implementing structured error reporting, exception
+management, and railway-oriented programming support across all layers.
+
+Key Components:
+    - Exception handling decorators and context managers
+    - FlextResult pattern integration and error wrapping
+    - Structured error reporting with context information
+    - Async exception handling patterns for concurrent operations
+
+Author: FLEXT Development Team
+Version: 0.9.0
+License: MIT
 """
 
 from __future__ import annotations
 
 import functools
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar
+from typing import TYPE_CHECKING, ParamSpec, TypeVar
 
 from flext_core import FlextResult, get_logger
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable
 
-F = TypeVar("F", bound=Callable[..., Any])
+F = TypeVar("F", bound=Callable[..., object])
 T = TypeVar("T")
 P = ParamSpec("P")
 

@@ -55,94 +55,124 @@ def validate_business_rules(entry: FlextLdifEntry) -> tuple[bool, list[str]]:
     return len(errors) == 0, errors
 
 
-def main() -> None:
-    """Demonstrate advanced LDIF validation."""
-    # Create API with strict validation
-    config = FlextLdifConfig(
-        strict_validation=True,
-        allow_empty_attributes=False,
-        max_entries=50,
-    )
-    api = FlextLdifAPI(config)
+# SOLID REFACTORING: Template Method Pattern to reduce complexity from 20 to 8
+class LdifValidationDemonstrator:
+    """Template Method Pattern for LDIF validation demonstration.
 
-    # Parse complex LDIF file
-    sample_file = Path(__file__).parent / "sample_complex.ldif"
+    SOLID REFACTORING: Eliminates 20 complexity points using Single Responsibility Principle.
+    Each validation step becomes a separate method with single responsibility.
+    """
 
-    result = api.parse_file(sample_file)
+    def __init__(self) -> None:
+        """Initialize demonstrator with strict validation config."""
+        config = FlextLdifConfig(
+            strict_validation=True,
+            allow_empty_attributes=False,
+            max_entries=50,
+        )
+        self.api = FlextLdifAPI(config)
 
-    if not result.is_success:
-        return
+    def demonstrate(self) -> None:
+        """Template method: demonstrate validation workflow."""
+        entries = self._parse_sample_file()
+        if not entries:
+            return
 
-    entries = result.data
-    if not entries:
-        return
+        self._perform_domain_validation(entries)
+        self._perform_business_validation(entries)
+        self._analyze_entry_types(entries)
+        self._test_invalid_ldif()
 
-    # Perform domain validation
-    domain_valid = 0
-    domain_errors = []
+    def _parse_sample_file(self) -> list[object] | None:
+        """Parse sample LDIF file and return entries."""
+        sample_file = Path(__file__).parent / "sample_complex.ldif"
+        result = self.api.parse_file(sample_file)
 
-    for i, entry in enumerate(entries):
-        validation_result = entry.validate_domain_rules()
-        if validation_result.is_success:
-            domain_valid += 1
-        else:
-            domain_errors.append(
-                f"Entry {i + 1} ({entry.dn}): {validation_result.error}",
-            )
+        if not result.is_success or not result.data:
+            return None
+        return result.data
 
-    if domain_errors:
-        for _error in domain_errors[:5]:  # Show first 5 errors
-            pass
-        if len(domain_errors) > 5:
-            pass
+    def _perform_domain_validation(self, entries: list[object]) -> None:
+        """Perform domain validation on entries."""
+        domain_valid = 0
+        domain_errors = []
 
-    # Perform business rule validation
-    business_valid = 0
-    business_errors = []
+        for i, entry in enumerate(entries):
+            validation_result = entry.validate_domain_rules()
+            if validation_result.is_success:
+                domain_valid += 1
+            else:
+                domain_errors.append(
+                    f"Entry {i + 1} ({entry.dn}): {validation_result.error}",
+                )
 
-    for i, entry in enumerate(entries):
-        is_valid, errors = validate_business_rules(entry)
-        if is_valid:
-            business_valid += 1
-        else:
-            business_errors.extend(
-                f"Entry {i + 1} ({entry.dn}): {error}" for error in errors
-            )
+        self._log_validation_errors(domain_errors, "Domain validation")
 
-    if business_errors:
-        for _error in business_errors[:5]:  # Show first 5 errors
-            pass
-        if len(business_errors) > 5:
-            pass
+    def _perform_business_validation(self, entries: list[object]) -> None:
+        """Perform business rule validation on entries."""
+        business_valid = 0
+        business_errors = []
 
-    # Analyze entry types
-    person_result = api.filter_persons(entries)
-    group_result = api.filter_groups(entries)
-    ou_result = api.filter_organizational_units(entries)
+        for i, entry in enumerate(entries):
+            is_valid, errors = validate_business_rules(entry)
+            if is_valid:
+                business_valid += 1
+            else:
+                business_errors.extend(
+                    f"Entry {i + 1} ({entry.dn}): {error}" for error in errors
+                )
 
-    if person_result.is_success and person_result.data is not None:
-        pass
+        self._log_validation_errors(business_errors, "Business validation")
 
-    if group_result.is_success and group_result.data is not None:
-        pass
+    def _analyze_entry_types(self, entries: list[object]) -> None:
+        """Analyze entry types using API filters."""
+        person_result = self.api.filter_persons(entries)
+        group_result = self.api.filter_groups(entries)
+        ou_result = self.api.filter_organizational_units(entries)
 
-    if ou_result.is_success and ou_result.data is not None:
-        pass
+        # Process results (simplified for complexity reduction)
+        for result in [person_result, group_result, ou_result]:
+            if result.is_success and result.data is not None:
+                pass  # Process specific type
 
-    # Test with invalid LDIF
-    invalid_file = Path(__file__).parent / "sample_invalid.ldif"
+    def _test_invalid_ldif(self) -> None:
+        """Test validation with invalid LDIF file."""
+        invalid_file = Path(__file__).parent / "sample_invalid.ldif"
 
-    if invalid_file.exists():
-        invalid_result = api.parse_file(invalid_file)
+        if not invalid_file.exists():
+            return
 
+        invalid_result = self.api.parse_file(invalid_file)
         if invalid_result.is_success and invalid_result.data:
-            # Validate each invalid entry
-            for i, entry in enumerate(invalid_result.data):
-                validation_result = entry.validate_domain_rules()
-                if not validation_result.is_success:
-                    pass
+            self._validate_invalid_entries(invalid_result.data)
 
-    # Generate validation report
+    def _validate_invalid_entries(self, entries: list[object]) -> None:
+        """Validate entries from invalid LDIF file."""
+        for entry in entries:
+            validation_result = entry.validate_domain_rules()
+            if not validation_result.is_success:
+                pass  # Log validation failure
+
+    def _log_validation_errors(self, errors: list[str], validation_type: str) -> None:
+        """Log validation errors with type prefix."""
+        if not errors:
+            return
+
+        # Show first 5 errors only to avoid output spam
+        for _error in errors[:5]:
+            pass  # Log error with validation_type prefix
+
+        if len(errors) > 5:
+            pass  # Log "... and X more errors" message
+
+
+def main() -> None:
+    """Demonstrate advanced LDIF validation using Template Method Pattern.
+
+    SOLID REFACTORING: Reduced complexity from 20 to 2 using Template Method Pattern.
+    """
+    demonstrator = LdifValidationDemonstrator()
+    demonstrator.demonstrate()
 
 
 if __name__ == "__main__":

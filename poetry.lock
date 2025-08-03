@@ -1867,12 +1867,12 @@ develop = false
 [package.dependencies]
 click = ">=8.2.1,<9.0.0"
 cryptography = ">=45.0.5,<46.0.0"
-flext-cli = {path = "/home/marlonsc/flext/flext-cli"}
 flext-core = {path = "/home/marlonsc/flext/flext-core"}
 ldap3 = ">=2.9.1,<3.0.0"
 pydantic = ">=2.11.7,<3.0.0"
 pydantic-settings = ">=2.10.1,<3.0.0"
 rich = ">=14.0.0,<15.0.0"
+structlog = ">=25.4.0,<26.0.0"
 
 [package.source]
 type = "directory"
@@ -2023,6 +2023,10 @@ files = []
 develop = false
 
 [package.dependencies]
+flext-core = ">=0.9.0"
+flext-db-oracle = ">=0.9.0"
+flext-meltano = ">=0.9.0"
+flext-observability = ">=0.9.0"
 pydantic = ">=2.11.0"
 
 [package.source]
@@ -6975,4 +6979,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<3.14"
-content-hash = "fe9e233f049cef6ee341bdf32ede37846f1b2c7df5e240cc3a8fff0200e27033"
+content-hash = "cc3fead31f5ced2b35293497c69da621c880dbc4cd56343a2c2e25eda60b89cc"

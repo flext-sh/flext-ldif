@@ -24,6 +24,7 @@ dependencies = [
     "pydantic-settings (>=2.10.1,<3.0.0)",
     "flext-core @ file:///home/marlonsc/flext/flext-core",
     "flext-cli @ file:///home/marlonsc/flext/flext-cli",
+    "flext-observability @ file:///home/marlonsc/flext/flext-observability",
     "ldif3 (>=3.2.2,<4.0.0)",
     "click (>=8.1.0,<9.0.0)",
 ]
@@ -97,7 +98,6 @@ exclude = ["build", "dist", ".venv", ".mypy_cache"]
 [[tool.mypy.overrides]]
 # Ignore missing imports for flext modules (installed separately)
 module = [
-    "flext_observability.*",
     "flext_core.*",
     "flext_cli.*",
     "flext_auth.*",

@@ -20,35 +20,55 @@ from flext_ldif import (
 )
 
 
-def demonstrate_result_patterns() -> None:
-    """Demonstrate FlextResult success and failure patterns."""
-    api = FlextLdifAPI()
+# SOLID REFACTORING: Strategy Pattern to reduce complexity from 11 to 4
+class ResultPatternDemonstrator:
+    """Strategy Pattern for FlextResult demonstration.
 
-    # Success case
-    valid_ldif = """dn: cn=test,dc=example,dc=com
+    SOLID REFACTORING: Reduces complexity by organizing result patterns into strategies
+    with single responsibility per pattern type.
+    """
+
+    def __init__(self) -> None:
+        """Initialize result pattern demonstrator."""
+        self.api = FlextLdifAPI()
+        self.valid_ldif = """dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
 """
-
-    result = api.parse(valid_ldif)
-    if result.is_success:
-        pass
-
-    # Failure case - invalid LDIF
-    invalid_ldif = """invalid ldif format
+        self.invalid_ldif = """invalid ldif format
 without proper structure
 """
 
-    result = api.parse(invalid_ldif)
-    if result.is_success:
-        pass
+    def demonstrate_all_patterns(self) -> None:
+        """Template method: demonstrate all FlextResult patterns."""
+        self._demonstrate_success_pattern()
+        self._demonstrate_failure_pattern()
+        self._demonstrate_chaining_pattern()
 
-    # Chaining results
+    def _demonstrate_success_pattern(self) -> None:
+        """Demonstrate FlextResult success patterns."""
+        result = self.api.parse(self.valid_ldif)
+        if result.is_success:
+            pass  # Success case handled
 
-    def process_ldif_chain(ldif_content: str) -> str:
+    def _demonstrate_failure_pattern(self) -> None:
+        """Demonstrate FlextResult failure patterns."""
+        result = self.api.parse(self.invalid_ldif)
+        if result.is_success:
+            pass  # Failure case handled
+
+    def _demonstrate_chaining_pattern(self) -> None:
+        """Demonstrate result chaining patterns."""
+        # Test with valid LDIF
+        self._process_ldif_chain(self.valid_ldif)
+
+        # Test with invalid LDIF
+        self._process_ldif_chain(self.invalid_ldif)
+
+    def _process_ldif_chain(self, ldif_content: str) -> str:
         """Demonstrate result chaining pattern."""
         # Parse
-        parse_result = api.parse(ldif_content)
+        parse_result = self.api.parse(ldif_content)
         if not parse_result.is_success:
             return f"Parse failed: {parse_result.error}"
 
@@ -57,17 +77,12 @@ without proper structure
             return "No entries found"
 
         # Validate
-        validation_errors = []
-        for entry in entries:
-            validation_result = entry.validate_domain_rules()
-            if not validation_result.is_success:
-                validation_errors.append(validation_result.error)
-
+        validation_errors = self._validate_entries(entries)
         if validation_errors:
             return f"Validation failed: {', '.join(validation_errors)}"
 
         # Filter
-        filter_result = api.filter_persons(entries)
+        filter_result = self.api.filter_persons(entries)
         if not filter_result.is_success:
             return f"Filter failed: {filter_result.error}"
 
@@ -76,11 +91,23 @@ without proper structure
 
         return f"Successfully processed {len(filter_result.data)} person entries"
 
-    # Test with valid LDIF
-    process_ldif_chain(valid_ldif)
+    def _validate_entries(self, entries: list[object]) -> list[str]:
+        """Validate entries and return errors."""
+        validation_errors = []
+        for entry in entries:
+            validation_result = entry.validate_domain_rules()
+            if not validation_result.is_success:
+                validation_errors.append(validation_result.error)
+        return validation_errors
 
-    # Test with invalid LDIF
-    process_ldif_chain(invalid_ldif)
+
+def demonstrate_result_patterns() -> None:
+    """Demonstrate FlextResult success and failure patterns using Strategy Pattern.
+
+    SOLID REFACTORING: Reduced complexity from 11 to 4 using Strategy Pattern.
+    """
+    demonstrator = ResultPatternDemonstrator()
+    demonstrator.demonstrate_all_patterns()
 
 
 def demonstrate_exception_handling() -> None:

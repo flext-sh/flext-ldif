@@ -1,7 +1,54 @@
-"""Test configuration for flext-ldif.
+"""
+FLEXT-LDIF Test Configuration and Fixtures
 
-Provides pytest fixtures and configuration for testing LDIF processing functionality
-using real LDIF data and flext-core patterns.
+This module provides comprehensive pytest configuration, fixtures, and test utilities
+for the FLEXT-LDIF test suite, implementing enterprise-grade testing patterns with
+comprehensive test data, service mocking, and integration test support.
+
+The test configuration supports multiple test categories including unit tests,
+integration tests, end-to-end tests, and performance benchmarks with proper
+isolation, realistic test data, and Docker-based integration testing capabilities.
+
+Key Components:
+    - Core Fixtures: API instances, configuration objects, and service mocks
+    - Test Data Fixtures: Sample LDIF content, entries, and validation scenarios
+    - Integration Fixtures: Docker containers, external service mocks, and test databases
+    - Utility Fixtures: Temporary files, directories, and cleanup management
+
+Test Categories:
+    - unit: Isolated component testing with mocked dependencies
+    - integration: Cross-component testing with real service integration
+    - e2e: End-to-end workflow testing with complete system integration
+    - ldif: LDIF-specific domain testing with RFC compliance validation
+    - parser: Parsing functionality testing with edge cases and error scenarios
+    - performance: Performance benchmarking and scalability validation
+
+Example:
+    Using fixtures for comprehensive testing:
+    
+    >>> def test_ldif_parsing_with_fixtures(flext_ldif_api, sample_ldif_content):
+    ...     # API fixture provides configured instance
+    ...     result = flext_ldif_api.parse(sample_ldif_content)
+    ...     assert result.is_success
+    ...     
+    ...     # Sample content fixture provides realistic test data
+    ...     entries = result.data
+    ...     assert len(entries) > 0
+    ...     
+    ...     # Validate domain rules
+    ...     for entry in entries:
+    ...         result = entry.validate_semantic_rules()
+    ...         assert result.is_success
+
+Integration:
+    - Docker fixtures for external service integration testing
+    - Comprehensive test data with realistic LDIF scenarios
+    - Performance benchmarking fixtures with configurable parameters
+    - Mock service integration with dependency injection patterns
+
+Author: FLEXT Development Team
+Version: 0.9.0
+License: MIT
 """
 
 from __future__ import annotations
