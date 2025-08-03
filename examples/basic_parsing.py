@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Basic LDIF Parsing Example
+"""Basic LDIF Parsing Example.
 
 This example demonstrates fundamental LDIF parsing operations using the FLEXT-LDIF
 library with Clean Architecture patterns, FlextResult error handling, and

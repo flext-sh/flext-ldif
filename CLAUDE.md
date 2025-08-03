@@ -143,7 +143,7 @@ The FlextLdifAPI class:
 Infrastructure services include:
 
 - **FlextLdifParserService**: LDIF parsing with validation
-- **FlextLdifValidatorService**: Business rule validation  
+- **FlextLdifValidatorService**: Business rule validation
 - **FlextLdifWriterService**: LDIF output generation
 
 ### Testing Strategy

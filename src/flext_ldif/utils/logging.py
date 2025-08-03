@@ -1,4 +1,4 @@
-"""FLEXT-LDIF Logging Utilities
+"""FLEXT-LDIF Logging Utilities.
 
 This module provides standardized logging utilities and patterns for FLEXT-LDIF
 operations, implementing structured logging with flext-core integration and

@@ -1,4 +1,4 @@
-"""FLEXT-LDIF CLI Utilities
+"""FLEXT-LDIF CLI Utilities.
 
 This module provides comprehensive CLI utilities and helper functions for
 FLEXT-LDIF command-line interface operations, implementing consistent user
@@ -27,17 +27,26 @@ if TYPE_CHECKING:
 
 
 def validate_cli_result[T](result: FlextResult[T], operation_name: str) -> None:
-    """Validate CLI result and exit with error if invalid.
+    """Validate CLI result and exit with error if invalid using Railway-Oriented Programming.
 
     This function consolidates the repeated pattern of validating CLI results
-    and provides consistent error handling across all CLI commands.
+    and provides consistent error handling across all CLI commands following
+    enterprise-grade error reporting standards with structured logging.
 
     Args:
-        result: The result object to validate
-        operation_name: Name of the operation for error messages
+        result: The FlextResult object to validate with success/failure state
+        operation_name: Name of the operation for error messages and logging context
 
     Raises:
-        SystemExit: If result is invalid (exits with code 1)
+        SystemExit: If result is invalid (exits with code 1) after displaying error
+
+    Example:
+        >>> from flext_core import FlextResult
+        >>> success_result = FlextResult.ok("data")
+        >>> validate_cli_result(success_result, "Parse operation")  # No exception
+        >>>
+        >>> failure_result = FlextResult.fail("Parse error")
+        >>> validate_cli_result(failure_result, "Parse operation")  # SystemExit(1)
 
     """
     if not hasattr(result, "is_success") or not result.is_success:
@@ -51,17 +60,26 @@ def validate_cli_result[T](result: FlextResult[T], operation_name: str) -> None:
 
 
 def handle_parse_result[T](result: FlextResult[T], file_path: str) -> None:
-    """Handle parsing result with consistent error reporting.
+    """Handle parsing result with consistent error reporting and file context.
 
     This function consolidates the repeated pattern of handling parse results
-    across different CLI commands.
+    across different CLI commands, providing comprehensive error context including
+    file path information and data validation checks.
 
     Args:
-        result: The FlextResult from parsing operation
-        file_path: Path to the file being parsed
+        result: The FlextResult from parsing operation with success/failure state
+        file_path: Path to the file being parsed for error context
 
     Raises:
-        SystemExit: If parsing failed (exits with code 1)
+        SystemExit: If parsing failed (exits with code 1) after displaying detailed error
+
+    Example:
+        >>> from flext_core import FlextResult
+        >>> success_result = FlextResult.ok([])  # Empty but valid
+        >>> handle_parse_result(success_result, "/path/to/file.ldif")  # SystemExit (no entries)
+        >>>
+        >>> failure_result = FlextResult.fail("Invalid LDIF format")
+        >>> handle_parse_result(failure_result, "/path/to/file.ldif")  # SystemExit(1)
 
     """
     if not result.is_success:

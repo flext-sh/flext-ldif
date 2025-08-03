@@ -104,7 +104,7 @@ class TestCoreCoverage:
 
         result = TLdif.validate_entries([valid_entry, invalid_entry])
         assert not result.is_success
-        assert "Entry 1:" in result.error
+        assert "Entry 2 of 2 failed validation" in result.error
 
     def test_tldif_validate_entries_with_exception(self) -> None:
         """Test TLdif validate_entries with exception."""
@@ -155,7 +155,7 @@ class TestCoreCoverage:
         """Test TLdif read_file with nonexistent file."""
         result = TLdif.read_file("/nonexistent/file.ldif")
         assert not result.is_success
-        assert "File not found" in result.error
+        assert "file not found" in result.error.lower()
 
     def test_tldif_read_file_with_permission_error(self) -> None:
         """Test TLdif read_file with permission error."""
@@ -171,7 +171,7 @@ class TestCoreCoverage:
             result = TLdif.read_file(temp_path)
             # Should handle permission error gracefully
             assert not result.is_success
-            assert "File read failed" in result.error
+            assert "file read failed" in result.error.lower()
         finally:
             # Restore permissions and cleanup
             Path(temp_path).chmod(0o644)

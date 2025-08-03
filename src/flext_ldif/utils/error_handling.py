@@ -1,4 +1,4 @@
-"""FLEXT-LDIF Error Handling Utilities
+"""FLEXT-LDIF Error Handling Utilities.
 
 This module provides comprehensive error handling utilities and patterns for
 FLEXT-LDIF operations, implementing structured error reporting, exception
@@ -34,7 +34,25 @@ logger = get_logger(__name__)
 
 
 class FlextLdifErrorHandler:
-    """Error handling utility class with common patterns."""
+    """Enterprise-grade error handling utility class with Railway-Oriented Programming patterns.
+
+    This utility class provides comprehensive error handling patterns for FLEXT-LDIF
+    operations, implementing consistent error reporting, FlextResult pattern integration,
+    and structured logging across all application layers.
+
+    The class encapsulates common error handling scenarios including result failure
+    propagation, validation error management, and context-aware error reporting
+    following Domain-Driven Design and Clean Architecture principles.
+
+    Example:
+        >>> from flext_core import FlextResult
+        >>> handler = FlextLdifErrorHandler()
+        >>> failed_result = FlextResult.fail("Validation failed")
+        >>> handled = handler.handle_result_failure(failed_result, "LDIF parsing")
+        >>> handled.is_success  # False
+        >>> "LDIF parsing failed" in handled.error  # True
+
+    """
 
     @staticmethod
     def handle_result_failure(

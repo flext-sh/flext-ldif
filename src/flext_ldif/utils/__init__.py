@@ -1,4 +1,4 @@
-"""FLEXT-LDIF Cross-cutting Utilities
+"""FLEXT-LDIF Cross-cutting Utilities.
 
 This package provides cross-cutting utilities and helper functions that support
 LDIF processing operations across all architectural layers while maintaining

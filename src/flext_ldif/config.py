@@ -73,43 +73,114 @@ logger = get_logger(__name__)
 
 
 class FlextLdifConfig(FlextBaseSettings):
-    """LDIF processing configuration."""
+    """Enterprise-grade LDIF processing configuration with comprehensive validation and observability integration.
+
+    This configuration class provides comprehensive LDIF processing settings with enterprise-grade
+    validation, environment variable integration, and detailed logging for production deployments.
+    Extends flext-core FlextBaseSettings with LDIF-specific configuration management patterns.
+
+    The configuration supports multiple sources with proper precedence, type safety, and comprehensive
+    validation rules ensuring consistent behavior across different deployment environments.
+
+    Example:
+        >>> from flext_ldif.config import FlextLdifConfig
+        >>> 
+        >>> # Create configuration with custom settings
+        >>> config = FlextLdifConfig(
+        ...     max_entries=50000,
+        ...     strict_validation=True,
+        ...     create_output_dir=True
+        ... )
+        >>> print(f"Max entries: {config.max_entries}")
+
+    """
 
     def __init__(self, **data: object) -> None:
-        """Initialize configuration with logging."""
-        logger.debug("Initializing FlextLdifConfig")
-        logger.trace(
-            "Configuration data provided: %s",
-            list(data.keys()) if data else "none",
-        )
+        """Initialize configuration with enterprise-grade validation and comprehensive logging.
+        
+        Performs comprehensive configuration initialization with data validation, environment
+        variable processing, semantic rule validation, and detailed logging integration.
+        
+        Args:
+            **data: Configuration overrides and custom settings
+            
+        """
+        # REFACTORING: Enhanced initialization logging with comprehensive context
+        provided_keys = list(data.keys()) if data else []
+        logger.debug("Starting FlextLdifConfig initialization",
+                    provided_overrides_count=len(provided_keys),
+                    provided_keys=provided_keys)
+        logger.trace("Configuration data provided: %s", data if data else "none")
 
-        # Call parent init without explicit kwargs
-        super().__init__()
+        # REFACTORING: Enhanced parent initialization with error handling
+        try:
+            super().__init__()
+            logger.trace("Parent FlextBaseSettings initialization completed")
+        except (ValueError, TypeError) as e:
+            logger.exception("Failed to initialize parent configuration class")
+            raise RuntimeError(f"Configuration initialization failed: {e}") from e
 
-        # Now apply any provided data through Pydantic's model_validate
+        # REFACTORING: Enhanced data application with validation and error handling
         if data:
+            logger.debug("Applying %d configuration overrides", len(data))
             for key, value in data.items():
                 if hasattr(self, key):
-                    setattr(self, key, value)
+                    logger.trace("Applying override: %s = %s", key, value)
+                    try:
+                        setattr(self, key, value)
+                    except (ValueError, TypeError) as e:
+                        logger.warning("Failed to apply configuration override: %s = %s, error: %s",
+                                     key, value, e)
+                        raise ValueError(f"Invalid configuration value for {key}: {e}") from e
+                else:
+                    logger.warning("Unknown configuration key ignored: %s", key)
 
-        logger.debug("Configuration initialized with values:")
-        logger.debug("  input_encoding: %s", self.input_encoding)
-        logger.debug("  output_encoding: %s", self.output_encoding)
-        logger.debug("  strict_validation: %s", self.strict_validation)
-        logger.debug("  allow_empty_attributes: %s", self.allow_empty_attributes)
-        logger.debug("  max_entries: %d", self.max_entries)
-        logger.debug("  max_entry_size: %d", self.max_entry_size)
-        logger.debug("  output_directory: %s", self.output_directory)
-        logger.debug("  create_output_dir: %s", self.create_output_dir)
+        # REFACTORING: Enhanced configuration logging with structured output
+        self._log_configuration_summary()
 
-        logger.trace("Full configuration: %s", self.model_dump())
-        logger.info(
-            "LDIF configuration initialized successfully",
-            encoding=f"{self.input_encoding}→{self.output_encoding}",
-            validation_mode="strict" if self.strict_validation else "standard",
-            max_entries=self.max_entries,
-            max_entry_size_mb=round(self.max_entry_size / 1024 / 1024, 2),
-        )
+        # REFACTORING: Enhanced semantic validation integration
+        validation_result = self.validate_semantic_rules()
+        if validation_result.is_failure:
+            error_msg = f"Configuration semantic validation failed: {validation_result.error}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+
+        logger.trace("Configuration semantic validation passed")
+
+    def _log_configuration_summary(self) -> None:
+        """Log comprehensive configuration summary with enterprise-grade structured logging.
+        
+        Provides detailed configuration logging for troubleshooting, audit, and monitoring
+        purposes with structured format for enterprise log aggregation systems.
+        
+        """
+        # REFACTORING: Enhanced configuration summary logging with comprehensive metrics
+        logger.debug("Configuration values summary:")
+        logger.debug("  File Processing - input_encoding: %s, output_encoding: %s",
+                    self.input_encoding, self.output_encoding)
+        logger.debug("  Validation - strict_validation: %s, allow_empty_attributes: %s",
+                    self.strict_validation, self.allow_empty_attributes)
+        logger.debug("  Processing Limits - max_entries: %d, max_entry_size: %d bytes",
+                    self.max_entries, self.max_entry_size)
+        logger.debug("  Output Settings - output_directory: %s, create_output_dir: %s",
+                    self.output_directory, self.create_output_dir)
+        logger.debug("  Advanced Settings - line_wrap_length: %d, sort_attributes: %s, normalize_dn: %s",
+                    self.line_wrap_length, self.sort_attributes, self.normalize_dn)
+
+        # REFACTORING: Enhanced comprehensive configuration logging with metrics
+        logger.trace("Full configuration dump: %s", self.model_dump())
+
+        # REFACTORING: Enhanced success logging with enterprise-grade structured information
+        logger.info("LDIF configuration initialized successfully",
+                   encoding_pipeline=f"{self.input_encoding}→{self.output_encoding}",
+                   validation_mode="strict" if self.strict_validation else "standard",
+                   processing_limits=f"{self.max_entries} entries, {round(self.max_entry_size / 1024 / 1024, 2)}MB max size",
+                   output_config=f"dir={self.output_directory}, create_dir={self.create_output_dir}",
+                   advanced_features={
+                       "line_wrap": self.line_wrap_length,
+                       "sort_attributes": self.sort_attributes,
+                       "normalize_dn": self.normalize_dn,
+                   })
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         env_prefix="FLEXT_LDIF_",
@@ -190,21 +261,111 @@ class FlextLdifConfig(FlextBaseSettings):
         return v.absolute()
 
     def validate_semantic_rules(self) -> FlextResult[None]:
-        """Validate LDIF configuration semantic rules."""
-        # Check encoding validity
-        try:
-            "test".encode(self.input_encoding)
-            "test".encode(self.output_encoding)
-        except LookupError as e:
-            return FlextResult.fail(f"Invalid encoding: {e}")
+        """Validate LDIF configuration semantic rules with comprehensive business logic validation.
 
-        # Check size limits consistency
+        Performs extensive validation of configuration semantic rules including encoding validation,
+        size limit consistency checks, path validation, and enterprise deployment constraints
+        with detailed error reporting and comprehensive logging.
+
+        Returns:
+            FlextResult[None]: Success if all validation rules pass, failure with detailed error context
+
+        Validation Rules:
+            - Encoding validity for both input and output encodings
+            - Size limit consistency between max_entry_size and max_entries
+            - Output directory accessibility and permissions
+            - Line wrap length RFC 2849 compliance
+            - Production deployment constraint validation
+
+        """
+        # REFACTORING: Enhanced encoding validation with comprehensive error handling
+        logger.debug("Starting configuration semantic validation")
+        logger.trace("Validating encodings: input=%s, output=%s",
+                    self.input_encoding, self.output_encoding)
+
+        try:
+            # Test input encoding validity
+            test_content = "LDIF configuration encoding test"
+            test_content.encode(self.input_encoding)
+            logger.trace("Input encoding validation passed: %s", self.input_encoding)
+
+            # Test output encoding validity
+            test_content.encode(self.output_encoding)
+            logger.trace("Output encoding validation passed: %s", self.output_encoding)
+
+        except LookupError as e:
+            error_msg = f"Invalid encoding configuration: {e}"
+            logger.error(error_msg,
+                        input_encoding=self.input_encoding,
+                        output_encoding=self.output_encoding)
+            return FlextResult.fail(error_msg)
+        except (UnicodeError, AttributeError) as e:
+            error_msg = f"Encoding validation failed: {e}"
+            logger.error(error_msg)
+            return FlextResult.fail(error_msg)
+
+        # REFACTORING: Enhanced size limits consistency validation with detailed metrics
+        logger.trace("Validating size limits consistency")
+        total_potential_size = self.max_entries * self.max_entry_size
+        logger.trace("Calculated potential total size: %d bytes (%d MB)",
+                    total_potential_size,
+                    total_potential_size // (1024 * 1024))
+
+        # Check if max_entry_size makes sense relative to max_entries
         if self.max_entry_size > self.max_entries * 1024:
-            logger.warning(
-                "max_entry_size (%d) might be too large for max_entries (%d)",
-                self.max_entry_size,
-                self.max_entries,
-            )
+            warning_msg = (f"max_entry_size ({self.max_entry_size} bytes) might be too large "
+                          f"relative to max_entries ({self.max_entries})")
+            logger.warning(warning_msg,
+                          max_entry_size_mb=round(self.max_entry_size / 1024 / 1024, 2),
+                          max_entries=self.max_entries,
+                          potential_total_gb=round(total_potential_size / (1024**3), 2))
+
+        # REFACTORING: Enhanced output directory validation with comprehensive checks
+        logger.trace("Validating output directory accessibility")
+        try:
+            output_dir = self.output_directory.absolute()
+            logger.trace("Output directory resolved to: %s", output_dir)
+
+            # Check if directory exists or can be created
+            if not output_dir.exists() and self.create_output_dir:
+                logger.trace("Output directory will be created when needed")
+            elif not output_dir.exists():
+                warning_msg = f"Output directory does not exist and create_output_dir is False: {output_dir}"
+                logger.warning(warning_msg)
+            elif not output_dir.is_dir():
+                error_msg = f"Output path exists but is not a directory: {output_dir}"
+                logger.error(error_msg)
+                return FlextResult.fail(error_msg)
+
+        except (OSError, PermissionError) as e:
+            error_msg = f"Output directory validation failed: {e}"
+            logger.error(error_msg, output_directory=str(self.output_directory))
+            return FlextResult.fail(error_msg)
+
+        # REFACTORING: Enhanced RFC 2849 compliance validation
+        logger.trace("Validating LDIF RFC 2849 compliance settings")
+        if not (50 <= self.line_wrap_length <= 998):
+            error_msg = f"line_wrap_length ({self.line_wrap_length}) violates RFC 2849 constraints (50-998)"
+            logger.error(error_msg)
+            return FlextResult.fail(error_msg)
+
+        # REFACTORING: Enhanced production deployment constraints validation
+        logger.trace("Validating production deployment constraints")
+        if self.max_entries > 500000:
+            logger.warning("High max_entries value detected - ensure sufficient memory and processing capacity",
+                          max_entries=self.max_entries)
+
+        if self.max_entry_size > 50 * 1024 * 1024:  # 50MB
+            logger.warning("Large max_entry_size detected - ensure sufficient memory capacity",
+                          max_entry_size_mb=round(self.max_entry_size / 1024 / 1024, 2))
+
+        # REFACTORING: Enhanced validation success logging with comprehensive summary
+        logger.debug("Configuration semantic validation completed successfully")
+        logger.info("LDIF configuration validation passed",
+                   encodings_valid=f"{self.input_encoding}→{self.output_encoding}",
+                   size_limits_valid=f"{self.max_entries} entries, {round(self.max_entry_size / 1024 / 1024, 2)}MB max",
+                   output_directory_valid=str(self.output_directory.absolute()),
+                   rfc2849_compliant=True)
 
         return FlextResult.ok(None)
 

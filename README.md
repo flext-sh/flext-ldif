@@ -11,16 +11,16 @@
 
 ## 🏗️ Project Status
 
-| **Component** | **Status** | **Coverage** | **Integration** |
-|---------------|------------|--------------|-----------------|
-| **Core LDIF Processing** | ✅ Production Ready | 90%+ | Complete |
-| **Domain Model** | ✅ Production Ready | 95%+ | Complete |
-| **API Layer** | ✅ Production Ready | 85%+ | Complete |
-| **CLI Interface** | ✅ Production Ready | 80%+ | Complete |
-| **FLEXT-Core Integration** | ✅ Complete | 100% | ✅ Active |
-| **FLEXT-LDAP Integration** | ⚠️ In Progress | 60% | 🔄 Phase 1 |
-| **Singer Ecosystem** | 🔄 Planned | 0% | 📋 Phase 2 |
-| **Observability** | ⚠️ Partial | 70% | 🔄 Phase 1 |
+| **Component**              | **Status**          | **Coverage** | **Integration** |
+| -------------------------- | ------------------- | ------------ | --------------- |
+| **Core LDIF Processing**   | ✅ Production Ready | 90%+         | Complete        |
+| **Domain Model**           | ✅ Production Ready | 95%+         | Complete        |
+| **API Layer**              | ✅ Production Ready | 85%+         | Complete        |
+| **CLI Interface**          | ✅ Production Ready | 80%+         | Complete        |
+| **FLEXT-Core Integration** | ✅ Complete         | 100%         | ✅ Active       |
+| **FLEXT-LDAP Integration** | ⚠️ In Progress      | 60%          | 🔄 Phase 1      |
+| **Singer Ecosystem**       | 🔄 Planned          | 0%           | 📋 Phase 2      |
+| **Observability**          | ⚠️ Partial          | 70%          | 🔄 Phase 1      |
 
 **Current Version**: 0.9.0 | **Target**: 1.0.0 (Production Release)
 
@@ -122,24 +122,28 @@ src/flext_ldif/
 ## 🔧 Core Features
 
 ### 📋 LDIF Processing
+
 - **Parsing**: RFC-compliant LDIF parsing with validation
 - **Generation**: Clean LDIF output with proper formatting
 - **Validation**: Business rule validation and schema compliance
 - **Transformation**: Entry filtering and modification
 
 ### 🏗️ Enterprise Architecture
+
 - **Clean Architecture**: Testable, maintainable code structure
 - **Domain-Driven Design**: Business logic encapsulation
 - **Type Safety**: 95%+ type annotation coverage with MyPy
 - **Error Handling**: Comprehensive error scenarios with FlextResult
 
 ### 🔌 FLEXT Ecosystem Integration
+
 - **flext-core**: Foundation patterns and utilities
 - **flext-observability**: Monitoring and tracing (partial)
 - **flext-ldap**: Directory services integration (planned)
 - **Singer Ecosystem**: Data pipeline integration (planned)
 
 ### ⚡ Performance & Scalability
+
 - **Streaming Support**: Large file processing capabilities
 - **Memory Efficient**: Optimized for enterprise workloads
 - **Async Ready**: Asynchronous processing patterns
@@ -150,6 +154,7 @@ src/flext_ldif/
 ### Core Classes
 
 #### FlextLdifAPI
+
 Main application service providing unified LDIF operations:
 
 ```python
@@ -173,6 +178,7 @@ transform_result = api.transform(entries, filters)  # Transform entries
 ```
 
 #### FlextLdifEntry
+
 Domain entity representing LDIF entries:
 
 ```python
@@ -196,6 +202,7 @@ mail_values = entry.get_attribute_values("mail")  # Get attribute values
 ```
 
 #### FlextLdifDistinguishedName
+
 Value object for Distinguished Names:
 
 ```python
@@ -348,18 +355,21 @@ make pre-commit                # Run all pre-commit hooks
 ## 📋 Roadmap
 
 ### Phase 1: Core Stabilization (v1.0.0)
+
 - [ ] **Fix FLEXT-Observability Integration** - Resolve dependency issues
 - [ ] **Implement FLEXT-LDAP Integration** - Schema validation and directory ops
 - [ ] **Performance Optimization** - Streaming support for large files
 - [ ] **Architecture Refactoring** - Proper Clean Architecture structure
 
 ### Phase 2: Ecosystem Integration (v1.1.0)
+
 - [ ] **Singer SDK Integration** - Tap, Target, and DBT implementations
 - [ ] **Advanced Transformations** - Business rule engine
 - [ ] **Multi-format Support** - JSON, XML, YAML conversion
 - [ ] **Enterprise Features** - Audit logging, compliance
 
 ### Phase 3: Advanced Features (v1.2.0)
+
 - [ ] **Real-time Processing** - Stream processing capabilities
 - [ ] **Schema Evolution** - Dynamic schema adaptation
 - [ ] **Performance Analytics** - Built-in benchmarking
@@ -368,12 +378,14 @@ make pre-commit                # Run all pre-commit hooks
 ## 🔒 Security & Compliance
 
 ### Security Features
+
 - **Input Validation**: Comprehensive LDIF format validation
 - **Schema Compliance**: LDAP schema validation support
 - **Error Handling**: Secure error messages without data leakage
 - **Dependency Scanning**: Regular security audits
 
 ### Compliance Standards
+
 - **RFC 2849**: LDIF specification compliance
 - **LDAP Standards**: Integration with LDAP directory standards
 - **Enterprise Security**: Audit logging and access controls
@@ -400,20 +412,24 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🏆 Related FLEXT Projects
 
 ### Foundation Libraries
+
 - **[flext-core](https://github.com/flext-sh/flext-core)** - Foundation patterns and utilities
 - **[flext-observability](https://github.com/flext-sh/flext-observability)** - Monitoring and observability
 
-### Infrastructure Libraries  
+### Infrastructure Libraries
+
 - **[flext-ldap](https://github.com/flext-sh/flext-ldap)** - LDAP directory integration
 - **[flext-db-oracle](https://github.com/flext-sh/flext-db-oracle)** - Oracle database connectivity
 - **[flext-grpc](https://github.com/flext-sh/flext-grpc)** - gRPC communication protocols
 
 ### Application Services
+
 - **[flext-api](https://github.com/flext-sh/flext-api)** - REST API services
 - **[flext-cli](https://github.com/flext-sh/flext-cli)** - Command-line tools
 - **[flext-web](https://github.com/flext-sh/flext-web)** - Web interface and dashboard
 
 ### Singer Ecosystem (Planned)
+
 - **[flext-tap-ldif](https://github.com/flext-sh/flext-tap-ldif)** - LDIF data extraction
 - **[flext-target-ldif](https://github.com/flext-sh/flext-target-ldif)** - LDIF data loading
 - **[flext-dbt-ldif](https://github.com/flext-sh/flext-dbt-ldif)** - LDIF data transformation

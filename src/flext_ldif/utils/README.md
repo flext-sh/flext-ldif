@@ -20,15 +20,18 @@ utils/
 ## Module Descriptions
 
 ### `validation.py`
+
 **Purpose**: Provides reusable validation utilities that can be used across domain, application, and infrastructure layers.
 
 **Key Functions**:
+
 - LDIF format validation helpers
 - DN syntax validation utilities
 - Attribute name and value validation
 - Common validation patterns and predicates
 
 **Usage**:
+
 ```python
 from flext_ldif.utils.validation import (
     validate_dn_syntax,
@@ -46,15 +49,18 @@ if validate_attribute_name("objectClass"):
 ```
 
 ### `error_handling.py`
+
 **Purpose**: Provides error handling patterns, exception utilities, and error reporting helpers.
 
 **Key Functions**:
+
 - FlextResult pattern helpers
 - Exception chaining utilities
 - Error context management
 - Structured error reporting
 
 **Usage**:
+
 ```python
 from flext_ldif.utils.error_handling import (
     wrap_exception,
@@ -70,15 +76,18 @@ except Exception as e:
 ```
 
 ### `logging.py`
+
 **Purpose**: Provides structured logging configuration and utilities integrated with flext-core logging patterns.
 
 **Key Functions**:
+
 - Logger configuration with FLEXT standards
 - Structured logging helpers
 - Performance logging utilities
 - Debug and trace logging patterns
 
 **Usage**:
+
 ```python
 from flext_ldif.utils.logging import (
     configure_ldif_logging,
@@ -92,15 +101,18 @@ logger.info("Starting LDIF parsing", extra={"entries_count": 100})
 ```
 
 ### `cli_utils.py`
+
 **Purpose**: Provides CLI helper functions, formatting utilities, and command-line interface support.
 
 **Key Functions**:
+
 - Rich console formatting helpers
 - Progress reporting utilities
 - Command-line argument processing
 - Output formatting and styling
 
 **Usage**:
+
 ```python
 from flext_ldif.utils.cli_utils import (
     format_entry_table,
@@ -116,18 +128,21 @@ console.print(table)
 ## Design Principles
 
 ### Cross-cutting Concerns
+
 - **No Business Logic**: Utilities contain only technical helpers, no domain rules
 - **Layer Neutral**: Can be used by any architectural layer without coupling
 - **Reusable**: Focused, single-purpose functions that can be composed
 - **Testable**: Pure functions with clear inputs and outputs
 
 ### FLEXT Integration
+
 - **Consistent Patterns**: Follows flext-core utilities and logging standards
 - **Type Safety**: Full type annotation coverage with strict validation
 - **Error Handling**: Integrates with FlextResult patterns and error hierarchies
 - **Observability**: Supports structured logging and tracing integration
 
 ### Quality Standards
+
 - **Performance**: Optimized utilities with minimal overhead
 - **Memory Efficiency**: Avoid unnecessary object creation and copying
 - **Thread Safety**: Utilities are thread-safe where applicable
@@ -136,6 +151,7 @@ console.print(table)
 ## Usage Guidelines
 
 ### Import Conventions
+
 ```python
 # Preferred: Import specific functions
 from flext_ldif.utils.validation import validate_dn_syntax
@@ -148,6 +164,7 @@ from flext_ldif.utils.validation import *  # Don't do this
 ```
 
 ### Error Handling Integration
+
 ```python
 from flext_core import FlextResult
 from flext_ldif.utils.error_handling import wrap_exception
@@ -163,12 +180,13 @@ def process_entry(entry):
 ```
 
 ### Logging Integration
+
 ```python
 from flext_ldif.utils.logging import create_operation_logger
 
 def complex_operation():
     logger = create_operation_logger("complex_operation")
-    
+
     logger.info("Starting complex operation", extra={"operation_id": "op_123"})
     try:
         # Operation logic
@@ -199,16 +217,19 @@ def test_wrap_exception():
 ## Performance Considerations
 
 ### Efficient Validation
+
 - Pre-compiled regex patterns for repeated validations
 - Lazy evaluation for expensive operations
 - Caching for frequently used validation results
 
 ### Memory Management
+
 - Avoid creating unnecessary intermediate objects
 - Use generators for processing large datasets
 - Implement proper cleanup for resources
 
 ### Profiling Integration
+
 ```python
 from flext_ldif.utils.logging import log_performance
 
@@ -232,6 +253,6 @@ When adding new utilities:
 ## Related Documentation
 
 - **[Core Module](../core.py)** - Infrastructure processing that uses these utilities
-- **[API Module](../api.py)** - Application service that uses these utilities  
+- **[API Module](../api.py)** - Application service that uses these utilities
 - **[CLI Module](../cli.py)** - Command-line interface using CLI utilities
 - **[Architecture Guide](../../../docs/architecture/ARCHITECTURE.md)** - Overall architecture patterns

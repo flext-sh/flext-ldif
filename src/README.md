@@ -31,18 +31,21 @@ src/flext_ldif/
 ## Key Design Principles
 
 ### Clean Architecture Compliance
+
 - **Domain Layer**: Pure business logic in `models.py` and `exceptions.py`
 - **Application Layer**: Use case orchestration in `api.py`
 - **Infrastructure Layer**: Technical concerns in `core.py`, `config.py`, `services.py`
 - **Interface Layer**: User interfaces in `cli.py`
 
 ### Domain-Driven Design
+
 - **Entities**: `FlextLdifEntry` with identity and business logic
 - **Value Objects**: `FlextLdifDistinguishedName`, `FlextLdifAttributes` (immutable)
 - **Domain Services**: Complex business operations in `services.py`
 - **Domain Events**: Planned for future implementation
 
 ### FLEXT Ecosystem Integration
+
 - **flext-core**: Foundation patterns and FlextResult error handling
 - **flext-observability**: Monitoring and tracing integration
 - **Type Safety**: 95%+ type annotation coverage with strict MyPy validation
@@ -50,38 +53,45 @@ src/flext_ldif/
 ## Module Responsibilities
 
 ### Core Business Logic
+
 - **`models.py`**: Domain entities, value objects, and business rule validation
 - **`exceptions.py`**: Domain-specific exceptions and error hierarchies
 - **`api.py`**: Main application service orchestrating business operations
 
 ### Infrastructure Implementation
+
 - **`core.py`**: Low-level LDIF parsing and writing with performance optimization
 - **`config.py`**: Enterprise configuration management with environment variables
 - **`services.py`**: Domain service implementations and dependency injection
 - **`modernized_ldif.py`**: Extended LDIF format support and compatibility
 
 ### User Interfaces
+
 - **`cli.py`**: Comprehensive command-line interface with rich formatting
 - **`__init__.py`**: Public API exports and simplified interfaces
 
 ### Cross-cutting Concerns
+
 - **`utils/`**: Shared utilities, validation helpers, and logging configuration
 
 ## Development Standards
 
 ### Code Quality Requirements
+
 - **Test Coverage**: 90%+ minimum across all modules
 - **Type Safety**: Strict MyPy validation with no untyped code
 - **Documentation**: Comprehensive docstrings following enterprise standards
 - **Linting**: Ruff with ALL rules enabled for maximum code quality
 
 ### Enterprise Standards
+
 - **Error Handling**: FlextResult pattern for railway-oriented programming
 - **Configuration**: Environment variable support with validation
 - **Logging**: Structured logging with correlation IDs and trace context
 - **Performance**: Memory-efficient processing with configurable limits
 
 ### Integration Standards
+
 - **Dependency Injection**: flext-core container for service resolution
 - **Observability**: Distributed tracing and metrics collection
 - **Configuration**: Enterprise-grade settings with validation and defaults
@@ -89,6 +99,7 @@ src/flext_ldif/
 ## Usage Examples
 
 ### Direct Module Usage
+
 ```python
 # Domain model usage
 from flext_ldif.models import FlextLdifEntry, FlextLdifDistinguishedName
@@ -104,6 +115,7 @@ from flext_ldif.core import TLdif
 ```
 
 ### Recommended Public API
+
 ```python
 # Simplified public interface
 from flext_ldif import (
