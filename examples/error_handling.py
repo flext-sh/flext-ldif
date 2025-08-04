@@ -95,9 +95,11 @@ without proper structure
         """Validate entries and return errors."""
         validation_errors = []
         for entry in entries:
-            validation_result = entry.validate_domain_rules()
-            if not validation_result.is_success:
-                validation_errors.append(validation_result.error)
+            # CORREÇÃO: Usar método correto que existe na API
+            try:
+                entry.validate_semantic_rules()
+            except FlextLdifValidationError as e:
+                validation_errors.append(str(e))
         return validation_errors
 
 
@@ -221,8 +223,9 @@ description:
     if result.is_success and result.data:
         # Test validation
         for entry in result.data:
-            validation_result = entry.validate_domain_rules()
-            if validation_result.is_success:
+            try:
+                entry.validate_semantic_rules()
+            except FlextLdifValidationError:
                 pass
 
 

@@ -158,7 +158,8 @@ class CliIntegrationDemonstrator:
         result = api.parse_file(self.sample_file)
         if result.is_success and result.data:
             entries = result.data
-            stats = api.get_entry_statistics(entries)
+            stats_result = api.get_entry_statistics(entries)
+            stats = stats_result.data
 
             for _key, _value in stats.items():
                 pass  # Process stats

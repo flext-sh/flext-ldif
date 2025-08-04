@@ -1,6 +1,6 @@
 # FLEXT-LDIF Documentation
 
-This directory contains comprehensive enterprise-grade documentation for the FLEXT-LDIF library, organized following professional documentation standards and aligned with the FLEXT ecosystem architecture.
+This directory contains documentation for the FLEXT-LDIF library, organized following the FLEXT ecosystem standards.
 
 ## Documentation Structure
 
@@ -26,77 +26,40 @@ docs/
 
 ### 📚 API Documentation (`api/`)
 
-**Complete API reference with enterprise-grade examples**
-
-- **API.md**: Comprehensive API documentation with:
-  - Complete class and method reference
-  - Type-safe examples with FlextResult patterns
-  - Integration patterns with flext-core and flext-observability
-  - Error handling and validation examples
-  - Performance optimization guidelines
-  - Enterprise deployment patterns
+- **API.md**: API reference documentation including:
+  - Core classes and methods
+  - FlextResult patterns and error handling
+  - Basic usage examples
+  - FLEXT-core integration patterns
 
 ### 🏗️ Architecture Documentation (`architecture/`)
 
-**Clean Architecture and Domain-Driven Design implementation guides**
-
-- **ARCHITECTURE.md**: Detailed architectural guidance including:
-  - Clean Architecture layer implementation
-  - Domain-Driven Design patterns and practices
-  - FLEXT ecosystem integration architecture
-  - Migration roadmap from current to target architecture
-  - Quality gates and compliance requirements
-  - Performance and scalability considerations
+- **ARCHITECTURE.md**: Architecture overview covering:
+  - Clean Architecture implementation
+  - Domain-Driven Design patterns
+  - Module organization and boundaries
+  - Current implementation status
 
 ### 🛠️ Development Documentation (`development/`)
 
-**Development process, audits, and validation reports**
-
-- **AUDIT_REPORT.md**: Comprehensive project audit including:
-
-  - Architectural compliance assessment
-  - Code quality metrics and analysis
-  - Security vulnerability assessment
-  - Performance benchmark results
-  - Technical debt analysis and remediation plans
-
-- **DOCKER_INTEGRATION.md**: Docker integration patterns for:
-
-  - Development environment setup
-  - Testing with containerized services
-  - Production deployment strategies
-  - CI/CD pipeline integration
-
-- **VALIDATION_REPORT.md**: Quality validation reports covering:
-  - Test coverage analysis
-  - Type safety validation
-  - Documentation completeness
-  - Security scan results
-  - Performance benchmark validation
+- **AUDIT_REPORT.md**: Current project status and technical assessment
+- **DOCKER_INTEGRATION.md**: Docker setup and integration guidance
+- **VALIDATION_REPORT.md**: Testing and validation approach
 
 ### 💡 Examples Documentation (`examples/`)
 
-**Practical usage examples and integration patterns**
-
-- **EXAMPLES.md**: Comprehensive examples including:
-  - Basic LDIF processing operations
-  - Advanced transformation and filtering
-  - Enterprise integration patterns
-  - Performance optimization techniques
-  - Error handling and recovery scenarios
-  - Production deployment examples
+- **EXAMPLES.md**: Practical usage examples including:
+  - Basic LDIF parsing and validation
+  - File processing operations
+  - Error handling scenarios
+  - Integration with FLEXT ecosystem
 
 ### 📋 Standards Documentation (`standards/`)
 
-**Development standards and organizational guidelines**
-
-- **Python-module-organization.md**: Module organization standards including:
-  - Clean Architecture implementation patterns
-  - Directory structure and naming conventions
-  - Import organization and dependency management
-  - Documentation standards and requirements
-  - Quality assurance and testing patterns
-  - Migration roadmap and implementation guidelines
+- **Python-module-organization.md**: Development standards including:
+  - Module structure conventions
+  - Code organization patterns
+  - Documentation requirements
 
 ## Documentation Principles
 

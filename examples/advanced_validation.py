@@ -26,12 +26,12 @@ def validate_business_rules(entry: FlextLdifEntry) -> tuple[bool, list[str]]:
 
     # Rule 1: Person entries must have email
     if entry.is_person_entry():
-        mail = entry.attributes.get("mail")
+        mail = entry.attributes.get_single_value("mail")
         if not mail or not mail[0]:
             errors.append("Person entries must have email address")
 
     # Rule 2: Employee numbers must be numeric
-    employee_num = entry.attributes.get("employeeNumber")
+    employee_num = entry.attributes.get_single_value("employeeNumber")
     if employee_num:
         try:
             int(employee_num[0])
@@ -39,14 +39,14 @@ def validate_business_rules(entry: FlextLdifEntry) -> tuple[bool, list[str]]:
             errors.append("Employee number must be numeric")
 
     # Rule 3: Phone numbers must follow format
-    phone = entry.attributes.get("telephoneNumber")
+    phone = entry.attributes.get_single_value("telephoneNumber")
     if phone and phone[0]:
         phone_num = phone[0]
         if not phone_num.startswith("+1-555-"):
             errors.append("Phone number must follow +1-555-XXXX format")
 
     # Rule 4: Manager must be a valid DN
-    manager = entry.attributes.get("manager")
+    manager = entry.attributes.get_single_value("manager")
     if manager and manager[0]:
         manager_dn = manager[0]
         if "ou=People" not in manager_dn:
@@ -98,7 +98,7 @@ class LdifValidationDemonstrator:
         domain_errors = []
 
         for i, entry in enumerate(entries):
-            validation_result = entry.validate_domain_rules()
+            validation_result = entry.validate_semantic_rules()
             if validation_result.is_success:
                 domain_valid += 1
             else:
@@ -149,7 +149,7 @@ class LdifValidationDemonstrator:
     def _validate_invalid_entries(self, entries: list[object]) -> None:
         """Validate entries from invalid LDIF file."""
         for entry in entries:
-            validation_result = entry.validate_domain_rules()
+            validation_result = entry.validate_semantic_rules()
             if not validation_result.is_success:
                 pass  # Log validation failure
 

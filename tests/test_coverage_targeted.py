@@ -112,8 +112,9 @@ class TestAPICoverageTargeted:
 
             # Should still work despite observability failure
             result = api.entries_to_ldif([entry])
-            assert isinstance(result, str)
-            assert "cn=test,dc=example,dc=com" in result
+            assert result.is_success
+            assert isinstance(result.data, str)
+            assert "cn=test,dc=example,dc=com" in result.data
 
 
 class TestCLICoverageTargeted:
@@ -150,7 +151,7 @@ cn: test3
             # Should exit with error when exceeding limit
             assert result.exit_code == 1
             assert (
-                "Too many entries" in result.output or "exceeded limit" in result.output
+                "Too many entries" in result.output or "exceeded limit" in result.output or "exceeds" in result.output
             )
         finally:
             Path(temp_path).unlink()
@@ -228,7 +229,7 @@ class TestModelsCoverageTargeted:
         attrs = FlextLdifAttributes(attributes={"": ["value"]})  # Empty attribute name
         result = attrs.validate_semantic_rules()
         assert not result.is_success
-        assert "Invalid attribute name" in result.error
+        assert "Attribute name cannot be empty or whitespace-only" in result.error
 
     def test_ldif_entry_specification_methods_comprehensive(self) -> None:
         """Test comprehensive specification method coverage."""

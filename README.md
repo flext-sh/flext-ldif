@@ -1,28 +1,28 @@
-# FLEXT-LDIF - Enterprise LDIF Processing Library
+# FLEXT-LDIF - LDIF Processing Library
 
 [![Python 3.13+](https://img.shields.io/badge/python-3.13%2B-blue.svg)](https://www.python.org/downloads/)
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Type Checked](https://img.shields.io/badge/typed-mypy-blue.svg)](https://mypy.readthedocs.io/)
 [![Code Style](https://img.shields.io/badge/code%20style-ruff-black.svg)](https://github.com/astral-sh/ruff)
-[![Test Coverage](https://img.shields.io/badge/coverage-90%2B%25-brightgreen.svg)](tests/)
+[![Test Coverage](https://img.shields.io/badge/coverage-85%25-green.svg)](tests/)
 [![FLEXT Ecosystem](https://img.shields.io/badge/FLEXT-ecosystem-purple.svg)](https://github.com/flext-sh)
 
-**FLEXT-LDIF** is an enterprise-grade LDIF (LDAP Data Interchange Format) processing library built with **Clean Architecture** and **Domain-Driven Design** principles. It provides comprehensive LDIF parsing, validation, transformation, and generation capabilities integrated with the **FLEXT ecosystem**.
+**FLEXT-LDIF** is a Python library for processing LDIF (LDAP Data Interchange Format) files. Built using Clean Architecture principles and integrated with the FLEXT ecosystem, it provides parsing, validation, and transformation capabilities for LDIF data.
 
-## 🏗️ Project Status
+## 🏗️ Current Status
 
-| **Component**              | **Status**          | **Coverage** | **Integration** |
-| -------------------------- | ------------------- | ------------ | --------------- |
-| **Core LDIF Processing**   | ✅ Production Ready | 90%+         | Complete        |
-| **Domain Model**           | ✅ Production Ready | 95%+         | Complete        |
-| **API Layer**              | ✅ Production Ready | 85%+         | Complete        |
-| **CLI Interface**          | ✅ Production Ready | 80%+         | Complete        |
-| **FLEXT-Core Integration** | ✅ Complete         | 100%         | ✅ Active       |
-| **FLEXT-LDAP Integration** | ⚠️ In Progress      | 60%          | 🔄 Phase 1      |
-| **Singer Ecosystem**       | 🔄 Planned          | 0%           | 📋 Phase 2      |
-| **Observability**          | ⚠️ Partial          | 70%          | 🔄 Phase 1      |
+| **Component**              | **Status**     | **Notes**                                            |
+| -------------------------- | -------------- | ---------------------------------------------------- |
+| **Core LDIF Processing**   | ✅ Stable      | Basic parsing, validation, and writing functionality |
+| **API Layer**              | ✅ Refactored  | Enterprise-grade error handling and logging          |
+| **Domain Model**           | 🔄 In Progress | Core entities and value objects implemented          |
+| **CLI Interface**          | ✅ Functional  | Basic command-line operations available              |
+| **FLEXT-Core Integration** | ✅ Active      | Using FlextResult patterns and DI container          |
+| **Configuration System**   | ✅ Complete    | Environment-based configuration management           |
+| **Service Layer**          | ✅ Complete    | Domain services with dependency injection            |
+| **Exception Handling**     | ✅ Complete    | Structured exception hierarchy                       |
 
-**Current Version**: 0.9.0 | **Target**: 1.0.0 (Production Release)
+**Current Version**: 0.9.0 | **Development Status**: Active
 
 ## ⚡ Quick Start
 
@@ -352,28 +352,28 @@ make pre-commit                # Run all pre-commit hooks
 5. **Write comprehensive docstrings**
 6. **Respect Clean Architecture boundaries**
 
-## 📋 Roadmap
+## 📋 Development Roadmap
 
-### Phase 1: Core Stabilization (v1.0.0)
+### Immediate Priorities
 
-- [ ] **Fix FLEXT-Observability Integration** - Resolve dependency issues
-- [ ] **Implement FLEXT-LDAP Integration** - Schema validation and directory ops
-- [ ] **Performance Optimization** - Streaming support for large files
-- [ ] **Architecture Refactoring** - Proper Clean Architecture structure
+- [ ] **Complete Domain Model Refactoring** - Enhance models.py with enterprise patterns
+- [ ] **CLI Enhancement** - Improve command-line interface robustness
+- [ ] **Testing Coverage** - Achieve 90%+ test coverage across all modules
+- [ ] **Documentation Updates** - Align documentation with current implementation
 
-### Phase 2: Ecosystem Integration (v1.1.0)
+### Version 1.0.0 Goals
 
-- [ ] **Singer SDK Integration** - Tap, Target, and DBT implementations
-- [ ] **Advanced Transformations** - Business rule engine
-- [ ] **Multi-format Support** - JSON, XML, YAML conversion
-- [ ] **Enterprise Features** - Audit logging, compliance
+- [ ] **Core Functionality Stabilization** - Ensure all basic LDIF operations are robust
+- [ ] **Error Handling Improvements** - Comprehensive error scenarios coverage
+- [ ] **Performance Optimization** - Benchmark and optimize critical paths
+- [ ] **Integration Testing** - End-to-end testing with real LDIF files
 
-### Phase 3: Advanced Features (v1.2.0)
+### Future Enhancements
 
-- [ ] **Real-time Processing** - Stream processing capabilities
-- [ ] **Schema Evolution** - Dynamic schema adaptation
-- [ ] **Performance Analytics** - Built-in benchmarking
-- [ ] **Multi-tenant Support** - Enterprise deployment
+- [ ] **FLEXT-LDAP Integration** - Connect with LDAP directory services (when available)
+- [ ] **Advanced Transformations** - Business rule-based entry transformations
+- [ ] **Streaming Support** - Handle large LDIF files efficiently
+- [ ] **Multi-format Support** - Export to JSON, XML formats
 
 ## 🔒 Security & Compliance
 

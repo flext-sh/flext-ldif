@@ -97,7 +97,7 @@ class FlextLdifParseError(FlextProcessingError):
 
     Example:
         >>> from flext_ldif.exceptions import FlextLdifParseError
-        >>> 
+        >>>
         >>> try:
         ...     # LDIF parsing operation
         ...     pass
@@ -119,22 +119,24 @@ class FlextLdifParseError(FlextProcessingError):
         **kwargs: object,
     ) -> None:
         """Initialize LDIF parse error with enterprise-grade context and comprehensive logging.
-        
+
         Creates a comprehensive LDIF parsing error with detailed context information,
         structured logging, and enterprise-grade error reporting for troubleshooting.
-        
+
         Args:
             message: Human-readable error description
             line_number: Optional line number where parsing failed
             entry_dn: Optional DN of the entry being parsed when error occurred
             **kwargs: Additional context information for error reporting
-            
+
         """
         # REFACTORING: Enhanced error creation logging with comprehensive context
-        logger.debug("Creating FlextLdifParseError with comprehensive context",
-                    error_message=message,
-                    parse_line_number=line_number,
-                    parse_entry_dn=entry_dn)
+        logger.debug(
+            "Creating FlextLdifParseError with comprehensive context",
+            error_message=message,
+            parse_line_number=line_number,
+            parse_entry_dn=entry_dn,
+        )
         logger.trace("Parse error additional context: %s", kwargs)
 
         # REFACTORING: Enhanced context building with validation and error handling
@@ -146,7 +148,10 @@ class FlextLdifParseError(FlextProcessingError):
                 context["line_number"] = line_number
                 logger.trace("Added line number to error context: %d", line_number)
             else:
-                logger.warning("Invalid line_number provided to FlextLdifParseError: %s", line_number)
+                logger.warning(
+                    "Invalid line_number provided to FlextLdifParseError: %s",
+                    line_number,
+                )
 
         # Add entry DN context with validation
         if entry_dn is not None:
@@ -154,7 +159,9 @@ class FlextLdifParseError(FlextProcessingError):
                 context["entry_dn"] = entry_dn.strip()
                 logger.trace("Added entry DN to error context: %s", entry_dn)
             else:
-                logger.warning("Invalid entry_dn provided to FlextLdifParseError: %s", entry_dn)
+                logger.warning(
+                    "Invalid entry_dn provided to FlextLdifParseError: %s", entry_dn,
+                )
 
         # REFACTORING: Enhanced error message formatting with context integration
         enhanced_message = f"LDIF parsing failed: {message}"
@@ -169,14 +176,18 @@ class FlextLdifParseError(FlextProcessingError):
         # REFACTORING: Enhanced parent initialization with error handling
         try:
             super().__init__(enhanced_message, **context)
-            logger.debug("FlextLdifParseError created successfully",
-                        error_message=enhanced_message,
-                        context_keys=list(context.keys()))
+            logger.debug(
+                "FlextLdifParseError created successfully",
+                error_message=enhanced_message,
+                context_keys=list(context.keys()),
+            )
         except (TypeError, ValueError) as e:
             logger.exception("Failed to create FlextLdifParseError")
             # Fallback to basic initialization
             super().__init__(f"LDIF parse: {message}")
-            logger.warning("FlextLdifParseError created with fallback initialization due to: %s", e)
+            logger.warning(
+                "FlextLdifParseError created with fallback initialization due to: %s", e,
+            )
 
 
 class FlextLdifEntryError(FlextProcessingError):
@@ -192,7 +203,7 @@ class FlextLdifEntryError(FlextProcessingError):
 
     Example:
         >>> from flext_ldif.exceptions import FlextLdifEntryError
-        >>> 
+        >>>
         >>> try:
         ...     # LDIF entry processing operation
         ...     pass
@@ -215,22 +226,24 @@ class FlextLdifEntryError(FlextProcessingError):
         **kwargs: object,
     ) -> None:
         """Initialize LDIF entry error with enterprise-grade context and comprehensive logging.
-        
+
         Creates a comprehensive LDIF entry processing error with detailed context information,
         structured logging, and enterprise-grade error reporting for troubleshooting.
-        
+
         Args:
             message: Human-readable error description
             entry_dn: Optional DN of the entry being processed when error occurred
             operation: Optional operation name that was being performed
             **kwargs: Additional context information for error reporting
-            
+
         """
         # REFACTORING: Enhanced error creation logging with comprehensive context
-        logger.debug("Creating FlextLdifEntryError with comprehensive context",
-                    error_message=message,
-                    entry_entry_dn=entry_dn,
-                    entry_operation=operation)
+        logger.debug(
+            "Creating FlextLdifEntryError with comprehensive context",
+            error_message=message,
+            entry_entry_dn=entry_dn,
+            entry_operation=operation,
+        )
         logger.trace("Entry error additional context: %s", kwargs)
 
         # REFACTORING: Enhanced context building with validation and error handling
@@ -242,7 +255,9 @@ class FlextLdifEntryError(FlextProcessingError):
                 context["entry_dn"] = entry_dn.strip()
                 logger.trace("Added entry DN to error context: %s", entry_dn)
             else:
-                logger.warning("Invalid entry_dn provided to FlextLdifEntryError: %s", entry_dn)
+                logger.warning(
+                    "Invalid entry_dn provided to FlextLdifEntryError: %s", entry_dn,
+                )
 
         # Add operation context with validation
         if operation is not None:
@@ -250,7 +265,9 @@ class FlextLdifEntryError(FlextProcessingError):
                 context["operation"] = operation.strip()
                 logger.trace("Added operation to error context: %s", operation)
             else:
-                logger.warning("Invalid operation provided to FlextLdifEntryError: %s", operation)
+                logger.warning(
+                    "Invalid operation provided to FlextLdifEntryError: %s", operation,
+                )
 
         # REFACTORING: Enhanced error message formatting with context integration
         enhanced_message = f"LDIF entry processing failed: {message}"
@@ -265,14 +282,18 @@ class FlextLdifEntryError(FlextProcessingError):
         # REFACTORING: Enhanced parent initialization with error handling
         try:
             super().__init__(enhanced_message, **context)
-            logger.debug("FlextLdifEntryError created successfully",
-                        error_message=enhanced_message,
-                        context_keys=list(context.keys()))
+            logger.debug(
+                "FlextLdifEntryError created successfully",
+                error_message=enhanced_message,
+                context_keys=list(context.keys()),
+            )
         except (TypeError, ValueError) as e:
             logger.exception("Failed to create FlextLdifEntryError")
             # Fallback to basic initialization
             super().__init__(f"LDIF entry: {message}")
-            logger.warning("FlextLdifEntryError created with fallback initialization due to: %s", e)
+            logger.warning(
+                "FlextLdifEntryError created with fallback initialization due to: %s", e,
+            )
 
 
 __all__ = [

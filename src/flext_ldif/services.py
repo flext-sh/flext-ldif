@@ -145,7 +145,7 @@ class FlextLdifParserService:
     Example:
         >>> from flext_ldif.services import FlextLdifParserService
         >>> from flext_ldif.config import FlextLdifConfig
-        >>> 
+        >>>
         >>> config = FlextLdifConfig(max_entries=1000)
         >>> parser = FlextLdifParserService(config)
         >>> result = parser.parse(ldif_content)
@@ -156,16 +156,18 @@ class FlextLdifParserService:
 
     def __init__(self, config: FlextLdifConfig | None = None) -> None:
         """Initialize parser service with enterprise configuration management.
-        
+
         Args:
             config: Optional configuration object with parsing constraints and settings
-            
+
         """
         # REFACTORING: Enhanced configuration initialization with validation
         self.config = config or FlextLdifConfig()
-        logger.debug("FlextLdifParserService initialized",
-                    max_entries=self.config.max_entries,
-                    input_encoding=self.config.input_encoding)
+        logger.debug(
+            "FlextLdifParserService initialized",
+            max_entries=self.config.max_entries,
+            input_encoding=self.config.input_encoding,
+        )
         logger.trace("Parser service configuration: %s", self.config.model_dump())
 
     def parse(self, content: str | LDIFContent) -> FlextResult[list[FlextLdifEntry]]:
@@ -206,10 +208,12 @@ class FlextLdifParserService:
             return FlextResult.fail(limit_error)
 
         # REFACTORING: Enhanced success logging with comprehensive metrics
-        logger.info("LDIF content parsing completed successfully",
-                   entries_parsed=entries_count,
-                   content_size_chars=content_size,
-                   max_entries_limit=self.config.max_entries)
+        logger.info(
+            "LDIF content parsing completed successfully",
+            entries_parsed=entries_count,
+            content_size_chars=content_size,
+            max_entries_limit=self.config.max_entries,
+        )
         return FlextResult.ok(entries)
 
     def parse_file(self, file_path: str | Path) -> FlextResult[list[FlextLdifEntry]]:
@@ -228,15 +232,19 @@ class FlextLdifParserService:
         # REFACTORING: Enhanced file path validation and metrics
         file_path_obj = Path(file_path)
         absolute_path = file_path_obj.absolute()
-        logger.debug("Starting LDIF file parsing",
-                    file_path=str(absolute_path),
-                    input_encoding=self.config.input_encoding)
+        logger.debug(
+            "Starting LDIF file parsing",
+            file_path=str(absolute_path),
+            input_encoding=self.config.input_encoding,
+        )
 
         # Delegate to core parser with configuration-based encoding
         result = TLdif.read_file(file_path_obj, self.config.input_encoding)
 
         if result.is_failure:
-            error_msg = f"Core LDIF file parsing failed for {absolute_path}: {result.error}"
+            error_msg = (
+                f"Core LDIF file parsing failed for {absolute_path}: {result.error}"
+            )
             logger.error(error_msg)
             return FlextResult.fail(error_msg)
 
@@ -247,15 +255,19 @@ class FlextLdifParserService:
         if entries_count > self.config.max_entries:
             limit_error = f"File entry count {entries_count} exceeds configured limit {self.config.max_entries} for {absolute_path}"
             logger.warning(limit_error)
-            logger.debug("Configuration constraint violated for file parsing - rejecting result")
+            logger.debug(
+                "Configuration constraint violated for file parsing - rejecting result",
+            )
             return FlextResult.fail(limit_error)
 
         # REFACTORING: Enhanced file parsing success logging with file metrics
-        logger.info("LDIF file parsing completed successfully",
-                   entries_parsed=entries_count,
-                   file_path=str(absolute_path),
-                   input_encoding=self.config.input_encoding,
-                   max_entries_limit=self.config.max_entries)
+        logger.info(
+            "LDIF file parsing completed successfully",
+            entries_parsed=entries_count,
+            file_path=str(absolute_path),
+            input_encoding=self.config.input_encoding,
+            max_entries_limit=self.config.max_entries,
+        )
         return FlextResult.ok(entries)
 
 
@@ -272,7 +284,7 @@ class FlextLdifWriterService:
     Example:
         >>> from flext_ldif.services import FlextLdifWriterService
         >>> from flext_ldif.config import FlextLdifConfig
-        >>> 
+        >>>
         >>> config = FlextLdifConfig(sort_attributes=True, create_output_dir=True)
         >>> writer = FlextLdifWriterService(config)
         >>> result = writer.write_file(entries, "output/users.ldif")
@@ -281,17 +293,19 @@ class FlextLdifWriterService:
 
     def __init__(self, config: FlextLdifConfig | None = None) -> None:
         """Initialize writer service with enterprise configuration management.
-        
+
         Args:
             config: Optional configuration object with writing settings and formatting options
-            
+
         """
         # REFACTORING: Enhanced configuration initialization with comprehensive logging
         self.config = config or FlextLdifConfig()
-        logger.debug("FlextLdifWriterService initialized",
-                    sort_attributes=self.config.sort_attributes,
-                    output_encoding=self.config.output_encoding,
-                    create_output_dir=self.config.create_output_dir)
+        logger.debug(
+            "FlextLdifWriterService initialized",
+            sort_attributes=self.config.sort_attributes,
+            output_encoding=self.config.output_encoding,
+            create_output_dir=self.config.create_output_dir,
+        )
         logger.trace("Writer service configuration: %s", self.config.model_dump())
 
     def write(self, entries: list[FlextLdifEntry]) -> FlextResult[str]:
@@ -309,7 +323,9 @@ class FlextLdifWriterService:
         """
         # REFACTORING: Enhanced entry validation and processing metrics
         entries_count = len(entries)
-        logger.debug("Starting LDIF string writing operation", entries_count=entries_count)
+        logger.debug(
+            "Starting LDIF string writing operation", entries_count=entries_count,
+        )
 
         # REFACTORING: Enhanced attribute sorting with performance logging
         processed_entries = entries
@@ -328,10 +344,12 @@ class FlextLdifWriterService:
 
         # REFACTORING: Enhanced success logging with content metrics
         content_length = len(result.data or "")
-        logger.info("LDIF string writing completed successfully",
-                   entries_written=entries_count,
-                   content_length_chars=content_length,
-                   attributes_sorted=self.config.sort_attributes)
+        logger.info(
+            "LDIF string writing completed successfully",
+            entries_written=entries_count,
+            content_length_chars=content_length,
+            attributes_sorted=self.config.sort_attributes,
+        )
         return result
 
     def write_file(
@@ -355,28 +373,37 @@ class FlextLdifWriterService:
         # REFACTORING: Enhanced file path processing and validation
         entries_count = len(entries)
         original_path = Path(file_path)
-        logger.debug("Starting LDIF file writing operation",
-                    entries_count=entries_count,
-                    original_path=str(original_path))
+        logger.debug(
+            "Starting LDIF file writing operation",
+            entries_count=entries_count,
+            original_path=str(original_path),
+        )
 
         # REFACTORING: Enhanced path resolution with comprehensive logging
         resolved_path = original_path
         if not original_path.is_absolute() and self.config.output_directory:
             resolved_path = self.config.output_directory / original_path
-            logger.debug("Resolved relative path to absolute",
-                        original=str(original_path),
-                        resolved=str(resolved_path.absolute()))
+            logger.debug(
+                "Resolved relative path to absolute",
+                original=str(original_path),
+                resolved=str(resolved_path.absolute()),
+            )
 
         # REFACTORING: Enhanced directory creation with detailed error handling
         if self.config.create_output_dir and resolved_path.parent:
             parent_dir = resolved_path.parent
             try:
                 if not parent_dir.exists():
-                    logger.debug("Creating output directory structure", parent_dir=str(parent_dir))
+                    logger.debug(
+                        "Creating output directory structure",
+                        parent_dir=str(parent_dir),
+                    )
                     parent_dir.mkdir(parents=True, exist_ok=True)
                     logger.trace("Output directory created successfully")
                 else:
-                    logger.trace("Output directory already exists", parent_dir=str(parent_dir))
+                    logger.trace(
+                        "Output directory already exists", parent_dir=str(parent_dir),
+                    )
             except (OSError, PermissionError) as e:
                 error_msg = f"Failed to create output directory {parent_dir}: {e}"
                 logger.exception(error_msg)
@@ -390,7 +417,9 @@ class FlextLdifWriterService:
             logger.trace("Attribute sorting completed for file output")
 
         # Delegate to core writer with configuration-based encoding
-        result = TLdif.write_file(processed_entries, resolved_path, self.config.output_encoding)
+        result = TLdif.write_file(
+            processed_entries, resolved_path, self.config.output_encoding,
+        )
 
         if result.is_failure:
             error_msg = f"Core LDIF file writing failed for {resolved_path.absolute()}: {result.error}"
@@ -398,12 +427,14 @@ class FlextLdifWriterService:
             return FlextResult.fail(error_msg)
 
         # REFACTORING: Enhanced file writing success logging with comprehensive metrics
-        logger.info("LDIF file writing completed successfully",
-                   entries_written=entries_count,
-                   file_path=str(resolved_path.absolute()),
-                   output_encoding=self.config.output_encoding,
-                   attributes_sorted=self.config.sort_attributes,
-                   directory_created=self.config.create_output_dir)
+        logger.info(
+            "LDIF file writing completed successfully",
+            entries_written=entries_count,
+            file_path=str(resolved_path.absolute()),
+            output_encoding=self.config.output_encoding,
+            attributes_sorted=self.config.sort_attributes,
+            directory_created=self.config.create_output_dir,
+        )
         return result
 
     def _sort_entry_attributes(
@@ -437,19 +468,29 @@ class FlextLdifWriterService:
                 logger.trace("Sorting attributes for entry %d: %s", i + 1, entry.dn)
 
                 # Sort attribute names with case-insensitive ordering for better consistency
-                sorted_attrs = dict(sorted(entry.attributes.attributes.items(), key=lambda x: x[0].lower()))
+                sorted_attrs = dict(
+                    sorted(
+                        entry.attributes.attributes.items(), key=lambda x: x[0].lower(),
+                    ),
+                )
 
                 # Create new entry with sorted attributes using immutable pattern
-                new_attrs = entry.attributes.model_copy(update={"attributes": sorted_attrs})
+                new_attrs = entry.attributes.model_copy(
+                    update={"attributes": sorted_attrs},
+                )
                 new_entry = entry.model_copy(update={"attributes": new_attrs})
                 sorted_entries.append(new_entry)
 
-            logger.debug("Attribute sorting completed successfully for %d entries", entries_count)
+            logger.debug(
+                "Attribute sorting completed successfully for %d entries", entries_count,
+            )
             return sorted_entries
 
         except (AttributeError, ValueError, TypeError) as e:
-            logger.exception("Exception during attribute sorting - returning original entries")
-            logger.error("Attribute sorting failed: %s", e)
+            logger.exception(
+                "Exception during attribute sorting - returning original entries",
+            )
+            logger.exception("Attribute sorting failed: %s", e)
             return entries  # Fallback to original entries on error
 
 
@@ -466,7 +507,7 @@ class FlextLdifValidatorService:
     Example:
         >>> from flext_ldif.services import FlextLdifValidatorService
         >>> from flext_ldif.config import FlextLdifConfig
-        >>> 
+        >>>
         >>> config = FlextLdifConfig(max_entry_size=1048576, allow_empty_attributes=False)
         >>> validator = FlextLdifValidatorService(config)
         >>> result = validator.validate(entries)
@@ -475,17 +516,19 @@ class FlextLdifValidatorService:
 
     def __init__(self, config: FlextLdifConfig | None = None) -> None:
         """Initialize validator service with enterprise configuration management.
-        
+
         Args:
             config: Optional configuration object with validation rules and constraints
-            
+
         """
         # REFACTORING: Enhanced configuration initialization with comprehensive validation logging
         self.config = config or FlextLdifConfig()
-        logger.debug("FlextLdifValidatorService initialized",
-                    max_entries=self.config.max_entries,
-                    max_entry_size=self.config.max_entry_size,
-                    allow_empty_attributes=self.config.allow_empty_attributes)
+        logger.debug(
+            "FlextLdifValidatorService initialized",
+            max_entries=self.config.max_entries,
+            max_entry_size=self.config.max_entry_size,
+            allow_empty_attributes=self.config.allow_empty_attributes,
+        )
         logger.trace("Validator service configuration: %s", self.config.model_dump())
 
     def validate(self, entries: list[FlextLdifEntry]) -> FlextResult[bool]:
@@ -521,15 +564,19 @@ class FlextLdifValidatorService:
             if result.is_failure:
                 error_msg = f"Entry {i + 1} of {entries_count} validation failed ({entry.dn}): {result.error}"
                 logger.error(error_msg)
-                logger.debug("Bulk validation failed at entry %d - stopping validation", i + 1)
+                logger.debug(
+                    "Bulk validation failed at entry %d - stopping validation", i + 1,
+                )
                 return FlextResult.fail(error_msg)
 
         # REFACTORING: Enhanced success logging with comprehensive validation metrics
-        logger.info("Bulk LDIF validation completed successfully",
-                   entries_validated=entries_count,
-                   max_entries_limit=self.config.max_entries,
-                   max_entry_size_limit=self.config.max_entry_size,
-                   empty_attributes_allowed=self.config.allow_empty_attributes)
+        logger.info(
+            "Bulk LDIF validation completed successfully",
+            entries_validated=entries_count,
+            max_entries_limit=self.config.max_entries,
+            max_entry_size_limit=self.config.max_entry_size,
+            empty_attributes_allowed=self.config.allow_empty_attributes,
+        )
         return FlextResult.ok(data=True)
 
     def validate_entry(self, entry: FlextLdifEntry) -> FlextResult[bool]:
@@ -561,10 +608,12 @@ class FlextLdifValidatorService:
         try:
             entry_ldif = entry.to_ldif()
             entry_size = len(entry_ldif.encode(self.config.output_encoding))
-            logger.trace("Entry size calculated",
-                        entry_size_bytes=entry_size,
-                        max_size_limit=self.config.max_entry_size,
-                        encoding=self.config.output_encoding)
+            logger.trace(
+                "Entry size calculated",
+                entry_size_bytes=entry_size,
+                max_size_limit=self.config.max_entry_size,
+                encoding=self.config.output_encoding,
+            )
 
             if entry_size > self.config.max_entry_size:
                 size_error = f"Entry size {entry_size} bytes exceeds configured limit {self.config.max_entry_size} bytes"
@@ -572,14 +621,18 @@ class FlextLdifValidatorService:
                 return FlextResult.fail(size_error)
         except (UnicodeEncodeError, AttributeError) as e:
             encoding_error = f"Entry size validation failed due to encoding error: {e}"
-            logger.error(encoding_error, entry_dn=entry_dn)
+            logger.exception(encoding_error, entry_dn=entry_dn)
             return FlextResult.fail(encoding_error)
 
         # REFACTORING: Enhanced empty attributes validation with comprehensive checking
         if not self.config.allow_empty_attributes:
             logger.trace("Checking for empty attributes (not allowed by configuration)")
             for attr_name, attr_values in entry.attributes.attributes.items():
-                logger.trace("Validating attribute: %s with %d values", attr_name, len(attr_values))
+                logger.trace(
+                    "Validating attribute: %s with %d values",
+                    attr_name,
+                    len(attr_values),
+                )
 
                 if not attr_values:
                     empty_error = f"Empty attribute list not allowed: {attr_name}"
@@ -588,8 +641,15 @@ class FlextLdifValidatorService:
 
                 for j, value in enumerate(attr_values):
                     if not value.strip():
-                        empty_value_error = f"Empty attribute value not allowed: {attr_name}[{j}]"
-                        logger.warning(empty_value_error, entry_dn=entry_dn, attribute=attr_name, value_index=j)
+                        empty_value_error = (
+                            f"Empty attribute value not allowed: {attr_name}[{j}]"
+                        )
+                        logger.warning(
+                            empty_value_error,
+                            entry_dn=entry_dn,
+                            attribute=attr_name,
+                            value_index=j,
+                        )
                         return FlextResult.fail(empty_value_error)
 
         # REFACTORING: Enhanced semantic validation with detailed error context
@@ -601,11 +661,13 @@ class FlextLdifValidatorService:
             return FlextResult.fail(semantic_error)
 
         # REFACTORING: Enhanced success logging with comprehensive entry metrics
-        logger.debug("Single entry validation completed successfully",
-                    entry_dn=entry_dn,
-                    entry_size_bytes=entry_size,
-                    attributes_count=len(entry.attributes.attributes),
-                    empty_attributes_checked=not self.config.allow_empty_attributes)
+        logger.debug(
+            "Single entry validation completed successfully",
+            entry_dn=entry_dn,
+            entry_size_bytes=entry_size,
+            attributes_count=len(entry.attributes.attributes),
+            empty_attributes_checked=not self.config.allow_empty_attributes,
+        )
         return FlextResult.ok(data=True)
 
 
@@ -644,9 +706,11 @@ def register_ldif_services(
     else:
         logger.debug("Using provided LDIF configuration for service registration")
 
-    logger.debug("Starting LDIF services registration",
-                container_id=id(container),
-                config_hash=hash(str(config.model_dump())))
+    logger.debug(
+        "Starting LDIF services registration",
+        container_id=id(container),
+        config_hash=hash(str(config.model_dump())),
+    )
 
     # REFACTORING: Enhanced configuration registration with validation
     logger.trace("Registering LDIF configuration in container")
@@ -688,10 +752,12 @@ def register_ldif_services(
             return FlextResult.fail(error_msg)
 
     # REFACTORING: Enhanced success logging with comprehensive registration metrics
-    logger.info("LDIF services registration completed successfully",
-               services_registered=len(registered_services),
-               service_names=registered_services,
-               container_id=id(container))
+    logger.info(
+        "LDIF services registration completed successfully",
+        services_registered=len(registered_services),
+        service_names=registered_services,
+        container_id=id(container),
+    )
     return FlextResult.ok(None)
 
 

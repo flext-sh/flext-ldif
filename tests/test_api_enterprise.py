@@ -159,8 +159,8 @@ sn: User{i}
 
         assert not result.is_success
         assert result.error is not None
-        if "too many entries" not in result.error.lower():
-            msg = f"Expected {'too many entries'} in {result.error.lower()}"
+        if "exceeds configured limit" not in result.error.lower():
+            msg = f"Expected 'exceeds configured limit' in {result.error.lower()}"
             raise AssertionError(msg)
 
     def test_parse_file_success(self, sample_ldif_content: str) -> None:
@@ -245,8 +245,8 @@ sn: User{i}
             write_result = api.write(parse_result.data, temp_file)
 
             assert write_result.is_success
-            if "written to" not in write_result.data.lower():
-                msg = f"Expected {'written to'} in {write_result.data.lower()}"
+            if "written successfully to" not in write_result.data.lower():
+                msg = f"Expected {'written successfully to'} in {write_result.data.lower()}"
                 raise AssertionError(msg)
             assert temp_file.exists()
 
@@ -303,13 +303,17 @@ sn: User{i}
         assert parse_result.is_success
 
         # Filter by person objectClass
-        person_entries = api.filter_by_objectclass(parse_result.data, "person")
+        person_result = api.filter_by_objectclass(parse_result.data, "person")
+        assert person_result.is_success
+        person_entries = person_result.data
         if len(person_entries) != EXPECTED_BULK_SIZE:
             msg = f"Expected {2}, got {len(person_entries)}"
             raise AssertionError(msg)
 
         # Filter by groupOfNames objectClass
-        group_entries = api.filter_by_objectclass(parse_result.data, "groupOfNames")
+        group_result = api.filter_by_objectclass(parse_result.data, "groupOfNames")
+        assert group_result.is_success
+        group_entries = group_result.data
         if len(group_entries) != 1:
             msg = f"Expected {1}, got {len(group_entries)}"
             raise AssertionError(msg)
@@ -322,9 +326,11 @@ sn: User{i}
         assert parse_result.is_success
 
         target_dn = "cn=John Doe,ou=people,dc=example,dc=com"
-        found_entry = api.find_entry_by_dn(parse_result.data, target_dn)
+        found_result = api.find_entry_by_dn(parse_result.data, target_dn)
 
-        assert found_entry is not None
+        assert found_result.is_success
+        assert found_result.data is not None
+        found_entry = found_result.data
         if str(found_entry.dn) != target_dn:
             msg = f"Expected {target_dn}, got {found_entry.dn!s}"
             raise AssertionError(msg)
@@ -338,9 +344,10 @@ sn: User{i}
         assert parse_result.is_success
 
         nonexistent_dn = "cn=nonexistent,ou=people,dc=example,dc=com"
-        found_entry = api.find_entry_by_dn(parse_result.data, nonexistent_dn)
+        found_result = api.find_entry_by_dn(parse_result.data, nonexistent_dn)
 
-        assert found_entry is None
+        assert found_result.is_success
+        assert found_result.data is None
 
     def test_sort_hierarchically_success(self, sample_ldif_content: str) -> None:
         """Test hierarchical sorting succeeds."""
@@ -371,9 +378,11 @@ sn: User{i}
         parse_result = api.parse(sample_ldif_content)
         assert parse_result.is_success
 
-        ldif_output = api.entries_to_ldif(parse_result.data)
+        ldif_result = api.entries_to_ldif(parse_result.data)
 
-        assert ldif_output is not None
+        assert ldif_result.is_success
+        assert ldif_result.data is not None
+        ldif_output = ldif_result.data
         assert len(ldif_output) > 0
         if "dn:" not in ldif_output:
             msg = f"Expected {'dn:'} in {ldif_output}"

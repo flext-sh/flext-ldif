@@ -56,7 +56,10 @@ cn: user2
         try:
             result = api.parse_file(temp_path)
             assert not result.is_success
-            assert "Too many entries" in result.error
+            assert (
+                "Too many entries" in result.error
+                or "exceeds configured limit" in result.error
+            )
         finally:
             Path(temp_path).unlink()
 
@@ -84,7 +87,10 @@ cn: test
         try:
             result = api.write(parse_result.data, temp_path)
             assert result.is_success
-            assert f"Written to {temp_path}" in result.data
+            assert (
+                f"Written to {temp_path}" in result.data
+                or f"written successfully to {temp_path}" in result.data
+            )
 
             # Verify file was created
             assert Path(temp_path).exists()
@@ -112,7 +118,7 @@ cn: test
         # Pass invalid data type to trigger exception
         result = api.filter_persons(None)
         assert not result.is_success
-        assert "Failed to filter person entries" in result.error
+        assert "Entries list cannot be None" in result.error
 
     def test_api_filter_valid_error(self) -> None:
         """Test API filter_valid with error condition."""
@@ -121,7 +127,7 @@ cn: test
         # Pass invalid data type to trigger exception
         result = api.filter_valid(None)
         assert not result.is_success
-        assert "Failed to filter valid entries" in result.error
+        assert "Entries list cannot be None" in result.error
 
     def test_api_sort_hierarchically_error(self) -> None:
         """Test API sort_hierarchically with error condition."""
@@ -130,7 +136,7 @@ cn: test
         # Pass invalid data type to trigger exception
         result = api.sort_hierarchically(None)
         assert not result.is_success
-        assert "Failed to sort entries hierarchically" in result.error
+        assert "Entries list cannot be None" in result.error
 
     def test_api_filter_groups_error(self) -> None:
         """Test API filter_groups with error condition."""
@@ -139,7 +145,7 @@ cn: test
         # Pass invalid data type to trigger exception
         result = api.filter_groups(None)
         assert not result.is_success
-        assert "Failed to filter group entries" in result.error
+        assert "Entries list cannot be None" in result.error
 
     def test_api_filter_organizational_units_error(self) -> None:
         """Test API filter_organizational_units with error condition."""
@@ -148,7 +154,7 @@ cn: test
         # Pass invalid data type to trigger exception
         result = api.filter_organizational_units(None)
         assert not result.is_success
-        assert "Failed to filter OU entries" in result.error
+        assert "Entries list cannot be None" in result.error
 
     def test_api_filter_change_records_error(self) -> None:
         """Test API filter_change_records with error condition."""
@@ -157,7 +163,7 @@ cn: test
         # Pass invalid data type to trigger exception
         result = api.filter_change_records(None)
         assert not result.is_success
-        assert "Failed to filter change records" in result.error
+        assert "Entries list cannot be None" in result.error
 
     def test_api_get_entry_statistics_with_mixed_entries(self) -> None:
         """Test API get_entry_statistics with various entry types."""
@@ -186,7 +192,9 @@ cn: changerecord
         parse_result = api.parse(ldif_content)
         assert parse_result.is_success
 
-        stats = api.get_entry_statistics(parse_result.data)
+        stats_result = api.get_entry_statistics(parse_result.data)
+        assert stats_result.is_success
+        stats = stats_result.data
         assert stats["total_entries"] == 4
         assert stats["person_entries"] >= 1
         assert stats["group_entries"] >= 1
@@ -206,7 +214,9 @@ cn: test
         assert parse_result.is_success
 
         # Convert back to LDIF
-        ldif_output = api.entries_to_ldif(parse_result.data)
+        ldif_result = api.entries_to_ldif(parse_result.data)
+        assert ldif_result.is_success
+        ldif_output = ldif_result.data
         assert isinstance(ldif_output, str)
         assert "cn=test,dc=example,dc=com" in ldif_output
 
@@ -227,8 +237,12 @@ cn: other
         assert parse_result.is_success
 
         # Find specific entry
-        entry = api.find_entry_by_dn(parse_result.data, "cn=test,dc=example,dc=com")
-        assert entry is not None
+        entry_result = api.find_entry_by_dn(
+            parse_result.data, "cn=test,dc=example,dc=com",
+        )
+        assert entry_result.is_success
+        assert entry_result.data is not None
+        entry = entry_result.data
         assert str(entry.dn) == "cn=test,dc=example,dc=com"
 
     def test_api_find_entry_by_dn_not_found(self) -> None:
@@ -244,11 +258,12 @@ cn: test
         assert parse_result.is_success
 
         # Try to find non-existent entry
-        entry = api.find_entry_by_dn(
+        entry_result = api.find_entry_by_dn(
             parse_result.data,
             "cn=nonexistent,dc=example,dc=com",
         )
-        assert entry is None
+        assert entry_result.is_success
+        assert entry_result.data is None
 
     def test_api_filter_by_objectclass(self) -> None:
         """Test API filter_by_objectclass."""
@@ -267,7 +282,9 @@ cn: group
         assert parse_result.is_success
 
         # Filter by objectClass
-        person_entries = api.filter_by_objectclass(parse_result.data, "person")
+        person_result = api.filter_by_objectclass(parse_result.data, "person")
+        assert person_result.is_success
+        person_entries = person_result.data
         assert len(person_entries) == 1
         assert str(person_entries[0].dn) == "cn=person,dc=example,dc=com"
 

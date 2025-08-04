@@ -63,16 +63,18 @@ def main() -> None:
         return
 
     # Display basic statistics
-    stats = api.get_entry_statistics(entries)
-    for _key, _value in stats.items():
-        pass
+    stats_result = api.get_entry_statistics(entries)
+    if stats_result.is_success:
+        stats = stats_result.data
+        for _key, _value in stats.items():
+            pass
 
     # Display first entry details
     if entries:
         first_entry = entries[0]
 
         # Validate domain rules
-        validation_result = first_entry.validate_domain_rules()
+        validation_result = first_entry.validate_semantic_rules()
         if validation_result.is_success:
             pass
 
@@ -83,8 +85,8 @@ def main() -> None:
         person_entries = filter_result.data
 
         for entry in person_entries:
-            entry.attributes.get("cn", ["Unknown"])[0]
-            entry.attributes.get("mail", ["No email"])[0]
+            entry.attributes.get_single_value("cn") or "Unknown"
+            entry.attributes.get_single_value("mail") or "No email"
 
     # Demonstrate writing back to LDIF
     output_file = Path(__file__).parent / "output_basic.ldif"
