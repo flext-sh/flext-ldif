@@ -10,14 +10,15 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from docker_fixtures import OpenLDAPContainerManager, check_docker_available
-from flext_ldif import parse_ldif, validate_ldif
-
 # Add src and tests to path for local testing
 src_path = Path(__file__).parent.parent / "src"
 tests_path = Path(__file__).parent.parent / "tests"
 sys.path.insert(0, str(src_path))
 sys.path.insert(0, str(tests_path))
+
+# CORREÇÃO: Import após configurar path
+from docker_fixtures import OpenLDAPContainerManager, check_docker_available
+from flext_ldif import flext_ldif_parse, flext_ldif_validate
 
 
 def test_with_docker_container() -> bool | None:
@@ -40,7 +41,7 @@ def test_with_docker_container() -> bool | None:
             return False
 
         # Test parsing
-        entries = parse_ldif(ldif_data)
+        entries = flext_ldif_parse(ldif_data)
 
         # Show entry details
         for _i, entry in enumerate(entries[:3]):
@@ -51,22 +52,21 @@ def test_with_docker_container() -> bool | None:
             pass
 
         # Test validation
-        validate_ldif(ldif_data)
+        flext_ldif_validate(ldif_data)
 
-        # Test domain specifications
-        from flext_ldif.domain.specifications import (
-            FlextLdifGroupSpecification,
-            FlextLdifOrganizationalUnitSpecification,
-            FlextLdifPersonSpecification,
-        )
+        # CORREÇÃO: Specifications estão integradas no FlextLdifEntry via composição
+        # Usar API real para filtrar pessoas e grupos
+        from flext_ldif import FlextLdifAPI
+        api = FlextLdifAPI()
 
-        person_spec = FlextLdifPersonSpecification()
-        group_spec = FlextLdifGroupSpecification()
-        ou_spec = FlextLdifOrganizationalUnitSpecification()
+        # Filter pessoas usando API real
+        person_result = api.filter_persons(entries)
+        if person_result.is_success:
+            person_count = len(person_result.data or [])
 
-        sum(1 for entry in entries if person_spec.is_satisfied_by(entry))
-        sum(1 for entry in entries if group_spec.is_satisfied_by(entry))
-        sum(1 for entry in entries if ou_spec.is_satisfied_by(entry))
+        # Contar entries por objectClass usando API real
+        group_count = sum(1 for entry in entries if entry.has_object_class("groupOfNames"))
+        ou_count = sum(1 for entry in entries if entry.has_object_class("organizationalUnit"))
 
         return True
 

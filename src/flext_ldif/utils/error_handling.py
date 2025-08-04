@@ -19,16 +19,15 @@ from __future__ import annotations
 
 import functools
 from collections.abc import Callable
-from typing import TYPE_CHECKING, ParamSpec, TypeVar
+from typing import TYPE_CHECKING, ParamSpec
 
-from flext_core import FlextResult, get_logger
+from flext_core import FlextResult, get_logger, F, T
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable
 
-F = TypeVar("F", bound=Callable[..., object])
-T = TypeVar("T")
 P = ParamSpec("P")
+# F and T imported from flext_core to eliminate duplication
 
 logger = get_logger(__name__)
 

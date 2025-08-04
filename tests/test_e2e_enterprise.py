@@ -156,7 +156,11 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
             raise AssertionError(msg)
 
         # Step 4: Filter by specific objectClass
-        inetorg_entries = api.filter_by_objectclass(entries, "inetOrgPerson")
+        inetorg_result = api.filter_by_objectclass(entries, "inetOrgPerson")
+        if not inetorg_result.is_success:
+            msg = f"Filter by objectClass failed: {inetorg_result.error}"
+            raise AssertionError(msg)
+        inetorg_entries = inetorg_result.data
         if len(inetorg_entries) != EXPECTED_DATA_COUNT:
             msg = f"Expected {3}, got {len(inetorg_entries)}"
             raise AssertionError(msg)
@@ -174,7 +178,9 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
 
         # Step 6: Find specific entry by DN
         target_dn = "cn=John Smith,ou=people,dc=enterprise,dc=com"
-        found_entry = api.find_entry_by_dn(entries, target_dn)
+        found_result = api.find_entry_by_dn(entries, target_dn)
+        assert found_result.is_success
+        found_entry = found_result.data
         assert found_entry is not None
         if found_entry.get_attribute("employeeNumber") != ["EMP001"]:
             msg = f"Expected ['EMP001'], got {found_entry.get_attribute('employeeNumber')}"
@@ -594,7 +600,8 @@ description: User number {i} for memory testing
         # Step 4: Extract different types of entries
         all_entries = parse_result.data
         person_entries = api.filter_persons(all_entries).data
-        group_entries = api.filter_by_objectclass(all_entries, "groupOfNames")
+        group_entries_result = api.filter_by_objectclass(all_entries, "groupOfNames")
+        group_entries = group_entries_result.data
 
         # Step 5: Process each type separately
         sorted_persons = api.sort_hierarchically(person_entries).data

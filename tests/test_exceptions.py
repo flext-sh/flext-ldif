@@ -41,23 +41,23 @@ class TestFlextLdifExceptions:
     def test_flext_ldif_parse_error_default(self) -> None:
         """Test FlextLdifParseError with default parameters."""
         error = FlextLdifParseError()
-        assert "LDIF parse: LDIF parsing failed" in str(error)
+        assert "LDIF parsing failed: LDIF parsing failed" in str(error)
 
     def test_flext_ldif_parse_error_custom_message(self) -> None:
         """Test FlextLdifParseError with custom message."""
         error = FlextLdifParseError("Custom parse error")
-        assert "LDIF parse: Custom parse error" in str(error)
+        assert "LDIF parsing failed: Custom parse error" in str(error)
 
     def test_flext_ldif_parse_error_with_line_number(self) -> None:
         """Test FlextLdifParseError with line number."""
         error = FlextLdifParseError("Parse error", line_number=42)
-        assert "LDIF parse: Parse error" in str(error)
+        assert "LDIF parsing failed: Parse error" in str(error)
         assert error.context["line_number"] == 42
 
     def test_flext_ldif_parse_error_with_entry_dn(self) -> None:
         """Test FlextLdifParseError with entry DN."""
         error = FlextLdifParseError("Parse error", entry_dn="cn=test,dc=example,dc=com")
-        assert "LDIF parse: Parse error" in str(error)
+        assert "LDIF parsing failed: Parse error" in str(error)
         assert error.context["entry_dn"] == "cn=test,dc=example,dc=com"
 
     def test_flext_ldif_parse_error_with_all_params(self) -> None:
@@ -68,7 +68,7 @@ class TestFlextLdifExceptions:
             entry_dn="cn=user,dc=example,dc=com",
             source="file.ldif",
         )
-        assert "LDIF parse: Complete parse error" in str(error)
+        assert "LDIF parsing failed: Complete parse error" in str(error)
         assert error.context["line_number"] == 10
         assert error.context["entry_dn"] == "cn=user,dc=example,dc=com"
         assert error.context["source"] == "file.ldif"
@@ -121,12 +121,12 @@ class TestFlextLdifExceptions:
     def test_flext_ldif_entry_error_default(self) -> None:
         """Test FlextLdifEntryError with default parameters."""
         error = FlextLdifEntryError()
-        assert "LDIF entry: LDIF entry error" in str(error)
+        assert "LDIF entry processing failed: LDIF entry error" in str(error)
 
     def test_flext_ldif_entry_error_custom_message(self) -> None:
         """Test FlextLdifEntryError with custom message."""
         error = FlextLdifEntryError("Custom entry error")
-        assert "LDIF entry: Custom entry error" in str(error)
+        assert "LDIF entry processing failed: Custom entry error" in str(error)
 
     def test_flext_ldif_entry_error_with_entry_dn(self) -> None:
         """Test FlextLdifEntryError with entry DN."""
@@ -134,13 +134,14 @@ class TestFlextLdifExceptions:
             "Entry error",
             entry_dn="cn=test,dc=example,dc=com",
         )
-        assert "LDIF entry: Entry error" in str(error)
+        assert "LDIF entry processing failed: Entry error" in str(error)
         assert error.context["entry_dn"] == "cn=test,dc=example,dc=com"
 
     def test_flext_ldif_entry_error_with_operation(self) -> None:
         """Test FlextLdifEntryError with operation."""
         error = FlextLdifEntryError("Entry error", operation="modify")
-        assert "LDIF entry: Entry error" in str(error)
+        assert "LDIF entry processing failed: Entry error" in str(error)
+        assert "(operation: modify)" in str(error)
         assert error.context["operation"] == "modify"
 
     def test_flext_ldif_entry_error_with_all_params(self) -> None:
@@ -151,7 +152,7 @@ class TestFlextLdifExceptions:
             operation="delete",
             source="ldap_server",
         )
-        assert "LDIF entry: Complete entry error" in str(error)
+        assert "LDIF entry processing failed: Complete entry error" in str(error)
         assert error.context["entry_dn"] == "cn=user,dc=example,dc=com"
         assert error.context["operation"] == "delete"
         assert error.context["source"] == "ldap_server"

@@ -208,7 +208,13 @@ def display_statistics(
     logger.trace("Requested output format: %s", output_format)
 
     logger.debug("Getting entry statistics from API")
-    stats = api.get_entry_statistics(entries)
+    stats_result = api.get_entry_statistics(entries)
+    if not stats_result.is_success or stats_result.data is None:
+        logger.error("Failed to get statistics: %s", stats_result.error)
+        click.echo(f"Failed to get statistics: {stats_result.error}", err=True)
+        sys.exit(1)
+
+    stats = stats_result.data
     logger.trace("Statistics keys: %s", list(stats.keys()))
     logger.info(
         "Statistics generated successfully",
@@ -639,7 +645,12 @@ def stats(
                 err=True,
             )
             sys.exit(1)
-        statistics = api.get_entry_statistics(entries)
+        statistics_result = api.get_entry_statistics(entries)
+        if not statistics_result.is_success or statistics_result.data is None:
+            click.echo(f"Failed to get statistics: {statistics_result.error}", err=True)
+            sys.exit(1)
+
+        statistics = statistics_result.data
 
         click.echo(f"Statistics for {input_file}:")
 
@@ -686,13 +697,21 @@ def find(
                 err=True,
             )
             sys.exit(1)
-        entry = api.find_entry_by_dn(entries, dn)
+        entry_result = api.find_entry_by_dn(entries, dn)
+        if not entry_result.is_success:
+            click.echo(f"Find operation failed: {entry_result.error}", err=True)
+            sys.exit(1)
 
+        entry = entry_result.data
         if entry:
             # Convert single entry to LDIF format
-            ldif_output = api.entries_to_ldif([entry])
-            click.echo("Found entry:")
-            click.echo(ldif_output)
+            ldif_result = api.entries_to_ldif([entry])
+            if ldif_result.is_success:
+                click.echo("Found entry:")
+                click.echo(ldif_result.data)
+            else:
+                click.echo(f"Failed to convert entry to LDIF: {ldif_result.error}", err=True)
+                sys.exit(1)
         else:
             click.echo(f"Entry with DN '{dn}' not found", err=True)
             sys.exit(1)
@@ -739,8 +758,12 @@ def filter_by_class(
                 err=True,
             )
             sys.exit(1)
-        filtered_entries = api.filter_by_objectclass(entries, objectclass)
+        filtered_result = api.filter_by_objectclass(entries, objectclass)
+        if not filtered_result.is_success:
+            click.echo(f"Filter operation failed: {filtered_result.error}", err=True)
+            sys.exit(1)
 
+        filtered_entries = filtered_result.data
         click.echo(
             f"Found {len(filtered_entries)} entries with objectClass '{objectclass}'",
         )
@@ -749,8 +772,12 @@ def filter_by_class(
             write_entries_to_file(api, filtered_entries, output)
         else:
             # Display filtered entries
-            ldif_output = api.entries_to_ldif(filtered_entries)
-            click.echo(ldif_output)
+            ldif_result = api.entries_to_ldif(filtered_entries)
+            if ldif_result.is_success:
+                click.echo(ldif_result.data)
+            else:
+                click.echo(f"Failed to convert entries to LDIF: {ldif_result.error}", err=True)
+                sys.exit(1)
 
     except (OSError, ValueError, TypeError) as e:
         click.echo(f"Filter operation failed: {e}", err=True)
