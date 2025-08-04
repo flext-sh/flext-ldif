@@ -196,7 +196,7 @@ class TestMassiveModelsCoverage:
             attributes=FlextLdifAttributes(attributes={
                 "objectClass": ["top", "domain"],
                 "dc": ["example"],
-            })
+            }),
         )
 
         # Person entry
@@ -210,7 +210,7 @@ class TestMassiveModelsCoverage:
                 "mail": ["john.doe@example.com"],
                 "uid": ["jdoe"],
                 "telephoneNumber": ["+1-555-123-4567"],
-            })
+            }),
         )
 
         # Group entry
@@ -220,7 +220,7 @@ class TestMassiveModelsCoverage:
                 "objectClass": ["top", "groupOfNames"],
                 "cn": ["Administrators"],
                 "member": ["cn=John Doe,dc=example,dc=com"],
-            })
+            }),
         )
 
         entries = [domain_entry, person_entry, group_entry]
@@ -240,7 +240,7 @@ class TestMassiveModelsCoverage:
             assert "top" in object_classes
 
             # Test attribute operations
-            for attr_name in entry.attributes.attributes.keys():
+            for attr_name in entry.attributes.attributes:
                 assert entry.has_attribute(attr_name)
                 values = entry.get_attribute(attr_name)
                 assert values is not None
@@ -285,7 +285,7 @@ class TestMassiveModelsCoverage:
                 "givenName": ["Jane"],
                 "mail": ["jane.smith@example.com"],
                 "uid": ["jsmith"],
-            })
+            }),
         )
 
         # Initial state
@@ -323,7 +323,7 @@ class TestMassiveModelsCoverage:
                 "objectClass": ["person"],
                 "cn": ["Valid User"],
                 "sn": ["User"],
-            })
+            }),
         )
 
         # Should have required attributes for person
@@ -338,7 +338,7 @@ class TestMassiveModelsCoverage:
                 "objectClass": ["person"],
                 "cn": ["Valid User"],
                 "sn": ["User"],
-            })
+            }),
         )
 
         different_person = FlextLdifEntry(
@@ -347,7 +347,7 @@ class TestMassiveModelsCoverage:
                 "objectClass": ["person"],
                 "cn": ["Different User"],
                 "sn": ["User"],
-            })
+            }),
         )
 
         assert valid_person == same_person
@@ -368,7 +368,7 @@ class TestMassiveModelsCoverage:
         # Test attribute name validation in entry
         entry = FlextLdifEntry(
             dn=FlextLdifDistinguishedName(value="cn=Test,dc=test,dc=com"),
-            attributes=FlextLdifAttributes(attributes={"cn": ["Test"]})
+            attributes=FlextLdifAttributes(attributes={"cn": ["Test"]}),
         )
 
         # Empty attribute name should raise error
@@ -395,7 +395,7 @@ class TestMassiveModelsCoverage:
                 "mobile": ["+1-555-987-6543"],
                 "employeeNumber": ["E001"],
                 "departmentNumber": ["IT"],
-            })
+            }),
         )
 
         # Test all attributes

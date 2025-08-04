@@ -1,6 +1,6 @@
 """Testes estratégicos para maximizar cobertura de models.py.
 
-Este módulo contém testes específicos para cobrir os gaps de cobertura 
+Este módulo contém testes específicos para cobrir os gaps de cobertura
 identificados em models.py, focando nos statements não testados.
 Objetivo: elevar cobertura de 49% para ~100%.
 """
@@ -8,13 +8,13 @@ Objetivo: elevar cobertura de 49% para ~100%.
 from __future__ import annotations
 
 import pytest
+from pydantic import ValidationError
 
 from flext_ldif.models import (
     FlextLdifAttributes,
     FlextLdifDistinguishedName,
     FlextLdifEntry,
 )
-from pydantic import ValidationError
 
 
 class TestFlextLdifDistinguishedNameStrategic:
@@ -72,7 +72,7 @@ class TestFlextLdifDistinguishedNameStrategic:
         assert dn1 == dn2
         assert dn1 != dn3
         assert dn1 == "cn=test,dc=example,dc=com"  # String comparison (implementado no __eq__)
-        assert dn1 != None
+        assert dn1 is not None
         assert dn1 != 123
 
         # Test hash consistency
@@ -121,7 +121,7 @@ class TestFlextLdifAttributesStrategic:
 
         # Caso 3: Add None value (should be handled gracefully)
         try:
-            new_attrs3 = attrs.add_value("null_test", None)
+            attrs.add_value("null_test", None)
         except (ValueError, TypeError):
             pass  # May not accept None values
 
@@ -139,7 +139,7 @@ class TestFlextLdifAttributesStrategic:
         attrs = FlextLdifAttributes(attributes={
             "single": ["value1"],
             "multi": ["value1", "value2", "value3"],
-            "empty": []
+            "empty": [],
         })
 
         # Test basic to_dict
@@ -150,12 +150,12 @@ class TestFlextLdifAttributesStrategic:
         assert "multi" in dict_result["attributes"]
 
         # Test to_typed_dict if exists
-        if hasattr(attrs, 'to_typed_dict'):
+        if hasattr(attrs, "to_typed_dict"):
             typed_dict = attrs.to_typed_dict()
             assert isinstance(typed_dict, dict)
 
         # Test to_attributes_dict if exists
-        if hasattr(attrs, 'to_attributes_dict'):
+        if hasattr(attrs, "to_attributes_dict"):
             attr_dict = attrs.to_attributes_dict()
             assert isinstance(attr_dict, dict)
 
@@ -164,7 +164,7 @@ class TestFlextLdifAttributesStrategic:
         attrs = FlextLdifAttributes(attributes={
             "multi": ["value1", "value2", "value3"],
             "single": ["value"],
-            "empty": []
+            "empty": [],
         })
 
         # Caso 1: Remove existing value from multi-value attribute
@@ -227,8 +227,8 @@ class TestFlextLdifEntryStrategic:
             dn=FlextLdifDistinguishedName(value="cn=John Doe,dc=example,dc=com"),
             attributes=FlextLdifAttributes(attributes={
                 "cn": ["John Doe"],
-                "objectClass": ["person"]
-            })
+                "objectClass": ["person"],
+            }),
         )
 
         # Deve passar sem exceções (baseado no log que mostra que passou)
@@ -244,8 +244,8 @@ class TestFlextLdifEntryStrategic:
         no_oc_entry = FlextLdifEntry(
             dn=FlextLdifDistinguishedName(value="cn=No OC,dc=example,dc=com"),
             attributes=FlextLdifAttributes(attributes={
-                "cn": ["No OC"]
-            })
+                "cn": ["No OC"],
+            }),
         )
 
         # Testa se a validação funciona (sem assumir exceção específica)
@@ -264,8 +264,8 @@ class TestFlextLdifEntryStrategic:
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifAttributes(attributes={
                 "cn": ["test"],
-                "objectClass": ["person"]
-            })
+                "objectClass": ["person"],
+            }),
         )
 
         # Test __str__
@@ -283,31 +283,31 @@ class TestFlextLdifEntryStrategic:
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifAttributes(attributes={
                 "cn": ["test"],
-                "objectClass": ["person"]
-            })
+                "objectClass": ["person"],
+            }),
         )
 
         entry2 = FlextLdifEntry(
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifAttributes(attributes={
                 "cn": ["test"],
-                "objectClass": ["person"]
-            })
+                "objectClass": ["person"],
+            }),
         )
 
         entry3 = FlextLdifEntry(
             dn=FlextLdifDistinguishedName(value="cn=other,dc=example,dc=com"),
             attributes=FlextLdifAttributes(attributes={
                 "cn": ["other"],
-                "objectClass": ["person"]
-            })
+                "objectClass": ["person"],
+            }),
         )
 
         # Test equality
         assert entry1 == entry2
         assert entry1 != entry3
         assert entry1 != "not_an_entry"
-        assert entry1 != None
+        assert entry1 is not None
 
         # Test hash consistency (FlextLdifEntry may not be hashable due to complex structure)
         try:
@@ -327,8 +327,8 @@ class TestFlextLdifEntryStrategic:
             attributes=FlextLdifAttributes(attributes={
                 "cn": ["test"],
                 "objectClass": ["person", "top"],
-                "description": []  # Empty attribute
-            })
+                "description": [],  # Empty attribute
+            }),
         )
 
         # Test basic to_dict
@@ -403,8 +403,8 @@ class TestModelsMiscellaneous:
                 dn=FlextLdifDistinguishedName(value=f"cn=user{i},dc=test,dc=com"),
                 attributes=FlextLdifAttributes(attributes={
                     "cn": [f"user{i}"],
-                    "objectClass": ["person"]
-                })
+                    "objectClass": ["person"],
+                }),
             )
             entries.append(entry)
 

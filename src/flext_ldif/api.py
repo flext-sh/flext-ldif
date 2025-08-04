@@ -39,10 +39,10 @@ Example:
     >>>
     >>> # Parse LDIF with comprehensive error handling
     >>> result = api.parse(ldif_content)
-    >>> if result.is_success:
+    >>> if result.success:
     ...     entries = result.data
     ...     validation_result = api.validate(entries)
-    ...     if validation_result.is_success:
+    ...     if validation_result.success:
     ...         output_result = api.write(entries)
 
 Integration:
@@ -133,7 +133,7 @@ class FlextLdifAPI:
             )
             self.logger.trace("Complete configuration: %s", self.config.model_dump())
         except (ValueError, TypeError) as e:
-            error_msg = f"Configuration validation failed: {e}"
+            error_msg: str = f"Configuration validation failed: {e}"
             self.logger.exception(error_msg)
             raise RuntimeError(error_msg) from e
 
@@ -142,13 +142,13 @@ class FlextLdifAPI:
         try:
             register_result = register_ldif_services(config=self.config)
             if register_result.is_failure:
-                error_msg = f"Service registration failed: {register_result.error}"
+                error_msg: str = f"Service registration failed: {register_result.error}"
                 self.logger.error(error_msg)
                 raise RuntimeError(error_msg)
 
             self.logger.debug("LDIF services registered successfully in DI container")
         except Exception as e:
-            error_msg = f"Service registration exception: {e}"
+            error_msg: str = f"Service registration exception: {e}"
             self.logger.exception(error_msg)
             raise RuntimeError(error_msg) from e
 
@@ -215,14 +215,14 @@ class FlextLdifAPI:
             try:
                 service_result = container.get(service_name)
                 if service_result.is_failure:
-                    error_msg = f"Failed to resolve {description} from container: {service_result.error}"
+                    error_msg: str = f"Failed to resolve {description} from container: {service_result.error}"
                     self.logger.error(error_msg)
                     raise RuntimeError(error_msg)
 
                 # Enhanced type validation with detailed error context
                 if not isinstance(service_result.data, service_type):
                     actual_type = type(service_result.data).__name__
-                    error_msg = f"{description} type validation failed: expected {service_type.__name__}, got {actual_type}"
+                    error_msg: str = f"{description} type validation failed: expected {service_type.__name__}, got {actual_type}"
                     self.logger.error(error_msg)
                     raise RuntimeError(error_msg)
 
@@ -232,7 +232,7 @@ class FlextLdifAPI:
                 self.logger.trace("%s initialized successfully", description)
 
             except Exception as e:
-                error_msg = f"Exception during {description} initialization: {e}"
+                error_msg: str = f"Exception during {description} initialization: {e}"
                 self.logger.exception(error_msg)
                 raise RuntimeError(error_msg) from e
 
@@ -258,7 +258,7 @@ class FlextLdifAPI:
 
             # Initialize observability with comprehensive error handling
             init_result = self._observability_monitor.flext_initialize_observability()
-            if init_result.is_success:
+            if init_result.success:
                 self.logger.debug("Observability initialization successful")
 
                 # Start monitoring with error handling
@@ -355,7 +355,7 @@ class FlextLdifAPI:
         self.logger.trace("Running validate_entries with strict mode")
         validate_result = self._validator_service.validate(entries)
 
-        if not validate_result.is_success:
+        if not validate_result.success:
             self.logger.warning("Strict validation warnings: %s", validate_result.error)
             self.logger.debug("Recording validation warning metric")
             self._observability_monitor.flext_record_metric(
@@ -486,7 +486,7 @@ class FlextLdifAPI:
             ... '''
             >>>
             >>> result = api.parse(ldif_content)
-            >>> if result.is_success:
+            >>> if result.success:
             ...     entries = result.data
             ...     print(f"Parsed {len(entries)} entries successfully")
             ... else:
@@ -528,7 +528,7 @@ class FlextLdifAPI:
             parse_result = self._parser_service.parse(content)
 
             # REFACTORING: Enhanced parse result validation with detailed error context
-            if not parse_result.is_success:
+            if not parse_result.success:
                 self.logger.warning(
                     "Parser service returned failure",
                     error=parse_result.error,
@@ -577,7 +577,7 @@ class FlextLdifAPI:
             )
 
             limit_check_result = self._check_entry_limits(entries)
-            if not limit_check_result.is_success:
+            if not limit_check_result.success:
                 error_msg = limit_check_result.error or "Entry limit exceeded"
                 self.logger.error(
                     "Entry limit check failed",
@@ -656,7 +656,7 @@ class FlextLdifAPI:
             >>>
             >>> # Parse local LDIF file
             >>> result = api.parse_file("/path/to/directory.ldif")
-            >>> if result.is_success:
+            >>> if result.success:
             ...     entries = result.data
             ...     print(f"Successfully parsed {len(entries)} entries from file")
             ...     # Process parsed entries
@@ -705,7 +705,7 @@ class FlextLdifAPI:
 
             # REFACTORING: Enhanced file validation before parsing
             if not file_path_obj.exists():
-                error_msg = f"File not found: {absolute_path}"
+                error_msg: str = f"File not found: {absolute_path}"
                 self.logger.error(error_msg, trace_id=trace_id)
                 self._observability_monitor.flext_record_metric(
                     "ldif_file_parse_errors_total",
@@ -715,7 +715,7 @@ class FlextLdifAPI:
                 return FlextResult.fail(error_msg)
 
             if not file_path_obj.is_file():
-                error_msg = f"Path is not a file: {absolute_path}"
+                error_msg: str = f"Path is not a file: {absolute_path}"
                 self.logger.error(error_msg, trace_id=trace_id)
                 self._observability_monitor.flext_record_metric(
                     "ldif_file_parse_errors_total",
@@ -744,7 +744,7 @@ class FlextLdifAPI:
             parse_result = self._parser_service.parse_file(file_path_obj)
 
             if parse_result.is_failure:
-                error_msg = f"Parser service failed: {parse_result.error}"
+                error_msg: str = f"Parser service failed: {parse_result.error}"
                 self.logger.error(error_msg, trace_id=trace_id)
                 self._observability_monitor.flext_record_metric(
                     "ldif_file_parse_errors_total",
@@ -855,7 +855,7 @@ class FlextLdifAPI:
 
         except (OSError, ValueError, TypeError, AttributeError, ImportError) as e:
             # REFACTORING: Enhanced exception handling with comprehensive error context
-            error_msg = f"File parsing exception: {type(e).__name__}: {e}"
+            error_msg: str = f"File parsing exception: {type(e).__name__}: {e}"
             self.logger.exception(
                 "LDIF file parsing failed with exception",
                 file_path=file_path_str,
@@ -986,7 +986,7 @@ class FlextLdifAPI:
             >>>
             >>> # Validate parsed entries
             >>> result = api.validate(entries)
-            >>> if result.is_success and result.data:
+            >>> if result.success and result.data:
             ...     print("All entries passed validation")
             ... else:
             ...     print(f"Validation failed: {result.error}")
@@ -1012,7 +1012,7 @@ class FlextLdifAPI:
         # REFACTORING: Enhanced empty attributes validation with detailed error handling
         self.logger.debug("Starting empty attributes validation")
         empty_attr_result = self._validate_empty_attributes(entries)
-        if not empty_attr_result.is_success:
+        if not empty_attr_result.success:
             error_msg = empty_attr_result.error or "Empty attribute validation failed"
             self.logger.error(
                 "Empty attributes validation failed",
@@ -1029,7 +1029,7 @@ class FlextLdifAPI:
             max_entry_size_limit=self.config.max_entry_size,
         )
         size_result = self._validate_entry_sizes(entries)
-        if not size_result.is_success:
+        if not size_result.success:
             error_msg = size_result.error or "Entry size validation failed"
             self.logger.error(
                 "Entry sizes validation failed",
@@ -1050,7 +1050,7 @@ class FlextLdifAPI:
         core_validation_result = self._validator_service.validate(entries)
 
         # REFACTORING: Enhanced validation result processing with comprehensive logging
-        if core_validation_result.is_success:
+        if core_validation_result.success:
             self.logger.info(
                 "LDIF validation completed successfully",
                 entries_validated=entries_count,
@@ -1164,13 +1164,13 @@ class FlextLdifAPI:
             >>>
             >>> # Write to string
             >>> result = api.write(entries)
-            >>> if result.is_success:
+            >>> if result.success:
             ...     ldif_content = result.data
             ...     print(f"Generated LDIF content: {len(ldif_content)} characters")
             >>>
             >>> # Write to file
             >>> result = api.write(entries, "exported_entries.ldif")
-            >>> if result.is_success:
+            >>> if result.success:
             ...     print(f"Success: {result.data}")
             ... else:
             ...     print(f"Write failed: {result.error}")
@@ -1211,7 +1211,7 @@ class FlextLdifAPI:
                     resolved_path=str(resolved_path.absolute()),
                 )
             except (OSError, ValueError) as e:
-                error_msg = f"Path resolution failed for {file_path}: {e}"
+                error_msg: str = f"Path resolution failed for {file_path}: {e}"
                 self.logger.exception(error_msg)
                 return FlextResult.fail(error_msg)
 
@@ -1236,8 +1236,10 @@ class FlextLdifAPI:
             write_result = self._writer_service.write_file(entries, resolved_path)
 
             # REFACTORING: Enhanced file write result processing
-            if write_result.is_success:
-                success_msg = f"LDIF entries written successfully to {resolved_path}"
+            if write_result.success:
+                success_msg: str = (
+                    f"LDIF entries written successfully to {resolved_path}"
+                )
                 self.logger.info(
                     "File write operation completed successfully",
                     entries_written=entries_count,
@@ -1264,7 +1266,7 @@ class FlextLdifAPI:
         string_result = self._writer_service.write(entries)
 
         # REFACTORING: Enhanced string write result processing
-        if string_result.is_success:
+        if string_result.success:
             content_length = len(string_result.data or "")
             self.logger.info(
                 "String write operation completed successfully",
@@ -1321,7 +1323,7 @@ class FlextLdifAPI:
             >>>
             >>> # Filter person entries from parsed LDIF
             >>> result = api.filter_persons(entries)
-            >>> if result.is_success:
+            >>> if result.success:
             ...     person_entries = result.data
             ...     print(f"Found {len(person_entries)} person entries")
             ...     for person in person_entries[:3]:  # Show first 3
@@ -1456,7 +1458,9 @@ class FlextLdifAPI:
 
         except (ValueError, TypeError, AttributeError, OSError) as e:
             # REFACTORING: Enhanced exception handling with comprehensive error context
-            error_msg = f"Person filtering operation failed: {type(e).__name__}: {e}"
+            error_msg: str = (
+                f"Person filtering operation failed: {type(e).__name__}: {e}"
+            )
             self.logger.exception(
                 "Person entries filtering failed with exception",
                 total_entries=total_entries,
@@ -1565,7 +1569,7 @@ class FlextLdifAPI:
 
         except (ValueError, TypeError, AttributeError, OSError) as e:
             # REFACTORING: Enhanced exception handling with comprehensive error context
-            error_msg = f"Valid entries filtering failed: {type(e).__name__}: {e}"
+            error_msg: str = f"Valid entries filtering failed: {type(e).__name__}: {e}"
             self.logger.exception(
                 "Valid entries filtering failed with exception",
                 total_entries=total_entries,
@@ -1621,7 +1625,7 @@ class FlextLdifAPI:
                 return FlextResult.fail(error_msg)
 
             if not object_class or not isinstance(object_class, str):
-                error_msg = f"Invalid object_class: expected non-empty string, got {type(object_class).__name__}: {object_class}"
+                error_msg: str = f"Invalid object_class: expected non-empty string, got {type(object_class).__name__}: {object_class}"
                 self.logger.error(error_msg)
                 return FlextResult.fail(error_msg)
 
@@ -1686,7 +1690,7 @@ class FlextLdifAPI:
 
         except (ValueError, TypeError, AttributeError, OSError) as e:
             # REFACTORING: Enhanced exception handling with comprehensive error context
-            error_msg = f"ObjectClass filtering failed: {type(e).__name__}: {e}"
+            error_msg: str = f"ObjectClass filtering failed: {type(e).__name__}: {e}"
             self.logger.exception(
                 "ObjectClass filtering failed with exception",
                 total_entries=total_entries,
@@ -1737,7 +1741,7 @@ class FlextLdifAPI:
                 return FlextResult.fail(error_msg)
 
             if not dn or not isinstance(dn, str):
-                error_msg = f"Invalid DN: expected non-empty string, got {type(dn).__name__}: {dn}"
+                error_msg: str = f"Invalid DN: expected non-empty string, got {type(dn).__name__}: {dn}"
                 self.logger.error(error_msg)
                 return FlextResult.fail(error_msg)
 
@@ -1801,7 +1805,7 @@ class FlextLdifAPI:
 
         except (ValueError, TypeError, AttributeError, OSError) as e:
             # REFACTORING: Enhanced exception handling with comprehensive error context
-            error_msg = f"DN search failed: {type(e).__name__}: {e}"
+            error_msg: str = f"DN search failed: {type(e).__name__}: {e}"
             self.logger.exception(
                 "DN search failed with exception",
                 total_entries=total_entries,
@@ -1917,7 +1921,7 @@ class FlextLdifAPI:
                     )
 
             except (ValueError, TypeError, AttributeError) as e:
-                error_msg = f"Sorting algorithm failed: {type(e).__name__}: {e}"
+                error_msg: str = f"Sorting algorithm failed: {type(e).__name__}: {e}"
                 self.logger.exception(error_msg)
                 return FlextResult.fail(error_msg)
 
@@ -1948,7 +1952,7 @@ class FlextLdifAPI:
 
         except (ValueError, TypeError, AttributeError, OSError) as e:
             # REFACTORING: Enhanced exception handling with comprehensive error context
-            error_msg = f"Hierarchical sorting failed: {type(e).__name__}: {e}"
+            error_msg: str = f"Hierarchical sorting failed: {type(e).__name__}: {e}"
             self.logger.exception(
                 "Hierarchical sorting failed with exception",
                 total_entries=total_entries,
@@ -2005,7 +2009,7 @@ class FlextLdifAPI:
             result = self._writer_service.write(entries)
 
             # REFACTORING: Enhanced result processing with detailed error context
-            if not result.is_success:
+            if not result.success:
                 error_msg = result.error or "LDIF write operation failed"
                 detailed_error = (
                     f"Failed to convert {total_entries} entries to LDIF: {error_msg}"
@@ -2051,7 +2055,7 @@ class FlextLdifAPI:
 
         except (ValueError, TypeError, AttributeError, OSError) as e:
             # REFACTORING: Enhanced exception handling with comprehensive error context
-            error_msg = f"LDIF conversion failed: {type(e).__name__}: {e}"
+            error_msg: str = f"LDIF conversion failed: {type(e).__name__}: {e}"
             self.logger.exception(
                 "Entries to LDIF conversion failed with exception",
                 total_entries=total_entries,
@@ -2102,7 +2106,7 @@ class FlextLdifAPI:
             >>>
             >>> # Filter group entries from parsed LDIF
             >>> result = api.filter_groups(entries)
-            >>> if result.is_success:
+            >>> if result.success:
             ...     group_entries = result.data
             ...     print(f"Found {len(group_entries)} group entries")
             ...     for group in group_entries[:3]:  # Show first 3
@@ -2210,7 +2214,9 @@ class FlextLdifAPI:
 
         except (ValueError, TypeError, AttributeError, OSError) as e:
             # REFACTORING: Enhanced exception handling with comprehensive error context
-            error_msg = f"Group filtering operation failed: {type(e).__name__}: {e}"
+            error_msg: str = (
+                f"Group filtering operation failed: {type(e).__name__}: {e}"
+            )
             self.logger.exception(
                 "Group entries filtering failed with exception",
                 total_entries=total_entries,
@@ -2312,7 +2318,7 @@ class FlextLdifAPI:
 
         except (ValueError, TypeError, AttributeError, OSError) as e:
             # REFACTORING: Enhanced exception handling with comprehensive error context
-            error_msg = f"OU filtering operation failed: {type(e).__name__}: {e}"
+            error_msg: str = f"OU filtering operation failed: {type(e).__name__}: {e}"
             self.logger.exception(
                 "OU filtering failed with exception",
                 total_entries=total_entries,
@@ -2577,7 +2583,7 @@ class FlextLdifAPI:
 
         except (ValueError, TypeError, AttributeError, OSError) as e:
             # REFACTORING: Enhanced exception handling with comprehensive error context
-            error_msg = f"Statistics calculation failed: {type(e).__name__}: {e}"
+            error_msg: str = f"Statistics calculation failed: {type(e).__name__}: {e}"
             self.logger.exception(
                 "Entry statistics calculation failed with exception",
                 total_entries=total_entries,
@@ -2613,7 +2619,7 @@ class FlextLdifAPI:
             self.logger.debug("Retrieving metrics summary from observability monitor")
             metrics_result = self._observability_monitor.flext_get_metrics_summary()
             if metrics_result.is_failure:
-                error_msg = f"Failed to get metrics summary: {metrics_result.error or 'Unknown error'}"
+                error_msg: str = f"Failed to get metrics summary: {metrics_result.error or 'Unknown error'}"
                 self.logger.error(error_msg)
                 return FlextResult.fail(error_msg)
 
@@ -2627,7 +2633,7 @@ class FlextLdifAPI:
             self.logger.debug("Retrieving health status from observability monitor")
             health_result = self._observability_monitor.flext_get_health_status()
             if health_result.is_failure:
-                error_msg = f"Failed to get health status: {health_result.error or 'Unknown error'}"
+                error_msg: str = f"Failed to get health status: {health_result.error or 'Unknown error'}"
                 self.logger.error(error_msg)
                 return FlextResult.fail(error_msg)
 
@@ -2724,7 +2730,9 @@ class FlextLdifAPI:
             return FlextResult.ok(None)
 
         except (ValueError, TypeError, AttributeError, OSError) as e:
-            error_msg = f"Observability metrics reset failed: {type(e).__name__}: {e}"
+            error_msg: str = (
+                f"Observability metrics reset failed: {type(e).__name__}: {e}"
+            )
             self.logger.exception(
                 "Observability metrics reset failed with exception",
                 exception_type=type(e).__name__,
@@ -2737,11 +2745,16 @@ class FlextLdifAPI:
         if not self._observability_monitor:
             error_msg = "Observability monitor not available - cannot reset metrics"
             self.logger.error(error_msg)
-            self.logger.debug("Reset operation failed: no observability monitor configured")
+            self.logger.debug(
+                "Reset operation failed: no observability monitor configured",
+            )
             return FlextResult.fail(error_msg)
 
         self.logger.debug("Observability monitor validated successfully")
-        self.logger.trace("Monitor type: %s", self._observability_monitor.__class__.__name__)
+        self.logger.trace(
+            "Monitor type: %s",
+            self._observability_monitor.__class__.__name__,
+        )
         return FlextResult.ok(None)
 
     def _get_metrics_service(self) -> FlextResult:
@@ -2753,10 +2766,13 @@ class FlextLdifAPI:
                 self.logger.error(error_msg)
                 return FlextResult.fail(error_msg)
 
-            self.logger.debug("Container access validated successfully", container_id=id(container))
+            self.logger.debug(
+                "Container access validated successfully",
+                container_id=id(container),
+            )
 
         except (AttributeError, ValueError) as e:
-            error_msg = f"Failed to access observability container: {e}"
+            error_msg: str = f"Failed to access observability container: {e}"
             self.logger.exception(error_msg)
             return FlextResult.fail(error_msg)
 
@@ -2765,8 +2781,10 @@ class FlextLdifAPI:
         try:
             metrics_service_result = container.get("flext_metrics_service")
 
-            if not metrics_service_result.is_success:
-                error_msg = f"Failed to resolve metrics service: {metrics_service_result.error}"
+            if not metrics_service_result.success:
+                error_msg: str = (
+                    f"Failed to resolve metrics service: {metrics_service_result.error}"
+                )
                 self.logger.error(error_msg)
                 return FlextResult.fail(error_msg)
 
@@ -2776,11 +2794,14 @@ class FlextLdifAPI:
                 self.logger.error(error_msg)
                 return FlextResult.fail(error_msg)
 
-            self.logger.debug("Metrics service resolved successfully", service_type=type(metrics_service).__name__)
+            self.logger.debug(
+                "Metrics service resolved successfully",
+                service_type=type(metrics_service).__name__,
+            )
             return FlextResult.ok(metrics_service)
 
         except (ValueError, TypeError, AttributeError) as e:
-            error_msg = f"Metrics service resolution failed: {e}"
+            error_msg: str = f"Metrics service resolution failed: {e}"
             self.logger.exception(error_msg)
             return FlextResult.fail(error_msg)
 
@@ -2789,7 +2810,10 @@ class FlextLdifAPI:
         # Template Method: Try different reset strategies
 
         # Strategy 3.1: Try service.data.reset_metrics
-        if hasattr(metrics_service, "data") and hasattr(metrics_service.data, "reset_metrics"):
+        if hasattr(metrics_service, "data") and hasattr(
+            metrics_service.data,
+            "reset_metrics",
+        ):
             return self._reset_via_service_data(metrics_service)
 
         # Strategy 3.2: Try service.reset_metrics
@@ -2805,8 +2829,8 @@ class FlextLdifAPI:
         try:
             reset_result = metrics_service.data.reset_metrics()
 
-            if not reset_result.is_success:
-                error_msg = f"Metrics service reset failed: {reset_result.error or 'Unknown reset error'}"
+            if not reset_result.success:
+                error_msg: str = f"Metrics service reset failed: {reset_result.error or 'Unknown reset error'}"
                 self.logger.error(error_msg)
                 return FlextResult.fail(error_msg)
 
@@ -2814,7 +2838,7 @@ class FlextLdifAPI:
             return FlextResult.ok(True)  # Reset executed
 
         except (ValueError, TypeError, AttributeError) as e:
-            error_msg = f"Metrics reset execution failed: {e}"
+            error_msg: str = f"Metrics reset execution failed: {e}"
             self.logger.exception(error_msg)
             return FlextResult.fail(error_msg)
 
@@ -2824,26 +2848,32 @@ class FlextLdifAPI:
         try:
             reset_result = metrics_service.reset_metrics()
 
-            if hasattr(reset_result, "is_success") and not reset_result.is_success:
-                error_msg = f"Direct metrics reset failed: {reset_result.error or 'Unknown reset error'}"
+            if hasattr(reset_result, "success") and not reset_result.success:
+                error_msg: str = f"Direct metrics reset failed: {reset_result.error or 'Unknown reset error'}"
                 self.logger.error(error_msg)
                 return FlextResult.fail(error_msg)
 
-            self.logger.debug("Metrics reset executed successfully via direct service call")
+            self.logger.debug(
+                "Metrics reset executed successfully via direct service call",
+            )
             return FlextResult.ok(True)  # Reset executed
 
         except (ValueError, TypeError, AttributeError) as e:
-            error_msg = f"Direct metrics reset execution failed: {e}"
+            error_msg: str = f"Direct metrics reset execution failed: {e}"
             self.logger.exception(error_msg)
             return FlextResult.fail(error_msg)
 
     def _handle_no_reset_capability(self, metrics_service) -> FlextResult[bool]:
         """Strategy 3.3: Handle service without reset capability - SRP."""
-        warning_msg = "Metrics service does not support reset operations - skipping reset"
+        warning_msg = (
+            "Metrics service does not support reset operations - skipping reset"
+        )
         self.logger.warning(
             warning_msg,
             service_type=type(metrics_service).__name__,
-            available_methods=[method for method in dir(metrics_service) if not method.startswith("_")],
+            available_methods=[
+                method for method in dir(metrics_service) if not method.startswith("_")
+            ],
         )
         return FlextResult.ok(False)  # No reset executed
 
@@ -2853,7 +2883,9 @@ class FlextLdifAPI:
             self.logger.info(
                 "Observability metrics reset completed successfully",
                 metrics_service_type=type(metrics_service).__name__,
-                reset_method_used="service.data.reset_metrics" if hasattr(metrics_service, "data") else "service.reset_metrics",
+                reset_method_used="service.data.reset_metrics"
+                if hasattr(metrics_service, "data")
+                else "service.reset_metrics",
             )
         else:
             self.logger.info(
@@ -2976,7 +3008,7 @@ def flext_ldif_get_api(config: FlextLdifConfig | None = None) -> FlextLdifAPI:
                     logger.warning("Fallback API instance created successfully")
                 except Exception as fallback_error:
                     logger.exception("Fallback API instance creation also failed")
-                    msg = f"Unable to create LDIF API instance: {fallback_error}"
+                    msg: str = f"Unable to create LDIF API instance: {fallback_error}"
                     raise RuntimeError(
                         msg,
                     ) from fallback_error
@@ -3092,8 +3124,7 @@ def flext_ldif_parse(content: str | LDIFContent) -> list[FlextLdifEntry]:
             return []
 
         # Strategy 4: Result processing - Single Responsibility
-        entries = _process_parse_result(parse_result, validated_content, logger)
-        return entries
+        return _process_parse_result(parse_result, validated_content, logger)
 
     except Exception as e:
         # REFACTORING: Enhanced top-level exception handling
@@ -3154,7 +3185,12 @@ def _get_parse_api(logger) -> FlextLdifAPI | None:
         return None
 
 
-def _execute_parse_operation(api: FlextLdifAPI, content: str | LDIFContent, content_str: str, logger) -> FlextResult | None:
+def _execute_parse_operation(
+    api: FlextLdifAPI,
+    content: str | LDIFContent,
+    content_str: str,
+    logger,
+) -> FlextResult | None:
     """Strategy 3: Execute parse operation following Single Responsibility Principle."""
     # REFACTORING: Enhanced parsing execution with comprehensive result validation
     content_length = len(content_str)
@@ -3178,7 +3214,7 @@ def _execute_parse_operation(api: FlextLdifAPI, content: str | LDIFContent, cont
 
         logger.debug(
             "Parse operation completed",
-            result_success=parse_result.is_success,
+            result_success=parse_result.success,
             result_has_data=parse_result.data is not None,
         )
 
@@ -3191,12 +3227,16 @@ def _execute_parse_operation(api: FlextLdifAPI, content: str | LDIFContent, cont
         return None
 
 
-def _process_parse_result(parse_result: FlextResult, content_str: str, logger) -> list[FlextLdifEntry]:
+def _process_parse_result(
+    parse_result: FlextResult,
+    content_str: str,
+    logger,
+) -> list[FlextLdifEntry]:
     """Strategy 4: Process parse result following Single Responsibility Principle."""
     content_length = len(content_str)
 
     # REFACTORING: Enhanced result processing with comprehensive validation
-    if not parse_result.is_success:
+    if not parse_result.success:
         logger.warning(
             "LDIF parsing failed via convenience function",
             error=parse_result.error or "Unknown parsing error",
@@ -3392,7 +3432,7 @@ def flext_ldif_validate(content: str | LDIFContent) -> bool:
 
             logger.debug(
                 "Parse stage completed for validation",
-                result_success=parse_result.is_success,
+                result_success=parse_result.success,
                 result_has_data=parse_result.data is not None,
             )
 
@@ -3403,7 +3443,7 @@ def flext_ldif_validate(content: str | LDIFContent) -> bool:
             return False
 
         # REFACTORING: Enhanced parse result processing with comprehensive validation
-        if not parse_result.is_success:
+        if not parse_result.success:
             logger.warning(
                 "LDIF parsing failed during validation",
                 error=parse_result.error or "Unknown parsing error",
@@ -3450,7 +3490,7 @@ def flext_ldif_validate(content: str | LDIFContent) -> bool:
 
             logger.debug(
                 "Validation stage completed",
-                result_success=validate_result.is_success,
+                result_success=validate_result.success,
                 result_has_data=validate_result.data is not None,
             )
 
@@ -3461,7 +3501,7 @@ def flext_ldif_validate(content: str | LDIFContent) -> bool:
             return False
 
         # REFACTORING: Enhanced validation result processing with comprehensive checks
-        if not validate_result.is_success:
+        if not validate_result.success:
             logger.warning(
                 "LDIF validation failed",
                 error=validate_result.error or "Unknown validation error",
@@ -3478,7 +3518,7 @@ def flext_ldif_validate(content: str | LDIFContent) -> bool:
             logger.debug("Returning False due to None validation data")
             return False
 
-        # Check if validation data indicates success
+        # Check if validation data indicates success:
         validation_success = bool(validation_data)
 
         logger.info(
@@ -3487,7 +3527,7 @@ def flext_ldif_validate(content: str | LDIFContent) -> bool:
             entries_validated=entries_count,
             validation_success=validation_success,
             parse_stage_passed=True,
-            validation_stage_passed=validate_result.is_success,
+            validation_stage_passed=validate_result.success,
         )
 
         logger.debug("Returning validation result: %s", validation_success)
@@ -3573,7 +3613,9 @@ def flext_ldif_write(
 def _validate_write_inputs(entries: list[FlextLdifEntry], logger) -> str:
     """Strategy 1: Validate write inputs - Single Responsibility Principle."""
     if not entries:
-        logger.warning("Empty or None entries list provided to convenience write function")
+        logger.warning(
+            "Empty or None entries list provided to convenience write function",
+        )
         logger.debug("Returning empty string for empty entries")
         return ""
 
@@ -3591,7 +3633,10 @@ def _validate_write_inputs(entries: list[FlextLdifEntry], logger) -> str:
     for i, entry in enumerate(entries):
         if not hasattr(entry, "dn") or not hasattr(entry, "attributes"):
             invalid_entries += 1
-            logger.warning("Entry %d does not have required attributes (dn, attributes)", i)
+            logger.warning(
+                "Entry %d does not have required attributes (dn, attributes)",
+                i,
+            )
 
     if invalid_entries > 0:
         logger.warning("Found %d invalid entries in write request", invalid_entries)
@@ -3613,7 +3658,10 @@ def _get_write_api(logger):
     """Strategy 2: Get API instance - Single Responsibility Principle."""
     try:
         api = flext_ldif_get_api()
-        logger.debug("Global API instance retrieved for writing", api_type=type(api).__name__)
+        logger.debug(
+            "Global API instance retrieved for writing",
+            api_type=type(api).__name__,
+        )
         return api
     except Exception as e:
         logger.exception("Failed to get global API instance for convenience writing")
@@ -3622,7 +3670,12 @@ def _get_write_api(logger):
         return None
 
 
-def _execute_write_operation(api, entries: list[FlextLdifEntry], output_path: str | None, logger):
+def _execute_write_operation(
+    api,
+    entries: list[FlextLdifEntry],
+    output_path: str | None,
+    logger,
+):
     """Strategy 3: Execute write operation - Single Responsibility Principle."""
     entries_count = len(entries)
     output_mode = "file" if output_path else "string"
@@ -3648,7 +3701,7 @@ def _execute_write_operation(api, entries: list[FlextLdifEntry], output_path: st
 
         logger.debug(
             "Write operation completed",
-            result_success=write_result.is_success,
+            result_success=write_result.success,
             result_has_data=write_result.data is not None,
             output_mode=output_mode,
         )
@@ -3661,11 +3714,16 @@ def _execute_write_operation(api, entries: list[FlextLdifEntry], output_path: st
         return None
 
 
-def _process_write_result(write_result: FlextResult, output_path: str | None, entries_count: int, logger) -> str:
+def _process_write_result(
+    write_result: FlextResult,
+    output_path: str | None,
+    entries_count: int,
+    logger,
+) -> str:
     """Strategy 4: Process write result - Single Responsibility Principle."""
     output_mode = "file" if output_path else "string"
 
-    if not write_result.is_success:
+    if not write_result.success:
         logger.warning(
             "LDIF writing failed via convenience function",
             error=write_result.error or "Unknown writing error",
@@ -3683,7 +3741,10 @@ def _process_write_result(write_result: FlextResult, output_path: str | None, en
 
     try:
         if not isinstance(write_result.data, str):
-            logger.error("Write data is not a string", data_type=type(write_result.data).__name__)
+            logger.error(
+                "Write data is not a string",
+                data_type=type(write_result.data).__name__,
+            )
             logger.debug("Returning empty string due to invalid data type")
             return ""
 
@@ -3698,11 +3759,16 @@ def _process_write_result(write_result: FlextResult, output_path: str | None, en
             )
         else:
             if content_length == 0 and entries_count > 0:
-                logger.warning("String write returned empty content for %d entries", entries_count)
+                logger.warning(
+                    "String write returned empty content for %d entries",
+                    entries_count,
+                )
             logger.debug(
                 "String write mode - validating LDIF content",
                 content_length=content_length,
-                ldif_preview=output_content[:100].replace("\n", "\\n") if content_length > 0 else "",
+                ldif_preview=output_content[:100].replace("\n", "\\n")
+                if content_length > 0
+                else "",
             )
 
         logger.info(
@@ -3722,7 +3788,7 @@ def _process_write_result(write_result: FlextResult, output_path: str | None, en
         return ""
 
 
-__all__ = [
+__all__: list[str] = [
     "FlextLdifAPI",
     "flext_ldif_get_api",
     "flext_ldif_parse",

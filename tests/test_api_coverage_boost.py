@@ -9,7 +9,6 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-
 from flext_ldif.api import FlextLdifAPI, flext_ldif_validate
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.exceptions import FlextLdifValidationError
@@ -23,7 +22,7 @@ class TestFlextLdifAPICoverage:
         api = FlextLdifAPI()
 
         # Caso 1: Arquivo válido normal
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=John Doe,ou=people,dc=example,dc=com
 cn: John Doe
 sn: Doe
@@ -39,7 +38,7 @@ objectClass: person
 
         try:
             result = api.parse_file(temp_path)
-            assert result.is_success
+            assert result.success
             assert result.data is not None
             assert len(result.data) == 2
         finally:
@@ -48,31 +47,37 @@ objectClass: person
         # Caso 2: Arquivo inexistente
         nonexistent = Path("/nonexistent/file.ldif")
         result = api.parse_file(nonexistent)
-        assert not result.is_success
-        assert "not found" in result.error.lower() or "does not exist" in result.error.lower()
+        assert not result.success
+        assert (
+            "not found" in result.error.lower()
+            or "does not exist" in result.error.lower()
+        )
 
         # Caso 3: Diretório em vez de arquivo
         with tempfile.TemporaryDirectory() as temp_dir:
             dir_path = Path(temp_dir)
             result = api.parse_file(dir_path)
-            assert not result.is_success
-            assert "directory" in result.error.lower() or "not a file" in result.error.lower()
+            assert not result.success
+            assert (
+                "directory" in result.error.lower()
+                or "not a file" in result.error.lower()
+            )
 
         # Caso 4: Arquivo vazio
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("")  # Arquivo vazio
             empty_path = Path(f.name)
 
         try:
             result = api.parse_file(empty_path)
-            assert result.is_success
+            assert result.success
             assert result.data is not None
             assert len(result.data) == 0
         finally:
             empty_path.unlink(missing_ok=True)
 
         # Caso 5: Arquivo com LDIF inválido
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""invalid ldif content
 without proper format
 no dn line
@@ -82,13 +87,15 @@ no dn line
         try:
             result = api.parse_file(invalid_path)
             # Depending on implementation, may succeed with 0 entries or fail
-            if not result.is_success:
-                assert "parse" in result.error.lower() or "invalid" in result.error.lower()
+            if not result.success:
+                assert (
+                    "parse" in result.error.lower() or "invalid" in result.error.lower()
+                )
         finally:
             invalid_path.unlink(missing_ok=True)
 
         # Caso 6: Arquivo com caracteres especiais no nome
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("""dn: cn=Test,dc=example,dc=com
 cn: Test
 objectClass: person
@@ -100,7 +107,7 @@ objectClass: person
         try:
             special_path.rename(special_name)
             result = api.parse_file(special_name)
-            assert result.is_success or not result.is_success  # Either works
+            assert result.success or not result.success  # Either works
         except OSError:
             # Sistema pode não suportar nomes especiais
             pass
@@ -114,7 +121,7 @@ objectClass: person
 
         # Caso 1: Lista vazia
         empty_stats_result = api.get_entry_statistics([])
-        assert empty_stats_result.is_success
+        assert empty_stats_result.success
         empty_stats = empty_stats_result.data
         assert isinstance(empty_stats, dict)
         assert empty_stats.get("total_entries", 0) == 0
@@ -149,11 +156,11 @@ member: cn=John Doe,ou=people,dc=example,dc=com
 """
 
         parse_result = api.parse(ldif_content)
-        assert parse_result.is_success
+        assert parse_result.success
         entries = parse_result.data or []
 
         stats_result = api.get_entry_statistics(entries)
-        assert stats_result.is_success
+        assert stats_result.success
         stats = stats_result.data
         assert isinstance(stats, dict)
         assert stats.get("total_entries", 0) > 0
@@ -177,9 +184,9 @@ loginShell: /bin/bash
 """
 
         complex_result = api.parse(complex_ldif)
-        if complex_result.is_success and complex_result.data:
+        if complex_result.success and complex_result.data:
             complex_stats_result = api.get_entry_statistics(complex_result.data)
-            assert complex_stats_result.is_success
+            assert complex_stats_result.success
             complex_stats = complex_stats_result.data
             assert isinstance(complex_stats, dict)
 
@@ -190,9 +197,9 @@ description: Entry without objectClass
 """
 
         no_oc_result = api.parse(no_oc_ldif)
-        if no_oc_result.is_success and no_oc_result.data:
+        if no_oc_result.success and no_oc_result.data:
             no_oc_stats_result = api.get_entry_statistics(no_oc_result.data)
-            assert no_oc_stats_result.is_success
+            assert no_oc_stats_result.success
             no_oc_stats = no_oc_stats_result.data
             assert isinstance(no_oc_stats, dict)
             assert no_oc_stats.get("total_entries", 0) >= 1
@@ -204,7 +211,7 @@ description: Entry without objectClass
             max_entries=1,
             max_entry_size=1024,  # Minimum allowed value
             strict_validation=True,
-            allow_empty_attributes=False
+            allow_empty_attributes=False,
         )
         api_low = FlextLdifAPI(low_limit_config)
 
@@ -218,7 +225,7 @@ objectClass: person
 cn: User2
 """
 
-        result_low = api_low.parse(large_content)
+        api_low.parse(large_content)
         # Pode falhar devido aos limites ou ter warnings
 
         # Caso 2: Config permissiva
@@ -226,7 +233,7 @@ cn: User2
             max_entries=10000,
             max_entry_size=1048576,  # 1MB
             strict_validation=False,
-            allow_empty_attributes=True
+            allow_empty_attributes=True,
         )
         api_permissive = FlextLdifAPI(permissive_config)
 
@@ -235,10 +242,10 @@ cn: User2
 objectClass: person
 cn: Problem User
 description:
-title:   
+title:
 """
 
-        result_permissive = api_permissive.parse(problematic_content)
+        api_permissive.parse(problematic_content)
         # Deve funcionar em modo permissivo
 
     def test_api_error_conditions(self) -> None:
@@ -261,7 +268,7 @@ title:
 
         # Caso 3: Lista vazia para validação
         result = api.validate([])
-        assert result.is_success  # Lista vazia deve ser válida
+        assert result.success  # Lista vazia deve ser válida
 
         # Caso 4: Objetos inválidos para validação
         try:
@@ -294,38 +301,37 @@ cn: admins
 """
 
         parse_result = api.parse(ldif_content)
-        assert parse_result.is_success
+        assert parse_result.success
         entries = parse_result.data or []
 
         # Caso 1: filter_persons com lista vazia
         persons_empty = api.filter_persons([])
-        assert persons_empty.is_success
+        assert persons_empty.success
         assert len(persons_empty.data or []) == 0
 
         # Caso 2: filter_persons com entries válidos
         persons_result = api.filter_persons(entries)
-        assert persons_result.is_success
-        persons = persons_result.data or []
+        assert persons_result.success
         # Deve encontrar pelo menos uma pessoa
 
         # Caso 3: filter_by_objectclass com classe inexistente
         nonexistent_result = api.filter_by_objectclass(entries, "nonexistentClass")
-        assert nonexistent_result.is_success
+        assert nonexistent_result.success
         assert len(nonexistent_result.data or []) == 0
 
         # Caso 4: filter_by_objectclass com classe existente
         org_result = api.filter_by_objectclass(entries, "organization")
-        assert org_result.is_success
+        assert org_result.success
         # Pode ou não encontrar dependendo dos entries
 
         # Caso 5: filter_valid com lista vazia
         valid_empty = api.filter_valid([])
-        assert valid_empty.is_success
+        assert valid_empty.success
         assert len(valid_empty.data or []) == 0
 
         # Caso 6: filter_valid com entries válidos
         valid_result = api.filter_valid(entries)
-        assert valid_result.is_success
+        assert valid_result.success
         # Deve retornar entries válidos
 
     def test_write_methods_edge_cases(self) -> None:
@@ -334,7 +340,7 @@ cn: admins
 
         # Caso 1: write com lista vazia
         write_empty = api.write([])
-        assert write_empty.is_success
+        assert write_empty.success
         assert write_empty.data == ""
 
         # Caso 2: write com entries válidos
@@ -344,22 +350,24 @@ cn: Test
 """
 
         parse_result = api.parse(ldif_content)
-        assert parse_result.is_success
+        assert parse_result.success
         entries = parse_result.data or []
 
         if entries:
             write_result = api.write(entries)
-            assert write_result.is_success
+            assert write_result.success
             assert isinstance(write_result.data, str)
             assert len(write_result.data) > 0
 
             # Caso 3: write para arquivo
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+            with tempfile.NamedTemporaryFile(
+                encoding="utf-8", mode="w", suffix=".ldif", delete=False,
+            ) as f:
                 output_path = Path(f.name)
 
             try:
                 write_file_result = api.write(entries, output_path)
-                assert write_file_result.is_success
+                assert write_file_result.success
                 assert output_path.exists()
                 assert output_path.stat().st_size > 0
             finally:
@@ -371,7 +379,7 @@ cn: Test
 
         # Caso 1: Lista vazia
         sort_empty = api.sort_hierarchically([])
-        assert sort_empty.is_success
+        assert sort_empty.success
         assert len(sort_empty.data or []) == 0
 
         # Caso 2: Entries com hierarquia complexa
@@ -401,12 +409,12 @@ cn: admin
 """
 
         parse_result = api.parse(hierarchical_ldif)
-        assert parse_result.is_success
+        assert parse_result.success
         entries = parse_result.data or []
 
         if entries:
             sort_result = api.sort_hierarchically(entries)
-            assert sort_result.is_success
+            assert sort_result.success
             sorted_entries = sort_result.data or []
             assert len(sorted_entries) == len(entries)
 
@@ -452,16 +460,20 @@ missing dn
 
         # Caso 4: String vazia
         result_empty = flext_ldif_validate("")
-        assert result_empty is False  # String vazia retorna False conforme implementação
+        assert (
+            result_empty is False
+        )  # String vazia retorna False conforme implementação
 
         # Caso 5: Path para arquivo válido
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write(valid_ldif)
             file_path = Path(f.name)
 
         try:
             result_file = flext_ldif_validate(file_path)
-            assert result_file is True or result_file is False  # Depende da implementação
+            assert (
+                result_file is True or result_file is False
+            )  # Depende da implementação
         finally:
             file_path.unlink(missing_ok=True)
 
@@ -479,7 +491,9 @@ missing dn
 
         # Caso 8: String vazia (comportamento pode variar)
         result_empty_str = flext_ldif_validate("")
-        assert result_empty_str is True or result_empty_str is False  # Comportamento pode variar
+        assert (
+            result_empty_str is True or result_empty_str is False
+        )  # Comportamento pode variar
 
         # Caso 9: Conteúdo com caracteres especiais
         special_ldif = """dn: cn=João Silva,ou=usuários,dc=empresa,dc=com
@@ -516,9 +530,9 @@ cn: user2
     def test_validate_with_config_variations(self) -> None:
         """Testa validação com diferentes configurações."""
         # Test com configuração estrita
-        strict_config = FlextLdifConfig(
+        FlextLdifConfig(
             strict_validation=True,
-            allow_empty_attributes=False
+            allow_empty_attributes=False,
         )
 
         # LDIF com atributos vazios
@@ -526,18 +540,18 @@ cn: user2
 objectClass: person
 cn: Test
 description:
-title:   
+title:
 """
 
         # Test direto com string
-        result_strict = flext_ldif_validate(empty_attr_ldif)
+        flext_ldif_validate(empty_attr_ldif)
         # Resultado depende da configuração padrão
 
         # Test com configuração permissiva
-        permissive_config = FlextLdifConfig(
+        FlextLdifConfig(
             strict_validation=False,
-            allow_empty_attributes=True
+            allow_empty_attributes=True,
         )
 
-        result_permissive = flext_ldif_validate(empty_attr_ldif)
+        flext_ldif_validate(empty_attr_ldif)
         # Deve ser mais tolerante

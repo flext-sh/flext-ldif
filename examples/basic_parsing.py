@@ -55,7 +55,7 @@ def main() -> None:
 
     result = api.parse_file(sample_file)
 
-    if not result.is_success:
+    if not result.success:
         return
 
     entries = result.data
@@ -64,7 +64,7 @@ def main() -> None:
 
     # Display basic statistics
     stats_result = api.get_entry_statistics(entries)
-    if stats_result.is_success:
+    if stats_result.success:
         stats = stats_result.data
         for _key, _value in stats.items():
             pass
@@ -75,13 +75,13 @@ def main() -> None:
 
         # Validate domain rules
         validation_result = first_entry.validate_semantic_rules()
-        if validation_result.is_success:
+        if validation_result.success:
             pass
 
     # Demonstrate filtering
     filter_result = api.filter_persons(entries)
 
-    if filter_result.is_success and filter_result.data is not None:
+    if filter_result.success and filter_result.data is not None:
         person_entries = filter_result.data
 
         for entry in person_entries:
@@ -91,10 +91,10 @@ def main() -> None:
     # Demonstrate writing back to LDIF
     output_file = Path(__file__).parent / "output_basic.ldif"
 
-    if filter_result.is_success and filter_result.data is not None:
+    if filter_result.success and filter_result.data is not None:
         write_result = api.write(filter_result.data, output_file)
 
-        if write_result.is_success:
+        if write_result.success:
             pass
 
 

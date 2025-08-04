@@ -55,7 +55,7 @@ class TestAPICoverageTargeted:
         try:
             # Test that parse_file works normally (observability failures are handled internally)
             result = api.parse_file(temp_path)
-            assert result.is_success
+            assert result.success
             assert len(result.data) == 1
         finally:
             Path(temp_path).unlink()
@@ -83,7 +83,7 @@ class TestAPICoverageTargeted:
             # Should create directory and succeed
             result = api.write([entry], "test.ldif")
             assert (
-                result.is_success or "Permission denied" in result.error
+                result.success or "Permission denied" in result.error
             )  # May fail on permission
         except PermissionError:
             # Expected on systems with restricted /tmp access
@@ -112,7 +112,7 @@ class TestAPICoverageTargeted:
 
             # Should still work despite observability failure
             result = api.entries_to_ldif([entry])
-            assert result.is_success
+            assert result.success
             assert isinstance(result.data, str)
             assert "cn=test,dc=example,dc=com" in result.data
 
@@ -151,7 +151,9 @@ cn: test3
             # Should exit with error when exceeding limit
             assert result.exit_code == 1
             assert (
-                "Too many entries" in result.output or "exceeded limit" in result.output or "exceeds" in result.output
+                "Too many entries" in result.output
+                or "exceeded limit" in result.output
+                or "exceeds" in result.output
             )
         finally:
             Path(temp_path).unlink()
@@ -220,7 +222,7 @@ class TestModelsCoverageTargeted:
         )
 
         result = entry.validate_semantic_rules()
-        assert not result.is_success
+        assert not result.success
         assert "at least one attribute" in result.error
 
     def test_ldif_attributes_validation_failures(self) -> None:
@@ -228,7 +230,7 @@ class TestModelsCoverageTargeted:
         # Test invalid attribute names
         attrs = FlextLdifAttributes(attributes={"": ["value"]})  # Empty attribute name
         result = attrs.validate_semantic_rules()
-        assert not result.is_success
+        assert not result.success
         assert "Attribute name cannot be empty or whitespace-only" in result.error
 
     def test_ldif_entry_specification_methods_comprehensive(self) -> None:
@@ -264,7 +266,7 @@ class TestCoreCoverageTargeted:
         )
 
         result = TLdif.validate(entry)
-        assert not result.is_success
+        assert not result.success
         assert "Invalid attribute name" in result.error
 
     def test_tldif_read_file_with_empty_file(self) -> None:
@@ -284,7 +286,7 @@ class TestCoreCoverageTargeted:
         try:
             result = TLdif.read_file(temp_path)
             # Should handle empty file gracefully
-            assert not result.is_success or (result.is_success and result.data == [])
+            assert not result.success or (result.success and result.data == [])
         finally:
             Path(temp_path).unlink()
 

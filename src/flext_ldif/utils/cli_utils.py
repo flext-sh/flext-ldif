@@ -49,7 +49,7 @@ def validate_cli_result[T](result: FlextResult[T], operation_name: str) -> None:
         >>> validate_cli_result(failure_result, "Parse operation")  # SystemExit(1)
 
     """
-    if not hasattr(result, "is_success") or not result.is_success:
+    if not hasattr(result, "success") or not result.success:
         error_msg = getattr(result, "error", "Unknown error")
         click.echo(f"{operation_name} failed: {error_msg}", err=True)
         sys.exit(1)
@@ -76,13 +76,15 @@ def handle_parse_result[T](result: FlextResult[T], file_path: str) -> None:
     Example:
         >>> from flext_core import FlextResult
         >>> success_result = FlextResult.ok([])  # Empty but valid
-        >>> handle_parse_result(success_result, "/path/to/file.ldif")  # SystemExit (no entries)
+        >>> handle_parse_result(
+        ...     success_result, "/path/to/file.ldif"
+        ... )  # SystemExit (no entries)
         >>>
         >>> failure_result = FlextResult.fail("Invalid LDIF format")
         >>> handle_parse_result(failure_result, "/path/to/file.ldif")  # SystemExit(1)
 
     """
-    if not result.is_success:
+    if not result.success:
         error_msg = result.error or "Parsing failed"
         click.echo(f"Failed to parse LDIF file '{file_path}': {error_msg}", err=True)
         sys.exit(1)
@@ -108,7 +110,7 @@ def handle_file_operation_result[T](
         SystemExit: If operation failed (exits with code 1)
 
     """
-    if not result.is_success:
+    if not result.success:
         error_msg = result.error or f"{operation.capitalize()} operation failed"
         click.echo(f"Failed to {operation} file '{file_path}': {error_msg}", err=True)
         sys.exit(1)

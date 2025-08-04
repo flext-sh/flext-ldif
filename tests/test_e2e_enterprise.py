@@ -137,65 +137,65 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         api = FlextLdifAPI()
         parse_result = api.parse(enterprise_ldif_sample)
 
-        assert parse_result.is_success
+        assert parse_result.success
         if len(parse_result.data) != 9:  # 9 entries total
-            msg = f"Expected 9 entries total, got {len(parse_result.data)}"
+            msg: str = f"Expected 9 entries total, got {len(parse_result.data)}"
             raise AssertionError(msg)
         entries = parse_result.data
 
         # Step 2: Validate all entries
         validate_result = api.validate(entries)
-        assert validate_result.is_success
+        assert validate_result.success
 
         # Step 3: Filter person entries
         person_filter_result = api.filter_persons(entries)
-        assert person_filter_result.is_success
+        assert person_filter_result.success
         person_entries = person_filter_result.data
         if len(person_entries) != EXPECTED_DATA_COUNT:  # John, Alice, Bob
-            msg = f"Expected 3 (John, Alice, Bob), got {len(person_entries)}"
+            msg: str = f"Expected 3 (John, Alice, Bob), got {len(person_entries)}"
             raise AssertionError(msg)
 
         # Step 4: Filter by specific objectClass
         inetorg_result = api.filter_by_objectclass(entries, "inetOrgPerson")
-        if not inetorg_result.is_success:
-            msg = f"Filter by objectClass failed: {inetorg_result.error}"
+        if not inetorg_result.success:
+            msg: str = f"Filter by objectClass failed: {inetorg_result.error}"
             raise AssertionError(msg)
         inetorg_entries = inetorg_result.data
         if len(inetorg_entries) != EXPECTED_DATA_COUNT:
-            msg = f"Expected {3}, got {len(inetorg_entries)}"
+            msg: str = f"Expected {3}, got {len(inetorg_entries)}"
             raise AssertionError(msg)
 
         # Step 5: Sort hierarchically
         sort_result = api.sort_hierarchically(entries)
-        assert sort_result.is_success
+        assert sort_result.success
         sorted_entries = sort_result.data
 
         # Root domain should come first (fewer commas in DN)
         root_entry = sorted_entries[0]
         if str(root_entry.dn) != "dc=enterprise,dc=com":
-            msg = f"Expected dc=enterprise,dc=com, got {root_entry.dn!s}"
+            msg: str = f"Expected dc=enterprise,dc=com, got {root_entry.dn!s}"
             raise AssertionError(msg)
 
         # Step 6: Find specific entry by DN
         target_dn = "cn=John Smith,ou=people,dc=enterprise,dc=com"
         found_result = api.find_entry_by_dn(entries, target_dn)
-        assert found_result.is_success
+        assert found_result.success
         found_entry = found_result.data
         assert found_entry is not None
         if found_entry.get_attribute("employeeNumber") != ["EMP001"]:
-            msg = f"Expected ['EMP001'], got {found_entry.get_attribute('employeeNumber')}"
+            msg: str = f"Expected ['EMP001'], got {found_entry.get_attribute('employeeNumber')}"
             raise AssertionError(msg)
 
         # Step 7: Write back to LDIF
         write_result = api.write(sorted_entries)
-        assert write_result.is_success
+        assert write_result.success
         output_ldif = write_result.data
 
         # Step 8: Validate round-trip integrity
         reparse_result = api.parse(output_ldif)
-        assert reparse_result.is_success
+        assert reparse_result.success
         if len(reparse_result.data) != len(sorted_entries):
-            msg = f"Expected {len(sorted_entries)}, got {len(reparse_result.data)}"
+            msg: str = f"Expected {len(sorted_entries)}, got {len(reparse_result.data)}"
             raise AssertionError(msg)
 
     def test_e2e_file_processing_workflow(self, enterprise_ldif_sample: str) -> None:
@@ -219,35 +219,37 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         try:
             # Step 1: Parse from file
             parse_result = api.parse_file(input_path)
-            assert parse_result.is_success
+            assert parse_result.success
             entries = parse_result.data
 
             # Step 2: Process entries (filter and sort)
             person_result = api.filter_persons(entries)
-            assert person_result.is_success
+            assert person_result.success
             person_entries = person_result.data
 
             sort_result = api.sort_hierarchically(person_entries)
-            assert sort_result.is_success
+            assert sort_result.success
             sorted_persons = sort_result.data
 
             # Step 3: Write to output file
             write_result = api.write(sorted_persons, output_path)
-            assert write_result.is_success
+            assert write_result.success
 
             # Step 4: Verify output file
             assert output_path.exists()
             output_content = output_path.read_text(encoding="utf-8")
             assert len(output_content) > 0
             if "cn=John Smith" not in output_content:
-                msg = f"Expected 'cn=John Smith' in {output_content}"
+                msg: str = f"Expected 'cn=John Smith' in {output_content}"
                 raise AssertionError(msg)
 
             # Step 5: Re-read and validate
             reread_result = api.parse_file(output_path)
-            assert reread_result.is_success
+            assert reread_result.success
             if len(reread_result.data) != len(sorted_persons):
-                msg = f"Expected {len(sorted_persons)}, got {len(reread_result.data)}"
+                msg: str = (
+                    f"Expected {len(sorted_persons)}, got {len(reread_result.data)}"
+                )
                 raise AssertionError(msg)
 
         finally:
@@ -258,23 +260,23 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         """Test complete workflow using TLdif core directly."""
         # Step 1: Parse using TLdif
         parse_result = TLdif.parse(enterprise_ldif_sample)
-        assert parse_result.is_success
+        assert parse_result.success
         entries = parse_result.data
 
         # Step 2: Validate using TLdif
         validate_result = TLdif.validate_entries(entries)
-        assert validate_result.is_success
+        assert validate_result.success
 
         # Step 3: Write using TLdif
         write_result = TLdif.write(entries)
-        assert write_result.is_success
+        assert write_result.success
         output_content = write_result.data
 
         # Step 4: Round-trip test
         reparse_result = TLdif.parse(output_content)
-        assert reparse_result.is_success
+        assert reparse_result.success
         if len(reparse_result.data) != len(entries):
-            msg = f"Expected {len(entries)}, got {len(reparse_result.data)}"
+            msg: str = f"Expected {len(entries)}, got {len(reparse_result.data)}"
             raise AssertionError(msg)
 
         # Step 5: File operations
@@ -284,13 +286,13 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         try:
             # Write to file
             file_write_result = TLdif.write_file(entries, temp_path)
-            assert file_write_result.is_success
+            assert file_write_result.success
 
             # Read from file
             file_read_result = TLdif.read_file(temp_path)
-            assert file_read_result.is_success
+            assert file_read_result.success
             if len(file_read_result.data) != len(entries):
-                msg = f"Expected {len(entries)}, got {len(file_read_result.data)}"
+                msg: str = f"Expected {len(entries)}, got {len(file_read_result.data)}"
                 raise AssertionError(msg)
 
         finally:
@@ -304,13 +306,13 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         # Step 1: Parse using convenience function
         entries = flext_ldif_parse(enterprise_ldif_sample)
         if len(entries) != 9:
-            msg = f"Expected {9}, got {len(entries)}"
+            msg: str = f"Expected {9}, got {len(entries)}"
             raise AssertionError(msg)
 
         # Step 2: Validate using convenience function
         is_valid = flext_ldif_validate(enterprise_ldif_sample)
         if not (is_valid):
-            msg = f"Expected True, got {is_valid}"
+            msg: str = f"Expected True, got {is_valid}"
             raise AssertionError(msg)
 
         # Step 3: Write using convenience function
@@ -320,7 +322,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         # Step 4: Round-trip with convenience functions
         reparsed_entries = flext_ldif_parse(output_content)
         if len(reparsed_entries) != len(entries):
-            msg = f"Expected {len(entries)}, got {len(reparsed_entries)}"
+            msg: str = f"Expected {len(entries)}, got {len(reparsed_entries)}"
             raise AssertionError(msg)
 
         # Step 5: File output with convenience function
@@ -348,7 +350,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
 
         strict_api = FlextLdifAPI(strict_config)
         strict_result = strict_api.parse(enterprise_ldif_sample)
-        assert strict_result.is_success  # Should pass with valid data
+        assert strict_result.success  # Should pass with valid data
 
         # Scenario 2: Permissive configuration
         permissive_config = FlextLdifConfig.model_validate(
@@ -361,7 +363,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
 
         permissive_api = FlextLdifAPI(permissive_config)
         permissive_result = permissive_api.parse(enterprise_ldif_sample)
-        assert permissive_result.is_success
+        assert permissive_result.success
 
         # Scenario 3: Restrictive configuration
         restrictive_config = FlextLdifConfig.model_validate(
@@ -372,7 +374,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
 
         restrictive_api = FlextLdifAPI(restrictive_config)
         restrictive_result = restrictive_api.parse(enterprise_ldif_sample)
-        assert not restrictive_result.is_success  # Should fail due to limits
+        assert not restrictive_result.success  # Should fail due to limits
 
     def test_e2e_error_recovery_workflow(self) -> None:
         """Test E2E workflow with error conditions and recovery."""
@@ -381,7 +383,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         # Step 1: Try to parse invalid content
         invalid_content = "This is not LDIF content at all"
         parse_result = api.parse(invalid_content)
-        assert not parse_result.is_success
+        assert not parse_result.success
         assert parse_result.error is not None
 
         # Step 2: Try to parse partially valid content
@@ -401,9 +403,9 @@ objectClass: person
         # Step 3: Try file operations with nonexistent files
         nonexistent_file = Path("/nonexistent/file.ldif")
         file_result = api.parse_file(nonexistent_file)
-        assert not file_result.is_success
+        assert not file_result.success
         if "not found" not in file_result.error.lower():
-            msg = f"Expected 'not found' in {file_result.error.lower()}"
+            msg: str = f"Expected 'not found' in {file_result.error.lower()}"
             raise AssertionError(msg)
 
     def test_e2e_performance_workflow(self) -> None:
@@ -444,22 +446,22 @@ employeeNumber: EMP{i:03d}
 
         # Parse
         parse_result = api.parse(large_content)
-        assert parse_result.is_success
+        assert parse_result.success
         parse_time = time.time()
 
         # Filter
         person_result = api.filter_persons(parse_result.data)
-        assert person_result.is_success
+        assert person_result.success
         filter_time = time.time()
 
         # Sort
         sort_result = api.sort_hierarchically(person_result.data)
-        assert sort_result.is_success
+        assert sort_result.success
         sort_time = time.time()
 
         # Write
         write_result = api.write(sort_result.data)
-        assert write_result.is_success
+        assert write_result.success
         write_time = time.time()
 
         # Calculate timings
@@ -478,11 +480,13 @@ employeeNumber: EMP{i:03d}
 
         # Verify results
         if len(parse_result.data) != 52:  # 2 structure + 50 people
-            msg = f"Expected 52 (2 structure + 50 people), got {len(parse_result.data)}"
+            msg: str = (
+                f"Expected 52 (2 structure + 50 people), got {len(parse_result.data)}"
+            )
             raise AssertionError(msg)
         assert len(person_result.data) == 50  # 50 people
         if len(sort_result.data) != 50:  # Same after sorting
-            msg = f"Expected 50 (same after sorting), got {len(sort_result.data)}"
+            msg: str = f"Expected 50 (same after sorting), got {len(sort_result.data)}"
             raise AssertionError(msg)
 
     def test_e2e_memory_efficiency_workflow(self) -> None:
@@ -531,15 +535,15 @@ description: User number {i} for memory testing
             api = FlextLdifAPI()
 
             parse_result = api.parse(ldif_sample)
-            if not parse_result.is_success:
+            if not parse_result.success:
                 return "failed"
 
             person_result = api.filter_persons(parse_result.data)
-            if not person_result.is_success:
+            if not person_result.success:
                 return "failed"
 
             write_result = api.write(person_result.data)
-            if not write_result.is_success:
+            if not write_result.success:
                 return "failed"
         except (RuntimeError, ValueError, TypeError):
             return "failed"
@@ -572,7 +576,7 @@ description: User number {i} for memory testing
                 success_count += 1
 
         if success_count != 5:  # All workflows should succeed
-            msg = f"Expected 5 (all workflows should succeed), got {success_count}"
+            msg: str = f"Expected 5 (all workflows should succeed), got {success_count}"
             raise AssertionError(msg)
 
     def test_e2e_real_world_scenario(self) -> None:
@@ -595,7 +599,7 @@ description: User number {i} for memory testing
 
         # Step 3: Parse and validate
         parse_result = api.parse(enterprise_data)
-        assert parse_result.is_success
+        assert parse_result.success
 
         # Step 4: Extract different types of entries
         all_entries = parse_result.data
@@ -615,7 +619,7 @@ description: User number {i} for memory testing
         assert len(persons_ldif) > 0
         assert len(groups_ldif) > 0
         if "objectClass: person" not in persons_ldif:
-            msg = f"Expected 'objectClass: person' in {persons_ldif}"
+            msg: str = f"Expected 'objectClass: person' in {persons_ldif}"
             raise AssertionError(msg)
         assert "objectClass: groupOfNames" in groups_ldif
 

@@ -407,7 +407,7 @@ cn: test
 
         with patch("flext_ldif.cli.create_api_with_config") as mock_create_api:
             mock_api = Mock()
-            mock_api.parse_file.return_value.is_success = False
+            mock_api.parse_file.return_value.success = False
             mock_api.parse_file.return_value.error = "API Error"
             mock_create_api.return_value = mock_api
 

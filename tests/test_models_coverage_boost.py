@@ -94,7 +94,7 @@ class TestFlextLdifAttributesCoverage:
         attrs = FlextLdifAttributes(attributes={
             "cn": ["John Doe", "Johnny", "J. Doe"],
             "sn": ["Doe"],
-            "empty": []
+            "empty": [],
         })
 
         # Primeiro valor de múltiplos
@@ -116,7 +116,7 @@ class TestFlextLdifAttributesCoverage:
         # Caso 2: Valores com espaços e caracteres especiais
         attrs_special = FlextLdifAttributes(attributes={
             "description": ["  Spaced value  ", "Normal value"],
-            "special": ["Value with, comma", "Value with: colon"]
+            "special": ["Value with, comma", "Value with: colon"],
         })
 
         desc_value = attrs_special.get_single_value("description")
@@ -131,7 +131,7 @@ class TestFlextLdifAttributesCoverage:
             "objectClass": ["person", "inetOrgPerson", "top"],
             "cn": ["John Doe"],
             "empty": [],
-            "mixed": ["value1", "", "value3", "  "]
+            "mixed": ["value1", "", "value3", "  "],
         })
 
         # Múltiplos valores
@@ -164,7 +164,7 @@ class TestFlextLdifAttributesCoverage:
         """Testa add_value com casos complexos para cobrir C901 (complexity 18)."""
         attrs = FlextLdifAttributes(attributes={
             "cn": ["John Doe"],
-            "objectClass": ["person"]
+            "objectClass": ["person"],
         })
 
         # Caso 1: Adicionar valor novo a atributo existente (capture returned instance)
@@ -215,7 +215,7 @@ class TestFlextLdifAttributesCoverage:
             "objectClass": ["person", "inetOrgPerson", "top"],
             "empty1": [],
             "empty2": [],
-            "mail": ["john@example.com"]
+            "mail": ["john@example.com"],
         })
         total_mixed = attrs_mixed.get_total_values()
         assert total_mixed == 7  # 2 + 1 + 0 + 3 + 0 + 0 + 1 = 7 (conforme log)
@@ -224,7 +224,7 @@ class TestFlextLdifAttributesCoverage:
         attrs_all_empty = FlextLdifAttributes(attributes={
             "empty1": [],
             "empty2": [],
-            "empty3": []
+            "empty3": [],
         })
         total_all_empty = attrs_all_empty.get_total_values()
         assert total_all_empty == 0
@@ -233,7 +233,7 @@ class TestFlextLdifAttributesCoverage:
         attrs_special = FlextLdifAttributes(attributes={
             "spaces": ["  ", "   ", "normal"],
             "empty_strings": ["", "", "value"],
-            "mixed": ["", "  ", "value", "  value  "]
+            "mixed": ["", "  ", "value", "  value  "],
         })
         total_special = attrs_special.get_total_values()
         assert total_special == 10  # 3 + 3 + 4
@@ -248,7 +248,7 @@ class TestFlextLdifAttributesCoverage:
         attrs_empty_lists = FlextLdifAttributes(attributes={
             "attr1": [],
             "attr2": [],
-            "attr3": []
+            "attr3": [],
         })
         # Baseado no log: "NOT EMPTY (3 attributes)" - considera as chaves
         assert attrs_empty_lists.is_empty() is False
@@ -257,7 +257,7 @@ class TestFlextLdifAttributesCoverage:
         attrs_mixed = FlextLdifAttributes(attributes={
             "empty1": [],
             "filled": ["value"],
-            "empty2": []
+            "empty2": [],
         })
         assert attrs_mixed.is_empty() is False
 
@@ -280,12 +280,12 @@ class TestFlextLdifAttributesCoverage:
         attrs1 = FlextLdifAttributes(attributes={
             "cn": ["John Doe"],
             "sn": ["Doe"],
-            "objectClass": ["person", "inetOrgPerson"]
+            "objectClass": ["person", "inetOrgPerson"],
         })
         attrs2 = FlextLdifAttributes(attributes={
             "cn": ["John Doe"],
             "sn": ["Doe"],
-            "objectClass": ["person", "inetOrgPerson"]
+            "objectClass": ["person", "inetOrgPerson"],
         })
         assert attrs1 == attrs2
 
@@ -293,7 +293,7 @@ class TestFlextLdifAttributesCoverage:
         attrs3 = FlextLdifAttributes(attributes={
             "objectClass": ["inetOrgPerson", "person"],  # Ordem diferente
             "cn": ["John Doe"],
-            "sn": ["Doe"]
+            "sn": ["Doe"],
         })
         # Deve ser diferente se ordem importa
         assert (attrs1 == attrs3) or (attrs1 != attrs3)  # Depends on implementation
@@ -302,21 +302,21 @@ class TestFlextLdifAttributesCoverage:
         attrs4 = FlextLdifAttributes(attributes={
             "cn": ["Jane Doe"],  # Valor diferente
             "sn": ["Doe"],
-            "objectClass": ["person", "inetOrgPerson"]
+            "objectClass": ["person", "inetOrgPerson"],
         })
         assert attrs1 != attrs4
 
         # Caso 4: Número diferente de atributos
         attrs5 = FlextLdifAttributes(attributes={
             "cn": ["John Doe"],
-            "sn": ["Doe"]
+            "sn": ["Doe"],
             # Missing objectClass
         })
         assert attrs1 != attrs5
 
         # Caso 5: Comparação com tipo diferente
         assert attrs1 != "not_an_attributes_object"
-        assert attrs1 != None
+        assert attrs1 is not None
         assert attrs1 != 123
 
         # Caso 6: Atributos vazios
@@ -329,18 +329,18 @@ class TestFlextLdifAttributesCoverage:
         # Caso 1: Hash de attributes idênticos deve ser igual
         attrs1 = FlextLdifAttributes(attributes={
             "cn": ["John Doe"],
-            "sn": ["Doe"]
+            "sn": ["Doe"],
         })
         attrs2 = FlextLdifAttributes(attributes={
             "cn": ["John Doe"],
-            "sn": ["Doe"]
+            "sn": ["Doe"],
         })
         assert hash(attrs1) == hash(attrs2)
 
         # Caso 2: Hash de attributes diferentes deve ser diferente
         attrs3 = FlextLdifAttributes(attributes={
             "cn": ["Jane Doe"],  # Diferente
-            "sn": ["Doe"]
+            "sn": ["Doe"],
         })
         assert hash(attrs1) != hash(attrs3)
 
@@ -352,7 +352,7 @@ class TestFlextLdifAttributesCoverage:
         # Caso 4: Hash com múltiplos valores
         attrs_multi = FlextLdifAttributes(attributes={
             "objectClass": ["person", "inetOrgPerson", "top"],
-            "cn": ["John Doe", "Johnny"]
+            "cn": ["John Doe", "Johnny"],
         })
         hash_multi = hash(attrs_multi)
         assert isinstance(hash_multi, int)
@@ -375,8 +375,8 @@ class TestFlextLdifEntryCoverage:
                 "sn": ["Doe"],
                 "objectClass": ["person", "inetOrgPerson"],
                 "description": [],
-                "mail": ["john@example.com"]
-            })
+                "mail": ["john@example.com"],
+            }),
         )
 
         # Caso 1: Atributo com múltiplos valores
@@ -399,8 +399,8 @@ class TestFlextLdifEntryCoverage:
         assert missing_values is None
 
         # Caso 5: Case sensitivity
-        cn_upper = entry.get_attribute("CN")  # Maiúscula
-        cn_lower = entry.get_attribute("cn")  # Minúscula
+        entry.get_attribute("CN")  # Maiúscula
+        entry.get_attribute("cn")  # Minúscula
         # Behavior depends on implementation
 
         # Caso 6: Atributo com caracteres especiais no nome
@@ -409,8 +409,8 @@ class TestFlextLdifEntryCoverage:
             attributes=FlextLdifAttributes(attributes={
                 "custom-attr": ["value1"],
                 "attr_with_underscores": ["value2"],
-                "attr.with.dots": ["value3"]
-            })
+                "attr.with.dots": ["value3"],
+            }),
         )
 
         custom_values = entry_special.get_attribute("custom-attr")
@@ -423,8 +423,8 @@ class TestFlextLdifEntryCoverage:
             dn=FlextLdifDistinguishedName(value="cn=John Doe,ou=people,dc=example,dc=com"),
             attributes=FlextLdifAttributes(attributes={
                 "cn": ["John Doe"],
-                "sn": ["Doe"]
-            })
+                "sn": ["Doe"],
+            }),
         )
 
         # Caso 1: Sobrescrever atributo existente
@@ -475,8 +475,8 @@ class TestFlextLdifEntryCoverage:
                 "sn": ["Doe"],
                 "objectClass": ["person", "inetOrgPerson"],
                 "description": [],  # Atributo vazio
-                "mail": ["john@example.com"]
-            })
+                "mail": ["john@example.com"],
+            }),
         )
 
         # Caso 1: Atributo existe com valores
@@ -486,7 +486,7 @@ class TestFlextLdifEntryCoverage:
         assert entry.has_attribute("mail") is True
 
         # Caso 2: Atributo existe mas está vazio
-        has_empty_desc = entry.has_attribute("description")
+        entry.has_attribute("description")
         # Behavior depends on implementation - may be True or False
 
         # Caso 3: Atributo não existe
@@ -494,8 +494,8 @@ class TestFlextLdifEntryCoverage:
         assert entry.has_attribute("nonexistent") is False
 
         # Caso 4: Case sensitivity
-        has_cn_upper = entry.has_attribute("CN")
-        has_cn_lower = entry.has_attribute("cn")
+        entry.has_attribute("CN")
+        entry.has_attribute("cn")
         # Behavior depends on implementation
 
         # Caso 5: Atributos com caracteres especiais
@@ -504,8 +504,8 @@ class TestFlextLdifEntryCoverage:
             attributes=FlextLdifAttributes(attributes={
                 "custom-attr": ["value"],
                 "attr_with_underscores": ["value"],
-                "attr.with.dots": ["value"]
-            })
+                "attr.with.dots": ["value"],
+            }),
         )
 
         assert entry_special.has_attribute("custom-attr") is True
@@ -525,8 +525,8 @@ class TestFlextLdifEntryCoverage:
             dn=FlextLdifDistinguishedName(value="cn=John Doe,ou=people,dc=example,dc=com"),
             attributes=FlextLdifAttributes(attributes={
                 "cn": ["John Doe"],
-                "objectClass": ["person", "inetOrgPerson", "top"]
-            })
+                "objectClass": ["person", "inetOrgPerson", "top"],
+            }),
         )
 
         oc_values1 = entry1.get_object_classes()
@@ -540,8 +540,8 @@ class TestFlextLdifEntryCoverage:
             dn=FlextLdifDistinguishedName(value="cn=Test,dc=example,dc=com"),
             attributes=FlextLdifAttributes(attributes={
                 "cn": ["Test"],
-                "sn": ["Test"]
-            })
+                "sn": ["Test"],
+            }),
         )
 
         oc_values2 = entry2.get_object_classes()
@@ -552,8 +552,8 @@ class TestFlextLdifEntryCoverage:
             dn=FlextLdifDistinguishedName(value="cn=Empty,dc=example,dc=com"),
             attributes=FlextLdifAttributes(attributes={
                 "cn": ["Empty"],
-                "objectClass": []
-            })
+                "objectClass": [],
+            }),
         )
 
         oc_values3 = entry3.get_object_classes()
@@ -564,8 +564,8 @@ class TestFlextLdifEntryCoverage:
             dn=FlextLdifDistinguishedName(value="cn=Dup,dc=example,dc=com"),
             attributes=FlextLdifAttributes(attributes={
                 "cn": ["Dup"],
-                "objectClass": ["person", "person", "inetOrgPerson"]  # person duplicado
-            })
+                "objectClass": ["person", "person", "inetOrgPerson"],  # person duplicado
+            }),
         )
 
         oc_values4 = entry4.get_object_classes()
@@ -578,10 +578,10 @@ class TestFlextLdifEntryCoverage:
             attributes=FlextLdifAttributes(attributes={
                 "cn": ["Case"],
                 "objectclass": ["person"],  # lowercase
-                "OBJECTCLASS": ["top"]      # uppercase
-            })
+                "OBJECTCLASS": ["top"],      # uppercase
+            }),
         )
 
         # Test both variations
-        oc_lower = entry5.get_object_classes()
+        entry5.get_object_classes()
         # Also test if it handles case variations

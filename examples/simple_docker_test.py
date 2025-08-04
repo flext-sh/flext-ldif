@@ -57,16 +57,21 @@ def test_with_docker_container() -> bool | None:
         # CORREÇÃO: Specifications estão integradas no FlextLdifEntry via composição
         # Usar API real para filtrar pessoas e grupos
         from flext_ldif import FlextLdifAPI
+
         api = FlextLdifAPI()
 
         # Filter pessoas usando API real
         person_result = api.filter_persons(entries)
-        if person_result.is_success:
-            person_count = len(person_result.data or [])
+        if person_result.success:
+            len(person_result.data or [])
 
         # Contar entries por objectClass usando API real
-        group_count = sum(1 for entry in entries if entry.has_object_class("groupOfNames"))
-        ou_count = sum(1 for entry in entries if entry.has_object_class("organizationalUnit"))
+        sum(
+            1 for entry in entries if entry.has_object_class("groupOfNames")
+        )
+        sum(
+            1 for entry in entries if entry.has_object_class("organizationalUnit")
+        )
 
         return True
 

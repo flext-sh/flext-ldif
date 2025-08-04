@@ -88,7 +88,7 @@ class LdifValidationDemonstrator:
         sample_file = Path(__file__).parent / "sample_complex.ldif"
         result = self.api.parse_file(sample_file)
 
-        if not result.is_success or not result.data:
+        if not result.success or not result.data:
             return None
         return result.data
 
@@ -99,7 +99,7 @@ class LdifValidationDemonstrator:
 
         for i, entry in enumerate(entries):
             validation_result = entry.validate_semantic_rules()
-            if validation_result.is_success:
+            if validation_result.success:
                 domain_valid += 1
             else:
                 domain_errors.append(
@@ -132,7 +132,7 @@ class LdifValidationDemonstrator:
 
         # Process results (simplified for complexity reduction)
         for result in [person_result, group_result, ou_result]:
-            if result.is_success and result.data is not None:
+            if result.success and result.data is not None:
                 pass  # Process specific type
 
     def _test_invalid_ldif(self) -> None:
@@ -143,14 +143,14 @@ class LdifValidationDemonstrator:
             return
 
         invalid_result = self.api.parse_file(invalid_file)
-        if invalid_result.is_success and invalid_result.data:
+        if invalid_result.success and invalid_result.data:
             self._validate_invalid_entries(invalid_result.data)
 
     def _validate_invalid_entries(self, entries: list[object]) -> None:
         """Validate entries from invalid LDIF file."""
         for entry in entries:
             validation_result = entry.validate_semantic_rules()
-            if not validation_result.is_success:
+            if not validation_result.success:
                 pass  # Log validation failure
 
     def _log_validation_errors(self, errors: list[str], validation_type: str) -> None:

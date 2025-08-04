@@ -7,6 +7,7 @@ using Clean Architecture principles and flext-core integration.
 
 from __future__ import annotations
 
+import contextlib
 from pathlib import Path
 
 from flext_core import get_logger
@@ -48,13 +49,13 @@ without proper structure
     def _demonstrate_success_pattern(self) -> None:
         """Demonstrate FlextResult success patterns."""
         result = self.api.parse(self.valid_ldif)
-        if result.is_success:
+        if result.success:
             pass  # Success case handled
 
     def _demonstrate_failure_pattern(self) -> None:
         """Demonstrate FlextResult failure patterns."""
         result = self.api.parse(self.invalid_ldif)
-        if result.is_success:
+        if result.success:
             pass  # Failure case handled
 
     def _demonstrate_chaining_pattern(self) -> None:
@@ -69,7 +70,7 @@ without proper structure
         """Demonstrate result chaining pattern."""
         # Parse
         parse_result = self.api.parse(ldif_content)
-        if not parse_result.is_success:
+        if not parse_result.success:
             return f"Parse failed: {parse_result.error}"
 
         entries = parse_result.data
@@ -83,7 +84,7 @@ without proper structure
 
         # Filter
         filter_result = self.api.filter_persons(entries)
-        if not filter_result.is_success:
+        if not filter_result.success:
             return f"Filter failed: {filter_result.error}"
 
         if filter_result.data is None:
@@ -153,14 +154,14 @@ def demonstrate_file_error_handling() -> None:
     nonexistent_file = Path("/nonexistent/path/file.ldif")
     result = api.parse_file(nonexistent_file)
 
-    if result.is_success:
+    if result.success:
         pass
 
     # Test with directory instead of file
     directory_path = Path(__file__).parent
     result = api.parse_file(directory_path)
 
-    if result.is_success:
+    if result.success:
         pass
 
     # Test with permission issues (simulate)
@@ -174,15 +175,15 @@ def demonstrate_file_error_handling() -> None:
     try:
         # Try to parse valid file
         result = api.parse_file(temp_file)
-        if result.is_success:
+        if result.success:
             pass
 
         # Try to write to read-only location (will likely fail)
-        if result.is_success and result.data:
+        if result.success and result.data:
             readonly_path = Path("/readonly/output.ldif")  # This will fail
             write_result = api.write(result.data, readonly_path)
 
-            if write_result.is_success:
+            if write_result.success:
                 pass
 
     finally:
@@ -202,7 +203,7 @@ def demonstrate_configuration_error_handling() -> None:
         sample_file = Path(__file__).parent / "sample_basic.ldif"
         if sample_file.exists():
             result = api.parse_file(sample_file)
-            if result.is_success:
+            if result.success:
                 pass
 
     except Exception:
@@ -220,13 +221,11 @@ description:
 """
 
     result = api.parse(empty_attr_ldif)
-    if result.is_success and result.data:
+    if result.success and result.data:
         # Test validation
         for entry in result.data:
-            try:
+            with contextlib.suppress(FlextLdifValidationError):
                 entry.validate_semantic_rules()
-            except FlextLdifValidationError:
-                pass
 
 
 def main() -> None:

@@ -110,7 +110,7 @@ class OpenLDAPContainerManager:
 
             def _check_container_status() -> None:
                 if self.container.status != "running":
-                    msg = f"Container failed to start: {self.container.status}"
+                    msg: str = f"Container failed to start: {self.container.status}"
                     raise RuntimeError(msg)
 
             try:
@@ -147,7 +147,7 @@ class OpenLDAPContainerManager:
 
             time.sleep(1)
 
-        msg = f"OpenLDAP container failed to become ready within {timeout} seconds"
+        msg: str = f"OpenLDAP container failed to become ready within {timeout} seconds"
         raise RuntimeError(msg)
 
     def _populate_test_data(self) -> None:
@@ -435,7 +435,7 @@ async def temporary_ldif_data(
         )
 
         if exec_result.exit_code != 0:
-            msg = f"Failed to write temporary LDIF: {exec_result.output}"
+            msg: str = f"Failed to write temporary LDIF: {exec_result.output}"
             raise RuntimeError(msg)
 
         yield temp_file

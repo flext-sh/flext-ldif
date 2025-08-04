@@ -41,7 +41,7 @@ Example:
     ... '''
     >>>
     >>> result = api.parse(ldif_content)
-    >>> if result.is_success:
+    >>> if result.success:
     ...     entries = result.data
     ...     print(f"Parsed {len(entries)} entries successfully")
     ... else:
@@ -118,7 +118,7 @@ from .services import (
 
 __version__ = "0.9.0"
 
-__all__ = [
+__all__: list[str] = [
     "FlextLdifAPI",
     "FlextLdifAttributes",
     "FlextLdifAttributesDict",

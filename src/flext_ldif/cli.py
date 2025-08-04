@@ -122,9 +122,9 @@ def apply_filter(
 
         # Type assertion: we know result is FlextResult from our API calls
         result_typed = cast("FlextResult[list[FlextLdifEntry]]", result)
-        logger.trace("Filter result success: %s", result_typed.is_success)
+        logger.trace("Filter result success: %s", result_typed.success)
 
-        if result_typed.is_success and result_typed.data is not None:
+        if result_typed.success and result_typed.data is not None:
             filtered_entries = result_typed.data
             logger.debug(
                 "Filter successful: %d entries filtered to %d entries",
@@ -163,8 +163,8 @@ def handle_validation_errors(entries: list[FlextLdifEntry]) -> None:
     for i, entry in enumerate(entries):
         logger.trace("Validating entry %d: %s", i + 1, entry.dn)
         validation_result = entry.validate_semantic_rules()
-        if not validation_result.is_success:
-            error_msg = f"Entry {i + 1} ({entry.dn}): {validation_result.error}"
+        if not validation_result.success:
+            error_msg: str = f"Entry {i + 1} ({entry.dn}): {validation_result.error}"
             validation_errors.append(error_msg)
             logger.debug(
                 "Validation failed for entry %d: %s",
@@ -209,7 +209,7 @@ def display_statistics(
 
     logger.debug("Getting entry statistics from API")
     stats_result = api.get_entry_statistics(entries)
-    if not stats_result.is_success or stats_result.data is None:
+    if not stats_result.success or stats_result.data is None:
         logger.error("Failed to get statistics: %s", stats_result.error)
         click.echo(f"Failed to get statistics: {stats_result.error}", err=True)
         sys.exit(1)
@@ -255,9 +255,9 @@ def write_entries_to_file(
 
     logger.debug("Calling API write method")
     write_result = api.write(entries, output_path)
-    logger.trace("Write result success: %s", write_result.is_success)
+    logger.trace("Write result success: %s", write_result.success)
 
-    if write_result.is_success:
+    if write_result.success:
         logger.info(
             "Entries successfully written to file",
             entry_count=len(entries),
@@ -348,7 +348,7 @@ def _parse_and_log_file(
     result = api.parse_file(input_file)
     logger.trace(
         "Parse result success: %s",
-        hasattr(result, "is_success") and result.is_success,
+        hasattr(result, "success") and result.success,
     )
 
     # Handle parsing result with utility
@@ -463,7 +463,7 @@ def _validate_entries(entries: list[FlextLdifEntry]) -> list[str]:
     validation_errors = []
     for i, entry in enumerate(entries):
         validation_result = entry.validate_semantic_rules()
-        if not validation_result.is_success:
+        if not validation_result.success:
             validation_errors.append(
                 f"Entry {i + 1} ({entry.dn}): {validation_result.error}",
             )
@@ -567,7 +567,7 @@ def transform(
 
         # Parse input
         parse_result = api.parse_file(input_file)
-        if not parse_result.is_success or parse_result.data is None:
+        if not parse_result.success or parse_result.data is None:
             click.echo(f"Failed to parse input file: {parse_result.error}", err=True)
             sys.exit(1)
 
@@ -591,7 +591,7 @@ def transform(
         # Apply sorting
         if sort:
             sort_result = api.sort_hierarchically(entries)
-            if sort_result.is_success and sort_result.data is not None:
+            if sort_result.success and sort_result.data is not None:
                 entries = sort_result.data
                 click.echo("Entries sorted hierarchically")
             else:
@@ -630,7 +630,7 @@ def stats(
 
         # Parse file
         parse_result = api.parse_file(input_file)
-        if not parse_result.is_success or parse_result.data is None:
+        if not parse_result.success or parse_result.data is None:
             click.echo(f"Failed to parse file: {parse_result.error}", err=True)
             sys.exit(1)
 
@@ -646,7 +646,7 @@ def stats(
             )
             sys.exit(1)
         statistics_result = api.get_entry_statistics(entries)
-        if not statistics_result.is_success or statistics_result.data is None:
+        if not statistics_result.success or statistics_result.data is None:
             click.echo(f"Failed to get statistics: {statistics_result.error}", err=True)
             sys.exit(1)
 
@@ -682,7 +682,7 @@ def find(
 
         # Parse file
         parse_result = api.parse_file(input_file)
-        if not parse_result.is_success or parse_result.data is None:
+        if not parse_result.success or parse_result.data is None:
             click.echo(f"Failed to parse file: {parse_result.error}", err=True)
             sys.exit(1)
 
@@ -698,7 +698,7 @@ def find(
             )
             sys.exit(1)
         entry_result = api.find_entry_by_dn(entries, dn)
-        if not entry_result.is_success:
+        if not entry_result.success:
             click.echo(f"Find operation failed: {entry_result.error}", err=True)
             sys.exit(1)
 
@@ -706,11 +706,14 @@ def find(
         if entry:
             # Convert single entry to LDIF format
             ldif_result = api.entries_to_ldif([entry])
-            if ldif_result.is_success:
+            if ldif_result.success:
                 click.echo("Found entry:")
                 click.echo(ldif_result.data)
             else:
-                click.echo(f"Failed to convert entry to LDIF: {ldif_result.error}", err=True)
+                click.echo(
+                    f"Failed to convert entry to LDIF: {ldif_result.error}",
+                    err=True,
+                )
                 sys.exit(1)
         else:
             click.echo(f"Entry with DN '{dn}' not found", err=True)
@@ -743,7 +746,7 @@ def filter_by_class(
 
         # Parse file
         parse_result = api.parse_file(input_file)
-        if not parse_result.is_success or parse_result.data is None:
+        if not parse_result.success or parse_result.data is None:
             click.echo(f"Failed to parse file: {parse_result.error}", err=True)
             sys.exit(1)
 
@@ -759,7 +762,7 @@ def filter_by_class(
             )
             sys.exit(1)
         filtered_result = api.filter_by_objectclass(entries, objectclass)
-        if not filtered_result.is_success:
+        if not filtered_result.success:
             click.echo(f"Filter operation failed: {filtered_result.error}", err=True)
             sys.exit(1)
 
@@ -773,10 +776,13 @@ def filter_by_class(
         else:
             # Display filtered entries
             ldif_result = api.entries_to_ldif(filtered_entries)
-            if ldif_result.is_success:
+            if ldif_result.success:
                 click.echo(ldif_result.data)
             else:
-                click.echo(f"Failed to convert entries to LDIF: {ldif_result.error}", err=True)
+                click.echo(
+                    f"Failed to convert entries to LDIF: {ldif_result.error}",
+                    err=True,
+                )
                 sys.exit(1)
 
     except (OSError, ValueError, TypeError) as e:
@@ -818,7 +824,7 @@ def convert(
 
         # Parse input
         parse_result = api.parse_file(input_file)
-        if not parse_result.is_success or parse_result.data is None:
+        if not parse_result.success or parse_result.data is None:
             click.echo(f"Failed to parse input file: {parse_result.error}", err=True)
             sys.exit(1)
 
@@ -882,7 +888,7 @@ cn: test
 """
 
         parse_result = api.parse(test_ldif)
-        if parse_result.is_success:
+        if parse_result.success:
             click.echo("✓ API functionality validated")
         else:
             click.echo(f"API test failed: {parse_result.error}", err=True)
@@ -900,9 +906,9 @@ def main() -> None:
         # Setup CLI with flext-cli foundation
         logger.debug("Setting up CLI with flext-cli foundation")
         setup_result = setup_cli()
-        logger.trace("CLI setup result success: %s", setup_result.is_success)
+        logger.trace("CLI setup result success: %s", setup_result.success)
 
-        if not setup_result.is_success:
+        if not setup_result.success:
             logger.error("CLI setup failed: %s", setup_result.error)
             click.echo(f"CLI setup failed: {setup_result.error}", err=True)
             sys.exit(1)

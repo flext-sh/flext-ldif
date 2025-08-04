@@ -21,14 +21,14 @@ class TestApiCoverage:
 
         # Empty content should parse successfully but return empty list
         result = api.parse("")
-        assert result.is_success
+        assert result.success
         assert result.data == []
 
     def test_api_parse_file_with_invalid_path(self) -> None:
         """Test API parse_file with invalid path."""
         api = FlextLdifAPI()
         result = api.parse_file("/nonexistent/path.ldif")
-        assert not result.is_success
+        assert not result.success
         assert "File not found" in result.error
 
     def test_api_parse_file_with_too_many_entries(self) -> None:
@@ -55,7 +55,7 @@ cn: user2
 
         try:
             result = api.parse_file(temp_path)
-            assert not result.is_success
+            assert not result.success
             assert (
                 "Too many entries" in result.error
                 or "exceeds configured limit" in result.error
@@ -73,7 +73,7 @@ objectClass: person
 cn: test
 """
         parse_result = api.parse(ldif_content)
-        assert parse_result.is_success
+        assert parse_result.success
 
         # Write to file
         with tempfile.NamedTemporaryFile(
@@ -86,7 +86,7 @@ cn: test
 
         try:
             result = api.write(parse_result.data, temp_path)
-            assert result.is_success
+            assert result.success
             assert (
                 f"Written to {temp_path}" in result.data
                 or f"written successfully to {temp_path}" in result.data
@@ -103,7 +103,7 @@ cn: test
 
         # Try to write to invalid path
         result = api.write([], "/invalid/path/file.ldif")
-        assert not result.is_success
+        assert not result.success
         assert (
             "Write failed" in result.error
             or "File write failed" in result.error
@@ -117,7 +117,7 @@ cn: test
 
         # Pass invalid data type to trigger exception
         result = api.filter_persons(None)
-        assert not result.is_success
+        assert not result.success
         assert "Entries list cannot be None" in result.error
 
     def test_api_filter_valid_error(self) -> None:
@@ -126,7 +126,7 @@ cn: test
 
         # Pass invalid data type to trigger exception
         result = api.filter_valid(None)
-        assert not result.is_success
+        assert not result.success
         assert "Entries list cannot be None" in result.error
 
     def test_api_sort_hierarchically_error(self) -> None:
@@ -135,7 +135,7 @@ cn: test
 
         # Pass invalid data type to trigger exception
         result = api.sort_hierarchically(None)
-        assert not result.is_success
+        assert not result.success
         assert "Entries list cannot be None" in result.error
 
     def test_api_filter_groups_error(self) -> None:
@@ -144,7 +144,7 @@ cn: test
 
         # Pass invalid data type to trigger exception
         result = api.filter_groups(None)
-        assert not result.is_success
+        assert not result.success
         assert "Entries list cannot be None" in result.error
 
     def test_api_filter_organizational_units_error(self) -> None:
@@ -153,7 +153,7 @@ cn: test
 
         # Pass invalid data type to trigger exception
         result = api.filter_organizational_units(None)
-        assert not result.is_success
+        assert not result.success
         assert "Entries list cannot be None" in result.error
 
     def test_api_filter_change_records_error(self) -> None:
@@ -162,7 +162,7 @@ cn: test
 
         # Pass invalid data type to trigger exception
         result = api.filter_change_records(None)
-        assert not result.is_success
+        assert not result.success
         assert "Entries list cannot be None" in result.error
 
     def test_api_get_entry_statistics_with_mixed_entries(self) -> None:
@@ -190,10 +190,10 @@ cn: changerecord
 """
 
         parse_result = api.parse(ldif_content)
-        assert parse_result.is_success
+        assert parse_result.success
 
         stats_result = api.get_entry_statistics(parse_result.data)
-        assert stats_result.is_success
+        assert stats_result.success
         stats = stats_result.data
         assert stats["total_entries"] == 4
         assert stats["person_entries"] >= 1
@@ -211,11 +211,11 @@ objectClass: person
 cn: test
 """
         parse_result = api.parse(ldif_content)
-        assert parse_result.is_success
+        assert parse_result.success
 
         # Convert back to LDIF
         ldif_result = api.entries_to_ldif(parse_result.data)
-        assert ldif_result.is_success
+        assert ldif_result.success
         ldif_output = ldif_result.data
         assert isinstance(ldif_output, str)
         assert "cn=test,dc=example,dc=com" in ldif_output
@@ -234,13 +234,14 @@ objectClass: person
 cn: other
 """
         parse_result = api.parse(ldif_content)
-        assert parse_result.is_success
+        assert parse_result.success
 
         # Find specific entry
         entry_result = api.find_entry_by_dn(
-            parse_result.data, "cn=test,dc=example,dc=com",
+            parse_result.data,
+            "cn=test,dc=example,dc=com",
         )
-        assert entry_result.is_success
+        assert entry_result.success
         assert entry_result.data is not None
         entry = entry_result.data
         assert str(entry.dn) == "cn=test,dc=example,dc=com"
@@ -255,14 +256,14 @@ objectClass: person
 cn: test
 """
         parse_result = api.parse(ldif_content)
-        assert parse_result.is_success
+        assert parse_result.success
 
         # Try to find non-existent entry
         entry_result = api.find_entry_by_dn(
             parse_result.data,
             "cn=nonexistent,dc=example,dc=com",
         )
-        assert entry_result.is_success
+        assert entry_result.success
         assert entry_result.data is None
 
     def test_api_filter_by_objectclass(self) -> None:
@@ -279,11 +280,11 @@ objectClass: groupOfNames
 cn: group
 """
         parse_result = api.parse(ldif_content)
-        assert parse_result.is_success
+        assert parse_result.success
 
         # Filter by objectClass
         person_result = api.filter_by_objectclass(parse_result.data, "person")
-        assert person_result.is_success
+        assert person_result.success
         person_entries = person_result.data
         assert len(person_entries) == 1
         assert str(person_entries[0].dn) == "cn=person,dc=example,dc=com"
