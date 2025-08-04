@@ -97,7 +97,7 @@ def _safe_url_fetch(url: str, encoding: str = "utf-8") -> str:
 
     def _handle_http_error(status: int, url: str) -> None:
         """Handle HTTP error responses."""
-        msg = f"HTTP {status}: Failed to fetch {url}"
+        msg: str = f"HTTP {status}: Failed to fetch {url}"
         raise ValueError(msg)
 
     try:
@@ -106,7 +106,7 @@ def _safe_url_fetch(url: str, encoding: str = "utf-8") -> str:
             _handle_http_error(response.status, url)
         return response.data.decode(encoding)
     except Exception as e:
-        msg = f"urllib3 fetch error for {url}: {e}"
+        msg: str = f"urllib3 fetch error for {url}: {e}"
         raise ValueError(msg) from e
 
 
@@ -330,7 +330,7 @@ class FlextLDIFParser:
                 attr_value.encode("utf-8").decode("utf-8")
             except UnicodeError as err:
                 if self._strict:
-                    msg = f"Invalid UTF-8 in {attr_type}: {err}"
+                    msg: str = f"Invalid UTF-8 in {attr_type}: {err}"
                     raise ValueError(msg) from err
                 return attr_type, attr_value
             else:
@@ -349,7 +349,7 @@ class FlextLDIFParser:
 
         """
         if ":" not in line:
-            msg = f"Invalid LDIF line format: {line}"
+            msg: str = f"Invalid LDIF line format: {line}"
             raise ValueError(msg)
 
         colon_pos = line.index(":")
@@ -361,8 +361,8 @@ class FlextLDIFParser:
             try:
                 attr_value = base64.b64decode(encoded_value).decode(self._encoding)
             except Exception as e:
-                msg = f"Base64 decode error: {e}"
-                raise ValueError(msg) from e
+                base64_error_msg: str = f"Base64 decode error: {e}"
+                raise ValueError(base64_error_msg) from e
 
         # Handle URL references (:<)
         elif line[colon_pos:].startswith(":<"):
@@ -370,8 +370,8 @@ class FlextLDIFParser:
             try:
                 attr_value = _safe_url_fetch(url, self._encoding)
             except Exception as e:
-                msg = f"URL fetch error: {e}"
-                raise ValueError(msg) from e
+                url_fetch_error_msg: str = f"URL fetch error: {e}"
+                raise ValueError(url_fetch_error_msg) from e
 
         # Handle regular values (:)
         else:
@@ -490,7 +490,7 @@ def modernized_ldif_parse(
         return FlextResult.ok(entries)
 
     except Exception as e:
-        error_msg = f"Modernized LDIF parse failed: {e}"
+        error_msg: str = f"Modernized LDIF parse failed: {e}"
         logger.exception("Modernized LDIF parsing failed")
         logger.debug("Exception type: %s", type(e).__name__)
         logger.trace("Full parsing exception details", exc_info=True)
@@ -543,14 +543,14 @@ def modernized_ldif_write(
         return FlextResult.ok(output)
 
     except Exception as e:
-        error_msg = f"Modernized LDIF write failed: {e}"
+        error_msg: str = f"Modernized LDIF write failed: {e}"
         logger.exception("Modernized LDIF writing failed")
         logger.debug("Exception type: %s", type(e).__name__)
         logger.trace("Full writing exception details", exc_info=True)
         return FlextResult.fail(error_msg)
 
 
-__all__ = [
+__all__: list[str] = [
     "FlextLDIFParser",
     "FlextLDIFWriter",
     "is_dn",

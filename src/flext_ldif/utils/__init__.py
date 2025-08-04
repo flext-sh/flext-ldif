@@ -56,7 +56,7 @@ from .error_handling import (
 from .logging import LoggerMixin, get_module_logger
 from .validation import LdifSchemaValidator, LdifValidator
 
-__all__ = [
+__all__: list[str] = [
     "FlextLdifErrorHandler",
     "LdifSchemaValidator",
     "LdifValidator",

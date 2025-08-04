@@ -314,19 +314,19 @@ cn: test
     def test_modernized_ldif_parse_empty_content(self) -> None:
         """Test modernized_ldif_parse with empty content."""
         result = modernized_ldif_parse("")
-        assert result.is_success
+        assert result.success
         assert result.data == []
 
     def test_modernized_ldif_parse_error_handling(self) -> None:
         """Test modernized_ldif_parse error handling."""
         result = modernized_ldif_parse("invalid ldif without proper format")
-        assert not result.is_success
+        assert not result.success
         assert "Modernized LDIF parse failed" in result.error
 
     def test_modernized_ldif_write_empty_entries(self) -> None:
         """Test modernized_ldif_write with empty entries."""
         result = modernized_ldif_write([])
-        assert result.is_success
+        assert result.success
         assert result.data == ""
 
     def test_modernized_ldif_write_multiple_entries(self) -> None:
@@ -343,7 +343,7 @@ cn: test
         ]
 
         result = modernized_ldif_write(entries)
-        assert result.is_success
+        assert result.success
         assert "cn=user1,dc=example,dc=com" in result.data
         assert "cn=user2,dc=example,dc=com" in result.data
 
@@ -351,7 +351,7 @@ cn: test
         """Test modernized_ldif_write error handling."""
         # Pass invalid data to trigger exception
         result = modernized_ldif_write(None)
-        assert not result.is_success
+        assert not result.success
         assert "Entries cannot be None" in result.error
 
     def test_flext_ldif_parser_base64_decode_error(self) -> None:

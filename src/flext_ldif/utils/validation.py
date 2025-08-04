@@ -129,12 +129,12 @@ class LdifValidator:
             return FlextResult.fail("LDIF entry must have a valid DN")
 
         dn_validation = cls.validate_dn(entry.dn.value)
-        if not dn_validation.is_success:
+        if not dn_validation.success:
             return dn_validation
 
         # Check objectClass
         objectclass_validation = cls.validate_required_objectclass(entry)
-        if not objectclass_validation.is_success:
+        if not objectclass_validation.success:
             return objectclass_validation
 
         return FlextResult.ok(data=True)
@@ -157,7 +157,7 @@ class LdifValidator:
         """
         # First validate basic completeness
         completeness_result = cls.validate_entry_completeness(entry)
-        if not completeness_result.is_success:
+        if not completeness_result.success:
             return completeness_result
 
         # Get objectClass values
@@ -261,7 +261,7 @@ class LdifSchemaValidator:
         """
         # Check if it's a person entry first
         person_check = LdifValidator.is_person_entry(entry)
-        if not person_check.is_success:
+        if not person_check.success:
             return person_check
 
         # Validate required attributes for person entries
@@ -281,7 +281,7 @@ class LdifSchemaValidator:
         """
         # Check if it's an OU entry first
         ou_check = LdifValidator.is_ou_entry(entry)
-        if not ou_check.is_success:
+        if not ou_check.success:
             return ou_check
 
         # Validate required attributes for OU entries

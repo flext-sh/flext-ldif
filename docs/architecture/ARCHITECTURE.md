@@ -971,7 +971,7 @@ class FlextLdifAPI:
 
             result = self._parse_handler.handle(request)
 
-            if result.is_success:
+            if result.success:
                 trace.set_attribute("entries_parsed", len(result.data))
                 trace.set_status("success")
                 self._logger.info("Successfully parsed %d entries", len(result.data))
@@ -994,7 +994,7 @@ class FlextLdifAPI:
 
             result = self._validate_handler.handle(request)
 
-            if result.is_success:
+            if result.success:
                 trace.set_attribute("validation_passed", result.data)
                 trace.set_status("success")
                 self._logger.info("Validation %s", "passed" if result.data else "failed")
@@ -1017,7 +1017,7 @@ class FlextLdifAPI:
 
             result = self._write_handler.handle(request)
 
-            if result.is_success:
+            if result.success:
                 trace.set_attribute("output_length", len(result.data))
                 trace.set_status("success")
                 self._logger.info("Successfully generated LDIF output (%d chars)", len(result.data))

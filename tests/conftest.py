@@ -29,7 +29,7 @@ Example:
     >>> def test_ldif_parsing_with_fixtures(flext_ldif_api, sample_ldif_content):
     ...     # API fixture provides configured instance
     ...     result = flext_ldif_api.parse(sample_ldif_content)
-    ...     assert result.is_success
+    ...     assert result.success
     ...
     ...     # Sample content fixture provides realistic test data
     ...     entries = result.data
@@ -38,7 +38,7 @@ Example:
     ...     # Validate domain rules
     ...     for entry in entries:
     ...         result = entry.validate_semantic_rules()
-    ...         assert result.is_success
+    ...         assert result.success
 
 Integration:
     - Docker fixtures for external service integration testing
@@ -78,7 +78,7 @@ try:
     DOCKER_AVAILABLE = True
 
     # Make fixtures available by importing them into this module's namespace
-    __all__ = [
+    __all__: list[str] = [
         "docker_openldap_container",
         "ldif_test_config",
         "real_ldif_data",

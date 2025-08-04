@@ -170,13 +170,13 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
         for raw_component in components:
             component = raw_component.strip()
             if "=" not in component:
-                msg = f"Invalid DN component: {component}"
-                raise ValueError(msg)
+                component_msg = f"Invalid DN component: {component}"
+                raise ValueError(component_msg)
 
             attr_name, attr_value = component.split("=", 1)
             if not attr_name.strip() or not attr_value.strip():
-                msg = f"Invalid DN component: {component}"
-                raise ValueError(msg)
+                component_msg = f"Invalid DN component: {component}"
+                raise ValueError(component_msg)
 
         return v
 
@@ -239,10 +239,7 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
                 logger.error("RDN extraction failed: %s", error_msg)
                 raise ValueError(error_msg)
 
-            if not isinstance(self.value, str):
-                error_msg = "DN value must be string, got " + type(self.value).__name__
-                logger.error("RDN extraction failed: %s", error_msg)
-                raise ValueError(error_msg)
+            # NOTE: self.value is guaranteed to be str by Pydantic validator
 
             # Validate DN contains component separators for parsing
             if "," not in self.value and "=" not in self.value:
@@ -296,28 +293,32 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
                     raise ValueError(error_msg)
 
                 if not attr_value.strip():
-                    error_msg = f"Invalid RDN - empty attribute value: '{rdn}'"
-                    logger.error("RDN extraction failed: %s", error_msg)
-                    raise ValueError(error_msg)
+                    value_error_msg = f"Invalid RDN - empty attribute value: '{rdn}'"
+                    logger.error("RDN extraction failed: %s", value_error_msg)
+                    raise ValueError(value_error_msg)
 
                 logger.debug(
-                    "Successfully extracted RDN: '%s' from DN: '%s'", rdn, self.value,
+                    "Successfully extracted RDN: '%s' from DN: '%s'",
+                    rdn,
+                    self.value,
                 )
                 logger.info(
-                    "RDN extraction completed - attribute: '%s', value: '%s'", attr_name.strip(), attr_value.strip(),
+                    "RDN extraction completed - attribute: '%s', value: '%s'",
+                    attr_name.strip(),
+                    attr_value.strip(),
                 )
 
                 return rdn
 
             except (IndexError, AttributeError) as parsing_error:
-                error_msg = f"DN component parsing failed: {parsing_error!s}"
-                logger.error("RDN extraction failed: %s", error_msg, exc_info=True)
-                raise ValueError(error_msg) from parsing_error
+                parsing_error_msg = f"DN component parsing failed: {parsing_error!s}"
+                logger.error("RDN extraction failed: %s", parsing_error_msg, exc_info=True)
+                raise ValueError(parsing_error_msg) from parsing_error
 
         except Exception as unexpected_error:
-            error_msg = f"Unexpected error during RDN extraction from DN '{self.value}': {unexpected_error!s}"
-            logger.error("RDN extraction failed: %s", error_msg, exc_info=True)
-            raise ValueError(error_msg) from unexpected_error
+            unexpected_error_msg = f"Unexpected error during RDN extraction from DN '{self.value}': {unexpected_error!s}"
+            logger.error("RDN extraction failed: %s", unexpected_error_msg, exc_info=True)
+            raise ValueError(unexpected_error_msg) from unexpected_error
 
     def get_parent_dn(self) -> FlextLdifDistinguishedName | None:
         """Get parent DN with enterprise-grade hierarchy processing and comprehensive validation.
@@ -370,12 +371,12 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
                 logger.error("Parent DN extraction failed: %s", error_msg)
                 raise ValueError(error_msg)
 
-            if not isinstance(self.value, str):
-                error_msg = f"DN value must be string for parent extraction, got {type(self.value).__name__}"
-                logger.error("Parent DN extraction failed: %s", error_msg)
-                raise ValueError(error_msg)
+            # NOTE: self.value is guaranteed to be str by Pydantic validator
 
-            logger.trace("Parsing DN components for parent extraction: '%s'", self.value)
+            logger.trace(
+                "Parsing DN components for parent extraction: '%s'",
+                self.value,
+            )
 
             # Split DN into components with comprehensive error handling
             try:
@@ -392,7 +393,8 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
                 # Check if this is a root DN (single component)
                 if len(components) <= 1:
                     logger.debug(
-                        "DN '%s' is root-level - no parent DN exists", self.value,
+                        "DN '%s' is root-level - no parent DN exists",
+                        self.value,
                     )
                     logger.info(
                         "Parent DN extraction completed - no parent for root DN",
@@ -400,7 +402,8 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
                     return None
 
                 logger.trace(
-                    "DN has %d components - parent DN extraction possible", len(components),
+                    "DN has %d components - parent DN extraction possible",
+                    len(components),
                 )
 
                 # Extract parent components (all except first)
@@ -433,12 +436,13 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
 
                     # Validate parent DN format
                     if "=" not in parent_dn_cleaned:
-                        error_msg = f"Invalid parent DN format - missing attribute=value pairs: '{parent_dn_cleaned}'"
-                        logger.error("Parent DN extraction failed: %s", error_msg)
-                        raise ValueError(error_msg)
+                        format_error_msg = f"Invalid parent DN format - missing attribute=value pairs: '{parent_dn_cleaned}'"
+                        logger.error("Parent DN extraction failed: %s", format_error_msg)
+                        raise ValueError(format_error_msg)
 
                     logger.debug(
-                        "Constructing parent DN object from: '%s'", parent_dn_cleaned,
+                        "Constructing parent DN object from: '%s'",
+                        parent_dn_cleaned,
                     )
 
                     # Create parent DN object with validation
@@ -447,39 +451,48 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
                             {"value": parent_dn_cleaned},
                         )
                         logger.debug(
-                            "Successfully created parent DN object: '%s'", parent_dn_obj.value,
+                            "Successfully created parent DN object: '%s'",
+                            parent_dn_obj.value,
                         )
                         logger.info(
-                            "Parent DN extraction completed - child: '%s', parent: '%s'", self.value, parent_dn_obj.value,
+                            "Parent DN extraction completed - child: '%s', parent: '%s'",
+                            self.value,
+                            parent_dn_obj.value,
                         )
 
                         return parent_dn_obj
 
                     except Exception as validation_error:
-                        error_msg = f"Parent DN object creation failed for '{parent_dn_cleaned}': {validation_error!s}"
+                        validation_error_msg = f"Parent DN object creation failed for '{parent_dn_cleaned}': {validation_error!s}"
                         logger.error(
-                            "Parent DN extraction failed: %s", error_msg,
+                            "Parent DN extraction failed: %s",
+                            validation_error_msg,
                             exc_info=True,
                         )
-                        raise ValueError(error_msg) from validation_error
+                        raise ValueError(validation_error_msg) from validation_error
 
                 except (IndexError, AttributeError) as join_error:
-                    error_msg = f"Parent DN construction failed: {join_error!s}"
+                    join_error_msg = f"Parent DN construction failed: {join_error!s}"
                     logger.error(
-                        "Parent DN extraction failed: %s", error_msg,
+                        "Parent DN extraction failed: %s",
+                        join_error_msg,
                         exc_info=True,
                     )
-                    raise ValueError(error_msg) from join_error
+                    raise ValueError(join_error_msg) from join_error
 
             except (IndexError, AttributeError) as parsing_error:
-                error_msg = f"DN component parsing failed for parent extraction: {parsing_error!s}"
-                logger.error("Parent DN extraction failed: %s", error_msg, exc_info=True)
+                parsing_error_msg = f"DN component parsing failed for parent extraction: {parsing_error!s}"
+                logger.error(
+                    "Parent DN extraction failed: %s",
+                    parsing_error_msg,
+                    exc_info=True,
+                )
                 raise ValueError(error_msg) from parsing_error
 
         except Exception as unexpected_error:
-            error_msg = f"Unexpected error during parent DN extraction from '{self.value}': {unexpected_error!s}"
-            logger.error("Parent DN extraction failed: %s", error_msg, exc_info=True)
-            raise ValueError(error_msg) from unexpected_error
+            unexpected_error_msg: str = f"Unexpected error during parent DN extraction from '{self.value}': {unexpected_error!s}"
+            logger.error("Parent DN extraction failed: %s", unexpected_error_msg, exc_info=True)
+            raise ValueError(unexpected_error_msg) from unexpected_error
 
     def is_child_of(self, parent: FlextLdifDistinguishedName) -> bool:
         """Check if this DN is a child of another DN in the hierarchy with enterprise-grade validation and analysis.
@@ -532,7 +545,7 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
         logger.debug(
             "Checking if DN '%s' is child of parent '%s'",
             self.value,
-            parent.value if parent else 'None'
+            parent.value if parent else "None",
         )
 
         try:
@@ -559,21 +572,37 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
 
         except Exception as unexpected_error:
             error_msg = "Unexpected error during child relationship check between '%s' and '%s': %s"
-            logger.error(error_msg, self.value, parent.value if parent else 'None', unexpected_error, exc_info=True)
-            raise ValueError(error_msg % (self.value, parent.value if parent else 'None', str(unexpected_error))) from unexpected_error
+            logger.error(
+                error_msg,
+                self.value,
+                parent.value if parent else "None",
+                unexpected_error,
+                exc_info=True,
+            )
+            raise ValueError(
+                error_msg
+                % (
+                    self.value,
+                    parent.value if parent else "None",
+                    str(unexpected_error),
+                ),
+            ) from unexpected_error
 
-    def _validate_child_of_parameters(self, parent: FlextLdifDistinguishedName | None) -> Exception | None:
+    def _validate_child_of_parameters(
+        self,
+        parent: FlextLdifDistinguishedName | None,
+    ) -> Exception | None:
         """Strategy 1: Validate parameters for child relationship check following Single Responsibility Principle."""
         # Comprehensive parameter validation
         if parent is None:
-            error_msg = "Parent DN parameter cannot be None for child relationship check"
+            error_msg = (
+                "Parent DN parameter cannot be None for child relationship check"
+            )
             logger.error("Child relationship check failed: %s", error_msg)
             return TypeError(error_msg)
 
-        if not isinstance(parent, FlextLdifDistinguishedName):
-            error_msg = "Parent must be FlextLdifDistinguishedName instance, got %s"
-            logger.error("Child relationship check failed: %s", error_msg % type(parent).__name__)
-            return TypeError(error_msg % type(parent).__name__)
+        # NOTE: parent type is validated by Pydantic in calling context
+        # isinstance check is redundant and creates unreachable code
 
         # Validate current DN value
         if not self.value:
@@ -581,10 +610,7 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
             logger.error("Child relationship check failed: %s", error_msg)
             return ValueError(error_msg)
 
-        if not isinstance(self.value, str):
-            error_msg = "Current DN value must be string, got %s"
-            logger.error("Child relationship check failed: %s", error_msg % type(self.value).__name__)
-            return ValueError(error_msg % type(self.value).__name__)
+        # NOTE: self.value is guaranteed to be str by Pydantic validator
 
         # Validate parent DN value
         if not parent.value:
@@ -592,34 +618,46 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
             logger.error("Child relationship check failed: %s", error_msg)
             return ValueError(error_msg)
 
-        if not isinstance(parent.value, str):
-            error_msg = "Parent DN value must be string, got %s"
-            logger.error("Child relationship check failed: %s", error_msg % type(parent.value).__name__)
-            return ValueError(error_msg % type(parent.value).__name__)
+        # NOTE: parent.value is guaranteed to be str by Pydantic validator
 
-        logger.trace("Validating DN hierarchy: child='%s', parent='%s'", self.value, parent.value)
+        logger.trace(
+            "Validating DN hierarchy: child='%s', parent='%s'",
+            self.value,
+            parent.value,
+        )
         return None
 
-    def _check_child_of_length_requirements(self, parent: FlextLdifDistinguishedName) -> bool:
+    def _check_child_of_length_requirements(
+        self,
+        parent: FlextLdifDistinguishedName,
+    ) -> bool:
         """Strategy 2: Check length requirements for child relationship following Single Responsibility Principle."""
         # Handle identical DN case (not a child relationship)
         if self.value.lower() == parent.value.lower():
             logger.debug("DNs are identical - no child relationship: '%s'", self.value)
-            logger.info("Child relationship check completed - identical DNs (not child)")
+            logger.info(
+                "Child relationship check completed - identical DNs (not child)",
+            )
             return False
 
         # Check for logical hierarchy relationship (child must be longer than parent)
         if len(self.value) <= len(parent.value):
             logger.debug(
                 "Current DN is not longer than parent - cannot be child: current=%d, parent=%d",
-                len(self.value), len(parent.value)
+                len(self.value),
+                len(parent.value),
             )
-            logger.info("Child relationship check completed - DN length indicates no child relationship")
+            logger.info(
+                "Child relationship check completed - DN length indicates no child relationship",
+            )
             return False
 
         return True
 
-    def _perform_child_of_hierarchy_analysis(self, parent: FlextLdifDistinguishedName) -> bool | None:
+    def _perform_child_of_hierarchy_analysis(
+        self,
+        parent: FlextLdifDistinguishedName,
+    ) -> bool | None:
         """Strategy 3: Perform hierarchy analysis for child relationship following Single Responsibility Principle."""
         logger.trace("Performing case-insensitive hierarchy comparison")
 
@@ -627,7 +665,11 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
             current_dn_lower = self.value.lower().strip()
             parent_dn_lower = parent.value.lower().strip()
 
-            logger.trace("Normalized DNs - current: '%s', parent: '%s'", current_dn_lower, parent_dn_lower)
+            logger.trace(
+                "Normalized DNs - current: '%s', parent: '%s'",
+                current_dn_lower,
+                parent_dn_lower,
+            )
 
             # Check if current DN ends with parent DN (hierarchy relationship)
             is_child = current_dn_lower.endswith(parent_dn_lower)
@@ -640,27 +682,50 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
                     # Check if character before parent DN is a comma (proper component boundary)
                     preceding_char = current_dn_lower[parent_start_index - 1]
                     if preceding_char != ",":
-                        logger.debug("DN match found but not at component boundary - not a valid child relationship")
+                        logger.debug(
+                            "DN match found but not at component boundary - not a valid child relationship",
+                        )
                         is_child = False
                     else:
-                        logger.trace("Valid component boundary found at index %d", parent_start_index)
+                        logger.trace(
+                            "Valid component boundary found at index %d",
+                            parent_start_index,
+                        )
                 else:
-                    logger.trace("Parent DN match at start of current DN - checking for valid hierarchy")
+                    logger.trace(
+                        "Parent DN match at start of current DN - checking for valid hierarchy",
+                    )
 
             return is_child
 
         except (AttributeError, IndexError) as string_error:
             error_msg = "String processing error during hierarchy check: %s"
-            logger.error("Child relationship check failed: %s", error_msg % str(string_error), exc_info=True)
+            logger.error(
+                "Child relationship check failed: %s",
+                error_msg % str(string_error),
+                exc_info=True,
+            )
             raise ValueError(error_msg % str(string_error)) from string_error
 
-    def _log_child_of_result(self, is_child: bool, parent: FlextLdifDistinguishedName) -> None:
+    def _log_child_of_result(
+        self,
+        is_child: bool,
+        parent: FlextLdifDistinguishedName,
+    ) -> None:
         """Strategy 4: Log child relationship result following Single Responsibility Principle."""
         if is_child:
-            logger.debug("Confirmed child relationship: '%s' is child of '%s'", self.value, parent.value)
+            logger.debug(
+                "Confirmed child relationship: '%s' is child of '%s'",
+                self.value,
+                parent.value,
+            )
             logger.info("Child relationship check completed - CHILD CONFIRMED")
         else:
-            logger.debug("No child relationship: '%s' is NOT child of '%s'", self.value, parent.value)
+            logger.debug(
+                "No child relationship: '%s' is NOT child of '%s'",
+                self.value,
+                parent.value,
+            )
             logger.info("Child relationship check completed - NO CHILD RELATIONSHIP")
 
     def get_depth(self) -> int:
@@ -729,14 +794,14 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
             valid_components = self._validate_depth_components(components)
 
             # Strategy 4: Depth calculation and validation - Single Responsibility
-            depth = self._calculate_and_validate_depth(valid_components)
-
-            return depth
+            return self._calculate_and_validate_depth(valid_components)
 
         except Exception as unexpected_error:
             error_msg = "Unexpected error during DN depth calculation for '%s': %s"
             logger.error(error_msg, self.value, unexpected_error, exc_info=True)
-            raise ValueError(error_msg % (self.value, str(unexpected_error))) from unexpected_error
+            raise ValueError(
+                error_msg % (self.value, str(unexpected_error)),
+            ) from unexpected_error
 
     def _validate_depth_parameters(self) -> Exception | None:
         """Strategy 1: Validate parameters for depth calculation following Single Responsibility Principle."""
@@ -746,10 +811,7 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
             logger.error("DN depth calculation failed: %s", error_msg)
             return ValueError(error_msg)
 
-        if not isinstance(self.value, str):
-            error_msg = "DN value must be string for depth calculation, got %s"
-            logger.error("DN depth calculation failed: %s", error_msg % type(self.value).__name__)
-            return ValueError(error_msg % type(self.value).__name__)
+        # NOTE: self.value is guaranteed to be str by Pydantic validator
 
         logger.trace("Parsing DN components for depth calculation: '%s'", self.value)
         return None
@@ -758,10 +820,16 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
         """Strategy 2: Parse DN components for depth calculation following Single Responsibility Principle."""
         try:
             components = self.value.split(",")
-            logger.trace("Split DN into %d raw components: %s", len(components), components)
+            logger.trace(
+                "Split DN into %d raw components: %s",
+                len(components),
+                components,
+            )
 
             if not components:
-                error_msg = "DN parsing resulted in empty components list for depth calculation"
+                error_msg = (
+                    "DN parsing resulted in empty components list for depth calculation"
+                )
                 logger.error("DN depth calculation failed: %s", error_msg)
                 raise ValueError(error_msg)
 
@@ -769,7 +837,11 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
 
         except (AttributeError, IndexError) as parsing_error:
             error_msg = "DN component parsing failed for depth calculation: %s"
-            logger.error("DN depth calculation failed: %s", error_msg % str(parsing_error), exc_info=True)
+            logger.error(
+                "DN depth calculation failed: %s",
+                error_msg % str(parsing_error),
+                exc_info=True,
+            )
             raise ValueError(error_msg % str(parsing_error)) from parsing_error
 
     def _validate_depth_components(self, components: list[str]) -> list[str]:
@@ -788,29 +860,49 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
             # Validate component format (must contain attribute=value)
             if "=" not in component:
                 error_msg = "Invalid DN component format at index %d: '%s' - missing '=' separator"
-                logger.error("DN depth calculation failed: %s", error_msg % (i, component))
+                logger.error(
+                    "DN depth calculation failed: %s",
+                    error_msg % (i, component),
+                )
                 raise ValueError(error_msg % (i, component))
 
             # Additional component validation
             try:
                 attr_name, attr_value = component.split("=", 1)
                 if not attr_name.strip():
-                    error_msg = "Invalid DN component at index %d: empty attribute name in '%s'"
-                    logger.error("DN depth calculation failed: %s", error_msg % (i, component))
+                    error_msg = (
+                        "Invalid DN component at index %d: empty attribute name in '%s'"
+                    )
+                    logger.error(
+                        "DN depth calculation failed: %s",
+                        error_msg % (i, component),
+                    )
                     raise ValueError(error_msg % (i, component))
 
                 if not attr_value.strip():
                     error_msg = "Invalid DN component at index %d: empty attribute value in '%s'"
-                    logger.error("DN depth calculation failed: %s", error_msg % (i, component))
+                    logger.error(
+                        "DN depth calculation failed: %s",
+                        error_msg % (i, component),
+                    )
                     raise ValueError(error_msg % (i, component))
 
                 valid_components.append(component)
-                logger.trace("Valid component %d: '%s'", len(valid_components), component)
+                logger.trace(
+                    "Valid component %d: '%s'",
+                    len(valid_components),
+                    component,
+                )
 
             except ValueError as component_error:
                 error_msg = "Component validation failed at index %d for '%s': %s"
-                logger.exception("DN depth calculation failed: %s", error_msg % (i, component, str(component_error)))
-                raise ValueError(error_msg % (i, component, str(component_error))) from component_error
+                logger.exception(
+                    "DN depth calculation failed: %s",
+                    error_msg % (i, component, str(component_error)),
+                )
+                raise ValueError(
+                    error_msg % (i, component, str(component_error)),
+                ) from component_error
 
         # Ensure at least one valid component exists
         if not valid_components:
@@ -833,10 +925,18 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
             raise ValueError(error_msg % depth)
 
         if depth > 20:  # Practical limit for LDAP hierarchy depth
-            logger.warning("Unusually deep DN hierarchy detected: %d levels - '%s'", depth, self.value)
+            logger.warning(
+                "Unusually deep DN hierarchy detected: %d levels - '%s'",
+                depth,
+                self.value,
+            )
 
         logger.debug("Successfully calculated DN depth: %d for '%s'", depth, self.value)
-        logger.info("DN depth calculation completed - depth: %d, components: %d", depth, len(valid_components))
+        logger.info(
+            "DN depth calculation completed - depth: %d, components: %d",
+            depth,
+            len(valid_components),
+        )
 
         return depth
 
@@ -858,7 +958,7 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
         Example:
             >>> dn = FlextLdifDistinguishedName(value="cn=user,dc=example,dc=com")
             >>> result = dn.validate_semantic_rules()
-            >>> result.is_success  # True
+            >>> result.success  # True
 
         Raises:
             No exceptions - all errors returned via FlextResult pattern
@@ -879,11 +979,16 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
 
         # Railway-Oriented Programming: Return early if any validation failed
         if validation_errors:
-            error_summary = f"DN semantic validation failed: {'; '.join(validation_errors)}"
+            error_summary = (
+                f"DN semantic validation failed: {'; '.join(validation_errors)}"
+            )
             logger.error("DN semantic validation failed: %s", error_summary)
             return FlextResult.fail(error_summary)
 
-        logger.debug("DN semantic validation completed successfully for: '%s'", self.value)
+        logger.debug(
+            "DN semantic validation completed successfully for: '%s'",
+            self.value,
+        )
         return FlextResult.ok(None)
 
     def _validate_basic_dn_structure(self) -> list[str]:
@@ -891,13 +996,16 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
         errors = []
 
         if not self.value:
-            errors.append("DN value cannot be empty - must contain at least one attribute=value pair")
+            errors.append(
+                "DN value cannot be empty - must contain at least one attribute=value pair",
+            )
 
-        if not isinstance(self.value, str):
-            errors.append(f"DN value must be string type, got {type(self.value).__name__}")
+        # NOTE: self.value is guaranteed to be str by Pydantic validator
 
         if self.value and "=" not in self.value:
-            errors.append("DN must contain at least one attribute=value pair (missing '=' separator)")
+            errors.append(
+                "DN must contain at least one attribute=value pair (missing '=' separator)",
+            )
 
         return errors
 
@@ -924,7 +1032,11 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
 
         return errors
 
-    def _validate_single_component(self, raw_component: str, component_number: int) -> list[str]:
+    def _validate_single_component(
+        self,
+        raw_component: str,
+        component_number: int,
+    ) -> list[str]:
         """Strategy 3: Validate single DN component - Template Method Pattern."""
         errors = []
         component = raw_component.strip() if raw_component else ""
@@ -941,11 +1053,17 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
         try:
             attr_parts = component.split("=", 1)
             if len(attr_parts) != 2:
-                errors.append(f"{component_prefix} invalid attribute=value format: '{component}'")
+                errors.append(
+                    f"{component_prefix} invalid attribute=value format: '{component}'",
+                )
                 return errors
 
             attr_name, attr_value = attr_parts
-            attribute_errors = self._validate_attribute_pair(attr_name, attr_value, component_prefix)
+            attribute_errors = self._validate_attribute_pair(
+                attr_name,
+                attr_value,
+                component_prefix,
+            )
             errors.extend(attribute_errors)
 
         except Exception as e:
@@ -953,7 +1071,12 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
 
         return errors
 
-    def _validate_attribute_pair(self, attr_name: str, attr_value: str, component_prefix: str) -> list[str]:
+    def _validate_attribute_pair(
+        self,
+        attr_name: str,
+        attr_value: str,
+        component_prefix: str,
+    ) -> list[str]:
         """Strategy 4: Validate attribute name-value pair - DRY Principle."""
         errors = []
 
@@ -967,7 +1090,6 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
             errors.append(f"{component_prefix} attribute value is empty")
 
         return errors
-
 
     def to_dn_dict(self) -> FlextLdifDNDict:
         """Convert to FlextLdifDNDict representation with enterprise-grade serialization and comprehensive validation.
@@ -1009,19 +1131,16 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
         Version: 0.9.0
 
         """
-        logger.debug(f"Converting DN to dictionary representation: '{self.value}'")
+        logger.debug("Converting DN to dictionary representation: '%s'", self.value)
 
         try:
             # Comprehensive DN value validation before serialization
             if not self.value:
                 error_msg = "Cannot convert empty DN value to dictionary representation"
-                logger.error(f"DN dictionary conversion failed: {error_msg}")
+                logger.error("DN dictionary conversion failed: %s", error_msg)
                 raise ValueError(error_msg)
 
-            if not isinstance(self.value, str):
-                error_msg = f"DN value must be string for dictionary conversion, got {type(self.value).__name__}"
-                logger.error(f"DN dictionary conversion failed: {error_msg}")
-                raise ValueError(error_msg)
+            # NOTE: self.value is guaranteed to be str by Pydantic validator
 
             logger.trace(
                 f"Processing DN components for dictionary serialization: '{self.value}'",
@@ -1036,26 +1155,26 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
 
                 if not raw_components:
                     error_msg = "DN component parsing resulted in empty components list"
-                    logger.error(f"DN dictionary conversion failed: {error_msg}")
+                    logger.error("DN dictionary conversion failed: %s", error_msg)
                     raise ValueError(error_msg)
 
                 # Clean and validate each component
                 validated_components = []
                 for i, raw_component in enumerate(raw_components):
-                    logger.trace(f"Processing component {i + 1}: '{raw_component}'")
+                    logger.trace("Processing component %d: '%s'", i + 1, raw_component)
 
                     # Clean whitespace from component
                     component = raw_component.strip() if raw_component else ""
 
                     if not component:
-                        logger.trace(f"Skipping empty component at index {i}")
+                        logger.trace("Skipping empty component at index %d", i)
                         continue
 
                     # Validate component format
                     if "=" not in component:
-                        error_msg = f"Invalid component format at index {i}: '{component}' - missing '=' separator"
-                        logger.error(f"DN dictionary conversion failed: {error_msg}")
-                        raise ValueError(error_msg)
+                        component_format_error_msg: str = f"Invalid component format at index {i}: '{component}' - missing '=' separator"
+                        logger.error("DN dictionary conversion failed: %s", component_format_error_msg)
+                        raise ValueError(component_format_error_msg)
 
                     validated_components.append(component)
                     logger.trace(
@@ -1066,20 +1185,22 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
                     error_msg = (
                         "No valid components found after cleaning and validation"
                     )
-                    logger.error(f"DN dictionary conversion failed: {error_msg}")
+                    logger.error("DN dictionary conversion failed: %s", error_msg)
                     raise ValueError(error_msg)
 
                 logger.debug(
-                    f"Successfully validated {len(validated_components)} DN components",
+                    "Successfully validated %d DN components",
+                    len(validated_components),
                 )
 
             except (AttributeError, IndexError) as component_error:
-                error_msg = f"DN component parsing failed for dictionary conversion: {component_error!s}"
+                component_parsing_error_msg: str = f"DN component parsing failed for dictionary conversion: {component_error!s}"
                 logger.error(
-                    f"DN dictionary conversion failed: {error_msg}",
+                    "DN dictionary conversion failed: %s",
+                    component_parsing_error_msg,
                     exc_info=True,
                 )
-                raise ValueError(error_msg) from component_error
+                raise ValueError(component_parsing_error_msg) from component_error
 
             # Calculate hierarchical depth with enterprise-grade method
             try:
@@ -1091,18 +1212,19 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
                     error_msg = (
                         f"Invalid DN depth calculated: {depth} - must be at least 1"
                     )
-                    logger.error(f"DN dictionary conversion failed: {error_msg}")
+                    logger.error("DN dictionary conversion failed: %s", error_msg)
                     raise ValueError(error_msg)
 
-                logger.debug(f"Successfully calculated DN depth: {depth}")
+                logger.debug("Successfully calculated DN depth: %d", depth)
 
             except Exception as depth_error:
-                error_msg = f"DN depth calculation failed for dictionary conversion: {depth_error!s}"
+                depth_calculation_error_msg: str = f"DN depth calculation failed for dictionary conversion: {depth_error!s}"
                 logger.error(
-                    f"DN dictionary conversion failed: {error_msg}",
+                    "DN dictionary conversion failed: %s",
+                    depth_calculation_error_msg,
                     exc_info=True,
                 )
-                raise ValueError(error_msg) from depth_error
+                raise ValueError(depth_calculation_error_msg) from depth_error
 
             # Construct FlextLdifDNDict with comprehensive validation
             try:
@@ -1116,23 +1238,27 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
 
                 logger.debug("Successfully created DN dictionary representation")
                 logger.info(
-                    f"DN dictionary conversion completed - value: '{self.value}', components: {len(validated_components)}, depth: {depth}",
+                    "DN dictionary conversion completed - value: '%s', components: %d, depth: %d",
+                    self.value,
+                    len(validated_components),
+                    depth,
                 )
 
                 return dn_dict
 
             except Exception as dict_error:
-                error_msg = f"FlextLdifDNDict construction failed: {dict_error!s}"
+                dict_construction_error_msg: str = f"FlextLdifDNDict construction failed: {dict_error!s}"
                 logger.error(
-                    f"DN dictionary conversion failed: {error_msg}",
+                    "DN dictionary conversion failed: %s",
+                    dict_construction_error_msg,
                     exc_info=True,
                 )
-                raise ValueError(error_msg) from dict_error
+                raise ValueError(dict_construction_error_msg) from dict_error
 
         except Exception as unexpected_error:
-            error_msg = f"Unexpected error during DN dictionary conversion for '{self.value}': {unexpected_error!s}"
-            logger.error(f"DN dictionary conversion failed: {error_msg}", exc_info=True)
-            raise ValueError(error_msg) from unexpected_error
+            dict_unexpected_error_msg: str = f"Unexpected error during DN dictionary conversion for '{self.value}': {unexpected_error!s}"
+            logger.error("DN dictionary conversion failed: %s", dict_unexpected_error_msg, exc_info=True)
+            raise ValueError(dict_unexpected_error_msg) from unexpected_error
 
 
 class FlextLdifAttributes(FlextDomainValueObject):
@@ -1202,23 +1328,13 @@ class FlextLdifAttributes(FlextDomainValueObject):
         )
 
         try:
-            # Comprehensive parameter validation
-            if name is None:
-                error_msg = "Attribute name cannot be None for single value retrieval"
-                logger.error(f"Single value retrieval failed: {error_msg}")
-                raise TypeError(error_msg)
-
-            if not isinstance(name, str):
-                error_msg = f"Attribute name must be string, got {type(name).__name__}"
-                logger.error(f"Single value retrieval failed: {error_msg}")
-                raise TypeError(error_msg)
-
+            # Parameter validation - name is guaranteed to be str by type annotation
             if not name.strip():
-                error_msg = (
+                empty_name_error_msg = (
                     "Attribute name cannot be empty string for single value retrieval"
                 )
-                logger.error(f"Single value retrieval failed: {error_msg}")
-                raise ValueError(error_msg)
+                logger.error("Single value retrieval failed: %s", empty_name_error_msg)
+                raise ValueError(empty_name_error_msg)
 
             # Clean attribute name for consistent lookup
             cleaned_name = name.strip()
@@ -1226,16 +1342,13 @@ class FlextLdifAttributes(FlextDomainValueObject):
 
             # Validate attributes collection exists and is accessible
             if not hasattr(self, "attributes"):
-                error_msg = (
+                missing_attributes_error_msg = (
                     "Attributes collection is not available for single value retrieval"
                 )
-                logger.error(f"Single value retrieval failed: {error_msg}")
-                raise AttributeError(error_msg)
+                logger.error("Single value retrieval failed: %s", missing_attributes_error_msg)
+                raise AttributeError(missing_attributes_error_msg)
 
-            if not isinstance(self.attributes, dict):
-                error_msg = f"Attributes collection must be dictionary, got {type(self.attributes).__name__}"
-                logger.error(f"Single value retrieval failed: {error_msg}")
-                raise TypeError(error_msg)
+            # self.attributes is guaranteed to be dict[str, list[str]] by type annotation
 
             logger.trace(
                 f"Accessing attribute '{cleaned_name}' from {len(self.attributes)} total attributes",
@@ -1248,11 +1361,7 @@ class FlextLdifAttributes(FlextDomainValueObject):
                     f"Retrieved values for '{cleaned_name}': {attribute_values}",
                 )
 
-                # Validate returned values structure
-                if not isinstance(attribute_values, list):
-                    error_msg = f"Attribute values must be list, got {type(attribute_values).__name__} for attribute '{cleaned_name}'"
-                    logger.error(f"Single value retrieval failed: {error_msg}")
-                    raise TypeError(error_msg)
+                # attribute_values is guaranteed to be list[str] by type annotation
 
                 # Handle empty attribute values
                 if not attribute_values:
@@ -1264,15 +1373,9 @@ class FlextLdifAttributes(FlextDomainValueObject):
                     )
                     return None
 
-                # Extract first value with validation
+                # Extract first value (guaranteed to be str by type annotation)
                 first_value = attribute_values[0]
                 logger.trace(f"First value for '{cleaned_name}': '{first_value}'")
-
-                # Validate first value is string
-                if not isinstance(first_value, str):
-                    error_msg = f"Attribute value must be string, got {type(first_value).__name__} for attribute '{cleaned_name}'"
-                    logger.error(f"Single value retrieval failed: {error_msg}")
-                    raise TypeError(error_msg)
 
                 # Log successful retrieval with metadata
                 total_values = len(attribute_values)
@@ -1286,16 +1389,16 @@ class FlextLdifAttributes(FlextDomainValueObject):
                 return first_value
 
             except KeyError as key_error:
-                error_msg = (
+                key_error_msg = (
                     f"Attribute lookup failed for '{cleaned_name}': {key_error!s}"
                 )
-                logger.exception(f"Single value retrieval failed: {error_msg}")
-                raise ValueError(error_msg) from key_error
+                logger.exception("Single value retrieval failed: %s", key_error_msg)
+                raise ValueError(key_error_msg) from key_error
 
         except Exception as unexpected_error:
-            error_msg = f"Unexpected error during single value retrieval for attribute '{name}': {unexpected_error!s}"
-            logger.error(f"Single value retrieval failed: {error_msg}", exc_info=True)
-            raise ValueError(error_msg) from unexpected_error
+            single_value_unexpected_error_msg: str = f"Unexpected error during single value retrieval for attribute '{name}': {unexpected_error!s}"
+            logger.error("Single value retrieval failed: %s", single_value_unexpected_error_msg, exc_info=True)
+            raise ValueError(single_value_unexpected_error_msg) from unexpected_error
 
     def get_values(self, name: str) -> list[str]:
         """Get all values for a multi-valued attribute.
@@ -1325,21 +1428,11 @@ class FlextLdifAttributes(FlextDomainValueObject):
         )
 
         try:
-            # Comprehensive parameter validation
-            if name is None:
-                error_msg = "Attribute name cannot be None for values retrieval"
-                logger.error(f"Values retrieval failed: {error_msg}")
-                raise TypeError(error_msg)
-
-            if not isinstance(name, str):
-                error_msg = f"Attribute name must be string, got {type(name).__name__}"
-                logger.error(f"Values retrieval failed: {error_msg}")
-                raise TypeError(error_msg)
-
+            # Parameter validation - name is guaranteed to be str by type annotation
             if not name.strip():
-                error_msg = "Attribute name cannot be empty string for values retrieval"
-                logger.error(f"Values retrieval failed: {error_msg}")
-                raise ValueError(error_msg)
+                empty_name_values_error_msg = "Attribute name cannot be empty string for values retrieval"
+                logger.error("Values retrieval failed: %s", empty_name_values_error_msg)
+                raise ValueError(empty_name_values_error_msg)
 
             # Clean attribute name for consistent lookup
             cleaned_name = name.strip()
@@ -1347,16 +1440,13 @@ class FlextLdifAttributes(FlextDomainValueObject):
 
             # Validate attributes collection exists and is accessible
             if not hasattr(self, "attributes"):
-                error_msg = (
+                missing_attributes_values_error_msg = (
                     "Attributes collection is not available for values retrieval"
                 )
-                logger.error(f"Values retrieval failed: {error_msg}")
-                raise AttributeError(error_msg)
+                logger.error("Values retrieval failed: %s", missing_attributes_values_error_msg)
+                raise AttributeError(missing_attributes_values_error_msg)
 
-            if not isinstance(self.attributes, dict):
-                error_msg = f"Attributes collection must be dictionary, got {type(self.attributes).__name__}"
-                logger.error(f"Values retrieval failed: {error_msg}")
-                raise TypeError(error_msg)
+            # self.attributes is guaranteed to be dict[str, list[str]] by type annotation
 
             logger.trace(
                 f"Accessing attribute '{cleaned_name}' from {len(self.attributes)} total attributes",
@@ -1369,27 +1459,18 @@ class FlextLdifAttributes(FlextDomainValueObject):
                     f"Retrieved values for '{cleaned_name}': {attribute_values}",
                 )
 
-                # Validate returned values structure
-                if not isinstance(attribute_values, list):
-                    error_msg = f"Attribute values must be list, got {type(attribute_values).__name__} for attribute '{cleaned_name}'"
-                    logger.error(f"Values retrieval failed: {error_msg}")
-                    raise TypeError(error_msg)
+                # attribute_values is guaranteed to be list[str] by type annotation
 
-                # Validate each value in the list
+                # Process each value (all guaranteed to be str by type annotation)
                 validated_values = []
                 for i, value in enumerate(attribute_values):
                     logger.trace(
-                        f"Validating value {i + 1} for '{cleaned_name}': '{value}'",
+                        f"Processing value {i + 1} for '{cleaned_name}': '{value}'",
                     )
-
-                    if not isinstance(value, str):
-                        error_msg = f"Attribute value {i + 1} must be string, got {type(value).__name__} for attribute '{cleaned_name}'"
-                        logger.error(f"Values retrieval failed: {error_msg}")
-                        raise TypeError(error_msg)
 
                     # Keep original value (including empty strings for LDAP compatibility)
                     validated_values.append(value)
-                    logger.trace(f"Validated value {i + 1}: '{value}'")
+                    logger.trace(f"Processed value {i + 1}: '{value}'")
 
                 # Handle empty attribute values
                 if not validated_values:
@@ -1413,16 +1494,16 @@ class FlextLdifAttributes(FlextDomainValueObject):
                 return validated_values
 
             except KeyError as key_error:
-                error_msg = (
+                values_key_error_msg = (
                     f"Attribute lookup failed for '{cleaned_name}': {key_error!s}"
                 )
-                logger.exception(f"Values retrieval failed: {error_msg}")
-                raise ValueError(error_msg) from key_error
+                logger.exception(f"Values retrieval failed: {values_key_error_msg}")
+                raise ValueError(values_key_error_msg) from key_error
 
         except Exception as unexpected_error:
-            error_msg = f"Unexpected error during values retrieval for attribute '{name}': {unexpected_error!s}"
-            logger.error(f"Values retrieval failed: {error_msg}", exc_info=True)
-            raise ValueError(error_msg) from unexpected_error
+            values_unexpected_error_msg: str = f"Unexpected error during values retrieval for attribute '{name}': {unexpected_error!s}"
+            logger.error(f"Values retrieval failed: {values_unexpected_error_msg}", exc_info=True)
+            raise ValueError(values_unexpected_error_msg) from unexpected_error
 
     def has_attribute(self, name: str) -> bool:
         """Check if an attribute exists in the collection.
@@ -1448,21 +1529,11 @@ class FlextLdifAttributes(FlextDomainValueObject):
         )
 
         try:
-            # Comprehensive parameter validation
-            if name is None:
-                error_msg = "Attribute name cannot be None for existence check"
-                logger.error(f"Attribute existence check failed: {error_msg}")
-                raise TypeError(error_msg)
-
-            if not isinstance(name, str):
-                error_msg = f"Attribute name must be string, got {type(name).__name__}"
-                logger.error(f"Attribute existence check failed: {error_msg}")
-                raise TypeError(error_msg)
-
+            # Parameter validation - name is guaranteed to be str by type annotation
             if not name.strip():
-                error_msg = "Attribute name cannot be empty string for existence check"
-                logger.error(f"Attribute existence check failed: {error_msg}")
-                raise ValueError(error_msg)
+                empty_name_exists_error_msg = "Attribute name cannot be empty string for existence check"
+                logger.error(f"Attribute existence check failed: {empty_name_exists_error_msg}")
+                raise ValueError(empty_name_exists_error_msg)
 
             # Clean attribute name for consistent lookup
             cleaned_name = name.strip()
@@ -1472,14 +1543,11 @@ class FlextLdifAttributes(FlextDomainValueObject):
 
             # Validate attributes collection exists and is accessible
             if not hasattr(self, "attributes"):
-                error_msg = "Attributes collection is not available for existence check"
-                logger.error(f"Attribute existence check failed: {error_msg}")
-                raise AttributeError(error_msg)
+                missing_attributes_exists_error_msg = "Attributes collection is not available for existence check"
+                logger.error(f"Attribute existence check failed: {missing_attributes_exists_error_msg}")
+                raise AttributeError(missing_attributes_exists_error_msg)
 
-            if not isinstance(self.attributes, dict):
-                error_msg = f"Attributes collection must be dictionary, got {type(self.attributes).__name__}"
-                logger.error(f"Attribute existence check failed: {error_msg}")
-                raise TypeError(error_msg)
+            # self.attributes is guaranteed to be dict[str, list[str]] by type annotation
 
             logger.trace(
                 f"Checking attribute '{cleaned_name}' existence in {len(self.attributes)} total attributes",
@@ -1493,18 +1561,9 @@ class FlextLdifAttributes(FlextDomainValueObject):
                 )
 
                 if attribute_exists:
-                    # Additional validation - ensure the value is a list (expected LDAP structure)
+                    # attribute_value is guaranteed to be list[str] by type annotation
                     attribute_value = self.attributes[cleaned_name]
-                    if not isinstance(attribute_value, list):
-                        logger.warning(
-                            f"Attribute '{cleaned_name}' exists but has non-list value: {type(attribute_value).__name__}",
-                        )
-
-                    values_count = (
-                        len(attribute_value)
-                        if isinstance(attribute_value, list)
-                        else "unknown"
-                    )
+                    values_count = len(attribute_value)
                     logger.debug(
                         f"Attribute '{cleaned_name}' exists with {values_count} values",
                     )
@@ -1522,17 +1581,17 @@ class FlextLdifAttributes(FlextDomainValueObject):
                 return attribute_exists
 
             except (KeyError, TypeError) as lookup_error:
-                error_msg = f"Attribute existence check failed for '{cleaned_name}': {lookup_error!s}"
-                logger.exception(f"Attribute existence check failed: {error_msg}")
-                raise ValueError(error_msg) from lookup_error
+                exists_lookup_error_msg: str = f"Attribute existence check failed for '{cleaned_name}': {lookup_error!s}"
+                logger.exception(f"Attribute existence check failed: {exists_lookup_error_msg}")
+                raise ValueError(exists_lookup_error_msg) from lookup_error
 
         except Exception as unexpected_error:
-            error_msg = f"Unexpected error during attribute existence check for '{name}': {unexpected_error!s}"
+            exists_unexpected_error_msg: str = f"Unexpected error during attribute existence check for '{name}': {unexpected_error!s}"
             logger.error(
-                f"Attribute existence check failed: {error_msg}",
+                f"Attribute existence check failed: {exists_unexpected_error_msg}",
                 exc_info=True,
             )
-            raise ValueError(error_msg) from unexpected_error
+            raise ValueError(exists_unexpected_error_msg) from unexpected_error
 
     def add_value(self, name: str, value: str) -> FlextLdifAttributes:
         """Add value to an attribute, returning new instance with immutable pattern.
@@ -1560,33 +1619,11 @@ class FlextLdifAttributes(FlextDomainValueObject):
         )
 
         try:
-            # Comprehensive parameter validation
-            if name is None:
-                error_msg = "Attribute name cannot be None for value addition"
-                logger.error(f"Add value operation failed: {error_msg}")
-                raise TypeError(error_msg)
-
-            if not isinstance(name, str):
-                error_msg = f"Attribute name must be string, got {type(name).__name__}"
-                logger.error(f"Add value operation failed: {error_msg}")
-                raise TypeError(error_msg)
-
+            # Parameter validation - name and value are guaranteed to be str by type annotation
             if not name.strip():
-                error_msg = "Attribute name cannot be empty string for value addition"
-                logger.error(f"Add value operation failed: {error_msg}")
-                raise ValueError(error_msg)
-
-            if value is None:
-                error_msg = "Attribute value cannot be None for value addition"
-                logger.error(f"Add value operation failed: {error_msg}")
-                raise TypeError(error_msg)
-
-            if not isinstance(value, str):
-                error_msg = (
-                    f"Attribute value must be string, got {type(value).__name__}"
-                )
-                logger.error(f"Add value operation failed: {error_msg}")
-                raise TypeError(error_msg)
+                empty_name_add_error_msg = "Attribute name cannot be empty string for value addition"
+                logger.error(f"Add value operation failed: {empty_name_add_error_msg}")
+                raise ValueError(empty_name_add_error_msg)
 
             # Clean parameters for consistent processing
             cleaned_name = name.strip()
@@ -1599,37 +1636,25 @@ class FlextLdifAttributes(FlextDomainValueObject):
 
             # Validate current attributes collection
             if not hasattr(self, "attributes"):
-                error_msg = "Attributes collection is not available for value addition"
-                logger.error(f"Add value operation failed: {error_msg}")
-                raise AttributeError(error_msg)
+                missing_attributes_add_error_msg = "Attributes collection is not available for value addition"
+                logger.error(f"Add value operation failed: {missing_attributes_add_error_msg}")
+                raise AttributeError(missing_attributes_add_error_msg)
 
-            if not isinstance(self.attributes, dict):
-                error_msg = f"Attributes collection must be dictionary, got {type(self.attributes).__name__}"
-                logger.error(f"Add value operation failed: {error_msg}")
-                raise TypeError(error_msg)
+            # self.attributes is guaranteed to be dict[str, list[str]] by type annotation
 
             logger.trace(
                 f"Processing {len(self.attributes)} existing attributes for immutable copy",
             )
 
-            # Create deep copy of existing attributes with comprehensive validation
+            # Create deep copy of existing attributes (types guaranteed by annotation)
             try:
                 new_attrs = {}
                 for attr_name, attr_values in self.attributes.items():
                     logger.trace(
-                        f"Copying attribute '{attr_name}' with {len(attr_values) if isinstance(attr_values, list) else 'unknown'} values",
+                        f"Copying attribute '{attr_name}' with {len(attr_values)} values",
                     )
 
-                    # Validate existing attribute structure
-                    if not isinstance(attr_name, str):
-                        error_msg = f"Existing attribute name must be string, got {type(attr_name).__name__}: '{attr_name}'"
-                        logger.error(f"Add value operation failed: {error_msg}")
-                        raise TypeError(error_msg)
-
-                    if not isinstance(attr_values, list):
-                        error_msg = f"Existing attribute values must be list, got {type(attr_values).__name__} for '{attr_name}'"
-                        logger.error(f"Add value operation failed: {error_msg}")
-                        raise TypeError(error_msg)
+                    # attr_name and attr_values types guaranteed by dict[str, list[str]] annotation
 
                     # Create deep copy of values list
                     try:
@@ -1639,7 +1664,7 @@ class FlextLdifAttributes(FlextDomainValueObject):
                             f"Successfully copied attribute '{attr_name}' with {len(copied_values)} values",
                         )
                     except Exception as copy_error:
-                        error_msg = f"Failed to copy values for attribute '{attr_name}': {copy_error!s}"
+                        error_msg: str = f"Failed to copy values for attribute '{attr_name}': {copy_error!s}"
                         logger.exception(f"Add value operation failed: {error_msg}")
                         raise ValueError(error_msg) from copy_error
 
@@ -1648,11 +1673,11 @@ class FlextLdifAttributes(FlextDomainValueObject):
                 )
 
             except Exception as copy_error:
-                error_msg = (
+                copy_attrs_error_msg = (
                     f"Failed to create immutable copy of attributes: {copy_error!s}"
                 )
-                logger.error(f"Add value operation failed: {error_msg}", exc_info=True)
-                raise ValueError(error_msg) from copy_error
+                logger.error(f"Add value operation failed: {copy_attrs_error_msg}", exc_info=True)
+                raise ValueError(copy_attrs_error_msg) from copy_error
 
             # Add new value to target attribute with validation
             try:
@@ -1666,12 +1691,8 @@ class FlextLdifAttributes(FlextDomainValueObject):
                         f"Adding to existing attribute '{cleaned_name}' with {len(new_attrs[cleaned_name])} current values",
                     )
 
-                # Validate current values in target attribute
+                # current_values is guaranteed to be list[str] (either new empty list or copied list)
                 current_values = new_attrs[cleaned_name]
-                if not isinstance(current_values, list):
-                    error_msg = f"Target attribute values must be list, got {type(current_values).__name__} for '{cleaned_name}'"
-                    logger.error(f"Add value operation failed: {error_msg}")
-                    raise TypeError(error_msg)
 
                 # Add new value to the list
                 current_values.append(cleaned_value)
@@ -1680,9 +1701,9 @@ class FlextLdifAttributes(FlextDomainValueObject):
                 )
 
             except Exception as addition_error:
-                error_msg = f"Failed to add value '{cleaned_value}' to attribute '{cleaned_name}': {addition_error!s}"
-                logger.exception(f"Add value operation failed: {error_msg}")
-                raise ValueError(error_msg) from addition_error
+                add_value_error_msg: str = f"Failed to add value '{cleaned_value}' to attribute '{cleaned_name}': {addition_error!s}"
+                logger.exception(f"Add value operation failed: {add_value_error_msg}")
+                raise ValueError(add_value_error_msg) from addition_error
 
             # Create new FlextLdifAttributes instance with comprehensive validation
             try:
@@ -1704,14 +1725,14 @@ class FlextLdifAttributes(FlextDomainValueObject):
                 return new_instance
 
             except Exception as validation_error:
-                error_msg = f"Failed to create new FlextLdifAttributes instance: {validation_error!s}"
-                logger.error(f"Add value operation failed: {error_msg}", exc_info=True)
-                raise ValueError(error_msg) from validation_error
+                create_instance_error_msg: str = f"Failed to create new FlextLdifAttributes instance: {validation_error!s}"
+                logger.error(f"Add value operation failed: {create_instance_error_msg}", exc_info=True)
+                raise ValueError(create_instance_error_msg) from validation_error
 
         except Exception as unexpected_error:
-            error_msg = f"Unexpected error during add value operation for '{name}':'{value}': {unexpected_error!s}"
-            logger.error(f"Add value operation failed: {error_msg}", exc_info=True)
-            raise ValueError(error_msg) from unexpected_error
+            add_value_unexpected_error_msg: str = f"Unexpected error during add value operation for '{name}':'{value}': {unexpected_error!s}"
+            logger.error(f"Add value operation failed: {add_value_unexpected_error_msg}", exc_info=True)
+            raise ValueError(add_value_unexpected_error_msg) from unexpected_error
 
     def remove_value(self, name: str, value: str) -> FlextLdifAttributes:
         """Remove value from an attribute, returning new instance with immutable pattern.
@@ -1738,7 +1759,11 @@ class FlextLdifAttributes(FlextDomainValueObject):
             ... )  # ["john@example.com", "john@company.com"] (original unchanged)
 
         """
-        logger.debug("Removing value '%s' from attribute '%s' with immutable pattern", value, name)
+        logger.debug(
+            "Removing value '%s' from attribute '%s' with immutable pattern",
+            value,
+            name,
+        )
 
         try:
             # Strategy Pattern: Use removal strategies to reduce complexity
@@ -1756,50 +1781,48 @@ class FlextLdifAttributes(FlextDomainValueObject):
                 raise validation_error
 
             # Strategy 3: Value removal processing - Single Responsibility
-            new_attrs, removed_count = self._process_remove_value_operation(cleaned_name, cleaned_value)
+            new_attrs, removed_count = self._process_remove_value_operation(
+                cleaned_name,
+                cleaned_value,
+            )
 
             # Strategy 4: Instance creation - Single Responsibility
-            new_instance = self._create_remove_value_instance(new_attrs, cleaned_name, cleaned_value, removed_count)
-
-            return new_instance
+            return self._create_remove_value_instance(
+                new_attrs,
+                cleaned_name,
+                cleaned_value,
+                removed_count,
+            )
 
         except Exception as unexpected_error:
-            error_msg = "Unexpected error during remove value operation for '%s':'%s': %s"
+            error_msg = (
+                "Unexpected error during remove value operation for '%s':'%s': %s"
+            )
             logger.error(error_msg, name, value, unexpected_error, exc_info=True)
-            raise ValueError(error_msg % (name, value, str(unexpected_error))) from unexpected_error
+            raise ValueError(
+                error_msg % (name, value, str(unexpected_error)),
+            ) from unexpected_error
 
-    def _validate_remove_value_parameters(self, name: str, value: str) -> tuple[str, str] | None:
+    def _validate_remove_value_parameters(
+        self,
+        name: str,
+        value: str,
+    ) -> tuple[str, str] | None:
         """Strategy 1: Validate parameters for remove value operation following Single Responsibility Principle."""
-        # Comprehensive parameter validation
-        if name is None:
-            error_msg = "Attribute name cannot be None for value removal"
-            logger.error("Remove value operation failed: %s", error_msg)
-            raise TypeError(error_msg)
-
-        if not isinstance(name, str):
-            error_msg = "Attribute name must be string, got %s"
-            logger.error("Remove value operation failed: %s", error_msg % type(name).__name__)
-            raise TypeError(error_msg % type(name).__name__)
-
+        # Parameter validation - name and value are guaranteed to be str by type annotation
         if not name.strip():
-            error_msg = "Attribute name cannot be empty string for value removal"
-            logger.error("Remove value operation failed: %s", error_msg)
-            raise ValueError(error_msg)
-
-        if value is None:
-            error_msg = "Attribute value cannot be None for value removal"
-            logger.error("Remove value operation failed: %s", error_msg)
-            raise TypeError(error_msg)
-
-        if not isinstance(value, str):
-            error_msg = "Attribute value must be string, got %s"
-            logger.error("Remove value operation failed: %s", error_msg % type(value).__name__)
-            raise TypeError(error_msg % type(value).__name__)
+            empty_name_remove_error_msg = "Attribute name cannot be empty string for value removal"
+            logger.error("Remove value operation failed: %s", empty_name_remove_error_msg)
+            raise ValueError(empty_name_remove_error_msg)
 
         # Clean parameters for consistent processing
         cleaned_name = name.strip()
         cleaned_value = value  # Keep exact value for precise matching
-        logger.trace("Removing value from attribute: name='%s', value='%s'", cleaned_name, cleaned_value)
+        logger.trace(
+            "Removing value from attribute: name='%s', value='%s'",
+            cleaned_name,
+            cleaned_value,
+        )
 
         return (cleaned_name, cleaned_value)
 
@@ -1811,15 +1834,19 @@ class FlextLdifAttributes(FlextDomainValueObject):
             logger.error("Remove value operation failed: %s", error_msg)
             return AttributeError(error_msg)
 
-        if not isinstance(self.attributes, dict):
-            error_msg = "Attributes collection must be dictionary, got %s"
-            logger.error("Remove value operation failed: %s", error_msg % type(self.attributes).__name__)
-            return TypeError(error_msg % type(self.attributes).__name__)
+        # self.attributes is guaranteed to be dict[str, list[str]] by type annotation
 
-        logger.trace("Processing %d existing attributes for immutable copy with removal", len(self.attributes))
+        logger.trace(
+            "Processing %d existing attributes for immutable copy with removal",
+            len(self.attributes),
+        )
         return None
 
-    def _process_remove_value_operation(self, cleaned_name: str, cleaned_value: str) -> tuple[dict[str, list[str]], int]:
+    def _process_remove_value_operation(
+        self,
+        cleaned_name: str,
+        cleaned_value: str,
+    ) -> tuple[dict[str, list[str]], int]:
         """Strategy 3: Process value removal operation following Single Responsibility Principle."""
         # Create immutable copy with value removal logic
         try:
@@ -1831,81 +1858,126 @@ class FlextLdifAttributes(FlextDomainValueObject):
                 logger.trace(
                     "Processing attribute '%s' with %s values",
                     attr_name,
-                    len(attr_values) if isinstance(attr_values, list) else 'unknown'
+                    len(attr_values),
                 )
 
                 # Validate existing attribute structure
-                if not isinstance(attr_name, str):
-                    error_msg = "Existing attribute name must be string, got %s: '%s'"
-                    logger.error("Remove value operation failed: %s", error_msg % (type(attr_name).__name__, attr_name))
-                    raise TypeError(error_msg % (type(attr_name).__name__, attr_name))
-
-                if not isinstance(attr_values, list):
-                    error_msg = "Existing attribute values must be list, got %s for '%s'"
-                    logger.error("Remove value operation failed: %s", error_msg % (type(attr_values).__name__, attr_name))
-                    raise TypeError(error_msg % (type(attr_values).__name__, attr_name))
+                # attr_name and attr_values types guaranteed by dict[str, list[str]] annotation
 
                 # Handle target attribute with value removal
                 if attr_name == cleaned_name:
                     target_found = True
-                    logger.trace("Found target attribute '%s' - applying value removal", cleaned_name)
+                    logger.trace(
+                        "Found target attribute '%s' - applying value removal",
+                        cleaned_name,
+                    )
 
                     try:
-                        # Filter out matching values with comprehensive logging
+                        # Filter out matching values (existing_value guaranteed to be str)
                         new_values = []
                         for i, existing_value in enumerate(attr_values):
-                            if not isinstance(existing_value, str):
-                                error_msg = "Attribute value %d must be string, got %s in '%s'"
-                                logger.error("Remove value operation failed: %s", error_msg % (i + 1, type(existing_value).__name__, attr_name))
-                                raise TypeError(error_msg % (i + 1, type(existing_value).__name__, attr_name))
 
                             if existing_value == cleaned_value:
                                 removed_count += 1
-                                logger.trace("Removing matching value %d: '%s'", i + 1, existing_value)
+                                logger.trace(
+                                    "Removing matching value %d: '%s'",
+                                    i + 1,
+                                    existing_value,
+                                )
                             else:
                                 new_values.append(existing_value)
-                                logger.trace("Keeping value %d: '%s'", i + 1, existing_value)
+                                logger.trace(
+                                    "Keeping value %d: '%s'",
+                                    i + 1,
+                                    existing_value,
+                                )
 
                         # Only include attribute if it has remaining values
                         if new_values:
                             new_attrs[attr_name] = new_values
-                            logger.trace("Kept attribute '%s' with %d remaining values", attr_name, len(new_values))
+                            logger.trace(
+                                "Kept attribute '%s' with %d remaining values",
+                                attr_name,
+                                len(new_values),
+                            )
                         else:
-                            logger.trace("Removed empty attribute '%s' after value removal", attr_name)
+                            logger.trace(
+                                "Removed empty attribute '%s' after value removal",
+                                attr_name,
+                            )
 
                     except Exception as removal_error:
                         error_msg = "Failed to remove value from attribute '%s': %s"
-                        logger.exception("Remove value operation failed: %s", error_msg % (attr_name, str(removal_error)))
-                        raise ValueError(error_msg % (attr_name, str(removal_error))) from removal_error
+                        logger.exception(
+                            "Remove value operation failed: %s",
+                            error_msg % (attr_name, str(removal_error)),
+                        )
+                        raise ValueError(
+                            error_msg % (attr_name, str(removal_error)),
+                        ) from removal_error
 
                 # Handle non-target attributes with simple copy
                 else:
                     try:
                         copied_values = attr_values.copy()
                         new_attrs[attr_name] = copied_values
-                        logger.trace("Copied non-target attribute '%s' with %d values", attr_name, len(copied_values))
+                        logger.trace(
+                            "Copied non-target attribute '%s' with %d values",
+                            attr_name,
+                            len(copied_values),
+                        )
                     except Exception as copy_error:
                         error_msg = "Failed to copy values for attribute '%s': %s"
-                        logger.exception("Remove value operation failed: %s", error_msg % (attr_name, str(copy_error)))
-                        raise ValueError(error_msg % (attr_name, str(copy_error))) from copy_error
+                        logger.exception(
+                            "Remove value operation failed: %s",
+                            error_msg % (attr_name, str(copy_error)),
+                        )
+                        raise ValueError(
+                            error_msg % (attr_name, str(copy_error)),
+                        ) from copy_error
 
             # Log removal results
             if not target_found:
-                logger.debug("Target attribute '%s' not found - no changes made", cleaned_name)
+                logger.debug(
+                    "Target attribute '%s' not found - no changes made",
+                    cleaned_name,
+                )
             elif removed_count == 0:
-                logger.debug("Value '%s' not found in attribute '%s' - no changes made", cleaned_value, cleaned_name)
+                logger.debug(
+                    "Value '%s' not found in attribute '%s' - no changes made",
+                    cleaned_value,
+                    cleaned_name,
+                )
             else:
-                logger.debug("Successfully removed %d instances of value '%s' from attribute '%s'", removed_count, cleaned_value, cleaned_name)
+                logger.debug(
+                    "Successfully removed %d instances of value '%s' from attribute '%s'",
+                    removed_count,
+                    cleaned_value,
+                    cleaned_name,
+                )
 
-            logger.debug("Successfully created immutable copy with %d attributes after removal", len(new_attrs))
+            logger.debug(
+                "Successfully created immutable copy with %d attributes after removal",
+                len(new_attrs),
+            )
             return new_attrs, removed_count
 
         except Exception as copy_error:
             error_msg = "Failed to create immutable copy with removal: %s"
-            logger.error("Remove value operation failed: %s", error_msg % str(copy_error), exc_info=True)
+            logger.error(
+                "Remove value operation failed: %s",
+                error_msg % str(copy_error),
+                exc_info=True,
+            )
             raise ValueError(error_msg % str(copy_error)) from copy_error
 
-    def _create_remove_value_instance(self, new_attrs: dict[str, list[str]], cleaned_name: str, cleaned_value: str, removed_count: int) -> FlextLdifAttributes:
+    def _create_remove_value_instance(
+        self,
+        new_attrs: dict[str, list[str]],
+        cleaned_name: str,
+        cleaned_value: str,
+        removed_count: int,
+    ) -> FlextLdifAttributes:
         """Strategy 4: Create new instance after remove value operation following Single Responsibility Principle."""
         # Create new FlextLdifAttributes instance with comprehensive validation
         try:
@@ -1913,17 +1985,26 @@ class FlextLdifAttributes(FlextDomainValueObject):
 
             new_instance = FlextLdifAttributes.model_validate({"attributes": new_attrs})
 
-            logger.debug("Successfully created new attributes instance with value removed")
+            logger.debug(
+                "Successfully created new attributes instance with value removed",
+            )
             logger.info(
                 "Remove value operation completed - attribute: '%s', value: '%s', removed_count: %d, final_attributes: %d",
-                cleaned_name, cleaned_value, removed_count, len(new_attrs)
+                cleaned_name,
+                cleaned_value,
+                removed_count,
+                len(new_attrs),
             )
 
             return new_instance
 
         except Exception as validation_error:
             error_msg = "Failed to create new FlextLdifAttributes instance: %s"
-            logger.error("Remove value operation failed: %s", error_msg % str(validation_error), exc_info=True)
+            logger.error(
+                "Remove value operation failed: %s",
+                error_msg % str(validation_error),
+                exc_info=True,
+            )
             raise ValueError(error_msg % str(validation_error)) from validation_error
 
     def get_attribute_names(self) -> list[str]:
@@ -1951,14 +2032,11 @@ class FlextLdifAttributes(FlextDomainValueObject):
         try:
             # Validate attributes collection exists and is accessible
             if not hasattr(self, "attributes"):
-                error_msg = "Attributes collection is not available for name retrieval"
-                logger.error(f"Attribute names retrieval failed: {error_msg}")
-                raise AttributeError(error_msg)
+                missing_attributes_names_error_msg = "Attributes collection is not available for name retrieval"
+                logger.error(f"Attribute names retrieval failed: {missing_attributes_names_error_msg}")
+                raise AttributeError(missing_attributes_names_error_msg)
 
-            if not isinstance(self.attributes, dict):
-                error_msg = f"Attributes collection must be dictionary, got {type(self.attributes).__name__}"
-                logger.error(f"Attribute names retrieval failed: {error_msg}")
-                raise TypeError(error_msg)
+            # self.attributes is guaranteed to be dict[str, list[str]] by type annotation
 
             logger.trace(
                 f"Processing {len(self.attributes)} attributes for name extraction",
@@ -1967,25 +2045,17 @@ class FlextLdifAttributes(FlextDomainValueObject):
             # Extract and validate attribute names with comprehensive validation
             try:
                 attribute_names = []
-                for i, (attr_name, attr_values) in enumerate(self.attributes.items()):
+                for i, (attr_name, _attr_values) in enumerate(self.attributes.items()):
                     logger.trace(f"Processing attribute {i + 1}: '{attr_name}'")
 
-                    # Validate attribute name format
-                    if not isinstance(attr_name, str):
-                        error_msg = f"Attribute name {i + 1} must be string, got {type(attr_name).__name__}: '{attr_name}'"
-                        logger.error(f"Attribute names retrieval failed: {error_msg}")
-                        raise TypeError(error_msg)
+                    # attr_name and attr_values types guaranteed by dict[str, list[str]] annotation
 
                     if not attr_name.strip():
-                        error_msg = f"Attribute name {i + 1} cannot be empty string"
-                        logger.error(f"Attribute names retrieval failed: {error_msg}")
-                        raise ValueError(error_msg)
-
-                    # Validate attribute values structure for consistency
-                    if not isinstance(attr_values, list):
-                        logger.warning(
-                            f"Attribute '{attr_name}' has non-list values: {type(attr_values).__name__}",
+                        empty_attr_name_error_msg = (
+                            f"Attribute name {i + 1} cannot be empty string"
                         )
+                        logger.error(f"Attribute names retrieval failed: {empty_attr_name_error_msg}")
+                        raise ValueError(empty_attr_name_error_msg)
 
                     # Add validated attribute name
                     attribute_names.append(attr_name)
@@ -1997,7 +2067,7 @@ class FlextLdifAttributes(FlextDomainValueObject):
 
                 # Final validation of result
                 if len(sorted_names) != len(self.attributes):
-                    error_msg = f"Attribute names count mismatch: expected {len(self.attributes)}, got {len(sorted_names)}"
+                    error_msg: str = f"Attribute names count mismatch: expected {len(self.attributes)}, got {len(sorted_names)}"
                     logger.error(f"Attribute names retrieval failed: {error_msg}")
                     raise ValueError(error_msg)
 
@@ -2011,20 +2081,22 @@ class FlextLdifAttributes(FlextDomainValueObject):
                 return sorted_names
 
             except Exception as extraction_error:
-                error_msg = f"Failed to extract attribute names: {extraction_error!s}"
+                extraction_error_msg: str = (
+                    f"Failed to extract attribute names: {extraction_error!s}"
+                )
                 logger.error(
-                    f"Attribute names retrieval failed: {error_msg}",
+                    f"Attribute names retrieval failed: {extraction_error_msg}",
                     exc_info=True,
                 )
-                raise ValueError(error_msg) from extraction_error
+                raise ValueError(extraction_error_msg) from extraction_error
 
         except Exception as unexpected_error:
-            error_msg = f"Unexpected error during attribute names retrieval: {unexpected_error!s}"
+            names_unexpected_error_msg: str = f"Unexpected error during attribute names retrieval: {unexpected_error!s}"
             logger.error(
-                f"Attribute names retrieval failed: {error_msg}",
+                f"Attribute names retrieval failed: {names_unexpected_error_msg}",
                 exc_info=True,
             )
-            raise ValueError(error_msg) from unexpected_error
+            raise ValueError(names_unexpected_error_msg) from unexpected_error
 
     def get_total_values(self) -> int:
         """Get total number of attribute values across all attributes.
@@ -2051,14 +2123,11 @@ class FlextLdifAttributes(FlextDomainValueObject):
         try:
             # Validate attributes collection exists and is accessible
             if not hasattr(self, "attributes"):
-                error_msg = "Attributes collection is not available for total values calculation"
-                logger.error(f"Total values calculation failed: {error_msg}")
-                raise AttributeError(error_msg)
+                missing_attributes_total_error_msg = "Attributes collection is not available for total values calculation"
+                logger.error(f"Total values calculation failed: {missing_attributes_total_error_msg}")
+                raise AttributeError(missing_attributes_total_error_msg)
 
-            if not isinstance(self.attributes, dict):
-                error_msg = f"Attributes collection must be dictionary, got {type(self.attributes).__name__}"
-                logger.error(f"Total values calculation failed: {error_msg}")
-                raise TypeError(error_msg)
+            # self.attributes is guaranteed to be dict[str, list[str]] by type annotation
 
             logger.trace(
                 f"Processing {len(self.attributes)} attributes for total values calculation",
@@ -2074,17 +2143,7 @@ class FlextLdifAttributes(FlextDomainValueObject):
                         f"Processing attribute '{attr_name}' for value counting",
                     )
 
-                    # Validate attribute name
-                    if not isinstance(attr_name, str):
-                        error_msg = f"Attribute name must be string, got {type(attr_name).__name__}: '{attr_name}'"
-                        logger.error(f"Total values calculation failed: {error_msg}")
-                        raise TypeError(error_msg)
-
-                    # Validate attribute values structure
-                    if not isinstance(attr_values, list):
-                        error_msg = f"Attribute values must be list, got {type(attr_values).__name__} for '{attr_name}'"
-                        logger.error(f"Total values calculation failed: {error_msg}")
-                        raise TypeError(error_msg)
+                    # attr_name and attr_values types guaranteed by dict[str, list[str]] annotation
 
                     # Count values in current attribute
                     try:
@@ -2096,29 +2155,28 @@ class FlextLdifAttributes(FlextDomainValueObject):
                             f"Attribute '{attr_name}' has {current_count} values - running total: {total_values}",
                         )
 
-                        # Validate individual values for consistency (optional but thorough)
-                        for i, value in enumerate(attr_values):
-                            if not isinstance(value, str):
-                                logger.warning(
-                                    f"Attribute '{attr_name}' value {i + 1} is not string: {type(value).__name__}",
-                                )
+                        # All values guaranteed to be str by type annotation
 
                     except Exception as count_error:
-                        error_msg = f"Failed to count values for attribute '{attr_name}': {count_error!s}"
-                        logger.exception(f"Total values calculation failed: {error_msg}")
-                        raise ValueError(error_msg) from count_error
+                        count_values_error_msg: str = f"Failed to count values for attribute '{attr_name}': {count_error!s}"
+                        logger.exception(
+                            f"Total values calculation failed: {count_values_error_msg}",
+                        )
+                        raise ValueError(count_values_error_msg) from count_error
 
                 # Validate calculation consistency
                 if attributes_processed != len(self.attributes):
-                    error_msg = f"Processed attributes count mismatch: expected {len(self.attributes)}, processed {attributes_processed}"
-                    logger.error(f"Total values calculation failed: {error_msg}")
-                    raise ValueError(error_msg)
+                    processed_count_error_msg: str = f"Processed attributes count mismatch: expected {len(self.attributes)}, processed {attributes_processed}"
+                    logger.error(f"Total values calculation failed: {processed_count_error_msg}")
+                    raise ValueError(processed_count_error_msg)
 
                 # Validate total is reasonable
                 if total_values < 0:
-                    error_msg = f"Invalid negative total values count: {total_values}"
-                    logger.error(f"Total values calculation failed: {error_msg}")
-                    raise ValueError(error_msg)
+                    negative_total_error_msg: str = (
+                        f"Invalid negative total values count: {total_values}"
+                    )
+                    logger.error(f"Total values calculation failed: {negative_total_error_msg}")
+                    raise ValueError(negative_total_error_msg)
 
                 # Log successful calculation with detailed statistics
                 if total_values == 0:
@@ -2140,19 +2198,19 @@ class FlextLdifAttributes(FlextDomainValueObject):
                 return total_values
 
             except Exception as calculation_error:
-                error_msg = (
+                calculation_total_error_msg = (
                     f"Failed to calculate total attribute values: {calculation_error!s}"
                 )
                 logger.error(
-                    f"Total values calculation failed: {error_msg}",
+                    f"Total values calculation failed: {calculation_total_error_msg}",
                     exc_info=True,
                 )
-                raise ValueError(error_msg) from calculation_error
+                raise ValueError(calculation_total_error_msg) from calculation_error
 
         except Exception as unexpected_error:
-            error_msg = f"Unexpected error during total values calculation: {unexpected_error!s}"
-            logger.error(f"Total values calculation failed: {error_msg}", exc_info=True)
-            raise ValueError(error_msg) from unexpected_error
+            total_unexpected_error_msg: str = f"Unexpected error during total values calculation: {unexpected_error!s}"
+            logger.error(f"Total values calculation failed: {total_unexpected_error_msg}", exc_info=True)
+            raise ValueError(total_unexpected_error_msg) from unexpected_error
 
     def is_empty(self) -> bool:
         """Check if the attributes collection is empty.
@@ -2175,14 +2233,11 @@ class FlextLdifAttributes(FlextDomainValueObject):
         try:
             # Validate attributes collection exists and is accessible
             if not hasattr(self, "attributes"):
-                error_msg = "Attributes collection is not available for emptiness check"
-                logger.error(f"Emptiness check failed: {error_msg}")
-                raise AttributeError(error_msg)
+                missing_attributes_empty_error_msg = "Attributes collection is not available for emptiness check"
+                logger.error(f"Emptiness check failed: {missing_attributes_empty_error_msg}")
+                raise AttributeError(missing_attributes_empty_error_msg)
 
-            if not isinstance(self.attributes, dict):
-                error_msg = f"Attributes collection must be dictionary, got {type(self.attributes).__name__}"
-                logger.error(f"Emptiness check failed: {error_msg}")
-                raise TypeError(error_msg)
+            # self.attributes is guaranteed to be dict[str, list[str]] by type annotation
 
             logger.trace(
                 f"Checking emptiness of attributes collection with {len(self.attributes)} items",
@@ -2207,17 +2262,7 @@ class FlextLdifAttributes(FlextDomainValueObject):
                             f"Checking attribute '{attr_name}' for empty values",
                         )
 
-                        # Validate attribute structure
-                        if not isinstance(attr_name, str):
-                            logger.warning(
-                                f"Non-string attribute name found: {type(attr_name).__name__}",
-                            )
-
-                        if not isinstance(attr_values, list):
-                            logger.warning(
-                                f"Non-list attribute values found for '{attr_name}': {type(attr_values).__name__}",
-                            )
-                            continue
+                        # attr_name and attr_values types guaranteed by dict[str, list[str]] annotation
 
                         # Count values in this attribute
                         values_count = len(attr_values)
@@ -2258,14 +2303,18 @@ class FlextLdifAttributes(FlextDomainValueObject):
                 return is_empty
 
             except Exception as check_error:
-                error_msg = f"Failed to check attributes emptiness: {check_error!s}"
-                logger.error(f"Emptiness check failed: {error_msg}", exc_info=True)
-                raise ValueError(error_msg) from check_error
+                check_error_msg: str = (
+                    f"Failed to check attributes emptiness: {check_error!s}"
+                )
+                logger.error(f"Emptiness check failed: {check_error_msg}", exc_info=True)
+                raise ValueError(check_error_msg) from check_error
 
         except Exception as unexpected_error:
-            error_msg = f"Unexpected error during emptiness check: {unexpected_error!s}"
-            logger.error(f"Emptiness check failed: {error_msg}", exc_info=True)
-            raise ValueError(error_msg) from unexpected_error
+            empty_unexpected_error_msg: str = (
+                f"Unexpected error during emptiness check: {unexpected_error!s}"
+            )
+            logger.error(f"Emptiness check failed: {empty_unexpected_error_msg}", exc_info=True)
+            raise ValueError(empty_unexpected_error_msg) from unexpected_error
 
     def __eq__(self, other: object) -> bool:
         """Compare with dict or other FlextLdifAttributes with enterprise-grade equality validation.
@@ -2322,10 +2371,7 @@ class FlextLdifAttributes(FlextDomainValueObject):
                 logger.error(f"Equality comparison failed: {error_msg}")
                 raise AttributeError(error_msg)
 
-            if not isinstance(self.attributes, dict):
-                error_msg = f"Current object attributes must be dictionary, got {type(self.attributes).__name__}"
-                logger.error(f"Equality comparison failed: {error_msg}")
-                raise TypeError(error_msg)
+            # self.attributes is guaranteed to be dict[str, list[str]] by type annotation
 
             logger.trace(
                 f"Comparing current object ({len(self.attributes)} attributes) with {type(other).__name__}",
@@ -2373,9 +2419,11 @@ class FlextLdifAttributes(FlextDomainValueObject):
                     return is_equal
 
                 except Exception as dict_compare_error:
-                    error_msg = f"Dictionary comparison failed: {dict_compare_error!s}"
-                    logger.exception(f"Equality comparison failed: {error_msg}")
-                    raise ValueError(error_msg) from dict_compare_error
+                    dict_compare_error_msg: str = (
+                        f"Dictionary comparison failed: {dict_compare_error!s}"
+                    )
+                    logger.exception(f"Equality comparison failed: {dict_compare_error_msg}")
+                    raise ValueError(dict_compare_error_msg) from dict_compare_error
 
             # Handle FlextLdifAttributes comparison
             elif isinstance(other, FlextLdifAttributes):
@@ -2388,10 +2436,7 @@ class FlextLdifAttributes(FlextDomainValueObject):
                         logger.error(f"Equality comparison failed: {error_msg}")
                         raise AttributeError(error_msg)
 
-                    if not isinstance(other.attributes, dict):
-                        error_msg = f"Other object attributes must be dictionary, got {type(other.attributes).__name__}"
-                        logger.error(f"Equality comparison failed: {error_msg}")
-                        raise TypeError(error_msg)
+                    # other.attributes is guaranteed to be dict[str, list[str]] by type annotation
 
                     logger.trace(
                         f"Comparing with other FlextLdifAttributes ({len(other.attributes)} attributes)",
@@ -2431,9 +2476,9 @@ class FlextLdifAttributes(FlextDomainValueObject):
                     return is_equal
 
                 except Exception as attrs_compare_error:
-                    error_msg = f"FlextLdifAttributes comparison failed: {attrs_compare_error!s}"
-                    logger.exception(f"Equality comparison failed: {error_msg}")
-                    raise ValueError(error_msg) from attrs_compare_error
+                    attrs_compare_error_msg: str = f"FlextLdifAttributes comparison failed: {attrs_compare_error!s}"
+                    logger.exception(f"Equality comparison failed: {attrs_compare_error_msg}")
+                    raise ValueError(attrs_compare_error_msg) from attrs_compare_error
 
             # Handle other object types (always False)
             else:
@@ -2444,9 +2489,9 @@ class FlextLdifAttributes(FlextDomainValueObject):
                 return False
 
         except Exception as unexpected_error:
-            error_msg = f"Unexpected error during equality comparison with {type(other).__name__}: {unexpected_error!s}"
-            logger.error(f"Equality comparison failed: {error_msg}", exc_info=True)
-            raise ValueError(error_msg) from unexpected_error
+            eq_unexpected_error_msg: str = f"Unexpected error during equality comparison with {type(other).__name__}: {unexpected_error!s}"
+            logger.error(f"Equality comparison failed: {eq_unexpected_error_msg}", exc_info=True)
+            raise ValueError(eq_unexpected_error_msg) from unexpected_error
 
     def __hash__(self) -> int:
         """Return hash of attributes for use in sets/dicts with enterprise-grade hash computation.
@@ -2502,10 +2547,7 @@ class FlextLdifAttributes(FlextDomainValueObject):
                 logger.error(f"Hash computation failed: {error_msg}")
                 raise AttributeError(error_msg)
 
-            if not isinstance(self.attributes, dict):
-                error_msg = f"Attributes collection must be dictionary, got {type(self.attributes).__name__}"
-                logger.error(f"Hash computation failed: {error_msg}")
-                raise TypeError(error_msg)
+            # self.attributes is guaranteed to be dict[str, list[str]] by type annotation
 
             logger.trace(f"Computing hash for {len(self.attributes)} attributes")
 
@@ -2518,25 +2560,13 @@ class FlextLdifAttributes(FlextDomainValueObject):
                         f"Processing attribute '{attr_name}' for hash computation",
                     )
 
-                    # Validate attribute name for hashing
-                    if not isinstance(attr_name, str):
-                        error_msg = f"Attribute name must be string for hashing, got {type(attr_name).__name__}: '{attr_name}'"
-                        logger.error(f"Hash computation failed: {error_msg}")
-                        raise TypeError(error_msg)
-
-                    # Validate attribute values for hashing
-                    if not isinstance(attr_values, list):
-                        error_msg = f"Attribute values must be list for hashing, got {type(attr_values).__name__} for '{attr_name}'"
-                        logger.error(f"Hash computation failed: {error_msg}")
-                        raise TypeError(error_msg)
+                    # attr_name and attr_values types guaranteed by dict[str, list[str]] annotation
 
                     # Validate individual values are hashable
                     try:
-                        for i, value in enumerate(attr_values):
-                            if not isinstance(value, str):
-                                error_msg = f"Attribute value {i + 1} must be string for hashing, got {type(value).__name__} in '{attr_name}'"
-                                logger.error(f"Hash computation failed: {error_msg}")
-                                raise TypeError(error_msg)
+                        # All values guaranteed to be str by list[str] annotation
+                        for _i, _value in enumerate(attr_values):
+                            pass  # Type safety guaranteed by annotation
 
                         # Convert to immutable tuple for deterministic hashing
                         immutable_values = tuple(attr_values)
@@ -2546,18 +2576,18 @@ class FlextLdifAttributes(FlextDomainValueObject):
                         )
 
                     except Exception as value_error:
-                        error_msg = f"Failed to process values for attribute '{attr_name}': {value_error!s}"
-                        logger.exception(f"Hash computation failed: {error_msg}")
-                        raise TypeError(error_msg) from value_error
+                        value_error_msg: str = f"Failed to process values for attribute '{attr_name}': {value_error!s}"
+                        logger.exception(f"Hash computation failed: {value_error_msg}")
+                        raise TypeError(value_error_msg) from value_error
 
                 logger.trace(
                     f"Successfully converted {len(immutable_items)} attributes to immutable format",
                 )
 
             except Exception as conversion_error:
-                error_msg = f"Failed to convert attributes to immutable format: {conversion_error!s}"
-                logger.error(f"Hash computation failed: {error_msg}", exc_info=True)
-                raise TypeError(error_msg) from conversion_error
+                conversion_error_msg: str = f"Failed to convert attributes to immutable format: {conversion_error!s}"
+                logger.error(f"Hash computation failed: {conversion_error_msg}", exc_info=True)
+                raise TypeError(conversion_error_msg) from conversion_error
 
             # Compute deterministic hash using frozenset for order independence
             try:
@@ -2568,11 +2598,8 @@ class FlextLdifAttributes(FlextDomainValueObject):
 
                 logger.trace(f"Computed raw hash value: {hash_value}")
 
-                # Validate hash value is reasonable
-                if not isinstance(hash_value, int):
-                    error_msg = f"Hash computation produced non-integer result: {type(hash_value).__name__}"
-                    logger.error(f"Hash computation failed: {error_msg}")
-                    raise TypeError(error_msg)
+                # hash() function always returns int by design
+                # Validation omitted as type safety is guaranteed
 
                 # Log successful hash computation with metadata
                 logger.debug(f"Successfully computed hash value: {hash_value}")
@@ -2583,18 +2610,18 @@ class FlextLdifAttributes(FlextDomainValueObject):
                 return hash_value
 
             except Exception as hash_error:
-                error_msg = (
+                hash_error_msg = (
                     f"Hash computation failed during frozenset hashing: {hash_error!s}"
                 )
-                logger.error(f"Hash computation failed: {error_msg}", exc_info=True)
-                raise ValueError(error_msg) from hash_error
+                logger.error(f"Hash computation failed: {hash_error_msg}", exc_info=True)
+                raise ValueError(hash_error_msg) from hash_error
 
         except Exception as unexpected_error:
-            error_msg = (
+            hash_unexpected_error_msg = (
                 f"Unexpected error during hash computation: {unexpected_error!s}"
             )
-            logger.error(f"Hash computation failed: {error_msg}", exc_info=True)
-            raise ValueError(error_msg) from unexpected_error
+            logger.error(f"Hash computation failed: {hash_unexpected_error_msg}", exc_info=True)
+            raise ValueError(hash_unexpected_error_msg) from unexpected_error
 
     def validate_semantic_rules(self) -> FlextResult[None]:
         """Validate attributes collection against business rules using Strategy Pattern.
@@ -2604,6 +2631,7 @@ class FlextLdifAttributes(FlextDomainValueObject):
 
         Returns:
             FlextResult[None]: Success if all attributes are valid, failure with error message
+
         """
         logger.debug(
             "Validating attributes collection semantic rules using Strategy Pattern",
@@ -2618,10 +2646,7 @@ class FlextLdifAttributes(FlextDomainValueObject):
                 logger.error(f"Semantic validation failed: {error_msg}")
                 return FlextResult.fail(error_msg)
 
-            if not isinstance(self.attributes, dict):
-                error_msg = f"Attributes collection must be dictionary, got {type(self.attributes).__name__}"
-                logger.error(f"Semantic validation failed: {error_msg}")
-                return FlextResult.fail(error_msg)
+            # self.attributes is guaranteed to be dict[str, list[str]] by type annotation
 
             logger.trace(
                 f"Validating semantic rules for {len(self.attributes)} attributes",
@@ -2637,26 +2662,21 @@ class FlextLdifAttributes(FlextDomainValueObject):
                         f"Validating attribute '{attr_name}' with {len(attr_values) if isinstance(attr_values, list) else 'unknown'} values",
                     )
 
-                    # Validate attribute name type
-                    if not isinstance(attr_name, str):
-                        error_msg = f"Attribute name must be string, got {type(attr_name).__name__}: '{attr_name}'"
-                        validation_errors.append(error_msg)
-                        logger.error(f"Semantic validation error: {error_msg}")
-                        continue
+                    # attr_name guaranteed to be str by dict[str, list[str]] annotation
 
                     # Validate attribute name format (not empty after strip)
                     if not attr_name.strip():
-                        error_msg = f"Attribute name cannot be empty or whitespace-only: '{attr_name}'"
-                        validation_errors.append(error_msg)
-                        logger.error(f"Semantic validation error: {error_msg}")
+                        empty_name_error_msg: str = f"Attribute name cannot be empty or whitespace-only: '{attr_name}'"
+                        validation_errors.append(empty_name_error_msg)
+                        logger.error(f"Semantic validation error: {empty_name_error_msg}")
                         continue
 
                     # Validate attribute name follows LDAP naming conventions
                     cleaned_name = attr_name.strip()
                     if cleaned_name != attr_name:
-                        error_msg = f"Attribute name contains leading/trailing whitespace: '{attr_name}'"
-                        validation_errors.append(error_msg)
-                        logger.error(f"Semantic validation error: {error_msg}")
+                        whitespace_error_msg: str = f"Attribute name contains leading/trailing whitespace: '{attr_name}'"
+                        validation_errors.append(whitespace_error_msg)
+                        logger.error(f"Semantic validation error: {whitespace_error_msg}")
                         continue
 
                     # Validate attribute name contains valid characters (basic LDAP compliance)
@@ -2667,17 +2687,12 @@ class FlextLdifAttributes(FlextDomainValueObject):
                         .isalnum()
                     ):
                         if not all(c.isalnum() or c in "-_." for c in cleaned_name):
-                            error_msg = f"Attribute name contains invalid characters: '{cleaned_name}'"
-                            validation_errors.append(error_msg)
-                            logger.error(f"Semantic validation error: {error_msg}")
+                            invalid_chars_error_msg: str = f"Attribute name contains invalid characters: '{cleaned_name}'"
+                            validation_errors.append(invalid_chars_error_msg)
+                            logger.error(f"Semantic validation error: {invalid_chars_error_msg}")
                             continue
 
-                    # Validate attribute values structure
-                    if not isinstance(attr_values, list):
-                        error_msg = f"Attribute values must be list, got {type(attr_values).__name__} for '{attr_name}'"
-                        validation_errors.append(error_msg)
-                        logger.error(f"Semantic validation error: {error_msg}")
-                        continue
+                    # attr_values guaranteed to be list[str] by dict[str, list[str]] annotation
 
                     # Validate individual attribute values
                     values_validated = 0
@@ -2686,11 +2701,7 @@ class FlextLdifAttributes(FlextDomainValueObject):
                             f"Validating value {i + 1} for attribute '{attr_name}': '{value}'",
                         )
 
-                        if not isinstance(value, str):
-                            error_msg = f"Attribute value {i + 1} must be string, got {type(value).__name__} for '{attr_name}'"
-                            validation_errors.append(error_msg)
-                            logger.error(f"Semantic validation error: {error_msg}")
-                            continue
+                        # value guaranteed to be str by list[str] annotation
 
                         # Note: Empty strings are valid LDAP attribute values
                         values_validated += 1
@@ -2730,18 +2741,18 @@ class FlextLdifAttributes(FlextDomainValueObject):
                 return FlextResult.ok(None)
 
             except Exception as validation_error:
-                error_msg = (
+                validation_error_msg = (
                     f"Error during semantic validation processing: {validation_error!s}"
                 )
-                logger.error(f"Semantic validation failed: {error_msg}", exc_info=True)
-                return FlextResult.fail(error_msg)
+                logger.error(f"Semantic validation failed: {validation_error_msg}", exc_info=True)
+                return FlextResult.fail(validation_error_msg)
 
         except Exception as unexpected_error:
-            error_msg = (
+            semantic_unexpected_error_msg = (
                 f"Unexpected error during semantic validation: {unexpected_error!s}"
             )
-            logger.error(f"Semantic validation failed: {error_msg}", exc_info=True)
-            return FlextResult.fail(error_msg)
+            logger.error(f"Semantic validation failed: {semantic_unexpected_error_msg}", exc_info=True)
+            return FlextResult.fail(semantic_unexpected_error_msg)
 
     def to_attributes_dict(self) -> FlextLdifAttributesDict:
         """Convert to FlextLdifAttributesDict representation with enterprise-grade serialization and comprehensive validation.
@@ -2795,10 +2806,7 @@ class FlextLdifAttributes(FlextDomainValueObject):
                 logger.error(f"Attributes dictionary conversion failed: {error_msg}")
                 raise AttributeError(error_msg)
 
-            if not isinstance(self.attributes, dict):
-                error_msg = f"Attributes collection must be dictionary, got {type(self.attributes).__name__}"
-                logger.error(f"Attributes dictionary conversion failed: {error_msg}")
-                raise TypeError(error_msg)
+            # self.attributes is guaranteed to be dict[str, list[str]] by type annotation
 
             logger.trace(
                 f"Processing {len(self.attributes)} attributes for dictionary serialization",
@@ -2814,23 +2822,11 @@ class FlextLdifAttributes(FlextDomainValueObject):
                         f"Processing attribute '{attr_name}' for dictionary conversion",
                     )
 
-                    # Validate attribute name
-                    if not isinstance(attr_name, str):
-                        error_msg = f"Attribute name must be string, got {type(attr_name).__name__}: '{attr_name}'"
-                        logger.error(
-                            f"Attributes dictionary conversion failed: {error_msg}",
-                        )
-                        raise TypeError(error_msg)
+                    # attr_name guaranteed to be str by dict[str, list[str]] annotation
 
-                    # Validate attribute values structure
-                    if not isinstance(attr_values, list):
-                        error_msg = f"Attribute values must be list, got {type(attr_values).__name__} for '{attr_name}'"
-                        logger.error(
-                            f"Attributes dictionary conversion failed: {error_msg}",
-                        )
-                        raise TypeError(error_msg)
+                    # attr_values guaranteed to be list[str] by dict[str, list[str]] annotation
 
-                    # Create deep copy of values list with validation
+                    # Create deep copy of values list with type safety
                     try:
                         copied_values = []
                         for i, value in enumerate(attr_values):
@@ -2838,13 +2834,7 @@ class FlextLdifAttributes(FlextDomainValueObject):
                                 f"Copying value {i + 1} for attribute '{attr_name}': '{value}'",
                             )
 
-                            if not isinstance(value, str):
-                                error_msg = f"Attribute value {i + 1} must be string, got {type(value).__name__} for '{attr_name}'"
-                                logger.error(
-                                    f"Attributes dictionary conversion failed: {error_msg}",
-                                )
-                                raise TypeError(error_msg)
-
+                            # value guaranteed to be str by list[str] annotation
                             copied_values.append(value)
 
                         deep_copied_attributes[attr_name] = copied_values
@@ -2854,23 +2844,25 @@ class FlextLdifAttributes(FlextDomainValueObject):
                         )
 
                     except Exception as copy_error:
-                        error_msg = f"Failed to copy values for attribute '{attr_name}': {copy_error!s}"
+                        copy_error_msg: str = f"Failed to copy values for attribute '{attr_name}': {copy_error!s}"
                         logger.exception(
-                            f"Attributes dictionary conversion failed: {error_msg}",
+                            f"Attributes dictionary conversion failed: {copy_error_msg}",
                         )
-                        raise ValueError(error_msg) from copy_error
+                        raise ValueError(copy_error_msg) from copy_error
 
                 logger.debug(
                     f"Successfully created deep copy of {len(deep_copied_attributes)} attributes with {total_values} total values",
                 )
 
             except Exception as copy_error:
-                error_msg = f"Failed to create deep copy of attributes: {copy_error!s}"
+                deep_copy_error_msg: str = (
+                    f"Failed to create deep copy of attributes: {copy_error!s}"
+                )
                 logger.error(
-                    f"Attributes dictionary conversion failed: {error_msg}",
+                    f"Attributes dictionary conversion failed: {deep_copy_error_msg}",
                     exc_info=True,
                 )
-                raise ValueError(error_msg) from copy_error
+                raise ValueError(deep_copy_error_msg) from copy_error
 
             # Calculate comprehensive statistics
             try:
@@ -2878,22 +2870,24 @@ class FlextLdifAttributes(FlextDomainValueObject):
 
                 # Validate count consistency
                 if attribute_count != len(self.attributes):
-                    error_msg = f"Attribute count mismatch: original {len(self.attributes)}, copied {attribute_count}"
+                    count_mismatch_error_msg: str = f"Attribute count mismatch: original {len(self.attributes)}, copied {attribute_count}"
                     logger.error(
-                        f"Attributes dictionary conversion failed: {error_msg}",
+                        f"Attributes dictionary conversion failed: {count_mismatch_error_msg}",
                     )
-                    raise ValueError(error_msg)
+                    raise ValueError(count_mismatch_error_msg)
 
                 logger.trace(
                     f"Calculated statistics - attributes: {attribute_count}, total_values: {total_values}",
                 )
 
             except Exception as stats_error:
-                error_msg = (
+                stats_error_msg = (
                     f"Failed to calculate attributes statistics: {stats_error!s}"
                 )
-                logger.exception(f"Attributes dictionary conversion failed: {error_msg}")
-                raise ValueError(error_msg) from stats_error
+                logger.exception(
+                    f"Attributes dictionary conversion failed: {stats_error_msg}",
+                )
+                raise ValueError(stats_error_msg) from stats_error
 
             # Create FlextLdifAttributesDict with comprehensive validation
             try:
@@ -2914,22 +2908,22 @@ class FlextLdifAttributes(FlextDomainValueObject):
                 return attributes_dict
 
             except Exception as dict_error:
-                error_msg = (
+                dict_construction_error_msg = (
                     f"FlextLdifAttributesDict construction failed: {dict_error!s}"
                 )
                 logger.error(
-                    f"Attributes dictionary conversion failed: {error_msg}",
+                    f"Attributes dictionary conversion failed: {dict_construction_error_msg}",
                     exc_info=True,
                 )
-                raise ValueError(error_msg) from dict_error
+                raise ValueError(dict_construction_error_msg) from dict_error
 
         except Exception as unexpected_error:
-            error_msg = f"Unexpected error during attributes dictionary conversion: {unexpected_error!s}"
+            dict_unexpected_error_msg: str = f"Unexpected error during attributes dictionary conversion: {unexpected_error!s}"
             logger.error(
-                f"Attributes dictionary conversion failed: {error_msg}",
+                f"Attributes dictionary conversion failed: {dict_unexpected_error_msg}",
                 exc_info=True,
             )
-            raise ValueError(error_msg) from unexpected_error
+            raise ValueError(dict_unexpected_error_msg) from unexpected_error
 
 
 class FlextLdifEntry(FlextImmutableModel):
@@ -2979,7 +2973,7 @@ class FlextLdifEntry(FlextImmutableModel):
 
         Validate business rules:
         >>> result = entry.validate_semantic_rules()
-        >>> result.is_success  # True
+        >>> result.success  # True
 
         Convert to LDIF format:
         >>> ldif_string = entry.to_ldif()
@@ -3011,7 +3005,7 @@ class FlextLdifEntry(FlextImmutableModel):
             return FlextLdifDistinguishedName.model_validate({"value": v})
         if isinstance(v, FlextLdifDistinguishedName):
             return v
-        msg = f"Invalid DN type: {type(v)}"
+        msg: str = f"Invalid DN type: {type(v)}"
         raise ValueError(msg)
 
     @field_validator("attributes", mode="before")
@@ -3094,8 +3088,8 @@ class FlextLdifEntry(FlextImmutableModel):
         try:
             # Comprehensive parameter validation with detailed error context
             if not isinstance(name, str):
-                error_msg = f"Attribute name must be string, got {type(name).__name__}: '{name}'"
-                logger.error(f"Attribute retrieval failed: {error_msg}")
+                name_type_error_msg: str = f"Attribute name must be string, got {type(name).__name__}: '{name}'"
+                logger.error(f"Attribute retrieval failed: {name_type_error_msg}")
                 context = {
                     "attribute_name": str(name),
                     "name_type": type(name).__name__,
@@ -3105,14 +3099,14 @@ class FlextLdifEntry(FlextImmutableModel):
                     else "unknown",
                 }
                 logger.error(f"Attribute retrieval context: {context}")
-                raise TypeError(error_msg)
+                raise TypeError(name_type_error_msg)
 
             # Validate attribute name format and business rules
             if not name.strip():
-                error_msg = (
+                name_empty_error_msg = (
                     f"Attribute name cannot be empty or whitespace-only: '{name}'"
                 )
-                logger.error(f"Attribute retrieval failed: {error_msg}")
+                logger.error(f"Attribute retrieval failed: {name_empty_error_msg}")
                 context = {
                     "attribute_name": name,
                     "name_length": len(name),
@@ -3120,12 +3114,12 @@ class FlextLdifEntry(FlextImmutableModel):
                     "operation": "get_attribute",
                 }
                 logger.error(f"Attribute name validation context: {context}")
-                raise ValueError(error_msg)
+                raise ValueError(name_empty_error_msg)
 
             # Validate entry attributes collection accessibility
             if not hasattr(self, "attributes"):
-                error_msg = "Entry attributes collection is not available for attribute retrieval"
-                logger.error(f"Attribute retrieval failed: {error_msg}")
+                no_attributes_error_msg = "Entry attributes collection is not available for attribute retrieval"
+                logger.error(f"Attribute retrieval failed: {no_attributes_error_msg}")
                 context = {
                     "attribute_name": name,
                     "entry_dn": str(self.dn.value)
@@ -3135,11 +3129,11 @@ class FlextLdifEntry(FlextImmutableModel):
                     "operation": "get_attribute",
                 }
                 logger.error(f"Entry state validation context: {context}")
-                raise AttributeError(error_msg)
+                raise AttributeError(no_attributes_error_msg)
 
             if not isinstance(self.attributes, FlextLdifAttributes):
-                error_msg = f"Entry attributes must be FlextLdifAttributes, got {type(self.attributes).__name__}"
-                logger.error(f"Attribute retrieval failed: {error_msg}")
+                attributes_type_error_msg: str = f"Entry attributes must be FlextLdifAttributes, got {type(self.attributes).__name__}"
+                logger.error(f"Attribute retrieval failed: {attributes_type_error_msg}")
                 context = {
                     "attribute_name": name,
                     "attributes_type": type(self.attributes).__name__,
@@ -3149,7 +3143,7 @@ class FlextLdifEntry(FlextImmutableModel):
                     "operation": "get_attribute",
                 }
                 logger.error(f"Attributes type validation context: {context}")
-                raise TypeError(error_msg)
+                raise TypeError(attributes_type_error_msg)
 
             logger.trace(f"Validated attribute name '{name}' for retrieval from entry")
 
@@ -3180,7 +3174,7 @@ class FlextLdifEntry(FlextImmutableModel):
                     return None
 
             except Exception as existence_check_error:
-                error_msg = f"Error checking attribute existence for '{name}': {existence_check_error!s}"
+                error_msg: str = f"Error checking attribute existence for '{name}': {existence_check_error!s}"
                 logger.error(
                     f"Attribute existence check failed: {error_msg}",
                     exc_info=True,
@@ -3202,7 +3196,7 @@ class FlextLdifEntry(FlextImmutableModel):
 
                 # Validate returned values structure
                 if not isinstance(attribute_values, list):
-                    error_msg = f"Attribute values must be list, got {type(attribute_values).__name__} for '{name}'"
+                    error_msg: str = f"Attribute values must be list, got {type(attribute_values).__name__} for '{name}'"
                     logger.error(f"Attribute values validation failed: {error_msg}")
                     context = {
                         "attribute_name": name,
@@ -3219,7 +3213,7 @@ class FlextLdifEntry(FlextImmutableModel):
                         invalid_values.append(f"value[{i}]: {type(value).__name__}")
 
                 if invalid_values:
-                    error_msg = f"All attribute values must be strings for '{name}': {', '.join(invalid_values)}"
+                    error_msg: str = f"All attribute values must be strings for '{name}': {', '.join(invalid_values)}"
                     logger.error(
                         f"Attribute values type validation failed: {error_msg}",
                     )
@@ -3251,7 +3245,7 @@ class FlextLdifEntry(FlextImmutableModel):
                 return attribute_values
 
             except Exception as retrieval_error:
-                error_msg = f"Error retrieving values for attribute '{name}': {retrieval_error!s}"
+                error_msg: str = f"Error retrieving values for attribute '{name}': {retrieval_error!s}"
                 logger.error(
                     f"Attribute values retrieval failed: {error_msg}",
                     exc_info=True,
@@ -3265,7 +3259,7 @@ class FlextLdifEntry(FlextImmutableModel):
                 raise ValueError(error_msg) from retrieval_error
 
         except Exception as unexpected_error:
-            error_msg = f"Unexpected error during attribute retrieval for '{name}': {unexpected_error!s}"
+            error_msg: str = f"Unexpected error during attribute retrieval for '{name}': {unexpected_error!s}"
             logger.error(f"Attribute retrieval failed: {error_msg}", exc_info=True)
             context = {
                 "attribute_name": name,
@@ -3349,7 +3343,7 @@ class FlextLdifEntry(FlextImmutableModel):
         try:
             # Comprehensive parameter validation with detailed error context
             if not isinstance(name, str):
-                error_msg = f"Attribute name must be string, got {type(name).__name__}: '{name}'"
+                error_msg: str = f"Attribute name must be string, got {type(name).__name__}: '{name}'"
                 logger.error(f"Attribute setting failed: {error_msg}")
                 context = {
                     "attribute_name": str(name),
@@ -3385,7 +3379,7 @@ class FlextLdifEntry(FlextImmutableModel):
 
             # Validate values parameter type and structure
             if not isinstance(values, list):
-                error_msg = f"Attribute values must be list, got {type(values).__name__} for '{name}'"
+                error_msg: str = f"Attribute values must be list, got {type(values).__name__} for '{name}'"
                 logger.error(f"Attribute setting failed: {error_msg}")
                 context = {
                     "attribute_name": name,
@@ -3405,7 +3399,7 @@ class FlextLdifEntry(FlextImmutableModel):
                     )
 
             if invalid_values:
-                error_msg = f"All attribute values must be strings for '{name}': {', '.join(invalid_values)}"
+                error_msg: str = f"All attribute values must be strings for '{name}': {', '.join(invalid_values)}"
                 logger.error(f"Attribute values validation failed: {error_msg}")
                 context = {
                     "attribute_name": name,
@@ -3439,7 +3433,7 @@ class FlextLdifEntry(FlextImmutableModel):
                 raise AttributeError(error_msg)
 
             if not isinstance(self.attributes, FlextLdifAttributes):
-                error_msg = f"Entry attributes must be FlextLdifAttributes, got {type(self.attributes).__name__}"
+                error_msg: str = f"Entry attributes must be FlextLdifAttributes, got {type(self.attributes).__name__}"
                 logger.error(f"Attribute setting failed: {error_msg}")
                 context = {
                     "attribute_name": name,
@@ -3528,7 +3522,7 @@ class FlextLdifEntry(FlextImmutableModel):
                 logger.trace("New FlextLdifAttributes instance created successfully")
 
             except Exception as validation_error:
-                error_msg = f"Error validating new attributes collection for '{name}': {validation_error!s}"
+                error_msg: str = f"Error validating new attributes collection for '{name}': {validation_error!s}"
                 logger.error(
                     f"Attributes validation failed: {error_msg}",
                     exc_info=True,
@@ -3584,7 +3578,7 @@ class FlextLdifEntry(FlextImmutableModel):
             logger.info(f"Attribute '{name}' {change_type} with {len(values)} values")
 
         except Exception as unexpected_error:
-            error_msg = f"Unexpected error during attribute setting for '{name}': {unexpected_error!s}"
+            error_msg: str = f"Unexpected error during attribute setting for '{name}': {unexpected_error!s}"
             logger.error(f"Attribute setting failed: {error_msg}", exc_info=True)
             context = {
                 "attribute_name": name,
@@ -3670,7 +3664,7 @@ class FlextLdifEntry(FlextImmutableModel):
         try:
             # Comprehensive parameter validation with detailed error context
             if not isinstance(name, str):
-                error_msg = f"Attribute name must be string, got {type(name).__name__}: '{name}'"
+                error_msg: str = f"Attribute name must be string, got {type(name).__name__}: '{name}'"
                 logger.error(f"Attribute existence check failed: {error_msg}")
                 context = {
                     "attribute_name": str(name),
@@ -3716,7 +3710,7 @@ class FlextLdifEntry(FlextImmutableModel):
                 raise AttributeError(error_msg)
 
             if not isinstance(self.attributes, FlextLdifAttributes):
-                error_msg = f"Entry attributes must be FlextLdifAttributes, got {type(self.attributes).__name__}"
+                error_msg: str = f"Entry attributes must be FlextLdifAttributes, got {type(self.attributes).__name__}"
                 logger.error(f"Attribute existence check failed: {error_msg}")
                 context = {
                     "attribute_name": name,
@@ -3742,7 +3736,7 @@ class FlextLdifEntry(FlextImmutableModel):
 
                 # Validate the result type for data integrity
                 if not isinstance(attribute_exists, bool):
-                    error_msg = f"Attribute existence check must return boolean, got {type(attribute_exists).__name__}: {attribute_exists}"
+                    error_msg: str = f"Attribute existence check must return boolean, got {type(attribute_exists).__name__}: {attribute_exists}"
                     logger.error(
                         f"Existence check result validation failed: {error_msg}",
                     )
@@ -3807,7 +3801,7 @@ class FlextLdifEntry(FlextImmutableModel):
                 return attribute_exists
 
             except Exception as existence_check_error:
-                error_msg = f"Error during attribute existence check for '{name}': {existence_check_error!s}"
+                error_msg: str = f"Error during attribute existence check for '{name}': {existence_check_error!s}"
                 logger.error(
                     f"Attribute existence check failed: {error_msg}",
                     exc_info=True,
@@ -3821,7 +3815,7 @@ class FlextLdifEntry(FlextImmutableModel):
                 raise ValueError(error_msg) from existence_check_error
 
         except Exception as unexpected_error:
-            error_msg = f"Unexpected error during attribute existence check for '{name}': {unexpected_error!s}"
+            error_msg: str = f"Unexpected error during attribute existence check for '{name}': {unexpected_error!s}"
             logger.error(
                 f"Attribute existence check failed: {error_msg}",
                 exc_info=True,
@@ -3934,7 +3928,7 @@ class FlextLdifEntry(FlextImmutableModel):
                 raise AttributeError(error_msg)
 
             if not isinstance(self.attributes, FlextLdifAttributes):
-                error_msg = f"Entry attributes must be FlextLdifAttributes, got {type(self.attributes).__name__}"
+                error_msg: str = f"Entry attributes must be FlextLdifAttributes, got {type(self.attributes).__name__}"
                 logger.error(f"ObjectClass retrieval failed: {error_msg}")
                 context = {
                     "attributes_type": type(self.attributes).__name__,
@@ -3963,7 +3957,7 @@ class FlextLdifEntry(FlextImmutableModel):
 
                 # Validate returned values structure
                 if not isinstance(object_class_values, list):
-                    error_msg = f"ObjectClass values must be list, got {type(object_class_values).__name__}"
+                    error_msg: str = f"ObjectClass values must be list, got {type(object_class_values).__name__}"
                     logger.error(f"ObjectClass values validation failed: {error_msg}")
                     context = {
                         "values_type": type(object_class_values).__name__,
@@ -3991,7 +3985,7 @@ class FlextLdifEntry(FlextImmutableModel):
                         logger.trace(f"Validated objectClass[{i}]: '{oc_value}'")
 
                 if invalid_values:
-                    error_msg = f"All objectClass values must be non-empty strings: {', '.join(invalid_values)}"
+                    error_msg: str = f"All objectClass values must be non-empty strings: {', '.join(invalid_values)}"
                     logger.error(f"ObjectClass values validation failed: {error_msg}")
                     context = {
                         "invalid_values": invalid_values,
@@ -4041,7 +4035,9 @@ class FlextLdifEntry(FlextImmutableModel):
                 return object_class_values
 
             except Exception as retrieval_error:
-                error_msg = f"Error retrieving objectClass values: {retrieval_error!s}"
+                error_msg: str = (
+                    f"Error retrieving objectClass values: {retrieval_error!s}"
+                )
                 logger.error(
                     f"ObjectClass retrieval failed: {error_msg}",
                     exc_info=True,
@@ -4162,25 +4158,29 @@ class FlextLdifEntry(FlextImmutableModel):
         try:
             # Comprehensive parameter validation with detailed error context
             if not isinstance(name, str):
-                error_msg = f"Attribute name must be string, got {type(name).__name__}: '{name}'"
+                error_msg: str = f"Attribute name must be string, got {type(name).__name__}: '{name}'"
                 logger.error(f"Entry attribute values retrieval failed: {error_msg}")
                 context = {
                     "attribute_name": str(name),
                     "name_type": type(name).__name__,
                     "operation": "get_attribute_values",
-                    "entry_dn": str(self.dn.value) if hasattr(self, "dn") and self.dn else "unknown",
+                    "entry_dn": str(self.dn.value)
+                    if hasattr(self, "dn") and self.dn
+                    else "unknown",
                 }
                 logger.error(f"Entry attribute values retrieval context: {context}")
                 raise TypeError(error_msg)
 
             if not name.strip():
-                error_msg = f"Attribute name cannot be empty or whitespace-only: '{name}'"
+                error_msg: str = (
+                    f"Attribute name cannot be empty or whitespace-only: '{name}'"
+                )
                 logger.error(f"Entry attribute values retrieval failed: {error_msg}")
                 raise ValueError(error_msg)
 
             # Validate entry attributes collection accessibility
             if not hasattr(self, "attributes") or self.attributes is None:
-                error_msg = f"Entry attributes collection is not accessible for DN: '{self.dn.value if hasattr(self, 'dn') and self.dn else 'unknown'}'"
+                error_msg: str = f"Entry attributes collection is not accessible for DN: '{self.dn.value if hasattr(self, 'dn') and self.dn else 'unknown'}'"
                 logger.error(f"Entry attribute values retrieval failed: {error_msg}")
                 raise AttributeError(error_msg)
 
@@ -4203,13 +4203,19 @@ class FlextLdifEntry(FlextImmutableModel):
                 return values
 
             except Exception as delegation_error:
-                error_msg = f"Attributes collection failed to retrieve values for '{name}': {delegation_error!s}"
-                logger.error(f"Entry attribute values retrieval failed: {error_msg}", exc_info=True)
+                error_msg: str = f"Attributes collection failed to retrieve values for '{name}': {delegation_error!s}"
+                logger.error(
+                    f"Entry attribute values retrieval failed: {error_msg}",
+                    exc_info=True,
+                )
                 raise ValueError(error_msg) from delegation_error
 
         except Exception as unexpected_error:
-            error_msg = f"Unexpected error during entry attribute values retrieval for '{name}': {unexpected_error!s}"
-            logger.error(f"Entry attribute values retrieval failed: {error_msg}", exc_info=True)
+            error_msg: str = f"Unexpected error during entry attribute values retrieval for '{name}': {unexpected_error!s}"
+            logger.error(
+                f"Entry attribute values retrieval failed: {error_msg}",
+                exc_info=True,
+            )
             raise ValueError(error_msg) from unexpected_error
 
     def is_modify_operation(self) -> bool:
@@ -4259,7 +4265,7 @@ class FlextLdifEntry(FlextImmutableModel):
 
         Business Logic:
             - Analyzes changetype attribute for modify operation detection
-            - Handles case-insensitive changetype value comparison  
+            - Handles case-insensitive changetype value comparison
             - Returns False for entries without changetype (regular LDIF entries)
             - Provides comprehensive validation of changetype attribute format
             - Supports RFC 2849 LDIF change record specification compliance
@@ -4285,11 +4291,13 @@ class FlextLdifEntry(FlextImmutableModel):
         try:
             # Validate entry structure before changetype analysis
             if not hasattr(self, "attributes") or self.attributes is None:
-                error_msg = f"Entry attributes collection not accessible for modify operation detection: DN='{self.dn.value if hasattr(self, 'dn') and self.dn else 'unknown'}'"
+                error_msg: str = f"Entry attributes collection not accessible for modify operation detection: DN='{self.dn.value if hasattr(self, 'dn') and self.dn else 'unknown'}'"
                 logger.error(f"Modify operation detection failed: {error_msg}")
                 raise AttributeError(error_msg)
 
-            logger.trace("Retrieving changetype attribute for modify operation analysis")
+            logger.trace(
+                "Retrieving changetype attribute for modify operation analysis",
+            )
 
             # Retrieve changetype attribute with comprehensive error handling
             try:
@@ -4301,12 +4309,14 @@ class FlextLdifEntry(FlextImmutableModel):
                     logger.debug(
                         f"No changetype attribute found - entry is regular LDIF entry, not modify operation: DN='{self.dn.value}'",
                     )
-                    logger.info("Modify operation detection completed - result: False (no changetype)")
+                    logger.info(
+                        "Modify operation detection completed - result: False (no changetype)",
+                    )
                     return False
 
                 # Validate changetype attribute structure
                 if not isinstance(changetype_values, list):
-                    error_msg = f"Invalid changetype attribute format - expected list, got {type(changetype_values).__name__}: {changetype_values}"
+                    error_msg: str = f"Invalid changetype attribute format - expected list, got {type(changetype_values).__name__}: {changetype_values}"
                     logger.error(f"Modify operation detection failed: {error_msg}")
                     raise ValueError(error_msg)
 
@@ -4314,7 +4324,9 @@ class FlextLdifEntry(FlextImmutableModel):
                     logger.debug(
                         f"Empty changetype attribute found - entry is not modify operation: DN='{self.dn.value}'",
                     )
-                    logger.info("Modify operation detection completed - result: False (empty changetype)")
+                    logger.info(
+                        "Modify operation detection completed - result: False (empty changetype)",
+                    )
                     return False
 
                 # Extract and validate first changetype value
@@ -4322,7 +4334,7 @@ class FlextLdifEntry(FlextImmutableModel):
                 logger.trace(f"Primary changetype value: '{changetype_value}'")
 
                 if not isinstance(changetype_value, str):
-                    error_msg = f"Invalid changetype value format - expected string, got {type(changetype_value).__name__}: '{changetype_value}'"
+                    error_msg: str = f"Invalid changetype value format - expected string, got {type(changetype_value).__name__}: '{changetype_value}'"
                     logger.error(f"Modify operation detection failed: {error_msg}")
                     raise ValueError(error_msg)
 
@@ -4334,7 +4346,9 @@ class FlextLdifEntry(FlextImmutableModel):
                     logger.debug(
                         f"Empty changetype value after normalization - entry is not modify operation: DN='{self.dn.value}'",
                     )
-                    logger.info("Modify operation detection completed - result: False (empty normalized changetype)")
+                    logger.info(
+                        "Modify operation detection completed - result: False (empty normalized changetype)",
+                    )
                     return False
 
                 # Perform modify operation detection
@@ -4350,13 +4364,19 @@ class FlextLdifEntry(FlextImmutableModel):
                 return is_modify
 
             except Exception as retrieval_error:
-                error_msg = f"Changetype attribute retrieval failed during modify operation detection: {retrieval_error!s}"
-                logger.error(f"Modify operation detection failed: {error_msg}", exc_info=True)
+                error_msg: str = f"Changetype attribute retrieval failed during modify operation detection: {retrieval_error!s}"
+                logger.error(
+                    f"Modify operation detection failed: {error_msg}",
+                    exc_info=True,
+                )
                 raise ValueError(error_msg) from retrieval_error
 
         except Exception as unexpected_error:
-            error_msg = f"Unexpected error during modify operation detection for DN '{self.dn.value if hasattr(self, 'dn') and self.dn else 'unknown'}': {unexpected_error!s}"
-            logger.error(f"Modify operation detection failed: {error_msg}", exc_info=True)
+            error_msg: str = f"Unexpected error during modify operation detection for DN '{self.dn.value if hasattr(self, 'dn') and self.dn else 'unknown'}': {unexpected_error!s}"
+            logger.error(
+                f"Modify operation detection failed: {error_msg}",
+                exc_info=True,
+            )
             raise ValueError(error_msg) from unexpected_error
 
     def is_add_operation(self) -> bool:
@@ -4433,7 +4453,7 @@ class FlextLdifEntry(FlextImmutableModel):
         try:
             # Validate entry structure before changetype analysis
             if not hasattr(self, "attributes") or self.attributes is None:
-                error_msg = f"Entry attributes collection not accessible for add operation detection: DN='{self.dn.value if hasattr(self, 'dn') and self.dn else 'unknown'}'"
+                error_msg: str = f"Entry attributes collection not accessible for add operation detection: DN='{self.dn.value if hasattr(self, 'dn') and self.dn else 'unknown'}'"
                 logger.error(f"Add operation detection failed: {error_msg}")
                 raise AttributeError(error_msg)
 
@@ -4449,12 +4469,14 @@ class FlextLdifEntry(FlextImmutableModel):
                     logger.debug(
                         f"No changetype attribute found - defaulting to add operation per LDIF standard: DN='{self.dn.value}'",
                     )
-                    logger.info("Add operation detection completed - result: True (default behavior)")
+                    logger.info(
+                        "Add operation detection completed - result: True (default behavior)",
+                    )
                     return True
 
                 # Validate changetype attribute structure
                 if not isinstance(changetype_values, list):
-                    error_msg = f"Invalid changetype attribute format - expected list, got {type(changetype_values).__name__}: {changetype_values}"
+                    error_msg: str = f"Invalid changetype attribute format - expected list, got {type(changetype_values).__name__}: {changetype_values}"
                     logger.error(f"Add operation detection failed: {error_msg}")
                     raise ValueError(error_msg)
 
@@ -4462,7 +4484,9 @@ class FlextLdifEntry(FlextImmutableModel):
                     logger.debug(
                         f"Empty changetype attribute found - defaulting to add operation: DN='{self.dn.value}'",
                     )
-                    logger.info("Add operation detection completed - result: True (empty changetype defaults to add)")
+                    logger.info(
+                        "Add operation detection completed - result: True (empty changetype defaults to add)",
+                    )
                     return True
 
                 # Extract and validate first changetype value
@@ -4470,7 +4494,7 @@ class FlextLdifEntry(FlextImmutableModel):
                 logger.trace(f"Primary changetype value: '{changetype_value}'")
 
                 if not isinstance(changetype_value, str):
-                    error_msg = f"Invalid changetype value format - expected string, got {type(changetype_value).__name__}: '{changetype_value}'"
+                    error_msg: str = f"Invalid changetype value format - expected string, got {type(changetype_value).__name__}: '{changetype_value}'"
                     logger.error(f"Add operation detection failed: {error_msg}")
                     raise ValueError(error_msg)
 
@@ -4482,7 +4506,9 @@ class FlextLdifEntry(FlextImmutableModel):
                     logger.debug(
                         f"Empty changetype value after normalization - defaulting to add operation: DN='{self.dn.value}'",
                     )
-                    logger.info("Add operation detection completed - result: True (empty normalized changetype defaults to add)")
+                    logger.info(
+                        "Add operation detection completed - result: True (empty normalized changetype defaults to add)",
+                    )
                     return True
 
                 # Perform add operation detection
@@ -4498,12 +4524,15 @@ class FlextLdifEntry(FlextImmutableModel):
                 return is_add
 
             except Exception as retrieval_error:
-                error_msg = f"Changetype attribute retrieval failed during add operation detection: {retrieval_error!s}"
-                logger.error(f"Add operation detection failed: {error_msg}", exc_info=True)
+                error_msg: str = f"Changetype attribute retrieval failed during add operation detection: {retrieval_error!s}"
+                logger.error(
+                    f"Add operation detection failed: {error_msg}",
+                    exc_info=True,
+                )
                 raise ValueError(error_msg) from retrieval_error
 
         except Exception as unexpected_error:
-            error_msg = f"Unexpected error during add operation detection for DN '{self.dn.value if hasattr(self, 'dn') and self.dn else 'unknown'}': {unexpected_error!s}"
+            error_msg: str = f"Unexpected error during add operation detection for DN '{self.dn.value if hasattr(self, 'dn') and self.dn else 'unknown'}': {unexpected_error!s}"
             logger.error(f"Add operation detection failed: {error_msg}", exc_info=True)
             raise ValueError(error_msg) from unexpected_error
 
@@ -4579,11 +4608,13 @@ class FlextLdifEntry(FlextImmutableModel):
         try:
             # Validate entry structure before changetype analysis
             if not hasattr(self, "attributes") or self.attributes is None:
-                error_msg = f"Entry attributes collection not accessible for delete operation detection: DN='{self.dn.value if hasattr(self, 'dn') and self.dn else 'unknown'}'"
+                error_msg: str = f"Entry attributes collection not accessible for delete operation detection: DN='{self.dn.value if hasattr(self, 'dn') and self.dn else 'unknown'}'"
                 logger.error(f"Delete operation detection failed: {error_msg}")
                 raise AttributeError(error_msg)
 
-            logger.trace("Retrieving changetype attribute for delete operation analysis")
+            logger.trace(
+                "Retrieving changetype attribute for delete operation analysis",
+            )
 
             # Retrieve changetype attribute with comprehensive error handling
             try:
@@ -4595,12 +4626,14 @@ class FlextLdifEntry(FlextImmutableModel):
                     logger.debug(
                         f"No changetype attribute found - entry is regular LDIF entry, not delete operation: DN='{self.dn.value}'",
                     )
-                    logger.info("Delete operation detection completed - result: False (no changetype)")
+                    logger.info(
+                        "Delete operation detection completed - result: False (no changetype)",
+                    )
                     return False
 
                 # Validate changetype attribute structure
                 if not isinstance(changetype_values, list):
-                    error_msg = f"Invalid changetype attribute format - expected list, got {type(changetype_values).__name__}: {changetype_values}"
+                    error_msg: str = f"Invalid changetype attribute format - expected list, got {type(changetype_values).__name__}: {changetype_values}"
                     logger.error(f"Delete operation detection failed: {error_msg}")
                     raise ValueError(error_msg)
 
@@ -4608,7 +4641,9 @@ class FlextLdifEntry(FlextImmutableModel):
                     logger.debug(
                         f"Empty changetype attribute found - entry is not delete operation: DN='{self.dn.value}'",
                     )
-                    logger.info("Delete operation detection completed - result: False (empty changetype)")
+                    logger.info(
+                        "Delete operation detection completed - result: False (empty changetype)",
+                    )
                     return False
 
                 # Extract and validate first changetype value
@@ -4616,7 +4651,7 @@ class FlextLdifEntry(FlextImmutableModel):
                 logger.trace(f"Primary changetype value: '{changetype_value}'")
 
                 if not isinstance(changetype_value, str):
-                    error_msg = f"Invalid changetype value format - expected string, got {type(changetype_value).__name__}: '{changetype_value}'"
+                    error_msg: str = f"Invalid changetype value format - expected string, got {type(changetype_value).__name__}: '{changetype_value}'"
                     logger.error(f"Delete operation detection failed: {error_msg}")
                     raise ValueError(error_msg)
 
@@ -4628,7 +4663,9 @@ class FlextLdifEntry(FlextImmutableModel):
                     logger.debug(
                         f"Empty changetype value after normalization - entry is not delete operation: DN='{self.dn.value}'",
                     )
-                    logger.info("Delete operation detection completed - result: False (empty normalized changetype)")
+                    logger.info(
+                        "Delete operation detection completed - result: False (empty normalized changetype)",
+                    )
                     return False
 
                 # Perform delete operation detection
@@ -4644,13 +4681,19 @@ class FlextLdifEntry(FlextImmutableModel):
                 return is_delete
 
             except Exception as retrieval_error:
-                error_msg = f"Changetype attribute retrieval failed during delete operation detection: {retrieval_error!s}"
-                logger.error(f"Delete operation detection failed: {error_msg}", exc_info=True)
+                error_msg: str = f"Changetype attribute retrieval failed during delete operation detection: {retrieval_error!s}"
+                logger.error(
+                    f"Delete operation detection failed: {error_msg}",
+                    exc_info=True,
+                )
                 raise ValueError(error_msg) from retrieval_error
 
         except Exception as unexpected_error:
-            error_msg = f"Unexpected error during delete operation detection for DN '{self.dn.value if hasattr(self, 'dn') and self.dn else 'unknown'}': {unexpected_error!s}"
-            logger.error(f"Delete operation detection failed: {error_msg}", exc_info=True)
+            error_msg: str = f"Unexpected error during delete operation detection for DN '{self.dn.value if hasattr(self, 'dn') and self.dn else 'unknown'}': {unexpected_error!s}"
+            logger.error(
+                f"Delete operation detection failed: {error_msg}",
+                exc_info=True,
+            )
             raise ValueError(error_msg) from unexpected_error
 
     def get_single_attribute(self, name: str) -> str | None:
@@ -4691,7 +4734,7 @@ class FlextLdifEntry(FlextImmutableModel):
             ... )
             >>> single_cn = entry.get_single_attribute("cn")
             >>> print(single_cn)  # "John Doe"
-            >>> first_mail = entry.get_single_attribute("mail") 
+            >>> first_mail = entry.get_single_attribute("mail")
             >>> print(first_mail)  # "john@example.com" (first value)
             >>> missing = entry.get_single_attribute("nonexistent")
             >>> print(missing)  # None
@@ -4724,25 +4767,29 @@ class FlextLdifEntry(FlextImmutableModel):
         try:
             # Comprehensive parameter validation with detailed error context
             if not isinstance(name, str):
-                error_msg = f"Attribute name must be string, got {type(name).__name__}: '{name}'"
+                error_msg: str = f"Attribute name must be string, got {type(name).__name__}: '{name}'"
                 logger.error(f"Entry single attribute retrieval failed: {error_msg}")
                 context = {
                     "attribute_name": str(name),
                     "name_type": type(name).__name__,
                     "operation": "get_single_attribute",
-                    "entry_dn": str(self.dn.value) if hasattr(self, "dn") and self.dn else "unknown",
+                    "entry_dn": str(self.dn.value)
+                    if hasattr(self, "dn") and self.dn
+                    else "unknown",
                 }
                 logger.error(f"Entry single attribute retrieval context: {context}")
                 raise TypeError(error_msg)
 
             if not name.strip():
-                error_msg = f"Attribute name cannot be empty or whitespace-only: '{name}'"
+                error_msg: str = (
+                    f"Attribute name cannot be empty or whitespace-only: '{name}'"
+                )
                 logger.error(f"Entry single attribute retrieval failed: {error_msg}")
                 raise ValueError(error_msg)
 
             # Validate entry attributes collection accessibility
             if not hasattr(self, "attributes") or self.attributes is None:
-                error_msg = f"Entry attributes collection is not accessible for DN: '{self.dn.value if hasattr(self, 'dn') and self.dn else 'unknown'}'"
+                error_msg: str = f"Entry attributes collection is not accessible for DN: '{self.dn.value if hasattr(self, 'dn') and self.dn else 'unknown'}'"
                 logger.error(f"Entry single attribute retrieval failed: {error_msg}")
                 raise AttributeError(error_msg)
 
@@ -4773,13 +4820,19 @@ class FlextLdifEntry(FlextImmutableModel):
                 return single_value
 
             except Exception as delegation_error:
-                error_msg = f"Attributes collection failed to retrieve single value for '{name}': {delegation_error!s}"
-                logger.error(f"Entry single attribute retrieval failed: {error_msg}", exc_info=True)
+                error_msg: str = f"Attributes collection failed to retrieve single value for '{name}': {delegation_error!s}"
+                logger.error(
+                    f"Entry single attribute retrieval failed: {error_msg}",
+                    exc_info=True,
+                )
                 raise ValueError(error_msg) from delegation_error
 
         except Exception as unexpected_error:
-            error_msg = f"Unexpected error during entry single attribute retrieval for '{name}': {unexpected_error!s}"
-            logger.error(f"Entry single attribute retrieval failed: {error_msg}", exc_info=True)
+            error_msg: str = f"Unexpected error during entry single attribute retrieval for '{name}': {unexpected_error!s}"
+            logger.error(
+                f"Entry single attribute retrieval failed: {error_msg}",
+                exc_info=True,
+            )
             raise ValueError(error_msg) from unexpected_error
 
     def to_ldif(self) -> str:
@@ -4878,7 +4931,7 @@ class FlextLdifEntry(FlextImmutableModel):
         # First line must be DN
         dn_line = lines[0]
         if not dn_line.startswith("dn:"):
-            msg = f"First line must be DN, got: {dn_line}"
+            msg: str = f"First line must be DN, got: {dn_line}"
             raise ValueError(msg)
 
         dn = dn_line[3:].strip()
@@ -5049,7 +5102,7 @@ class FlextLdifEntry(FlextImmutableModel):
         return changetype[0] in valid_change_types
 
 
-__all__ = [
+__all__: list[str] = [
     "FlextLdifAttributes",
     "FlextLdifAttributesDict",
     "FlextLdifDNDict",

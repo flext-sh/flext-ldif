@@ -38,7 +38,7 @@ Example:
     ... '''
     >>>
     >>> result = TLdif.parse(ldif_content)
-    >>> if result.is_success:
+    >>> if result.success:
     ...     entries = result.data
     ...     print(f"Parsed {len(entries)} entries")
     ... else:
@@ -128,7 +128,7 @@ class TLdif:
             ... '''
             >>>
             >>> result = TLdif.parse(ldif_content)
-            >>> if result.is_success:
+            >>> if result.success:
             ...     entries = result.data
             ...     print(f"Parsed {len(entries)} entries successfully")
             ...     for entry in entries:
@@ -173,7 +173,7 @@ class TLdif:
             logger.debug("Calling modernized_ldif_parse")
             parse_result = modernized_ldif_parse(content)
 
-            if not parse_result.is_success:
+            if not parse_result.success:
                 logger.warning("Modernized LDIF parse failed: %s", parse_result.error)
                 logger.debug("Returning failure from modernized parser")
                 return FlextResult.fail(
@@ -250,19 +250,22 @@ class TLdif:
 
         Example:
             >>> from flext_ldif.core import TLdif
-            >>> from flext_ldif.models import FlextLdifEntry, FlextLdifDistinguishedName, FlextLdifAttributes
+            >>> from flext_ldif.models import (
+            ...     FlextLdifEntry,
+            ...     FlextLdifDistinguishedName,
+            ...     FlextLdifAttributes,
+            ... )
             >>>
             >>> # Create valid entry
             >>> entry = FlextLdifEntry(
             ...     dn=FlextLdifDistinguishedName(value="cn=user,dc=example,dc=com"),
-            ...     attributes=FlextLdifAttributes(attributes={
-            ...         "objectClass": ["person"],
-            ...         "cn": ["user"]
-            ...     })
+            ...     attributes=FlextLdifAttributes(
+            ...         attributes={"objectClass": ["person"], "cn": ["user"]}
+            ...     ),
             ... )
             >>>
             >>> result = TLdif.validate(entry)
-            >>> if result.is_success and result.data:
+            >>> if result.success and result.data:
             ...     print("Entry is valid")
             ... else:
             ...     print(f"Validation failed: {result.error}")
@@ -362,7 +365,7 @@ class TLdif:
             >>>
             >>> # Validate multiple entries
             >>> result = TLdif.validate_entries(entries)
-            >>> if result.is_success and result.data:
+            >>> if result.success and result.data:
             ...     print(f"All {len(entries)} entries are valid")
             ... else:
             ...     print(f"Validation failed: {result.error}")
@@ -379,13 +382,18 @@ class TLdif:
 
             for i, entry in enumerate(entries):
                 logger.trace(
-                    "Validating entry %d/%d: %s", i + 1, total_entries, entry.dn,
+                    "Validating entry %d/%d: %s",
+                    i + 1,
+                    total_entries,
+                    entry.dn,
                 )
                 result = cls.validate(entry)
-                if not result.is_success:
-                    error_msg = f"Entry {i + 1} of {total_entries} failed validation ({entry.dn}): {result.error}"
+                if not result.success:
+                    error_msg: str = f"Entry {i + 1} of {total_entries} failed validation ({entry.dn}): {result.error}"
                     logger.warning(
-                        "Bulk validation failed at entry %d: %s", i + 1, result.error,
+                        "Bulk validation failed at entry %d: %s",
+                        i + 1,
+                        result.error,
                     )
                     return FlextResult.fail(error_msg)
 
@@ -434,7 +442,7 @@ class TLdif:
             >>>
             >>> # Write entries to LDIF string
             >>> result = TLdif.write(entries)
-            >>> if result.is_success:
+            >>> if result.success:
             ...     ldif_content = result.data
             ...     print(f"Generated LDIF: {len(ldif_content)} characters")
             ...     # Save to file or process further
@@ -455,10 +463,11 @@ class TLdif:
             result = cls._write_with_modernized_ldif(entries)
 
             # REFACTORING: Enhanced result logging and metrics
-            if result.is_success and result.data:
+            if result.success and result.data:
                 content_length = len(result.data)
                 logger.debug(
-                    "LDIF write successful: %d characters generated", content_length,
+                    "LDIF write successful: %d characters generated",
+                    content_length,
                 )
                 logger.info(
                     "LDIF write operation completed successfully",
@@ -491,7 +500,7 @@ class TLdif:
             # Use modernized writer
             write_result = modernized_ldif_write(raw_entries)
 
-            if not write_result.is_success:
+            if not write_result.success:
                 return FlextResult.fail(
                     write_result.error or "Modernized LDIF write failed",
                 )
@@ -545,7 +554,7 @@ class TLdif:
             >>> # Write entries to LDIF file
             >>> output_path = Path("output/users.ldif")
             >>> result = TLdif.write_file(entries, output_path)
-            >>> if result.is_success:
+            >>> if result.success:
             ...     print(f"Successfully written {len(entries)} entries")
             ... else:
             ...     print(f"Write failed: {result.error}")
@@ -585,8 +594,8 @@ class TLdif:
             # Get LDIF content with enhanced error handling
             logger.debug("Converting %d entries to LDIF content", entries_count)
             content_result = cls.write(entries)
-            if not content_result.is_success:
-                error_msg = f"Content generation failed for {entries_count} entries: {content_result.error}"
+            if not content_result.success:
+                error_msg: str = f"Content generation failed for {entries_count} entries: {content_result.error}"
                 logger.error(error_msg)
                 return FlextResult.fail(error_msg)
 
@@ -669,7 +678,7 @@ class TLdif:
             >>> # Read and parse LDIF file
             >>> input_path = Path("data/users.ldif")
             >>> result = TLdif.read_file(input_path)
-            >>> if result.is_success:
+            >>> if result.success:
             ...     entries = result.data
             ...     print(f"Successfully parsed {len(entries)} entries")
             ...     for entry in entries:
@@ -698,12 +707,12 @@ class TLdif:
 
             # REFACTORING: Enhanced file validation with detailed error context
             if not file_path.exists():
-                error_msg = f"LDIF file not found: {absolute_path}"
+                error_msg: str = f"LDIF file not found: {absolute_path}"
                 logger.error(error_msg)
                 return FlextResult.fail(error_msg)
 
             if not file_path.is_file():
-                error_msg = f"Path is not a file: {absolute_path}"
+                error_msg: str = f"Path is not a file: {absolute_path}"
                 logger.error(error_msg)
                 return FlextResult.fail(error_msg)
 
@@ -712,7 +721,9 @@ class TLdif:
             file_stat = file_path.stat()
             file_size = file_stat.st_size
             logger.debug(
-                "File metadata - size: %d bytes, mode: %o", file_size, file_stat.st_mode,
+                "File metadata - size: %d bytes, mode: %o",
+                file_size,
+                file_stat.st_mode,
             )
 
             # REFACTORING: Enhanced file size validation
@@ -726,7 +737,7 @@ class TLdif:
                 with file_path.open("r", encoding=encoding) as f:
                     content = f.read()
             except UnicodeDecodeError as e:
-                error_msg = f"Encoding error reading file with {encoding}: {e}"
+                error_msg: str = f"Encoding error reading file with {encoding}: {e}"
                 logger.exception(error_msg)
                 return FlextResult.fail(error_msg)
 
@@ -751,7 +762,7 @@ class TLdif:
             return FlextResult.fail(f"LDIF file read failed: {e}")
         else:
             # REFACTORING: Enhanced result logging with comprehensive metrics
-            if result.is_success:
+            if result.success:
                 entries_count = len(result.data or [])
                 logger.debug(
                     "File read and parse successful: %d entries from %s",
@@ -781,6 +792,6 @@ class TLdif:
             return result
 
 
-__all__ = [
+__all__: list[str] = [
     "TLdif",
 ]

@@ -111,7 +111,7 @@ sn: Doe
     # Testar parsing e validação
     with contextlib.suppress(Exception):
         parse_result = api.parse(ldif_content)
-        if parse_result.is_success and parse_result.data:
+        if parse_result.success and parse_result.data:
             entry = parse_result.data[0]
             # Testar specifications integradas
             entry.has_object_class("person")
@@ -143,7 +143,7 @@ sn: User
         # Parse - geraria "DocumentParsed" event via logging
         parse_result = api.parse(sample_ldif)
 
-        if parse_result.is_success and parse_result.data:
+        if parse_result.success and parse_result.data:
             entries = parse_result.data
 
             # Validate - geraria "EntryValidated" event via logging
@@ -235,7 +235,7 @@ member: uid=jdoe,ou=people,dc=example,dc=com"""
         # Test parsing capabilities usando API real
         with contextlib.suppress(Exception):
             result = api.parse(self.ldif_content)
-            if result.is_success and result.data:
+            if result.success and result.data:
                 pass
 
     def _test_processing_stage(self) -> None:
@@ -244,7 +244,7 @@ member: uid=jdoe,ou=people,dc=example,dc=com"""
 
         with contextlib.suppress(Exception):
             result = api.parse(self.ldif_content)
-            if result.is_success and result.data:
+            if result.success and result.data:
                 entries = result.data
                 # Test filtering (processing)
                 api.filter_persons(entries)
@@ -256,7 +256,7 @@ member: uid=jdoe,ou=people,dc=example,dc=com"""
 
         with contextlib.suppress(Exception):
             parse_result = api.parse(self.ldif_content)
-            if parse_result.is_success and parse_result.data:
+            if parse_result.success and parse_result.data:
                 api.validate(parse_result.data)
 
     def _test_writing_stage(self) -> None:
@@ -265,7 +265,7 @@ member: uid=jdoe,ou=people,dc=example,dc=com"""
 
         with contextlib.suppress(Exception):
             parse_result = api.parse(self.ldif_content)
-            if parse_result.is_success and parse_result.data:
+            if parse_result.success and parse_result.data:
                 api.write(parse_result.data)
 
     def _test_utilities_stage(self) -> None:
@@ -289,7 +289,7 @@ cn: User
 
         with contextlib.suppress(Exception):
             parse_result = api.parse(test_entries_ldif)
-            if parse_result.is_success and parse_result.data:
+            if parse_result.success and parse_result.data:
                 api.sort_hierarchically(parse_result.data)
 
 
@@ -357,7 +357,7 @@ cn: Test User"""
         with contextlib.suppress(Exception):
             result = api.parse(test_ldif)
             # Should return FlextResult
-            if hasattr(result, "is_success") and hasattr(result, "data"):
+            if hasattr(result, "success") and hasattr(result, "data"):
                 pass
 
     except ImportError:
@@ -424,7 +424,7 @@ member: uid=user1,ou=people,dc=comprehensive,dc=test"""
         # ✅ CORREÇÃO: Usar funções que realmente existem
         entries = flext_ldif_parse(complex_ldif)
 
-        is_valid = flext_ldif_validate(complex_ldif)
+        flext_ldif_validate(complex_ldif)
 
         if entries:
             for entry in entries:
@@ -454,7 +454,7 @@ member: uid=user1,ou=people,dc=comprehensive,dc=test"""
 
         try:
             # Test writing to file usando função que existe
-            output = flext_ldif_write(entries, temp_file)
+            flext_ldif_write(entries, temp_file)
 
             # Test reading from file
             if Path(temp_file).exists():

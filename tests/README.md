@@ -65,13 +65,13 @@ def test_flext_ldif_entry_validation(sample_entry):
     """Test domain entity validation rules."""
     entry = sample_entry
     result = entry.validate_semantic_rules()  # Should succeed
-    assert result.is_success
+    assert result.success
 
     # Test business rule violations
     invalid_entry = FlextLdifEntry(dn="", attributes={})
     with pytest.raises(FlextLdifValidationError):
         result = invalid_entry.validate_semantic_rules()
-        assert not result.is_success
+        assert not result.success
 ```
 
 ### Integration Tests (`test_*_integration.py`)
@@ -91,10 +91,10 @@ def test_flext_ldif_entry_validation(sample_entry):
 def test_api_service_integration(flext_ldif_api, sample_ldif_content):
     """Test API service with real dependencies."""
     result = flext_ldif_api.parse(sample_ldif_content)
-    assert result.is_success
+    assert result.success
 
     validation_result = flext_ldif_api.validate(result.data)
-    assert validation_result.is_success
+    assert validation_result.success
 ```
 
 ### End-to-End Tests (`test_e2e_*.py`)
@@ -147,7 +147,7 @@ def test_e2e_ldif_processing_workflow(tmp_path):
 def test_ldif_rfc_compliance(rfc_compliant_ldif):
     """Test RFC 2849 LDIF specification compliance."""
     result = TLdif.parse(rfc_compliant_ldif)
-    assert result.is_success
+    assert result.success
 
     # Validate specific RFC requirements
     entries = result.data
@@ -179,7 +179,7 @@ def test_large_file_processing_performance():
     result = TLdif.parse(large_ldif)
     processing_time = time.time() - start_time
 
-    assert result.is_success
+    assert result.success
     assert processing_time < 30.0  # Max 30 seconds for 10k entries
     assert len(result.data) == 10000
 ```
@@ -380,7 +380,7 @@ def test_new_feature_specification():
     result = api.new_feature(test_data)
 
     # Assert - Validate expected behavior
-    assert result.is_success
+    assert result.success
     assert result.data.meets_requirements()
 ```
 

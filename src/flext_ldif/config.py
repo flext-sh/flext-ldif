@@ -32,8 +32,8 @@ Example:
     >>> from flext_ldif.config import FlextLdifConfig
     >>>
     >>> # Set environment variables
-    >>> os.environ['LDIF_MAX_ENTRIES'] = '50000'
-    >>> os.environ['LDIF_STRICT_VALIDATION'] = 'true'
+    >>> os.environ["LDIF_MAX_ENTRIES"] = "50000"
+    >>> os.environ["LDIF_STRICT_VALIDATION"] = "true"
     >>>
     >>> # Create configuration with environment override
     >>> config = FlextLdifConfig()
@@ -41,10 +41,7 @@ Example:
     >>> print(config.strict_validation)  # True (from environment)
     >>>
     >>> # Override programmatically
-    >>> config = FlextLdifConfig(
-    ...     max_entries=100000,
-    ...     enable_observability=True
-    ... )
+    >>> config = FlextLdifConfig(max_entries=100000, enable_observability=True)
 
 Integration:
     - Extends flext-core FlextBaseSettings with LDIF-specific validation
@@ -87,9 +84,7 @@ class FlextLdifConfig(FlextBaseSettings):
         >>>
         >>> # Create configuration with custom settings
         >>> config = FlextLdifConfig(
-        ...     max_entries=50000,
-        ...     strict_validation=True,
-        ...     create_output_dir=True
+        ...     max_entries=50000, strict_validation=True, create_output_dir=True
         ... )
         >>> print(f"Max entries: {config.max_entries}")
 
@@ -120,7 +115,7 @@ class FlextLdifConfig(FlextBaseSettings):
             logger.trace("Parent FlextBaseSettings initialization completed")
         except (ValueError, TypeError) as e:
             logger.exception("Failed to initialize parent configuration class")
-            msg = f"Configuration initialization failed: {e}"
+            msg: str = f"Configuration initialization failed: {e}"
             raise RuntimeError(msg) from e
 
         # REFACTORING: Enhanced data application with validation and error handling
@@ -138,7 +133,7 @@ class FlextLdifConfig(FlextBaseSettings):
                             value,
                             e,
                         )
-                        msg = f"Invalid configuration value for {key}: {e}"
+                        msg: str = f"Invalid configuration value for {key}: {e}"
                         raise ValueError(
                             msg,
                         ) from e
@@ -327,7 +322,7 @@ class FlextLdifConfig(FlextBaseSettings):
             logger.trace("Output encoding validation passed: %s", self.output_encoding)
 
         except LookupError as e:
-            error_msg = f"Invalid encoding configuration: {e}"
+            error_msg: str = f"Invalid encoding configuration: {e}"
             logger.exception(
                 error_msg,
                 input_encoding=self.input_encoding,
@@ -335,7 +330,7 @@ class FlextLdifConfig(FlextBaseSettings):
             )
             return FlextResult.fail(error_msg)
         except (UnicodeError, AttributeError) as e:
-            error_msg = f"Encoding validation failed: {e}"
+            error_msg: str = f"Encoding validation failed: {e}"
             logger.exception(error_msg)
             return FlextResult.fail(error_msg)
 
@@ -371,22 +366,24 @@ class FlextLdifConfig(FlextBaseSettings):
             if not output_dir.exists() and self.create_output_dir:
                 logger.trace("Output directory will be created when needed")
             elif not output_dir.exists():
-                warning_msg = f"Output directory does not exist and create_output_dir is False: {output_dir}"
+                warning_msg: str = f"Output directory does not exist and create_output_dir is False: {output_dir}"
                 logger.warning(warning_msg)
             elif not output_dir.is_dir():
-                error_msg = f"Output path exists but is not a directory: {output_dir}"
+                error_msg: str = (
+                    f"Output path exists but is not a directory: {output_dir}"
+                )
                 logger.error(error_msg)
                 return FlextResult.fail(error_msg)
 
         except (OSError, PermissionError) as e:
-            error_msg = f"Output directory validation failed: {e}"
+            error_msg: str = f"Output directory validation failed: {e}"
             logger.exception(error_msg, output_directory=str(self.output_directory))
             return FlextResult.fail(error_msg)
 
         # REFACTORING: Enhanced RFC 2849 compliance validation
         logger.trace("Validating LDIF RFC 2849 compliance settings")
         if not (50 <= self.line_wrap_length <= 998):
-            error_msg = f"line_wrap_length ({self.line_wrap_length}) violates RFC 2849 constraints (50-998)"
+            error_msg: str = f"line_wrap_length ({self.line_wrap_length}) violates RFC 2849 constraints (50-998)"
             logger.error(error_msg)
             return FlextResult.fail(error_msg)
 
@@ -417,6 +414,6 @@ class FlextLdifConfig(FlextBaseSettings):
         return FlextResult.ok(None)
 
 
-__all__ = [
+__all__: list[str] = [
     "FlextLdifConfig",
 ]

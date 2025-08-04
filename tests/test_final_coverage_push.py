@@ -68,7 +68,7 @@ class TestInitModuleCoverage:
         # Test using the API
         test_ldif = "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test"
         result = api.parse(test_ldif)
-        assert result.is_success
+        assert result.success
         assert len(result.data) == 1
 
 
@@ -351,7 +351,7 @@ class TestAPICoverageEdgeCases:
 
         result = api.validate([entry])
         # Should succeed with allow_empty_attributes=True
-        assert result.is_success or "Empty attribute" in result.error
+        assert result.success or "Empty attribute" in result.error
 
     def test_api_error_recovery_scenarios(self) -> None:
         """Test API error recovery scenarios."""
@@ -374,9 +374,9 @@ cn: good2
 
         result = api.parse(malformed_ldif)
         # Should either partially succeed or fail gracefully
-        assert isinstance(result.is_success, bool)
+        assert isinstance(result.success, bool)
 
-        if result.is_success:
+        if result.success:
             # If it succeeds, should have some valid entries
             assert len(result.data) >= 0
         else:

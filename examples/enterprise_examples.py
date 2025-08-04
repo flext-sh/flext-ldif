@@ -47,17 +47,17 @@ uid: janesmith
     # Using TLdif core functionality
     parse_result = TLdif.parse(ldif_content)
 
-    if parse_result.is_success:
+    if parse_result.success:
         entries = parse_result.data
 
         # Validate entries
         validate_result = TLdif.validate_entries(entries)
-        if validate_result.is_success:
+        if validate_result.success:
             pass
 
         # Write back to LDIF
         write_result = TLdif.write(entries)
-        if write_result.is_success:
+        if write_result.success:
             pass
 
 
@@ -106,12 +106,12 @@ member: cn=Alice Johnson,ou=people,dc=company,dc=com
 
     parse_result = api.parse(ldif_content)
 
-    if parse_result.is_success:
+    if parse_result.success:
         entries = parse_result.data
 
         # Filter person entries
         person_result = api.filter_persons(entries)
-        if person_result.is_success:
+        if person_result.success:
             person_entries = person_result.data
             for entry in person_entries:
                 pass
@@ -127,7 +127,7 @@ member: cn=Alice Johnson,ou=people,dc=company,dc=com
 
         # Sort hierarchically
         sort_result = api.sort_hierarchically(entries)
-        if sort_result.is_success:
+        if sort_result.success:
             sorted_entries = sort_result.data
             for entry in sorted_entries:
                 str(entry.dn).count(",")
@@ -170,18 +170,18 @@ mail: test.user@filetest.com
     try:
         # Using TLdif for file operations
         read_result = TLdif.read_file(input_path)
-        if read_result.is_success:
+        if read_result.success:
             entries = read_result.data
 
             # Process entries
             api = FlextLdifAPI()
             person_result = api.filter_persons(entries)
-            if person_result.is_success:
+            if person_result.success:
                 person_entries = person_result.data
 
                 # Write to output file
                 write_result = TLdif.write_file(person_entries, output_path)
-                if write_result.is_success:
+                if write_result.success:
                     # Verify output
                     if output_path.exists():
                         output_path.read_text(encoding="utf-8")
@@ -189,7 +189,7 @@ mail: test.user@filetest.com
         # Using API for file operations
         api = FlextLdifAPI()
         file_parse_result = api.parse_file(input_path)
-        if file_parse_result.is_success:
+        if file_parse_result.success:
             pass
 
     finally:
@@ -220,7 +220,7 @@ mail: convenience@example.com
     # Global API instance
     api = flext_ldif_get_api()
     result = api.parse(ldif_content)
-    if result.is_success:
+    if result.success:
         pass
 
 
@@ -246,7 +246,7 @@ sn: user{i:02d}
 
     strict_api = FlextLdifAPI(strict_config)
     strict_result = strict_api.parse(large_ldif)
-    if strict_result.is_success:
+    if strict_result.success:
         pass
 
     permissive_config = FlextLdifConfig.model_validate(
@@ -259,7 +259,7 @@ sn: user{i:02d}
 
     permissive_api = FlextLdifAPI(permissive_config)
     permissive_result = permissive_api.parse(large_ldif)
-    if permissive_result.is_success:
+    if permissive_result.success:
         pass
 
 
@@ -271,13 +271,13 @@ It has no proper structure
 And should fail parsing"""
 
     parse_result = TLdif.parse(invalid_ldif)
-    if not parse_result.is_success:
+    if not parse_result.success:
         pass
 
     # File not found error
     nonexistent_file = Path("/nonexistent/path/file.ldif")
     file_result = TLdif.read_file(nonexistent_file)
-    if not file_result.is_success:
+    if not file_result.success:
         pass
 
     # Validation errors
@@ -287,11 +287,11 @@ cn: incomplete
 
     api = FlextLdifAPI()
     incomplete_result = api.parse(incomplete_ldif)
-    if incomplete_result.is_success:
+    if incomplete_result.success:
         # Parse might succeed, but validation should catch issues
         entries = incomplete_result.data
         validate_result = api.validate(entries)
-        if not validate_result.is_success:
+        if not validate_result.success:
             pass
 
 
@@ -355,7 +355,7 @@ member: cn=Mary Manager,ou=people,dc=advanced,dc=com
     api = FlextLdifAPI()
     parse_result = api.parse(complex_ldif)
 
-    if parse_result.is_success:
+    if parse_result.success:
         entries = parse_result.data
 
         # Filter different types
@@ -390,7 +390,7 @@ member: cn=Mary Manager,ou=people,dc=advanced,dc=com
 
         # Hierarchical analysis
         sort_result = api.sort_hierarchically(entries)
-        if sort_result.is_success:
+        if sort_result.success:
             sorted_entries = sort_result.data
             for entry in sorted_entries:
                 depth = str(entry.dn).count(",")
@@ -431,7 +431,7 @@ description: Test user {i:03d} for performance monitoring
     parse_result = TLdif.parse(large_ldif)
     parse_time = time.time() - start_time
 
-    if parse_result.is_success:
+    if parse_result.success:
         entries = parse_result.data
 
         # Measure filtering performance
@@ -441,13 +441,13 @@ description: Test user {i:03d} for performance monitoring
         person_result = api.filter_persons(entries)
         filter_time = time.time() - start_time
 
-        if person_result.is_success:
+        if person_result.success:
             # Measure writing performance
             start_time = time.time()
             write_result = TLdif.write(person_result.data)
             write_time = time.time() - start_time
 
-            if write_result.is_success:
+            if write_result.success:
                 # Total performance
                 parse_time + filter_time + write_time
 

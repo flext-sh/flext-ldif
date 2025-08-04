@@ -9,7 +9,6 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-
 from flext_ldif import FlextLdifAPI, FlextLdifConfig
 
 
@@ -47,7 +46,7 @@ member: cn=John Doe,dc=example,dc=com
 
         # Parse LDIF (covers parsing path)
         parse_result = api.parse(ldif_content)
-        assert parse_result.is_success
+        assert parse_result.success
         entries = parse_result.data or []
         assert len(entries) == 3
 
@@ -78,28 +77,28 @@ member: cn=John Doe,dc=example,dc=com
 
         # Test filtering functionality from example
         persons_result = api.filter_persons(entries)
-        assert persons_result.is_success
+        assert persons_result.success
         persons = persons_result.data or []
         assert len(persons) == 1
         assert persons[0] == entry2
 
         # Test filtering by object class
         domain_result = api.filter_by_objectclass(entries, "domain")
-        assert domain_result.is_success
+        assert domain_result.success
         domains = domain_result.data or []
         assert len(domains) == 1
         assert domains[0] == entry1
 
         # Test groups filtering
         groups_result = api.filter_groups(entries)
-        assert groups_result.is_success
+        assert groups_result.success
         groups = groups_result.data or []
         assert len(groups) == 1
         assert groups[0] == entry3
 
         # Test entry statistics
         stats_result = api.get_entry_statistics(entries)
-        assert stats_result.is_success
+        assert stats_result.success
         stats = stats_result.data
         assert stats["total_entries"] == 3
         assert stats["person_entries"] == 1
@@ -107,11 +106,11 @@ member: cn=John Doe,dc=example,dc=com
 
         # Test validation
         validate_result = api.validate(entries)
-        assert validate_result.is_success
+        assert validate_result.success
 
         # Test LDIF generation
         write_result = api.write(entries)
-        assert write_result.is_success
+        assert write_result.success
         output_ldif = write_result.data
         assert "dn: dc=example,dc=com" in output_ldif
         assert "dn: cn=John Doe,dc=example,dc=com" in output_ldif
@@ -135,7 +134,7 @@ uid: jsmith
 """
 
         parse_result = api.parse(person_ldif)
-        assert parse_result.is_success
+        assert parse_result.success
         entries = parse_result.data or []
         assert len(entries) == 1
 
@@ -152,7 +151,7 @@ uid: jsmith
 
         # Test write after modification
         write_result = api.write(entries)
-        assert write_result.is_success
+        assert write_result.success
         output = write_result.data
         assert "departmentNumber: IT" in output
 
@@ -167,21 +166,21 @@ sn: User
 """
 
         # Test file parsing
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
         try:
             # Parse from file
             file_result = api.parse_file(temp_path)
-            assert file_result.is_success
+            assert file_result.success
             entries = file_result.data or []
             assert len(entries) == 1
 
             # Test write to file
             output_path = temp_path.parent / "output.ldif"
             write_file_result = api.write(entries, output_path)
-            assert write_file_result.is_success
+            assert write_file_result.success
             assert output_path.exists()
 
             # Verify written content
@@ -204,18 +203,18 @@ sn: User
 """
 
         parse_result = api.parse(valid_ldif)
-        assert parse_result.is_success
+        assert parse_result.success
         entries = parse_result.data or []
 
         # Test filter_valid
         valid_result = api.filter_valid(entries)
-        assert valid_result.is_success
+        assert valid_result.success
         valid_entries = valid_result.data or []
         assert len(valid_entries) == 1
 
         # Test with empty list
         empty_valid = api.filter_valid([])
-        assert empty_valid.is_success
+        assert empty_valid.success
         assert len(empty_valid.data or []) == 0
 
     def test_api_hierarchical_sorting(self) -> None:
@@ -237,21 +236,25 @@ dc: example
 """
 
         parse_result = api.parse(ldif_content)
-        assert parse_result.is_success
+        assert parse_result.success
         entries = parse_result.data or []
         assert len(entries) == 3
 
         # Test hierarchical sorting
         sort_result = api.sort_hierarchically(entries)
-        assert sort_result.is_success
+        assert sort_result.success
         sorted_entries = sort_result.data or []
         assert len(sorted_entries) == 3
 
         # Verify hierarchical order (root should come first)
         dns = [str(entry.dn.value) for entry in sorted_entries]
         dc_index = next(i for i, dn in enumerate(dns) if dn == "dc=example,dc=com")
-        ou_index = next(i for i, dn in enumerate(dns) if dn == "ou=people,dc=example,dc=com")
-        user_index = next(i for i, dn in enumerate(dns) if dn == "cn=User,ou=people,dc=example,dc=com")
+        ou_index = next(
+            i for i, dn in enumerate(dns) if dn == "ou=people,dc=example,dc=com"
+        )
+        user_index = next(
+            i for i, dn in enumerate(dns) if dn == "cn=User,ou=people,dc=example,dc=com"
+        )
 
         assert dc_index < ou_index < user_index
 
@@ -271,20 +274,22 @@ sn: User
 """
 
         parse_result = api.parse(ldif_content)
-        assert parse_result.is_success
+        assert parse_result.success
         entries = parse_result.data or []
         assert len(entries) == 2
 
         # Test finding existing entry
         found_result = api.find_entry_by_dn(entries, "cn=Findable User,dc=test,dc=com")
-        assert found_result.is_success
+        assert found_result.success
         found_entry = found_result.data
         assert found_entry is not None
         assert found_entry.dn.value == "cn=Findable User,dc=test,dc=com"
 
         # Test finding non-existent entry
-        not_found_result = api.find_entry_by_dn(entries, "cn=Missing User,dc=test,dc=com")
-        assert not_found_result.is_success
+        not_found_result = api.find_entry_by_dn(
+            entries, "cn=Missing User,dc=test,dc=com",
+        )
+        assert not_found_result.success
         assert not_found_result.data is None
 
     def test_api_organizational_units_filtering(self) -> None:
@@ -309,19 +314,21 @@ cn: User
 """
 
         parse_result = api.parse(ldif_content)
-        assert parse_result.is_success
+        assert parse_result.success
         entries = parse_result.data or []
         assert len(entries) == 4
 
         # Test OU filtering
         ou_result = api.filter_organizational_units(entries)
-        assert ou_result.is_success
+        assert ou_result.success
         ous = ou_result.data or []
         # Should find OU entries (might include domain depending on implementation)
         assert len(ous) >= 2
 
         # Verify both OUs found
-        ou_names = [entry.get_attribute("ou")[0] for entry in ous if entry.get_attribute("ou")]
+        ou_names = [
+            entry.get_attribute("ou")[0] for entry in ous if entry.get_attribute("ou")
+        ]
         assert "people" in ou_names
         assert "groups" in ou_names
 
@@ -331,7 +338,7 @@ cn: User
         strict_config = FlextLdifConfig(
             strict_validation=True,
             allow_empty_attributes=False,
-            max_entries=100
+            max_entries=100,
         )
         api_strict = FlextLdifAPI(strict_config)
 
@@ -343,13 +350,13 @@ sn: Test
 """
 
         result = api_strict.parse(valid_content)
-        assert result.is_success
+        assert result.success
 
         # Test with permissive config
         permissive_config = FlextLdifConfig(
             strict_validation=False,
             allow_empty_attributes=True,
-            max_entries=1000
+            max_entries=1000,
         )
         api_permissive = FlextLdifAPI(permissive_config)
 
@@ -358,12 +365,14 @@ sn: Test
 objectClass: person
 cn: Permissive
 description:
-title:   
+title:
 """
 
         result_permissive = api_permissive.parse(permissive_content)
         # Should work in permissive mode
-        assert result_permissive.is_success or not result_permissive.is_success  # Either is acceptable
+        assert (
+            result_permissive.success or not result_permissive.success
+        )  # Either is acceptable
 
     def test_api_change_records_filtering(self) -> None:
         """Test change records filtering functionality."""
@@ -383,12 +392,12 @@ description: Modified description
 """
 
         parse_result = api.parse(change_ldif)
-        if parse_result.is_success:
+        if parse_result.success:
             entries = parse_result.data or []
 
             # Test change records filtering
             changes_result = api.filter_change_records(entries)
-            assert changes_result.is_success
+            assert changes_result.success
             # May or may not find change records depending on implementation
 
     def test_api_comprehensive_error_scenarios(self) -> None:
@@ -403,18 +412,18 @@ random content
 
         result = api.parse(malformed_ldif)
         # Should either succeed with 0 entries or fail gracefully
-        assert result.is_success or not result.is_success
+        assert result.success or not result.success
 
         # Test with empty content
         empty_result = api.parse("")
-        assert empty_result.is_success
+        assert empty_result.success
         assert len(empty_result.data or []) == 0
 
         # Test validation with empty list
         empty_validate = api.validate([])
-        assert empty_validate.is_success
+        assert empty_validate.success
 
         # Test write with empty list
         empty_write = api.write([])
-        assert empty_write.is_success
+        assert empty_write.success
         assert empty_write.data == ""

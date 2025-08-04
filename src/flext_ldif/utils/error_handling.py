@@ -18,13 +18,12 @@ License: MIT
 from __future__ import annotations
 
 import functools
-from collections.abc import Callable
 from typing import TYPE_CHECKING, ParamSpec
 
-from flext_core import FlextResult, get_logger, F, T
+from flext_core import FlextResult, T, get_logger
 
 if TYPE_CHECKING:
-    from collections.abc import Awaitable
+    from collections.abc import Awaitable, Callable
 
 P = ParamSpec("P")
 # F and T imported from flext_core to eliminate duplication
@@ -48,7 +47,7 @@ class FlextLdifErrorHandler:
         >>> handler = FlextLdifErrorHandler()
         >>> failed_result = FlextResult.fail("Validation failed")
         >>> handled = handler.handle_result_failure(failed_result, "LDIF parsing")
-        >>> handled.is_success  # False
+        >>> handled.success  # False
         >>> "LDIF parsing failed" in handled.error  # True
 
     """
@@ -89,12 +88,12 @@ class FlextLdifErrorHandler:
             FlextResult with propagated failure
 
         """
-        if result.is_success:
+        if result.success:
             return result
 
         error_msg = result.error or "Unknown error"
         if context:
-            error_msg = f"{context}: {error_msg}"
+            error_msg: str = f"{context}: {error_msg}"
 
         logger.debug("Propagating failure: %s", error_msg)
         return FlextResult.fail(error_msg)
@@ -114,10 +113,10 @@ class FlextLdifErrorHandler:
             FlextResult with consistent validation error handling
 
         """
-        if validation_result.is_success:
+        if validation_result.success:
             return validation_result
 
-        error_msg = f"{item_name} validation failed: {validation_result.error}"
+        error_msg: str = f"{item_name} validation failed: {validation_result.error}"
         logger.warning("Validation failure: %s", error_msg)
         return FlextResult.fail(error_msg)
 
@@ -211,7 +210,7 @@ def handle_file_operation_error(
         FlextResult with consistent file error handling
 
     """
-    error_msg = f"{operation_name} failed for file '{file_path}': {error}"
+    error_msg: str = f"{operation_name} failed for file '{file_path}': {error}"
     logger.error("File operation error: %s", error_msg)
     return FlextResult.fail(error_msg)
 
@@ -233,6 +232,6 @@ def handle_parsing_error(
 
     """
     location = f" at line {line_number}" if line_number else ""
-    error_msg = f"{content_type} parsing failed{location}: {error}"
+    error_msg: str = f"{content_type} parsing failed{location}: {error}"
     logger.error("Parsing error: %s", error_msg)
     return FlextResult.fail(error_msg)

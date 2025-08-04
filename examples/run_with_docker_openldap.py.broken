@@ -439,6 +439,7 @@ class LdifExampleRunner:
             modernized_ldif_parse,
             modernized_ldif_write,
         )
+
         self.modernized_parse = modernized_ldif_parse
         self.modernized_write = modernized_ldif_write
 
@@ -467,16 +468,18 @@ class LdifExampleRunner:
         processor = FlextLdifProcessor()
         result = processor.parse_ldif_content(self.ldif_data)
 
-        if not result.is_success:
+        if not result.success:
             return
 
         await self._process_person_entries(processor, result.data)
         self._process_valid_entries(processor, result.data)
 
-    async def _process_person_entries(self, processor: object, data: list[object]) -> None:
+    async def _process_person_entries(
+        self, processor: object, data: list[object]
+    ) -> None:
         """Process person entries from LDIF data."""
         person_result = processor.filter_person_entries(data)
-        if not person_result.is_success:
+        if not person_result.success:
             return
 
         # Show person details for first 3 entries
@@ -489,13 +492,15 @@ class LdifExampleRunner:
     def _process_valid_entries(self, processor: object, data: list[object]) -> None:
         """Process valid entries filtering."""
         valid_result = processor.filter_valid_entries(data)
-        if valid_result.is_success:
+        if valid_result.success:
             pass  # Process valid entries
 
     def _run_domain_specification_example(self) -> None:
         """Example 3: Domain specifications demonstration."""
         person_spec = FlextLdifPersonSpecification()
-        _person_count = sum(1 for entry in self.entries if person_spec.is_satisfied_by(entry))
+        _person_count = sum(
+            1 for entry in self.entries if person_spec.is_satisfied_by(entry)
+        )
         # Could log person count here
 
     def _run_validation_example(self) -> None:
@@ -504,13 +509,15 @@ class LdifExampleRunner:
 
         validator = FlextLdifValidator()
         validation_result = validator.validate_entries(self.entries)
-        if validation_result.is_success:
+        if validation_result.success:
             pass  # Process validation success
 
     def _run_write_ldif_example(self) -> None:
         """Example 5: Write LDIF demonstration."""
         person_spec = FlextLdifPersonSpecification()
-        person_entries = [entry for entry in self.entries if person_spec.is_satisfied_by(entry)]
+        person_entries = [
+            entry for entry in self.entries if person_spec.is_satisfied_by(entry)
+        ]
 
         if not person_entries:
             return

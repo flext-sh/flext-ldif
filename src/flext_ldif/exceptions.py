@@ -43,7 +43,7 @@ Example:
     ...             raise FlextLdifValidationError(
     ...                 "DN cannot be empty",
     ...                 context={"entry_id": entry.id},
-    ...                 error_code="EMPTY_DN"
+    ...                 error_code="EMPTY_DN",
     ...             )
     ...         return FlextResult.ok(entry)
     ...     except FlextLdifValidationError as e:
@@ -106,7 +106,7 @@ class FlextLdifParseError(FlextProcessingError):
         ...         "Invalid DN format in LDIF entry",
         ...         line_number=42,
         ...         entry_dn="cn=invalid entry,dc=example,dc=com",
-        ...         error_code="INVALID_DN_FORMAT"
+        ...         error_code="INVALID_DN_FORMAT",
         ...     ) from e
 
     """
@@ -160,7 +160,8 @@ class FlextLdifParseError(FlextProcessingError):
                 logger.trace("Added entry DN to error context: %s", entry_dn)
             else:
                 logger.warning(
-                    "Invalid entry_dn provided to FlextLdifParseError: %s", entry_dn,
+                    "Invalid entry_dn provided to FlextLdifParseError: %s",
+                    entry_dn,
                 )
 
         # REFACTORING: Enhanced error message formatting with context integration
@@ -186,7 +187,8 @@ class FlextLdifParseError(FlextProcessingError):
             # Fallback to basic initialization
             super().__init__(f"LDIF parse: {message}")
             logger.warning(
-                "FlextLdifParseError created with fallback initialization due to: %s", e,
+                "FlextLdifParseError created with fallback initialization due to: %s",
+                e,
             )
 
 
@@ -213,7 +215,7 @@ class FlextLdifEntryError(FlextProcessingError):
         ...         entry_dn="cn=user,ou=people,dc=example,dc=com",
         ...         operation="validate_required_attributes",
         ...         error_code="MISSING_REQUIRED_ATTR",
-        ...         missing_attribute="objectClass"
+        ...         missing_attribute="objectClass",
         ...     ) from e
 
     """
@@ -256,7 +258,8 @@ class FlextLdifEntryError(FlextProcessingError):
                 logger.trace("Added entry DN to error context: %s", entry_dn)
             else:
                 logger.warning(
-                    "Invalid entry_dn provided to FlextLdifEntryError: %s", entry_dn,
+                    "Invalid entry_dn provided to FlextLdifEntryError: %s",
+                    entry_dn,
                 )
 
         # Add operation context with validation
@@ -266,7 +269,8 @@ class FlextLdifEntryError(FlextProcessingError):
                 logger.trace("Added operation to error context: %s", operation)
             else:
                 logger.warning(
-                    "Invalid operation provided to FlextLdifEntryError: %s", operation,
+                    "Invalid operation provided to FlextLdifEntryError: %s",
+                    operation,
                 )
 
         # REFACTORING: Enhanced error message formatting with context integration
@@ -292,11 +296,12 @@ class FlextLdifEntryError(FlextProcessingError):
             # Fallback to basic initialization
             super().__init__(f"LDIF entry: {message}")
             logger.warning(
-                "FlextLdifEntryError created with fallback initialization due to: %s", e,
+                "FlextLdifEntryError created with fallback initialization due to: %s",
+                e,
             )
 
 
-__all__ = [
+__all__: list[str] = [
     "FlextLdifEntryError",
     "FlextLdifError",
     "FlextLdifParseError",

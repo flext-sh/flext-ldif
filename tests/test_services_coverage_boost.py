@@ -9,16 +9,20 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
+from flext_core import get_flext_container
 
+from flext_ldif.config import FlextLdifConfig
+from flext_ldif.models import (
+    FlextLdifAttributes,
+    FlextLdifDistinguishedName,
+    FlextLdifEntry,
+)
 from flext_ldif.services import (
     FlextLdifParserService,
     FlextLdifValidatorService,
     FlextLdifWriterService,
     register_ldif_services,
 )
-from flext_ldif.models import FlextLdifEntry, FlextLdifDistinguishedName, FlextLdifAttributes
-from flext_ldif.config import FlextLdifConfig
-from flext_core import get_flext_container
 
 
 class TestFlextLdifParserServiceCoverage:
@@ -30,8 +34,8 @@ class TestFlextLdifParserServiceCoverage:
         parser = FlextLdifParserService(config=config)
 
         assert parser.config == config
-        assert hasattr(parser, 'parse')
-        assert hasattr(parser, 'parse_file')
+        assert hasattr(parser, "parse")
+        assert hasattr(parser, "parse_file")
 
     def test_parse_valid_ldif_content(self) -> None:
         """Testa parsing de conteúdo LDIF válido."""
@@ -52,7 +56,7 @@ sn: Smith
 """
 
         result = parser.parse(ldif_content)
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert len(result.data) == 2
 
@@ -68,7 +72,7 @@ missing dn line
 
         result = parser.parse(invalid_ldif)
         # Pode ser success com 0 entries ou failure dependendo da implementação
-        if result.is_success:
+        if result.success:
             assert len(result.data or []) == 0
         else:
             assert result.error is not None
@@ -79,7 +83,7 @@ missing dn line
         parser = FlextLdifParserService(config=config)
 
         result = parser.parse("")
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert len(result.data) == 0
 
@@ -94,13 +98,13 @@ cn: Test
 sn: Test
 """
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
         try:
             result = parser.parse_file(temp_path)
-            assert result.is_success
+            assert result.success
             assert result.data is not None
             assert len(result.data) >= 1
         finally:
@@ -113,8 +117,11 @@ sn: Test
 
         nonexistent = Path("/nonexistent/file.ldif")
         result = parser.parse_file(nonexistent)
-        assert not result.is_success
-        assert "not found" in result.error.lower() or "does not exist" in result.error.lower()
+        assert not result.success
+        assert (
+            "not found" in result.error.lower()
+            or "does not exist" in result.error.lower()
+        )
 
 
 class TestFlextLdifValidatorServiceCoverage:
@@ -126,8 +133,8 @@ class TestFlextLdifValidatorServiceCoverage:
         validator = FlextLdifValidatorService(config=config)
 
         assert validator.config == config
-        assert hasattr(validator, 'validate')
-        assert hasattr(validator, 'validate_entry')
+        assert hasattr(validator, "validate")
+        assert hasattr(validator, "validate_entry")
 
     def test_validate_valid_entries(self) -> None:
         """Testa validação de entries válidos."""
@@ -135,16 +142,20 @@ class TestFlextLdifValidatorServiceCoverage:
         validator = FlextLdifValidatorService(config=config)
 
         valid_entry = FlextLdifEntry(
-            dn=FlextLdifDistinguishedName(value="cn=John Doe,ou=people,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "cn": ["John Doe"],
-                "sn": ["Doe"],
-                "objectClass": ["person", "inetOrgPerson"]
-            })
+            dn=FlextLdifDistinguishedName(
+                value="cn=John Doe,ou=people,dc=example,dc=com",
+            ),
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "cn": ["John Doe"],
+                    "sn": ["Doe"],
+                    "objectClass": ["person", "inetOrgPerson"],
+                },
+            ),
         )
 
         result = validator.validate([valid_entry])
-        assert result.is_success
+        assert result.success
         assert result.data is not None
 
     def test_validate_empty_list(self) -> None:
@@ -153,7 +164,7 @@ class TestFlextLdifValidatorServiceCoverage:
         validator = FlextLdifValidatorService(config=config)
 
         result = validator.validate([])
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert len(result.data) == 0
 
@@ -164,52 +175,66 @@ class TestFlextLdifValidatorServiceCoverage:
 
         # Entry válido
         valid_entry = FlextLdifEntry(
-            dn=FlextLdifDistinguishedName(value="cn=Valid User,ou=people,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "cn": ["Valid User"],
-                "objectClass": ["person"]
-            })
+            dn=FlextLdifDistinguishedName(
+                value="cn=Valid User,ou=people,dc=example,dc=com",
+            ),
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "cn": ["Valid User"],
+                    "objectClass": ["person"],
+                },
+            ),
         )
 
         # Entry sem objectClass
         no_oc_entry = FlextLdifEntry(
             dn=FlextLdifDistinguishedName(value="cn=No OC,ou=people,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "cn": ["No OC"],
-                "description": ["Entry without objectClass"]
-            })
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "cn": ["No OC"],
+                    "description": ["Entry without objectClass"],
+                },
+            ),
         )
 
         # Testar validate_entry individualmente
         result_valid = validator.validate_entry(valid_entry)
-        assert result_valid.is_success or not result_valid.is_success  # Depende da implementação
+        assert (
+            result_valid.success or not result_valid.success
+        )  # Depende da implementação
 
         result_no_oc = validator.validate_entry(no_oc_entry)
         # Sem objectClass pode passar ou falhar dependendo da configuração
         # Deve retornar resultado baseado na configuração de strict_validation
-        assert result_no_oc.is_success or not result_no_oc.is_success
+        assert result_no_oc.success or not result_no_oc.success
 
     def test_validate_with_strict_config(self) -> None:
         """Testa validação com configuração estrita."""
         strict_config = FlextLdifConfig(
             strict_validation=True,
-            allow_empty_attributes=False
+            allow_empty_attributes=False,
         )
         validator = FlextLdifValidatorService(config=strict_config)
 
         # Entry com atributo vazio
         entry_with_empty = FlextLdifEntry(
-            dn=FlextLdifDistinguishedName(value="cn=Empty Attr,ou=people,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "cn": ["Empty Attr"],
-                "description": []  # Atributo vazio
-            })
+            dn=FlextLdifDistinguishedName(
+                value="cn=Empty Attr,ou=people,dc=example,dc=com",
+            ),
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "cn": ["Empty Attr"],
+                    "description": [],  # Atributo vazio
+                },
+            ),
         )
 
         result = validator.validate([entry_with_empty])
         # Com strict_validation=True, pode falhar
-        if not result.is_success:
-            assert "empty" in result.error.lower() or "validation" in result.error.lower()
+        if not result.success:
+            assert (
+                "empty" in result.error.lower() or "validation" in result.error.lower()
+            )
 
 
 class TestFlextLdifWriterServiceCoverage:
@@ -221,8 +246,8 @@ class TestFlextLdifWriterServiceCoverage:
         writer = FlextLdifWriterService(config=config)
 
         assert writer.config == config
-        assert hasattr(writer, 'write')
-        assert hasattr(writer, 'write_file')
+        assert hasattr(writer, "write")
+        assert hasattr(writer, "write_file")
 
     def test_write_valid_entries(self) -> None:
         """Testa escrita de entries válidos."""
@@ -230,16 +255,20 @@ class TestFlextLdifWriterServiceCoverage:
         writer = FlextLdifWriterService(config=config)
 
         entry = FlextLdifEntry(
-            dn=FlextLdifDistinguishedName(value="cn=Test User,ou=people,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "cn": ["Test User"],
-                "sn": ["User"],
-                "objectClass": ["person"]
-            })
+            dn=FlextLdifDistinguishedName(
+                value="cn=Test User,ou=people,dc=example,dc=com",
+            ),
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "cn": ["Test User"],
+                    "sn": ["User"],
+                    "objectClass": ["person"],
+                },
+            ),
         )
 
         result = writer.write([entry])
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert isinstance(result.data, str)
         assert len(result.data) > 0
@@ -251,7 +280,7 @@ class TestFlextLdifWriterServiceCoverage:
         writer = FlextLdifWriterService(config=config)
 
         result = writer.write([])
-        assert result.is_success
+        assert result.success
         assert result.data == ""
 
     def test_write_multiple_entries(self) -> None:
@@ -261,22 +290,26 @@ class TestFlextLdifWriterServiceCoverage:
 
         entry1 = FlextLdifEntry(
             dn=FlextLdifDistinguishedName(value="cn=User1,ou=people,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "cn": ["User1"],
-                "objectClass": ["person"]
-            })
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "cn": ["User1"],
+                    "objectClass": ["person"],
+                },
+            ),
         )
 
         entry2 = FlextLdifEntry(
             dn=FlextLdifDistinguishedName(value="cn=User2,ou=people,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "cn": ["User2"],
-                "objectClass": ["person"]
-            })
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "cn": ["User2"],
+                    "objectClass": ["person"],
+                },
+            ),
         )
 
         result = writer.write([entry1, entry2])
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert isinstance(result.data, str)
         assert "cn=User1" in result.data
@@ -288,24 +321,28 @@ class TestFlextLdifWriterServiceCoverage:
         writer = FlextLdifWriterService(config=config)
 
         entry = FlextLdifEntry(
-            dn=FlextLdifDistinguishedName(value="cn=File Test,ou=people,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "cn": ["File Test"],
-                "objectClass": ["person"]
-            })
+            dn=FlextLdifDistinguishedName(
+                value="cn=File Test,ou=people,dc=example,dc=com",
+            ),
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "cn": ["File Test"],
+                    "objectClass": ["person"],
+                },
+            ),
         )
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             output_path = Path(f.name)
 
         try:
             result = writer.write_file([entry], output_path)
-            assert result.is_success
+            assert result.success
             assert output_path.exists()
             assert output_path.stat().st_size > 0
 
             # Verificar conteúdo
-            content = output_path.read_text()
+            content = output_path.read_text(encoding="utf-8")
             assert "cn=File Test" in content
         finally:
             output_path.unlink(missing_ok=True)
@@ -317,16 +354,22 @@ class TestFlextLdifWriterServiceCoverage:
 
         entry = FlextLdifEntry(
             dn=FlextLdifDistinguishedName(value="cn=Test,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "cn": ["Test"],
-                "objectClass": ["person"]
-            })
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "cn": ["Test"],
+                    "objectClass": ["person"],
+                },
+            ),
         )
 
         invalid_path = Path("/nonexistent/directory/file.ldif")
         result = writer.write_file([entry], invalid_path)
-        assert not result.is_success
-        assert "permission" in result.error.lower() or "not found" in result.error.lower() or "directory" in result.error.lower()
+        assert not result.success
+        assert (
+            "permission" in result.error.lower()
+            or "not found" in result.error.lower()
+            or "directory" in result.error.lower()
+        )
 
 
 class TestServiceRegistrationCoverage:
@@ -341,19 +384,19 @@ class TestServiceRegistrationCoverage:
 
         # Registrar serviços
         result = register_ldif_services(container)
-        assert result.is_success
+        assert result.success
 
         # Verificar se serviços foram registrados pelos nomes
         parser_result = container.get("ldif_parser")
-        assert parser_result.is_success
+        assert parser_result.success
         assert isinstance(parser_result.data, FlextLdifParserService)
 
         validator_result = container.get("ldif_validator")
-        assert validator_result.is_success
+        assert validator_result.success
         assert isinstance(validator_result.data, FlextLdifValidatorService)
 
         writer_result = container.get("ldif_writer")
-        assert writer_result.is_success
+        assert writer_result.success
         assert isinstance(writer_result.data, FlextLdifWriterService)
 
     def test_service_dependencies(self) -> None:
@@ -364,14 +407,14 @@ class TestServiceRegistrationCoverage:
         # Registrar com configuração customizada
         custom_config = FlextLdifConfig(
             max_entries=100,
-            strict_validation=True
+            strict_validation=True,
         )
 
         result = register_ldif_services(container, config=custom_config)
-        assert result.is_success
+        assert result.success
 
         parser_result = container.get("ldif_parser")
-        assert parser_result.is_success
+        assert parser_result.success
         parser = parser_result.data
         assert parser.config.max_entries == 100
         assert parser.config.strict_validation is True
@@ -384,7 +427,7 @@ class TestServiceRegistrationCoverage:
         # Testar com entrada inválida que deve causar erro
         try:
             result = parser.parse(None)  # type: ignore
-            if not result.is_success:
+            if not result.success:
                 assert result.error is not None
         except (TypeError, AttributeError):
             pass  # Esperado para entrada inválida
@@ -399,9 +442,9 @@ class TestProtocolCompliance:
         parser = FlextLdifParserService(config=config)
 
         # Verificar se métodos do protocolo existem
-        assert hasattr(parser, 'parse')
+        assert hasattr(parser, "parse")
         assert callable(parser.parse)
-        assert hasattr(parser, 'parse_file')
+        assert hasattr(parser, "parse_file")
         assert callable(parser.parse_file)
 
     def test_validator_protocol_compliance(self) -> None:
@@ -410,9 +453,9 @@ class TestProtocolCompliance:
         validator = FlextLdifValidatorService(config=config)
 
         # Verificar se métodos do protocolo existem
-        assert hasattr(validator, 'validate')
+        assert hasattr(validator, "validate")
         assert callable(validator.validate)
-        assert hasattr(validator, 'validate_entry')
+        assert hasattr(validator, "validate_entry")
         assert callable(validator.validate_entry)
 
     def test_writer_protocol_compliance(self) -> None:
@@ -421,9 +464,9 @@ class TestProtocolCompliance:
         writer = FlextLdifWriterService(config=config)
 
         # Verificar se métodos do protocolo existem
-        assert hasattr(writer, 'write')
+        assert hasattr(writer, "write")
         assert callable(writer.write)
-        assert hasattr(writer, 'write_file')
+        assert hasattr(writer, "write_file")
         assert callable(writer.write_file)
 
 
@@ -446,7 +489,7 @@ cn: User{i}
 
         result = parser.parse(large_ldif)
         # Pode ser limitado pela configuração max_entries
-        if result.is_success:
+        if result.success:
             assert len(result.data or []) <= config.max_entries
 
     def test_writer_with_special_characters(self) -> None:
@@ -455,16 +498,20 @@ cn: User{i}
         writer = FlextLdifWriterService(config=config)
 
         entry_special = FlextLdifEntry(
-            dn=FlextLdifDistinguishedName(value="cn=João Silva,ou=usuários,dc=empresa,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "cn": ["João Silva"],
-                "description": ["Usuário com acentos e çedilha"],
-                "objectClass": ["person"]
-            })
+            dn=FlextLdifDistinguishedName(
+                value="cn=João Silva,ou=usuários,dc=empresa,dc=com",
+            ),
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "cn": ["João Silva"],
+                    "description": ["Usuário com acentos e çedilha"],
+                    "objectClass": ["person"],
+                },
+            ),
         )
 
         result = writer.write([entry_special])
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         # Deve lidar com caracteres especiais corretamente
 
@@ -472,21 +519,23 @@ cn: User{i}
         """Testa validator com regras customizadas."""
         strict_config = FlextLdifConfig(
             strict_validation=True,
-            allow_empty_attributes=False
+            allow_empty_attributes=False,
         )
         validator = FlextLdifValidatorService(config=strict_config)
 
         # Entry que pode falhar validação estrita
         problematic_entry = FlextLdifEntry(
             dn=FlextLdifDistinguishedName(value="cn=Problem,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "cn": ["Problem"],
-                "description": [],  # Empty attribute
-                # Missing objectClass
-            })
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "cn": ["Problem"],
+                    "description": [],  # Empty attribute
+                    # Missing objectClass
+                },
+            ),
         )
 
         result = validator.validate([problematic_entry])
         # Com strict_validation, pode falhar
-        if not result.is_success:
+        if not result.success:
             assert result.error is not None

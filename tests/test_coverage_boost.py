@@ -33,13 +33,16 @@ class TestAPICoverageBoost:
         # Mock the TLdif.parse to return success but with None data
         with patch("flext_ldif.core.TLdif.parse") as mock_parse:
             mock_result = Mock()
-            mock_result.is_success = True
+            mock_result.success = True
             mock_result.data = None
             mock_parse.return_value = mock_result
 
             result = api.parse("test content")
-            assert not result.is_success
-            assert ("No entries parsed" in result.error or "Core LDIF parsing failed" in result.error)
+            assert not result.success
+            assert (
+                "No entries parsed" in result.error
+                or "Core LDIF parsing failed" in result.error
+            )
 
     def test_api_parse_file_with_none_result_data(self) -> None:
         """Test API parse_file when parser service returns None data."""
@@ -59,13 +62,13 @@ class TestAPICoverageBoost:
             # Mock the parser service to return success but with None data
             with patch.object(api._parser_service, "parse_file") as mock_parse:
                 mock_result = Mock()
-                mock_result.is_success = True
+                mock_result.success = True
                 mock_result.is_failure = False
                 mock_result.data = None
                 mock_parse.return_value = mock_result
 
                 result = api.parse_file(temp_path)
-                assert not result.is_success
+                assert not result.success
                 assert "No entries parsed from file" in result.error
         finally:
             Path(temp_path).unlink()
@@ -85,7 +88,7 @@ class TestAPICoverageBoost:
         )
 
         result = api.validate([entry])
-        assert not result.is_success
+        assert not result.success
         assert "Empty attribute value not allowed" in result.error
 
     def test_api_validate_entry_size_exceeds_limit(self) -> None:
@@ -102,14 +105,15 @@ class TestAPICoverageBoost:
                     "cn": ["test"],
                     "objectClass": ["person"],
                     "description": [
-                        "This is a very long description that exceeds the size limit set in the configuration for testing purposes. " * 20,  # Make it much larger to exceed 1024 bytes
+                        "This is a very long description that exceeds the size limit set in the configuration for testing purposes. "
+                        * 20,  # Make it much larger to exceed 1024 bytes
                     ],
                 },
             ),
         )
 
         result = api.validate([entry])
-        assert not result.is_success
+        assert not result.success
         assert "Entry size" in result.error
         assert "exceeds limit" in result.error
 
@@ -130,7 +134,7 @@ class TestAPICoverageBoost:
         # Should attempt to create directory but fail gracefully
         result = api.write([entry], "test.ldif")
         # Write should still proceed and fail naturally
-        assert not result.is_success
+        assert not result.success
 
     def test_api_entries_to_ldif_write_failure(self) -> None:
         """Test entries_to_ldif when write operation fails."""
@@ -146,13 +150,13 @@ class TestAPICoverageBoost:
         # Mock TLdif.write to fail
         with patch("flext_ldif.core.TLdif.write") as mock_write:
             mock_result = Mock()
-            mock_result.is_success = False
+            mock_result.success = False
             mock_result.error = "Write error"
             mock_write.return_value = mock_result
 
             # The API returns FlextResult on write failure rather than raising exception
             result = api.entries_to_ldif([entry])
-            assert not result.is_success
+            assert not result.success
             assert "Failed to convert" in result.error
 
     def test_api_get_entry_statistics_error_handling(self) -> None:
@@ -165,7 +169,7 @@ class TestAPICoverageBoost:
 
             # Should still return successful result with basic statistics
             result = api.get_entry_statistics([])
-            assert result.is_success
+            assert result.success
             # With empty list, basic statistics should still be generated
 
     def test_api_observability_initialization_failure(self) -> None:
@@ -173,7 +177,7 @@ class TestAPICoverageBoost:
         with patch("flext_ldif.api.FlextObservabilityMonitor") as mock_monitor_class:
             mock_monitor = Mock()
             mock_result = Mock()
-            mock_result.is_success = False
+            mock_result.success = False
             mock_result.error = "Initialization failed"
             mock_monitor.flext_initialize_observability.return_value = mock_result
             mock_monitor_class.return_value = mock_monitor
@@ -189,7 +193,7 @@ class TestAPICoverageBoost:
         # Test when monitor is not available
         api._observability_monitor = None
         result = api.get_observability_metrics()
-        assert not result.is_success
+        assert not result.success
         assert "not available" in result.error
 
         # Test when metrics summary fails
@@ -202,7 +206,7 @@ class TestAPICoverageBoost:
         )
 
         result = api.get_observability_metrics()
-        assert not result.is_success
+        assert not result.success
         assert "Failed to get metrics" in result.error
 
     def test_api_reset_observability_metrics_failures(self) -> None:
@@ -212,7 +216,7 @@ class TestAPICoverageBoost:
         # Test when monitor is not available
         api._observability_monitor = None
         result = api.reset_observability_metrics()
-        assert not result.is_success
+        assert not result.success
         assert "not available" in result.error
 
 
@@ -265,7 +269,7 @@ cn: test2
             # Set max entries to 1
             result = runner.invoke(cli, ["parse", temp_path, "--max-entries", "1"])
             assert result.exit_code == 1
-            assert ("Too many entries" in result.output or "exceeds" in result.output)
+            assert "Too many entries" in result.output or "exceeds" in result.output
         finally:
             Path(temp_path).unlink()
 
@@ -389,7 +393,7 @@ cn: test2
 
         with patch("flext_ldif.cli.setup_cli") as mock_setup:
             mock_result = Mock()
-            mock_result.is_success = False
+            mock_result.success = False
             mock_result.error = "Setup failed"
             mock_setup.return_value = mock_result
 

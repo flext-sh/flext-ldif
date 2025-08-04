@@ -25,12 +25,12 @@ class TestFlextLdifCLIEdgeCases:
         with patch("flext_ldif.cli.create_api_with_config") as mock_create_api:
             # Create a mock entry that fails validation
             mock_entry = Mock()
-            mock_entry.validate_semantic_rules.return_value.is_success = False
+            mock_entry.validate_semantic_rules.return_value.success = False
             mock_entry.validate_semantic_rules.return_value.error = "Invalid DN"
             mock_entry.dn = "invalid-dn"
 
             mock_api = Mock()
-            mock_api.parse_file.return_value.is_success = True
+            mock_api.parse_file.return_value.success = True
             mock_api.parse_file.return_value.data = [
                 mock_entry,
             ] * 10  # 10 validation errors
@@ -66,7 +66,7 @@ class TestFlextLdifCLIEdgeCases:
 
         with patch("flext_ldif.cli.create_api_with_config") as mock_create_api:
             mock_api = Mock()
-            mock_api.parse_file.return_value.is_success = True
+            mock_api.parse_file.return_value.success = True
             mock_api.parse_file.return_value.data = []
             mock_create_api.return_value = mock_api
 
@@ -105,13 +105,13 @@ class TestFlextLdifCLIEdgeCases:
 
         with patch("flext_ldif.cli.create_api_with_config") as mock_create_api:
             mock_api = Mock()
-            mock_api.parse_file.return_value.is_success = True
+            mock_api.parse_file.return_value.success = True
             mock_api.parse_file.return_value.data = []
 
             # Mock sort to fail
-            mock_api.sort_hierarchically.return_value.is_success = False
+            mock_api.sort_hierarchically.return_value.success = False
             mock_api.sort_hierarchically.return_value.error = "Sort failed"
-            mock_api.write.return_value.is_success = True
+            mock_api.write.return_value.success = True
 
             mock_create_api.return_value = mock_api
 
@@ -149,11 +149,11 @@ class TestFlextLdifCLIEdgeCases:
 
         with patch("flext_ldif.cli.create_api_with_config") as mock_create_api:
             mock_api = Mock()
-            mock_api.parse_file.return_value.is_success = True
+            mock_api.parse_file.return_value.success = True
             mock_api.parse_file.return_value.data = []
 
             # Mock write to fail
-            mock_api.write.return_value.is_success = False
+            mock_api.write.return_value.success = False
             mock_api.write.return_value.error = "Write failed"
 
             mock_create_api.return_value = mock_api
@@ -192,7 +192,7 @@ class TestFlextLdifCLIEdgeCases:
 
         with patch("flext_ldif.cli.create_api_with_config") as mock_create_api:
             mock_api = Mock()
-            mock_api.parse.return_value.is_success = False
+            mock_api.parse.return_value.success = False
             mock_api.parse.return_value.error = "API test failed"
             mock_create_api.return_value = mock_api
 
@@ -266,7 +266,7 @@ cn: test
     def test_cli_setup_failure(self) -> None:
         """Test CLI setup failure."""
         with patch("flext_ldif.cli.setup_cli") as mock_setup:
-            mock_setup.return_value.is_success = False
+            mock_setup.return_value.success = False
             mock_setup.return_value.error = "Setup failed"
 
             # Test main function directly to hit setup failure path
@@ -283,13 +283,13 @@ cn: test
 
         with patch("flext_ldif.cli.create_api_with_config") as mock_create_api:
             mock_api = Mock()
-            mock_api.parse_file.return_value.is_success = True
+            mock_api.parse_file.return_value.success = True
             mock_api.parse_file.return_value.data = []
 
             # Mock filter to succeed
-            mock_api.filter_persons.return_value.is_success = True
+            mock_api.filter_persons.return_value.success = True
             mock_api.filter_persons.return_value.data = []
-            mock_api.write.return_value.is_success = True
+            mock_api.write.return_value.success = True
 
             mock_create_api.return_value = mock_api
 
@@ -331,13 +331,13 @@ cn: test
             mock_entries = []
             for i in range(10):  # More than MAX_DISPLAYED_ERRORS (5)
                 mock_entry = Mock()
-                mock_entry.validate_semantic_rules.return_value.is_success = False
+                mock_entry.validate_semantic_rules.return_value.success = False
                 mock_entry.validate_semantic_rules.return_value.error = f"Error {i}"
                 mock_entry.dn = f"dn{i}"
                 mock_entries.append(mock_entry)
 
             mock_api = Mock()
-            mock_api.parse_file.return_value.is_success = True
+            mock_api.parse_file.return_value.success = True
             mock_api.parse_file.return_value.data = mock_entries
             # Mock get_entry_statistics to return proper dict instead of Mock
             mock_api.get_entry_statistics.return_value = {

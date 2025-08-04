@@ -6,6 +6,7 @@ especialmente comandos CLI que são demonstrados nos examples funcionais.
 
 from __future__ import annotations
 
+import contextlib
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock
@@ -14,10 +15,10 @@ import click
 from click.testing import CliRunner
 
 from flext_ldif.cli import (
+    apply_filter,
     cli,
     display_statistics,
     write_entries_to_file,
-    apply_filter,
 )
 
 
@@ -47,33 +48,33 @@ uid: jdoe
 telephoneNumber: +1-555-123-4567
 """
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
         try:
             # Test basic parse command
-            result = runner.invoke(cli, ['parse', str(temp_path)])
+            result = runner.invoke(cli, ["parse", str(temp_path)])
             # Should succeed or provide meaningful output
-            assert result.exit_code in [0, 1]  # May exit 1 on warnings but that's ok
+            assert result.exit_code in {0, 1}  # May exit 1 on warnings but that's ok
 
             # Test parse with --output
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as output_f:
+            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as output_f:
                 output_path = Path(output_f.name)
 
             try:
-                result = runner.invoke(cli, ['parse', str(temp_path), '--output', str(output_path)])
-                assert result.exit_code in [0, 1]
+                result = runner.invoke(cli, ["parse", str(temp_path), "--output", str(output_path)])
+                assert result.exit_code in {0, 1}
             finally:
                 output_path.unlink(missing_ok=True)
 
             # Test parse with --validate
-            result = runner.invoke(cli, ['parse', str(temp_path), '--validate'])
-            assert result.exit_code in [0, 1]
+            result = runner.invoke(cli, ["parse", str(temp_path), "--validate"])
+            assert result.exit_code in {0, 1}
 
             # Test parse with --stats
-            result = runner.invoke(cli, ['parse', str(temp_path), '--stats'])
-            assert result.exit_code in [0, 1]
+            result = runner.invoke(cli, ["parse", str(temp_path), "--stats"])
+            assert result.exit_code in {0, 1}
 
         finally:
             temp_path.unlink(missing_ok=True)
@@ -89,26 +90,26 @@ cn: Valid User
 sn: User
 """
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write(valid_ldif)
             temp_path = Path(f.name)
 
         try:
             # Test basic validate
-            result = runner.invoke(cli, ['validate', str(temp_path)])
-            assert result.exit_code in [0, 1]
+            result = runner.invoke(cli, ["validate", str(temp_path)])
+            assert result.exit_code in {0, 1}
 
             # Test validate with --strict
-            result = runner.invoke(cli, ['validate', str(temp_path), '--strict'])
-            assert result.exit_code in [0, 1]
+            result = runner.invoke(cli, ["validate", str(temp_path), "--strict"])
+            assert result.exit_code in {0, 1}
 
             # Test validate with --output-errors
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as error_f:
+            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".txt", delete=False) as error_f:
                 error_path = Path(error_f.name)
 
             try:
-                result = runner.invoke(cli, ['validate', str(temp_path), '--output-errors', str(error_path)])
-                assert result.exit_code in [0, 1]
+                result = runner.invoke(cli, ["validate", str(temp_path), "--output-errors", str(error_path)])
+                assert result.exit_code in {0, 1}
             finally:
                 error_path.unlink(missing_ok=True)
 
@@ -132,28 +133,28 @@ mail: jane.smith@example.com
 uid: jsmith
 """
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write(person_ldif)
             temp_path = Path(f.name)
 
         try:
             # Test basic transform
-            result = runner.invoke(cli, ['transform', str(temp_path)])
-            assert result.exit_code in [0, 1]
+            result = runner.invoke(cli, ["transform", str(temp_path)])
+            assert result.exit_code in {0, 1}
 
             # Test transform with --output
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as output_f:
+            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as output_f:
                 output_path = Path(output_f.name)
 
             try:
-                result = runner.invoke(cli, ['transform', str(temp_path), '--output', str(output_path)])
-                assert result.exit_code in [0, 1]
+                result = runner.invoke(cli, ["transform", str(temp_path), "--output", str(output_path)])
+                assert result.exit_code in {0, 1}
             finally:
                 output_path.unlink(missing_ok=True)
 
             # Test transform with --add-missing-departments
-            result = runner.invoke(cli, ['transform', str(temp_path), '--add-missing-departments'])
-            assert result.exit_code in [0, 1]
+            result = runner.invoke(cli, ["transform", str(temp_path), "--add-missing-departments"])
+            assert result.exit_code in {0, 1}
 
         finally:
             temp_path.unlink(missing_ok=True)
@@ -169,28 +170,28 @@ cn: Test User
 sn: User
 """
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
         try:
             # Test basic write (reformat)
-            result = runner.invoke(cli, ['write', str(temp_path)])
-            assert result.exit_code in [0, 1]
+            result = runner.invoke(cli, ["write", str(temp_path)])
+            assert result.exit_code in {0, 1}
 
             # Test write with --output
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as output_f:
+            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as output_f:
                 output_path = Path(output_f.name)
 
             try:
-                result = runner.invoke(cli, ['write', str(temp_path), '--output', str(output_path)])
-                assert result.exit_code in [0, 1]
+                result = runner.invoke(cli, ["write", str(temp_path), "--output", str(output_path)])
+                assert result.exit_code in {0, 1}
             finally:
                 output_path.unlink(missing_ok=True)
 
             # Test write with --line-wrap
-            result = runner.invoke(cli, ['write', str(temp_path), '--line-wrap', '60'])
-            assert result.exit_code in [0, 1]
+            result = runner.invoke(cli, ["write", str(temp_path), "--line-wrap", "60"])
+            assert result.exit_code in {0, 1}
 
         finally:
             temp_path.unlink(missing_ok=True)
@@ -213,22 +214,22 @@ objectClass: domain
 dc: example
 """
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
         try:
             # Test stats command (replaces hierarchical-sort)
-            result = runner.invoke(cli, ['stats', str(temp_path)])
-            assert result.exit_code in [0, 1]
+            result = runner.invoke(cli, ["stats", str(temp_path)])
+            assert result.exit_code in {0, 1}
 
             # Test with --output
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as output_f:
+            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as output_f:
                 output_path = Path(output_f.name)
 
             try:
-                result = runner.invoke(cli, ['stats', str(temp_path), '--output', str(output_path)])
-                assert result.exit_code in [0, 1]
+                result = runner.invoke(cli, ["stats", str(temp_path), "--output", str(output_path)])
+                assert result.exit_code in {0, 1}
             except click.ClickException:
                 pass  # Option might not exist
             finally:
@@ -242,35 +243,35 @@ dc: example
         runner = CliRunner()
 
         # Test with non-existent file
-        result = runner.invoke(cli, ['parse', '/nonexistent/file.ldif'])
+        result = runner.invoke(cli, ["parse", "/nonexistent/file.ldif"])
         assert result.exit_code != 0  # Should fail
 
         # Test with directory instead of file
         with tempfile.TemporaryDirectory() as temp_dir:
-            result = runner.invoke(cli, ['parse', temp_dir])
+            result = runner.invoke(cli, ["parse", temp_dir])
             assert result.exit_code != 0  # Should fail
 
         # Test with empty file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("")  # Empty file
             temp_path = Path(f.name)
 
         try:
-            result = runner.invoke(cli, ['parse', str(temp_path)])
+            result = runner.invoke(cli, ["parse", str(temp_path)])
             # May succeed with 0 entries or fail, both are valid
-            assert result.exit_code in [0, 1]
+            assert result.exit_code in {0, 1}
         finally:
             temp_path.unlink(missing_ok=True)
 
         # Test with invalid LDIF
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write("invalid ldif content\nno proper format")
             temp_path = Path(f.name)
 
         try:
-            result = runner.invoke(cli, ['parse', str(temp_path)])
+            result = runner.invoke(cli, ["parse", str(temp_path)])
             # Should fail or succeed with warnings
-            assert result.exit_code in [0, 1]
+            assert result.exit_code in {0, 1}
         finally:
             temp_path.unlink(missing_ok=True)
 
@@ -279,13 +280,13 @@ dc: example
         runner = CliRunner()
 
         # Test main help
-        result = runner.invoke(cli, ['--help'])
+        result = runner.invoke(cli, ["--help"])
         assert result.exit_code == 0
 
         # Test command-specific help
-        commands = ['parse', 'validate', 'transform', 'stats', 'find', 'filter-by-class', 'convert']
+        commands = ["parse", "validate", "transform", "stats", "find", "filter-by-class", "convert"]
         for command in commands:
-            result = runner.invoke(cli, [command, '--help'])
+            result = runner.invoke(cli, [command, "--help"])
             assert result.exit_code == 0
 
     def test_display_statistics_function(self) -> None:
@@ -293,7 +294,7 @@ dc: example
         # Mock entries for testing
         mock_entries = [
             Mock(dn=Mock(value="dc=example,dc=com")),
-            Mock(dn=Mock(value="cn=user,dc=example,dc=com"))
+            Mock(dn=Mock(value="cn=user,dc=example,dc=com")),
         ]
 
         # Test display_statistics function
@@ -304,10 +305,8 @@ dc: example
             pass
 
         # Test with empty list
-        try:
+        with contextlib.suppress(AttributeError, NotImplementedError, TypeError):
             display_statistics([])
-        except (AttributeError, NotImplementedError, TypeError):
-            pass
 
     def test_cli_configuration_options(self) -> None:
         """Test CLI with various configuration options."""
@@ -320,27 +319,27 @@ cn: Test
 sn: Test
 """
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
         try:
             # Test with --verbose
-            result = runner.invoke(cli, ['--verbose', 'parse', str(temp_path)])
-            assert result.exit_code in [0, 1]
+            result = runner.invoke(cli, ["--verbose", "parse", str(temp_path)])
+            assert result.exit_code in {0, 1}
 
             # Test with --quiet
-            result = runner.invoke(cli, ['--quiet', 'parse', str(temp_path)])
-            assert result.exit_code in [0, 1]
+            result = runner.invoke(cli, ["--quiet", "parse", str(temp_path)])
+            assert result.exit_code in {0, 1}
 
             # Test with --debug
-            result = runner.invoke(cli, ['--debug', 'parse', str(temp_path)])
-            assert result.exit_code in [0, 1]
+            result = runner.invoke(cli, ["--debug", "parse", str(temp_path)])
+            assert result.exit_code in {0, 1}
 
             # Test with --config-file (if implemented)
             try:
-                result = runner.invoke(cli, ['--config-file', '/dev/null', 'parse', str(temp_path)])
-                assert result.exit_code in [0, 1]
+                result = runner.invoke(cli, ["--config-file", "/dev/null", "parse", str(temp_path)])
+                assert result.exit_code in {0, 1}
             except click.ClickException:
                 # Config file option might not be implemented
                 pass
@@ -359,17 +358,17 @@ sn: Test
 mail: test@example.com
 """
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
         try:
             # Test different output formats
-            formats = ['ldif', 'json', 'yaml', 'csv']
+            formats = ["ldif", "json", "yaml", "csv"]
             for fmt in formats:
                 try:
-                    result = runner.invoke(cli, ['parse', str(temp_path), '--format', fmt])
-                    assert result.exit_code in [0, 1]
+                    result = runner.invoke(cli, ["parse", str(temp_path), "--format", fmt])
+                    assert result.exit_code in {0, 1}
                 except click.ClickException:
                     # Format might not be implemented
                     pass
@@ -400,22 +399,22 @@ objectClass: groupOfNames
 cn: REDACTED_LDAP_BIND_PASSWORDs
 """
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
         try:
             # Test filtering by object class
-            result = runner.invoke(cli, ['parse', str(temp_path), '--filter-objectclass', 'person'])
-            assert result.exit_code in [0, 1]
+            result = runner.invoke(cli, ["parse", str(temp_path), "--filter-objectclass", "person"])
+            assert result.exit_code in {0, 1}
 
             # Test filtering persons only
-            result = runner.invoke(cli, ['parse', str(temp_path), '--persons-only'])
-            assert result.exit_code in [0, 1]
+            result = runner.invoke(cli, ["parse", str(temp_path), "--persons-only"])
+            assert result.exit_code in {0, 1}
 
             # Test filtering groups only
-            result = runner.invoke(cli, ['parse', str(temp_path), '--groups-only'])
-            assert result.exit_code in [0, 1]
+            result = runner.invoke(cli, ["parse", str(temp_path), "--groups-only"])
+            assert result.exit_code in {0, 1}
 
         finally:
             temp_path.unlink(missing_ok=True)
@@ -433,20 +432,20 @@ cn: User{i}
 sn: User{i}
 """
 
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
                 f.write(ldif_content)
                 files.append(Path(f.name))
 
         try:
             # Test batch processing multiple files
             file_args = [str(f) for f in files]
-            result = runner.invoke(cli, ['parse'] + file_args)
-            assert result.exit_code in [0, 1]
+            result = runner.invoke(cli, ["parse", *file_args])
+            assert result.exit_code in {0, 1}
 
             # Test with glob pattern (if supported)
             try:
-                result = runner.invoke(cli, ['parse', str(files[0].parent / '*.ldif')])
-                assert result.exit_code in [0, 1]
+                result = runner.invoke(cli, ["parse", str(files[0].parent / "*.ldif")])
+                assert result.exit_code in {0, 1}
             except click.ClickException:
                 # Glob might not be supported
                 pass
@@ -464,7 +463,7 @@ class TestCLIUtilityFunctions:
         # Mock entries for testing
         mock_entries = [
             Mock(dn=Mock(value="dc=example,dc=com"), get_object_classes=Mock(return_value=["domain"])),
-            Mock(dn=Mock(value="cn=user,dc=example,dc=com"), get_object_classes=Mock(return_value=["person"]))
+            Mock(dn=Mock(value="cn=user,dc=example,dc=com"), get_object_classes=Mock(return_value=["person"])),
         ]
 
         # Test apply_filter function with different filter types
@@ -481,10 +480,10 @@ class TestCLIUtilityFunctions:
     def test_write_entries_to_file_function(self) -> None:
         """Test write_entries_to_file utility function."""
         mock_entries = [
-            Mock(dn=Mock(value="cn=test,dc=example,dc=com"))
+            Mock(dn=Mock(value="cn=test,dc=example,dc=com")),
         ]
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             temp_path = Path(f.name)
 
         try:
@@ -505,18 +504,18 @@ sn: Doe
 mail: john@example.com
 """
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
         try:
             # Test find command
-            result = runner.invoke(cli, ['find', str(temp_path), '--dn', '*Doe*'])
-            assert result.exit_code in [0, 1]
+            result = runner.invoke(cli, ["find", str(temp_path), "--dn", "*Doe*"])
+            assert result.exit_code in {0, 1}
 
             # Test find by attribute
-            result = runner.invoke(cli, ['find', str(temp_path), '--attribute', 'mail'])
-            assert result.exit_code in [0, 1]
+            result = runner.invoke(cli, ["find", str(temp_path), "--attribute", "mail"])
+            assert result.exit_code in {0, 1}
 
         finally:
             temp_path.unlink(missing_ok=True)
@@ -534,14 +533,14 @@ objectClass: person
 cn: person
 """
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
         try:
             # Test filter by class
-            result = runner.invoke(cli, ['filter-by-class', str(temp_path), 'person'])
-            assert result.exit_code in [0, 1]
+            result = runner.invoke(cli, ["filter-by-class", str(temp_path), "person"])
+            assert result.exit_code in {0, 1}
 
         finally:
             temp_path.unlink(missing_ok=True)
@@ -556,16 +555,16 @@ cn: Convert Test
 sn: Test
 """
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
         try:
             # Test convert command with different formats
-            formats = ['json', 'yaml', 'csv']
+            formats = ["json", "yaml", "csv"]
             for fmt in formats:
-                result = runner.invoke(cli, ['convert', str(temp_path), '--format', fmt])
-                assert result.exit_code in [0, 1]
+                result = runner.invoke(cli, ["convert", str(temp_path), "--format", fmt])
+                assert result.exit_code in {0, 1}
 
         finally:
             temp_path.unlink(missing_ok=True)

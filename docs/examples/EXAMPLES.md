@@ -69,20 +69,20 @@ member: cn=John Doe,ou=people,dc=example,dc=com
 # Parse LDIF content with comprehensive error handling
 result = api.parse(ldif_content)
 
-if result.is_success:
+if result.success:
     entries = result.data
     print(f"✅ Successfully parsed {len(entries)} entries")
 
     # Validate entries
     validation_result = api.validate(entries)
-    if validation_result.is_success:
+    if validation_result.success:
         print("✅ All entries are valid")
     else:
         print(f"❌ Validation failed: {validation_result.error}")
 
     # Generate LDIF output
     output_result = api.write(entries)
-    if output_result.is_success:
+    if output_result.success:
         print("✅ Generated LDIF output:")
         print(output_result.data)
 else:
@@ -160,13 +160,13 @@ api = FlextLdifAPI(config)
 # Parse large LDIF file
 large_file_result = api.parse_file("data/large_export.ldif")
 
-if large_file_result.is_success:
+if large_file_result.success:
     entries = large_file_result.data
     print(f"Processed {len(entries)} entries from large file")
 
     # Write to output file
     write_result = api.write_file(entries, "output/processed.ldif")
-    if write_result.is_success:
+    if write_result.success:
         print("Successfully wrote processed entries to file")
 ```
 
@@ -188,7 +188,7 @@ writer = FlextLdifWriterService(config)
 
 # Parse with service
 parse_result = parser.parse(ldif_content)
-if parse_result.is_success:
+if parse_result.success:
     entries = parse_result.data
 
     # Validate each entry individually
@@ -199,7 +199,7 @@ if parse_result.is_success:
 
     # Write with custom formatting
     write_result = writer.write(entries)
-    if write_result.is_success:
+    if write_result.success:
         formatted_ldif = write_result.data
         print("Custom formatted LDIF:")
         print(formatted_ldif)
@@ -235,14 +235,14 @@ objectClass: person
 
 # Parse and validate
 valid_result = api.parse(valid_ldif)
-if valid_result.is_success:
+if valid_result.success:
     validation = api.validate(valid_result.data)
-    print(f"Valid LDIF validation: {'PASSED' if validation.is_success else 'FAILED'}")
+    print(f"Valid LDIF validation: {'PASSED' if validation.success else 'FAILED'}")
 
 invalid_result = api.parse(invalid_ldif)
-if invalid_result.is_success:
+if invalid_result.success:
     validation = api.validate(invalid_result.data)
-    print(f"Invalid LDIF validation: {'PASSED' if validation.is_success else 'FAILED'}")
+    print(f"Invalid LDIF validation: {'PASSED' if validation.success else 'FAILED'}")
     if validation.is_failure:
         print(f"Validation error: {validation.error}")
 ```
@@ -338,18 +338,18 @@ api = FlextLdifAPI()
 # Parse entries from file
 result = api.parse_file("input/users.ldif")
 
-if result.is_success:
+if result.success:
     entries = result.data
 
     # Write to string
     ldif_output = api.write(entries)
-    if ldif_output.is_success:
+    if ldif_output.success:
         print("LDIF String Output:")
         print(ldif_output.data[:500] + "..." if len(ldif_output.data) > 500 else ldif_output.data)
 
     # Write to file
     file_result = api.write_file(entries, "output/exported_users.ldif")
-    if file_result.is_success:
+    if file_result.success:
         print("✅ Successfully exported entries to file")
 
         # Verify file was created
@@ -368,7 +368,7 @@ api = FlextLdifAPI()
 # Parse all entries
 result = api.parse_file("data/organization.ldif")
 
-if result.is_success:
+if result.success:
     all_entries = result.data
 
     # Filter for person entries only
@@ -381,7 +381,7 @@ if result.is_success:
 
     # Export only person entries
     person_export = api.write(person_entries)
-    if person_export.is_success:
+    if person_export.success:
         # Save to file
         with open("output/people_only.ldif", "w", encoding="utf-8") as f:
             f.write(person_export.data)
@@ -396,7 +396,7 @@ if result.is_success:
 
     if engineering_entries:
         eng_export = api.write(engineering_entries)
-        if eng_export.is_success:
+        if eng_export.success:
             with open("output/engineering_team.ldif", "w", encoding="utf-8") as f:
                 f.write(eng_export.data)
             print(f"✅ Exported {len(engineering_entries)} engineering team members")
@@ -545,7 +545,7 @@ api = FlextLdifAPI()
 # Load sample organization data
 result = api.parse_file("data/organization.ldif")
 
-if result.is_success:
+if result.success:
     all_entries = result.data
     print(f"Total entries: {len(all_entries)}")
 
@@ -607,7 +607,7 @@ api = FlextLdifAPI()
 # Parse organizational data
 result = api.parse_file("data/company.ldif")
 
-if result.is_success:
+if result.success:
     all_entries = result.data
 
     # Filter by OU (organizational unit)
@@ -695,14 +695,14 @@ def process_ldif_files_batch(input_dir: str, output_dir: str):
             # Parse file
             parse_result = api.parse_file(str(ldif_file))
 
-            if parse_result.is_success:
+            if parse_result.success:
                 entries = parse_result.data
                 print(f"  Parsed: {len(entries)} entries")
 
                 # Validate entries
                 validation_result = api.validate(entries)
 
-                if validation_result.is_success:
+                if validation_result.success:
                     print("  Validation: PASSED")
 
                     # Process only valid entries
@@ -716,7 +716,7 @@ def process_ldif_files_batch(input_dir: str, output_dir: str):
                         output_file = output_path / f"processed_{ldif_file.name}"
                         write_result = api.write_file(valid_entries, str(output_file))
 
-                        if write_result.is_success:
+                        if write_result.success:
                             print(f"  Output: {len(valid_entries)} entries -> {output_file.name}")
                             results["processed"] += 1
                             results["total_entries"] += len(valid_entries)
@@ -840,7 +840,7 @@ transformation_pipeline = create_transformation_pipeline(
 # Load and transform data
 result = api.parse_file("data/employee_export.ldif")
 
-if result.is_success:
+if result.success:
     original_entries = result.data
     print(f"Original entries: {len(original_entries)}")
 
@@ -850,13 +850,13 @@ if result.is_success:
     # Validate transformed entries
     validation_result = api.validate(transformed_entries)
 
-    if validation_result.is_success:
+    if validation_result.success:
         print("✅ All transformed entries are valid")
 
         # Export transformed data
         export_result = api.write_file(transformed_entries, "output/transformed_employees.ldif")
 
-        if export_result.is_success:
+        if export_result.success:
             print("✅ Exported transformed data")
 
             # Show transformation results
@@ -962,7 +962,7 @@ def robust_ldif_processing(file_path: str) -> bool:
             # Write results
             output_result = api.write_file(entries, "output/processed.ldif")
 
-            if output_result.is_success:
+            if output_result.success:
                 print("✅ Successfully exported processed entries")
                 return True
             else:
@@ -1060,14 +1060,14 @@ def process_with_recovery(file_path: str, max_retries: int = 3) -> bool:
             # Parse with current configuration
             result = api.parse_file(file_path)
 
-            if result.is_success:
+            if result.success:
                 entries = result.data
                 logger.info(f"Successfully parsed {len(entries)} entries on attempt {attempt + 1}")
 
                 # Try to save successful result
                 output_result = api.write_file(entries, f"output/recovered_{attempt+1}.ldif")
 
-                if output_result.is_success:
+                if output_result.success:
                     logger.info(f"Successfully saved recovered data on attempt {attempt + 1}")
                     return True
                 else:
@@ -1175,7 +1175,7 @@ def process_large_file(file_path: str, chunk_size: int = 10000):
     result = api.parse_file(file_path)
     parse_time = time.time() - start_parse
 
-    if result.is_success:
+    if result.success:
         entries = result.data
         print(f"✅ Parsed {len(entries)} entries in {parse_time:.2f}s")
         print(f"   Parse rate: {len(entries) / parse_time:.1f} entries/second")
@@ -1191,12 +1191,12 @@ def process_large_file(file_path: str, chunk_size: int = 10000):
             # Validate chunk
             validation_result = api.validate(chunk)
 
-            if validation_result.is_success:
+            if validation_result.success:
                 # Write chunk
                 chunk_output = f"output/chunk_{i//chunk_size + 1}.ldif"
                 write_result = api.write_file(chunk, chunk_output)
 
-                if write_result.is_success:
+                if write_result.success:
                     chunk_time = time.time() - chunk_start
                     total_processed += len(chunk)
                     chunk_results.append({
@@ -1271,7 +1271,7 @@ def stream_process_ldif(file_path: str, batch_size: int = 1000) -> Generator[Lis
         # Parse all entries first
         result = api.parse(content)
 
-        if result.is_success:
+        if result.success:
             all_entries = result.data
             print(f"   Actual entries: {len(all_entries)}")
 
@@ -1286,7 +1286,7 @@ def stream_process_ldif(file_path: str, batch_size: int = 1000) -> Generator[Lis
                     'batch_number': i // batch_size + 1,
                     'entries': batch,
                     'entry_count': len(batch),
-                    'validation_passed': validation_result.is_success,
+                    'validation_passed': validation_result.success,
                     'validation_error': validation_result.error if validation_result.is_failure else None
                 }
 
@@ -1332,7 +1332,7 @@ def process_stream_batches(file_path: str):
 
                     write_result = api.write_file(person_entries, output_file)
 
-                    if write_result.is_success:
+                    if write_result.success:
                         print(f"   ✅ Exported {len(person_entries)} people to {output_file}")
                         successful_batches += 1
                     else:
@@ -1392,7 +1392,7 @@ api = container.get(FlextLdifAPI)
 # Use API with dependency injection
 result = api.parse_file("data/sample.ldif")
 
-if result.is_success:
+if result.success:
     entries = result.data
     print(f"DI-managed API processed {len(entries)} entries")
 ```
@@ -1423,15 +1423,15 @@ def process_multiple_files(file_paths: list[str]) -> dict:
                 # Parse file with tracing
                 parse_result = api.parse_file(file_path)
 
-                if parse_result.is_success:
+                if parse_result.success:
                     entries = parse_result.data
                     trace.set_attribute("entries_count", len(entries))
 
                     # Validate with tracing
                     validation_result = api.validate(entries)
-                    trace.set_attribute("validation_passed", validation_result.is_success)
+                    trace.set_attribute("validation_passed", validation_result.success)
 
-                    if validation_result.is_success:
+                    if validation_result.success:
                         results["processed_files"] += 1
                         results["total_entries"] += len(entries)
                         trace.set_status("success")
@@ -1502,7 +1502,7 @@ def filter_person_entries(entries) -> FlextResult[list]:
 # Use chained operations
 result = chain_ldif_operations("data/mixed_entries.ldif")
 
-if result.is_success:
+if result.success:
     ldif_output = result.data
     print("✅ Chained operations successful")
     print(f"Generated LDIF length: {len(ldif_output)} characters")
@@ -1525,7 +1525,7 @@ def process_files_railway(*file_paths: str) -> FlextResult[dict]:
                              "people": len([e for e in entries if e.has_object_class("person")])
                          })))
 
-        if file_result.is_success:
+        if file_result.success:
             file_data = file_result.data
             results["files"][file_path] = file_data
             results["summary"]["success"] += 1
@@ -1542,7 +1542,7 @@ railway_result = process_files_railway(
     "data/invalid.ldif"
 )
 
-if railway_result.is_success:
+if railway_result.success:
     data = railway_result.data
     print("\n🚂 Railway Processing Results:")
     print(f"   Success: {data['summary']['success']} files")
@@ -1598,7 +1598,7 @@ def migrate_from_standard_ldif():
     # Parse LDIF (much simpler)
     result = api.parse_file('data.ldif')
 
-    if result.is_success:
+    if result.success:
         entries = result.data
 
         for entry in entries:
@@ -1663,20 +1663,20 @@ def migrate_from_legacy_flext():
     # Parse (with comprehensive error handling)
     parse_result = api.parse(content)
 
-    if parse_result.is_success:
+    if parse_result.success:
         entries = parse_result.data
         print(f"Parsed {len(entries)} entries")
 
         # Validate (integrated validation)
         validation_result = api.validate(entries)
 
-        if validation_result.is_success:
+        if validation_result.success:
             print("✅ Validation passed")
 
             # Generate output (consistent formatting)
             output_result = api.write(entries)
 
-            if output_result.is_success:
+            if output_result.success:
                 print("✅ Output generated")
                 print(output_result.data)
             else:
@@ -1757,7 +1757,7 @@ objectClass: organizationalPerson
 """
 
 result = api.parse(test_content)
-print(f"Configuration test result: {'SUCCESS' if result.is_success else 'FAILED'}")
+print(f"Configuration test result: {'SUCCESS' if result.success else 'FAILED'}")
 ```
 
 ---
@@ -1829,7 +1829,7 @@ class EnterpriseLdifProcessor:
                 self.statistics["files_processed"] += 1
 
             except Exception as e:
-                error_msg = f"Failed to process {ldif_file.name}: {e}"
+                error_msg: str = f"Failed to process {ldif_file.name}: {e}"
                 logger.error(error_msg)
                 self.statistics["errors"].append(error_msg)
 
@@ -1893,7 +1893,7 @@ class EnterpriseLdifProcessor:
 
                 write_result = self.api.write_file(category_entries, str(output_file))
 
-                if write_result.is_success:
+                if write_result.success:
                     logger.info(f"  Exported {len(category_entries)} {category} to {output_file.name}")
                 else:
                     logger.error(f"  Failed to export {category}: {write_result.error}")

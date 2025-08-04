@@ -40,7 +40,7 @@ Example:
     >>>
     >>> # Use service with proper error handling
     >>> result = parser.parse(ldif_content)
-    >>> if result.is_success:
+    >>> if result.success:
     ...     entries = result.data
     ...     print(f"Parsed {len(entries)} entries successfully")
     ... else:
@@ -149,7 +149,7 @@ class FlextLdifParserService:
         >>> config = FlextLdifConfig(max_entries=1000)
         >>> parser = FlextLdifParserService(config)
         >>> result = parser.parse(ldif_content)
-        >>> if result.is_success:
+        >>> if result.success:
         ...     print(f"Parsed {len(result.data)} entries")
 
     """
@@ -193,7 +193,7 @@ class FlextLdifParserService:
         result = TLdif.parse(content)
 
         if result.is_failure:
-            error_msg = f"Core LDIF parsing failed: {result.error}"
+            error_msg: str = f"Core LDIF parsing failed: {result.error}"
             logger.error(error_msg)
             return FlextResult.fail(error_msg)
 
@@ -324,7 +324,8 @@ class FlextLdifWriterService:
         # REFACTORING: Enhanced entry validation and processing metrics
         entries_count = len(entries)
         logger.debug(
-            "Starting LDIF string writing operation", entries_count=entries_count,
+            "Starting LDIF string writing operation",
+            entries_count=entries_count,
         )
 
         # REFACTORING: Enhanced attribute sorting with performance logging
@@ -338,7 +339,7 @@ class FlextLdifWriterService:
         result = TLdif.write(processed_entries)
 
         if result.is_failure:
-            error_msg = f"Core LDIF string writing failed for {entries_count} entries: {result.error}"
+            error_msg: str = f"Core LDIF string writing failed for {entries_count} entries: {result.error}"
             logger.error(error_msg)
             return FlextResult.fail(error_msg)
 
@@ -402,10 +403,11 @@ class FlextLdifWriterService:
                     logger.trace("Output directory created successfully")
                 else:
                     logger.trace(
-                        "Output directory already exists", parent_dir=str(parent_dir),
+                        "Output directory already exists",
+                        parent_dir=str(parent_dir),
                     )
             except (OSError, PermissionError) as e:
-                error_msg = f"Failed to create output directory {parent_dir}: {e}"
+                error_msg: str = f"Failed to create output directory {parent_dir}: {e}"
                 logger.exception(error_msg)
                 return FlextResult.fail(error_msg)
 
@@ -418,11 +420,13 @@ class FlextLdifWriterService:
 
         # Delegate to core writer with configuration-based encoding
         result = TLdif.write_file(
-            processed_entries, resolved_path, self.config.output_encoding,
+            processed_entries,
+            resolved_path,
+            self.config.output_encoding,
         )
 
         if result.is_failure:
-            error_msg = f"Core LDIF file writing failed for {resolved_path.absolute()}: {result.error}"
+            error_msg: str = f"Core LDIF file writing failed for {resolved_path.absolute()}: {result.error}"
             logger.error(error_msg)
             return FlextResult.fail(error_msg)
 
@@ -470,7 +474,8 @@ class FlextLdifWriterService:
                 # Sort attribute names with case-insensitive ordering for better consistency
                 sorted_attrs = dict(
                     sorted(
-                        entry.attributes.attributes.items(), key=lambda x: x[0].lower(),
+                        entry.attributes.attributes.items(),
+                        key=lambda x: x[0].lower(),
                     ),
                 )
 
@@ -482,7 +487,8 @@ class FlextLdifWriterService:
                 sorted_entries.append(new_entry)
 
             logger.debug(
-                "Attribute sorting completed successfully for %d entries", entries_count,
+                "Attribute sorting completed successfully for %d entries",
+                entries_count,
             )
             return sorted_entries
 
@@ -508,7 +514,9 @@ class FlextLdifValidatorService:
         >>> from flext_ldif.services import FlextLdifValidatorService
         >>> from flext_ldif.config import FlextLdifConfig
         >>>
-        >>> config = FlextLdifConfig(max_entry_size=1048576, allow_empty_attributes=False)
+        >>> config = FlextLdifConfig(
+        ...     max_entry_size=1048576, allow_empty_attributes=False
+        ... )
         >>> validator = FlextLdifValidatorService(config)
         >>> result = validator.validate(entries)
 
@@ -562,10 +570,11 @@ class FlextLdifValidatorService:
 
             result = self.validate_entry(entry)
             if result.is_failure:
-                error_msg = f"Entry {i + 1} of {entries_count} validation failed ({entry.dn}): {result.error}"
+                error_msg: str = f"Entry {i + 1} of {entries_count} validation failed ({entry.dn}): {result.error}"
                 logger.error(error_msg)
                 logger.debug(
-                    "Bulk validation failed at entry %d - stopping validation", i + 1,
+                    "Bulk validation failed at entry %d - stopping validation",
+                    i + 1,
                 )
                 return FlextResult.fail(error_msg)
 
@@ -600,7 +609,7 @@ class FlextLdifValidatorService:
         # Core validation with enhanced error context
         result = TLdif.validate(entry)
         if result.is_failure:
-            error_msg = f"Core validation failed for {entry_dn}: {result.error}"
+            error_msg: str = f"Core validation failed for {entry_dn}: {result.error}"
             logger.warning(error_msg)
             return FlextResult.fail(error_msg)
 
@@ -716,7 +725,7 @@ def register_ldif_services(
     logger.trace("Registering LDIF configuration in container")
     config_result = container.register("ldif_config", config)
     if config_result.is_failure:
-        error_msg = f"Failed to register LDIF configuration: {config_result.error}"
+        error_msg: str = f"Failed to register LDIF configuration: {config_result.error}"
         logger.error(error_msg)
         return FlextResult.fail(error_msg)
 
@@ -739,7 +748,7 @@ def register_ldif_services(
             # Register in container
             result = container.register(service_name, service_instance)
             if result.is_failure:
-                error_msg = f"Failed to register {service_description} ({service_name}): {result.error}"
+                error_msg: str = f"Failed to register {service_description} ({service_name}): {result.error}"
                 logger.error(error_msg)
                 return FlextResult.fail(error_msg)
 
@@ -747,7 +756,7 @@ def register_ldif_services(
             logger.trace("Successfully registered %s", service_description)
 
         except (TypeError, ValueError, AttributeError) as e:
-            error_msg = f"Exception creating {service_description}: {e}"
+            error_msg: str = f"Exception creating {service_description}: {e}"
             logger.exception(error_msg)
             return FlextResult.fail(error_msg)
 
@@ -777,14 +786,16 @@ def get_ldif_parser() -> FlextResult[FlextLdifParserService]:
 
     result = container.get("ldif_parser")
     if result.is_failure:
-        error_msg = f"Failed to retrieve LDIF parser from container: {result.error}"
+        error_msg: str = (
+            f"Failed to retrieve LDIF parser from container: {result.error}"
+        )
         logger.error(error_msg)
         return FlextResult.fail(error_msg)
 
     # REFACTORING: Enhanced type validation with detailed error context
     if not isinstance(result.data, FlextLdifParserService):
         actual_type = type(result.data).__name__
-        error_msg = f"LDIF parser service type mismatch: expected FlextLdifParserService, got {actual_type}"
+        error_msg: str = f"LDIF parser service type mismatch: expected FlextLdifParserService, got {actual_type}"
         logger.error(error_msg)
         return FlextResult.fail(error_msg)
 
@@ -808,14 +819,16 @@ def get_ldif_writer() -> FlextResult[FlextLdifWriterService]:
 
     result = container.get("ldif_writer")
     if result.is_failure:
-        error_msg = f"Failed to retrieve LDIF writer from container: {result.error}"
+        error_msg: str = (
+            f"Failed to retrieve LDIF writer from container: {result.error}"
+        )
         logger.error(error_msg)
         return FlextResult.fail(error_msg)
 
     # REFACTORING: Enhanced type validation with detailed error context
     if not isinstance(result.data, FlextLdifWriterService):
         actual_type = type(result.data).__name__
-        error_msg = f"LDIF writer service type mismatch: expected FlextLdifWriterService, got {actual_type}"
+        error_msg: str = f"LDIF writer service type mismatch: expected FlextLdifWriterService, got {actual_type}"
         logger.error(error_msg)
         return FlextResult.fail(error_msg)
 
@@ -839,14 +852,16 @@ def get_ldif_validator() -> FlextResult[FlextLdifValidatorService]:
 
     result = container.get("ldif_validator")
     if result.is_failure:
-        error_msg = f"Failed to retrieve LDIF validator from container: {result.error}"
+        error_msg: str = (
+            f"Failed to retrieve LDIF validator from container: {result.error}"
+        )
         logger.error(error_msg)
         return FlextResult.fail(error_msg)
 
     # REFACTORING: Enhanced type validation with detailed error context
     if not isinstance(result.data, FlextLdifValidatorService):
         actual_type = type(result.data).__name__
-        error_msg = f"LDIF validator service type mismatch: expected FlextLdifValidatorService, got {actual_type}"
+        error_msg: str = f"LDIF validator service type mismatch: expected FlextLdifValidatorService, got {actual_type}"
         logger.error(error_msg)
         return FlextResult.fail(error_msg)
 
@@ -859,7 +874,7 @@ def get_ldif_validator() -> FlextResult[FlextLdifValidatorService]:
 # =============================================================================
 
 
-__all__ = [
+__all__: list[str] = [
     # Service classes
     "FlextLdifParserService",
     "FlextLdifValidatorService",

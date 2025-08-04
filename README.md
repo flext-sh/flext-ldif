@@ -57,7 +57,7 @@ mail: john.doe@example.com
 
 # Parse with error handling
 result = api.parse(ldif_content)
-if result.is_success:
+if result.success:
     entries = result.data
     print(f"Successfully parsed {len(entries)} entries")
 else:
@@ -65,11 +65,11 @@ else:
 
 # Validate LDIF entries
 validation_result = api.validate(entries)
-print(f"Validation passed: {validation_result.is_success}")
+print(f"Validation passed: {validation_result.success}")
 
 # Generate LDIF output
 output_result = api.write(entries)
-if output_result.is_success:
+if output_result.success:
     print(output_result.data)
 ```
 
@@ -231,7 +231,7 @@ api = container.get(FlextLdifAPI)
 
 # FlextResult pattern
 result = api.parse(ldif_content)
-if result.is_success:
+if result.success:
     entries = result.data
     # Process entries
 else:
@@ -308,7 +308,7 @@ from tests.conftest import (
 
 def test_ldif_parsing(ldif_test_data, flext_ldif_api):
     result = flext_ldif_api.parse(ldif_test_data)
-    assert result.is_success
+    assert result.success
     assert len(result.data) > 0
 ```
 

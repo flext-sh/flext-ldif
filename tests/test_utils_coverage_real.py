@@ -2,7 +2,7 @@
 
 Este módulo contém testes focados nos módulos utils/ com baixa cobertura:
 - cli_utils.py (47% cobertura)
-- error_handling.py (25% cobertura) 
+- error_handling.py (25% cobertura)
 - validation.py (32% cobertura)
 - logging.py (59% cobertura)
 """
@@ -12,8 +12,8 @@ from __future__ import annotations
 from unittest.mock import Mock, patch
 
 import pytest
-
 from flext_core import FlextResult
+
 from flext_ldif.utils.cli_utils import (
     confirm_operation,
     display_entry_count,
@@ -36,16 +36,16 @@ class TestCliUtilsCoverage:
         validate_cli_result(success_result, "Test operation")
 
     def test_validate_cli_result_failure_no_success_attr(self) -> None:
-        """Testa validate_cli_result com objeto sem atributo is_success."""
+        """Testa validate_cli_result com objeto sem atributo success."""
         mock_result = Mock()
-        del mock_result.is_success  # Remove atributo
+        del mock_result.success  # Remove atributo
 
         with pytest.raises(SystemExit) as exc_info:
             validate_cli_result(mock_result, "Test operation")
         assert exc_info.value.code == 1
 
     def test_validate_cli_result_failure_false_success(self) -> None:
-        """Testa validate_cli_result com is_success=False."""
+        """Testa validate_cli_result com success=False."""
         failure_result = FlextResult.fail("test error")
 
         with pytest.raises(SystemExit) as exc_info:
@@ -55,7 +55,7 @@ class TestCliUtilsCoverage:
     def test_validate_cli_result_no_data_attr(self) -> None:
         """Testa validate_cli_result com objeto sem atributo data."""
         mock_result = Mock()
-        mock_result.is_success = True
+        mock_result.success = True
         del mock_result.data  # Remove atributo
 
         with pytest.raises(SystemExit) as exc_info:
@@ -65,7 +65,7 @@ class TestCliUtilsCoverage:
     def test_validate_cli_result_none_data(self) -> None:
         """Testa validate_cli_result com data=None."""
         mock_result = Mock()
-        mock_result.is_success = True
+        mock_result.success = True
         mock_result.data = None
 
         with pytest.raises(SystemExit) as exc_info:
@@ -119,7 +119,7 @@ class TestCliUtilsCoverage:
     def test_handle_file_operation_result_failure_no_error(self) -> None:
         """Testa handle_file_operation_result com falha sem mensagem."""
         mock_result = Mock()
-        mock_result.is_success = False
+        mock_result.success = False
         mock_result.error = None
 
         with pytest.raises(SystemExit) as exc_info:
@@ -128,19 +128,19 @@ class TestCliUtilsCoverage:
 
     def test_safe_click_echo_normal(self) -> None:
         """Testa safe_click_echo com operação normal."""
-        with patch('flext_ldif.utils.cli_utils.click.echo') as mock_echo:
+        with patch("flext_ldif.utils.cli_utils.click.echo") as mock_echo:
             safe_click_echo("test message")
             mock_echo.assert_called_once_with("test message", err=False)
 
     def test_safe_click_echo_to_stderr(self) -> None:
         """Testa safe_click_echo para stderr."""
-        with patch('flext_ldif.utils.cli_utils.click.echo') as mock_echo:
+        with patch("flext_ldif.utils.cli_utils.click.echo") as mock_echo:
             safe_click_echo("error message", err=True)
             mock_echo.assert_called_once_with("error message", err=True)
 
     def test_safe_click_echo_broken_pipe(self) -> None:
         """Testa safe_click_echo com BrokenPipeError."""
-        with patch('flext_ldif.utils.cli_utils.click.echo') as mock_echo:
+        with patch("flext_ldif.utils.cli_utils.click.echo") as mock_echo:
             mock_echo.side_effect = BrokenPipeError()
 
             with pytest.raises(SystemExit) as exc_info:
@@ -149,7 +149,7 @@ class TestCliUtilsCoverage:
 
     def test_safe_click_echo_keyboard_interrupt(self) -> None:
         """Testa safe_click_echo com KeyboardInterrupt."""
-        with patch('flext_ldif.utils.cli_utils.click.echo') as mock_echo:
+        with patch("flext_ldif.utils.cli_utils.click.echo") as mock_echo:
             mock_echo.side_effect = KeyboardInterrupt()
 
             with pytest.raises(SystemExit) as exc_info:
@@ -170,31 +170,33 @@ class TestCliUtilsCoverage:
 
     def test_display_success_message_no_details(self) -> None:
         """Testa display_success_message sem detalhes."""
-        with patch('flext_ldif.utils.cli_utils.safe_click_echo') as mock_echo:
+        with patch("flext_ldif.utils.cli_utils.safe_click_echo") as mock_echo:
             display_success_message("Parse")
             mock_echo.assert_called_once_with("✓ Parse completed successfully")
 
     def test_display_success_message_with_details(self) -> None:
         """Testa display_success_message com detalhes."""
-        with patch('flext_ldif.utils.cli_utils.safe_click_echo') as mock_echo:
+        with patch("flext_ldif.utils.cli_utils.safe_click_echo") as mock_echo:
             display_success_message("Parse", "10 entries processed")
-            mock_echo.assert_called_once_with("✓ Parse completed successfully: 10 entries processed")
+            mock_echo.assert_called_once_with(
+                "✓ Parse completed successfully: 10 entries processed",
+            )
 
     def test_display_entry_count_default_type(self) -> None:
         """Testa display_entry_count com tipo padrão."""
-        with patch('flext_ldif.utils.cli_utils.safe_click_echo') as mock_echo:
+        with patch("flext_ldif.utils.cli_utils.safe_click_echo") as mock_echo:
             display_entry_count(5)
             mock_echo.assert_called_once_with("Found 5 entries")
 
     def test_display_entry_count_custom_type(self) -> None:
         """Testa display_entry_count com tipo customizado."""
-        with patch('flext_ldif.utils.cli_utils.safe_click_echo') as mock_echo:
+        with patch("flext_ldif.utils.cli_utils.safe_click_echo") as mock_echo:
             display_entry_count(3, "users")
             mock_echo.assert_called_once_with("Found 3 users")
 
     def test_confirm_operation_default_false(self) -> None:
         """Testa confirm_operation com padrão False."""
-        with patch('flext_ldif.utils.cli_utils.click.confirm') as mock_confirm:
+        with patch("flext_ldif.utils.cli_utils.click.confirm") as mock_confirm:
             mock_confirm.return_value = True
             result = confirm_operation("Continue?")
             mock_confirm.assert_called_once_with("Continue?", default=False)
@@ -202,7 +204,7 @@ class TestCliUtilsCoverage:
 
     def test_confirm_operation_default_true(self) -> None:
         """Testa confirm_operation com padrão True."""
-        with patch('flext_ldif.utils.cli_utils.click.confirm') as mock_confirm:
+        with patch("flext_ldif.utils.cli_utils.click.confirm") as mock_confirm:
             mock_confirm.return_value = False
             result = confirm_operation("Continue?", default=True)
             mock_confirm.assert_called_once_with("Continue?", default=True)
@@ -220,6 +222,7 @@ class TestErrorHandlingCoverage:
                 format_validation_error,
                 handle_ldif_error,
             )
+
             # Se chegou até aqui, os imports funcionam
             assert True
         except ImportError:
@@ -234,10 +237,11 @@ class TestValidationCoverage:
         """Testa se os imports do validation funcionam."""
         try:
             from flext_ldif.utils.validation import (
+                validate_attribute_format,
                 validate_dn_format,
                 validate_ldif_structure,
-                validate_attribute_format,
             )
+
             # Se chegou até aqui, os imports funcionam
             assert True
         except ImportError:
@@ -252,10 +256,11 @@ class TestLoggingCoverage:
         """Testa se os imports do logging funcionam."""
         try:
             from flext_ldif.utils.logging import (
+                LogLevel,
                 configure_ldif_logging,
                 get_ldif_logger,
-                LogLevel,
             )
+
             # Se chegou até aqui, os imports funcionam
             assert True
         except ImportError:
