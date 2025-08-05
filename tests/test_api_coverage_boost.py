@@ -254,14 +254,14 @@ title:
 
         # Caso 1: Conteúdo None
         try:
-            result = api.parse(None)  # type: ignore
+            result = api.parse(None)
             # Pode retornar erro ou lançar exceção
         except (TypeError, AttributeError):
             pass  # Esperado
 
         # Caso 2: Conteúdo não-string
         try:
-            result = api.parse(123)  # type: ignore
+            result = api.parse(123)
             # Pode retornar erro ou lançar exceção
         except (TypeError, AttributeError):
             pass  # Esperado
@@ -272,7 +272,7 @@ title:
 
         # Caso 4: Objetos inválidos para validação
         try:
-            result = api.validate(["not_an_entry"])  # type: ignore
+            result = api.validate(["not_an_entry"])
             # Deve falhar ou lançar exceção
         except (TypeError, AttributeError, FlextLdifValidationError):
             pass  # Esperado
@@ -484,7 +484,7 @@ missing dn
 
         # Caso 7: Tipo inválido
         try:
-            result_invalid_type = flext_ldif_validate(123)  # type: ignore
+            result_invalid_type = flext_ldif_validate(123)
             assert result_invalid_type is False
         except (TypeError, AttributeError):
             pass  # Esperado

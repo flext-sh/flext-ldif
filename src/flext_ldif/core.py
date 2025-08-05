@@ -276,7 +276,7 @@ class TLdif:
         """
         try:
             if entry is None:
-                logger.error("Cannot validate None entry")  # type: ignore[unreachable]
+                logger.error("Cannot validate None entry")
                 return FlextResult.fail("Entry cannot be None")
 
             logger.debug("Validating LDIF entry: %s", entry.dn)

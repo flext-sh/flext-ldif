@@ -426,7 +426,7 @@ class TestServiceRegistrationCoverage:
 
         # Testar com entrada inválida que deve causar erro
         try:
-            result = parser.parse(None)  # type: ignore
+            result = parser.parse(None)
             if not result.success:
                 assert result.error is not None
         except (TypeError, AttributeError):
