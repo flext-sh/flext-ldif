@@ -18,16 +18,14 @@ License: MIT
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
-from flext_core import FlextResult
+from flext_core import FlextResult, get_logger
 
-from .logging import get_module_logger
+# Import needed for runtime validation
+from flext_ldif.models import FlextLdifEntry
 
-if TYPE_CHECKING:
-    from flext_ldif.models import FlextLdifEntry
-
-logger = get_module_logger(__name__)
+logger = get_logger(__name__)
 
 
 class LdifValidator:
@@ -287,3 +285,35 @@ class LdifSchemaValidator:
         # Validate required attributes for OU entries
         required_attrs = ["ou"]  # Organizational Unit name
         return cls.validate_required_attributes(entry, required_attrs)
+
+
+# ========================================================================
+# ADDITIONAL VALIDATION FUNCTIONS (Compatibility)
+# ========================================================================
+
+
+def validate_attribute_format(attr_name: str, attr_value: str) -> FlextResult[bool]:
+    """Validate attribute name and value format."""
+    # Validate attribute name
+    name_result = LdifValidator.validate_attribute_name(attr_name)
+    if not name_result.success:
+        return name_result
+
+    # Basic value validation
+    if not attr_value.strip():
+        return FlextResult.fail(f"Empty attribute value not allowed for {attr_name}")
+
+    return FlextResult.ok(data=True)
+
+
+def validate_dn_format(dn_value: str) -> FlextResult[bool]:
+    """Validate DN format - delegates to LdifValidator."""
+    return LdifValidator.validate_dn(dn_value)
+
+
+def validate_ldif_structure(entry: object) -> FlextResult[bool]:
+    """Validate LDIF entry structure - delegates to LdifValidator."""
+    if not isinstance(entry, FlextLdifEntry):
+        return FlextResult.fail("Entry must be FlextLdifEntry instance")
+
+    return LdifValidator.validate_entry_completeness(entry)

@@ -9,7 +9,8 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from flext_ldif.api import FlextLdifAPI, flext_ldif_validate
+from flext_ldif import flext_ldif_validate
+from flext_ldif.api import FlextLdifAPI
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.exceptions import FlextLdifValidationError
 
@@ -22,7 +23,9 @@ class TestFlextLdifAPICoverage:
         api = FlextLdifAPI()
 
         # Caso 1: Arquivo válido normal
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write("""dn: cn=John Doe,ou=people,dc=example,dc=com
 cn: John Doe
 sn: Doe
@@ -64,7 +67,9 @@ objectClass: person
             )
 
         # Caso 4: Arquivo vazio
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write("")  # Arquivo vazio
             empty_path = Path(f.name)
 
@@ -77,7 +82,9 @@ objectClass: person
             empty_path.unlink(missing_ok=True)
 
         # Caso 5: Arquivo com LDIF inválido
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write("""invalid ldif content
 without proper format
 no dn line
@@ -95,7 +102,9 @@ no dn line
             invalid_path.unlink(missing_ok=True)
 
         # Caso 6: Arquivo com caracteres especiais no nome
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write("""dn: cn=Test,dc=example,dc=com
 cn: Test
 objectClass: person
@@ -361,7 +370,10 @@ cn: Test
 
             # Caso 3: write para arquivo
             with tempfile.NamedTemporaryFile(
-                encoding="utf-8", mode="w", suffix=".ldif", delete=False,
+                encoding="utf-8",
+                mode="w",
+                suffix=".ldif",
+                delete=False,
             ) as f:
                 output_path = Path(f.name)
 
@@ -465,7 +477,9 @@ missing dn
         )  # String vazia retorna False conforme implementação
 
         # Caso 5: Path para arquivo válido
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(valid_ldif)
             file_path = Path(f.name)
 

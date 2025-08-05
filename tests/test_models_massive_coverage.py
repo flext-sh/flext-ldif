@@ -6,6 +6,8 @@ especially métodos complexos C901 que são usados nos examples funcionais.
 
 from __future__ import annotations
 
+import uuid
+
 import pytest
 
 from flext_ldif.models import (
@@ -70,7 +72,9 @@ class TestMassiveModelsCoverage:
     def test_distinguished_name_special_cases(self) -> None:
         """Test DN special cases and edge conditions."""
         # Multi-valued RDN (from examples)
-        multi_rdn_dn = FlextLdifDistinguishedName(value="cn=John Doe+uid=jdoe,ou=people,dc=example,dc=com")
+        multi_rdn_dn = FlextLdifDistinguishedName(
+            value="cn=John Doe+uid=jdoe,ou=people,dc=example,dc=com"
+        )
         rdn = multi_rdn_dn.get_rdn()
         assert "cn=John Doe+uid=jdoe" in str(rdn)
 
@@ -79,7 +83,9 @@ class TestMassiveModelsCoverage:
         assert simple_dn.get_depth() == 1
         assert simple_dn.get_parent_dn() is None
 
-        complex_dn = FlextLdifDistinguishedName(value="uid=user,ou=group,ou=people,dc=example,dc=com")
+        complex_dn = FlextLdifDistinguishedName(
+            value="uid=user,ou=group,ou=people,dc=example,dc=com"
+        )
         assert complex_dn.get_depth() == 5
         parent = complex_dn.get_parent_dn()
         assert parent is not None
@@ -94,15 +100,22 @@ class TestMassiveModelsCoverage:
     def test_attributes_comprehensive_operations(self) -> None:
         """Test Attributes comprehensive operations from examples."""
         # Create attributes like in working examples
-        attrs = FlextLdifAttributes(attributes={
-            "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
-            "cn": ["John Doe"],
-            "sn": ["Doe"],
-            "givenName": ["John"],
-            "mail": ["john.doe@example.com"],
-            "uid": ["jdoe"],
-            "telephoneNumber": ["+1-555-123-4567"],
-        })
+        attrs = FlextLdifAttributes(
+            attributes={
+                "objectClass": [
+                    "inetOrgPerson",
+                    "organizationalPerson",
+                    "person",
+                    "top",
+                ],
+                "cn": ["John Doe"],
+                "sn": ["Doe"],
+                "givenName": ["John"],
+                "mail": ["john.doe@example.com"],
+                "uid": ["jdoe"],
+                "telephoneNumber": ["+1-555-123-4567"],
+            }
+        )
 
         # Test single value retrieval
         assert attrs.get_single_value("cn") == "John Doe"
@@ -155,22 +168,26 @@ class TestMassiveModelsCoverage:
         assert not empty_attrs.has_attribute("any")
 
         # Attributes with empty lists
-        attrs_with_empties = FlextLdifAttributes(attributes={
-            "attr1": [],
-            "attr2": ["value"],
-            "attr3": [],
-        })
+        attrs_with_empties = FlextLdifAttributes(
+            attributes={
+                "attr1": [],
+                "attr2": ["value"],
+                "attr3": [],
+            }
+        )
         assert not attrs_with_empties.is_empty()  # Has keys
         assert attrs_with_empties.get_total_values() == 1  # Only attr2 has value
         assert attrs_with_empties.get_single_value("attr1") is None
         assert attrs_with_empties.get_single_value("attr2") == "value"
 
         # Attributes with whitespace values
-        whitespace_attrs = FlextLdifAttributes(attributes={
-            "spaces": ["  value  ", "another"],
-            "empty_string": [""],
-            "just_spaces": ["   "],
-        })
+        whitespace_attrs = FlextLdifAttributes(
+            attributes={
+                "spaces": ["  value  ", "another"],
+                "empty_string": [""],
+                "just_spaces": ["   "],
+            }
+        )
 
         # Values should be preserved as-is (based on example behavior)
         spaces_val = whitespace_attrs.get_single_value("spaces")
@@ -192,35 +209,49 @@ class TestMassiveModelsCoverage:
 
         # Domain entry
         domain_entry = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "objectClass": ["top", "domain"],
-                "dc": ["example"],
-            }),
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "objectClass": ["top", "domain"],
+                    "dc": ["example"],
+                }
+            ),
         )
 
         # Person entry
         person_entry = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=John Doe,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
-                "cn": ["John Doe"],
-                "sn": ["Doe"],
-                "givenName": ["John"],
-                "mail": ["john.doe@example.com"],
-                "uid": ["jdoe"],
-                "telephoneNumber": ["+1-555-123-4567"],
-            }),
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "objectClass": [
+                        "inetOrgPerson",
+                        "organizationalPerson",
+                        "person",
+                        "top",
+                    ],
+                    "cn": ["John Doe"],
+                    "sn": ["Doe"],
+                    "givenName": ["John"],
+                    "mail": ["john.doe@example.com"],
+                    "uid": ["jdoe"],
+                    "telephoneNumber": ["+1-555-123-4567"],
+                }
+            ),
         )
 
         # Group entry
         group_entry = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=Administrators,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "objectClass": ["top", "groupOfNames"],
-                "cn": ["Administrators"],
-                "member": ["cn=John Doe,dc=example,dc=com"],
-            }),
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "objectClass": ["top", "groupOfNames"],
+                    "cn": ["Administrators"],
+                    "member": ["cn=John Doe,dc=example,dc=com"],
+                }
+            ),
         )
 
         entries = [domain_entry, person_entry, group_entry]
@@ -277,15 +308,23 @@ class TestMassiveModelsCoverage:
         """Test entry modifications as done in working examples."""
         # Person without department (from transformation example)
         person = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=Jane Smith,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
-                "cn": ["Jane Smith"],
-                "sn": ["Smith"],
-                "givenName": ["Jane"],
-                "mail": ["jane.smith@example.com"],
-                "uid": ["jsmith"],
-            }),
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "objectClass": [
+                        "inetOrgPerson",
+                        "organizationalPerson",
+                        "person",
+                        "top",
+                    ],
+                    "cn": ["Jane Smith"],
+                    "sn": ["Smith"],
+                    "givenName": ["Jane"],
+                    "mail": ["jane.smith@example.com"],
+                    "uid": ["jsmith"],
+                }
+            ),
         )
 
         # Initial state
@@ -318,12 +357,15 @@ class TestMassiveModelsCoverage:
         """Test entry validation scenarios."""
         # Valid person entry
         valid_person = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=Valid User,dc=test,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "objectClass": ["person"],
-                "cn": ["Valid User"],
-                "sn": ["User"],
-            }),
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "objectClass": ["person"],
+                    "cn": ["Valid User"],
+                    "sn": ["User"],
+                }
+            ),
         )
 
         # Should have required attributes for person
@@ -333,21 +375,27 @@ class TestMassiveModelsCoverage:
 
         # Test entry equality
         same_person = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=Valid User,dc=test,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "objectClass": ["person"],
-                "cn": ["Valid User"],
-                "sn": ["User"],
-            }),
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "objectClass": ["person"],
+                    "cn": ["Valid User"],
+                    "sn": ["User"],
+                }
+            ),
         )
 
         different_person = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=Different User,dc=test,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "objectClass": ["person"],
-                "cn": ["Different User"],
-                "sn": ["User"],
-            }),
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "objectClass": ["person"],
+                    "cn": ["Different User"],
+                    "sn": ["User"],
+                }
+            ),
         )
 
         assert valid_person == same_person
@@ -362,11 +410,14 @@ class TestMassiveModelsCoverage:
         with pytest.raises(ValueError, match="DN must be a non-empty string"):
             FlextLdifDistinguishedName(value="")
 
-        with pytest.raises(ValueError, match="DN must contain at least one attribute=value pair"):
+        with pytest.raises(
+            ValueError, match="DN must contain at least one attribute=value pair"
+        ):
             FlextLdifDistinguishedName(value="invalid_format")
 
         # Test attribute name validation in entry
         entry = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=Test,dc=test,dc=com"),
             attributes=FlextLdifAttributes(attributes={"cn": ["Test"]}),
         )
@@ -382,20 +433,30 @@ class TestMassiveModelsCoverage:
         """Test complex LDIF structures from real examples."""
         # Complex user with all attributes from examples
         complex_user = FlextLdifEntry(
-            dn=FlextLdifDistinguishedName(value="uid=john.doe,ou=people,dc=flext-ldif,dc=local"),
-            attributes=FlextLdifAttributes(attributes={
-                "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
-                "uid": ["john.doe"],
-                "cn": ["John Doe"],
-                "sn": ["Doe"],
-                "givenName": ["John"],
-                "displayName": ["John Doe"],
-                "mail": ["john.doe@flext-ldif.local"],
-                "telephoneNumber": ["+1-555-123-4567"],
-                "mobile": ["+1-555-987-6543"],
-                "employeeNumber": ["E001"],
-                "departmentNumber": ["IT"],
-            }),
+            id=str(uuid.uuid4()),
+            dn=FlextLdifDistinguishedName(
+                value="uid=john.doe,ou=people,dc=flext-ldif,dc=local"
+            ),
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "objectClass": [
+                        "inetOrgPerson",
+                        "organizationalPerson",
+                        "person",
+                        "top",
+                    ],
+                    "uid": ["john.doe"],
+                    "cn": ["John Doe"],
+                    "sn": ["Doe"],
+                    "givenName": ["John"],
+                    "displayName": ["John Doe"],
+                    "mail": ["john.doe@flext-ldif.local"],
+                    "telephoneNumber": ["+1-555-123-4567"],
+                    "mobile": ["+1-555-987-6543"],
+                    "employeeNumber": ["E001"],
+                    "departmentNumber": ["IT"],
+                }
+            ),
         )
 
         # Test all attributes

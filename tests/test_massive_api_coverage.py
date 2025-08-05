@@ -166,7 +166,9 @@ sn: User
 """
 
         # Test file parsing
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
@@ -287,7 +289,8 @@ sn: User
 
         # Test finding non-existent entry
         not_found_result = api.find_entry_by_dn(
-            entries, "cn=Missing User,dc=test,dc=com",
+            entries,
+            "cn=Missing User,dc=test,dc=com",
         )
         assert not_found_result.success
         assert not_found_result.data is None

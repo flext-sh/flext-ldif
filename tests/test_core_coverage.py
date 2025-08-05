@@ -7,6 +7,7 @@ in the core LDIF processing functionality.
 from __future__ import annotations
 
 import tempfile
+import uuid
 from pathlib import Path
 
 from flext_ldif import TLdif
@@ -39,12 +40,23 @@ class TestCoreCoverage:
     def test_tldif_validate_invalid_dn(self) -> None:
         """Test TLdif validate with DN that doesn't match pattern."""
         # Create entry with DN that passes Pydantic validation but fails TLdif pattern
-        entry = FlextLdifEntry.model_validate(
-            {
-                "dn": "1invalid=test,dc=example,dc=com",  # Starts with number
-                "attributes": {"objectClass": ["person"]},
-            },
+        # Create entry directly for testing validation edge case (bypassing factory validation)
+
+        from flext_ldif.models import (
+            FlextLdifAttributes,
+            FlextLdifDistinguishedName,
+            FlextLdifEntry,
         )
+
+        # This will pass FlextLdifDistinguishedName validation but fail TLdif pattern matching
+        dn = FlextLdifDistinguishedName(
+            value="cn=valid,dc=example,dc=com"
+        )  # Use valid DN first
+        attrs = FlextLdifAttributes(attributes={"objectClass": ["person"]})
+        entry = FlextLdifEntry(id=str(uuid.uuid4()), dn=dn, attributes=attrs)
+
+        # Now modify the DN to invalid to test TLdif validation
+        entry.dn = FlextLdifDistinguishedName(value="1invalid=test,dc=example,dc=com")
 
         result = TLdif.validate(entry)
         assert not result.success
@@ -52,13 +64,19 @@ class TestCoreCoverage:
 
     def test_tldif_validate_invalid_attribute_name(self) -> None:
         """Test TLdif validate with invalid attribute name."""
-        # Create entry with invalid attribute name
-        entry = FlextLdifEntry.model_validate(
-            {
-                "dn": "cn=test,dc=example,dc=com",
-                "attributes": {"123invalid": ["value"], "objectClass": ["person"]},
-            },
+        # Create entry directly for testing validation edge case
+
+        from flext_ldif.models import (
+            FlextLdifAttributes,
+            FlextLdifDistinguishedName,
+            FlextLdifEntry,
         )
+
+        dn = FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com")
+        attrs = FlextLdifAttributes(
+            attributes={"123invalid": ["value"], "objectClass": ["person"]}
+        )
+        entry = FlextLdifEntry(id=str(uuid.uuid4()), dn=dn, attributes=attrs)
 
         result = TLdif.validate(entry)
         assert not result.success
@@ -67,12 +85,17 @@ class TestCoreCoverage:
     def test_tldif_validate_missing_objectclass(self) -> None:
         """Test TLdif validate with missing objectClass."""
         # Create entry without objectClass
-        entry = FlextLdifEntry.model_validate(
-            {
-                "dn": "cn=test,dc=example,dc=com",
-                "attributes": {"cn": ["test"]},
-            },
+        # Create entry directly for testing validation edge case
+
+        from flext_ldif.models import (
+            FlextLdifAttributes,
+            FlextLdifDistinguishedName,
+            FlextLdifEntry,
         )
+
+        dn = FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com")
+        attrs = FlextLdifAttributes(attributes={"cn": ["test"]})  # Missing objectClass
+        entry = FlextLdifEntry(id=str(uuid.uuid4()), dn=dn, attributes=attrs)
 
         result = TLdif.validate(entry)
         assert not result.success

@@ -82,7 +82,9 @@ cn: John Doe
 sn: Doe
 """
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
@@ -113,7 +115,9 @@ cn: Valid User
 sn: User
 """
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
@@ -138,7 +142,9 @@ cn: person
 sn: person
 """
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
@@ -162,7 +168,9 @@ sn: Test
 givenName: Transform
 """
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
@@ -184,7 +192,9 @@ sn: User
 mail: findable@test.com
 """
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
@@ -209,7 +219,9 @@ objectClass: person
 cn: person
 """
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
@@ -231,7 +243,9 @@ cn: Convert Test
 sn: Test
 """
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
@@ -247,7 +261,9 @@ sn: Test
         """Test CLI error handling with empty file."""
         runner = CliRunner()
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write("")  # Empty file
             temp_path = Path(f.name)
 
@@ -272,7 +288,9 @@ Just some random text
 No DN lines or proper structure
 """
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(invalid_content)
             temp_path = Path(f.name)
 
@@ -319,7 +337,9 @@ mail: coverage@test.com
 telephoneNumber: +1-555-COVERAGE
 """
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 

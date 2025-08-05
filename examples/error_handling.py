@@ -118,32 +118,35 @@ def demonstrate_exception_handling() -> None:
     logger = get_logger(__name__)
 
     # Test different exception types
-    try:
-        # This will raise FlextLdifParseError
+    def _test_parse_error() -> None:
         msg = "Test parse error"
         raise FlextLdifParseError(msg, line_number=42)
 
-    except FlextLdifParseError:
-        logger.error("Parse error occurred", exc_info=True)
-
     try:
-        # This will raise FlextLdifValidationError
+        _test_parse_error()
+    except FlextLdifParseError:
+        logger.exception("Parse error occurred")
+
+    def _test_validation_error() -> None:
         msg = "Test validation error"
         raise FlextLdifValidationError(
             msg,
             validation_details={"field": "dn", "issue": "empty"},
         )
 
-    except FlextLdifValidationError:
-        logger.error("Validation error occurred", exc_info=True)
-
     try:
-        # This will raise base FlextLdifError
+        _test_validation_error()
+    except FlextLdifValidationError:
+        logger.exception("Validation error occurred")
+
+    def _test_base_error() -> None:
         msg = "Test base error"
         raise FlextLdifError(msg)
 
+    try:
+        _test_base_error()
     except FlextLdifError:
-        logger.error("LDIF error occurred", exc_info=True)
+        logger.exception("LDIF error occurred")
 
 
 def demonstrate_file_error_handling() -> None:

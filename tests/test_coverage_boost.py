@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import tempfile
+import uuid
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -81,6 +82,7 @@ class TestAPICoverageBoost:
 
         # Create entry with empty attribute
         entry = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifAttributes(
                 attributes={"cn": [""], "objectClass": ["person"]},
@@ -99,6 +101,7 @@ class TestAPICoverageBoost:
 
         # Create entry with large attribute values
         entry = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifAttributes(
                 attributes={
@@ -125,6 +128,7 @@ class TestAPICoverageBoost:
         api = FlextLdifAPI(config)
 
         entry = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifAttributes(
                 attributes={"cn": ["test"], "objectClass": ["person"]},
@@ -141,6 +145,7 @@ class TestAPICoverageBoost:
         api = FlextLdifAPI()
 
         entry = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifAttributes(
                 attributes={"cn": ["test"], "objectClass": ["person"]},
@@ -427,6 +432,7 @@ class TestModelsCoverageBoost:
         """Test FlextLdifEntry specification methods edge cases."""
         # Test entry without objectClass
         entry = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifAttributes(attributes={"cn": ["test"]}),
         )
@@ -461,6 +467,7 @@ class TestModelsCoverageBoost:
     def test_ldif_entry_model_dump_edge_cases(self) -> None:
         """Test FlextLdifEntry model_dump edge cases."""
         entry = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifAttributes(
                 attributes={"cn": ["test"], "objectClass": ["person"]},

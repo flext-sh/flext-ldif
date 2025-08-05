@@ -49,7 +49,21 @@ from flext_core import get_logger
 
 from .api import FlextLdifAPI
 from .config import FlextLdifConfig
-from .utils.cli_utils import handle_parse_result, safe_click_echo
+
+
+# Simple utilities to replace deleted cli_utils
+def safe_click_echo(message: str, *, err: bool = False) -> None:
+    """Safe echo for click commands."""
+    click.echo(message, err=err)
+
+
+def handle_parse_result(result: FlextResult[list[FlextLdifEntry]]) -> None:
+    """Handle parse result output."""
+    if result.success and result.data is not None:
+        click.echo(f"✅ Parsed {len(result.data)} entries successfully")
+    else:
+        click.echo(f"❌ Parse failed: {result.error or 'Unknown error'}")
+
 
 # Logger for CLI module
 logger = get_logger(__name__)
@@ -60,31 +74,13 @@ MAX_DISPLAYED_ERRORS = 5
 
 def create_api_with_config(*, max_entries: int | None = None) -> FlextLdifAPI:
     """Create FlextLdifAPI with optional configuration."""
-    logger.debug("Creating FlextLdifAPI with configuration")
-    logger.trace("max_entries parameter: %s", max_entries)
-
     if max_entries is not None:
-        logger.debug("Creating config with max_entries override: %d", max_entries)
-        # Explicitly create config with max_entries override
-        ldif_config = FlextLdifConfig()
-        ldif_config.max_entries = max_entries
-        logger.trace("Config created with max_entries: %d", ldif_config.max_entries)
+        # Create config with override values
+        ldif_config = FlextLdifConfig(max_entries=max_entries)
     else:
-        logger.debug("Creating config with default settings")
         ldif_config = FlextLdifConfig()
-        logger.trace(
-            "Config created with default max_entries: %d",
-            ldif_config.max_entries,
-        )
 
-    logger.debug("Initializing FlextLdifAPI with configuration")
-    api = FlextLdifAPI(ldif_config)
-    logger.info(
-        "FlextLdifAPI created successfully",
-        max_entries=ldif_config.max_entries,
-        strict_validation=ldif_config.strict_validation,
-    )
-    return api
+    return FlextLdifAPI(ldif_config)
 
 
 def apply_filter(
@@ -121,7 +117,7 @@ def apply_filter(
             return entries
 
         # Type assertion: we know result is FlextResult from our API calls
-        result_typed = cast("FlextResult[list[FlextLdifEntry]]", result)
+        result_typed = result
         logger.trace("Filter result success: %s", result_typed.success)
 
         if result_typed.success and result_typed.data is not None:
@@ -253,8 +249,8 @@ def write_entries_to_file(
     logger.debug("Writing %d entries to file: %s", len(entries), output_path)
     logger.trace("Output path details: %s", output_path)
 
-    logger.debug("Calling API write method")
-    write_result = api.write(entries, output_path)
+    logger.debug("Calling API write_file method")
+    write_result = api.write_file(entries, output_path)
     logger.trace("Write result success: %s", write_result.success)
 
     if write_result.success:
@@ -314,7 +310,8 @@ def cli(
     # Use flext-cli configuration
     logger.debug("Getting flext-cli configuration")
     cli_config = get_config()
-    cli_config.output_format = output_format
+    if output_format in {"table", "json", "yaml", "csv", "plain"}:
+        cli_config.output_format = output_format  # type: ignore[assignment]
     cli_config.verbose = verbose
     cli_config.debug = debug
     logger.trace("CLI configuration set successfully")
@@ -352,9 +349,9 @@ def _parse_and_log_file(
     )
 
     # Handle parsing result with utility
-    handle_parse_result(cast("FlextResult[list[FlextLdifEntry]]", result), input_file)
+    handle_parse_result(result)
 
-    entries = cast("FlextResult[list[FlextLdifEntry]]", result).data
+    entries = result.data
     if entries is None:  # Safety check
         safe_click_echo(
             "Internal error: entries is None after successful parse",
@@ -452,8 +449,7 @@ def parse(
 def _create_validation_api(ctx: click.Context, *, strict: bool) -> FlextLdifAPI:
     """Create API instance for validation with appropriate config."""
     if strict:
-        config = FlextLdifConfig()
-        config.strict_validation = strict
+        config = FlextLdifConfig(strict_validation=strict)
         return FlextLdifAPI(config)
     return cast("FlextLdifAPI", ctx.obj["api"])
 
@@ -511,14 +507,10 @@ def validate(
 
         # Parse file and handle errors
         parse_result = api.parse_file(input_file)
-        handle_parse_result(
-            cast("FlextResult[list[FlextLdifEntry]]", parse_result),
-            input_file,
-        )
+        handle_parse_result(parse_result)
 
         # Type assertion: we know parse_result is successful from handle_parse_result
-        parse_result_typed = cast("FlextResult[list[FlextLdifEntry]]", parse_result)
-        entries = parse_result_typed.data
+        entries = parse_result.data
 
         if entries is None:  # Safety check
             safe_click_echo(

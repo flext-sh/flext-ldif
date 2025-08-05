@@ -64,19 +64,26 @@ Status: Production Ready
 from __future__ import annotations
 
 # Unified API
-from .api import (
-    FlextLdifAPI,
-    flext_ldif_get_api,
-    flext_ldif_parse,
-    flext_ldif_validate,
-    flext_ldif_write,
-)
+from .api import FlextLdifAPI
 
 # Services
-# CLI functionality - import directly since dependencies are required
-from .cli import main as cli_main
+# CLI functionality - conditional import to avoid dependency issues
+try:
+    from .cli import main as cli_main
+except ImportError:
+    cli_main = None  # type: ignore[assignment]
 
 # Configuration and models
+# Import service functions from API for legacy compatibility
+from .api import (
+    FlextLdifParserService,
+    FlextLdifValidatorService,
+    FlextLdifWriterService,
+    get_ldif_parser,
+    get_ldif_validator,
+    get_ldif_writer,
+    register_ldif_services,
+)
 from .config import FlextLdifConfig
 
 # Core processing functionality
@@ -98,20 +105,72 @@ from .models import (
     FlextLdifDNDict,
     FlextLdifEntry,
     FlextLdifEntryDict,
+    FlextLdifFactory,
     LDIFContent,
     LDIFLines,
 )
-from .services import (
-    FlextLdifParserService,
-    FlextLdifValidatorService,
-    FlextLdifWriterService,
-    get_ldif_parser,
-    get_ldif_validator,
-    get_ldif_writer,
-    register_ldif_services,
-)
 
 __version__ = "0.9.0"
+
+# ⚠️ LEGACY COMPATIBILITY SECTION ⚠️
+# These functions provide fallback interfaces with warnings
+import warnings
+
+
+def flext_ldif_get_api(config: FlextLdifConfig | None = None) -> FlextLdifAPI:
+    """Legacy function - use FlextLdifAPI() directly."""
+    warnings.warn(
+        "flext_ldif_get_api() is deprecated. Use FlextLdifAPI() directly.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return FlextLdifAPI(config)
+
+
+def flext_ldif_parse(content: str) -> list[FlextLdifEntry]:
+    """Legacy function - use FlextLdifAPI().parse() for FlextResult."""
+    warnings.warn(
+        "flext_ldif_parse() is deprecated. Use FlextLdifAPI().parse() for proper error handling.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    api = FlextLdifAPI()
+    result = api.parse(content)
+    if result.success and result.data is not None:
+        return result.data
+    error_msg = f"Parse failed: {result.error or 'Unknown error'}"
+    raise ValueError(error_msg)
+
+
+def flext_ldif_validate(entries: list[FlextLdifEntry]) -> bool:
+    """Legacy function - use FlextLdifAPI().validate() for FlextResult."""
+    warnings.warn(
+        "flext_ldif_validate() is deprecated. Use FlextLdifAPI().validate() for proper error handling.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    api = FlextLdifAPI()
+    result = api.validate(entries)
+    if result.success and result.data is not None:
+        return result.data
+    error_msg = f"Validation failed: {result.error or 'Unknown error'}"
+    raise ValueError(error_msg)
+
+
+def flext_ldif_write(entries: list[FlextLdifEntry]) -> str:
+    """Legacy function - use FlextLdifAPI().write() for FlextResult."""
+    warnings.warn(
+        "flext_ldif_write() is deprecated. Use FlextLdifAPI().write() for proper error handling.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    api = FlextLdifAPI()
+    result = api.write(entries)
+    if result.success and result.data is not None:
+        return result.data
+    error_msg = f"Write failed: {result.error or 'Unknown error'}"
+    raise ValueError(error_msg)
+
 
 __all__: list[str] = [
     "FlextLdifAPI",
@@ -124,6 +183,7 @@ __all__: list[str] = [
     "FlextLdifEntryDict",
     "FlextLdifEntryError",
     "FlextLdifError",
+    "FlextLdifFactory",
     "FlextLdifParseError",
     "FlextLdifParserService",
     "FlextLdifValidationError",

@@ -7,6 +7,8 @@ Objetivo: elevar cobertura de 49% para ~100%.
 
 from __future__ import annotations
 
+import uuid
+
 import pytest
 from pydantic import ValidationError
 
@@ -71,7 +73,9 @@ class TestFlextLdifDistinguishedNameStrategic:
         # Test equality
         assert dn1 == dn2
         assert dn1 != dn3
-        assert dn1 == "cn=test,dc=example,dc=com"  # String comparison (implementado no __eq__)
+        assert (
+            dn1 == "cn=test,dc=example,dc=com"
+        )  # String comparison (implementado no __eq__)
         assert dn1 is not None
         assert dn1 != 123
 
@@ -136,11 +140,13 @@ class TestFlextLdifAttributesStrategic:
 
     def test_to_dict_comprehensive(self) -> None:
         """Testa to_dict com casos comprehensivos."""
-        attrs = FlextLdifAttributes(attributes={
-            "single": ["value1"],
-            "multi": ["value1", "value2", "value3"],
-            "empty": [],
-        })
+        attrs = FlextLdifAttributes(
+            attributes={
+                "single": ["value1"],
+                "multi": ["value1", "value2", "value3"],
+                "empty": [],
+            }
+        )
 
         # Test basic to_dict
         dict_result = attrs.to_dict()
@@ -161,11 +167,13 @@ class TestFlextLdifAttributesStrategic:
 
     def test_remove_value_comprehensive(self) -> None:
         """Testa remove_value comprehensivamente."""
-        attrs = FlextLdifAttributes(attributes={
-            "multi": ["value1", "value2", "value3"],
-            "single": ["value"],
-            "empty": [],
-        })
+        attrs = FlextLdifAttributes(
+            attributes={
+                "multi": ["value1", "value2", "value3"],
+                "single": ["value"],
+                "empty": [],
+            }
+        )
 
         # Caso 1: Remove existing value from multi-value attribute
         result_attrs = attrs.remove_value("multi", "value2")
@@ -209,7 +217,9 @@ class TestFlextLdifEntryStrategic:
             FlextLdifEntry(dn=None, attributes=valid_attrs)
 
         # Caso 2: String DN is automatically converted (SUCCESS case)
-        entry_string_dn = FlextLdifEntry(dn="cn=test,dc=example,dc=com", attributes=valid_attrs)
+        entry_string_dn = FlextLdifEntry(
+            id=str(uuid.uuid4()), dn="cn=test,dc=example,dc=com", attributes=valid_attrs
+        )
         assert isinstance(entry_string_dn.dn, FlextLdifDistinguishedName)
 
         # Caso 3: None attributes
@@ -224,11 +234,14 @@ class TestFlextLdifEntryStrategic:
         """Testa validate_semantic_rules comprehensivamente."""
         # Caso 1: Entry válido - deve passar sem exceções
         valid_entry = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=John Doe,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "cn": ["John Doe"],
-                "objectClass": ["person"],
-            }),
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "cn": ["John Doe"],
+                    "objectClass": ["person"],
+                }
+            ),
         )
 
         # Deve passar sem exceções (baseado no log que mostra que passou)
@@ -242,10 +255,13 @@ class TestFlextLdifEntryStrategic:
 
         # Caso 2: Entry sem objectClass - testa comportamento real
         no_oc_entry = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=No OC,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "cn": ["No OC"],
-            }),
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "cn": ["No OC"],
+                }
+            ),
         )
 
         # Testa se a validação funciona (sem assumir exceção específica)
@@ -261,11 +277,14 @@ class TestFlextLdifEntryStrategic:
     def test_str_and_repr_methods(self) -> None:
         """Testa métodos __str__ e __repr__ para cobertura completa."""
         entry = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "cn": ["test"],
-                "objectClass": ["person"],
-            }),
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "cn": ["test"],
+                    "objectClass": ["person"],
+                }
+            ),
         )
 
         # Test __str__
@@ -280,27 +299,36 @@ class TestFlextLdifEntryStrategic:
     def test_equality_and_hash_comprehensive(self) -> None:
         """Testa __eq__ e __hash__ com casos comprehensivos."""
         entry1 = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "cn": ["test"],
-                "objectClass": ["person"],
-            }),
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "cn": ["test"],
+                    "objectClass": ["person"],
+                }
+            ),
         )
 
         entry2 = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "cn": ["test"],
-                "objectClass": ["person"],
-            }),
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "cn": ["test"],
+                    "objectClass": ["person"],
+                }
+            ),
         )
 
         entry3 = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=other,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "cn": ["other"],
-                "objectClass": ["person"],
-            }),
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "cn": ["other"],
+                    "objectClass": ["person"],
+                }
+            ),
         )
 
         # Test equality
@@ -323,12 +351,15 @@ class TestFlextLdifEntryStrategic:
     def test_to_dict_comprehensive(self) -> None:
         """Testa to_dict com casos comprehensivos."""
         entry = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(attributes={
-                "cn": ["test"],
-                "objectClass": ["person", "top"],
-                "description": [],  # Empty attribute
-            }),
+            attributes=FlextLdifAttributes(
+                attributes={
+                    "cn": ["test"],
+                    "objectClass": ["person", "top"],
+                    "description": [],  # Empty attribute
+                }
+            ),
         )
 
         # Test basic to_dict
@@ -400,11 +431,14 @@ class TestModelsMiscellaneous:
         entries = []
         for i in range(100):
             entry = FlextLdifEntry(
+                id=str(uuid.uuid4()),
                 dn=FlextLdifDistinguishedName(value=f"cn=user{i},dc=test,dc=com"),
-                attributes=FlextLdifAttributes(attributes={
-                    "cn": [f"user{i}"],
-                    "objectClass": ["person"],
-                }),
+                attributes=FlextLdifAttributes(
+                    attributes={
+                        "cn": [f"user{i}"],
+                        "objectClass": ["person"],
+                    }
+                ),
             )
             entries.append(entry)
 
