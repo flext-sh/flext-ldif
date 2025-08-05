@@ -62,7 +62,7 @@ from typing import ClassVar
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root namespace imports
 from flext_core import FlextResult, get_logger
-from flext_core.models import FlextBaseSettings
+from flext_core import FlextBaseSettings
 from pydantic import Field, field_validator
 from pydantic_settings import SettingsConfigDict
 
@@ -115,8 +115,8 @@ class FlextLdifConfig(FlextBaseSettings):
             logger.trace("Parent FlextBaseSettings initialization completed")
         except (ValueError, TypeError) as e:
             logger.exception("Failed to initialize parent configuration class")
-            msg: str = f"Configuration initialization failed: {e}"
-            raise RuntimeError(msg) from e
+            init_msg: str = f"Configuration initialization failed: {e}"
+            raise RuntimeError(init_msg) from e
 
         # REFACTORING: Enhanced data application with validation and error handling
         if data:
@@ -133,9 +133,9 @@ class FlextLdifConfig(FlextBaseSettings):
                             value,
                             e,
                         )
-                        msg: str = f"Invalid configuration value for {key}: {e}"
+                        override_msg: str = f"Invalid configuration value for {key}: {e}"
                         raise ValueError(
-                            msg,
+                            override_msg,
                         ) from e
                 else:
                     logger.warning("Unknown configuration key ignored: %s", key)
@@ -330,9 +330,9 @@ class FlextLdifConfig(FlextBaseSettings):
             )
             return FlextResult.fail(error_msg)
         except (UnicodeError, AttributeError) as e:
-            error_msg: str = f"Encoding validation failed: {e}"
-            logger.exception(error_msg)
-            return FlextResult.fail(error_msg)
+            encoding_error_msg: str = f"Encoding validation failed: {e}"
+            logger.exception(encoding_error_msg)
+            return FlextResult.fail(encoding_error_msg)
 
         # REFACTORING: Enhanced size limits consistency validation with detailed metrics
         logger.trace("Validating size limits consistency")
@@ -366,26 +366,26 @@ class FlextLdifConfig(FlextBaseSettings):
             if not output_dir.exists() and self.create_output_dir:
                 logger.trace("Output directory will be created when needed")
             elif not output_dir.exists():
-                warning_msg: str = f"Output directory does not exist and create_output_dir is False: {output_dir}"
-                logger.warning(warning_msg)
+                dir_warning_msg: str = f"Output directory does not exist and create_output_dir is False: {output_dir}"
+                logger.warning(dir_warning_msg)
             elif not output_dir.is_dir():
-                error_msg: str = (
+                dir_error_msg: str = (
                     f"Output path exists but is not a directory: {output_dir}"
                 )
-                logger.error(error_msg)
-                return FlextResult.fail(error_msg)
+                logger.error(dir_error_msg)
+                return FlextResult.fail(dir_error_msg)
 
         except (OSError, PermissionError) as e:
-            error_msg: str = f"Output directory validation failed: {e}"
-            logger.exception(error_msg, output_directory=str(self.output_directory))
-            return FlextResult.fail(error_msg)
+            dir_access_error_msg: str = f"Output directory validation failed: {e}"
+            logger.exception(dir_access_error_msg, output_directory=str(self.output_directory))
+            return FlextResult.fail(dir_access_error_msg)
 
         # REFACTORING: Enhanced RFC 2849 compliance validation
         logger.trace("Validating LDIF RFC 2849 compliance settings")
         if not (50 <= self.line_wrap_length <= 998):
-            error_msg: str = f"line_wrap_length ({self.line_wrap_length}) violates RFC 2849 constraints (50-998)"
-            logger.error(error_msg)
-            return FlextResult.fail(error_msg)
+            rfc_error_msg: str = f"line_wrap_length ({self.line_wrap_length}) violates RFC 2849 constraints (50-998)"
+            logger.error(rfc_error_msg)
+            return FlextResult.fail(rfc_error_msg)
 
         # REFACTORING: Enhanced production deployment constraints validation
         logger.trace("Validating production deployment constraints")

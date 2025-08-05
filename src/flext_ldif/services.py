@@ -407,9 +407,9 @@ class FlextLdifWriterService:
                         parent_dir=str(parent_dir),
                     )
             except (OSError, PermissionError) as e:
-                error_msg: str = f"Failed to create output directory {parent_dir}: {e}"
-                logger.exception(error_msg)
-                return FlextResult.fail(error_msg)
+                directory_error_msg: str = f"Failed to create output directory {parent_dir}: {e}"
+                logger.exception(directory_error_msg)
+                return FlextResult.fail(directory_error_msg)
 
         # REFACTORING: Enhanced attribute sorting with performance tracking
         processed_entries = entries
@@ -426,9 +426,9 @@ class FlextLdifWriterService:
         )
 
         if result.is_failure:
-            error_msg: str = f"Core LDIF file writing failed for {resolved_path.absolute()}: {result.error}"
-            logger.error(error_msg)
-            return FlextResult.fail(error_msg)
+            write_error_msg: str = f"Core LDIF file writing failed for {resolved_path.absolute()}: {result.error}"
+            logger.error(write_error_msg)
+            return FlextResult.fail(write_error_msg)
 
         # REFACTORING: Enhanced file writing success logging with comprehensive metrics
         logger.info(
@@ -725,9 +725,9 @@ def register_ldif_services(
     logger.trace("Registering LDIF configuration in container")
     config_result = container.register("ldif_config", config)
     if config_result.is_failure:
-        error_msg: str = f"Failed to register LDIF configuration: {config_result.error}"
-        logger.error(error_msg)
-        return FlextResult.fail(error_msg)
+        config_error_msg: str = f"Failed to register LDIF configuration: {config_result.error}"
+        logger.error(config_error_msg)
+        return FlextResult.fail(config_error_msg)
 
     # REFACTORING: Enhanced service registration with detailed error handling
     services_config = [
@@ -748,17 +748,17 @@ def register_ldif_services(
             # Register in container
             result = container.register(service_name, service_instance)
             if result.is_failure:
-                error_msg: str = f"Failed to register {service_description} ({service_name}): {result.error}"
-                logger.error(error_msg)
-                return FlextResult.fail(error_msg)
+                registration_error_msg: str = f"Failed to register {service_description} ({service_name}): {result.error}"
+                logger.error(registration_error_msg)
+                return FlextResult.fail(registration_error_msg)
 
             registered_services.append(service_name)
             logger.trace("Successfully registered %s", service_description)
 
         except (TypeError, ValueError, AttributeError) as e:
-            error_msg: str = f"Exception creating {service_description}: {e}"
-            logger.exception(error_msg)
-            return FlextResult.fail(error_msg)
+            creation_error_msg: str = f"Exception creating {service_description}: {e}"
+            logger.exception(creation_error_msg)
+            return FlextResult.fail(creation_error_msg)
 
     # REFACTORING: Enhanced success logging with comprehensive registration metrics
     logger.info(
@@ -786,18 +786,18 @@ def get_ldif_parser() -> FlextResult[FlextLdifParserService]:
 
     result = container.get("ldif_parser")
     if result.is_failure:
-        error_msg: str = (
+        parser_retrieval_error_msg: str = (
             f"Failed to retrieve LDIF parser from container: {result.error}"
         )
-        logger.error(error_msg)
-        return FlextResult.fail(error_msg)
+        logger.error(parser_retrieval_error_msg)
+        return FlextResult.fail(parser_retrieval_error_msg)
 
     # REFACTORING: Enhanced type validation with detailed error context
     if not isinstance(result.data, FlextLdifParserService):
         actual_type = type(result.data).__name__
-        error_msg: str = f"LDIF parser service type mismatch: expected FlextLdifParserService, got {actual_type}"
-        logger.error(error_msg)
-        return FlextResult.fail(error_msg)
+        parser_type_error_msg: str = f"LDIF parser service type mismatch: expected FlextLdifParserService, got {actual_type}"
+        logger.error(parser_type_error_msg)
+        return FlextResult.fail(parser_type_error_msg)
 
     logger.debug("LDIF parser service retrieved successfully")
     return FlextResult.ok(result.data)
@@ -819,18 +819,18 @@ def get_ldif_writer() -> FlextResult[FlextLdifWriterService]:
 
     result = container.get("ldif_writer")
     if result.is_failure:
-        error_msg: str = (
+        writer_retrieval_error_msg: str = (
             f"Failed to retrieve LDIF writer from container: {result.error}"
         )
-        logger.error(error_msg)
-        return FlextResult.fail(error_msg)
+        logger.error(writer_retrieval_error_msg)
+        return FlextResult.fail(writer_retrieval_error_msg)
 
     # REFACTORING: Enhanced type validation with detailed error context
     if not isinstance(result.data, FlextLdifWriterService):
         actual_type = type(result.data).__name__
-        error_msg: str = f"LDIF writer service type mismatch: expected FlextLdifWriterService, got {actual_type}"
-        logger.error(error_msg)
-        return FlextResult.fail(error_msg)
+        writer_type_error_msg: str = f"LDIF writer service type mismatch: expected FlextLdifWriterService, got {actual_type}"
+        logger.error(writer_type_error_msg)
+        return FlextResult.fail(writer_type_error_msg)
 
     logger.debug("LDIF writer service retrieved successfully")
     return FlextResult.ok(result.data)
@@ -852,18 +852,18 @@ def get_ldif_validator() -> FlextResult[FlextLdifValidatorService]:
 
     result = container.get("ldif_validator")
     if result.is_failure:
-        error_msg: str = (
+        validator_retrieval_error_msg: str = (
             f"Failed to retrieve LDIF validator from container: {result.error}"
         )
-        logger.error(error_msg)
-        return FlextResult.fail(error_msg)
+        logger.error(validator_retrieval_error_msg)
+        return FlextResult.fail(validator_retrieval_error_msg)
 
     # REFACTORING: Enhanced type validation with detailed error context
     if not isinstance(result.data, FlextLdifValidatorService):
         actual_type = type(result.data).__name__
-        error_msg: str = f"LDIF validator service type mismatch: expected FlextLdifValidatorService, got {actual_type}"
-        logger.error(error_msg)
-        return FlextResult.fail(error_msg)
+        validator_type_error_msg: str = f"LDIF validator service type mismatch: expected FlextLdifValidatorService, got {actual_type}"
+        logger.error(validator_type_error_msg)
+        return FlextResult.fail(validator_type_error_msg)
 
     logger.debug("LDIF validator service retrieved successfully")
     return FlextResult.ok(result.data)

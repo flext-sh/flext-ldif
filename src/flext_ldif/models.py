@@ -1,8 +1,17 @@
-"""FLEXT-LDIF Domain Models and Value Objects.
+"""FLEXT-LDIF Unified Semantic Pattern Models - Domain Objects.
 
-This module contains the core domain model for LDIF processing, implementing
-Domain-Driven Design patterns with immutable value objects and rich domain
-entities built on flext-core foundation classes.
+Implements FLEXT Unified Semantic Patterns for LDIF processing domain model.
+Follows harmonized Flext[Domain][Type][Context] naming convention and
+integrates with the ecosystem-wide unified pattern system.
+
+Unified Patterns Applied:
+    - FlextLdifEntry: Domain entity using FlextEntity foundation
+    - FlextLdifDistinguishedName: Value object using FlextValue foundation
+    - FlextLdifAttributes: Immutable collection using FlextValue foundation
+    - Unified business rule validation with FlextResult pattern
+    - Cross-ecosystem type compatibility via FlextTypes.Data namespace
+
+Reference: /home/marlonsc/flext/flext-core/docs/FLEXT_UNIFIED_SEMANTIC_PATTERNS.md
 
 The domain model encapsulates business logic and invariants for LDIF data
 processing, providing type-safe, validated, and immutable data structures
@@ -69,13 +78,10 @@ from __future__ import annotations
 
 from typing import NewType, NotRequired, TypedDict
 
-# 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root namespace imports
-from flext_core import (
-    FlextDomainValueObject,
-    FlextImmutableModel,
-    FlextResult,
-    get_logger,
-)
+# 🚨 UNIFIED SEMANTIC PATTERNS: Using harmonized flext-core imports
+from flext_core import FlextResult, get_logger
+from flext_core.models import FlextValue, FlextEntity, FlextFactory
+from flext_core.semantic_types import FlextTypes
 from pydantic import Field, field_validator
 
 # Logger for models module
@@ -115,7 +121,7 @@ class FlextLdifEntryDict(TypedDict):
     changetype: NotRequired[str]
 
 
-class FlextLdifDistinguishedName(FlextDomainValueObject):
+class FlextLdifDistinguishedName(FlextValue):
     """Distinguished Name value object for LDIF entries.
 
     Immutable value object representing LDAP Distinguished Names with RFC 4514
@@ -948,12 +954,12 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
 
         return depth
 
-    def validate_semantic_rules(self) -> FlextResult[None]:
-        """Validate DN semantic business rules following RFC 4514.
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate DN business rules following Unified Semantic Patterns.
 
-        Performs comprehensive validation of the DN structure including
-        format validation, component structure, and business rule compliance
-        using Railway-Oriented Programming patterns with Strategy Pattern.
+        Implements unified business rule validation pattern from FLEXT ecosystem
+        following RFC 4514 DN validation requirements with Railway-Oriented
+        Programming and consistent FlextResult error handling.
 
         Returns:
             FlextResult[None]: Success if DN is valid, failure with error message
@@ -965,11 +971,10 @@ class FlextLdifDistinguishedName(FlextDomainValueObject):
 
         Example:
             >>> dn = FlextLdifDistinguishedName(value="cn=user,dc=example,dc=com")
-            >>> result = dn.validate_semantic_rules()
+            >>> result = dn.validate_business_rules()
             >>> result.success  # True
 
-        Raises:
-            No exceptions - all errors returned via FlextResult pattern
+        Unified Pattern: Uses FlextResult for consistent error handling
 
         """
         logger.debug("Validating DN semantic rules for: '%s'", self.value)
@@ -4822,10 +4827,10 @@ class FlextLdifEntry(FlextImmutableModel):
                     attributes[attr_name] = []
                 attributes[attr_name].append(attr_value)
 
-        return cls(
-            dn=FlextLdifDistinguishedName.model_validate({"value": dn}),
-            attributes=FlextLdifAttributes.model_validate({"attributes": attributes}),
-        )
+        return cls.model_validate({
+            "dn": FlextLdifDistinguishedName.model_validate({"value": dn}),
+            "attributes": FlextLdifAttributes.model_validate({"attributes": attributes}),
+        })
 
     @classmethod
     def from_ldif_dict(
@@ -4856,7 +4861,7 @@ class FlextLdifEntry(FlextImmutableModel):
             attrs_obj = FlextLdifAttributes.model_validate({"attributes": attributes})
             logger.trace("Attributes validation successful")
 
-            entry = cls(dn=dn_obj, attributes=attrs_obj)
+            entry = cls.model_validate({"dn": dn_obj, "attributes": attrs_obj})
             logger.debug("FlextLdifEntry created successfully: %s", entry.dn)
             logger.info(
                 "LDIF entry created from dict",

@@ -18,6 +18,7 @@ sys.path.insert(0, str(tests_path))
 
 # CORREÇÃO: Import após configurar path
 from docker_fixtures import OpenLDAPContainerManager, check_docker_available
+
 from flext_ldif import flext_ldif_parse, flext_ldif_validate
 
 
