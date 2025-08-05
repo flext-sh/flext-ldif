@@ -7,6 +7,7 @@ to achieve the required 90% coverage threshold.
 from __future__ import annotations
 
 import tempfile
+import uuid
 from pathlib import Path
 
 from click.testing import CliRunner
@@ -343,6 +344,7 @@ class TestAPICoverageEdgeCases:
 
         # Test with configuration that allows empty attributes
         entry = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifAttributes(
                 attributes={"cn": [""], "objectClass": ["person"]},

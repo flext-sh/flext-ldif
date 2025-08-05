@@ -14,16 +14,8 @@ from unittest.mock import Mock, patch
 import pytest
 from flext_core import FlextResult
 
-from flext_ldif.utils.cli_utils import (
-    confirm_operation,
-    display_entry_count,
-    display_success_message,
-    exit_with_error,
-    handle_file_operation_result,
-    handle_parse_result,
-    safe_click_echo,
-    validate_cli_result,
-)
+# ⚡ REFACTORED: cli_utils eliminated - testing simplified CLI functions
+from flext_ldif.cli import handle_parse_result
 
 
 class TestCliUtilsCoverage:
@@ -31,46 +23,47 @@ class TestCliUtilsCoverage:
 
     def test_validate_cli_result_success(self) -> None:
         """Testa validate_cli_result com resultado de sucesso."""
+        from flext_ldif.utils.cli_utils import validate_cli_result
+
         success_result = FlextResult.ok("test data")
-        # Não deve lançar exceção
-        validate_cli_result(success_result, "Test operation")
+        result = validate_cli_result(success_result)
+        assert result.success is True
 
-    def test_validate_cli_result_failure_no_success_attr(self) -> None:
-        """Testa validate_cli_result com objeto sem atributo success."""
+    def test_validate_cli_result_with_exit_code_zero(self) -> None:
+        """Testa validate_cli_result com objeto com exit_code=0."""
+        from flext_ldif.utils.cli_utils import validate_cli_result
+
         mock_result = Mock()
-        del mock_result.success  # Remove atributo
+        mock_result.exit_code = 0
+        result = validate_cli_result(mock_result)
+        assert result.success is True
 
-        with pytest.raises(SystemExit) as exc_info:
-            validate_cli_result(mock_result, "Test operation")
-        assert exc_info.value.code == 1
+    def test_validate_cli_result_with_exit_code_nonzero(self) -> None:
+        """Testa validate_cli_result com exit_code não-zero."""
+        from flext_ldif.utils.cli_utils import validate_cli_result
 
-    def test_validate_cli_result_failure_false_success(self) -> None:
-        """Testa validate_cli_result com success=False."""
-        failure_result = FlextResult.fail("test error")
-
-        with pytest.raises(SystemExit) as exc_info:
-            validate_cli_result(failure_result, "Test operation")
-        assert exc_info.value.code == 1
-
-    def test_validate_cli_result_no_data_attr(self) -> None:
-        """Testa validate_cli_result com objeto sem atributo data."""
         mock_result = Mock()
-        mock_result.success = True
-        del mock_result.data  # Remove atributo
+        mock_result.exit_code = 1
+        result = validate_cli_result(mock_result)
+        assert result.success is False
 
-        with pytest.raises(SystemExit) as exc_info:
-            validate_cli_result(mock_result, "Test operation")
-        assert exc_info.value.code == 1
+    def test_validate_cli_result_truthy_object(self) -> None:
+        """Testa validate_cli_result com objeto truthy."""
+        from flext_ldif.utils.cli_utils import validate_cli_result
 
-    def test_validate_cli_result_none_data(self) -> None:
-        """Testa validate_cli_result com data=None."""
         mock_result = Mock()
-        mock_result.success = True
-        mock_result.data = None
+        mock_result.__bool__ = Mock(return_value=True)
+        result = validate_cli_result(mock_result)
+        assert result.success is True
 
-        with pytest.raises(SystemExit) as exc_info:
-            validate_cli_result(mock_result, "Test operation")
-        assert exc_info.value.code == 1
+    def test_validate_cli_result_falsy_object(self) -> None:
+        """Testa validate_cli_result com objeto falsy."""
+        from flext_ldif.utils.cli_utils import validate_cli_result
+
+        mock_result = Mock()
+        mock_result.__bool__ = Mock(return_value=False)
+        result = validate_cli_result(mock_result)
+        assert result.success is False
 
     def test_handle_parse_result_success_with_data(self) -> None:
         """Testa handle_parse_result com sucesso e dados."""
@@ -102,100 +95,70 @@ class TestCliUtilsCoverage:
             handle_parse_result(none_result, "/test/file.ldif")
         assert exc_info.value.code == 1
 
-    def test_handle_file_operation_result_success(self) -> None:
-        """Testa handle_file_operation_result com sucesso."""
-        success_result = FlextResult.ok("file content")
-        # Não deve lançar exceção
-        handle_file_operation_result(success_result, "read", "/test/file.txt")
+    def test_cli_utils_imports(self) -> None:
+        """Testa imports das funções de cli_utils."""
+        from flext_ldif.utils.cli_utils import (
+            confirm_operation,
+            display_entry_count,
+            display_statistics,
+            safe_click_echo,
+            validate_cli_result,
+        )
 
-    def test_handle_file_operation_result_failure_with_error(self) -> None:
-        """Testa handle_file_operation_result com falha e mensagem de erro."""
-        failure_result = FlextResult.fail("File not found")
-
-        with pytest.raises(SystemExit) as exc_info:
-            handle_file_operation_result(failure_result, "read", "/test/file.txt")
-        assert exc_info.value.code == 1
-
-    def test_handle_file_operation_result_failure_no_error(self) -> None:
-        """Testa handle_file_operation_result com falha sem mensagem."""
-        mock_result = Mock()
-        mock_result.success = False
-        mock_result.error = None
-
-        with pytest.raises(SystemExit) as exc_info:
-            handle_file_operation_result(mock_result, "write", "/test/file.txt")
-        assert exc_info.value.code == 1
+        # Se chegou até aqui, os imports funcionam
+        assert callable(display_entry_count)
+        assert callable(confirm_operation)
+        assert callable(display_statistics)
+        assert callable(safe_click_echo)
+        assert callable(validate_cli_result)
 
     def test_safe_click_echo_normal(self) -> None:
         """Testa safe_click_echo com operação normal."""
+        from flext_ldif.utils.cli_utils import safe_click_echo
+
         with patch("flext_ldif.utils.cli_utils.click.echo") as mock_echo:
             safe_click_echo("test message")
-            mock_echo.assert_called_once_with("test message", err=False)
+            mock_echo.assert_called_once_with("test message")
 
-    def test_safe_click_echo_to_stderr(self) -> None:
-        """Testa safe_click_echo para stderr."""
-        with patch("flext_ldif.utils.cli_utils.click.echo") as mock_echo:
-            safe_click_echo("error message", err=True)
-            mock_echo.assert_called_once_with("error message", err=True)
+    def test_safe_click_echo_with_color(self) -> None:
+        """Testa safe_click_echo com cor."""
+        from flext_ldif.utils.cli_utils import safe_click_echo
 
-    def test_safe_click_echo_broken_pipe(self) -> None:
-        """Testa safe_click_echo com BrokenPipeError."""
-        with patch("flext_ldif.utils.cli_utils.click.echo") as mock_echo:
-            mock_echo.side_effect = BrokenPipeError()
+        with patch("flext_ldif.utils.cli_utils.click.secho") as mock_secho:
+            safe_click_echo("colored message", color="red")
+            mock_secho.assert_called_once_with("colored message", fg="red")
 
-            with pytest.raises(SystemExit) as exc_info:
-                safe_click_echo("test message")
-            assert exc_info.value.code == 1
+    def test_safe_click_echo_exception_fallback(self) -> None:
+        """Testa safe_click_echo com exceção e fallback."""
+        from flext_ldif.utils.cli_utils import safe_click_echo
 
-    def test_safe_click_echo_keyboard_interrupt(self) -> None:
-        """Testa safe_click_echo com KeyboardInterrupt."""
-        with patch("flext_ldif.utils.cli_utils.click.echo") as mock_echo:
-            mock_echo.side_effect = KeyboardInterrupt()
+        with patch(
+            "flext_ldif.utils.cli_utils.click.echo",
+            side_effect=Exception("click error"),
+        ), patch("builtins.print") as mock_print:
+            safe_click_echo("test message")
+            mock_print.assert_called_once_with("test message")
 
-            with pytest.raises(SystemExit) as exc_info:
-                safe_click_echo("test message")
-            assert exc_info.value.code == 1
+    def test_display_entry_count_default(self) -> None:
+        """Testa display_entry_count com valores padrão."""
+        from flext_ldif.utils.cli_utils import display_entry_count
 
-    def test_exit_with_error_default_code(self) -> None:
-        """Testa exit_with_error com código padrão."""
-        with pytest.raises(SystemExit) as exc_info:
-            exit_with_error("Test error")
-        assert exc_info.value.code == 1
-
-    def test_exit_with_error_custom_code(self) -> None:
-        """Testa exit_with_error com código customizado."""
-        with pytest.raises(SystemExit) as exc_info:
-            exit_with_error("Test error", 2)
-        assert exc_info.value.code == 2
-
-    def test_display_success_message_no_details(self) -> None:
-        """Testa display_success_message sem detalhes."""
-        with patch("flext_ldif.utils.cli_utils.safe_click_echo") as mock_echo:
-            display_success_message("Parse")
-            mock_echo.assert_called_once_with("✓ Parse completed successfully")
-
-    def test_display_success_message_with_details(self) -> None:
-        """Testa display_success_message com detalhes."""
-        with patch("flext_ldif.utils.cli_utils.safe_click_echo") as mock_echo:
-            display_success_message("Parse", "10 entries processed")
-            mock_echo.assert_called_once_with(
-                "✓ Parse completed successfully: 10 entries processed",
-            )
-
-    def test_display_entry_count_default_type(self) -> None:
-        """Testa display_entry_count com tipo padrão."""
         with patch("flext_ldif.utils.cli_utils.safe_click_echo") as mock_echo:
             display_entry_count(5)
             mock_echo.assert_called_once_with("Found 5 entries")
 
     def test_display_entry_count_custom_type(self) -> None:
-        """Testa display_entry_count com tipo customizado."""
+        """Testa display_entry_count com tipo personalizado."""
+        from flext_ldif.utils.cli_utils import display_entry_count
+
         with patch("flext_ldif.utils.cli_utils.safe_click_echo") as mock_echo:
             display_entry_count(3, "users")
             mock_echo.assert_called_once_with("Found 3 users")
 
     def test_confirm_operation_default_false(self) -> None:
         """Testa confirm_operation com padrão False."""
+        from flext_ldif.utils.cli_utils import confirm_operation
+
         with patch("flext_ldif.utils.cli_utils.click.confirm") as mock_confirm:
             mock_confirm.return_value = True
             result = confirm_operation("Continue?")
@@ -204,11 +167,46 @@ class TestCliUtilsCoverage:
 
     def test_confirm_operation_default_true(self) -> None:
         """Testa confirm_operation com padrão True."""
+        from flext_ldif.utils.cli_utils import confirm_operation
+
         with patch("flext_ldif.utils.cli_utils.click.confirm") as mock_confirm:
             mock_confirm.return_value = False
             result = confirm_operation("Continue?", default=True)
             mock_confirm.assert_called_once_with("Continue?", default=True)
             assert result is False
+
+    def test_confirm_operation_exception_fallback(self) -> None:
+        """Testa confirm_operation com exceção e fallback."""
+        from flext_ldif.utils.cli_utils import confirm_operation
+
+        with patch(
+            "flext_ldif.utils.cli_utils.click.confirm",
+            side_effect=Exception("confirm error"),
+        ):
+            result = confirm_operation("Continue?", default=True)
+            assert result is True  # Should return default on exception
+
+    def test_display_statistics_empty_list(self) -> None:
+        """Testa display_statistics com lista vazia."""
+        from flext_ldif.utils.cli_utils import display_statistics
+
+        with patch("flext_ldif.utils.cli_utils.safe_click_echo") as mock_echo:
+            display_statistics([])
+            mock_echo.assert_called_once_with("No entries to display statistics for.")
+
+    def test_display_statistics_with_entries(self) -> None:
+        """Testa display_statistics com entries."""
+        from unittest.mock import Mock
+
+        from flext_ldif.utils.cli_utils import display_statistics
+
+        mock_entry = Mock()
+        mock_entry.attributes.attributes = {"objectClass": ["person", "top"]}
+
+        with patch("flext_ldif.utils.cli_utils.safe_click_echo") as mock_echo:
+            display_statistics([mock_entry])
+            # Verifica que foi chamado pelo menos uma vez
+            assert mock_echo.call_count >= 1
 
 
 class TestErrorHandlingCoverage:
@@ -218,7 +216,6 @@ class TestErrorHandlingCoverage:
         """Testa se os imports do error_handling funcionam."""
         try:
             from flext_ldif.utils.error_handling import (
-                FlextLdifErrorHandler,
                 format_validation_error,
                 handle_ldif_error,
             )

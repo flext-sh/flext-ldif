@@ -9,7 +9,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from flext_core import get_logger
+
 from flext_ldif import FlextLdifAPI, FlextLdifConfig, FlextLdifEntry
+
+logger = get_logger(__name__)
 
 
 def validate_business_rules(entry: FlextLdifEntry) -> tuple[bool, list[str]]:
@@ -158,12 +162,16 @@ class LdifValidationDemonstrator:
         if not errors:
             return
 
-        # Show first 5 errors only to avoid output spam
-        for _error in errors[:5]:
-            pass  # Log error with validation_type prefix
+        # Constants for error display
+        max_displayed_errors = 5
 
-        if len(errors) > 5:
-            pass  # Log "... and X more errors" message
+        # Show first 5 errors only to avoid output spam
+        for error in errors[:max_displayed_errors]:
+            logger.error(f"[{validation_type}] {error}")
+
+        if len(errors) > max_displayed_errors:
+            remaining = len(errors) - max_displayed_errors
+            logger.warning(f"[{validation_type}] ... and {remaining} more errors")
 
 
 def main() -> None:

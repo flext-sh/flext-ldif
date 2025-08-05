@@ -737,7 +737,9 @@ class TLdif:
                 with file_path.open("r", encoding=encoding) as f:
                     content = f.read()
             except UnicodeDecodeError as e:
-                encoding_error_msg: str = f"Encoding error reading file with {encoding}: {e}"
+                encoding_error_msg: str = (
+                    f"Encoding error reading file with {encoding}: {e}"
+                )
                 logger.exception(encoding_error_msg)
                 return FlextResult.fail(encoding_error_msg)
 

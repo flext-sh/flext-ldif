@@ -48,7 +48,9 @@ uid: jdoe
 telephoneNumber: +1-555-123-4567
 """
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
@@ -59,11 +61,15 @@ telephoneNumber: +1-555-123-4567
             assert result.exit_code in {0, 1}  # May exit 1 on warnings but that's ok
 
             # Test parse with --output
-            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as output_f:
+            with tempfile.NamedTemporaryFile(
+                encoding="utf-8", mode="w", suffix=".ldif", delete=False
+            ) as output_f:
                 output_path = Path(output_f.name)
 
             try:
-                result = runner.invoke(cli, ["parse", str(temp_path), "--output", str(output_path)])
+                result = runner.invoke(
+                    cli, ["parse", str(temp_path), "--output", str(output_path)]
+                )
                 assert result.exit_code in {0, 1}
             finally:
                 output_path.unlink(missing_ok=True)
@@ -90,7 +96,9 @@ cn: Valid User
 sn: User
 """
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(valid_ldif)
             temp_path = Path(f.name)
 
@@ -104,11 +112,16 @@ sn: User
             assert result.exit_code in {0, 1}
 
             # Test validate with --output-errors
-            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".txt", delete=False) as error_f:
+            with tempfile.NamedTemporaryFile(
+                encoding="utf-8", mode="w", suffix=".txt", delete=False
+            ) as error_f:
                 error_path = Path(error_f.name)
 
             try:
-                result = runner.invoke(cli, ["validate", str(temp_path), "--output-errors", str(error_path)])
+                result = runner.invoke(
+                    cli,
+                    ["validate", str(temp_path), "--output-errors", str(error_path)],
+                )
                 assert result.exit_code in {0, 1}
             finally:
                 error_path.unlink(missing_ok=True)
@@ -133,7 +146,9 @@ mail: jane.smith@example.com
 uid: jsmith
 """
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(person_ldif)
             temp_path = Path(f.name)
 
@@ -143,17 +158,23 @@ uid: jsmith
             assert result.exit_code in {0, 1}
 
             # Test transform with --output
-            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as output_f:
+            with tempfile.NamedTemporaryFile(
+                encoding="utf-8", mode="w", suffix=".ldif", delete=False
+            ) as output_f:
                 output_path = Path(output_f.name)
 
             try:
-                result = runner.invoke(cli, ["transform", str(temp_path), "--output", str(output_path)])
+                result = runner.invoke(
+                    cli, ["transform", str(temp_path), "--output", str(output_path)]
+                )
                 assert result.exit_code in {0, 1}
             finally:
                 output_path.unlink(missing_ok=True)
 
             # Test transform with --add-missing-departments
-            result = runner.invoke(cli, ["transform", str(temp_path), "--add-missing-departments"])
+            result = runner.invoke(
+                cli, ["transform", str(temp_path), "--add-missing-departments"]
+            )
             assert result.exit_code in {0, 1}
 
         finally:
@@ -170,7 +191,9 @@ cn: Test User
 sn: User
 """
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
@@ -180,11 +203,15 @@ sn: User
             assert result.exit_code in {0, 1}
 
             # Test write with --output
-            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as output_f:
+            with tempfile.NamedTemporaryFile(
+                encoding="utf-8", mode="w", suffix=".ldif", delete=False
+            ) as output_f:
                 output_path = Path(output_f.name)
 
             try:
-                result = runner.invoke(cli, ["write", str(temp_path), "--output", str(output_path)])
+                result = runner.invoke(
+                    cli, ["write", str(temp_path), "--output", str(output_path)]
+                )
                 assert result.exit_code in {0, 1}
             finally:
                 output_path.unlink(missing_ok=True)
@@ -214,7 +241,9 @@ objectClass: domain
 dc: example
 """
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
@@ -224,11 +253,15 @@ dc: example
             assert result.exit_code in {0, 1}
 
             # Test with --output
-            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as output_f:
+            with tempfile.NamedTemporaryFile(
+                encoding="utf-8", mode="w", suffix=".ldif", delete=False
+            ) as output_f:
                 output_path = Path(output_f.name)
 
             try:
-                result = runner.invoke(cli, ["stats", str(temp_path), "--output", str(output_path)])
+                result = runner.invoke(
+                    cli, ["stats", str(temp_path), "--output", str(output_path)]
+                )
                 assert result.exit_code in {0, 1}
             except click.ClickException:
                 pass  # Option might not exist
@@ -252,7 +285,9 @@ dc: example
             assert result.exit_code != 0  # Should fail
 
         # Test with empty file
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write("")  # Empty file
             temp_path = Path(f.name)
 
@@ -264,7 +299,9 @@ dc: example
             temp_path.unlink(missing_ok=True)
 
         # Test with invalid LDIF
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write("invalid ldif content\nno proper format")
             temp_path = Path(f.name)
 
@@ -284,7 +321,15 @@ dc: example
         assert result.exit_code == 0
 
         # Test command-specific help
-        commands = ["parse", "validate", "transform", "stats", "find", "filter-by-class", "convert"]
+        commands = [
+            "parse",
+            "validate",
+            "transform",
+            "stats",
+            "find",
+            "filter-by-class",
+            "convert",
+        ]
         for command in commands:
             result = runner.invoke(cli, [command, "--help"])
             assert result.exit_code == 0
@@ -319,7 +364,9 @@ cn: Test
 sn: Test
 """
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
@@ -338,7 +385,9 @@ sn: Test
 
             # Test with --config-file (if implemented)
             try:
-                result = runner.invoke(cli, ["--config-file", "/dev/null", "parse", str(temp_path)])
+                result = runner.invoke(
+                    cli, ["--config-file", "/dev/null", "parse", str(temp_path)]
+                )
                 assert result.exit_code in {0, 1}
             except click.ClickException:
                 # Config file option might not be implemented
@@ -358,7 +407,9 @@ sn: Test
 mail: test@example.com
 """
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
@@ -367,7 +418,9 @@ mail: test@example.com
             formats = ["ldif", "json", "yaml", "csv"]
             for fmt in formats:
                 try:
-                    result = runner.invoke(cli, ["parse", str(temp_path), "--format", fmt])
+                    result = runner.invoke(
+                        cli, ["parse", str(temp_path), "--format", fmt]
+                    )
                     assert result.exit_code in {0, 1}
                 except click.ClickException:
                     # Format might not be implemented
@@ -399,13 +452,17 @@ objectClass: groupOfNames
 cn: REDACTED_LDAP_BIND_PASSWORDs
 """
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
         try:
             # Test filtering by object class
-            result = runner.invoke(cli, ["parse", str(temp_path), "--filter-objectclass", "person"])
+            result = runner.invoke(
+                cli, ["parse", str(temp_path), "--filter-objectclass", "person"]
+            )
             assert result.exit_code in {0, 1}
 
             # Test filtering persons only
@@ -432,7 +489,9 @@ cn: User{i}
 sn: User{i}
 """
 
-            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+            with tempfile.NamedTemporaryFile(
+                encoding="utf-8", mode="w", suffix=".ldif", delete=False
+            ) as f:
                 f.write(ldif_content)
                 files.append(Path(f.name))
 
@@ -462,8 +521,14 @@ class TestCLIUtilityFunctions:
         """Test apply_filter utility function."""
         # Mock entries for testing
         mock_entries = [
-            Mock(dn=Mock(value="dc=example,dc=com"), get_object_classes=Mock(return_value=["domain"])),
-            Mock(dn=Mock(value="cn=user,dc=example,dc=com"), get_object_classes=Mock(return_value=["person"])),
+            Mock(
+                dn=Mock(value="dc=example,dc=com"),
+                get_object_classes=Mock(return_value=["domain"]),
+            ),
+            Mock(
+                dn=Mock(value="cn=user,dc=example,dc=com"),
+                get_object_classes=Mock(return_value=["person"]),
+            ),
         ]
 
         # Test apply_filter function with different filter types
@@ -483,7 +548,9 @@ class TestCLIUtilityFunctions:
             Mock(dn=Mock(value="cn=test,dc=example,dc=com")),
         ]
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             temp_path = Path(f.name)
 
         try:
@@ -504,7 +571,9 @@ sn: Doe
 mail: john@example.com
 """
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
@@ -533,7 +602,9 @@ objectClass: person
 cn: person
 """
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
@@ -555,7 +626,9 @@ cn: Convert Test
 sn: Test
 """
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
@@ -563,7 +636,9 @@ sn: Test
             # Test convert command with different formats
             formats = ["json", "yaml", "csv"]
             for fmt in formats:
-                result = runner.invoke(cli, ["convert", str(temp_path), "--format", fmt])
+                result = runner.invoke(
+                    cli, ["convert", str(temp_path), "--format", fmt]
+                )
                 assert result.exit_code in {0, 1}
 
         finally:

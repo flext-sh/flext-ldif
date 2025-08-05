@@ -54,7 +54,7 @@ from flext_ldif import (
 )
 
 
-def test_1_flext_ldif_prefixes_validation():
+def test_1_flext_ldif_prefixes_validation() -> None:
     """Teste 1: Validação de todos os prefixos FlextLdif* que REALMENTE EXISTEM."""
     # ✅ Testando classes principais com prefixo FlextLdif* (APENAS as que existem)
     config = FlextLdifConfig()
@@ -83,7 +83,7 @@ def test_1_flext_ldif_prefixes_validation():
     }
 
 
-def test_2_domain_specifications_validation():
+def test_2_domain_specifications_validation() -> None:
     """Teste 2: Validação usando FlextLdifEntry (specifications integradas via composição)."""
     # ✅ CORREÇÃO: Specifications estão integradas no FlextLdifEntry via composição
     # Testando funcionalidade através da API que realmente existe
@@ -159,29 +159,34 @@ sn: User
 def test_4_exceptions_validation() -> None:
     """Teste 4: Validação das Exceptions com prefixos FlextLdif*."""
     # ✅ Testando exceptions com prefixo FlextLdif*
-    try:
+
+    def _test_base_error() -> None:
         msg = "Test base error"
         raise FlextLdifError(msg)
-    except FlextLdifError:
-        pass
 
-    try:
+    def _test_parse_error() -> None:
         msg = "Test parse error"
         raise FlextLdifParseError(msg)
-    except FlextLdifParseError:
-        pass
 
-    try:
+    with contextlib.suppress(FlextLdifError):
+        _test_base_error()
+
+    with contextlib.suppress(FlextLdifParseError):
+        _test_parse_error()
+
+    def _test_validation_error() -> None:
         msg = "Test validation error"
         raise FlextLdifValidationError(msg)
-    except FlextLdifValidationError:
-        pass
 
-    try:
+    def _test_entry_error() -> None:
         msg = "Test entry error"
         raise FlextLdifEntryError(msg)
-    except FlextLdifEntryError:
-        pass
+
+    with contextlib.suppress(FlextLdifValidationError):
+        _test_validation_error()
+
+    with contextlib.suppress(FlextLdifEntryError):
+        _test_entry_error()
 
 
 # SOLID REFACTORING: Template Method Pattern to reduce complexity from 11 to 4

@@ -152,9 +152,9 @@ class TestFlextLdifCLIEdgeCases:
             mock_api.parse_file.return_value.success = True
             mock_api.parse_file.return_value.data = []
 
-            # Mock write to fail
-            mock_api.write.return_value.success = False
-            mock_api.write.return_value.error = "Write failed"
+            # Mock write_file to fail
+            mock_api.write_file.return_value.success = False
+            mock_api.write_file.return_value.error = "Write failed"
 
             mock_create_api.return_value = mock_api
 
@@ -181,7 +181,7 @@ class TestFlextLdifCLIEdgeCases:
                     ],
                 )
                 assert result.exit_code == 1
-                assert "No entries found" in result.output
+                assert "Write failed" in result.output
             finally:
                 Path(input_path).unlink()
                 Path(output_path).unlink(missing_ok=True)

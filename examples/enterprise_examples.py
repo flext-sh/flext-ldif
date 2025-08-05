@@ -113,8 +113,8 @@ member: cn=Alice Johnson,ou=people,dc=company,dc=com
         person_result = api.filter_persons(entries)
         if person_result.success:
             person_entries = person_result.data
-            for entry in person_entries:
-                pass
+            for _entry in person_entries:
+                pass  # Process each person entry
 
         # Filter by objectClass
         api.filter_by_objectclass(entries, "inetOrgPerson")
@@ -181,10 +181,9 @@ mail: test.user@filetest.com
 
                 # Write to output file
                 write_result = TLdif.write_file(person_entries, output_path)
-                if write_result.success:
+                if write_result.success and output_path.exists():
                     # Verify output
-                    if output_path.exists():
-                        output_path.read_text(encoding="utf-8")
+                    output_path.read_text(encoding="utf-8")
 
         # Using API for file operations
         api = FlextLdifAPI()

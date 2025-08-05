@@ -7,6 +7,7 @@ identified in the coverage report to reach the 90%+ target.
 from __future__ import annotations
 
 import tempfile
+import uuid
 from pathlib import Path
 from unittest.mock import patch
 
@@ -73,6 +74,7 @@ class TestAPICoverageTargeted:
         api = FlextLdifAPI(config)
 
         entry = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifAttributes(
                 attributes={"cn": ["test"], "objectClass": ["person"]},
@@ -100,6 +102,7 @@ class TestAPICoverageTargeted:
         api = FlextLdifAPI()
 
         entry = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifAttributes(
                 attributes={"cn": ["test"], "objectClass": ["person"]},
@@ -217,6 +220,7 @@ class TestModelsCoverageTargeted:
         """Test entry domain validation edge cases."""
         # Test entry with empty DN
         entry = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifAttributes(attributes={}),  # Empty attributes
         )
@@ -237,6 +241,7 @@ class TestModelsCoverageTargeted:
         """Test comprehensive specification method coverage."""
         # Test entry with empty objectClass list
         entry = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifAttributes(
                 attributes={"objectClass": []},
@@ -259,6 +264,7 @@ class TestCoreCoverageTargeted:
 
         # Test with entry that has invalid attribute names
         entry = FlextLdifEntry(
+            id=str(uuid.uuid4()),
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifAttributes(
                 attributes={"invalid-attr!": ["value"], "objectClass": ["person"]},

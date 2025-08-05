@@ -44,12 +44,15 @@ def test_with_docker_container() -> bool | None:
         # Test parsing
         entries = flext_ldif_parse(ldif_data)
 
+        # Constants for testing
+        MAX_ENTRIES_TO_SHOW = 3
+
         # Show entry details
-        for _i, entry in enumerate(entries[:3]):
+        for _i, entry in enumerate(entries[:MAX_ENTRIES_TO_SHOW]):
             if entry.has_attribute("cn"):
                 pass
 
-        if len(entries) > 3:
+        if len(entries) > MAX_ENTRIES_TO_SHOW:
             pass
 
         # Test validation
@@ -67,12 +70,8 @@ def test_with_docker_container() -> bool | None:
             len(person_result.data or [])
 
         # Contar entries por objectClass usando API real
-        sum(
-            1 for entry in entries if entry.has_object_class("groupOfNames")
-        )
-        sum(
-            1 for entry in entries if entry.has_object_class("organizationalUnit")
-        )
+        sum(1 for entry in entries if entry.has_object_class("groupOfNames"))
+        sum(1 for entry in entries if entry.has_object_class("organizationalUnit"))
 
         return True
 

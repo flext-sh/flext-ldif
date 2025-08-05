@@ -29,8 +29,8 @@ def run_cli_command(command_args: list[str]) -> tuple[int, str, str]:
         # Build command
         cmd = ["poetry", "run", "flext-ldif", *command_args]
 
-        # Execute
-        result = subprocess.run(
+        # Execute with shell=False for security - cmd is a list of strings
+        result = subprocess.run(  # noqa: S603
             cmd,
             check=False,
             capture_output=True,
