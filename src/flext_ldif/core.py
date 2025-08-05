@@ -219,7 +219,7 @@ class TLdif:
             return FlextResult.fail(f"Modernized LDIF parse failed: {e}")
 
     @classmethod
-    def validate(cls, entry: FlextLdifEntry) -> FlextResult[bool]:
+    def validate(cls, entry: FlextLdifEntry | None) -> FlextResult[bool]:
         """Validate LDIF entry with comprehensive format and business rule validation.
 
         Performs extensive validation of LDIF entries including DN format validation,
@@ -707,14 +707,14 @@ class TLdif:
 
             # REFACTORING: Enhanced file validation with detailed error context
             if not file_path.exists():
-                error_msg: str = f"LDIF file not found: {absolute_path}"
-                logger.error(error_msg)
-                return FlextResult.fail(error_msg)
+                not_found_error_msg: str = f"LDIF file not found: {absolute_path}"
+                logger.error(not_found_error_msg)
+                return FlextResult.fail(not_found_error_msg)
 
             if not file_path.is_file():
-                error_msg: str = f"Path is not a file: {absolute_path}"
-                logger.error(error_msg)
-                return FlextResult.fail(error_msg)
+                not_file_error_msg: str = f"Path is not a file: {absolute_path}"
+                logger.error(not_file_error_msg)
+                return FlextResult.fail(not_file_error_msg)
 
             # REFACTORING: Enhanced file metadata collection
             logger.trace("File exists, collecting file metadata")
@@ -737,9 +737,9 @@ class TLdif:
                 with file_path.open("r", encoding=encoding) as f:
                     content = f.read()
             except UnicodeDecodeError as e:
-                error_msg: str = f"Encoding error reading file with {encoding}: {e}"
-                logger.exception(error_msg)
-                return FlextResult.fail(error_msg)
+                encoding_error_msg: str = f"Encoding error reading file with {encoding}: {e}"
+                logger.exception(encoding_error_msg)
+                return FlextResult.fail(encoding_error_msg)
 
             # REFACTORING: Enhanced content validation and metrics
             content_size = len(content)

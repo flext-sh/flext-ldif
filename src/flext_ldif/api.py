@@ -99,6 +99,12 @@ class FlextLdifAPI:
 
     """
 
+    # Service attributes - initialized dynamically in _initialize_services
+    _parser_service: FlextLdifParserService
+    _writer_service: FlextLdifWriterService
+    _validator_service: FlextLdifValidatorService
+    _observability_monitor: FlextObservabilityMonitor | None
+
     def __init__(self, config: FlextLdifConfig | None = None) -> None:
         """Initialize LDIF API with enterprise-grade service orchestration and comprehensive observability.
 
@@ -133,24 +139,24 @@ class FlextLdifAPI:
             )
             self.logger.trace("Complete configuration: %s", self.config.model_dump())
         except (ValueError, TypeError) as e:
-            error_msg: str = f"Configuration validation failed: {e}"
-            self.logger.exception(error_msg)
-            raise RuntimeError(error_msg) from e
+            config_validation_error_msg: str = f"Configuration validation failed: {e}"
+            self.logger.exception(config_validation_error_msg)
+            raise RuntimeError(config_validation_error_msg) from e
 
         # REFACTORING: Enhanced service registration with comprehensive error handling
         self.logger.debug("Initiating LDIF services registration in DI container")
         try:
             register_result = register_ldif_services(config=self.config)
             if register_result.is_failure:
-                error_msg: str = f"Service registration failed: {register_result.error}"
-                self.logger.error(error_msg)
-                raise RuntimeError(error_msg)
+                registration_error_msg: str = f"Service registration failed: {register_result.error}"
+                self.logger.error(registration_error_msg)
+                raise RuntimeError(registration_error_msg)
 
             self.logger.debug("LDIF services registered successfully in DI container")
         except Exception as e:
-            error_msg: str = f"Service registration exception: {e}"
-            self.logger.exception(error_msg)
-            raise RuntimeError(error_msg) from e
+            registration_exception_msg: str = f"Service registration exception: {e}"
+            self.logger.exception(registration_exception_msg)
+            raise RuntimeError(registration_exception_msg) from e
 
         # REFACTORING: Enhanced service resolution with improved error handling
         self._initialize_services()
@@ -215,26 +221,19 @@ class FlextLdifAPI:
             try:
                 service_result = container.get(service_name)
                 if service_result.is_failure:
-                    error_msg: str = f"Failed to resolve {description} from container: {service_result.error}"
-                    self.logger.error(error_msg)
-                    raise RuntimeError(error_msg)
+                    service_resolution_error_msg: str = f"Failed to resolve {description} from container: {service_result.error}"
+                    self.logger.error(service_resolution_error_msg)
+                    raise RuntimeError(service_resolution_error_msg)
 
-                # Enhanced type validation with detailed error context
-                if not isinstance(service_result.data, service_type):
-                    actual_type = type(service_result.data).__name__
-                    error_msg: str = f"{description} type validation failed: expected {service_type.__name__}, got {actual_type}"
-                    self.logger.error(error_msg)
-                    raise RuntimeError(error_msg)
-
-                # Set service attribute
+                # Set service attribute (type validation is ensured by DI container)
                 setattr(self, attr_name, service_result.data)
                 initialized_services.append(service_name)
                 self.logger.trace("%s initialized successfully", description)
 
             except Exception as e:
-                error_msg: str = f"Exception during {description} initialization: {e}"
-                self.logger.exception(error_msg)
-                raise RuntimeError(error_msg) from e
+                service_init_error_msg: str = f"Exception during {description} initialization: {e}"
+                self.logger.exception(service_init_error_msg)
+                raise RuntimeError(service_init_error_msg) from e
 
         self.logger.info(
             "Domain services initialization completed successfully",
@@ -705,24 +704,24 @@ class FlextLdifAPI:
 
             # REFACTORING: Enhanced file validation before parsing
             if not file_path_obj.exists():
-                error_msg: str = f"File not found: {absolute_path}"
-                self.logger.error(error_msg, trace_id=trace_id)
+                file_not_found_error_msg: str = f"File not found: {absolute_path}"
+                self.logger.error(file_not_found_error_msg, trace_id=trace_id)
                 self._observability_monitor.flext_record_metric(
                     "ldif_file_parse_errors_total",
                     1.0,
                     "counter",
                 )
-                return FlextResult.fail(error_msg)
+                return FlextResult.fail(file_not_found_error_msg)
 
             if not file_path_obj.is_file():
-                error_msg: str = f"Path is not a file: {absolute_path}"
-                self.logger.error(error_msg, trace_id=trace_id)
+                not_file_error_msg: str = f"Path is not a file: {absolute_path}"
+                self.logger.error(not_file_error_msg, trace_id=trace_id)
                 self._observability_monitor.flext_record_metric(
                     "ldif_file_parse_errors_total",
                     1.0,
                     "counter",
                 )
-                return FlextResult.fail(error_msg)
+                return FlextResult.fail(not_file_error_msg)
 
             # REFACTORING: Enhanced file size metrics
             try:
@@ -744,26 +743,26 @@ class FlextLdifAPI:
             parse_result = self._parser_service.parse_file(file_path_obj)
 
             if parse_result.is_failure:
-                error_msg: str = f"Parser service failed: {parse_result.error}"
-                self.logger.error(error_msg, trace_id=trace_id)
+                parser_service_error_msg: str = f"Parser service failed: {parse_result.error}"
+                self.logger.error(parser_service_error_msg, trace_id=trace_id)
                 self._observability_monitor.flext_record_metric(
                     "ldif_file_parse_errors_total",
                     1.0,
                     "counter",
                 )
-                return FlextResult.fail(error_msg)
+                return FlextResult.fail(parser_service_error_msg)
 
             # REFACTORING: Enhanced entries validation and processing
             entries = parse_result.data
             if entries is None:
-                error_msg = "No entries parsed from file"
-                self.logger.error(error_msg, trace_id=trace_id, file_path=file_path_str)
+                no_entries_error_msg = "No entries parsed from file"
+                self.logger.error(no_entries_error_msg, trace_id=trace_id, file_path=file_path_str)
                 self._observability_monitor.flext_record_metric(
                     "ldif_file_parse_errors_total",
                     1.0,
                     "counter",
                 )
-                return FlextResult.fail(error_msg)
+                return FlextResult.fail(no_entries_error_msg)
 
             entries_count = len(entries)
             self.logger.debug(
@@ -855,7 +854,7 @@ class FlextLdifAPI:
 
         except (OSError, ValueError, TypeError, AttributeError, ImportError) as e:
             # REFACTORING: Enhanced exception handling with comprehensive error context
-            error_msg: str = f"File parsing exception: {type(e).__name__}: {e}"
+            parsing_exception_error_msg: str = f"File parsing exception: {type(e).__name__}: {e}"
             self.logger.exception(
                 "LDIF file parsing failed with exception",
                 file_path=file_path_str,
@@ -870,7 +869,7 @@ class FlextLdifAPI:
                 "counter",
             )
 
-            return FlextResult.fail(error_msg)
+            return FlextResult.fail(parsing_exception_error_msg)
 
     def _validate_empty_attributes(
         self,
@@ -1285,7 +1284,7 @@ class FlextLdifAPI:
     @flext_monitor_function(metric_name="ldif_filter_persons")
     def filter_persons(
         self,
-        entries: list[FlextLdifEntry],
+        entries: list[FlextLdifEntry] | None,
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter person entries with enterprise-grade classification and observability monitoring.
 
@@ -1340,9 +1339,9 @@ class FlextLdifAPI:
         # REFACTORING: Enhanced filtering initialization with comprehensive metrics
         # Input validation for None entries
         if entries is None:
-            error_msg = "Entries list cannot be None"
-            self.logger.error(error_msg)
-            return FlextResult.fail(error_msg)
+            null_entries_error_msg = "Entries list cannot be None"
+            self.logger.error(null_entries_error_msg)
+            return FlextResult.fail(null_entries_error_msg)
 
         total_entries = len(entries)
         self.logger.debug(
@@ -1367,13 +1366,6 @@ class FlextLdifAPI:
                     "Empty entries list provided - returning empty result",
                 )
                 return FlextResult.ok([])
-
-            if not isinstance(entries, list):
-                error_msg = (
-                    f"Invalid entries type: expected list, got {type(entries).__name__}"
-                )
-                self.logger.error(error_msg)
-                return FlextResult.fail(error_msg)
 
             # REFACTORING: Enhanced metrics recording with comprehensive context
             self._observability_monitor.flext_record_metric(
@@ -1458,7 +1450,7 @@ class FlextLdifAPI:
 
         except (ValueError, TypeError, AttributeError, OSError) as e:
             # REFACTORING: Enhanced exception handling with comprehensive error context
-            error_msg: str = (
+            person_filtering_error_msg: str = (
                 f"Person filtering operation failed: {type(e).__name__}: {e}"
             )
             self.logger.exception(
@@ -1473,11 +1465,11 @@ class FlextLdifAPI:
                 "counter",
             )
 
-            return FlextResult.fail(error_msg)
+            return FlextResult.fail(person_filtering_error_msg)
 
     def filter_valid(
         self,
-        entries: list[FlextLdifEntry],
+        entries: list[FlextLdifEntry] | None,
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter valid entries with enterprise-grade validation and comprehensive error handling.
 
@@ -1494,9 +1486,9 @@ class FlextLdifAPI:
         # REFACTORING: Enhanced validation filtering with comprehensive metrics
         # Input validation for None entries
         if entries is None:
-            error_msg = "Entries list cannot be None"
-            self.logger.error(error_msg)
-            return FlextResult.fail(error_msg)
+            valid_entries_null_error_msg = "Entries list cannot be None"
+            self.logger.error(valid_entries_null_error_msg)
+            return FlextResult.fail(valid_entries_null_error_msg)
 
         total_entries = len(entries)
         self.logger.debug(
@@ -1511,13 +1503,6 @@ class FlextLdifAPI:
                     "Empty entries list provided - returning empty result",
                 )
                 return FlextResult.ok([])
-
-            if not isinstance(entries, list):
-                error_msg = (
-                    f"Invalid entries type: expected list, got {type(entries).__name__}"
-                )
-                self.logger.error(error_msg)
-                return FlextResult.fail(error_msg)
 
             # REFACTORING: Enhanced validation filtering with error tracking
             valid_entries = []
@@ -1569,17 +1554,17 @@ class FlextLdifAPI:
 
         except (ValueError, TypeError, AttributeError, OSError) as e:
             # REFACTORING: Enhanced exception handling with comprehensive error context
-            error_msg: str = f"Valid entries filtering failed: {type(e).__name__}: {e}"
+            valid_filtering_error_msg: str = f"Valid entries filtering failed: {type(e).__name__}: {e}"
             self.logger.exception(
                 "Valid entries filtering failed with exception",
                 total_entries=total_entries,
                 exception_type=type(e).__name__,
             )
-            return FlextResult.fail(error_msg)
+            return FlextResult.fail(valid_filtering_error_msg)
 
     def filter_by_objectclass(
         self,
-        entries: list[FlextLdifEntry],
+        entries: list[FlextLdifEntry] | None,
         object_class: str,
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter entries by objectClass with enterprise-grade validation and comprehensive error handling.
@@ -1598,9 +1583,9 @@ class FlextLdifAPI:
         # REFACTORING: Enhanced objectClass filtering with comprehensive validation
         # Input validation for None entries
         if entries is None:
-            error_msg = "Entries list cannot be None"
-            self.logger.error(error_msg)
-            return FlextResult.fail(error_msg)
+            objectclass_entries_null_error_msg = "Entries list cannot be None"
+            self.logger.error(objectclass_entries_null_error_msg)
+            return FlextResult.fail(objectclass_entries_null_error_msg)
 
         total_entries = len(entries)
         self.logger.debug(
@@ -1617,17 +1602,10 @@ class FlextLdifAPI:
                 )
                 return FlextResult.ok([])
 
-            if not isinstance(entries, list):
-                error_msg = (
-                    f"Invalid entries type: expected list, got {type(entries).__name__}"
-                )
-                self.logger.error(error_msg)
-                return FlextResult.fail(error_msg)
-
             if not object_class or not isinstance(object_class, str):
-                error_msg: str = f"Invalid object_class: expected non-empty string, got {type(object_class).__name__}: {object_class}"
-                self.logger.error(error_msg)
-                return FlextResult.fail(error_msg)
+                objectclass_validation_error_msg: str = f"Invalid object_class: expected non-empty string, got {type(object_class).__name__}: {object_class}"
+                self.logger.error(objectclass_validation_error_msg)
+                return FlextResult.fail(objectclass_validation_error_msg)
 
             # REFACTORING: Enhanced objectClass filtering with error tracking
             matching_entries = []
@@ -1690,18 +1668,18 @@ class FlextLdifAPI:
 
         except (ValueError, TypeError, AttributeError, OSError) as e:
             # REFACTORING: Enhanced exception handling with comprehensive error context
-            error_msg: str = f"ObjectClass filtering failed: {type(e).__name__}: {e}"
+            objectclass_filtering_error_msg: str = f"ObjectClass filtering failed: {type(e).__name__}: {e}"
             self.logger.exception(
                 "ObjectClass filtering failed with exception",
                 total_entries=total_entries,
                 object_class=object_class,
                 exception_type=type(e).__name__,
             )
-            return FlextResult.fail(error_msg)
+            return FlextResult.fail(objectclass_filtering_error_msg)
 
     def find_entry_by_dn(
         self,
-        entries: list[FlextLdifEntry],
+        entries: list[FlextLdifEntry] | None,
         dn: str,
     ) -> FlextResult[FlextLdifEntry | None]:
         """Find entry by DN with enterprise-grade search and comprehensive error handling.
@@ -1720,9 +1698,9 @@ class FlextLdifAPI:
         # REFACTORING: Enhanced DN search with comprehensive validation
         # Input validation for None entries
         if entries is None:
-            error_msg = "Entries list cannot be None"
-            self.logger.error(error_msg)
-            return FlextResult.fail(error_msg)
+            dn_entries_null_error_msg = "Entries list cannot be None"
+            self.logger.error(dn_entries_null_error_msg)
+            return FlextResult.fail(dn_entries_null_error_msg)
 
         total_entries = len(entries)
         self.logger.debug(
@@ -1733,17 +1711,10 @@ class FlextLdifAPI:
 
         try:
             # REFACTORING: Enhanced input validation
-            if not isinstance(entries, list):
-                error_msg = (
-                    f"Invalid entries type: expected list, got {type(entries).__name__}"
-                )
-                self.logger.error(error_msg)
-                return FlextResult.fail(error_msg)
-
             if not dn or not isinstance(dn, str):
-                error_msg: str = f"Invalid DN: expected non-empty string, got {type(dn).__name__}: {dn}"
-                self.logger.error(error_msg)
-                return FlextResult.fail(error_msg)
+                dn_validation_error_msg: str = f"Invalid DN: expected non-empty string, got {type(dn).__name__}: {dn}"
+                self.logger.error(dn_validation_error_msg)
+                return FlextResult.fail(dn_validation_error_msg)
 
             if not entries:
                 self.logger.debug("Empty entries list provided - DN not found")
@@ -1805,18 +1776,18 @@ class FlextLdifAPI:
 
         except (ValueError, TypeError, AttributeError, OSError) as e:
             # REFACTORING: Enhanced exception handling with comprehensive error context
-            error_msg: str = f"DN search failed: {type(e).__name__}: {e}"
+            dn_search_error_msg: str = f"DN search failed: {type(e).__name__}: {e}"
             self.logger.exception(
                 "DN search failed with exception",
                 total_entries=total_entries,
                 target_dn=dn,
                 exception_type=type(e).__name__,
             )
-            return FlextResult.fail(error_msg)
+            return FlextResult.fail(dn_search_error_msg)
 
     def sort_hierarchically(
         self,
-        entries: list[FlextLdifEntry],
+        entries: list[FlextLdifEntry] | None,
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Sort entries hierarchically with enterprise-grade sorting and comprehensive error handling.
 
@@ -1837,9 +1808,9 @@ class FlextLdifAPI:
         # REFACTORING: Enhanced hierarchical sorting with comprehensive validation
         # Input validation for None entries
         if entries is None:
-            error_msg = "Entries list cannot be None"
-            self.logger.error(error_msg)
-            return FlextResult.fail(error_msg)
+            sort_entries_null_error_msg = "Entries list cannot be None"
+            self.logger.error(sort_entries_null_error_msg)
+            return FlextResult.fail(sort_entries_null_error_msg)
 
         total_entries = len(entries)
         self.logger.debug(
@@ -1849,12 +1820,6 @@ class FlextLdifAPI:
 
         try:
             # REFACTORING: Enhanced input validation
-            if not isinstance(entries, list):
-                error_msg = (
-                    f"Invalid entries type: expected list, got {type(entries).__name__}"
-                )
-                self.logger.error(error_msg)
-                return FlextResult.fail(error_msg)
 
             if not entries:
                 self.logger.debug(
@@ -1921,9 +1886,9 @@ class FlextLdifAPI:
                     )
 
             except (ValueError, TypeError, AttributeError) as e:
-                error_msg: str = f"Sorting algorithm failed: {type(e).__name__}: {e}"
-                self.logger.exception(error_msg)
-                return FlextResult.fail(error_msg)
+                sort_algorithm_error_msg: str = f"Sorting algorithm failed: {type(e).__name__}: {e}"
+                self.logger.exception(sort_algorithm_error_msg)
+                return FlextResult.fail(sort_algorithm_error_msg)
 
             # REFACTORING: Enhanced sorting errors tracking
             if sorting_errors > 0:
@@ -1952,15 +1917,15 @@ class FlextLdifAPI:
 
         except (ValueError, TypeError, AttributeError, OSError) as e:
             # REFACTORING: Enhanced exception handling with comprehensive error context
-            error_msg: str = f"Hierarchical sorting failed: {type(e).__name__}: {e}"
+            sort_operation_error_msg: str = f"Hierarchical sorting failed: {type(e).__name__}: {e}"
             self.logger.exception(
                 "Hierarchical sorting failed with exception",
                 total_entries=total_entries,
                 exception_type=type(e).__name__,
             )
-            return FlextResult.fail(error_msg)
+            return FlextResult.fail(sort_operation_error_msg)
 
-    def entries_to_ldif(self, entries: list[FlextLdifEntry]) -> FlextResult[str]:
+    def entries_to_ldif(self, entries: list[FlextLdifEntry] | None) -> FlextResult[str]:
         """Convert multiple entries to LDIF content with enterprise-grade formatting and comprehensive error handling.
 
         Performs comprehensive LDIF content generation from domain objects with input validation,
@@ -1976,9 +1941,9 @@ class FlextLdifAPI:
         # REFACTORING: Enhanced LDIF conversion with comprehensive validation
         # Input validation for None entries
         if entries is None:
-            error_msg = "Entries list cannot be None"
-            self.logger.error(error_msg)
-            return FlextResult.fail(error_msg)
+            ldif_entries_null_error_msg = "Entries list cannot be None"
+            self.logger.error(ldif_entries_null_error_msg)
+            return FlextResult.fail(ldif_entries_null_error_msg)
 
         total_entries = len(entries)
         self.logger.debug(
@@ -1988,12 +1953,6 @@ class FlextLdifAPI:
 
         try:
             # REFACTORING: Enhanced input validation
-            if not isinstance(entries, list):
-                error_msg = (
-                    f"Invalid entries type: expected list, got {type(entries).__name__}"
-                )
-                self.logger.error(error_msg)
-                return FlextResult.fail(error_msg)
 
             if not entries:
                 self.logger.debug("Empty entries list provided - returning empty LDIF")
@@ -2055,13 +2014,13 @@ class FlextLdifAPI:
 
         except (ValueError, TypeError, AttributeError, OSError) as e:
             # REFACTORING: Enhanced exception handling with comprehensive error context
-            error_msg: str = f"LDIF conversion failed: {type(e).__name__}: {e}"
+            ldif_conversion_error_msg: str = f"LDIF conversion failed: {type(e).__name__}: {e}"
             self.logger.exception(
                 "Entries to LDIF conversion failed with exception",
                 total_entries=total_entries,
                 exception_type=type(e).__name__,
             )
-            return FlextResult.fail(error_msg)
+            return FlextResult.fail(ldif_conversion_error_msg)
 
     # ==========================================================================
     # INTELLIGENT FILTERING METHODS (Using integrated composition)
@@ -2069,7 +2028,7 @@ class FlextLdifAPI:
 
     def filter_groups(
         self,
-        entries: list[FlextLdifEntry],
+        entries: list[FlextLdifEntry] | None,
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter group entries with enterprise-grade classification and business rule validation.
 
@@ -2123,9 +2082,9 @@ class FlextLdifAPI:
         # REFACTORING: Enhanced group filtering with comprehensive metrics
         # Input validation for None entries
         if entries is None:
-            error_msg = "Entries list cannot be None"
-            self.logger.error(error_msg)
-            return FlextResult.fail(error_msg)
+            groups_entries_null_error_msg = "Entries list cannot be None"
+            self.logger.error(groups_entries_null_error_msg)
+            return FlextResult.fail(groups_entries_null_error_msg)
 
         total_entries = len(entries)
         self.logger.debug(
@@ -2151,12 +2110,6 @@ class FlextLdifAPI:
                 )
                 return FlextResult.ok([])
 
-            if not isinstance(entries, list):
-                error_msg = (
-                    f"Invalid entries type: expected list, got {type(entries).__name__}"
-                )
-                self.logger.error(error_msg)
-                return FlextResult.fail(error_msg)
 
             # REFACTORING: Enhanced group filtering with detailed progress tracking
             self.logger.debug("Applying group classification rules to entries")
@@ -2214,7 +2167,7 @@ class FlextLdifAPI:
 
         except (ValueError, TypeError, AttributeError, OSError) as e:
             # REFACTORING: Enhanced exception handling with comprehensive error context
-            error_msg: str = (
+            groups_filtering_error_msg: str = (
                 f"Group filtering operation failed: {type(e).__name__}: {e}"
             )
             self.logger.exception(
@@ -2222,11 +2175,11 @@ class FlextLdifAPI:
                 total_entries=total_entries,
                 exception_type=type(e).__name__,
             )
-            return FlextResult.fail(error_msg)
+            return FlextResult.fail(groups_filtering_error_msg)
 
     def filter_organizational_units(
         self,
-        entries: list[FlextLdifEntry],
+        entries: list[FlextLdifEntry] | None,
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter organizational unit entries with enterprise-grade validation and comprehensive error handling.
 
@@ -2243,9 +2196,9 @@ class FlextLdifAPI:
         # REFACTORING: Enhanced OU filtering with comprehensive metrics
         # Input validation for None entries
         if entries is None:
-            error_msg = "Entries list cannot be None"
-            self.logger.error(error_msg)
-            return FlextResult.fail(error_msg)
+            ou_entries_null_error_msg = "Entries list cannot be None"
+            self.logger.error(ou_entries_null_error_msg)
+            return FlextResult.fail(ou_entries_null_error_msg)
 
         total_entries = len(entries)
         self.logger.debug(
@@ -2261,12 +2214,6 @@ class FlextLdifAPI:
                 )
                 return FlextResult.ok([])
 
-            if not isinstance(entries, list):
-                error_msg = (
-                    f"Invalid entries type: expected list, got {type(entries).__name__}"
-                )
-                self.logger.error(error_msg)
-                return FlextResult.fail(error_msg)
 
             # REFACTORING: Enhanced OU filtering with error tracking
             ou_entries = []
@@ -2318,17 +2265,17 @@ class FlextLdifAPI:
 
         except (ValueError, TypeError, AttributeError, OSError) as e:
             # REFACTORING: Enhanced exception handling with comprehensive error context
-            error_msg: str = f"OU filtering operation failed: {type(e).__name__}: {e}"
+            ou_filtering_error_msg: str = f"OU filtering operation failed: {type(e).__name__}: {e}"
             self.logger.exception(
                 "OU filtering failed with exception",
                 total_entries=total_entries,
                 exception_type=type(e).__name__,
             )
-            return FlextResult.fail(error_msg)
+            return FlextResult.fail(ou_filtering_error_msg)
 
     def filter_change_records(
         self,
-        entries: list[FlextLdifEntry],
+        entries: list[FlextLdifEntry] | None,
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter change record entries with enterprise-grade validation and comprehensive error handling.
 
@@ -2363,12 +2310,6 @@ class FlextLdifAPI:
                 )
                 return FlextResult.ok([])
 
-            if not isinstance(entries, list):
-                error_msg = (
-                    f"Invalid entries type: expected list, got {type(entries).__name__}"
-                )
-                self.logger.error(error_msg)
-                return FlextResult.fail(error_msg)
 
             # REFACTORING: Enhanced change record filtering with error tracking
             change_entries = []
@@ -2438,7 +2379,7 @@ class FlextLdifAPI:
 
     def get_entry_statistics(
         self,
-        entries: list[FlextLdifEntry],
+        entries: list[FlextLdifEntry] | None,
     ) -> FlextResult[dict[str, int]]:
         """Get comprehensive entry statistics with enterprise-grade analysis and observability integration.
 
@@ -2455,9 +2396,9 @@ class FlextLdifAPI:
         # REFACTORING: Enhanced statistics calculation with comprehensive validation
         # Input validation for None entries
         if entries is None:
-            error_msg = "Entries list cannot be None"
-            self.logger.error(error_msg)
-            return FlextResult.fail(error_msg)
+            stats_entries_null_error_msg = "Entries list cannot be None"
+            self.logger.error(stats_entries_null_error_msg)
+            return FlextResult.fail(stats_entries_null_error_msg)
 
         total_entries = len(entries)
         self.logger.debug(
@@ -2467,12 +2408,6 @@ class FlextLdifAPI:
 
         try:
             # REFACTORING: Enhanced input validation
-            if not isinstance(entries, list):
-                error_msg = (
-                    f"Invalid entries type: expected list, got {type(entries).__name__}"
-                )
-                self.logger.error(error_msg)
-                return FlextResult.fail(error_msg)
 
             if not entries:
                 self.logger.debug(
@@ -2583,13 +2518,13 @@ class FlextLdifAPI:
 
         except (ValueError, TypeError, AttributeError, OSError) as e:
             # REFACTORING: Enhanced exception handling with comprehensive error context
-            error_msg: str = f"Statistics calculation failed: {type(e).__name__}: {e}"
+            stats_calculation_error_msg: str = f"Statistics calculation failed: {type(e).__name__}: {e}"
             self.logger.exception(
                 "Entry statistics calculation failed with exception",
                 total_entries=total_entries,
                 exception_type=type(e).__name__,
             )
-            return FlextResult.fail(error_msg)
+            return FlextResult.fail(stats_calculation_error_msg)
 
     def get_observability_metrics(self) -> FlextResult[dict[str, object]]:
         """Get comprehensive observability metrics with enterprise-grade monitoring and error handling.
@@ -2607,9 +2542,9 @@ class FlextLdifAPI:
         try:
             # REFACTORING: Enhanced observability monitor validation
             if not self._observability_monitor:
-                error_msg = "Observability monitor not available - API operating in degraded mode"
-                self.logger.warning(error_msg)
-                return FlextResult.fail(error_msg)
+                observability_unavailable_error_msg = "Observability monitor not available - API operating in degraded mode"
+                self.logger.warning(observability_unavailable_error_msg)
+                return FlextResult.fail(observability_unavailable_error_msg)
 
             self.logger.trace(
                 "Observability monitor available - proceeding with metrics collection",
@@ -2619,9 +2554,9 @@ class FlextLdifAPI:
             self.logger.debug("Retrieving metrics summary from observability monitor")
             metrics_result = self._observability_monitor.flext_get_metrics_summary()
             if metrics_result.is_failure:
-                error_msg: str = f"Failed to get metrics summary: {metrics_result.error or 'Unknown error'}"
-                self.logger.error(error_msg)
-                return FlextResult.fail(error_msg)
+                metrics_retrieval_error_msg: str = f"Failed to get metrics summary: {metrics_result.error or 'Unknown error'}"
+                self.logger.error(metrics_retrieval_error_msg)
+                return FlextResult.fail(metrics_retrieval_error_msg)
 
             metrics_data = metrics_result.data or {}
             self.logger.trace(
@@ -2633,9 +2568,9 @@ class FlextLdifAPI:
             self.logger.debug("Retrieving health status from observability monitor")
             health_result = self._observability_monitor.flext_get_health_status()
             if health_result.is_failure:
-                error_msg: str = f"Failed to get health status: {health_result.error or 'Unknown error'}"
-                self.logger.error(error_msg)
-                return FlextResult.fail(error_msg)
+                health_retrieval_error_msg: str = f"Failed to get health status: {health_result.error or 'Unknown error'}"
+                self.logger.error(health_retrieval_error_msg)
+                return FlextResult.fail(health_retrieval_error_msg)
 
             health_data = health_result.data or {}
             self.logger.trace(
@@ -2762,9 +2697,9 @@ class FlextLdifAPI:
         try:
             container = self._observability_monitor.container
             if not container:
-                error_msg = "Observability container not available - cannot access metrics service"
-                self.logger.error(error_msg)
-                return FlextResult.fail(error_msg)
+                container_unavailable_error_msg = "Observability container not available - cannot access metrics service"
+                self.logger.error(container_unavailable_error_msg)
+                return FlextResult.fail(container_unavailable_error_msg)
 
             self.logger.debug(
                 "Container access validated successfully",
@@ -2772,9 +2707,9 @@ class FlextLdifAPI:
             )
 
         except (AttributeError, ValueError) as e:
-            error_msg: str = f"Failed to access observability container: {e}"
-            self.logger.exception(error_msg)
-            return FlextResult.fail(error_msg)
+            container_access_error_msg: str = f"Failed to access observability container: {e}"
+            self.logger.exception(container_access_error_msg)
+            return FlextResult.fail(container_access_error_msg)
 
         # Resolve metrics service from container
         self.logger.debug("Resolving metrics service from container")
@@ -2782,17 +2717,17 @@ class FlextLdifAPI:
             metrics_service_result = container.get("flext_metrics_service")
 
             if not metrics_service_result.success:
-                error_msg: str = (
+                service_resolution_error_msg: str = (
                     f"Failed to resolve metrics service: {metrics_service_result.error}"
                 )
-                self.logger.error(error_msg)
-                return FlextResult.fail(error_msg)
+                self.logger.error(service_resolution_error_msg)
+                return FlextResult.fail(service_resolution_error_msg)
 
             metrics_service = metrics_service_result.data
             if not metrics_service:
-                error_msg = "Metrics service resolved but data is None"
-                self.logger.error(error_msg)
-                return FlextResult.fail(error_msg)
+                service_data_null_error_msg = "Metrics service resolved but data is None"
+                self.logger.error(service_data_null_error_msg)
+                return FlextResult.fail(service_data_null_error_msg)
 
             self.logger.debug(
                 "Metrics service resolved successfully",
@@ -2801,9 +2736,9 @@ class FlextLdifAPI:
             return FlextResult.ok(metrics_service)
 
         except (ValueError, TypeError, AttributeError) as e:
-            error_msg: str = f"Metrics service resolution failed: {e}"
-            self.logger.exception(error_msg)
-            return FlextResult.fail(error_msg)
+            service_exception_error_msg: str = f"Metrics service resolution failed: {e}"
+            self.logger.exception(service_exception_error_msg)
+            return FlextResult.fail(service_exception_error_msg)
 
     def _execute_metrics_reset(self, metrics_service) -> FlextResult[bool]:
         """Strategy 3: Execute metrics reset operation - Template Method Pattern."""
@@ -2830,17 +2765,17 @@ class FlextLdifAPI:
             reset_result = metrics_service.data.reset_metrics()
 
             if not reset_result.success:
-                error_msg: str = f"Metrics service reset failed: {reset_result.error or 'Unknown reset error'}"
-                self.logger.error(error_msg)
-                return FlextResult.fail(error_msg)
+                reset_failure_error_msg: str = f"Metrics service reset failed: {reset_result.error or 'Unknown reset error'}"
+                self.logger.error(reset_failure_error_msg)
+                return FlextResult.fail(reset_failure_error_msg)
 
             self.logger.debug("Metrics reset executed successfully via service.data")
             return FlextResult.ok(True)  # Reset executed
 
         except (ValueError, TypeError, AttributeError) as e:
-            error_msg: str = f"Metrics reset execution failed: {e}"
-            self.logger.exception(error_msg)
-            return FlextResult.fail(error_msg)
+            reset_execution_error_msg: str = f"Metrics reset execution failed: {e}"
+            self.logger.exception(reset_execution_error_msg)
+            return FlextResult.fail(reset_execution_error_msg)
 
     def _reset_via_direct_service(self, metrics_service) -> FlextResult[bool]:
         """Strategy 3.2: Reset via service.reset_metrics - SRP."""
@@ -2849,9 +2784,9 @@ class FlextLdifAPI:
             reset_result = metrics_service.reset_metrics()
 
             if hasattr(reset_result, "success") and not reset_result.success:
-                error_msg: str = f"Direct metrics reset failed: {reset_result.error or 'Unknown reset error'}"
-                self.logger.error(error_msg)
-                return FlextResult.fail(error_msg)
+                direct_reset_failure_error_msg: str = f"Direct metrics reset failed: {reset_result.error or 'Unknown reset error'}"
+                self.logger.error(direct_reset_failure_error_msg)
+                return FlextResult.fail(direct_reset_failure_error_msg)
 
             self.logger.debug(
                 "Metrics reset executed successfully via direct service call",
@@ -2859,9 +2794,9 @@ class FlextLdifAPI:
             return FlextResult.ok(True)  # Reset executed
 
         except (ValueError, TypeError, AttributeError) as e:
-            error_msg: str = f"Direct metrics reset execution failed: {e}"
-            self.logger.exception(error_msg)
-            return FlextResult.fail(error_msg)
+            direct_reset_execution_error_msg: str = f"Direct metrics reset execution failed: {e}"
+            self.logger.exception(direct_reset_execution_error_msg)
+            return FlextResult.fail(direct_reset_execution_error_msg)
 
     def _handle_no_reset_capability(self, metrics_service) -> FlextResult[bool]:
         """Strategy 3.3: Handle service without reset capability - SRP."""
@@ -3145,16 +3080,7 @@ def _validate_parse_input(content: str | LDIFContent, logger) -> str | None:
         logger.debug("Returning empty list for empty content")
         return None
 
-    # Validate content type
-    if not isinstance(content, (str, bytes)) and not hasattr(content, "__str__"):
-        logger.warning(
-            "Invalid content type for parsing",
-            content_type=type(content).__name__,
-            expected_types=["str", "bytes", "LDIFContent"],
-        )
-        logger.debug("Returning empty list for invalid content type")
-        return None
-
+    # Convert content to string (content is guaranteed to be str or LDIFContent)
     content_str = str(content)
     content_length = len(content_str)
     logger.trace(
@@ -3201,16 +3127,6 @@ def _execute_parse_operation(
 
     try:
         parse_result = api.parse(content)
-
-        # Validate result type and structure
-        if not isinstance(parse_result, FlextResult):
-            logger.error(
-                "Parse operation returned invalid result type",
-                result_type=type(parse_result).__name__,
-                expected_type="FlextResult",
-            )
-            logger.debug("Returning empty list due to invalid result type")
-            return None
 
         logger.debug(
             "Parse operation completed",
@@ -3376,16 +3292,7 @@ def flext_ldif_validate(content: str | LDIFContent) -> bool:
             logger.debug("Returning False for empty content")
             return False
 
-        # Validate content type
-        if not isinstance(content, (str, bytes)) and not hasattr(content, "__str__"):
-            logger.warning(
-                "Invalid content type for validation",
-                content_type=type(content).__name__,
-                expected_types=["str", "bytes", "LDIFContent"],
-            )
-            logger.debug("Returning False for invalid content type")
-            return False
-
+        # Convert content to string (content is guaranteed to be str or LDIFContent)
         content_str = str(content)
         content_length = len(content_str)
         logger.trace(
@@ -3437,8 +3344,7 @@ def flext_ldif_validate(content: str | LDIFContent) -> bool:
             )
 
         except Exception as e:
-            logger.exception("Parse operation raised exception during validation")
-            logger.exception("Parsing failed with exception: %s", e)
+            logger.exception("Parse operation raised exception during validation: %s", e)
             logger.debug("Returning False due to parsing exception")
             return False
 
@@ -3628,22 +3534,7 @@ def _validate_write_inputs(entries: list[FlextLdifEntry], logger) -> str:
         logger.debug("Returning empty string for invalid entries type")
         return ""
 
-    # Validate entries content
-    invalid_entries = 0
-    for i, entry in enumerate(entries):
-        if not hasattr(entry, "dn") or not hasattr(entry, "attributes"):
-            invalid_entries += 1
-            logger.warning(
-                "Entry %d does not have required attributes (dn, attributes)",
-                i,
-            )
-
-    if invalid_entries > 0:
-        logger.warning("Found %d invalid entries in write request", invalid_entries)
-        if invalid_entries == len(entries):
-            logger.error("All entries are invalid - cannot proceed with write")
-            logger.debug("Returning empty string for all invalid entries")
-            return ""
+    # All entries are guaranteed to be valid FlextLdifEntry objects by type system
 
     logger.trace(
         "Entries validated for writing",

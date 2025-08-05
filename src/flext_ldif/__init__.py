@@ -63,8 +63,6 @@ Status: Production Ready
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 # Unified API
 from .api import (
     FlextLdifAPI,
@@ -73,6 +71,10 @@ from .api import (
     flext_ldif_validate,
     flext_ldif_write,
 )
+
+# Services
+# CLI functionality - import directly since dependencies are required
+from .cli import main as cli_main
 
 # Configuration and models
 from .config import FlextLdifConfig
@@ -99,13 +101,6 @@ from .models import (
     LDIFContent,
     LDIFLines,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-# Services
-# CLI functionality - import directly since dependencies are required
-from .cli import main as cli_main
 from .services import (
     FlextLdifParserService,
     FlextLdifValidatorService,

@@ -93,7 +93,8 @@ class FlextLdifErrorHandler:
 
         error_msg = result.error or "Unknown error"
         if context:
-            error_msg: str = f"{context}: {error_msg}"
+            contextual_error_msg: str = f"{context}: {error_msg}"
+            error_msg = contextual_error_msg
 
         logger.debug("Propagating failure: %s", error_msg)
         return FlextResult.fail(error_msg)
