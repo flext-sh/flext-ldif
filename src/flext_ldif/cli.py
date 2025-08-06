@@ -35,7 +35,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Literal, cast
 
 if TYPE_CHECKING:
     from flext_core import FlextResult
@@ -311,7 +311,7 @@ def cli(
     logger.debug("Getting flext-cli configuration")
     cli_config = get_config()
     if output_format in {"table", "json", "yaml", "csv", "plain"}:
-        cli_config.output_format = output_format  # type: ignore[assignment]
+        cli_config.output_format = cast("Literal['table', 'json', 'yaml', 'csv', 'plain']", output_format)
     cli_config.verbose = verbose
     cli_config.debug = debug
     logger.trace("CLI configuration set successfully")

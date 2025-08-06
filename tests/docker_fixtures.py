@@ -270,7 +270,7 @@ member: uid=bob.wilson,ou=people,{OPENLDAP_BASE_DN}
                     "-w",
                     OPENLDAP_ADMIN_PASSWORD,
                     "-f",
-                    "/tmp/test_data.ldif",  # noqa: S108
+                    "/tmp/test_data.ldif",
                 ],
                 demux=True,
             )
@@ -352,7 +352,7 @@ def docker_openldap_container() -> Container:
     This fixture starts an OpenLDAP container with test data at the beginning of the test
     session and stops it at the end. The container is shared across all tests.
     """
-    global _container_manager  # noqa: PLW0603
+    global _container_manager
 
     if _container_manager is None:
         _container_manager = OpenLDAPContainerManager()
@@ -425,7 +425,7 @@ async def temporary_ldif_data(
     ldif_content: str,
 ) -> AsyncGenerator[str]:
     """Context manager for temporary LDIF data that is auto-cleaned."""
-    temp_file = f"/tmp/temp_{int(time.time())}.ldif"  # noqa: S108
+    temp_file = f"/tmp/temp_{int(time.time())}.ldif"
 
     try:
         # Write LDIF to container
@@ -449,7 +449,7 @@ async def temporary_ldif_data(
 def check_docker_available() -> bool:
     """Check if Docker is available on the system."""
     try:
-        subprocess.run(["docker", "--version"], check=True, capture_output=True)  # noqa: S607
+        subprocess.run(["docker", "--version"], check=True, capture_output=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
         return False
     else:

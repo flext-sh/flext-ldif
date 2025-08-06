@@ -85,14 +85,15 @@ def main() -> None:
         person_entries = filter_result.data
 
         for entry in person_entries:
-            entry.attributes.get_single_value("cn") or "Unknown"
-            entry.attributes.get_single_value("mail") or "No email"
+            attributes = entry.attributes.attributes
+            cn = attributes.get("cn", ["Unknown"])[0]
+            mail = attributes.get("mail", ["No email"])[0]
 
     # Demonstrate writing back to LDIF
     output_file = Path(__file__).parent / "output_basic.ldif"
 
     if filter_result.success and filter_result.data is not None:
-        write_result = api.write(filter_result.data, output_file)
+        write_result = api.write_file(filter_result.data, output_file)
 
         if write_result.success:
             pass
