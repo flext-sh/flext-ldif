@@ -29,13 +29,14 @@ class TestFlextLdifDistinguishedNameCoverage:
         rdn = dn.get_rdn()
         assert "cn=John Doe+uid=jdoe" in str(rdn)
 
-        # Caso 2: DN vazio causa ValidationError
-        with pytest.raises(ValueError, match="DN must be a non-empty string"):
+        # Caso 2: DN vazio causa FlextValidationError (SOLID fix: use correct exception)
+        from flext_core.exceptions import FlextValidationError
+        with pytest.raises(FlextValidationError, match="DN must be a non-empty string"):
             FlextLdifDistinguishedName(value="")
 
-        # Caso 3: DN malformado causa ValidationError
+        # Caso 3: DN malformado causa FlextValidationError (SOLID fix: use correct exception)
         with pytest.raises(
-            ValueError, match="DN must contain at least one attribute=value pair"
+            FlextValidationError, match="DN must contain at least one attribute=value pair"
         ):
             FlextLdifDistinguishedName(value="invalid_dn_format")
 

@@ -72,7 +72,7 @@ class FlextLdifDistinguishedName(FlextValue):
     @field_validator("value")
     @classmethod
     def validate_dn(cls, v: str) -> str:
-        """Validate DN format."""
+        """Validate and normalize DN format."""
         if not v or not isinstance(v, str) or not v.strip():
             error_msg = "DN must be a non-empty string"
             raise FlextValidationError(error_msg)
@@ -82,7 +82,44 @@ class FlextLdifDistinguishedName(FlextValue):
             error_msg = "DN must contain at least one attribute=value pair"
             raise FlextValidationError(error_msg)
 
-        return v.strip()
+        # Normalize DN by removing extra spaces around commas and equals
+        # This fixes malformed DNs like 'cn=OCS_PORTAL_USERS, cn=groups,dc=network,dc=ctbc'
+        # to the proper format 'cn=OCS_PORTAL_USERS,cn=groups,dc=network,dc=ctbc'
+        return cls._normalize_dn(v.strip())
+
+    @classmethod
+    def _normalize_dn(cls, dn: str) -> str:
+        """Normalize DN by removing extra spaces around commas and equals.
+        
+        This method ensures DN consistency by:
+        - Removing spaces around commas between components
+        - Normalizing spaces around equals signs within components
+        - Preserving necessary spaces within attribute values
+        
+        Args:
+            dn: Distinguished name to normalize
+            
+        Returns:
+            Normalized DN string
+            
+        Examples:
+            'cn=OCS_PORTAL_USERS, cn=groups,dc=network,dc=ctbc' 
+            -> 'cn=OCS_PORTAL_USERS,cn=groups,dc=network,dc=ctbc'
+        """
+        if not dn:
+            return dn
+            
+        # Split by comma, strip each component, then rejoin  
+        components = []
+        for component in dn.split(","):
+            component = component.strip()
+            # Normalize spaces around equals sign within each component
+            if "=" in component:
+                key, value = component.split("=", 1)
+                component = f"{key.strip()}={value.strip()}"
+            components.append(component)
+            
+        return ",".join(components)
 
     def __str__(self) -> str:
         """String representation returns the DN value."""
@@ -112,6 +149,35 @@ class FlextLdifAttributes(FlextValue):
     """LDIF attribute collection value object."""
 
     attributes: dict[str, list[str]] = Field(default_factory=dict)
+
+    @field_validator("attributes")
+    @classmethod  
+    def normalize_dn_attributes(cls, v: dict[str, list[str]]) -> dict[str, list[str]]:
+        """Normalize DN-valued attributes to ensure consistent formatting."""
+        # DN-valued attributes that need normalization
+        dn_attributes = {
+            "orcldaspublicgroupdns", "member", "uniquemember", "owner", "seeAlso",
+            "distinguishedName", "manager", "secretary", "roleOccupant"
+        }
+        
+        normalized = {}
+        for attr_name, attr_values in v.items():
+            if attr_name.lower() in dn_attributes:
+                # Normalize DN values using the same method as FlextLdifDistinguishedName
+                normalized_values = []
+                for value in attr_values:
+                    try:
+                        normalized_value = FlextLdifDistinguishedName._normalize_dn(value)
+                        normalized_values.append(normalized_value)
+                    except Exception:
+                        # If normalization fails, keep original value
+                        normalized_values.append(value)
+                normalized[attr_name] = normalized_values
+            else:
+                # Keep non-DN attributes as-is
+                normalized[attr_name] = attr_values
+        
+        return normalized
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate attribute business rules."""
@@ -153,7 +219,9 @@ class FlextLdifEntry(FlextEntity):
 
     @classmethod
     def model_validate(
-        cls, obj: dict[str, object] | object, **_kwargs: object,
+        cls,
+        obj: dict[str, object] | object,
+        **_kwargs: object,
     ) -> FlextLdifEntry:
         """Backwards-compatible validation for legacy tests."""
         # Handle legacy format
@@ -235,6 +303,83 @@ class FlextLdifEntry(FlextEntity):
         dn_obj = FlextLdifDistinguishedName(value=dn)
         attrs_obj = FlextLdifAttributes(attributes=attrs)
         return cls(id=str(uuid.uuid4()), dn=dn_obj, attributes=attrs_obj)
+
+    @classmethod
+    def from_ldif_block(cls, ldif_block: str) -> FlextLdifEntry:
+        """Create entry from LDIF text block - SOLID implementation.
+
+        SOLID IMPLEMENTATION: Single Responsibility - parses LDIF text block into entry.
+        Delegates to from_ldif_dict for actual object creation (Dependency Inversion).
+        """
+        lines = ldif_block.strip().split("\n")
+        if not lines:
+            msg = "LDIF block cannot be empty"
+            raise FlextValidationError(msg)
+
+        # Parse DN from first line
+        dn_line = lines[0].strip()
+        if not dn_line.startswith("dn:"):
+            msg = "LDIF block must start with DN"
+            raise FlextValidationError(msg)
+        dn = dn_line[3:].strip()
+
+        # Parse attributes from remaining lines
+        attrs: dict[str, list[str]] = {}
+        for line in lines[1:]:
+            line = line.strip()
+            if not line:
+                continue
+            if ":" not in line:
+                continue
+            attr_name, attr_value = line.split(":", 1)
+            attr_name = attr_name.strip()
+            attr_value = attr_value.strip()
+
+            if attr_name not in attrs:
+                attrs[attr_name] = []
+            attrs[attr_name].append(attr_value)
+
+        # Delegate to from_ldif_dict (SOLID: reuse existing functionality)
+        return cls.from_ldif_dict(dn, attrs)
+
+    def is_person_entry(self) -> bool:
+        """Check if entry represents a person based on objectClass - SOLID implementation.
+
+        SOLID IMPLEMENTATION: Single Responsibility - determines if entry is person-type.
+        Uses LDAP standard person objectClasses for classification.
+
+        Returns:
+            bool: True if entry represents a person, False otherwise
+
+        """
+        object_classes = self.attributes.get_values("objectClass")
+        if not object_classes:
+            return False
+
+        # Standard LDAP person objectClasses
+        person_classes = {
+            "person",
+            "organizationalPerson",
+            "inetOrgPerson",
+            "user",
+            "posixAccount",
+        }
+
+        # Check if any objectClass indicates this is a person entry
+        return any(obj_class in person_classes for obj_class in object_classes)
+
+    def set_attribute(self, name: str, values: list[str]) -> None:
+        """Set attribute values - SOLID implementation.
+
+        SOLID IMPLEMENTATION: Single Responsibility - delegates attribute setting
+        to FlextLdifAttributes object (Dependency Inversion Principle).
+
+        Args:
+            name: Attribute name to set
+            values: List of values to set for the attribute
+
+        """
+        self.attributes.update({name: values})  # type: ignore
 
 
 # =============================================================================

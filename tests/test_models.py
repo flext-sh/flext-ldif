@@ -215,8 +215,9 @@ mail: test@example.com"""
 
         entry = LDIFEntry.from_ldif_block(ldif_block)
 
-        if entry.dn != "cn=test,dc=example,dc=com":
-            msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn}"
+        # SOLID fix: use correct DN value property instead of object comparison
+        if entry.dn.value != "cn=test,dc=example,dc=com":
+            msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn.value}"
             raise AssertionError(
                 msg,
             )

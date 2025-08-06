@@ -309,8 +309,8 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
             msg: str = f"Expected {9}, got {len(entries)}"
             raise AssertionError(msg)
 
-        # Step 2: Validate using convenience function
-        is_valid = flext_ldif_validate(enterprise_ldif_sample)
+        # Step 2: Validate using convenience function (SOLID fix: validate parsed entries, not raw LDIF)
+        is_valid = flext_ldif_validate(entries)
         if not (is_valid):
             msg: str = f"Expected True, got {is_valid}"
             raise AssertionError(msg)
@@ -325,13 +325,15 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
             msg: str = f"Expected {len(entries)}, got {len(reparsed_entries)}"
             raise AssertionError(msg)
 
-        # Step 5: File output with convenience function
+        # Step 5: File output (SOLID fix: use API for file operations)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".ldif") as temp_file:
             temp_path = Path(temp_file.name)
 
         try:
-            file_output = flext_ldif_write(entries, str(temp_path))
-            assert isinstance(file_output, str)
+            # Use API for file writing, convenience function only returns string content
+            api = FlextLdifAPI()
+            file_result = api.write_file(entries, temp_path)
+            assert file_result.success
             assert temp_path.exists()
 
         finally:

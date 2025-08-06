@@ -402,13 +402,15 @@ cn: test
             Path(temp_path).unlink()
 
     def test_cli_error_handling_api_failure(self) -> None:
-        """Test CLI error handling when API fails."""
+        """Test CLI error handling when API fails - SOLID refactored."""
         runner = CliRunner()
 
+        # SOLID Fix: Mock the API properly to return FlextResult pattern
         with patch("flext_ldif.cli.create_api_with_config") as mock_create_api:
             mock_api = Mock()
-            mock_api.parse_file.return_value.success = False
-            mock_api.parse_file.return_value.error = "API Error"
+            # CAUSE ROOT FIX: Create proper FlextResult failure mock
+            from flext_core import FlextResult
+            mock_api.parse_file.return_value = FlextResult.fail("API Error")
             mock_create_api.return_value = mock_api
 
             with tempfile.NamedTemporaryFile(
@@ -423,6 +425,7 @@ cn: test
             try:
                 result = runner.invoke(cli, ["parse", temp_path])
                 assert result.exit_code == 1
-                assert "Failed to parse LDIF file" in result.output
+                # REAL TEST: Check for actual error message format
+                assert "Parse failed: API Error" in result.output
             finally:
                 Path(temp_path).unlink()
