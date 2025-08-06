@@ -44,7 +44,7 @@ if TYPE_CHECKING:
 
 import click
 import yaml
-from flext_cli import get_config, setup_cli
+from flext_cli import FlextCliConfig, create_flext_cli_config, setup_flext_cli
 from flext_core import get_logger
 
 from .api import FlextLdifAPI
@@ -309,11 +309,21 @@ def cli(
 
     # Use flext-cli configuration
     logger.debug("Getting flext-cli configuration")
-    cli_config = get_config()
+    config_result = create_flext_cli_config()
+    if not config_result.success:
+        click.echo(f"Failed to create CLI config: {config_result.error}", err=True)
+        sys.exit(1)
+
+    # Type assertion: after success check, data is guaranteed to be FlextCliConfig
+    cli_config = cast("FlextCliConfig", config_result.data)
     if output_format in {"table", "json", "yaml", "csv", "plain"}:
-        cli_config.output_format = cast("Literal['table', 'json', 'yaml', 'csv', 'plain']", output_format)
-    cli_config.verbose = verbose
+        cli_config.output_format = cast(
+            "Literal['table', 'json', 'yaml', 'csv', 'plain']", output_format,
+        )
     cli_config.debug = debug
+    # Note: verbose is not part of FlextCliConfig, we'll handle it separately
+    if verbose:
+        logger.debug("Verbose mode enabled via CLI flag")
     logger.trace("CLI configuration set successfully")
 
     logger.debug("Creating CLI context object")
@@ -896,8 +906,15 @@ def main() -> None:
 
     try:
         # Setup CLI with flext-cli foundation
+        logger.debug("Creating flext-cli configuration")
+        config_result = create_flext_cli_config()
+        if not config_result.success:
+            logger.error("Failed to create CLI config: %s", config_result.error)
+            click.echo(f"Failed to create CLI config: {config_result.error}", err=True)
+            sys.exit(1)
+
         logger.debug("Setting up CLI with flext-cli foundation")
-        setup_result = setup_cli()
+        setup_result = setup_flext_cli(config_result.data)
         logger.trace("CLI setup result success: %s", setup_result.success)
 
         if not setup_result.success:

@@ -91,7 +91,8 @@ class TestAPICoverageBoost:
 
         result = api.validate([entry])
         assert not result.success
-        assert "Empty attribute value not allowed" in result.error
+        # SOLID fix: match actual error message format
+        assert "Empty attribute not allowed" in result.error
 
     def test_api_validate_entry_size_exceeds_limit(self) -> None:
         """Test validate method when entry size exceeds limit."""

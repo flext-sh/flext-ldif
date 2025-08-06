@@ -86,8 +86,8 @@ def main() -> None:
 
         for entry in person_entries:
             attributes = entry.attributes.attributes
-            cn = attributes.get("cn", ["Unknown"])[0]
-            mail = attributes.get("mail", ["No email"])[0]
+            attributes.get("cn", ["Unknown"])[0]
+            attributes.get("mail", ["No email"])[0]
 
     # Demonstrate writing back to LDIF
     output_file = Path(__file__).parent / "output_basic.ldif"

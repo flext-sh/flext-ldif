@@ -132,10 +132,13 @@ class TestCliUtilsCoverage:
         """Testa safe_click_echo com exceção e fallback."""
         from flext_ldif.utils.cli_utils import safe_click_echo
 
-        with patch(
-            "flext_ldif.utils.cli_utils.click.echo",
-            side_effect=Exception("click error"),
-        ), patch("builtins.print") as mock_print:
+        with (
+            patch(
+                "flext_ldif.utils.cli_utils.click.echo",
+                side_effect=Exception("click error"),
+            ),
+            patch("builtins.print") as mock_print,
+        ):
             safe_click_echo("test message")
             mock_print.assert_called_once_with("test message")
 
@@ -217,6 +220,7 @@ class TestErrorHandlingCoverage:
         try:
             # Teste apenas se o módulo existe, sem importar funções específicas
             import importlib.util
+
             spec = importlib.util.find_spec("flext_ldif.utils.error_handling")
 
             # Se chegou até aqui, o módulo existe
@@ -234,6 +238,7 @@ class TestValidationCoverage:
         try:
             # Teste apenas se o módulo existe, sem importar funções específicas
             import importlib.util
+
             spec = importlib.util.find_spec("flext_ldif.utils.validation")
 
             # Se chegou até aqui, o módulo existe
@@ -251,6 +256,7 @@ class TestLoggingCoverage:
         try:
             # Teste apenas se o módulo existe, sem importar funções específicas
             import importlib.util
+
             spec = importlib.util.find_spec("flext_ldif.utils.logging")
 
             # Se chegou até aqui, o módulo existe

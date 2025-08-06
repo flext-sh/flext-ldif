@@ -25,7 +25,7 @@ class FlextLdifConfig(BaseModel):
     """LDIF processing configuration using unified patterns."""
 
     # Processing settings
-    max_entries: int = Field(default=10000, ge=1, le=1000000)
+    max_entries: int = Field(default=15000, ge=1, le=1000000)
     max_entry_size: int = Field(default=1048576, ge=1024, le=104857600)
     strict_validation: bool = Field(default=True)
 

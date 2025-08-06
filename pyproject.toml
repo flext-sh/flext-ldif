@@ -23,7 +23,7 @@ dependencies = [
     "pydantic (>=2.11.7)",
     "pydantic-settings (>=2.10.1)",
     "flext-core @ file:///home/marlonsc/flext/flext-core",
-    "flext-cli @ file:///home/marlonsc/flext/flext-cli",
+    "flext-cli @ file:///home/marlonsc/flext/flext-cli",  # CLI UTILITIES LIBRARY - provides CLI tools and helpers
     "flext-observability @ file:///home/marlonsc/flext/flext-observability",
     "ldif3 (>=3.2.2)",
     "click (>=8.1.0)",

@@ -108,7 +108,8 @@ class FlextLdifAPI:
         """
         file_path_obj = Path(file_path)
         logger.debug(
-            "Starting LDIF file parsing", file_path=str(file_path_obj.absolute()),
+            "Starting LDIF file parsing",
+            file_path=str(file_path_obj.absolute()),
         )
 
         # Delegate to core parser with encoding
@@ -146,7 +147,8 @@ class FlextLdifAPI:
         result = TLdif.write(processed_entries)
         if result.is_success:
             logger.debug(
-                "LDIF string writing completed", content_length=len(result.data or ""),
+                "LDIF string writing completed",
+                content_length=len(result.data or ""),
             )
 
         return result
@@ -186,7 +188,9 @@ class FlextLdifAPI:
 
         # Delegate to core writer with encoding
         result = TLdif.write_file(
-            processed_entries, resolved_path, self.config.output_encoding,
+            processed_entries,
+            resolved_path,
+            self.config.output_encoding,
         )
         if result.is_success:
             logger.debug("LDIF file writing completed", file_path=str(resolved_path))
@@ -274,7 +278,8 @@ class FlextLdifAPI:
     # ========================================================================
 
     def filter_persons(
-        self, entries: list[FlextLdifEntry],
+        self,
+        entries: list[FlextLdifEntry],
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter person entries."""
         filtered = [
@@ -283,7 +288,8 @@ class FlextLdifAPI:
         return FlextResult.ok(filtered)
 
     def filter_groups(
-        self, entries: list[FlextLdifEntry],
+        self,
+        entries: list[FlextLdifEntry],
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter group entries."""
         filtered = [
@@ -292,7 +298,8 @@ class FlextLdifAPI:
         return FlextResult.ok(filtered)
 
     def filter_organizational_units(
-        self, entries: list[FlextLdifEntry],
+        self,
+        entries: list[FlextLdifEntry],
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter organizational unit entries."""
         filtered = [
@@ -301,14 +308,16 @@ class FlextLdifAPI:
         return FlextResult.ok(filtered)
 
     def filter_valid(
-        self, entries: list[FlextLdifEntry],
+        self,
+        entries: list[FlextLdifEntry],
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter valid entries."""
         filtered = [entry for entry in entries if self.validate_entry(entry).success]
         return FlextResult.ok(filtered)
 
     def get_entry_statistics(
-        self, entries: list[FlextLdifEntry],
+        self,
+        entries: list[FlextLdifEntry],
     ) -> FlextResult[dict[str, int]]:
         """Get entry statistics."""
         stats = {
@@ -321,14 +330,18 @@ class FlextLdifAPI:
         return FlextResult.ok(stats)
 
     def filter_by_objectclass(
-        self, entries: list[FlextLdifEntry], objectclass: str,
+        self,
+        entries: list[FlextLdifEntry],
+        objectclass: str,
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter entries by objectClass."""
         filtered = [entry for entry in entries if entry.has_object_class(objectclass)]
         return FlextResult.ok(filtered)
 
     def find_entry_by_dn(
-        self, entries: list[FlextLdifEntry], dn: str,
+        self,
+        entries: list[FlextLdifEntry],
+        dn: str,
     ) -> FlextResult[FlextLdifEntry | None]:
         """Find entry by DN."""
         for entry in entries:
@@ -337,7 +350,8 @@ class FlextLdifAPI:
         return FlextResult.ok(None)
 
     def sort_hierarchically(
-        self, entries: list[FlextLdifEntry],
+        self,
+        entries: list[FlextLdifEntry],
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Sort entries hierarchically by DN depth."""
         try:
@@ -351,7 +365,8 @@ class FlextLdifAPI:
     # ========================================================================
 
     def _sort_attributes_if_configured(
-        self, entries: list[FlextLdifEntry],
+        self,
+        entries: list[FlextLdifEntry],
     ) -> list[FlextLdifEntry]:
         """Sort entry attributes if configured."""
         if not getattr(self.config, "sort_attributes", False):
@@ -363,7 +378,8 @@ class FlextLdifAPI:
                 # Sort attributes by name
                 sorted_attrs = dict(
                     sorted(
-                        entry.attributes.attributes.items(), key=lambda x: x[0].lower(),
+                        entry.attributes.attributes.items(),
+                        key=lambda x: x[0].lower(),
                     ),
                 )
 

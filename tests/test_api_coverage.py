@@ -213,8 +213,8 @@ cn: test
         parse_result = api.parse(ldif_content)
         assert parse_result.success
 
-        # Convert back to LDIF
-        ldif_result = api.entries_to_ldif(parse_result.data)
+        # Convert back to LDIF (SOLID fix: use correct API method name)
+        ldif_result = api.write(parse_result.data)
         assert ldif_result.success
         ldif_output = ldif_result.data
         assert isinstance(ldif_output, str)
