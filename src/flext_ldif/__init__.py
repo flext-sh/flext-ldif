@@ -63,19 +63,13 @@ Status: Production Ready
 
 from __future__ import annotations
 
-# Unified API
-from .api import FlextLdifAPI
+import warnings
+from typing import TYPE_CHECKING
 
-# Services
-# CLI functionality - conditional import to avoid dependency issues
-try:
-    from .cli import main as cli_main
-except ImportError:
-    cli_main = None  # type: ignore[assignment]
-
-# Configuration and models
-# Import service functions from API for legacy compatibility
+# Core public API
+# Service layer - import all services for API compatibility
 from .api import (
+    FlextLdifAPI,
     FlextLdifParserService,
     FlextLdifValidatorService,
     FlextLdifWriterService,
@@ -84,12 +78,14 @@ from .api import (
     get_ldif_writer,
     register_ldif_services,
 )
+
+# Configuration management
 from .config import FlextLdifConfig
 
 # Core processing functionality
 from .core import TLdif
 
-# Exceptions
+# Domain exceptions
 from .exceptions import (
     FlextLdifEntryError,
     FlextLdifError,
@@ -97,7 +93,7 @@ from .exceptions import (
     FlextLdifValidationError,
 )
 
-# Models (consolidated specifications and values)
+# Domain models and value objects
 from .models import (
     FlextLdifAttributes,
     FlextLdifAttributesDict,
@@ -110,11 +106,20 @@ from .models import (
     LDIFLines,
 )
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+# CLI functionality - conditional import to avoid dependency issues
+cli_main: Callable[[], None] | None
+try:
+    from .cli import main as cli_main
+except ImportError:
+    cli_main = None
+
 __version__ = "0.9.0"
 
 # ⚠️ LEGACY COMPATIBILITY SECTION ⚠️
 # These functions provide fallback interfaces with warnings
-import warnings
 
 
 def flext_ldif_get_api(config: FlextLdifConfig | None = None) -> FlextLdifAPI:
