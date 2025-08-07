@@ -128,6 +128,216 @@ class FlextLdifAPI:
         logger.debug("LDIF file parsing completed", entries_count=len(entries))
         return FlextResult.ok(entries)
 
+    def _get_files_to_process(
+        self,
+        directory_path: str | Path | None,
+        file_pattern: str,
+        file_path: str | Path | None,
+    ) -> FlextResult[list[Path]]:
+        """Get initial list of files to process based on input parameters."""
+        if file_path:
+            return self._process_single_file_path(file_path)
+        if directory_path:
+            return self._process_directory_path(directory_path, file_pattern)
+        return self._process_current_directory_pattern(file_pattern)
+
+    def _process_single_file_path(self, file_path: str | Path) -> FlextResult[list[Path]]:
+        """Process single file path input."""
+        file_path_obj = Path(file_path)
+        if file_path_obj.exists() and file_path_obj.is_file():
+            return FlextResult.ok([file_path_obj])
+        return FlextResult.fail(f"File not found or not accessible: {file_path}")
+
+    def _process_directory_path(
+        self, directory_path: str | Path, file_pattern: str,
+    ) -> FlextResult[list[Path]]:
+        """Process directory path with pattern."""
+        directory_obj = Path(directory_path)
+        if not directory_obj.exists():
+            return FlextResult.fail(f"Directory not found: {directory_path}")
+        if not directory_obj.is_dir():
+            return FlextResult.fail(f"Path is not a directory: {directory_path}")
+
+        try:
+            files_found = list(directory_obj.glob(file_pattern))
+            return FlextResult.ok(files_found)
+        except (OSError, ValueError) as e:
+            return FlextResult.fail(f"Error discovering files in directory: {e}")
+
+    def _process_current_directory_pattern(self, file_pattern: str) -> FlextResult[list[Path]]:
+        """Process pattern in current directory."""
+        try:
+            files_found = list(Path().glob(file_pattern))
+            return FlextResult.ok(files_found)
+        except (OSError, ValueError) as e:
+            return FlextResult.fail(f"Error discovering files with pattern: {e}")
+
+    def _filter_files_by_size(self, files_to_process: list[Path], max_file_size_mb: int) -> list[Path]:
+        """Filter files by size limit."""
+        max_size_bytes = max_file_size_mb * 1024 * 1024
+        filtered_files: list[Path] = []
+
+        for file_path_item in files_to_process:
+            try:
+                if file_path_item.stat().st_size <= max_size_bytes:
+                    filtered_files.append(file_path_item)
+                else:
+                    logger.warning(
+                        "Skipping file - size exceeds limit",
+                        file_path=str(file_path_item),
+                        size_bytes=file_path_item.stat().st_size,
+                        limit_bytes=max_size_bytes,
+                    )
+            except OSError as e:
+                logger.warning(
+                    "Could not check file size",
+                    file_path=str(file_path_item),
+                    error=str(e),
+                )
+                continue
+
+        return filtered_files
+
+    def discover_ldif_files(
+        self,
+        directory_path: str | Path | None = None,
+        file_pattern: str = "*.ldif",
+        file_path: str | Path | None = None,
+        max_file_size_mb: int = 100,
+    ) -> FlextResult[list[Path]]:
+        """Discover LDIF files based on configuration parameters.
+
+        Generic functionality for file discovery that eliminates duplication
+        across LDIF processing tools in the ecosystem.
+
+        Args:
+            directory_path: Directory to search for LDIF files
+            file_pattern: Glob pattern for file matching (default: *.ldif)
+            file_path: Single file path (alternative to directory_path)
+            max_file_size_mb: Maximum file size in MB (default: 100)
+
+        Returns:
+            FlextResult[list[Path]]: Success with list of discovered files or failure with error
+
+        """
+        logger.debug(
+            "Starting LDIF file discovery",
+            directory_path=str(directory_path) if directory_path else None,
+            file_pattern=file_pattern,
+            single_file=str(file_path) if file_path else None,
+            max_size_mb=max_file_size_mb,
+        )
+
+        # Get initial files to process
+        files_result = self._get_files_to_process(directory_path, file_pattern, file_path)
+        if files_result.is_failure:
+            return files_result
+
+        files_to_process = files_result.data or []
+
+        # Filter by file size limit
+        filtered_files = self._filter_files_by_size(files_to_process, max_file_size_mb)
+
+        # Sort for consistent ordering
+        sorted_files = sorted(filtered_files)
+
+        logger.debug(
+            "LDIF file discovery completed",
+            files_found=len(sorted_files),
+            files_discarded=len(files_to_process) - len(filtered_files),
+        )
+
+        return FlextResult.ok(sorted_files)
+
+    def parse_multiple_files(
+        self,
+        directory_path: str | Path | None = None,
+        file_pattern: str = "*.ldif",
+        file_path: str | Path | None = None,
+        max_file_size_mb: int = 100,
+        *,
+        strict_parsing: bool = True,
+    ) -> FlextResult[list[FlextLdifEntry]]:
+        """Parse multiple LDIF files with comprehensive error handling.
+
+        Generic functionality for parsing multiple LDIF files that eliminates
+        duplication across LDIF processing tools in the ecosystem.
+
+        Args:
+            directory_path: Directory to search for LDIF files
+            file_pattern: Glob pattern for file matching
+            file_path: Single file path (alternative to directory_path)
+            max_file_size_mb: Maximum file size in MB
+            strict_parsing: If True, stop on first parsing error
+
+        Returns:
+            FlextResult[list[FlextLdifEntry]]: Success with all entries or failure with error
+
+        """
+        logger.info(
+            "Starting multiple LDIF files parsing",
+            directory=str(directory_path) if directory_path else None,
+            pattern=file_pattern,
+            strict_mode=strict_parsing,
+        )
+
+        # Discover files using generic discovery functionality
+        discovery_result = self.discover_ldif_files(
+            directory_path=directory_path,
+            file_pattern=file_pattern,
+            file_path=file_path,
+            max_file_size_mb=max_file_size_mb,
+        )
+
+        if discovery_result.is_failure:
+            return FlextResult.fail(f"File discovery failed: {discovery_result.error}")
+
+        files = discovery_result.data or []
+        if not files:
+            return FlextResult.ok([])
+
+        logger.info("Processing %d LDIF files", len(files))
+
+        all_entries: list[FlextLdifEntry] = []
+        for current_file_path in files:
+            logger.debug("Processing file", file_path=str(current_file_path))
+
+            try:
+                # Parse individual file
+                file_result = self.parse_file(current_file_path)
+                if file_result.is_failure:
+                    if strict_parsing:
+                        return FlextResult.fail(
+                            f"File parsing failed ({current_file_path}): {file_result.error}",
+                        )
+                    logger.warning(
+                        "Skipping file due to parsing error",
+                        file_path=str(current_file_path),
+                        error=file_result.error,
+                    )
+                    continue
+
+                entries = file_result.data or []
+                all_entries.extend(entries)
+
+            except Exception as e:
+                if strict_parsing:
+                    return FlextResult.fail(f"Unexpected error processing {current_file_path}: {e}")
+                logger.warning(
+                    "Skipping file due to unexpected error",
+                    file_path=str(current_file_path),
+                    error=str(e),
+                )
+                continue
+
+        logger.info(
+            "Multiple files parsing completed",
+            files_processed=len(files),
+            total_entries=len(all_entries),
+        )
+
+        return FlextResult.ok(all_entries)
+
     def write(self, entries: list[FlextLdifEntry]) -> FlextResult[str]:
         """Write entries to LDIF string with formatting configuration.
 
@@ -328,6 +538,63 @@ class FlextLdifAPI:
             "valid": len(self.filter_valid(entries).data or []),
         }
         return FlextResult.ok(stats)
+
+    def calculate_risk_assessment(
+        self,
+        entries: list[FlextLdifEntry],
+        high_validity_threshold: float = 0.95,
+        medium_validity_threshold: float = 0.8,
+    ) -> FlextResult[str]:
+        """Calculate risk assessment based on entry validity.
+
+        Generic functionality for assessing data quality risk that eliminates
+        duplication across LDIF processing tools in the ecosystem.
+
+        Args:
+            entries: List of LDIF entries to analyze
+            high_validity_threshold: Threshold for low risk (default 0.95)
+            medium_validity_threshold: Threshold for medium risk (default 0.8)
+
+        Returns:
+            FlextResult[str]: Risk assessment level ('low', 'medium', 'high', 'unknown')
+
+        """
+        if not entries:
+            return FlextResult.ok("unknown")
+
+        try:
+            # Use existing filtering functionality
+            valid_entries_result = self.filter_valid(entries)
+            if valid_entries_result.is_failure:
+                return FlextResult.fail(f"Risk assessment failed: {valid_entries_result.error}")
+
+            total_entries = len(entries)
+            valid_entries = len(valid_entries_result.data or [])
+
+            if total_entries <= 0:
+                return FlextResult.ok("unknown")
+
+            validity_ratio = valid_entries / total_entries
+
+            if validity_ratio >= high_validity_threshold:
+                risk_level = "low"
+            elif validity_ratio >= medium_validity_threshold:
+                risk_level = "medium"
+            else:
+                risk_level = "high"
+
+            logger.debug(
+                "Risk assessment calculated",
+                total_entries=total_entries,
+                valid_entries=valid_entries,
+                validity_ratio=validity_ratio,
+                risk_level=risk_level,
+            )
+
+            return FlextResult.ok(risk_level)
+
+        except Exception as e:
+            return FlextResult.fail(f"Risk assessment calculation failed: {e}")
 
     def filter_by_objectclass(
         self,
