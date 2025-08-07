@@ -90,35 +90,38 @@ class FlextLdifDistinguishedName(FlextValue):
     @classmethod
     def _normalize_dn(cls, dn: str) -> str:
         """Normalize DN by removing extra spaces around commas and equals.
-        
+
         This method ensures DN consistency by:
         - Removing spaces around commas between components
         - Normalizing spaces around equals signs within components
         - Preserving necessary spaces within attribute values
-        
+
         Args:
             dn: Distinguished name to normalize
-            
+
         Returns:
             Normalized DN string
-            
+
         Examples:
-            'cn=OCS_PORTAL_USERS, cn=groups,dc=network,dc=ctbc' 
+            'cn=OCS_PORTAL_USERS, cn=groups,dc=network,dc=ctbc'
             -> 'cn=OCS_PORTAL_USERS,cn=groups,dc=network,dc=ctbc'
+
         """
         if not dn:
             return dn
-            
-        # Split by comma, strip each component, then rejoin  
+
+        # Split by comma, strip each component, then rejoin
         components = []
-        for component in dn.split(","):
-            component = component.strip()
+        for raw_component in dn.split(","):
+            stripped_component = raw_component.strip()
             # Normalize spaces around equals sign within each component
-            if "=" in component:
-                key, value = component.split("=", 1)
-                component = f"{key.strip()}={value.strip()}"
-            components.append(component)
-            
+            if "=" in stripped_component:
+                key, value = stripped_component.split("=", 1)
+                normalized_component = f"{key.strip()}={value.strip()}"
+            else:
+                normalized_component = stripped_component
+            components.append(normalized_component)
+
         return ",".join(components)
 
     def __str__(self) -> str:
@@ -151,15 +154,15 @@ class FlextLdifAttributes(FlextValue):
     attributes: dict[str, list[str]] = Field(default_factory=dict)
 
     @field_validator("attributes")
-    @classmethod  
+    @classmethod
     def normalize_dn_attributes(cls, v: dict[str, list[str]]) -> dict[str, list[str]]:
         """Normalize DN-valued attributes to ensure consistent formatting."""
         # DN-valued attributes that need normalization
         dn_attributes = {
             "orcldaspublicgroupdns", "member", "uniquemember", "owner", "seeAlso",
-            "distinguishedName", "manager", "secretary", "roleOccupant"
+            "distinguishedName", "manager", "secretary", "roleOccupant",
         }
-        
+
         normalized = {}
         for attr_name, attr_values in v.items():
             if attr_name.lower() in dn_attributes:
@@ -176,7 +179,7 @@ class FlextLdifAttributes(FlextValue):
             else:
                 # Keep non-DN attributes as-is
                 normalized[attr_name] = attr_values
-        
+
         return normalized
 
     def validate_business_rules(self) -> FlextResult[None]:
@@ -325,13 +328,13 @@ class FlextLdifEntry(FlextEntity):
 
         # Parse attributes from remaining lines
         attrs: dict[str, list[str]] = {}
-        for line in lines[1:]:
-            line = line.strip()
-            if not line:
+        for raw_line in lines[1:]:
+            stripped_line = raw_line.strip()
+            if not stripped_line:
                 continue
-            if ":" not in line:
+            if ":" not in stripped_line:
                 continue
-            attr_name, attr_value = line.split(":", 1)
+            attr_name, attr_value = stripped_line.split(":", 1)
             attr_name = attr_name.strip()
             attr_value = attr_value.strip()
 
@@ -379,7 +382,7 @@ class FlextLdifEntry(FlextEntity):
             values: List of values to set for the attribute
 
         """
-        self.attributes.update({name: values})  # type: ignore
+        self.attributes.update({name: values})  # type: ignore[misc]
 
 
 # =============================================================================
