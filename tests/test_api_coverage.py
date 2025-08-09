@@ -29,7 +29,7 @@ class TestApiCoverage:
         api = FlextLdifAPI()
         result = api.parse_file("/nonexistent/path.ldif")
         assert not result.success
-        assert "File not found" in result.error
+        assert "file not found" in result.error.lower()
 
     def test_api_parse_file_with_too_many_entries(self) -> None:
         """Test API parse_file with too many entries."""

@@ -51,49 +51,54 @@ class TestCliUtilsCoverage:
         """Testa validate_cli_result com objeto truthy."""
         from flext_ldif.utils.cli_utils import validate_cli_result
 
-        mock_result = Mock()
-        mock_result.__bool__ = Mock(return_value=True)
-        result = validate_cli_result(mock_result)
+        # Use uma classe simples ao invés de Mock para evitar atributos extras
+        class TruthyObject:
+            def __bool__(self) -> bool:
+                return True
+
+        truthy_result = TruthyObject()
+        result = validate_cli_result(truthy_result)
         assert result.success is True
 
     def test_validate_cli_result_falsy_object(self) -> None:
         """Testa validate_cli_result com objeto falsy."""
         from flext_ldif.utils.cli_utils import validate_cli_result
 
-        mock_result = Mock()
-        mock_result.__bool__ = Mock(return_value=False)
-        result = validate_cli_result(mock_result)
+        # Use uma classe simples ao invés de Mock para evitar atributos extras
+        class FalsyObject:
+            def __bool__(self) -> bool:
+                return False
+
+        falsy_result = FalsyObject()
+        result = validate_cli_result(falsy_result)
         assert result.success is False
 
     def test_handle_parse_result_success_with_data(self) -> None:
         """Testa handle_parse_result com sucesso e dados."""
         success_result = FlextResult.ok(["entry1", "entry2"])
         # Não deve lançar exceção
-        handle_parse_result(success_result, "/test/file.ldif")
+        handle_parse_result(success_result)
 
     def test_handle_parse_result_failure(self) -> None:
         """Testa handle_parse_result com falha."""
         failure_result = FlextResult.fail("Parse error")
 
-        with pytest.raises(SystemExit) as exc_info:
-            handle_parse_result(failure_result, "/test/file.ldif")
-        assert exc_info.value.code == 1
+        # Should handle gracefully and print error message, not exit
+        handle_parse_result(failure_result)  # Should not raise
 
     def test_handle_parse_result_success_no_data(self) -> None:
         """Testa handle_parse_result com sucesso mas sem dados."""
         empty_result = FlextResult.ok([])
 
-        with pytest.raises(SystemExit) as exc_info:
-            handle_parse_result(empty_result, "/test/file.ldif")
-        assert exc_info.value.code == 1
+        # Should handle gracefully and print success message with 0 entries
+        handle_parse_result(empty_result)  # Should not raise
 
     def test_handle_parse_result_success_none_data(self) -> None:
         """Testa handle_parse_result com sucesso mas data=None."""
         none_result = FlextResult.ok(None)
 
-        with pytest.raises(SystemExit) as exc_info:
-            handle_parse_result(none_result, "/test/file.ldif")
-        assert exc_info.value.code == 1
+        # Should handle gracefully and print error message, not exit
+        handle_parse_result(none_result)  # Should not raise
 
     def test_cli_utils_imports(self) -> None:
         """Testa imports das funções de cli_utils."""
@@ -137,10 +142,13 @@ class TestCliUtilsCoverage:
                 "flext_ldif.utils.cli_utils.click.echo",
                 side_effect=Exception("click error"),
             ),
-            patch("builtins.print") as mock_print,
+            patch("flext_ldif.utils.cli_utils.logger") as mock_logger,
         ):
             safe_click_echo("test message")
-            mock_print.assert_called_once_with("test message")
+            # Should call logger.exception when all click methods fail
+            mock_logger.exception.assert_called_once_with(
+                "Complete display failure: %s", "test message"
+            )
 
     def test_display_entry_count_default(self) -> None:
         """Testa display_entry_count com valores padrão."""

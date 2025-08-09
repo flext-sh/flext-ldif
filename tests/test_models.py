@@ -45,20 +45,20 @@ class TestLDIFEntry:
 
         entry = LDIFEntry.model_validate({"dn": dn, "attributes": attributes})
 
-        if entry.dn != dn:
-            msg: str = f"Expected {dn}, got {entry.dn}"
+        if entry.dn.value != dn:
+            msg: str = f"Expected {dn}, got {entry.dn.value}"
             raise AssertionError(msg)
-        assert entry.attributes == attributes
+        assert entry.attributes.attributes == attributes
 
     def test_ldif_entry_default_attributes(self) -> None:
         """Test LDIF entry creation with default attributes."""
         dn = "cn=test,dc=example,dc=com"
         entry = LDIFEntry.model_validate({"dn": dn})
 
-        if entry.dn != dn:
-            msg: str = f"Expected {dn}, got {entry.dn}"
+        if entry.dn.value != dn:
+            msg: str = f"Expected {dn}, got {entry.dn.value}"
             raise AssertionError(msg)
-        assert entry.attributes == {}
+        assert entry.attributes.attributes == {}
 
     def test_get_attribute_exists(self) -> None:
         """Test getting an existing attribute."""
@@ -244,7 +244,8 @@ mail: test@example.com"""
         ldif_block = """cn: test
 objectClass: person"""
 
-        with pytest.raises(ValueError, match="First line must be DN"):
+        from flext_core.exceptions import FlextValidationError
+        with pytest.raises(FlextValidationError, match="LDIF block must start with DN"):
             LDIFEntry.from_ldif_block(ldif_block)
 
     def test_from_ldif_block_dn_only(self) -> None:
@@ -253,12 +254,12 @@ objectClass: person"""
 
         entry = LDIFEntry.from_ldif_block(ldif_block)
 
-        if entry.dn != "cn=test,dc=example,dc=com":
-            msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn}"
+        if entry.dn.value != "cn=test,dc=example,dc=com":
+            msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn.value}"
             raise AssertionError(
                 msg,
             )
-        assert entry.attributes == {}
+        assert entry.attributes.attributes == {}
 
     def test_from_ldif_block_with_whitespace(self) -> None:
         """Test creating entry from LDIF block with extra whitespace."""
@@ -271,8 +272,8 @@ objectClass: person"""
 
         entry = LDIFEntry.from_ldif_block(ldif_block)
 
-        if entry.dn != "cn=test,dc=example,dc=com":
-            msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn}"
+        if entry.dn.value != "cn=test,dc=example,dc=com":
+            msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn.value}"
             raise AssertionError(
                 msg,
             )
@@ -326,8 +327,8 @@ invalid line without colon"""
         # Should ignore lines without colons
         entry = LDIFEntry.from_ldif_block(ldif_block)
 
-        if entry.dn != "cn=test,dc=example,dc=com":
-            msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn}"
+        if entry.dn.value != "cn=test,dc=example,dc=com":
+            msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn.value}"
             raise AssertionError(
                 msg,
             )

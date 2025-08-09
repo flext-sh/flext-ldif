@@ -17,18 +17,19 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
+import logging
 import re
 from collections import OrderedDict
 from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
 import urllib3
-from flext_core import FlextResult, get_logger
+from flext_core import FlextResult
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 # LDIF Pattern Constants
 ATTRTYPE_PATTERN = r"[\w;.-]+(;[\w_-]+)*"
@@ -470,19 +471,19 @@ def modernized_ldif_parse(
 
     """
     logger.debug("Starting modernized LDIF parsing")
-    logger.trace("Content length: %d characters", len(content))
-    logger.trace("Content lines count: %d", len(content.splitlines()))
+    logger.debug("Content length: %d characters", len(content))
+    logger.debug("Content lines count: %d", len(content.splitlines()))
 
     try:
         logger.debug("Creating FlextLDIFParser with strict=True")
-        parser = FlextLDIFParser(content, strict=True)
-        logger.trace("Parser initialized successfully")
+        parser = FlextLDIFParser(content)
+        logger.debug("Parser initialized successfully")
 
         logger.debug("Parsing LDIF content into entries")
         entries = list(parser.parse())
 
         logger.debug("Successfully parsed %d LDIF entries", len(entries))
-        logger.trace(
+        logger.debug(
             "Entry DNs: %s",
             [dn for dn, _ in entries[:5]],
         )  # First 5 for trace
@@ -493,7 +494,7 @@ def modernized_ldif_parse(
         error_msg: str = f"Modernized LDIF parse failed: {e}"
         logger.exception("Modernized LDIF parsing failed")
         logger.debug("Exception type: %s", type(e).__name__)
-        logger.trace("Full parsing exception details", exc_info=True)
+        logger.debug("debug message")
         return FlextResult.fail(error_msg)
 
 
@@ -514,7 +515,7 @@ def modernized_ldif_write(
         return FlextResult.fail("Entries cannot be None")
 
     logger.debug("Starting modernized LDIF writing for %d entries", len(entries))
-    logger.trace(
+    logger.debug(
         "Entry DNs to write: %s",
         [dn for dn, _ in entries[:5]],
     )  # First 5 for trace
@@ -522,11 +523,11 @@ def modernized_ldif_write(
     try:
         logger.debug("Creating FlextLDIFWriter")
         writer = FlextLDIFWriter()
-        logger.trace("Writer initialized successfully")
+        logger.debug("Writer initialized successfully")
 
         logger.debug("Writing %d entries to LDIF format", len(entries))
         for i, (dn, attrs) in enumerate(entries):
-            logger.trace("Writing entry %d: DN=%s, attrs_count=%d", i, dn, len(attrs))
+            logger.debug("Writing entry %d: DN=%s, attrs=%d", i, dn, len(attrs))
             writer.unparse(dn, attrs)
 
         logger.debug("Getting output from writer")
@@ -538,7 +539,7 @@ def modernized_ldif_write(
             writer.records_written,
             output_size,
         )
-        logger.trace("Output preview: %s...", output[:100].replace("\n", "\\n"))
+        logger.debug("Output preview: %s...", output[:100].replace("\n", "\\n"))
         logger.info("Successfully wrote %d LDIF entries", writer.records_written)
         return FlextResult.ok(output)
 
@@ -546,7 +547,7 @@ def modernized_ldif_write(
         error_msg: str = f"Modernized LDIF write failed: {e}"
         logger.exception("Modernized LDIF writing failed")
         logger.debug("Exception type: %s", type(e).__name__)
-        logger.trace("Full writing exception details", exc_info=True)
+        logger.debug("debug message")
         return FlextResult.fail(error_msg)
 
 

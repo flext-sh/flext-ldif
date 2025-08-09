@@ -1,14 +1,10 @@
-"""FLEXT-LDIF Validation Utilities.
+"""FLEXT-LDIF Validation Utilities - Using FLEXT-LDAP Root API.
 
-This module provides comprehensive validation utilities for LDIF processing
-operations, implementing reusable validation patterns, business rule validation,
-and data integrity checks across all architectural layers.
+✅ CORRECT ARCHITECTURE: This module uses flext-ldap root APIs for all LDAP validation.
+   ZERO duplication - leverages existing flext-ldap functionality.
 
-Key Components:
-    - DN syntax validation with RFC 4514 compliance
-    - LDIF format validation and structure checking
-    - Attribute name and value validation patterns
-    - Business rule validation with configurable strictness
+This module provides LDIF-specific validation utilities by delegating to
+flext-ldap for all DN and attribute validation operations.
 
 Author: FLEXT Development Team
 Version: 0.9.0
@@ -17,23 +13,22 @@ License: MIT
 
 from __future__ import annotations
 
-import re
 from typing import ClassVar
 
-from flext_core import FlextResult, get_logger
+from flext_core import FlextResult
+
+# ✅ CORRECT - Import from flext-ldap root API
+from flext_ldap import (
+    flext_ldap_validate_attribute_name,
+    flext_ldap_validate_dn,
+)
 
 # Import needed for runtime validation
 from flext_ldif.models import FlextLdifEntry
 
-logger = get_logger(__name__)
-
 
 class LdifValidator:
-    """LDIF validation utility class with common validation patterns."""
-
-    # Common validation patterns
-    DN_PATTERN = re.compile(r"^[a-zA-Z]+=.+")
-    ATTR_NAME_PATTERN = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]*$")
+    """LDIF validation utility class using flext-ldap root APIs."""
 
     # Object class sets for entry type validation
     PERSON_CLASSES: ClassVar[set[str]] = {
@@ -59,7 +54,10 @@ class LdifValidator:
 
     @classmethod
     def validate_dn(cls, dn_value: str) -> FlextResult[bool]:
-        """Validate Distinguished Name format.
+        """Validate Distinguished Name format using flext-ldap root API.
+
+        ✅ CORRECT ARCHITECTURE: Delegates to flext-ldap root API.
+        ZERO duplication - uses existing flext-ldap validation functionality.
 
         Args:
             dn_value: DN string to validate
@@ -71,14 +69,19 @@ class LdifValidator:
         if not dn_value or not dn_value.strip():
             return FlextResult.fail("DN cannot be empty")
 
-        if not cls.DN_PATTERN.match(dn_value.strip()):
+        # ✅ DELEGATE to flext-ldap root API - NO local validation logic
+        is_valid = flext_ldap_validate_dn(dn_value.strip())
+        if not is_valid:
             return FlextResult.fail(f"Invalid DN format: {dn_value}")
 
         return FlextResult.ok(data=True)
 
     @classmethod
     def validate_attribute_name(cls, attr_name: str) -> FlextResult[bool]:
-        """Validate LDAP attribute name format.
+        """Validate LDAP attribute name format using flext-ldap root API.
+
+        ✅ CORRECT ARCHITECTURE: Delegates to flext-ldap root API.
+        ZERO duplication - uses existing flext-ldap validation functionality.
 
         Args:
             attr_name: Attribute name to validate
@@ -90,7 +93,9 @@ class LdifValidator:
         if not attr_name or not attr_name.strip():
             return FlextResult.fail("Attribute name cannot be empty")
 
-        if not cls.ATTR_NAME_PATTERN.match(attr_name):
+        # ✅ DELEGATE to flext-ldap root API - NO local validation logic
+        is_valid = flext_ldap_validate_attribute_name(attr_name)
+        if not is_valid:
             return FlextResult.fail(f"Invalid attribute name format: {attr_name}")
 
         return FlextResult.ok(data=True)

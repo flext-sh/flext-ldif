@@ -181,7 +181,7 @@ sn: User
 
             # Test write to file
             output_path = temp_path.parent / "output.ldif"
-            write_file_result = api.write(entries, output_path)
+            write_file_result = api.write_file(entries, output_path)
             assert write_file_result.success
             assert output_path.exists()
 

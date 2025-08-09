@@ -232,7 +232,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
             sorted_persons = sort_result.data
 
             # Step 3: Write to output file
-            write_result = api.write(sorted_persons, output_path)
+            write_result = api.write_file(sorted_persons, output_path)
             assert write_result.success
 
             # Step 4: Verify output file

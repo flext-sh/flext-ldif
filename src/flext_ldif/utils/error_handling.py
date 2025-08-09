@@ -6,10 +6,11 @@ error handling patterns, eliminating duplication while maintaining API compatibi
 
 from __future__ import annotations
 
-from flext_core import FlextResult, get_logger
-from flext_core.exceptions import FlextValidationError
+import logging
 
-logger = get_logger(__name__)
+from flext_core import FlextResult, FlextValidationError
+
+logger = logging.getLogger(__name__)
 
 # Compatibility aliases that redirect to flext-core
 FlextLdifErrorHandler = FlextValidationError
@@ -22,5 +23,5 @@ def format_validation_error(error: str) -> str:
 
 def handle_ldif_error(error: Exception) -> FlextResult[None]:
     """Handle LDIF processing error."""
-    logger.error("LDIF processing error", error=str(error))
+    logger.exception("LDIF processing error")
     return FlextResult.fail(str(error))

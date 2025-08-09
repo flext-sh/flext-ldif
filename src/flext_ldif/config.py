@@ -13,20 +13,24 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_core import FlextResult
-from pydantic import BaseModel, Field
+from flext_core import FlextConfig, FlextResult
+from pydantic import Field
 
 # RFC 2849 constants for line wrap lengths
 MIN_LINE_WRAP_LENGTH: int = 50
 MAX_LINE_WRAP_LENGTH: int = 998
 
 
-class FlextLdifConfig(BaseModel):
-    """LDIF processing configuration using unified patterns."""
+class FlextLdifConfig(FlextConfig):
+    """LDIF processing configuration using flext-core FlextConfig foundation.
+
+    ✅ CORRECT ARCHITECTURE: Extends FlextConfig from flext-core.
+    ZERO duplication - uses existing flext-core configuration patterns.
+    """
 
     # Processing settings
-    max_entries: int = Field(default=15000, ge=1, le=1000000)
-    max_entry_size: int = Field(default=1048576, ge=1024, le=104857600)
+    max_entries: int = Field(default=20000)
+    max_entry_size: int = Field(default=1048576)
     strict_validation: bool = Field(default=True)
 
     # File settings
@@ -36,7 +40,7 @@ class FlextLdifConfig(BaseModel):
     create_output_dir: bool = Field(default=True)
 
     # LDIF format settings
-    line_wrap_length: int = Field(default=76, ge=50, le=998)
+    line_wrap_length: int = Field(default=76)
     sort_attributes: bool = Field(default=False)
     normalize_dn: bool = Field(default=False)
     allow_empty_attributes: bool = Field(default=False)
