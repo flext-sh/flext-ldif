@@ -9,7 +9,6 @@ from __future__ import annotations
 import tempfile
 import uuid
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
@@ -83,7 +82,7 @@ class TestAPICoverageTargeted:
 
         try:
             # Should create directory and succeed
-            result = api.write([entry], "test.ldif")
+            result = api.write_file([entry], "test.ldif")
             assert (
                 result.success or "Permission denied" in result.error
             )  # May fail on permission
@@ -97,27 +96,9 @@ class TestAPICoverageTargeted:
             if Path(temp_dir).exists():
                 shutil.rmtree(temp_dir)
 
-    def test_api_entries_to_ldif_with_observability_errors(self) -> None:
-        """Test entries_to_ldif when observability metrics fail."""
-        api = FlextLdifAPI()
-
-        entry = FlextLdifEntry(
-            id=str(uuid.uuid4()),
-            dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifAttributes(
-                attributes={"cn": ["test"], "objectClass": ["person"]},
-            ),
-        )
-
-        # Mock observability to fail
-        with patch.object(api, "_observability_monitor") as mock_monitor:
-            mock_monitor.flext_record_metric.side_effect = Exception("Metrics error")
-
-            # Should still work despite observability failure
-            result = api.entries_to_ldif([entry])
-            assert result.success
-            assert isinstance(result.data, str)
-            assert "cn=test,dc=example,dc=com" in result.data
+    def skip_test_api_entries_to_ldif_with_observability_errors(self) -> None:
+        """SKIPPED: Test entries_to_ldif when observability metrics fail - observability removed."""
+        # Observability functionality has been removed during refactoring
 
 
 class TestCLICoverageTargeted:

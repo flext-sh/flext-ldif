@@ -58,27 +58,39 @@ License: MIT
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from flext_core import FlextResult, get_logger
 
-from .models import FlextLdifEntry
+# ✅ CORRECT - Import from flext-ldap root API to eliminate validation duplication
+from flext_ldap import (
+    flext_ldap_validate_attribute_name,
+    flext_ldap_validate_dn,
+)
+
 from .modernized_ldif import modernized_ldif_parse, modernized_ldif_write
 
 if TYPE_CHECKING:
-    from .models import LDIFContent
+    from .models import FlextLdifEntry, FlextLdifFactory, LDIFContent
+else:
+    # Need FlextLdifFactory at runtime for parsing
+    from .models import FlextLdifFactory
 
 logger = get_logger(__name__)
 
 
 class TLdif:
-    """Core LDIF processing functionality using flext-core patterns."""
+    """Core LDIF processing functionality using flext-core patterns.
 
-    # Validation patterns
-    DN_PATTERN = re.compile(r"^[a-zA-Z]+=.+")
-    ATTR_NAME_PATTERN = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]*$")
+    ✅ CORRECT ARCHITECTURE: Uses flext-ldap root API for validation.
+    ZERO duplication - eliminated local validation patterns.
+    """
+
+    # ✅ ELIMINATED DUPLICATION: Validation patterns removed
+    # Now delegates to flext-ldap root API functions:
+    # - flext_ldap_validate_dn for DN validation
+    # - flext_ldap_validate_attribute_name for attribute validation
 
     @classmethod
     def parse(cls, content: str | LDIFContent) -> FlextResult[list[FlextLdifEntry]]:
@@ -141,11 +153,11 @@ class TLdif:
 
         """
         logger.debug("TLdif.parse called with content type: %s", type(content).__name__)
-        logger.trace("Content length: %d characters", len(str(content)))
+        logger.debug("Content length: %d characters", len(str(content)))
         try:
             content_str = str(content)
             logger.debug("Content converted to string, length: %d", len(content_str))
-            logger.trace(
+            logger.debug(
                 "Content preview: %s...",
                 content_str[:200].replace("\n", "\\n"),
             )
@@ -156,7 +168,7 @@ class TLdif:
 
         except (ValueError, TypeError, AttributeError, OSError, ImportError) as e:
             logger.debug("Exception type: %s", type(e).__name__)
-            logger.trace("Full exception details", exc_info=True)
+            logger.debug("Full exception details", exc_info=True)
             logger.exception("Exception in TLdif.parse")
             return FlextResult.fail(f"Parse failed: {e}")
 
@@ -167,7 +179,7 @@ class TLdif:
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Parse using modernized LDIF parser with full string compatibility."""
         logger.debug("Starting modernized LDIF parsing")
-        logger.trace("Content lines count: %d", len(content.splitlines()))
+        logger.debug("Content lines count: %d", len(content.splitlines()))
         try:
             # Use modernized parser that handles all string/bytes issues internally
             logger.debug("Calling modernized_ldif_parse")
@@ -182,7 +194,7 @@ class TLdif:
 
             raw_entries = parse_result.data or []
             logger.debug("Modernized parser returned %d raw entries", len(raw_entries))
-            logger.trace(
+            logger.debug(
                 "Raw entries DNs: %s",
                 [dn for dn, _ in raw_entries[:5]],
             )  # First 5 for trace
@@ -192,13 +204,16 @@ class TLdif:
             # Convert to FlextLdifEntry objects
             logger.debug("Converting raw entries to FlextLdifEntry objects")
             for i, (dn, attrs) in enumerate(raw_entries):
-                logger.trace(
+                logger.debug(
                     "Processing entry %d: DN=%s, attrs_count=%d",
                     i,
                     dn,
                     len(attrs),
                 )
-                entry = FlextLdifEntry.from_ldif_dict(dn, attrs)
+                entry_result = FlextLdifFactory.create_entry(dn, attrs)
+                if entry_result.is_failure or entry_result.data is None:
+                    return FlextResult.fail(f"Failed to create entry: {entry_result.error}")
+                entry = entry_result.data
                 entries.append(entry)
 
             logger.debug(
@@ -206,15 +221,15 @@ class TLdif:
                 len(entries),
             )
             logger.info(
-                "Modernized LDIF parsing completed successfully",
-                raw_entries_count=len(raw_entries),
-                converted_entries_count=len(entries),
+                "Modernized LDIF parsing completed successfully - raw_entries=%d, converted_entries=%d",
+                len(raw_entries),
+                len(entries),
             )
             return FlextResult.ok(entries)
 
         except (ValueError, TypeError, AttributeError, ImportError) as e:
             logger.debug("Exception type: %s", type(e).__name__)
-            logger.trace("Full exception details", exc_info=True)
+            logger.debug("Full exception details", exc_info=True)
             logger.exception("Exception in modernized LDIF parsing")
             return FlextResult.fail(f"Modernized LDIF parse failed: {e}")
 
@@ -280,15 +295,15 @@ class TLdif:
                 return FlextResult.fail("Entry cannot be None")
 
             logger.debug("Validating LDIF entry: %s", entry.dn)
-            logger.trace("Entry attributes count: %d", len(entry.attributes.attributes))
-            # Validate DN format
+            logger.debug("Entry attributes count: %d", len(entry.attributes.attributes))
+            # ✅ DELEGATE DN validation to flext-ldap root API - NO local patterns
             dn_str = str(entry.dn)
-            logger.trace("Validating DN format: %s", dn_str)
-            if not cls.DN_PATTERN.match(dn_str):
+            logger.debug("Validating DN format: %s", dn_str)
+            if not flext_ldap_validate_dn(dn_str):
                 logger.warning("Invalid DN format: %s", dn_str)
-                logger.debug("DN failed regex pattern match")
+                logger.debug("DN failed flext-ldap validation")
                 return FlextResult.fail(f"Invalid DN format: {entry.dn}")
-            logger.trace("DN format validation passed")
+            logger.debug("DN format validation passed")
 
             # Validate attribute names
             logger.debug(
@@ -296,15 +311,16 @@ class TLdif:
                 len(entry.attributes.attributes),
             )
             for attr_name in entry.attributes.attributes:
-                logger.trace("Validating attribute name: %s", attr_name)
-                if not cls.ATTR_NAME_PATTERN.match(attr_name):
+                logger.debug("Validating attribute name: %s", attr_name)
+                # ✅ DELEGATE attribute validation to flext-ldap root API - NO local patterns
+                if not flext_ldap_validate_attribute_name(attr_name):
                     logger.warning("Invalid attribute name: %s", attr_name)
-                    logger.debug("Attribute name failed regex pattern match")
+                    logger.debug("Attribute name failed flext-ldap validation")
                     return FlextResult.fail(f"Invalid attribute name: {attr_name}")
             logger.debug("All attribute names validated successfully")
 
             # Validate required objectClass attribute
-            logger.trace("Checking for required objectClass attribute")
+            logger.debug("Checking for required objectClass attribute")
             if not entry.has_attribute("objectClass"):
                 logger.warning(
                     "Entry missing required objectClass attribute: %s",
@@ -314,20 +330,20 @@ class TLdif:
                 return FlextResult.fail("Entry missing required objectClass attribute")
 
             object_classes = entry.get_attribute("objectClass")
-            logger.trace("Found objectClass values: %s", object_classes)
+            logger.debug("Found objectClass values: %s", object_classes)
             logger.debug("Entry validation passed for: %s", entry.dn)
             logger.info(
-                "LDIF entry validation successful",
-                dn=str(entry.dn),
-                attributes_count=len(entry.attributes.attributes),
-                object_classes=object_classes,
+                "LDIF entry validation successful - dn=%s, attributes_count=%d, object_classes=%s",
+                str(entry.dn),
+                len(entry.attributes.attributes),
+                object_classes,
             )
 
             return FlextResult.ok(data=True)
 
         except (ValueError, TypeError, AttributeError) as e:
             logger.debug("Exception type: %s", type(e).__name__)
-            logger.trace("Validation exception details", exc_info=True)
+            logger.debug("Validation exception details", exc_info=True)
             logger.exception("Exception during entry validation")
             return FlextResult.fail(f"Validation failed: {e}")
 
@@ -381,7 +397,7 @@ class TLdif:
             logger.debug("Starting bulk validation of %d entries", total_entries)
 
             for i, entry in enumerate(entries):
-                logger.trace(
+                logger.debug(
                     "Validating entry %d/%d: %s",
                     i + 1,
                     total_entries,
@@ -399,8 +415,8 @@ class TLdif:
 
             logger.debug("Bulk validation successful for all %d entries", total_entries)
             logger.info(
-                "Bulk LDIF validation completed successfully",
-                entries_validated=total_entries,
+                "Bulk LDIF validation completed successfully - entries_validated=%d",
+                total_entries,
             )
             return FlextResult.ok(data=True)
 
@@ -457,7 +473,7 @@ class TLdif:
             # REFACTORING: Enhanced error handling and performance logging
             entries_count = len(entries)
             logger.debug("Starting LDIF write operation for %d entries", entries_count)
-            logger.trace("Write operation using modernized LDIF writer")
+            logger.debug("Write operation using modernized LDIF writer")
 
             # Use modernized LDIF writer (no external dependencies)
             result = cls._write_with_modernized_ldif(entries)
@@ -470,9 +486,9 @@ class TLdif:
                     content_length,
                 )
                 logger.info(
-                    "LDIF write operation completed successfully",
-                    entries_count=entries_count,
-                    content_length=content_length,
+                    "LDIF write operation completed successfully - entries_count=%d, content_length=%d",
+                    entries_count,
+                    content_length,
                 )
             else:
                 logger.warning("LDIF write operation failed: %s", result.error)
@@ -576,7 +592,7 @@ class TLdif:
             entries_count,
             file_path,
         )
-        logger.trace("File encoding: %s", encoding)
+        logger.debug("File encoding: %s", encoding)
 
         try:
             file_path = Path(file_path)
@@ -587,9 +603,9 @@ class TLdif:
             if not parent_dir.exists():
                 logger.debug("Creating parent directory: %s", parent_dir)
                 parent_dir.mkdir(parents=True, exist_ok=True)
-                logger.trace("Parent directory created successfully")
+                logger.debug("Parent directory created successfully")
 
-            logger.trace("File path exists: %s", file_path.exists())
+            logger.debug("File path exists: %s", file_path.exists())
 
             # Get LDIF content with enhanced error handling
             logger.debug("Converting %d entries to LDIF content", entries_count)
@@ -607,32 +623,31 @@ class TLdif:
 
             content_size = len(content_result.data)
             logger.debug("Generated LDIF content: %d characters", content_size)
-            logger.trace(
+            logger.debug(
                 "Content preview: %s...",
                 content_result.data[:100].replace("\n", "\\n"),
             )
 
             # REFACTORING: Enhanced file writing with atomic operations
-            logger.trace("Writing content to file with encoding: %s", encoding)
+            logger.debug("Writing content to file with encoding: %s", encoding)
             with file_path.open("w", encoding=encoding) as f:
                 f.write(content_result.data)
 
             # REFACTORING: Enhanced success logging with comprehensive metrics
             logger.debug("File write completed successfully: %s", file_path)
             logger.info(
-                "LDIF file write operation completed successfully",
-                entries_count=entries_count,
-                file_path=str(file_path.absolute()),
-                content_size_chars=content_size,
-                encoding=encoding,
-                parent_dir_created=not parent_dir.exists(),
+                "LDIF file write operation completed successfully - entries_count=%d, file_path=%s, content_size_chars=%d, encoding=%s",
+                entries_count,
+                str(file_path.absolute()),
+                content_size,
+                encoding,
             )
 
             return FlextResult.ok(data=True)
 
         except (OSError, ValueError, TypeError, AttributeError) as e:
             logger.debug("Exception type: %s", type(e).__name__)
-            logger.trace("File write exception details", exc_info=True)
+            logger.debug("File write exception details", exc_info=True)
             logger.exception("Exception during file write")
             return FlextResult.fail(f"File write failed: {e}")
 
@@ -698,7 +713,7 @@ class TLdif:
         """
         # REFACTORING: Enhanced file validation and error context
         logger.debug("Starting LDIF file read operation: %s", file_path)
-        logger.trace("File encoding: %s", encoding)
+        logger.debug("File encoding: %s", encoding)
 
         try:
             file_path = Path(file_path)
@@ -717,7 +732,7 @@ class TLdif:
                 return FlextResult.fail(not_file_error_msg)
 
             # REFACTORING: Enhanced file metadata collection
-            logger.trace("File exists, collecting file metadata")
+            logger.debug("File exists, collecting file metadata")
             file_stat = file_path.stat()
             file_size = file_stat.st_size
             logger.debug(
@@ -751,7 +766,7 @@ class TLdif:
                 content_size,
                 lines_count,
             )
-            logger.trace("Content preview: %s...", content[:200].replace("\n", "\\n"))
+            logger.debug("Content preview: %s...", content[:200].replace("\n", "\\n"))
 
             # Parse content with enhanced error context
             logger.debug("Delegating to parse method for content processing")
@@ -759,7 +774,7 @@ class TLdif:
 
         except (OSError, ValueError, TypeError, AttributeError) as e:
             logger.debug("Exception type: %s", type(e).__name__)
-            logger.trace("File read exception details", exc_info=True)
+            logger.debug("File read exception details", exc_info=True)
             logger.exception("Exception during file read operation")
             return FlextResult.fail(f"LDIF file read failed: {e}")
         else:
@@ -772,14 +787,13 @@ class TLdif:
                     absolute_path,
                 )
                 logger.info(
-                    "LDIF file processing completed successfully",
-                    file_path=str(absolute_path),
-                    file_size_bytes=file_size,
-                    content_size_chars=content_size,
-                    lines_count=lines_count,
-                    entries_parsed=entries_count,
-                    encoding=encoding,
-                    parse_success=True,
+                    "LDIF file processing completed successfully - file_path=%s, file_size_bytes=%d, content_size_chars=%d, lines_count=%d, entries_parsed=%d, encoding=%s",
+                    str(absolute_path),
+                    file_size,
+                    content_size,
+                    lines_count,
+                    entries_count,
+                    encoding,
                 )
             else:
                 # REFACTORING: Enhanced parse failure logging with context

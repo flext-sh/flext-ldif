@@ -195,10 +195,10 @@ sn: Smith
         assert result.success
         assert result.data is not None
         assert isinstance(result.data, dict)
-        assert "total" in result.data
-        assert result.data["total"] == 2
-        assert "persons" in result.data
-        assert result.data["persons"] == 2
+        assert "total_entries" in result.data
+        assert result.data["total_entries"] == 2
+        assert "person_entries" in result.data
+        assert result.data["person_entries"] == 2
 
     def test_sort_hierarchically(self) -> None:
         """Testa ordenação hierárquica de entries."""
@@ -342,7 +342,7 @@ sn: Smith
         result = api.get_entry_statistics([])
         assert result.success
         assert result.data is not None
-        assert result.data["total"] == 0
+        assert result.data["total_entries"] == 0
 
         # Test invalid LDIF parsing
         result = api.parse("invalid format")

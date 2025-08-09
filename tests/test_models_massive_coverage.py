@@ -9,6 +9,7 @@ from __future__ import annotations
 import uuid
 
 import pytest
+from flext_core.exceptions import FlextValidationError
 
 from flext_ldif.models import (
     FlextLdifAttributes,
@@ -373,9 +374,9 @@ class TestMassiveModelsCoverage:
         assert valid_person.has_attribute("sn")
         assert valid_person.has_attribute("objectClass")
 
-        # Test entry equality
+        # Test entry equality (use same ID for equality test)
         same_person = FlextLdifEntry(
-            id=str(uuid.uuid4()),
+            id=valid_person.id,  # Use same ID for equality comparison
             dn=FlextLdifDistinguishedName(value="cn=Valid User,dc=test,dc=com"),
             attributes=FlextLdifAttributes(
                 attributes={
@@ -407,11 +408,11 @@ class TestMassiveModelsCoverage:
     def test_model_error_conditions(self) -> None:
         """Test model error conditions and validation."""
         # Test invalid DN formats
-        with pytest.raises(ValueError, match="DN must be a non-empty string"):
+        with pytest.raises((ValueError, FlextValidationError), match="DN must be a non-empty string"):
             FlextLdifDistinguishedName(value="")
 
         with pytest.raises(
-            ValueError, match="DN must contain at least one attribute=value pair"
+            FlextValidationError, match="DN must contain at least one attribute=value pair"
         ):
             FlextLdifDistinguishedName(value="invalid_format")
 

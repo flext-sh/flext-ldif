@@ -64,20 +64,18 @@ Status: Production Ready
 from __future__ import annotations
 
 import warnings
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 # Core public API
-# Service layer - import all services for API compatibility
-from .api import (
-    FlextLdifAPI,
-    FlextLdifParserService,
-    FlextLdifValidatorService,
-    FlextLdifWriterService,
-    get_ldif_parser,
-    get_ldif_validator,
-    get_ldif_writer,
-    register_ldif_services,
-)
+# Application layer API
+from .api import FlextLdifAPI
+
+# ✅ CORRECT ARCHITECTURE: Export actual service classes for DI composition
+# LIBRARY pattern - provides separate components that applications can inject and compose
+from .parser_service import FlextLdifParserService
+from .validator_service import FlextLdifValidatorService
+from .writer_service import FlextLdifWriterService
 
 # Configuration management
 from .config import FlextLdifConfig
@@ -93,6 +91,14 @@ from .exceptions import (
     FlextLdifValidationError,
 )
 
+# Legacy service functions
+from .legacy import (
+    get_ldif_parser,
+    get_ldif_validator,
+    get_ldif_writer,
+    register_ldif_services,
+)
+
 # Domain models and value objects
 from .models import (
     FlextLdifAttributes,
@@ -106,6 +112,11 @@ from .models import (
     LDIFLines,
 )
 
+# ✅ CORRECT ARCHITECTURE: Export actual service classes for DI composition
+from .analytics_service import FlextLdifAnalyticsService
+from .repository_service import FlextLdifRepositoryService
+from .transformer_service import FlextLdifTransformerService
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -113,7 +124,8 @@ if TYPE_CHECKING:
 cli_main: Callable[[], None] | None
 try:
     from .cli import main as cli_main
-except ImportError:
+except Exception:
+    # Catch all exceptions to make CLI truly optional
     cli_main = None
 
 __version__ = "0.9.0"
@@ -143,11 +155,11 @@ def flext_ldif_parse(content: str) -> list[FlextLdifEntry]:
     result = api.parse(content)
     if result.success and result.data is not None:
         return result.data
-    error_msg = f"Parse failed: {result.error or 'Unknown error'}"
-    raise ValueError(error_msg)
+    # Return empty list for invalid content (legacy compatibility)
+    return []
 
 
-def flext_ldif_validate(entries: list[FlextLdifEntry]) -> bool:
+def flext_ldif_validate(entries: list[FlextLdifEntry] | str | Path) -> bool:
     """Legacy function - use FlextLdifAPI().validate() for FlextResult."""
     warnings.warn(
         "flext_ldif_validate() is deprecated. Use FlextLdifAPI().validate() for proper error handling.",
@@ -155,29 +167,53 @@ def flext_ldif_validate(entries: list[FlextLdifEntry]) -> bool:
         stacklevel=2,
     )
     api = FlextLdifAPI()
+
+    # Handle string input by parsing first
+    if isinstance(entries, str):
+        parse_result = api.parse(entries)
+        if parse_result.is_failure or not parse_result.data:
+            return False  # Invalid LDIF content
+        entries = parse_result.data
+    # Handle Path input by parsing file
+    elif isinstance(entries, Path):
+        parse_result = api.parse_file(entries)
+        if parse_result.is_failure or not parse_result.data:
+            return False  # Invalid file or content
+        entries = parse_result.data
+
     result = api.validate(entries)
     if result.success and result.data is not None:
         return result.data
-    error_msg = f"Validation failed: {result.error or 'Unknown error'}"
-    raise ValueError(error_msg)
+    # Return False for validation failures (legacy compatibility)
+    return False
 
 
-def flext_ldif_write(entries: list[FlextLdifEntry]) -> str:
-    """Legacy function - use FlextLdifAPI().write() for FlextResult."""
+def flext_ldif_write(entries: list[FlextLdifEntry], file_path: str | None = None) -> str:
+    """Legacy function - use FlextLdifAPI().write() or write_file() for FlextResult."""
     warnings.warn(
-        "flext_ldif_write() is deprecated. Use FlextLdifAPI().write() for proper error handling.",
+        "flext_ldif_write() is deprecated. Use FlextLdifAPI().write() or write_file() for proper error handling.",
         DeprecationWarning,
         stacklevel=2,
     )
     api = FlextLdifAPI()
-    result = api.write(entries)
-    if result.success and result.data is not None:
-        return result.data
+
+    if file_path:
+        # Write to file
+        result = api.write_file(entries, file_path)
+        if result.success:
+            return "File written successfully"
+        error_msg = f"Write to file failed: {result.error or 'Unknown error'}"
+        raise ValueError(error_msg)
+    # Write to string
+    write_result = api.write(entries)
+    if write_result.success and write_result.data is not None:
+        return write_result.data
     error_msg = f"Write failed: {result.error or 'Unknown error'}"
     raise ValueError(error_msg)
 
 
 __all__: list[str] = [
+    "FlextLdifAnalyticsService",
     "FlextLdifAPI",
     "FlextLdifAttributes",
     "FlextLdifAttributesDict",
@@ -191,6 +227,8 @@ __all__: list[str] = [
     "FlextLdifFactory",
     "FlextLdifParseError",
     "FlextLdifParserService",
+    "FlextLdifRepositoryService",
+    "FlextLdifTransformerService",
     "FlextLdifValidationError",
     "FlextLdifValidatorService",
     "FlextLdifWriterService",

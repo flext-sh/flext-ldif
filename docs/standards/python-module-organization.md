@@ -107,7 +107,7 @@ src/flext_ldif/
 # Infrastructure Layer - External Concerns
 ├── infrastructure/
 │   ├── __init__.py              # Infrastructure exports
-│   ├── config.py                # FlextLdifSettings (extends FlextBaseSettings)
+│   ├── config.py                # FlextLdifSettings (extends FlextSettings)
 │   ├── parsers.py               # LDIF parsing implementations
 │   ├── writers.py               # LDIF output generation
 │   ├── validators.py            # LDIF validation implementations
@@ -1142,7 +1142,7 @@ This module contains configuration management for LDIF processing infrastructure
 extending flext-core configuration patterns with LDIF-specific settings.
 
 Key Components:
-    - FlextLdifSettings: Main configuration class extending FlextBaseSettings
+    - FlextLdifSettings: Main configuration class extending FlextSettings
     - Environment variable integration
     - Validation and defaults management
 
@@ -1156,7 +1156,7 @@ Example:
     >>> print(settings.max_entries)  # 10000
 
 Integration:
-    - Extends flext-core FlextBaseSettings
+    - Extends flext-core FlextSettings
     - Supports environment variable configuration
     - Integrates with Pydantic validation
     - Used by Application and Infrastructure services
@@ -1168,10 +1168,10 @@ License: MIT
 
 from typing import Optional, Dict, Any, List
 from pathlib import Path
-from flext_core import FlextBaseSettings
+from flext_core import FlextSettings
 from pydantic import Field, validator
 
-class FlextLdifSettings(FlextBaseSettings):
+class FlextLdifSettings(FlextSettings):
     """
     LDIF processing configuration extending FLEXT foundation settings.
 
@@ -2270,7 +2270,7 @@ utils/
 
 ### **Phase 4: Infrastructure Integration**
 
-1. **Implement proper configuration** extending FlextBaseSettings
+1. **Implement proper configuration** extending FlextSettings
 2. **Add repository implementations** with abstractions
 3. **Integrate observability patterns** with flext-observability
 4. **Add performance monitoring** and metrics collection

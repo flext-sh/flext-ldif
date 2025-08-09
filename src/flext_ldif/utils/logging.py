@@ -6,9 +6,8 @@ logging patterns, eliminating duplication while maintaining API compatibility.
 
 from __future__ import annotations
 
+import logging
 from enum import Enum
-
-from flext_core import get_logger
 
 
 class LogLevel(Enum):
@@ -28,4 +27,4 @@ def configure_ldif_logging(level: LogLevel = LogLevel.INFO) -> None:
 
 def get_ldif_logger(name: str = __name__) -> object:
     """Get LDIF logger - delegates to flext-core."""
-    return get_logger(name)
+    return logging.getLogger(name)

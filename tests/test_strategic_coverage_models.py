@@ -48,7 +48,8 @@ class TestFlextLdifDistinguishedNameStrategic:
         assert len(dn_long.value) > 8200
 
         # Caso 2: DN com caracteres inválidos (sem =)
-        with pytest.raises((ValueError, ValidationError)):
+        from flext_core.exceptions import FlextValidationError
+        with pytest.raises(FlextValidationError):
             FlextLdifDistinguishedName(value="invalid_format_no_equals")
 
     def test_str_and_repr_methods(self) -> None:
@@ -216,18 +217,24 @@ class TestFlextLdifEntryStrategic:
         with pytest.raises((ValueError, ValidationError)):
             FlextLdifEntry(dn=None, attributes=valid_attrs)
 
-        # Caso 2: String DN is automatically converted (SUCCESS case)
-        entry_string_dn = FlextLdifEntry(
-            id=str(uuid.uuid4()), dn="cn=test,dc=example,dc=com", attributes=valid_attrs
-        )
+        # Caso 2: String DN is automatically converted via model_validate (SUCCESS case)
+        entry_string_dn = FlextLdifEntry.model_validate({
+            "id": str(uuid.uuid4()),
+            "dn": "cn=test,dc=example,dc=com",
+            "attributes": valid_attrs.attributes
+        })
         assert isinstance(entry_string_dn.dn, FlextLdifDistinguishedName)
 
         # Caso 3: None attributes
         with pytest.raises((ValueError, ValidationError)):
             FlextLdifEntry(dn=valid_dn, attributes=None)
 
-        # Caso 4: Dict attributes are automatically converted (SUCCESS case)
-        entry_dict_attrs = FlextLdifEntry(dn=valid_dn, attributes={"cn": ["test"]})
+        # Caso 4: Dict attributes are automatically converted via model_validate (SUCCESS case)
+        entry_dict_attrs = FlextLdifEntry.model_validate({
+            "id": str(uuid.uuid4()),
+            "dn": valid_dn.value,
+            "attributes": {"cn": ["test"]}
+        })
         assert isinstance(entry_dict_attrs.attributes, FlextLdifAttributes)
 
     def test_validate_semantic_rules_comprehensive(self) -> None:

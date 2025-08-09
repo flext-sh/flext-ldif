@@ -242,12 +242,11 @@ sn: User{i}
             temp_file = Path(f.name)
 
         try:
-            write_result = api.write(parse_result.data, temp_file)
+            write_result = api.write_file(parse_result.data, temp_file)
 
             assert write_result.success
-            if "written successfully to" not in write_result.data.lower():
-                msg: str = f"Expected {'written successfully to'} in {write_result.data.lower()}"
-                raise AssertionError(msg)
+            # write_file returns FlextResult[bool], so data should be True for success
+            assert write_result.data is True
             assert temp_file.exists()
 
             # Verify content
@@ -378,7 +377,7 @@ sn: User{i}
         parse_result = api.parse(sample_ldif_content)
         assert parse_result.success
 
-        ldif_result = api.entries_to_ldif(parse_result.data)
+        ldif_result = api.write(parse_result.data)
 
         assert ldif_result.success
         assert ldif_result.data is not None
