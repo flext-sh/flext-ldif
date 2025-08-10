@@ -66,12 +66,15 @@ class FlextLdifAPI:
         """
         self.config = config or FlextLdifConfig()
 
-        # Ensure Pydantic models are rebuilt (simplified approach)
-        _FlextLdifParserService.model_rebuild()
-        _FlextLdifValidatorService.model_rebuild()
-        _FlextLdifWriterService.model_rebuild()
-        FlextLdifRepositoryService.model_rebuild()
-        FlextLdifAnalyticsService.model_rebuild()
+        # Ensure Pydantic models are rebuilt with proper namespace context
+        ns = {
+            "FlextLdifConfig": FlextLdifConfig,
+        }
+        _FlextLdifParserService.model_rebuild(_types_namespace=ns)
+        _FlextLdifValidatorService.model_rebuild(_types_namespace=ns)
+        _FlextLdifWriterService.model_rebuild(_types_namespace=ns)
+        FlextLdifRepositoryService.model_rebuild(_types_namespace=ns)
+        FlextLdifAnalyticsService.model_rebuild(_types_namespace=ns)
         
         # Initialize infrastructure services using Pydantic field pattern
         self._parser_service = _FlextLdifParserService(config=self.config)
@@ -110,7 +113,7 @@ class FlextLdifAPI:
         entries = result.data or []
 
         # Apply configuration limits
-        if len(entries) > self.config.max_entries:
+        if len(entries) > int(self.config.max_entries):
             error_msg = (
                 f"Entry count {len(entries)} exceeds limit {self.config.max_entries}"
             )
@@ -144,7 +147,7 @@ class FlextLdifAPI:
         entries = result.data or []
 
         # Apply configuration limits
-        if len(entries) > self.config.max_entries:
+        if len(entries) > int(self.config.max_entries):
             error_msg = f"File entry count {len(entries)} exceeds limit {self.config.max_entries}"
             logger.warning(error_msg)
             return FlextResult.fail(error_msg)

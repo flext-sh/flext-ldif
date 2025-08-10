@@ -339,7 +339,7 @@ class TLdif:
                 object_classes,
             )
 
-            return FlextResult.ok(data=True)
+            return FlextResult.ok(True)
 
         except (ValueError, TypeError, AttributeError) as e:
             logger.debug("Exception type: %s", type(e).__name__)
@@ -418,7 +418,7 @@ class TLdif:
                 "Bulk LDIF validation completed successfully - entries_validated=%d",
                 total_entries,
             )
-            return FlextResult.ok(data=True)
+            return FlextResult.ok(True)
 
         except (ValueError, TypeError, AttributeError) as e:
             logger.exception("Exception during bulk validation")
@@ -643,7 +643,7 @@ class TLdif:
                 encoding,
             )
 
-            return FlextResult.ok(data=True)
+            return FlextResult.ok(True)
 
         except (OSError, ValueError, TypeError, AttributeError) as e:
             logger.debug("Exception type: %s", type(e).__name__)
@@ -744,7 +744,7 @@ class TLdif:
             # REFACTORING: Enhanced file size validation
             if file_size == 0:
                 logger.warning("Empty LDIF file detected: %s", absolute_path)
-                return FlextResult.ok(data=[])  # Return empty list for empty files
+                return FlextResult.ok([])  # Return empty list for empty files
 
             # Read file content with enhanced error handling
             logger.debug("Reading file content with encoding: %s", encoding)

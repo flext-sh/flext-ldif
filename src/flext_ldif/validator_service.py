@@ -48,7 +48,7 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
     def execute(self) -> FlextResult[bool]:
         """Execute validation operation - required by FlextDomainService."""
         # This would be called with specific data in real usage
-        return FlextResult.ok(data=True)
+        return FlextResult.ok(True)
 
     def validate_data(self, data: list[FlextLdifEntry]) -> FlextResult[bool]:
         """Validate data using flext-core pattern."""
@@ -59,7 +59,7 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
         validation_result = entry.validate_business_rules()
         if validation_result.is_failure:
             return FlextResult.fail(f"Entry validation failed: {validation_result.error}")
-        return FlextResult.ok(data=True)
+        return FlextResult.ok(True)
 
     def validate_entries(self, entries: list[FlextLdifEntry]) -> FlextResult[bool]:
         """Validate multiple LDIF entries."""
@@ -67,7 +67,7 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
             entry_result = self.validate_entry(entry)
             if entry_result.is_failure:
                 return FlextResult.fail(f"Entry {i} validation failed: {entry_result.error}")
-        return FlextResult.ok(data=True)
+        return FlextResult.ok(True)
 
     def validate_dn_format(self, dn: str) -> FlextResult[bool]:
         """Validate DN format compliance."""
@@ -82,7 +82,7 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
         if not dn_pattern.match(dn.strip()):
             return FlextResult.fail("DN format does not comply with RFC 4514")
 
-        return FlextResult.ok(data=True)
+        return FlextResult.ok(True)
 
 
 __all__ = ["FlextLdifValidatorService"]

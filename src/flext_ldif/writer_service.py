@@ -81,7 +81,7 @@ class FlextLdifWriterService(FlextDomainService[str]):
             path_obj.parent.mkdir(parents=True, exist_ok=True)
             path_obj.write_text(content_result.data or "", encoding=encoding)
 
-            return FlextResult.ok(data=True)
+            return FlextResult.ok(True)
 
         except Exception as e:
             return FlextResult.fail(f"File write error: {e!s}")

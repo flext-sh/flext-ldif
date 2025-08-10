@@ -378,6 +378,39 @@ class FlextLdifEntry(FlextEntity):
 
         return "\n".join(lines) + "\n"
 
+    @classmethod
+    def from_ldif_block(cls, block: str) -> FlextLdifEntry:
+        """Create entry from a minimal LDIF block.
+
+        Enforces:
+        - Non-empty block
+        - First non-empty line must start with 'dn:'
+        - Subsequent lines parsed as 'key: value' pairs; duplicates accumulate
+        """
+        if not block or not block.strip():
+            raise ValueError("LDIF block cannot be empty")
+
+        lines = [ln.strip() for ln in block.splitlines() if ln.strip()]
+        if not lines or not lines[0].lower().startswith("dn:"):
+            from flext_core.exceptions import FlextValidationError
+
+            raise FlextValidationError("LDIF block must start with DN")
+
+        dn_value = lines[0].split(":", 1)[1].strip()
+        attributes: dict[str, list[str]] = {}
+        for line in lines[1:]:
+            if ":" not in line:
+                continue
+            key, val = line.split(":", 1)
+            key = key.strip()
+            val = val.strip()
+            attributes.setdefault(key, []).append(val)
+
+        return cls(
+            dn=FlextLdifDistinguishedName(value=dn_value),
+            attributes=FlextLdifAttributes(attributes=attributes),
+        )
+
     def is_person_entry(self) -> bool:
         """Check if entry represents a person."""
         return self._has_object_class_in_set(LDAP_PERSON_CLASSES)
