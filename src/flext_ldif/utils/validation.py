@@ -74,7 +74,7 @@ class LdifValidator:
         if not is_valid:
             return FlextResult.fail(f"Invalid DN format: {dn_value}")
 
-        return FlextResult.ok(data=True)
+        return FlextResult.ok(True)
 
     @classmethod
     def validate_attribute_name(cls, attr_name: str) -> FlextResult[bool]:
@@ -98,7 +98,7 @@ class LdifValidator:
         if not is_valid:
             return FlextResult.fail(f"Invalid attribute name format: {attr_name}")
 
-        return FlextResult.ok(data=True)
+        return FlextResult.ok(True)
 
     @classmethod
     def validate_required_objectclass(cls, entry: FlextLdifEntry) -> FlextResult[bool]:
@@ -114,7 +114,7 @@ class LdifValidator:
         if not entry.has_attribute("objectClass"):
             return FlextResult.fail("Entry missing required objectClass attribute")
 
-        return FlextResult.ok(data=True)
+        return FlextResult.ok(True)
 
     @classmethod
     def validate_entry_completeness(cls, entry: FlextLdifEntry) -> FlextResult[bool]:
@@ -140,7 +140,7 @@ class LdifValidator:
         if not objectclass_validation.success:
             return objectclass_validation
 
-        return FlextResult.ok(data=True)
+        return FlextResult.ok(True)
 
     @classmethod
     def validate_entry_type(
@@ -177,7 +177,7 @@ class LdifValidator:
                 f"Expected: {expected_classes}, Found: {object_classes}",
             )
 
-        return FlextResult.ok(data=True)
+        return FlextResult.ok(True)
 
     @classmethod
     def is_person_entry(cls, entry: FlextLdifEntry) -> FlextResult[bool]:
@@ -249,7 +249,7 @@ class LdifSchemaValidator:
                 f"Entry missing required attributes: {', '.join(missing_attrs)}",
             )
 
-        return FlextResult.ok(data=True)
+        return FlextResult.ok(True)
 
     @classmethod
     def validate_person_schema(cls, entry: FlextLdifEntry) -> FlextResult[bool]:
@@ -308,7 +308,7 @@ def validate_attribute_format(attr_name: str, attr_value: str) -> FlextResult[bo
     if not attr_value.strip():
         return FlextResult.fail(f"Empty attribute value not allowed for {attr_name}")
 
-    return FlextResult.ok(data=True)
+    return FlextResult.ok(True)
 
 
 def validate_dn_format(dn_value: str) -> FlextResult[bool]:

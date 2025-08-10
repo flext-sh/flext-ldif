@@ -1153,6 +1153,6 @@ entries = result.data if result.success else []
 ---
 
 **API Version**: 0.9.0 | **Last Updated**: 2025-08-03  
-**Status**: Production Ready | **FLEXT Ecosystem**: Compatible
+**Status**: Active Development | **FLEXT Ecosystem**: Compatible
 
 This comprehensive API reference covers all public interfaces, integration patterns, and best practices for the FLEXT-LDIF library within the FLEXT ecosystem.
