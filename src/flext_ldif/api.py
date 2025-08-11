@@ -75,7 +75,7 @@ class FlextLdifAPI:
         _FlextLdifWriterService.model_rebuild(_types_namespace=ns)
         FlextLdifRepositoryService.model_rebuild(_types_namespace=ns)
         FlextLdifAnalyticsService.model_rebuild(_types_namespace=ns)
-        
+
         # Initialize infrastructure services using Pydantic field pattern
         self._parser_service = _FlextLdifParserService(config=self.config)
         self._validator_service = _FlextLdifValidatorService(config=self.config)

@@ -81,14 +81,14 @@ def validate_cli_result(result: object) -> FlextResult[bool]:
         # Check if result has expected CLI result attributes
         if hasattr(result, "exit_code"):
             if result.exit_code == 0:
-                return FlextResult.ok(True)
+                return FlextResult.ok(data=True)
             return FlextResult.fail(
                 f"CLI command failed with exit code {result.exit_code}",
             )
 
         # For other result types, check if it's truthy
         if result:
-            return FlextResult.ok(True)
+            return FlextResult.ok(data=True)
         return FlextResult.fail("CLI result validation failed")
 
     except Exception as e:

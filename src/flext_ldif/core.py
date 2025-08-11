@@ -279,7 +279,7 @@ class TLdif:
             ...     ),
             ... )
             >>>
-            >>> result = TLdif.validate(entry)
+            >>> result = TLdif.validate()
             >>> if result.success and result.data:
             ...     print("Entry is valid")
             ... else:
@@ -339,7 +339,7 @@ class TLdif:
                 object_classes,
             )
 
-            return FlextResult.ok(True)
+            return FlextResult.ok(data=True)
 
         except (ValueError, TypeError, AttributeError) as e:
             logger.debug("Exception type: %s", type(e).__name__)
@@ -418,7 +418,7 @@ class TLdif:
                 "Bulk LDIF validation completed successfully - entries_validated=%d",
                 total_entries,
             )
-            return FlextResult.ok(True)
+            return FlextResult.ok(data=True)
 
         except (ValueError, TypeError, AttributeError) as e:
             logger.exception("Exception during bulk validation")
@@ -643,7 +643,7 @@ class TLdif:
                 encoding,
             )
 
-            return FlextResult.ok(True)
+            return FlextResult.ok(data=True)
 
         except (OSError, ValueError, TypeError, AttributeError) as e:
             logger.debug("Exception type: %s", type(e).__name__)
