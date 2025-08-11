@@ -285,7 +285,6 @@ class FlextLdifEntry(FlextEntity):
             attrs_obj = FlextLdifAttributes(attributes=attributes)
             # Generate deterministic ID like model_validate does
             import hashlib
-            import uuid
             content_hash = hashlib.sha256(f"{dn}{attributes}".encode()).hexdigest()
             entry_id = f"{content_hash[:8]}-{content_hash[8:12]}-{content_hash[12:16]}-{content_hash[16:20]}-{content_hash[20:32]}"
             return cls(id=entry_id, dn=dn_obj, attributes=attrs_obj)

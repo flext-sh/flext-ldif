@@ -27,7 +27,6 @@ License: MIT
 from __future__ import annotations
 
 import logging
-import re
 from typing import TYPE_CHECKING
 
 from flext_core import FlextDomainService, FlextResult
@@ -48,7 +47,7 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
     def execute(self) -> FlextResult[bool]:
         """Execute validation operation - required by FlextDomainService."""
         # This would be called with specific data in real usage
-        return FlextResult.ok(True)
+        return FlextResult.ok(data=True)
 
     def validate_data(self, data: list[FlextLdifEntry]) -> FlextResult[bool]:
         """Validate data using flext-core pattern."""
@@ -59,7 +58,7 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
         validation_result = entry.validate_business_rules()
         if validation_result.is_failure:
             return FlextResult.fail(f"Entry validation failed: {validation_result.error}")
-        return FlextResult.ok(True)
+        return FlextResult.ok(data=True)
 
     def validate_entries(self, entries: list[FlextLdifEntry]) -> FlextResult[bool]:
         """Validate multiple LDIF entries."""
@@ -67,22 +66,19 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
             entry_result = self.validate_entry(entry)
             if entry_result.is_failure:
                 return FlextResult.fail(f"Entry {i} validation failed: {entry_result.error}")
-        return FlextResult.ok(True)
+        return FlextResult.ok(data=True)
 
     def validate_dn_format(self, dn: str) -> FlextResult[bool]:
-        """Validate DN format compliance."""
-        if not dn or not dn.strip():
-            return FlextResult.fail("DN cannot be empty")
-
-        if "=" not in dn:
-            return FlextResult.fail("DN must contain attribute=value pairs")
-
-        # Basic RFC 4514 validation
-        dn_pattern = re.compile(r"^([A-Za-z][A-Za-z0-9]*=[^,]+)(,\s*[A-Za-z][A-Za-z0-9]*=[^,]+)*$")
-        if not dn_pattern.match(dn.strip()):
-            return FlextResult.fail("DN format does not comply with RFC 4514")
-
-        return FlextResult.ok(True)
+        """Validate DN format compliance.
+        
+        ✅ ELIMINATED DUPLICATION: Delegates to validation.LdifValidator
+        which properly delegates to flext-ldap root API.
+        """
+        # Import locally to avoid circular dependency
+        from flext_ldif.validation import LdifValidator
+        
+        # Delegate to consolidated validation that uses flext-ldap APIs
+        return LdifValidator.validate_dn(dn)
 
 
 __all__ = ["FlextLdifValidatorService"]

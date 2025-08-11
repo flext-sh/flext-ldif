@@ -44,6 +44,7 @@ if TYPE_CHECKING:
 
 import click
 import yaml  # type: ignore
+
 # from flext_cli import FlextCliConfig, create_flext_cli_config, setup_flext_cli
 from flext_core import get_logger
 
@@ -917,7 +918,7 @@ def main() -> None:
 
         # logger.debug("Setting up CLI with flext-cli foundation")
         # setup_result = setup_flext_cli(config_result.data)
-        setup_result = type('Result', (), {'success': True})()  # Fallback
+        setup_result = type("Result", (), {"success": True})()  # Fallback
         logger.trace("CLI setup result success: %s", setup_result.success)
 
         if not setup_result.success:
