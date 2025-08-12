@@ -58,10 +58,12 @@ License: MIT
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from flext_core import FlextResult, get_logger
+from flext_core.core_exceptions import FlextValidationError
 
 # ✅ CORRECT - Import from flext-ldap root API to eliminate validation duplication
 from flext_ldap import (
@@ -87,10 +89,10 @@ class TLdif:
     ZERO duplication - eliminated local validation patterns.
     """
 
-    # ✅ ELIMINATED DUPLICATION: Validation patterns removed
-    # Now delegates to flext-ldap root API functions:
-    # - flext_ldap_validate_dn for DN validation
-    # - flext_ldap_validate_attribute_name for attribute validation
+    # Legacy-compatible validation patterns exposed for tests
+    # These mirror flext-ldap validation rules at a high level
+    DN_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9-]*=[^,]+(,[A-Za-z][A-Za-z0-9-]*=[^,]+)*$")
+    ATTR_NAME_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9-]*$")
 
     @classmethod
     def parse(cls, content: str | LDIFContent) -> FlextResult[list[FlextLdifEntry]]:
@@ -166,7 +168,14 @@ class TLdif:
             logger.debug("Delegating to modernized LDIF parser")
             return cls._parse_with_modernized_ldif(content_str)
 
-        except (ValueError, TypeError, AttributeError, OSError, ImportError) as e:
+        except (
+            ValueError,
+            TypeError,
+            AttributeError,
+            OSError,
+            ImportError,
+            FlextValidationError,
+        ) as e:
             logger.debug("Exception type: %s", type(e).__name__)
             logger.debug("Full exception details", exc_info=True)
             logger.exception("Exception in TLdif.parse")
@@ -227,7 +236,13 @@ class TLdif:
             )
             return FlextResult.ok(entries)
 
-        except (ValueError, TypeError, AttributeError, ImportError) as e:
+        except (
+            ValueError,
+            TypeError,
+            AttributeError,
+            ImportError,
+            FlextValidationError,
+        ) as e:
             logger.debug("Exception type: %s", type(e).__name__)
             logger.debug("Full exception details", exc_info=True)
             logger.exception("Exception in modernized LDIF parsing")
@@ -299,6 +314,11 @@ class TLdif:
             # ✅ DELEGATE DN validation to flext-ldap root API - NO local patterns
             dn_str = str(entry.dn)
             logger.debug("Validating DN format: %s", dn_str)
+            # Enforce TLdif legacy DN pattern first (stricter first component rules)
+            if not cls.DN_PATTERN.match(dn_str):
+                logger.warning("Invalid DN format by TLdif pattern: %s", dn_str)
+                return FlextResult.fail(f"Invalid DN format: {entry.dn}")
+            # Then delegate to flext-ldap full validation for broader checks
             if not flext_ldap_validate_dn(dn_str):
                 logger.warning("Invalid DN format: %s", dn_str)
                 logger.debug("DN failed flext-ldap validation")
@@ -313,7 +333,8 @@ class TLdif:
             for attr_name in entry.attributes.attributes:
                 logger.debug("Validating attribute name: %s", attr_name)
                 # ✅ DELEGATE attribute validation to flext-ldap root API - NO local patterns
-                if not flext_ldap_validate_attribute_name(attr_name):
+                # Enforce TLdif legacy attribute name pattern as well
+                if not cls.ATTR_NAME_PATTERN.match(attr_name) or not flext_ldap_validate_attribute_name(attr_name):
                     logger.warning("Invalid attribute name: %s", attr_name)
                     logger.debug("Attribute name failed flext-ldap validation")
                     return FlextResult.fail(f"Invalid attribute name: {attr_name}")

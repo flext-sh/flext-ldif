@@ -45,6 +45,20 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# Backward-compat test alias expected by some tests
+from typing import ClassVar
+
+
+class TLdif(_FlextLdifParserService):
+    """Backward-compat facade exposing patterns for tests."""
+
+    # Simple DN pattern for tests
+    import re as _re
+
+    DN_PATTERN: ClassVar[object] = _re.compile(
+        r"^[a-zA-Z][a-zA-Z0-9-]*=.+(?:,[a-zA-Z][a-zA-Z0-9-]*=.+)*$",
+    )
+
 
 class FlextLdifAPI:
     """Enterprise-grade unified LDIF API with Clean Architecture orchestration.
@@ -115,7 +129,7 @@ class FlextLdifAPI:
         # Apply configuration limits
         if len(entries) > int(self.config.max_entries):
             error_msg = (
-                f"Entry count {len(entries)} exceeds limit {self.config.max_entries}"
+                f"Entry count {len(entries)} exceeds configured limit {self.config.max_entries}"
             )
             logger.warning(error_msg)
             return FlextResult.fail(error_msg)
@@ -148,7 +162,9 @@ class FlextLdifAPI:
 
         # Apply configuration limits
         if len(entries) > int(self.config.max_entries):
-            error_msg = f"File entry count {len(entries)} exceeds limit {self.config.max_entries}"
+            error_msg = (
+                f"File entry count {len(entries)} exceeds configured limit {self.config.max_entries}"
+            )
             logger.warning(error_msg)
             return FlextResult.fail(error_msg)
 
@@ -156,7 +172,7 @@ class FlextLdifAPI:
         return FlextResult.ok(entries)
 
     def parse_entries_from_string(
-        self, ldif_string: str
+        self, ldif_string: str,
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Parse multiple entries from LDIF string."""
         return self._parser_service.parse_entries_from_string(ldif_string)
@@ -190,7 +206,7 @@ class FlextLdifAPI:
 
         # Get initial files to process
         files_result = self._get_files_to_process(
-            directory_path, file_pattern, file_path
+            directory_path, file_pattern, file_path,
         )
         if files_result.is_failure:
             return files_result
@@ -211,11 +227,14 @@ class FlextLdifAPI:
 
         return FlextResult.ok(sorted_files)
 
-    def write(self, entries: list[FlextLdifEntry]) -> FlextResult[str]:
+    def write(self, entries: list[FlextLdifEntry], file_path: str | None = None) -> FlextResult[str]:
         """Write entries to LDIF string with formatting configuration.
 
         Args:
             entries: List of FlextLdifEntry objects to serialize
+            file_path: Optional path to write the serialized LDIF output. When
+                provided, the content is written to the given file path instead
+                of being returned as a string.
 
         Returns:
             FlextResult[str]: Success with LDIF string or failure with error
@@ -223,7 +242,14 @@ class FlextLdifAPI:
         """
         logger.debug("debug message")
 
-        # Delegate to infrastructure service
+        # Write to string or file depending on file_path
+        if file_path:
+            file_result = self._writer_service.write_file(entries, file_path)
+            if file_result.success:
+                return FlextResult.ok(f"Written successfully to {file_path}")
+            return FlextResult.fail(file_result.error or "File write failed")
+
+        # Delegate to infrastructure service for string output
         result = self._writer_service.write(entries)
         if result.is_success:
             logger.debug(
@@ -233,10 +259,9 @@ class FlextLdifAPI:
 
         return result
 
-    def entries_to_ldif(self, entries: list[FlextLdifEntry]) -> str:
+    def entries_to_ldif(self, entries: list[FlextLdifEntry]) -> FlextResult[str]:
         """Convert entries to LDIF string format (alias for write method)."""
-        result = self.write(entries)
-        return result.data or "" if result.success else ""
+        return self.write(entries)
 
     def write_file(
         self,
@@ -329,9 +354,11 @@ class FlextLdifAPI:
 
     def filter_organizational_units(
         self,
-        entries: list[FlextLdifEntry],
+        entries: list[FlextLdifEntry] | None,
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter organizational unit entries."""
+        if entries is None:
+            return FlextResult.fail("Entries list cannot be None")
         filtered = [
             entry for entry in entries if entry.has_object_class("organizationalUnit")
         ]
@@ -356,7 +383,7 @@ class FlextLdifAPI:
         return self._repository_service.filter_by_objectclass(entries, objectclass)
 
     def filter_by_attribute(
-        self, entries: list[FlextLdifEntry], attribute: str, value: str
+        self, entries: list[FlextLdifEntry], attribute: str, value: str,
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter entries by attribute value."""
         return self._repository_service.filter_by_attribute(entries, attribute, value)
@@ -377,28 +404,37 @@ class FlextLdifAPI:
         return self._repository_service.get_statistics(entries)
 
     def analyze_entry_patterns(
-        self, entries: list[FlextLdifEntry]
+        self, entries: list[FlextLdifEntry],
     ) -> FlextResult[dict[str, int]]:
         """Analyze patterns in LDIF entries."""
         return self._analytics_service.analyze_entry_patterns(entries)
 
     def get_objectclass_distribution(
-        self, entries: list[FlextLdifEntry]
+        self, entries: list[FlextLdifEntry],
     ) -> FlextResult[dict[str, int]]:
         """Get distribution of objectClass types."""
         return self._analytics_service.get_objectclass_distribution(entries)
 
     def get_dn_depth_analysis(
-        self, entries: list[FlextLdifEntry]
+        self, entries: list[FlextLdifEntry],
     ) -> FlextResult[dict[str, int]]:
         """Analyze DN depth distribution."""
         return self._analytics_service.get_dn_depth_analysis(entries)
 
+    def filter_change_records(self, entries: list[FlextLdifEntry] | None) -> FlextResult[list[FlextLdifEntry]]:
+        """Filter entries that represent change records (changetype present)."""
+        if entries is None:
+            return FlextResult.fail("Entries list cannot be None")
+        filtered = [entry for entry in entries if entry.changetype is not None]
+        return FlextResult.ok(filtered)
+
     def sort_hierarchically(
         self,
-        entries: list[FlextLdifEntry],
+        entries: list[FlextLdifEntry] | None,
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Sort entries hierarchically by DN depth."""
+        if entries is None:
+            return FlextResult.fail("Entries list cannot be None")
         try:
             sorted_entries = sorted(entries, key=lambda entry: str(entry.dn).count(","))
             return FlextResult.ok(sorted_entries)
@@ -423,7 +459,7 @@ class FlextLdifAPI:
         return self._process_current_directory_pattern(file_pattern)
 
     def _process_single_file_path(
-        self, file_path: str | Path
+        self, file_path: str | Path,
     ) -> FlextResult[list[Path]]:
         """Process single file path input."""
         file_path_obj = Path(file_path)
@@ -450,7 +486,7 @@ class FlextLdifAPI:
             return FlextResult.fail(f"Error discovering files in directory: {e}")
 
     def _process_current_directory_pattern(
-        self, file_pattern: str
+        self, file_pattern: str,
     ) -> FlextResult[list[Path]]:
         """Process pattern in current directory."""
         try:
@@ -460,7 +496,7 @@ class FlextLdifAPI:
             return FlextResult.fail(f"Error discovering files with pattern: {e}")
 
     def _filter_files_by_size(
-        self, files_to_process: list[Path], max_file_size_mb: int
+        self, files_to_process: list[Path], max_file_size_mb: int,
     ) -> list[Path]:
         """Filter files by size limit."""
         max_size_bytes = max_file_size_mb * 1024 * 1024

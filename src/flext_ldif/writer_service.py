@@ -78,7 +78,11 @@ class FlextLdifWriterService(FlextDomainService[str]):
                 return FlextResult.fail(f"Content generation failed: {content_result.error}")
 
             path_obj = Path(file_path)
-            path_obj.parent.mkdir(parents=True, exist_ok=True)
+            # If parent is root and creation is requested, simulate permission error
+            try:
+                path_obj.parent.mkdir(parents=True, exist_ok=True)
+            except PermissionError as e:
+                return FlextResult.fail(f"Directory creation failed: {e}")
             path_obj.write_text(content_result.data or "", encoding=encoding)
 
             return FlextResult.ok(data=True)

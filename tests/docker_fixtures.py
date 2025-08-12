@@ -249,35 +249,19 @@ member: uid=bob.wilson,ou=people,{OPENLDAP_BASE_DN}
 """
 
         try:
-            # Write LDIF to container
-            exec_result = self.container.exec_run(
-                ["sh", "-c", f"cat > /tmp/test_data.ldif << 'EOF'\n{test_ldif}\nEOF"],
-                demux=True,
+            # Create temp file and import LDIF inside the container without hardcoded /tmp
+            shell_cmd = (
+                "TF=$(mktemp -t flext_ldif.XXXXXX.ldif); "
+                "cat > \"$TF\" << 'EOF'\n"
+                f"{test_ldif}\n"
+                "EOF\n"
+                '/usr/bin/ldapadd -x -H ldap://localhost:389 -D "' + OPENLDAP_ADMIN_DN + '" '
+                '-w "' + OPENLDAP_ADMIN_PASSWORD + '" -f "$TF"; '
+                'RC=$?; rm -f "$TF"; exit $RC'
             )
-
+            exec_result = self.container.exec_run(["sh", "-c", shell_cmd], demux=True)
             if exec_result.exit_code != 0:
                 return
-
-            # Import LDIF data
-            exec_result = self.container.exec_run(
-                [
-                    "ldapadd",
-                    "-x",
-                    "-H",
-                    "ldap://localhost:389",
-                    "-D",
-                    OPENLDAP_ADMIN_DN,
-                    "-w",
-                    OPENLDAP_ADMIN_PASSWORD,
-                    "-f",
-                    "/tmp/test_data.ldif",
-                ],
-                demux=True,
-            )
-
-            if exec_result.exit_code == 0:
-                pass
-
         except (RuntimeError, ValueError, TypeError):
             pass
 
@@ -341,24 +325,26 @@ member: uid=bob.wilson,ou=people,{OPENLDAP_BASE_DN}
             return f"Failed to get logs: {e}"
 
 
-# Global container manager instance
-_container_manager: OpenLDAPContainerManager | None = None
+@pytest.fixture(scope="session")
+def container_manager() -> OpenLDAPContainerManager:
+    """Session-scoped manager to control lifecycle without globals."""
+    mgr = OpenLDAPContainerManager()
+    try:
+        yield mgr
+    finally:
+        with contextlib.suppress(Exception):
+            mgr.stop_container()
 
 
 @pytest.fixture(scope="session")
-def docker_openldap_container() -> Container:
+def docker_openldap_container(container_manager: OpenLDAPContainerManager) -> Container:
     """Session-scoped fixture that provides OpenLDAP Docker container for LDIF testing.
 
     This fixture starts an OpenLDAP container with test data at the beginning of the test
     session and stops it at the end. The container is shared across all tests.
     """
-    global _container_manager
-
-    if _container_manager is None:
-        _container_manager = OpenLDAPContainerManager()
-
-    # Start container
-    container = _container_manager.start_container()
+    # Start container using session manager
+    container = container_manager.start_container()
 
     # Set environment variables for tests
     for key, value in TEST_ENV_VARS.items():
@@ -367,7 +353,7 @@ def docker_openldap_container() -> Container:
     yield container
 
     # Cleanup
-    _container_manager.stop_container()
+    container_manager.stop_container()
 
     # Clean up environment variables
     for key in TEST_ENV_VARS:
@@ -376,7 +362,7 @@ def docker_openldap_container() -> Container:
 
 @pytest.fixture
 def ldif_test_config(docker_openldap_container: Container) -> dict[str, object]:
-    """Provides LDIF test configuration for individual tests."""
+    """Provide LDIF test configuration for individual tests."""
     return {
         "server_url": TEST_ENV_VARS["LDIF_TEST_SERVER"],
         "bind_dn": TEST_ENV_VARS["LDIF_TEST_BIND_DN"],
@@ -387,11 +373,14 @@ def ldif_test_config(docker_openldap_container: Container) -> dict[str, object]:
 
 
 @pytest.fixture
-def real_ldif_data(ldif_test_config: dict[str, object]) -> str:
-    """Provides real LDIF data exported from the OpenLDAP container."""
-    if _container_manager and _container_manager.is_container_running():
+def real_ldif_data(
+    ldif_test_config: dict[str, object],
+    container_manager: OpenLDAPContainerManager,
+) -> str:
+    """Provide real LDIF data exported from the OpenLDAP container."""
+    if container_manager and container_manager.is_container_running():
         # Export LDIF data from container
-        ldif_data = _container_manager.get_ldif_export()
+        ldif_data = container_manager.get_ldif_export()
         if ldif_data:
             return ldif_data
 
@@ -425,7 +414,12 @@ async def temporary_ldif_data(
     ldif_content: str,
 ) -> AsyncGenerator[str]:
     """Context manager for temporary LDIF data that is auto-cleaned."""
-    temp_file = f"/tmp/temp_{int(time.time())}.ldif"
+    # Create temp file path in container safely without hardcoded /tmp
+    mktemp_result = container.exec_run(["mktemp", "-t", "flext_ldif.XXXXXX.ldif"], demux=True)
+    if mktemp_result.exit_code != 0 or not mktemp_result.output or not mktemp_result.output[0]:
+        err_msg = "Failed to create temporary file in container"
+        raise RuntimeError(err_msg)
+    temp_file = mktemp_result.output[0].decode().strip()
 
     try:
         # Write LDIF to container
@@ -449,7 +443,7 @@ async def temporary_ldif_data(
 def check_docker_available() -> bool:
     """Check if Docker is available on the system."""
     try:
-        subprocess.run(["docker", "--version"], check=True, capture_output=True)
+        subprocess.run(["/usr/bin/docker", "--version"], check=True, capture_output=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
         return False
     else:

@@ -412,7 +412,6 @@ objectClass: person
 
     def test_e2e_performance_workflow(self) -> None:
         """Test E2E workflow performance with larger datasets."""
-
         # Generate larger LDIF content
         large_content = """dn: dc=performance,dc=com
 objectClass: top
@@ -493,7 +492,6 @@ employeeNumber: EMP{i:03d}
 
     def test_e2e_memory_efficiency_workflow(self) -> None:
         """Test E2E workflow memory efficiency."""
-
         # Generate medium-sized LDIF content
         content = ""
         for i in range(20):

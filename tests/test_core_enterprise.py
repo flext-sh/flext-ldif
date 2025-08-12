@@ -304,7 +304,6 @@ invalid: line: format
 
     def test_performance_large_ldif(self) -> None:
         """Test performance with larger LDIF content."""
-
         # Generate larger LDIF content
         large_content = ""
         for i in range(100):
@@ -332,7 +331,6 @@ mail: user{i}@example.com
 
     def test_memory_usage_large_ldif(self) -> None:
         """Test memory usage with larger LDIF content."""
-
         # Generate content and measure memory
         large_content = ""
         for i in range(200):
@@ -357,7 +355,6 @@ sn: User{i}
 
     def test_concurrent_parsing(self, sample_ldif_content: str) -> None:
         """Test concurrent parsing operations."""
-
         results = queue.Queue()
 
         def parse_worker():

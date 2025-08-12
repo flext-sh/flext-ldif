@@ -67,15 +67,9 @@ import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-# Core public API
+# Core public API - Import from actual files
 # Application layer API
 from .api import FlextLdifAPI
-
-# ✅ CORRECT ARCHITECTURE: Export actual service classes for DI composition
-# LIBRARY pattern - provides separate components that applications can inject and compose
-from .parser_service import FlextLdifParserService
-from .validator_service import FlextLdifValidatorService
-from .writer_service import FlextLdifWriterService
 
 # Configuration management
 from .config import FlextLdifConfig
@@ -91,13 +85,13 @@ from .exceptions import (
     FlextLdifValidationError,
 )
 
-# Legacy service functions
-from .legacy import (
-    get_ldif_parser,
-    get_ldif_validator,
-    get_ldif_writer,
-    register_ldif_services,
-)
+# Service classes
+from .analytics_service import FlextLdifAnalyticsService
+from .parser_service import FlextLdifParserService
+from .repository_service import FlextLdifRepositoryService
+from .transformer_service import FlextLdifTransformerService
+from .validator_service import FlextLdifValidatorService
+from .writer_service import FlextLdifWriterService
 
 # Domain models and value objects
 from .models import (
@@ -112,10 +106,8 @@ from .models import (
     LDIFLines,
 )
 
-# ✅ CORRECT ARCHITECTURE: Export actual service classes for DI composition
-from .analytics_service import FlextLdifAnalyticsService
-from .repository_service import FlextLdifRepositoryService
-from .transformer_service import FlextLdifTransformerService
+# CLI functionality
+from .cli_utils import display_entry_count  # Legacy path compatibility
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -134,14 +126,27 @@ __version__ = "0.9.0"
 # These functions provide fallback interfaces with warnings
 
 
+_GLOBAL_API_INSTANCE: FlextLdifAPI | None = None
+
+
 def flext_ldif_get_api(config: FlextLdifConfig | None = None) -> FlextLdifAPI:
-    """Legacy function - use FlextLdifAPI() directly."""
+    """Legacy function - returns a global singleton API instance.
+
+    Subsequent calls return the same instance; the first call can optionally
+    receive a configuration that will be used to construct the singleton.
+    """
     warnings.warn(
         "flext_ldif_get_api() is deprecated. Use FlextLdifAPI() directly.",
         DeprecationWarning,
         stacklevel=2,
     )
-    return FlextLdifAPI(config)
+    global _GLOBAL_API_INSTANCE
+    if _GLOBAL_API_INSTANCE is None:
+        _GLOBAL_API_INSTANCE = FlextLdifAPI(config)
+    elif config is not None:
+        # Allow reconfiguration by replacing the singleton when config is provided
+        _GLOBAL_API_INSTANCE = FlextLdifAPI(config)
+    return _GLOBAL_API_INSTANCE
 
 
 def flext_ldif_parse(content: str) -> list[FlextLdifEntry]:
@@ -213,6 +218,15 @@ def flext_ldif_write(entries: list[FlextLdifEntry], file_path: str | None = None
 
 
 __all__: list[str] = [
+    "annotations", "Path", "TYPE_CHECKING", "FlextLdifAPI", "FlextLdifConfig", "TLdif",
+    "FlextLdifEntryError", "FlextLdifError", "FlextLdifParseError", "FlextLdifValidationError",
+    "FlextLdifAnalyticsService", "FlextLdifParserService", "FlextLdifRepositoryService",
+    "FlextLdifTransformerService", "FlextLdifValidatorService", "FlextLdifWriterService",
+    "FlextLdifAttributes", "FlextLdifAttributesDict", "FlextLdifDistinguishedName", "FlextLdifDNDict",
+    "FlextLdifEntry", "FlextLdifEntryDict", "FlextLdifFactory", "LDIFContent", "LDIFLines",
+    "display_entry_count", "cli_main", "__version__", "flext_ldif_get_api", "flext_ldif_parse",
+    "flext_ldif_validate", "flext_ldif_write",
+] = [
     "FlextLdifAnalyticsService",
     "FlextLdifAPI",
     "FlextLdifAttributes",
@@ -237,12 +251,9 @@ __all__: list[str] = [
     "TLdif",
     "__version__",
     "cli_main",
+    "display_entry_count",
     "flext_ldif_get_api",
     "flext_ldif_parse",
     "flext_ldif_validate",
     "flext_ldif_write",
-    "get_ldif_parser",
-    "get_ldif_validator",
-    "get_ldif_writer",
-    "register_ldif_services",
 ]

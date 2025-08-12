@@ -52,8 +52,10 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifEntry]]):
         # This would be called with specific content in real usage
         return FlextResult.ok([])
 
-    def parse(self, content: str) -> FlextResult[list[FlextLdifEntry]]:
+    def parse(self, content: str | object) -> FlextResult[list[FlextLdifEntry]]:
         """Parse LDIF content into domain entities."""
+        if not isinstance(content, str):
+            return FlextResult.fail("Invalid LDIF content type")
         if not content or not content.strip():
             return FlextResult.ok([])
 
@@ -84,7 +86,7 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifEntry]]):
             return FlextResult.fail(f"Parse error: {e!s}")
 
     def parse_ldif_file(
-        self, file_path: str | Path, encoding: str = DEFAULT_INPUT_ENCODING
+        self, file_path: str | Path, encoding: str = DEFAULT_INPUT_ENCODING,
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Parse LDIF file into domain entities."""
         try:
@@ -99,7 +101,7 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifEntry]]):
             return FlextResult.fail(f"File read error: {e!s}")
 
     def parse_entries_from_string(
-        self, ldif_string: str
+        self, ldif_string: str,
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Parse multiple entries from LDIF string."""
         return self.parse(ldif_string)

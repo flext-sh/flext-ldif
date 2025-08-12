@@ -32,6 +32,8 @@ from typing import TYPE_CHECKING
 from flext_core import FlextDomainService, FlextResult
 from pydantic import Field
 
+from flext_ldif.validation import LdifValidator
+
 if TYPE_CHECKING:
     from .config import FlextLdifConfig
     from .models import FlextLdifEntry
@@ -57,7 +59,24 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
         """Validate single LDIF entry."""
         validation_result = entry.validate_business_rules()
         if validation_result.is_failure:
-            return FlextResult.fail(f"Entry validation failed: {validation_result.error}")
+            return FlextResult.fail(
+                f"Entry validation failed: {validation_result.error}",
+            )
+
+        # Enforce configuration-driven rules
+        if self.config is not None and self.config.strict_validation:
+            if not self.config.allow_empty_attributes:
+                # Empty attribute lists are not allowed in strict mode
+                for attr_name, values in entry.attributes.attributes.items():
+                    if len(values) == 0:
+                        return FlextResult.fail(
+                            f"Empty attribute values not allowed for '{attr_name}' in strict mode",
+                        )
+                    # Also disallow empty-string values strictly
+                    if any(v is None or (isinstance(v, str) and v.strip() == "") for v in values):
+                        return FlextResult.fail(
+                            f"Empty attribute value not allowed for '{attr_name}' in strict mode",
+                        )
         return FlextResult.ok(data=True)
 
     def validate_entries(self, entries: list[FlextLdifEntry]) -> FlextResult[bool]:
@@ -70,13 +89,10 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
 
     def validate_dn_format(self, dn: str) -> FlextResult[bool]:
         """Validate DN format compliance.
-        
+
         ✅ ELIMINATED DUPLICATION: Delegates to validation.LdifValidator
         which properly delegates to flext-ldap root API.
         """
-        # Import locally to avoid circular dependency
-        from flext_ldif.validation import LdifValidator
-        
         # Delegate to consolidated validation that uses flext-ldap APIs
         return LdifValidator.validate_dn(dn)
 

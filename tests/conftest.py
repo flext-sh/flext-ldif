@@ -1,5 +1,4 @@
-"""
-FLEXT-LDIF Test Configuration and Fixtures
+"""FLEXT-LDIF Test Configuration and Fixtures.
 
 This module provides comprehensive pytest configuration, fixtures, and test utilities
 for the FLEXT-LDIF test suite, implementing enterprise-grade testing patterns with
@@ -49,6 +48,7 @@ Integration:
 Author: FLEXT Development Team
 Version: 0.9.0
 License: MIT
+
 """
 
 from __future__ import annotations
@@ -285,7 +285,7 @@ def ldap_schema_config() -> dict[str, object]:
 # Entry transformation fixtures
 @pytest.fixture
 def transformation_rules() -> dict[str, object]:
-    """Transformation rules for LDIF processing."""
+    """Provide transformation rules for LDIF processing."""
     return {
         "attribute_mappings": {
             "telephoneNumber": "phone",
@@ -324,7 +324,7 @@ def ldif_filters() -> dict[str, object]:
 # Statistics fixtures
 @pytest.fixture
 def expected_ldif_stats() -> dict[str, object]:
-    """Expected LDIF processing statistics."""
+    """Provide expected LDIF processing statistics."""
     return {
         "total_entries": 4,
         "successful_entries": 4,
@@ -362,7 +362,7 @@ objectClass: person
 # Performance fixtures
 @pytest.fixture
 def large_ldif_config() -> dict[str, object]:
-    """Configuration for large LDIF processing tests."""
+    """Provide configuration for large LDIF processing tests."""
     return {
         "batch_size": 1000,
         "memory_limit": "100MB",
