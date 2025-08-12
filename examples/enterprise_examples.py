@@ -22,7 +22,7 @@ from flext_ldif import (
 
 
 def example_basic_ldif_processing() -> None:
-    """Example: Basic LDIF parsing, validation, and writing."""
+    """Demonstrate basic LDIF parsing, validation, and writing."""
     # Sample LDIF content
     ldif_content = """dn: cn=John Doe,ou=people,dc=example,dc=com
 objectClass: person
@@ -62,7 +62,7 @@ uid: janesmith
 
 
 def example_api_usage() -> None:
-    """Example: Using FlextLdifAPI for advanced processing."""
+    """Demonstrate using ``FlextLdifAPI`` for advanced processing."""
     ldif_content = """dn: ou=people,dc=company,dc=com
 objectClass: organizationalUnit
 ou: people
@@ -134,7 +134,7 @@ member: cn=Alice Johnson,ou=people,dc=company,dc=com
 
 
 def example_file_operations() -> None:
-    """Example: File-based LDIF operations."""
+    """Demonstrate file-based LDIF operations."""
     ldif_content = """dn: dc=filetest,dc=com
 objectClass: top
 objectClass: domain
@@ -198,7 +198,7 @@ mail: test.user@filetest.com
 
 
 def example_convenience_functions() -> None:
-    """Example: Using convenience functions for simple tasks."""
+    """Demonstrate convenience functions for simple tasks."""
     ldif_content = """dn: cn=convenience,dc=example,dc=com
 objectClass: person
 cn: convenience
@@ -224,7 +224,7 @@ mail: convenience@example.com
 
 
 def example_configuration_scenarios() -> None:
-    """Example: Different configuration scenarios."""
+    """Demonstrate different configuration scenarios."""
     # Test content with multiple entries
     large_ldif = ""
     for i in range(15):
@@ -263,7 +263,7 @@ sn: user{i:02d}
 
 
 def example_error_handling() -> None:
-    """Example: Proper error handling patterns."""
+    """Demonstrate proper error handling patterns."""
     # Invalid LDIF content
     invalid_ldif = """This is not LDIF content
 It has no proper structure
@@ -295,7 +295,7 @@ cn: incomplete
 
 
 def example_advanced_filtering() -> None:
-    """Example: Advanced filtering and processing."""
+    """Demonstrate advanced filtering and processing."""
     complex_ldif = """dn: dc=advanced,dc=com
 objectClass: top
 objectClass: domain
@@ -404,7 +404,7 @@ member: cn=Mary Manager,ou=people,dc=advanced,dc=com
 
 
 def example_performance_monitoring() -> None:
-    """Example: Performance monitoring and optimization."""
+    """Demonstrate performance monitoring and optimization."""
     # Generate larger dataset
     large_ldif = (
         "dn: dc=perf,dc=com\nobjectClass: top\nobjectClass: domain\ndc: perf\n\n"

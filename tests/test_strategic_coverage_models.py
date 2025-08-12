@@ -125,10 +125,9 @@ class TestFlextLdifAttributesStrategic:
         # Should handle duplicates according to implementation
 
         # Caso 3: Add None value (should be handled gracefully)
-        try:
+        import contextlib
+        with contextlib.suppress(ValueError, TypeError):
             attrs.add_value("null_test", None)
-        except (ValueError, TypeError):
-            pass  # May not accept None values
 
         # Caso 4: Add empty string
         new_attrs4 = attrs.add_value("empty_test", "")
@@ -406,12 +405,11 @@ class TestModelsMiscellaneous:
         assert repr(dn) is not None
 
         # Test validation methods exist and can be called
-        try:
+        import contextlib
+        with contextlib.suppress(Exception):
             dn.get_rdn()
             dn.get_parent_dn()
             dn.to_dn_dict()
-        except Exception:
-            pass  # Methods may have specific requirements
 
     def test_performance_edge_cases(self) -> None:
         """Testa edge cases de performance."""

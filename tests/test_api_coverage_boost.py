@@ -262,29 +262,21 @@ title:
         api = FlextLdifAPI()
 
         # Caso 1: Conteúdo None
-        try:
+        import contextlib
+        with contextlib.suppress(TypeError, AttributeError):
             result = api.parse(None)
-            # Pode retornar erro ou lançar exceção
-        except (TypeError, AttributeError):
-            pass  # Esperado
 
         # Caso 2: Conteúdo não-string
-        try:
+        with contextlib.suppress(TypeError, AttributeError):
             result = api.parse(123)
-            # Pode retornar erro ou lançar exceção
-        except (TypeError, AttributeError):
-            pass  # Esperado
 
         # Caso 3: Lista vazia para validação
         result = api.validate([])
         assert result.success  # Lista vazia deve ser válida
 
         # Caso 4: Objetos inválidos para validação
-        try:
+        with contextlib.suppress(TypeError, AttributeError, FlextLdifValidationError):
             result = api.validate(["not_an_entry"])
-            # Deve falhar ou lançar exceção
-        except (TypeError, AttributeError, FlextLdifValidationError):
-            pass  # Esperado
 
     def test_filter_methods_edge_cases(self) -> None:
         """Testa métodos de filtro com edge cases."""
@@ -445,7 +437,7 @@ cn: REDACTED_LDAP_BIND_PASSWORD
 class TestFlextLdifValidateFunction:
     """Testes para a função flext_ldif_validate (C901 complexity 14)."""
 
-    def test_flext_ldif_validate_complex_cases_SKIP(self) -> None:
+    def test_flext_ldif_validate_complex_cases_skip(self) -> None:
         """Testa flext_ldif_validate com casos complexos para cobrir C901."""
         api = FlextLdifAPI()
 

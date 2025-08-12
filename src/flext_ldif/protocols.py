@@ -184,7 +184,7 @@ __all__ = [
     # Legacy Aliases (DEPRECATED - for backward compatibility only)
     "LdifParserProtocol",      # Use FlextLdifParserProtocol instead
     "LdifRepositoryProtocol",  # Use FlextLdifRepositoryProtocol instead
-    "LdifTransformerProtocol", # Use FlextLdifTransformerProtocol instead
+    "LdifTransformerProtocol",  # Use FlextLdifTransformerProtocol instead
     "LdifValidatorProtocol",   # Use FlextLdifValidatorProtocol instead
     "LdifWriterProtocol",      # Use FlextLdifWriterProtocol instead
 ]

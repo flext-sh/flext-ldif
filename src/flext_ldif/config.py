@@ -13,7 +13,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_core import FlextConfig, FlextResult
+from flext_core import FlextConfig
+from flext_core.result import FlextResult
 from pydantic import Field
 
 # RFC 2849 constants for line wrap lengths
@@ -46,19 +47,19 @@ class FlextLdifConfig(FlextConfig):
     allow_empty_attributes: bool = Field(default=False)
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate LDIF configuration business rules."""
+        """Validate LDIF configuration business rules with detailed errors."""
         # RFC 2849 compliance
         if not (MIN_LINE_WRAP_LENGTH <= self.line_wrap_length <= MAX_LINE_WRAP_LENGTH):
             return FlextResult.fail(
-                f"Line wrap length {self.line_wrap_length} violates RFC 2849",
+                f"line_wrap_length must be between {MIN_LINE_WRAP_LENGTH} and {MAX_LINE_WRAP_LENGTH}",
             )
 
         # Encoding validation
         try:
             "test".encode(self.input_encoding)
             "test".encode(self.output_encoding)
-        except LookupError as e:
-            return FlextResult.fail(f"Invalid encoding: {e}")
+        except LookupError:
+            return FlextResult.fail("Invalid input or output encoding specified")
 
         return FlextResult.ok(None)
 

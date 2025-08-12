@@ -32,7 +32,7 @@ class TestFlextLdifAPIEnterprise:
 
     @pytest.fixture
     def default_config(self) -> FlextLdifConfig:
-        """Default configuration for testing."""
+        """Provide default configuration for testing."""
         return FlextLdifConfig()
 
     @pytest.fixture
@@ -444,7 +444,6 @@ cn: test
 
     def test_performance_with_large_content(self) -> None:
         """Test API performance with larger content."""
-
         api = FlextLdifAPI()
 
         # Generate larger content

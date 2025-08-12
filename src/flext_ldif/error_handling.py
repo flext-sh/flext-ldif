@@ -23,5 +23,5 @@ def format_validation_error(error: str) -> str:
 
 def handle_ldif_error(error: Exception) -> FlextResult[None]:
     """Handle LDIF processing error."""
-    logger.exception("LDIF processing error")
+    logger.error("LDIF processing error")
     return FlextResult.fail(str(error))

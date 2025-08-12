@@ -343,11 +343,8 @@ dc: example
         ]
 
         # Test display_statistics function
-        try:
+        with contextlib.suppress(AttributeError, NotImplementedError, TypeError):
             display_statistics(mock_entries)
-        except (AttributeError, NotImplementedError, TypeError):
-            # Function might have different signature or not be implemented
-            pass
 
         # Test with empty list
         with contextlib.suppress(AttributeError, NotImplementedError, TypeError):

@@ -1,45 +1,81 @@
-"""FLEXT-LDIF Legacy Compatibility Layer - Deprecated Functions.
+"""FLEXT-LDIF Utilities - Consolidated Logging and Legacy Compatibility.
 
-⚠️ DEPRECATION NOTICE: All functions in this module are deprecated and will be
-   removed in v1.0.0. Use the modern FlextLdifAPI instead.
+🎯 CONSOLIDATES 2 UTILITY FILES INTO SINGLE PEP8 MODULE:
+- logging.py (31 lines) - Logging utilities redirecting to flext-core
+- legacy.py (265 lines) - Legacy compatibility layer with deprecation warnings
 
-This module provides backward compatibility for legacy function-based APIs
-while encouraging migration to the modern class-based approach.
+TOTAL CONSOLIDATION: 296 lines → ldif_utils.py (PEP8 organized)
 
-Author: FLEXT Development Team
-Version: 0.9.0
-License: MIT
+This module provides logging utilities and legacy API compatibility for FLEXT-LDIF,
+maintaining backward compatibility while encouraging migration to modern patterns.
+
+All logging functions delegate to flext-core patterns while legacy functions provide
+deprecation warnings and migration paths to the modern FlextLdifAPI.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
+import logging
 import warnings
+from enum import Enum
 from typing import TYPE_CHECKING
 
 from flext_core import FlextResult
 
-from .api import FlextLdifAPI
-from .config import FlextLdifConfig
-
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from .models import FlextLdifEntry
+    from .ldif_models import FlextLdifEntry
+
+# =============================================================================
+# LOGGING UTILITIES - Delegating to flext-core
+# =============================================================================
+
+
+class LogLevel(Enum):
+    """Log level enumeration."""
+
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
+    CRITICAL = "CRITICAL"
+
+
+def configure_ldif_logging(level: LogLevel = LogLevel.INFO) -> None:
+    """Configure LDIF logging - delegated to flext-core."""
+    # flext-core handles logging configuration globally
+
+
+def get_ldif_logger(name: str = __name__) -> object:
+    """Get LDIF logger - delegates to flext-core."""
+    return logging.getLogger(name)
+
+
+# =============================================================================
+# LEGACY COMPATIBILITY LAYER - Deprecated Functions
+# =============================================================================
 
 # Private API instance for legacy compatibility
-_legacy_api: FlextLdifAPI | None = None
+_legacy_api: object | None = None
 
 
-def _get_legacy_api() -> FlextLdifAPI:
+def _get_legacy_api() -> object:
     """Get or create legacy API instance."""
     # Use module-level variable without global statement
     if _legacy_api is None:
+        # Import here to avoid circular imports
+        from .ldif_api import FlextLdifAPI
+
         # Initialize a new API instance
         return FlextLdifAPI()
     return _legacy_api
 
 
-def flext_ldif_get_api(config: object | None = None) -> FlextLdifAPI:
+def flext_ldif_get_api(config: object | None = None) -> object:
     """Legacy function - use FlextLdifAPI() directly.
 
     ⚠️ DEPRECATED: This function is deprecated.
@@ -52,6 +88,9 @@ def flext_ldif_get_api(config: object | None = None) -> FlextLdifAPI:
         DeprecationWarning,
         stacklevel=2,
     )
+
+    from .ldif_api import FlextLdifAPI
+    from .ldif_config import FlextLdifConfig
 
     if config is None:
         return FlextLdifAPI()
@@ -186,7 +225,7 @@ def flext_ldif_entries_to_ldif(entries: list[FlextLdifEntry]) -> str:
 
 
 # Legacy service creation functions
-def get_ldif_parser() -> FlextLdifAPI:
+def get_ldif_parser() -> object:
     """Legacy service function - use FlextLdifAPI() instead.
 
     ⚠️ DEPRECATED: This function is deprecated.
@@ -202,7 +241,7 @@ def get_ldif_parser() -> FlextLdifAPI:
     return _get_legacy_api()
 
 
-def get_ldif_validator() -> FlextLdifAPI:
+def get_ldif_validator() -> object:
     """Legacy service function - use FlextLdifAPI() instead.
 
     ⚠️ DEPRECATED: This function is deprecated.
@@ -218,7 +257,7 @@ def get_ldif_validator() -> FlextLdifAPI:
     return _get_legacy_api()
 
 
-def get_ldif_writer() -> FlextLdifAPI:
+def get_ldif_writer() -> object:
     """Legacy service function - use FlextLdifAPI() instead.
 
     ⚠️ DEPRECATED: This function is deprecated.
@@ -250,13 +289,22 @@ def register_ldif_services() -> FlextResult[None]:
     return FlextResult.ok(None)
 
 
+# =============================================================================
+# EXPORTS
+# =============================================================================
+
 __all__ = [
+    # Logging utilities
+    "LogLevel",
+    "configure_ldif_logging",
+    # Legacy compatibility functions
     "flext_ldif_entries_to_ldif",
     "flext_ldif_get_api",
     "flext_ldif_parse",
     "flext_ldif_parse_file",
     "flext_ldif_validate",
     "flext_ldif_write",
+    "get_ldif_logger",
     "get_ldif_parser",
     "get_ldif_validator",
     "get_ldif_writer",

@@ -177,7 +177,7 @@ class LdifValidator:
                 f"Expected: {expected_classes}, Found: {object_classes}",
             )
 
-        return FlextResult.ok(True)
+        return FlextResult.ok(data=True)
 
     @classmethod
     def is_person_entry(cls, entry: FlextLdifEntry) -> FlextResult[bool]:
@@ -249,7 +249,7 @@ class LdifSchemaValidator:
                 f"Entry missing required attributes: {', '.join(missing_attrs)}",
             )
 
-        return FlextResult.ok(True)
+        return FlextResult.ok(data=True)
 
     @classmethod
     def validate_person_schema(cls, entry: FlextLdifEntry) -> FlextResult[bool]:

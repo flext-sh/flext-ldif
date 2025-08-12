@@ -421,7 +421,6 @@ description: With multiple descriptions"""
 
     def test_entry_performance_large_attributes(self) -> None:
         """Test entry performance with large number of attributes."""
-
         # Create entry with many attributes
         attributes = {"objectClass": ["top"]}
         for i in range(100):
@@ -452,7 +451,6 @@ description: With multiple descriptions"""
 
     def test_entry_memory_efficiency(self) -> None:
         """Test entry memory efficiency."""
-
         # Create multiple similar entries
         entries = []
         for i in range(10):
