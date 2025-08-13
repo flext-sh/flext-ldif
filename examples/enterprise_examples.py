@@ -413,7 +413,7 @@ def _demonstrate_hierarchical_analysis(
 def example_advanced_filtering() -> None:
     """Demonstrate advanced filtering and processing."""
     complex_ldif = _parse_sample_ldif_data()
-    
+
     api = FlextLdifAPI()
     parse_result = api.parse(complex_ldif)
 

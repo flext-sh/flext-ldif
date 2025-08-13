@@ -32,9 +32,8 @@ from flext_core import FlextDomainService, FlextResult, get_logger
 from pydantic import Field
 
 from .models import FlextLdifEntry
-
-if TYPE_CHECKING:
-    from .config import FlextLdifConfig
+# Import runtime type to avoid unresolved forward refs in Pydantic models
+from .config import FlextLdifConfig
 
 logger = get_logger(__name__)
 
@@ -81,4 +80,12 @@ class FlextLdifTransformerService(FlextDomainService[list[FlextLdifEntry]]):
 
 __all__ = ["FlextLdifTransformerService"]
 
-# Note: model_rebuild() is called in api.py to avoid circular imports
+# Ensure forward references are resolved for direct imports (tests instantiate
+# this service without going through API wiring). This is safe and idempotent.
+try:  # pragma: no cover - defensive initialization
+    FlextLdifTransformerService.model_rebuild(
+        _types_namespace={"FlextLdifConfig": FlextLdifConfig},
+    )
+except Exception:
+    # Best effort: allow API layer to rebuild if this early attempt fails
+    ...
