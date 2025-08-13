@@ -27,12 +27,11 @@ License: MIT
 
 from __future__ import annotations
 
-import logging
 import re as _re
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import FlextResult
+from flext_core import FlextResult, get_logger
 
 from .config import FlextLdifConfig
 from .entry_analytics import FlextLdifAnalyticsService
@@ -44,7 +43,7 @@ from .ldif_writer import FlextLdifWriterService as _FlextLdifWriterService
 if TYPE_CHECKING:
     from .models import FlextLdifEntry
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class TLdif(_FlextLdifParserService):
@@ -113,7 +112,7 @@ class FlextLdifAPI:
             FlextResult[list[FlextLdifEntry]]: Success with entries or failure with error
 
         """
-        logger.debug("debug message")
+        logger.debug("Parsing LDIF content via parser service")
 
         # Delegate to infrastructure service
         result = self._parser_service.parse(content)
@@ -128,7 +127,7 @@ class FlextLdifAPI:
             logger.warning(error_msg)
             return FlextResult.fail(error_msg)
 
-        logger.debug("debug message")
+        logger.debug("Parse completed successfully with %d entries", len(entries))
         return FlextResult.ok(entries)
 
     def parse_file(self, file_path: str | Path) -> FlextResult[list[FlextLdifEntry]]:
@@ -143,8 +142,7 @@ class FlextLdifAPI:
         """
         file_path_obj = Path(file_path)
         logger.debug(
-            "Starting LDIF file parsing - file_path=%s",
-            str(file_path_obj.absolute()),
+            "Starting LDIF file parsing - file_path=%s", str(file_path_obj.absolute())
         )
 
         # Delegate to infrastructure service
@@ -160,7 +158,7 @@ class FlextLdifAPI:
             logger.warning(error_msg)
             return FlextResult.fail(error_msg)
 
-        logger.debug("debug message")
+        logger.debug("File parsed successfully with %d entries", len(entries))
         return FlextResult.ok(entries)
 
     def parse_entries_from_string(
@@ -239,7 +237,7 @@ class FlextLdifAPI:
             FlextResult[str]: Success with LDIF string or failure with error
 
         """
-        logger.debug("debug message")
+        logger.debug("Preparing to write LDIF output")
 
         # Write to string or file depending on file_path
         if file_path:
@@ -277,12 +275,12 @@ class FlextLdifAPI:
             FlextResult[bool]: Success with True or failure with error
 
         """
-        logger.debug("debug message")
+        logger.debug("Validating %d entries", len(entries))
 
         # Delegate to infrastructure service
         result = self._writer_service.write_file(entries, file_path)
         if result.is_success:
-            logger.debug("debug message")
+            logger.debug("File write completed successfully")
 
         return result
 
@@ -322,7 +320,7 @@ class FlextLdifAPI:
             FlextResult[bool]: Success with True if valid, failure with error
 
         """
-        logger.debug("debug message")
+        logger.debug("Validating single entry")
 
         # Delegate to infrastructure service
         return self._validator_service.validate_entry(entry)

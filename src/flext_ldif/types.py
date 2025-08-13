@@ -31,8 +31,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import NotRequired, TypedDict
 
-# Import base types from flext-core
-from flext_core.typings import FlextTypes
+from flext_ldif.typings import FlextTypes
 
 # =============================================================================
 # LDIF DOMAIN TYPES - Extending flext-core base types
@@ -45,7 +44,7 @@ LDIFBytes = bytes
 LDIFLines = list[str]
 
 # File system types (extending core types)
-FilePath = FlextTypes.Config.FilePath | Path  # Extend core FilePath
+FilePath = Path | FlextTypes.Config.FilePath  # Extend core FilePath
 FileContent = str | bytes
 
 # Collection types (extending core collection types)
@@ -167,7 +166,9 @@ class FlextLdifConfigDict(TypedDict):
 
 # Parser function types
 ParseFunction = Callable[[LDIFContent], list[FlextLdifEntryDict]]
-ParseFileFunction = Callable[[FilePath], list[FlextLdifEntryDict]]
+ParseFileFunction = Callable[
+    [Path | FlextTypes.Config.FilePath], list[FlextLdifEntryDict]
+]
 
 # Validator function types
 ValidateFunction = Callable[[list[FlextLdifEntryDict]], bool]
@@ -175,7 +176,9 @@ ValidateEntryFunction = Callable[[FlextLdifEntryDict], bool]
 
 # Writer function types
 WriteFunction = Callable[[list[FlextLdifEntryDict]], LDIFText]
-WriteFileFunction = Callable[[list[FlextLdifEntryDict], FilePath], None]
+WriteFileFunction = Callable[
+    [list[FlextLdifEntryDict], Path | FlextTypes.Config.FilePath], None
+]
 
 # Analytics function types
 AnalyticsFunction = Callable[[list[FlextLdifEntryDict]], FlextLdifAnalyticsResult]
