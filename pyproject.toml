@@ -235,13 +235,12 @@ python = ">=3.13,<3.14"
 ldif3 = ">=3.2.2"
 click = ">=8.1.0"
 
-[tool.poetry.dependencies.flext-core]
-path = "../flext-core"
-develop = true
+# Local ecosystem deps in editable mode for workspace development
+flext-core = { path = "../flext-core", develop = true }
+flext-cli = { path = "../flext-cli", develop = true }
+flext-observability = { path = "../flext-observability", develop = true }
 
-[tool.poetry.dependencies.flext-cli]
-path = "../flext-cli"
-develop = true
+
 
 [tool.poetry.group.dev.dependencies]
 ruff = ">=0.12.3"

@@ -33,10 +33,7 @@ from pydantic import Field
 
 from flext_ldif.format_validators import LdifValidator
 
-try:  # Resolve at runtime to avoid NameError during import ordering
-    from .config import FlextLdifConfig  # type: ignore
-except Exception:  # pragma: no cover - resolved by model_rebuild
-    FlextLdifConfig = object  # type: ignore[misc,assignment]
+from .config import FlextLdifConfig
 
 if TYPE_CHECKING:
     from .models import FlextLdifEntry
