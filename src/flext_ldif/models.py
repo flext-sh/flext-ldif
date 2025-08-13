@@ -30,14 +30,14 @@ License: MIT
 
 from __future__ import annotations
 
-import hashlib
-import importlib
-import uuid
 from collections.abc import Callable
 
 # ✅ Import from flext-ldap root API to eliminate DN/attribute validation duplication
 from functools import lru_cache
+import hashlib
+import importlib
 from typing import cast
+import uuid
 
 # FOUNDATION: Complete flext-core integration - NO duplication
 from flext_core import FlextEntity, FlextFactory, FlextResult, FlextValue
@@ -121,8 +121,8 @@ class FlextLdifDistinguishedName(FlextValue):
                     msg = "Invalid DN component"
                     raise ValueError(msg)
         # Delegate to flext-ldap validator lazily to avoid circular imports
-        _attr_validator, _dn_validator = _get_ldap_validators()
-        if not bool(_dn_validator(normalized)):
+        _attr_validator, dn_validator = _get_ldap_validators()
+        if not bool(dn_validator(normalized)):
             # If there is no '=' at all, it's an invalid DN structure
             if not global_has_equal:
                 error_msg = "DN must contain at least one attribute=value pair"
@@ -250,8 +250,8 @@ class FlextLdifAttributes(FlextValue):
                 )
 
             # ✅ DELEGATE to flext-ldap root API - NO local validation logic
-            _attr_validator, _dn_validator = _get_ldap_validators()
-            if not bool(_attr_validator(attr_name)):
+            attr_validator, _dn_validator = _get_ldap_validators()
+            if not bool(attr_validator(attr_name)):
                 return FlextResult.fail(
                     f"Invalid LDAP attribute name format: {attr_name}",
                 )

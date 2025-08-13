@@ -7,10 +7,10 @@ a real OpenLDAP server, enabling full integration testing.
 from __future__ import annotations
 
 import contextlib
+from contextlib import asynccontextmanager
 import os
 import subprocess
 import time
-from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
 import docker
@@ -418,7 +418,8 @@ async def temporary_ldif_data(
     """Context manager for temporary LDIF data that is auto-cleaned."""
     # Create temp file path in container safely without hardcoded /tmp
     mktemp_result = container.exec_run(
-        ["mktemp", "-t", "flext_ldif.XXXXXX.ldif"], demux=True
+        ["mktemp", "-t", "flext_ldif.XXXXXX.ldif"],
+        demux=True,
     )
     if (
         mktemp_result.exit_code != 0
@@ -452,7 +453,9 @@ def check_docker_available() -> bool:
     """Check if Docker is available on the system."""
     try:
         subprocess.run(
-            ["/usr/bin/docker", "--version"], check=True, capture_output=True
+            ["/usr/bin/docker", "--version"],
+            check=True,
+            capture_output=True,
         )
     except (subprocess.CalledProcessError, FileNotFoundError):
         return False

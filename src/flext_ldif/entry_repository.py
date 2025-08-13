@@ -121,7 +121,7 @@ class FlextLdifRepositoryService(FlextDomainService[dict[str, int]]):
 __all__ = ["FlextLdifRepositoryService"]
 
 # Rebuild model to resolve forward references after config is defined
-from .config import FlextLdifConfig as _Config  # noqa: E402, TC001
+from .config import FlextLdifConfig as _Config  # noqa: E402
 
 # Provide types namespace to satisfy Pydantic forward refs
 FlextLdifRepositoryService.model_rebuild(_types_namespace={"FlextLdifConfig": _Config})

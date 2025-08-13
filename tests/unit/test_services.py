@@ -58,7 +58,7 @@ def sample_entry() -> FlextLdifEntry:
         id="test-entry-123",
         dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
         attributes=FlextLdifAttributes(
-            attributes={"cn": ["test"], "objectClass": ["person"]}
+            attributes={"cn": ["test"], "objectClass": ["person"]},
         ),
     )
 
@@ -79,7 +79,8 @@ objectClass: person
         assert len(result.data) == 1
 
     def test_validator_service_with_valid_entry(
-        self, sample_entry: FlextLdifEntry
+        self,
+        sample_entry: FlextLdifEntry,
     ) -> None:
         """Test validator service with valid entry."""
         service = FlextLdifValidatorService()
@@ -87,7 +88,8 @@ objectClass: person
         assert result.success
 
     def test_writer_service_with_valid_entries(
-        self, sample_entry: FlextLdifEntry
+        self,
+        sample_entry: FlextLdifEntry,
     ) -> None:
         """Test writer service with valid entries."""
         service = FlextLdifWriterService()

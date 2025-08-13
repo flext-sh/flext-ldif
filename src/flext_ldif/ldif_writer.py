@@ -103,6 +103,6 @@ class FlextLdifWriterService(FlextDomainService[str]):
 __all__ = ["FlextLdifWriterService"]
 
 # Rebuild to resolve forward refs in strict pydantic setups in tests
-from .config import FlextLdifConfig as _Cfg  # noqa: E402, TC001
+from .config import FlextLdifConfig as _Cfg  # noqa: E402
 
 FlextLdifWriterService.model_rebuild(_types_namespace={"FlextLdifConfig": _Cfg})

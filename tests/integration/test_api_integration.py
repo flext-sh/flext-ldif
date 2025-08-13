@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
+import tempfile
 
 import pytest
 
@@ -41,7 +41,9 @@ objectClass: organizationalUnit
 """
 
     def test_parse_and_validate_flow(
-        self, api: FlextLdifAPI, sample_ldif_content: str
+        self,
+        api: FlextLdifAPI,
+        sample_ldif_content: str,
     ) -> None:
         """Test complete parse and validate flow."""
         # Parse LDIF content
@@ -55,7 +57,9 @@ objectClass: organizationalUnit
         assert validate_result.success
 
     def test_parse_and_write_flow(
-        self, api: FlextLdifAPI, sample_ldif_content: str
+        self,
+        api: FlextLdifAPI,
+        sample_ldif_content: str,
     ) -> None:
         """Test complete parse and write flow."""
         # Parse LDIF content
@@ -72,7 +76,10 @@ objectClass: organizationalUnit
     def test_file_operations(self, api: FlextLdifAPI, sample_ldif_content: str) -> None:
         """Test file read and write operations."""
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
         ) as f:
             f.write(sample_ldif_content)
             temp_file = Path(f.name)
@@ -99,7 +106,9 @@ objectClass: organizationalUnit
     def test_api_with_custom_config(self, sample_ldif_content: str) -> None:
         """Test API with custom configuration."""
         config = FlextLdifConfig(
-            max_entries=10, strict_validation=True, sort_attributes=True
+            max_entries=10,
+            strict_validation=True,
+            sort_attributes=True,
         )
         api = FlextLdifAPI(config)
 
