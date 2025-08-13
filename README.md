@@ -1,12 +1,5 @@
 # FLEXT-LDIF - LDIF Processing Library
 
-[![Python 3.13+](https://img.shields.io/badge/python-3.13%2B-blue.svg)](https://www.python.org/downloads/)
-[![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Type Checked](https://img.shields.io/badge/typed-mypy-blue.svg)](https://mypy.readthedocs.io/)
-[![Code Style](https://img.shields.io/badge/code%20style-ruff-black.svg)](https://github.com/astral-sh/ruff)
-[![Test Coverage](https://img.shields.io/badge/coverage-85%25-green.svg)](tests/)
-[![FLEXT Ecosystem](https://img.shields.io/badge/FLEXT-ecosystem-purple.svg)](https://github.com/flext-sh)
-
 **FLEXT-LDIF** is a Python library for processing LDIF (LDAP Data Interchange Format) files. Built using Clean Architecture principles and integrated with the FLEXT ecosystem, it provides parsing, validation, and transformation capabilities for LDIF data.
 
 ## 🏗️ Current Status
@@ -435,5 +428,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **[flext-dbt-ldif](https://github.com/flext-sh/flext-dbt-ldif)** - LDIF data transformation
 
 ---
-
-**Built with ❤️ by the FLEXT Team** | **Enterprise-Grade • Type-Safe • Production-Ready**
