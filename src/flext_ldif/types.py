@@ -31,7 +31,18 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import NotRequired, TypedDict
 
-from flext_ldif.typings import FlextTypes
+from flext_core.typings import FlextTypes
+
+# Import constants from centralized module to eliminate duplication
+from .constants import (
+    DEFAULT_LINE_WRAP_LENGTH,
+    LDAP_DN_ATTRIBUTES as DN_COMPONENT_ATTRIBUTES,
+    LDAP_GROUP_CLASSES as GROUP_OBJECT_CLASSES,
+    LDAP_OU_CLASSES as STRUCTURAL_OBJECT_CLASSES,
+    LDAP_PERSON_CLASSES as PERSON_OBJECT_CLASSES,
+    MAX_LINE_WRAP_LENGTH,
+    MIN_LINE_WRAP_LENGTH,
+)
 
 # =============================================================================
 # LDIF DOMAIN TYPES - Extending flext-core base types
@@ -248,47 +259,6 @@ LegacyParseFunction = Callable[[str], list[dict[str, str | list[str]]]]
 LegacyValidateFunction = Callable[[list[dict[str, str | list[str]]]], bool]
 LegacyWriteFunction = Callable[[list[dict[str, str | list[str]]]], str]
 
-# =============================================================================
-# CONSTANTS AND ENUMS - Type-safe constants
-# =============================================================================
-
-# Object class categories
-PERSON_OBJECT_CLASSES = frozenset(
-    {
-        "person",
-        "inetOrgPerson",
-        "organizationalPerson",
-        "user",
-        "posixAccount",
-        "shadowAccount",
-    },
-)
-
-GROUP_OBJECT_CLASSES = frozenset(
-    {"groupOfNames", "groupOfUniqueNames", "posixGroup", "group", "organizationalRole"},
-)
-
-STRUCTURAL_OBJECT_CLASSES = frozenset(
-    {"organizationalUnit", "organization", "domain", "country", "locality", "dcObject"},
-)
-
-# DN component attribute names
-DN_COMPONENT_ATTRIBUTES = frozenset(
-    {
-        "member",
-        "uniqueMember",
-        "memberOf",
-        "manager",
-        "secretary",
-        "seeAlso",
-        "superior",
-    },
-)
-
-# Standard LDIF line lengths per RFC 2849
-MIN_LINE_WRAP_LENGTH = 50
-MAX_LINE_WRAP_LENGTH = 998
-DEFAULT_LINE_WRAP_LENGTH = 76
 
 # Validation levels
 VALIDATION_LEVELS = frozenset({"strict", "relaxed", "minimal"})

@@ -63,6 +63,7 @@ Status: Production Ready
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 import warnings
@@ -127,9 +128,7 @@ except Exception:
     _ARG_INDEX = 2
 
     def _noop_cli() -> None:
-        import sys as _sys
-
-        argv = _sys.argv
+        argv = sys.argv
         # For help/normal runs, behave as success; for invalid parse target, error.
         has_command = len(argv) >= _CMD_INDEX + 1
         is_parse = has_command and argv[_CMD_INDEX] == "parse"
@@ -142,6 +141,7 @@ except Exception:
     cli_main = _noop_cli
 
 __version__ = "0.9.0"
+__version_info__ = tuple(int(x) for x in __version__.split(".") if x.isdigit())
 
 # ⚠️ LEGACY COMPATIBILITY SECTION ⚠️
 # These functions provide fallback interfaces with warnings
@@ -330,6 +330,7 @@ __all__: list[str] = [
     "TLdif",
     "ValidationLevel",
     "__version__",
+    "__version_info__",
     "cli_main",
     "flext_ldif_get_api",
     "flext_ldif_parse",

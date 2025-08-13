@@ -43,16 +43,39 @@ if TYPE_CHECKING:
 
     from .models import FlextLdifEntry
 
+from dataclasses import dataclass
+
 import click
 import yaml
 
 # Use real flext-cli integration
 from flext_cli import CLIConfig as FlextCliConfig, setup_cli as flext_setup_cli
-from flext_cli.types import OutputFormat as _OutputFormat
+from flext_cli.cli_types import OutputFormat as _OutputFormat
 from flext_core import get_logger
 
 from .api import FlextLdifAPI
 from .config import FlextLdifConfig
+
+
+@dataclass
+class ParseCommandParams:
+    """Parameter object for parse command to reduce parameter count."""
+
+    input_file: str
+    output: str | None
+    max_entries: int | None
+    validate: bool = False
+    stats: bool = False
+
+
+@dataclass
+class TransformCommandParams:
+    """Parameter object for transform command to reduce parameter count."""
+
+    input_file: str
+    output_file: str
+    filter_type: str | None
+    sort: bool = False
 
 
 # Simple utilities to replace deleted cli_utils
@@ -296,7 +319,7 @@ def write_entries_to_file(
 @click.option("--debug", is_flag=True, help="Enable debug output")
 @click.option("--config-file", type=click.Path(), help="Optional path to config file")
 @click.pass_context
-def cli(ctx: click.Context, **options: object) -> None:
+def cli(ctx: click.Context, /, **options: object) -> None:
     """FLEXT LDIF - Enterprise LDIF Processing CLI.
 
     Comprehensive command-line interface para parsing, validação
@@ -432,37 +455,51 @@ def _handle_output_generation(
 @click.pass_context
 def parse(
     ctx: click.Context,
+    /,
     input_file: str,
     output: str | None,
     max_entries: int | None,
     **flags: object,
 ) -> None:
     """Parse LDIF file and display or save entries."""
+    # Create parameter object to reduce complexity
+    params = ParseCommandParams(
+        input_file=input_file,
+        output=output,
+        max_entries=max_entries,
+        validate=bool(flags.get("validate", False)),
+        stats=bool(flags.get("stats", False)),
+    )
+
+    _execute_parse_command(ctx, params)
+
+
+def _execute_parse_command(ctx: click.Context, params: ParseCommandParams) -> None:
+    """Execute the parse command with parameter object."""
     logger.debug("Starting parse command")
     logger.trace(
         "Parse options: input_file=%s, output=%s, max_entries=%s, validate=%s",
-        input_file,
-        output,
-        max_entries,
-        validate,
+        params.input_file,
+        params.output,
+        params.max_entries,
+        params.validate,
     )
 
     try:
         logger.debug("Creating API with parse configuration")
-        api = create_api_with_config(max_entries=max_entries)
+        api = create_api_with_config(max_entries=params.max_entries)
 
         # Parse file and get entries
-        entries = _parse_and_log_file(api, input_file, max_entries)
+        entries = _parse_and_log_file(api, params.input_file, params.max_entries)
 
         # Handle optional validation
-        _handle_optional_validation(entries, validate=bool(flags.get("validate")))
+        _handle_optional_validation(entries, validate=params.validate)
 
         # Generate output or statistics
-        stats_flag = bool(flags.get("stats"))
-        if stats_flag:
+        if params.stats:
             display_statistics(ctx, api, entries)
         else:
-            _handle_output_generation(ctx, api, entries, output)
+            _handle_output_generation(ctx, api, entries, params.output)
 
         logger.info("Parse command completed successfully")
 
@@ -584,11 +621,24 @@ def transform(
     sort: bool,
 ) -> None:
     """Transform LDIF file with filtering and sorting options."""
+    # Create parameter object to reduce complexity
+    params = TransformCommandParams(
+        input_file=input_file,
+        output_file=output_file,
+        filter_type=filter_type,
+        sort=sort,
+    )
+
+    _execute_transform_command(ctx, params)
+
+
+def _execute_transform_command(ctx: click.Context, params: TransformCommandParams) -> None:
+    """Execute the transform command with parameter object."""
     try:
         api = ctx.obj["api"]
 
         # Parse input
-        parse_result = api.parse_file(input_file)
+        parse_result = api.parse_file(params.input_file)
         if not parse_result.success or parse_result.data is None:
             click.echo(f"Failed to parse input file: {parse_result.error}", err=True)
             sys.exit(1)
@@ -607,11 +657,11 @@ def transform(
         click.echo(f"Loaded {len(entries)} entries")
 
         # Apply filtering
-        if filter_type:
-            entries = apply_filter(api, entries, filter_type)
+        if params.filter_type:
+            entries = apply_filter(api, entries, params.filter_type)
 
         # Apply sorting
-        if sort:
+        if params.sort:
             sort_result = api.sort_hierarchically(entries)
             if sort_result.success and sort_result.data is not None:
                 entries = sort_result.data
@@ -623,7 +673,7 @@ def transform(
                 )
 
         # Write output
-        write_entries_to_file(api, entries, output_file)
+        write_entries_to_file(api, entries, params.output_file)
 
     except (OSError, ValueError, TypeError) as e:
         click.echo(f"Transform operation failed: {e}", err=True)
@@ -737,13 +787,72 @@ def find(
         sys.exit(1)
 
 
+def _find_matching_entry(
+    entries: list[FlextLdifEntry], query: str,
+) -> FlextLdifEntry | None:
+    """Find entry matching DN query pattern."""
+    query_pattern = query.strip("*")
+    for entry in entries:
+        if query_pattern in str(entry.dn):
+            return entry
+    return None
+
+
+def _handle_search_attribute(entry: FlextLdifEntry, search_attr: str) -> None:
+    """Handle printing specific attribute from matched entry."""
+    values = entry.get_attribute(search_attr) or []
+    click.echo("\n".join(values))
+
+
+def _handle_matched_entry_output(entry: FlextLdifEntry, api: FlextLdifAPI) -> None:
+    """Handle converting and displaying matched entry as LDIF."""
+    ldif_result = api.entries_to_ldif([entry])
+    if ldif_result.success:
+        click.echo("Found entry:")
+        click.echo(ldif_result.data)
+    else:
+        click.echo(
+            f"Failed to convert entry to LDIF: {ldif_result.error}",
+            err=True,
+        )
+        sys.exit(1)
+
+
+def _handle_query_execution(
+    entries: list[FlextLdifEntry],
+    query: str,
+    search_attr: str | None,
+    api: FlextLdifAPI,
+) -> None:
+    """Execute search query and handle output."""
+    matched = _find_matching_entry(entries, query)
+
+    if matched is None:
+        click.echo(
+            f"Entry with DN matching '{query}' not found",
+            err=True,
+        )
+        sys.exit(1)
+
+    if search_attr:
+        _handle_search_attribute(matched, search_attr)
+    else:
+        _handle_matched_entry_output(matched, api)
+
+
+def _handle_list_all_dns(entries: list[FlextLdifEntry]) -> None:
+    """Handle listing all DNs when no query provided."""
+    for entry in entries:
+        click.echo(str(entry.dn))
+
+
 def _run_find(
     entries: list[FlextLdifEntry],
     effective_query: str | None,
     search_attr: str | None,
     api: FlextLdifAPI,
 ) -> None:
-    """Execute the find logic separated to reduce complexity.
+    """Execute the find logic with improved structure.
 
     Args:
         entries: Parsed LDIF entries.
@@ -753,34 +862,9 @@ def _run_find(
 
     """
     if effective_query:
-        matched = None
-        for entry in entries:
-            if effective_query.strip("*") in str(entry.dn):
-                matched = entry
-                break
-        if matched is None:
-            click.echo(
-                f"Entry with DN matching '{effective_query}' not found",
-                err=True,
-            )
-            sys.exit(1)
-        if search_attr:
-            values = matched.get_attribute(search_attr) or []
-            click.echo("\n".join(values))
-            return
-        ldif_result = api.entries_to_ldif([matched])
-        if ldif_result.success:
-            click.echo("Found entry:")
-            click.echo(ldif_result.data)
-        else:
-            click.echo(
-                f"Failed to convert entry to LDIF: {ldif_result.error}",
-                err=True,
-            )
-            sys.exit(1)
+        _handle_query_execution(entries, effective_query, search_attr, api)
     else:
-        for entry in entries:
-            click.echo(str(entry.dn))
+        _handle_list_all_dns(entries)
 
 
 @cli.command()

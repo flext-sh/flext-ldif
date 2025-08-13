@@ -33,15 +33,17 @@ from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import FlextResult, get_logger
 
-from .config import FlextLdifConfig
-from .entry_analytics import FlextLdifAnalyticsService
-from .entry_repository import FlextLdifRepositoryService
-from .entry_validator import FlextLdifValidatorService as _FlextLdifValidatorService
-from .ldif_parser import FlextLdifParserService as _FlextLdifParserService
-from .ldif_writer import FlextLdifWriterService as _FlextLdifWriterService
+from flext_ldif.config import FlextLdifConfig
+from flext_ldif.entry_analytics import FlextLdifAnalyticsService
+from flext_ldif.entry_repository import FlextLdifRepositoryService
+from flext_ldif.entry_validator import (
+    FlextLdifValidatorService as _FlextLdifValidatorService,
+)
+from flext_ldif.ldif_parser import FlextLdifParserService as _FlextLdifParserService
+from flext_ldif.ldif_writer import FlextLdifWriterService as _FlextLdifWriterService
 
 if TYPE_CHECKING:
-    from .models import FlextLdifEntry
+    from flext_ldif.models import FlextLdifEntry
 
 logger = get_logger(__name__)
 

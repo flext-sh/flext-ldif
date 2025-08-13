@@ -102,4 +102,4 @@ class FlextLdifWriterService(FlextDomainService[str]):
 __all__ = ["FlextLdifWriterService"]
 
 # Rebuild to resolve forward refs with explicit namespace in strict setups
-FlextLdifWriterService.model_rebuild()
+# Note: model_rebuild() is called in api.py to avoid circular imports

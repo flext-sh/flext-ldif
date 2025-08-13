@@ -399,6 +399,70 @@ class FlextLDIFParser:
         if not is_dn(attr_value):
             self._error(f"Invalid distinguished name format: {attr_value}")
 
+    def _handle_dn_attribute(self, dn: str | None, attr_value: str) -> str:
+        """Handle DN attribute processing and validation."""
+        self._check_dn(dn, attr_value)
+        return attr_value
+
+    def _handle_version_attribute(self, dn: str | None) -> bool:
+        """Handle version attribute processing.
+
+        Returns:
+            True if should skip processing, False otherwise.
+
+        """
+        return dn is None  # Skip version lines when no DN yet
+
+    def _validate_attribute_ordering(self, dn: str | None, attr_type: str) -> None:
+        """Validate that attributes come after DN."""
+        if dn is None:
+            self._error(f"Attribute before dn: line: {attr_type}")
+
+    def _should_include_attribute(self, attr_type: str) -> bool:
+        """Check if attribute should be included based on ignore list."""
+        return attr_type.lower() not in self._ignored_attr_types
+
+    def _add_attribute_to_entry(
+        self, entry: dict[str, list[str]], attr_type: str, attr_value: str,
+    ) -> None:
+        """Add attribute value to entry dictionary."""
+        if attr_type in entry:
+            entry[attr_type].append(attr_value)
+        else:
+            entry[attr_type] = [attr_value]
+
+    def _process_standard_attribute(
+        self,
+        entry: dict[str, list[str]],
+        attr_type: str,
+        attr_value: str,
+        dn: str | None,
+    ) -> None:
+        """Process a standard LDIF attribute."""
+        self._validate_attribute_ordering(dn, attr_type)
+
+        if self._should_include_attribute(attr_type):
+            self._add_attribute_to_entry(entry, attr_type, attr_value)
+
+    def _process_line_attribute(
+        self,
+        line: str,
+        dn: str | None,
+        entry: dict[str, list[str]],
+    ) -> str | None:
+        """Process a single line and return updated DN if applicable."""
+        if not line.strip():
+            return dn
+
+        attr_type, attr_value = self._parse_attr(line)
+
+        if attr_type == "dn":
+            return self._handle_dn_attribute(dn, attr_value)
+        if attr_type == "version" and self._handle_version_attribute(dn):
+            return dn  # Skip version lines
+        self._process_standard_attribute(entry, attr_type, attr_value, dn)
+        return dn
+
     def _parse_entry_record(self, lines: list[str]) -> tuple[str, dict[str, list[str]]]:
         """Parse a single entry record from lines.
 
@@ -413,27 +477,7 @@ class FlextLDIFParser:
         entry: dict[str, list[str]] = OrderedDict()
 
         for line in lines:
-            if not line.strip():
-                continue
-
-            attr_type, attr_value = self._parse_attr(line)
-
-            if attr_type == "dn":
-                self._check_dn(dn, attr_value)
-                dn = attr_value
-            elif attr_type == "version" and dn is None:
-                # Skip version lines
-                continue
-            else:
-                # Standard attribute processing
-                if dn is None:
-                    self._error(f"Attribute before dn: line: {attr_type}")
-
-                if attr_type.lower() not in self._ignored_attr_types:
-                    if attr_type in entry:
-                        entry[attr_type].append(attr_value)
-                    else:
-                        entry[attr_type] = [attr_value]
+            dn = self._process_line_attribute(line, dn, entry)
 
         if dn is None:
             msg = "Record missing dn: line"
