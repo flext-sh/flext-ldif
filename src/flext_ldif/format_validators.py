@@ -14,6 +14,7 @@ License: MIT
 from __future__ import annotations
 
 import importlib
+from collections.abc import Callable
 from functools import lru_cache
 from typing import TYPE_CHECKING, ClassVar
 
@@ -23,8 +24,11 @@ if TYPE_CHECKING:
     from .models import FlextLdifEntry
 
 
+ValidatorFunc = Callable[[str], bool]
+
+
 @lru_cache(maxsize=1)
-def _get_ldap_validators() -> tuple[object, object]:
+def _get_ldap_validators() -> tuple[ValidatorFunc, ValidatorFunc]:
     """Lazily import real validators from flext-ldap to avoid circular imports.
 
     Returns a tuple (validate_attribute_name, validate_dn).
@@ -90,7 +94,7 @@ class LdifValidator:
 
         # ✅ DELEGATE to flext-ldap root API - NO local validation logic
         _attr_validator, _dn_validator = _get_ldap_validators()
-        is_valid = bool(_dn_validator(dn_value.strip()))  # type: ignore[misc]
+        is_valid = bool(_dn_validator(dn_value.strip()))
         if not is_valid:
             return FlextResult.fail(f"Invalid DN format: {dn_value}")
 
@@ -115,7 +119,7 @@ class LdifValidator:
 
         # ✅ DELEGATE to flext-ldap root API - NO local validation logic
         _attr_validator, _dn_validator = _get_ldap_validators()
-        is_valid = bool(_attr_validator(attr_name))  # type: ignore[misc]
+        is_valid = bool(_attr_validator(attr_name))
         if not is_valid:
             return FlextResult.fail(f"Invalid attribute name format: {attr_name}")
 

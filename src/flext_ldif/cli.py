@@ -48,6 +48,7 @@ import yaml
 
 # Use real flext-cli integration
 from flext_cli import CLIConfig as FlextCliConfig, setup_cli as flext_setup_cli
+from flext_cli.types import OutputFormat as _OutputFormat
 from flext_core import get_logger
 
 from .api import FlextLdifAPI
@@ -323,12 +324,12 @@ def cli(ctx: click.Context, **options: object) -> None:
 
     # Build real flext-cli configuration using flat compatibility kwargs
     cli_config = FlextCliConfig(
-        output_format=output_format,
+        output_format=_OutputFormat(output_format),
         verbose=verbose and not quiet,
         quiet=quiet,
         debug=debug,
     )
-    setup_result = flext_setup_cli(cli_config)
+    setup_result = flext_setup_cli(cli_config)  # type: ignore[arg-type]
     if not setup_result.success:
         click.echo(f"Failed to setup CLI: {setup_result.error}", err=True)
         sys.exit(1)

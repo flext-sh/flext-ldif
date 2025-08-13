@@ -48,7 +48,7 @@ src/flext_ldif/
 
 - **flext-core**: Foundation patterns and FlextResult error handling
 - **flext-observability**: Monitoring and tracing integration
-- **Type Safety**: 95%+ type annotation coverage with strict MyPy validation
+- **Type Safety**: MyPy strict mode adoption; aiming for 95%+ coverage
 
 ## Module Responsibilities
 
