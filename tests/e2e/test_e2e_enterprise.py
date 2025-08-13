@@ -182,9 +182,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         found_entry = found_result.data
         assert found_entry is not None
         if found_entry.get_attribute("employeeNumber") != ["EMP001"]:
-            msg: str = (
-                f"Expected ['EMP001'], got {found_entry.get_attribute('employeeNumber')}"
-            )
+            msg: str = f"Expected ['EMP001'], got {found_entry.get_attribute('employeeNumber')}"
             raise AssertionError(msg)
 
         # Step 7: Write back to LDIF

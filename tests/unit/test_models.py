@@ -24,6 +24,7 @@ License: MIT
 from __future__ import annotations
 
 import pytest
+from flext_core.exceptions import FlextValidationError
 
 # Use proper import from root level
 from flext_ldif import FlextLdifEntry
@@ -223,9 +224,7 @@ mail: test@example.com"""
             )
         assert entry.get_attribute("cn") == ["test"]
         if entry.get_attribute("objectClass") != ["person", "inetOrgPerson"]:
-            msg: str = (
-                f"Expected {['person', 'inetOrgPerson']}, got {entry.get_attribute('objectClass')}"
-            )
+            msg: str = f"Expected {['person', 'inetOrgPerson']}, got {entry.get_attribute('objectClass')}"
             raise AssertionError(
                 msg,
             )
@@ -245,8 +244,6 @@ mail: test@example.com"""
         """Test creating entry from LDIF block without DN."""
         ldif_block = """cn: test
 objectClass: person"""
-
-        from flext_core.exceptions import FlextValidationError
 
         with pytest.raises(FlextValidationError, match="LDIF block must start with DN"):
             LDIFEntry.from_ldif_block(ldif_block)
@@ -300,9 +297,7 @@ mail: test2@example.com"""
         entry = LDIFEntry.from_ldif_block(ldif_block)
 
         if entry.get_attribute("objectClass") != ["person", "inetOrgPerson"]:
-            msg: str = (
-                f"Expected {['person', 'inetOrgPerson']}, got {entry.get_attribute('objectClass')}"
-            )
+            msg: str = f"Expected {['person', 'inetOrgPerson']}, got {entry.get_attribute('objectClass')}"
             raise AssertionError(
                 msg,
             )
@@ -317,9 +312,7 @@ url: http://example.com:8080/path"""
         entry = LDIFEntry.from_ldif_block(ldif_block)
 
         if entry.get_attribute("description") != ["This is a test: with colon"]:
-            msg: str = (
-                f"Expected {['This is a test: with colon']}, got {entry.get_attribute('description')}"
-            )
+            msg: str = f"Expected {['This is a test: with colon']}, got {entry.get_attribute('description')}"
             raise AssertionError(
                 msg,
             )

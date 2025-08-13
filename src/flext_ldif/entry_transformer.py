@@ -26,14 +26,14 @@ License: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import contextlib
 
 from flext_core import FlextDomainService, FlextResult, get_logger
 from pydantic import Field
 
-from .models import FlextLdifEntry
 # Import runtime type to avoid unresolved forward refs in Pydantic models
 from .config import FlextLdifConfig
+from .models import FlextLdifEntry
 
 logger = get_logger(__name__)
 
@@ -82,10 +82,7 @@ __all__ = ["FlextLdifTransformerService"]
 
 # Ensure forward references are resolved for direct imports (tests instantiate
 # this service without going through API wiring). This is safe and idempotent.
-try:  # pragma: no cover - defensive initialization
+with contextlib.suppress(Exception):  # pragma: no cover - defensive initialization
     FlextLdifTransformerService.model_rebuild(
         _types_namespace={"FlextLdifConfig": FlextLdifConfig},
     )
-except Exception:
-    # Best effort: allow API layer to rebuild if this early attempt fails
-    ...

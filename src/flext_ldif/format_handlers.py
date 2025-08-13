@@ -423,7 +423,10 @@ class FlextLDIFParser:
         return attr_type.lower() not in self._ignored_attr_types
 
     def _add_attribute_to_entry(
-        self, entry: dict[str, list[str]], attr_type: str, attr_value: str,
+        self,
+        entry: dict[str, list[str]],
+        attr_type: str,
+        attr_value: str,
     ) -> None:
         """Add attribute value to entry dictionary."""
         if attr_type in entry:

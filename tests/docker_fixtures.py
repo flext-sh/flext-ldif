@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import contextlib
 import os
+import shutil
 import time
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
@@ -450,18 +451,7 @@ async def temporary_ldif_data(
 
 def check_docker_available() -> bool:
     """Check if Docker is available on the system."""
-    try:
-        import shutil
-
-        docker_path = shutil.which("docker")
-        if not docker_path:
-            return False
-        # Avoid spawning external process in tests; assume available if found
-        return True
-    except (RuntimeError, ValueError, FileNotFoundError):
-        return False
-    else:
-        return True
+    return bool(shutil.which("docker"))
 
 
 def skip_if_no_docker():

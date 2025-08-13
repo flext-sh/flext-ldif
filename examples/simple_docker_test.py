@@ -60,11 +60,9 @@ def test_with_docker_container() -> bool | None:
         # Test validation
         flext_ldif_validate(ldif_data)
 
-        # CORREÇÃO: Specifications estão integradas no FlextLdifEntry via composição
         # Usar API real para filtrar pessoas e grupos
-        from flext_ldif import FlextLdifAPI
-
-        api = FlextLdifAPI()
+        api = __import__("flext_ldif").flext_ldif.FlextLdifAPI
+        api = api()
 
         # Filter pessoas usando API real
         person_result = api.filter_persons(entries)

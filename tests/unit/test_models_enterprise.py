@@ -71,9 +71,7 @@ class TestFlextLdifEntryEnterprise:
 
         assert isinstance(entry.attributes, FlextLdifAttributes)
         if entry.attributes.attributes != sample_entry_data["attributes"]:
-            msg: str = (
-                f"Expected {sample_entry_data['attributes']}, got {entry.attributes.attributes}"
-            )
+            msg: str = f"Expected {sample_entry_data['attributes']}, got {entry.attributes.attributes}"
             raise AssertionError(msg)
 
     def test_entry_validation_invalid_dn_type(self) -> None:
@@ -131,17 +129,13 @@ class TestFlextLdifEntryEnterprise:
         # Set new attribute
         entry.set_attribute("telephoneNumber", ["+1-555-0123"])
         if entry.get_attribute("telephoneNumber") != ["+1-555-0123"]:
-            msg: str = (
-                f"Expected {['+1-555-0123']}, got {entry.get_attribute('telephoneNumber')}"
-            )
+            msg: str = f"Expected {['+1-555-0123']}, got {entry.get_attribute('telephoneNumber')}"
             raise AssertionError(msg)
 
         # Modify existing attribute
         entry.set_attribute("mail", ["newemail@example.com"])
         if entry.get_attribute("mail") != ["newemail@example.com"]:
-            msg: str = (
-                f"Expected {['newemail@example.com']}, got {entry.get_attribute('mail')}"
-            )
+            msg: str = f"Expected {['newemail@example.com']}, got {entry.get_attribute('mail')}"
             raise AssertionError(msg)
 
     def test_has_attribute_success(self, sample_entry_data: dict) -> None:
