@@ -41,6 +41,7 @@ from typing import cast
 # FOUNDATION: Complete flext-core integration - NO duplication
 from flext_core import FlextEntity, FlextFactory, FlextResult, FlextValue
 from flext_core.exceptions import FlextValidationError
+from pydantic import Field, field_validator
 
 # Import consolidated constants first (policy: constants at top)
 from .constants import (
@@ -68,7 +69,7 @@ def _get_ldap_validators() -> tuple[object, object]:
             return bool(dn and isinstance(dn, str) and "=" in dn)
 
         return (_attr_ok, _dn_ok)
-from pydantic import Field, field_validator
+
 
 # NOTE: Enterprise semantic types now centralized in types.py
 # TypedDict definitions also centralized in types.py for consistency
