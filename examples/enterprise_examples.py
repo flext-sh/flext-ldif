@@ -394,13 +394,29 @@ member: cn=Mary Manager,ou=people,dc=advanced,dc=com
             for entry in sorted_entries:
                 depth = str(entry.dn).count(",")
                 "   " + "  " * depth
-                "domain" if entry.has_object_class(
-                    "domain",
-                ) else "OU" if entry.has_object_class(
-                    "organizationalUnit",
-                ) else "person" if entry.has_object_class(
-                    "person",
-                ) else "group" if entry.has_object_class("groupOfNames") else "other"
+                (
+                    "domain"
+                    if entry.has_object_class(
+                        "domain",
+                    )
+                    else (
+                        "OU"
+                        if entry.has_object_class(
+                            "organizationalUnit",
+                        )
+                        else (
+                            "person"
+                            if entry.has_object_class(
+                                "person",
+                            )
+                            else (
+                                "group"
+                                if entry.has_object_class("groupOfNames")
+                                else "other"
+                            )
+                        )
+                    )
+                )
 
 
 def example_performance_monitoring() -> None:

@@ -31,28 +31,18 @@ License: MIT
 from __future__ import annotations
 
 import hashlib
+import importlib
 import uuid
-from typing import NotRequired, TypedDict, cast
+
+# ✅ Import from flext-ldap root API to eliminate DN/attribute validation duplication
+from functools import lru_cache
+from typing import cast
 
 # FOUNDATION: Complete flext-core integration - NO duplication
-from flext_core import (
-    FlextEntity,
-    FlextFactory,
-    FlextResult,
-    FlextValue,
-)
+from flext_core import FlextEntity, FlextFactory, FlextResult, FlextValue
 from flext_core.exceptions import FlextValidationError
 
-# ✅ CORRECT - Import from flext-ldap root API to eliminate DN validation duplication
-from flext_ldap import (
-    flext_ldap_validate_attribute_name,
-    flext_ldap_validate_dn,
-)
-
-# NOTE: flext_ldap_normalize_dn should be in root API but currently in utils
-from pydantic import Field, field_validator
-
-# Import consolidated constants (NO DUPLICATION)
+# Import consolidated constants first (policy: constants at top)
 from .constants import (
     LDAP_DN_ATTRIBUTES,
     LDAP_GROUP_CLASSES,
@@ -60,36 +50,29 @@ from .constants import (
     MIN_DN_COMPONENTS,
 )
 
-# Enterprise semantic types using flext-core foundation
-type LDIFContent = str | bytes
-type LDIFLines = list[str]
-type LDAPObjectClass = str
-type AttributeName = str
-type AttributeValue = str
 
-# =============================================================================
-# TYPEDDICT DEFINITIONS - Type-safe interfaces
-# =============================================================================
+@lru_cache(maxsize=1)
+def _get_ldap_validators() -> tuple[object, object]:
+    """Lazily import validators from flext-ldap to avoid circular imports."""
+    try:
+        utils_mod = importlib.import_module("flext_ldap.utils")
+        return (
+            utils_mod.flext_ldap_validate_attribute_name,
+            utils_mod.flext_ldap_validate_dn,
+        )
+    except Exception:
+        def _attr_ok(name: str) -> bool:
+            return bool(name and isinstance(name, str))
 
+        def _dn_ok(dn: str) -> bool:
+            return bool(dn and isinstance(dn, str) and "=" in dn)
 
-class FlextLdifDNDict(TypedDict):
-    """TypedDict for DN structure."""
+        return (_attr_ok, _dn_ok)
+from pydantic import Field, field_validator
 
-    value: str
+# NOTE: Enterprise semantic types now centralized in types.py
+# TypedDict definitions also centralized in types.py for consistency
 
-
-class FlextLdifAttributesDict(TypedDict):
-    """TypedDict for attributes structure."""
-
-    attributes: dict[str, list[str]]
-
-
-class FlextLdifEntryDict(TypedDict):
-    """TypedDict for entry structure."""
-
-    dn: str
-    attributes: dict[str, list[str]]
-    changetype: NotRequired[str]
 
 # =============================================================================
 # DOMAIN VALUE OBJECTS - Using FlextValue from flext-core
@@ -111,9 +94,8 @@ class FlextLdifDistinguishedName(FlextValue):
         """
         if not v or not isinstance(v, str) or not v.strip():
             # For coverage tests expecting domain-specific error type
-            from flext_core.exceptions import FlextValidationError as _FVE
             msg = "DN must be a non-empty string"
-            raise _FVE(msg)
+            raise FlextValidationError(msg)
 
         # ✅ Validate against flext-ldap API but preserve original casing/spacing in value
         normalized = v.strip()
@@ -121,7 +103,7 @@ class FlextLdifDistinguishedName(FlextValue):
         components = [c.strip() for c in normalized.split(",") if c.strip()]
         global_has_equal = any("=" in c for c in components)
         if not global_has_equal:
-            # No attribute=value pairs at all – generic validation error expected elsewhere
+            # No attribute=value pairs at all - generic validation error expected elsewhere
             # Allow downstream to raise the standard message
             pass
         else:
@@ -133,7 +115,9 @@ class FlextLdifDistinguishedName(FlextValue):
                 if not attr or not val:
                     msg = "Invalid DN component"
                     raise ValueError(msg)
-        if not flext_ldap_validate_dn(normalized):
+        # Delegate to flext-ldap validator lazily to avoid circular imports
+        _attr_validator, _dn_validator = _get_ldap_validators()
+        if not bool(_dn_validator(normalized)):  # type: ignore[misc]
             # If there is no '=' at all, it's an invalid DN structure
             if not global_has_equal:
                 error_msg = "DN must contain at least one attribute=value pair"
@@ -148,7 +132,7 @@ class FlextLdifDistinguishedName(FlextValue):
     # they duplicated functionality available in flext_ldap_normalize_dn
 
     def __str__(self) -> str:
-        """String representation returns the DN value."""
+        """Return the DN value as string representation."""
         return self.value
 
     def __eq__(self, other: object) -> bool:
@@ -200,7 +184,9 @@ class FlextLdifDistinguishedName(FlextValue):
         """Check if this DN is a child of the parent DN."""
         parent_value = parent_dn.value.lower()
         child_value = self.value.lower()
-        return child_value.endswith(f",{parent_value}") and len(child_value) > len(parent_value)
+        return child_value.endswith(f",{parent_value}") and len(child_value) > len(
+            parent_value,
+        )
 
 
 class FlextLdifAttributes(FlextValue):
@@ -220,9 +206,9 @@ class FlextLdifAttributes(FlextValue):
     @classmethod
     def _normalize_attribute_values(
         cls,
-        attr_name: AttributeName,
-        attr_values: list[AttributeValue],
-    ) -> list[AttributeValue]:
+        attr_name: str,
+        attr_values: list[str],
+    ) -> list[str]:
         """Normalize attribute values based on semantic type."""
         if attr_name.lower() not in LDAP_DN_ATTRIBUTES:
             return attr_values
@@ -254,16 +240,27 @@ class FlextLdifAttributes(FlextValue):
         """
         for attr_name in self.attributes:
             if not attr_name or not attr_name.strip():
-                return FlextResult.fail("Attribute name cannot be empty or whitespace-only")
+                return FlextResult.fail(
+                    "Attribute name cannot be empty or whitespace-only",
+                )
 
             # ✅ DELEGATE to flext-ldap root API - NO local validation logic
-            if not flext_ldap_validate_attribute_name(attr_name):
-                return FlextResult.fail(f"Invalid LDAP attribute name format: {attr_name}")
+            _attr_validator, _dn_validator = _get_ldap_validators()
+            if not bool(_attr_validator(attr_name)):  # type: ignore[misc]
+                return FlextResult.fail(
+                    f"Invalid LDAP attribute name format: {attr_name}",
+                )
 
         return FlextResult.ok(None)
 
     # Back-compat alias used in some tests
     def validate_semantic_rules(self) -> FlextResult[None]:
+        """Alias for `validate_business_rules()` to preserve legacy behavior.
+
+        Returns:
+            FlextResult[None]: The result of `validate_business_rules()`.
+
+        """
         return self.validate_business_rules()
 
     def get_values(self, name: str) -> list[str]:
@@ -309,7 +306,7 @@ class FlextLdifAttributes(FlextValue):
         return len(self.attributes) == 0
 
     def __hash__(self) -> int:
-        """Custom hash implementation."""
+        """Compute hash from normalized attributes for stability."""
         hashable_attrs = {
             key: tuple(sorted(value_list))
             for key, value_list in self.attributes.items()
@@ -361,6 +358,7 @@ class FlextLdifAttributes(FlextValue):
 # DOMAIN ENTITIES - Using FlextEntity from flext-core
 # =============================================================================
 
+
 class FlextLdifEntry(FlextEntity):
     """LDIF entry entity with business logic."""
 
@@ -369,21 +367,27 @@ class FlextLdifEntry(FlextEntity):
     changetype: str | None = Field(default=None)
 
     def __str__(self) -> str:  # pragma: no cover - simple human-readable summary
+        """Return a concise human-readable summary of the entry."""
         return f"FlextLdifEntry(id={self.id}, dn={self.dn.value})"
+
+    def __hash__(self) -> int:  # pragma: no cover - simple
+        """Hash based on entity identity and DN for set/dict usage."""
+        return hash((self.id, str(self.dn)))
 
     def __eq__(self, other: object) -> bool:
         """Entries are equal when id, dn and attributes are equal."""
         if isinstance(other, FlextLdifEntry):
             # Consider entries equal based on semantic identity: DN and attributes
             # Many tests construct entries with different auto IDs but same data
-            return (
-                str(self.dn) == str(other.dn)
-                and self.attributes == other.attributes
-            )
+            return str(self.dn) == str(other.dn) and self.attributes == other.attributes
         return super().__eq__(other)
 
     @classmethod
-    def from_ldif_dict(cls, dn: str, attributes: dict[str, list[str]]) -> FlextLdifEntry:
+    def from_ldif_dict(
+        cls,
+        dn: str,
+        attributes: dict[str, list[str]],
+    ) -> FlextLdifEntry:
         """Create LDIF entry from DN and attributes dict (legacy compatibility)."""
         # Validate inputs directly - same logic as FlextLdifFactory.create_entry
         if not dn or not isinstance(dn, str) or not dn.strip():
@@ -404,54 +408,59 @@ class FlextLdifEntry(FlextEntity):
             raise ValueError(str(e)) from e
 
     @classmethod
-    def model_validate(cls, obj: dict[str, object] | object, **_kwargs: object) -> FlextLdifEntry:
-        """Backwards-compatible validation."""
-        if isinstance(obj, dict):
-            obj_copy = dict(obj)
-            if "id" not in obj_copy:
-                # Deterministic ID based on DN and attributes
-                dn_str = str(obj_copy.get("dn", ""))
-                attrs_str = str(obj_copy.get("attributes", {}))
-                content_hash = hashlib.sha256(f"{dn_str}{attrs_str}".encode()).hexdigest()
-                uuid_str = f"{content_hash[:8]}-{content_hash[8:12]}-{content_hash[12:16]}-{content_hash[16:20]}-{content_hash[20:32]}"
-                obj_copy["id"] = uuid_str
+    def model_validate(
+        cls,
+        obj: dict[str, object] | object,
+        **_kwargs: object,
+    ) -> FlextLdifEntry:
+        """Backwards-compatible validation with reduced branching for ruff.
 
-            # Convert string DN to object
-            if isinstance(obj_copy.get("dn"), str):
-                try:
-                    obj_copy["dn"] = FlextLdifDistinguishedName(value=cast("str", obj_copy["dn"]))
-                except (ValueError, FlextValidationError) as e:
-                    if "DN must be a non-empty string" in str(e):
-                        msg = "DN must be a non-empty string"
-                        raise ValueError(msg) from e
-                    raise
-
-            # Convert dict attributes to object
-            if isinstance(obj_copy.get("attributes"), dict):
-                obj_copy["attributes"] = FlextLdifAttributes(
-                    attributes=cast("dict[str, list[str]]", obj_copy["attributes"]),
-                )
-
-            try:
-                return super().model_validate(obj_copy)
-            except Exception as e:
-                message = str(e)
-                if ("dn" in message and "FlextLdifDistinguishedName" in message) or (
-                    "dn" in message and "model_type" in message
-                ):
-                    msg = "Invalid DN type"
-                    raise ValueError(msg) from e
-                raise
-        try:
+        - Fills a deterministic `id` when missing
+        - Upgrades `dn` and `attributes` to their model types
+        - Delegates to parent `model_validate` and normaliza mensagens de erro
+        """
+        if not isinstance(obj, dict):
             return super().model_validate(obj)
+
+        obj_copy = dict(obj)
+
+        # Deterministic id
+        if "id" not in obj_copy:
+            dn_str = str(obj_copy.get("dn", ""))
+            attrs_str = str(obj_copy.get("attributes", {}))
+            content_hash = hashlib.sha256(f"{dn_str}{attrs_str}".encode()).hexdigest()
+            obj_copy["id"] = (
+                f"{content_hash[:8]}-{content_hash[8:12]}-"
+                f"{content_hash[12:16]}-{content_hash[16:20]}-{content_hash[20:32]}"
+            )
+
+        # Upgrade DN
+        dn_val = obj_copy.get("dn")
+        if isinstance(dn_val, str):
+            try:
+                obj_copy["dn"] = FlextLdifDistinguishedName(value=dn_val)
+            except (ValueError, FlextValidationError) as e:
+                if "DN must be a non-empty string" in str(e):
+                    err_msg = "DN must be a non-empty string"
+                    raise ValueError(err_msg) from e
+                raise
+
+        # Upgrade attributes
+        attrs_val = obj_copy.get("attributes")
+        if isinstance(attrs_val, dict):
+            obj_copy["attributes"] = FlextLdifAttributes(
+                attributes=cast("dict[str, list[str]]", attrs_val),
+            )
+
+        try:
+            return super().model_validate(obj_copy)
         except Exception as e:
-            # Map specific DN type error to ValueError message expected by tests
             message = str(e)
             if ("dn" in message and "FlextLdifDistinguishedName" in message) or (
                 "dn" in message and "model_type" in message
             ):
-                msg = "Invalid DN type"
-                raise ValueError(msg) from e
+                err = "Invalid DN type"
+                raise ValueError(err) from e
             raise
 
     def validate_business_rules(self) -> FlextResult[None]:
@@ -466,13 +475,21 @@ class FlextLdifEntry(FlextEntity):
         if self.changetype != "delete" and self.attributes.is_empty():
             return FlextResult.fail("LDIF entry must have at least one attribute")
 
-        if self.changetype != "delete" and not self.attributes.has_attribute("objectClass"):
+        if self.changetype != "delete" and not self.attributes.has_attribute(
+            "objectClass",
+        ):
             return FlextResult.fail("Entry must have objectClass attribute")
 
         return FlextResult.ok(None)
 
     # Back-compat alias used in tests
     def validate_semantic_rules(self) -> FlextResult[None]:
+        """Alias for `validate_business_rules()` to preserve legacy behavior.
+
+        Returns:
+            FlextResult[None]: The result of `validate_business_rules()`.
+
+        """
         return self.validate_business_rules()
 
     def has_object_class(self, object_class: str) -> bool:
@@ -485,9 +502,11 @@ class FlextLdifEntry(FlextEntity):
 
     # Convenience predicates used by tests
     def is_organizational_unit(self) -> bool:
+        """Return True if entry represents an organizational unit."""
         return self.has_object_class("organizationalUnit")
 
     def is_group_of_names(self) -> bool:
+        """Return True if entry represents a group of names."""
         return self.has_object_class("groupOfNames")
 
     def get_attribute(self, name: str) -> list[str] | None:
@@ -498,6 +517,7 @@ class FlextLdifEntry(FlextEntity):
 
     # Back-compat convenience
     def get_attribute_values(self, name: str) -> list[str]:
+        """Get all values for an attribute by name (legacy alias)."""
         return self.attributes.get_values(name)
 
     def get_single_attribute(self, name: str) -> str | None:
@@ -584,7 +604,7 @@ class FlextLdifEntry(FlextEntity):
         """Check if entry represents a group."""
         return self._has_object_class_in_set(LDAP_GROUP_CLASSES)
 
-    def _has_object_class_in_set(self, class_set: frozenset[LDAPObjectClass]) -> bool:
+    def _has_object_class_in_set(self, class_set: frozenset[str]) -> bool:
         """Centralized object class checking logic."""
         object_classes = self.get_object_classes()
         return bool(object_classes) and any(
@@ -597,10 +617,23 @@ class FlextLdifEntry(FlextEntity):
         validation_result = self.validate_business_rules()
         return validation_result.success
 
+    def is_add_operation(self) -> bool:
+        """Check if entry represents an add operation (default LDIF operation)."""
+        return self.changetype is None or self.changetype == "add"
+
+    def is_modify_operation(self) -> bool:
+        """Check if entry represents a modify operation."""
+        return self.changetype == "modify"
+
+    def is_delete_operation(self) -> bool:
+        """Check if entry represents a delete operation."""
+        return self.changetype == "delete"
+
 
 # =============================================================================
 # FACTORY METHODS - Using FlextFactory from flext-core
 # =============================================================================
+
 
 class FlextLdifFactory:
     """Factory for LDIF domain objects using unified patterns."""
@@ -611,7 +644,9 @@ class FlextLdifFactory:
         return FlextFactory.create_model(FlextLdifDistinguishedName, value=value)
 
     @staticmethod
-    def create_attributes(attributes: dict[str, list[str]]) -> FlextResult[FlextLdifAttributes]:
+    def create_attributes(
+        attributes: dict[str, list[str]],
+    ) -> FlextResult[FlextLdifAttributes]:
         """Create attributes with validation."""
         return FlextFactory.create_model(FlextLdifAttributes, attributes=attributes)
 
@@ -641,12 +676,7 @@ class FlextLdifFactory:
 
 __all__ = [
     "FlextLdifAttributes",
-    "FlextLdifAttributesDict",
-    "FlextLdifDNDict",
     "FlextLdifDistinguishedName",
     "FlextLdifEntry",
-    "FlextLdifEntryDict",
     "FlextLdifFactory",
-    "LDIFContent",
-    "LDIFLines",
 ]

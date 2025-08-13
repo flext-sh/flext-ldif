@@ -1,7 +1,7 @@
 # FLEXT-LDIF API Reference
 
-**Version**: 0.9.0  
-**Status**: Active Development  
+**Version**: 0.9.0
+**Status**: Active Development
 **Integration**: FLEXT Ecosystem Compatible
 
 API documentation for the FLEXT-LDIF library.
@@ -312,7 +312,7 @@ print(ldif_output)
 ##### Change Type Detection
 
 **`is_add_operation() -> bool`**
-**`is_modify_operation() -> bool`**  
+**`is_modify_operation() -> bool`**
 **`is_delete_operation() -> bool`**
 
 ```python
@@ -1152,7 +1152,7 @@ entries = result.data if result.success else []
 
 ---
 
-**API Version**: 0.9.0 | **Last Updated**: 2025-08-03  
+**API Version**: 0.9.0 | **Last Updated**: 2025-08-03
 **Status**: Active Development | **FLEXT Ecosystem**: Compatible
 
 This comprehensive API reference covers all public interfaces, integration patterns, and best practices for the FLEXT-LDIF library within the FLEXT ecosystem.

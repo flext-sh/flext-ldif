@@ -209,8 +209,9 @@ def demonstrate_configuration_error_handling() -> None:
             if result.success:
                 pass
 
-    except Exception:
-        pass
+    except Exception as exc:  # Log instead of bare pass
+        logger = get_logger(__name__)
+        logger.exception("Configuration test failed", exc_info=exc)
 
     # Test with strict validation
     config = FlextLdifConfig(strict_validation=True, allow_empty_attributes=False)
@@ -253,7 +254,7 @@ def main() -> None:
         logger.info("Error handling demonstration completed successfully")
 
     except Exception:
-        logger.error("Demonstration failed", exc_info=True)
+        logger.exception("Demonstration failed")
         raise
 
 

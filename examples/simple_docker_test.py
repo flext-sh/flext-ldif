@@ -8,16 +8,8 @@ for testing and development purposes.
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 
-# Add src and tests to path for local testing
-src_path = Path(__file__).parent.parent / "src"
-tests_path = Path(__file__).parent.parent / "tests"
-sys.path.insert(0, str(src_path))
-sys.path.insert(0, str(tests_path))
-
-# CORREÇÃO: Import após configurar path
-from docker_fixtures import OpenLDAPContainerManager, check_docker_available
+from tests.docker_fixtures import OpenLDAPContainerManager, check_docker_available
 
 from flext_ldif import flext_ldif_parse, flext_ldif_validate
 
@@ -45,14 +37,14 @@ def test_with_docker_container() -> bool | None:
         entries = flext_ldif_parse(ldif_data)
 
         # Constants for testing
-        MAX_ENTRIES_TO_SHOW = 3
+        max_entries_to_show = 3
 
         # Show entry details
-        for _i, entry in enumerate(entries[:MAX_ENTRIES_TO_SHOW]):
+        for _i, entry in enumerate(entries[:max_entries_to_show]):
             if entry.has_attribute("cn"):
                 pass
 
-        if len(entries) > MAX_ENTRIES_TO_SHOW:
+        if len(entries) > max_entries_to_show:
             pass
 
         # Test validation
