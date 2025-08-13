@@ -33,8 +33,12 @@ from pydantic import Field
 
 from flext_ldif.format_validators import LdifValidator
 
+try:  # Resolve at runtime to avoid NameError during import ordering
+    from .config import FlextLdifConfig  # type: ignore
+except Exception:  # pragma: no cover - resolved by model_rebuild
+    FlextLdifConfig = object  # type: ignore[misc,assignment]
+
 if TYPE_CHECKING:
-    from .config import FlextLdifConfig
     from .models import FlextLdifEntry
 
 logger = get_logger(__name__)
@@ -152,6 +156,5 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
 __all__ = ["FlextLdifValidatorService"]
 
 # Rebuild model to resolve forward references after config is defined
-from .config import FlextLdifConfig  # noqa: E402, TC001
 
 FlextLdifValidatorService.model_rebuild()

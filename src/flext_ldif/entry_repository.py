@@ -31,8 +31,9 @@ from typing import TYPE_CHECKING
 from flext_core import FlextDomainService, FlextResult, get_logger
 from pydantic import Field
 
+from .config import FlextLdifConfig
+
 if TYPE_CHECKING:
-    from .config import FlextLdifConfig
     from .models import FlextLdifEntry
 
 logger = get_logger(__name__)
@@ -120,7 +121,6 @@ class FlextLdifRepositoryService(FlextDomainService[dict[str, int]]):
 __all__ = ["FlextLdifRepositoryService"]
 
 # Rebuild model to resolve forward references after config is defined
-from .config import FlextLdifConfig as _Config  # noqa: E402
 
-# Provide types namespace to satisfy Pydantic forward refs
-FlextLdifRepositoryService.model_rebuild(_types_namespace={"FlextLdifConfig": _Config})
+# Provide types namespace to satisfy Pydantic forward refs explicitly
+FlextLdifRepositoryService.model_rebuild(_types_namespace={"FlextLdifConfig": FlextLdifConfig})

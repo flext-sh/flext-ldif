@@ -26,15 +26,11 @@ License: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from flext_core import FlextDomainService, FlextResult, get_logger
 from pydantic import Field
 
+from .config import FlextLdifConfig
 from .models import FlextLdifEntry
-
-if TYPE_CHECKING:
-    from .config import FlextLdifConfig
 
 logger = get_logger(__name__)
 
@@ -82,6 +78,5 @@ class FlextLdifTransformerService(FlextDomainService[list[FlextLdifEntry]]):
 __all__ = ["FlextLdifTransformerService"]
 
 # Rebuild model to resolve forward references after config is defined
-from .config import FlextLdifConfig  # noqa: E402, TC001
 
-FlextLdifTransformerService.model_rebuild()
+FlextLdifTransformerService.model_rebuild(_types_namespace={"FlextLdifConfig": FlextLdifConfig})
