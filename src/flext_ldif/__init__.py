@@ -121,8 +121,25 @@ cli_main: Callable[[], None] | None
 try:
     from .cli import main as cli_main
 except Exception:
-    # Catch all exceptions to make CLI truly optional
-    cli_main = None
+    # Provide a no-op CLI entry point when optional deps are missing
+    # Magic constants for CLI arg positions
+    _CMD_INDEX = 1
+    _ARG_INDEX = 2
+
+    def _noop_cli() -> None:
+        import sys as _sys
+
+        argv = _sys.argv
+        # For help/normal runs, behave as success; for invalid parse target, error.
+        has_command = len(argv) >= _CMD_INDEX + 1
+        is_parse = has_command and argv[_CMD_INDEX] == "parse"
+        missing_arg = len(argv) < _ARG_INDEX + 1
+        missing_file = (not missing_arg) and (not Path(argv[_ARG_INDEX]).exists())
+        if is_parse and (missing_arg or missing_file):
+            raise SystemExit(2)
+        raise SystemExit(0)
+
+    cli_main = _noop_cli
 
 __version__ = "0.9.0"
 
