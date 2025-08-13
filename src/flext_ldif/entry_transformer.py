@@ -26,10 +26,9 @@ License: MIT
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
-from flext_core import FlextDomainService, FlextResult
+from flext_core import FlextDomainService, FlextResult, get_logger
 from pydantic import Field
 
 from .models import FlextLdifEntry
@@ -37,7 +36,7 @@ from .models import FlextLdifEntry
 if TYPE_CHECKING:
     from .config import FlextLdifConfig
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class FlextLdifTransformerService(FlextDomainService[list[FlextLdifEntry]]):
