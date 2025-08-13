@@ -27,18 +27,14 @@ License: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from flext_core import FlextDomainService, FlextResult, get_logger
 from pydantic import Field
 
 from .constants import DEFAULT_OUTPUT_ENCODING
 
-try:  # Resolve at runtime to avoid NameError during import ordering
-    from .config import FlextLdifConfig  # type: ignore
-except Exception:  # pragma: no cover - resolved by model_rebuild
-    FlextLdifConfig = object  # type: ignore[misc,assignment]
-    from .models import FlextLdifEntry
+from .config import FlextLdifConfig
+from .models import FlextLdifEntry
 
 logger = get_logger(__name__)
 
@@ -104,4 +100,4 @@ class FlextLdifWriterService(FlextDomainService[str]):
 __all__ = ["FlextLdifWriterService"]
 
 # Rebuild to resolve forward refs with explicit namespace in strict setups
-FlextLdifWriterService.model_rebuild(_types_namespace={"FlextLdifConfig": FlextLdifConfig})
+FlextLdifWriterService.model_rebuild()

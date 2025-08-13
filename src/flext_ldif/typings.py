@@ -9,7 +9,11 @@ from __future__ import annotations
 from flext_core.typings import FlextTypes as CoreFlextTypes
 
 # Re-export LDIF domain-specific types for a single import point
-from flext_ldif.types import *  # noqa: F403
+from flext_ldif.types import (
+    FlextLdifAttributesDict as LdifAttributeDict,
+    FlextLdifEntryDict as LdifEntry,
+    LdifAttributeValue,
+)
 
 
 class FlextTypes(CoreFlextTypes):
@@ -18,4 +22,7 @@ class FlextTypes(CoreFlextTypes):
 
 __all__ = [
     "FlextTypes",
-] + [name for name in dir() if not name.startswith("_")]
+    "LdifAttributeDict",
+    "LdifAttributeValue",
+    "LdifEntry",
+]
