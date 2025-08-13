@@ -58,8 +58,8 @@ License: MIT
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
+import re
 from typing import TYPE_CHECKING
 
 from flext_core import FlextResult, get_logger
@@ -445,7 +445,9 @@ class TLdif:
                 )
                 result = cls.validate(entry)
                 if not result.success:
-                    error_msg: str = f"Entry {i + 1} of {total_entries} failed validation ({entry.dn}): {result.error}"
+                    error_msg: str = (
+                        f"Entry {i + 1} of {total_entries} failed validation ({entry.dn}): {result.error}"
+                    )
                     logger.warning(
                         "Bulk validation failed at entry %d: %s",
                         i + 1,
@@ -651,7 +653,9 @@ class TLdif:
             logger.debug("Converting %d entries to LDIF content", entries_count)
             content_result = cls.write(entries)
             if not content_result.success:
-                error_msg: str = f"Content generation failed for {entries_count} entries: {content_result.error}"
+                error_msg: str = (
+                    f"Content generation failed for {entries_count} entries: {content_result.error}"
+                )
                 logger.error(error_msg)
                 return FlextResult.fail(error_msg)
 

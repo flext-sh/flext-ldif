@@ -7,12 +7,12 @@ covering real-world scenarios and enterprise use cases.
 from __future__ import annotations
 
 import gc
+from pathlib import Path
 import queue
 import sys
 import tempfile
 import threading
 import time
-from pathlib import Path
 
 import pytest
 
