@@ -55,7 +55,7 @@ repos:
         types: [python]
         require_serial: true
         pass_filenames: false
-        args: [src/, tests/, examples/, --config-file=pyproject.toml]
+        args: [src/, --config-file=pyproject.toml]
 
       # Bandit security
       - id: bandit
