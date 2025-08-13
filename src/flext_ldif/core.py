@@ -66,27 +66,17 @@ from flext_core import FlextResult, get_logger
 from flext_core.exceptions import FlextValidationError
 
 # ✅ CORRECT - Import from flext-ldap root API to eliminate validation duplication
-# Avoid mypy strict errors from external repo by importing at runtime only
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    _validate_dn: Callable[[str], bool]
-    _validate_attr_name: Callable[[str], bool]
-else:
-    from flext_ldap import (
-        flext_ldap_validate_attribute_name as _validate_attr_name,
-        flext_ldap_validate_dn as _validate_dn,
-    )
-
+# These are proper dependencies that should be in pyproject.toml
+from flext_ldap import (
+    flext_ldap_validate_attribute_name as _validate_attr_name,
+    flext_ldap_validate_dn as _validate_dn,
+)
 
 from .format_handlers import modernized_ldif_parse, modernized_ldif_write
+from .models import FlextLdifEntry, FlextLdifFactory
 
 if TYPE_CHECKING:
-    from .models import FlextLdifEntry, FlextLdifFactory
     from .types import LDIFContent
-else:
-    # Need FlextLdifFactory at runtime for parsing
-    from .models import FlextLdifFactory
 
 logger = get_logger(__name__)
 

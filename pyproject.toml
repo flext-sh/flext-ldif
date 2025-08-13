@@ -238,6 +238,7 @@ click = ">=8.1.0"
 # Local ecosystem deps in editable mode for workspace development
 flext-core = { path = "../flext-core", develop = true }
 flext-cli = { path = "../flext-cli", develop = true }
+flext-ldap = { path = "../flext-ldap", develop = true }
 flext-observability = { path = "../flext-observability", develop = true }
 
 

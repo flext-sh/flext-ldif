@@ -32,11 +32,10 @@ from typing import TYPE_CHECKING
 from flext_core import FlextDomainService, FlextResult, get_logger
 from pydantic import Field
 
-from .constants import DEFAULT_INPUT_ENCODING
-from .models import FlextLdifEntry, FlextLdifFactory
-
 if TYPE_CHECKING:
     from .config import FlextLdifConfig
+from .constants import DEFAULT_INPUT_ENCODING
+from .models import FlextLdifEntry, FlextLdifFactory
 
 logger = get_logger(__name__)
 

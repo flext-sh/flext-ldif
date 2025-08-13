@@ -33,8 +33,9 @@ from pydantic import Field
 
 from flext_ldif.format_validators import LdifValidator
 
+from .config import FlextLdifConfig
+
 if TYPE_CHECKING:
-    from .config import FlextLdifConfig
     from .models import FlextLdifEntry
 
 logger = get_logger(__name__)
@@ -160,4 +161,4 @@ except Exception as _e:
     # Best-effort: if import fails, forward refs may resolve later
     ...
 
-FlextLdifValidatorService.model_rebuild()
+# Note: model_rebuild() is called in api.py to avoid circular imports

@@ -294,9 +294,9 @@ cn: incomplete
             pass
 
 
-def example_advanced_filtering() -> None:
-    """Demonstrate advanced filtering and processing."""
-    complex_ldif = """dn: dc=advanced,dc=com
+def _parse_sample_ldif_data() -> str:
+    """Provide sample LDIF data for advanced filtering demonstration."""
+    return """dn: dc=advanced,dc=com
 objectClass: top
 objectClass: domain
 dc: advanced
@@ -351,72 +351,86 @@ member: cn=Mary Manager,ou=people,dc=advanced,dc=com
 
 """
 
+
+def _demonstrate_basic_object_class_filtering(
+    api: FlextLdifAPI, entries: list, person_entries: list,
+) -> None:
+    """Demonstrate basic object class filtering operations."""
+    # inetOrgPerson entries (more specific)
+    api.filter_by_objectclass(entries, "inetOrgPerson")
+
+    # Group entries
+    api.filter_by_objectclass(entries, "groupOfNames")
+
+    # Organizational units
+    api.filter_by_objectclass(entries, "organizationalUnit")
+
+
+def _filter_by_title_containing(entries: list, keyword: str) -> list:
+    """Custom filter for entries with title containing keyword."""
+    result = []
+    for entry in entries:
+        title_attr = entry.get_attribute("title")
+        if title_attr and any(
+            keyword.lower() in title.lower() for title in title_attr
+        ):
+            result.append(entry)
+    return result
+
+
+def _demonstrate_custom_title_filtering(person_entries: list) -> None:
+    """Demonstrate custom filtering by title keywords."""
+    _filter_by_title_containing(person_entries, "engineer")
+    _filter_by_title_containing(person_entries, "manager")
+
+
+def _determine_entry_type(entry) -> str:
+    """Determine the type of an LDAP entry based on object classes."""
+    if entry.has_object_class("domain"):
+        return "domain"
+    if entry.has_object_class("organizationalUnit"):
+        return "OU"
+    if entry.has_object_class("person"):
+        return "person"
+    if entry.has_object_class("groupOfNames"):
+        return "group"
+    return "other"
+
+
+def _demonstrate_hierarchical_analysis(
+    api: FlextLdifAPI, entries: list,
+) -> None:
+    """Demonstrate hierarchical analysis and entry categorization."""
+    sort_result = api.sort_hierarchically(entries)
+    if sort_result.success:
+        sorted_entries = sort_result.data
+        for entry in sorted_entries:
+            depth = str(entry.dn).count(",")
+            "   " + "  " * depth
+            _determine_entry_type(entry)
+
+
+def example_advanced_filtering() -> None:
+    """Demonstrate advanced filtering and processing."""
+    complex_ldif = _parse_sample_ldif_data()
+    
     api = FlextLdifAPI()
     parse_result = api.parse(complex_ldif)
 
     if parse_result.success:
         entries = parse_result.data
 
-        # Filter different types
-
         # Person entries
         person_entries = api.filter_persons(entries).data
 
-        # inetOrgPerson entries (more specific)
-        api.filter_by_objectclass(entries, "inetOrgPerson")
+        # Demonstrate basic object class filtering
+        _demonstrate_basic_object_class_filtering(api, entries, person_entries)
 
-        # Group entries
-        api.filter_by_objectclass(entries, "groupOfNames")
+        # Demonstrate custom title filtering
+        _demonstrate_custom_title_filtering(person_entries)
 
-        # Organizational units
-        api.filter_by_objectclass(entries, "organizationalUnit")
-
-        # Custom filtering example
-        def filter_by_title_containing(entries: list, keyword: str) -> list:
-            """Custom filter for entries with title containing keyword."""
-            result = []
-            for entry in entries:
-                title_attr = entry.get_attribute("title")
-                if title_attr and any(
-                    keyword.lower() in title.lower() for title in title_attr
-                ):
-                    result.append(entry)
-            return result
-
-        filter_by_title_containing(person_entries, "engineer")
-
-        filter_by_title_containing(person_entries, "manager")
-
-        # Hierarchical analysis
-        sort_result = api.sort_hierarchically(entries)
-        if sort_result.success:
-            sorted_entries = sort_result.data
-            for entry in sorted_entries:
-                depth = str(entry.dn).count(",")
-                "   " + "  " * depth
-                (
-                    "domain"
-                    if entry.has_object_class(
-                        "domain",
-                    )
-                    else (
-                        "OU"
-                        if entry.has_object_class(
-                            "organizationalUnit",
-                        )
-                        else (
-                            "person"
-                            if entry.has_object_class(
-                                "person",
-                            )
-                            else (
-                                "group"
-                                if entry.has_object_class("groupOfNames")
-                                else "other"
-                            )
-                        )
-                    )
-                )
+        # Demonstrate hierarchical analysis
+        _demonstrate_hierarchical_analysis(api, entries)
 
 
 def example_performance_monitoring() -> None:

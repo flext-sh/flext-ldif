@@ -16,13 +16,11 @@ from __future__ import annotations
 import importlib
 from collections.abc import Callable
 from functools import lru_cache
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 from flext_core import FlextResult
 
-if TYPE_CHECKING:
-    from .models import FlextLdifEntry
-
+from flext_ldif.models import FlextLdifEntry
 
 ValidatorFunc = Callable[[str], bool]
 
@@ -330,9 +328,6 @@ def validate_dn_format(dn_value: str) -> FlextResult[bool]:
 
 def validate_ldif_structure(entry: object) -> FlextResult[bool]:
     """Validate LDIF entry structure - delegates to LdifValidator."""
-    # Import here to avoid circular dependency
-    from .models import FlextLdifEntry
-
     if not isinstance(entry, FlextLdifEntry):
         return FlextResult.fail("Entry must be FlextLdifEntry instance")
 
