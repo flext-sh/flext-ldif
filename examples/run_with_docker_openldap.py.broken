@@ -9,20 +9,14 @@ Perfect for testing and demonstration without needing a manual LDAP setup.
 from __future__ import annotations
 
 import asyncio
+from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import time
-from pathlib import Path
 
-from flext_ldif import (
-    FlextLdifProcessor,
-    FlextLdifValidator,
-    parse_ldif,
-)
-from flext_ldif.domain.specifications import (
-    FlextLdifPersonSpecification,
-)
+from flext_ldif import FlextLdifProcessor, FlextLdifValidator, parse_ldif
+from flext_ldif.domain.specifications import FlextLdifPersonSpecification
 
 # Add src to path for local testing
 src_path = Path(__file__).parent.parent / "src"
@@ -435,10 +429,7 @@ class LdifExampleRunner:
         self.ldif_data = ldif_data
         self.entries = parse_ldif(ldif_data)
 
-        from flext_ldif import (
-            modernized_ldif_parse,
-            modernized_ldif_write,
-        )
+        from flext_ldif import modernized_ldif_parse, modernized_ldif_write
 
         self.modernized_parse = modernized_ldif_parse
         self.modernized_write = modernized_ldif_write

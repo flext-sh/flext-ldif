@@ -76,29 +76,35 @@ DN_COMPONENT_PATTERN: Final[str] = r"^[a-zA-Z]+=.+"
 # =============================================================================
 
 # Person Object Classes (merged from constants.py + ldif_constants.py)
-LDAP_PERSON_CLASSES: Final[frozenset[str]] = frozenset({
-    "person",
-    "organizationalPerson",
-    "inetOrgPerson",
-    "user",
-    "posixAccount",
-})
+LDAP_PERSON_CLASSES: Final[frozenset[str]] = frozenset(
+    {
+        "person",
+        "organizationalPerson",
+        "inetOrgPerson",
+        "user",
+        "posixAccount",
+    },
+)
 
 # Group Object Classes (merged from constants.py + ldif_constants.py)
-LDAP_GROUP_CLASSES: Final[frozenset[str]] = frozenset({
-    "group",
-    "groupOfNames",
-    "groupOfUniqueNames",
-    "posixGroup",
-    "organizationalRole",
-    "groupOfMembers",
-})
+LDAP_GROUP_CLASSES: Final[frozenset[str]] = frozenset(
+    {
+        "group",
+        "groupOfNames",
+        "groupOfUniqueNames",
+        "posixGroup",
+        "organizationalRole",
+        "groupOfMembers",
+    },
+)
 
 # Organizational Unit Object Classes
-LDAP_OU_CLASSES: Final[frozenset[str]] = frozenset({
-    "organizationalUnit",
-    "top",
-})
+LDAP_OU_CLASSES: Final[frozenset[str]] = frozenset(
+    {
+        "organizationalUnit",
+        "top",
+    },
+)
 
 # Backward Compatibility Aliases (DEPRECATED - use LDAP_ prefixed versions)
 PERSON_OBJECT_CLASSES: Final[frozenset[str]] = LDAP_PERSON_CLASSES
@@ -110,17 +116,19 @@ OU_OBJECT_CLASSES: Final[frozenset[str]] = LDAP_OU_CLASSES
 # =============================================================================
 
 # DN-Valued Attributes requiring DN normalization (merged from both files)
-LDAP_DN_ATTRIBUTES: Final[frozenset[str]] = frozenset({
-    "orcldaspublicgroupdns",
-    "member",
-    "uniquemember",
-    "owner",
-    "seealso",
-    "distinguishedname",
-    "manager",
-    "secretary",
-    "roleoccupant",
-})
+LDAP_DN_ATTRIBUTES: Final[frozenset[str]] = frozenset(
+    {
+        "orcldaspublicgroupdns",
+        "member",
+        "uniquemember",
+        "owner",
+        "seealso",
+        "distinguishedname",
+        "manager",
+        "secretary",
+        "roleoccupant",
+    },
+)
 
 # Backward Compatibility Alias (DEPRECATED - use LDAP_DN_ATTRIBUTES)
 DN_VALUED_ATTRIBUTES: Final[frozenset[str]] = LDAP_DN_ATTRIBUTES
@@ -129,12 +137,14 @@ DN_VALUED_ATTRIBUTES: Final[frozenset[str]] = LDAP_DN_ATTRIBUTES
 # LDIF CHANGE TYPES
 # =============================================================================
 
-LDIF_CHANGE_TYPES: Final[frozenset[str]] = frozenset({
-    "add",
-    "delete",
-    "modify",
-    "modrdn",
-})
+LDIF_CHANGE_TYPES: Final[frozenset[str]] = frozenset(
+    {
+        "add",
+        "delete",
+        "modify",
+        "modrdn",
+    },
+)
 
 # =============================================================================
 # VALIDATION SETTINGS
@@ -180,8 +190,8 @@ __all__ = [
     "DN_ATTRIBUTE_SEPARATOR",
     "DN_COMPONENT_PATTERN",
     "DN_SEPARATOR",
-    "DN_VALUED_ATTRIBUTES",   # Use LDAP_DN_ATTRIBUTES instead
-    "GROUP_OBJECT_CLASSES",   # Use LDAP_GROUP_CLASSES instead
+    "DN_VALUED_ATTRIBUTES",  # Use LDAP_DN_ATTRIBUTES instead
+    "GROUP_OBJECT_CLASSES",  # Use LDAP_GROUP_CLASSES instead
     "LDAP_ATTRIBUTE_PATTERN",
     # LDAP Attributes (NEW - consolidated naming)
     "LDAP_DN_ATTRIBUTES",
@@ -204,7 +214,7 @@ __all__ = [
     "MIN_ENTRIES_LIMIT",
     "MIN_ENTRY_SIZE",
     "MIN_LINE_WRAP_LENGTH",
-    "OU_OBJECT_CLASSES",      # Use LDAP_OU_CLASSES instead
+    "OU_OBJECT_CLASSES",  # Use LDAP_OU_CLASSES instead
     # Backward Compatibility Aliases (DEPRECATED)
     "PERSON_OBJECT_CLASSES",  # Use LDAP_PERSON_CLASSES instead
 ]

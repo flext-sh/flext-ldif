@@ -63,19 +63,21 @@ Status: Production Ready
 
 from __future__ import annotations
 
-import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING
+import warnings
 
-# Core public API - Import from actual files
 # Application layer API
-from .api import FlextLdifAPI
+from .api import FlextLdifAPI, TLdif
 
 # Configuration management
 from .config import FlextLdifConfig
 
-# Core processing functionality
-from .core import TLdif
+# Service classes
+from .entry_analytics import FlextLdifAnalyticsService
+from .entry_repository import FlextLdifRepositoryService
+from .entry_transformer import FlextLdifTransformerService
+from .entry_validator import FlextLdifValidatorService
 
 # Domain exceptions
 from .exceptions import (
@@ -84,30 +86,32 @@ from .exceptions import (
     FlextLdifParseError,
     FlextLdifValidationError,
 )
-
-# Service classes
-from .analytics_service import FlextLdifAnalyticsService
-from .parser_service import FlextLdifParserService
-from .repository_service import FlextLdifRepositoryService
-from .transformer_service import FlextLdifTransformerService
-from .validator_service import FlextLdifValidatorService
-from .writer_service import FlextLdifWriterService
+from .ldif_parser import FlextLdifParserService
+from .ldif_writer import FlextLdifWriterService
 
 # Domain models and value objects
 from .models import (
     FlextLdifAttributes,
-    FlextLdifAttributesDict,
     FlextLdifDistinguishedName,
-    FlextLdifDNDict,
     FlextLdifEntry,
-    FlextLdifEntryDict,
     FlextLdifFactory,
+)
+from .types import (
+    AttributeValue,
+    FilePath,
+    FlextLdifAttributesDict,
+    FlextLdifDNDict,
+    FlextLdifEntryDict,
+    LDAPObjectClass,
     LDIFContent,
     LDIFLines,
+    ProcessingMode,
+    StringList,
+    ValidationLevel,
 )
 
-# CLI functionality
-from .cli_utils import display_entry_count  # Legacy path compatibility
+# Centralized type system
+from .types import AttributeName  # Additional commonly used types
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -126,31 +130,54 @@ __version__ = "0.9.0"
 # These functions provide fallback interfaces with warnings
 
 
-_GLOBAL_API_INSTANCE: FlextLdifAPI | None = None
-
-
 def flext_ldif_get_api(config: FlextLdifConfig | None = None) -> FlextLdifAPI:
-    """Legacy function - returns a global singleton API instance.
+    """Get (and optionally configure) a global LDIF API singleton.
 
-    Subsequent calls return the same instance; the first call can optionally
-    receive a configuration that will be used to construct the singleton.
+    This legacy helper provides a process-wide singleton for `FlextLdifAPI`.
+    Prefer direct instantiation for new code.
+
+    Args:
+        config: Optional `FlextLdifConfig` used to initialize or reconfigure
+            the singleton instance.
+
+    Returns:
+        FlextLdifAPI: The global API instance.
+
+    Notes:
+        - Deprecated in favor of constructing `FlextLdifAPI()` directly.
+        - If called again with a non-None `config`, the singleton is replaced
+          with a new instance constructed from that configuration.
+
     """
     warnings.warn(
         "flext_ldif_get_api() is deprecated. Use FlextLdifAPI() directly.",
         DeprecationWarning,
         stacklevel=2,
     )
-    global _GLOBAL_API_INSTANCE
-    if _GLOBAL_API_INSTANCE is None:
-        _GLOBAL_API_INSTANCE = FlextLdifAPI(config)
-    elif config is not None:
-        # Allow reconfiguration by replacing the singleton when config is provided
-        _GLOBAL_API_INSTANCE = FlextLdifAPI(config)
-    return _GLOBAL_API_INSTANCE
+    # Use a function attribute to avoid module-level global mutation (ruff PLW0603)
+    instance: FlextLdifAPI | None = getattr(flext_ldif_get_api, "_instance", None)
+    if instance is None or config is not None:
+        instance = FlextLdifAPI(config)
+        flext_ldif_get_api._instance = instance  # type: ignore[attr-defined]
+    return instance
 
 
 def flext_ldif_parse(content: str) -> list[FlextLdifEntry]:
-    """Legacy function - use FlextLdifAPI().parse() for FlextResult."""
+    """Parse LDIF content into entries (legacy convenience).
+
+    Args:
+        content: The raw LDIF content to parse.
+
+    Returns:
+        list[FlextLdifEntry]: Parsed entries. Returns an empty list when
+        parsing fails (legacy behavior). For structured error handling, use
+        `FlextLdifAPI().parse()` which returns `FlextResult`.
+
+    Warning:
+        Deprecated. Prefer `FlextLdifAPI().parse()` for proper error handling
+        with `FlextResult`.
+
+    """
     warnings.warn(
         "flext_ldif_parse() is deprecated. Use FlextLdifAPI().parse() for proper error handling.",
         DeprecationWarning,
@@ -165,7 +192,22 @@ def flext_ldif_parse(content: str) -> list[FlextLdifEntry]:
 
 
 def flext_ldif_validate(entries: list[FlextLdifEntry] | str | Path) -> bool:
-    """Legacy function - use FlextLdifAPI().validate() for FlextResult."""
+    """Validate LDIF entries or LDIF content (legacy convenience).
+
+    Args:
+        entries: Either a list of `FlextLdifEntry`, a raw LDIF string, or a
+            `Path` to an LDIF file.
+
+    Returns:
+        bool: True if validation succeeds, False otherwise. For structured
+        error details, prefer `FlextLdifAPI().validate()` which returns
+        `FlextResult`.
+
+    Warning:
+        Deprecated. Prefer `FlextLdifAPI().validate()` for richer error
+        information.
+
+    """
     warnings.warn(
         "flext_ldif_validate() is deprecated. Use FlextLdifAPI().validate() for proper error handling.",
         DeprecationWarning,
@@ -193,8 +235,31 @@ def flext_ldif_validate(entries: list[FlextLdifEntry] | str | Path) -> bool:
     return False
 
 
-def flext_ldif_write(entries: list[FlextLdifEntry], file_path: str | None = None) -> str:
-    """Legacy function - use FlextLdifAPI().write() or write_file() for FlextResult."""
+def flext_ldif_write(
+    entries: list[FlextLdifEntry],
+    file_path: str | None = None,
+) -> str:
+    """Write LDIF entries to a string or file (legacy convenience).
+
+    Args:
+        entries: The LDIF entries to write.
+        file_path: Optional file path. When provided, entries are written to
+            the file; otherwise, an LDIF string is returned.
+
+    Returns:
+        str: When `file_path` is None, returns the LDIF string. When
+        `file_path` is provided and writing succeeds, returns a human-readable
+        success message.
+
+    Raises:
+        ValueError: If writing fails.
+
+    Warning:
+        Deprecated. Prefer `FlextLdifAPI().write()` (returns LDIF string) or
+        `FlextLdifAPI().write_file()` (writes to disk) for `FlextResult`-based
+        error handling.
+
+    """
     warnings.warn(
         "flext_ldif_write() is deprecated. Use FlextLdifAPI().write() or write_file() for proper error handling.",
         DeprecationWarning,
@@ -213,22 +278,16 @@ def flext_ldif_write(entries: list[FlextLdifEntry], file_path: str | None = None
     write_result = api.write(entries)
     if write_result.success and write_result.data is not None:
         return write_result.data
-    error_msg = f"Write failed: {result.error or 'Unknown error'}"
+    error_msg = f"Write failed: {write_result.error or 'Unknown error'}"
     raise ValueError(error_msg)
 
 
 __all__: list[str] = [
-    "annotations", "Path", "TYPE_CHECKING", "FlextLdifAPI", "FlextLdifConfig", "TLdif",
-    "FlextLdifEntryError", "FlextLdifError", "FlextLdifParseError", "FlextLdifValidationError",
-    "FlextLdifAnalyticsService", "FlextLdifParserService", "FlextLdifRepositoryService",
-    "FlextLdifTransformerService", "FlextLdifValidatorService", "FlextLdifWriterService",
-    "FlextLdifAttributes", "FlextLdifAttributesDict", "FlextLdifDistinguishedName", "FlextLdifDNDict",
-    "FlextLdifEntry", "FlextLdifEntryDict", "FlextLdifFactory", "LDIFContent", "LDIFLines",
-    "display_entry_count", "cli_main", "__version__", "flext_ldif_get_api", "flext_ldif_parse",
-    "flext_ldif_validate", "flext_ldif_write",
-] = [
-    "FlextLdifAnalyticsService",
+    "AttributeName",
+    "AttributeValue",
+    "FilePath",
     "FlextLdifAPI",
+    "FlextLdifAnalyticsService",
     "FlextLdifAttributes",
     "FlextLdifAttributesDict",
     "FlextLdifConfig",
@@ -246,12 +305,15 @@ __all__: list[str] = [
     "FlextLdifValidationError",
     "FlextLdifValidatorService",
     "FlextLdifWriterService",
+    "LDAPObjectClass",
     "LDIFContent",
     "LDIFLines",
+    "ProcessingMode",
+    "StringList",
     "TLdif",
+    "ValidationLevel",
     "__version__",
     "cli_main",
-    "display_entry_count",
     "flext_ldif_get_api",
     "flext_ldif_parse",
     "flext_ldif_validate",

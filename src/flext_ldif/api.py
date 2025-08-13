@@ -28,33 +28,29 @@ License: MIT
 from __future__ import annotations
 
 import logging
+import re as _re
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import FlextResult
 
-from .analytics_service import FlextLdifAnalyticsService
 from .config import FlextLdifConfig
-from .parser_service import FlextLdifParserService as _FlextLdifParserService
-from .repository_service import FlextLdifRepositoryService
-from .validator_service import FlextLdifValidatorService as _FlextLdifValidatorService
-from .writer_service import FlextLdifWriterService as _FlextLdifWriterService
+from .entry_analytics import FlextLdifAnalyticsService
+from .entry_repository import FlextLdifRepositoryService
+from .entry_validator import FlextLdifValidatorService as _FlextLdifValidatorService
+from .ldif_parser import FlextLdifParserService as _FlextLdifParserService
+from .ldif_writer import FlextLdifWriterService as _FlextLdifWriterService
 
 if TYPE_CHECKING:
     from .models import FlextLdifEntry
 
 logger = logging.getLogger(__name__)
 
-# Backward-compat test alias expected by some tests
-from typing import ClassVar
-
 
 class TLdif(_FlextLdifParserService):
     """Backward-compat facade exposing patterns for tests."""
 
     # Simple DN pattern for tests
-    import re as _re
-
     DN_PATTERN: ClassVar[object] = _re.compile(
         r"^[a-zA-Z][a-zA-Z0-9-]*=.+(?:,[a-zA-Z][a-zA-Z0-9-]*=.+)*$",
     )
@@ -128,9 +124,7 @@ class FlextLdifAPI:
 
         # Apply configuration limits
         if len(entries) > int(self.config.max_entries):
-            error_msg = (
-                f"Entry count {len(entries)} exceeds configured limit {self.config.max_entries}"
-            )
+            error_msg = f"Entry count {len(entries)} exceeds configured limit {self.config.max_entries}"
             logger.warning(error_msg)
             return FlextResult.fail(error_msg)
 
@@ -162,9 +156,7 @@ class FlextLdifAPI:
 
         # Apply configuration limits
         if len(entries) > int(self.config.max_entries):
-            error_msg = (
-                f"File entry count {len(entries)} exceeds configured limit {self.config.max_entries}"
-            )
+            error_msg = f"File entry count {len(entries)} exceeds configured limit {self.config.max_entries}"
             logger.warning(error_msg)
             return FlextResult.fail(error_msg)
 
@@ -172,7 +164,8 @@ class FlextLdifAPI:
         return FlextResult.ok(entries)
 
     def parse_entries_from_string(
-        self, ldif_string: str,
+        self,
+        ldif_string: str,
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Parse multiple entries from LDIF string."""
         return self._parser_service.parse_entries_from_string(ldif_string)
@@ -206,7 +199,9 @@ class FlextLdifAPI:
 
         # Get initial files to process
         files_result = self._get_files_to_process(
-            directory_path, file_pattern, file_path,
+            directory_path,
+            file_pattern,
+            file_path,
         )
         if files_result.is_failure:
             return files_result
@@ -227,7 +222,11 @@ class FlextLdifAPI:
 
         return FlextResult.ok(sorted_files)
 
-    def write(self, entries: list[FlextLdifEntry], file_path: str | None = None) -> FlextResult[str]:
+    def write(
+        self,
+        entries: list[FlextLdifEntry],
+        file_path: str | None = None,
+    ) -> FlextResult[str]:
         """Write entries to LDIF string with formatting configuration.
 
         Args:
@@ -383,7 +382,10 @@ class FlextLdifAPI:
         return self._repository_service.filter_by_objectclass(entries, objectclass)
 
     def filter_by_attribute(
-        self, entries: list[FlextLdifEntry], attribute: str, value: str,
+        self,
+        entries: list[FlextLdifEntry],
+        attribute: str,
+        value: str,
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter entries by attribute value."""
         return self._repository_service.filter_by_attribute(entries, attribute, value)
@@ -404,24 +406,30 @@ class FlextLdifAPI:
         return self._repository_service.get_statistics(entries)
 
     def analyze_entry_patterns(
-        self, entries: list[FlextLdifEntry],
+        self,
+        entries: list[FlextLdifEntry],
     ) -> FlextResult[dict[str, int]]:
         """Analyze patterns in LDIF entries."""
         return self._analytics_service.analyze_entry_patterns(entries)
 
     def get_objectclass_distribution(
-        self, entries: list[FlextLdifEntry],
+        self,
+        entries: list[FlextLdifEntry],
     ) -> FlextResult[dict[str, int]]:
         """Get distribution of objectClass types."""
         return self._analytics_service.get_objectclass_distribution(entries)
 
     def get_dn_depth_analysis(
-        self, entries: list[FlextLdifEntry],
+        self,
+        entries: list[FlextLdifEntry],
     ) -> FlextResult[dict[str, int]]:
         """Analyze DN depth distribution."""
         return self._analytics_service.get_dn_depth_analysis(entries)
 
-    def filter_change_records(self, entries: list[FlextLdifEntry] | None) -> FlextResult[list[FlextLdifEntry]]:
+    def filter_change_records(
+        self,
+        entries: list[FlextLdifEntry] | None,
+    ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter entries that represent change records (changetype present)."""
         if entries is None:
             return FlextResult.fail("Entries list cannot be None")
@@ -459,7 +467,8 @@ class FlextLdifAPI:
         return self._process_current_directory_pattern(file_pattern)
 
     def _process_single_file_path(
-        self, file_path: str | Path,
+        self,
+        file_path: str | Path,
     ) -> FlextResult[list[Path]]:
         """Process single file path input."""
         file_path_obj = Path(file_path)
@@ -486,7 +495,8 @@ class FlextLdifAPI:
             return FlextResult.fail(f"Error discovering files in directory: {e}")
 
     def _process_current_directory_pattern(
-        self, file_pattern: str,
+        self,
+        file_pattern: str,
     ) -> FlextResult[list[Path]]:
         """Process pattern in current directory."""
         try:
@@ -496,7 +506,9 @@ class FlextLdifAPI:
             return FlextResult.fail(f"Error discovering files with pattern: {e}")
 
     def _filter_files_by_size(
-        self, files_to_process: list[Path], max_file_size_mb: int,
+        self,
+        files_to_process: list[Path],
+        max_file_size_mb: int,
     ) -> list[Path]:
         """Filter files by size limit."""
         max_size_bytes = max_file_size_mb * 1024 * 1024

@@ -32,6 +32,7 @@ License: MIT
 
 from __future__ import annotations
 
+import csv
 import json
 import sys
 from pathlib import Path
@@ -45,7 +46,8 @@ if TYPE_CHECKING:
 import click
 import yaml
 
-# from flext_cli import FlextCliConfig, create_flext_cli_config, setup_flext_cli
+# Use real flext-cli integration
+from flext_cli import CLIConfig as FlextCliConfig, setup_cli as flext_setup_cli
 from flext_core import get_logger
 
 from .api import FlextLdifAPI
@@ -293,53 +295,43 @@ def write_entries_to_file(
 @click.option("--debug", is_flag=True, help="Enable debug output")
 @click.option("--config-file", type=click.Path(), help="Optional path to config file")
 @click.pass_context
-def cli(
-    ctx: click.Context,
-    config: str | None,
-    output_format: str,
-    *,
-    verbose: bool,
-    quiet: bool,
-    debug: bool,
-    config_file: str | None,
-) -> None:
+def cli(ctx: click.Context, **options: object) -> None:
     """FLEXT LDIF - Enterprise LDIF Processing CLI.
 
-    Comprehensive command-line interface for LDIF parsing, validation,
-    and transformation using Clean Architecture patterns.
+    Comprehensive command-line interface para parsing, validação
+    e transformação LDIF com Clean Architecture.
+
+    Args:
+        ctx: Contexto Click.
+        **options: Opções capturadas (`config`, `output_format`, `verbose`,
+            `quiet`, `debug`, `config_file`).
+
     """
     logger.debug("Initializing FLEXT LDIF CLI")
-    logger.trace(
-        "CLI options: config=%s, format=%s, verbose=%s, quiet=%s, debug=%s, config_file=%s",
-        config,
-        output_format,
-        verbose,
-        quiet,
-        debug,
-        config_file,
-    )
-
-    # Use flext-cli configuration
-    logger.debug("Getting flext-cli configuration")
-    # config_result = create_flext_cli_config()
-    # if not config_result.success:
-    #     click.echo(f"Failed to create CLI config: {config_result.error}", err=True)
-    #     sys.exit(1)
-
-    # # Type assertion: after success check, data is guaranteed to be FlextCliConfig
-    # cli_config = cast("FlextCliConfig", config_result.data)
-    class _CLIConfig:
-        def __init__(self, output_format: str, verbose: bool, debug: bool) -> None:
-            self.output_format = output_format
-            self.verbose = verbose
-            self.debug = debug
+    logger.trace("CLI options: %s", dict(options))
 
     # quiet implies not verbose
-    cli_config = _CLIConfig(output_format, verbose and not quiet, debug)
-    # Note: verbose is not part of FlextCliConfig, we'll handle it separately
-    if verbose:
-        logger.debug("Verbose mode enabled via CLI flag")
-    logger.trace("CLI configuration set successfully")
+    output_format = str(options.get("output_format", "text"))
+    # Map legacy 'text' to flext-cli 'plain'
+    if output_format == "text":
+        output_format = "plain"
+    verbose = bool(options.get("verbose"))
+    quiet = bool(options.get("quiet"))
+    debug = bool(options.get("debug"))
+    config = options.get("config")
+    config_file = options.get("config_file")
+
+    # Build real flext-cli configuration using flat compatibility kwargs
+    cli_config = FlextCliConfig(
+        output_format=output_format,
+        verbose=verbose and not quiet,
+        quiet=quiet,
+        debug=debug,
+    )
+    setup_result = flext_setup_cli(cli_config)
+    if not setup_result.success:
+        click.echo(f"Failed to setup CLI: {setup_result.error}", err=True)
+        sys.exit(1)
 
     logger.debug("Creating CLI context object")
     logger.trace("Creating API with default configuration")
@@ -356,7 +348,7 @@ def cli(
         output_format=output_format,
         verbose=verbose,
         debug=debug,
-        config_path=config or "default",
+        config_path=str(config) if isinstance(config, str) else "default",
     )
 
 
@@ -431,16 +423,18 @@ def _handle_output_generation(
 @click.option("--output", "-o", type=click.Path(), help="Output file path")
 @click.option("--max-entries", type=int, help="Maximum entries to parse")
 @click.option("--validate", is_flag=True, help="Validate entries after parsing")
-@click.option("--stats", is_flag=True, help="Display statistics instead of writing output")
+@click.option(
+    "--stats",
+    is_flag=True,
+    help="Display statistics instead of writing output",
+)
 @click.pass_context
 def parse(
     ctx: click.Context,
     input_file: str,
     output: str | None,
     max_entries: int | None,
-    *,
-    validate: bool,
-    stats: bool,
+    **flags: object,
 ) -> None:
     """Parse LDIF file and display or save entries."""
     logger.debug("Starting parse command")
@@ -460,10 +454,11 @@ def parse(
         entries = _parse_and_log_file(api, input_file, max_entries)
 
         # Handle optional validation
-        _handle_optional_validation(entries, validate=validate)
+        _handle_optional_validation(entries, validate=bool(flags.get("validate")))
 
         # Generate output or statistics
-        if stats:
+        stats_flag = bool(flags.get("stats"))
+        if stats_flag:
             display_statistics(ctx, api, entries)
         else:
             _handle_output_generation(ctx, api, entries, output)
@@ -696,7 +691,12 @@ def stats(
 @cli.command()
 @click.argument("input_file", type=click.Path(exists=True))
 @click.argument("query", required=False)
-@click.option("--dn", "search_dn", type=str, help="DN filter pattern (supports substring)")
+@click.option(
+    "--dn",
+    "search_dn",
+    type=str,
+    help="DN filter pattern (supports substring)",
+)
 @click.option("--attribute", "search_attr", type=str, help="Attribute name to display")
 @click.pass_context
 def find(
@@ -729,40 +729,57 @@ def find(
             sys.exit(1)
         # Prefer positional query (for compatibility), fallback to --dn
         effective_query = query or search_dn
-
-        # If DN provided, try to find exact or substring match
-        if effective_query:
-            matched = None
-            for entry in entries:
-                if effective_query.strip("*") in str(entry.dn):
-                    matched = entry
-                    break
-            if matched is None:
-                click.echo(f"Entry with DN matching '{effective_query}' not found", err=True)
-                sys.exit(1)
-            # Print attribute if requested
-            if search_attr:
-                values = matched.get_attribute(search_attr) or []
-                click.echo("\n".join(values))
-            else:
-                ldif_result = api.entries_to_ldif([matched])
-                if ldif_result.success:
-                    click.echo("Found entry:")
-                    click.echo(ldif_result.data)
-                else:
-                    click.echo(
-                        f"Failed to convert entry to LDIF: {ldif_result.error}",
-                        err=True,
-                    )
-                    sys.exit(1)
-        else:
-            # No DN provided: just print distinct DNs
-            for entry in entries:
-                click.echo(str(entry.dn))
+        _run_find(entries, effective_query, search_attr, api)
 
     except (OSError, ValueError, TypeError) as e:
         click.echo(f"Find operation failed: {e}", err=True)
         sys.exit(1)
+
+
+def _run_find(
+    entries: list[FlextLdifEntry],
+    effective_query: str | None,
+    search_attr: str | None,
+    api: FlextLdifAPI,
+) -> None:
+    """Execute the find logic separated to reduce complexity.
+
+    Args:
+        entries: Parsed LDIF entries.
+        effective_query: DN query or None to list DNs.
+        search_attr: Attribute to print if matched.
+        api: API instance for LDIF operations.
+
+    """
+    if effective_query:
+        matched = None
+        for entry in entries:
+            if effective_query.strip("*") in str(entry.dn):
+                matched = entry
+                break
+        if matched is None:
+            click.echo(
+                f"Entry with DN matching '{effective_query}' not found",
+                err=True,
+            )
+            sys.exit(1)
+        if search_attr:
+            values = matched.get_attribute(search_attr) or []
+            click.echo("\n".join(values))
+            return
+        ldif_result = api.entries_to_ldif([matched])
+        if ldif_result.success:
+            click.echo("Found entry:")
+            click.echo(ldif_result.data)
+        else:
+            click.echo(
+                f"Failed to convert entry to LDIF: {ldif_result.error}",
+                err=True,
+            )
+            sys.exit(1)
+    else:
+        for entry in entries:
+            click.echo(str(entry.dn))
 
 
 @cli.command()
@@ -878,15 +895,20 @@ def convert(
         elif output_format in {"json", "yaml"}:
             entries_data = [entry.model_dump() for entry in entries]
             if output_format == "json":
-                output_path.write_text(json.dumps(entries_data, indent=2, default=str), encoding="utf-8")
+                output_path.write_text(
+                    json.dumps(entries_data, indent=2, default=str),
+                    encoding="utf-8",
+                )
             else:
-                output_path.write_text(yaml.dump(entries_data, default_flow_style=False), encoding="utf-8")
+                output_path.write_text(
+                    yaml.dump(entries_data, default_flow_style=False),
+                    encoding="utf-8",
+                )
             click.echo(
                 f"Converted {len(entries)} entries to {output_format}: {output_path}",
             )
         elif output_format == "csv":
             # Minimal CSV export: dn and objectClass
-            import csv
 
             with output_path.open("w", encoding="utf-8", newline="") as f:
                 writer = csv.writer(f)
@@ -940,7 +962,12 @@ cn: test
 @cli.command()
 @click.argument("input_file", type=str)
 @click.option("--output", "-o", type=click.Path(), help="Output LDIF file path")
-@click.option("--line-wrap", type=int, default=0, help="Optional line wrap width (ignored)")
+@click.option(
+    "--line-wrap",
+    type=int,
+    default=0,
+    help="Optional line wrap width (ignored)",
+)
 @click.pass_context
 def write(
     ctx: click.Context,
@@ -988,22 +1015,11 @@ def main() -> None:
     logger.debug("Starting FLEXT LDIF CLI main entry point")
 
     try:
-        # Setup CLI with flext-cli foundation
-        logger.debug("Creating flext-cli configuration")
-        # config_result = create_flext_cli_config()
-        # if not config_result.success:
-        #     logger.error("Failed to create CLI config: %s", config_result.error)
-        #     click.echo(f"Failed to create CLI config: {config_result.error}", err=True)
-        #     sys.exit(1)
-
-        # logger.debug("Setting up CLI with flext-cli foundation")
-        # setup_result = setup_flext_cli(config_result.data)
-        setup_result = setup_cli()
-        logger.trace("CLI setup result success: %s", getattr(setup_result, "success", True))
-
-        if not getattr(setup_result, "success", True):
-            logger.error("CLI setup failed: %s", getattr(setup_result, "error", "Unknown error"))
-            click.echo(f"CLI setup failed: {getattr(setup_result, 'error', 'Unknown error')}", err=True)
+        # Setup CLI with flext-cli foundation (using defaults)
+        setup_result = flext_setup_cli()
+        if not setup_result.success:
+            logger.error("CLI setup failed: %s", setup_result.error)
+            click.echo(f"CLI setup failed: {setup_result.error}", err=True)
             sys.exit(1)
 
         logger.debug("CLI setup completed successfully, starting CLI")

@@ -60,7 +60,10 @@ class FlextLdifParserProtocol(Protocol):
         """Parse LDIF file into domain entities."""
         ...
 
-    def parse_entries_from_string(self, ldif_string: str) -> FlextResult[list[FlextLdifEntry]]:
+    def parse_entries_from_string(
+        self,
+        ldif_string: str,
+    ) -> FlextResult[list[FlextLdifEntry]]:
         """Parse multiple entries from LDIF string."""
         ...
 
@@ -94,7 +97,11 @@ class FlextLdifWriterProtocol(Protocol):
         """Write entries to LDIF string."""
         ...
 
-    def write_file(self, entries: list[FlextLdifEntry], file_path: str | Path) -> FlextResult[bool]:
+    def write_file(
+        self,
+        entries: list[FlextLdifEntry],
+        file_path: str | Path,
+    ) -> FlextResult[bool]:
         """Write entries to LDIF file."""
         ...
 
@@ -107,19 +114,35 @@ class FlextLdifWriterProtocol(Protocol):
 class FlextLdifRepositoryProtocol(Protocol):
     """LDIF data access protocol."""
 
-    def find_by_dn(self, entries: list[FlextLdifEntry], dn: str) -> FlextResult[FlextLdifEntry | None]:
+    def find_by_dn(
+        self,
+        entries: list[FlextLdifEntry],
+        dn: str,
+    ) -> FlextResult[FlextLdifEntry | None]:
         """Find entry by distinguished name."""
         ...
 
-    def filter_by_objectclass(self, entries: list[FlextLdifEntry], objectclass: str) -> FlextResult[list[FlextLdifEntry]]:
+    def filter_by_objectclass(
+        self,
+        entries: list[FlextLdifEntry],
+        objectclass: str,
+    ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter entries by objectClass attribute."""
         ...
 
-    def filter_by_attribute(self, entries: list[FlextLdifEntry], attribute: str, value: str) -> FlextResult[list[FlextLdifEntry]]:
+    def filter_by_attribute(
+        self,
+        entries: list[FlextLdifEntry],
+        attribute: str,
+        value: str,
+    ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter entries by attribute value."""
         ...
 
-    def get_statistics(self, entries: list[FlextLdifEntry]) -> FlextResult[dict[str, int]]:
+    def get_statistics(
+        self,
+        entries: list[FlextLdifEntry],
+    ) -> FlextResult[dict[str, int]]:
         """Get statistical information about entries."""
         ...
 
@@ -132,11 +155,17 @@ class FlextLdifTransformerProtocol(Protocol):
         """Transform single LDIF entry."""
         ...
 
-    def transform_entries(self, entries: list[FlextLdifEntry]) -> FlextResult[list[FlextLdifEntry]]:
+    def transform_entries(
+        self,
+        entries: list[FlextLdifEntry],
+    ) -> FlextResult[list[FlextLdifEntry]]:
         """Transform multiple LDIF entries."""
         ...
 
-    def normalize_dns(self, entries: list[FlextLdifEntry]) -> FlextResult[list[FlextLdifEntry]]:
+    def normalize_dns(
+        self,
+        entries: list[FlextLdifEntry],
+    ) -> FlextResult[list[FlextLdifEntry]]:
         """Normalize all DN values in entries."""
         ...
 
@@ -145,15 +174,24 @@ class FlextLdifTransformerProtocol(Protocol):
 class FlextLdifAnalyticsProtocol(Protocol):
     """LDIF analytics protocol for business intelligence."""
 
-    def analyze_entry_patterns(self, entries: list[FlextLdifEntry]) -> FlextResult[dict[str, int]]:
+    def analyze_entry_patterns(
+        self,
+        entries: list[FlextLdifEntry],
+    ) -> FlextResult[dict[str, int]]:
         """Analyze patterns in LDIF entries."""
         ...
 
-    def get_objectclass_distribution(self, entries: list[FlextLdifEntry]) -> FlextResult[dict[str, int]]:
+    def get_objectclass_distribution(
+        self,
+        entries: list[FlextLdifEntry],
+    ) -> FlextResult[dict[str, int]]:
         """Get distribution of objectClass types."""
         ...
 
-    def get_dn_depth_analysis(self, entries: list[FlextLdifEntry]) -> FlextResult[dict[str, int]]:
+    def get_dn_depth_analysis(
+        self,
+        entries: list[FlextLdifEntry],
+    ) -> FlextResult[dict[str, int]]:
         """Analyze DN depth distribution."""
         ...
 
@@ -182,9 +220,9 @@ __all__ = [
     "FlextLdifValidatorProtocol",
     "FlextLdifWriterProtocol",
     # Legacy Aliases (DEPRECATED - for backward compatibility only)
-    "LdifParserProtocol",      # Use FlextLdifParserProtocol instead
+    "LdifParserProtocol",  # Use FlextLdifParserProtocol instead
     "LdifRepositoryProtocol",  # Use FlextLdifRepositoryProtocol instead
     "LdifTransformerProtocol",  # Use FlextLdifTransformerProtocol instead
-    "LdifValidatorProtocol",   # Use FlextLdifValidatorProtocol instead
-    "LdifWriterProtocol",      # Use FlextLdifWriterProtocol instead
+    "LdifValidatorProtocol",  # Use FlextLdifValidatorProtocol instead
+    "LdifWriterProtocol",  # Use FlextLdifWriterProtocol instead
 ]

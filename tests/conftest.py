@@ -65,9 +65,9 @@ from flext_ldif import FlextLdifAPI, TLdif
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-# Import Docker fixtures if available
+# Import Docker fixtures if available (absolute import to avoid duplicate module mapping)
 try:
-    from .docker_fixtures import (
+    from tests.docker_fixtures import (
         docker_openldap_container,
         ldif_test_config,
         real_ldif_data,
@@ -86,7 +86,7 @@ try:
         "temporary_ldif_data",
     ]
 
-except ImportError:
+except Exception:
     DOCKER_AVAILABLE = False
 
 

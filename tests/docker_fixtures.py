@@ -255,7 +255,9 @@ member: uid=bob.wilson,ou=people,{OPENLDAP_BASE_DN}
                 "cat > \"$TF\" << 'EOF'\n"
                 f"{test_ldif}\n"
                 "EOF\n"
-                '/usr/bin/ldapadd -x -H ldap://localhost:389 -D "' + OPENLDAP_ADMIN_DN + '" '
+                '/usr/bin/ldapadd -x -H ldap://localhost:389 -D "'
+                + OPENLDAP_ADMIN_DN
+                + '" '
                 '-w "' + OPENLDAP_ADMIN_PASSWORD + '" -f "$TF"; '
                 'RC=$?; rm -f "$TF"; exit $RC'
             )
@@ -415,8 +417,14 @@ async def temporary_ldif_data(
 ) -> AsyncGenerator[str]:
     """Context manager for temporary LDIF data that is auto-cleaned."""
     # Create temp file path in container safely without hardcoded /tmp
-    mktemp_result = container.exec_run(["mktemp", "-t", "flext_ldif.XXXXXX.ldif"], demux=True)
-    if mktemp_result.exit_code != 0 or not mktemp_result.output or not mktemp_result.output[0]:
+    mktemp_result = container.exec_run(
+        ["mktemp", "-t", "flext_ldif.XXXXXX.ldif"], demux=True
+    )
+    if (
+        mktemp_result.exit_code != 0
+        or not mktemp_result.output
+        or not mktemp_result.output[0]
+    ):
         err_msg = "Failed to create temporary file in container"
         raise RuntimeError(err_msg)
     temp_file = mktemp_result.output[0].decode().strip()
@@ -443,7 +451,9 @@ async def temporary_ldif_data(
 def check_docker_available() -> bool:
     """Check if Docker is available on the system."""
     try:
-        subprocess.run(["/usr/bin/docker", "--version"], check=True, capture_output=True)
+        subprocess.run(
+            ["/usr/bin/docker", "--version"], check=True, capture_output=True
+        )
     except (subprocess.CalledProcessError, FileNotFoundError):
         return False
     else:

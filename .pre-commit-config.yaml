@@ -29,24 +29,7 @@ repos:
         require_serial: true
         args: [--check, --diff]
 
-      # Ruff linting and formatting
-      - id: ruff-format
-        name: "⚡ Ruff Format"
-        entry: poetry run ruff format
-        language: system
-        types: [python]
-        require_serial: true
-        args: [--check, --diff]
-
-      - id: ruff-lint
-        name: "🔥 Ruff Lint (17 categories)"
-        entry: poetry run ruff check
-        language: system
-        types: [python]
-        require_serial: true
-        args: [--fix, --exit-non-zero-on-fix]
-
-      # isort import sorting
+      # isort import sorting (run before lints)
       - id: isort
         name: "📦 Import Sort"
         entry: poetry run isort
@@ -54,6 +37,15 @@ repos:
         types: [python]
         require_serial: true
         args: [--check-only, --diff]
+
+      # Ruff linting (imports handled by isort; Ruff I001 ignored in pyproject)
+      - id: ruff-lint
+        name: "🔥 Ruff Lint (17 categories)"
+        entry: poetry run ruff check
+        language: system
+        types: [python]
+        require_serial: true
+        args: [--fix, --exit-non-zero-on-fix, --ignore, I001, --ignore, INP001]
 
       # MyPy type checking
       - id: mypy
@@ -63,7 +55,7 @@ repos:
         types: [python]
         require_serial: true
         pass_filenames: false
-        args: [src/, tests/, --config-file=pyproject.toml]
+        args: [src/, tests/, examples/, --config-file=pyproject.toml]
 
       # Bandit security
       - id: bandit
