@@ -45,7 +45,10 @@ def _validate_args(tokens: list[str]) -> tuple[bool, str | None]:
 
     command = _extract_primary_command(tokens)
     if command is None or command not in ALLOWED_COMMANDS:
-        return False, f"Unsupported CLI command '{command}'. Allowed: {sorted(ALLOWED_COMMANDS)}"
+        return (
+            False,
+            f"Unsupported CLI command '{command}'. Allowed: {sorted(ALLOWED_COMMANDS)}",
+        )
 
     for token in tokens:
         if any(bad in token for bad in ("\n", "\r", "\x00")):

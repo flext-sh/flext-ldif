@@ -156,6 +156,7 @@ __all__ = ["FlextLdifValidatorService"]
 # Ensure forward-ref targets are available at runtime for Pydantic
 try:
     from .config import FlextLdifConfig as _FlextLdifConfigRuntime
+
     globals()["FlextLdifConfig"] = _FlextLdifConfigRuntime
 except Exception as _e:
     # Best-effort: if import fails, forward refs may resolve later

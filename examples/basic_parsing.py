@@ -105,7 +105,7 @@ def main() -> None:
             attributes = entry.attributes.attributes
             cn = attributes.get("cn", ["Unknown"])[0]
             mail = attributes.get("mail", ["No email"])[0]
-            print(f"   {i+1}. {cn} ({mail})")
+            print(f"   {i + 1}. {cn} ({mail})")
 
         # Demonstrate writing back to LDIF
         output_file = Path(__file__).parent / "output_basic.ldif"

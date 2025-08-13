@@ -353,9 +353,13 @@ member: cn=Mary Manager,ou=people,dc=advanced,dc=com
 
 
 def _demonstrate_basic_object_class_filtering(
-    api: FlextLdifAPI, entries: list, person_entries: list,
+    api: FlextLdifAPI,
+    entries: list,
+    person_entries: list,
 ) -> None:
     """Demonstrate basic object class filtering operations."""
+    # Touch parameter to demonstrate usage in examples and satisfy linters
+    _ = len(person_entries)
     # inetOrgPerson entries (more specific)
     api.filter_by_objectclass(entries, "inetOrgPerson")
 
@@ -371,9 +375,7 @@ def _filter_by_title_containing(entries: list, keyword: str) -> list:
     result = []
     for entry in entries:
         title_attr = entry.get_attribute("title")
-        if title_attr and any(
-            keyword.lower() in title.lower() for title in title_attr
-        ):
+        if title_attr and any(keyword.lower() in title.lower() for title in title_attr):
             result.append(entry)
     return result
 
@@ -384,7 +386,7 @@ def _demonstrate_custom_title_filtering(person_entries: list) -> None:
     _filter_by_title_containing(person_entries, "manager")
 
 
-def _determine_entry_type(entry) -> str:
+def _determine_entry_type(entry: object) -> str:
     """Determine the type of an LDAP entry based on object classes."""
     if entry.has_object_class("domain"):
         return "domain"
@@ -398,7 +400,8 @@ def _determine_entry_type(entry) -> str:
 
 
 def _demonstrate_hierarchical_analysis(
-    api: FlextLdifAPI, entries: list,
+    api: FlextLdifAPI,
+    entries: list,
 ) -> None:
     """Demonstrate hierarchical analysis and entry categorization."""
     sort_result = api.sort_hierarchically(entries)

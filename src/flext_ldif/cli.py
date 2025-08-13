@@ -467,8 +467,8 @@ def parse(
         input_file=input_file,
         output=output,
         max_entries=max_entries,
-        validate=bool(flags.get("validate", False)),
-        stats=bool(flags.get("stats", False)),
+        validate=bool(flags.get("validate")),
+        stats=bool(flags.get("stats")),
     )
 
     _execute_parse_command(ctx, params)
@@ -632,7 +632,10 @@ def transform(
     _execute_transform_command(ctx, params)
 
 
-def _execute_transform_command(ctx: click.Context, params: TransformCommandParams) -> None:
+def _execute_transform_command(
+    ctx: click.Context,
+    params: TransformCommandParams,
+) -> None:
     """Execute the transform command with parameter object."""
     try:
         api = ctx.obj["api"]
@@ -788,7 +791,8 @@ def find(
 
 
 def _find_matching_entry(
-    entries: list[FlextLdifEntry], query: str,
+    entries: list[FlextLdifEntry],
+    query: str,
 ) -> FlextLdifEntry | None:
     """Find entry matching DN query pattern."""
     query_pattern = query.strip("*")
