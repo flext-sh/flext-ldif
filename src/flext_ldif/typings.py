@@ -9,7 +9,7 @@ from __future__ import annotations
 from flext_core.typings import FlextTypes as CoreFlextTypes
 
 # Re-export LDIF domain-specific types for a single import point
-from flext_ldif.types import *  # noqa: F401,F403
+from flext_ldif.types import *  # noqa: F403
 
 
 class FlextTypes(CoreFlextTypes):

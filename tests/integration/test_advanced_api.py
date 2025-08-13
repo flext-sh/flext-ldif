@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
+import tempfile
 
 import pytest
 
@@ -22,7 +22,9 @@ class TestAdvancedAPIFeatures:
     def api_with_config(self) -> FlextLdifAPI:
         """Create API with custom configuration."""
         config = FlextLdifConfig(
-            max_entries=100, strict_validation=True, sort_attributes=True
+            max_entries=100,
+            strict_validation=True,
+            sort_attributes=True,
         )
         return FlextLdifAPI(config)
 
@@ -34,14 +36,14 @@ class TestAdvancedAPIFeatures:
             entry = FlextLdifEntry(
                 id=f"user-{i:03d}",
                 dn=FlextLdifDistinguishedName(
-                    value=f"cn=user{i:03d},ou=people,dc=example,dc=com"
+                    value=f"cn=user{i:03d},ou=people,dc=example,dc=com",
                 ),
                 attributes=FlextLdifAttributes(
                     attributes={
                         "cn": [f"user{i:03d}"],
                         "objectClass": ["person", "inetOrgPerson"],
                         "mail": [f"user{i:03d}@example.com"],
-                    }
+                    },
                 ),
             )
             entries.append(entry)
@@ -120,7 +122,10 @@ objectClass: person
 """
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
         ) as f:
             f.write(content)
             temp_file = Path(f.name)
@@ -134,7 +139,8 @@ objectClass: person
             # Test write file
             output_file = temp_file.with_suffix(".output.ldif")
             write_result = api_with_config.write_file(
-                parse_result.data, str(output_file)
+                parse_result.data,
+                str(output_file),
             )
             assert write_result.success
             assert output_file.exists()

@@ -27,8 +27,8 @@ License: MIT
 
 from __future__ import annotations
 
-import re as _re
 from pathlib import Path
+import re as _re
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import FlextResult, get_logger
@@ -142,7 +142,8 @@ class FlextLdifAPI:
         """
         file_path_obj = Path(file_path)
         logger.debug(
-            "Starting LDIF file parsing - file_path=%s", str(file_path_obj.absolute())
+            "Starting LDIF file parsing - file_path=%s",
+            str(file_path_obj.absolute()),
         )
 
         # Delegate to infrastructure service

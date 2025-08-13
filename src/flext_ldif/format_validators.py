@@ -13,9 +13,9 @@ License: MIT
 
 from __future__ import annotations
 
-import importlib
 from collections.abc import Callable
 from functools import lru_cache
+import importlib
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import FlextResult
@@ -93,8 +93,8 @@ class LdifValidator:
             return FlextResult.fail("DN cannot be empty")
 
         # ✅ DELEGATE to flext-ldap root API - NO local validation logic
-        _attr_validator, _dn_validator = _get_ldap_validators()
-        is_valid = bool(_dn_validator(dn_value.strip()))
+        _attr_validator, dn_validator = _get_ldap_validators()
+        is_valid = bool(dn_validator(dn_value.strip()))
         if not is_valid:
             return FlextResult.fail(f"Invalid DN format: {dn_value}")
 
@@ -118,8 +118,8 @@ class LdifValidator:
             return FlextResult.fail("Attribute name cannot be empty")
 
         # ✅ DELEGATE to flext-ldap root API - NO local validation logic
-        _attr_validator, _dn_validator = _get_ldap_validators()
-        is_valid = bool(_attr_validator(attr_name))
+        attr_validator, _dn_validator = _get_ldap_validators()
+        is_valid = bool(attr_validator(attr_name))
         if not is_valid:
             return FlextResult.fail(f"Invalid attribute name format: {attr_name}")
 

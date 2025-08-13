@@ -167,7 +167,8 @@ class FlextLdifConfigDict(TypedDict):
 # Parser function types
 ParseFunction = Callable[[LDIFContent], list[FlextLdifEntryDict]]
 ParseFileFunction = Callable[
-    [Path | FlextTypes.Config.FilePath], list[FlextLdifEntryDict]
+    [Path | FlextTypes.Config.FilePath],
+    list[FlextLdifEntryDict],
 ]
 
 # Validator function types
@@ -177,7 +178,8 @@ ValidateEntryFunction = Callable[[FlextLdifEntryDict], bool]
 # Writer function types
 WriteFunction = Callable[[list[FlextLdifEntryDict]], LDIFText]
 WriteFileFunction = Callable[
-    [list[FlextLdifEntryDict], Path | FlextTypes.Config.FilePath], None
+    [list[FlextLdifEntryDict], Path | FlextTypes.Config.FilePath],
+    None,
 ]
 
 # Analytics function types

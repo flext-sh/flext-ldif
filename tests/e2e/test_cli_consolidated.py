@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
+import tempfile
 from unittest.mock import patch
 
 import pytest
@@ -22,7 +22,10 @@ cn: test
 objectClass: person
 """
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
         ) as f:
             f.write(content)
             return Path(f.name)

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
+import tempfile
 
 import pytest
 
@@ -93,7 +93,8 @@ member: cn=John Doe,ou=people,dc=example,dc=com
 
         # Step 4: Find specific entry
         john_result = api.find_entry_by_dn(
-            entries, "cn=John Doe,ou=people,dc=example,dc=com"
+            entries,
+            "cn=John Doe,ou=people,dc=example,dc=com",
         )
         assert john_result.success
         assert john_result.data is not None
@@ -113,7 +114,8 @@ member: cn=John Doe,ou=people,dc=example,dc=com
         assert "cn=John Doe,ou=people,dc=example,dc=com" in write_result.data
 
     def test_complete_legacy_functions_workflow(
-        self, complex_ldif_content: str
+        self,
+        complex_ldif_content: str,
     ) -> None:
         """Test complete workflow using legacy convenience functions."""
         # Step 1: Parse using legacy function
@@ -134,7 +136,10 @@ member: cn=John Doe,ou=people,dc=example,dc=com
         api = FlextLdifAPI()
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
         ) as input_file:
             input_file.write(complex_ldif_content)
             input_path = Path(input_file.name)

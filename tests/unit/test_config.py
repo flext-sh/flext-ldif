@@ -16,7 +16,9 @@ class TestFlextLdifConfig:
     def test_config_initialization_with_params(self) -> None:
         """Test config initialization with custom parameters."""
         config = FlextLdifConfig(
-            max_entries=1000, strict_validation=True, sort_attributes=False
+            max_entries=1000,
+            strict_validation=True,
+            sort_attributes=False,
         )
         assert config.max_entries == 1000
         assert config.strict_validation is True
