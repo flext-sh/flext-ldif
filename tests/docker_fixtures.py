@@ -7,10 +7,10 @@ a real OpenLDAP server, enabling full integration testing.
 from __future__ import annotations
 
 import contextlib
-from contextlib import asynccontextmanager
 import os
 import subprocess
 import time
+from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
 import docker

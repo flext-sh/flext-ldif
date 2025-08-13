@@ -9,8 +9,8 @@ from __future__ import annotations
 import sys
 import time
 
-from flext_core.exceptions import FlextValidationError
 import pytest
+from flext_core.exceptions import FlextValidationError
 
 from flext_ldif import FlextLdifEntry
 from flext_ldif.models import FlextLdifAttributes, FlextLdifDistinguishedName

@@ -13,9 +13,9 @@ License: MIT
 
 from __future__ import annotations
 
+import importlib
 from collections.abc import Callable
 from functools import lru_cache
-import importlib
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import FlextResult

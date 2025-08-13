@@ -17,19 +17,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
-import logging
 import re
 from collections import OrderedDict
 from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
 import urllib3
-from flext_core import FlextResult
+from flext_core import FlextResult, get_logger
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # LDIF Pattern Constants
 ATTRTYPE_PATTERN = r"[\w;.-]+(;[\w_-]+)*"

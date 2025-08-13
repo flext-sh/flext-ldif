@@ -30,14 +30,14 @@ License: MIT
 
 from __future__ import annotations
 
+import hashlib
+import importlib
+import uuid
 from collections.abc import Callable
 
 # ✅ Import from flext-ldap root API to eliminate DN/attribute validation duplication
 from functools import lru_cache
-import hashlib
-import importlib
 from typing import cast
-import uuid
 
 # FOUNDATION: Complete flext-core integration - NO duplication
 from flext_core import FlextEntity, FlextFactory, FlextResult, FlextValue
