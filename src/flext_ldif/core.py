@@ -58,8 +58,8 @@ License: MIT
 
 from __future__ import annotations
 
-from pathlib import Path
 import re
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from flext_core import FlextResult, get_logger
