@@ -1,3 +1,3 @@
 # scripts
 
-Helper scripts for development and LDIF demos.
+Helper scripts for LDIF workflows and demos.
