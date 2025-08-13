@@ -12,7 +12,6 @@ from flext_core.typings import FlextTypes as CoreFlextTypes
 from flext_ldif.types import (
     FlextLdifAttributesDict as LdifAttributeDict,
     FlextLdifEntryDict as LdifEntry,
-    LdifAttributeValue,
 )
 
 
@@ -23,6 +22,5 @@ class FlextTypes(CoreFlextTypes):
 __all__ = [
     "FlextTypes",
     "LdifAttributeDict",
-    "LdifAttributeValue",
     "LdifEntry",
 ]

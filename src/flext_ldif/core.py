@@ -73,18 +73,10 @@ if TYPE_CHECKING:
     _validate_dn: Callable[[str], bool]
     _validate_attr_name: Callable[[str], bool]
 else:
-    try:
-        from flext_ldap import (
-            flext_ldap_validate_attribute_name as _validate_attr_name,
-            flext_ldap_validate_dn as _validate_dn,
-        )
-    except Exception:  # pragma: no cover - fallback mocks when flext-ldap unavailable
-
-        def _validate_dn(dn: str) -> bool:  # type: ignore[misc]
-            return bool(dn and isinstance(dn, str) and "=" in dn)
-
-        def _validate_attr_name(name: str) -> bool:  # type: ignore[misc]
-            return bool(name and isinstance(name, str))
+    from flext_ldap import (
+        flext_ldap_validate_attribute_name as _validate_attr_name,
+        flext_ldap_validate_dn as _validate_dn,
+    )
 
 
 from .format_handlers import modernized_ldif_parse, modernized_ldif_write

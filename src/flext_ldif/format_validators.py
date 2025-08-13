@@ -29,25 +29,12 @@ ValidatorFunc = Callable[[str], bool]
 
 @lru_cache(maxsize=1)
 def _get_ldap_validators() -> tuple[ValidatorFunc, ValidatorFunc]:
-    """Lazily import real validators from flext-ldap to avoid circular imports.
-
-    Returns a tuple (validate_attribute_name, validate_dn).
-    """
-    try:
-        utils_mod = importlib.import_module("flext_ldap.utils")
-        return (
-            utils_mod.flext_ldap_validate_attribute_name,
-            utils_mod.flext_ldap_validate_dn,
-        )
-    except Exception:  # pragma: no cover - hard fallback; should not happen in prod
-        # Fallback to permissive validators if flext-ldap is unavailable temporarily
-        def _attr_ok(name: str) -> bool:
-            return bool(name and isinstance(name, str))
-
-        def _dn_ok(dn: str) -> bool:
-            return bool(dn and isinstance(dn, str) and "=" in dn)
-
-        return (_attr_ok, _dn_ok)
+    """Import real validators from flext-ldap (canonical requirement)."""
+    utils_mod = importlib.import_module("flext_ldap.utils")
+    return (
+        utils_mod.flext_ldap_validate_attribute_name,
+        utils_mod.flext_ldap_validate_dn,
+    )
 
 
 class LdifValidator:

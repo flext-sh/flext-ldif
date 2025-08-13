@@ -27,14 +27,16 @@ License: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from flext_core import FlextDomainService, FlextResult, get_logger
 from pydantic import Field
 
 from .constants import DEFAULT_OUTPUT_ENCODING
 
-from .config import FlextLdifConfig
-from .models import FlextLdifEntry
+if TYPE_CHECKING:
+    from .config import FlextLdifConfig
+    from .models import FlextLdifEntry
 
 logger = get_logger(__name__)
 

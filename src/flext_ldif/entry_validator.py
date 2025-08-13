@@ -33,9 +33,8 @@ from pydantic import Field
 
 from flext_ldif.format_validators import LdifValidator
 
-from .config import FlextLdifConfig
-
 if TYPE_CHECKING:
+    from .config import FlextLdifConfig
     from .models import FlextLdifEntry
 
 logger = get_logger(__name__)
@@ -153,5 +152,12 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
 __all__ = ["FlextLdifValidatorService"]
 
 # Rebuild model to resolve forward references after config is defined
+# Ensure forward-ref targets are available at runtime for Pydantic
+try:
+    from .config import FlextLdifConfig as _FlextLdifConfigRuntime
+    globals()["FlextLdifConfig"] = _FlextLdifConfigRuntime
+except Exception as _e:
+    # Best-effort: if import fails, forward refs may resolve later
+    ...
 
 FlextLdifValidatorService.model_rebuild()
