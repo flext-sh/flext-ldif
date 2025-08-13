@@ -24,6 +24,7 @@ ALLOWED_COMMANDS: set[str] = {
     "config-check",
 }
 
+
 def _extract_primary_command(tokens: list[str]) -> str | None:
     """Return the first non-option token (the primary command), if any."""
     for token in tokens:

@@ -9,7 +9,17 @@ from __future__ import annotations
 
 import sys
 
-from tests.docker_fixtures import OpenLDAPContainerManager, check_docker_available
+try:
+    # Prefer local fixtures if running from client-a-oud-mig context
+    from tests.docker_fixtures import (  # type: ignore[attr-defined]
+        OpenLDAPContainerManager,
+        check_docker_available,
+    )
+except Exception:  # pragma: no cover - fallback to shared fixtures path
+    from client-a_oud_mig.tests.docker_fixtures import (  # type: ignore[attr-defined]
+        OpenLDAPContainerManager,
+        check_docker_available,
+    )
 
 from flext_ldif import flext_ldif_parse, flext_ldif_validate
 
