@@ -357,6 +357,8 @@ class FlextLdifAttributes(FlextValue):
 class FlextLdifEntry(FlextEntity):
     """LDIF entry entity with business logic."""
 
+    # Provide default ID to allow simple construction in tests without explicit id
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     dn: FlextLdifDistinguishedName = Field(...)
     attributes: FlextLdifAttributes = Field(default_factory=FlextLdifAttributes)
     changetype: str | None = Field(default=None)
