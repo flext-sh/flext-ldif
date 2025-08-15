@@ -20,6 +20,7 @@ from typing import ClassVar
 
 from flext_core import FlextResult
 
+from flext_ldif.constants import FlextLdifFormatConstants
 from flext_ldif.models import FlextLdifEntry
 
 ValidatorFunc = Callable[[str], bool]
@@ -28,7 +29,7 @@ ValidatorFunc = Callable[[str], bool]
 @lru_cache(maxsize=1)
 def _get_ldap_validators() -> tuple[ValidatorFunc, ValidatorFunc]:
     """Import real validators from flext-ldap (canonical requirement)."""
-    utils_mod = importlib.import_module("flext_ldap.utils")
+    utils_mod = importlib.import_module(FlextLdifFormatConstants.FLEXT_LDAP_UTILS_MODULE)
     return (
         utils_mod.flext_ldap_validate_attribute_name,
         utils_mod.flext_ldap_validate_dn,
@@ -38,27 +39,10 @@ def _get_ldap_validators() -> tuple[ValidatorFunc, ValidatorFunc]:
 class LdifValidator:
     """LDIF validation utility class using flext-ldap root APIs."""
 
-    # Object class sets for entry type validation
-    PERSON_CLASSES: ClassVar[set[str]] = {
-        "person",
-        "organizationalPerson",
-        "inetOrgPerson",
-        "user",
-        "posixAccount",
-    }
-
-    OU_CLASSES: ClassVar[set[str]] = {
-        "organizationalUnit",
-        "top",
-    }
-
-    GROUP_CLASSES: ClassVar[set[str]] = {
-        "group",
-        "groupOfNames",
-        "groupOfUniqueNames",
-        "posixGroup",
-        "groupOfMembers",
-    }
+    # Object class sets for entry type validation - using centralized constants
+    PERSON_CLASSES: ClassVar[set[str]] = FlextLdifFormatConstants.PERSON_OBJECTCLASSES
+    OU_CLASSES: ClassVar[set[str]] = FlextLdifFormatConstants.OU_OBJECTCLASSES
+    GROUP_CLASSES: ClassVar[set[str]] = FlextLdifFormatConstants.GROUP_OBJECTCLASSES
 
     @classmethod
     def validate_dn(cls, dn_value: str) -> FlextResult[bool]:
@@ -75,13 +59,13 @@ class LdifValidator:
 
         """
         if not dn_value or not dn_value.strip():
-            return FlextResult.fail("DN cannot be empty")
+            return FlextResult.fail(FlextLdifFormatConstants.DN_CANNOT_BE_EMPTY_FORMAT)
 
         # ✅ DELEGATE to flext-ldap root API - NO local validation logic
         _attr_validator, dn_validator = _get_ldap_validators()
         is_valid = bool(dn_validator(dn_value.strip()))
         if not is_valid:
-            return FlextResult.fail(f"Invalid DN format: {dn_value}")
+            return FlextResult.fail(FlextLdifFormatConstants.INVALID_DN_FORMAT_MSG.format(dn_value=dn_value))
 
         return FlextResult.ok(data=True)
 
@@ -100,13 +84,13 @@ class LdifValidator:
 
         """
         if not attr_name or not attr_name.strip():
-            return FlextResult.fail("Attribute name cannot be empty")
+            return FlextResult.fail(FlextLdifFormatConstants.ATTRIBUTE_NAME_CANNOT_BE_EMPTY_FORMAT)
 
         # ✅ DELEGATE to flext-ldap root API - NO local validation logic
         attr_validator, _dn_validator = _get_ldap_validators()
         is_valid = bool(attr_validator(attr_name))
         if not is_valid:
-            return FlextResult.fail(f"Invalid attribute name format: {attr_name}")
+            return FlextResult.fail(FlextLdifFormatConstants.INVALID_ATTRIBUTE_NAME_FORMAT_MSG.format(attr_name=attr_name))
 
         return FlextResult.ok(data=True)
 
@@ -121,8 +105,8 @@ class LdifValidator:
             FlextResult[bool] indicating validation success
 
         """
-        if not entry.has_attribute("objectClass"):
-            return FlextResult.fail("Entry missing required objectClass attribute")
+        if not entry.has_attribute(FlextLdifFormatConstants.OBJECTCLASS_ATTRIBUTE):
+            return FlextResult.fail(FlextLdifFormatConstants.ENTRY_MISSING_OBJECTCLASS_FORMAT)
 
         return FlextResult.ok(data=True)
 
@@ -139,7 +123,7 @@ class LdifValidator:
         """
         # Check DN
         if not entry.dn or not entry.dn.value:
-            return FlextResult.fail("LDIF entry must have a valid DN")
+            return FlextResult.fail(FlextLdifFormatConstants.ENTRY_MUST_HAVE_VALID_DN_FORMAT)
 
         dn_validation = cls.validate_dn(entry.dn.value)
         if not dn_validation.success:
@@ -174,17 +158,19 @@ class LdifValidator:
             return completeness_result
 
         # Get objectClass values
-        object_classes_attr = entry.get_attribute("objectClass")
+        object_classes_attr = entry.get_attribute(FlextLdifFormatConstants.OBJECTCLASS_ATTRIBUTE)
         if not object_classes_attr:
-            return FlextResult.fail("Entry missing objectClass for type validation")
+            return FlextResult.fail(FlextLdifFormatConstants.ENTRY_MISSING_OBJECTCLASS_TYPE_VALIDATION)
 
         object_classes = set(object_classes_attr)
 
         # Check if entry has any of the expected classes
         if not (expected_classes & object_classes):
             return FlextResult.fail(
-                f"Entry does not match expected type. "
-                f"Expected: {expected_classes}, Found: {object_classes}",
+                FlextLdifFormatConstants.ENTRY_TYPE_MISMATCH_FORMAT.format(
+                    expected_classes=expected_classes,
+                    object_classes=object_classes
+                )
             )
 
         return FlextResult.ok(data=True)
@@ -256,7 +242,9 @@ class LdifSchemaValidator:
 
         if missing_attrs:
             return FlextResult.fail(
-                f"Entry missing required attributes: {', '.join(missing_attrs)}",
+                FlextLdifFormatConstants.ENTRY_MISSING_REQUIRED_ATTRIBUTES_FORMAT.format(
+                    missing_attrs=", ".join(missing_attrs)
+                )
             )
 
         return FlextResult.ok(data=True)
@@ -278,7 +266,7 @@ class LdifSchemaValidator:
             return person_check
 
         # Validate required attributes for person entries
-        required_attrs = ["cn", "sn"]  # Common Name and Surname
+        required_attrs = FlextLdifFormatConstants.PERSON_REQUIRED_ATTRIBUTES
         return cls.validate_required_attributes(entry, required_attrs)
 
     @classmethod
@@ -298,7 +286,7 @@ class LdifSchemaValidator:
             return ou_check
 
         # Validate required attributes for OU entries
-        required_attrs = ["ou"]  # Organizational Unit name
+        required_attrs = FlextLdifFormatConstants.OU_REQUIRED_ATTRIBUTES
         return cls.validate_required_attributes(entry, required_attrs)
 
 
@@ -316,7 +304,7 @@ def validate_attribute_format(attr_name: str, attr_value: str) -> FlextResult[bo
 
     # Basic value validation
     if not attr_value.strip():
-        return FlextResult.fail(f"Empty attribute value not allowed for {attr_name}")
+        return FlextResult.fail(FlextLdifFormatConstants.EMPTY_ATTRIBUTE_VALUE_NOT_ALLOWED_FORMAT.format(attr_name=attr_name))
 
     return FlextResult.ok(data=True)
 
@@ -329,6 +317,6 @@ def validate_dn_format(dn_value: str) -> FlextResult[bool]:
 def validate_ldif_structure(entry: object) -> FlextResult[bool]:
     """Validate LDIF entry structure - delegates to LdifValidator."""
     if not isinstance(entry, FlextLdifEntry):
-        return FlextResult.fail("Entry must be FlextLdifEntry instance")
+        return FlextResult.fail(FlextLdifFormatConstants.ENTRY_MUST_BE_FLEXTLDIFENTRY_FORMAT)
 
     return LdifValidator.validate_entry_completeness(entry)

@@ -6,14 +6,16 @@ LDIF parsing implementation using flext-core patterns.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from flext_core import FlextDomainService, FlextResult, get_logger
 from pydantic import Field
 
-if TYPE_CHECKING:
-    from .config import FlextLdifConfig
-from .constants import DEFAULT_INPUT_ENCODING
+from .config import FlextLdifConfig  # noqa: TC001
+from .constants import (
+    DEFAULT_INPUT_ENCODING,
+    FlextLdifCoreMessages,
+    FlextLdifValidationMessages,
+)
 from .models import FlextLdifEntry, FlextLdifFactory
 
 logger = get_logger(__name__)
@@ -49,7 +51,7 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifEntry]]):
 
         """
         if not isinstance(content, str):
-            return FlextResult.fail("Invalid LDIF content type")
+            return FlextResult.fail(FlextLdifCoreMessages.INVALID_DN_FORMAT.replace("{dn}", "content type"))
         if not content or not content.strip():
             return FlextResult.ok([])
 
@@ -66,20 +68,20 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifEntry]]):
                 if entry_result.success and entry_result.data:
                     entries.append(entry_result.data)
                 elif entry_result.is_failure:
-                    logger.warning(f"Failed to parse entry block: {entry_result.error}")
+                    logger.warning(FlextLdifCoreMessages.PARSE_FAILED.format(error=entry_result.error))
                     failed_blocks.append(entry_result.error)
 
             # If we have content but no successful entries, it's invalid LDIF
             non_empty_blocks = [b for b in entry_blocks if b.strip()]
             if non_empty_blocks and not entries:
                 return FlextResult.fail(
-                    f"Invalid LDIF: {len(failed_blocks)} blocks failed to parse",
+                    FlextLdifValidationMessages.INVALID_LDIF_FORMAT + f": {len(failed_blocks)} blocks failed to parse",
                 )
 
             return FlextResult.ok(entries)
 
         except Exception as e:
-            return FlextResult.fail(f"Parse error: {e!s}")
+            return FlextResult.fail(FlextLdifCoreMessages.PARSE_FAILED.format(error=str(e)))
 
     def parse_ldif_file(
         self,
@@ -100,13 +102,13 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifEntry]]):
         try:
             path_obj = Path(file_path)
             if not path_obj.exists():
-                return FlextResult.fail(f"File not found: {file_path}")
+                return FlextResult.fail(FlextLdifCoreMessages.FILE_NOT_FOUND.format(file_path=file_path))
 
             content = path_obj.read_text(encoding=encoding)
             return self.parse(content)
 
         except Exception as e:
-            return FlextResult.fail(f"File read error: {e!s}")
+            return FlextResult.fail(FlextLdifCoreMessages.FILE_READ_FAILED.format(error=str(e)))
 
     def parse_entries_from_string(
         self,
@@ -138,20 +140,20 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifEntry]]):
 
         """
         if not block.strip():
-            return FlextResult.fail("Empty entry block")
+            return FlextResult.fail(FlextLdifValidationMessages.ENTRY_VALIDATION_FAILED)
 
         lines = block.split("\n")
         if not lines:
-            return FlextResult.fail("No lines in entry block")
+            return FlextResult.fail(FlextLdifValidationMessages.ENTRY_VALIDATION_FAILED)
 
         # Parse DN from first line
         dn_line = lines[0].strip()
         if not dn_line.startswith("dn:"):
-            return FlextResult.fail("Entry must start with DN")
+            return FlextResult.fail(FlextLdifValidationMessages.RECORD_MISSING_DN)
 
         dn = dn_line[3:].strip()
         if not dn:
-            return FlextResult.fail("DN cannot be empty")
+            return FlextResult.fail(FlextLdifValidationMessages.DN_EMPTY_ERROR)
 
         # Parse attributes
         attributes: dict[str, list[str]] = {}

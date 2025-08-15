@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import re as _re
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 from flext_core import FlextResult, get_logger
 
 from flext_ldif.config import FlextLdifConfig
-from flext_ldif.constants import FlextLdifValidationMessages, FlextLdifOperationMessages
+from flext_ldif.constants import FlextLdifOperationMessages, FlextLdifValidationMessages
 from flext_ldif.entry_analytics import FlextLdifAnalyticsService
 from flext_ldif.entry_repository import FlextLdifRepositoryService
 from flext_ldif.entry_validator import (
@@ -17,9 +17,7 @@ from flext_ldif.entry_validator import (
 )
 from flext_ldif.ldif_parser import FlextLdifParserService as _FlextLdifParserService
 from flext_ldif.ldif_writer import FlextLdifWriterService as _FlextLdifWriterService
-
-if TYPE_CHECKING:
-    from flext_ldif.models import FlextLdifEntry
+from flext_ldif.models import FlextLdifEntry  # noqa: TC001
 
 logger = get_logger(__name__)
 
@@ -43,15 +41,6 @@ class FlextLdifAPI:
 
         """
         self.config = config or FlextLdifConfig()
-
-        ns = {
-            "FlextLdifConfig": FlextLdifConfig,
-        }
-        _FlextLdifParserService.model_rebuild(_types_namespace=ns)
-        _FlextLdifValidatorService.model_rebuild(_types_namespace=ns)
-        _FlextLdifWriterService.model_rebuild(_types_namespace=ns)
-        FlextLdifRepositoryService.model_rebuild(_types_namespace=ns)
-        FlextLdifAnalyticsService.model_rebuild(_types_namespace=ns)
         self._parser_service = _FlextLdifParserService(config=self.config)
         self._validator_service = _FlextLdifValidatorService(config=self.config)
         self._writer_service = _FlextLdifWriterService(config=self.config)
@@ -114,7 +103,6 @@ class FlextLdifAPI:
         max_file_size_mb: int = 100,
     ) -> FlextResult[list[Path]]:
         """Discover LDIF files."""
-
         files_result = self._get_files_to_process(
             directory_path,
             file_pattern,
