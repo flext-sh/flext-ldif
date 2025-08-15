@@ -1,27 +1,6 @@
-"""FLEXT-LDIF Parser Service - Clean Architecture Infrastructure Layer.
+"""FLEXT-LDIF Parser Service.
 
-ARCHITECTURAL CONSOLIDATION: This module contains the concrete LDIF parsing service
-following Clean Architecture patterns, extracted from infrastructure_services.py
-for better separation of concerns.
-
-ELIMINATED DUPLICATION:
-✅ Extracted from infrastructure_services.py for single responsibility
-✅ Uses base_service.py correctly without duplication
-✅ Implements application protocols without local duplication
-✅ Complete flext-core integration patterns
-
-Service:
-    - FlextLdifParserService: Concrete LDIF parsing implementation with domain validation
-
-Technical Excellence:
-    - Clean Architecture: Infrastructure layer implementing application protocols
-    - ZERO duplication: Uses base_service.py and flext-core patterns correctly
-    - SOLID principles: Single responsibility, dependency inversion
-    - Type safety: Comprehensive type annotations with Python 3.13+
-
-Author: FLEXT Development Team
-Version: 0.9.0
-License: MIT
+LDIF parsing implementation using flext-core patterns.
 """
 
 from __future__ import annotations

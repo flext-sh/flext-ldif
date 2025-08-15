@@ -1,28 +1,4 @@
-"""FLEXT-LDIF Repository Service - Clean Architecture Infrastructure Layer.
-
-ARCHITECTURAL CONSOLIDATION: This module contains the concrete LDIF repository service
-following Clean Architecture patterns, extracted from infrastructure_services.py
-for better separation of concerns.
-
-ELIMINATED DUPLICATION:
-✅ Extracted from infrastructure_services.py for single responsibility
-✅ Uses base_service.py correctly without duplication
-✅ Implements application protocols without local duplication
-✅ Complete flext-core integration patterns
-
-Service:
-    - FlextLdifRepositoryService: Concrete LDIF data access implementation with filtering
-
-Technical Excellence:
-    - Clean Architecture: Infrastructure layer implementing application protocols
-    - ZERO duplication: Uses base_service.py and flext-core patterns correctly
-    - SOLID principles: Single responsibility, dependency inversion
-    - Type safety: Comprehensive type annotations with Python 3.13+
-
-Author: FLEXT Development Team
-Version: 0.9.0
-License: MIT
-"""
+"""FLEXT-LDIF Repository Service."""
 
 from __future__ import annotations
 

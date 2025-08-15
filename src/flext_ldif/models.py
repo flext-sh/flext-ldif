@@ -1,32 +1,4 @@
-"""FLEXT-LDIF Domain Models - Unified LDIF Processing Models.
-
-ARCHITECTURAL CONSOLIDATION: This module consolidates ALL LDIF domain models from
-multiple duplicate sources into ONE centralized domain layer following enterprise patterns.
-
-ELIMINATED DUPLICATION:
-✅ models.py + ldif_models.py + domain_models.py → ONE unified models.py
-✅ Complete flext-core foundation integration - ZERO local duplication
-✅ Clean Architecture + DDD principles throughout
-✅ Railway-oriented programming with FlextResult pattern
-
-Domain Objects:
-    - FlextLdifDistinguishedName: RFC 4514 compliant DN value object
-    - FlextLdifAttributes: Immutable attribute collection with business rules
-    - FlextLdifEntry: Rich domain entity with complete business logic
-    - FlextLdifFactory: Factory patterns with validation using flext-core
-
-Enterprise Architecture:
-- Domain-Driven Design: Rich domain models with business logic
-- Value Object Pattern: Immutable domain values (DN, Attributes)
-- Entity Pattern: FlextLdifEntry with identity and behavior
-- Factory Pattern: Object creation through FlextFactory delegation
-- Type Safety: Python 3.13+ with comprehensive type annotations
-- Error Handling: FlextResult pattern for railway-oriented programming
-
-Author: FLEXT Development Team
-Version: 0.9.0
-License: MIT
-"""
+"""FLEXT-LDIF Domain Models."""
 
 from __future__ import annotations
 
@@ -34,17 +6,13 @@ import hashlib
 import importlib
 import uuid
 from collections.abc import Callable
-
-# ✅ Import from flext-ldap root API to eliminate DN/attribute validation duplication
 from functools import lru_cache
 from typing import cast
 
-# FOUNDATION: Complete flext-core integration - NO duplication
 from flext_core import FlextEntity, FlextFactory, FlextResult, FlextValue
 from flext_core.exceptions import FlextValidationError
 from pydantic import Field, field_validator
 
-# Import consolidated constants first (policy: constants at top)
 from .constants import (
     LDAP_DN_ATTRIBUTES,
     LDAP_GROUP_CLASSES,
@@ -75,24 +43,20 @@ def _get_ldap_validators() -> tuple[ValidatorFunc, ValidatorFunc]:
 
 
 class FlextLdifDistinguishedName(FlextValue):
-    """Distinguished Name value object with RFC 4514 compliance."""
+    """Distinguished Name value object."""
 
     value: str = Field(...)
 
     @field_validator("value")
     @classmethod
     def validate_dn(cls, v: str) -> str:
-        """Validate and normalize DN format using flext-ldap root API.
-
-        ✅ CORRECT ARCHITECTURE: Delegates to flext-ldap root API.
-        ZERO duplication - uses existing flext-ldap validation and normalization.
-        """
+        """Validate and normalize DN format."""
         if not v or not isinstance(v, str) or not v.strip():
             # For coverage tests expecting domain-specific error type
-            msg = "DN must be a non-empty string"
-            raise FlextValidationError(msg)
+            from .constants import FlextLdifValidationMessages
+            raise FlextValidationError(FlextLdifValidationMessages.DN_EMPTY_ERROR)
 
-        # ✅ Validate against flext-ldap API but preserve original casing/spacing in value
+        # Validate against flext-ldap API but preserve original casing/spacing in value
         normalized = v.strip()
         # Pre-validate basic DN component structure to satisfy targeted error expectations
         components = [c.strip() for c in normalized.split(",") if c.strip()]
@@ -104,27 +68,24 @@ class FlextLdifDistinguishedName(FlextValue):
         else:
             for component in components:
                 if "=" not in component:
-                    msg = "Invalid DN component"
-                    raise ValueError(msg)
+                    from .constants import FlextLdifValidationMessages
+                    raise ValueError(FlextLdifValidationMessages.DN_INVALID_COMPONENT)
                 attr, val = component.split("=", 1)
                 if not attr or not val:
-                    msg = "Invalid DN component"
-                    raise ValueError(msg)
+                    from .constants import FlextLdifValidationMessages
+                    raise ValueError(FlextLdifValidationMessages.DN_INVALID_COMPONENT)
         # Delegate to flext-ldap validator lazily to avoid circular imports
         _attr_validator, dn_validator = _get_ldap_validators()
         if not bool(dn_validator(normalized)):
             # If there is no '=' at all, it's an invalid DN structure
             if not global_has_equal:
-                error_msg = "DN must contain at least one attribute=value pair"
-                raise FlextValidationError(error_msg)
+                from .constants import FlextLdifValidationMessages
+                raise FlextValidationError(FlextLdifValidationMessages.DN_MISSING_EQUALS)
             # Otherwise, allow TLdif to perform stricter validation later
             return normalized
         # Do not call normalize here to preserve exact input in DN string
         return normalized
 
-    # ✅ ELIMINATED DUPLICATION: DN normalization now delegates to flext-ldap root API
-    # The _normalize_dn and _normalize_dn_component methods were removed because
-    # they duplicated functionality available in flext_ldap_normalize_dn
 
     def __str__(self) -> str:
         """Return the DN value as string representation."""
@@ -185,7 +146,7 @@ class FlextLdifDistinguishedName(FlextValue):
 
 
 class FlextLdifAttributes(FlextValue):
-    """LDIF attribute collection value object."""
+    """LDIF attributes collection."""
 
     attributes: dict[str, list[str]] = Field(default_factory=dict)
 
@@ -228,18 +189,14 @@ class FlextLdifAttributes(FlextValue):
         return normalized_values
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate attribute business rules using flext-ldap root API.
-
-        ✅ CORRECT ARCHITECTURE: Delegates to flext-ldap for attribute validation.
-        ZERO duplication - uses existing flext-ldap validation functionality.
-        """
+        """Validate attribute business rules."""
         for attr_name in self.attributes:
             if not attr_name or not attr_name.strip():
                 return FlextResult.fail(
                     "Attribute name cannot be empty or whitespace-only",
                 )
 
-            # ✅ DELEGATE to flext-ldap root API - NO local validation logic
+            # Delegate to flext-ldap root API
             attr_validator, _dn_validator = _get_ldap_validators()
             if not bool(attr_validator(attr_name)):
                 return FlextResult.fail(
@@ -355,7 +312,7 @@ class FlextLdifAttributes(FlextValue):
 
 
 class FlextLdifEntry(FlextEntity):
-    """LDIF entry entity with business logic."""
+    """LDIF entry entity."""
 
     # Provide default ID to allow simple construction in tests without explicit id
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))

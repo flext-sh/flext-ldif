@@ -1,11 +1,4 @@
-"""FLEXT-LDIF Domain Exceptions.
-
-Standard exception hierarchy for LDIF processing operations.
-
-Author: FLEXT Development Team
-Version: 0.9.0
-License: MIT
-"""
+"""FLEXT-LDIF exceptions."""
 
 from __future__ import annotations
 
