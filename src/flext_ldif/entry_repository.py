@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from flext_core import FlextDomainService, FlextResult, get_logger
 from pydantic import Field
 
-if TYPE_CHECKING:
-    from .config import FlextLdifConfig
-    from .models import FlextLdifEntry
+from .config import FlextLdifConfig  # noqa: TC001
+from .constants import FlextLdifCoreMessages, FlextLdifValidationMessages
+from .models import FlextLdifEntry  # noqa: TC001
 
 logger = get_logger(__name__)
 
@@ -31,7 +29,7 @@ class FlextLdifRepositoryService(FlextDomainService[dict[str, int]]):
     ) -> FlextResult[FlextLdifEntry | None]:
         """Find entry by distinguished name."""
         if not dn or not dn.strip():
-            return FlextResult.fail("DN cannot be empty")
+            return FlextResult.fail(FlextLdifValidationMessages.DN_EMPTY_ERROR)
 
         dn_lower = dn.lower()
         for entry in entries:
@@ -47,7 +45,7 @@ class FlextLdifRepositoryService(FlextDomainService[dict[str, int]]):
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter entries by objectClass attribute."""
         if not objectclass or not objectclass.strip():
-            return FlextResult.fail("ObjectClass cannot be empty")
+            return FlextResult.fail(FlextLdifCoreMessages.MISSING_OBJECTCLASS)
 
         filtered = [entry for entry in entries if entry.has_object_class(objectclass)]
         return FlextResult.ok(filtered)
@@ -60,7 +58,7 @@ class FlextLdifRepositoryService(FlextDomainService[dict[str, int]]):
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter entries by attribute value."""
         if not attribute or not attribute.strip():
-            return FlextResult.fail("Attribute name cannot be empty")
+            return FlextResult.fail(FlextLdifCoreMessages.INVALID_ATTRIBUTE_NAME.format(attr_name="attribute"))
 
         filtered = []
         for entry in entries:

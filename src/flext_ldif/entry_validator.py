@@ -5,17 +5,14 @@ LDIF validation implementation using flext-core patterns.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from flext_core import FlextDomainService, FlextResult, get_logger
 from pydantic import Field
 
 from flext_ldif.format_validators import LdifValidator
 
 from .config import FlextLdifConfig
-
-if TYPE_CHECKING:
-    from .models import FlextLdifEntry
+from .constants import FlextLdifValidationMessages
+from .models import FlextLdifEntry  # noqa: TC001
 
 logger = get_logger(__name__)
 
@@ -44,7 +41,6 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
         if self.config is not None:
             cfg_validation = self.config.validate_business_rules()
             if cfg_validation.is_failure:
-                from .constants import FlextLdifValidationMessages
                 return FlextResult.fail(cfg_validation.error or FlextLdifValidationMessages.INVALID_CONFIGURATION)
         return FlextResult.ok(data=True)
 
@@ -72,7 +68,6 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
         """
         validation_result = entry.validate_business_rules()
         if validation_result.is_failure:
-            from .constants import FlextLdifValidationMessages
             return FlextResult.fail(
                 f"{FlextLdifValidationMessages.ENTRY_VALIDATION_FAILED}: {validation_result.error}",
             )
@@ -84,7 +79,6 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
             and not self.config.allow_empty_attributes
         ):
             # Empty attribute lists are not allowed in strict mode
-            from .constants import FlextLdifValidationMessages
             for attr_name, values in entry.attributes.attributes.items():
                 if len(values) == 0:
                     return FlextResult.fail(
@@ -113,7 +107,6 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
         for i, entry in enumerate(entries):
             entry_result = self.validate_entry(entry)
             if entry_result.is_failure:
-                from .constants import FlextLdifValidationMessages
                 return FlextResult.fail(
                     f"Entry {i} {FlextLdifValidationMessages.ENTRY_VALIDATION_FAILED.lower()}: {entry_result.error}",
                 )

@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from collections.abc import Callable
 
+from flext_core import FlextResult
+
 # Application layer API
 from .api import FlextLdifAPI, TLdif
 
@@ -86,6 +88,39 @@ __version__ = "0.9.0"
 __version_info__ = tuple(int(x) for x in __version__.split(".") if x.isdigit())
 
 
+# Convenience functions
+def flext_ldif_get_api(config: FlextLdifConfig | None = None) -> FlextLdifAPI:
+    """Get LDIF API instance with optional configuration."""
+    return FlextLdifAPI(config)
+
+
+def flext_ldif_parse(content: str) -> list[FlextLdifEntry]:
+    """Parse LDIF content using default configuration."""
+    api = flext_ldif_get_api()
+    result = api.parse(content)
+    if result.is_failure:
+        raise FlextLdifParseError(result.error or "Parse failed")
+    return result.data or []
+
+
+def flext_ldif_validate(entries: list[FlextLdifEntry]) -> bool:
+    """Validate LDIF entries using default configuration."""
+    api = flext_ldif_get_api()
+    result = api.validate(entries)
+    if result.is_failure:
+        raise FlextLdifValidationError(result.error or "Validation failed")
+    return result.data or False
+
+
+def flext_ldif_write(entries: list[FlextLdifEntry]) -> str:
+    """Write LDIF entries to string using default configuration."""
+    api = flext_ldif_get_api()
+    result = api.write(entries)
+    if result.is_failure:
+        raise FlextLdifError(result.error or "Write failed")
+    return result.data or ""
+
+
 __all__: list[str] = [
     "AttributeName",
     "AttributeValue",
@@ -119,4 +154,8 @@ __all__: list[str] = [
     "__version__",
     "__version_info__",
     "cli_main",
+    "flext_ldif_get_api",
+    "flext_ldif_parse",
+    "flext_ldif_validate",
+    "flext_ldif_write",
 ]

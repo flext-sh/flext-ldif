@@ -25,7 +25,11 @@ from flext_core import get_logger
 
 from .api import FlextLdifAPI
 from .config import FlextLdifConfig
-from .constants import FlextLdifDefaultValues, FlextLdifOperationMessages, FlextLdifValidationMessages
+from .constants import (
+    FlextLdifDefaultValues,
+    FlextLdifOperationMessages,
+    FlextLdifValidationMessages,
+)
 
 
 @dataclass
@@ -60,7 +64,7 @@ def handle_parse_result(result: FlextResult[list[FlextLdifEntry]]) -> None:
     if result.success and result.data is not None:
         click.echo(FlextLdifOperationMessages.PARSE_SUCCESS.format(count=len(result.data)))
     else:
-        click.echo(FlextLdifOperationMessages.PARSE_FAILED.format(error=result.error or 'Unknown error'))
+        click.echo(FlextLdifOperationMessages.PARSE_FAILED.format(error=result.error or "Unknown error"))
 
 
 # Logger for CLI module
@@ -291,7 +295,10 @@ def write_entries_to_file(
 @click.option("--config-file", type=click.Path(), help=FlextLdifDefaultValues.CONFIG_FILE_HELP)
 @click.pass_context
 def cli(ctx: click.Context, /, **options: object) -> None:
-    f"""{FlextLdifDefaultValues.CLI_DESCRIPTION}"""
+    """FLEXT LDIF - Enterprise LDIF Processing CLI.
+
+    Comprehensive command-line interface para parsing, validação
+    e transformação LDIF com Clean Architecture.
 
     Args:
         ctx: Contexto Click.
@@ -429,7 +436,7 @@ def parse(
     max_entries: int | None,
     **flags: object,
 ) -> None:
-    f"""{FlextLdifDefaultValues.PARSE_DESCRIPTION}."""
+    """Parse LDIF file and display or save entries."""
     # Create parameter object to reduce complexity
     params = ParseCommandParams(
         input_file=input_file,
@@ -473,11 +480,11 @@ def _execute_parse_command(ctx: click.Context, params: ParseCommandParams) -> No
 
     except FileNotFoundError as e:
         # Ensure exit code 2 for nonexistent files (Click convention)
-        safe_click_echo(f"Parse operation failed: {e}", err=True)
+        safe_click_echo(FlextLdifOperationMessages.PARSE_FAILED.format(error=str(e)), err=True)
         sys.exit(2)
     except Exception as e:  # Broad exception for CLI robustness
         logger.exception("Parse operation failed with unexpected exception")
-        safe_click_echo(f"Parse operation failed: {e}", err=True)
+        safe_click_echo(FlextLdifOperationMessages.PARSE_FAILED.format(error=str(e)), err=True)
         sys.exit(1)
 
 
@@ -535,7 +542,7 @@ def validate(
     strict: bool,
     schema: str | None,
 ) -> None:
-    f"""{FlextLdifDefaultValues.VALIDATE_DESCRIPTION}."""
+    """Validate LDIF file entries against schema rules."""
     try:
         # Create API with appropriate configuration
         api = _create_validation_api(ctx, strict=strict)
@@ -588,7 +595,7 @@ def transform(
     *,
     sort: bool,
 ) -> None:
-    f"""{FlextLdifDefaultValues.TRANSFORM_DESCRIPTION}."""
+    """Transform LDIF file with filtering and sorting options."""
     # Create parameter object to reduce complexity
     params = TransformCommandParams(
         input_file=input_file,
@@ -667,7 +674,7 @@ def stats(
     input_file: str,
     stats_format: str,
 ) -> None:
-    f"""{FlextLdifDefaultValues.STATS_DESCRIPTION}."""
+    """Display comprehensive statistics for LDIF file."""
     try:
         api = ctx.obj["api"]
 
@@ -728,7 +735,7 @@ def find(
     search_dn: str | None,
     search_attr: str | None,
 ) -> None:
-    f"""{FlextLdifDefaultValues.FIND_DESCRIPTION}."""
+    """Find specific entry by Distinguished Name."""
     try:
         api = ctx.obj["api"]
 
@@ -855,7 +862,7 @@ def filter_by_class(
     objectclass: str,
     output: str | None,
 ) -> None:
-    f"""{FlextLdifDefaultValues.FILTER_BY_CLASS_DESCRIPTION}."""
+    """Filter entries by objectClass attribute."""
     try:
         api = ctx.obj["api"]
 
@@ -921,7 +928,7 @@ def convert(
     input_file: str,
     output_format: str,
 ) -> None:
-    f"""{FlextLdifDefaultValues.CONVERT_DESCRIPTION}."""
+    """Convert between different file formats."""
     try:
         api = ctx.obj["api"]
 
@@ -985,7 +992,7 @@ def convert(
 @cli.command()
 @click.pass_context
 def config_check(ctx: click.Context) -> None:
-    f"""{FlextLdifDefaultValues.CONFIG_CHECK_DESCRIPTION}."""
+    """Validate CLI configuration and display settings."""
     try:
         cli_config = ctx.obj["config"]
         config_path = ctx.obj["config_path"]
@@ -994,7 +1001,7 @@ def config_check(ctx: click.Context) -> None:
         click.echo(FlextLdifOperationMessages.OUTPUT_FORMAT_CONFIG.format(format=cli_config.output_format))
         click.echo(FlextLdifOperationMessages.VERBOSE_CONFIG.format(verbose=cli_config.verbose))
         click.echo(FlextLdifOperationMessages.DEBUG_CONFIG.format(debug=cli_config.debug))
-        click.echo(FlextLdifOperationMessages.CONFIG_PATH_CONFIG.format(path=config_path or 'None'))
+        click.echo(FlextLdifOperationMessages.CONFIG_PATH_CONFIG.format(path=config_path or "None"))
 
         # Test API functionality
         api = ctx.obj["api"]
@@ -1032,7 +1039,7 @@ def write(
     output: str | None,
     line_wrap: int,
 ) -> None:
-    f"""{FlextLdifDefaultValues.WRITE_DESCRIPTION}."""
+    """Reformat LDIF file and print or save the output."""
     del line_wrap  # currently not applied; kept for CLI compatibility
     try:
         api = ctx.obj["api"]

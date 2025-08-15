@@ -25,6 +25,8 @@ from urllib.parse import urlparse
 import urllib3
 from flext_core import FlextResult, get_logger
 
+from .constants import FlextLdifOperationMessages, FlextLdifValidationMessages
+
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
 
@@ -483,7 +485,6 @@ class FlextLDIFParser:
             dn = self._process_line_attribute(line, dn, entry)
 
         if dn is None:
-            from .constants import FlextLdifValidationMessages
             msg = FlextLdifValidationMessages.RECORD_MISSING_DN
             raise ValueError(msg)
 
@@ -520,13 +521,11 @@ def modernized_ldif_parse(
     try:
         parser = FlextLDIFParser(content)
         entries = list(parser.parse())
-        from .constants import FlextLdifOperationMessages
         logger.info(FlextLdifOperationMessages.LDIF_PARSED_SUCCESS.format(count=len(entries)))
         return FlextResult.ok(entries)
 
     except Exception as e:
         error_msg: str = f"Modernized LDIF parse failed: {e}"
-        from .constants import FlextLdifValidationMessages
         logger.exception(FlextLdifValidationMessages.MODERNIZED_PARSING_FAILED)
         return FlextResult.fail(error_msg)
 
@@ -544,7 +543,6 @@ def modernized_ldif_write(
 
     """
     if entries is None:
-        from .constants import FlextLdifValidationMessages
         logger.error("Cannot write None entries")
         return FlextResult.fail(FlextLdifValidationMessages.ENTRIES_CANNOT_BE_NONE)
 
@@ -554,13 +552,11 @@ def modernized_ldif_write(
             writer.unparse(dn, attrs)
 
         output = writer.get_output()
-        from .constants import FlextLdifOperationMessages
         logger.info(FlextLdifOperationMessages.LDIF_WRITTEN_SUCCESS.format(count=writer.records_written))
         return FlextResult.ok(output)
 
     except Exception as e:
         error_msg: str = f"Modernized LDIF write failed: {e}"
-        from .constants import FlextLdifValidationMessages
         logger.exception(FlextLdifValidationMessages.MODERNIZED_WRITING_FAILED)
         return FlextResult.fail(error_msg)
 

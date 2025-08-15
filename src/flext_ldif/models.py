@@ -9,15 +9,23 @@ from collections.abc import Callable
 from functools import lru_cache
 from typing import cast
 
-from flext_core import FlextEntity, FlextFactory, FlextResult, FlextValue
+from flext_core import (
+    FlextConfig,
+    FlextEntity,
+    FlextFactory,
+    FlextResult,
+    FlextValue,
+)
 from flext_core.exceptions import FlextValidationError
 from pydantic import Field, field_validator
+from pathlib import Path
 
 from .constants import (
     LDAP_DN_ATTRIBUTES,
     LDAP_GROUP_CLASSES,
     LDAP_PERSON_CLASSES,
     MIN_DN_COMPONENTS,
+    FlextLdifValidationMessages,
 )
 
 ValidatorFunc = Callable[[str], bool]
@@ -53,7 +61,6 @@ class FlextLdifDistinguishedName(FlextValue):
         """Validate and normalize DN format."""
         if not v or not isinstance(v, str) or not v.strip():
             # For coverage tests expecting domain-specific error type
-            from .constants import FlextLdifValidationMessages
             raise FlextValidationError(FlextLdifValidationMessages.DN_EMPTY_ERROR)
 
         # Validate against flext-ldap API but preserve original casing/spacing in value
@@ -68,18 +75,15 @@ class FlextLdifDistinguishedName(FlextValue):
         else:
             for component in components:
                 if "=" not in component:
-                    from .constants import FlextLdifValidationMessages
                     raise ValueError(FlextLdifValidationMessages.DN_INVALID_COMPONENT)
                 attr, val = component.split("=", 1)
                 if not attr or not val:
-                    from .constants import FlextLdifValidationMessages
                     raise ValueError(FlextLdifValidationMessages.DN_INVALID_COMPONENT)
         # Delegate to flext-ldap validator lazily to avoid circular imports
         _attr_validator, dn_validator = _get_ldap_validators()
         if not bool(dn_validator(normalized)):
             # If there is no '=' at all, it's an invalid DN structure
             if not global_has_equal:
-                from .constants import FlextLdifValidationMessages
                 raise FlextValidationError(FlextLdifValidationMessages.DN_MISSING_EQUALS)
             # Otherwise, allow TLdif to perform stricter validation later
             return normalized
@@ -634,3 +638,49 @@ __all__ = [
     "FlextLdifEntry",
     "FlextLdifFactory",
 ]
+
+
+# =============================================================================
+# CONFIGURATION MODELS (consolidated from config.py)
+# =============================================================================
+
+from flext_core.result import FlextResult as _FlextResultAlias  # local alias to avoid shadowing
+
+# RFC 2849 constants for line wrap lengths
+MIN_LINE_WRAP_LENGTH: int = 50
+MAX_LINE_WRAP_LENGTH: int = 998
+
+
+class FlextLdifConfig(FlextConfig):
+    """LDIF processing configuration."""
+
+    max_entries: int = Field(default=20000)
+    max_entry_size: int = Field(default=1048576)
+    strict_validation: bool = Field(default=True)
+    input_encoding: str = Field(default="utf-8")
+    output_encoding: str = Field(default="utf-8")
+    output_directory: Path = Field(default_factory=Path.cwd)
+    create_output_dir: bool = Field(default=True)
+    line_wrap_length: int = Field(default=76)
+    sort_attributes: bool = Field(default=False)
+    normalize_dn: bool = Field(default=False)
+    allow_empty_attributes: bool = Field(default=False)
+
+    def validate_business_rules(self) -> _FlextResultAlias[None]:
+        """Validate LDIF configuration business rules."""
+        if not (MIN_LINE_WRAP_LENGTH <= self.line_wrap_length <= MAX_LINE_WRAP_LENGTH):
+            return _FlextResultAlias.fail(
+                f"line_wrap_length must be between {MIN_LINE_WRAP_LENGTH} and {MAX_LINE_WRAP_LENGTH}",
+            )
+
+        try:
+            "test".encode(self.input_encoding)
+            "test".encode(self.output_encoding)
+        except LookupError:
+            return _FlextResultAlias.fail(FlextLdifValidationMessages.INVALID_ENCODING)
+
+        return _FlextResultAlias.ok(None)
+
+
+# Export configuration symbol as part of models public API
+__all__.append("FlextLdifConfig")
