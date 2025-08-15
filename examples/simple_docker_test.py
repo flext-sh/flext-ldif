@@ -28,7 +28,9 @@ except Exception:  # pragma: no cover - fallback to shared fixtures path
 
         class OpenLDAPContainerManager:  # type: ignore[no-redef]
             def start_container(self) -> None: ...
-            def get_ldif_export(self) -> str: return ""
+            def get_ldif_export(self) -> str:
+                return ""
+
 
 from flext_ldif import flext_ldif_parse, flext_ldif_validate
 

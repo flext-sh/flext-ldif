@@ -483,7 +483,8 @@ class FlextLDIFParser:
             dn = self._process_line_attribute(line, dn, entry)
 
         if dn is None:
-            msg = "Record missing dn: line"
+            from .constants import FlextLdifValidationMessages
+            msg = FlextLdifValidationMessages.RECORD_MISSING_DN
             raise ValueError(msg)
 
         return dn, entry
@@ -516,31 +517,17 @@ def modernized_ldif_parse(
         FlextResult containing list of (dn, attributes) tuples
 
     """
-    logger.debug("Starting modernized LDIF parsing")
-    logger.debug("Content length: %d characters", len(content))
-    logger.debug("Content lines count: %d", len(content.splitlines()))
-
     try:
-        logger.debug("Creating FlextLDIFParser with strict=True")
         parser = FlextLDIFParser(content)
-        logger.debug("Parser initialized successfully")
-
-        logger.debug("Parsing LDIF content into entries")
         entries = list(parser.parse())
-
-        logger.debug("Successfully parsed %d LDIF entries", len(entries))
-        logger.debug(
-            "Entry DNs: %s",
-            [dn for dn, _ in entries[:5]],
-        )  # First 5 for trace
-        logger.info("Successfully parsed %d LDIF entries", len(entries))
+        from .constants import FlextLdifOperationMessages
+        logger.info(FlextLdifOperationMessages.LDIF_PARSED_SUCCESS.format(count=len(entries)))
         return FlextResult.ok(entries)
 
     except Exception as e:
         error_msg: str = f"Modernized LDIF parse failed: {e}"
-        logger.exception("Modernized LDIF parsing failed")
-        logger.debug("Exception type: %s", type(e).__name__)
-        logger.debug("debug message")
+        from .constants import FlextLdifValidationMessages
+        logger.exception(FlextLdifValidationMessages.MODERNIZED_PARSING_FAILED)
         return FlextResult.fail(error_msg)
 
 
@@ -557,43 +544,24 @@ def modernized_ldif_write(
 
     """
     if entries is None:
+        from .constants import FlextLdifValidationMessages
         logger.error("Cannot write None entries")
-        return FlextResult.fail("Entries cannot be None")
-
-    logger.debug("Starting modernized LDIF writing for %d entries", len(entries))
-    logger.debug(
-        "Entry DNs to write: %s",
-        [dn for dn, _ in entries[:5]],
-    )  # First 5 for trace
+        return FlextResult.fail(FlextLdifValidationMessages.ENTRIES_CANNOT_BE_NONE)
 
     try:
-        logger.debug("Creating FlextLDIFWriter")
         writer = FlextLDIFWriter()
-        logger.debug("Writer initialized successfully")
-
-        logger.debug("Writing %d entries to LDIF format", len(entries))
-        for i, (dn, attrs) in enumerate(entries):
-            logger.debug("Writing entry %d: DN=%s, attrs=%d", i, dn, len(attrs))
+        for dn, attrs in entries:
             writer.unparse(dn, attrs)
 
-        logger.debug("Getting output from writer")
         output = writer.get_output()
-        output_size = len(output)
-
-        logger.debug(
-            "Successfully wrote %d LDIF entries, output size: %d chars",
-            writer.records_written,
-            output_size,
-        )
-        logger.debug("Output preview: %s...", output[:100].replace("\n", "\\n"))
-        logger.info("Successfully wrote %d LDIF entries", writer.records_written)
+        from .constants import FlextLdifOperationMessages
+        logger.info(FlextLdifOperationMessages.LDIF_WRITTEN_SUCCESS.format(count=writer.records_written))
         return FlextResult.ok(output)
 
     except Exception as e:
         error_msg: str = f"Modernized LDIF write failed: {e}"
-        logger.exception("Modernized LDIF writing failed")
-        logger.debug("Exception type: %s", type(e).__name__)
-        logger.debug("debug message")
+        from .constants import FlextLdifValidationMessages
+        logger.exception(FlextLdifValidationMessages.MODERNIZED_WRITING_FAILED)
         return FlextResult.fail(error_msg)
 
 

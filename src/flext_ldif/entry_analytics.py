@@ -1,28 +1,4 @@
-"""FLEXT-LDIF Analytics Service - Clean Architecture Infrastructure Layer.
-
-ARCHITECTURAL CONSOLIDATION: This module contains the concrete LDIF analytics service
-following Clean Architecture patterns, extracted from infrastructure_services.py
-for better separation of concerns.
-
-ELIMINATED DUPLICATION:
-✅ Extracted from infrastructure_services.py for single responsibility
-✅ Uses base_service.py correctly without duplication
-✅ Implements application protocols without local duplication
-✅ Complete flext-core integration patterns
-
-Service:
-    - FlextLdifAnalyticsService: Concrete LDIF analytics implementation for business intelligence
-
-Technical Excellence:
-    - Clean Architecture: Infrastructure layer implementing application protocols
-    - ZERO duplication: Uses base_service.py and flext-core patterns correctly
-    - SOLID principles: Single responsibility, dependency inversion
-    - Type safety: Comprehensive type annotations with Python 3.13+
-
-Author: FLEXT Development Team
-Version: 0.9.0
-License: MIT
-"""
+"""FLEXT-LDIF Analytics Service."""
 
 from __future__ import annotations
 
@@ -32,6 +8,7 @@ from flext_core import FlextDomainService, FlextResult, get_logger
 from pydantic import Field
 
 from .config import FlextLdifConfig
+from .constants import FlextLdifAnalyticsConstants
 
 if TYPE_CHECKING:
     from .models import FlextLdifEntry
@@ -47,7 +24,7 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, int]]):
     def execute(self) -> FlextResult[dict[str, int]]:
         """Execute analytics operation - required by FlextDomainService."""
         # This would be called with specific entries in real usage
-        return FlextResult.ok({"total_entries": 0})
+        return FlextResult.ok({FlextLdifAnalyticsConstants.TOTAL_ENTRIES_KEY: 0})
 
     def analyze_entry_patterns(
         self,
@@ -55,19 +32,19 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, int]]):
     ) -> FlextResult[dict[str, int]]:
         """Analyze patterns in LDIF entries."""
         patterns = {
-            "total_entries": len(entries),
-            "entries_with_cn": 0,
-            "entries_with_mail": 0,
-            "entries_with_telephoneNumber": 0,
+            FlextLdifAnalyticsConstants.TOTAL_ENTRIES_KEY: len(entries),
+            FlextLdifAnalyticsConstants.ENTRIES_WITH_CN_KEY: 0,
+            FlextLdifAnalyticsConstants.ENTRIES_WITH_MAIL_KEY: 0,
+            FlextLdifAnalyticsConstants.ENTRIES_WITH_TELEPHONE_KEY: 0,
         }
 
         for entry in entries:
-            if entry.has_attribute("cn"):
-                patterns["entries_with_cn"] += 1
-            if entry.has_attribute("mail"):
-                patterns["entries_with_mail"] += 1
-            if entry.has_attribute("telephoneNumber"):
-                patterns["entries_with_telephoneNumber"] += 1
+            if entry.has_attribute(FlextLdifAnalyticsConstants.CN_ATTRIBUTE):
+                patterns[FlextLdifAnalyticsConstants.ENTRIES_WITH_CN_KEY] += 1
+            if entry.has_attribute(FlextLdifAnalyticsConstants.MAIL_ATTRIBUTE):
+                patterns[FlextLdifAnalyticsConstants.ENTRIES_WITH_MAIL_KEY] += 1
+            if entry.has_attribute(FlextLdifAnalyticsConstants.TELEPHONE_ATTRIBUTE):
+                patterns[FlextLdifAnalyticsConstants.ENTRIES_WITH_TELEPHONE_KEY] += 1
 
         return FlextResult.ok(patterns)
 
@@ -94,7 +71,7 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, int]]):
 
         for entry in entries:
             depth = entry.dn.get_depth()
-            depth_key = f"depth_{depth}"
+            depth_key = FlextLdifAnalyticsConstants.DEPTH_KEY_FORMAT.format(depth=depth)
             depth_analysis[depth_key] = depth_analysis.get(depth_key, 0) + 1
 
         return FlextResult.ok(depth_analysis)

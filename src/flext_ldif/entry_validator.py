@@ -1,27 +1,6 @@
-"""FLEXT-LDIF Validator Service - Clean Architecture Infrastructure Layer.
+"""FLEXT-LDIF Validator Service.
 
-ARCHITECTURAL CONSOLIDATION: This module contains the concrete LDIF validation service
-following Clean Architecture patterns, extracted from infrastructure_services.py
-for better separation of concerns.
-
-ELIMINATED DUPLICATION:
-✅ Extracted from infrastructure_services.py for single responsibility
-✅ Uses base_service.py correctly without duplication
-✅ Implements application protocols without local duplication
-✅ Complete flext-core integration patterns
-
-Service:
-    - FlextLdifValidatorService: Concrete LDIF validation implementation with business rules
-
-Technical Excellence:
-    - Clean Architecture: Infrastructure layer implementing application protocols
-    - ZERO duplication: Uses base_service.py and flext-core patterns correctly
-    - SOLID principles: Single responsibility, dependency inversion
-    - Type safety: Comprehensive type annotations with Python 3.13+
-
-Author: FLEXT Development Team
-Version: 0.9.0
-License: MIT
+LDIF validation implementation using flext-core patterns.
 """
 
 from __future__ import annotations
@@ -65,7 +44,8 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
         if self.config is not None:
             cfg_validation = self.config.validate_business_rules()
             if cfg_validation.is_failure:
-                return FlextResult.fail(cfg_validation.error or "Invalid configuration")
+                from .constants import FlextLdifValidationMessages
+                return FlextResult.fail(cfg_validation.error or FlextLdifValidationMessages.INVALID_CONFIGURATION)
         return FlextResult.ok(data=True)
 
     def validate_data(self, data: list[FlextLdifEntry]) -> FlextResult[bool]:
@@ -92,8 +72,9 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
         """
         validation_result = entry.validate_business_rules()
         if validation_result.is_failure:
+            from .constants import FlextLdifValidationMessages
             return FlextResult.fail(
-                f"Entry validation failed: {validation_result.error}",
+                f"{FlextLdifValidationMessages.ENTRY_VALIDATION_FAILED}: {validation_result.error}",
             )
 
         # Enforce configuration-driven rules
@@ -103,10 +84,11 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
             and not self.config.allow_empty_attributes
         ):
             # Empty attribute lists are not allowed in strict mode
+            from .constants import FlextLdifValidationMessages
             for attr_name, values in entry.attributes.attributes.items():
                 if len(values) == 0:
                     return FlextResult.fail(
-                        f"Empty attribute values not allowed for '{attr_name}' in strict mode",
+                        FlextLdifValidationMessages.EMPTY_ATTRIBUTES_NOT_ALLOWED.format(attr_name=attr_name),
                     )
                 # Also disallow empty-string values strictly
                 if any(
@@ -114,7 +96,7 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
                     for v in values
                 ):
                     return FlextResult.fail(
-                        f"Empty attribute value not allowed for '{attr_name}' in strict mode",
+                        FlextLdifValidationMessages.EMPTY_ATTRIBUTE_VALUE_NOT_ALLOWED.format(attr_name=attr_name),
                     )
         return FlextResult.ok(data=True)
 
@@ -131,8 +113,9 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
         for i, entry in enumerate(entries):
             entry_result = self.validate_entry(entry)
             if entry_result.is_failure:
+                from .constants import FlextLdifValidationMessages
                 return FlextResult.fail(
-                    f"Entry {i} validation failed: {entry_result.error}",
+                    f"Entry {i} {FlextLdifValidationMessages.ENTRY_VALIDATION_FAILED.lower()}: {entry_result.error}",
                 )
         return FlextResult.ok(data=True)
 

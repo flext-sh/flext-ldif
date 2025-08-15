@@ -1,32 +1,6 @@
-"""FLEXT-LDIF Protocols - Unified LDIF Processing Protocols.
+"""FLEXT-LDIF Protocols.
 
-ARCHITECTURAL CONSOLIDATION: This module consolidates ALL LDIF protocols from
-multiple duplicate sources into ONE centralized protocol layer following enterprise patterns.
-
-ELIMINATED DUPLICATION:
-✅ protocols.py + ldif_protocols.py + application_protocols.py → ONE unified protocols.py
-✅ Complete flext-core integration - ZERO local duplication
-✅ Type-safe interfaces using domain models instead of generic dicts
-✅ Comprehensive protocol coverage for all LDIF operations
-
-Protocols:
-    - FlextLdifParserProtocol: LDIF parsing interface with domain models
-    - FlextLdifValidatorProtocol: LDIF validation interface with business rules
-    - FlextLdifWriterProtocol: LDIF writing interface with enterprise patterns
-    - FlextLdifRepositoryProtocol: LDIF data access interface with filtering
-    - FlextLdifTransformerProtocol: LDIF transformation interface with normalization
-    - FlextLdifAnalyticsProtocol: LDIF analytics interface for business intelligence
-
-Enterprise Architecture:
-- Dependency Inversion: Abstractions depend on flext-core interfaces
-- Interface Segregation: Focused, single-responsibility protocols
-- Type Safety: Comprehensive type annotations with Python 3.13+
-- Domain-Driven Design: Protocols work with rich domain objects
-- Railway-Oriented Programming: FlextResult pattern throughout
-
-Author: FLEXT Development Team
-Version: 0.9.0
-License: MIT
+Protocol definitions for LDIF processing using flext-core patterns.
 """
 
 from __future__ import annotations

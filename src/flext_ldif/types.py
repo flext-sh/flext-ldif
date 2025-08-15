@@ -1,28 +1,6 @@
-"""FLEXT-LDIF Type Definitions - Domain-Specific Extensions.
+"""FLEXT-LDIF Type Definitions.
 
-This module provides LDIF-specific type definitions that extend the base types
-from flext-core.typings, following the FLEXT ecosystem type hierarchy.
-
-ARCHITECTURE PATTERN: Domain-specific types extending flext-core foundation
-- Inherits base types from FlextTypes in flext-core
-- Extends with LDIF-specific domain types and business logic
-- Maintains consistency with flext-core patterns
-
-Benefits:
-✅ Consistent with flext-core type hierarchy
-✅ Domain-specific types for LDIF processing
-✅ Type safety with FlextResult integration
-✅ Enhanced IDE support through inheritance
-
-Type Categories:
-    - LDIF Domain Types: Extending flext-core base types
-    - LDIF-Specific TypedDicts: Structured data definitions
-    - LDIF Service Types: Domain service interfaces
-    - LDIF Protocol Types: Business protocol definitions
-
-Author: FLEXT Development Team
-Version: 0.9.0
-License: MIT
+LDIF-specific type definitions extending flext-core base types.
 """
 
 from __future__ import annotations

@@ -1,60 +1,4 @@
-"""FLEXT-LDIF Core Processing Infrastructure.
-
-This module provides the core infrastructure for LDIF processing operations,
-implementing low-level parsing, validation, and writing functionality with
-comprehensive error handling and performance optimizations.
-
-The core module bridges between domain models and concrete LDIF format handling,
-providing the technical implementation details while maintaining clean interfaces
-for higher-level application services.
-
-Key Components:
-    - TLdif: Core LDIF processing class with parsing and writing operations
-    - LDIF format validation with RFC 2849 compliance checking
-    - Performance-optimized parsing with configurable limits and timeouts
-    - Integration with modernized LDIF extensions for enhanced format support
-
-Architecture:
-    Part of Infrastructure Layer in Clean Architecture, this module handles
-    technical LDIF format concerns and provides concrete implementations for
-    domain repository interfaces. Isolates format-specific logic from business rules.
-
-Performance Features:
-    - Streaming support for large LDIF files with memory management
-    - Regex-based validation with compiled patterns for efficiency
-    - Configurable processing limits to prevent resource exhaustion
-    - Comprehensive error reporting with line number tracking
-
-Example:
-    Direct core processing for performance-critical operations:
-
-    >>> from flext_ldif.core import TLdif
-    >>>
-    >>> # Parse LDIF with core processor
-    >>> ldif_content = '''
-    ... dn: cn=user,dc=example,dc=com
-    ... cn: user
-    ... objectClass: person
-    ... '''
-    >>>
-    >>> result = TLdif.parse(ldif_content)
-    >>> if result.success:
-    ...     entries = result.data
-    ...     print(f"Parsed {len(entries)} entries")
-    ... else:
-    ...     print(f"Parse failed: {result.error}")
-
-Integration:
-    - Uses flext-core FlextResult pattern for consistent error handling
-    - Integrates with modernized LDIF extensions for format compatibility
-    - Provides foundation for higher-level application service operations
-    - Supports observability integration through structured logging
-
-Author: FLEXT Development Team
-Version: 0.9.0
-License: MIT
-
-"""
+"""FLEXT-LDIF core processing."""
 
 from __future__ import annotations
 
@@ -64,9 +8,6 @@ from typing import TYPE_CHECKING
 
 from flext_core import FlextResult, get_logger
 from flext_core.exceptions import FlextValidationError
-
-# ✅ CORRECT - Import from flext-ldap root API to eliminate validation duplication
-# These are proper dependencies that should be in pyproject.toml
 from flext_ldap import (
     flext_ldap_validate_attribute_name as _validate_attr_name,
     flext_ldap_validate_dn as _validate_dn,
@@ -82,11 +23,7 @@ logger = get_logger(__name__)
 
 
 class TLdif:
-    """Core LDIF processing functionality using flext-core patterns.
-
-    ✅ CORRECT ARCHITECTURE: Uses flext-ldap root API for validation.
-    ZERO duplication - eliminated local validation patterns.
-    """
+    """Core LDIF processing functionality."""
 
     # Legacy-compatible validation patterns exposed for tests
     # These mirror flext-ldap validation rules at a high level
@@ -97,62 +34,13 @@ class TLdif:
 
     @classmethod
     def parse(cls, content: str | LDIFContent) -> FlextResult[list[FlextLdifEntry]]:
-        """Parse LDIF content into domain entities with enterprise-grade processing and validation.
-
-        Performs comprehensive LDIF parsing using modernized LDIF parser with enhanced error
-        handling, logging integration, and domain model conversion. This core parsing method
-        serves as the foundation for all LDIF processing operations in the system.
-
-        The method orchestrates the complete parsing pipeline including content validation,
-        modernized LDIF parsing with RFC 2849 compliance, domain object conversion, and
-        comprehensive error reporting with structured logging integration.
+        """Parse LDIF content into domain entities.
 
         Args:
-            content: LDIF content as string or LDIFContent type for parsing
+            content: LDIF content as string or LDIFContent type
 
         Returns:
-            FlextResult[list[FlextLdifEntry]]: Success with parsed domain entities or failure with detailed error context
-
-        Processing Pipeline:
-            1. Content type validation and string conversion
-            2. Modernized LDIF parsing with RFC 2849 compliance
-            3. Raw entry extraction and validation
-            4. Domain model conversion to FlextLdifEntry objects
-            5. Comprehensive error handling and logging
-
-        Technical Implementation:
-            - Uses modernized_ldif_parse for enhanced format support
-            - Handles string/bytes conversion automatically
-            - Provides detailed logging for troubleshooting
-            - Maintains performance with minimal object creation
-
-        Example:
-            >>> from flext_ldif.core import TLdif
-            >>>
-            >>> ldif_content = '''
-            ... dn: cn=John Doe,ou=people,dc=example,dc=com
-            ... objectClass: person
-            ... objectClass: inetOrgPerson
-            ... cn: John Doe
-            ... mail: john@example.com
-            ...
-            ... dn: cn=Engineering,ou=groups,dc=example,dc=com
-            ... objectClass: groupOfNames
-            ... cn: Engineering
-            ... member: cn=John Doe,ou=people,dc=example,dc=com
-            ... '''
-            >>>
-            >>> result = TLdif.parse(ldif_content)
-            >>> if result.success:
-            ...     entries = result.data
-            ...     print(f"Parsed {len(entries)} entries successfully")
-            ...     for entry in entries:
-            ...         print(f"- {entry.dn}")
-            ... else:
-            ...     print(f"Parse failed: {result.error}")
-
-        Raises:
-            No exceptions - all errors returned via FlextResult pattern for railway-oriented programming
+            FlextResult[list[FlextLdifEntry]]: Parsed entries or error
 
         """
         logger.debug("TLdif.parse called with content type: %s", type(content).__name__)
@@ -253,58 +141,13 @@ class TLdif:
 
     @classmethod
     def validate(cls, entry: FlextLdifEntry | None) -> FlextResult[bool]:
-        """Validate LDIF entry with comprehensive format and business rule validation.
-
-        Performs extensive validation of LDIF entries including DN format validation,
-        attribute name compliance, required attribute checking, and LDAP schema
-        validation using compiled regex patterns for optimal performance.
-
-        This core validation method enforces RFC 2849 LDIF format compliance and
-        LDAP directory standards with detailed error reporting and comprehensive
-        logging for troubleshooting and audit purposes.
+        """Validate LDIF entry with format and business rule validation.
 
         Args:
             entry: FlextLdifEntry domain object to validate
 
         Returns:
-            FlextResult[bool]: Success with True if entry is valid, failure with detailed error information
-
-        Validation Rules Applied:
-            1. DN Format Validation: Ensures DN follows proper LDAP naming conventions
-            2. Attribute Name Validation: Validates attribute names against LDAP standards
-            3. Required Attributes: Enforces presence of mandatory objectClass attribute
-            4. Business Rule Compliance: Applies domain-specific validation rules
-
-        Technical Implementation:
-            - Uses compiled regex patterns for efficient validation
-            - Provides detailed logging at debug and trace levels
-            - Maintains performance through optimized validation order
-            - Returns comprehensive error context for troubleshooting
-
-        Example:
-            >>> from flext_ldif.core import TLdif
-            >>> from flext_ldif.models import (
-            ...     FlextLdifEntry,
-            ...     FlextLdifDistinguishedName,
-            ...     FlextLdifAttributes,
-            ... )
-            >>>
-            >>> # Create valid entry
-            >>> entry = FlextLdifEntry(
-            ...     dn=FlextLdifDistinguishedName(value="cn=user,dc=example,dc=com"),
-            ...     attributes=FlextLdifAttributes(
-            ...         attributes={"objectClass": ["person"], "cn": ["user"]}
-            ...     ),
-            ... )
-            >>>
-            >>> result = TLdif.validate()
-            >>> if result.success and result.data:
-            ...     print("Entry is valid")
-            ... else:
-            ...     print(f"Validation failed: {result.error}")
-
-        Raises:
-            No exceptions - all errors returned via FlextResult pattern for railway-oriented programming
+            FlextResult[bool]: True if valid, error details on failure
 
         """
         try:
@@ -371,46 +214,13 @@ class TLdif:
 
     @classmethod
     def validate_entries(cls, entries: list[FlextLdifEntry]) -> FlextResult[bool]:
-        """Validate multiple LDIF entries with bulk processing optimization and detailed error reporting.
-
-        Performs comprehensive validation of multiple LDIF entries with optimized bulk processing,
-        early failure detection, and detailed error context. Uses efficient iteration patterns
-        and provides comprehensive logging for troubleshooting large datasets.
-
-        This method is optimized for bulk operations while maintaining individual entry validation
-        quality and providing detailed error reporting with entry indexing for precise error location.
+        """Validate multiple LDIF entries with early failure detection.
 
         Args:
             entries: List of FlextLdifEntry domain objects to validate
 
         Returns:
-            FlextResult[bool]: Success with True if all entries valid, failure with first validation error and entry index
-
-        Bulk Processing Features:
-            - Early failure detection stops processing on first invalid entry
-            - Entry indexing provides precise error location context
-            - Optimized iteration minimizes memory overhead
-            - Comprehensive error reporting with entry identification
-
-        Performance Characteristics:
-            - O(n) complexity with early termination
-            - Minimal memory overhead through streaming validation
-            - Compiled regex patterns reused for efficiency
-            - Detailed logging available for troubleshooting
-
-        Example:
-            >>> from flext_ldif.core import TLdif
-            >>>
-            >>> # Validate multiple entries
-            >>> result = TLdif.validate_entries(entries)
-            >>> if result.success and result.data:
-            ...     print(f"All {len(entries)} entries are valid")
-            ... else:
-            ...     print(f"Validation failed: {result.error}")
-            ...     # Error message includes entry index for precise location
-
-        Raises:
-            No exceptions - all errors returned via FlextResult pattern for railway-oriented programming
+            FlextResult[bool]: True if all valid, error with entry index on failure
 
         """
         try:
@@ -448,47 +258,13 @@ class TLdif:
 
     @classmethod
     def write(cls, entries: list[FlextLdifEntry]) -> FlextResult[str]:
-        """Write entries to LDIF string with optimized serialization and RFC 2849 compliance.
-
-        Performs high-performance serialization of FlextLdifEntry domain objects to RFC 2849
-        compliant LDIF format using modernized LDIF writer with comprehensive error handling
-        and performance optimization for bulk operations.
-
-        This core writing method provides the foundation for all LDIF output operations with
-        optimized domain object conversion and comprehensive error handling.
+        """Write entries to RFC 2849 compliant LDIF string.
 
         Args:
             entries: List of FlextLdifEntry domain objects to serialize
 
         Returns:
-            FlextResult[str]: Success with RFC 2849 compliant LDIF string or failure with detailed error context
-
-        Serialization Features:
-            - RFC 2849 compliant LDIF format generation
-            - Optimized domain object to raw entry conversion
-            - Modernized LDIF writer integration for enhanced compatibility
-            - Comprehensive error handling with detailed context
-
-        Performance Characteristics:
-            - O(n) complexity with minimal memory overhead
-            - Optimized object conversion reduces allocation pressure
-            - Streaming serialization for large datasets
-            - No external dependencies for maximum compatibility
-
-        Example:
-            >>> from flext_ldif.core import TLdif
-            >>>
-            >>> # Write entries to LDIF string
-            >>> result = TLdif.write(entries)
-            >>> if result.success:
-            ...     ldif_content = result.data
-            ...     print(f"Generated LDIF: {len(ldif_content)} characters")
-            ...     # Save to file or process further
-            ... else:
-            ...     print(f"Write failed: {result.error}")
-
-        Raises:
-            No exceptions - all errors returned via FlextResult pattern for railway-oriented programming
+            FlextResult[str]: LDIF string or error
 
         """
         try:
@@ -555,56 +331,15 @@ class TLdif:
         file_path: str | Path,
         encoding: str = "utf-8",
     ) -> FlextResult[bool]:
-        """Write LDIF entries to file with enterprise-grade file handling and comprehensive error management.
-
-        Performs high-performance file writing of FlextLdifEntry domain objects to LDIF files with
-        comprehensive error handling, directory creation, file encoding management, and detailed
-        logging integration for enterprise environments.
-
-        This method provides the complete file writing pipeline including content generation,
-        directory path resolution, encoding validation, and comprehensive error reporting
-        with structured logging for troubleshooting and audit purposes.
+        """Write LDIF entries to file with automatic directory creation.
 
         Args:
-            entries: List of FlextLdifEntry domain objects to write to file
-            file_path: Target file path as string or Path object for LDIF output
-            encoding: File encoding specification (default: utf-8) for cross-platform compatibility
+            entries: List of FlextLdifEntry domain objects to write
+            file_path: Target file path for LDIF output
+            encoding: File encoding (default: utf-8)
 
         Returns:
-            FlextResult[bool]: Success with True if file written successfully, failure with detailed error context
-
-        File Operation Features:
-            - Automatic directory creation for non-existent parent directories
-            - Cross-platform path handling with pathlib integration
-            - Comprehensive encoding support with validation
-            - Atomic file operations to prevent corruption
-
-        Performance Characteristics:
-            - Efficient domain object to LDIF content conversion
-            - Optimized file I/O with minimal memory overhead
-            - Streaming write operations for large datasets
-            - Comprehensive error context with file path tracking
-
-        Example:
-            >>> from flext_ldif.core import TLdif
-            >>> from pathlib import Path
-            >>>
-            >>> # Write entries to LDIF file
-            >>> output_path = Path("output/users.ldif")
-            >>> result = TLdif.write_file(entries, output_path)
-            >>> if result.success:
-            ...     print(f"Successfully written {len(entries)} entries")
-            ... else:
-            ...     print(f"Write failed: {result.error}")
-
-        Error Handling:
-            - File system permission errors with detailed context
-            - Directory creation failures with specific error messages
-            - Encoding validation with fallback recommendations
-            - Content generation failures with pipeline error tracking
-
-        Raises:
-            No exceptions - all errors returned via FlextResult pattern for railway-oriented programming
+            FlextResult[bool]: True if successful, error details on failure
 
         """
         # REFACTORING: Enhanced validation and error context
@@ -679,58 +414,14 @@ class TLdif:
         file_path: str | Path,
         encoding: str = "utf-8",
     ) -> FlextResult[list[FlextLdifEntry]]:
-        """Read and parse LDIF file with enterprise-grade file handling and comprehensive error management.
-
-        Performs high-performance LDIF file reading and parsing with comprehensive error handling,
-        file validation, encoding management, and detailed logging integration for enterprise
-        environments with complete pipeline processing from file to domain objects.
-
-        This method provides the complete file reading pipeline including file existence validation,
-        encoding detection, content reading, LDIF parsing, and domain object conversion with
-        comprehensive error reporting and structured logging for troubleshooting.
+        """Read and parse LDIF file with comprehensive validation.
 
         Args:
-            file_path: Input file path as string or Path object for LDIF file reading
-            encoding: File encoding specification (default: utf-8) for cross-platform compatibility
+            file_path: Input file path for LDIF file reading
+            encoding: File encoding (default: utf-8)
 
         Returns:
-            FlextResult[list[FlextLdifEntry]]: Success with parsed domain objects, failure with detailed error context
-
-        File Operation Features:
-            - Comprehensive file existence and accessibility validation
-            - Cross-platform path handling with pathlib integration
-            - Encoding detection and validation with fallback support
-            - File size and content validation before processing
-
-        Performance Characteristics:
-            - Optimized file I/O with minimal memory overhead
-            - Streaming read operations for large LDIF files
-            - Efficient content to domain object conversion
-            - Comprehensive error context with file metadata tracking
-
-        Example:
-            >>> from flext_ldif.core import TLdif
-            >>> from pathlib import Path
-            >>>
-            >>> # Read and parse LDIF file
-            >>> input_path = Path("data/users.ldif")
-            >>> result = TLdif.read_file(input_path)
-            >>> if result.success:
-            ...     entries = result.data
-            ...     print(f"Successfully parsed {len(entries)} entries")
-            ...     for entry in entries:
-            ...         print(f"- {entry.dn}")
-            ... else:
-            ...     print(f"File read failed: {result.error}")
-
-        Error Handling:
-            - File not found errors with detailed path information
-            - Permission denied errors with access context
-            - Encoding validation with recommendation for alternatives
-            - Content parsing failures with line number tracking
-
-        Raises:
-            No exceptions - all errors returned via FlextResult pattern for railway-oriented programming
+            FlextResult[list[FlextLdifEntry]]: Parsed entries or error
 
         """
         # REFACTORING: Enhanced file validation and error context
