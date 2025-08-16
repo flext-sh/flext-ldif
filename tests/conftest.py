@@ -394,27 +394,27 @@ def pytest_configure(config: pytest.Config) -> None:
 
 # Mock services
 @pytest.fixture
-def mock_ldif_service() -> Any:
+def mock_ldif_service() -> object:
     """Mock LDIF service for testing."""
 
     class MockLdifService:
-        async def parse_ldif(self, content: str) -> list[dict[str, object]]:
+        async def parse_ldif(self, content: str) -> list[dict[str, object]]:  # noqa: ARG002
             return [{"dn": "test", "attributes": {}}]
 
-        async def write_ldif(self, entries: list[dict[str, object]]) -> str:
+        async def write_ldif(self, entries: list[dict[str, object]]) -> str:  # noqa: ARG002
             return "dn: test\nobjectClass: top\n"
 
         async def transform_entries(
             self,
             entries: list[dict[str, object]],
-            rules: dict[str, object],
+            rules: dict[str, object],  # noqa: ARG002
         ) -> list[dict[str, object]]:
             return entries
 
         async def validate_entries(
             self,
-            entries: list[dict[str, object]],
-            schema: dict[str, object],
+            entries: list[dict[str, object]],  # noqa: ARG002
+            schema: dict[str, object],  # noqa: ARG002
         ) -> dict[str, object]:
             return {"valid": True, "errors": []}
 
@@ -422,17 +422,17 @@ def mock_ldif_service() -> Any:
 
 
 @pytest.fixture
-def mock_schema_validator() -> Any:
+def mock_schema_validator() -> object:
     """Mock schema validator for testing."""
 
     class MockSchemaValidator:
-        def validate_entry(self, entry: dict[str, object]) -> dict[str, object]:
+        def validate_entry(self, entry: dict[str, object]) -> dict[str, object]:  # noqa: ARG002
             return {"valid": True, "errors": []}
 
-        def validate_object_class(self, object_class: str) -> bool:
+        def validate_object_class(self, object_class: str) -> bool:  # noqa: ARG002
             return True
 
-        def validate_attribute(self, attribute: str, value: Any) -> bool:
+        def validate_attribute(self, attribute: str, value: Any) -> bool:  # noqa: ARG002, ANN401
             return True
 
     return MockSchemaValidator()

@@ -41,7 +41,9 @@ class FlextLdifWriterService(FlextDomainService[str]):
             return FlextResult.ok("\n".join(ldif_blocks))
 
         except Exception as e:
-            return FlextResult.fail(FlextLdifCoreMessages.WRITE_FAILED.format(error=str(e)))
+            return FlextResult.fail(
+                FlextLdifCoreMessages.WRITE_FAILED.format(error=str(e))
+            )
 
     def write_file(
         self,
@@ -54,7 +56,9 @@ class FlextLdifWriterService(FlextDomainService[str]):
             content_result = self.write(entries)
             if content_result.is_failure:
                 return FlextResult.fail(
-                    FlextLdifCoreMessages.CONTENT_GENERATION_FAILED.format(count=len(entries), error=content_result.error),
+                    FlextLdifCoreMessages.CONTENT_GENERATION_FAILED.format(
+                        count=len(entries), error=content_result.error
+                    ),
                 )
 
             path_obj = Path(file_path)
@@ -62,20 +66,26 @@ class FlextLdifWriterService(FlextDomainService[str]):
             try:
                 path_obj.parent.mkdir(parents=True, exist_ok=True)
             except PermissionError as e:
-                return FlextResult.fail(FlextLdifCoreMessages.FILE_WRITE_FAILED.format(error=str(e)))
+                return FlextResult.fail(
+                    FlextLdifCoreMessages.FILE_WRITE_FAILED.format(error=str(e))
+                )
             path_obj.write_text(content_result.data or "", encoding=encoding)
 
             return FlextResult.ok(data=True)
 
         except Exception as e:
-            return FlextResult.fail(FlextLdifCoreMessages.FILE_WRITE_FAILED.format(error=str(e)))
+            return FlextResult.fail(
+                FlextLdifCoreMessages.FILE_WRITE_FAILED.format(error=str(e))
+            )
 
     def write_entry(self, entry: FlextLdifEntry) -> FlextResult[str]:
         """Write single entry to LDIF string."""
         try:
             return FlextResult.ok(entry.to_ldif())
         except Exception as e:
-            return FlextResult.fail(FlextLdifCoreMessages.WRITE_FAILED.format(error=str(e)))
+            return FlextResult.fail(
+                FlextLdifCoreMessages.WRITE_FAILED.format(error=str(e))
+            )
 
 
 __all__ = ["FlextLdifWriterService"]

@@ -24,11 +24,27 @@ except Exception:  # pragma: no cover - fallback to shared fixtures path
     except Exception:
         # Last resort: provide stubs that disable the test gracefully
         def check_docker_available() -> bool:  # type: ignore[no-redef]
+            """Check docker available function.
+
+            Returns:
+                bool: Description.
+
+            """
             return False
 
         class OpenLDAPContainerManager:  # type: ignore[no-redef]
-            def start_container(self) -> None: ...
+            """OpenLDAPContainerManager class."""
+
+            def start_container(self) -> None:
+                """Start container function."""
+
             def get_ldif_export(self) -> str:
+                """Get ldif export function.
+
+                Returns:
+                    str: Description.
+
+                """
                 return ""
 
 
@@ -36,8 +52,12 @@ from flext_ldif import flext_ldif_parse, flext_ldif_validate
 
 
 def test_with_docker_container() -> bool | None:
-    """Example of manual Docker container usage for testing."""
-    # Check if Docker is available
+    """Example of manual Docker container usage for testing.
+
+    Returns:
+        bool | None: Description.
+
+    """    # Check if Docker is available
     if not check_docker_available():
         return False
 

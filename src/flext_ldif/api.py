@@ -47,7 +47,6 @@ class FlextLdifAPI:
         self._repository_service = FlextLdifRepositoryService(config=self.config)
         self._analytics_service = FlextLdifAnalyticsService(config=self.config)
 
-
     def parse(self, content: str) -> FlextResult[list[FlextLdifEntry]]:
         """Parse LDIF content."""
         result = self._parser_service.parse(content)
@@ -58,7 +57,7 @@ class FlextLdifAPI:
 
         if len(entries) > int(self.config.max_entries):
             error_msg = FlextLdifValidationMessages.ENTRY_COUNT_EXCEEDED.format(
-                count=len(entries), limit=self.config.max_entries
+                count=len(entries), limit=self.config.max_entries,
             )
             logger.warning(error_msg)
             return FlextResult.fail(error_msg)
@@ -80,7 +79,7 @@ class FlextLdifAPI:
 
         if len(entries) > int(self.config.max_entries):
             error_msg = FlextLdifValidationMessages.FILE_ENTRY_COUNT_EXCEEDED.format(
-                count=len(entries), limit=self.config.max_entries
+                count=len(entries), limit=self.config.max_entries,
             )
             logger.warning(error_msg)
             return FlextResult.fail(error_msg)
@@ -205,7 +204,7 @@ class FlextLdifAPI:
 
         if len(entries) > self.config.max_entries:
             error_msg = FlextLdifValidationMessages.ENTRY_COUNT_EXCEEDED.format(
-                count=len(entries), limit=self.config.max_entries
+                count=len(entries), limit=self.config.max_entries,
             )
             return FlextResult.fail(error_msg)
 

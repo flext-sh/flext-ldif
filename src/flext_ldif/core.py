@@ -2,23 +2,22 @@
 
 from __future__ import annotations
 
+import importlib
 import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:  # Only for type checkers; avoids runtime import cost
+    from collections.abc import Callable as _Callable
+
+    from .types import LDIFContent
+
 from flext_core import FlextResult, get_logger
 from flext_core.exceptions import FlextValidationError
-from flext_ldap import (
-    flext_ldap_validate_attribute_name as _validate_attr_name,
-    flext_ldap_validate_dn as _validate_dn,
-)
 
 from .constants import FlextLdifCoreConstants
 from .format_handlers import modernized_ldif_parse, modernized_ldif_write
 from .models import FlextLdifEntry, FlextLdifFactory
-
-if TYPE_CHECKING:
-    from .types import LDIFContent
 
 logger = get_logger(__name__)
 
@@ -30,6 +29,21 @@ class TLdif:
     # These mirror flext-ldap validation rules at a high level
     DN_PATTERN = re.compile(FlextLdifCoreConstants.DN_PATTERN_REGEX)
     ATTR_NAME_PATTERN = re.compile(FlextLdifCoreConstants.ATTR_NAME_PATTERN_REGEX)
+
+    # Lazy loader for flext-ldap validators to avoid hard import-time dependency
+    _attr_validator: _Callable[[str], bool] | None = None
+    _dn_validator: _Callable[[str], bool] | None = None
+
+    @classmethod
+    def _load_validators(cls) -> tuple[_Callable[[str], bool], _Callable[[str], bool]]:
+        if cls._attr_validator is not None and cls._dn_validator is not None:
+            return cls._attr_validator, cls._dn_validator
+
+        utils_mod = importlib.import_module("flext_ldap.utils")
+        # Use getattr to avoid direct attribute access warnings and enable lazy resolution
+        cls._attr_validator = utils_mod.flext_ldap_validate_attribute_name
+        cls._dn_validator = utils_mod.flext_ldap_validate_dn
+        return cls._attr_validator, cls._dn_validator
 
     @classmethod
     def parse(cls, content: str | LDIFContent) -> FlextResult[list[FlextLdifEntry]]:
@@ -43,7 +57,7 @@ class TLdif:
 
         """
         logger.debug(
-            FlextLdifCoreConstants.TLDIF_PARSE_CALLED_LOG, type(content).__name__
+            FlextLdifCoreConstants.TLDIF_PARSE_CALLED_LOG, type(content).__name__,
         )
         logger.debug(FlextLdifCoreConstants.CONTENT_LENGTH_LOG, len(str(content)))
         try:
@@ -52,7 +66,7 @@ class TLdif:
             logger.debug(
                 FlextLdifCoreConstants.CONTENT_PREVIEW_LOG,
                 content_str[: FlextLdifCoreConstants.CONTENT_PREVIEW_LENGTH].replace(
-                    "\n", FlextLdifCoreConstants.NEWLINE_ESCAPE
+                    "\n", FlextLdifCoreConstants.NEWLINE_ESCAPE,
                 ),
             )
 
@@ -70,11 +84,11 @@ class TLdif:
         ) as e:
             logger.debug(FlextLdifCoreConstants.EXCEPTION_TYPE_LOG, type(e).__name__)
             logger.debug(
-                FlextLdifCoreConstants.FULL_EXCEPTION_DETAILS_LOG, exc_info=True
+                FlextLdifCoreConstants.FULL_EXCEPTION_DETAILS_LOG, exc_info=True,
             )
             logger.exception(FlextLdifCoreConstants.EXCEPTION_IN_TLDIF_PARSE_LOG)
             return FlextResult.fail(
-                FlextLdifCoreConstants.PARSE_FAILED_MSG.format(error=e)
+                FlextLdifCoreConstants.PARSE_FAILED_MSG.format(error=e),
             )
 
     @classmethod
@@ -85,7 +99,7 @@ class TLdif:
         """Parse using modernized LDIF parser with full string compatibility."""
         logger.debug(FlextLdifCoreConstants.STARTING_MODERNIZED_PARSING_LOG)
         logger.debug(
-            FlextLdifCoreConstants.CONTENT_LINES_COUNT_LOG, len(content.splitlines())
+            FlextLdifCoreConstants.CONTENT_LINES_COUNT_LOG, len(content.splitlines()),
         )
         try:
             # Use modernized parser that handles all string/bytes issues internally
@@ -98,7 +112,7 @@ class TLdif:
                     parse_result.error,
                 )
                 logger.debug(
-                    FlextLdifCoreConstants.RETURNING_FAILURE_FROM_MODERNIZED_LOG
+                    FlextLdifCoreConstants.RETURNING_FAILURE_FROM_MODERNIZED_LOG,
                 )
                 return FlextResult.fail(
                     parse_result.error
@@ -130,7 +144,7 @@ class TLdif:
                 if entry_result.is_failure or entry_result.data is None:
                     return FlextResult.fail(
                         FlextLdifCoreConstants.FAILED_TO_CREATE_ENTRY_MSG.format(
-                            error=entry_result.error
+                            error=entry_result.error,
                         ),
                     )
                 entry = entry_result.data
@@ -156,13 +170,13 @@ class TLdif:
         ) as e:
             logger.debug(FlextLdifCoreConstants.EXCEPTION_TYPE_LOG, type(e).__name__)
             logger.debug(
-                FlextLdifCoreConstants.FULL_EXCEPTION_DETAILS_LOG, exc_info=True
+                FlextLdifCoreConstants.FULL_EXCEPTION_DETAILS_LOG, exc_info=True,
             )
             logger.exception(FlextLdifCoreConstants.EXCEPTION_IN_MODERNIZED_PARSING_LOG)
             return FlextResult.fail(
                 FlextLdifCoreConstants.MODERNIZED_LDIF_PARSE_FAILED_WITH_ERROR_MSG.format(
-                    error=e
-                )
+                    error=e,
+                ),
             )
 
     @classmethod
@@ -184,13 +198,13 @@ class TLdif:
         except (ValueError, TypeError, AttributeError) as e:
             logger.debug(FlextLdifCoreConstants.EXCEPTION_TYPE_LOG, type(e).__name__)
             logger.debug(
-                FlextLdifCoreConstants.VALIDATION_EXCEPTION_DETAILS_LOG, exc_info=True
+                FlextLdifCoreConstants.VALIDATION_EXCEPTION_DETAILS_LOG, exc_info=True,
             )
             logger.exception(
-                FlextLdifCoreConstants.EXCEPTION_DURING_ENTRY_VALIDATION_LOG
+                FlextLdifCoreConstants.EXCEPTION_DURING_ENTRY_VALIDATION_LOG,
             )
             return FlextResult.fail(
-                FlextLdifCoreConstants.VALIDATION_FAILED_MSG.format(error=e)
+                FlextLdifCoreConstants.VALIDATION_FAILED_MSG.format(error=e),
             )
 
     @classmethod
@@ -209,12 +223,13 @@ class TLdif:
         logger.debug(FlextLdifCoreConstants.VALIDATING_DN_FORMAT_LOG, dn_str)
         if not cls.DN_PATTERN.match(dn_str):
             logger.warning(
-                FlextLdifCoreConstants.INVALID_DN_FORMAT_BY_PATTERN_LOG, dn_str
+                FlextLdifCoreConstants.INVALID_DN_FORMAT_BY_PATTERN_LOG, dn_str,
             )
             return FlextLdifCoreConstants.INVALID_DN_FORMAT_MSG.format(dn=entry.dn)
-        if not _validate_dn(dn_str):
+        attr_validator, dn_validator = cls._load_validators()
+        if not dn_validator(dn_str):
             logger.warning(
-                FlextLdifCoreConstants.INVALID_DN_FORMAT_BY_PATTERN_LOG, dn_str
+                FlextLdifCoreConstants.INVALID_DN_FORMAT_BY_PATTERN_LOG, dn_str,
             )
             logger.debug(FlextLdifCoreConstants.DN_FAILED_FLEXT_LDAP_VALIDATION_LOG)
             return FlextLdifCoreConstants.INVALID_DN_FORMAT_MSG.format(dn=entry.dn)
@@ -226,35 +241,33 @@ class TLdif:
         )
         for attr_name in entry.attributes.attributes:
             logger.debug(
-                FlextLdifCoreConstants.VALIDATING_ATTRIBUTE_NAME_LOG, attr_name
+                FlextLdifCoreConstants.VALIDATING_ATTRIBUTE_NAME_LOG, attr_name,
             )
-            if not cls.ATTR_NAME_PATTERN.match(attr_name) or not _validate_attr_name(
-                attr_name,
-            ):
+            if not cls.ATTR_NAME_PATTERN.match(attr_name) or not attr_validator(attr_name):
                 logger.warning(
-                    FlextLdifCoreConstants.INVALID_ATTRIBUTE_NAME_LOG, attr_name
+                    FlextLdifCoreConstants.INVALID_ATTRIBUTE_NAME_LOG, attr_name,
                 )
                 logger.debug(
-                    FlextLdifCoreConstants.ATTRIBUTE_NAME_FAILED_VALIDATION_LOG
+                    FlextLdifCoreConstants.ATTRIBUTE_NAME_FAILED_VALIDATION_LOG,
                 )
                 return FlextLdifCoreConstants.INVALID_ATTRIBUTE_NAME_MSG.format(
-                    attr_name=attr_name
+                    attr_name=attr_name,
                 )
         logger.debug(FlextLdifCoreConstants.ALL_ATTRIBUTE_NAMES_VALIDATED_LOG)
 
         logger.debug(FlextLdifCoreConstants.CHECKING_REQUIRED_OBJECTCLASS_LOG)
         if not entry.has_attribute(FlextLdifCoreConstants.OBJECTCLASS_ATTRIBUTE):
             logger.warning(
-                FlextLdifCoreConstants.ENTRY_MISSING_OBJECTCLASS_WARNING_LOG, entry.dn
+                FlextLdifCoreConstants.ENTRY_MISSING_OBJECTCLASS_WARNING_LOG, entry.dn,
             )
             logger.debug(FlextLdifCoreConstants.OBJECTCLASS_REQUIRED_NOT_FOUND_LOG)
             return FlextLdifCoreConstants.ENTRY_MISSING_REQUIRED_OBJECTCLASS_MSG
 
         object_classes = entry.get_attribute(
-            FlextLdifCoreConstants.OBJECTCLASS_ATTRIBUTE
+            FlextLdifCoreConstants.OBJECTCLASS_ATTRIBUTE,
         )
         logger.debug(
-            FlextLdifCoreConstants.FOUND_OBJECTCLASS_VALUES_LOG, object_classes
+            FlextLdifCoreConstants.FOUND_OBJECTCLASS_VALUES_LOG, object_classes,
         )
         logger.debug(FlextLdifCoreConstants.ENTRY_VALIDATION_PASSED_LOG, entry.dn)
         logger.info(
@@ -280,7 +293,7 @@ class TLdif:
             # REFACTORING: Optimized validation with early termination and better error context
             total_entries = len(entries)
             logger.debug(
-                FlextLdifCoreConstants.STARTING_BULK_VALIDATION_LOG, total_entries
+                FlextLdifCoreConstants.STARTING_BULK_VALIDATION_LOG, total_entries,
             )
 
             for i, entry in enumerate(entries):
@@ -308,7 +321,7 @@ class TLdif:
                     return FlextResult.fail(error_msg)
 
             logger.debug(
-                FlextLdifCoreConstants.BULK_VALIDATION_SUCCESSFUL_LOG, total_entries
+                FlextLdifCoreConstants.BULK_VALIDATION_SUCCESSFUL_LOG, total_entries,
             )
             logger.info(
                 FlextLdifCoreConstants.BULK_LDIF_VALIDATION_COMPLETED_LOG,
@@ -318,10 +331,10 @@ class TLdif:
 
         except (ValueError, TypeError, AttributeError) as e:
             logger.exception(
-                FlextLdifCoreConstants.EXCEPTION_DURING_BULK_VALIDATION_LOG
+                FlextLdifCoreConstants.EXCEPTION_DURING_BULK_VALIDATION_LOG,
             )
             return FlextResult.fail(
-                FlextLdifCoreConstants.BULK_VALIDATION_EXCEPTION_MSG.format(error=e)
+                FlextLdifCoreConstants.BULK_VALIDATION_EXCEPTION_MSG.format(error=e),
             )
 
     @classmethod
@@ -339,7 +352,7 @@ class TLdif:
             # REFACTORING: Enhanced error handling and performance logging
             entries_count = len(entries)
             logger.debug(
-                FlextLdifCoreConstants.STARTING_LDIF_WRITE_OPERATION_LOG, entries_count
+                FlextLdifCoreConstants.STARTING_LDIF_WRITE_OPERATION_LOG, entries_count,
             )
             logger.debug(FlextLdifCoreConstants.WRITE_OPERATION_USING_MODERNIZED_LOG)
 
@@ -360,7 +373,7 @@ class TLdif:
                 )
             else:
                 logger.warning(
-                    FlextLdifCoreConstants.LDIF_WRITE_OPERATION_FAILED_LOG, result.error
+                    FlextLdifCoreConstants.LDIF_WRITE_OPERATION_FAILED_LOG, result.error,
                 )
 
             return result
@@ -368,7 +381,7 @@ class TLdif:
         except (ValueError, TypeError, AttributeError, OSError, ImportError) as e:
             logger.exception(FlextLdifCoreConstants.EXCEPTION_DURING_LDIF_WRITE_LOG)
             return FlextResult.fail(
-                FlextLdifCoreConstants.WRITE_FAILED_WITH_EXCEPTION_MSG.format(error=e)
+                FlextLdifCoreConstants.WRITE_FAILED_WITH_EXCEPTION_MSG.format(error=e),
             )
 
     @classmethod
@@ -395,14 +408,14 @@ class TLdif:
                 )
 
             return FlextResult.ok(
-                write_result.data or FlextLdifCoreConstants.EMPTY_WRITE_RESULT_MSG
+                write_result.data or FlextLdifCoreConstants.EMPTY_WRITE_RESULT_MSG,
             )
 
         except (ValueError, TypeError, AttributeError, ImportError) as e:
             return FlextResult.fail(
                 FlextLdifCoreConstants.MODERNIZED_LDIF_WRITE_FAILED_WITH_ERROR_MSG.format(
-                    error=e
-                )
+                    error=e,
+                ),
             )
 
     @classmethod
@@ -435,43 +448,39 @@ class TLdif:
         try:
             file_path = Path(file_path)
             logger.debug(
-                FlextLdifCoreConstants.RESOLVED_FILE_PATH_LOG, file_path.absolute()
+                FlextLdifCoreConstants.RESOLVED_FILE_PATH_LOG, file_path.absolute(),
             )
 
             # REFACTORING: Enhanced directory handling with automatic creation
             parent_dir = file_path.parent
             if not parent_dir.exists():
                 logger.debug(
-                    FlextLdifCoreConstants.CREATING_PARENT_DIRECTORY_LOG, parent_dir
+                    FlextLdifCoreConstants.CREATING_PARENT_DIRECTORY_LOG, parent_dir,
                 )
                 parent_dir.mkdir(parents=True, exist_ok=True)
                 logger.debug(FlextLdifCoreConstants.PARENT_DIRECTORY_CREATED_LOG)
 
             logger.debug(
-                FlextLdifCoreConstants.FILE_PATH_EXISTS_LOG, file_path.exists()
+                FlextLdifCoreConstants.FILE_PATH_EXISTS_LOG, file_path.exists(),
             )
 
             # Get LDIF content with enhanced error handling
             logger.debug(
-                FlextLdifCoreConstants.CONVERTING_ENTRIES_TO_LDIF_LOG, entries_count
+                FlextLdifCoreConstants.CONVERTING_ENTRIES_TO_LDIF_LOG, entries_count,
             )
             content_result = cls.write(entries)
             if not content_result.success:
                 error_msg: str = FlextLdifCoreConstants.CONTENT_GENERATION_FAILED_FOR_ENTRIES_MSG.format(
-                    entries_count=entries_count, error=content_result.error
+                    entries_count=entries_count, error=content_result.error,
                 )
                 logger.error(error_msg)
                 return FlextResult.fail(error_msg)
 
-            # REFACTORING: Enhanced content validation
-            if content_result.data is None:
-                error_msg = FlextLdifCoreConstants.CONTENT_GENERATION_NULL_DATA_MSG
-                logger.error(error_msg)
-                return FlextResult.fail(error_msg)
+            # REFACTORING: Content is guaranteed to be non-None for successful write operations
 
             content_size = len(content_result.data)
             logger.debug(
-                FlextLdifCoreConstants.GENERATED_LDIF_CONTENT_LOG, content_size
+                FlextLdifCoreConstants.GENERATED_LDIF_CONTENT_LOG, content_size,
             )
             logger.debug(
                 FlextLdifCoreConstants.CONTENT_PREVIEW_FILE_LOG,
@@ -486,7 +495,7 @@ class TLdif:
             # REFACTORING: Enhanced file writing with atomic operations
             logger.debug(FlextLdifCoreConstants.WRITING_CONTENT_TO_FILE_LOG, encoding)
             with file_path.open(
-                FlextLdifCoreConstants.FILE_WRITE_MODE, encoding=encoding
+                FlextLdifCoreConstants.FILE_WRITE_MODE, encoding=encoding,
             ) as f:
                 f.write(content_result.data)
 
@@ -505,11 +514,11 @@ class TLdif:
         except (OSError, ValueError, TypeError, AttributeError) as e:
             logger.debug(FlextLdifCoreConstants.EXCEPTION_TYPE_LOG, type(e).__name__)
             logger.debug(
-                FlextLdifCoreConstants.FILE_WRITE_EXCEPTION_DETAILS_LOG, exc_info=True
+                FlextLdifCoreConstants.FILE_WRITE_EXCEPTION_DETAILS_LOG, exc_info=True,
             )
             logger.exception(FlextLdifCoreConstants.EXCEPTION_DURING_FILE_WRITE_LOG)
             return FlextResult.fail(
-                FlextLdifCoreConstants.FILE_WRITE_FAILED_MSG.format(error=e)
+                FlextLdifCoreConstants.FILE_WRITE_FAILED_MSG.format(error=e),
             )
 
     @classmethod
@@ -530,7 +539,7 @@ class TLdif:
         """
         # REFACTORING: Enhanced file validation and error context
         logger.debug(
-            FlextLdifCoreConstants.STARTING_LDIF_FILE_READ_OPERATION_LOG, file_path
+            FlextLdifCoreConstants.STARTING_LDIF_FILE_READ_OPERATION_LOG, file_path,
         )
         logger.debug(FlextLdifCoreConstants.FILE_ENCODING_READ_LOG, encoding)
 
@@ -546,7 +555,7 @@ class TLdif:
             if not file_path.exists():
                 not_found_error_msg: str = (
                     FlextLdifCoreConstants.LDIF_FILE_NOT_FOUND_ERROR_MSG.format(
-                        absolute_path=absolute_path
+                        absolute_path=absolute_path,
                     )
                 )
                 logger.error(not_found_error_msg)
@@ -555,7 +564,7 @@ class TLdif:
             if not file_path.is_file():
                 not_file_error_msg: str = (
                     FlextLdifCoreConstants.PATH_NOT_FILE_ERROR_MSG.format(
-                        absolute_path=absolute_path
+                        absolute_path=absolute_path,
                     )
                 )
                 logger.error(not_file_error_msg)
@@ -581,17 +590,17 @@ class TLdif:
 
             # Read file content with enhanced error handling
             logger.debug(
-                FlextLdifCoreConstants.READING_FILE_CONTENT_ENCODING_LOG, encoding
+                FlextLdifCoreConstants.READING_FILE_CONTENT_ENCODING_LOG, encoding,
             )
             try:
                 with file_path.open(
-                    FlextLdifCoreConstants.FILE_READ_MODE, encoding=encoding
+                    FlextLdifCoreConstants.FILE_READ_MODE, encoding=encoding,
                 ) as f:
                     content = f.read()
             except UnicodeDecodeError as e:
                 encoding_error_msg: str = (
                     FlextLdifCoreConstants.ENCODING_ERROR_READING_FILE_MSG.format(
-                        encoding=encoding, error=e
+                        encoding=encoding, error=e,
                     )
                 )
                 logger.exception(encoding_error_msg)
@@ -617,23 +626,23 @@ class TLdif:
 
             # Parse content with enhanced error context
             logger.debug(
-                FlextLdifCoreConstants.DELEGATING_TO_PARSE_METHOD_FOR_CONTENT_LOG
+                FlextLdifCoreConstants.DELEGATING_TO_PARSE_METHOD_FOR_CONTENT_LOG,
             )
             result = cls.parse(content)
 
         except (OSError, ValueError, TypeError, AttributeError) as e:
             logger.debug(
-                FlextLdifCoreConstants.EXCEPTION_TYPE_READ_LOG, type(e).__name__
+                FlextLdifCoreConstants.EXCEPTION_TYPE_READ_LOG, type(e).__name__,
             )
             logger.debug(
                 FlextLdifCoreConstants.FILE_READ_EXCEPTION_DETAILS_READ_LOG,
                 exc_info=True,
             )
             logger.exception(
-                FlextLdifCoreConstants.EXCEPTION_DURING_FILE_READ_OPERATION_LOG
+                FlextLdifCoreConstants.EXCEPTION_DURING_FILE_READ_OPERATION_LOG,
             )
             return FlextResult.fail(
-                FlextLdifCoreConstants.LDIF_FILE_READ_FAILED_ERROR_MSG.format(error=e)
+                FlextLdifCoreConstants.LDIF_FILE_READ_FAILED_ERROR_MSG.format(error=e),
             )
         else:
             # REFACTORING: Enhanced result logging with comprehensive metrics
@@ -656,7 +665,7 @@ class TLdif:
             else:
                 # REFACTORING: Enhanced parse failure logging with context
                 error_msg = FlextLdifCoreConstants.LDIF_PARSING_FAILED_FOR_FILE_ERROR_MSG.format(
-                    absolute_path=absolute_path, error=result.error
+                    absolute_path=absolute_path, error=result.error,
                 )
                 logger.error(error_msg)
                 logger.debug(

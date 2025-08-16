@@ -454,7 +454,7 @@ def check_docker_available() -> bool:
     return bool(shutil.which("docker"))
 
 
-def skip_if_no_docker():
+def skip_if_no_docker() -> object:
     """Pytest skip decorator if Docker is not available."""
     return pytest.mark.skipif(
         not check_docker_available(),
