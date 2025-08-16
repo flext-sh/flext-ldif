@@ -556,7 +556,7 @@ description: User number {i} for memory testing
         """Test concurrent E2E workflows."""
         results = queue.Queue()
 
-        def worker_workflow():
+        def worker_workflow() -> None:
             result = self._execute_workflow(enterprise_ldif_sample)
             results.put(result)
 

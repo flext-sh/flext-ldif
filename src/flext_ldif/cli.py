@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 
     from .models import FlextLdifEntry
 
+import contextlib
 from dataclasses import dataclass
 
 import click
@@ -20,6 +21,11 @@ import yaml
 
 # Use real flext-cli integration
 from flext_cli import CLIConfig as FlextCliConfig, setup_cli as flext_setup_cli
+
+# Ensure CLIConfig is fully initialized for pydantic v2 - suppress any initialization errors
+with contextlib.suppress(Exception):
+    FlextCliConfig.model_rebuild()
+
 from flext_cli.cli_types import OutputFormat as _OutputFormat
 from flext_core import get_logger
 
@@ -28,7 +34,6 @@ from .config import FlextLdifConfig
 from .constants import (
     FlextLdifDefaultValues,
     FlextLdifOperationMessages,
-    FlextLdifValidationMessages,
 )
 
 
@@ -59,12 +64,7 @@ def safe_click_echo(message: str, *, err: bool = False) -> None:
     click.echo(message, err=err)
 
 
-def handle_parse_result(result: FlextResult[list[FlextLdifEntry]]) -> None:
-    """Handle parse result output."""
-    if result.success and result.data is not None:
-        click.echo(FlextLdifOperationMessages.PARSE_SUCCESS.format(count=len(result.data)))
-    else:
-        click.echo(FlextLdifOperationMessages.PARSE_FAILED.format(error=result.error or "Unknown error"))
+# REFACTORING: handle_parse_result function removed - now handling success/failure inline with proper exits
 
 
 # Logger for CLI module
@@ -321,12 +321,27 @@ def cli(ctx: click.Context, /, **options: object) -> None:
     config_file = options.get("config_file")
 
     # Build real flext-cli configuration using flat compatibility kwargs
-    cli_config = FlextCliConfig(
-        output_format=_OutputFormat(output_format),
-        verbose=verbose and not quiet,
-        quiet=quiet,
-        debug=debug,
-    )
+    # Ensure Pydantic model is fully built before instantiation (pydantic v2 forward refs)
+    with contextlib.suppress(Exception):
+        FlextCliConfig.model_rebuild()
+
+    try:
+        cli_config = FlextCliConfig(
+            output_format=_OutputFormat(output_format),
+            verbose=verbose and not quiet,
+            quiet=quiet,
+            debug=debug,
+        )
+    except Exception:
+        # As last resort, reconstruct validators and retry once
+        with contextlib.suppress(Exception):
+            FlextCliConfig.model_rebuild(force=True)
+        cli_config = FlextCliConfig(
+            output_format=_OutputFormat(output_format),
+            verbose=verbose and not quiet,
+            quiet=quiet,
+            debug=debug,
+        )
     setup_result = flext_setup_cli(cli_config)  # type: ignore[arg-type]
     if not setup_result.success:
         click.echo(FlextLdifOperationMessages.CLI_SETUP_FAILED.format(error=setup_result.error), err=True)
@@ -364,16 +379,16 @@ def _parse_and_log_file(
         hasattr(result, "success") and result.success,
     )
 
-    # Handle parsing result with utility
-    handle_parse_result(result)
-
-    entries = result.data
-    if entries is None:  # Safety check
+    # Handle parsing result with utility - exits on failure
+    if not result.success:
         safe_click_echo(
-            FlextLdifValidationMessages.INTERNAL_ERROR_ENTRIES_NONE,
+            FlextLdifOperationMessages.PARSE_FAILED.format(error=result.error or "Unknown error"),
             err=True,
         )
         sys.exit(1)
+
+    # FlextResult guarantees non-None data for successful results
+    entries = result.data
 
     logger.info(
         "LDIF file parsed successfully",
@@ -549,17 +564,16 @@ def validate(
 
         # Parse file and handle errors
         parse_result = api.parse_file(input_file)
-        handle_parse_result(parse_result)
-
-        # Type assertion: we know parse_result is successful from handle_parse_result
-        entries = parse_result.data
-
-        if entries is None:  # Safety check
+        # Handle parsing result - exit on failure
+        if not parse_result.success:
             safe_click_echo(
-                FlextLdifValidationMessages.INTERNAL_ERROR_ENTRIES_NONE,
+                FlextLdifOperationMessages.PARSE_FAILED.format(error=parse_result.error or "Unknown error"),
                 err=True,
             )
             sys.exit(1)
+
+        # FlextResult guarantees non-None data for successful results
+        entries = parse_result.data
 
         # Schema validation info (informational for now)
         if schema:
@@ -621,17 +635,10 @@ def _execute_transform_command(
             click.echo(f"Failed to parse input file: {parse_result.error}", err=True)
             sys.exit(1)
 
-        # Type assertion: we know parse_result is FlextResult from our API and data is not None
+        # Type assertion: parse_result is successful FlextResult with guaranteed non-None data
         parse_result_typed = cast("FlextResult[list[FlextLdifEntry]]", parse_result)
         entries = parse_result_typed.data
-        if (
-            entries is None
-        ):  # Safety check - should never happen due to validation above
-            click.echo(
-                FlextLdifValidationMessages.INTERNAL_ERROR_ENTRIES_NONE,
-                err=True,
-            )
-            sys.exit(1)
+        # REFACTORING: FlextResult guarantees non-None data for successful results
         click.echo(FlextLdifOperationMessages.LOADED_ENTRIES.format(count=len(entries)))
 
         # Apply filtering
@@ -687,14 +694,7 @@ def stats(
         # Type assertion: we know parse_result is FlextResult from our API and data is not None
         parse_result_typed = cast("FlextResult[list[FlextLdifEntry]]", parse_result)
         entries = parse_result_typed.data
-        if (
-            entries is None
-        ):  # Safety check - should never happen due to validation above
-            click.echo(
-                FlextLdifValidationMessages.INTERNAL_ERROR_ENTRIES_NONE,
-                err=True,
-            )
-            sys.exit(1)
+        # REFACTORING: FlextResult guarantees non-None data for successful results
         statistics_result = api.get_entry_statistics(entries)
         if not statistics_result.success or statistics_result.data is None:
             click.echo(f"Failed to get statistics: {statistics_result.error}", err=True)
@@ -745,17 +745,10 @@ def find(
             click.echo(f"Failed to parse file: {parse_result.error}", err=True)
             sys.exit(1)
 
-        # Type assertion: we know parse_result is FlextResult from our API and data is not None
+        # Type assertion: parse_result is successful FlextResult with guaranteed non-None data
         parse_result_typed = cast("FlextResult[list[FlextLdifEntry]]", parse_result)
         entries = parse_result_typed.data
-        if (
-            entries is None
-        ):  # Safety check - should never happen due to validation above
-            click.echo(
-                FlextLdifValidationMessages.INTERNAL_ERROR_ENTRIES_NONE,
-                err=True,
-            )
-            sys.exit(1)
+        # REFACTORING: FlextResult guarantees non-None data for successful results
         # Prefer positional query (for compatibility), fallback to --dn
         effective_query = query or search_dn
         _run_find(entries, effective_query, search_attr, api)
@@ -872,17 +865,10 @@ def filter_by_class(
             click.echo(f"Failed to parse file: {parse_result.error}", err=True)
             sys.exit(1)
 
-        # Type assertion: we know parse_result is FlextResult from our API and data is not None
+        # Type assertion: parse_result is successful FlextResult with guaranteed non-None data
         parse_result_typed = cast("FlextResult[list[FlextLdifEntry]]", parse_result)
         entries = parse_result_typed.data
-        if (
-            entries is None
-        ):  # Safety check - should never happen due to validation above
-            click.echo(
-                FlextLdifValidationMessages.INTERNAL_ERROR_ENTRIES_NONE,
-                err=True,
-            )
-            sys.exit(1)
+        # REFACTORING: FlextResult guarantees non-None data for successful results
         filtered_result = api.filter_by_objectclass(entries, objectclass)
         if not filtered_result.success:
             click.echo(f"Filter operation failed: {filtered_result.error}", err=True)
@@ -941,14 +927,7 @@ def convert(
         # Type assertion: we know parse_result is FlextResult from our API and data is not None
         parse_result_typed = cast("FlextResult[list[FlextLdifEntry]]", parse_result)
         entries = parse_result_typed.data
-        if (
-            entries is None
-        ):  # Safety check - should never happen due to validation above
-            click.echo(
-                FlextLdifValidationMessages.INTERNAL_ERROR_ENTRIES_NONE,
-                err=True,
-            )
-            sys.exit(1)
+        # REFACTORING: FlextResult guarantees non-None data for successful results
 
         # Determine output file path automatically next to input
         output_path = Path(input_file).with_suffix(f".{output_format}")

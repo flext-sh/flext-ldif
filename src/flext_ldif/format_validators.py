@@ -169,8 +169,8 @@ class LdifValidator:
             return FlextResult.fail(
                 FlextLdifFormatConstants.ENTRY_TYPE_MISMATCH_FORMAT.format(
                     expected_classes=expected_classes,
-                    object_classes=object_classes
-                )
+                    object_classes=object_classes,
+                ),
             )
 
         return FlextResult.ok(data=True)
@@ -243,8 +243,8 @@ class LdifSchemaValidator:
         if missing_attrs:
             return FlextResult.fail(
                 FlextLdifFormatConstants.ENTRY_MISSING_REQUIRED_ATTRIBUTES_FORMAT.format(
-                    missing_attrs=", ".join(missing_attrs)
-                )
+                    missing_attrs=", ".join(missing_attrs),
+                ),
             )
 
         return FlextResult.ok(data=True)
