@@ -86,7 +86,7 @@ from tests.docker_fixtures import skip_if_no_docker
 @skip_if_no_docker()
 def test_my_ldif_functionality(real_ldif_data: str, ldif_test_config: dict):
     """Seu teste com dados reais do OpenLDAP."""
-    from flext_ldif import parse_ldif, validate_ldif
+from flext_ldif import parse_ldif, validate_ldif
 
     # Testar com dados reais
     entries = parse_ldif(real_ldif_data)
@@ -150,7 +150,7 @@ def test_parsing_real_data(real_ldif_data):
 ```python
 def debug_with_real_data():
     # Container será criado automaticamente
-    from tests.docker_fixtures import OpenLDAPContainerManager
+from tests.docker_fixtures import OpenLDAPContainerManager
 
     manager = OpenLDAPContainerManager()
     container = manager.start_container()
