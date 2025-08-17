@@ -638,7 +638,7 @@ if result.success:
     print(f"Deep entries (depth > 5): {len(deep_entries)}")
 
     # Find entries under specific parent DN
-    from flext_ldif import FlextLdifDistinguishedName
+from flext_ldif import FlextLdifDistinguishedName
 
     people_base = FlextLdifDistinguishedName(value="ou=people,dc=company,dc=com")
 

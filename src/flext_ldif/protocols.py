@@ -5,21 +5,14 @@ Protocol definitions for LDIF processing using flext-core patterns.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from pathlib import Path
+from typing import Protocol, runtime_checkable
 
-# FOUNDATION: Import ONLY from flext-core - NO duplication
+from flext_core import (
+    FlextResult,
+)
 
-if TYPE_CHECKING:
-    from pathlib import Path
-
-    from flext_core import FlextResult
-
-    from .models import FlextLdifEntry
-
-
-# =============================================================================
-# APPLICATION PROTOCOLS - Extending flext-core protocols
-# =============================================================================
+from flext_ldif.models import FlextLdifEntry
 
 
 @runtime_checkable
@@ -27,19 +20,19 @@ class FlextLdifParserProtocol(Protocol):
     """LDIF parsing protocol - extends flext-core patterns."""
 
     def parse(self, content: str) -> FlextResult[list[FlextLdifEntry]]:
-        """Parse LDIF content into domain entities."""
-        ...
+      """Parse LDIF content into domain entities."""
+      ...
 
     def parse_file(self, file_path: str | Path) -> FlextResult[list[FlextLdifEntry]]:
-        """Parse LDIF file into domain entities."""
-        ...
+      """Parse LDIF file into domain entities."""
+      ...
 
     def parse_entries_from_string(
-        self,
-        ldif_string: str,
+      self,
+      ldif_string: str,
     ) -> FlextResult[list[FlextLdifEntry]]:
-        """Parse multiple entries from LDIF string."""
-        ...
+      """Parse multiple entries from LDIF string."""
+      ...
 
 
 @runtime_checkable
@@ -47,20 +40,20 @@ class FlextLdifValidatorProtocol(Protocol):
     """LDIF validation protocol using flext-core patterns."""
 
     def validate(self, data: list[FlextLdifEntry]) -> FlextResult[bool]:
-        """Validate data using flext-core pattern."""
-        ...
+      """Validate data using flext-core pattern."""
+      ...
 
     def validate_entry(self, entry: FlextLdifEntry) -> FlextResult[bool]:
-        """Validate single LDIF entry."""
-        ...
+      """Validate single LDIF entry."""
+      ...
 
     def validate_entries(self, entries: list[FlextLdifEntry]) -> FlextResult[bool]:
-        """Validate multiple LDIF entries."""
-        ...
+      """Validate multiple LDIF entries."""
+      ...
 
     def validate_dn_format(self, dn: str) -> FlextResult[bool]:
-        """Validate DN format compliance."""
-        ...
+      """Validate DN format compliance."""
+      ...
 
 
 @runtime_checkable
@@ -68,20 +61,20 @@ class FlextLdifWriterProtocol(Protocol):
     """LDIF writing protocol."""
 
     def write(self, entries: list[FlextLdifEntry]) -> FlextResult[str]:
-        """Write entries to LDIF string."""
-        ...
+      """Write entries to LDIF string."""
+      ...
 
     def write_file(
-        self,
-        entries: list[FlextLdifEntry],
-        file_path: str | Path,
+      self,
+      entries: list[FlextLdifEntry],
+      file_path: str | Path,
     ) -> FlextResult[bool]:
-        """Write entries to LDIF file."""
-        ...
+      """Write entries to LDIF file."""
+      ...
 
     def write_entry(self, entry: FlextLdifEntry) -> FlextResult[str]:
-        """Write single entry to LDIF string."""
-        ...
+      """Write single entry to LDIF string."""
+      ...
 
 
 @runtime_checkable
@@ -89,36 +82,36 @@ class FlextLdifRepositoryProtocol(Protocol):
     """LDIF data access protocol."""
 
     def find_by_dn(
-        self,
-        entries: list[FlextLdifEntry],
-        dn: str,
+      self,
+      entries: list[FlextLdifEntry],
+      dn: str,
     ) -> FlextResult[FlextLdifEntry | None]:
-        """Find entry by distinguished name."""
-        ...
+      """Find entry by distinguished name."""
+      ...
 
     def filter_by_objectclass(
-        self,
-        entries: list[FlextLdifEntry],
-        objectclass: str,
+      self,
+      entries: list[FlextLdifEntry],
+      objectclass: str,
     ) -> FlextResult[list[FlextLdifEntry]]:
-        """Filter entries by objectClass attribute."""
-        ...
+      """Filter entries by objectClass attribute."""
+      ...
 
     def filter_by_attribute(
-        self,
-        entries: list[FlextLdifEntry],
-        attribute: str,
-        value: str,
+      self,
+      entries: list[FlextLdifEntry],
+      attribute: str,
+      value: str,
     ) -> FlextResult[list[FlextLdifEntry]]:
-        """Filter entries by attribute value."""
-        ...
+      """Filter entries by attribute value."""
+      ...
 
     def get_statistics(
-        self,
-        entries: list[FlextLdifEntry],
+      self,
+      entries: list[FlextLdifEntry],
     ) -> FlextResult[dict[str, int]]:
-        """Get statistical information about entries."""
-        ...
+      """Get statistical information about entries."""
+      ...
 
 
 @runtime_checkable
@@ -126,22 +119,22 @@ class FlextLdifTransformerProtocol(Protocol):
     """LDIF transformation protocol."""
 
     def transform_entry(self, entry: FlextLdifEntry) -> FlextResult[FlextLdifEntry]:
-        """Transform single LDIF entry."""
-        ...
+      """Transform single LDIF entry."""
+      ...
 
     def transform_entries(
-        self,
-        entries: list[FlextLdifEntry],
+      self,
+      entries: list[FlextLdifEntry],
     ) -> FlextResult[list[FlextLdifEntry]]:
-        """Transform multiple LDIF entries."""
-        ...
+      """Transform multiple LDIF entries."""
+      ...
 
     def normalize_dns(
-        self,
-        entries: list[FlextLdifEntry],
+      self,
+      entries: list[FlextLdifEntry],
     ) -> FlextResult[list[FlextLdifEntry]]:
-        """Normalize all DN values in entries."""
-        ...
+      """Normalize all DN values in entries."""
+      ...
 
 
 @runtime_checkable
@@ -149,25 +142,25 @@ class FlextLdifAnalyticsProtocol(Protocol):
     """LDIF analytics protocol for business intelligence."""
 
     def analyze_entry_patterns(
-        self,
-        entries: list[FlextLdifEntry],
+      self,
+      entries: list[FlextLdifEntry],
     ) -> FlextResult[dict[str, int]]:
-        """Analyze patterns in LDIF entries."""
-        ...
+      """Analyze patterns in LDIF entries."""
+      ...
 
     def get_objectclass_distribution(
-        self,
-        entries: list[FlextLdifEntry],
+      self,
+      entries: list[FlextLdifEntry],
     ) -> FlextResult[dict[str, int]]:
-        """Get distribution of objectClass types."""
-        ...
+      """Get distribution of objectClass types."""
+      ...
 
     def get_dn_depth_analysis(
-        self,
-        entries: list[FlextLdifEntry],
+      self,
+      entries: list[FlextLdifEntry],
     ) -> FlextResult[dict[str, int]]:
-        """Analyze DN depth distribution."""
-        ...
+      """Analyze DN depth distribution."""
+      ...
 
 
 # =============================================================================

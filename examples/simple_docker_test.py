@@ -17,35 +17,35 @@ try:
     )
 except Exception:  # pragma: no cover - fallback to shared fixtures path
     try:
-        from client-a_oud_mig.tests.docker_fixtures import (
-            OpenLDAPContainerManager,
-            check_docker_available,
-        )
+      from client-a_oud_mig.tests.docker_fixtures import (
+          OpenLDAPContainerManager,
+          check_docker_available,
+      )
     except Exception:
-        # Last resort: provide stubs that disable the test gracefully
-        def check_docker_available() -> bool:  # type: ignore[no-redef]
-            """Check docker available function.
+      # Last resort: provide stubs that disable the test gracefully
+      def check_docker_available() -> bool:  # type: ignore[no-redef]
+          """Check docker available function.
 
-            Returns:
-                bool: Description.
+          Returns:
+              bool: Description.
 
-            """
-            return False
+          """
+          return False
 
-        class OpenLDAPContainerManager:  # type: ignore[no-redef]
-            """OpenLDAPContainerManager class."""
+      class OpenLDAPContainerManager:  # type: ignore[no-redef]
+          """OpenLDAPContainerManager class."""
 
-            def start_container(self) -> None:
-                """Start container function."""
+          def start_container(self) -> None:
+              """Start container function."""
 
-            def get_ldif_export(self) -> str:
-                """Get ldif export function.
+          def get_ldif_export(self) -> str:
+              """Get ldif export function.
 
-                Returns:
-                    str: Description.
+              Returns:
+                  str: Description.
 
-                """
-                return ""
+              """
+              return ""
 
 
 from flext_ldif import flext_ldif_parse, flext_ldif_validate
@@ -55,69 +55,69 @@ def test_with_docker_container() -> bool | None:
     """Example of manual Docker container usage for testing.
 
     Returns:
-        bool | None: Description.
+      bool | None: Description.
 
     """    # Check if Docker is available
     if not check_docker_available():
-        return False
+      return False
 
     # Create container manager
     manager = OpenLDAPContainerManager()
 
     try:
-        # Start container (this will populate it with test data)
-        manager.start_container()
+      # Start container (this will populate it with test data)
+      manager.start_container()
 
-        # Export LDIF data from container
-        ldif_data = manager.get_ldif_export()
+      # Export LDIF data from container
+      ldif_data = manager.get_ldif_export()
 
-        if not ldif_data:
-            return False
+      if not ldif_data:
+          return False
 
-        # Test parsing
-        entries = flext_ldif_parse(ldif_data)
+      # Test parsing
+      entries = flext_ldif_parse(ldif_data)
 
-        # Constants for testing
-        max_entries_to_show = 3
+      # Constants for testing
+      max_entries_to_show = 3
 
-        # Show entry details
-        for _i, entry in enumerate(entries[:max_entries_to_show]):
-            if entry.has_attribute("cn"):
-                pass
+      # Show entry details
+      for _i, entry in enumerate(entries[:max_entries_to_show]):
+          if entry.has_attribute("cn"):
+              pass
 
-        if len(entries) > max_entries_to_show:
-            pass
+      if len(entries) > max_entries_to_show:
+          pass
 
-        # Test validation
-        flext_ldif_validate(ldif_data)
+      # Test validation
+      flext_ldif_validate(ldif_data)
 
-        # Usar API real para filtrar pessoas e grupos
-        api = __import__("flext_ldif").flext_ldif.FlextLdifAPI
-        api = api()
+      # Usar API real para filtrar pessoas e grupos
+      api = __import__("flext_ldif").flext_ldif.FlextLdifAPI
+      api = api()
 
-        # Filter pessoas usando API real
-        person_result = api.filter_persons(entries)
-        if person_result.success:
-            len(person_result.data or [])
+      # Filter pessoas usando API real
+      person_result = api.filter_persons(entries)
+      if person_result.success:
+          len(person_result.data or [])
 
-        # Contar entries por objectClass usando API real
-        sum(1 for entry in entries if entry.has_object_class("groupOfNames"))
-        sum(1 for entry in entries if entry.has_object_class("organizationalUnit"))
+      # Contar entries por objectClass usando API real
+      sum(1 for entry in entries if entry.has_object_class("groupOfNames"))
+      sum(1 for entry in entries if entry.has_object_class("organizationalUnit"))
 
-        return True
+      return True
 
     except (RuntimeError, ValueError, TypeError):
-        return False
+      return False
 
     finally:
-        # Always cleanup
-        manager.stop_container()
+      # Always cleanup
+      manager.stop_container()
 
 
 if __name__ == "__main__":
     success = test_with_docker_container()
 
     if success:
-        pass
+      pass
     else:
-        sys.exit(1)
+      sys.exit(1)

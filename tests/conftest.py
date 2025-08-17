@@ -55,39 +55,31 @@ from __future__ import annotations
 
 import os
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import pytest
 
 from flext_ldif import FlextLdifAPI, TLdif
+from tests.docker_fixtures import (
+    docker_openldap_container,
+    ldif_test_config,
+    real_ldif_data,
+    skip_if_no_docker,
+    temporary_ldif_data,
+)
 
-if TYPE_CHECKING:
-    from collections.abc import Generator
+DOCKER_AVAILABLE = True
 
-# Import Docker fixtures if available (absolute import to avoid duplicate module mapping)
-try:
-    from tests.docker_fixtures import (
-        docker_openldap_container,
-        ldif_test_config,
-        real_ldif_data,
-        skip_if_no_docker,
-        temporary_ldif_data,
-    )
-
-    DOCKER_AVAILABLE = True
-
-    # Make fixtures available by importing them into this module's namespace
-    __all__: list[str] = [
-        "docker_openldap_container",
-        "ldif_test_config",
-        "real_ldif_data",
-        "skip_if_no_docker",
-        "temporary_ldif_data",
-    ]
-
-except Exception:
-    DOCKER_AVAILABLE = False
+# Make fixtures available by importing them into this module's namespace
+__all__: list[str] = [
+    "docker_openldap_container",
+    "ldif_test_config",
+    "real_ldif_data",
+    "skip_if_no_docker",
+    "temporary_ldif_data",
+]
 
 
 # Test environment setup
@@ -107,11 +99,11 @@ def set_test_environment() -> Generator[None]:
 def ldif_processor_config() -> dict[str, object]:
     """LDIF processor configuration for testing."""
     return {
-        "encoding": "utf-8",
-        "strict_parsing": True,
-        "max_entries": 10000,
-        "validate_dn": True,
-        "normalize_attributes": True,
+      "encoding": "utf-8",
+      "strict_parsing": True,
+      "max_entries": 10000,
+      "validate_dn": True,
+      "normalize_attributes": True,
     }
 
 
@@ -119,9 +111,9 @@ def ldif_processor_config() -> dict[str, object]:
 def test_ldif_dir() -> Generator[Path]:
     """Temporary directory for LDIF test files."""
     with tempfile.TemporaryDirectory() as temp_dir:
-        ldif_dir = Path(temp_dir) / "ldif_files"
-        ldif_dir.mkdir()
-        yield ldif_dir
+      ldif_dir = Path(temp_dir) / "ldif_files"
+      ldif_dir.mkdir()
+      yield ldif_dir
 
 
 # Sample LDIF data fixtures
@@ -262,23 +254,23 @@ def ldif_core() -> type[TLdif]:
 def ldap_schema_config() -> dict[str, object]:
     """LDAP schema configuration for validation."""
     return {
-        "validate_object_classes": True,
-        "validate_attributes": True,
-        "required_object_classes": ["top"],
-        "allowed_attributes": {
-            "inetOrgPerson": [
-                "uid",
-                "cn",
-                "sn",
-                "givenName",
-                "mail",
-                "telephoneNumber",
-                "employeeNumber",
-                "departmentNumber",
-                "title",
-            ],
-            "groupOfNames": ["cn", "description", "member"],
-        },
+      "validate_object_classes": True,
+      "validate_attributes": True,
+      "required_object_classes": ["top"],
+      "allowed_attributes": {
+          "inetOrgPerson": [
+              "uid",
+              "cn",
+              "sn",
+              "givenName",
+              "mail",
+              "telephoneNumber",
+              "employeeNumber",
+              "departmentNumber",
+              "title",
+          ],
+          "groupOfNames": ["cn", "description", "member"],
+      },
     }
 
 
@@ -287,22 +279,22 @@ def ldap_schema_config() -> dict[str, object]:
 def transformation_rules() -> dict[str, object]:
     """Provide transformation rules for LDIF processing."""
     return {
-        "attribute_mappings": {
-            "telephoneNumber": "phone",
-            "employeeNumber": "employee_id",
-            "departmentNumber": "department",
-        },
-        "value_transformations": {
-            "mail": lambda x: x.lower(),
-            "cn": lambda x: x.title(),
-        },
-        "dn_transformations": {
-            "base_dn": "dc=newdomain,dc=com",
-            "ou_mappings": {
-                "people": "users",
-                "groups": "groups",
-            },
-        },
+      "attribute_mappings": {
+          "telephoneNumber": "phone",
+          "employeeNumber": "employee_id",
+          "departmentNumber": "department",
+      },
+      "value_transformations": {
+          "mail": lambda x: x.lower(),
+          "cn": lambda x: x.title(),
+      },
+      "dn_transformations": {
+          "base_dn": "dc=newdomain,dc=com",
+          "ou_mappings": {
+              "people": "users",
+              "groups": "groups",
+          },
+      },
     }
 
 
@@ -311,13 +303,13 @@ def transformation_rules() -> dict[str, object]:
 def ldif_filters() -> dict[str, object]:
     """LDIF entry filters for testing."""
     return {
-        "include_object_classes": ["inetOrgPerson", "groupOfNames"],
-        "exclude_attributes": ["userPassword", "pwdHistory"],
-        "dn_patterns": [".*,ou=people,.*", ".*,ou=groups,.*"],
-        "attribute_filters": {
-            "mail": r".*@example\.com$",
-            "departmentNumber": ["IT", "HR", "Finance"],
-        },
+      "include_object_classes": ["inetOrgPerson", "groupOfNames"],
+      "exclude_attributes": ["userPassword", "pwdHistory"],
+      "dn_patterns": [".*,ou=people,.*", ".*,ou=groups,.*"],
+      "attribute_filters": {
+          "mail": r".*@example\.com$",
+          "departmentNumber": ["IT", "HR", "Finance"],
+      },
     }
 
 
@@ -326,18 +318,18 @@ def ldif_filters() -> dict[str, object]:
 def expected_ldif_stats() -> dict[str, object]:
     """Provide expected LDIF processing statistics."""
     return {
-        "total_entries": 4,
-        "successful_entries": 4,
-        "failed_entries": 0,
-        "object_class_counts": {
-            "inetOrgPerson": 2,
-            "groupOfNames": 2,
-        },
-        "attribute_counts": {
-            "uid": 2,
-            "cn": 4,
-            "mail": 2,
-        },
+      "total_entries": 4,
+      "successful_entries": 4,
+      "failed_entries": 0,
+      "object_class_counts": {
+          "inetOrgPerson": 2,
+          "groupOfNames": 2,
+      },
+      "attribute_counts": {
+          "uid": 2,
+          "cn": 4,
+          "mail": 2,
+      },
     }
 
 
@@ -364,11 +356,11 @@ objectClass: person
 def large_ldif_config() -> dict[str, object]:
     """Provide configuration for large LDIF processing tests."""
     return {
-        "batch_size": 1000,
-        "memory_limit": "100MB",
-        "progress_reporting": True,
-        "parallel_processing": True,
-        "max_workers": 4,
+      "batch_size": 1000,
+      "memory_limit": "100MB",
+      "progress_reporting": True,
+      "parallel_processing": True,
+      "max_workers": 4,
     }
 
 
@@ -386,8 +378,8 @@ def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line("markers", "performance: Performance tests")
     config.addinivalue_line("markers", "slow: Slow tests")
     config.addinivalue_line(
-        "markers",
-        "docker: Tests requiring Docker OpenLDAP container",
+      "markers",
+      "docker: Tests requiring Docker OpenLDAP container",
     )
     config.addinivalue_line("markers", "real_ldap: Tests using real LDAP server")
 
@@ -398,25 +390,25 @@ def mock_ldif_service() -> object:
     """Mock LDIF service for testing."""
 
     class MockLdifService:
-        async def parse_ldif(self, content: str) -> list[dict[str, object]]:  # noqa: ARG002
-            return [{"dn": "test", "attributes": {}}]
+      async def parse_ldif(self, content: str) -> list[dict[str, object]]:  # noqa: ARG002
+          return [{"dn": "test", "attributes": {}}]
 
-        async def write_ldif(self, entries: list[dict[str, object]]) -> str:  # noqa: ARG002
-            return "dn: test\nobjectClass: top\n"
+      async def write_ldif(self, entries: list[dict[str, object]]) -> str:  # noqa: ARG002
+          return "dn: test\nobjectClass: top\n"
 
-        async def transform_entries(
-            self,
-            entries: list[dict[str, object]],
-            rules: dict[str, object],  # noqa: ARG002
-        ) -> list[dict[str, object]]:
-            return entries
+      async def transform_entries(
+          self,
+          entries: list[dict[str, object]],
+          rules: dict[str, object],  # noqa: ARG002
+      ) -> list[dict[str, object]]:
+          return entries
 
-        async def validate_entries(
-            self,
-            entries: list[dict[str, object]],  # noqa: ARG002
-            schema: dict[str, object],  # noqa: ARG002
-        ) -> dict[str, object]:
-            return {"valid": True, "errors": []}
+      async def validate_entries(
+          self,
+          entries: list[dict[str, object]],  # noqa: ARG002
+          schema: dict[str, object],  # noqa: ARG002
+      ) -> dict[str, object]:
+          return {"valid": True, "errors": []}
 
     return MockLdifService()
 
@@ -426,13 +418,13 @@ def mock_schema_validator() -> object:
     """Mock schema validator for testing."""
 
     class MockSchemaValidator:
-        def validate_entry(self, entry: dict[str, object]) -> dict[str, object]:  # noqa: ARG002
-            return {"valid": True, "errors": []}
+      def validate_entry(self, entry: dict[str, object]) -> dict[str, object]:  # noqa: ARG002
+          return {"valid": True, "errors": []}
 
-        def validate_object_class(self, object_class: str) -> bool:  # noqa: ARG002
-            return True
+      def validate_object_class(self, object_class: str) -> bool:  # noqa: ARG002
+          return True
 
-        def validate_attribute(self, attribute: str, value: Any) -> bool:  # noqa: ARG002, ANN401
-            return True
+      def validate_attribute(self, attribute: str, value: Any) -> bool:  # noqa: ARG002, ANN401
+          return True
 
     return MockSchemaValidator()
