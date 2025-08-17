@@ -33,10 +33,10 @@ from flext_ldif.models import FlextLdifEntry
 def _deprecation_warning(old_name: str, new_name: str) -> None:
     """Issue deprecation warning for legacy API usage."""
     warnings.warn(
-      f"{old_name} is deprecated. Use {new_name} instead. "
-      f"Legacy compatibility will be removed in a future version.",
-      DeprecationWarning,
-      stacklevel=3,
+        f"{old_name} is deprecated. Use {new_name} instead. "
+        f"Legacy compatibility will be removed in a future version.",
+        DeprecationWarning,
+        stacklevel=3,
     )
 
 
@@ -66,7 +66,8 @@ def LdifEntryError(*args: object, **kwargs: object) -> FlextLdifEntryError:  # n
 
 
 def LdifConfigurationError(  # noqa: N802
-    *args: object, **kwargs: object,
+    *args: object,
+    **kwargs: object,
 ) -> FlextLdifConfigurationError:
     """Legacy: Use FlextLdifConfigurationError instead."""
     _deprecation_warning("LdifConfigurationError", "FlextLdifConfigurationError")
@@ -86,7 +87,8 @@ def LdifConnectionError(*args: object, **kwargs: object) -> FlextLdifConnectionE
 
 
 def LdifAuthenticationError(  # noqa: N802
-    *args: object, **kwargs: object,
+    *args: object,
+    **kwargs: object,
 ) -> FlextLdifAuthenticationError:
     """Legacy: Use FlextLdifAuthenticationError instead."""
     _deprecation_warning("LdifAuthenticationError", "FlextLdifAuthenticationError")
@@ -103,43 +105,43 @@ def LdifTimeoutError(*args: object, **kwargs: object) -> FlextLdifTimeoutError: 
 def create_ldif_api(*args: object, **kwargs: object) -> object:
     """Legacy: Use FlextLdifAPI directly instead."""
     try:
-      _deprecation_warning("create_ldif_api", "FlextLdifAPI")
-      return FlextLdifAPI(*args, **kwargs)
+        _deprecation_warning("create_ldif_api", "FlextLdifAPI")
+        return FlextLdifAPI(*args, **kwargs)
     except ImportError:
-      msg = "FlextLdifAPI not available"
-      raise ImportError(msg) from None
+        msg = "FlextLdifAPI not available"
+        raise ImportError(msg) from None
 
 
 def simple_ldif_parser(*args: object, **kwargs: object) -> object:
     """Legacy: Use FlextLdifAPI.parse instead."""
     try:
-      _deprecation_warning("simple_ldif_parser", "FlextLdifAPI.parse")
-      api = FlextLdifAPI()
-      return api.parse(*args, **kwargs)
+        _deprecation_warning("simple_ldif_parser", "FlextLdifAPI.parse")
+        api = FlextLdifAPI()
+        return api.parse(*args, **kwargs)
     except ImportError:
-      msg = "FlextLdifAPI not available"
-      raise ImportError(msg) from None
+        msg = "FlextLdifAPI not available"
+        raise ImportError(msg) from None
 
 
 def ldif_validate(*args: object, **kwargs: object) -> object:
     """Legacy: Use FlextLdifAPI.validate instead."""
     try:
-      _deprecation_warning("ldif_validate", "FlextLdifAPI.validate")
-      api = FlextLdifAPI()
-      return api.validate(*args, **kwargs)
+        _deprecation_warning("ldif_validate", "FlextLdifAPI.validate")
+        api = FlextLdifAPI()
+        return api.validate(*args, **kwargs)
     except ImportError:
-      msg = "FlextLdifAPI not available"
-      raise ImportError(msg) from None
+        msg = "FlextLdifAPI not available"
+        raise ImportError(msg) from None
 
 
 def create_ldif_entry(*args: object, **kwargs: object) -> object:
     """Legacy: Use FlextLdifEntry directly instead."""
     try:
-      _deprecation_warning("create_ldif_entry", "FlextLdifEntry")
-      return FlextLdifEntry(*args, **kwargs)
+        _deprecation_warning("create_ldif_entry", "FlextLdifEntry")
+        return FlextLdifEntry(*args, **kwargs)
     except ImportError:
-      msg = "FlextLdifEntry not available"
-      raise ImportError(msg) from None
+        msg = "FlextLdifEntry not available"
+        raise ImportError(msg) from None
 
 
 # Legacy constants and configuration
@@ -152,27 +154,29 @@ LDIF_BUFFER_SIZE = 8192
 def LdifParseErrorParams(*args: object, **kwargs: object) -> dict[str, object]:  # noqa: ARG001, N802
     """Legacy: Create parameters for LdifParseError - use FlextLdifParseError context instead."""
     _deprecation_warning(
-      "LdifParseErrorParams", "FlextLdifParseError context parameter",
+        "LdifParseErrorParams",
+        "FlextLdifParseError context parameter",
     )
     return {
-      "file_path": kwargs.get("file_path"),
-      "line_number": kwargs.get("line_number"),
-      "operation": kwargs.get("operation", "parse"),
-      "encoding": kwargs.get("encoding", LDIF_DEFAULT_ENCODING),
+        "file_path": kwargs.get("file_path"),
+        "line_number": kwargs.get("line_number"),
+        "operation": kwargs.get("operation", "parse"),
+        "encoding": kwargs.get("encoding", LDIF_DEFAULT_ENCODING),
     }
 
 
 def LdifEntryErrorParams(*args: object, **kwargs: object) -> dict[str, object]:  # noqa: ARG001, N802
     """Legacy: Create parameters for LdifEntryError - use FlextLdifEntryError context instead."""
     _deprecation_warning(
-      "LdifEntryErrorParams", "FlextLdifEntryError context parameter",
+        "LdifEntryErrorParams",
+        "FlextLdifEntryError context parameter",
     )
     return {
-      "dn": kwargs.get("dn"),
-      "attribute_name": kwargs.get("attribute_name"),
-      "attribute_value": kwargs.get("attribute_value"),
-      "entry_index": kwargs.get("entry_index"),
-      "validation_rule": kwargs.get("validation_rule"),
+        "dn": kwargs.get("dn"),
+        "attribute_name": kwargs.get("attribute_name"),
+        "attribute_value": kwargs.get("attribute_value"),
+        "entry_index": kwargs.get("entry_index"),
+        "validation_rule": kwargs.get("validation_rule"),
     }
 
 

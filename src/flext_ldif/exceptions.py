@@ -77,74 +77,74 @@ class FlextLdifFileError(FlextLdifError):
     """LDIF file operation errors with file context."""
 
     def __init__(
-      self,
-      message: str,
-      *,
-      file_path: str | None = None,
-      line_number: int | None = None,
-      operation: str | None = None,
-      encoding: str | None = None,
-      code: FlextLdifErrorCodes | None = FlextLdifErrorCodes.LDIF_ERROR,
-      context: Mapping[str, object] | None = None,
+        self,
+        message: str,
+        *,
+        file_path: str | None = None,
+        line_number: int | None = None,
+        operation: str | None = None,
+        encoding: str | None = None,
+        code: FlextLdifErrorCodes | None = FlextLdifErrorCodes.LDIF_ERROR,
+        context: Mapping[str, object] | None = None,
     ) -> None:
-      """Initialize LDIF file error with file context."""
-      context_dict: dict[str, object] = dict(context) if context else {}
-      if file_path is not None:
-          context_dict["file_path"] = file_path
-      if line_number is not None:
-          context_dict["line_number"] = line_number
-      if operation is not None:
-          context_dict["operation"] = operation
-      if encoding is not None:
-          context_dict["encoding"] = encoding
+        """Initialize LDIF file error with file context."""
+        context_dict: dict[str, object] = dict(context) if context else {}
+        if file_path is not None:
+            context_dict["file_path"] = file_path
+        if line_number is not None:
+            context_dict["line_number"] = line_number
+        if operation is not None:
+            context_dict["operation"] = operation
+        if encoding is not None:
+            context_dict["encoding"] = encoding
 
-      super().__init__(
-          message,
-          code=code,
-          context=context_dict,
-      )
+        super().__init__(
+            message,
+            code=code,
+            context=context_dict,
+        )
 
 
 class FlextLdifEntryValidationError(FlextLdifEntryError):
     """LDIF entry validation errors with entry context."""
 
     def __init__(
-      self,
-      message: str,
-      *,
-      dn: str | None = None,
-      attribute_name: str | None = None,
-      attribute_value: str | None = None,
-      entry_index: int | None = None,
-      validation_rule: str | None = None,
-      code: FlextLdifErrorCodes | None = FlextLdifErrorCodes.LDIF_ENTRY_ERROR,
-      context: Mapping[str, object] | None = None,
+        self,
+        message: str,
+        *,
+        dn: str | None = None,
+        attribute_name: str | None = None,
+        attribute_value: str | None = None,
+        entry_index: int | None = None,
+        validation_rule: str | None = None,
+        code: FlextLdifErrorCodes | None = FlextLdifErrorCodes.LDIF_ENTRY_ERROR,
+        context: Mapping[str, object] | None = None,
     ) -> None:
-      """Initialize LDIF entry validation error with entry context."""
-      context_dict: dict[str, object] = dict(context) if context else {}
-      if dn is not None:
-          context_dict["dn"] = dn
-      if attribute_name is not None:
-          context_dict["attribute_name"] = attribute_name
-      if attribute_value is not None:
-          # Truncate long attribute values for safety
-          max_value_length = 100
-          truncated_value = (
-              attribute_value[:max_value_length] + "..."
-              if len(attribute_value) > max_value_length
-              else attribute_value
-          )
-          context_dict["attribute_value"] = truncated_value
-      if entry_index is not None:
-          context_dict["entry_index"] = entry_index
-      if validation_rule is not None:
-          context_dict["validation_rule"] = validation_rule
+        """Initialize LDIF entry validation error with entry context."""
+        context_dict: dict[str, object] = dict(context) if context else {}
+        if dn is not None:
+            context_dict["dn"] = dn
+        if attribute_name is not None:
+            context_dict["attribute_name"] = attribute_name
+        if attribute_value is not None:
+            # Truncate long attribute values for safety
+            max_value_length = 100
+            truncated_value = (
+                attribute_value[:max_value_length] + "..."
+                if len(attribute_value) > max_value_length
+                else attribute_value
+            )
+            context_dict["attribute_value"] = truncated_value
+        if entry_index is not None:
+            context_dict["entry_index"] = entry_index
+        if validation_rule is not None:
+            context_dict["validation_rule"] = validation_rule
 
-      super().__init__(
-          message,
-          code=code,
-          context=context_dict,
-      )
+        super().__init__(
+            message,
+            code=code,
+            context=context_dict,
+        )
 
 
 __all__: list[str] = [
