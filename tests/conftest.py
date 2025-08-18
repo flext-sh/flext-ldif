@@ -62,13 +62,27 @@ from typing import Any
 import pytest
 
 from flext_ldif import FlextLdifAPI, TLdif
-from tests.docker_fixtures import (
-    docker_openldap_container,
-    ldif_test_config,
-    real_ldif_data,
-    skip_if_no_docker,
-    temporary_ldif_data,
-)
+
+# Try to import Docker fixtures - optional for testing without Docker
+try:
+    from tests.docker_fixtures import (
+        docker_openldap_container,
+        ldif_test_config,
+        real_ldif_data,
+        skip_if_no_docker,
+        temporary_ldif_data,
+    )
+    DOCKER_FIXTURES_AVAILABLE = True
+except ImportError:
+    DOCKER_FIXTURES_AVAILABLE = False
+    # Create dummy fixtures when Docker is not available
+    def skip_if_no_docker():
+        return pytest.mark.skip(reason="Docker not available")
+
+    docker_openldap_container = None
+    ldif_test_config = None
+    real_ldif_data = None
+    temporary_ldif_data = None
 
 DOCKER_AVAILABLE = True
 

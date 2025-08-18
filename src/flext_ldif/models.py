@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 import hashlib
-import importlib
 import re as _re
 import uuid
 from collections.abc import Callable
 from functools import lru_cache
 from pathlib import Path
-from typing import cast
 
 from flext_core import (
     FlextConfig,
@@ -36,29 +34,43 @@ from flext_ldif.constants import (
 ValidatorFunc = Callable[[str], bool]
 
 
+def _validate_ldap_attribute_name(name: str) -> bool:
+    """Local LDAP attribute name validator - breaks circular dependency.
+
+    Validates attribute names per RFC 4512: base name + optional language tags/options.
+    Supports: displayname;lang-es_es, orclinstancecount;oid-prd-app01.network.ctbc
+    """
+    if not name or not isinstance(name, str):
+        return False
+    attr_pattern = _re.compile(r"^[a-zA-Z][a-zA-Z0-9-]*(?:;[a-zA-Z0-9_.-]+)*$")
+    return bool(attr_pattern.match(name))
+
+
+def _validate_ldap_dn(dn: str) -> bool:
+    """Local LDAP DN validator - breaks circular dependency.
+
+    Basic DN validation pattern to avoid circular import from flext-ldap.
+    """
+    if not dn or not isinstance(dn, str):
+        return False
+    # Basic DN validation pattern
+    dn_pattern = _re.compile(r"^[a-zA-Z][\w-]*=.+(?:,[a-zA-Z][\w-]*=.+)*$")
+    return bool(dn_pattern.match(dn.strip()))
+
+
 @lru_cache(maxsize=1)
 def _get_ldap_validators() -> tuple[ValidatorFunc, ValidatorFunc]:
-    """Import validators from flext-ldap with graceful fallback.
+    """Use local validators to avoid circular dependency with flext-ldap.
 
-    If flext-ldap is temporarily unavailable during monorepo migrations,
-    provide minimal local validators that satisfy our tests.
+    Previously imported from flext-ldap.utils, but this creates circular dependency:
+    flext-ldap imports flext-ldif, flext-ldif imports flext-ldap.utils.
+
+    Now uses local implementations that match the LDAP RFC requirements.
     """
-    try:
-        utils_mod = importlib.import_module("flext_ldap.utils")
-        return (
-            utils_mod.flext_ldap_validate_attribute_name,
-            utils_mod.flext_ldap_validate_dn,
-        )
-    except Exception:
-
-        def _attr_ok(name: str) -> bool:
-            return bool(_re.match(r"^[A-Za-z][A-Za-z0-9-]*$", name))
-
-        def _dn_ok(dn: str) -> bool:
-            pattern = r"^[A-Za-z][A-Za-z0-9-]*=.+(,[A-Za-z][A-Za-z0-9-]*=.+)*$"
-            return bool(_re.match(pattern, dn.strip()))
-
-        return (_attr_ok, _dn_ok)
+    return (
+        _validate_ldap_attribute_name,
+        _validate_ldap_dn,
+    )
 
 
 # NOTE: Enterprise semantic types now centralized in types.py
@@ -345,6 +357,20 @@ class FlextLdifEntry(FlextEntity):
     attributes: FlextLdifAttributes = Field(default_factory=FlextLdifAttributes)
     changetype: str | None = Field(default=None)
 
+    @field_validator("attributes", mode="before")
+    @classmethod
+    def validate_attributes(
+        cls,
+        v: dict[str, list[str]] | FlextLdifAttributes
+    ) -> FlextLdifAttributes:
+        """Convert dict to FlextLdifAttributes if needed."""
+        if isinstance(v, FlextLdifAttributes):
+            return v
+        if isinstance(v, dict):
+            return FlextLdifAttributes(attributes=v)
+        msg = f"attributes must be dict or FlextLdifAttributes, got {type(v)}"
+        raise ValueError(msg)
+
     def __str__(self) -> str:  # pragma: no cover - simple human-readable summary
         """Return a concise human-readable summary of the entry."""
         return f"FlextLdifEntry(id={self.id}, dn={self.dn.value})"
@@ -374,15 +400,19 @@ class FlextLdifEntry(FlextEntity):
             raise ValueError(msg)
 
         try:
-            dn_obj = FlextLdifDistinguishedName(value=dn)
-            attrs_obj = FlextLdifAttributes(attributes=attributes)
             # Generate deterministic ID like model_validate does
             content_hash = hashlib.sha256(f"{dn}{attributes}".encode()).hexdigest()
             entry_id = (
                 f"{content_hash[:8]}-{content_hash[8:12]}-"
                 f"{content_hash[12:16]}-{content_hash[16:20]}-{content_hash[20:32]}"
             )
-            return cls(id=entry_id, dn=dn_obj, attributes=attrs_obj)
+
+            # Use model_validate to properly handle field validators
+            return cls.model_validate({
+                "id": entry_id,
+                "dn": dn,
+                "attributes": attributes,  # This will be converted by field_validator
+            })
         except (ValueError, FlextValidationError) as e:
             raise ValueError(str(e)) from e
 
@@ -424,12 +454,8 @@ class FlextLdifEntry(FlextEntity):
                     raise ValueError(err_msg) from e
                 raise
 
-        # Upgrade attributes
-        attrs_val = obj_copy.get("attributes")
-        if isinstance(attrs_val, dict):
-            obj_copy["attributes"] = FlextLdifAttributes(
-                attributes=cast("dict[str, list[str]]", attrs_val),
-            )
+        # Leave attributes as dict for field validator to handle
+        # The field validator will convert dict to FlextLdifAttributes
 
         try:
             return super().model_validate(obj_copy)

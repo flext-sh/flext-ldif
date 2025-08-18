@@ -7,11 +7,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import importlib
 import re
 from collections.abc import Callable as _Callable
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from flext_core import FlextResult, get_logger
 from flext_core.exceptions import FlextValidationError
@@ -19,11 +17,33 @@ from flext_core.exceptions import FlextValidationError
 from flext_ldif.constants import FlextLdifCoreConstants
 from flext_ldif.format_handlers import modernized_ldif_parse, modernized_ldif_write
 from flext_ldif.models import FlextLdifEntry, FlextLdifFactory
-
-if TYPE_CHECKING:
-    from flext_ldif.types import LDIFContent
+from flext_ldif.types import LDIFContent
 
 logger = get_logger(__name__)
+
+
+def _validate_ldap_attribute_name(name: str) -> bool:
+    """Local LDAP attribute name validator - breaks circular dependency.
+
+    Validates attribute names per RFC 4512: base name + optional language tags/options.
+    Supports: displayname;lang-es_es, orclinstancecount;oid-prd-app01.network.ctbc
+    """
+    if not name or not isinstance(name, str):
+        return False
+    attr_pattern = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]*(?:;[a-zA-Z0-9_.-]+)*$")
+    return bool(attr_pattern.match(name))
+
+
+def _validate_ldap_dn(dn: str) -> bool:
+    """Local LDAP DN validator - breaks circular dependency.
+
+    Basic DN validation pattern to avoid circular import from flext-ldap.
+    """
+    if not dn or not isinstance(dn, str):
+        return False
+    # Basic DN validation pattern
+    dn_pattern = re.compile(r"^[a-zA-Z][\w-]*=.+(?:,[a-zA-Z][\w-]*=.+)*$")
+    return bool(dn_pattern.match(dn.strip()))
 
 
 class TLdif:
@@ -34,20 +54,11 @@ class TLdif:
     DN_PATTERN = re.compile(FlextLdifCoreConstants.DN_PATTERN_REGEX)
     ATTR_NAME_PATTERN = re.compile(FlextLdifCoreConstants.ATTR_NAME_PATTERN_REGEX)
 
-    # Lazy loader for flext-ldap validators to avoid hard import-time dependency
-    _attr_validator: _Callable[[str], bool] | None = None
-    _dn_validator: _Callable[[str], bool] | None = None
-
+    # Use local validators to avoid circular dependency
     @classmethod
     def _load_validators(cls) -> tuple[_Callable[[str], bool], _Callable[[str], bool]]:
-        if cls._attr_validator is not None and cls._dn_validator is not None:
-            return cls._attr_validator, cls._dn_validator
-
-        utils_mod = importlib.import_module("flext_ldap.utils")
-        # Use getattr to avoid direct attribute access warnings and enable lazy resolution
-        cls._attr_validator = utils_mod.flext_ldap_validate_attribute_name
-        cls._dn_validator = utils_mod.flext_ldap_validate_dn
-        return cls._attr_validator, cls._dn_validator
+        """Use local validators to avoid circular dependency with flext-ldap."""
+        return (_validate_ldap_attribute_name, _validate_ldap_dn)
 
     @classmethod
     def parse(cls, content: str | LDIFContent) -> FlextResult[list[FlextLdifEntry]]:

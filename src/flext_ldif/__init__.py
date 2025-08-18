@@ -9,9 +9,6 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
-
-from flext_core import FlextResult
 
 
 # Application layer API
@@ -60,33 +57,41 @@ from .types import (
 # Centralized type system
 from .types import AttributeName  # Additional commonly used types
 
+# Constants for LDIF processing
+from .constants import (
+    LDAP_DN_ATTRIBUTES,
+    LDAP_PERSON_CLASSES,
+    LDAP_GROUP_CLASSES,
+    LDAP_OU_CLASSES,
+    DEFAULT_LINE_WRAP_LENGTH,
+    DEFAULT_INPUT_ENCODING,
+    DEFAULT_OUTPUT_ENCODING,
+)
+
 from collections.abc import Callable
 
-"""Expose optional CLI entry point without importing CLI at type-check time."""
+"""Expose optional CLI entry point with runtime fallback."""
 cli_main: Callable[[], None] | None
-if not TYPE_CHECKING:
-    try:
-        from .cli import main as cli_main
-    except Exception:
-        # Provide a no-op CLI entry point when optional deps are missing
-        # Magic constants for CLI arg positions
-        _CMD_INDEX = 1
-        _ARG_INDEX = 2
+try:
+    from .cli import main as cli_main
+except Exception:
+    # Provide a no-op CLI entry point when optional deps are missing
+    # Magic constants for CLI arg positions
+    _CMD_INDEX = 1
+    _ARG_INDEX = 2
 
-        def _noop_cli() -> None:
-            argv = sys.argv
-            # For help/normal runs, behave as success; for invalid parse target, error.
-            has_command = len(argv) >= _CMD_INDEX + 1
-            is_parse = has_command and argv[_CMD_INDEX] == "parse"
-            missing_arg = len(argv) < _ARG_INDEX + 1
-            missing_file = (not missing_arg) and (not Path(argv[_ARG_INDEX]).exists())
-            if is_parse and (missing_arg or missing_file):
-                raise SystemExit(2)
-            raise SystemExit(0)
+    def _noop_cli() -> None:
+        argv = sys.argv
+        # For help/normal runs, behave as success; for invalid parse target, error.
+        has_command = len(argv) >= _CMD_INDEX + 1
+        is_parse = has_command and argv[_CMD_INDEX] == "parse"
+        missing_arg = len(argv) < _ARG_INDEX + 1
+        missing_file = (not missing_arg) and (not Path(argv[_ARG_INDEX]).exists())
+        if is_parse and (missing_arg or missing_file):
+            raise SystemExit(2)
+        raise SystemExit(0)
 
-        cli_main = _noop_cli
-else:
-    cli_main = None
+    cli_main = _noop_cli
 
 __version__ = "0.9.0"
 __version_info__ = tuple(int(x) for x in __version__.split(".") if x.isdigit())
@@ -128,6 +133,9 @@ def flext_ldif_write(entries: list[FlextLdifEntry]) -> str:
 __all__: list[str] = [
     "AttributeName",
     "AttributeValue",
+    "DEFAULT_INPUT_ENCODING",
+    "DEFAULT_LINE_WRAP_LENGTH",
+    "DEFAULT_OUTPUT_ENCODING",
     "FilePath",
     "FlextLdifAPI",
     "FlextLdifAnalyticsService",
@@ -148,6 +156,10 @@ __all__: list[str] = [
     "FlextLdifValidationError",
     "FlextLdifValidatorService",
     "FlextLdifWriterService",
+    "LDAP_DN_ATTRIBUTES",
+    "LDAP_GROUP_CLASSES",
+    "LDAP_OU_CLASSES",
+    "LDAP_PERSON_CLASSES",
     "LDAPObjectClass",
     "LDIFContent",
     "LDIFLines",

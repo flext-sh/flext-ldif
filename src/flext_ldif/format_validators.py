@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import importlib
+import re
 from collections.abc import Callable
 from functools import lru_cache
 from typing import ClassVar
@@ -20,16 +20,34 @@ from flext_ldif.models import FlextLdifEntry
 ValidatorFunc = Callable[[str], bool]
 
 
+def _validate_ldap_attribute_name(name: str) -> bool:
+    """Local LDAP attribute name validator - breaks circular dependency.
+
+    Validates attribute names per RFC 4512: base name + optional language tags/options.
+    Supports: displayname;lang-es_es, orclinstancecount;oid-prd-app01.network.ctbc
+    """
+    if not name or not isinstance(name, str):
+        return False
+    attr_pattern = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]*(?:;[a-zA-Z0-9_.-]+)*$")
+    return bool(attr_pattern.match(name))
+
+
+def _validate_ldap_dn(dn: str) -> bool:
+    """Local LDAP DN validator - breaks circular dependency.
+
+    Basic DN validation pattern to avoid circular import from flext-ldap.
+    """
+    if not dn or not isinstance(dn, str):
+        return False
+    # Basic DN validation pattern
+    dn_pattern = re.compile(r"^[a-zA-Z][\w-]*=.+(?:,[a-zA-Z][\w-]*=.+)*$")
+    return bool(dn_pattern.match(dn.strip()))
+
+
 @lru_cache(maxsize=1)
 def _get_ldap_validators() -> tuple[ValidatorFunc, ValidatorFunc]:
-    """Import real validators from flext-ldap (canonical requirement)."""
-    utils_mod = importlib.import_module(
-        FlextLdifFormatConstants.FLEXT_LDAP_UTILS_MODULE,
-    )
-    return (
-        utils_mod.flext_ldap_validate_attribute_name,
-        utils_mod.flext_ldap_validate_dn,
-    )
+    """Use local validators to avoid circular dependency with flext-ldap."""
+    return (_validate_ldap_attribute_name, _validate_ldap_dn)
 
 
 class LdifValidator:

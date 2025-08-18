@@ -233,8 +233,8 @@ def display_statistics(
     stats_result = api.get_entry_statistics(entries)
     # Some tests mock get_entry_statistics to return a raw dict
     # Handle test compatibility - use type: ignore for this edge case
-    if isinstance(stats_result, dict):  # type: ignore[unreachable]
-        stats = stats_result  # type: ignore[unreachable]
+    if isinstance(stats_result, dict):
+        stats = stats_result
     else:
         if not stats_result.success or stats_result.data is None:
             logger.error("Failed to get statistics: %s", stats_result.error)
@@ -377,7 +377,7 @@ def cli(ctx: click.Context, /, **options: object) -> None:
             quiet=quiet,
             debug=debug,
         )
-    setup_result = flext_setup_cli(cli_config)  # type: ignore[arg-type]
+    setup_result = flext_setup_cli(cli_config)
     if not setup_result.success:
         click.echo(
             FlextLdifOperationMessages.CLI_SETUP_FAILED.format(

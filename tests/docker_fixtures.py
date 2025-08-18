@@ -13,9 +13,18 @@ import time
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-import docker
 import pytest
-from docker import Container, DockerClient
+
+# Make docker import optional to avoid import errors when docker package is not available
+try:
+    import docker
+    from docker import Container, DockerClient
+    DOCKER_AVAILABLE = True
+except ImportError:
+    DOCKER_AVAILABLE = False
+    # Create dummy types when docker is not available
+    Container = object
+    DockerClient = object
 
 # OpenLDAP Container Configuration
 OPENLDAP_IMAGE = "osixia/openldap:1.5.0"
