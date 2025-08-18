@@ -9,44 +9,10 @@ from __future__ import annotations
 
 import sys
 
-try:
-    # Prefer local fixtures if running from client-a-oud-mig context
-    from tests.docker_fixtures import (
-        OpenLDAPContainerManager,
-        check_docker_available,
-    )
-except Exception:  # pragma: no cover - fallback to shared fixtures path
-    try:
-        from client-a_oud_mig.tests.docker_fixtures import (
-            OpenLDAPContainerManager,
-            check_docker_available,
-        )
-    except Exception:
-        # Last resort: provide stubs that disable the test gracefully
-        def check_docker_available() -> bool:  # type: ignore[no-redef]
-            """Check docker available function.
-
-            Returns:
-                bool: Description.
-
-            """
-            return False
-
-        class OpenLDAPContainerManager:  # type: ignore[no-redef]
-            """OpenLDAPContainerManager class."""
-
-            def start_container(self) -> None:
-                """Start container function."""
-
-            def get_ldif_export(self) -> str:
-                """Get ldif export function.
-
-                Returns:
-                    str: Description.
-
-                """
-                return ""
-
+from tests.docker_fixtures import (
+    OpenLDAPContainerManager,
+    check_docker_available,
+)
 
 from flext_ldif import flext_ldif_parse, flext_ldif_validate
 
