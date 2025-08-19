@@ -25,7 +25,7 @@ class FlextLdifRepositoryService(FlextDomainService[dict[str, int]]):
     def execute(self) -> FlextResult[dict[str, int]]:
         """Execute repository operation - required by FlextDomainService."""
         # This would be called with specific queries in real usage
-        return FlextResult.ok({})
+        return FlextResult[None].ok({})
 
     def find_by_dn(
         self,
@@ -34,14 +34,14 @@ class FlextLdifRepositoryService(FlextDomainService[dict[str, int]]):
     ) -> FlextResult[FlextLdifEntry | None]:
         """Find entry by distinguished name."""
         if not dn or not dn.strip():
-            return FlextResult.fail(FlextLdifValidationMessages.DN_EMPTY_ERROR)
+            return FlextResult[None].fail(FlextLdifValidationMessages.DN_EMPTY_ERROR)
 
         dn_lower = dn.lower()
         for entry in entries:
             if entry.dn.value.lower() == dn_lower:
-                return FlextResult.ok(entry)
+                return FlextResult[None].ok(entry)
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def filter_by_objectclass(
         self,
@@ -50,10 +50,10 @@ class FlextLdifRepositoryService(FlextDomainService[dict[str, int]]):
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter entries by objectClass attribute."""
         if not objectclass or not objectclass.strip():
-            return FlextResult.fail(FlextLdifCoreMessages.MISSING_OBJECTCLASS)
+            return FlextResult[None].fail(FlextLdifCoreMessages.MISSING_OBJECTCLASS)
 
         filtered = [entry for entry in entries if entry.has_object_class(objectclass)]
-        return FlextResult.ok(filtered)
+        return FlextResult[None].ok(filtered)
 
     def filter_by_attribute(
         self,
@@ -63,7 +63,7 @@ class FlextLdifRepositoryService(FlextDomainService[dict[str, int]]):
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter entries by attribute value."""
         if not attribute or not attribute.strip():
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 FlextLdifCoreMessages.INVALID_ATTRIBUTE_NAME.format(
                     attr_name="attribute",
                 ),
@@ -75,7 +75,7 @@ class FlextLdifRepositoryService(FlextDomainService[dict[str, int]]):
             if attr_values and value in attr_values:
                 filtered.append(entry)
 
-        return FlextResult.ok(filtered)
+        return FlextResult[None].ok(filtered)
 
     def get_statistics(
         self,
@@ -97,7 +97,7 @@ class FlextLdifRepositoryService(FlextDomainService[dict[str, int]]):
             else:
                 stats["other_entries"] += 1
 
-        return FlextResult.ok(stats)
+        return FlextResult[None].ok(stats)
 
 
 __all__ = ["FlextLdifRepositoryService"]

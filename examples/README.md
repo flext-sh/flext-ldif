@@ -56,8 +56,8 @@ These examples demonstrate integration with:
 
 Each example includes expected output and demonstrates:
 
-- ✅ Successful operations with FlextResult.ok()
-- ❌ Error handling with FlextResult.fail()
+- ✅ Successful operations with FlextResult[None].ok()
+- ❌ Error handling with FlextResult[None].fail()
 - 📊 Statistics and validation reporting
 - 🔄 Transformation and filtering operations
 - 📝 Comprehensive logging and tracing

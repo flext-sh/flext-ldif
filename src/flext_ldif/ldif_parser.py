@@ -36,7 +36,7 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifEntry]]):
 
         """
         # This would be called with specific content in real usage
-        return FlextResult.ok([])
+        return FlextResult[None].ok([])
 
     def parse(self, content: str | object) -> FlextResult[list[FlextLdifEntry]]:
         """Parse raw LDIF content into domain entities.
@@ -51,11 +51,11 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifEntry]]):
 
         """
         if not isinstance(content, str):
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 FlextLdifCoreMessages.INVALID_DN_FORMAT.replace("{dn}", "content type"),
             )
         if not content or not content.strip():
-            return FlextResult.ok([])
+            return FlextResult[None].ok([])
 
         try:
             entries = []
@@ -80,15 +80,15 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifEntry]]):
             # If we have content but no successful entries, it's invalid LDIF
             non_empty_blocks = [b for b in entry_blocks if b.strip()]
             if non_empty_blocks and not entries:
-                return FlextResult.fail(
+                return FlextResult[None].fail(
                     FlextLdifValidationMessages.INVALID_LDIF_FORMAT
                     + f": {len(failed_blocks)} blocks failed to parse",
                 )
 
-            return FlextResult.ok(entries)
+            return FlextResult[None].ok(entries)
 
         except Exception as e:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 FlextLdifCoreMessages.PARSE_FAILED.format(error=str(e)),
             )
 
@@ -111,7 +111,7 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifEntry]]):
         try:
             path_obj = Path(file_path)
             if not path_obj.exists():
-                return FlextResult.fail(
+                return FlextResult[None].fail(
                     FlextLdifCoreMessages.FILE_NOT_FOUND.format(file_path=file_path),
                 )
 
@@ -119,7 +119,7 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifEntry]]):
             return self.parse(content)
 
         except Exception as e:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 FlextLdifCoreMessages.FILE_READ_FAILED.format(error=str(e)),
             )
 
@@ -153,20 +153,20 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifEntry]]):
 
         """
         if not block.strip():
-            return FlextResult.fail(FlextLdifValidationMessages.ENTRY_VALIDATION_FAILED)
+            return FlextResult[None].fail(FlextLdifValidationMessages.ENTRY_VALIDATION_FAILED)
 
         lines = block.split("\n")
         if not lines:
-            return FlextResult.fail(FlextLdifValidationMessages.ENTRY_VALIDATION_FAILED)
+            return FlextResult[None].fail(FlextLdifValidationMessages.ENTRY_VALIDATION_FAILED)
 
         # Parse DN from first line
         dn_line = lines[0].strip()
         if not dn_line.startswith("dn:"):
-            return FlextResult.fail(FlextLdifValidationMessages.RECORD_MISSING_DN)
+            return FlextResult[None].fail(FlextLdifValidationMessages.RECORD_MISSING_DN)
 
         dn = dn_line[3:].strip()
         if not dn:
-            return FlextResult.fail(FlextLdifValidationMessages.DN_EMPTY_ERROR)
+            return FlextResult[None].fail(FlextLdifValidationMessages.DN_EMPTY_ERROR)
 
         # Parse attributes
         attributes: dict[str, list[str]] = {}

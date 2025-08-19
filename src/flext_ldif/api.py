@@ -66,8 +66,8 @@ class FlextLdifAPI:
                 limit=self.config.max_entries,
             )
             logger.warning(error_msg)
-            return FlextResult.fail(error_msg)
-        return FlextResult.ok(entries)
+            return FlextResult[None].fail(error_msg)
+        return FlextResult[None].ok(entries)
 
     def parse_file(self, file_path: str | Path) -> FlextResult[list[FlextLdifEntry]]:
         """Parse LDIF file."""
@@ -89,10 +89,10 @@ class FlextLdifAPI:
                 limit=self.config.max_entries,
             )
             logger.warning(error_msg)
-            return FlextResult.fail(error_msg)
+            return FlextResult[None].fail(error_msg)
 
         logger.debug("File parsed successfully with %d entries", len(entries))
-        return FlextResult.ok(entries)
+        return FlextResult[None].ok(entries)
 
     def parse_entries_from_string(
         self,
@@ -128,7 +128,7 @@ class FlextLdifAPI:
             len(files_to_process) - len(filtered_files),
         )
 
-        return FlextResult.ok(sorted_files)
+        return FlextResult[None].ok(sorted_files)
 
     def write(
         self,
@@ -150,10 +150,10 @@ class FlextLdifAPI:
         if file_path:
             file_result = self._writer_service.write_file(entries, file_path)
             if file_result.success:
-                return FlextResult.ok(
+                return FlextResult[None].ok(
                     FlextLdifOperationMessages.WRITE_SUCCESS.format(path=file_path),
                 )
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 file_result.error
                 or FlextLdifOperationMessages.WRITE_FAILED.format(
                     error="File write failed",
@@ -221,7 +221,7 @@ class FlextLdifAPI:
                 count=len(entries),
                 limit=self.config.max_entries,
             )
-            return FlextResult.fail(error_msg)
+            return FlextResult[None].fail(error_msg)
 
         result = self._validator_service.validate_entries(entries)
         if result.is_success:
@@ -269,7 +269,7 @@ class FlextLdifAPI:
 
         """
         filtered = [entry for entry in entries if entry.is_person_entry()]
-        return FlextResult.ok(filtered)
+        return FlextResult[None].ok(filtered)
 
     def filter_groups(
         self,
@@ -285,7 +285,7 @@ class FlextLdifAPI:
 
         """
         filtered = [entry for entry in entries if entry.is_group_entry()]
-        return FlextResult.ok(filtered)
+        return FlextResult[None].ok(filtered)
 
     def filter_organizational_units(
         self,
@@ -301,11 +301,11 @@ class FlextLdifAPI:
 
         """
         if entries is None:
-            return FlextResult.fail(FlextLdifValidationMessages.ENTRIES_CANNOT_BE_NONE)
+            return FlextResult[None].fail(FlextLdifValidationMessages.ENTRIES_CANNOT_BE_NONE)
         filtered = [
             entry for entry in entries if entry.has_object_class("organizationalUnit")
         ]
-        return FlextResult.ok(filtered)
+        return FlextResult[None].ok(filtered)
 
     def filter_valid(
         self,
@@ -321,9 +321,9 @@ class FlextLdifAPI:
 
         """
         if entries is None:
-            return FlextResult.fail(FlextLdifValidationMessages.ENTRIES_CANNOT_BE_NONE)
+            return FlextResult[None].fail(FlextLdifValidationMessages.ENTRIES_CANNOT_BE_NONE)
         filtered = [entry for entry in entries if self.validate_entry(entry).success]
-        return FlextResult.ok(filtered)
+        return FlextResult[None].ok(filtered)
 
     def filter_by_objectclass(
         self,
@@ -452,9 +452,9 @@ class FlextLdifAPI:
 
         """
         if entries is None:
-            return FlextResult.fail(FlextLdifValidationMessages.ENTRIES_CANNOT_BE_NONE)
+            return FlextResult[None].fail(FlextLdifValidationMessages.ENTRIES_CANNOT_BE_NONE)
         filtered = [entry for entry in entries if entry.changetype is not None]
-        return FlextResult.ok(filtered)
+        return FlextResult[None].ok(filtered)
 
     def sort_hierarchically(
         self,
@@ -470,12 +470,12 @@ class FlextLdifAPI:
 
         """
         if entries is None:
-            return FlextResult.fail(FlextLdifValidationMessages.ENTRIES_CANNOT_BE_NONE)
+            return FlextResult[None].fail(FlextLdifValidationMessages.ENTRIES_CANNOT_BE_NONE)
         try:
             sorted_entries = sorted(entries, key=lambda entry: str(entry.dn).count(","))
-            return FlextResult.ok(sorted_entries)
+            return FlextResult[None].ok(sorted_entries)
         except Exception as e:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 FlextLdifOperationMessages.SORT_FAILED.format(error=str(e)),
             )
 
@@ -499,8 +499,8 @@ class FlextLdifAPI:
         """Process single file path input."""
         file_path_obj = Path(file_path)
         if file_path_obj.exists() and file_path_obj.is_file():
-            return FlextResult.ok([file_path_obj])
-        return FlextResult.fail(
+            return FlextResult[None].ok([file_path_obj])
+        return FlextResult[None].fail(
             FlextLdifValidationMessages.FILE_NOT_FOUND.format(file_path=file_path),
         )
 
@@ -512,19 +512,19 @@ class FlextLdifAPI:
         """Process directory path with pattern."""
         directory_obj = Path(directory_path)
         if not directory_obj.exists():
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 FlextLdifValidationMessages.FILE_NOT_FOUND.format(
                     file_path=directory_path,
                 ),
             )
         if not directory_obj.is_dir():
-            return FlextResult.fail(f"Path is not a directory: {directory_path}")
+            return FlextResult[None].fail(f"Path is not a directory: {directory_path}")
 
         try:
             files_found = list(directory_obj.glob(file_pattern))
-            return FlextResult.ok(files_found)
+            return FlextResult[None].ok(files_found)
         except (OSError, ValueError) as e:
-            return FlextResult.fail(f"Error discovering files in directory: {e}")
+            return FlextResult[None].fail(f"Error discovering files in directory: {e}")
 
     def _process_current_directory_pattern(
         self,
@@ -533,9 +533,9 @@ class FlextLdifAPI:
         """Process pattern in current directory."""
         try:
             files_found = list(Path().glob(file_pattern))
-            return FlextResult.ok(files_found)
+            return FlextResult[None].ok(files_found)
         except (OSError, ValueError) as e:
-            return FlextResult.fail(f"Error discovering files with pattern: {e}")
+            return FlextResult[None].fail(f"Error discovering files with pattern: {e}")
 
     def _filter_files_by_size(
         self,

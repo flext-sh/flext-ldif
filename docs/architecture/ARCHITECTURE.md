@@ -907,7 +907,7 @@ class ParseLdifHandler:
             parse_result = self._parser_service.parse_content(request.content)
 
             if parse_result.is_failure:
-                return FlextResult.failure(parse_result.error)
+                return FlextResult[None].fail(parse_result.error)
 
             # Update aggregate with parsed entries
             document.parse_entries(parse_result.data)
@@ -918,10 +918,10 @@ class ParseLdifHandler:
                 for entry in document.entries
             ]
 
-            return FlextResult.success(entry_dtos)
+            return FlextResult[None].ok(entry_dtos)
 
         except Exception as e:
-            return FlextResult.failure(f"Parse operation failed: {e}")
+            return FlextResult[None].fail(f"Parse operation failed: {e}")
 ```
 
 ### Application Services
@@ -1070,17 +1070,17 @@ class LdifParserService(ILdifParser):
                     domain_entries.append(domain_entry)
                 except ValueError as e:
                     if self._config.strict_validation:
-                        return FlextResult.failure(f"Entry validation failed: {e}")
+                        return FlextResult[None].fail(f"Entry validation failed: {e}")
                     else:
                         self._logger.warning("Skipping invalid entry: %s", e)
                         continue
 
             self._logger.info("Successfully parsed %d entries", len(domain_entries))
-            return FlextResult.success(domain_entries)
+            return FlextResult[None].ok(domain_entries)
 
         except Exception as e:
             self._logger.error("LDIF parsing failed: %s", e)
-            return FlextResult.failure(f"Parsing failed: {e}")
+            return FlextResult[None].fail(f"Parsing failed: {e}")
 
     def _parse_ldif_text(self, content: str) -> list[dict]:
         """Low-level LDIF text parsing."""
@@ -1213,11 +1213,11 @@ class FileLdifRepository(ILdifRepository):
             temp_path.rename(file_path)
 
             self._logger.info("Successfully saved entries to %s", file_path)
-            return FlextResult.success(True)
+            return FlextResult[None].ok(True)
 
         except Exception as e:
             self._logger.error("Failed to save entries: %s", e)
-            return FlextResult.failure(f"Save operation failed: {e}")
+            return FlextResult[None].fail(f"Save operation failed: {e}")
 
     def load_entries(self, filename: str) -> FlextResult[list[FlextLdifEntry]]:
         """Load entries from file."""
@@ -1225,7 +1225,7 @@ class FileLdifRepository(ILdifRepository):
             file_path = self._base_path / filename
 
             if not file_path.exists():
-                return FlextResult.failure(f"File not found: {filename}")
+                return FlextResult[None].fail(f"File not found: {filename}")
 
             self._logger.debug("Loading entries from %s", file_path)
 
@@ -1240,7 +1240,7 @@ class FileLdifRepository(ILdifRepository):
 
         except Exception as e:
             self._logger.error("Failed to load entries: %s", e)
-            return FlextResult.failure(f"Load operation failed: {e}")
+            return FlextResult[None].fail(f"Load operation failed: {e}")
 
     def _generate_ldif_content(self, entries: list[FlextLdifEntry]) -> str:
         """Generate LDIF content from domain entities."""

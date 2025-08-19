@@ -44,11 +44,11 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
         if self.config is not None:
             cfg_validation = self.config.validate_business_rules()
             if cfg_validation.is_failure:
-                return FlextResult.fail(
+                return FlextResult[None].fail(
                     cfg_validation.error
                     or FlextLdifValidationMessages.INVALID_CONFIGURATION,
                 )
-        return FlextResult.ok(data=True)
+        return FlextResult[None].ok(True)
 
     def validate_data(self, data: list[FlextLdifEntry]) -> FlextResult[bool]:
         """Validate a list of LDIF entries.
@@ -74,7 +74,7 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
         """
         validation_result = entry.validate_business_rules()
         if validation_result.is_failure:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 f"{FlextLdifValidationMessages.ENTRY_VALIDATION_FAILED}: {validation_result.error}",
             )
 
@@ -87,7 +87,7 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
             # Empty attribute lists are not allowed in strict mode
             for attr_name, values in entry.attributes.attributes.items():
                 if len(values) == 0:
-                    return FlextResult.fail(
+                    return FlextResult[None].fail(
                         FlextLdifValidationMessages.EMPTY_ATTRIBUTES_NOT_ALLOWED.format(
                             attr_name=attr_name,
                         ),
@@ -97,12 +97,12 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
                     v is None or (isinstance(v, str) and v.strip() == "")
                     for v in values
                 ):
-                    return FlextResult.fail(
+                    return FlextResult[None].fail(
                         FlextLdifValidationMessages.EMPTY_ATTRIBUTE_VALUE_NOT_ALLOWED.format(
                             attr_name=attr_name,
                         ),
                     )
-        return FlextResult.ok(data=True)
+        return FlextResult[None].ok(True)
 
     def validate_entries(self, entries: list[FlextLdifEntry]) -> FlextResult[bool]:
         """Validate multiple LDIF entries.
@@ -117,10 +117,10 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
         for i, entry in enumerate(entries):
             entry_result = self.validate_entry(entry)
             if entry_result.is_failure:
-                return FlextResult.fail(
+                return FlextResult[None].fail(
                     f"Entry {i} {FlextLdifValidationMessages.ENTRY_VALIDATION_FAILED.lower()}: {entry_result.error}",
                 )
-        return FlextResult.ok(data=True)
+        return FlextResult[None].ok(True)
 
     def validate_dn_format(self, dn: str) -> FlextResult[bool]:
         """Validate DN format compliance.

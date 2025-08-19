@@ -343,7 +343,7 @@ def test_7_flext_core_integration_validation() -> None:
         # ✅ Verificar se flext-core ainda funciona independentemente
 
         # Test FlextResult (core functionality)
-        FlextResult.ok("test data")
+        FlextResult[None].ok("test data")
 
         # Test FlextContainer (core functionality)
         FlextContainer()

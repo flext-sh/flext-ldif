@@ -974,10 +974,10 @@ def process_ldif_with_transform(
     parse_result = api.parse(content)
 
     if parse_result.is_failure:
-        return FlextResult.failure(parse_result.error)
+        return FlextResult[None].fail(parse_result.error)
 
     transformed = [transform(entry) for entry in parse_result.data]
-    return FlextResult.success(transformed)
+    return FlextResult[None].ok(transformed)
 ```
 
 ---

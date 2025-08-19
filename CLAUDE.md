@@ -171,9 +171,9 @@ Use FlextResult pattern from flext-core:
 def parse_ldif(content: str) -> FlextResult[list[FlextLdifEntry]]:
     try:
         entries = # parsing logic
-        return FlextResult.success(entries)
+        return FlextResult[None].ok(entries)
     except Exception as e:
-        return FlextResult.failure(str(e))
+        return FlextResult[None].fail(str(e))
 ```
 
 ### Domain Validation
