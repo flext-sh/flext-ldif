@@ -511,12 +511,12 @@ def modernized_ldif_parse(
         logger.info(
             FlextLdifOperationMessages.LDIF_PARSED_SUCCESS.format(count=len(entries)),
         )
-        return FlextResult.ok(entries)
+        return FlextResult[None].ok(entries)
 
     except Exception as e:
         error_msg: str = f"Modernized LDIF parse failed: {e}"
         logger.exception(FlextLdifValidationMessages.MODERNIZED_PARSING_FAILED)
-        return FlextResult.fail(error_msg)
+        return FlextResult[None].fail(error_msg)
 
 
 def modernized_ldif_write(
@@ -533,7 +533,7 @@ def modernized_ldif_write(
     """
     if entries is None:
         logger.error("Cannot write None entries")
-        return FlextResult.fail(FlextLdifValidationMessages.ENTRIES_CANNOT_BE_NONE)
+        return FlextResult[None].fail(FlextLdifValidationMessages.ENTRIES_CANNOT_BE_NONE)
 
     try:
         writer = FlextLDIFWriter()
@@ -546,12 +546,12 @@ def modernized_ldif_write(
                 count=writer.records_written,
             ),
         )
-        return FlextResult.ok(output)
+        return FlextResult[None].ok(output)
 
     except Exception as e:
         error_msg: str = f"Modernized LDIF write failed: {e}"
         logger.exception(FlextLdifValidationMessages.MODERNIZED_WRITING_FAILED)
-        return FlextResult.fail(error_msg)
+        return FlextResult[None].fail(error_msg)
 
 
 __all__: list[str] = [

@@ -908,7 +908,7 @@ class FlextLdifAPI:
 
         try:
             if not file_path.exists():
-                return FlextResult.fail(f"LDIF file not found: {file_path}")
+                return FlextResult[None].fail(f"LDIF file not found: {file_path}")
 
             # Read file with proper encoding
             content = file_path.read_text(encoding=self._settings.input_encoding)
@@ -922,7 +922,7 @@ class FlextLdifAPI:
                 "file_path": str(file_path),
                 "error": str(e)
             })
-            return FlextResult.fail(error_msg)
+            return FlextResult[None].fail(error_msg)
 
     def validate_entries(self, entries: List[FlextLdifEntry]) -> FlextResult[bool]:
         """
@@ -1031,7 +1031,7 @@ class FlextLdifAPI:
             # Generate LDIF content
             content_result = self.write_ldif(entries)
             if content_result.is_failure:
-                return FlextResult.fail(f"Failed to generate LDIF content: {content_result.error}")
+                return FlextResult[None].fail(f"Failed to generate LDIF content: {content_result.error}")
 
             # Write to file with proper encoding
             file_path.write_text(content_result.value, encoding=self._settings.output_encoding)
@@ -1041,7 +1041,7 @@ class FlextLdifAPI:
                 "file_path": str(file_path)
             })
 
-            return FlextResult.ok(True)
+            return FlextResult[None].ok(True)
 
         except Exception as e:
             error_msg: str = f"Failed to write LDIF file {file_path}: {str(e)}"
@@ -1049,7 +1049,7 @@ class FlextLdifAPI:
                 "file_path": str(file_path),
                 "error": str(e)
             })
-            return FlextResult.fail(error_msg)
+            return FlextResult[None].fail(error_msg)
 
     def search_entries(
         self,
@@ -1097,12 +1097,12 @@ class FlextLdifAPI:
                 "matches_found": len(filtered_entries)
             })
 
-            return FlextResult.ok(filtered_entries)
+            return FlextResult[None].ok(filtered_entries)
 
         except Exception as e:
             error_msg: str = f"Search failed: {str(e)}"
             logger.error("LDIF entry search failed", extra={"error": str(e)})
-            return FlextResult.fail(error_msg)
+            return FlextResult[None].fail(error_msg)
 
     def _matches_criteria(self, entry: FlextLdifEntry, criteria: Dict[str, Any]) -> bool:
         """Check if entry matches search criteria."""
@@ -2375,12 +2375,12 @@ def parse_ldif(content: str) -> FlextResult[List[FlextLdifEntry]]:
     """Parse LDIF with railway-oriented error handling."""
     try:
         entries = _parse_content(content)
-        return FlextResult.ok(entries)
+        return FlextResult[None].ok(entries)
     except FlextLdifParseError as e:
-        return FlextResult.fail(f"Parse failed: {str(e)}")
+        return FlextResult[None].fail(f"Parse failed: {str(e)}")
     except Exception as e:
         logger.exception("Unexpected error in LDIF parsing")
-        return FlextResult.fail(f"Unexpected error: {str(e)}")
+        return FlextResult[None].fail(f"Unexpected error: {str(e)}")
 ```
 
 #### **Domain Exception Hierarchy**

@@ -1495,9 +1495,9 @@ def filter_person_entries(entries) -> FlextResult[list]:
             entry for entry in entries
             if entry.has_object_class("person")
         ]
-        return FlextResult.success(person_entries)
+        return FlextResult[None].ok(person_entries)
     except Exception as e:
-        return FlextResult.failure(f"Filtering failed: {e}")
+        return FlextResult[None].fail(f"Filtering failed: {e}")
 
 # Use chained operations
 result = chain_ldif_operations("data/mixed_entries.ldif")
@@ -1519,7 +1519,7 @@ def process_files_railway(*file_paths: str) -> FlextResult[dict]:
     for file_path in file_paths:
         file_result = (api.parse_file(file_path)
                          .bind(lambda entries: api.validate(entries).map(lambda _: entries))
-                         .bind(lambda entries: FlextResult.success({
+                         .bind(lambda entries: FlextResult[None].ok({
                              "file": file_path,
                              "entries": len(entries),
                              "people": len([e for e in entries if e.has_object_class("person")])
@@ -1533,7 +1533,7 @@ def process_files_railway(*file_paths: str) -> FlextResult[dict]:
             results["files"][file_path] = {"error": file_result.error}
             results["summary"]["failed"] += 1
 
-    return FlextResult.success(results)
+    return FlextResult[None].ok(results)
 
 # Test railway pattern
 railway_result = process_files_railway(

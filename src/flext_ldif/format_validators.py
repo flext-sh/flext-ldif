@@ -73,19 +73,19 @@ class LdifValidator:
 
         """
         if not dn_value or not dn_value.strip():
-            return FlextResult.fail(FlextLdifFormatConstants.DN_CANNOT_BE_EMPTY_FORMAT)
+            return FlextResult[None].fail(FlextLdifFormatConstants.DN_CANNOT_BE_EMPTY_FORMAT)
 
         # ✅ DELEGATE to flext-ldap root API - NO local validation logic
         _attr_validator, dn_validator = _get_ldap_validators()
         is_valid = bool(dn_validator(dn_value.strip()))
         if not is_valid:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 FlextLdifFormatConstants.INVALID_DN_FORMAT_MSG.format(
                     dn_value=dn_value
                 ),
             )
 
-        return FlextResult.ok(data=True)
+        return FlextResult[None].ok(True)
 
     @classmethod
     def validate_attribute_name(cls, attr_name: str) -> FlextResult[bool]:
@@ -102,7 +102,7 @@ class LdifValidator:
 
         """
         if not attr_name or not attr_name.strip():
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 FlextLdifFormatConstants.ATTRIBUTE_NAME_CANNOT_BE_EMPTY_FORMAT,
             )
 
@@ -110,13 +110,13 @@ class LdifValidator:
         attr_validator, _dn_validator = _get_ldap_validators()
         is_valid = bool(attr_validator(attr_name))
         if not is_valid:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 FlextLdifFormatConstants.INVALID_ATTRIBUTE_NAME_FORMAT_MSG.format(
                     attr_name=attr_name,
                 ),
             )
 
-        return FlextResult.ok(data=True)
+        return FlextResult[None].ok(True)
 
     @classmethod
     def validate_required_objectclass(cls, entry: FlextLdifEntry) -> FlextResult[bool]:
@@ -130,11 +130,11 @@ class LdifValidator:
 
         """
         if not entry.has_attribute(FlextLdifFormatConstants.OBJECTCLASS_ATTRIBUTE):
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 FlextLdifFormatConstants.ENTRY_MISSING_OBJECTCLASS_FORMAT,
             )
 
-        return FlextResult.ok(data=True)
+        return FlextResult[None].ok(True)
 
     @classmethod
     def validate_entry_completeness(cls, entry: FlextLdifEntry) -> FlextResult[bool]:
@@ -149,7 +149,7 @@ class LdifValidator:
         """
         # Check DN
         if not entry.dn or not entry.dn.value:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 FlextLdifFormatConstants.ENTRY_MUST_HAVE_VALID_DN_FORMAT,
             )
 
@@ -162,7 +162,7 @@ class LdifValidator:
         if not objectclass_validation.success:
             return objectclass_validation
 
-        return FlextResult.ok(data=True)
+        return FlextResult[None].ok(True)
 
     @classmethod
     def validate_entry_type(
@@ -190,7 +190,7 @@ class LdifValidator:
             FlextLdifFormatConstants.OBJECTCLASS_ATTRIBUTE,
         )
         if not object_classes_attr:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 FlextLdifFormatConstants.ENTRY_MISSING_OBJECTCLASS_TYPE_VALIDATION,
             )
 
@@ -198,14 +198,14 @@ class LdifValidator:
 
         # Check if entry has any of the expected classes
         if not (expected_classes & object_classes):
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 FlextLdifFormatConstants.ENTRY_TYPE_MISMATCH_FORMAT.format(
                     expected_classes=expected_classes,
                     object_classes=object_classes,
                 ),
             )
 
-        return FlextResult.ok(data=True)
+        return FlextResult[None].ok(True)
 
     @classmethod
     def is_person_entry(cls, entry: FlextLdifEntry) -> FlextResult[bool]:
@@ -273,13 +273,13 @@ class LdifSchemaValidator:
         ]
 
         if missing_attrs:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 FlextLdifFormatConstants.ENTRY_MISSING_REQUIRED_ATTRIBUTES_FORMAT.format(
                     missing_attrs=", ".join(missing_attrs),
                 ),
             )
 
-        return FlextResult.ok(data=True)
+        return FlextResult[None].ok(True)
 
     @classmethod
     def validate_person_schema(cls, entry: FlextLdifEntry) -> FlextResult[bool]:
@@ -336,13 +336,13 @@ def validate_attribute_format(attr_name: str, attr_value: str) -> FlextResult[bo
 
     # Basic value validation
     if not attr_value.strip():
-        return FlextResult.fail(
+        return FlextResult[None].fail(
             FlextLdifFormatConstants.EMPTY_ATTRIBUTE_VALUE_NOT_ALLOWED_FORMAT.format(
                 attr_name=attr_name,
             ),
         )
 
-    return FlextResult.ok(data=True)
+    return FlextResult[None].ok(True)
 
 
 def validate_dn_format(dn_value: str) -> FlextResult[bool]:
@@ -353,7 +353,7 @@ def validate_dn_format(dn_value: str) -> FlextResult[bool]:
 def validate_ldif_structure(entry: object) -> FlextResult[bool]:
     """Validate LDIF entry structure - delegates to LdifValidator."""
     if not isinstance(entry, FlextLdifEntry):
-        return FlextResult.fail(
+        return FlextResult[None].fail(
             FlextLdifFormatConstants.ENTRY_MUST_BE_FLEXTLDIFENTRY_FORMAT,
         )
 

@@ -25,7 +25,7 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, int]]):
     def execute(self) -> FlextResult[dict[str, int]]:
         """Execute analytics operation - required by FlextDomainService."""
         # This would be called with specific entries in real usage
-        return FlextResult.ok({FlextLdifAnalyticsConstants.TOTAL_ENTRIES_KEY: 0})
+        return FlextResult[None].ok({FlextLdifAnalyticsConstants.TOTAL_ENTRIES_KEY: 0})
 
     def analyze_entry_patterns(
         self,
@@ -47,7 +47,7 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, int]]):
             if entry.has_attribute(FlextLdifAnalyticsConstants.TELEPHONE_ATTRIBUTE):
                 patterns[FlextLdifAnalyticsConstants.ENTRIES_WITH_TELEPHONE_KEY] += 1
 
-        return FlextResult.ok(patterns)
+        return FlextResult[None].ok(patterns)
 
     def get_objectclass_distribution(
         self,
@@ -61,7 +61,7 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, int]]):
             for obj_class in object_classes:
                 distribution[obj_class] = distribution.get(obj_class, 0) + 1
 
-        return FlextResult.ok(distribution)
+        return FlextResult[None].ok(distribution)
 
     def get_dn_depth_analysis(
         self,
@@ -75,7 +75,7 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, int]]):
             depth_key = FlextLdifAnalyticsConstants.DEPTH_KEY_FORMAT.format(depth=depth)
             depth_analysis[depth_key] = depth_analysis.get(depth_key, 0) + 1
 
-        return FlextResult.ok(depth_analysis)
+        return FlextResult[None].ok(depth_analysis)
 
 
 __all__ = ["FlextLdifAnalyticsService"]

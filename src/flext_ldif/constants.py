@@ -673,7 +673,7 @@ class FlextLdifCoreConstants:
     NEWLINE_ESCAPE: Final[str] = "\\n"
     CONTENT_PREVIEW_LENGTH: Final[int] = 200
 
-    # Error Messages for FlextResult.fail()
+    # Error Messages for FlextResult[None].fail()
     PARSE_FAILED_MSG: Final[str] = "Parse failed: {error}"
     MODERNIZED_LDIF_PARSE_FAILED_MSG: Final[str] = "Modernized LDIF parse failed"
     FAILED_TO_CREATE_ENTRY_MSG: Final[str] = "Failed to create entry: {error}"

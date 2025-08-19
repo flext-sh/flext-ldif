@@ -142,7 +142,7 @@ class FlextLdifDistinguishedName(FlextValue):
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate DN business rules."""
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def get_rdn(self) -> str:
         """Get relative distinguished name (first component)."""
@@ -229,18 +229,18 @@ class FlextLdifAttributes(FlextValue):
         """Validate attribute business rules."""
         for attr_name in self.attributes:
             if not attr_name or not attr_name.strip():
-                return FlextResult.fail(
+                return FlextResult[None].fail(
                     "Attribute name cannot be empty or whitespace-only",
                 )
 
             # Delegate to flext-ldap root API
             attr_validator, _dn_validator = _get_ldap_validators()
             if not bool(attr_validator(attr_name)):
-                return FlextResult.fail(
+                return FlextResult[None].fail(
                     f"Invalid LDAP attribute name format: {attr_name}",
                 )
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     # Back-compat alias used in some tests
     def validate_semantic_rules(self) -> FlextResult[None]:
@@ -471,21 +471,21 @@ class FlextLdifEntry(FlextEntity):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate entry business rules."""
         if not self.dn.value:
-            return FlextResult.fail("Entry must have a DN")
+            return FlextResult[None].fail("Entry must have a DN")
 
         attr_validation = self.attributes.validate_business_rules()
         if attr_validation.is_failure:
-            return FlextResult.fail(f"Invalid attributes: {attr_validation.error}")
+            return FlextResult[None].fail(f"Invalid attributes: {attr_validation.error}")
 
         if self.changetype != "delete" and self.attributes.is_empty():
-            return FlextResult.fail("LDIF entry must have at least one attribute")
+            return FlextResult[None].fail("LDIF entry must have at least one attribute")
 
         if self.changetype != "delete" and not self.attributes.has_attribute(
             "objectClass",
         ):
-            return FlextResult.fail("Entry must have objectClass attribute")
+            return FlextResult[None].fail("Entry must have objectClass attribute")
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     # Back-compat alias used in tests
     def validate_semantic_rules(self) -> FlextResult[None]:
@@ -664,11 +664,11 @@ class FlextLdifFactory:
         """Create entry with validation."""
         dn_result = FlextLdifFactory.create_dn(dn)
         if dn_result.is_failure:
-            return FlextResult.fail(f"Invalid DN: {dn_result.error}")
+            return FlextResult[None].fail(f"Invalid DN: {dn_result.error}")
 
         attr_result = FlextLdifFactory.create_attributes(attributes)
         if attr_result.is_failure:
-            return FlextResult.fail(f"Invalid attributes: {attr_result.error}")
+            return FlextResult[None].fail(f"Invalid attributes: {attr_result.error}")
 
         return FlextFactory.create_model(
             FlextLdifEntry,

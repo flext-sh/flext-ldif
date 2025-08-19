@@ -29,20 +29,20 @@ class FlextLdifWriterService(FlextDomainService[str]):
     def execute(self) -> FlextResult[str]:
         """Execute writing operation - required by FlextDomainService."""
         # This would be called with specific entries in real usage
-        return FlextResult.ok("")
+        return FlextResult[None].ok("")
 
     def write(self, entries: list[FlextLdifEntry]) -> FlextResult[str]:
         """Write entries to LDIF string."""
         if not entries:
-            return FlextResult.ok("")
+            return FlextResult[None].ok("")
 
         try:
             ldif_blocks = [entry.to_ldif() for entry in entries]
 
-            return FlextResult.ok("\n".join(ldif_blocks))
+            return FlextResult[None].ok("\n".join(ldif_blocks))
 
         except Exception as e:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 FlextLdifCoreMessages.WRITE_FAILED.format(error=str(e)),
             )
 
@@ -56,7 +56,7 @@ class FlextLdifWriterService(FlextDomainService[str]):
         try:
             content_result = self.write(entries)
             if content_result.is_failure:
-                return FlextResult.fail(
+                return FlextResult[None].fail(
                     FlextLdifCoreMessages.CONTENT_GENERATION_FAILED.format(
                         count=len(entries),
                         error=content_result.error,
@@ -68,24 +68,24 @@ class FlextLdifWriterService(FlextDomainService[str]):
             try:
                 path_obj.parent.mkdir(parents=True, exist_ok=True)
             except PermissionError as e:
-                return FlextResult.fail(
+                return FlextResult[None].fail(
                     FlextLdifCoreMessages.FILE_WRITE_FAILED.format(error=str(e)),
                 )
             path_obj.write_text(content_result.data or "", encoding=encoding)
 
-            return FlextResult.ok(data=True)
+            return FlextResult[None].ok(True)
 
         except Exception as e:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 FlextLdifCoreMessages.FILE_WRITE_FAILED.format(error=str(e)),
             )
 
     def write_entry(self, entry: FlextLdifEntry) -> FlextResult[str]:
         """Write single entry to LDIF string."""
         try:
-            return FlextResult.ok(entry.to_ldif())
+            return FlextResult[None].ok(entry.to_ldif())
         except Exception as e:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 FlextLdifCoreMessages.WRITE_FAILED.format(error=str(e)),
             )
 

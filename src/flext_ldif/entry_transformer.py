@@ -29,12 +29,12 @@ class FlextLdifTransformerService(FlextDomainService[list[FlextLdifEntry]]):
 
     def execute(self) -> FlextResult[list[FlextLdifEntry]]:
         """Execute transformation - implements FlextDomainService contract."""
-        return FlextResult.ok([])
+        return FlextResult[None].ok([])
 
     def transform_entry(self, entry: FlextLdifEntry) -> FlextResult[FlextLdifEntry]:
         """Transform single LDIF entry."""
         # Base implementation returns entry as-is
-        return FlextResult.ok(entry)
+        return FlextResult[None].ok(entry)
 
     def transform_entries(
         self,
@@ -47,7 +47,7 @@ class FlextLdifTransformerService(FlextDomainService[list[FlextLdifEntry]]):
             if result.success and result.data:
                 transformed.append(result.data)
 
-        return FlextResult.ok(transformed)
+        return FlextResult[None].ok(transformed)
 
     def normalize_dns(
         self,
@@ -55,7 +55,7 @@ class FlextLdifTransformerService(FlextDomainService[list[FlextLdifEntry]]):
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Normalize all DN values in entries."""
         # DN normalization is handled automatically by the domain model
-        return FlextResult.ok(entries)
+        return FlextResult[None].ok(entries)
 
 
 __all__ = ["FlextLdifTransformerService"]
