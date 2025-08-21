@@ -462,10 +462,10 @@ class FlextLdifDocument(FlextAggregateRoot):
 
 ```python
 # domain/values/distinguished_name.py
-from flext_core import FlextValueObject
+from flext_core import FlextValue
 import re
 
-class FlextLdifDistinguishedName(FlextValueObject):
+class FlextLdifDistinguishedName(FlextValue):
     """
     Immutable value object representing LDAP Distinguished Names.
 
@@ -569,10 +569,10 @@ class FlextLdifDistinguishedName(FlextValueObject):
 
 ```python
 # domain/values/attributes.py
-from flext_core import FlextValueObject
+from flext_core import FlextValue
 from typing import Dict, List
 
-class FlextLdifAttributes(FlextValueObject):
+class FlextLdifAttributes(FlextValue):
     """
     Immutable value object representing LDIF entry attributes.
 

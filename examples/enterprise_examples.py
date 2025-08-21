@@ -171,9 +171,7 @@ mail: test.user@filetest.com
             lambda entries: api.filter_persons(entries)
         ).flat_map(
             lambda person_entries: TLdif.write_file(person_entries, output_path)
-        ).tap(
-            lambda _: print(f"Wrote filtered entries to {output_path}")
-        )
+        ).tap(lambda _: print(f"Wrote filtered entries to {output_path}"))
 
         # Using API for file operations with railway programming
         api.parse_file(input_path).tap(lambda _: None)
@@ -263,9 +261,7 @@ cn: incomplete
 
     api = FlextLdifAPI()
     # Railway programming for validation chain
-    api.parse(incomplete_ldif).flat_map(
-        api.validate
-    ).tap_error(lambda _: None)
+    api.parse(incomplete_ldif).flat_map(api.validate).tap_error(lambda _: None)
 
 
 def _parse_sample_ldif_data() -> str:
@@ -344,7 +340,9 @@ def _demonstrate_basic_object_class_filtering(
     api.filter_by_objectclass(entries, "organizationalUnit")
 
 
-def _filter_by_title_containing(entries: list[FlextLdifEntry], keyword: str) -> list[FlextLdifEntry]:
+def _filter_by_title_containing(
+    entries: list[FlextLdifEntry], keyword: str
+) -> list[FlextLdifEntry]:
     """Custom filter for entries with title containing keyword."""
     result: list[FlextLdifEntry] = []
     for entry in entries:
@@ -379,6 +377,7 @@ def _demonstrate_hierarchical_analysis(
     entries: list[FlextLdifEntry],
 ) -> None:
     """Demonstrate hierarchical analysis and entry categorization."""
+
     def print_hierarchy(sorted_entries: list[FlextLdifEntry]) -> None:
         for entry in sorted_entries:
             indent = "   " + "  " * str(entry.dn).count(",")

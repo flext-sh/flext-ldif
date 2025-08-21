@@ -128,7 +128,9 @@ class LdifValidationDemonstrator:
     def _analyze_entry_types(self, entries: list[FlextLdifEntry]) -> None:
         """Analyze entry types using API filters."""
         # Use railway programming for filtering results
-        filter_functions: list[Callable[[list[FlextLdifEntry]], FlextResult[list[FlextLdifEntry]]]] = [
+        filter_functions: list[
+            Callable[[list[FlextLdifEntry]], FlextResult[list[FlextLdifEntry]]]
+        ] = [
             self.api.filter_persons,
             self.api.filter_groups,
             self.api.filter_organizational_units,
@@ -148,9 +150,7 @@ class LdifValidationDemonstrator:
             return
 
         # Use railway programming for invalid file processing
-        self.api.parse_file(invalid_file).tap(
-            self._validate_invalid_entries
-        )
+        self.api.parse_file(invalid_file).tap(self._validate_invalid_entries)
 
     def _validate_invalid_entries(self, entries: list[FlextLdifEntry]) -> None:
         """Validate entries from invalid LDIF file."""

@@ -124,7 +124,7 @@ def apply_filter(
         # Use unwrap_or with original entries as default on failure
         filtered_entries = result.unwrap_or(entries)
 
-        # Use railway programming for success actions  
+        # Use railway programming for success actions
         def log_filter_success(entries_list: list[FlextLdifEntry]) -> None:
             logger.debug(
                 "Filter successful: %d entries filtered to %d entries",
@@ -143,7 +143,7 @@ def apply_filter(
                     filter_type=filter_type,
                 ),
             )
-        
+
         result.tap(log_filter_success)
 
         # Handle error case if filter failed
@@ -287,14 +287,14 @@ def write_entries_to_file(
     logger.trace("Write result success: %s", write_result.is_success)
 
     # Use railway programming for success and error handling
-    def log_write_success(result: object) -> None:
+    def log_write_success(_result: object) -> None:
         logger.info(
             "Entries successfully written to file",
             entry_count=len(entries),
             output_path=output_path,
         )
         click.echo(FlextLdifOperationMessages.WRITE_SUCCESS.format(path=output_path))
-    
+
     def handle_write_error(error: str) -> None:
         logger.error("Write operation failed: %s", error)
         logger.debug("Write failure details for file: %s", output_path)
@@ -303,7 +303,7 @@ def write_entries_to_file(
             err=True,
         )
         sys.exit(1)
-    
+
     write_result.tap(log_write_success).tap_error(handle_write_error)
 
 
@@ -615,6 +615,7 @@ def validate(
 
         # Parse file and handle errors
         parse_result = api.parse_file(input_file)
+
         # Handle parsing result using railway programming pattern
         def exit_on_validation_parse_error(error: str) -> None:
             safe_click_echo(
@@ -742,6 +743,7 @@ def stats(
 
         # Parse file using railway programming pattern
         parse_result = api.parse_file(input_file)
+
         def exit_on_stats_parse_error(error: str) -> None:
             click.echo(f"Failed to parse file: {error}", err=True)
             sys.exit(1)
@@ -751,6 +753,7 @@ def stats(
 
         # Get statistics using railway programming pattern
         statistics_result = api.get_entry_statistics(entries)
+
         def exit_on_statistics_error(error: str) -> None:
             click.echo(f"Failed to get statistics: {error}", err=True)
             sys.exit(1)
@@ -804,6 +807,7 @@ def find(
 
         # Parse file using railway programming pattern
         parse_result = api.parse_file(input_file)
+
         def exit_on_find_parse_error(error: str) -> None:
             click.echo(f"Failed to parse file: {error}", err=True)
             sys.exit(1)
@@ -841,6 +845,7 @@ def _handle_search_attribute(entry: FlextLdifEntry, search_attr: str) -> None:
 def _handle_matched_entry_output(entry: FlextLdifEntry, api: FlextLdifAPI) -> None:
     """Handle converting and displaying matched entry as LDIF."""
     ldif_result = api.entries_to_ldif([entry])
+
     # Use railway programming pattern with tap for success action
     def display_found_entry(ldif_content: str) -> None:
         click.echo(FlextLdifOperationMessages.FOUND_ENTRY)
@@ -924,6 +929,7 @@ def filter_by_class(
 
         # Parse file using railway programming pattern
         parse_result = api.parse_file(input_file)
+
         def exit_on_objectclass_parse_error(error: str) -> None:
             click.echo(f"Failed to parse file: {error}", err=True)
             sys.exit(1)
@@ -932,6 +938,7 @@ def filter_by_class(
         entries = parse_result.unwrap_or([])
         # REFACTORING: FlextResult guarantees non-None data for successful results
         filtered_result = api.filter_by_objectclass(entries, objectclass)
+
         # Use railway programming pattern for filter result
         def exit_on_filter_error(error: str) -> None:
             click.echo(f"Filter operation failed: {error}", err=True)
@@ -951,6 +958,7 @@ def filter_by_class(
         else:
             # Display filtered entries using railway programming
             ldif_result = api.entries_to_ldif(filtered_entries)
+
             def exit_on_entries_ldif_error(error: str) -> None:
                 click.echo(f"Failed to convert entries to LDIF: {error}", err=True)
                 sys.exit(1)
@@ -985,6 +993,7 @@ def convert(
 
         # Parse input
         parse_result = api.parse_file(input_file)
+
         # Use railway programming with unwrap_or - no cast needed
         def handle_parse_error(err: str) -> None:
             click.echo(f"Parse error: {err}", err=True)
@@ -1119,6 +1128,7 @@ def write(
 
         # Parse file using railway programming pattern
         parse_result = api.parse_file(input_file)
+
         def exit_on_render_parse_error(error: str) -> None:
             click.echo(f"Failed to parse file: {error}", err=True)
             sys.exit(1)
@@ -1128,6 +1138,7 @@ def write(
 
         # Convert to LDIF using railway programming
         write_result = api.entries_to_ldif(entries)
+
         def exit_on_render_error(error: str) -> None:
             click.echo(f"Failed to render LDIF: {error}", err=True)
             sys.exit(1)

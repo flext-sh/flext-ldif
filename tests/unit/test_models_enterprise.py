@@ -53,7 +53,7 @@ class TestFlextLdifEntryEnterprise:
         if str(entry.dn) != sample_entry_data["dn"]:
             msg: str = f"Expected {sample_entry_data['dn']}, got {entry.dn!s}"
             raise AssertionError(msg)
-        assert entry.get_all_attributes() == sample_entry_data["attributes"]
+        assert entry.attributes.attributes == sample_entry_data["attributes"]
 
     def test_entry_creation_with_string_dn(self, sample_entry_data: dict) -> None:
         """Test entry creation with string DN (auto-conversion)."""
@@ -69,8 +69,8 @@ class TestFlextLdifEntryEnterprise:
         entry = FlextLdifEntry.model_validate(sample_entry_data)
 
         assert isinstance(entry.attributes, FlextLdifAttributes)
-        if entry.get_all_attributes() != sample_entry_data["attributes"]:
-            msg: str = f"Expected {sample_entry_data['attributes']}, got {entry.get_all_attributes()}"
+        if entry.attributes.attributes != sample_entry_data["attributes"]:
+            msg: str = f"Expected {sample_entry_data['attributes']}, got {entry.attributes.attributes}"
             raise AssertionError(msg)
 
     def test_entry_validation_invalid_dn_type(self) -> None:
@@ -333,7 +333,7 @@ description: With multiple descriptions"""
         if str(entry.dn) != dn:
             msg: str = f"Expected {dn}, got {entry.dn!s}"
             raise AssertionError(msg)
-        assert entry.get_all_attributes() == attributes
+        assert entry.attributes.attributes == attributes
         if entry.get_attribute("cn") != ["test"]:
             msg: str = f"Expected {['test']}, got {entry.get_attribute('cn')}"
             raise AssertionError(msg)
@@ -403,7 +403,7 @@ description: With multiple descriptions"""
         if str(entry.dn) != sample_entry_data["dn"]:
             msg: str = f"Expected {sample_entry_data['dn']}, got {entry.dn!s}"
             raise AssertionError(msg)
-        assert entry.get_all_attributes() == sample_entry_data["attributes"]
+        assert entry.attributes.attributes == sample_entry_data["attributes"]
 
     def test_entry_json_serialization(self, sample_entry_data: dict) -> None:
         """Test entry JSON serialization."""

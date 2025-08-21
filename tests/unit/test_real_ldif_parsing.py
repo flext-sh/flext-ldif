@@ -120,9 +120,7 @@ description: All users in the organization
         assert ou.dn == "ou=people,dc=example,dc=com"
         assert ou.get_attribute("objectClass") == ["organizationalUnit"]
         assert ou.get_attribute("ou") == ["people"]
-        assert ou.get_attribute("description") == [
-            "All users in the organization"
-        ]
+        assert ou.get_attribute("description") == ["All users in the organization"]
 
     def test_validate_real_entries(self) -> None:
         """Test validation of real parsed entries."""

@@ -221,19 +221,17 @@ class FlextLdifUtilities:
             batch = entries[i : i + batch_size]
             batch_result = api.validate(batch)
 
-            # Use railway programming to handle success case
-            def extend_batch_results(batch_validation: bool) -> None:
-                results.extend([batch_validation] * len(batch))
-            
             # Handle batch success or fall back to individual validation
-            if batch_result.tap(extend_batch_results).is_success:
+            if batch_result.is_success:
+                # Use railway programming to handle success case
+                validation_result = bool(batch_result.value)
+                results.extend([validation_result] * len(batch))
                 continue
-            else:
-                # Individual validation on batch failure
-                for entry in batch:
-                    entry_result = api.validate_entry(entry)
-                    default_validation = False
-                    results.append(entry_result.unwrap_or(default_validation))
+            # Individual validation on batch failure
+            for entry in batch:
+                entry_result = api.validate_entry(entry)
+                default_validation = False
+                results.append(entry_result.unwrap_or(default_validation))
 
         return FlextResult[list[bool]].ok(results)
 

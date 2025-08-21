@@ -23,6 +23,7 @@ logger = get_logger(__name__)
 
 try:
     import docker
+
     DOCKER_AVAILABLE = True
 except ImportError:
     DOCKER_AVAILABLE = False
@@ -128,7 +129,9 @@ class OpenLDAPContainerManager:
                     container_error = "Container is None"
                     raise RuntimeError(container_error)
                 if self.container.status != "running":
-                    status_msg: str = f"Container failed to start: {self.container.status}"
+                    status_msg: str = (
+                        f"Container failed to start: {self.container.status}"
+                    )
                     raise RuntimeError(status_msg)
 
             try:
@@ -165,7 +168,9 @@ class OpenLDAPContainerManager:
 
             time.sleep(1)
 
-        timeout_msg: str = f"OpenLDAP container failed to become ready within {timeout} seconds"
+        timeout_msg: str = (
+            f"OpenLDAP container failed to become ready within {timeout} seconds"
+        )
         raise RuntimeError(timeout_msg)
 
     def _populate_test_data(self) -> None:
@@ -355,7 +360,9 @@ def container_manager() -> Generator[OpenLDAPContainerManager]:
 
 
 @pytest.fixture(scope="session")
-def docker_openldap_container(container_manager: OpenLDAPContainerManager) -> Generator[Container | None]:
+def docker_openldap_container(
+    container_manager: OpenLDAPContainerManager,
+) -> Generator[Container | None]:
     """Session-scoped fixture that provides OpenLDAP Docker container for LDIF testing.
 
     This fixture starts an OpenLDAP container with test data at the beginning of the test

@@ -123,7 +123,7 @@ make deps-audit              # Security audit of dependencies
 
 All domain objects should:
 
-- Inherit from flext-core base classes (FlextEntity, FlextValueObject)
+- Inherit from flext-core base classes (FlextEntity, FlextValue)
 - Implement `validate_domain_rules()` for business logic validation
 - Use immutable value objects for data integrity
 - Follow DDD principles with rich domain models
