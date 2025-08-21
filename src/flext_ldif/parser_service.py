@@ -6,6 +6,7 @@ LDIF parsing implementation using flext-core patterns.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import override
 
 from flext_core import FlextDomainService, FlextResult, get_logger
 from pydantic import Field
@@ -26,6 +27,7 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifEntry]]):
 
     config: FlextLdifConfig | None = Field(default=None)
 
+    @override
     def execute(self) -> FlextResult[list[FlextLdifEntry]]:
         """Execute the default parsing operation.
 
@@ -36,7 +38,7 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifEntry]]):
 
         """
         # This would be called with specific content in real usage
-        return FlextResult[None].ok([])
+        return FlextResult[list[FlextLdifEntry]].ok([])
 
     def parse(self, content: str | object) -> FlextResult[list[FlextLdifEntry]]:
         """Parse raw LDIF content into domain entities.
@@ -51,44 +53,47 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifEntry]]):
 
         """
         if not isinstance(content, str):
-            return FlextResult[None].fail(
+            return FlextResult[list[FlextLdifEntry]].fail(
                 FlextLdifCoreMessages.INVALID_DN_FORMAT.replace("{dn}", "content type"),
             )
         if not content or not content.strip():
-            return FlextResult[None].ok([])
+            return FlextResult[list[FlextLdifEntry]].ok([])
 
         try:
-            entries = []
+            entries: list[FlextLdifEntry] = []
             entry_blocks = content.strip().split("\n\n")
-            failed_blocks = []
+            failed_blocks: list[str] = []
 
             for block in entry_blocks:
                 if not block.strip():
                     continue
 
-                entry_result = self._parse_entry_block(block.strip())
-                if entry_result.success and entry_result.data:
-                    entries.append(entry_result.data)
-                elif entry_result.is_failure:
+                # Use railway programming for entry parsing
+                def handle_success(entry: FlextLdifEntry) -> None:
+                    entries.append(entry)
+
+                def handle_error(error: str) -> None:
                     logger.warning(
-                        FlextLdifCoreMessages.PARSE_FAILED.format(
-                            error=entry_result.error,
-                        ),
+                        FlextLdifCoreMessages.PARSE_FAILED.format(error=error)
                     )
-                    failed_blocks.append(entry_result.error)
+                    failed_blocks.append(error or "Unknown parse error")
+
+                self._parse_entry_block(block.strip()).tap(handle_success).tap_error(
+                    handle_error
+                )
 
             # If we have content but no successful entries, it's invalid LDIF
             non_empty_blocks = [b for b in entry_blocks if b.strip()]
             if non_empty_blocks and not entries:
-                return FlextResult[None].fail(
+                return FlextResult[list[FlextLdifEntry]].fail(
                     FlextLdifValidationMessages.INVALID_LDIF_FORMAT
                     + f": {len(failed_blocks)} blocks failed to parse",
                 )
 
-            return FlextResult[None].ok(entries)
+            return FlextResult[list[FlextLdifEntry]].ok(entries)
 
-        except Exception as e:
-            return FlextResult[None].fail(
+        except (ValueError, AttributeError, TypeError) as e:
+            return FlextResult[list[FlextLdifEntry]].fail(
                 FlextLdifCoreMessages.PARSE_FAILED.format(error=str(e)),
             )
 
@@ -111,15 +116,15 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifEntry]]):
         try:
             path_obj = Path(file_path)
             if not path_obj.exists():
-                return FlextResult[None].fail(
+                return FlextResult[list[FlextLdifEntry]].fail(
                     FlextLdifCoreMessages.FILE_NOT_FOUND.format(file_path=file_path),
                 )
 
             content = path_obj.read_text(encoding=encoding)
             return self.parse(content)
 
-        except Exception as e:
-            return FlextResult[None].fail(
+        except (OSError, UnicodeError) as e:
+            return FlextResult[list[FlextLdifEntry]].fail(
                 FlextLdifCoreMessages.FILE_READ_FAILED.format(error=str(e)),
             )
 
@@ -153,20 +158,28 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifEntry]]):
 
         """
         if not block.strip():
-            return FlextResult[None].fail(FlextLdifValidationMessages.ENTRY_VALIDATION_FAILED)
+            return FlextResult[FlextLdifEntry].fail(
+                FlextLdifValidationMessages.ENTRY_VALIDATION_FAILED
+            )
 
         lines = block.split("\n")
         if not lines:
-            return FlextResult[None].fail(FlextLdifValidationMessages.ENTRY_VALIDATION_FAILED)
+            return FlextResult[FlextLdifEntry].fail(
+                FlextLdifValidationMessages.ENTRY_VALIDATION_FAILED
+            )
 
         # Parse DN from first line
         dn_line = lines[0].strip()
         if not dn_line.startswith("dn:"):
-            return FlextResult[None].fail(FlextLdifValidationMessages.RECORD_MISSING_DN)
+            return FlextResult[FlextLdifEntry].fail(
+                FlextLdifValidationMessages.RECORD_MISSING_DN
+            )
 
         dn = dn_line[3:].strip()
         if not dn:
-            return FlextResult[None].fail(FlextLdifValidationMessages.DN_EMPTY_ERROR)
+            return FlextResult[FlextLdifEntry].fail(
+                FlextLdifValidationMessages.DN_EMPTY_ERROR
+            )
 
         # Parse attributes
         attributes: dict[str, list[str]] = {}

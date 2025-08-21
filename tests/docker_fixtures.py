@@ -19,6 +19,7 @@ import pytest
 try:
     import docker
     from docker import Container, DockerClient
+
     DOCKER_AVAILABLE = True
 except ImportError:
     DOCKER_AVAILABLE = False
@@ -390,7 +391,7 @@ def real_ldif_data(
         if ldif_data:
             return ldif_data
 
-    # Fallback to static test data if container export fails
+    # Return static test data if container export fails
     return f"""dn: {ldif_test_config["base_dn"]}
 objectClass: dcObject
 objectClass: organization

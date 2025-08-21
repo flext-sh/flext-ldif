@@ -77,8 +77,8 @@ member: cn=John Doe,ou=people,dc=example,dc=com
         # Step 1: Parse LDIF content
         parse_result = api.parse(complex_ldif_content)
         assert parse_result.success
-        assert parse_result.data is not None
-        entries = parse_result.data
+        assert parse_result.value is not None
+        entries = parse_result.value
         assert len(entries) == 6
 
         # Step 2: Validate all entries
@@ -88,8 +88,8 @@ member: cn=John Doe,ou=people,dc=example,dc=com
         # Step 3: Filter specific entries
         people_filter = api.filter_by_objectclass(entries, "inetOrgPerson")
         assert people_filter.success
-        assert people_filter.data is not None
-        assert len(people_filter.data) == 2
+        assert people_filter.value is not None
+        assert len(people_filter.value) == 2
 
         # Step 4: Find specific entry
         john_result = api.find_entry_by_dn(
@@ -97,36 +97,36 @@ member: cn=John Doe,ou=people,dc=example,dc=com
             "cn=John Doe,ou=people,dc=example,dc=com",
         )
         assert john_result.success
-        assert john_result.data is not None
-        assert john_result.data.get_attribute("givenName") == ["John"]
+        assert john_result.value is not None
+        assert john_result.value.get_attribute("givenName") == ["John"]
 
         # Step 5: Get statistics
         stats_result = api.get_entry_statistics(entries)
         assert stats_result.success
-        assert stats_result.data is not None
-        assert "total_entries" in stats_result.data
-        assert stats_result.data["total_entries"] == 6
+        assert stats_result.value is not None
+        assert "total_entries" in stats_result.value
+        assert stats_result.value["total_entries"] == 6
 
         # Step 6: Write back to LDIF
         write_result = api.write(entries)
         assert write_result.success
-        assert write_result.data is not None
-        assert "cn=John Doe,ou=people,dc=example,dc=com" in write_result.data
+        assert write_result.value is not None
+        assert "cn=John Doe,ou=people,dc=example,dc=com" in write_result.value
 
-    def test_complete_legacy_functions_workflow(
+    def test_complete_convenience_functions_workflow(
         self,
         complex_ldif_content: str,
     ) -> None:
-        """Test complete workflow using legacy convenience functions."""
-        # Step 1: Parse using legacy function
+        """Test complete workflow using convenience functions."""
+        # Step 1: Parse using convenience function
         entries = flext_ldif_parse(complex_ldif_content)
         assert len(entries) == 6
 
-        # Step 2: Validate using legacy function
+        # Step 2: Validate using convenience function
         is_valid = flext_ldif_validate(entries)
         assert is_valid is True
 
-        # Step 3: Write using legacy function
+        # Step 3: Write using convenience function
         ldif_output = flext_ldif_write(entries)
         assert isinstance(ldif_output, str)
         assert "cn=John Doe,ou=people,dc=example,dc=com" in ldif_output
@@ -148,13 +148,13 @@ member: cn=John Doe,ou=people,dc=example,dc=com
             # Step 1: Parse from file
             parse_result = api.parse_file(input_path)
             assert parse_result.success
-            assert parse_result.data is not None
-            entries = parse_result.data
+            assert parse_result.value is not None
+            entries = parse_result.value
 
             # Step 2: Process entries (filter and modify)
             people_result = api.filter_by_objectclass(entries, "inetOrgPerson")
             assert people_result.success
-            people_entries = people_result.data
+            people_entries = people_result.value
 
             # Step 3: Write processed entries to new file
             output_path = input_path.with_suffix(".processed.ldif")
@@ -185,12 +185,12 @@ without proper format
 missing dns"""
 
         parse_result = api.parse(invalid_ldif)
-        assert parse_result.is_failure
+        assert not parse_result.success
         assert parse_result.error is not None
 
         # Test with non-existent file
         file_result = api.parse_file(Path("/non/existent/file.ldif"))
-        assert file_result.is_failure
+        assert not file_result.success
 
     def test_performance_workflow(self) -> None:
         """Test workflow performance with larger dataset."""
@@ -214,16 +214,16 @@ mail: user{i:03d}@example.com
         # Test parsing performance
         parse_result = api.parse(large_ldif_content)
         assert parse_result.success
-        assert parse_result.data is not None
-        assert len(parse_result.data) == 51  # 1 domain + 50 users
+        assert parse_result.value is not None
+        assert len(parse_result.value) == 51  # 1 domain + 50 users
 
         # Test filtering performance
-        filter_result = api.filter_by_objectclass(parse_result.data, "inetOrgPerson")
+        filter_result = api.filter_by_objectclass(parse_result.value, "inetOrgPerson")
         assert filter_result.success
-        assert filter_result.data is not None
-        assert len(filter_result.data) == 50
+        assert filter_result.value is not None
+        assert len(filter_result.value) == 50
 
         # Test writing performance
-        write_result = api.write(parse_result.data)
+        write_result = api.write(parse_result.value)
         assert write_result.success
-        assert write_result.data is not None
+        assert write_result.value is not None

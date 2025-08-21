@@ -73,7 +73,7 @@ without proper structure
         if not parse_result.success:
             return f"Parse failed: {parse_result.error}"
 
-        entries = parse_result.data
+        entries = parse_result.unwrap_or([])
         if not entries:
             return "No entries found"
 
@@ -87,10 +87,12 @@ without proper structure
         if not filter_result.success:
             return f"Filter failed: {filter_result.error}"
 
-        if filter_result.data is None:
+        if filter_result.unwrap_or([]) is None:
             return "Filter returned no data"
 
-        return f"Successfully processed {len(filter_result.data)} person entries"
+        return (
+            f"Successfully processed {len(filter_result.unwrap_or([]))} person entries"
+        )
 
     def _validate_entries(self, entries: list[object]) -> list[str]:
         """Validate entries and return errors."""
@@ -182,9 +184,9 @@ def demonstrate_file_error_handling() -> None:
             pass
 
         # Try to write to read-only location (will likely fail)
-        if result.success and result.data:
+        if result.success and result.unwrap_or([]):
             readonly_path = Path("/readonly/output.ldif")  # This will fail
-            write_result = api.write(result.data, readonly_path)
+            write_result = api.write(result.unwrap_or([]), readonly_path)
 
             if write_result.success:
                 pass
@@ -225,9 +227,9 @@ description:
 """
 
     result = api.parse(empty_attr_ldif)
-    if result.success and result.data:
+    if result.success and result.unwrap_or([]):
         # Test validation
-        for entry in result.data:
+        for entry in result.unwrap_or([]):
             with contextlib.suppress(FlextLdifValidationError):
                 entry.validate_semantic_rules()
 

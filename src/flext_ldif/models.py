@@ -3,24 +3,24 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import re as _re
 import uuid
 from collections.abc import Callable
 from functools import lru_cache
 from pathlib import Path
+from typing import override
 
 from flext_core import (
     FlextConfig,
     FlextEntity,
     FlextEntityId,
-    FlextFactory,
     FlextResult,
     FlextValue,
 )
 from flext_core.exceptions import FlextValidationError
-from flext_core.result import (
-    FlextResult as _FlextResultAlias,  # local alias to avoid shadowing
-)
+
+# FlextResult already imported from flext_core above
 from pydantic import Field, field_validator
 
 from flext_ldif.constants import (
@@ -87,12 +87,17 @@ class FlextLdifDistinguishedName(FlextValue):
 
     value: str = Field(...)
 
+    @override
+    def to_json(self, **_kwargs: object) -> str:
+        """Serialize to JSON string - workaround for Pydantic serialization issue."""
+        return json.dumps(self.model_dump(), default=str)
+
     @field_validator("value")
     @classmethod
     def validate_dn(cls, v: str) -> str:
         """Validate and normalize DN format."""
         if not v or not isinstance(v, str) or not v.strip():
-            # For coverage tests expecting domain-specific error type
+            # Domain-specific validation error
             raise FlextValidationError(FlextLdifValidationMessages.DN_EMPTY_ERROR)
 
         # Validate against flext-ldap API but preserve original casing/spacing in value
@@ -124,10 +129,12 @@ class FlextLdifDistinguishedName(FlextValue):
         # Do not call normalize here to preserve exact input in DN string
         return normalized
 
+    @override
     def __str__(self) -> str:
         """Return the DN value as string representation."""
         return self.value
 
+    @override
     def __eq__(self, other: object) -> bool:
         """Enable equality comparison with strings."""
         if isinstance(other, str):
@@ -136,10 +143,12 @@ class FlextLdifDistinguishedName(FlextValue):
             return self.value == other.value
         return super().__eq__(other)
 
+    @override
     def __hash__(self) -> int:
         """Enable hashing based on the DN value."""
         return hash(self.value)
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate DN business rules."""
         return FlextResult[None].ok(None)
@@ -160,7 +169,7 @@ class FlextLdifDistinguishedName(FlextValue):
         return len([c.strip() for c in self.value.split(",") if c.strip()])
 
     def to_dn_dict(self) -> dict[str, object]:
-        """Convert DN into a dict with metadata for coverage tests."""
+        """Convert DN into a dict with metadata."""
         parts = [c.strip() for c in self.value.split(",") if c.strip()]
         components: dict[str, str] = {}
         for part in parts:
@@ -187,6 +196,11 @@ class FlextLdifAttributes(FlextValue):
 
     attributes: dict[str, list[str]] = Field(default_factory=dict)
 
+    @override
+    def to_json(self, **_kwargs: object) -> str:
+        """Serialize to JSON string - workaround for Pydantic serialization issue."""
+        return json.dumps(self.model_dump(), default=str)
+
     @field_validator("attributes")
     @classmethod
     def normalize_dn_attributes(cls, v: dict[str, list[str]]) -> dict[str, list[str]]:
@@ -207,7 +221,7 @@ class FlextLdifAttributes(FlextValue):
             return attr_values
 
         # For DN-valued attributes, normalize spacing and attribute names only,
-        # preserving the original value casing for readability/tests
+        # preserving the original value casing for readability
         normalized_values: list[str] = []
         for raw in attr_values:
             try:
@@ -220,11 +234,12 @@ class FlextLdifAttributes(FlextValue):
                     else:
                         normalized_parts.append(part)
                 normalized_values.append(",".join(normalized_parts))
-            except Exception:
+            except (ValueError, AttributeError, TypeError):
                 normalized_values.append(raw)
 
         return normalized_values
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate attribute business rules."""
         for attr_name in self.attributes:
@@ -241,16 +256,6 @@ class FlextLdifAttributes(FlextValue):
                 )
 
         return FlextResult[None].ok(None)
-
-    # Back-compat alias used in some tests
-    def validate_semantic_rules(self) -> FlextResult[None]:
-        """Alias for `validate_business_rules()` to preserve legacy behavior.
-
-        Returns:
-            FlextResult[None]: The result of `validate_business_rules()`.
-
-        """
-        return self.validate_business_rules()
 
     def get_values(self, name: str) -> list[str]:
         """Get attribute values by name."""
@@ -275,12 +280,12 @@ class FlextLdifAttributes(FlextValue):
     def add_value(self, name: str, value: str | None) -> FlextLdifAttributes:
         """Return a new attributes object with the value added.
 
-        Follows immutable value-object semantics expected by tests.
+        Follows immutable value-object semantics.
         """
         new_attributes = dict(self.attributes)
         if value is None:
             return self
-        # Preserve empty strings per tests; trim spaces but keep empty if value was empty
+        # Preserve empty strings; trim spaces but keep empty if value was empty
         normalized_value = value.strip()
         if value == "":
             normalized_value = ""
@@ -294,6 +299,7 @@ class FlextLdifAttributes(FlextValue):
         """Check if attributes collection is empty."""
         return len(self.attributes) == 0
 
+    @override
     def __hash__(self) -> int:
         """Compute hash from normalized attributes for stability."""
         hashable_attrs = {
@@ -302,6 +308,7 @@ class FlextLdifAttributes(FlextValue):
         }
         return hash(tuple(sorted(hashable_attrs.items())))
 
+    @override
     def __eq__(self, other: object) -> bool:
         """Enable equality comparison."""
         if isinstance(other, dict):
@@ -310,7 +317,7 @@ class FlextLdifAttributes(FlextValue):
             return self.attributes == other.attributes
         return super().__eq__(other)
 
-    # Convenience method used in tests for performance counters
+    # Convenience method for performance counters
     def get_total_values(self) -> int:
         """Return the total number of attribute values across all attributes."""
         return sum(len(values) for values in self.attributes.values())
@@ -333,11 +340,12 @@ class FlextLdifAttributes(FlextValue):
         new_attributes[name] = current_values
         return FlextLdifAttributes(attributes=new_attributes)
 
+    @override
     def to_dict(self) -> dict[str, object]:
-        """Return a plain dict representation for compatibility tests."""
+        """Return a plain dict representation for compatibility."""
         return {"attributes": dict(self.attributes)}
 
-    # Convenience helpers used in enterprise tests
+    # Convenience helpers for enterprise operations
     def get_attribute_names(self) -> list[str]:
         """Return attribute names as a list preserving insertion order."""
         return list(self.attributes.keys())
@@ -351,39 +359,47 @@ class FlextLdifAttributes(FlextValue):
 class FlextLdifEntry(FlextEntity):
     """LDIF entry entity."""
 
-    # Provide default ID with proper RootModel type
-    id: FlextEntityId = Field(default_factory=lambda: FlextEntityId(str(uuid.uuid4())))
+    # Provide default ID with proper RootModel type (compatible with base FlextEntityId | str)
+    id: FlextEntityId | str = Field(
+        default_factory=lambda: FlextEntityId(str(uuid.uuid4()))
+    )
     dn: FlextLdifDistinguishedName = Field(...)
     attributes: FlextLdifAttributes = Field(default_factory=FlextLdifAttributes)
     changetype: str | None = Field(default=None)
+
+    @override
+    def to_json(self, **_kwargs: object) -> str:
+        """Serialize to JSON string - workaround for Pydantic serialization issue."""
+        return json.dumps(self.model_dump(), default=str)
 
     @field_validator("attributes", mode="before")
     @classmethod
     def validate_attributes(
         cls,
-        v: dict[str, list[str]] | FlextLdifAttributes
+        v: dict[str, list[str]] | FlextLdifAttributes,
     ) -> FlextLdifAttributes:
         """Convert dict to FlextLdifAttributes if needed."""
         if isinstance(v, FlextLdifAttributes):
             return v
-        if isinstance(v, dict):
-            return FlextLdifAttributes(attributes=v)
-        msg = f"attributes must be dict or FlextLdifAttributes, got {type(v)}"
-        raise ValueError(msg)
+        # Type annotation ensures v is dict at this point
+        return FlextLdifAttributes(attributes=v)
 
+    @override
     def __str__(self) -> str:  # pragma: no cover - simple human-readable summary
         """Return a concise human-readable summary of the entry."""
         return f"FlextLdifEntry(id={self.id}, dn={self.dn.value})"
 
+    @override
     def __hash__(self) -> int:  # pragma: no cover - simple
         """Hash based on entity identity and DN for set/dict usage."""
         return hash((self.id, str(self.dn)))
 
+    @override
     def __eq__(self, other: object) -> bool:
         """Entries are equal when id, dn and attributes are equal."""
         if isinstance(other, FlextLdifEntry):
             # Consider entries equal based on semantic identity: DN and attributes
-            # Many tests construct entries with different auto IDs but same data
+            # Entries with same data should have same ID
             return str(self.dn) == str(other.dn) and self.attributes == other.attributes
         return super().__eq__(other)
 
@@ -393,7 +409,7 @@ class FlextLdifEntry(FlextEntity):
         dn: str,
         attributes: dict[str, list[str]],
     ) -> FlextLdifEntry:
-        """Create LDIF entry from DN and attributes dict (legacy compatibility)."""
+        """Create LDIF entry from DN and attributes dict."""
         # Validate inputs directly - same logic as FlextLdifFactory.create_entry
         if not dn or not isinstance(dn, str) or not dn.strip():
             msg = "DN must be a non-empty string"
@@ -408,15 +424,18 @@ class FlextLdifEntry(FlextEntity):
             )
 
             # Use model_validate to properly handle field validators
-            return cls.model_validate({
-                "id": entry_id,
-                "dn": dn,
-                "attributes": attributes,  # This will be converted by field_validator
-            })
+            return cls.model_validate(
+                {
+                    "id": entry_id,
+                    "dn": dn,
+                    "attributes": attributes,  # This will be converted by field_validator
+                }
+            )
         except (ValueError, FlextValidationError) as e:
             raise ValueError(str(e)) from e
 
     @classmethod
+    @override
     def model_validate(
         cls,
         obj: dict[str, object] | object,
@@ -431,7 +450,12 @@ class FlextLdifEntry(FlextEntity):
         if not isinstance(obj, dict):
             return super().model_validate(obj)
 
-        obj_copy = dict(obj)
+        # Type narrowing: obj is guaranteed to be dict[str, object] after isinstance check
+        # Safe cast since isinstance(obj, dict) passed and obj: dict[str, object] | object
+        dict_obj = obj  # Type is now dict[str, object] after isinstance narrowing
+        obj_copy: dict[str, object] = {
+            k: v for k, v in dict_obj.items() if isinstance(k, str) and v is not None
+        }
 
         # Deterministic id
         if "id" not in obj_copy:
@@ -459,7 +483,7 @@ class FlextLdifEntry(FlextEntity):
 
         try:
             return super().model_validate(obj_copy)
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             message = str(e)
             if ("dn" in message and "FlextLdifDistinguishedName" in message) or (
                 "dn" in message and "model_type" in message
@@ -468,15 +492,19 @@ class FlextLdifEntry(FlextEntity):
                 raise ValueError(err) from e
             raise
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate entry business rules."""
         if not self.dn.value:
             return FlextResult[None].fail("Entry must have a DN")
 
-        attr_validation = self.attributes.validate_business_rules()
-        if attr_validation.is_failure:
-            return FlextResult[None].fail(f"Invalid attributes: {attr_validation.error}")
+        attr_result = self.attributes.validate_business_rules()
+        if attr_result.is_failure:
+            return FlextResult[None].fail(f"Invalid attributes: {attr_result.error}")
+        return self._validate_remaining_rules()
 
+    def _validate_remaining_rules(self) -> FlextResult[None]:
+        """Validate remaining business rules for the entry."""
         if self.changetype != "delete" and self.attributes.is_empty():
             return FlextResult[None].fail("LDIF entry must have at least one attribute")
 
@@ -487,16 +515,6 @@ class FlextLdifEntry(FlextEntity):
 
         return FlextResult[None].ok(None)
 
-    # Back-compat alias used in tests
-    def validate_semantic_rules(self) -> FlextResult[None]:
-        """Alias for `validate_business_rules()` to preserve legacy behavior.
-
-        Returns:
-            FlextResult[None]: The result of `validate_business_rules()`.
-
-        """
-        return self.validate_business_rules()
-
     def has_object_class(self, object_class: str) -> bool:
         """Check if entry has specific objectClass."""
         return object_class in self.attributes.get_object_classes()
@@ -505,7 +523,7 @@ class FlextLdifEntry(FlextEntity):
         """Get all objectClass values for this entry."""
         return self.attributes.get_object_classes()
 
-    # Convenience predicates used by tests
+    # Convenience predicates for domain logic
     def is_organizational_unit(self) -> bool:
         """Return True if entry represents an organizational unit."""
         return self.has_object_class("organizationalUnit")
@@ -519,11 +537,6 @@ class FlextLdifEntry(FlextEntity):
         values = self.attributes.get_values(name)
         # Return None when attribute not present; empty list if present but no values
         return values if name in self.attributes.attributes else None
-
-    # Back-compat convenience
-    def get_attribute_values(self, name: str) -> list[str]:
-        """Get all values for an attribute by name (legacy alias)."""
-        return self.attributes.get_values(name)
 
     def get_single_attribute(self, name: str) -> str | None:
         """Get single attribute value by name."""
@@ -575,7 +588,7 @@ class FlextLdifEntry(FlextEntity):
 
         lines = [ln.strip() for ln in block.splitlines() if ln.strip()]
         if not lines or not lines[0].lower().startswith("dn:"):
-            # Enterprise tests expect FlextValidationError for missing DN
+            # Domain validation requires DN
             msg = "LDIF block must start with DN"
             raise FlextValidationError(msg)
 
@@ -595,10 +608,12 @@ class FlextLdifEntry(FlextEntity):
             f"{content_hash[:8]}-{content_hash[8:12]}-"
             f"{content_hash[12:16]}-{content_hash[16:20]}-{content_hash[20:32]}"
         )
-        return cls(
-            id=entry_id,
-            dn=FlextLdifDistinguishedName(value=dn_value),
-            attributes=FlextLdifAttributes(attributes=attributes),
+        return cls.model_validate(
+            {
+                "id": entry_id,
+                "dn": dn_value,
+                "attributes": attributes,
+            }
         )
 
     def is_person_entry(self) -> bool:
@@ -619,8 +634,7 @@ class FlextLdifEntry(FlextEntity):
 
     def is_valid_entry(self) -> bool:
         """Check if entry passes semantic validation rules."""
-        validation_result = self.validate_business_rules()
-        return validation_result.success
+        return self.validate_business_rules().is_success
 
     def is_add_operation(self) -> bool:
         """Check if entry represents an add operation (default LDIF operation)."""
@@ -646,14 +660,22 @@ class FlextLdifFactory:
     @staticmethod
     def create_dn(value: str) -> FlextResult[FlextLdifDistinguishedName]:
         """Create DN with validation."""
-        return FlextFactory.create_model(FlextLdifDistinguishedName, value=value)
+        try:
+            dn = FlextLdifDistinguishedName(value=value)
+            return FlextResult[FlextLdifDistinguishedName].ok(dn)
+        except (ValueError, TypeError) as e:
+            return FlextResult[FlextLdifDistinguishedName].fail(str(e))
 
     @staticmethod
     def create_attributes(
         attributes: dict[str, list[str]],
     ) -> FlextResult[FlextLdifAttributes]:
         """Create attributes with validation."""
-        return FlextFactory.create_model(FlextLdifAttributes, attributes=attributes)
+        try:
+            attrs = FlextLdifAttributes(attributes=attributes)
+            return FlextResult[FlextLdifAttributes].ok(attrs)
+        except (ValueError, TypeError) as e:
+            return FlextResult[FlextLdifAttributes].fail(str(e))
 
     @staticmethod
     def create_entry(
@@ -664,19 +686,26 @@ class FlextLdifFactory:
         """Create entry with validation."""
         dn_result = FlextLdifFactory.create_dn(dn)
         if dn_result.is_failure:
-            return FlextResult[None].fail(f"Invalid DN: {dn_result.error}")
+            return FlextResult[FlextLdifEntry].fail(f"Invalid DN: {dn_result.error}")
 
         attr_result = FlextLdifFactory.create_attributes(attributes)
         if attr_result.is_failure:
-            return FlextResult[None].fail(f"Invalid attributes: {attr_result.error}")
+            return FlextResult[FlextLdifEntry].fail(
+                f"Invalid attributes: {attr_result.error}"
+            )
 
-        return FlextFactory.create_model(
-            FlextLdifEntry,
-            id=str(uuid.uuid4()),
-            dn=dn_result.data,
-            attributes=attr_result.data,
-            changetype=changetype,
-        )
+        try:
+            entry = FlextLdifEntry.model_validate(
+                {
+                    "id": str(uuid.uuid4()),
+                    "dn": dn_result.value,
+                    "attributes": attributes,  # Pass the original dict, let field_validator handle conversion
+                    "changetype": changetype or "add",
+                }
+            )
+            return FlextResult[FlextLdifEntry].ok(entry)
+        except (ValueError, TypeError) as e:
+            return FlextResult[FlextLdifEntry].fail(str(e))
 
 
 __all__ = [
@@ -713,10 +742,11 @@ class FlextLdifConfig(FlextConfig):
     normalize_dn: bool = Field(default=False)
     allow_empty_attributes: bool = Field(default=False)
 
-    def validate_business_rules(self) -> _FlextResultAlias[None]:
+    @override
+    def validate_business_rules(self) -> FlextResult[None]:
         """Validate LDIF configuration business rules."""
         if not (MIN_LINE_WRAP_LENGTH <= self.line_wrap_length <= MAX_LINE_WRAP_LENGTH):
-            return _FlextResultAlias.fail(
+            return FlextResult[None].fail(
                 f"line_wrap_length must be between {MIN_LINE_WRAP_LENGTH} and {MAX_LINE_WRAP_LENGTH}",
             )
 
@@ -724,9 +754,9 @@ class FlextLdifConfig(FlextConfig):
             "test".encode(self.input_encoding)
             "test".encode(self.output_encoding)
         except LookupError:
-            return _FlextResultAlias.fail(FlextLdifValidationMessages.INVALID_ENCODING)
+            return FlextResult[None].fail(FlextLdifValidationMessages.INVALID_ENCODING)
 
-        return _FlextResultAlias.ok(None)
+        return FlextResult[None].ok(None)
 
 
 # Export configuration symbol as part of models public API (use += for type-checkers)

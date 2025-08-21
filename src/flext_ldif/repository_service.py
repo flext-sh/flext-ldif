@@ -7,12 +7,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import override
+
 from flext_core import FlextDomainService, FlextResult, get_logger
 from pydantic import Field
 
 from flext_ldif.config import FlextLdifConfig  # noqa: TC001
 from flext_ldif.constants import FlextLdifCoreMessages, FlextLdifValidationMessages
-from flext_ldif.models import FlextLdifEntry  # noqa: TC001
+from flext_ldif.models import FlextLdifEntry
 
 logger = get_logger(__name__)
 
@@ -22,10 +24,11 @@ class FlextLdifRepositoryService(FlextDomainService[dict[str, int]]):
 
     config: FlextLdifConfig | None = Field(default=None)
 
+    @override
     def execute(self) -> FlextResult[dict[str, int]]:
         """Execute repository operation - required by FlextDomainService."""
         # This would be called with specific queries in real usage
-        return FlextResult[None].ok({})
+        return FlextResult[dict[str, int]].ok({})
 
     def find_by_dn(
         self,
@@ -34,14 +37,16 @@ class FlextLdifRepositoryService(FlextDomainService[dict[str, int]]):
     ) -> FlextResult[FlextLdifEntry | None]:
         """Find entry by distinguished name."""
         if not dn or not dn.strip():
-            return FlextResult[None].fail(FlextLdifValidationMessages.DN_EMPTY_ERROR)
+            return FlextResult[FlextLdifEntry | None].fail(
+                FlextLdifValidationMessages.DN_EMPTY_ERROR
+            )
 
         dn_lower = dn.lower()
         for entry in entries:
             if entry.dn.value.lower() == dn_lower:
-                return FlextResult[None].ok(entry)
+                return FlextResult[FlextLdifEntry | None].ok(entry)
 
-        return FlextResult[None].ok(None)
+        return FlextResult[FlextLdifEntry | None].ok(None)
 
     def filter_by_objectclass(
         self,
@@ -50,10 +55,12 @@ class FlextLdifRepositoryService(FlextDomainService[dict[str, int]]):
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter entries by objectClass attribute."""
         if not objectclass or not objectclass.strip():
-            return FlextResult[None].fail(FlextLdifCoreMessages.MISSING_OBJECTCLASS)
+            return FlextResult[list[FlextLdifEntry]].fail(
+                FlextLdifCoreMessages.MISSING_OBJECTCLASS
+            )
 
         filtered = [entry for entry in entries if entry.has_object_class(objectclass)]
-        return FlextResult[None].ok(filtered)
+        return FlextResult[list[FlextLdifEntry]].ok(filtered)
 
     def filter_by_attribute(
         self,
@@ -63,19 +70,19 @@ class FlextLdifRepositoryService(FlextDomainService[dict[str, int]]):
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Filter entries by attribute value."""
         if not attribute or not attribute.strip():
-            return FlextResult[None].fail(
+            return FlextResult[list[FlextLdifEntry]].fail(
                 FlextLdifCoreMessages.INVALID_ATTRIBUTE_NAME.format(
                     attr_name="attribute",
                 ),
             )
 
-        filtered = []
+        filtered: list[FlextLdifEntry] = []
         for entry in entries:
             attr_values = entry.get_attribute(attribute)
             if attr_values and value in attr_values:
                 filtered.append(entry)
 
-        return FlextResult[None].ok(filtered)
+        return FlextResult[list[FlextLdifEntry]].ok(filtered)
 
     def get_statistics(
         self,
@@ -97,7 +104,7 @@ class FlextLdifRepositoryService(FlextDomainService[dict[str, int]]):
             else:
                 stats["other_entries"] += 1
 
-        return FlextResult[None].ok(stats)
+        return FlextResult[dict[str, int]].ok(stats)
 
 
 __all__ = ["FlextLdifRepositoryService"]

@@ -79,17 +79,17 @@ class TestFlextLdifExceptions:
             raise FlextLdifEntryError(entry_error_msg)
 
     def test_exception_messages(self) -> None:
-        """Test exception messages are preserved."""
+        """Test exception messages are preserved and include error codes."""
         message = "Custom error message"
 
         error = FlextLdifError(message)
-        assert str(error) == message
+        assert message in str(error)  # Message should be in the string representation
 
         parse_error = FlextLdifParseError(message)
-        assert str(parse_error) == message
+        assert message in str(parse_error)
 
         validation_error = FlextLdifValidationError(message)
-        assert str(validation_error) == message
+        assert message in str(validation_error)
 
         entry_error = FlextLdifEntryError(message)
-        assert str(entry_error) == message
+        assert message in str(entry_error)

@@ -9,9 +9,7 @@ import pytest
 
 from flext_ldif import (
     FlextLdifAPI,
-    FlextLdifAttributes,
     FlextLdifConfig,
-    FlextLdifDistinguishedName,
     FlextLdifEntry,
 )
 
@@ -34,18 +32,16 @@ class TestAdvancedAPIFeatures:
         # Generate large LDIF content
         entries = []
         for i in range(50):
-            entry = FlextLdifEntry(
-                id=f"user-{i:03d}",
-                dn=FlextLdifDistinguishedName(
-                    value=f"cn=user{i:03d},ou=people,dc=example,dc=com",
-                ),
-                attributes=FlextLdifAttributes(
-                    attributes={
+            entry = FlextLdifEntry.model_validate(
+                {
+                    "id": f"user-{i:03d}",
+                    "dn": f"cn=user{i:03d},ou=people,dc=example,dc=com",
+                    "attributes": {
                         "cn": [f"user{i:03d}"],
                         "objectClass": ["person", "inetOrgPerson"],
                         "mail": [f"user{i:03d}@example.com"],
                     },
-                ),
+                }
             )
             entries.append(entry)
 
@@ -56,26 +52,26 @@ class TestAdvancedAPIFeatures:
         # Test statistics
         stats_result = api_with_config.get_entry_statistics(entries)
         assert stats_result.success
-        assert stats_result.data is not None
-        assert stats_result.data["total_entries"] == 50
+        assert stats_result.value is not None
+        assert stats_result.value["total_entries"] == 50
 
     def test_api_error_handling_edge_cases(self, api_with_config: FlextLdifAPI) -> None:
         """Test API error handling with various edge cases."""
         # Test with empty content (returns empty list, which is valid)
         result = api_with_config.parse("")
         assert result.success
-        assert result.data == []
+        assert result.value == []
 
         # Test with malformed LDIF
         malformed_ldif = """dn cn=invalid,dc=example,dc=com
 objectClass person
 cn invalid"""
         result = api_with_config.parse(malformed_ldif)
-        assert result.is_failure
+        assert not result.success
 
         # Test with invalid file path
         result = api_with_config.parse_file(Path("/totally/invalid/path/file.ldif"))
-        assert result.is_failure
+        assert not result.success
 
     def test_api_filtering_capabilities(self, api_with_config: FlextLdifAPI) -> None:
         """Test advanced filtering capabilities."""
@@ -100,20 +96,20 @@ objectClass: groupOfNames
         # Parse entries
         parse_result = api_with_config.parse(ldif_content)
         assert parse_result.success
-        entries = parse_result.data
+        entries = parse_result.value
 
         # Test filtering by objectClass
         person_result = api_with_config.filter_by_objectclass(entries, "person")
         assert person_result.success
-        assert len(person_result.data) == 2
+        assert len(person_result.value) == 2
 
         inet_result = api_with_config.filter_by_objectclass(entries, "inetOrgPerson")
         assert inet_result.success
-        assert len(inet_result.data) == 1
+        assert len(inet_result.value) == 1
 
         ou_result = api_with_config.filter_by_objectclass(entries, "organizationalUnit")
         assert ou_result.success
-        assert len(ou_result.data) == 1
+        assert len(ou_result.value) == 1
 
     def test_api_file_operations_advanced(self, api_with_config: FlextLdifAPI) -> None:
         """Test advanced file operations."""
@@ -135,12 +131,12 @@ objectClass: person
             # Test parse file
             parse_result = api_with_config.parse_file(temp_file)
             assert parse_result.success
-            assert len(parse_result.data) == 1
+            assert len(parse_result.value) == 1
 
             # Test write file
             output_file = temp_file.with_suffix(".output.ldif")
             write_result = api_with_config.write_file(
-                parse_result.data,
+                parse_result.value,
                 str(output_file),
             )
             assert write_result.success
@@ -173,13 +169,13 @@ mail: user{i:02d}@example.com
         # Test parsing performance
         parse_result = api_with_config.parse(large_content)
         assert parse_result.success
-        assert len(parse_result.data) == 20
+        assert len(parse_result.value) == 20
 
         # Test validation performance
-        validate_result = api_with_config.validate(parse_result.data)
+        validate_result = api_with_config.validate(parse_result.value)
         assert validate_result.success
 
         # Test writing performance
-        write_result = api_with_config.write(parse_result.data)
+        write_result = api_with_config.write(parse_result.value)
         assert write_result.success
-        assert write_result.data is not None
+        assert write_result.value is not None

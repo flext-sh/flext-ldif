@@ -137,10 +137,10 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         parse_result = api.parse(enterprise_ldif_sample)
 
         assert parse_result.success
-        if len(parse_result.data) != 9:  # 9 entries total
-            msg: str = f"Expected 9 entries total, got {len(parse_result.data)}"
+        if len(parse_result.value) != 9:  # 9 entries total
+            msg: str = f"Expected 9 entries total, got {len(parse_result.value)}"
             raise AssertionError(msg)
-        entries = parse_result.data
+        entries = parse_result.value
 
         # Step 2: Validate all entries
         validate_result = api.validate(entries)
@@ -149,7 +149,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         # Step 3: Filter person entries
         person_filter_result = api.filter_persons(entries)
         assert person_filter_result.success
-        person_entries = person_filter_result.data
+        person_entries = person_filter_result.value
         if len(person_entries) != EXPECTED_DATA_COUNT:  # John, Alice, Bob
             msg: str = f"Expected 3 (John, Alice, Bob), got {len(person_entries)}"
             raise AssertionError(msg)
@@ -159,7 +159,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         if not inetorg_result.success:
             msg: str = f"Filter by objectClass failed: {inetorg_result.error}"
             raise AssertionError(msg)
-        inetorg_entries = inetorg_result.data
+        inetorg_entries = inetorg_result.value
         if len(inetorg_entries) != EXPECTED_DATA_COUNT:
             msg: str = f"Expected {3}, got {len(inetorg_entries)}"
             raise AssertionError(msg)
@@ -167,7 +167,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         # Step 5: Sort hierarchically
         sort_result = api.sort_hierarchically(entries)
         assert sort_result.success
-        sorted_entries = sort_result.data
+        sorted_entries = sort_result.value
 
         # Root domain should come first (fewer commas in DN)
         root_entry = sorted_entries[0]
@@ -179,7 +179,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         target_dn = "cn=John Smith,ou=people,dc=enterprise,dc=com"
         found_result = api.find_entry_by_dn(entries, target_dn)
         assert found_result.success
-        found_entry = found_result.data
+        found_entry = found_result.value
         assert found_entry is not None
         if found_entry.get_attribute("employeeNumber") != ["EMP001"]:
             msg: str = f"Expected ['EMP001'], got {found_entry.get_attribute('employeeNumber')}"
@@ -188,13 +188,15 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         # Step 7: Write back to LDIF
         write_result = api.write(sorted_entries)
         assert write_result.success
-        output_ldif = write_result.data
+        output_ldif = write_result.value
 
         # Step 8: Validate round-trip integrity
         reparse_result = api.parse(output_ldif)
         assert reparse_result.success
-        if len(reparse_result.data) != len(sorted_entries):
-            msg: str = f"Expected {len(sorted_entries)}, got {len(reparse_result.data)}"
+        if len(reparse_result.value) != len(sorted_entries):
+            msg: str = (
+                f"Expected {len(sorted_entries)}, got {len(reparse_result.value)}"
+            )
             raise AssertionError(msg)
 
     def test_e2e_file_processing_workflow(self, enterprise_ldif_sample: str) -> None:
@@ -219,16 +221,16 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
             # Step 1: Parse from file
             parse_result = api.parse_file(input_path)
             assert parse_result.success
-            entries = parse_result.data
+            entries = parse_result.value
 
             # Step 2: Process entries (filter and sort)
             person_result = api.filter_persons(entries)
             assert person_result.success
-            person_entries = person_result.data
+            person_entries = person_result.value
 
             sort_result = api.sort_hierarchically(person_entries)
             assert sort_result.success
-            sorted_persons = sort_result.data
+            sorted_persons = sort_result.value
 
             # Step 3: Write to output file
             write_result = api.write_file(sorted_persons, output_path)
@@ -245,9 +247,9 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
             # Step 5: Re-read and validate
             reread_result = api.parse_file(output_path)
             assert reread_result.success
-            if len(reread_result.data) != len(sorted_persons):
+            if len(reread_result.value) != len(sorted_persons):
                 msg: str = (
-                    f"Expected {len(sorted_persons)}, got {len(reread_result.data)}"
+                    f"Expected {len(sorted_persons)}, got {len(reread_result.value)}"
                 )
                 raise AssertionError(msg)
 
@@ -263,7 +265,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         # Step 1: Parse using main API
         parse_result = api.parse(enterprise_ldif_sample)
         assert parse_result.success
-        entries = parse_result.data
+        entries = parse_result.value
 
         # Step 2: Validate using main API
         validate_result = api.validate(entries)
@@ -272,13 +274,13 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         # Step 3: Write using main API
         write_result = api.write(entries)
         assert write_result.success
-        output_content = write_result.data
+        output_content = write_result.value
 
         # Step 4: Round-trip test
         reparse_result = api.parse(output_content)
         assert reparse_result.success
-        if len(reparse_result.data) != len(entries):
-            msg: str = f"Expected {len(entries)}, got {len(reparse_result.data)}"
+        if len(reparse_result.value) != len(entries):
+            msg: str = f"Expected {len(entries)}, got {len(reparse_result.value)}"
             raise AssertionError(msg)
 
         # Step 5: File operations
@@ -293,8 +295,8 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
             # Read from file
             file_read_result = api.parse_file(temp_path)
             assert file_read_result.success
-            if len(file_read_result.data) != len(entries):
-                msg: str = f"Expected {len(entries)}, got {len(file_read_result.data)}"
+            if len(file_read_result.value) != len(entries):
+                msg: str = f"Expected {len(entries)}, got {len(file_read_result.value)}"
                 raise AssertionError(msg)
 
         finally:
@@ -453,17 +455,17 @@ employeeNumber: EMP{i:03d}
         parse_time = time.time()
 
         # Filter
-        person_result = api.filter_persons(parse_result.data)
+        person_result = api.filter_persons(parse_result.value)
         assert person_result.success
         filter_time = time.time()
 
         # Sort
-        sort_result = api.sort_hierarchically(person_result.data)
+        sort_result = api.sort_hierarchically(person_result.value)
         assert sort_result.success
         sort_time = time.time()
 
         # Write
-        write_result = api.write(sort_result.data)
+        write_result = api.write(sort_result.value)
         assert write_result.success
         write_time = time.time()
 
@@ -482,14 +484,14 @@ employeeNumber: EMP{i:03d}
         assert write_duration < 2.0  # Write should be under 2 seconds
 
         # Verify results
-        if len(parse_result.data) != 52:  # 2 structure + 50 people
+        if len(parse_result.value) != 52:  # 2 structure + 50 people
             msg: str = (
-                f"Expected 52 (2 structure + 50 people), got {len(parse_result.data)}"
+                f"Expected 52 (2 structure + 50 people), got {len(parse_result.value)}"
             )
             raise AssertionError(msg)
-        assert len(person_result.data) == 50  # 50 people
-        if len(sort_result.data) != 50:  # Same after sorting
-            msg: str = f"Expected 50 (same after sorting), got {len(sort_result.data)}"
+        assert len(person_result.value) == 50  # 50 people
+        if len(sort_result.value) != 50:  # Same after sorting
+            msg: str = f"Expected 50 (same after sorting), got {len(sort_result.value)}"
             raise AssertionError(msg)
 
     def test_e2e_memory_efficiency_workflow(self) -> None:
@@ -514,17 +516,17 @@ description: User number {i} for memory testing
 
         # Process workflow
         parse_result = api.parse(content)
-        person_result = api.filter_persons(parse_result.data)
-        sort_result = api.sort_hierarchically(person_result.data)
-        write_result = api.write(sort_result.data)
+        person_result = api.filter_persons(parse_result.value)
+        sort_result = api.sort_hierarchically(person_result.value)
+        write_result = api.write(sort_result.value)
 
         # Measure memory after
         gc.collect()
         total_memory = (
-            sys.getsizeof(parse_result.data)
-            + sys.getsizeof(person_result.data)
-            + sys.getsizeof(sort_result.data)
-            + sys.getsizeof(write_result.data)
+            sys.getsizeof(parse_result.value)
+            + sys.getsizeof(person_result.value)
+            + sys.getsizeof(sort_result.value)
+            + sys.getsizeof(write_result.value)
         )
 
         # Memory usage should be reasonable (not more than 5x input)
@@ -540,11 +542,11 @@ description: User number {i} for memory testing
             if not parse_result.success:
                 return "failed"
 
-            person_result = api.filter_persons(parse_result.data)
+            person_result = api.filter_persons(parse_result.value)
             if not person_result.success:
                 return "failed"
 
-            write_result = api.write(person_result.data)
+            write_result = api.write(person_result.value)
             if not write_result.success:
                 return "failed"
         except (RuntimeError, ValueError, TypeError):
@@ -604,18 +606,18 @@ description: User number {i} for memory testing
         assert parse_result.success
 
         # Step 4: Extract different types of entries
-        all_entries = parse_result.data
-        person_entries = api.filter_persons(all_entries).data
+        all_entries = parse_result.value
+        person_entries = api.filter_persons(all_entries).value
         group_entries_result = api.filter_by_objectclass(all_entries, "groupOfNames")
-        group_entries = group_entries_result.data
+        group_entries = group_entries_result.value
 
         # Step 5: Process each type separately
-        sorted_persons = api.sort_hierarchically(person_entries).data
-        sorted_groups = api.sort_hierarchically(group_entries).data
+        sorted_persons = api.sort_hierarchically(person_entries).value
+        sorted_groups = api.sort_hierarchically(group_entries).value
 
         # Step 6: Generate reports (LDIF outputs)
-        persons_ldif = api.write(sorted_persons).data
-        groups_ldif = api.write(sorted_groups).data
+        persons_ldif = api.write(sorted_persons).value
+        groups_ldif = api.write(sorted_groups).value
 
         # Step 7: Validate outputs
         assert len(persons_ldif) > 0

@@ -2,20 +2,20 @@
 
 This module provides comprehensive pytest configuration, fixtures, and test utilities
 for the FLEXT-LDIF test suite, implementing enterprise-grade testing patterns with
-comprehensive test data, service mocking, and integration test support.
+comprehensive test data, real service integration, and functional test support.
 
 The test configuration supports multiple test categories including unit tests,
 integration tests, end-to-end tests, and performance benchmarks with proper
 isolation, realistic test data, and Docker-based integration testing capabilities.
 
 Key Components:
-    - Core Fixtures: API instances, configuration objects, and service mocks
+    - Core Fixtures: API instances, configuration objects, and real service instances
     - Test Data Fixtures: Sample LDIF content, entries, and validation scenarios
     - Integration Fixtures: Docker containers, external service mocks, and test databases
     - Utility Fixtures: Temporary files, directories, and cleanup management
 
 Test Categories:
-    - unit: Isolated component testing with mocked dependencies
+    - unit: Isolated component testing with real service functionality
     - integration: Cross-component testing with real service integration
     - e2e: End-to-end workflow testing with complete system integration
     - ldif: LDIF-specific domain testing with RFC compliance validation
@@ -31,19 +31,19 @@ Example:
     ...     assert result.success
     ...
     ...     # Sample content fixture provides realistic test data
-    ...     entries = result.data
+    ...     entries = result.value
     ...     assert len(entries) > 0
     ...
     ...     # Validate domain rules
     ...     for entry in entries:
-    ...         result = entry.validate_semantic_rules()
+    ...         result = entry.validate_business_rules()
     ...         assert result.success
 
 Integration:
     - Docker fixtures for external service integration testing
     - Comprehensive test data with realistic LDIF scenarios
     - Performance benchmarking fixtures with configurable parameters
-    - Mock service integration with dependency injection patterns
+    - Real service integration with dependency injection patterns
 
 Author: FLEXT Development Team
 Version: 0.9.0
@@ -57,11 +57,15 @@ import os
 import tempfile
 from collections.abc import Generator
 from pathlib import Path
-from typing import Any
 
 import pytest
 
-from flext_ldif import FlextLdifAPI, TLdif
+from flext_ldif import (
+    FlextLdifAPI,
+    FlextLdifParserService,
+    FlextLdifValidatorService,
+    TLdif,
+)
 
 # Try to import Docker fixtures - optional for testing without Docker
 try:
@@ -72,11 +76,14 @@ try:
         skip_if_no_docker,
         temporary_ldif_data,
     )
+
     DOCKER_FIXTURES_AVAILABLE = True
 except ImportError:
     DOCKER_FIXTURES_AVAILABLE = False
+
     # Create dummy fixtures when Docker is not available
-    def skip_if_no_docker():
+    def skip_if_no_docker() -> pytest.MarkDecorator:
+        """Skip tests when Docker is not available."""
         return pytest.mark.skip(reason="Docker not available")
 
     docker_openldap_container = None
@@ -398,47 +405,20 @@ def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line("markers", "real_ldap: Tests using real LDAP server")
 
 
-# Mock services
+# Real service fixtures for functional testing
 @pytest.fixture
-def mock_ldif_service() -> object:
-    """Mock LDIF service for testing."""
-
-    class MockLdifService:
-        async def parse_ldif(self, content: str) -> list[dict[str, object]]:  # noqa: ARG002
-            return [{"dn": "test", "attributes": {}}]
-
-        async def write_ldif(self, entries: list[dict[str, object]]) -> str:  # noqa: ARG002
-            return "dn: test\nobjectClass: top\n"
-
-        async def transform_entries(
-            self,
-            entries: list[dict[str, object]],
-            rules: dict[str, object],  # noqa: ARG002
-        ) -> list[dict[str, object]]:
-            return entries
-
-        async def validate_entries(
-            self,
-            entries: list[dict[str, object]],  # noqa: ARG002
-            schema: dict[str, object],  # noqa: ARG002
-        ) -> dict[str, object]:
-            return {"valid": True, "errors": []}
-
-    return MockLdifService()
+def real_ldif_service() -> object:
+    """Real LDIF service for functional testing."""
+    return FlextLdifAPI()
 
 
 @pytest.fixture
-def mock_schema_validator() -> object:
-    """Mock schema validator for testing."""
+def real_parser_service() -> object:
+    """Real parser service for functional testing."""
+    return FlextLdifParserService()
 
-    class MockSchemaValidator:
-        def validate_entry(self, entry: dict[str, object]) -> dict[str, object]:  # noqa: ARG002
-            return {"valid": True, "errors": []}
 
-        def validate_object_class(self, object_class: str) -> bool:  # noqa: ARG002
-            return True
-
-        def validate_attribute(self, attribute: str, value: Any) -> bool:  # noqa: ARG002, ANN401
-            return True
-
-    return MockSchemaValidator()
+@pytest.fixture
+def real_validator_service() -> object:
+    """Real validator service for functional testing."""
+    return FlextLdifValidatorService()

@@ -10,7 +10,7 @@ import sys
 import time
 
 import pytest
-from flext_core.exceptions import FlextValidationError
+from flext_core import FlextValidationError
 
 from flext_ldif import FlextLdifAttributes, FlextLdifDistinguishedName, FlextLdifEntry
 
@@ -176,10 +176,10 @@ class TestFlextLdifEntryEnterprise:
             raise AssertionError(msg)
 
     def test_get_attribute_values_success(self, sample_entry_data: dict) -> None:
-        """Test getting attribute values (alternative method)."""
+        """Test getting attribute values using modern API."""
         entry = FlextLdifEntry.model_validate(sample_entry_data)
 
-        cn_values = entry.get_attribute_values("cn")
+        cn_values = entry.attributes.get_values("cn")
         if cn_values != ["John Doe"]:
             msg: str = f"Expected {['John Doe']}, got {cn_values}"
             raise AssertionError(msg)
@@ -234,7 +234,7 @@ class TestFlextLdifEntryEnterprise:
         entry = FlextLdifEntry.model_validate(sample_entry_data)
 
         # Should not raise exception
-        result = entry.validate_semantic_rules()
+        result = entry.validate_business_rules()
         assert result.success
 
     def test_validate_domain_rules_empty_dn_fails(self) -> None:
@@ -255,8 +255,8 @@ class TestFlextLdifEntryEnterprise:
                 "attributes": {},
             },
         )
-        result = entry.validate_semantic_rules()
-        assert result.is_failure
+        result = entry.validate_business_rules()
+        assert not result.success
         assert "LDIF entry must have at least one attribute" in result.error
 
     def test_from_ldif_block_success(self) -> None:
@@ -409,7 +409,7 @@ description: With multiple descriptions"""
         entry = FlextLdifEntry.model_validate(sample_entry_data)
 
         # Serialize to JSON
-        json_str = entry.model_dump_json()
+        json_str = entry.to_json()
         assert isinstance(json_str, str)
         assert len(json_str) > 0
 

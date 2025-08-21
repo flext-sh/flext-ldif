@@ -64,13 +64,13 @@ tests/
 def test_flext_ldif_entry_validation(sample_entry):
     """Test domain entity validation rules."""
     entry = sample_entry
-    result = entry.validate_semantic_rules()  # Should succeed
+    result = entry.validate_business_rules()  # Should succeed
     assert result.success
 
     # Test business rule violations
     invalid_entry = FlextLdifEntry(dn="", attributes={})
     with pytest.raises(FlextLdifValidationError):
-        result = invalid_entry.validate_semantic_rules()
+        result = invalid_entry.validate_business_rules()
         assert not result.success
 ```
 
@@ -93,7 +93,7 @@ def test_api_service_integration(flext_ldif_api, sample_ldif_content):
     result = flext_ldif_api.parse(sample_ldif_content)
     assert result.success
 
-    validation_result = flext_ldif_api.validate(result.data)
+    validation_result = flext_ldif_api.validate(result.value)
     assert validation_result.success
 ```
 
@@ -145,7 +145,7 @@ def test_ldif_rfc_compliance(rfc_compliant_ldif):
     assert result.success
 
     # Validate specific RFC requirements
-    entries = result.data
+    entries = result.value
     for entry in entries:
         assert entry.dn.value  # DN is required
         assert len(entry.dn.value) <= 255  # DN length limit
@@ -176,7 +176,7 @@ def test_large_file_processing_performance():
 
     assert result.success
     assert processing_time < 30.0  # Max 30 seconds for 10k entries
-    assert len(result.data) == 10000
+    assert len(result.value) == 10000
 ```
 
 ## Test Fixtures and Utilities
@@ -376,7 +376,7 @@ def test_new_feature_specification():
 
     # Assert - Validate expected behavior
     assert result.success
-    assert result.data.meets_requirements()
+    assert result.value.meets_requirements()
 ```
 
 ## Continuous Integration
