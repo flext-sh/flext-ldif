@@ -7,6 +7,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import override
+
 from flext_core import FlextDomainService, FlextResult, get_logger
 from pydantic import Field
 
@@ -22,10 +24,13 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, int]]):
 
     config: FlextLdifConfig = Field(default_factory=FlextLdifConfig)
 
+    @override
     def execute(self) -> FlextResult[dict[str, int]]:
         """Execute analytics operation - required by FlextDomainService."""
         # This would be called with specific entries in real usage
-        return FlextResult[None].ok({FlextLdifAnalyticsConstants.TOTAL_ENTRIES_KEY: 0})
+        return FlextResult[dict[str, int]].ok(
+            {FlextLdifAnalyticsConstants.TOTAL_ENTRIES_KEY: 0}
+        )
 
     def analyze_entry_patterns(
         self,
@@ -47,7 +52,7 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, int]]):
             if entry.has_attribute(FlextLdifAnalyticsConstants.TELEPHONE_ATTRIBUTE):
                 patterns[FlextLdifAnalyticsConstants.ENTRIES_WITH_TELEPHONE_KEY] += 1
 
-        return FlextResult[None].ok(patterns)
+        return FlextResult[dict[str, int]].ok(patterns)
 
     def get_objectclass_distribution(
         self,
@@ -61,7 +66,7 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, int]]):
             for obj_class in object_classes:
                 distribution[obj_class] = distribution.get(obj_class, 0) + 1
 
-        return FlextResult[None].ok(distribution)
+        return FlextResult[dict[str, int]].ok(distribution)
 
     def get_dn_depth_analysis(
         self,
@@ -75,7 +80,7 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, int]]):
             depth_key = FlextLdifAnalyticsConstants.DEPTH_KEY_FORMAT.format(depth=depth)
             depth_analysis[depth_key] = depth_analysis.get(depth_key, 0) + 1
 
-        return FlextResult[None].ok(depth_analysis)
+        return FlextResult[dict[str, int]].ok(depth_analysis)
 
 
 __all__ = ["FlextLdifAnalyticsService"]

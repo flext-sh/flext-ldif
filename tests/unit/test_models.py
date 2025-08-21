@@ -24,7 +24,7 @@ License: MIT
 from __future__ import annotations
 
 import pytest
-from flext_core.exceptions import FlextValidationError
+from flext_core import FlextValidationError
 
 # Use proper import from root level
 from flext_ldif import FlextLdifEntry

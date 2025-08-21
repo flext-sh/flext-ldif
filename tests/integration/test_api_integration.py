@@ -46,15 +46,13 @@ objectClass: organizationalUnit
         sample_ldif_content: str,
     ) -> None:
         """Test complete parse and validate flow."""
-        # Parse LDIF content
-        parse_result = api.parse(sample_ldif_content)
-        assert parse_result.success
-        assert parse_result.data is not None
-        assert len(parse_result.data) == 3
+        # Parse LDIF content with unwrap_or()
+        entries = api.parse(sample_ldif_content).unwrap_or([])
+        assert len(entries) == 3
 
-        # Validate parsed entries
-        validate_result = api.validate(parse_result.data)
-        assert validate_result.success
+        # Validate parsed entries with unwrap_or()
+        is_valid = api.validate(entries).unwrap_or(False)
+        assert is_valid
 
     def test_parse_and_write_flow(
         self,
@@ -62,16 +60,13 @@ objectClass: organizationalUnit
         sample_ldif_content: str,
     ) -> None:
         """Test complete parse and write flow."""
-        # Parse LDIF content
-        parse_result = api.parse(sample_ldif_content)
-        assert parse_result.success
-        assert parse_result.data is not None
+        # Parse LDIF content with unwrap_or()
+        entries = api.parse(sample_ldif_content).unwrap_or([])
+        assert len(entries) > 0
 
-        # Write entries back to LDIF
-        write_result = api.write(parse_result.data)
-        assert write_result.success
-        assert write_result.data is not None
-        assert "dn: cn=John Doe,ou=people,dc=example,dc=com" in write_result.data
+        # Write entries back to LDIF with unwrap_or()
+        output_ldif = api.write(entries).unwrap_or("")
+        assert "dn: cn=John Doe,ou=people,dc=example,dc=com" in output_ldif
 
     def test_file_operations(self, api: FlextLdifAPI, sample_ldif_content: str) -> None:
         """Test file read and write operations."""
@@ -88,11 +83,11 @@ objectClass: organizationalUnit
             # Parse from file
             parse_result = api.parse_file(temp_file)
             assert parse_result.success
-            assert parse_result.data is not None
+            assert parse_result.value is not None
 
             # Write to new file
             output_file = temp_file.with_suffix(".out.ldif")
-            write_result = api.write_file(parse_result.data, str(output_file))
+            write_result = api.write_file(parse_result.value, str(output_file))
             assert write_result.success
 
             # Verify file was created
@@ -114,15 +109,15 @@ objectClass: organizationalUnit
 
         parse_result = api.parse(sample_ldif_content)
         assert parse_result.success
-        assert parse_result.data is not None
+        assert parse_result.value is not None
 
     def test_error_handling(self, api: FlextLdifAPI) -> None:
         """Test API error handling."""
         # Test invalid LDIF content
         invalid_ldif = "invalid ldif content without proper format"
         parse_result = api.parse(invalid_ldif)
-        assert parse_result.is_failure
+        assert not parse_result.success
 
         # Test non-existent file
         parse_result = api.parse_file(Path("/non/existent/file.ldif"))
-        assert parse_result.is_failure
+        assert not parse_result.success

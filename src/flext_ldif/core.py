@@ -9,15 +9,19 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable as _Callable
+from functools import reduce
 from pathlib import Path
 
 from flext_core import FlextResult, get_logger
 from flext_core.exceptions import FlextValidationError
 
 from flext_ldif.constants import FlextLdifCoreConstants
-from flext_ldif.format_handlers import modernized_ldif_parse, modernized_ldif_write
+from flext_ldif.format_handler_service import (
+    modernized_ldif_parse,
+    modernized_ldif_write,
+)
 from flext_ldif.models import FlextLdifEntry, FlextLdifFactory
-from flext_ldif.types import LDIFContent
+from flext_ldif.typings import LDIFContent
 
 logger = get_logger(__name__)
 
@@ -105,7 +109,7 @@ class TLdif:
                 exc_info=True,
             )
             logger.exception(FlextLdifCoreConstants.EXCEPTION_IN_TLDIF_PARSE_LOG)
-            return FlextResult[None].fail(
+            return FlextResult[list[FlextLdifEntry]].fail(
                 FlextLdifCoreConstants.PARSE_FAILED_MSG.format(error=e),
             )
 
@@ -121,64 +125,77 @@ class TLdif:
             len(content.splitlines()),
         )
         try:
-            # Use modernized parser that handles all string/bytes issues internally
+            # Use modernized parser with railway-oriented programming
             logger.debug(FlextLdifCoreConstants.CALLING_MODERNIZED_LDIF_PARSE_LOG)
-            parse_result = modernized_ldif_parse(content)
 
-            if not parse_result.success:
-                logger.warning(
-                    FlextLdifCoreConstants.MODERNIZED_LDIF_PARSE_FAILED_WARNING,
-                    parse_result.error,
+            def convert_raw_entries(
+                raw_entries: list[tuple[str, dict[str, list[str]]]],
+            ) -> FlextResult[list[FlextLdifEntry]]:
+                """Convert raw entries to FlextLdifEntry objects using railway-oriented programming."""
+                logger.debug(
+                    FlextLdifCoreConstants.MODERNIZED_PARSER_RETURNED_ENTRIES_LOG,
+                    len(raw_entries),
                 )
                 logger.debug(
-                    FlextLdifCoreConstants.RETURNING_FAILURE_FROM_MODERNIZED_LOG,
-                )
-                return FlextResult[None].fail(
-                    parse_result.error
-                    or FlextLdifCoreConstants.MODERNIZED_LDIF_PARSE_FAILED_MSG,
+                    FlextLdifCoreConstants.RAW_ENTRIES_DNS_LOG,
+                    [dn for dn, _ in raw_entries[:5]],
                 )
 
-            raw_entries = parse_result.data or []
-            logger.debug(
-                FlextLdifCoreConstants.MODERNIZED_PARSER_RETURNED_ENTRIES_LOG,
-                len(raw_entries),
-            )
-            logger.debug(
-                FlextLdifCoreConstants.RAW_ENTRIES_DNS_LOG,
-                [dn for dn, _ in raw_entries[:5]],
-            )  # First 5 for trace
+                logger.debug(FlextLdifCoreConstants.CONVERTING_ENTRIES_LOG)
 
-            entries = []
-
-            # Convert to FlextLdifEntry objects
-            logger.debug(FlextLdifCoreConstants.CONVERTING_ENTRIES_LOG)
-            for i, (dn, attrs) in enumerate(raw_entries):
-                logger.debug(
-                    FlextLdifCoreConstants.PROCESSING_ENTRY_LOG,
-                    i,
-                    dn,
-                    len(attrs),
-                )
-                entry_result = FlextLdifFactory.create_entry(dn, attrs)
-                if entry_result.is_failure or entry_result.data is None:
-                    return FlextResult[None].fail(
-                        FlextLdifCoreConstants.FAILED_TO_CREATE_ENTRY_MSG.format(
-                            error=entry_result.error,
-                        ),
+                # Process each entry using railway-oriented programming with reduce pattern
+                def process_indexed_entry(
+                    acc: FlextResult[list[FlextLdifEntry]],
+                    indexed_raw: tuple[int, tuple[str, dict[str, list[str]]]],
+                ) -> FlextResult[list[FlextLdifEntry]]:
+                    i, (dn, attrs) = indexed_raw
+                    logger.debug(
+                        FlextLdifCoreConstants.PROCESSING_ENTRY_LOG,
+                        i,
+                        dn,
+                        len(attrs),
                     )
-                entry = entry_result.data
-                entries.append(entry)
 
-            logger.debug(
-                FlextLdifCoreConstants.SUCCESSFULLY_CONVERTED_ENTRIES_LOG,
-                len(entries),
-            )
-            logger.info(
-                FlextLdifCoreConstants.MODERNIZED_PARSING_COMPLETED_LOG,
-                len(raw_entries),
-                len(entries),
-            )
-            return FlextResult[None].ok(entries)
+                    def process_entry(
+                        entries_list: list[FlextLdifEntry],
+                    ) -> FlextResult[list[FlextLdifEntry]]:
+                        entry_result = FlextLdifFactory.create_entry(dn, attrs)
+                        if entry_result.is_failure:
+                            return FlextResult[list[FlextLdifEntry]].fail(
+                                FlextLdifCoreConstants.FAILED_TO_CREATE_ENTRY_MSG.format(
+                                    error=entry_result.error
+                                )
+                            )
+                        return FlextResult[list[FlextLdifEntry]].ok(
+                            [*entries_list, entry_result.value]
+                        )
+
+                    return acc.flat_map(process_entry)
+
+
+                return (
+                    reduce(
+                        process_indexed_entry,
+                        enumerate(raw_entries),
+                        FlextResult[list[FlextLdifEntry]].ok([]),
+                    )
+                    .tap(
+                        lambda entries: logger.debug(
+                            FlextLdifCoreConstants.SUCCESSFULLY_CONVERTED_ENTRIES_LOG,
+                            len(entries),
+                        )
+                    )
+                    .tap(
+                        lambda entries: logger.info(
+                            FlextLdifCoreConstants.MODERNIZED_PARSING_COMPLETED_LOG,
+                            len(raw_entries),
+                            len(entries),
+                        )
+                    )
+                )
+
+            # Railway-oriented programming chain
+            return modernized_ldif_parse(content).flat_map(convert_raw_entries)
 
         except (
             ValueError,
@@ -193,7 +210,7 @@ class TLdif:
                 exc_info=True,
             )
             logger.exception(FlextLdifCoreConstants.EXCEPTION_IN_MODERNIZED_PARSING_LOG)
-            return FlextResult[None].fail(
+            return FlextResult[list[FlextLdifEntry]].fail(
                 FlextLdifCoreConstants.MODERNIZED_LDIF_PARSE_FAILED_WITH_ERROR_MSG.format(
                     error=e,
                 ),
@@ -213,8 +230,8 @@ class TLdif:
         try:
             error_message = cls._get_validation_error(entry)
             if error_message is not None:
-                return FlextResult[None].fail(error_message)
-            return FlextResult[None].ok(True)
+                return FlextResult[bool].fail(error_message)
+            return FlextResult[bool].ok(True)  # noqa: FBT003
         except (ValueError, TypeError, AttributeError) as e:
             logger.debug(FlextLdifCoreConstants.EXCEPTION_TYPE_LOG, type(e).__name__)
             logger.debug(
@@ -224,7 +241,7 @@ class TLdif:
             logger.exception(
                 FlextLdifCoreConstants.EXCEPTION_DURING_ENTRY_VALIDATION_LOG,
             )
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 FlextLdifCoreConstants.VALIDATION_FAILED_MSG.format(error=e),
             )
 
@@ -319,52 +336,68 @@ class TLdif:
 
         """
         try:
-            # REFACTORING: Optimized validation with early termination and better error context
+            # Railway-oriented programming for bulk validation
             total_entries = len(entries)
             logger.debug(
                 FlextLdifCoreConstants.STARTING_BULK_VALIDATION_LOG,
                 total_entries,
             )
 
-            for i, entry in enumerate(entries):
+            def validate_single_entry(
+                entry_with_index: tuple[int, FlextLdifEntry],
+            ) -> FlextResult[bool]:
+                """Validate single entry with index for error context."""
+                i, entry = entry_with_index
                 logger.debug(
                     FlextLdifCoreConstants.VALIDATING_ENTRY_INDEX_LOG,
                     i + 1,
                     total_entries,
                     entry.dn,
                 )
-                result = cls.validate(entry)
-                if not result.success:
-                    error_msg: str = (
+                entry_result = cls.validate(entry)
+                if entry_result.is_failure:
+                    return FlextResult[bool].fail(
                         FlextLdifCoreConstants.BULK_VALIDATION_ENTRY_FAILED_MSG.format(
                             index=i + 1,
                             total=total_entries,
                             dn=entry.dn,
-                            error=result.error,
+                            error=entry_result.error,
                         )
                     )
-                    logger.warning(
-                        FlextLdifCoreConstants.BULK_VALIDATION_FAILED_AT_ENTRY_LOG,
-                        i + 1,
-                        result.error,
-                    )
-                    return FlextResult[None].fail(error_msg)
+                return entry_result
 
-            logger.debug(
-                FlextLdifCoreConstants.BULK_VALIDATION_SUCCESSFUL_LOG,
-                total_entries,
+            # Use railway programming with reduce to chain all validations
+            def chain_validations(
+                acc: FlextResult[bool], indexed_entry: tuple[int, FlextLdifEntry]
+            ) -> FlextResult[bool]:
+                return acc.flat_map(lambda _: validate_single_entry(indexed_entry))
+
+
+            return (
+                reduce(
+                    chain_validations,
+                    enumerate(entries),
+                    FlextResult[bool].ok(True),  # noqa: FBT003
+                )
+                .tap(
+                    lambda _: logger.debug(
+                        FlextLdifCoreConstants.BULK_VALIDATION_SUCCESSFUL_LOG,
+                        total_entries,
+                    )
+                )
+                .tap(
+                    lambda _: logger.info(
+                        FlextLdifCoreConstants.BULK_LDIF_VALIDATION_COMPLETED_LOG,
+                        total_entries,
+                    )
+                )
             )
-            logger.info(
-                FlextLdifCoreConstants.BULK_LDIF_VALIDATION_COMPLETED_LOG,
-                total_entries,
-            )
-            return FlextResult[None].ok(True)
 
         except (ValueError, TypeError, AttributeError) as e:
             logger.exception(
                 FlextLdifCoreConstants.EXCEPTION_DURING_BULK_VALIDATION_LOG,
             )
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 FlextLdifCoreConstants.BULK_VALIDATION_EXCEPTION_MSG.format(error=e),
             )
 
@@ -392,8 +425,9 @@ class TLdif:
             result = cls._write_with_modernized_ldif(entries)
 
             # REFACTORING: Enhanced result logging and metrics
-            if result.success and result.data:
-                content_length = len(result.data)
+            content = result.unwrap_or("")
+            if content:
+                content_length = len(content)
                 logger.debug(
                     FlextLdifCoreConstants.LDIF_WRITE_SUCCESSFUL_LOG,
                     content_length,
@@ -413,7 +447,7 @@ class TLdif:
 
         except (ValueError, TypeError, AttributeError, OSError, ImportError) as e:
             logger.exception(FlextLdifCoreConstants.EXCEPTION_DURING_LDIF_WRITE_LOG)
-            return FlextResult[None].fail(
+            return FlextResult[str].fail(
                 FlextLdifCoreConstants.WRITE_FAILED_WITH_EXCEPTION_MSG.format(error=e),
             )
 
@@ -425,27 +459,29 @@ class TLdif:
         """Write using modernized LDIF writer with full string compatibility."""
         try:
             # Convert FlextLdifEntry objects to (dn, attrs) tuples
-            raw_entries = []
+            raw_entries: list[tuple[str, dict[str, list[str]]]] = []
             for entry in entries:
                 dn = str(entry.dn)
                 attrs = entry.attributes.attributes
                 raw_entries.append((dn, attrs))
 
             # Use modernized writer
-            write_result = modernized_ldif_write(raw_entries)
-
-            if not write_result.success:
-                return FlextResult[None].fail(
-                    write_result.error
-                    or FlextLdifCoreConstants.MODERNIZED_LDIF_WRITE_FAILED_NO_ERROR_MSG,
+            # Railway-oriented programming for LDIF writing
+            return (
+                modernized_ldif_write(raw_entries)
+                .map(
+                    lambda content: content
+                    or FlextLdifCoreConstants.EMPTY_WRITE_RESULT_MSG
                 )
-
-            return FlextResult[None].ok(
-                write_result.data or FlextLdifCoreConstants.EMPTY_WRITE_RESULT_MSG,
+                .or_else(
+                    FlextResult[str].fail(
+                        FlextLdifCoreConstants.MODERNIZED_LDIF_WRITE_FAILED_NO_ERROR_MSG
+                    )
+                )
             )
 
         except (ValueError, TypeError, AttributeError, ImportError) as e:
-            return FlextResult[None].fail(
+            return FlextResult[str].fail(
                 FlextLdifCoreConstants.MODERNIZED_LDIF_WRITE_FAILED_WITH_ERROR_MSG.format(
                     error=e,
                 ),
@@ -505,51 +541,70 @@ class TLdif:
                 FlextLdifCoreConstants.CONVERTING_ENTRIES_TO_LDIF_LOG,
                 entries_count,
             )
-            content_result = cls.write(entries)
-            if not content_result.success:
-                error_msg: str = FlextLdifCoreConstants.CONTENT_GENERATION_FAILED_FOR_ENTRIES_MSG.format(
-                    entries_count=entries_count,
-                    error=content_result.error,
+
+            # Railway-oriented programming for content generation and file writing
+            def write_content_to_file(content: str) -> FlextResult[bool]:
+                """Write content to file with proper error handling."""
+                content_size = len(content)
+                logger.debug(
+                    FlextLdifCoreConstants.GENERATED_LDIF_CONTENT_LOG,
+                    content_size,
                 )
-                logger.error(error_msg)
-                return FlextResult[None].fail(error_msg)
+                logger.debug(
+                    FlextLdifCoreConstants.CONTENT_PREVIEW_FILE_LOG,
+                    content[: FlextLdifCoreConstants.CONTENT_PREVIEW_SIZE].replace(
+                        FlextLdifCoreConstants.NEWLINE_ESCAPE,
+                        FlextLdifCoreConstants.CONTENT_PREVIEW_REPLACEMENT,
+                    ),
+                )
 
-            # REFACTORING: Content is guaranteed to be non-None for successful write operations
+                # Enhanced file writing with atomic operations
+                logger.debug(
+                    FlextLdifCoreConstants.WRITING_CONTENT_TO_FILE_LOG, encoding
+                )
+                try:
+                    with file_path.open(
+                        FlextLdifCoreConstants.FILE_WRITE_MODE,
+                        encoding=encoding,
+                    ) as f:
+                        f.write(content)
+                    return FlextResult[bool].ok(True)  # noqa: FBT003  # noqa: FBT003
+                except (OSError, UnicodeError) as e:
+                    error_msg = FlextLdifCoreConstants.FILE_WRITE_FAILED_MSG.format(
+                        error=str(e)
+                    )
+                    logger.exception(error_msg)
+                    return FlextResult[bool].fail(error_msg)
 
-            content_size = len(content_result.data)
-            logger.debug(
-                FlextLdifCoreConstants.GENERATED_LDIF_CONTENT_LOG,
-                content_size,
+            return (
+                cls.write(entries)
+                .flat_map(write_content_to_file)
+                .or_else_get(
+                    lambda: FlextResult[bool].fail(
+                        FlextLdifCoreConstants.CONTENT_GENERATION_FAILED_FOR_ENTRIES_MSG.format(
+                            entries_count=entries_count,
+                            error="Content generation failed",
+                        )
+                    )
+                )
+                .tap(
+                    lambda success: logger.debug(
+                        FlextLdifCoreConstants.FILE_WRITE_COMPLETED_LOG, file_path
+                    )
+                    if success
+                    else None
+                )
+                .tap(
+                    lambda success: logger.info(
+                        FlextLdifCoreConstants.LDIF_FILE_WRITE_OPERATION_COMPLETED_LOG,
+                        entries_count,
+                        str(file_path.absolute()),
+                        encoding,
+                    )
+                    if success
+                    else None
+                )
             )
-            logger.debug(
-                FlextLdifCoreConstants.CONTENT_PREVIEW_FILE_LOG,
-                content_result.data[
-                    : FlextLdifCoreConstants.CONTENT_PREVIEW_SIZE
-                ].replace(
-                    FlextLdifCoreConstants.NEWLINE_ESCAPE,
-                    FlextLdifCoreConstants.CONTENT_PREVIEW_REPLACEMENT,
-                ),
-            )
-
-            # REFACTORING: Enhanced file writing with atomic operations
-            logger.debug(FlextLdifCoreConstants.WRITING_CONTENT_TO_FILE_LOG, encoding)
-            with file_path.open(
-                FlextLdifCoreConstants.FILE_WRITE_MODE,
-                encoding=encoding,
-            ) as f:
-                f.write(content_result.data)
-
-            # REFACTORING: Enhanced success logging with comprehensive metrics
-            logger.debug(FlextLdifCoreConstants.FILE_WRITE_COMPLETED_LOG, file_path)
-            logger.info(
-                FlextLdifCoreConstants.LDIF_FILE_WRITE_OPERATION_COMPLETED_LOG,
-                entries_count,
-                str(file_path.absolute()),
-                content_size,
-                encoding,
-            )
-
-            return FlextResult[None].ok(True)
 
         except (OSError, ValueError, TypeError, AttributeError) as e:
             logger.debug(FlextLdifCoreConstants.EXCEPTION_TYPE_LOG, type(e).__name__)
@@ -558,7 +613,7 @@ class TLdif:
                 exc_info=True,
             )
             logger.exception(FlextLdifCoreConstants.EXCEPTION_DURING_FILE_WRITE_LOG)
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 FlextLdifCoreConstants.FILE_WRITE_FAILED_MSG.format(error=e),
             )
 
@@ -601,7 +656,7 @@ class TLdif:
                     )
                 )
                 logger.error(not_found_error_msg)
-                return FlextResult[None].fail(not_found_error_msg)
+                return FlextResult[list[FlextLdifEntry]].fail(not_found_error_msg)
 
             if not file_path.is_file():
                 not_file_error_msg: str = (
@@ -610,7 +665,7 @@ class TLdif:
                     )
                 )
                 logger.error(not_file_error_msg)
-                return FlextResult[None].fail(not_file_error_msg)
+                return FlextResult[list[FlextLdifEntry]].fail(not_file_error_msg)
 
             # REFACTORING: Enhanced file metadata collection
             logger.debug(FlextLdifCoreConstants.FILE_EXISTS_COLLECTING_METADATA_LOG)
@@ -628,7 +683,9 @@ class TLdif:
                     FlextLdifCoreConstants.EMPTY_LDIF_FILE_DETECTED_WARNING_LOG,
                     absolute_path,
                 )
-                return FlextResult[None].ok([])  # Return empty list for empty files
+                return FlextResult[list[FlextLdifEntry]].ok(
+                    []
+                )  # Return empty list for empty files
 
             # Read file content with enhanced error handling
             logger.debug(
@@ -649,7 +706,7 @@ class TLdif:
                     )
                 )
                 logger.exception(encoding_error_msg)
-                return FlextResult[None].fail(encoding_error_msg)
+                return FlextResult[list[FlextLdifEntry]].fail(encoding_error_msg)
 
             # REFACTORING: Enhanced content validation and metrics
             content_size = len(content)
@@ -687,13 +744,14 @@ class TLdif:
             logger.exception(
                 FlextLdifCoreConstants.EXCEPTION_DURING_FILE_READ_OPERATION_LOG,
             )
-            return FlextResult[None].fail(
+            return FlextResult[list[FlextLdifEntry]].fail(
                 FlextLdifCoreConstants.LDIF_FILE_READ_FAILED_ERROR_MSG.format(error=e),
             )
         else:
             # REFACTORING: Enhanced result logging with comprehensive metrics
-            if result.success:
-                entries_count = len(result.data or [])
+            entries = result.unwrap_or([])
+            if entries:
+                entries_count = len(entries)
                 logger.debug(
                     FlextLdifCoreConstants.FILE_READ_AND_PARSE_SUCCESS_LOG,
                     entries_count,

@@ -7,21 +7,28 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-
 
 # Application layer API
-from .api import FlextLdifAPI, TLdif
+from .api import FlextLdifAPI
 
 # Configuration management
 from .config import FlextLdifConfig
 
 # Service classes
-from .entry_analytics import FlextLdifAnalyticsService
-from .entry_repository import FlextLdifRepositoryService
-from .entry_transformer import FlextLdifTransformerService
-from .entry_validator import FlextLdifValidatorService
+from .analytics_service import FlextLdifAnalyticsService
+from .repository_service import FlextLdifRepositoryService
+from .transformer_service import FlextLdifTransformerService
+from .validator_service import FlextLdifValidatorService
+
+# Protocols
+from .protocols import (
+    FlextLdifAnalyticsProtocol,
+    FlextLdifParserProtocol,
+    FlextLdifRepositoryProtocol,
+    FlextLdifTransformerProtocol,
+    FlextLdifValidatorProtocol,
+    FlextLdifWriterProtocol,
+)
 
 # Domain exceptions
 from .exceptions import (
@@ -30,8 +37,8 @@ from .exceptions import (
     FlextLdifParseError,
     FlextLdifValidationError,
 )
-from .ldif_parser import FlextLdifParserService
-from .ldif_writer import FlextLdifWriterService
+from .parser_service import FlextLdifParserService
+from .writer_service import FlextLdifWriterService
 
 # Domain models and value objects
 from .models import (
@@ -40,7 +47,10 @@ from .models import (
     FlextLdifEntry,
     FlextLdifFactory,
 )
-from .types import (
+
+# Centralized type system
+from .typings import (
+    AttributeName,
     AttributeValue,
     FilePath,
     FlextLdifAttributesDict,
@@ -54,8 +64,14 @@ from .types import (
     ValidationLevel,
 )
 
-# Centralized type system
-from .types import AttributeName  # Additional commonly used types
+# Pydantic field definitions
+from .fields import (
+    FieldDefaults,
+    attribute_name_field,
+    attribute_value_field,
+    dn_field,
+    object_class_field,
+)
 
 # Constants for LDIF processing
 from .constants import (
@@ -63,35 +79,17 @@ from .constants import (
     LDAP_PERSON_CLASSES,
     LDAP_GROUP_CLASSES,
     LDAP_OU_CLASSES,
+    MIN_DN_COMPONENTS,
     DEFAULT_LINE_WRAP_LENGTH,
     DEFAULT_INPUT_ENCODING,
     DEFAULT_OUTPUT_ENCODING,
 )
 
-from collections.abc import Callable
+# Core legacy class
+from .core import TLdif
 
-"""Expose optional CLI entry point with runtime fallback."""
-cli_main: Callable[[], None] | None
-try:
-    from .cli import main as cli_main
-except Exception:
-    # Provide a no-op CLI entry point when optional deps are missing
-    # Magic constants for CLI arg positions
-    _CMD_INDEX = 1
-    _ARG_INDEX = 2
-
-    def _noop_cli() -> None:
-        argv = sys.argv
-        # For help/normal runs, behave as success; for invalid parse target, error.
-        has_command = len(argv) >= _CMD_INDEX + 1
-        is_parse = has_command and argv[_CMD_INDEX] == "parse"
-        missing_arg = len(argv) < _ARG_INDEX + 1
-        missing_file = (not missing_arg) and (not Path(argv[_ARG_INDEX]).exists())
-        if is_parse and (missing_arg or missing_file):
-            raise SystemExit(2)
-        raise SystemExit(0)
-
-    cli_main = _noop_cli
+# CLI entry point - fail fast if dependencies missing
+from .cli import main as cli_main
 
 __version__ = "0.9.0"
 __version_info__ = tuple(int(x) for x in __version__.split(".") if x.isdigit())
@@ -105,29 +103,38 @@ def flext_ldif_get_api(config: FlextLdifConfig | None = None) -> FlextLdifAPI:
 
 def flext_ldif_parse(content: str) -> list[FlextLdifEntry]:
     """Parse LDIF content using default configuration."""
-    api = flext_ldif_get_api()
-    result = api.parse(content)
-    if result.is_failure:
-        raise FlextLdifParseError(result.error or "Parse failed")
-    return result.data or []
+
+    def raise_parse_error(error: str) -> None:
+        raise FlextLdifParseError(error or "Parse failed")
+
+    return (
+        flext_ldif_get_api().parse(content).tap_error(raise_parse_error).unwrap_or([])
+    )
 
 
 def flext_ldif_validate(entries: list[FlextLdifEntry]) -> bool:
     """Validate LDIF entries using default configuration."""
-    api = flext_ldif_get_api()
-    result = api.validate(entries)
-    if result.is_failure:
-        raise FlextLdifValidationError(result.error or "Validation failed")
-    return result.data or False
+
+    def raise_validation_error(error: str) -> None:
+        raise FlextLdifValidationError(error or "Validation failed")
+
+    return (
+        flext_ldif_get_api()
+        .validate(entries)
+        .tap_error(raise_validation_error)
+        .unwrap_or(default=False)
+    )
 
 
 def flext_ldif_write(entries: list[FlextLdifEntry]) -> str:
     """Write LDIF entries to string using default configuration."""
-    api = flext_ldif_get_api()
-    result = api.write(entries)
-    if result.is_failure:
-        raise FlextLdifError(result.error or "Write failed")
-    return result.data or ""
+
+    def raise_write_error(error: str) -> None:
+        raise FlextLdifError(error or "Write failed")
+
+    return (
+        flext_ldif_get_api().write(entries).tap_error(raise_write_error).unwrap_or("")
+    )
 
 
 __all__: list[str] = [
@@ -136,8 +143,10 @@ __all__: list[str] = [
     "DEFAULT_INPUT_ENCODING",
     "DEFAULT_LINE_WRAP_LENGTH",
     "DEFAULT_OUTPUT_ENCODING",
+    "FieldDefaults",
     "FilePath",
     "FlextLdifAPI",
+    "FlextLdifAnalyticsProtocol",
     "FlextLdifAnalyticsService",
     "FlextLdifAttributes",
     "FlextLdifAttributesDict",
@@ -150,16 +159,22 @@ __all__: list[str] = [
     "FlextLdifError",
     "FlextLdifFactory",
     "FlextLdifParseError",
+    "FlextLdifParserProtocol",
     "FlextLdifParserService",
+    "FlextLdifRepositoryProtocol",
     "FlextLdifRepositoryService",
+    "FlextLdifTransformerProtocol",
     "FlextLdifTransformerService",
     "FlextLdifValidationError",
+    "FlextLdifValidatorProtocol",
     "FlextLdifValidatorService",
+    "FlextLdifWriterProtocol",
     "FlextLdifWriterService",
     "LDAP_DN_ATTRIBUTES",
     "LDAP_GROUP_CLASSES",
     "LDAP_OU_CLASSES",
     "LDAP_PERSON_CLASSES",
+    "MIN_DN_COMPONENTS",
     "LDAPObjectClass",
     "LDIFContent",
     "LDIFLines",
@@ -169,9 +184,13 @@ __all__: list[str] = [
     "ValidationLevel",
     "__version__",
     "__version_info__",
+    "attribute_name_field",
+    "attribute_value_field",
     "cli_main",
+    "dn_field",
     "flext_ldif_get_api",
     "flext_ldif_parse",
     "flext_ldif_validate",
     "flext_ldif_write",
+    "object_class_field",
 ]

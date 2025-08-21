@@ -87,57 +87,52 @@ class LdifValidationDemonstrator:
         self._analyze_entry_types(entries)
         self._test_invalid_ldif()
 
-    def _parse_sample_file(self) -> list[object] | None:
+    def _parse_sample_file(self) -> list[FlextLdifEntry] | None:
         """Parse sample LDIF file and return entries."""
         sample_file = Path(__file__).parent / "sample_complex.ldif"
-        result = self.api.parse_file(sample_file)
+        entries = self.api.parse_file(sample_file).unwrap_or([])
+        return entries or None
 
-        if not result.success or not result.data:
-            return None
-        return result.data
-
-    def _perform_domain_validation(self, entries: list[object]) -> None:
+    def _perform_domain_validation(self, entries: list[FlextLdifEntry]) -> None:
         """Perform domain validation on entries."""
-        domain_valid = 0
         domain_errors = []
 
         for i, entry in enumerate(entries):
-            validation_result = entry.validate_semantic_rules()
-            if validation_result.success:
-                domain_valid += 1
-            else:
-                domain_errors.append(
-                    f"Entry {i + 1} ({entry.dn}): {validation_result.error}",
+            # Use railway programming for validation
+            entry.validate_semantic_rules().tap_error(
+                lambda error: domain_errors.append(
+                    f"Entry {i + 1} ({entry.dn}): {error}"
                 )
+            )
 
         self._log_validation_errors(domain_errors, "Domain validation")
 
-    def _perform_business_validation(self, entries: list[object]) -> None:
+    def _perform_business_validation(self, entries: list[FlextLdifEntry]) -> None:
         """Perform business rule validation on entries."""
-        business_valid = 0
         business_errors = []
 
         for i, entry in enumerate(entries):
             is_valid, errors = validate_business_rules(entry)
-            if is_valid:
-                business_valid += 1
-            else:
+            if not is_valid:
                 business_errors.extend(
                     f"Entry {i + 1} ({entry.dn}): {error}" for error in errors
                 )
 
         self._log_validation_errors(business_errors, "Business validation")
 
-    def _analyze_entry_types(self, entries: list[object]) -> None:
+    def _analyze_entry_types(self, entries: list[FlextLdifEntry]) -> None:
         """Analyze entry types using API filters."""
-        person_result = self.api.filter_persons(entries)
-        group_result = self.api.filter_groups(entries)
-        ou_result = self.api.filter_organizational_units(entries)
-
-        # Process results (simplified for complexity reduction)
-        for result in [person_result, group_result, ou_result]:
-            if result.success and result.data is not None:
-                pass  # Process specific type
+        # Use railway programming for filtering results
+        for filter_func in [
+            self.api.filter_persons,
+            self.api.filter_groups,
+            self.api.filter_organizational_units,
+        ]:
+            filter_func(entries).tap(
+                lambda filtered_entries: None
+                if not filtered_entries
+                else None  # Process specific type
+            )
 
     def _test_invalid_ldif(self) -> None:
         """Test validation with invalid LDIF file."""
@@ -146,16 +141,18 @@ class LdifValidationDemonstrator:
         if not invalid_file.exists():
             return
 
-        invalid_result = self.api.parse_file(invalid_file)
-        if invalid_result.success and invalid_result.data:
-            self._validate_invalid_entries(invalid_result.data)
+        # Use railway programming for invalid file processing
+        self.api.parse_file(invalid_file).tap(
+            self._validate_invalid_entries
+        )
 
-    def _validate_invalid_entries(self, entries: list[object]) -> None:
+    def _validate_invalid_entries(self, entries: list[FlextLdifEntry]) -> None:
         """Validate entries from invalid LDIF file."""
         for entry in entries:
-            validation_result = entry.validate_semantic_rules()
-            if not validation_result.success:
-                pass  # Log validation failure
+            # Use railway programming for validation
+            entry.validate_semantic_rules().tap_error(
+                lambda _: None  # Log validation failure
+            )
 
     def _log_validation_errors(self, errors: list[str], validation_type: str) -> None:
         """Log validation errors with type prefix."""

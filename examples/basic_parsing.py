@@ -60,24 +60,24 @@ def main() -> None:
 
     result = api.parse_file(sample_file)
 
-    if not result.success:
-        print(f"❌ Parse failed: {result.error}")
-        return
+    # Use railway programming with chaining
+    entries = result.tap_error(
+        lambda error: print(f"❌ Parse failed: {error}")
+    ).unwrap_or([])
 
-    entries = result.data
     if not entries:
         print("⚠️  No entries found in LDIF file")
         return
 
     print(f"✅ Successfully parsed {len(entries)} LDIF entries")
 
-    # Display basic statistics
-    stats_result = api.get_entry_statistics(entries)
-    if stats_result.success and stats_result.data:
-        stats = stats_result.data
-        print("📊 Entry statistics:")
-        for key, value in stats.items():
-            print(f"   {key}: {value}")
+    # Display basic statistics with railway programming
+    api.get_entry_statistics(entries).tap(
+        lambda stats: [
+            print("📊 Entry statistics:"),
+            [print(f"   {key}: {value}") for key, value in stats.items()],
+        ]
+    )
 
     # Display first entry details
     if entries:
@@ -86,39 +86,30 @@ def main() -> None:
         print(f"   DN: {first_entry.dn.value}")
         print(f"   Attributes: {len(first_entry.attributes.attributes)} total")
 
-        # Validate domain rules
-        validation_result = first_entry.validate_semantic_rules()
-        if validation_result.success:
-            print("   ✅ Domain validation passed")
-        else:
-            print(f"   ❌ Domain validation failed: {validation_result.error}")
+        # Validate domain rules with railway programming
+        first_entry.validate_semantic_rules().tap(
+            lambda _: print("   ✅ Domain validation passed")
+        ).tap_error(lambda error: print(f"   ❌ Domain validation failed: {error}"))
 
-    # Demonstrate filtering
+    # Demonstrate filtering with railway programming
     print("🔎 Filtering person entries...")
-    filter_result = api.filter_persons(entries)
+    output_file = Path(__file__).parent / "output_basic.ldif"
 
-    if filter_result.success and filter_result.data is not None:
-        person_entries = filter_result.data
-        print(f"👥 Found {len(person_entries)} person entries:")
-
-        for i, entry in enumerate(person_entries):
-            attributes = entry.attributes.attributes
-            cn = attributes.get("cn", ["Unknown"])[0]
-            mail = attributes.get("mail", ["No email"])[0]
-            print(f"   {i + 1}. {cn} ({mail})")
-
-        # Demonstrate writing back to LDIF
-        output_file = Path(__file__).parent / "output_basic.ldif"
-        print(f"💾 Writing filtered entries to: {output_file}")
-
-        write_result = api.write_file(person_entries, output_file)
-
-        if write_result.success:
-            print("✅ Successfully wrote filtered entries to output file")
-        else:
-            print(f"❌ Write failed: {write_result.error}")
-    else:
-        print(f"❌ Filter failed: {filter_result.error}")
+    api.filter_persons(entries).tap(
+        lambda person_entries: [
+            print(f"👥 Found {len(person_entries)} person entries:"),
+            [
+                print(
+                    f"   {i + 1}. {entry.attributes.attributes.get('cn', ['Unknown'])[0]} "
+                    f"({entry.attributes.attributes.get('mail', ['No email'])[0]})"
+                )
+                for i, entry in enumerate(person_entries)
+            ],
+            print(f"💾 Writing filtered entries to: {output_file}"),
+        ]
+    ).flat_map(lambda person_entries: api.write_file(person_entries, output_file)).tap(
+        lambda _: print("✅ Successfully wrote filtered entries to output file")
+    ).tap_error(lambda error: print(f"❌ Operation failed: {error}"))
 
     print("\n🎉 Example completed successfully!")
 

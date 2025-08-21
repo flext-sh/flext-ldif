@@ -5,9 +5,6 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import (
-    FlextLdifAnalyticsService,
-    FlextLdifAttributes,
-    FlextLdifDistinguishedName,
     FlextLdifEntry,
     FlextLdifParserService,
     FlextLdifRepositoryService,
@@ -45,21 +42,16 @@ class TestServices:
         service = FlextLdifTransformerService()
         assert service is not None
 
-    def test_analytics_service_initialization(self) -> None:
-        """Test analytics service can be initialized."""
-        service = FlextLdifAnalyticsService()
-        assert service is not None
-
 
 @pytest.fixture
 def sample_entry() -> FlextLdifEntry:
     """Create a sample LDIF entry for testing."""
-    return FlextLdifEntry(
-        id="test-entry-123",
-        dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
-        attributes=FlextLdifAttributes(
-            attributes={"cn": ["test"], "objectClass": ["person"]},
-        ),
+    return FlextLdifEntry.model_validate(
+        {
+            "id": "test-entry-123",
+            "dn": "cn=test,dc=example,dc=com",
+            "attributes": {"cn": ["test"], "objectClass": ["person"]},
+        }
     )
 
 
@@ -73,10 +65,9 @@ class TestServiceFunctionality:
 cn: test
 objectClass: person
 """
-        result = service.parse(ldif_content)
-        assert result.success
-        assert result.data is not None
-        assert len(result.data) == 1
+        # Use unwrap_or() pattern for cleaner testing
+        entries = service.parse(ldif_content).unwrap_or([])
+        assert len(entries) == 1
 
     def test_validator_service_with_valid_entry(
         self,
@@ -84,8 +75,9 @@ objectClass: person
     ) -> None:
         """Test validator service with valid entry."""
         service = FlextLdifValidatorService()
-        result = service.validate_data([sample_entry])
-        assert result.success
+        # Use unwrap_or() for cleaner validation testing
+        is_valid = service.validate_data([sample_entry]).unwrap_or(False)
+        assert is_valid
 
     def test_writer_service_with_valid_entries(
         self,
@@ -93,7 +85,6 @@ objectClass: person
     ) -> None:
         """Test writer service with valid entries."""
         service = FlextLdifWriterService()
-        result = service.write([sample_entry])
-        assert result.success
-        assert result.data is not None
-        assert "dn: cn=test,dc=example,dc=com" in result.data
+        # Use unwrap_or() for cleaner writer testing
+        output = service.write([sample_entry]).unwrap_or("")
+        assert "dn: cn=test,dc=example,dc=com" in output

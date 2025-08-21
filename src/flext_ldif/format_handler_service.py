@@ -94,7 +94,7 @@ def _safe_url_fetch(url: str, encoding: str = "utf-8") -> str:
         if response.status != HTTP_OK:
             _handle_http_error(response.status, url)
         return response.data.decode(encoding)
-    except Exception as e:
+    except (ValueError, TypeError, OSError) as e:
         msg: str = f"urllib3 fetch error for {url}: {e}"
         raise ValueError(msg) from e
 
@@ -349,7 +349,7 @@ class FlextLDIFParser:
             encoded_value = line[colon_pos + 2 :].strip()
             try:
                 attr_value = base64.b64decode(encoded_value).decode(self._encoding)
-            except Exception as e:
+            except (ValueError, TypeError) as e:
                 base64_error_msg: str = f"Base64 decode error: {e}"
                 raise ValueError(base64_error_msg) from e
 
@@ -358,7 +358,7 @@ class FlextLDIFParser:
             url = line[colon_pos + 2 :].strip()
             try:
                 attr_value = _safe_url_fetch(url, self._encoding)
-            except Exception as e:
+            except (ValueError, TypeError, OSError) as e:
                 url_fetch_error_msg: str = f"URL fetch error: {e}"
                 raise ValueError(url_fetch_error_msg) from e
 
@@ -488,7 +488,7 @@ class FlextLDIFParser:
             for block in self._iter_blocks():
                 if block:  # Skip empty blocks
                     yield self._parse_entry_record(block)
-        except Exception:
+        except (ValueError, AttributeError, TypeError, UnicodeError):
             logger.exception("LDIF parsing failed")
             raise
 
@@ -511,12 +511,12 @@ def modernized_ldif_parse(
         logger.info(
             FlextLdifOperationMessages.LDIF_PARSED_SUCCESS.format(count=len(entries)),
         )
-        return FlextResult[None].ok(entries)
+        return FlextResult[list[tuple[str, dict[str, list[str]]]]].ok(entries)
 
-    except Exception as e:
+    except (ValueError, AttributeError, TypeError, UnicodeError) as e:
         error_msg: str = f"Modernized LDIF parse failed: {e}"
         logger.exception(FlextLdifValidationMessages.MODERNIZED_PARSING_FAILED)
-        return FlextResult[None].fail(error_msg)
+        return FlextResult[list[tuple[str, dict[str, list[str]]]]].fail(error_msg)
 
 
 def modernized_ldif_write(
@@ -533,7 +533,7 @@ def modernized_ldif_write(
     """
     if entries is None:
         logger.error("Cannot write None entries")
-        return FlextResult[None].fail(FlextLdifValidationMessages.ENTRIES_CANNOT_BE_NONE)
+        return FlextResult[str].fail(FlextLdifValidationMessages.ENTRIES_CANNOT_BE_NONE)
 
     try:
         writer = FlextLDIFWriter()
@@ -546,12 +546,12 @@ def modernized_ldif_write(
                 count=writer.records_written,
             ),
         )
-        return FlextResult[None].ok(output)
+        return FlextResult[str].ok(output)
 
-    except Exception as e:
+    except (ValueError, AttributeError, TypeError, UnicodeError) as e:
         error_msg: str = f"Modernized LDIF write failed: {e}"
         logger.exception(FlextLdifValidationMessages.MODERNIZED_WRITING_FAILED)
-        return FlextResult[None].fail(error_msg)
+        return FlextResult[str].fail(error_msg)
 
 
 __all__: list[str] = [

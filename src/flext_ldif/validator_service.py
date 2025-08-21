@@ -9,12 +9,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from functools import reduce
+from typing import override
+
 from flext_core import FlextDomainService, FlextResult, get_logger
 from pydantic import Field
 
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifValidationMessages
-from flext_ldif.format_validators import LdifValidator
+from flext_ldif.format_validator_service import LdifValidator
 from flext_ldif.models import FlextLdifEntry  # noqa: TC001
 
 logger = get_logger(__name__)
@@ -29,6 +32,7 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
 
     config: FlextLdifConfig | None = Field(default=None)
 
+    @override
     def execute(self) -> FlextResult[bool]:
         """Execute validation operation.
 
@@ -44,11 +48,11 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
         if self.config is not None:
             cfg_validation = self.config.validate_business_rules()
             if cfg_validation.is_failure:
-                return FlextResult[None].fail(
+                return FlextResult[bool].fail(
                     cfg_validation.error
-                    or FlextLdifValidationMessages.INVALID_CONFIGURATION,
+                    or FlextLdifValidationMessages.INVALID_CONFIGURATION
                 )
-        return FlextResult[None].ok(True)
+        return FlextResult[bool].ok(True)  # noqa: FBT003
 
     def validate_data(self, data: list[FlextLdifEntry]) -> FlextResult[bool]:
         """Validate a list of LDIF entries.
@@ -72,12 +76,16 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
             FlextResult[bool]: Success if the entry is valid; otherwise failure with message.
 
         """
-        validation_result = entry.validate_business_rules()
-        if validation_result.is_failure:
-            return FlextResult[None].fail(
-                f"{FlextLdifValidationMessages.ENTRY_VALIDATION_FAILED}: {validation_result.error}",
+        business_result = entry.validate_business_rules()
+        if business_result.is_failure:
+            return FlextResult[bool].fail(
+                business_result.error or "Business rules validation failed"
             )
 
+        return self._validate_configuration_rules(entry)
+
+    def _validate_configuration_rules(self, entry: FlextLdifEntry) -> FlextResult[bool]:
+        """Validate configuration-specific rules for an entry."""
         # Enforce configuration-driven rules
         if (
             self.config is not None
@@ -87,22 +95,19 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
             # Empty attribute lists are not allowed in strict mode
             for attr_name, values in entry.attributes.attributes.items():
                 if len(values) == 0:
-                    return FlextResult[None].fail(
+                    return FlextResult[bool].fail(
                         FlextLdifValidationMessages.EMPTY_ATTRIBUTES_NOT_ALLOWED.format(
                             attr_name=attr_name,
                         ),
                     )
                 # Also disallow empty-string values strictly
-                if any(
-                    v is None or (isinstance(v, str) and v.strip() == "")
-                    for v in values
-                ):
-                    return FlextResult[None].fail(
+                if any(isinstance(v, str) and v.strip() == "" for v in values):
+                    return FlextResult[bool].fail(
                         FlextLdifValidationMessages.EMPTY_ATTRIBUTE_VALUE_NOT_ALLOWED.format(
                             attr_name=attr_name,
                         ),
                     )
-        return FlextResult[None].ok(True)
+        return FlextResult[bool].ok(True)  # noqa: FBT003
 
     def validate_entries(self, entries: list[FlextLdifEntry]) -> FlextResult[bool]:
         """Validate multiple LDIF entries.
@@ -114,13 +119,30 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
             FlextResult[bool]: Success if all entries are valid.
 
         """
-        for i, entry in enumerate(entries):
+
+        def validate_entry_with_index(
+            indexed_entry: tuple[int, FlextLdifEntry],
+        ) -> FlextResult[bool]:
+            i, entry = indexed_entry
             entry_result = self.validate_entry(entry)
             if entry_result.is_failure:
-                return FlextResult[None].fail(
-                    f"Entry {i} {FlextLdifValidationMessages.ENTRY_VALIDATION_FAILED.lower()}: {entry_result.error}",
+                return FlextResult[bool].fail(
+                    f"Entry {i} {FlextLdifValidationMessages.ENTRY_VALIDATION_FAILED.lower()}: {entry_result.error}"
                 )
-        return FlextResult[None].ok(True)
+            return entry_result
+
+        # Use reduce to chain validations
+
+        def chain_validations(
+            acc: FlextResult[bool], indexed_entry: tuple[int, FlextLdifEntry]
+        ) -> FlextResult[bool]:
+            return acc.flat_map(lambda _: validate_entry_with_index(indexed_entry))
+
+        return reduce(
+            chain_validations,
+            enumerate(entries),
+            FlextResult[bool].ok(True),  # noqa: FBT003
+        )
 
     def validate_dn_format(self, dn: str) -> FlextResult[bool]:
         """Validate DN format compliance.
@@ -144,7 +166,7 @@ try:
     from .config import FlextLdifConfig as _FlextLdifConfigRuntime
 
     globals()["FlextLdifConfig"] = _FlextLdifConfigRuntime
-except Exception as _e:
+except (ImportError, AttributeError, ModuleNotFoundError) as _e:
     # Best-effort: if import fails, forward refs may resolve later
     ...
 
