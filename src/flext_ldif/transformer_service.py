@@ -45,9 +45,8 @@ class FlextLdifTransformerService(FlextDomainService[list[FlextLdifEntry]]):
         transformed: list[FlextLdifEntry] = []
         for entry in entries:
             result = self.transform_entry(entry)
-            transformed_entry = result.value if result.is_success else None
-            if transformed_entry:
-                transformed.append(transformed_entry)
+            # Use tap for successful transformations instead of conditional check
+            result.tap(lambda transformed_entry: transformed.append(transformed_entry))
 
         return FlextResult[list[FlextLdifEntry]].ok(transformed)
 
@@ -62,7 +61,7 @@ class FlextLdifTransformerService(FlextDomainService[list[FlextLdifEntry]]):
 
 __all__ = ["FlextLdifTransformerService"]
 
-# Forward references resolved through API initialization - no fallback needed
+# Forward references resolved through API initialization
 FlextLdifTransformerService.model_rebuild(
     _types_namespace={"FlextLdifConfig": FlextLdifConfig},
 )

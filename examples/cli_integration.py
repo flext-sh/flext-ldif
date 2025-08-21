@@ -70,8 +70,8 @@ def run_cli_command(command_args: list[str]) -> tuple[int, str, str]:
     if not is_valid:
         return 2, "", error or "Invalid arguments"
 
-    runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(ldif_cli, command_args, catch_exceptions=True)
+    runner = CliRunner()
+    result = runner.invoke(ldif_cli.cli, command_args, catch_exceptions=True)
     stderr = getattr(result, "stderr", "") or ""
     return int(result.exit_code or 0), result.output, stderr
 
@@ -176,7 +176,7 @@ class CliIntegrationDemonstrator:
         """Verify transform command output."""
         api = FlextLdifAPI()
         result = api.parse_file(self.output_file)
-        if result.success and result.unwrap_or([]):
+        if result.is_success and result.unwrap_or([]):
             pass  # Transform output verified
         self.output_file.unlink()  # Clean up
 
@@ -186,10 +186,10 @@ class CliIntegrationDemonstrator:
         api = FlextLdifAPI(config)
 
         result = api.parse_file(self.sample_file)
-        if result.success and result.unwrap_or([]):
+        if result.is_success and result.unwrap_or([]):
             entries = result.unwrap_or([])
             stats_result = api.get_entry_statistics(entries)
-            stats = stats_result.unwrap_or([])
+            stats = stats_result.unwrap_or({})
 
             for _key, _value in stats.items():
                 pass  # Process stats

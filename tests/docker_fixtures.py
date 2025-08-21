@@ -10,22 +10,27 @@ import contextlib
 import os
 import shutil
 import time
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager
 
-import pytest
-
 # Make docker import optional to avoid import errors when docker package is not available
+from typing import TYPE_CHECKING
+
+import pytest
+from flext_core import get_logger
+
+logger = get_logger(__name__)
+
 try:
     import docker
-    from docker import Container, DockerClient
-
     DOCKER_AVAILABLE = True
 except ImportError:
     DOCKER_AVAILABLE = False
-    # Create dummy types when docker is not available
-    Container = object
-    DockerClient = object
+    docker = None
+
+if TYPE_CHECKING:
+    from docker import DockerClient
+    from docker.models.containers import Container
 
 # OpenLDAP Container Configuration
 OPENLDAP_IMAGE = "osixia/openldap:1.5.0"
@@ -50,11 +55,16 @@ class OpenLDAPContainerManager:
 
     def __init__(self) -> None:
         """Initialize the container manager."""
-        self.client: DockerClient = docker.from_env()
+        self.client: DockerClient | None = None
+        if DOCKER_AVAILABLE:
+            self.client = docker.from_env()
         self.container: Container | None = None
 
-    def start_container(self) -> Container:
+    def start_container(self) -> Container | None:
         """Start OpenLDAP container with proper configuration for LDIF testing."""
+        if not self.client:
+            return None
+
         # Stop and remove existing container if it exists
         self.stop_container()
 
@@ -89,18 +99,18 @@ class OpenLDAPContainerManager:
 
     def stop_container(self) -> None:
         """Stop and remove OpenLDAP container."""
+        if not self.client:
+            return
+
         try:
             # Try to get existing container by name
             existing = self.client.containers.get(OPENLDAP_CONTAINER_NAME)
             if existing.status in {"running", "created", "paused"}:
                 existing.stop(timeout=5)
             existing.remove(force=True)
-        except docker.errors.NotFound:
-            pass  # Container doesn't exist, nothing to stop
-        except (RuntimeError, ValueError, TypeError):
-            # Try to force remove by name if getting by ID fails
-            with contextlib.suppress(RuntimeError, ValueError, TypeError):
-                self.client.api.remove_container(OPENLDAP_CONTAINER_NAME, force=True)
+        except Exception as e:
+            # Container doesn't exist or failed to stop - this is expected
+            logger.debug("Container cleanup failed (expected): %s", e)
 
         self.container = None
 
@@ -114,9 +124,12 @@ class OpenLDAPContainerManager:
         while time.time() - start_time < timeout:
 
             def _check_container_status() -> None:
+                if self.container is None:
+                    container_error = "Container is None"
+                    raise RuntimeError(container_error)
                 if self.container.status != "running":
-                    msg: str = f"Container failed to start: {self.container.status}"
-                    raise RuntimeError(msg)
+                    status_msg: str = f"Container failed to start: {self.container.status}"
+                    raise RuntimeError(status_msg)
 
             try:
                 # Check if container is still running
@@ -152,8 +165,8 @@ class OpenLDAPContainerManager:
 
             time.sleep(1)
 
-        msg: str = f"OpenLDAP container failed to become ready within {timeout} seconds"
-        raise RuntimeError(msg)
+        timeout_msg: str = f"OpenLDAP container failed to become ready within {timeout} seconds"
+        raise RuntimeError(timeout_msg)
 
     def _populate_test_data(self) -> None:
         """Populate OpenLDAP container with test data for LDIF testing."""
@@ -260,10 +273,8 @@ member: uid=bob.wilson,ou=people,{OPENLDAP_BASE_DN}
                 "cat > \"$TF\" << 'EOF'\n"
                 f"{test_ldif}\n"
                 "EOF\n"
-                '/usr/bin/ldapadd -x -H ldap://localhost:389 -D "'
-                + OPENLDAP_ADMIN_DN
-                + '" '
-                '-w "' + OPENLDAP_ADMIN_PASSWORD + '" -f "$TF"; '
+                f'/usr/bin/ldapadd -x -H ldap://localhost:389 -D "{OPENLDAP_ADMIN_DN}" '
+                f'-w "{OPENLDAP_ADMIN_PASSWORD}" -f "$TF"; '
                 'RC=$?; rm -f "$TF"; exit $RC'
             )
             exec_result = self.container.exec_run(["sh", "-c", shell_cmd], demux=True)
@@ -333,7 +344,7 @@ member: uid=bob.wilson,ou=people,{OPENLDAP_BASE_DN}
 
 
 @pytest.fixture(scope="session")
-def container_manager() -> OpenLDAPContainerManager:
+def container_manager() -> Generator[OpenLDAPContainerManager]:
     """Session-scoped manager to control lifecycle without globals."""
     mgr = OpenLDAPContainerManager()
     try:
@@ -344,7 +355,7 @@ def container_manager() -> OpenLDAPContainerManager:
 
 
 @pytest.fixture(scope="session")
-def docker_openldap_container(container_manager: OpenLDAPContainerManager) -> Container:
+def docker_openldap_container(container_manager: OpenLDAPContainerManager) -> Generator[Container | None]:
     """Session-scoped fixture that provides OpenLDAP Docker container for LDIF testing.
 
     This fixture starts an OpenLDAP container with test data at the beginning of the test
@@ -368,7 +379,7 @@ def docker_openldap_container(container_manager: OpenLDAPContainerManager) -> Co
 
 
 @pytest.fixture
-def ldif_test_config(docker_openldap_container: Container) -> dict[str, object]:
+def ldif_test_config(docker_openldap_container: Container | None) -> dict[str, object]:
     """Provide LDIF test configuration for individual tests."""
     return {
         "server_url": TEST_ENV_VARS["LDIF_TEST_SERVER"],
@@ -417,10 +428,14 @@ mail: john.doe@internal.invalid
 
 @asynccontextmanager
 async def temporary_ldif_data(
-    container: Container,
+    container: Container | None,
     ldif_content: str,
 ) -> AsyncGenerator[str]:
     """Context manager for temporary LDIF data that is auto-cleaned."""
+    if container is None:
+        msg = "Container is required but not provided"
+        raise RuntimeError(msg)
+
     # Create temp file path in container safely without hardcoded /tmp
     mktemp_result = container.exec_run(
         ["mktemp", "-t", "flext_ldif.XXXXXX.ldif"],
@@ -443,8 +458,8 @@ async def temporary_ldif_data(
         )
 
         if exec_result.exit_code != 0:
-            msg: str = f"Failed to write temporary LDIF: {exec_result.output}"
-            raise RuntimeError(msg)
+            write_msg: str = f"Failed to write temporary LDIF: {exec_result.output}"
+            raise RuntimeError(write_msg)
 
         yield temp_file
 

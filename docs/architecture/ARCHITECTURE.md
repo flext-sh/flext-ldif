@@ -910,7 +910,7 @@ class ParseLdifHandler:
                 return FlextResult[None].fail(parse_result.error)
 
             # Update aggregate with parsed entries
-            document.parse_entries(parse_result.data)
+            document.parse_entries(parse_result.value)
 
             # Convert to DTOs for application layer
             entry_dtos = [
@@ -971,10 +971,10 @@ class FlextLdifAPI:
 
             result = self._parse_handler.handle(request)
 
-            if result.success:
-                trace.set_attribute("entries_parsed", len(result.data))
+            if result.is_success:
+                trace.set_attribute("entries_parsed", len(result.value))
                 trace.set_status("success")
-                self._logger.info("Successfully parsed %d entries", len(result.data))
+                self._logger.info("Successfully parsed %d entries", len(result.value))
             else:
                 trace.set_status("error", result.error)
                 self._logger.error("Parse failed: %s", result.error)
@@ -994,10 +994,10 @@ class FlextLdifAPI:
 
             result = self._validate_handler.handle(request)
 
-            if result.success:
-                trace.set_attribute("validation_passed", result.data)
+            if result.is_success:
+                trace.set_attribute("validation_passed", result.value)
                 trace.set_status("success")
-                self._logger.info("Validation %s", "passed" if result.data else "failed")
+                self._logger.info("Validation %s", "passed" if result.value else "failed")
             else:
                 trace.set_status("error", result.error)
                 self._logger.error("Validation error: %s", result.error)
@@ -1017,10 +1017,10 @@ class FlextLdifAPI:
 
             result = self._write_handler.handle(request)
 
-            if result.success:
-                trace.set_attribute("output_length", len(result.data))
+            if result.is_success:
+                trace.set_attribute("output_length", len(result.value))
                 trace.set_status("success")
-                self._logger.info("Successfully generated LDIF output (%d chars)", len(result.data))
+                self._logger.info("Successfully generated LDIF output (%d chars)", len(result.value))
             else:
                 trace.set_status("error", result.error)
                 self._logger.error("Write failed: %s", result.error)

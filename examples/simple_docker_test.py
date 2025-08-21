@@ -54,8 +54,9 @@ def test_with_docker_container() -> bool | None:
         if len(entries) > max_entries_to_show:
             pass
 
-        # Test validation
-        flext_ldif_validate(ldif_data)
+        # Test validation - parse first, then validate
+        entries = flext_ldif_parse(ldif_data)
+        flext_ldif_validate(entries)
 
         # Usar API real para filtrar pessoas e grupos
         api = __import__("flext_ldif").flext_ldif.FlextLdifAPI

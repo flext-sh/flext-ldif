@@ -7,23 +7,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import contextlib
+# contextlib no longer needed after removing workarounds
 import csv
 import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
+
+# CLISettings from flext-cli is stable, no model rebuild needed
+from typing import Literal, cast
 
 import click
 import yaml
-from flext_cli import CLIConfig as FlextCliConfig, setup_cli as flext_setup_cli
-from flext_core import FlextResult
-
-with contextlib.suppress(Exception):
-    FlextCliConfig.model_rebuild()
-
-from flext_cli.cli_types import OutputFormat as _OutputFormat
+from flext_cli import CLISettings as FlextCliConfig, setup_cli as flext_setup_cli
 from flext_core import get_logger
 
 from flext_ldif.models import FlextLdifEntry
@@ -122,45 +118,52 @@ def apply_filter(
             )
             return entries
 
-        # Type assertion: we know result is FlextResult from our API calls
-        result_typed = result
-        logger.trace("Filter result success: %s", result_typed.success)
+        # Use railway programming with unwrap_or for cleaner code
+        logger.trace("Filter result success: %s", result.is_success)
 
-        if result_typed.success and result_typed.value is not None:
-            filtered_entries = result_typed.value
+        # Use unwrap_or with original entries as default on failure
+        filtered_entries = result.unwrap_or(entries)
+
+        # Use railway programming for success actions  
+        def log_filter_success(entries_list: list[FlextLdifEntry]) -> None:
             logger.debug(
                 "Filter successful: %d entries filtered to %d entries",
                 len(entries),
-                len(filtered_entries),
+                len(entries_list),
             )
             logger.info(
                 "Successfully filtered entries",
                 filter_type=filter_type,
                 original_count=len(entries),
-                filtered_count=len(filtered_entries),
+                filtered_count=len(entries_list),
             )
             click.echo(
                 FlextLdifOperationMessages.FILTERED_ENTRIES.format(
-                    count=len(filtered_entries),
+                    count=len(entries_list),
                     filter_type=filter_type,
                 ),
             )
-            return filtered_entries
+        
+        result.tap(log_filter_success)
+
+        # Handle error case if filter failed
+        if not result.is_success:
+            logger.error("Filter operation failed: %s", result.error)
+            logger.debug("Filter failure details for filter_type: %s", filter_type)
+            click.echo(
+                FlextLdifOperationMessages.FILTER_FAILED.format(
+                    filter_type=filter_type,
+                    error=result.error,
+                ),
+                err=True,
+            )
+
+        return filtered_entries
 
     except (ValueError, TypeError, AttributeError) as e:
         logger.exception("Filter operation failed with exception")
         click.echo(
             FlextLdifOperationMessages.FILTER_OPERATION_FAILED.format(error=e),
-            err=True,
-        )
-    else:
-        logger.error("Filter operation failed: %s", result_typed.error)
-        logger.debug("Filter failure details for filter_type: %s", filter_type)
-        click.echo(
-            FlextLdifOperationMessages.FILTER_FAILED.format(
-                filter_type=filter_type,
-                error=result_typed.error,
-            ),
             err=True,
         )
 
@@ -173,13 +176,13 @@ def handle_validation_errors(entries: list[FlextLdifEntry]) -> None:
     logger.debug("Starting validation error handling for %d entries", len(entries))
     logger.trace("Maximum displayed errors: %d", MAX_DISPLAYED_ERRORS)
 
-    validation_errors = []
+    validation_errors: list[str] = []
     logger.debug("Validating entries for domain rules")
 
     for i, entry in enumerate(entries):
         logger.trace("Validating entry %d: %s", i + 1, entry.dn)
         validation_result = entry.validate_business_rules()
-        if not validation_result.success:
+        if not validation_result.is_success:
             error_msg: str = f"Entry {i + 1} ({entry.dn}): {validation_result.error}"
             validation_errors.append(error_msg)
             logger.debug(
@@ -231,7 +234,7 @@ def display_statistics(
 
     logger.debug("Getting entry statistics from API")
     stats_result = api.get_entry_statistics(entries)
-    
+
     def exit_with_stats_error(error: str) -> None:
         logger.error("Failed to get statistics: %s", error)
         click.echo(
@@ -239,7 +242,7 @@ def display_statistics(
             err=True,
         )
         sys.exit(1)
-    
+
     stats = stats_result.tap_error(exit_with_stats_error).unwrap_or({})
     logger.trace("Statistics keys: %s", list(stats.keys()))
     logger.info(
@@ -281,23 +284,27 @@ def write_entries_to_file(
 
     logger.debug("Calling API write_file method")
     write_result = api.write_file(entries, output_path)
-    logger.trace("Write result success: %s", write_result.success)
+    logger.trace("Write result success: %s", write_result.is_success)
 
-    if write_result.success:
+    # Use railway programming for success and error handling
+    def log_write_success(result: object) -> None:
         logger.info(
             "Entries successfully written to file",
             entry_count=len(entries),
             output_path=output_path,
         )
         click.echo(FlextLdifOperationMessages.WRITE_SUCCESS.format(path=output_path))
-    else:
-        logger.error("Write operation failed: %s", write_result.error)
+    
+    def handle_write_error(error: str) -> None:
+        logger.error("Write operation failed: %s", error)
         logger.debug("Write failure details for file: %s", output_path)
         click.echo(
-            FlextLdifOperationMessages.WRITE_FAILED.format(error=write_result.error),
+            FlextLdifOperationMessages.WRITE_FAILED.format(error=error),
             err=True,
         )
         sys.exit(1)
+    
+    write_result.tap(log_write_success).tap_error(handle_write_error)
 
 
 @click.group()
@@ -341,39 +348,28 @@ def cli(ctx: click.Context, /, **options: object) -> None:
 
     # quiet implies not verbose
     output_format = str(options.get("output_format", "text"))
-    # Map legacy 'text' to flext-cli 'plain'
+    # Map 'text' to flext-cli 'plain' and validate
     if output_format == "text":
         output_format = "plain"
-    verbose = bool(options.get("verbose"))
-    quiet = bool(options.get("quiet"))
+
+    # Validate output format
+    valid_formats = {"json", "csv", "yaml", "table", "plain"}
+    if output_format not in valid_formats:
+        output_format = "plain"
     debug = bool(options.get("debug"))
     config = options.get("config")
     config_file = options.get("config_file")
 
-    # Build real flext-cli configuration using flat compatibility kwargs
-    # Ensure Pydantic model is fully built before instantiation (pydantic v2 forward refs)
-    with contextlib.suppress(Exception):
-        FlextCliConfig.model_rebuild()
-
-    try:
-        cli_config = FlextCliConfig(
-            output_format=_OutputFormat(output_format),
-            verbose=verbose and not quiet,
-            quiet=quiet,
-            debug=debug,
-        )
-    except Exception:
-        # As last resort, reconstruct validators and retry once
-        with contextlib.suppress(Exception):
-            FlextCliConfig.model_rebuild(force=True)
-        cli_config = FlextCliConfig(
-            output_format=_OutputFormat(output_format),
-            verbose=verbose and not quiet,
-            quiet=quiet,
-            debug=debug,
-        )
+    # Build flext-cli configuration with validated parameters
+    format_literal = cast(
+        "Literal['table', 'json', 'yaml', 'csv', 'plain']", output_format
+    )
+    cli_config = FlextCliConfig(
+        output_format=format_literal,
+        debug=debug,
+    )
     setup_result = flext_setup_cli(cli_config)
-    if not setup_result.success:
+    if not setup_result.is_success:
         click.echo(
             FlextLdifOperationMessages.CLI_SETUP_FAILED.format(
                 error=setup_result.error,
@@ -395,7 +391,6 @@ def cli(ctx: click.Context, /, **options: object) -> None:
     logger.info(
         "FLEXT LDIF CLI initialized successfully",
         output_format=output_format,
-        verbose=verbose,
         debug=debug,
         config_path=str(config) if isinstance(config, str) else "default",
     )
@@ -411,21 +406,20 @@ def _parse_and_log_file(
     result = api.parse_file(input_file)
     logger.trace(
         "Parse result success: %s",
-        hasattr(result, "success") and result.success,
+        hasattr(result, "success") and result.is_success,
     )
 
-    # Handle parsing result with utility - exits on failure
-    if not result.success:
+    # Handle parsing result using railway programming with unwrap_or
+    def exit_on_parse_error(error: str) -> None:
         safe_click_echo(
-            FlextLdifOperationMessages.PARSE_FAILED.format(
-                error=result.error or "Unknown error",
-            ),
+            FlextLdifOperationMessages.PARSE_FAILED.format(error=error),
             err=True,
         )
         sys.exit(1)
 
-    # FlextResult guarantees non-None data for successful results
-    entries = result.value
+    # Use tap_error for side effects and unwrap_or with empty list as default
+    result.tap_error(exit_on_parse_error)
+    entries = result.unwrap_or([])
 
     logger.info(
         "LDIF file parsed successfully",
@@ -563,10 +557,10 @@ def _create_validation_api(ctx: click.Context, *, strict: bool) -> FlextLdifAPI:
 
 def _validate_entries(entries: list[FlextLdifEntry]) -> list[str]:
     """Validate entries and return list of error messages."""
-    validation_errors = []
+    validation_errors: list[str] = []
     for i, entry in enumerate(entries):
         validation_result = entry.validate_business_rules()
-        if not validation_result.success:
+        if not validation_result.is_success:
             validation_errors.append(
                 f"Entry {i + 1} ({entry.dn}): {validation_result.error}",
             )
@@ -621,18 +615,17 @@ def validate(
 
         # Parse file and handle errors
         parse_result = api.parse_file(input_file)
-        # Handle parsing result - exit on failure
-        if not parse_result.success:
+        # Handle parsing result using railway programming pattern
+        def exit_on_validation_parse_error(error: str) -> None:
             safe_click_echo(
-                FlextLdifOperationMessages.PARSE_FAILED.format(
-                    error=parse_result.error or "Unknown error",
-                ),
+                FlextLdifOperationMessages.PARSE_FAILED.format(error=error),
                 err=True,
             )
             sys.exit(1)
 
-        # FlextResult guarantees non-None data for successful results
-        entries = parse_result.value
+        # Use tap_error for error handling and unwrap_or with empty list
+        parse_result.tap_error(exit_on_validation_parse_error)
+        entries = parse_result.unwrap_or([])
 
         # Schema validation info (informational for now)
         if schema:
@@ -694,8 +687,12 @@ def _execute_transform_command(
         def exit_on_parse_error(error: str) -> None:
             click.echo(f"Failed to parse input file: {error}", err=True)
             sys.exit(1)
-        
-        entries = api.parse_file(params.input_file).tap_error(exit_on_parse_error).unwrap_or([])
+
+        entries = (
+            api.parse_file(params.input_file)
+            .tap_error(exit_on_parse_error)
+            .unwrap_or([])
+        )
         # REFACTORING: FlextResult guarantees non-None data for successful results
         click.echo(FlextLdifOperationMessages.LOADED_ENTRIES.format(count=len(entries)))
 
@@ -706,8 +703,8 @@ def _execute_transform_command(
         # Apply sorting
         if params.sort:
             sort_result = api.sort_hierarchically(entries)
-            if sort_result.success and sort_result.value is not None:
-                entries = sort_result.value
+            if sort_result.is_success:
+                entries = sort_result.unwrap_or(entries)
                 click.echo(FlextLdifOperationMessages.ENTRIES_SORTED)
             else:
                 click.echo(
@@ -743,22 +740,23 @@ def stats(
     try:
         api = ctx.obj["api"]
 
-        # Parse file
+        # Parse file using railway programming pattern
         parse_result = api.parse_file(input_file)
-        if not parse_result.success or parse_result.value is None:
-            click.echo(f"Failed to parse file: {parse_result.error}", err=True)
+        def exit_on_stats_parse_error(error: str) -> None:
+            click.echo(f"Failed to parse file: {error}", err=True)
             sys.exit(1)
 
-        # Type assertion: we know parse_result is FlextResult from our API and data is not None
-        parse_result_typed = cast("FlextResult[list[FlextLdifEntry]]", parse_result)
-        entries = parse_result_typed.value
-        # REFACTORING: FlextResult guarantees non-None data for successful results
+        parse_result.tap_error(exit_on_stats_parse_error)
+        entries = parse_result.unwrap_or([])
+
+        # Get statistics using railway programming pattern
         statistics_result = api.get_entry_statistics(entries)
-        if not statistics_result.success or statistics_result.value is None:
-            click.echo(f"Failed to get statistics: {statistics_result.error}", err=True)
+        def exit_on_statistics_error(error: str) -> None:
+            click.echo(f"Failed to get statistics: {error}", err=True)
             sys.exit(1)
 
-        statistics = statistics_result.value
+        statistics_result.tap_error(exit_on_statistics_error)
+        statistics = statistics_result.unwrap_or({})
 
         click.echo(
             FlextLdifOperationMessages.STATISTICS_FOR_FILE.format(file=input_file),
@@ -804,17 +802,16 @@ def find(
     try:
         api = ctx.obj["api"]
 
-        # Parse file
+        # Parse file using railway programming pattern
         parse_result = api.parse_file(input_file)
-        if not parse_result.success or parse_result.value is None:
-            click.echo(f"Failed to parse file: {parse_result.error}", err=True)
+        def exit_on_find_parse_error(error: str) -> None:
+            click.echo(f"Failed to parse file: {error}", err=True)
             sys.exit(1)
 
-        # Type assertion: parse_result is successful FlextResult with guaranteed non-None data
-        parse_result_typed = cast("FlextResult[list[FlextLdifEntry]]", parse_result)
-        entries = parse_result_typed.value
+        parse_result.tap_error(exit_on_find_parse_error)
+        entries = parse_result.unwrap_or([])
         # REFACTORING: FlextResult guarantees non-None data for successful results
-        # Prefer positional query (for compatibility), fallback to --dn
+        # Prefer positional query (for compatibility), use --dn if needed
         effective_query = query or search_dn
         _run_find(entries, effective_query, search_attr, api)
 
@@ -844,15 +841,16 @@ def _handle_search_attribute(entry: FlextLdifEntry, search_attr: str) -> None:
 def _handle_matched_entry_output(entry: FlextLdifEntry, api: FlextLdifAPI) -> None:
     """Handle converting and displaying matched entry as LDIF."""
     ldif_result = api.entries_to_ldif([entry])
-    if ldif_result.success:
+    # Use railway programming pattern with tap for success action
+    def display_found_entry(ldif_content: str) -> None:
         click.echo(FlextLdifOperationMessages.FOUND_ENTRY)
-        click.echo(ldif_result.value)
-    else:
-        click.echo(
-            f"Failed to convert entry to LDIF: {ldif_result.error}",
-            err=True,
-        )
+        click.echo(ldif_content)
+
+    def exit_on_ldif_error(error: str) -> None:
+        click.echo(f"Failed to convert entry to LDIF: {error}", err=True)
         sys.exit(1)
+
+    ldif_result.tap(display_found_entry).tap_error(exit_on_ldif_error)
 
 
 def _handle_query_execution(
@@ -924,22 +922,23 @@ def filter_by_class(
     try:
         api = ctx.obj["api"]
 
-        # Parse file
+        # Parse file using railway programming pattern
         parse_result = api.parse_file(input_file)
-        if not parse_result.success or parse_result.value is None:
-            click.echo(f"Failed to parse file: {parse_result.error}", err=True)
+        def exit_on_objectclass_parse_error(error: str) -> None:
+            click.echo(f"Failed to parse file: {error}", err=True)
             sys.exit(1)
 
-        # Type assertion: parse_result is successful FlextResult with guaranteed non-None data
-        parse_result_typed = cast("FlextResult[list[FlextLdifEntry]]", parse_result)
-        entries = parse_result_typed.value
+        parse_result.tap_error(exit_on_objectclass_parse_error)
+        entries = parse_result.unwrap_or([])
         # REFACTORING: FlextResult guarantees non-None data for successful results
         filtered_result = api.filter_by_objectclass(entries, objectclass)
-        if not filtered_result.success:
-            click.echo(f"Filter operation failed: {filtered_result.error}", err=True)
+        # Use railway programming pattern for filter result
+        def exit_on_filter_error(error: str) -> None:
+            click.echo(f"Filter operation failed: {error}", err=True)
             sys.exit(1)
 
-        filtered_entries = filtered_result.value
+        filtered_result.tap_error(exit_on_filter_error)
+        filtered_entries = filtered_result.unwrap_or([])
         click.echo(
             FlextLdifOperationMessages.FOUND_ENTRIES.format(
                 count=len(filtered_entries),
@@ -950,16 +949,14 @@ def filter_by_class(
         if output:
             write_entries_to_file(api, filtered_entries, output)
         else:
-            # Display filtered entries
+            # Display filtered entries using railway programming
             ldif_result = api.entries_to_ldif(filtered_entries)
-            if ldif_result.success:
-                click.echo(ldif_result.value)
-            else:
-                click.echo(
-                    f"Failed to convert entries to LDIF: {ldif_result.error}",
-                    err=True,
-                )
+            def exit_on_entries_ldif_error(error: str) -> None:
+                click.echo(f"Failed to convert entries to LDIF: {error}", err=True)
                 sys.exit(1)
+
+            # Use tap for success action and tap_error for error handling
+            ldif_result.tap(click.echo).tap_error(exit_on_entries_ldif_error)
 
     except (OSError, ValueError, TypeError) as e:
         click.echo(f"Filter operation failed: {e}", err=True)
@@ -988,13 +985,13 @@ def convert(
 
         # Parse input
         parse_result = api.parse_file(input_file)
-        if not parse_result.success or parse_result.value is None:
-            click.echo(f"Failed to parse input file: {parse_result.error}", err=True)
+        # Use railway programming with unwrap_or - no cast needed
+        def handle_parse_error(err: str) -> None:
+            click.echo(f"Parse error: {err}", err=True)
             sys.exit(1)
 
-        # Type assertion: we know parse_result is FlextResult from our API and data is not None
-        parse_result_typed = cast("FlextResult[list[FlextLdifEntry]]", parse_result)
-        entries = parse_result_typed.value
+        parse_result.tap_error(handle_parse_error)
+        entries = parse_result.unwrap_or([])
         # REFACTORING: FlextResult guarantees non-None data for successful results
 
         # Determine output file path automatically next to input
@@ -1084,7 +1081,7 @@ cn: test
 """
 
         parse_result = api.parse(test_ldif)
-        if parse_result.success:
+        if parse_result.is_success:
             click.echo(FlextLdifOperationMessages.API_VALIDATION_SUCCESS)
         else:
             click.echo(f"API test failed: {parse_result.error}", err=True)
@@ -1120,18 +1117,23 @@ def write(
     try:
         api = ctx.obj["api"]
 
+        # Parse file using railway programming pattern
         parse_result = api.parse_file(input_file)
-        if not parse_result.success or parse_result.value is None:
-            click.echo(f"Failed to parse file: {parse_result.error}", err=True)
+        def exit_on_render_parse_error(error: str) -> None:
+            click.echo(f"Failed to parse file: {error}", err=True)
             sys.exit(1)
 
-        entries = parse_result.value
+        parse_result.tap_error(exit_on_render_parse_error)
+        entries = parse_result.unwrap_or([])
+
+        # Convert to LDIF using railway programming
         write_result = api.entries_to_ldif(entries)
-        if not write_result.success:
-            click.echo(f"Failed to render LDIF: {write_result.error}", err=True)
+        def exit_on_render_error(error: str) -> None:
+            click.echo(f"Failed to render LDIF: {error}", err=True)
             sys.exit(1)
 
-        content = write_result.value or ""
+        write_result.tap_error(exit_on_render_error)
+        content = write_result.unwrap_or("")
         if output:
             out_path = Path(output)
             out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1157,7 +1159,7 @@ def main() -> None:
     try:
         # Setup CLI with flext-cli foundation (using defaults)
         setup_result = flext_setup_cli()
-        if not setup_result.success:
+        if not setup_result.is_success:
             logger.error("CLI setup failed: %s", setup_result.error)
             click.echo(f"CLI setup failed: {setup_result.error}", err=True)
             sys.exit(1)

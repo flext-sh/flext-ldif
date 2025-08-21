@@ -28,7 +28,7 @@ Example:
     >>> def test_ldif_parsing_with_fixtures(flext_ldif_api, sample_ldif_content):
     ...     # API fixture provides configured instance
     ...     result = flext_ldif_api.parse(sample_ldif_content)
-    ...     assert result.success
+    ...     assert result.is_success
     ...
     ...     # Sample content fixture provides realistic test data
     ...     entries = result.value
@@ -37,7 +37,7 @@ Example:
     ...     # Validate domain rules
     ...     for entry in entries:
     ...         result = entry.validate_business_rules()
-    ...         assert result.success
+    ...         assert result.is_success
 
 Integration:
     - Docker fixtures for external service integration testing
@@ -82,7 +82,7 @@ except ImportError:
     DOCKER_FIXTURES_AVAILABLE = False
 
     # Create dummy fixtures when Docker is not available
-    def skip_if_no_docker() -> pytest.MarkDecorator:
+    def skip_if_no_docker() -> object:
         """Skip tests when Docker is not available."""
         return pytest.mark.skip(reason="Docker not available")
 
@@ -306,8 +306,8 @@ def transformation_rules() -> dict[str, object]:
             "departmentNumber": "department",
         },
         "value_transformations": {
-            "mail": lambda x: x.lower(),
-            "cn": lambda x: x.title(),
+            "mail": lambda x: str(x).lower() if x else "",
+            "cn": lambda x: str(x).title() if x else "",
         },
         "dn_transformations": {
             "base_dn": "dc=newdomain,dc=com",

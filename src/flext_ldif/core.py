@@ -172,7 +172,6 @@ class TLdif:
 
                     return acc.flat_map(process_entry)
 
-
                 return (
                     reduce(
                         process_indexed_entry,
@@ -371,7 +370,6 @@ class TLdif:
                 acc: FlextResult[bool], indexed_entry: tuple[int, FlextLdifEntry]
             ) -> FlextResult[bool]:
                 return acc.flat_map(lambda _: validate_single_entry(indexed_entry))
-
 
             return (
                 reduce(

@@ -40,14 +40,15 @@ telephoneNumber: +1-555-123-4567
         assert len(entries) == 1
         entry = entries[0]
 
-        assert entry.dn.value == "cn=John Doe,ou=people,dc=example,dc=com"
-        assert "person" in entry.attributes.attributes["objectClass"]
-        assert "organizationalPerson" in entry.attributes.attributes["objectClass"]
-        assert entry.attributes.attributes["cn"] == ["John Doe"]
-        assert entry.attributes.attributes["sn"] == ["Doe"]
-        assert entry.attributes.attributes["givenName"] == ["John"]
-        assert entry.attributes.attributes["mail"] == ["john.doe@example.com"]
-        assert entry.attributes.attributes["telephoneNumber"] == ["+1-555-123-4567"]
+        assert entry.dn == "cn=John Doe,ou=people,dc=example,dc=com"
+        object_classes = entry.get_attribute("objectClass") or []
+        assert "person" in object_classes
+        assert "organizationalPerson" in object_classes
+        assert entry.get_attribute("cn") == ["John Doe"]
+        assert entry.get_attribute("sn") == ["Doe"]
+        assert entry.get_attribute("givenName") == ["John"]
+        assert entry.get_attribute("mail") == ["john.doe@example.com"]
+        assert entry.get_attribute("telephoneNumber") == ["+1-555-123-4567"]
 
     def test_parse_multiple_entries(self) -> None:
         """Test parsing multiple LDIF entries."""
@@ -68,15 +69,15 @@ sn: Regular
 
         # Check first entry
         REDACTED_LDAP_BIND_PASSWORD = entries[0]
-        assert REDACTED_LDAP_BIND_PASSWORD.dn.value == "cn=Admin,ou=people,dc=example,dc=com"
-        assert REDACTED_LDAP_BIND_PASSWORD.attributes.attributes["cn"] == ["Admin"]
-        assert REDACTED_LDAP_BIND_PASSWORD.attributes.attributes["sn"] == ["Administrator"]
+        assert REDACTED_LDAP_BIND_PASSWORD.dn == "cn=Admin,ou=people,dc=example,dc=com"
+        assert REDACTED_LDAP_BIND_PASSWORD.get_attribute("cn") == ["Admin"]
+        assert REDACTED_LDAP_BIND_PASSWORD.get_attribute("sn") == ["Administrator"]
 
         # Check second entry
         user = entries[1]
-        assert user.dn.value == "cn=User,ou=people,dc=example,dc=com"
-        assert user.attributes.attributes["cn"] == ["User"]
-        assert user.attributes.attributes["sn"] == ["Regular"]
+        assert user.dn == "cn=User,ou=people,dc=example,dc=com"
+        assert user.get_attribute("cn") == ["User"]
+        assert user.get_attribute("sn") == ["Regular"]
 
     def test_parse_group_entry(self) -> None:
         """Test parsing a group entry with members."""
@@ -93,12 +94,12 @@ member: cn=Jane Smith,ou=people,dc=example,dc=com
         assert len(entries) == 1
         group = entries[0]
 
-        assert group.dn.value == "cn=developers,ou=groups,dc=example,dc=com"
-        assert group.attributes.attributes["objectClass"] == ["groupOfNames"]
-        assert group.attributes.attributes["cn"] == ["developers"]
-        assert group.attributes.attributes["description"] == ["Development Team"]
+        assert group.dn == "cn=developers,ou=groups,dc=example,dc=com"
+        assert group.get_attribute("objectClass") == ["groupOfNames"]
+        assert group.get_attribute("cn") == ["developers"]
+        assert group.get_attribute("description") == ["Development Team"]
 
-        members = group.attributes.attributes["member"]
+        members = group.get_attribute("member") or []
         assert len(members) == 2
         assert "cn=John Doe,ou=people,dc=example,dc=com" in members
         assert "cn=Jane Smith,ou=people,dc=example,dc=com" in members
@@ -116,10 +117,10 @@ description: All users in the organization
         assert len(entries) == 1
         ou = entries[0]
 
-        assert ou.dn.value == "ou=people,dc=example,dc=com"
-        assert ou.attributes.attributes["objectClass"] == ["organizationalUnit"]
-        assert ou.attributes.attributes["ou"] == ["people"]
-        assert ou.attributes.attributes["description"] == [
+        assert ou.dn == "ou=people,dc=example,dc=com"
+        assert ou.get_attribute("objectClass") == ["organizationalUnit"]
+        assert ou.get_attribute("ou") == ["people"]
+        assert ou.get_attribute("description") == [
             "All users in the organization"
         ]
 
@@ -160,7 +161,7 @@ sn: Test
         # Parse the written LDIF to verify it's valid
         reparsed_entries = flext_ldif_parse(written_ldif)
         assert len(reparsed_entries) == 1
-        assert reparsed_entries[0].dn.value == entries[0].dn.value
+        assert reparsed_entries[0].dn == entries[0].dn
 
     def test_api_class_directly(self) -> None:
         """Test using FlextLdifAPI class directly."""
@@ -174,7 +175,7 @@ sn: Direct
 
         # Test parsing
         parse_result = api.parse(ldif_content)
-        assert parse_result.success
+        assert parse_result.is_success
         assert parse_result.value is not None
         assert len(parse_result.value) == 1
 
@@ -182,12 +183,12 @@ sn: Direct
 
         # Test validation
         validate_result = api.validate(entries)
-        assert validate_result.success
+        assert validate_result.is_success
         assert validate_result.value is True
 
         # Test writing
         write_result = api.write(entries)
-        assert write_result.success
+        assert write_result.is_success
         assert write_result.value is not None
         assert "cn=APITest" in write_result.value
 
@@ -232,7 +233,7 @@ member: cn=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=example,dc=com
         assert len(entries) == 5
 
         # Validate all entry types are parsed correctly
-        dns = [entry.dn.value for entry in entries]
+        dns = [str(entry.dn) for entry in entries]
         expected_dns = [
             "dc=example,dc=com",
             "ou=people,dc=example,dc=com",
@@ -245,12 +246,13 @@ member: cn=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=example,dc=com
             assert expected_dn in dns
 
         # Check specific entries
-        REDACTED_LDAP_BIND_PASSWORD_entry = next(e for e in entries if "cn=REDACTED_LDAP_BIND_PASSWORD" in e.dn.value)
-        assert "inetOrgPerson" in REDACTED_LDAP_BIND_PASSWORD_entry.attributes.attributes["objectClass"]
-        assert REDACTED_LDAP_BIND_PASSWORD_entry.attributes.attributes["uid"] == ["REDACTED_LDAP_BIND_PASSWORD"]
+        REDACTED_LDAP_BIND_PASSWORD_entry = next(e for e in entries if "cn=REDACTED_LDAP_BIND_PASSWORD" in str(e.dn))
+        REDACTED_LDAP_BIND_PASSWORD_object_classes = REDACTED_LDAP_BIND_PASSWORD_entry.get_attribute("objectClass") or []
+        assert "inetOrgPerson" in REDACTED_LDAP_BIND_PASSWORD_object_classes
+        assert REDACTED_LDAP_BIND_PASSWORD_entry.get_attribute("uid") == ["REDACTED_LDAP_BIND_PASSWORD"]
 
-        REDACTED_LDAP_BIND_PASSWORD_group = next(e for e in entries if "cn=REDACTED_LDAP_BIND_PASSWORDs" in e.dn.value)
-        assert REDACTED_LDAP_BIND_PASSWORD_group.attributes.attributes["member"] == [
+        REDACTED_LDAP_BIND_PASSWORD_group = next(e for e in entries if "cn=REDACTED_LDAP_BIND_PASSWORDs" in str(e.dn))
+        assert REDACTED_LDAP_BIND_PASSWORD_group.get_attribute("member") == [
             "cn=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=example,dc=com"
         ]
 
@@ -298,11 +300,11 @@ telephoneNumber: +1-555-999-8888
         assert len(entries1) == len(entries2) == 1
 
         # Should have same DN
-        assert entries1[0].dn.value == entries2[0].dn.value
+        assert entries1[0].dn == entries2[0].dn
 
         # Should have same core attributes
-        entry1_attrs = entries1[0].attributes.attributes
-        entry2_attrs = entries2[0].attributes.attributes
+        entry1 = entries1[0]
+        entry2 = entries2[0]
 
         for key in ["objectClass", "cn", "sn", "mail"]:
-            assert entry1_attrs[key] == entry2_attrs[key]
+            assert entry1.get_attribute(key) == entry2.get_attribute(key)

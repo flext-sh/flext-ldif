@@ -46,8 +46,8 @@ class TestLDIFEntry:
 
         entry = LDIFEntry.model_validate({"dn": dn, "attributes": attributes})
 
-        if entry.dn.value != dn:
-            msg: str = f"Expected {dn}, got {entry.dn.value}"
+        if entry.dn != dn:
+            msg: str = f"Expected {dn}, got {entry.dn}"
             raise AssertionError(msg)
         assert entry.attributes.attributes == attributes
 
@@ -56,8 +56,8 @@ class TestLDIFEntry:
         dn = "cn=test,dc=example,dc=com"
         entry = LDIFEntry.model_validate({"dn": dn})
 
-        if entry.dn.value != dn:
-            msg: str = f"Expected {dn}, got {entry.dn.value}"
+        if entry.dn != dn:
+            msg: str = f"Expected {dn}, got {entry.dn}"
             raise AssertionError(msg)
         assert entry.attributes.attributes == {}
 
@@ -217,8 +217,8 @@ mail: test@example.com"""
         entry = LDIFEntry.from_ldif_block(ldif_block)
 
         # SOLID fix: use correct DN value property instead of object comparison
-        if entry.dn.value != "cn=test,dc=example,dc=com":
-            msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn.value}"
+        if entry.dn != "cn=test,dc=example,dc=com":
+            msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn}"
             raise AssertionError(
                 msg,
             )
@@ -254,8 +254,8 @@ objectClass: person"""
 
         entry = LDIFEntry.from_ldif_block(ldif_block)
 
-        if entry.dn.value != "cn=test,dc=example,dc=com":
-            msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn.value}"
+        if entry.dn != "cn=test,dc=example,dc=com":
+            msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn}"
             raise AssertionError(
                 msg,
             )
@@ -272,8 +272,8 @@ objectClass: person"""
 
         entry = LDIFEntry.from_ldif_block(ldif_block)
 
-        if entry.dn.value != "cn=test,dc=example,dc=com":
-            msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn.value}"
+        if entry.dn != "cn=test,dc=example,dc=com":
+            msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn}"
             raise AssertionError(
                 msg,
             )
@@ -327,8 +327,8 @@ invalid line without colon"""
         # Should ignore lines without colons
         entry = LDIFEntry.from_ldif_block(ldif_block)
 
-        if entry.dn.value != "cn=test,dc=example,dc=com":
-            msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn.value}"
+        if entry.dn != "cn=test,dc=example,dc=com":
+            msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn}"
             raise AssertionError(
                 msg,
             )

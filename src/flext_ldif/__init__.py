@@ -85,7 +85,7 @@ from .constants import (
     DEFAULT_OUTPUT_ENCODING,
 )
 
-# Core legacy class
+# Core processing class
 from .core import TLdif
 
 # CLI entry point - fail fast if dependencies missing

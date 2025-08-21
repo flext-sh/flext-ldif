@@ -781,7 +781,7 @@ Example:
     >>> from flext_ldif.application import FlextLdifAPI
     >>> api = FlextLdifAPI()
     >>> result = api.parse_ldif(content)
-    >>> if result.success:
+    >>> if result.is_success:
     >>>     entries = result.value
 
 Integration:
@@ -861,7 +861,7 @@ class FlextLdifAPI:
             >>> api = FlextLdifAPI()
             >>> content = "dn: cn=user,dc=example,dc=com\\ncn: user\\n"
             >>> result = api.parse_ldif(content)
-            >>> if result.success:
+            >>> if result.is_success:
             >>>     entries = result.value
             >>>     print(f"Parsed {len(entries)} entries")
         """
@@ -871,7 +871,7 @@ class FlextLdifAPI:
         command = ParseLdifCommand(content=content, settings=self._settings)
         result = self._parser.execute_parse_command(command)
 
-        if result.success:
+        if result.is_success:
             entries = result.value
             logger.info("LDIF parsing completed successfully", extra={
                 "entries_count": len(entries),
@@ -901,7 +901,7 @@ class FlextLdifAPI:
         Example:
             >>> api = FlextLdifAPI()
             >>> result = api.parse_ldif_file(Path("data.ldif"))
-            >>> if result.success:
+            >>> if result.is_success:
             >>>     entries = result.value
         """
         logger.debug("Starting LDIF file parsing", extra={"file_path": str(file_path)})
@@ -940,7 +940,7 @@ class FlextLdifAPI:
         Example:
             >>> api = FlextLdifAPI()
             >>> result = api.validate_entries(entries)
-            >>> if result.success:
+            >>> if result.is_success:
             >>>     print("All entries are valid")
         """
         logger.debug("Starting LDIF validation", extra={"entries_count": len(entries)})
@@ -949,7 +949,7 @@ class FlextLdifAPI:
         command = ValidateLdifCommand(entries=entries, settings=self._settings)
         result = self._validator.execute_validate_command(command)
 
-        if result.success:
+        if result.is_success:
             logger.info("LDIF validation completed successfully", extra={
                 "entries_count": len(entries),
                 "validation_passed": True
@@ -978,7 +978,7 @@ class FlextLdifAPI:
         Example:
             >>> api = FlextLdifAPI()
             >>> result = api.write_ldif(entries)
-            >>> if result.success:
+            >>> if result.is_success:
             >>>     ldif_content = result.value
             >>>     print(ldif_content)
         """
@@ -988,7 +988,7 @@ class FlextLdifAPI:
         command = WriteLdifCommand(entries=entries, settings=self._settings)
         result = self._writer.execute_write_command(command)
 
-        if result.success:
+        if result.is_success:
             content = result.value
             logger.info("LDIF writing completed successfully", extra={
                 "entries_count": len(entries),
@@ -1019,7 +1019,7 @@ class FlextLdifAPI:
         Example:
             >>> api = FlextLdifAPI()
             >>> result = api.write_ldif_file(entries, Path("output.ldif"))
-            >>> if result.success:
+            >>> if result.is_success:
             >>>     print("File written successfully")
         """
         logger.debug("Starting LDIF file writing", extra={
@@ -1073,7 +1073,7 @@ class FlextLdifAPI:
             >>> api = FlextLdifAPI()
             >>> criteria = {"objectClass": "person", "mail": "*@example.com"}
             >>> result = api.search_entries(entries, criteria)
-            >>> if result.success:
+            >>> if result.is_success:
             >>>     matching_entries = result.value
         """
         logger.debug("Starting LDIF entry search", extra={
@@ -1802,7 +1802,7 @@ def validate(
             console.print(validation_report)
 
         # Exit with appropriate code
-        if validate_result.success:
+        if validate_result.is_success:
             if not quiet:
                 console.print("[green]✓ All entries are valid[/green]")
             sys.exit(0)
@@ -1886,7 +1886,7 @@ def transform(
             if filter_expr:
                 filter_criteria = _parse_filter_expression(filter_expr)
                 filter_result = api.search_entries(entries, filter_criteria)
-                if filter_result.success:
+                if filter_result.is_success:
                     entries = filter_result.value
                     progress.update(transform_task, description=f"Filtered to {len(entries)} entries")
 
@@ -2126,7 +2126,7 @@ def _generate_validation_report(
     """Generate validation report in specified format."""
     if format == 'json':
         report = {
-            'validation_passed': result.success,
+            'validation_passed': result.is_success,
             'total_entries': len(entries),
             'strict_mode': strict,
             'schema_file': str(schema) if schema else None,
@@ -2142,7 +2142,7 @@ def _generate_validation_report(
         lines.append(f"Total entries: {len(entries)}")
         lines.append(f"Strict mode: {'Yes' if strict else 'No'}")
         lines.append(f"Schema validation: {'Yes' if schema else 'No'}")
-        lines.append(f"Result: {'PASSED' if result.success else 'FAILED'}")
+        lines.append(f"Result: {'PASSED' if result.is_success else 'FAILED'}")
 
         if result.is_failure:
             lines.append("\nErrors:")
