@@ -24,7 +24,9 @@ class TestConstants:
         """Test LDAP group classes are properly defined."""
         assert isinstance(LDAP_GROUP_CLASSES, frozenset)
         assert len(LDAP_GROUP_CLASSES) > 0
-        assert "group" in LDAP_GROUP_CLASSES or "groupOfNames" in LDAP_GROUP_CLASSES
+        # Verify standard group classes are present
+        assert "groupOfNames" in LDAP_GROUP_CLASSES
+        assert "groupOfUniqueNames" in LDAP_GROUP_CLASSES
 
     def test_ldap_dn_attributes_defined(self) -> None:
         """Test LDAP DN attributes are properly defined."""

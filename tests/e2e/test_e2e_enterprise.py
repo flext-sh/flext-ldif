@@ -136,7 +136,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         api = FlextLdifAPI()
         parse_result = api.parse(enterprise_ldif_sample)
 
-        assert parse_result.success
+        assert parse_result.is_success
         if len(parse_result.value) != 9:  # 9 entries total
             msg: str = f"Expected 9 entries total, got {len(parse_result.value)}"
             raise AssertionError(msg)
@@ -144,11 +144,11 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
 
         # Step 2: Validate all entries
         validate_result = api.validate(entries)
-        assert validate_result.success
+        assert validate_result.is_success
 
         # Step 3: Filter person entries
         person_filter_result = api.filter_persons(entries)
-        assert person_filter_result.success
+        assert person_filter_result.is_success
         person_entries = person_filter_result.value
         if len(person_entries) != EXPECTED_DATA_COUNT:  # John, Alice, Bob
             msg: str = f"Expected 3 (John, Alice, Bob), got {len(person_entries)}"
@@ -156,7 +156,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
 
         # Step 4: Filter by specific objectClass
         inetorg_result = api.filter_by_objectclass(entries, "inetOrgPerson")
-        if not inetorg_result.success:
+        if not inetorg_result.is_success:
             msg: str = f"Filter by objectClass failed: {inetorg_result.error}"
             raise AssertionError(msg)
         inetorg_entries = inetorg_result.value
@@ -166,7 +166,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
 
         # Step 5: Sort hierarchically
         sort_result = api.sort_hierarchically(entries)
-        assert sort_result.success
+        assert sort_result.is_success
         sorted_entries = sort_result.value
 
         # Root domain should come first (fewer commas in DN)
@@ -178,7 +178,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         # Step 6: Find specific entry by DN
         target_dn = "cn=John Smith,ou=people,dc=enterprise,dc=com"
         found_result = api.find_entry_by_dn(entries, target_dn)
-        assert found_result.success
+        assert found_result.is_success
         found_entry = found_result.value
         assert found_entry is not None
         if found_entry.get_attribute("employeeNumber") != ["EMP001"]:
@@ -187,12 +187,12 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
 
         # Step 7: Write back to LDIF
         write_result = api.write(sorted_entries)
-        assert write_result.success
+        assert write_result.is_success
         output_ldif = write_result.value
 
         # Step 8: Validate round-trip integrity
         reparse_result = api.parse(output_ldif)
-        assert reparse_result.success
+        assert reparse_result.is_success
         if len(reparse_result.value) != len(sorted_entries):
             msg: str = (
                 f"Expected {len(sorted_entries)}, got {len(reparse_result.value)}"
@@ -220,21 +220,21 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         try:
             # Step 1: Parse from file
             parse_result = api.parse_file(input_path)
-            assert parse_result.success
+            assert parse_result.is_success
             entries = parse_result.value
 
             # Step 2: Process entries (filter and sort)
             person_result = api.filter_persons(entries)
-            assert person_result.success
+            assert person_result.is_success
             person_entries = person_result.value
 
             sort_result = api.sort_hierarchically(person_entries)
-            assert sort_result.success
+            assert sort_result.is_success
             sorted_persons = sort_result.value
 
             # Step 3: Write to output file
             write_result = api.write_file(sorted_persons, output_path)
-            assert write_result.success
+            assert write_result.is_success
 
             # Step 4: Verify output file
             assert output_path.exists()
@@ -246,7 +246,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
 
             # Step 5: Re-read and validate
             reread_result = api.parse_file(output_path)
-            assert reread_result.success
+            assert reread_result.is_success
             if len(reread_result.value) != len(sorted_persons):
                 msg: str = (
                     f"Expected {len(sorted_persons)}, got {len(reread_result.value)}"
@@ -264,21 +264,21 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
 
         # Step 1: Parse using main API
         parse_result = api.parse(enterprise_ldif_sample)
-        assert parse_result.success
+        assert parse_result.is_success
         entries = parse_result.value
 
         # Step 2: Validate using main API
         validate_result = api.validate(entries)
-        assert validate_result.success
+        assert validate_result.is_success
 
         # Step 3: Write using main API
         write_result = api.write(entries)
-        assert write_result.success
+        assert write_result.is_success
         output_content = write_result.value
 
         # Step 4: Round-trip test
         reparse_result = api.parse(output_content)
-        assert reparse_result.success
+        assert reparse_result.is_success
         if len(reparse_result.value) != len(entries):
             msg: str = f"Expected {len(entries)}, got {len(reparse_result.value)}"
             raise AssertionError(msg)
@@ -290,11 +290,11 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         try:
             # Write to file
             file_write_result = api.write_file(entries, str(temp_path))
-            assert file_write_result.success
+            assert file_write_result.is_success
 
             # Read from file
             file_read_result = api.parse_file(temp_path)
-            assert file_read_result.success
+            assert file_read_result.is_success
             if len(file_read_result.value) != len(entries):
                 msg: str = f"Expected {len(entries)}, got {len(file_read_result.value)}"
                 raise AssertionError(msg)
@@ -337,7 +337,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
             # Use API for file writing, convenience function only returns string content
             api = FlextLdifAPI()
             file_result = api.write_file(entries, temp_path)
-            assert file_result.success
+            assert file_result.is_success
             assert temp_path.exists()
 
         finally:
@@ -356,7 +356,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
 
         strict_api = FlextLdifAPI(strict_config)
         strict_result = strict_api.parse(enterprise_ldif_sample)
-        assert strict_result.success  # Should pass with valid data
+        assert strict_result.is_success  # Should pass with valid data
 
         # Scenario 2: Permissive configuration
         permissive_config = FlextLdifConfig.model_validate(
@@ -369,7 +369,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
 
         permissive_api = FlextLdifAPI(permissive_config)
         permissive_result = permissive_api.parse(enterprise_ldif_sample)
-        assert permissive_result.success
+        assert permissive_result.is_success
 
         # Scenario 3: Restrictive configuration
         restrictive_config = FlextLdifConfig.model_validate(
@@ -380,7 +380,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
 
         restrictive_api = FlextLdifAPI(restrictive_config)
         restrictive_result = restrictive_api.parse(enterprise_ldif_sample)
-        assert not restrictive_result.success  # Should fail due to limits
+        assert not restrictive_result.is_success  # Should fail due to limits
 
     def test_e2e_error_recovery_workflow(self) -> None:
         """Test E2E workflow with error conditions and recovery."""
@@ -389,7 +389,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         # Step 1: Try to parse invalid content
         invalid_content = "This is not LDIF content at all"
         parse_result = api.parse(invalid_content)
-        assert not parse_result.success
+        assert not parse_result.is_success
         assert parse_result.error is not None
 
         # Step 2: Try to parse partially valid content
@@ -409,7 +409,7 @@ objectClass: person
         # Step 3: Try file operations with nonexistent files
         nonexistent_file = Path("/nonexistent/file.ldif")
         file_result = api.parse_file(nonexistent_file)
-        assert not file_result.success
+        assert not file_result.is_success
         if "not found" not in file_result.error.lower():
             msg: str = f"Expected 'not found' in {file_result.error.lower()}"
             raise AssertionError(msg)
@@ -451,22 +451,22 @@ employeeNumber: EMP{i:03d}
 
         # Parse
         parse_result = api.parse(large_content)
-        assert parse_result.success
+        assert parse_result.is_success
         parse_time = time.time()
 
         # Filter
         person_result = api.filter_persons(parse_result.value)
-        assert person_result.success
+        assert person_result.is_success
         filter_time = time.time()
 
         # Sort
         sort_result = api.sort_hierarchically(person_result.value)
-        assert sort_result.success
+        assert sort_result.is_success
         sort_time = time.time()
 
         # Write
         write_result = api.write(sort_result.value)
-        assert write_result.success
+        assert write_result.is_success
         write_time = time.time()
 
         # Calculate timings
@@ -539,15 +539,15 @@ description: User number {i} for memory testing
             api = FlextLdifAPI()
 
             parse_result = api.parse(ldif_sample)
-            if not parse_result.success:
+            if not parse_result.is_success:
                 return "failed"
 
             person_result = api.filter_persons(parse_result.value)
-            if not person_result.success:
+            if not person_result.is_success:
                 return "failed"
 
             write_result = api.write(person_result.value)
-            if not write_result.success:
+            if not write_result.is_success:
                 return "failed"
         except (RuntimeError, ValueError, TypeError):
             return "failed"
@@ -603,7 +603,7 @@ description: User number {i} for memory testing
 
         # Step 3: Parse and validate
         parse_result = api.parse(enterprise_data)
-        assert parse_result.success
+        assert parse_result.is_success
 
         # Step 4: Extract different types of entries
         all_entries = parse_result.value

@@ -13,6 +13,7 @@ from pathlib import Path
 from flext_ldif import (
     FlextLdifAPI,
     FlextLdifConfig,
+    FlextLdifEntry,
     TLdif,
     flext_ldif_get_api,
     flext_ldif_parse,
@@ -166,16 +167,12 @@ mail: test.user@filetest.com
     try:
         # Using TLdif for file operations with railway programming
         api = FlextLdifAPI()
-        TLdif.read_file(input_path).tap(
-            lambda entries: api.filter_persons(entries).tap(
-                lambda person_entries: TLdif.write_file(
-                    person_entries, output_path
-                ).tap(
-                    lambda _: output_path.read_text(encoding="utf-8")
-                    if output_path.exists()
-                    else None
-                )
-            )
+        TLdif.read_file(input_path).flat_map(
+            lambda entries: api.filter_persons(entries)
+        ).flat_map(
+            lambda person_entries: TLdif.write_file(person_entries, output_path)
+        ).tap(
+            lambda _: print(f"Wrote filtered entries to {output_path}")
         )
 
         # Using API for file operations with railway programming
@@ -200,8 +197,8 @@ mail: convenience@example.com
     # Parse using convenience function
     entries = flext_ldif_parse(ldif_content)
 
-    # Validate using convenience function
-    flext_ldif_validate(ldif_content)
+    # Validate using convenience function - parse first, then validate
+    flext_ldif_validate(entries)
 
     # Write using convenience function
     flext_ldif_write(entries)
@@ -331,8 +328,8 @@ member: cn=Mary Manager,ou=people,dc=advanced,dc=com
 
 def _demonstrate_basic_object_class_filtering(
     api: FlextLdifAPI,
-    entries: list,
-    person_entries: list,
+    entries: list[FlextLdifEntry],
+    person_entries: list[FlextLdifEntry],
 ) -> None:
     """Demonstrate basic object class filtering operations."""
     # Touch parameter to demonstrate usage in examples and satisfy linters
@@ -347,9 +344,9 @@ def _demonstrate_basic_object_class_filtering(
     api.filter_by_objectclass(entries, "organizationalUnit")
 
 
-def _filter_by_title_containing(entries: list, keyword: str) -> list:
+def _filter_by_title_containing(entries: list[FlextLdifEntry], keyword: str) -> list[FlextLdifEntry]:
     """Custom filter for entries with title containing keyword."""
-    result = []
+    result: list[FlextLdifEntry] = []
     for entry in entries:
         title_attr = entry.get_attribute("title")
         if title_attr and any(keyword.lower() in title.lower() for title in title_attr):
@@ -357,36 +354,38 @@ def _filter_by_title_containing(entries: list, keyword: str) -> list:
     return result
 
 
-def _demonstrate_custom_title_filtering(person_entries: list) -> None:
+def _demonstrate_custom_title_filtering(person_entries: list[FlextLdifEntry]) -> None:
     """Demonstrate custom filtering by title keywords."""
     _filter_by_title_containing(person_entries, "engineer")
     _filter_by_title_containing(person_entries, "manager")
 
 
-def _determine_entry_type(entry: object) -> str:
+def _determine_entry_type(entry: FlextLdifEntry) -> str:
     """Determine the type of an LDAP entry based on object classes."""
-    if entry.has_object_class("domain"):
+    has_object_class = entry.has_object_class
+    if has_object_class("domain"):
         return "domain"
-    if entry.has_object_class("organizationalUnit"):
+    if has_object_class("organizationalUnit"):
         return "OU"
-    if entry.has_object_class("person"):
+    if has_object_class("person"):
         return "person"
-    if entry.has_object_class("groupOfNames"):
+    if has_object_class("groupOfNames"):
         return "group"
     return "other"
 
 
 def _demonstrate_hierarchical_analysis(
     api: FlextLdifAPI,
-    entries: list,
+    entries: list[FlextLdifEntry],
 ) -> None:
     """Demonstrate hierarchical analysis and entry categorization."""
-    api.sort_hierarchically(entries).tap(
-        lambda sorted_entries: [
-            ["   " + "  " * str(entry.dn).count(","), _determine_entry_type(entry)]
-            for entry in sorted_entries
-        ]
-    )
+    def print_hierarchy(sorted_entries: list[FlextLdifEntry]) -> None:
+        for entry in sorted_entries:
+            indent = "   " + "  " * str(entry.dn).count(",")
+            entry_type = _determine_entry_type(entry)
+            print(f"{indent}{entry_type}")
+
+    api.sort_hierarchically(entries).tap(print_hierarchy)
 
 
 def example_advanced_filtering() -> None:
@@ -397,17 +396,13 @@ def example_advanced_filtering() -> None:
     parse_result = api.parse(complex_ldif)
 
     # Use railway programming with chaining
-    parse_result.tap(
-        lambda entries: [
-            _demonstrate_basic_object_class_filtering(
-                api, entries, api.filter_persons(entries).unwrap_or([])
-            ),
-            _demonstrate_custom_title_filtering(
-                api.filter_persons(entries).unwrap_or([])
-            ),
-            _demonstrate_hierarchical_analysis(api, entries),
-        ]
-    )
+    def demonstrate_all_filtering(entries: list[FlextLdifEntry]) -> None:
+        person_entries = api.filter_persons(entries).unwrap_or([])
+        _demonstrate_basic_object_class_filtering(api, entries, person_entries)
+        _demonstrate_custom_title_filtering(person_entries)
+        _demonstrate_hierarchical_analysis(api, entries)
+
+    parse_result.tap(demonstrate_all_filtering)
 
 
 def example_performance_monitoring() -> None:
@@ -436,19 +431,21 @@ description: Test user {i:03d} for performance monitoring
     start_time = time.time()
     api = FlextLdifAPI()
 
-    TLdif.parse(large_ldif).tap(
-        lambda entries: [
-            time.time() - start_time,  # parse_time
-            api.filter_persons(entries).tap(
-                lambda person_entries: [
-                    time.time() - start_time,  # filter_time
-                    TLdif.write(person_entries).tap(
-                        lambda _: time.time() - start_time  # write_time
-                    ),
-                ]
-            ),
-        ]
-    )
+    def measure_performance(entries: list[FlextLdifEntry]) -> None:
+        parse_time = time.time() - start_time
+        print(f"Parse time: {parse_time:.3f}s")
+
+        filter_start = time.time()
+        person_entries = api.filter_persons(entries).unwrap_or([])
+        filter_time = time.time() - filter_start
+        print(f"Filter time: {filter_time:.3f}s")
+
+        write_start = time.time()
+        TLdif.write(person_entries)
+        write_time = time.time() - write_start
+        print(f"Write time: {write_time:.3f}s")
+
+    TLdif.parse(large_ldif).tap(measure_performance)
 
 
 def main() -> None:

@@ -15,6 +15,7 @@ from flext_core import get_logger
 from flext_ldif import (
     FlextLdifAPI,
     FlextLdifConfig,
+    FlextLdifEntry,
     FlextLdifError,
     FlextLdifParseError,
     FlextLdifValidationError,
@@ -49,13 +50,13 @@ without proper structure
     def _demonstrate_success_pattern(self) -> None:
         """Demonstrate FlextResult success patterns."""
         result = self.api.parse(self.valid_ldif)
-        if result.success:
+        if result.is_success:
             pass  # Success case handled
 
     def _demonstrate_failure_pattern(self) -> None:
         """Demonstrate FlextResult failure patterns."""
         result = self.api.parse(self.invalid_ldif)
-        if result.success:
+        if result.is_success:
             pass  # Failure case handled
 
     def _demonstrate_chaining_pattern(self) -> None:
@@ -70,7 +71,7 @@ without proper structure
         """Demonstrate result chaining pattern."""
         # Parse
         parse_result = self.api.parse(ldif_content)
-        if not parse_result.success:
+        if not parse_result.is_success:
             return f"Parse failed: {parse_result.error}"
 
         entries = parse_result.unwrap_or([])
@@ -84,23 +85,24 @@ without proper structure
 
         # Filter
         filter_result = self.api.filter_persons(entries)
-        if not filter_result.success:
+        if not filter_result.is_success:
             return f"Filter failed: {filter_result.error}"
 
-        if filter_result.unwrap_or([]) is None:
+        if not filter_result.unwrap_or([]):
             return "Filter returned no data"
 
         return (
             f"Successfully processed {len(filter_result.unwrap_or([]))} person entries"
         )
 
-    def _validate_entries(self, entries: list[object]) -> list[str]:
+    def _validate_entries(self, entries: list[FlextLdifEntry]) -> list[str]:
         """Validate entries and return errors."""
-        validation_errors = []
+        validation_errors: list[str] = []
         for entry in entries:
             # CORREÇÃO: Usar método correto que existe na API
             try:
-                entry.validate_semantic_rules()
+                if hasattr(entry, "validate_business_rules"):
+                    entry.validate_business_rules()
             except FlextLdifValidationError as e:
                 validation_errors.append(str(e))
         return validation_errors
@@ -122,7 +124,8 @@ def demonstrate_exception_handling() -> None:
     # Test different exception types
     def _test_parse_error() -> None:
         msg = "Test parse error"
-        raise FlextLdifParseError(msg, line_number=42)
+        parse_error_msg = f"{msg} (line 42)"
+        raise FlextLdifParseError(parse_error_msg)
 
     try:
         _test_parse_error()
@@ -131,10 +134,8 @@ def demonstrate_exception_handling() -> None:
 
     def _test_validation_error() -> None:
         msg = "Test validation error"
-        raise FlextLdifValidationError(
-            msg,
-            validation_details={"field": "dn", "issue": "empty"},
-        )
+        validation_error_msg = f"{msg} - field: dn, issue: empty"
+        raise FlextLdifValidationError(validation_error_msg)
 
     try:
         _test_validation_error()
@@ -159,14 +160,14 @@ def demonstrate_file_error_handling() -> None:
     nonexistent_file = Path("/nonexistent/path/file.ldif")
     result = api.parse_file(nonexistent_file)
 
-    if result.success:
+    if result.is_success:
         pass
 
     # Test with directory instead of file
     directory_path = Path(__file__).parent
     result = api.parse_file(directory_path)
 
-    if result.success:
+    if result.is_success:
         pass
 
     # Test with permission issues (simulate)
@@ -180,15 +181,15 @@ def demonstrate_file_error_handling() -> None:
     try:
         # Try to parse valid file
         result = api.parse_file(temp_file)
-        if result.success:
+        if result.is_success:
             pass
 
         # Try to write to read-only location (will likely fail)
-        if result.success and result.unwrap_or([]):
+        if result.is_success and result.unwrap_or([]):
             readonly_path = Path("/readonly/output.ldif")  # This will fail
-            write_result = api.write(result.unwrap_or([]), readonly_path)
+            write_result = api.write_file(result.unwrap_or([]), str(readonly_path))
 
-            if write_result.success:
+            if write_result.is_success:
                 pass
 
     finally:
@@ -208,7 +209,7 @@ def demonstrate_configuration_error_handling() -> None:
         sample_file = Path(__file__).parent / "sample_basic.ldif"
         if sample_file.exists():
             result = api.parse_file(sample_file)
-            if result.success:
+            if result.is_success:
                 pass
 
     except Exception as exc:  # Log instead of bare pass
@@ -227,11 +228,11 @@ description:
 """
 
     result = api.parse(empty_attr_ldif)
-    if result.success and result.unwrap_or([]):
+    if result.is_success and result.unwrap_or([]):
         # Test validation
         for entry in result.unwrap_or([]):
             with contextlib.suppress(FlextLdifValidationError):
-                entry.validate_semantic_rules()
+                entry.validate_business_rules()
 
 
 def main() -> None:

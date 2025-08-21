@@ -82,13 +82,13 @@ objectClass: organizationalUnit
         try:
             # Parse from file
             parse_result = api.parse_file(temp_file)
-            assert parse_result.success
+            assert parse_result.is_success
             assert parse_result.value is not None
 
             # Write to new file
             output_file = temp_file.with_suffix(".out.ldif")
             write_result = api.write_file(parse_result.value, str(output_file))
-            assert write_result.success
+            assert write_result.is_success
 
             # Verify file was created
             assert output_file.exists()
@@ -108,7 +108,7 @@ objectClass: organizationalUnit
         api = FlextLdifAPI(config)
 
         parse_result = api.parse(sample_ldif_content)
-        assert parse_result.success
+        assert parse_result.is_success
         assert parse_result.value is not None
 
     def test_error_handling(self, api: FlextLdifAPI) -> None:
@@ -116,8 +116,8 @@ objectClass: organizationalUnit
         # Test invalid LDIF content
         invalid_ldif = "invalid ldif content without proper format"
         parse_result = api.parse(invalid_ldif)
-        assert not parse_result.success
+        assert not parse_result.is_success
 
         # Test non-existent file
         parse_result = api.parse_file(Path("/non/existent/file.ldif"))
-        assert not parse_result.success
+        assert not parse_result.is_success

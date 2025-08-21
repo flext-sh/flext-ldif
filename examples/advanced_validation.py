@@ -7,11 +7,16 @@ Clean Architecture patterns and FlextResult error handling.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from flext_core import get_logger
 
 from flext_ldif import FlextLdifAPI, FlextLdifConfig, FlextLdifEntry
+
+if TYPE_CHECKING:
+    from flext_core import FlextResult
 
 logger = get_logger(__name__)
 
@@ -26,7 +31,7 @@ def validate_business_rules(entry: FlextLdifEntry) -> tuple[bool, list[str]]:
       Tuple of (is_valid, list_of_errors)
 
     """
-    errors = []
+    errors: list[str] = []
 
     # Rule 1: Person entries must have email
     if entry.is_person_entry():
@@ -95,13 +100,13 @@ class LdifValidationDemonstrator:
 
     def _perform_domain_validation(self, entries: list[FlextLdifEntry]) -> None:
         """Perform domain validation on entries."""
-        domain_errors = []
+        domain_errors: list[str] = []
 
         for i, entry in enumerate(entries):
             # Use railway programming for validation
-            entry.validate_semantic_rules().tap_error(
-                lambda error: domain_errors.append(
-                    f"Entry {i + 1} ({entry.dn}): {error}"
+            entry.validate_business_rules().tap_error(
+                lambda error, idx=i, ent=entry: domain_errors.append(
+                    f"Entry {idx + 1} ({ent.dn}): {error}"
                 )
             )
 
@@ -109,7 +114,7 @@ class LdifValidationDemonstrator:
 
     def _perform_business_validation(self, entries: list[FlextLdifEntry]) -> None:
         """Perform business rule validation on entries."""
-        business_errors = []
+        business_errors: list[str] = []
 
         for i, entry in enumerate(entries):
             is_valid, errors = validate_business_rules(entry)
@@ -123,15 +128,16 @@ class LdifValidationDemonstrator:
     def _analyze_entry_types(self, entries: list[FlextLdifEntry]) -> None:
         """Analyze entry types using API filters."""
         # Use railway programming for filtering results
-        for filter_func in [
+        filter_functions: list[Callable[[list[FlextLdifEntry]], FlextResult[list[FlextLdifEntry]]]] = [
             self.api.filter_persons,
             self.api.filter_groups,
             self.api.filter_organizational_units,
-        ]:
+        ]
+        for filter_func in filter_functions:
             filter_func(entries).tap(
-                lambda filtered_entries: None
-                if not filtered_entries
-                else None  # Process specific type
+                lambda filtered_entries: print(f"Found {len(filtered_entries)} entries")
+                if filtered_entries
+                else print("No entries found")
             )
 
     def _test_invalid_ldif(self) -> None:
@@ -150,7 +156,7 @@ class LdifValidationDemonstrator:
         """Validate entries from invalid LDIF file."""
         for entry in entries:
             # Use railway programming for validation
-            entry.validate_semantic_rules().tap_error(
+            entry.validate_business_rules().tap_error(
                 lambda _: None  # Log validation failure
             )
 

@@ -26,8 +26,8 @@ class TestRealApiIntegration:
     def test_api_with_real_config(self) -> None:
         """Test API with real configuration."""
         config = FlextLdifConfig(
-            validation_level="strict",
-            encoding="utf-8",
+            strict_validation=True,
+            input_encoding="utf-8",
             line_wrap_length=76,
         )
 
@@ -41,7 +41,7 @@ sn: Test
 
         # Test parsing with config
         result = api.parse(ldif_content)
-        assert result.success
+        assert result.is_success
         assert result.value is not None
         assert len(result.value) == 1
 
@@ -65,13 +65,13 @@ mail: filetest@example.com
                 parser = FlextLdifParserService()
                 file_result = parser.parse_ldif_file(tmp_file.name)
 
-                assert file_result.success
+                assert file_result.is_success
                 assert file_result.value is not None
                 assert len(file_result.value) == 1
 
                 entry = file_result.value[0]
-                assert entry.dn.value == "cn=FileTest,dc=example,dc=com"
-                assert entry.attributes.attributes["mail"] == ["filetest@example.com"]
+                assert entry.dn == "cn=FileTest,dc=example,dc=com"
+                assert entry.get_attribute("mail") == ["filetest@example.com"]
 
             finally:
                 Path(tmp_file.name).unlink()
@@ -104,12 +104,12 @@ departmentNumber: IT001
 
         result = parser.parse(multi_entry_ldif)
 
-        assert result.success
+        assert result.is_success
         assert result.value is not None
         assert len(result.value) == 3
 
         # Check hierarchical structure
-        dns = [entry.dn.value for entry in result.value]
+        dns = [str(entry.dn) for entry in result.value]
         assert "ou=departments,dc=company,dc=com" in dns
         assert "ou=IT,ou=departments,dc=company,dc=com" in dns
         assert "cn=john.doe,ou=IT,ou=departments,dc=company,dc=com" in dns
@@ -127,12 +127,12 @@ sn: User
 """
 
         parse_result = parser.parse(valid_ldif)
-        assert parse_result.success
+        assert parse_result.is_success
         entries = parse_result.value
 
         # Test validation
         validation_result = validator.validate_data(entries)
-        assert validation_result.success
+        assert validation_result.is_success
         assert validation_result.value is True
 
     def test_writer_service_integration(self) -> None:
@@ -150,14 +150,14 @@ telephoneNumber: +1-555-WRITE-1
 """
 
         parse_result = parser.parse(original_ldif)
-        assert parse_result.success
+        assert parse_result.is_success
         entries = parse_result.value
 
         # Write using writer service
         writer = FlextLdifWriterService()
         write_result = writer.write(entries)
 
-        assert write_result.success
+        assert write_result.is_success
         written_ldif = write_result.value
         assert written_ldif is not None
 
@@ -201,7 +201,7 @@ member: cn=user2,ou=users,dc=analytics,dc=com
 """
 
         parse_result = parser.parse(sample_ldif)
-        assert parse_result.success
+        assert parse_result.is_success
         entries = parse_result.value
 
         # Verify we have entries
@@ -273,50 +273,51 @@ member: cn=bob.smith,ou=Employees,ou=Corporate,dc=enterprise,dc=local
 
         # 1. Parse the enterprise LDIF
         parse_result = api.parse(enterprise_ldif)
-        assert parse_result.success
+        assert parse_result.is_success
         entries = parse_result.value
         assert len(entries) == 7  # Adjusted count - actually 7 entries
 
         # 2. Validate the entries
         validation_result = api.validate(entries)
-        assert validation_result.success
+        assert validation_result.is_success
         assert validation_result.value is True
 
         # 3. Get analytics
         analytics_result = api.get_entry_statistics(entries)
-        assert analytics_result.success
+        assert analytics_result.is_success
         stats = analytics_result.value
         assert stats["total_entries"] == 7
 
         # 4. Write back to LDIF
         write_result = api.write(entries)
-        assert write_result.success
+        assert write_result.is_success
         output_ldif = write_result.value
 
         # 5. Verify round-trip consistency
         reparse_result = api.parse(output_ldif)
-        assert reparse_result.success
+        assert reparse_result.is_success
         reparsed_entries = reparse_result.value
         assert len(reparsed_entries) == len(entries)
 
         # Verify key entries are preserved
-        original_dns = {entry.dn.value for entry in entries}
-        reparsed_dns = {entry.dn.value for entry in reparsed_entries}
+        original_dns = {str(entry.dn) for entry in entries}
+        reparsed_dns = {str(entry.dn) for entry in reparsed_entries}
         assert original_dns == reparsed_dns
 
     def test_error_handling_integration(self) -> None:
         """Test real error handling integration."""
         api = FlextLdifAPI()
 
-        # Test with malformed LDIF
+        # Test with malformed LDIF (missing DN line)
         malformed_ldif = """not a dn: invalid
 objectClass: person
 """
 
         result = api.parse(malformed_ldif)
-        assert not result.success
+        assert not result.is_success
         assert result.error is not None
-        assert "missing DN" in result.error.lower() or "invalid" in result.error.lower()
+        # Should specifically fail with LDIF format error
+        assert "failed to parse" in result.error.lower() or "invalid ldif" in result.error.lower()
 
     def test_empty_and_edge_cases_integration(self) -> None:
         """Test edge cases integration."""
@@ -324,12 +325,12 @@ objectClass: person
 
         # Empty content
         empty_result = api.parse("")
-        assert empty_result.success
+        assert empty_result.is_success
         assert len(empty_result.value) == 0
 
         # Whitespace only
         whitespace_result = api.parse("   \n\n\t  ")
-        assert whitespace_result.success
+        assert whitespace_result.is_success
         assert len(whitespace_result.value) == 0
 
         # Single minimal entry
@@ -339,5 +340,5 @@ cn: minimal
 sn: test
 """
         minimal_result = api.parse(minimal_ldif)
-        assert minimal_result.success
+        assert minimal_result.is_success
         assert len(minimal_result.value) == 1

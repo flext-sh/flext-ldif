@@ -38,7 +38,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_ldif import FlextLdifAPI, FlextLdifConfig
+from flext_ldif import FlextLdifAPI, FlextLdifConfig, FlextLdifEntry
 
 
 def main() -> None:
@@ -72,22 +72,22 @@ def main() -> None:
     print(f"✅ Successfully parsed {len(entries)} LDIF entries")
 
     # Display basic statistics with railway programming
-    api.get_entry_statistics(entries).tap(
-        lambda stats: [
-            print("📊 Entry statistics:"),
-            [print(f"   {key}: {value}") for key, value in stats.items()],
-        ]
-    )
+    def display_stats(stats: dict[str, int]) -> None:
+        print("📊 Entry statistics:")
+        for key, value in stats.items():
+            print(f"   {key}: {value}")
+
+    api.get_entry_statistics(entries).tap(display_stats)
 
     # Display first entry details
     if entries:
         first_entry = entries[0]
         print("🔍 First entry details:")
-        print(f"   DN: {first_entry.dn.value}")
-        print(f"   Attributes: {len(first_entry.attributes.attributes)} total")
+        print(f"   DN: {first_entry.dn}")
+        print(f"   Attributes: {len(first_entry.get_all_attributes())} total")
 
         # Validate domain rules with railway programming
-        first_entry.validate_semantic_rules().tap(
+        first_entry.validate_business_rules().tap(
             lambda _: print("   ✅ Domain validation passed")
         ).tap_error(lambda error: print(f"   ❌ Domain validation failed: {error}"))
 
@@ -95,19 +95,17 @@ def main() -> None:
     print("🔎 Filtering person entries...")
     output_file = Path(__file__).parent / "output_basic.ldif"
 
-    api.filter_persons(entries).tap(
-        lambda person_entries: [
-            print(f"👥 Found {len(person_entries)} person entries:"),
-            [
-                print(
-                    f"   {i + 1}. {entry.attributes.attributes.get('cn', ['Unknown'])[0]} "
-                    f"({entry.attributes.attributes.get('mail', ['No email'])[0]})"
-                )
-                for i, entry in enumerate(person_entries)
-            ],
-            print(f"💾 Writing filtered entries to: {output_file}"),
-        ]
-    ).flat_map(lambda person_entries: api.write_file(person_entries, output_file)).tap(
+    def process_person_entries(person_entries: list[FlextLdifEntry]) -> None:
+        print(f"👥 Found {len(person_entries)} person entries:")
+        for i, entry in enumerate(person_entries):
+            cn = entry.get_single_attribute("cn") or "Unknown"
+            mail = entry.get_single_attribute("mail") or "No email"
+            print(f"   {i + 1}. {cn} ({mail})")
+        print(f"💾 Writing filtered entries to: {output_file}")
+
+    api.filter_persons(entries).tap(process_person_entries).flat_map(
+        lambda person_entries: api.write_file(person_entries, str(output_file))
+    ).tap(
         lambda _: print("✅ Successfully wrote filtered entries to output file")
     ).tap_error(lambda error: print(f"❌ Operation failed: {error}"))
 

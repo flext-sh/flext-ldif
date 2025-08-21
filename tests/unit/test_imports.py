@@ -61,10 +61,11 @@ class TestModuleImports:
         assert flext_ldif_write is not None
 
     def test_cli_import(self) -> None:
-        """Test CLI import (may be None if dependencies missing)."""
-        # CLI may be None if dependencies are missing, which is acceptable
-        # Just test that import doesn't raise exception
-        assert cli_main is not None or cli_main is None  # Both are valid
+        """Test CLI import functionality."""
+        # Test that CLI import works and function is callable
+        if cli_main is not None:
+            assert callable(cli_main)
+        # If None, it means dependencies are missing, which is acceptable in test environment
 
     def test_version_import(self) -> None:
         """Test version information import."""

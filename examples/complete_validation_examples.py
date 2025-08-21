@@ -54,7 +54,7 @@ from flext_ldif import (
 )
 
 
-def test_1_flext_ldif_prefixes_validation() -> None:
+def test_1_flext_ldif_prefixes_validation() -> dict[str, object]:
     """Teste 1: Validação de todos os prefixos FlextLdif* que REALMENTE EXISTEM."""
     # ✅ Testando classes principais com prefixo FlextLdif* (APENAS as que existem)
     config = FlextLdifConfig()
@@ -83,12 +83,12 @@ def test_1_flext_ldif_prefixes_validation() -> None:
     }
 
 
-def test_2_domain_specifications_validation() -> None:
+def test_2_domain_specifications_validation() -> dict[str, object]:
     """Teste 2: Validação usando FlextLdifEntry (specifications integradas via composição)."""
     # ✅ CORREÇÃO: Specifications estão integradas no FlextLdifEntry via composição
     # Testando funcionalidade através da API que realmente existe
 
-    test_entry_data = {
+    test_entry_data: dict[str, str | list[str]] = {
         "dn": "uid=jdoe,ou=people,dc=example,dc=com",
         "objectClass": ["person", "inetOrgPerson"],
         "uid": ["jdoe"],
@@ -111,11 +111,11 @@ sn: Doe
     # Testar parsing e validação
     with contextlib.suppress(Exception):
         parse_result = api.parse(ldif_content)
-        if parse_result.success and parse_result.unwrap_or([]):
+        if parse_result.is_success and parse_result.unwrap_or([]):
             entry = parse_result.unwrap_or([])[0]
             # Testar specifications integradas
             entry.has_object_class("person")
-            entry.validate_semantic_rules()
+            entry.validate_business_rules()
 
     return {
         "api": api,
@@ -143,7 +143,7 @@ sn: User
         # Parse - geraria "DocumentParsed" event via logging
         parse_result = api.parse(sample_ldif)
 
-        if parse_result.success and parse_result.unwrap_or([]):
+        if parse_result.is_success and parse_result.unwrap_or([]):
             entries = parse_result.unwrap_or([])
 
             # Validate - geraria "EntryValidated" event via logging
@@ -240,7 +240,7 @@ member: uid=jdoe,ou=people,dc=example,dc=com"""
         # Test parsing capabilities usando API real
         with contextlib.suppress(Exception):
             result = api.parse(self.ldif_content)
-            if result.success and result.unwrap_or([]):
+            if result.is_success and result.unwrap_or([]):
                 pass
 
     def _test_processing_stage(self) -> None:
@@ -249,7 +249,7 @@ member: uid=jdoe,ou=people,dc=example,dc=com"""
 
         with contextlib.suppress(Exception):
             result = api.parse(self.ldif_content)
-            if result.success and result.unwrap_or([]):
+            if result.is_success and result.unwrap_or([]):
                 entries = result.unwrap_or([])
                 # Test filtering (processing)
                 api.filter_persons(entries)
@@ -261,7 +261,7 @@ member: uid=jdoe,ou=people,dc=example,dc=com"""
 
         with contextlib.suppress(Exception):
             parse_result = api.parse(self.ldif_content)
-            if parse_result.success and parse_result.unwrap_or([]):
+            if parse_result.is_success and parse_result.unwrap_or([]):
                 api.validate(parse_result.unwrap_or([]))
 
     def _test_writing_stage(self) -> None:
@@ -270,7 +270,7 @@ member: uid=jdoe,ou=people,dc=example,dc=com"""
 
         with contextlib.suppress(Exception):
             parse_result = api.parse(self.ldif_content)
-            if parse_result.success and parse_result.unwrap_or([]):
+            if parse_result.is_success and parse_result.unwrap_or([]):
                 api.write(parse_result.unwrap_or([]))
 
     def _test_utilities_stage(self) -> None:
@@ -294,7 +294,7 @@ cn: User
 
         with contextlib.suppress(Exception):
             parse_result = api.parse(test_entries_ldif)
-            if parse_result.success and parse_result.unwrap_or([]):
+            if parse_result.is_success and parse_result.unwrap_or([]):
                 api.sort_hierarchically(parse_result.unwrap_or([]))
 
 
@@ -322,19 +322,24 @@ cn: Simple User"""
 
     # Test flext_ldif_validate function - EXISTE
     with contextlib.suppress(Exception):
-        is_valid = flext_ldif_validate(test_ldif)
+        # flext_ldif_validate expects list of entries, not LDIF string
+        test_entries = flext_ldif_parse(test_ldif)
+        is_valid = flext_ldif_validate(test_entries)
+        print(f"Validation result: {is_valid}")
 
     # Test flext_ldif_write function - EXISTE
     try:
         # Create a test entry for writing
         if "entries" in locals() and entries:
             ldif_output = flext_ldif_write(entries)
+            print(f"Generated LDIF output: {len(ldif_output)} characters")
     except (RuntimeError, ValueError, TypeError):
         pass
 
     # Test flext_ldif_get_api function - EXISTE
     with contextlib.suppress(Exception):
         api = flext_ldif_get_api()
+        print(f"API instance: {type(api).__name__}")
 
 
 def test_7_flext_core_integration_validation() -> None:
@@ -343,7 +348,8 @@ def test_7_flext_core_integration_validation() -> None:
         # ✅ Verificar se flext-core ainda funciona independentemente
 
         # Test FlextResult (core functionality)
-        FlextResult[None].ok("test data")
+        result_test = FlextResult[str].ok("test data")
+        print(f"FlextResult test: {result_test.is_success}")
 
         # Test FlextContainer (core functionality)
         FlextContainer()
@@ -360,9 +366,9 @@ uid: test
 cn: Test User"""
 
         with contextlib.suppress(Exception):
-            result = api.parse(test_ldif)
+            parse_result = api.parse(test_ldif)
             # Should return FlextResult
-            if hasattr(result, "success") and hasattr(result, "data"):
+            if hasattr(parse_result, "is_success") and hasattr(parse_result, "value"):
                 pass
 
     except ImportError:
@@ -429,7 +435,7 @@ member: uid=user1,ou=people,dc=comprehensive,dc=test"""
         # ✅ CORREÇÃO: Usar funções que realmente existem
         entries = flext_ldif_parse(complex_ldif)
 
-        flext_ldif_validate(complex_ldif)
+        flext_ldif_validate(entries)
 
         if entries:
             for entry in entries:
@@ -455,15 +461,16 @@ member: uid=user1,ou=people,dc=comprehensive,dc=test"""
             suffix=".ldif",
             delete=False,
         ) as f:
-            temp_file = f.name
+            temp_file = Path(f.name)
 
         try:
-            # Test writing to file usando função que existe
-            flext_ldif_write(entries, temp_file)
+            # Test writing to string and then to file
+            ldif_content = flext_ldif_write(entries)
+            temp_file.write_text(ldif_content, encoding="utf-8")
 
             # Test reading from file
-            if Path(temp_file).exists():
-                file_content = Path(temp_file).read_text(encoding="utf-8")
+            if temp_file.exists():
+                file_content = temp_file.read_text(encoding="utf-8")
                 flext_ldif_parse(file_content)
 
         finally:

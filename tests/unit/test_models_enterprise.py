@@ -19,7 +19,7 @@ class TestFlextLdifEntryEnterprise:
     """Enterprise-grade tests for FlextLdifEntry model."""
 
     @pytest.fixture
-    def sample_entry_data(self) -> dict:
+    def sample_entry_data(self) -> dict[str, str | dict[str, list[str]]]:
         """Sample entry data for testing."""
         return {
             "dn": "cn=John Doe,ou=people,dc=example,dc=com",
@@ -35,7 +35,7 @@ class TestFlextLdifEntryEnterprise:
         }
 
     @pytest.fixture
-    def minimal_entry_data(self) -> dict:
+    def minimal_entry_data(self) -> dict[str, str | dict[str, list[str]]]:
         """Minimal valid entry data."""
         return {
             "dn": "cn=minimal,dc=example,dc=com",
@@ -53,7 +53,7 @@ class TestFlextLdifEntryEnterprise:
         if str(entry.dn) != sample_entry_data["dn"]:
             msg: str = f"Expected {sample_entry_data['dn']}, got {entry.dn!s}"
             raise AssertionError(msg)
-        assert entry.attributes.attributes == sample_entry_data["attributes"]
+        assert entry.get_all_attributes() == sample_entry_data["attributes"]
 
     def test_entry_creation_with_string_dn(self, sample_entry_data: dict) -> None:
         """Test entry creation with string DN (auto-conversion)."""
@@ -69,8 +69,8 @@ class TestFlextLdifEntryEnterprise:
         entry = FlextLdifEntry.model_validate(sample_entry_data)
 
         assert isinstance(entry.attributes, FlextLdifAttributes)
-        if entry.attributes.attributes != sample_entry_data["attributes"]:
-            msg: str = f"Expected {sample_entry_data['attributes']}, got {entry.attributes.attributes}"
+        if entry.get_all_attributes() != sample_entry_data["attributes"]:
+            msg: str = f"Expected {sample_entry_data['attributes']}, got {entry.get_all_attributes()}"
             raise AssertionError(msg)
 
     def test_entry_validation_invalid_dn_type(self) -> None:
@@ -235,7 +235,7 @@ class TestFlextLdifEntryEnterprise:
 
         # Should not raise exception
         result = entry.validate_business_rules()
-        assert result.success
+        assert result.is_success
 
     def test_validate_domain_rules_empty_dn_fails(self) -> None:
         """Test domain rules validation fails for empty DN."""
@@ -256,7 +256,8 @@ class TestFlextLdifEntryEnterprise:
             },
         )
         result = entry.validate_business_rules()
-        assert not result.success
+        assert not result.is_success
+        assert result.error is not None
         assert "LDIF entry must have at least one attribute" in result.error
 
     def test_from_ldif_block_success(self) -> None:
@@ -332,7 +333,7 @@ description: With multiple descriptions"""
         if str(entry.dn) != dn:
             msg: str = f"Expected {dn}, got {entry.dn!s}"
             raise AssertionError(msg)
-        assert entry.attributes.attributes == attributes
+        assert entry.get_all_attributes() == attributes
         if entry.get_attribute("cn") != ["test"]:
             msg: str = f"Expected {['test']}, got {entry.get_attribute('cn')}"
             raise AssertionError(msg)
@@ -402,7 +403,7 @@ description: With multiple descriptions"""
         if str(entry.dn) != sample_entry_data["dn"]:
             msg: str = f"Expected {sample_entry_data['dn']}, got {entry.dn!s}"
             raise AssertionError(msg)
-        assert entry.attributes.attributes == sample_entry_data["attributes"]
+        assert entry.get_all_attributes() == sample_entry_data["attributes"]
 
     def test_entry_json_serialization(self, sample_entry_data: dict) -> None:
         """Test entry JSON serialization."""
@@ -426,7 +427,7 @@ description: With multiple descriptions"""
         for i in range(100):
             attributes[f"attr{i}"] = [f"value{i}"]
 
-        entry_data = {
+        entry_data: dict[str, str | dict[str, list[str]]] = {
             "dn": "cn=large,dc=example,dc=com",
             "attributes": attributes,
         }
@@ -454,7 +455,7 @@ description: With multiple descriptions"""
         # Create multiple similar entries
         entries = []
         for i in range(10):
-            entry_data = {
+            entry_data: dict[str, str | dict[str, list[str]]] = {
                 "dn": f"cn=user{i},dc=example,dc=com",
                 "attributes": {
                     "objectClass": ["person"],
@@ -473,7 +474,7 @@ description: With multiple descriptions"""
 
     def test_edge_cases_special_characters_in_dn(self) -> None:
         """Test entry with special characters in DN."""
-        entry_data = {
+        entry_data: dict[str, str | dict[str, list[str]]] = {
             "dn": "cn=Üser Spëcial,ou=people,dc=example,dc=com",
             "attributes": {
                 "objectClass": ["person"],
@@ -495,7 +496,7 @@ description: With multiple descriptions"""
         """Test entry with very long attribute values."""
         long_value = "x" * 10000  # 10KB value
 
-        entry_data = {
+        entry_data: dict[str, str | dict[str, list[str]]] = {
             "dn": "cn=longvalue,dc=example,dc=com",
             "attributes": {
                 "objectClass": ["top"],
@@ -515,7 +516,7 @@ description: With multiple descriptions"""
 
     def test_edge_cases_empty_attribute_values(self) -> None:
         """Test entry with empty attribute values."""
-        entry_data = {
+        entry_data: dict[str, str | dict[str, list[str]]] = {
             "dn": "cn=empty,dc=example,dc=com",
             "attributes": {
                 "objectClass": ["top"],

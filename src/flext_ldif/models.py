@@ -9,7 +9,7 @@ import uuid
 from collections.abc import Callable
 from functools import lru_cache
 from pathlib import Path
-from typing import override
+from typing import cast, override
 
 from flext_core import (
     FlextConfig,
@@ -450,9 +450,9 @@ class FlextLdifEntry(FlextEntity):
         if not isinstance(obj, dict):
             return super().model_validate(obj)
 
-        # Type narrowing: obj is guaranteed to be dict[str, object] after isinstance check
-        # Safe cast since isinstance(obj, dict) passed and obj: dict[str, object] | object
-        dict_obj = obj  # Type is now dict[str, object] after isinstance narrowing
+        # Type narrowing: obj is guaranteed to be dict after isinstance check
+        # Use typing.cast to make the type explicit for static analyzers
+        dict_obj: dict[str, object] = cast("dict[str, object]", obj)
         obj_copy: dict[str, object] = {
             k: v for k, v in dict_obj.items() if isinstance(k, str) and v is not None
         }
