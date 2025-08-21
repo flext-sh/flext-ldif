@@ -317,7 +317,10 @@ objectClass: person
         assert not result.is_success
         assert result.error is not None
         # Should specifically fail with LDIF format error
-        assert "failed to parse" in result.error.lower() or "invalid ldif" in result.error.lower()
+        assert (
+            "failed to parse" in result.error.lower()
+            or "invalid ldif" in result.error.lower()
+        )
 
     def test_empty_and_edge_cases_integration(self) -> None:
         """Test edge cases integration."""

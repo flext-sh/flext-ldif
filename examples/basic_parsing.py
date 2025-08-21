@@ -84,7 +84,7 @@ def main() -> None:
         first_entry = entries[0]
         print("🔍 First entry details:")
         print(f"   DN: {first_entry.dn}")
-        print(f"   Attributes: {len(first_entry.get_all_attributes())} total")
+        print(f"   Attributes: {len(first_entry.attributes.attributes)} total")
 
         # Validate domain rules with railway programming
         first_entry.validate_business_rules().tap(

@@ -348,7 +348,7 @@ FLEXT-LDIF Domain Value Objects
 This module contains immutable value objects for LDIF processing, implementing
 Domain-Driven Design patterns with strong typing and validation.
 
-All value objects extend FlextValueObject from flext-core and provide
+All value objects extend FlextValue from flext-core and provide
 immutable data structures with business rule validation.
 
 Key Components:
@@ -367,7 +367,7 @@ Example:
     >>> print(parent.value)  # "ou=people,dc=example,dc=com"
 
 Integration:
-    - Built on flext-core FlextValueObject foundation
+    - Built on flext-core FlextValue foundation
     - Used by Domain Entities for data encapsulation
     - Implements immutability patterns
     - Provides business logic for data validation
@@ -379,12 +379,12 @@ License: MIT
 
 from typing import Dict, List, Set, Optional, Tuple
 from dataclasses import dataclass
-from flext_core import FlextValueObject
+from flext_core import FlextValue
 import re
 from .exceptions import FlextLdifDomainError
 
 @dataclass(frozen=True)
-class FlextLdifDistinguishedName(FlextValueObject):
+class FlextLdifDistinguishedName(FlextValue):
     """
     Immutable distinguished name value object with hierarchy operations.
 
@@ -581,7 +581,7 @@ class FlextLdifDistinguishedName(FlextValueObject):
                 raise FlextLdifDomainError(f"Empty attribute value in: {component}")
 
 @dataclass(frozen=True)
-class FlextLdifAttributes(FlextValueObject):
+class FlextLdifAttributes(FlextValue):
     """
     Immutable attributes collection with business rule validation.
 
@@ -2257,7 +2257,7 @@ utils/
 ### **Phase 2: Domain Layer Implementation**
 
 1. **Implement proper domain entities** extending FlextEntity
-2. **Create immutable value objects** extending FlextValueObject
+2. **Create immutable value objects** extending FlextValue
 3. **Add domain services** for complex business logic
 4. **Implement domain events** for integration patterns
 
