@@ -1,6 +1,6 @@
 # Python Module Organization Standards - FLEXT-LDIF
 
-**Version**: 1.0.0
+**Version**: 0.9.0
 **Status**: Production Standard
 **Scope**: FLEXT-LDIF Python Module Architecture
 **Authority**: FLEXT Ecosystem Standards
@@ -173,7 +173,7 @@ Integration:
     - Validated by Domain Services
 
 Author: FLEXT Development Team
-Version: 1.0.0
+Version: 0.9.0
 License: MIT
 """
 
@@ -373,7 +373,7 @@ Integration:
     - Provides business logic for data validation
 
 Author: FLEXT Development Team
-Version: 1.0.0
+Version: 0.9.0
 License: MIT
 """
 
@@ -791,7 +791,7 @@ Integration:
     - Implements CQRS patterns for command/query separation
 
 Author: FLEXT Development Team
-Version: 1.0.0
+Version: 0.9.0
 License: MIT
 """
 
@@ -1162,7 +1162,7 @@ Integration:
     - Used by Application and Infrastructure services
 
 Author: FLEXT Development Team
-Version: 1.0.0
+Version: 0.9.0
 License: MIT
 """
 
@@ -1526,7 +1526,7 @@ Integration:
     - Supports observability and monitoring integration
 
 Author: FLEXT Development Team
-Version: 1.0.0
+Version: 0.9.0
 License: MIT
 """
 
@@ -1556,7 +1556,7 @@ CONTEXT_SETTINGS = dict(
 )
 
 @click.group(context_settings=CONTEXT_SETTINGS)
-@click.version_option(version='1.0.0', prog_name='flext-ldif')
+@click.version_option(version='0.9.0', prog_name='flext-ldif')
 @click.option(
     '--config', '-c',
     type=click.Path(exists=True, path_type=Path),
@@ -2353,7 +2353,7 @@ Integration:
     FLEXT ecosystem integration points and dependencies.
 
 Author: FLEXT Development Team
-Version: 1.0.0
+Version: 0.9.0
 License: MIT
 """
 ```
@@ -2613,7 +2613,7 @@ git push origin --tags
 
 ---
 
-**Document Version**: 1.0.0
+**Document Version**: 0.9.0
 **Last Updated**: 2025-08-03
 **Status**: Production Standard
 **Authority**: FLEXT Ecosystem Architecture Team
