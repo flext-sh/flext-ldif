@@ -1,5 +1,8 @@
 """Comprehensive tests for format_validator_service.py to achieve 100% coverage."""
 
+# ruff: noqa: PT018
+# Reason: Multiple assertion checks are common in tests for comprehensive error validation
+
 # pyright: reportArgumentType=false
 # Reason: FlextLdifEntry accepts dict[str, list[str]] via field validator mode="before" but pyright doesn't understand this
 

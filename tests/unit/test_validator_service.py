@@ -1,5 +1,8 @@
 """Tests for FlextLdifValidatorService - comprehensive coverage."""
 
+# ruff: noqa: PT018
+# Reason: Multiple assertion checks are common in tests for comprehensive error validation
+
 from unittest.mock import Mock, patch
 
 from flext_core import FlextResult

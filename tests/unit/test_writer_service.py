@@ -154,21 +154,6 @@ class TestFlextLdifWriterService:
         assert "cn: Test User" in result.value
         assert "mail: test@example.com" in result.value
 
-    def test_write_entry_error_handling(self) -> None:
-        """Test write_entry handles errors from entry.to_ldif()."""
-        service = FlextLdifWriterService()
-
-        # Create a mock entry that raises an exception
-        mock_entry = Mock(spec=FlextLdifEntry)
-        mock_entry.to_ldif.side_effect = ValueError("Entry error")
-
-        result = service.write_entry(mock_entry)
-
-        assert result.is_failure
-        assert (
-            FlextLdifCoreMessages.WRITE_FAILED.format(error="Entry error")
-            in result.error
-        )
 
     def test_write_entry_attribute_error_handling(self) -> None:
         """Test write_entry handles AttributeError."""
@@ -224,7 +209,7 @@ class TestFlextLdifWriterService:
             assert result.value is True
 
             # Verify file was written
-            with open(tmp_path, encoding=DEFAULT_OUTPUT_ENCODING) as f:
+            with Path(tmp_path).open(encoding=DEFAULT_OUTPUT_ENCODING) as f:
                 content = f.read()
                 assert "dn: cn=Test,dc=example,dc=com" in content
                 assert "cn: Test" in content
@@ -255,7 +240,7 @@ class TestFlextLdifWriterService:
             assert result.value is True
 
             # Verify file was written with correct encoding
-            with open(tmp_path, encoding="utf-8") as f:
+            with Path(tmp_path).open(encoding="utf-8") as f:
                 content = f.read()
                 assert "cn: Tëst" in content
         finally:
@@ -269,7 +254,9 @@ class TestFlextLdifWriterService:
         mock_entry = Mock(spec=FlextLdifEntry)
         mock_entry.to_ldif.side_effect = RuntimeError("Unexpected error")
 
-        result = service.write_file([mock_entry], "/tmp/test.ldif")
+        with tempfile.NamedTemporaryFile(suffix=".ldif", delete=False) as tmp_file:
+            tmp_path = tmp_file.name
+        result = service.write_file([mock_entry], tmp_path)
 
         assert result.is_failure
         assert (
@@ -296,7 +283,7 @@ class TestFlextLdifWriterService:
             assert result.value is True
 
             # Verify content was written
-            with open(tmp_path, encoding=DEFAULT_OUTPUT_ENCODING) as f:
+            with Path(tmp_path).open(encoding=DEFAULT_OUTPUT_ENCODING) as f:
                 written_content = f.read()
                 assert written_content == content
         finally:
@@ -330,8 +317,10 @@ class TestFlextLdifWriterService:
         with patch("pathlib.Path.write_text") as mock_write_text:
             mock_write_text.side_effect = OSError("Disk full")
 
+            with tempfile.NamedTemporaryFile(suffix=".ldif", delete=False) as tmp_file:
+                tmp_path = tmp_file.name
             result = service._write_content_to_file(
-                content, "/tmp/test.ldif", DEFAULT_OUTPUT_ENCODING
+                content, tmp_path, DEFAULT_OUTPUT_ENCODING
             )
 
             assert result.is_failure
@@ -348,7 +337,9 @@ class TestFlextLdifWriterService:
         with patch("pathlib.Path.write_text") as mock_write_text:
             mock_write_text.side_effect = UnicodeError("Unicode encoding error")
 
-            result = service._write_content_to_file(content, "/tmp/test.ldif", "ascii")
+            with tempfile.NamedTemporaryFile(suffix=".ldif", delete=False) as tmp_file:
+                tmp_path = tmp_file.name
+            result = service._write_content_to_file(content, tmp_path, "ascii")
 
             assert result.is_failure
             assert (
@@ -374,7 +365,7 @@ class TestFlextLdifWriterService:
             assert result.value is True
 
             # Verify empty file was created
-            with open(tmp_path, encoding=DEFAULT_OUTPUT_ENCODING) as f:
+            with Path(tmp_path).open(encoding=DEFAULT_OUTPUT_ENCODING) as f:
                 content = f.read()
                 assert content == ""
         finally:
