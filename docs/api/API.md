@@ -47,12 +47,12 @@ if result.is_success:
 
     # Validate entries
     validation = api.validate(entries)
-    print(f"✅ Validation: {'PASSED' if validation.success else 'FAILED'}")
+    print(f"✅ Validation: {'PASSED' if validation.is_success else 'FAILED'}")
 
     # Generate output
     output = api.write(entries)
-    if output.success:
-        print(f"✅ Generated LDIF:\n{output.data}")
+    if output.is_success:
+        print(f"✅ Generated LDIF:\n{output.value}")
 else:
     print(f"❌ Parse failed: {result.error}")
 ```
@@ -1001,7 +1001,7 @@ def safe_parse(content: str) -> list[FlextLdifEntry]:
 # ❌ Avoid: Assuming success
 def unsafe_parse(content: str) -> list[FlextLdifEntry]:
     api = FlextLdifAPI()
-    return api.parse(content).data  # May be None!
+    return api.parse(content).value  # May be None!
 ```
 
 ### 2. Leverage Domain Validation
@@ -1147,7 +1147,8 @@ entries = parser.parse(content)
 # After: Unified API with error handling
 api = FlextLdifAPI()
 result = api.parse(content)
-entries = result.value if result.is_success else []
+# Use FlextResult's unwrap_or method for cleaner code
+entries = result.unwrap_or([])
 ```
 
 ---

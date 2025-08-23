@@ -14,7 +14,6 @@ from flext_ldif import (
     FlextLdifAPI,
     FlextLdifConfig,
     FlextLdifEntry,
-    TLdif,
     flext_ldif_get_api,
     flext_ldif_parse,
     flext_ldif_validate,
@@ -45,20 +44,25 @@ uid: janesmith
 
 """
 
-    # Using TLdif core functionality
-    parse_result = TLdif.parse(ldif_content)
+    # Using modern FlextLdifAPI functionality
+    api = FlextLdifAPI()
+    parse_result = api.parse(ldif_content)
 
-    # Use railway programming for cleaner flow
-    entries = parse_result.unwrap_or([])
+    # Use railway programming for cleaner flow - modern FlextResult pattern
+    if parse_result.is_success:
+        entries = parse_result.value
+    else:
+        print(f"Parse failed: {parse_result.error}")
+        return
 
     if entries:
         # Validate entries with railway programming
-        TLdif.validate_entries(entries).tap(
+        api.validate(entries).tap(
             lambda _: print("Validation successful")
         ).tap_error(lambda error: print(f"Validation failed: {error}"))
 
         # Write back to LDIF with railway programming
-        TLdif.write(entries).tap(lambda _: print("Write successful")).tap_error(
+        api.write(entries).tap(lambda _: print("Write successful")).tap_error(
             lambda error: print(f"Write failed: {error}")
         )
 
@@ -106,12 +110,21 @@ member: cn=Alice Johnson,ou=people,dc=company,dc=com
     )
     api = FlextLdifAPI(config)
 
-    # Railway programming chain for parsing and filtering
-    entries = api.parse(ldif_content).unwrap_or([])
+    # Railway programming chain for parsing and filtering - modern pattern
+    parse_result = api.parse(ldif_content)
+    if not parse_result.is_success:
+        print(f"Parse failed: {parse_result.error}")
+        return
+    entries = parse_result.value
 
     if entries:
-        # Filter person entries with railway programming
-        person_entries = api.filter_persons(entries).unwrap_or([])
+        # Filter person entries with railway programming - modern pattern
+        person_filter_result = api.filter_persons(entries)
+        if person_filter_result.is_success:
+            person_entries = person_filter_result.value
+        else:
+            print(f"Person filter failed: {person_filter_result.error}")
+            person_entries = []
         for _entry in person_entries:
             pass  # Process each person entry
 
@@ -124,8 +137,13 @@ member: cn=Alice Johnson,ou=people,dc=company,dc=com
         if found_entry:
             pass
 
-        # Sort hierarchically with railway programming
-        sorted_entries = api.sort_hierarchically(entries).unwrap_or(entries)
+        # Sort hierarchically with railway programming - modern pattern
+        sort_result = api.sort_hierarchically(entries)
+        if sort_result.is_success:
+            sorted_entries = sort_result.value
+        else:
+            print(f"Sort failed: {sort_result.error}")
+            sorted_entries = entries
         for entry in sorted_entries:
             str(entry.dn).count(",")
 
@@ -165,12 +183,12 @@ mail: test.user@filetest.com
         output_path = Path(output_file.name)
 
     try:
-        # Using TLdif for file operations with railway programming
+        # Using modern FlextLdifAPI for file operations with railway programming
         api = FlextLdifAPI()
-        TLdif.read_file(input_path).flat_map(
+        api.parse_file(input_path).flat_map(
             lambda entries: api.filter_persons(entries)
         ).flat_map(
-            lambda person_entries: TLdif.write_file(person_entries, output_path)
+            lambda person_entries: api.write_file(person_entries, output_path)
         ).tap(lambda _: print(f"Wrote filtered entries to {output_path}"))
 
         # Using API for file operations with railway programming
@@ -248,11 +266,12 @@ It has no proper structure
 And should fail parsing"""
 
     # Use railway programming for error handling
-    TLdif.parse(invalid_ldif).tap_error(lambda _: None)
+    api = FlextLdifAPI()
+    api.parse(invalid_ldif).tap_error(lambda _: None)
 
     # File not found error
     nonexistent_file = Path("/nonexistent/path/file.ldif")
-    TLdif.read_file(nonexistent_file).tap_error(lambda _: None)
+    api.parse_file(nonexistent_file).tap_error(lambda _: None)
 
     # Validation errors
     incomplete_ldif = """dn: cn=incomplete,dc=example,dc=com
@@ -396,7 +415,8 @@ def example_advanced_filtering() -> None:
 
     # Use railway programming with chaining
     def demonstrate_all_filtering(entries: list[FlextLdifEntry]) -> None:
-        person_entries = api.filter_persons(entries).unwrap_or([])
+        person_filter_result = api.filter_persons(entries)
+        person_entries = person_filter_result.unwrap_or([])
         _demonstrate_basic_object_class_filtering(api, entries, person_entries)
         _demonstrate_custom_title_filtering(person_entries)
         _demonstrate_hierarchical_analysis(api, entries)
@@ -435,16 +455,17 @@ description: Test user {i:03d} for performance monitoring
         print(f"Parse time: {parse_time:.3f}s")
 
         filter_start = time.time()
-        person_entries = api.filter_persons(entries).unwrap_or([])
+        person_filter_result = api.filter_persons(entries)
+        person_entries = person_filter_result.unwrap_or([])
         filter_time = time.time() - filter_start
         print(f"Filter time: {filter_time:.3f}s")
 
         write_start = time.time()
-        TLdif.write(person_entries)
+        api.write(person_entries)
         write_time = time.time() - write_start
         print(f"Write time: {write_time:.3f}s")
 
-    TLdif.parse(large_ldif).tap(measure_performance)
+    api.parse(large_ldif).tap(measure_performance)
 
 
 def main() -> None:

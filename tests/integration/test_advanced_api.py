@@ -30,7 +30,7 @@ class TestAdvancedAPIFeatures:
     def test_api_with_large_entries(self, api_with_config: FlextLdifAPI) -> None:
         """Test API with large number of entries."""
         # Generate large LDIF content
-        entries = []
+        entries: list[FlextLdifEntry] = []
         for i in range(50):
             entry = FlextLdifEntry.model_validate(
                 {

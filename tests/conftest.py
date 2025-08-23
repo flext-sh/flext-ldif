@@ -64,7 +64,6 @@ from flext_ldif import (
     FlextLdifAPI,
     FlextLdifParserService,
     FlextLdifValidatorService,
-    TLdif,
 )
 
 # Try to import Docker fixtures - optional for testing without Docker
@@ -264,10 +263,7 @@ def ldif_api() -> FlextLdifAPI:
     return FlextLdifAPI()
 
 
-@pytest.fixture
-def ldif_core() -> type[TLdif]:
-    """Provide LDIF core functionality for testing."""
-    return TLdif
+# Removed unused ldif_core fixture - use api fixture instead
 
 
 # Schema validation fixtures

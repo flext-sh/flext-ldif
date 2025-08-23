@@ -95,7 +95,11 @@ class LdifValidationDemonstrator:
     def _parse_sample_file(self) -> list[FlextLdifEntry] | None:
         """Parse sample LDIF file and return entries."""
         sample_file = Path(__file__).parent / "sample_complex.ldif"
-        entries = self.api.parse_file(sample_file).unwrap_or([])
+        parse_result = self.api.parse_file(sample_file)
+        if not parse_result.is_success:
+            print(f"Parse failed: {parse_result.error}")
+            return None
+        entries = parse_result.value
         return entries or None
 
     def _perform_domain_validation(self, entries: list[FlextLdifEntry]) -> None:

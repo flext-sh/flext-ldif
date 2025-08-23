@@ -7,11 +7,11 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Callable
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, TypeVar, cast
 
 import click
 from flext_core import FlextResult
-from flext_core.decorators import FlextCallable
+from flext_core.typings import FlextCallable
 
 if TYPE_CHECKING:
     from flext_ldif.api import FlextLdifAPI
@@ -44,7 +44,7 @@ class FlextLdifUtilities:
             sys.exit(1)
 
         result.tap_error(exit_on_error)
-        return result.unwrap()  # This will also exit via tap_error if failure
+        return result.value  # Safe after tap_error handles failures
 
     @staticmethod
     def validate_entries_or_warn(
@@ -116,7 +116,7 @@ class FlextLdifUtilities:
 
     @staticmethod
     def safe_execute_callable(
-        func: FlextCallable,
+        func: FlextCallable[object],
         *args: object,
         **kwargs: object,
     ) -> object:
@@ -139,7 +139,7 @@ class FlextLdifUtilities:
 
     @staticmethod
     def create_processing_pipeline(
-        *operations: FlextCallable,
+        *operations: FlextCallable[object],
     ) -> Callable[[object], object]:
         """Create a processing pipeline using FlextCallable functions.
 
@@ -157,14 +157,14 @@ class FlextLdifUtilities:
             result = initial_value
             for operation in operations:
                 if callable(operation):
-                    result = operation(result)
+                    result = operation(result)  # FlextCallable accepts *args, **kwargs but can be called with single arg
             return result
 
         return pipeline
 
     @staticmethod
     def validate_callable_chain(
-        *functions: FlextCallable,
+        *functions: FlextCallable[object],
     ) -> bool:
         """Validate that all functions in a chain are proper FlextCallables.
 
@@ -197,7 +197,7 @@ class FlextLdifUtilities:
             1
             for entry in entries
             if objectclass.lower()
-            in [oc.lower() for oc in (entry.get_attribute("objectClass") or [])]
+            in FlextLdifUtilities.get_entry_objectclasses(entry, lowercase=True)
         )
 
     @staticmethod
@@ -221,11 +221,12 @@ class FlextLdifUtilities:
             batch = entries[i : i + batch_size]
             batch_result = api.validate(batch)
 
-            # Handle batch success or fall back to individual validation
-            if batch_result.is_success:
-                # Use railway programming to handle success case
-                validation_result = bool(batch_result.value)
-                results.extend([validation_result] * len(batch))
+            # Use unwrap_or pattern for cleaner batch validation handling
+            default_validation = False
+            validation_result = batch_result.unwrap_or(default_validation)
+            if validation_result:
+                # Batch validation succeeded for all entries
+                results.extend([True] * len(batch))
                 continue
             # Individual validation on batch failure
             for entry in batch:
@@ -258,8 +259,10 @@ class FlextLdifUtilities:
         total_attributes = 0
 
         for entry in entries:
-            objectclasses = entry.get_attribute("objectClass") or []
-            all_objectclasses.update(oc.lower() for oc in objectclasses)
+            entry_objectclasses = FlextLdifUtilities.get_entry_objectclasses(
+                entry, lowercase=True
+            )
+            all_objectclasses.update(entry_objectclasses)
             total_attributes += len(entry.attributes.attributes)
 
         return {
@@ -285,7 +288,116 @@ class FlextLdifUtilities:
 
         """
         pattern_lower = dn_pattern.lower()
-        return [entry for entry in entries if pattern_lower in str(entry.dn).lower()]
+        return [
+            entry
+            for entry in entries
+            if pattern_lower
+            in FlextLdifUtilities.get_entry_dn_string(entry, lowercase=True)
+        ]
+
+    @staticmethod
+    def get_entry_dn_string(entry: FlextLdifEntry, *, lowercase: bool = False) -> str:
+        """Get entry DN as string with optional lowercase conversion.
+
+        Args:
+            entry: Entry to get DN from
+            lowercase: Whether to convert to lowercase
+
+        Returns:
+            DN string representation
+
+        """
+        dn_str = str(entry.dn)
+        return dn_str.lower() if lowercase else dn_str
+
+    @staticmethod
+    def get_entry_objectclasses(
+        entry: FlextLdifEntry, *, lowercase: bool = False
+    ) -> list[str]:
+        """Get entry objectClass values with optional lowercase conversion.
+
+        Args:
+            entry: Entry to get objectClasses from
+            lowercase: Whether to convert to lowercase
+
+        Returns:
+            List of objectClass values
+
+        """
+        objectclasses = entry.get_attribute("objectClass") or []
+        return [oc.lower() for oc in objectclasses] if lowercase else objectclasses
+
+    @staticmethod
+    def calculate_dn_depth(entry: FlextLdifEntry) -> int:
+        """Calculate DN depth by counting components.
+
+        Args:
+            entry: Entry to calculate depth for
+
+        Returns:
+            Number of DN components (depth)
+
+        """
+        return str(entry.dn).count(",") + 1
+
+    @staticmethod
+    def validate_entry_with_error_handler(
+        entry: FlextLdifEntry, error_handler: Callable[[str], None] | None = None
+    ) -> bool:
+        """Validate entry business rules with optional error handler.
+
+        Args:
+            entry: Entry to validate
+            error_handler: Optional function to handle validation errors
+
+        Returns:
+            True if validation passes, False otherwise
+
+        """
+        validation_result = entry.validate_business_rules()
+        if validation_result.is_failure and error_handler:
+            error_handler(validation_result.error or "Unknown validation error")
+        return validation_result.is_success
+
+    @staticmethod
+    def bulk_validate_entries_with_summary(
+        entries: list[FlextLdifEntry], max_errors: int = 5
+    ) -> tuple[int, list[str]]:
+        """Validate multiple entries and return summary.
+
+        Args:
+            entries: Entries to validate
+            max_errors: Maximum number of errors to collect
+
+        Returns:
+            Tuple of (valid_count, error_messages)
+
+        """
+        valid_count = 0
+        errors: list[str] = []
+
+        for i, entry in enumerate(entries):
+            if len(errors) >= max_errors:
+                errors.append(f"... and {len(entries) - i} more entries not validated")
+                break
+
+            def error_handler(
+                error: str,
+                current_entry: FlextLdifEntry = entry,
+                current_index: int = i + 1,
+            ) -> None:
+                errors.append(
+                    FlextLdifUtilities.format_entry_error_message(
+                        current_entry, current_index, error
+                    )
+                )
+
+            if FlextLdifUtilities.validate_entry_with_error_handler(
+                entry, error_handler
+            ):
+                valid_count += 1
+
+        return valid_count, errors
 
     @staticmethod
     def merge_entry_lists(
@@ -305,12 +417,335 @@ class FlextLdifUtilities:
 
         for entry_list in entry_lists:
             for entry in entry_list:
-                dn_str = str(entry.dn).lower()
+                dn_str = FlextLdifUtilities.get_entry_dn_string(entry, lowercase=True)
                 if dn_str not in seen_dns:
                     seen_dns.add(dn_str)
                     merged.append(entry)
 
         return merged
+
+    @staticmethod
+    def batch_process_entries[T](
+        entries: list[FlextLdifEntry],
+        batch_size: int = 100,
+        processor: Callable[[list[FlextLdifEntry]], FlextResult[T]] | None = None,
+    ) -> FlextResult[list[T]]:
+        """Process entries in batches for better performance.
+
+        Args:
+            entries: Entries to process
+            batch_size: Size of each batch
+            processor: Function to process each batch
+
+        Returns:
+            FlextResult with list of processed results
+
+        """
+        if not processor:
+            return FlextResult[list[T]].fail("Processor function required")
+
+        results: list[T] = []
+        for i in range(0, len(entries), batch_size):
+            batch = entries[i : i + batch_size]
+            batch_result = processor(batch)
+            if batch_result.is_failure:
+                return FlextResult[list[T]].fail(
+                    f"Batch {i // batch_size + 1} failed: {batch_result.error}"
+                )
+            batch_value = batch_result.value
+            if isinstance(batch_value, list):
+                # Type narrowing: batch_value is list[T] here
+                results.extend(cast("list[T]", batch_value))
+            else:
+                # Type narrowing: batch_value is T here
+                results.append(batch_value)
+
+        return FlextResult[list[T]].ok(results)
+
+    @staticmethod
+    def safe_get_attribute_value(
+        entry: FlextLdifEntry, attribute_name: str, default: str = ""
+    ) -> str:
+        """Safely get first attribute value with fallback.
+
+        Args:
+            entry: Entry to get attribute from
+            attribute_name: Name of attribute
+            default: Default value if attribute not found
+
+        Returns:
+            First attribute value or default
+
+        """
+        value = entry.get_single_attribute(attribute_name)
+        return value if value is not None else default
+
+    @staticmethod
+    def group_entries_by_object_class(
+        entries: list[FlextLdifEntry],
+    ) -> dict[str, list[FlextLdifEntry]]:
+        """Group entries by their object classes.
+
+        Args:
+            entries: Entries to group
+
+        Returns:
+            Dictionary mapping object class to list of entries
+
+        """
+        grouped: dict[str, list[FlextLdifEntry]] = {}
+        for entry in entries:
+            object_classes = entry.get_object_classes()
+            for obj_class in object_classes:
+                if obj_class not in grouped:
+                    grouped[obj_class] = []
+                grouped[obj_class].append(entry)
+        return grouped
+
+    @staticmethod
+    def format_entry_error_message(
+        entry: FlextLdifEntry, index: int, error: str
+    ) -> str:
+        """Format standardized error message for entry validation failures.
+
+        Args:
+            entry: Entry that failed validation
+            index: 1-based index of entry in list
+            error: Error message
+
+        Returns:
+            Formatted error message with entry context
+
+        """
+        return f"Entry {index} ({entry.dn}): {error}"
+
+    @staticmethod
+    def filter_entries_by_dn_pattern(
+        entries: list[FlextLdifEntry], pattern: str, *, case_sensitive: bool = False
+    ) -> list[FlextLdifEntry]:
+        """Filter entries by DN pattern matching.
+
+        Args:
+            entries: Entries to filter
+            pattern: Pattern to match in DN
+            case_sensitive: Whether to perform case-sensitive matching
+
+        Returns:
+            Filtered list of entries
+
+        """
+        if case_sensitive:
+            return [
+                entry
+                for entry in entries
+                if pattern in FlextLdifUtilities.get_entry_dn_string(entry)
+            ]
+        pattern_lower = pattern.lower()
+        return [
+            entry
+            for entry in entries
+            if pattern_lower
+            in FlextLdifUtilities.get_entry_dn_string(entry, lowercase=True)
+        ]
+
+    @staticmethod
+    def extract_unique_attribute_names(entries: list[FlextLdifEntry]) -> set[str]:
+        """Extract all unique attribute names across entries.
+
+        Args:
+            entries: Entries to analyze
+
+        Returns:
+            Set of unique attribute names
+
+        """
+        attribute_names: set[str] = set()
+        for entry in entries:
+            attribute_names.update(entry.attributes.attributes.keys())
+        return attribute_names
+
+    @staticmethod
+    def find_entries_with_missing_required_attributes(
+        entries: list[FlextLdifEntry], required_attributes: list[str]
+    ) -> list[FlextLdifEntry]:
+        """Find entries missing any required attributes.
+
+        Args:
+            entries: Entries to check
+            required_attributes: List of required attribute names
+
+        Returns:
+            Entries that are missing one or more required attributes
+
+        """
+        missing_entries: list[FlextLdifEntry] = []
+        for entry in entries:
+            entry_attrs = set(entry.attributes.attributes.keys())
+            if not all(attr in entry_attrs for attr in required_attributes):
+                missing_entries.append(entry)
+        return missing_entries
+
+    @staticmethod
+    def chain_operations[T](
+        initial: FlextResult[T],
+        operations: list[Callable[[T], FlextResult[T]]],
+    ) -> FlextResult[T]:
+        """Chain multiple operations using railway programming.
+
+        This utility enables clean functional composition of operations that may fail,
+        following the Railway Programming pattern from flext-core.
+
+        Args:
+            initial: Initial FlextResult to start the chain
+            operations: List of operations to chain (all must have same type)
+
+        Returns:
+            Final FlextResult after all operations (or first failure)
+
+        Example:
+            >>> def validate(entry): return FlextResult.ok(entry)
+            >>> def transform(entry): return FlextResult.ok(entry)
+            >>> operations = [validate, transform]
+            >>> result = FlextLdifUtilities.chain_operations(initial_result, operations)
+
+        """
+        current = initial
+        for operation in operations:
+            if current.is_failure:
+                return FlextResult[T].fail(current.error or "Chain operation failed")
+            current = operation(current.value)
+        return current
+
+    @staticmethod
+    def collect_results[T](
+        results: list[FlextResult[T]],
+    ) -> FlextResult[list[T]]:
+        """Collect a list of FlextResult into a FlextResult of list.
+
+        Implements the 'sequence' operation from functional programming,
+        converting list of Results into Result of list.
+
+        Args:
+            results: List of FlextResult to collect
+
+        Returns:
+            FlextResult containing list of all values, or first error
+
+        Example:
+            >>> results = [api.validate(entry) for entry in entries]
+            >>> final = FlextLdifUtilities.collect_results(results)
+
+        """
+        collected: list[T] = []
+        for i, result in enumerate(results):
+            if result.is_failure:
+                return FlextResult[list[T]].fail(
+                    f"Item {i + 1} failed: {result.error}"
+                )
+            collected.append(result.value)
+        return FlextResult[list[T]].ok(collected)
+
+    @staticmethod
+    def partition_entries_by_validation(
+        entries: list[FlextLdifEntry],
+    ) -> tuple[list[FlextLdifEntry], list[tuple[FlextLdifEntry, str]]]:
+        """Partition entries into valid and invalid with error messages.
+
+        This utility separates entries based on business rule validation,
+        providing detailed error information for invalid entries.
+
+        Args:
+            entries: List of entries to partition
+
+        Returns:
+            Tuple of (valid_entries, invalid_entries_with_errors)
+
+        Example:
+            >>> valid, invalid = FlextLdifUtilities.partition_entries_by_validation(entries)
+            >>> print(f"Valid: {len(valid)}, Invalid: {len(invalid)}")
+
+        """
+        valid: list[FlextLdifEntry] = []
+        invalid: list[tuple[FlextLdifEntry, str]] = []
+
+        for entry in entries:
+            validation_result = entry.validate_business_rules()
+            if validation_result.is_success:
+                valid.append(entry)
+            else:
+                invalid.append((entry, validation_result.error or "Validation failed"))
+
+        return valid, invalid
+
+    @staticmethod
+    def map_entries_safely[T](
+        entries: list[FlextLdifEntry],
+        mapper: Callable[[FlextLdifEntry], FlextResult[T]],
+        *,
+        fail_fast: bool = True,
+    ) -> FlextResult[list[T]]:
+        """Map entries through a function that may fail, with error handling.
+
+        Applies a potentially failing operation to each entry, with options
+        for error handling strategy (fail-fast or collect errors).
+
+        Args:
+            entries: Entries to map
+            mapper: Function to apply to each entry
+            fail_fast: If True, stop on first failure; if False, collect all errors
+
+        Returns:
+            FlextResult containing mapped values or error information
+
+        """
+        results: list[T] = []
+        errors: list[str] = []
+
+        for i, entry in enumerate(entries):
+            result = mapper(entry)
+            if result.is_success:
+                results.append(result.value)
+            else:
+                error_msg = f"Entry {i + 1}: {result.error}"
+                if fail_fast:
+                    return FlextResult[list[T]].fail(error_msg)
+                errors.append(error_msg)
+
+        if errors and not fail_fast:
+            return FlextResult[list[T]].fail(f"Multiple errors: {'; '.join(errors)}")
+
+        return FlextResult[list[T]].ok(results)
+
+    @staticmethod
+    def find_entries_with_circular_references(
+        entries: list[FlextLdifEntry],
+    ) -> list[tuple[FlextLdifEntry, str]]:
+        """Find entries that may have circular references in their DN hierarchy.
+
+        Identifies potential circular references by checking if any entry's DN
+        appears in another entry's member attributes.
+
+        Args:
+            entries: Entries to analyze
+
+        Returns:
+            List of (entry, reason) tuples for entries with potential circular refs
+
+        """
+        dns = {str(entry.dn).lower() for entry in entries}
+        circular: list[tuple[FlextLdifEntry, str]] = []
+
+        for entry in entries:
+            member_attrs = entry.get_attribute("member") or []
+            # Find all circular references for this entry
+            entry_circular = [
+                (entry, f"Member {member} creates potential circular reference")
+                for member in member_attrs
+                if member.lower() in dns
+            ]
+            circular.extend(entry_circular)
+
+        return circular
 
 
 __all__ = ["FlextLdifUtilities"]

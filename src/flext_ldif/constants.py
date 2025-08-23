@@ -50,7 +50,6 @@ MIN_DN_COMPONENTS: Final[int] = 2
 MAX_DN_DEPTH: Final[int] = 20
 DN_SEPARATOR: Final[str] = ","
 DN_ATTRIBUTE_SEPARATOR: Final[str] = "="
-ATTRIBUTE_SEPARATOR: Final[str] = "="  # Alias for backward compatibility
 
 # DN Validation Patterns
 LDAP_ATTRIBUTE_PATTERN: Final[str] = r"^[a-zA-Z][a-zA-Z0-9-]*$"
@@ -806,7 +805,6 @@ class FlextLdifCoreConstants:
 # =============================================================================
 
 __all__ = [
-    "ATTRIBUTE_SEPARATOR",  # Backward compatibility
     "DEFAULT_ALLOW_EMPTY_ATTRIBUTES",
     "DEFAULT_ENTRY_SEPARATOR",
     "DEFAULT_FILE_BUFFER_SIZE",

@@ -1,5 +1,7 @@
 """FLEXT-LDIF Command Line Interface.
 
+Enterprise LDIF processing CLI built with flext-cli patterns and flext-core foundation.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -7,1186 +9,366 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-# contextlib no longer needed after removing workarounds
-import csv
-import json
 import sys
-from dataclasses import dataclass
 from pathlib import Path
 
-# CLISettings from flext-cli is stable, no model rebuild needed
-from typing import Literal, cast
-
 import click
-import yaml
-from flext_cli import CLISettings as FlextCliConfig, setup_cli as flext_setup_cli
-from flext_core import get_logger
-
-from flext_ldif.models import FlextLdifEntry
+from flext_cli import (
+    cli_handle_keyboard_interrupt,
+    cli_measure_time,
+    flext_cli_output_data,
+    get_cli_config,
+    setup_cli,
+)
+from flext_core import FlextResult, get_logger
+from rich.console import Console
 
 from .api import FlextLdifAPI
-from .config import FlextLdifConfig
-from .constants import (
-    FlextLdifDefaultValues,
-    FlextLdifOperationMessages,
-)
-
-
-@dataclass
-class ParseCommandParams:
-    """Parameter object for parse command to reduce parameter count."""
-
-    input_file: str
-    output: str | None
-    max_entries: int | None
-    validate: bool = False
-    stats: bool = False
-
-
-@dataclass
-class TransformCommandParams:
-    """Parameter object for transform command to reduce parameter count."""
-
-    input_file: str
-    output_file: str
-    filter_type: str | None
-    sort: bool = False
-
-
-# Simple utilities to replace deleted cli_utils
-def safe_click_echo(message: str, *, err: bool = False) -> None:
-    """Safe echo for click commands."""
-    click.echo(message, err=err)
-
-
-# REFACTORING: handle_parse_result function removed - now handling success/failure inline with proper exits
-
+from .models import FlextLdifConfig, FlextLdifEntry
+from .utilities import FlextLdifUtilities
 
 # Logger for CLI module
 logger = get_logger(__name__)
 
-# Constants
-MAX_DISPLAYED_ERRORS = 5
 
+class FlextLdifCliService:
+    """LDIF CLI service using flext-cli and flext-core patterns."""
 
-def create_api_with_config(*, max_entries: int | None = None) -> FlextLdifAPI:
-    """Create FlextLdifAPI with optional configuration."""
-    if max_entries is not None:
-        # Create config with override values
-        ldif_config = FlextLdifConfig(max_entries=max_entries)
-    else:
-        ldif_config = FlextLdifConfig()
+    def __init__(self, config: FlextLdifConfig | None = None) -> None:
+        """Initialize CLI service."""
+        self.api = FlextLdifAPI(config or FlextLdifConfig())
+        self.console = Console()
 
-    return FlextLdifAPI(ldif_config)
-
-
-def apply_filter(
-    api: FlextLdifAPI,
-    entries: list[FlextLdifEntry],
-    filter_type: str,
-) -> list[FlextLdifEntry]:
-    """Apply filtering to entries based on filter type."""
-    logger.debug(
-        "Applying filter to entries: filter_type=%s, entry_count=%d",
-        filter_type,
-        len(entries),
-    )
-    logger.trace("Available filter types: persons, groups, ous, valid")
-
-    try:
-        logger.debug("Executing filter operation: %s", filter_type)
-        if filter_type == "persons":
-            logger.trace("Calling api.filter_persons")
-            result = api.filter_persons(entries)
-        elif filter_type == "groups":
-            logger.trace("Calling api.filter_groups")
-            result = api.filter_groups(entries)
-        elif filter_type == "ous":
-            logger.trace("Calling api.filter_organizational_units")
-            result = api.filter_organizational_units(entries)
-        elif filter_type == "valid":
-            logger.trace("Calling api.filter_valid")
-            result = api.filter_valid(entries)
+    def parse_and_process(
+        self,
+        input_file: Path,
+        *,
+        validate: bool = False,  # noqa: ARG002
+        max_entries: int | None = None,
+    ) -> FlextResult[list[FlextLdifEntry]]:
+        """Parse LDIF file with optional validation."""
+        # Update config if max_entries specified
+        if max_entries:
+            config = FlextLdifConfig(max_entries=max_entries)
+            api = FlextLdifAPI(config)
         else:
-            logger.error("Unknown filter type provided: %s", filter_type)
-            logger.debug("Valid filter types: persons, groups, ous, valid")
-            click.echo(
-                FlextLdifOperationMessages.UNKNOWN_FILTER_TYPE.format(
-                    filter_type=filter_type,
-                ),
-                err=True,
-            )
-            return entries
+            api = self.api
 
-        # Use railway programming with unwrap_or for cleaner code
-        logger.trace("Filter result success: %s", result.is_success)
-
-        # Use unwrap_or with original entries as default on failure
-        filtered_entries = result.unwrap_or(entries)
-
-        # Use railway programming for success actions
-        def log_filter_success(entries_list: list[FlextLdifEntry]) -> None:
-            logger.debug(
-                "Filter successful: %d entries filtered to %d entries",
-                len(entries),
-                len(entries_list),
-            )
-            logger.info(
-                "Successfully filtered entries",
-                filter_type=filter_type,
-                original_count=len(entries),
-                filtered_count=len(entries_list),
-            )
-            click.echo(
-                FlextLdifOperationMessages.FILTERED_ENTRIES.format(
-                    count=len(entries_list),
-                    filter_type=filter_type,
-                ),
-            )
-
-        result.tap(log_filter_success)
-
-        # Handle error case if filter failed
-        if not result.is_success:
-            logger.error("Filter operation failed: %s", result.error)
-            logger.debug("Filter failure details for filter_type: %s", filter_type)
-            click.echo(
-                FlextLdifOperationMessages.FILTER_FAILED.format(
-                    filter_type=filter_type,
-                    error=result.error,
-                ),
-                err=True,
-            )
-
-        return filtered_entries
-
-    except (ValueError, TypeError, AttributeError) as e:
-        logger.exception("Filter operation failed with exception")
-        click.echo(
-            FlextLdifOperationMessages.FILTER_OPERATION_FAILED.format(error=e),
-            err=True,
+        return api.parse_file(str(input_file)).tap(
+            lambda entries: logger.info(f"Parsed {len(entries)} entries from {input_file}")
+        ).tap_error(
+            lambda error: logger.error(f"Failed to parse {input_file}: {error}")
         )
 
-    logger.debug("Returning original entries due to filter failure")
-    return entries
+    def validate_entries(
+        self, entries: list[FlextLdifEntry]
+    ) -> FlextResult[tuple[list[FlextLdifEntry], list[str]]]:
+        """Validate entries and return valid entries with error list."""
+        valid_entries: list[FlextLdifEntry] = []
+        errors: list[str] = []
 
+        for i, entry in enumerate(entries, 1):
+            validation_result = entry.validate_business_rules()
+            if validation_result.is_success:
+                valid_entries.append(entry)
+            else:
+                error_msg = FlextLdifUtilities.format_entry_error_message(
+                    entry, i, validation_result.error or "Validation failed"
+                )
+                errors.append(error_msg)
 
-def handle_validation_errors(entries: list[FlextLdifEntry]) -> None:
-    """Handle validation of entries and display errors."""
-    logger.debug("Starting validation error handling for %d entries", len(entries))
-    logger.trace("Maximum displayed errors: %d", MAX_DISPLAYED_ERRORS)
+        return FlextResult[tuple[list[FlextLdifEntry], list[str]]].ok((valid_entries, errors))
 
-    validation_errors: list[str] = []
-    logger.debug("Validating entries for domain rules")
+    def transform_entries(
+        self,
+        entries: list[FlextLdifEntry],
+        filter_type: str | None = None,
+        *,
+        sort_hierarchically: bool = False,
+    ) -> FlextResult[list[FlextLdifEntry]]:
+        """Transform entries with filtering and sorting."""
+        result_entries = entries
 
-    for i, entry in enumerate(entries):
-        logger.trace("Validating entry %d: %s", i + 1, entry.dn)
-        validation_result = entry.validate_business_rules()
-        if not validation_result.is_success:
-            error_msg: str = f"Entry {i + 1} ({entry.dn}): {validation_result.error}"
-            validation_errors.append(error_msg)
-            logger.debug(
-                "Validation failed for entry %d: %s",
-                i + 1,
-                validation_result.error,
+        # Apply filter if specified
+        if filter_type:
+            filter_result = FlextLdifUtilities.railway_filter_entries(
+                self.api, result_entries, filter_type
+            )
+            result_entries = filter_result
+
+        # Apply sorting if requested
+        if sort_hierarchically:
+            sort_result = self.api.sort_hierarchically(result_entries)
+            return sort_result.tap(
+                lambda sorted_entries: logger.info(f"Sorted {len(sorted_entries)} entries hierarchically")
             )
 
-    logger.debug("Validation completed: %d errors found", len(validation_errors))
+        return FlextResult[list[FlextLdifEntry]].ok(result_entries)
 
-    if validation_errors:
-        logger.info(
-            "Validation errors found",
-            total_entries=len(entries),
-            error_count=len(validation_errors),
-            displayed_errors=min(len(validation_errors), MAX_DISPLAYED_ERRORS),
+    def write_entries(
+        self, entries: list[FlextLdifEntry], output_path: Path
+    ) -> FlextResult[bool]:
+        """Write entries to output file."""
+        return self.api.write_file(entries, str(output_path)).tap(
+            lambda _: logger.info(f"Written {len(entries)} entries to {output_path}")
         )
 
-        click.echo(
-            FlextLdifOperationMessages.VALIDATION_ERRORS_FOUND.format(
-                count=len(validation_errors),
-            ),
-            err=True,
-        )
-
-        for i, error in enumerate(validation_errors[:MAX_DISPLAYED_ERRORS], 1):
-            click.echo(f"  - {error}", err=True)
-            logger.trace("Displayed error %d: %s", i, error)
-
-        if len(validation_errors) > MAX_DISPLAYED_ERRORS:
-            remaining_errors = len(validation_errors) - MAX_DISPLAYED_ERRORS
-            logger.debug("Hiding %d additional errors", remaining_errors)
-            click.echo(f"  ... and {remaining_errors} more errors", err=True)
-    else:
-        logger.info("No validation errors found", total_entries=len(entries))
-        click.echo(FlextLdifOperationMessages.NO_VALIDATION_ERRORS)
+    def get_statistics(
+        self, entries: list[FlextLdifEntry]
+    ) -> FlextResult[dict[str, int]]:
+        """Get comprehensive statistics for entries."""
+        return self.api.get_entry_statistics(entries)
 
 
-def display_statistics(
-    ctx: click.Context,
-    api: FlextLdifAPI,
-    entries: list[FlextLdifEntry],
-) -> None:
-    """Display entry statistics in the requested format."""
-    logger.debug("Displaying statistics for %d entries", len(entries))
-    cli_config = ctx.obj["config"]
-    output_format = cli_config.output_format
-    logger.trace("Requested output format: %s", output_format)
-
-    logger.debug("Getting entry statistics from API")
-    stats_result = api.get_entry_statistics(entries)
-
-    def exit_with_stats_error(error: str) -> None:
-        logger.error("Failed to get statistics: %s", error)
-        click.echo(
-            FlextLdifOperationMessages.STATISTICS_FAILED.format(error=error),
-            err=True,
-        )
-        sys.exit(1)
-
-    stats = stats_result.tap_error(exit_with_stats_error).unwrap_or({})
-    logger.trace("Statistics keys: %s", list(stats.keys()))
-    logger.info(
-        "Statistics generated successfully",
-        entry_count=len(entries),
-        output_format=output_format,
-        stats_count=len(stats),
-    )
-
-    logger.debug("Formatting statistics output")
-    if output_format == "json":
-        logger.trace("Formatting as JSON with indent=2")
-        json_output = json.dumps(stats, indent=2)
-        logger.debug("JSON output length: %d characters", len(json_output))
-        click.echo(json_output)
-    elif output_format == "yaml":
-        logger.trace("Formatting as YAML")
-        yaml_output = yaml.dump(stats, default_flow_style=False)
-        logger.debug("YAML output length: %d characters", len(yaml_output))
-        click.echo(yaml_output)
-    else:
-        logger.trace("Formatting as plain text")
-        click.echo("Entry Statistics:")
-        for key, value in stats.items():
-            logger.trace("Displaying stat: %s = %s", key, value)
-            click.echo(f"  {key}: {value}")
-
-    logger.debug("Statistics display completed successfully")
+# Global CLI service
+cli_service = FlextLdifCliService()
 
 
-def write_entries_to_file(
-    api: FlextLdifAPI,
-    entries: list[FlextLdifEntry],
-    output_path: str,
-) -> None:
-    """Write entries to output file with error handling."""
-    logger.debug("Writing %d entries to file: %s", len(entries), output_path)
-    logger.trace("Output path details: %s", output_path)
+def handle_result_or_exit[T](
+    result: FlextResult[T], success_msg: str | None = None
+) -> T:
+    """Handle FlextResult with CLI-appropriate error reporting."""
+    if result.is_success:
+        if success_msg:
+            click.echo(success_msg)
+        return result.value
 
-    logger.debug("Calling API write_file method")
-    write_result = api.write_file(entries, output_path)
-    logger.trace("Write result success: %s", write_result.is_success)
-
-    # Use railway programming for success and error handling
-    def log_write_success(_result: object) -> None:
-        logger.info(
-            "Entries successfully written to file",
-            entry_count=len(entries),
-            output_path=output_path,
-        )
-        click.echo(FlextLdifOperationMessages.WRITE_SUCCESS.format(path=output_path))
-
-    def handle_write_error(error: str) -> None:
-        logger.error("Write operation failed: %s", error)
-        logger.debug("Write failure details for file: %s", output_path)
-        click.echo(
-            FlextLdifOperationMessages.WRITE_FAILED.format(error=error),
-            err=True,
-        )
-        sys.exit(1)
-
-    write_result.tap(log_write_success).tap_error(handle_write_error)
+    click.echo(f"Error: {result.error}", err=True)
+    sys.exit(1)
 
 
-@click.group()
-@click.option(
-    "--config",
-    "-c",
-    type=click.Path(exists=True),
-    help=FlextLdifDefaultValues.CONFIG_HELP,
+@click.group(
+    context_settings={"help_option_names": ["-h", "--help"]},
+    invoke_without_command=True,
 )
+@click.version_option()
+@click.option("--debug/--no-debug", default=False, help="Enable debug mode")
+@click.option("--quiet/--no-quiet", "-q", default=False, help="Suppress output")
 @click.option(
-    "--format",
+    "--output-format",
     "-f",
-    "output_format",
-    type=click.Choice(["json", "yaml", "table", "text"]),
-    default="text",
-    help=FlextLdifDefaultValues.OUTPUT_FORMAT_HELP,
-)
-@click.option("--verbose", "-v", is_flag=True, help=FlextLdifDefaultValues.VERBOSE_HELP)
-@click.option("--quiet", is_flag=True, help=FlextLdifDefaultValues.QUIET_HELP)
-@click.option("--debug", is_flag=True, help=FlextLdifDefaultValues.DEBUG_HELP)
-@click.option(
-    "--config-file",
-    type=click.Path(),
-    help=FlextLdifDefaultValues.CONFIG_FILE_HELP,
+    type=click.Choice(["table", "json", "yaml", "plain"]),
+    default="table",
+    help="Output format",
 )
 @click.pass_context
-def cli(ctx: click.Context, /, **options: object) -> None:
-    """FLEXT LDIF - Enterprise LDIF Processing CLI.
-
-    Comprehensive command-line interface para parsing, validação
-    e transformação LDIF com Clean Architecture.
-
-    Args:
-      ctx: Contexto Click.
-      **options: Opções capturadas (`config`, `output_format`, `verbose`,
-          `quiet`, `debug`, `config_file`).
-
-    """
-    logger.debug("Initializing FLEXT LDIF CLI")
-    logger.trace("CLI options: %s", dict(options))
-
-    # quiet implies not verbose
-    output_format = str(options.get("output_format", "text"))
-    # Map 'text' to flext-cli 'plain' and validate
-    if output_format == "text":
-        output_format = "plain"
-
-    # Validate output format
-    valid_formats = {"json", "csv", "yaml", "table", "plain"}
-    if output_format not in valid_formats:
-        output_format = "plain"
-    debug = bool(options.get("debug"))
-    config = options.get("config")
-    config_file = options.get("config_file")
-
-    # Build flext-cli configuration with validated parameters
-    format_literal = cast(
-        "Literal['table', 'json', 'yaml', 'csv', 'plain']", output_format
-    )
-    cli_config = FlextCliConfig(
-        output_format=format_literal,
-        debug=debug,
-    )
-    setup_result = flext_setup_cli(cli_config)
-    if not setup_result.is_success:
-        click.echo(
-            FlextLdifOperationMessages.CLI_SETUP_FAILED.format(
-                error=setup_result.error,
-            ),
-            err=True,
-        )
-        sys.exit(1)
-
-    logger.debug("Creating CLI context object")
-    logger.trace("Creating API with default configuration")
-    api = create_api_with_config()
-
-    ctx.obj = {
-        "config": cli_config,
-        "config_path": config_file or config,
-        "api": api,
-    }
-
-    logger.info(
-        "FLEXT LDIF CLI initialized successfully",
-        output_format=output_format,
-        debug=debug,
-        config_path=str(config) if isinstance(config, str) else "default",
-    )
-
-
-def _parse_and_log_file(
-    api: FlextLdifAPI,
-    input_file: str,
-    max_entries: int | None,
-) -> list[FlextLdifEntry]:
-    """Parse LDIF file with logging and return entries."""
-    logger.debug("Parsing LDIF file: %s", input_file)
-    result = api.parse_file(input_file)
-    logger.trace(
-        "Parse result success: %s",
-        hasattr(result, "success") and result.is_success,
-    )
-
-    # Handle parsing result using railway programming with unwrap_or
-    def exit_on_parse_error(error: str) -> None:
-        safe_click_echo(
-            FlextLdifOperationMessages.PARSE_FAILED.format(error=error),
-            err=True,
-        )
-        sys.exit(1)
-
-    # Use tap_error for side effects and unwrap_or with empty list as default
-    result.tap_error(exit_on_parse_error)
-    entries = result.unwrap_or([])
-
-    logger.info(
-        "LDIF file parsed successfully",
-        input_file=input_file,
-        entry_count=len(entries),
-        max_entries=max_entries or "unlimited",
-    )
-    safe_click_echo(
-        FlextLdifOperationMessages.PARSE_COMPLETED_SUCCESS.format(count=len(entries)),
-    )
-    return entries
-
-
-def _handle_optional_validation(
-    entries: list[FlextLdifEntry],
-    *,
-    validate: bool,
-) -> None:
-    """Handle optional validation of entries."""
-    if validate:
-        logger.debug("Performing validation as requested")
-        handle_validation_errors(entries)
-    else:
-        logger.trace("Skipping validation (not requested)")
-
-
-def _handle_output_generation(
+def cli(
     ctx: click.Context,
-    api: FlextLdifAPI,
-    entries: list[FlextLdifEntry],
-    output: str | None,
+    *,
+    debug: bool,
+    quiet: bool,
+    output_format: str,
 ) -> None:
-    """Handle output generation - file or statistics display."""
-    if output:
-        logger.debug("Writing parsed entries to output file: %s", output)
-        write_entries_to_file(api, entries, output)
-    else:
-        logger.debug("Displaying statistics instead of writing to file")
-        try:
-            display_statistics(ctx, api, entries)
-        except (TypeError, AttributeError) as e:
-            logger.exception("Statistics display failed")
-            safe_click_echo(f"Statistics display failed: {e}", err=True)
+    """FLEXT LDIF - Enterprise LDIF Processing CLI."""
+    # Setup flext-cli
+    setup_result = setup_cli()
+    if setup_result.is_failure:
+        click.echo(f"CLI setup failed: {setup_result.error}", err=True)
+        sys.exit(1)
+
+    # Configure CLI context
+    config = get_cli_config()
+    if debug or quiet:
+        config = config.model_copy(
+            update={"debug": debug, "quiet": quiet, "output_format": output_format}
+        )
+
+    ctx.ensure_object(dict)
+    ctx.obj["config"] = config
+    ctx.obj["console"] = Console(quiet=quiet)
+    ctx.obj["cli_service"] = cli_service
+
+    if debug:
+        logger.info("FLEXT LDIF CLI initialized", debug=debug, output_format=output_format)
+
+    # Show help if no command
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @cli.command()
-@click.argument("input_file", type=click.Path(exists=True))
-@click.option(
-    "--output",
-    "-o",
-    type=click.Path(),
-    help=FlextLdifDefaultValues.OUTPUT_FILE_HELP,
-)
-@click.option("--max-entries", type=int, help=FlextLdifDefaultValues.MAX_ENTRIES_HELP)
-@click.option("--validate", is_flag=True, help=FlextLdifDefaultValues.VALIDATE_HELP)
-@click.option(
-    "--stats",
-    is_flag=True,
-    help=FlextLdifDefaultValues.STATS_HELP,
-)
+@click.argument("input_file", type=click.Path(exists=True, path_type=Path))
+@click.option("--output", "-o", type=click.Path(path_type=Path), help="Output file")
+@click.option("--max-entries", type=int, help="Maximum entries to parse")
+@click.option("--validate", is_flag=True, help="Validate entries after parsing")
+@click.option("--stats", is_flag=True, help="Show statistics")
+@cli_measure_time
+@cli_handle_keyboard_interrupt
 @click.pass_context
 def parse(
     ctx: click.Context,
-    /,
-    input_file: str,
-    output: str | None,
+    input_file: Path,
+    output: Path | None,
     max_entries: int | None,
-    **flags: object,
-) -> None:
-    """Parse LDIF file and display or save entries."""
-    # Create parameter object to reduce complexity
-    params = ParseCommandParams(
-        input_file=input_file,
-        output=output,
-        max_entries=max_entries,
-        validate=bool(flags.get("validate")),
-        stats=bool(flags.get("stats")),
-    )
-
-    _execute_parse_command(ctx, params)
-
-
-def _execute_parse_command(ctx: click.Context, params: ParseCommandParams) -> None:
-    """Execute the parse command with parameter object."""
-    logger.debug("Starting parse command")
-    logger.trace(
-        "Parse options: input_file=%s, output=%s, max_entries=%s, validate=%s",
-        params.input_file,
-        params.output,
-        params.max_entries,
-        params.validate,
-    )
-
-    try:
-        logger.debug("Creating API with parse configuration")
-        api = create_api_with_config(max_entries=params.max_entries)
-
-        # Parse file and get entries
-        entries = _parse_and_log_file(api, params.input_file, params.max_entries)
-
-        # Handle optional validation
-        _handle_optional_validation(entries, validate=params.validate)
-
-        # Generate output or statistics
-        if params.stats:
-            display_statistics(ctx, api, entries)
-        else:
-            _handle_output_generation(ctx, api, entries, params.output)
-
-        logger.info("Parse command completed successfully")
-
-    except FileNotFoundError as e:
-        # Ensure exit code 2 for nonexistent files (Click convention)
-        safe_click_echo(
-            FlextLdifOperationMessages.PARSE_FAILED.format(error=str(e)),
-            err=True,
-        )
-        sys.exit(2)
-    except Exception as e:  # Broad exception for CLI robustness
-        logger.exception("Parse operation failed with unexpected exception")
-        safe_click_echo(
-            FlextLdifOperationMessages.PARSE_FAILED.format(error=str(e)),
-            err=True,
-        )
-        sys.exit(1)
-
-
-def _create_validation_api(ctx: click.Context, *, strict: bool) -> FlextLdifAPI:
-    """Create API instance for validation with appropriate config."""
-    if strict:
-        config = FlextLdifConfig(strict_validation=strict)
-        return FlextLdifAPI(config)
-    return cast("FlextLdifAPI", ctx.obj["api"])
-
-
-def _validate_entries(entries: list[FlextLdifEntry]) -> list[str]:
-    """Validate entries and return list of error messages."""
-    validation_errors: list[str] = []
-    for i, entry in enumerate(entries):
-        validation_result = entry.validate_business_rules()
-        if not validation_result.is_success:
-            validation_errors.append(
-                f"Entry {i + 1} ({entry.dn}): {validation_result.error}",
-            )
-    return validation_errors
-
-
-def _display_validation_results(
-    entries: list[FlextLdifEntry],
-    validation_errors: list[str],
     *,
-    strict: bool,
+    validate: bool,
+    stats: bool,
 ) -> None:
-    """Display validation results and exit if errors found."""
-    mode = "strict" if strict else "standard"
-    safe_click_echo(FlextLdifOperationMessages.VALIDATION_MODE.format(mode=mode))
+    """Parse LDIF file with optional validation and statistics."""
+    service: FlextLdifCliService = ctx.obj["cli_service"]
+    config = ctx.obj["config"]
+    console: Console = ctx.obj["console"]
 
-    if validation_errors:
-        safe_click_echo(
-            FlextLdifOperationMessages.VALIDATION_FAILED.format(
-                count=len(validation_errors),
-            ),
-            err=True,
+    # Parse file
+    parse_result = service.parse_and_process(
+        input_file, validate=validate, max_entries=max_entries
+    )
+    entries = handle_result_or_exit(
+        parse_result, f"Successfully parsed {input_file}"
+    )
+
+    console.print(f"✅ Parsed {len(entries)} entries")
+
+    # Validate if requested
+    if validate:
+        validation_result = service.validate_entries(entries)
+        _, errors = handle_result_or_exit(validation_result)
+
+        if errors:
+            console.print(f"❌ Found {len(errors)} validation errors:")
+            max_errors_to_show = 5
+            for error in errors[:max_errors_to_show]:
+                console.print(f"  • {error}")
+            if len(errors) > max_errors_to_show:
+                console.print(f"  ... and {len(errors) - max_errors_to_show} more errors")
+            if not output:  # Exit if validation fails and no output requested
+                sys.exit(1)
+        else:
+            console.print(f"✅ All {len(entries)} entries are valid")
+
+    # Show statistics if requested
+    if stats:
+        stats_result = service.get_statistics(entries)
+        statistics = handle_result_or_exit(stats_result)
+
+        # Use flext-cli output formatting
+        output_result = flext_cli_output_data(
+            statistics, config.output_format, console=console
         )
-        for error in validation_errors:
-            safe_click_echo(f"  - {error}", err=True)
+        handle_result_or_exit(output_result)
+
+    # Write output if requested
+    if output:
+        write_result = service.write_entries(entries, output)
+        handle_result_or_exit(write_result, f"Entries written to {output}")
+
+
+@cli.command()
+@click.argument("input_file", type=click.Path(exists=True, path_type=Path))
+@cli_measure_time
+@cli_handle_keyboard_interrupt
+@click.pass_context
+def validate(ctx: click.Context, input_file: Path) -> None:
+    """Validate LDIF entries for business rule compliance."""
+    service: FlextLdifCliService = ctx.obj["cli_service"]
+    console: Console = ctx.obj["console"]
+
+    # Parse and validate
+    parse_result = service.parse_and_process(input_file)
+    entries = handle_result_or_exit(parse_result)
+
+    validation_result = service.validate_entries(entries)
+    _, errors = handle_result_or_exit(validation_result)
+
+    if errors:
+        console.print(f"❌ Validation failed: {len(errors)} errors found")
+        for error in errors:
+            console.print(f"  • {error}")
         sys.exit(1)
     else:
-        safe_click_echo(
-            FlextLdifOperationMessages.VALIDATION_SUCCESS.format(
-                count=len(entries),
-                mode=mode,
-            ),
-        )
+        console.print(f"✅ All {len(entries)} entries are valid")
 
 
 @cli.command()
-@click.argument("input_file", type=click.Path(exists=True))
-@click.option("--strict", is_flag=True, help=FlextLdifDefaultValues.STRICT_HELP)
-@click.option("--schema", type=str, help=FlextLdifDefaultValues.SCHEMA_HELP)
-@click.pass_context
-def validate(
-    ctx: click.Context,
-    input_file: str,
-    *,
-    strict: bool,
-    schema: str | None,
-) -> None:
-    """Validate LDIF file entries against schema rules."""
-    try:
-        # Create API with appropriate configuration
-        api = _create_validation_api(ctx, strict=strict)
-
-        # Parse file and handle errors
-        parse_result = api.parse_file(input_file)
-
-        # Handle parsing result using railway programming pattern
-        def exit_on_validation_parse_error(error: str) -> None:
-            safe_click_echo(
-                FlextLdifOperationMessages.PARSE_FAILED.format(error=error),
-                err=True,
-            )
-            sys.exit(1)
-
-        # Use tap_error for error handling and unwrap_or with empty list
-        parse_result.tap_error(exit_on_validation_parse_error)
-        entries = parse_result.unwrap_or([])
-
-        # Schema validation info (informational for now)
-        if schema:
-            safe_click_echo(
-                FlextLdifOperationMessages.USING_SCHEMA.format(schema=schema),
-            )
-            safe_click_echo(
-                FlextLdifOperationMessages.SCHEMA_NOTE,
-            )
-
-        # Validate entries and display results
-        validation_errors = _validate_entries(entries)
-        _display_validation_results(entries, validation_errors, strict=strict)
-
-    except (OSError, ValueError, TypeError) as e:
-        safe_click_echo(f"Validation failed: {e}", err=True)
-        sys.exit(1)
-
-
-@cli.command()
-@click.argument("input_file", type=click.Path(exists=True))
-@click.argument("output_file", type=click.Path())
+@click.argument("input_file", type=click.Path(exists=True, path_type=Path))
+@click.argument("output_file", type=click.Path(path_type=Path))
 @click.option(
-    "--filter-type",
+    "--filter",
+    "filter_type",
     type=click.Choice(["persons", "groups", "ous", "valid"]),
-    help=FlextLdifDefaultValues.FILTER_TYPE_HELP,
+    help="Filter entries by type",
 )
-@click.option("--sort", is_flag=True, help=FlextLdifDefaultValues.SORT_HELP)
+@click.option("--sort", is_flag=True, help="Sort entries hierarchically")
+@cli_measure_time
+@cli_handle_keyboard_interrupt
 @click.pass_context
 def transform(
     ctx: click.Context,
-    input_file: str,
-    output_file: str,
+    input_file: Path,
+    output_file: Path,
     filter_type: str | None,
     *,
     sort: bool,
 ) -> None:
-    """Transform LDIF file with filtering and sorting options."""
-    # Create parameter object to reduce complexity
-    params = TransformCommandParams(
-        input_file=input_file,
-        output_file=output_file,
-        filter_type=filter_type,
-        sort=sort,
+    """Transform LDIF file with filtering and sorting."""
+    service: FlextLdifCliService = ctx.obj["cli_service"]
+    console: Console = ctx.obj["console"]
+
+    # Parse file
+    parse_result = service.parse_and_process(input_file)
+    entries = handle_result_or_exit(parse_result)
+
+    console.print(f"📄 Loaded {len(entries)} entries from {input_file}")
+
+    # Transform entries
+    transform_result = service.transform_entries(
+        entries, filter_type, sort_hierarchically=sort
     )
+    transformed_entries = handle_result_or_exit(transform_result)
 
-    _execute_transform_command(ctx, params)
+    operations: list[str] = []
+    if filter_type:
+        operations.append(f"filtered to {filter_type}")
+    if sort:
+        operations.append("sorted hierarchically")
 
+    if operations:
+        console.print(f"🔄 Transformed entries: {', '.join(operations)}")
+        console.print(f"📊 Result: {len(transformed_entries)} entries")
 
-def _execute_transform_command(
-    ctx: click.Context,
-    params: TransformCommandParams,
-) -> None:
-    """Execute the transform command with parameter object."""
-    try:
-        api = ctx.obj["api"]
-
-        # Parse input with railway programming
-        def exit_on_parse_error(error: str) -> None:
-            click.echo(f"Failed to parse input file: {error}", err=True)
-            sys.exit(1)
-
-        entries = (
-            api.parse_file(params.input_file)
-            .tap_error(exit_on_parse_error)
-            .unwrap_or([])
-        )
-        # REFACTORING: FlextResult guarantees non-None data for successful results
-        click.echo(FlextLdifOperationMessages.LOADED_ENTRIES.format(count=len(entries)))
-
-        # Apply filtering
-        if params.filter_type:
-            entries = apply_filter(api, entries, params.filter_type)
-
-        # Apply sorting
-        if params.sort:
-            sort_result = api.sort_hierarchically(entries)
-            if sort_result.is_success:
-                entries = sort_result.unwrap_or(entries)
-                click.echo(FlextLdifOperationMessages.ENTRIES_SORTED)
-            else:
-                click.echo(
-                    f"Failed to sort hierarchically: {sort_result.error}",
-                    err=True,
-                )
-
-        # Write output
-        write_entries_to_file(api, entries, params.output_file)
-
-    except (OSError, ValueError, TypeError) as e:
-        click.echo(f"Transform operation failed: {e}", err=True)
-        sys.exit(1)
+    # Write transformed entries
+    write_result = service.write_entries(transformed_entries, output_file)
+    handle_result_or_exit(write_result, f"Transformed entries saved to {output_file}")
 
 
 @cli.command()
-@click.argument("input_file", type=click.Path(exists=True))
-@click.option(
-    "--format",
-    "-f",
-    "stats_format",
-    type=click.Choice(["json", "yaml", "table"]),
-    default="table",
-    help=FlextLdifDefaultValues.STATISTICS_FORMAT_HELP,
-)
+@click.argument("input_file", type=click.Path(exists=True, path_type=Path))
 @click.pass_context
-def stats(
-    ctx: click.Context,
-    input_file: str,
-    stats_format: str,
-) -> None:
+@cli_handle_keyboard_interrupt
+def stats(ctx: click.Context, input_file: Path) -> None:
     """Display comprehensive statistics for LDIF file."""
-    try:
-        api = ctx.obj["api"]
-
-        # Parse file using railway programming pattern
-        parse_result = api.parse_file(input_file)
-
-        def exit_on_stats_parse_error(error: str) -> None:
-            click.echo(f"Failed to parse file: {error}", err=True)
-            sys.exit(1)
-
-        parse_result.tap_error(exit_on_stats_parse_error)
-        entries = parse_result.unwrap_or([])
-
-        # Get statistics using railway programming pattern
-        statistics_result = api.get_entry_statistics(entries)
-
-        def exit_on_statistics_error(error: str) -> None:
-            click.echo(f"Failed to get statistics: {error}", err=True)
-            sys.exit(1)
-
-        statistics_result.tap_error(exit_on_statistics_error)
-        statistics = statistics_result.unwrap_or({})
-
-        click.echo(
-            FlextLdifOperationMessages.STATISTICS_FOR_FILE.format(file=input_file),
-        )
-
-        if stats_format == "json":
-            click.echo(json.dumps(statistics, indent=2))
-        elif stats_format == "yaml":
-            click.echo(yaml.dump(statistics, default_flow_style=False))
-        else:
-            for key, value in statistics.items():
-                click.echo(f"  {key}: {value}")
-
-    except (OSError, ValueError, TypeError) as e:
-        click.echo(f"Statistics operation failed: {e}", err=True)
-        sys.exit(1)
-
-
-@cli.command()
-@click.argument("input_file", type=click.Path(exists=True))
-@click.argument("query", required=False)
-@click.option(
-    "--dn",
-    "search_dn",
-    type=str,
-    help=FlextLdifDefaultValues.DN_HELP,
-)
-@click.option(
-    "--attribute",
-    "search_attr",
-    type=str,
-    help=FlextLdifDefaultValues.ATTRIBUTE_HELP,
-)
-@click.pass_context
-def find(
-    ctx: click.Context,
-    input_file: str,
-    query: str | None,
-    search_dn: str | None,
-    search_attr: str | None,
-) -> None:
-    """Find specific entry by Distinguished Name."""
-    try:
-        api = ctx.obj["api"]
-
-        # Parse file using railway programming pattern
-        parse_result = api.parse_file(input_file)
-
-        def exit_on_find_parse_error(error: str) -> None:
-            click.echo(f"Failed to parse file: {error}", err=True)
-            sys.exit(1)
-
-        parse_result.tap_error(exit_on_find_parse_error)
-        entries = parse_result.unwrap_or([])
-        # REFACTORING: FlextResult guarantees non-None data for successful results
-        # Prefer positional query (for compatibility), use --dn if needed
-        effective_query = query or search_dn
-        _run_find(entries, effective_query, search_attr, api)
-
-    except (OSError, ValueError, TypeError) as e:
-        click.echo(f"Find operation failed: {e}", err=True)
-        sys.exit(1)
-
-
-def _find_matching_entry(
-    entries: list[FlextLdifEntry],
-    query: str,
-) -> FlextLdifEntry | None:
-    """Find entry matching DN query pattern."""
-    query_pattern = query.strip("*")
-    for entry in entries:
-        if query_pattern in str(entry.dn):
-            return entry
-    return None
-
-
-def _handle_search_attribute(entry: FlextLdifEntry, search_attr: str) -> None:
-    """Handle printing specific attribute from matched entry."""
-    values = entry.get_attribute(search_attr) or []
-    click.echo("\n".join(values))
-
-
-def _handle_matched_entry_output(entry: FlextLdifEntry, api: FlextLdifAPI) -> None:
-    """Handle converting and displaying matched entry as LDIF."""
-    ldif_result = api.entries_to_ldif([entry])
-
-    # Use railway programming pattern with tap for success action
-    def display_found_entry(ldif_content: str) -> None:
-        click.echo(FlextLdifOperationMessages.FOUND_ENTRY)
-        click.echo(ldif_content)
-
-    def exit_on_ldif_error(error: str) -> None:
-        click.echo(f"Failed to convert entry to LDIF: {error}", err=True)
-        sys.exit(1)
-
-    ldif_result.tap(display_found_entry).tap_error(exit_on_ldif_error)
-
-
-def _handle_query_execution(
-    entries: list[FlextLdifEntry],
-    query: str,
-    search_attr: str | None,
-    api: FlextLdifAPI,
-) -> None:
-    """Execute search query and handle output."""
-    matched = _find_matching_entry(entries, query)
-
-    if matched is None:
-        click.echo(
-            FlextLdifOperationMessages.ENTRY_NOT_FOUND.format(query=query),
-            err=True,
-        )
-        sys.exit(1)
-
-    if search_attr:
-        _handle_search_attribute(matched, search_attr)
-    else:
-        _handle_matched_entry_output(matched, api)
-
-
-def _handle_list_all_dns(entries: list[FlextLdifEntry]) -> None:
-    """Handle listing all DNs when no query provided."""
-    for entry in entries:
-        click.echo(str(entry.dn))
-
-
-def _run_find(
-    entries: list[FlextLdifEntry],
-    effective_query: str | None,
-    search_attr: str | None,
-    api: FlextLdifAPI,
-) -> None:
-    """Execute the find logic with improved structure.
-
-    Args:
-      entries: Parsed LDIF entries.
-      effective_query: DN query or None to list DNs.
-      search_attr: Attribute to print if matched.
-      api: API instance for LDIF operations.
-
-    """
-    if effective_query:
-        _handle_query_execution(entries, effective_query, search_attr, api)
-    else:
-        _handle_list_all_dns(entries)
-
-
-@cli.command()
-@click.argument("input_file", type=click.Path(exists=True))
-@click.argument("objectclass", type=str)
-@click.option(
-    "--output",
-    "-o",
-    type=click.Path(),
-    help=FlextLdifDefaultValues.OUTPUT_FILTER_HELP,
-)
-@click.pass_context
-def filter_by_class(
-    ctx: click.Context,
-    input_file: str,
-    objectclass: str,
-    output: str | None,
-) -> None:
-    """Filter entries by objectClass attribute."""
-    try:
-        api = ctx.obj["api"]
-
-        # Parse file using railway programming pattern
-        parse_result = api.parse_file(input_file)
-
-        def exit_on_objectclass_parse_error(error: str) -> None:
-            click.echo(f"Failed to parse file: {error}", err=True)
-            sys.exit(1)
-
-        parse_result.tap_error(exit_on_objectclass_parse_error)
-        entries = parse_result.unwrap_or([])
-        # REFACTORING: FlextResult guarantees non-None data for successful results
-        filtered_result = api.filter_by_objectclass(entries, objectclass)
-
-        # Use railway programming pattern for filter result
-        def exit_on_filter_error(error: str) -> None:
-            click.echo(f"Filter operation failed: {error}", err=True)
-            sys.exit(1)
-
-        filtered_result.tap_error(exit_on_filter_error)
-        filtered_entries = filtered_result.unwrap_or([])
-        click.echo(
-            FlextLdifOperationMessages.FOUND_ENTRIES.format(
-                count=len(filtered_entries),
-                objectclass=objectclass,
-            ),
-        )
-
-        if output:
-            write_entries_to_file(api, filtered_entries, output)
-        else:
-            # Display filtered entries using railway programming
-            ldif_result = api.entries_to_ldif(filtered_entries)
-
-            def exit_on_entries_ldif_error(error: str) -> None:
-                click.echo(f"Failed to convert entries to LDIF: {error}", err=True)
-                sys.exit(1)
-
-            # Use tap for success action and tap_error for error handling
-            ldif_result.tap(click.echo).tap_error(exit_on_entries_ldif_error)
-
-    except (OSError, ValueError, TypeError) as e:
-        click.echo(f"Filter operation failed: {e}", err=True)
-        sys.exit(1)
-
-
-@cli.command()
-@click.option(
-    "--format",
-    "-f",
-    "output_format",
-    type=click.Choice(["ldif", "json", "yaml", "csv"]),
-    default="ldif",
-    help=FlextLdifDefaultValues.OUTPUT_FORMAT_HELP,
-)
-@click.argument("input_file", type=click.Path(exists=True))
-@click.pass_context
-def convert(
-    ctx: click.Context,
-    input_file: str,
-    output_format: str,
-) -> None:
-    """Convert between different file formats."""
-    try:
-        api = ctx.obj["api"]
-
-        # Parse input
-        parse_result = api.parse_file(input_file)
-
-        # Use railway programming with unwrap_or - no cast needed
-        def handle_parse_error(err: str) -> None:
-            click.echo(f"Parse error: {err}", err=True)
-            sys.exit(1)
-
-        parse_result.tap_error(handle_parse_error)
-        entries = parse_result.unwrap_or([])
-        # REFACTORING: FlextResult guarantees non-None data for successful results
-
-        # Determine output file path automatically next to input
-        output_path = Path(input_file).with_suffix(f".{output_format}")
-
-        if output_format == "ldif":
-            write_entries_to_file(api, entries, str(output_path))
-            click.echo(
-                FlextLdifOperationMessages.CONVERTED_TO_LDIF.format(path=output_path),
-            )
-        elif output_format in {"json", "yaml"}:
-            entries_data = [entry.model_dump() for entry in entries]
-            if output_format == "json":
-                output_path.write_text(
-                    json.dumps(entries_data, indent=2, default=str),
-                    encoding="utf-8",
-                )
-            else:
-                output_path.write_text(
-                    yaml.dump(entries_data, default_flow_style=False),
-                    encoding="utf-8",
-                )
-            click.echo(
-                FlextLdifOperationMessages.CONVERTED_TO_FORMAT.format(
-                    count=len(entries),
-                    format=output_format,
-                    path=output_path,
-                ),
-            )
-        elif output_format == "csv":
-            # Minimal CSV export: dn and objectClass
-
-            with output_path.open("w", encoding="utf-8", newline="") as f:
-                writer = csv.writer(f)
-                writer.writerow(["dn", "objectClass"])
-                for entry in entries:
-                    oc = ";".join(entry.get_object_classes())
-                    writer.writerow([str(entry.dn), oc])
-            click.echo(
-                FlextLdifOperationMessages.CONVERTED_TO_FORMAT.format(
-                    count=len(entries),
-                    format="csv",
-                    path=output_path,
-                ),
-            )
-
-    except (OSError, ValueError, TypeError) as e:
-        click.echo(f"Convert operation failed: {e}", err=True)
-        sys.exit(1)
-
-
-@cli.command()
-@click.pass_context
-def config_check(ctx: click.Context) -> None:
-    """Validate CLI configuration and display settings."""
-    try:
-        cli_config = ctx.obj["config"]
-        config_path = ctx.obj["config_path"]
-
-        click.echo(FlextLdifOperationMessages.CLI_CONFIGURATION)
-        click.echo(
-            FlextLdifOperationMessages.OUTPUT_FORMAT_CONFIG.format(
-                format=cli_config.output_format,
-            ),
-        )
-        click.echo(
-            FlextLdifOperationMessages.VERBOSE_CONFIG.format(
-                verbose=cli_config.verbose
-            ),
-        )
-        click.echo(
-            FlextLdifOperationMessages.DEBUG_CONFIG.format(debug=cli_config.debug),
-        )
-        click.echo(
-            FlextLdifOperationMessages.CONFIG_PATH_CONFIG.format(
-                path=config_path or "None",
-            ),
-        )
-
-        # Test API functionality
-        api = ctx.obj["api"]
-
-        # Create a test entry to validate API
-        test_ldif = """dn: cn=test,dc=example,dc=com
-objectClass: person
-cn: test
-"""
-
-        parse_result = api.parse(test_ldif)
-        if parse_result.is_success:
-            click.echo(FlextLdifOperationMessages.API_VALIDATION_SUCCESS)
-        else:
-            click.echo(f"API test failed: {parse_result.error}", err=True)
-
-    except (OSError, ValueError, TypeError) as e:
-        click.echo(f"Configuration check failed: {e}", err=True)
-        sys.exit(1)
-
-
-@cli.command()
-@click.argument("input_file", type=str)
-@click.option(
-    "--output",
-    "-o",
-    type=click.Path(),
-    help=FlextLdifDefaultValues.OUTPUT_FILE_HELP,
-)
-@click.option(
-    "--line-wrap",
-    type=int,
-    default=0,
-    help=FlextLdifDefaultValues.LINE_WRAP_HELP,
-)
-@click.pass_context
-def write(
-    ctx: click.Context,
-    input_file: str,
-    output: str | None,
-    line_wrap: int,
-) -> None:
-    """Reformat LDIF file and print or save the output."""
-    del line_wrap  # currently not applied; kept for CLI compatibility
-    try:
-        api = ctx.obj["api"]
-
-        # Parse file using railway programming pattern
-        parse_result = api.parse_file(input_file)
-
-        def exit_on_render_parse_error(error: str) -> None:
-            click.echo(f"Failed to parse file: {error}", err=True)
-            sys.exit(1)
-
-        parse_result.tap_error(exit_on_render_parse_error)
-        entries = parse_result.unwrap_or([])
-
-        # Convert to LDIF using railway programming
-        write_result = api.entries_to_ldif(entries)
-
-        def exit_on_render_error(error: str) -> None:
-            click.echo(f"Failed to render LDIF: {error}", err=True)
-            sys.exit(1)
-
-        write_result.tap_error(exit_on_render_error)
-        content = write_result.unwrap_or("")
-        if output:
-            out_path = Path(output)
-            out_path.parent.mkdir(parents=True, exist_ok=True)
-            out_path.write_text(content, encoding="utf-8")
-        else:
-            click.echo(content)
-
-    except (OSError, ValueError, TypeError) as e:
-        click.echo(f"Write operation failed: {e}", err=True)
-        sys.exit(1)
-
-
-def setup_cli() -> object:
-    """Set up the CLI environment and return a simple result-like object."""
-    # In real integration this would call flext-cli; we keep a small shim
-    return type("Result", (), {"success": True, "error": None})()
+    service: FlextLdifCliService = ctx.obj["cli_service"]
+    config = ctx.obj["config"]
+    console: Console = ctx.obj["console"]
+
+    # Parse and analyze
+    parse_result = service.parse_and_process(input_file)
+    entries = handle_result_or_exit(parse_result)
+
+    stats_result = service.get_statistics(entries)
+    statistics = handle_result_or_exit(stats_result)
+
+    console.print(f"📊 Statistics for {input_file}:")
+
+    # Use flext-cli formatting
+    output_result = flext_cli_output_data(
+        statistics, config.output_format, console=console
+    )
+    handle_result_or_exit(output_result)
 
 
 def main() -> None:
-    """Run the CLI application entry point."""
-    logger.debug("Starting FLEXT LDIF CLI main entry point")
-
+    """Main entry point."""
     try:
-        # Setup CLI with flext-cli foundation (using defaults)
-        setup_result = flext_setup_cli()
-        if not setup_result.is_success:
-            logger.error("CLI setup failed: %s", setup_result.error)
-            click.echo(f"CLI setup failed: {setup_result.error}", err=True)
-            sys.exit(1)
-
-        logger.debug("CLI setup completed successfully, starting CLI")
-        logger.info("FLEXT LDIF CLI starting")
+        logger.info("Starting FLEXT LDIF CLI")
         cli()
-        logger.info("FLEXT LDIF CLI completed successfully")
-
     except KeyboardInterrupt:
-        logger.info("CLI operation cancelled by user (Ctrl+C)")
-        click.echo("\nOperation cancelled by user", err=True)
+        click.echo("\\nOperation cancelled by user", err=True)
+        logger.info("CLI cancelled by user")
         sys.exit(1)
-    except (OSError, ValueError, TypeError) as e:
-        logger.exception("CLI failed with exception")
-        click.echo(f"CLI error: {e}", err=True)
+    except Exception as e:
+        click.echo(f"Unexpected error: {e}", err=True)
+        logger.exception("CLI failed with unexpected error")
         sys.exit(1)
 
 

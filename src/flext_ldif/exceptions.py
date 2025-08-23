@@ -15,7 +15,6 @@ from collections.abc import Mapping
 from enum import Enum
 
 from flext_core import FlextError
-from flext_core.exceptions import FlextErrorMixin
 
 
 class FlextLdifErrorCodes(Enum):
@@ -32,41 +31,186 @@ class FlextLdifErrorCodes(Enum):
     LDIF_TIMEOUT_ERROR = "LDIF_TIMEOUT_ERROR"
 
 
-# Base LDIF exception hierarchy using FlextErrorMixin pattern
-class FlextLdifError(FlextError, FlextErrorMixin):
+# Base LDIF exception hierarchy using FlextError pattern
+class FlextLdifError(FlextError):
     """Base LDIF error."""
+
+    def __init__(
+        self,
+        message: str = "LDIF operation failed",
+        *,
+        error_code: str | None = None,
+        context: Mapping[str, object] | None = None,
+        cause: Exception | None = None,
+    ) -> None:
+        """Initialize LDIF error with proper defaults."""
+        super().__init__(
+            message,
+            error_code=error_code or FlextLdifErrorCodes.LDIF_ERROR.value,
+            context=dict(context) if context else None,
+            cause=cause,
+        )
 
 
 class FlextLdifValidationError(FlextLdifError):
     """LDIF validation error."""
 
+    def __init__(
+        self,
+        message: str = "LDIF validation failed",
+        *,
+        error_code: str | None = None,
+        context: Mapping[str, object] | None = None,
+        cause: Exception | None = None,
+    ) -> None:
+        """Initialize LDIF validation error."""
+        super().__init__(
+            message,
+            error_code=error_code or FlextLdifErrorCodes.LDIF_VALIDATION_ERROR.value,
+            context=dict(context) if context else None,
+            cause=cause,
+        )
+
 
 class FlextLdifParseError(FlextLdifError):
     """LDIF parsing error."""
+
+    def __init__(
+        self,
+        message: str = "LDIF parsing failed",
+        *,
+        error_code: str | None = None,
+        context: Mapping[str, object] | None = None,
+        cause: Exception | None = None,
+    ) -> None:
+        """Initialize LDIF parse error."""
+        super().__init__(
+            message,
+            error_code=error_code or FlextLdifErrorCodes.LDIF_PARSE_ERROR.value,
+            context=dict(context) if context else None,
+            cause=cause,
+        )
 
 
 class FlextLdifEntryError(FlextLdifValidationError):
     """LDIF entry processing error."""
 
+    def __init__(
+        self,
+        message: str = "LDIF entry processing failed",
+        *,
+        error_code: str | None = None,
+        context: Mapping[str, object] | None = None,
+        cause: Exception | None = None,
+    ) -> None:
+        """Initialize LDIF entry error."""
+        super().__init__(
+            message,
+            error_code=error_code or FlextLdifErrorCodes.LDIF_ENTRY_ERROR.value,
+            context=dict(context) if context else None,
+            cause=cause,
+        )
+
 
 class FlextLdifConfigurationError(FlextLdifError):
     """LDIF configuration error."""
+
+    def __init__(
+        self,
+        message: str = "LDIF configuration failed",
+        *,
+        error_code: str | None = None,
+        context: Mapping[str, object] | None = None,
+        cause: Exception | None = None,
+    ) -> None:
+        """Initialize LDIF configuration error."""
+        super().__init__(
+            message,
+            error_code=error_code or FlextLdifErrorCodes.LDIF_CONFIGURATION_ERROR.value,
+            context=dict(context) if context else None,
+            cause=cause,
+        )
 
 
 class FlextLdifProcessingError(FlextLdifError):
     """LDIF processing error."""
 
+    def __init__(
+        self,
+        message: str = "LDIF processing failed",
+        *,
+        error_code: str | None = None,
+        context: Mapping[str, object] | None = None,
+        cause: Exception | None = None,
+    ) -> None:
+        """Initialize LDIF processing error."""
+        super().__init__(
+            message,
+            error_code=error_code or FlextLdifErrorCodes.LDIF_PROCESSING_ERROR.value,
+            context=dict(context) if context else None,
+            cause=cause,
+        )
+
 
 class FlextLdifConnectionError(FlextLdifError):
     """LDIF connection error."""
+
+    def __init__(
+        self,
+        message: str = "LDIF connection failed",
+        *,
+        error_code: str | None = None,
+        context: Mapping[str, object] | None = None,
+        cause: Exception | None = None,
+    ) -> None:
+        """Initialize LDIF connection error."""
+        super().__init__(
+            message,
+            error_code=error_code or FlextLdifErrorCodes.LDIF_CONNECTION_ERROR.value,
+            context=dict(context) if context else None,
+            cause=cause,
+        )
 
 
 class FlextLdifAuthenticationError(FlextLdifError):
     """LDIF authentication error."""
 
+    def __init__(
+        self,
+        message: str = "LDIF authentication failed",
+        *,
+        error_code: str | None = None,
+        context: Mapping[str, object] | None = None,
+        cause: Exception | None = None,
+    ) -> None:
+        """Initialize LDIF authentication error."""
+        super().__init__(
+            message,
+            error_code=error_code
+            or FlextLdifErrorCodes.LDIF_AUTHENTICATION_ERROR.value,
+            context=dict(context) if context else None,
+            cause=cause,
+        )
+
 
 class FlextLdifTimeoutError(FlextLdifError):
     """LDIF timeout error."""
+
+    def __init__(
+        self,
+        message: str = "LDIF operation timed out",
+        *,
+        error_code: str | None = None,
+        context: Mapping[str, object] | None = None,
+        cause: Exception | None = None,
+    ) -> None:
+        """Initialize LDIF timeout error."""
+        super().__init__(
+            message,
+            error_code=error_code or FlextLdifErrorCodes.LDIF_TIMEOUT_ERROR.value,
+            context=dict(context) if context else None,
+            cause=cause,
+        )
 
 
 # Domain-specific exceptions for LDIF business logic
@@ -100,7 +244,7 @@ class FlextLdifFileError(FlextLdifError):
 
         super().__init__(
             message,
-            code=code,
+            error_code=code.value if code else "UNKNOWN_ERROR",
             context=context_dict,
         )
 
@@ -142,7 +286,7 @@ class FlextLdifEntryValidationError(FlextLdifEntryError):
 
         super().__init__(
             message,
-            code=code,
+            error_code=code.value if code else "UNKNOWN_ERROR",
             context=context_dict,
         )
 

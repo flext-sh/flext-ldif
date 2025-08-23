@@ -556,14 +556,14 @@ description: User number {i} for memory testing
 
     def test_e2e_concurrent_workflows(self, enterprise_ldif_sample: str) -> None:
         """Test concurrent E2E workflows."""
-        results = queue.Queue()
+        results: queue.Queue[str] = queue.Queue()
 
         def worker_workflow() -> None:
             result = self._execute_workflow(enterprise_ldif_sample)
             results.put(result)
 
         # Start multiple worker threads
-        threads = []
+        threads: list[threading.Thread] = []
         for _ in range(5):
             thread = threading.Thread(target=worker_workflow)
             threads.append(thread)

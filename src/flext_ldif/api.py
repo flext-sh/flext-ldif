@@ -12,11 +12,11 @@ from pathlib import Path
 from flext_core import FlextResult, get_logger
 
 from flext_ldif.analytics_service import FlextLdifAnalyticsService
-from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifOperationMessages, FlextLdifValidationMessages
-from flext_ldif.models import FlextLdifEntry
+from flext_ldif.models import FlextLdifConfig, FlextLdifEntry
 from flext_ldif.parser_service import FlextLdifParserService as _FlextLdifParserService
 from flext_ldif.repository_service import FlextLdifRepositoryService
+from flext_ldif.utilities import FlextLdifUtilities
 from flext_ldif.validator_service import (
     FlextLdifValidatorService as _FlextLdifValidatorService,
 )
@@ -230,7 +230,7 @@ class FlextLdifAPI:
             return FlextResult[bool].fail(error_msg)
 
         # Use railway programming for validation
-        return self._validator_service.validate_entries(entries).tap(
+        return self._validator_service.validate_ldif_entries(entries).tap(
             lambda _: logger.debug("Bulk validation completed successfully")
         )
 
@@ -331,10 +331,11 @@ class FlextLdifAPI:
             return FlextResult[list[FlextLdifEntry]].fail(
                 FlextLdifValidationMessages.ENTRIES_CANNOT_BE_NONE
             )
+        validation_failed_default = False
         filtered = [
             entry
             for entry in entries
-            if self.validate_entry(entry).unwrap_or(default=False)
+            if self.validate_entry(entry).unwrap_or(validation_failed_default)
         ]
         return FlextResult[list[FlextLdifEntry]].ok(filtered)
 
@@ -489,7 +490,9 @@ class FlextLdifAPI:
                 FlextLdifValidationMessages.ENTRIES_CANNOT_BE_NONE
             )
         try:
-            sorted_entries = sorted(entries, key=lambda entry: str(entry.dn).count(","))
+            sorted_entries = sorted(
+                entries, key=lambda entry: FlextLdifUtilities.calculate_dn_depth(entry)
+            )
             return FlextResult[list[FlextLdifEntry]].ok(sorted_entries)
         except (ValueError, AttributeError, TypeError) as e:
             return FlextResult[list[FlextLdifEntry]].fail(
