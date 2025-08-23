@@ -10,19 +10,19 @@ from flext_ldif.models import FlextLdifConfig, FlextLdifEntry
 class TestFlextLdifAnalyticsService:
     """Test analytics service functionality."""
 
-    def test_service_initialization(self):
+    def test_service_initialization(self) -> None:
         """Test service can be initialized."""
         service = FlextLdifAnalyticsService()
         assert service.config is not None
         assert isinstance(service.config, FlextLdifConfig)
 
-    def test_service_initialization_with_config(self):
+    def test_service_initialization_with_config(self) -> None:
         """Test service can be initialized with custom config."""
         config = FlextLdifConfig(strict_validation=True)
         service = FlextLdifAnalyticsService(config=config)
         assert service.config.strict_validation is True
 
-    def test_execute_default(self):
+    def test_execute_default(self) -> None:
         """Test default execute method."""
         service = FlextLdifAnalyticsService()
         result = service.execute()
@@ -32,7 +32,7 @@ class TestFlextLdifAnalyticsService:
         assert FlextLdifAnalyticsConstants.TOTAL_ENTRIES_KEY in result.value
         assert result.value[FlextLdifAnalyticsConstants.TOTAL_ENTRIES_KEY] == 0
 
-    def test_analyze_entry_patterns_empty_list(self):
+    def test_analyze_entry_patterns_empty_list(self) -> None:
         """Test analyzing empty entry list."""
         service = FlextLdifAnalyticsService()
         result = service.analyze_entry_patterns([])
@@ -44,7 +44,7 @@ class TestFlextLdifAnalyticsService:
         assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_MAIL_KEY] == 0
         assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_TELEPHONE_KEY] == 0
 
-    def test_analyze_entry_patterns_with_cn(self, sample_entry_with_cn):
+    def test_analyze_entry_patterns_with_cn(self, sample_entry_with_cn) -> None:
         """Test analyzing entries with CN attribute."""
         service = FlextLdifAnalyticsService()
         result = service.analyze_entry_patterns([sample_entry_with_cn])
@@ -56,7 +56,7 @@ class TestFlextLdifAnalyticsService:
         assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_MAIL_KEY] == 0
         assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_TELEPHONE_KEY] == 0
 
-    def test_analyze_entry_patterns_with_mail(self, sample_entry_with_mail):
+    def test_analyze_entry_patterns_with_mail(self, sample_entry_with_mail) -> None:
         """Test analyzing entries with mail attribute."""
         service = FlextLdifAnalyticsService()
         result = service.analyze_entry_patterns([sample_entry_with_mail])
@@ -68,7 +68,9 @@ class TestFlextLdifAnalyticsService:
         assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_MAIL_KEY] == 1
         assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_TELEPHONE_KEY] == 0
 
-    def test_analyze_entry_patterns_with_telephone(self, sample_entry_with_telephone):
+    def test_analyze_entry_patterns_with_telephone(
+        self, sample_entry_with_telephone
+    ) -> None:
         """Test analyzing entries with telephoneNumber attribute."""
         service = FlextLdifAnalyticsService()
         result = service.analyze_entry_patterns([sample_entry_with_telephone])
@@ -80,17 +82,19 @@ class TestFlextLdifAnalyticsService:
         assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_MAIL_KEY] == 0
         assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_TELEPHONE_KEY] == 1
 
-    def test_analyze_entry_patterns_multiple_attributes(self):
+    def test_analyze_entry_patterns_multiple_attributes(self) -> None:
         """Test analyzing entry with multiple tracked attributes."""
-        entry = FlextLdifEntry.model_validate({
-            "dn": "cn=John Doe,ou=people,dc=example,dc=com",
-            "attributes": {
-                "cn": ["John Doe"],
-                "mail": ["john@example.com"],
-                "telephoneNumber": ["+1234567890"],
-                "objectClass": ["person", "inetOrgPerson"]
+        entry = FlextLdifEntry.model_validate(
+            {
+                "dn": "cn=John Doe,ou=people,dc=example,dc=com",
+                "attributes": {
+                    "cn": ["John Doe"],
+                    "mail": ["john@example.com"],
+                    "telephoneNumber": ["+1234567890"],
+                    "objectClass": ["person", "inetOrgPerson"],
+                },
             }
-        })
+        )
 
         service = FlextLdifAnalyticsService()
         result = service.analyze_entry_patterns([entry])
@@ -102,10 +106,14 @@ class TestFlextLdifAnalyticsService:
         assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_MAIL_KEY] == 1
         assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_TELEPHONE_KEY] == 1
 
-    def test_analyze_entry_patterns_multiple_entries(self, sample_entry_with_cn, sample_entry_with_mail):
+    def test_analyze_entry_patterns_multiple_entries(
+        self, sample_entry_with_cn, sample_entry_with_mail
+    ) -> None:
         """Test analyzing multiple entries."""
         service = FlextLdifAnalyticsService()
-        result = service.analyze_entry_patterns([sample_entry_with_cn, sample_entry_with_mail])
+        result = service.analyze_entry_patterns(
+            [sample_entry_with_cn, sample_entry_with_mail]
+        )
 
         assert result.is_success
         assert result.value is not None
@@ -114,7 +122,7 @@ class TestFlextLdifAnalyticsService:
         assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_MAIL_KEY] == 1
         assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_TELEPHONE_KEY] == 0
 
-    def test_analyze_entry_patterns_large_dataset(self):
+    def test_analyze_entry_patterns_large_dataset(self) -> None:
         """Test analyzing large dataset performance."""
         # Create 100 entries with varying attributes
         entries = []
@@ -127,10 +135,9 @@ class TestFlextLdifAnalyticsService:
             if i % 5 == 0:
                 attrs["telephoneNumber"] = [f"+123456{i:04d}"]
 
-            entry = FlextLdifEntry.model_validate({
-                "dn": f"cn=person{i},ou=people,dc=example,dc=com",
-                "attributes": attrs
-            })
+            entry = FlextLdifEntry.model_validate(
+                {"dn": f"cn=person{i},ou=people,dc=example,dc=com", "attributes": attrs}
+            )
             entries.append(entry)
 
         service = FlextLdifAnalyticsService()
@@ -140,11 +147,17 @@ class TestFlextLdifAnalyticsService:
         assert result.value is not None
         assert result.value[FlextLdifAnalyticsConstants.TOTAL_ENTRIES_KEY] == 100
         # Verify counts match expected patterns
-        assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_CN_KEY] == 34  # 0, 3, 6, 9, ... up to 99
-        assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_MAIL_KEY] == 25  # 0, 4, 8, 12, ... up to 96
-        assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_TELEPHONE_KEY] == 20  # 0, 5, 10, 15, ... up to 95
+        assert (
+            result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_CN_KEY] == 34
+        )  # 0, 3, 6, 9, ... up to 99
+        assert (
+            result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_MAIL_KEY] == 25
+        )  # 0, 4, 8, 12, ... up to 96
+        assert (
+            result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_TELEPHONE_KEY] == 20
+        )  # 0, 5, 10, 15, ... up to 95
 
-    def test_get_objectclass_distribution_empty_list(self):
+    def test_get_objectclass_distribution_empty_list(self) -> None:
         """Test objectClass distribution with empty list."""
         service = FlextLdifAnalyticsService()
         result = service.get_objectclass_distribution([])
@@ -153,15 +166,17 @@ class TestFlextLdifAnalyticsService:
         assert result.value is not None
         assert result.value == {}
 
-    def test_get_objectclass_distribution_single_entry(self):
+    def test_get_objectclass_distribution_single_entry(self) -> None:
         """Test objectClass distribution with single entry."""
-        entry = FlextLdifEntry.model_validate({
-            "dn": "cn=John Doe,ou=people,dc=example,dc=com",
-            "attributes": {
-                "cn": ["John Doe"],
-                "objectClass": ["person", "inetOrgPerson"]
+        entry = FlextLdifEntry.model_validate(
+            {
+                "dn": "cn=John Doe,ou=people,dc=example,dc=com",
+                "attributes": {
+                    "cn": ["John Doe"],
+                    "objectClass": ["person", "inetOrgPerson"],
+                },
             }
-        })
+        )
 
         service = FlextLdifAnalyticsService()
         result = service.get_objectclass_distribution([entry])
@@ -171,21 +186,27 @@ class TestFlextLdifAnalyticsService:
         assert result.value["person"] == 1
         assert result.value["inetOrgPerson"] == 1
 
-    def test_get_objectclass_distribution_multiple_entries(self):
+    def test_get_objectclass_distribution_multiple_entries(self) -> None:
         """Test objectClass distribution with multiple entries."""
         entries = [
-            FlextLdifEntry.model_validate({
-                "dn": "cn=John,dc=example,dc=com",
-                "attributes": {"objectClass": ["person"]}
-            }),
-            FlextLdifEntry.model_validate({
-                "dn": "ou=people,dc=example,dc=com",
-                "attributes": {"objectClass": ["organizationalUnit"]}
-            }),
-            FlextLdifEntry.model_validate({
-                "dn": "cn=Jane,dc=example,dc=com",
-                "attributes": {"objectClass": ["person", "inetOrgPerson"]}
-            })
+            FlextLdifEntry.model_validate(
+                {
+                    "dn": "cn=John,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person"]},
+                }
+            ),
+            FlextLdifEntry.model_validate(
+                {
+                    "dn": "ou=people,dc=example,dc=com",
+                    "attributes": {"objectClass": ["organizationalUnit"]},
+                }
+            ),
+            FlextLdifEntry.model_validate(
+                {
+                    "dn": "cn=Jane,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person", "inetOrgPerson"]},
+                }
+            ),
         ]
 
         service = FlextLdifAnalyticsService()
@@ -197,7 +218,7 @@ class TestFlextLdifAnalyticsService:
         assert result.value["organizationalUnit"] == 1
         assert result.value["inetOrgPerson"] == 1
 
-    def test_get_dn_depth_analysis_empty_list(self):
+    def test_get_dn_depth_analysis_empty_list(self) -> None:
         """Test DN depth analysis with empty list."""
         service = FlextLdifAnalyticsService()
         result = service.get_dn_depth_analysis([])
@@ -206,29 +227,39 @@ class TestFlextLdifAnalyticsService:
         assert result.value is not None
         assert result.value == {}
 
-    def test_get_dn_depth_analysis_various_depths(self):
+    def test_get_dn_depth_analysis_various_depths(self) -> None:
         """Test DN depth analysis with entries of various depths."""
         entries = [
-            FlextLdifEntry.model_validate({
-                "dn": "dc=com",  # depth 1
-                "attributes": {"objectClass": ["dcObject"]}
-            }),
-            FlextLdifEntry.model_validate({
-                "dn": "dc=example,dc=com",  # depth 2
-                "attributes": {"objectClass": ["dcObject"]}
-            }),
-            FlextLdifEntry.model_validate({
-                "dn": "ou=people,dc=example,dc=com",  # depth 3
-                "attributes": {"objectClass": ["organizationalUnit"]}
-            }),
-            FlextLdifEntry.model_validate({
-                "dn": "cn=John,ou=people,dc=example,dc=com",  # depth 4
-                "attributes": {"objectClass": ["person"]}
-            }),
-            FlextLdifEntry.model_validate({
-                "dn": "cn=Jane,ou=people,dc=example,dc=com",  # depth 4
-                "attributes": {"objectClass": ["person"]}
-            })
+            FlextLdifEntry.model_validate(
+                {
+                    "dn": "dc=com",  # depth 1
+                    "attributes": {"objectClass": ["dcObject"]},
+                }
+            ),
+            FlextLdifEntry.model_validate(
+                {
+                    "dn": "dc=example,dc=com",  # depth 2
+                    "attributes": {"objectClass": ["dcObject"]},
+                }
+            ),
+            FlextLdifEntry.model_validate(
+                {
+                    "dn": "ou=people,dc=example,dc=com",  # depth 3
+                    "attributes": {"objectClass": ["organizationalUnit"]},
+                }
+            ),
+            FlextLdifEntry.model_validate(
+                {
+                    "dn": "cn=John,ou=people,dc=example,dc=com",  # depth 4
+                    "attributes": {"objectClass": ["person"]},
+                }
+            ),
+            FlextLdifEntry.model_validate(
+                {
+                    "dn": "cn=Jane,ou=people,dc=example,dc=com",  # depth 4
+                    "attributes": {"objectClass": ["person"]},
+                }
+            ),
         ]
 
         service = FlextLdifAnalyticsService()
@@ -252,34 +283,37 @@ class TestFlextLdifAnalyticsService:
 @pytest.fixture
 def sample_entry_with_cn():
     """Create sample entry with CN attribute."""
-    return FlextLdifEntry.model_validate({
-        "dn": "cn=John Doe,ou=people,dc=example,dc=com",
-        "attributes": {
-            "cn": ["John Doe"],
-            "objectClass": ["person"]
+    return FlextLdifEntry.model_validate(
+        {
+            "dn": "cn=John Doe,ou=people,dc=example,dc=com",
+            "attributes": {"cn": ["John Doe"], "objectClass": ["person"]},
         }
-    })
+    )
 
 
 @pytest.fixture
 def sample_entry_with_mail():
     """Create sample entry with mail attribute."""
-    return FlextLdifEntry.model_validate({
-        "dn": "uid=jane,ou=people,dc=example,dc=com",
-        "attributes": {
-            "mail": ["jane@example.com"],
-            "objectClass": ["inetOrgPerson"]
+    return FlextLdifEntry.model_validate(
+        {
+            "dn": "uid=jane,ou=people,dc=example,dc=com",
+            "attributes": {
+                "mail": ["jane@example.com"],
+                "objectClass": ["inetOrgPerson"],
+            },
         }
-    })
+    )
 
 
 @pytest.fixture
 def sample_entry_with_telephone():
     """Create sample entry with telephoneNumber attribute."""
-    return FlextLdifEntry.model_validate({
-        "dn": "uid=bob,ou=people,dc=example,dc=com",
-        "attributes": {
-            "telephoneNumber": ["+1234567890"],
-            "objectClass": ["person"]
+    return FlextLdifEntry.model_validate(
+        {
+            "dn": "uid=bob,ou=people,dc=example,dc=com",
+            "attributes": {
+                "telephoneNumber": ["+1234567890"],
+                "objectClass": ["person"],
+            },
         }
-    })
+    )

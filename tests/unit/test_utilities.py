@@ -466,7 +466,7 @@ cn: invalid
         results = [
             FlextResult[str].ok("first"),
             FlextResult[str].ok("second"),
-            FlextResult[str].ok("third")
+            FlextResult[str].ok("third"),
         ]
 
         collected = FlextLdifUtilities.collect_results(results)
@@ -479,7 +479,7 @@ cn: invalid
         results = [
             FlextResult[str].ok("first"),
             FlextResult[str].fail("second failed"),
-            FlextResult[str].ok("third")
+            FlextResult[str].ok("third"),
         ]
 
         collected = FlextLdifUtilities.collect_results(results)
@@ -492,7 +492,9 @@ cn: invalid
     ) -> None:
         """Test partition_entries_by_validation separates valid/invalid."""
         # Use real entries from fixture
-        valid, invalid = FlextLdifUtilities.partition_entries_by_validation(sample_entries)
+        valid, invalid = FlextLdifUtilities.partition_entries_by_validation(
+            sample_entries
+        )
 
         # All sample entries should be valid (they have proper structure)
         assert len(valid) == len(sample_entries)
@@ -502,6 +504,7 @@ cn: invalid
         self, sample_entries: list[FlextLdifEntry]
     ) -> None:
         """Test map_entries_safely with successful mapper."""
+
         def extract_dn(entry: FlextLdifEntry) -> FlextResult[str]:
             return FlextResult[str].ok(str(entry.dn))
 
@@ -516,6 +519,7 @@ cn: invalid
         self, sample_entries: list[FlextLdifEntry]
     ) -> None:
         """Test map_entries_safely with fail_fast=True."""
+
         def failing_mapper(entry: FlextLdifEntry) -> FlextResult[str]:
             # Fail on Jane entry
             if "Jane" in str(entry.dn):
@@ -535,7 +539,9 @@ cn: invalid
     ) -> None:
         """Test find_entries_with_circular_references."""
         # Sample entries may have group references to person entries
-        circular = FlextLdifUtilities.find_entries_with_circular_references(sample_entries)
+        circular = FlextLdifUtilities.find_entries_with_circular_references(
+            sample_entries
+        )
 
         # Check that the function works (may find legitimate member references)
         # Each circular reference should be a tuple of (entry, reason)
@@ -550,7 +556,9 @@ cn: invalid
     ) -> None:
         """Test validate_entries_or_warn that generates actual warnings."""
         # This should test the warning functionality on line 65
-        warnings = FlextLdifUtilities.validate_entries_or_warn(sample_entries, max_warnings=3)
+        warnings = FlextLdifUtilities.validate_entries_or_warn(
+            sample_entries, max_warnings=3
+        )
 
         # Should return a list of warnings (may be empty if all entries are valid)
         assert isinstance(warnings, list)
@@ -632,6 +640,7 @@ cn: invalid
 
     def test_create_processing_pipeline_functionality(self) -> None:
         """Test create_processing_pipeline to cover functional composition."""
+
         # Create simple operations for the pipeline
         def add_one(value: object) -> object:
             if isinstance(value, int):
@@ -652,12 +661,14 @@ cn: invalid
 
     def test_create_processing_pipeline_with_non_callable(self) -> None:
         """Test create_processing_pipeline with non-callable to cover error path."""
+
         def valid_operation(value: object) -> object:
             return value
 
         # Create pipeline with mixed valid and invalid operations
         pipeline = FlextLdifUtilities.create_processing_pipeline(
-            valid_operation, "not_callable"  # type: ignore[arg-type]
+            valid_operation,
+            "not_callable",  # type: ignore[arg-type]
         )
 
         # Should handle gracefully (skip non-callable operations)
@@ -715,6 +726,7 @@ cn: invalid
 
     def test_validate_callable_chain_with_complex_scenarios(self) -> None:
         """Test validate_callable_chain to cover complex validation paths."""
+
         # Create a valid callable chain
         def validator1(value: str) -> bool:
             return len(value) > 0
@@ -723,11 +735,15 @@ cn: invalid
             return "@" in value if value else False
 
         # Test with valid callables
-        result_valid = FlextLdifUtilities.validate_callable_chain(validator1, validator2)
+        result_valid = FlextLdifUtilities.validate_callable_chain(
+            validator1, validator2
+        )
         assert result_valid is True
 
         # Test with non-callable (this should cover error paths)
-        result_invalid = FlextLdifUtilities.validate_callable_chain(validator1, "not_a_callable")  # type: ignore[arg-type]
+        result_invalid = FlextLdifUtilities.validate_callable_chain(
+            validator1, "not_a_callable"
+        )  # type: ignore[arg-type]
         assert result_invalid is False
 
     def test_format_entry_error_message_functionality(
@@ -762,7 +778,9 @@ cn: invalid
         entries = []  # Empty list for processor test
 
         result = FlextLdifUtilities.batch_process_entries(
-            entries, 10, None  # batch_size=10, processor=None
+            entries,
+            10,
+            None,  # batch_size=10, processor=None
         )
         assert result.is_failure
         assert "Processor function required" in result.error
@@ -777,7 +795,9 @@ cn: invalid
             return FlextResult[list[str]].fail("Batch processing failed")
 
         result = FlextLdifUtilities.batch_process_entries(
-            sample_entries[:2], 1, failing_processor  # batch_size=1
+            sample_entries[:2],
+            1,
+            failing_processor,  # batch_size=1
         )
         assert result.is_failure
         assert "Batch 1 failed" in result.error
@@ -792,7 +812,9 @@ cn: invalid
             return FlextResult[str].ok(f"Processed {len(batch)} entries")
 
         result = FlextLdifUtilities.batch_process_entries(
-            sample_entries[:1], 1, single_result_processor  # batch_size=1
+            sample_entries[:1],
+            1,
+            single_result_processor,  # batch_size=1
         )
         assert result.is_success
         assert isinstance(result.value, list)
@@ -869,9 +891,7 @@ cn: invalid
         entry = sample_entries[0]
 
         # Test with existing attribute
-        cn_value = FlextLdifUtilities.safe_get_attribute_value(
-            entry, "cn", "default"
-        )
+        cn_value = FlextLdifUtilities.safe_get_attribute_value(entry, "cn", "default")
         assert cn_value != "default"
         assert isinstance(cn_value, str)
 
@@ -954,7 +974,9 @@ cn: invalid
         assert "total_entries" in stats
 
         # Test entry counting by objectclass
-        person_count = FlextLdifUtilities.count_entries_by_objectclass(entries, "person")
+        person_count = FlextLdifUtilities.count_entries_by_objectclass(
+            entries, "person"
+        )
         assert isinstance(person_count, int)
         assert person_count >= 0
 
@@ -987,7 +1009,7 @@ cn: invalid
         assert isinstance(errors, list)
 
         # If there are validation errors, check for the "... and X more" message
-        more_msg_found = any("more entries not validated" in error for error in errors)
+        any("more entries not validated" in error for error in errors)
         # This might be True if we hit the limit, or False if all entries are valid
 
     def test_filter_entries_by_dn_pattern_case_sensitive_coverage(
@@ -998,29 +1020,29 @@ cn: invalid
         case_sensitive_results = FlextLdifUtilities.filter_entries_by_dn_pattern(
             sample_entries, "John", case_sensitive=True
         )
-        
-        # Test case insensitive search 
+
+        # Test case insensitive search
         case_insensitive_results = FlextLdifUtilities.filter_entries_by_dn_pattern(
             sample_entries, "john", case_sensitive=False
         )
-        
+
         assert isinstance(case_sensitive_results, list)
         assert isinstance(case_insensitive_results, list)
-        
+
         # Case insensitive should potentially find more results
         assert len(case_insensitive_results) >= len(case_sensitive_results)
 
     def test_additional_missing_lines_coverage(
-        self, sample_entries: list[FlextLdifEntry]  
+        self, sample_entries: list[FlextLdifEntry]
     ) -> None:
         """Test additional scenarios to cover remaining missing lines."""
         # Test validation with actual warning collection (line 65)
         warnings = FlextLdifUtilities.validate_entries_or_warn(sample_entries[:1])
         assert isinstance(warnings, list)
-        
+
         # Test other utility methods to cover missing lines
         entry = sample_entries[0]
-        
+
         # Test methods that might not be covered
         depth = FlextLdifUtilities.calculate_dn_depth(entry)
         assert isinstance(depth, int)
@@ -1032,7 +1054,7 @@ cn: invalid
         """Test comprehensive error scenarios to achieve higher coverage."""
         # Test batch validation with individual fallback scenarios (lines 232-235)
         entries = sample_entries[:3]
-        
+
         # Force smaller batch size to test individual validation path
         result = FlextLdifUtilities.batch_validate_entries(api, entries, batch_size=1)
         assert result.is_success

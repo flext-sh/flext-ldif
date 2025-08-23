@@ -163,14 +163,18 @@ class TestFlextLdifExceptions:
         context = {"file": "test.ldif", "line": 42}
         error = FlextLdifError("Error with context", context=context)
         # Context should be preserved in the exception
-        assert hasattr(error, "context") or str(error)  # Either attribute exists or context is in string
+        assert hasattr(error, "context") or str(
+            error
+        )  # Either attribute exists or context is in string
 
     def test_exception_with_cause(self) -> None:
         """Test exceptions with cause parameter."""
         cause = ValueError("Original error")
         error = FlextLdifError("LDIF error", cause=cause)
         # Cause should be preserved
-        assert hasattr(error, "cause") or str(error)  # Either attribute exists or cause is referenced
+        assert hasattr(error, "cause") or str(
+            error
+        )  # Either attribute exists or cause is referenced
 
     def test_file_error_with_file_path(self) -> None:
         """Test FlextLdifFileError with file_path parameter."""
@@ -184,7 +188,7 @@ class TestFlextLdifExceptions:
             "Validation failed",
             dn="cn=test,dc=example,dc=com",
             attribute_name="cn",
-            validation_rule="required_attribute"
+            validation_rule="required_attribute",
         )
         assert "Validation failed" in str(error)
 
@@ -210,7 +214,7 @@ class TestFlextLdifExceptions:
             attribute_name="description",
             attribute_value=long_value,  # This covers lines 275-281 (truncation logic)
             entry_index=5,  # This covers line 283
-            validation_rule="max_length_check"
+            validation_rule="max_length_check",
         )
         assert "Attribute too long" in str(error)
 

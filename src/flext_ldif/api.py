@@ -490,9 +490,7 @@ class FlextLdifAPI:
                 FlextLdifValidationMessages.ENTRIES_CANNOT_BE_NONE
             )
         try:
-            sorted_entries = sorted(
-                entries, key=lambda entry: FlextLdifUtilities.calculate_dn_depth(entry)
-            )
+            sorted_entries = sorted(entries, key=FlextLdifUtilities.calculate_dn_depth)
             return FlextResult[list[FlextLdifEntry]].ok(sorted_entries)
         except (ValueError, AttributeError, TypeError) as e:
             return FlextResult[list[FlextLdifEntry]].fail(

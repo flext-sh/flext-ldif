@@ -57,9 +57,9 @@ uid: janesmith
 
     if entries:
         # Validate entries with railway programming
-        api.validate(entries).tap(
-            lambda _: print("Validation successful")
-        ).tap_error(lambda error: print(f"Validation failed: {error}"))
+        api.validate(entries).tap(lambda _: print("Validation successful")).tap_error(
+            lambda error: print(f"Validation failed: {error}")
+        )
 
         # Write back to LDIF with railway programming
         api.write(entries).tap(lambda _: print("Write successful")).tap_error(
@@ -185,9 +185,7 @@ mail: test.user@filetest.com
     try:
         # Using modern FlextLdifAPI for file operations with railway programming
         api = FlextLdifAPI()
-        api.parse_file(input_path).flat_map(
-            lambda entries: api.filter_persons(entries)
-        ).flat_map(
+        api.parse_file(input_path).flat_map(api.filter_persons).flat_map(
             lambda person_entries: api.write_file(person_entries, output_path)
         ).tap(lambda _: print(f"Wrote filtered entries to {output_path}"))
 
