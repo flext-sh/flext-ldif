@@ -1,5 +1,8 @@
 """Tests for LDIF format handler service - comprehensive coverage."""
 
+# ruff: noqa: PT018
+# Reason: Multiple assertion checks are common in tests for comprehensive error validation
+
 import base64
 import unittest.mock
 from typing import Never, Self
@@ -7,6 +10,7 @@ from unittest.mock import Mock
 
 import pytest
 
+import flext_ldif.format_handler_service as fh
 from flext_ldif.format_handler_service import (
     HTTP_OK,
     FlextLDIFParser,
@@ -56,7 +60,6 @@ class TestInternalFunctions:
     def test_validate_url_scheme_valid(self) -> None:
         """Test URL scheme validation with valid schemes."""
         # Access internal function through module
-        import flext_ldif.format_handler_service as fh
 
         # Test valid schemes
         fh._validate_url_scheme("https://example.com/file.ldif")
@@ -65,15 +68,11 @@ class TestInternalFunctions:
 
     def test_validate_url_scheme_invalid(self) -> None:
         """Test URL scheme validation with invalid schemes."""
-        import flext_ldif.format_handler_service as fh
-
         with pytest.raises(ValueError, match="URL scheme 'ftp' not allowed"):
             fh._validate_url_scheme("ftp://example.com/file.ldif")
 
     def test_safe_url_fetch_success(self) -> None:
         """Test successful URL fetching with mock response."""
-        import flext_ldif.format_handler_service as fh
-
         # Mock urllib3 PoolManager to avoid actual HTTP requests
         with unittest.mock.patch(
             "flext_ldif.format_handler_service.urllib3.PoolManager"
@@ -96,8 +95,6 @@ class TestInternalFunctions:
 
     def test_safe_url_fetch_http_error(self) -> None:
         """Test URL fetching with HTTP error response."""
-        import flext_ldif.format_handler_service as fh
-
         with unittest.mock.patch(
             "flext_ldif.format_handler_service.urllib3.PoolManager"
         ) as mock_pool:

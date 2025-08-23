@@ -44,7 +44,7 @@ class TestFlextLdifAnalyticsService:
         assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_MAIL_KEY] == 0
         assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_TELEPHONE_KEY] == 0
 
-    def test_analyze_entry_patterns_with_cn(self, sample_entry_with_cn) -> None:
+    def test_analyze_entry_patterns_with_cn(self, sample_entry_with_cn: FlextLdifEntry) -> None:
         """Test analyzing entries with CN attribute."""
         service = FlextLdifAnalyticsService()
         result = service.analyze_entry_patterns([sample_entry_with_cn])
@@ -56,7 +56,7 @@ class TestFlextLdifAnalyticsService:
         assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_MAIL_KEY] == 0
         assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_TELEPHONE_KEY] == 0
 
-    def test_analyze_entry_patterns_with_mail(self, sample_entry_with_mail) -> None:
+    def test_analyze_entry_patterns_with_mail(self, sample_entry_with_mail: FlextLdifEntry) -> None:
         """Test analyzing entries with mail attribute."""
         service = FlextLdifAnalyticsService()
         result = service.analyze_entry_patterns([sample_entry_with_mail])
@@ -69,7 +69,7 @@ class TestFlextLdifAnalyticsService:
         assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_TELEPHONE_KEY] == 0
 
     def test_analyze_entry_patterns_with_telephone(
-        self, sample_entry_with_telephone
+        self, sample_entry_with_telephone: FlextLdifEntry
     ) -> None:
         """Test analyzing entries with telephoneNumber attribute."""
         service = FlextLdifAnalyticsService()
@@ -107,7 +107,7 @@ class TestFlextLdifAnalyticsService:
         assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_TELEPHONE_KEY] == 1
 
     def test_analyze_entry_patterns_multiple_entries(
-        self, sample_entry_with_cn, sample_entry_with_mail
+        self, sample_entry_with_cn: FlextLdifEntry, sample_entry_with_mail: FlextLdifEntry
     ) -> None:
         """Test analyzing multiple entries."""
         service = FlextLdifAnalyticsService()
@@ -281,7 +281,7 @@ class TestFlextLdifAnalyticsService:
 
 
 @pytest.fixture
-def sample_entry_with_cn():
+def sample_entry_with_cn() -> FlextLdifEntry:
     """Create sample entry with CN attribute."""
     return FlextLdifEntry.model_validate(
         {
@@ -292,7 +292,7 @@ def sample_entry_with_cn():
 
 
 @pytest.fixture
-def sample_entry_with_mail():
+def sample_entry_with_mail() -> FlextLdifEntry:
     """Create sample entry with mail attribute."""
     return FlextLdifEntry.model_validate(
         {
@@ -306,7 +306,7 @@ def sample_entry_with_mail():
 
 
 @pytest.fixture
-def sample_entry_with_telephone():
+def sample_entry_with_telephone() -> FlextLdifEntry:
     """Create sample entry with telephoneNumber attribute."""
     return FlextLdifEntry.model_validate(
         {

@@ -1,5 +1,8 @@
 """Tests for FlextLdifRepositoryService - comprehensive coverage."""
 
+# ruff: noqa: PT018
+# Reason: Multiple assertion checks are common in tests for comprehensive error validation
+
 from flext_ldif.constants import FlextLdifCoreMessages, FlextLdifValidationMessages
 from flext_ldif.models import FlextLdifConfig, FlextLdifEntry
 from flext_ldif.repository_service import FlextLdifRepositoryService
