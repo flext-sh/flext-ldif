@@ -47,7 +47,7 @@ mail: john.doe@example.com
 
 dn: cn=Jane Smith,ou=people,dc=example,dc=com
 objectClass: inetOrgPerson
-objectClass: organizationalPerson  
+objectClass: organizationalPerson
 objectClass: person
 objectClass: top
 cn: Jane Smith
@@ -153,7 +153,10 @@ sn: user"""
 
         # Use pytest's tmp_path fixture equivalent
         import tempfile
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(ldif_content)
             f.flush()
 
@@ -187,6 +190,7 @@ sn: user"""
 
         # Create a file with problematic encoding
         import tempfile
+
         with tempfile.NamedTemporaryFile(mode="wb", suffix=".ldif", delete=False) as f:
             # Write invalid UTF-8 bytes
             f.write(b"dn: cn=test,dc=example,dc=com\n")
@@ -281,7 +285,7 @@ invalid_block_without_dn
 still: invalid
 
 dn: cn=another_valid,dc=example,dc=com
-objectClass: person  
+objectClass: person
 objectClass: top
 cn: another_valid"""
 
@@ -297,7 +301,7 @@ cn: another_valid"""
     def test_parse_empty_blocks_handling(self) -> None:
         """Test parsing with empty blocks to cover line 72."""
         service = FlextLdifParserService()
-        
+
         # Content with empty blocks between valid entries
         content_with_empty_blocks = """
 
@@ -306,45 +310,48 @@ objectClass: person
 cn: first
 
 
-dn: cn=second,dc=example,dc=com  
+dn: cn=second,dc=example,dc=com
 objectClass: person
 cn: second
 
 """
-        
+
         result = service.parse(content_with_empty_blocks)
         assert result.is_success
         assert len(result.value) == 2
 
     def test_parse_exception_handling(self) -> None:
-        """Test exception handling in parse method (lines 98-99).""" 
+        """Test exception handling in parse method (lines 98-99)."""
         service = FlextLdifParserService()
-        
+
         # Malformed content that could trigger ValueError/AttributeError/TypeError
         malformed_content = "dn: \x00invalid\x00characters\nobjectClass:"
-        
+
         result = service.parse(malformed_content)
         # Should handle gracefully and return failure result
         if result.is_failure:
-            assert "parse failed" in result.error.lower() or "failed" in result.error.lower()
+            assert (
+                "parse failed" in result.error.lower()
+                or "failed" in result.error.lower()
+            )
 
     def test_single_entry_parsing_scenarios(self) -> None:
         """Test single entry parsing to cover missing lines."""
         service = FlextLdifParserService()
-        
+
         # Test minimal valid entry
         minimal_entry = "dn: cn=minimal,dc=example,dc=com\nobjectClass: person"
-        
+
         result = service.parse(minimal_entry)
         assert result.is_success
         assert len(result.value) == 1
-        
+
         # Test entry with special characters that might cause parsing issues
         special_chars_entry = """dn: cn=test with spaces and "quotes",dc=example,dc=com
 objectClass: person
 cn: test with spaces and "quotes"
 description: Some description with\n newlines and special chars: !@#$%"""
-        
+
         result = service.parse(special_chars_entry)
         # Should handle gracefully
         if result.is_success:
@@ -353,13 +360,13 @@ description: Some description with\n newlines and special chars: !@#$%"""
     def test_parse_edge_cases_for_complete_coverage(self) -> None:
         """Test edge cases to achieve complete coverage of missing lines."""
         service = FlextLdifParserService()
-        
+
         # Test empty DN case (line 183) - DN with just "dn:" and no value
         empty_dn_content = "dn: \nobjectClass: person"
         result = service.parse(empty_dn_content)
         if result.is_failure:
             assert "failed" in result.error.lower() or "invalid" in result.error.lower()
-        
+
         # Test DN with only spaces
         spaces_dn_content = "dn:    \nobjectClass: person"
         result = service.parse(spaces_dn_content)
@@ -369,9 +376,9 @@ description: Some description with\n newlines and special chars: !@#$%"""
     def test_parse_entries_from_string_method(self) -> None:
         """Test parse_entries_from_string method to cover line 150."""
         service = FlextLdifParserService()
-        
+
         valid_ldif = "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test"
-        
+
         # This should call parse internally
         result = service.parse_entries_from_string(valid_ldif)
         assert result.is_success

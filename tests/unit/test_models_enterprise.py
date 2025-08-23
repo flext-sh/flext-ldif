@@ -55,7 +55,9 @@ class TestFlextLdifEntryEnterprise:
             raise AssertionError(msg)
         assert entry.attributes.attributes == sample_entry_data["attributes"]
 
-    def test_entry_creation_with_string_dn(self, sample_entry_data: dict[str, object]) -> None:
+    def test_entry_creation_with_string_dn(
+        self, sample_entry_data: dict[str, object]
+    ) -> None:
         """Test entry creation with string DN (auto-conversion)."""
         entry = FlextLdifEntry.model_validate(sample_entry_data)
 
@@ -64,7 +66,9 @@ class TestFlextLdifEntryEnterprise:
             msg: str = f"Expected {sample_entry_data['dn']}, got {entry.dn!s}"
             raise AssertionError(msg)
 
-    def test_entry_creation_with_dict_attributes(self, sample_entry_data: dict[str, object]) -> None:
+    def test_entry_creation_with_dict_attributes(
+        self, sample_entry_data: dict[str, object]
+    ) -> None:
         """Test entry creation with dict attributes (auto-conversion)."""
         entry = FlextLdifEntry.model_validate(sample_entry_data)
 
@@ -114,7 +118,9 @@ class TestFlextLdifEntryEnterprise:
             )
             raise AssertionError(msg)
 
-    def test_get_attribute_nonexistent(self, sample_entry_data: dict[str, object]) -> None:
+    def test_get_attribute_nonexistent(
+        self, sample_entry_data: dict[str, object]
+    ) -> None:
         """Test getting nonexistent attribute returns None."""
         entry = FlextLdifEntry.model_validate(sample_entry_data)
 
@@ -152,7 +158,9 @@ class TestFlextLdifEntryEnterprise:
             msg: str = f"Expected False, got {entry.has_attribute('nonexistent')}"
             raise AssertionError(msg)
 
-    def test_get_object_classes_success(self, sample_entry_data: dict[str, object]) -> None:
+    def test_get_object_classes_success(
+        self, sample_entry_data: dict[str, object]
+    ) -> None:
         """Test getting object classes succeeds."""
         entry = FlextLdifEntry.model_validate(sample_entry_data)
 
@@ -161,7 +169,9 @@ class TestFlextLdifEntryEnterprise:
             msg: str = f"Expected {['person', 'inetOrgPerson']}, got {object_classes}"
             raise AssertionError(msg)
 
-    def test_has_object_class_success(self, sample_entry_data: dict[str, object]) -> None:
+    def test_has_object_class_success(
+        self, sample_entry_data: dict[str, object]
+    ) -> None:
         """Test checking object class existence succeeds."""
         entry = FlextLdifEntry.model_validate(sample_entry_data)
 
@@ -175,7 +185,9 @@ class TestFlextLdifEntryEnterprise:
             )
             raise AssertionError(msg)
 
-    def test_get_attribute_values_success(self, sample_entry_data: dict[str, object]) -> None:
+    def test_get_attribute_values_success(
+        self, sample_entry_data: dict[str, object]
+    ) -> None:
         """Test getting attribute values using modern API."""
         entry = FlextLdifEntry.model_validate(sample_entry_data)
 
@@ -184,7 +196,9 @@ class TestFlextLdifEntryEnterprise:
             msg: str = f"Expected {['John Doe']}, got {cn_values}"
             raise AssertionError(msg)
 
-    def test_operation_methods_correct_behavior(self, sample_entry_data: dict[str, object]) -> None:
+    def test_operation_methods_correct_behavior(
+        self, sample_entry_data: dict[str, object]
+    ) -> None:
         """Test operation check methods return correct LDIF behavior."""
         entry = FlextLdifEntry.model_validate(sample_entry_data)
 
@@ -193,7 +207,9 @@ class TestFlextLdifEntryEnterprise:
         assert entry.is_modify_operation() is False
         assert entry.is_delete_operation() is False
 
-    def test_get_single_attribute_success(self, sample_entry_data: dict[str, object]) -> None:
+    def test_get_single_attribute_success(
+        self, sample_entry_data: dict[str, object]
+    ) -> None:
         """Test getting single attribute value succeeds."""
         entry = FlextLdifEntry.model_validate(sample_entry_data)
 
@@ -207,7 +223,9 @@ class TestFlextLdifEntryEnterprise:
             msg: str = f"Expected {'johndoe'}, got {uid_value}"
             raise AssertionError(msg)
 
-    def test_get_single_attribute_nonexistent(self, sample_entry_data: dict[str, object]) -> None:
+    def test_get_single_attribute_nonexistent(
+        self, sample_entry_data: dict[str, object]
+    ) -> None:
         """Test getting single value from nonexistent attribute returns None."""
         entry = FlextLdifEntry.model_validate(sample_entry_data)
 
@@ -229,7 +247,9 @@ class TestFlextLdifEntryEnterprise:
         assert "cn: John Doe" in ldif_output
         assert ldif_output.endswith("\n")
 
-    def test_validate_domain_rules_success(self, sample_entry_data: dict[str, object]) -> None:
+    def test_validate_domain_rules_success(
+        self, sample_entry_data: dict[str, object]
+    ) -> None:
         """Test domain rules validation succeeds for valid entry."""
         entry = FlextLdifEntry.model_validate(sample_entry_data)
 
@@ -339,7 +359,9 @@ description: With multiple descriptions"""
             raise AssertionError(msg)
         assert entry.has_object_class("person")
 
-    def test_entry_immutability_via_pydantic(self, sample_entry_data: dict[str, object]) -> None:
+    def test_entry_immutability_via_pydantic(
+        self, sample_entry_data: dict[str, object]
+    ) -> None:
         """Test entry immutability through Pydantic frozen behavior."""
         entry = FlextLdifEntry.model_validate(sample_entry_data)
 
@@ -358,7 +380,9 @@ description: With multiple descriptions"""
             msg: str = f"Expected {original_dn}, got {entry.dn!s}"
             raise AssertionError(msg)
 
-    def test_entry_equality_and_hashing(self, sample_entry_data: dict[str, object]) -> None:
+    def test_entry_equality_and_hashing(
+        self, sample_entry_data: dict[str, object]
+    ) -> None:
         """Test entry equality and hash behavior."""
         entry1 = FlextLdifEntry.model_validate(sample_entry_data)
         entry2 = FlextLdifEntry.model_validate(sample_entry_data)
@@ -386,7 +410,9 @@ description: With multiple descriptions"""
             msg = "String representations should match for equal entries"
             raise AssertionError(msg)
 
-    def test_entry_serialization_deserialization(self, sample_entry_data: dict[str, object]) -> None:
+    def test_entry_serialization_deserialization(
+        self, sample_entry_data: dict[str, object]
+    ) -> None:
         """Test entry serialization and deserialization."""
         entry = FlextLdifEntry.model_validate(sample_entry_data)
 
@@ -405,7 +431,9 @@ description: With multiple descriptions"""
             raise AssertionError(msg)
         assert entry.attributes.attributes == sample_entry_data["attributes"]
 
-    def test_entry_json_serialization(self, sample_entry_data: dict[str, object]) -> None:
+    def test_entry_json_serialization(
+        self, sample_entry_data: dict[str, object]
+    ) -> None:
         """Test entry JSON serialization."""
         entry = FlextLdifEntry.model_validate(sample_entry_data)
 

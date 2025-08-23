@@ -2,6 +2,7 @@
 
 import base64
 import unittest.mock
+from typing import Never
 from unittest.mock import Mock
 
 import pytest
@@ -20,7 +21,7 @@ from flext_ldif.format_handler_service import (
 class TestUtilityFunctions:
     """Test utility functions."""
 
-    def test_is_dn_valid_dns(self):
+    def test_is_dn_valid_dns(self) -> None:
         """Test is_dn with valid DNs."""
         assert is_dn("cn=John Doe,ou=people,dc=example,dc=com") is True
         assert is_dn("uid=johndoe,ou=people,dc=example,dc=com") is True
@@ -28,22 +29,22 @@ class TestUtilityFunctions:
         assert is_dn("cn=test") is True
         assert is_dn("") is True  # Empty DN is valid (root DN)
 
-    def test_is_dn_invalid_dns(self):
+    def test_is_dn_invalid_dns(self) -> None:
         """Test is_dn with invalid DNs."""
         assert is_dn("not a dn") is False
         assert is_dn("invalid=,dc=com") is False
 
-    def test_lower_list_with_list(self):
+    def test_lower_list_with_list(self) -> None:
         """Test lower_list with string list."""
         result = lower_list(["UPPER", "Mixed", "lower"])
         assert result == ["upper", "mixed", "lower"]
 
-    def test_lower_list_with_none(self):
+    def test_lower_list_with_none(self) -> None:
         """Test lower_list with None."""
         result = lower_list(None)
         assert result == []
 
-    def test_lower_list_with_empty_list(self):
+    def test_lower_list_with_empty_list(self) -> None:
         """Test lower_list with empty list."""
         result = lower_list([])
         assert result == []
@@ -52,7 +53,7 @@ class TestUtilityFunctions:
 class TestInternalFunctions:
     """Test internal functions through the module."""
 
-    def test_validate_url_scheme_valid(self):
+    def test_validate_url_scheme_valid(self) -> None:
         """Test URL scheme validation with valid schemes."""
         # Access internal function through module
         import flext_ldif.format_handler_service as fh
@@ -62,14 +63,14 @@ class TestInternalFunctions:
         fh._validate_url_scheme("http://example.com/file.ldif")
         # Should not raise exception
 
-    def test_validate_url_scheme_invalid(self):
+    def test_validate_url_scheme_invalid(self) -> None:
         """Test URL scheme validation with invalid schemes."""
         import flext_ldif.format_handler_service as fh
 
         with pytest.raises(ValueError, match="URL scheme 'ftp' not allowed"):
             fh._validate_url_scheme("ftp://example.com/file.ldif")
 
-    def test_safe_url_fetch_success(self):
+    def test_safe_url_fetch_success(self) -> None:
         """Test successful URL fetching with mock response."""
         import flext_ldif.format_handler_service as fh
 
@@ -93,7 +94,7 @@ class TestInternalFunctions:
                 "GET", "https://example.com/test.ldif"
             )
 
-    def test_safe_url_fetch_http_error(self):
+    def test_safe_url_fetch_http_error(self) -> None:
         """Test URL fetching with HTTP error response."""
         import flext_ldif.format_handler_service as fh
 
@@ -110,7 +111,7 @@ class TestInternalFunctions:
             with pytest.raises(ValueError, match="HTTP 404: Failed to fetch"):
                 fh._safe_url_fetch("https://example.com/nonexistent.ldif")
 
-    def test_safe_url_fetch_network_error(self):
+    def test_safe_url_fetch_network_error(self) -> None:
         """Test URL fetching with network errors."""
         import flext_ldif.format_handler_service as fh
 
@@ -126,14 +127,14 @@ class TestInternalFunctions:
             ):
                 fh._safe_url_fetch("https://example.com/test.ldif")
 
-    def test_safe_url_fetch_invalid_url_scheme(self):
+    def test_safe_url_fetch_invalid_url_scheme(self) -> None:
         """Test URL fetching with invalid URL scheme."""
         import flext_ldif.format_handler_service as fh
 
         with pytest.raises(ValueError, match="URL scheme 'ftp' not allowed"):
             fh._safe_url_fetch("ftp://example.com/test.ldif")
 
-    def test_safe_url_fetch_encoding_error(self):
+    def test_safe_url_fetch_encoding_error(self) -> None:
         """Test URL fetching with encoding issues."""
         import flext_ldif.format_handler_service as fh
 
@@ -151,7 +152,7 @@ class TestInternalFunctions:
             with pytest.raises(ValueError, match="urllib3 fetch error for"):
                 fh._safe_url_fetch("https://example.com/test.ldif", encoding="utf-8")
 
-    def test_safe_url_fetch_custom_encoding(self):
+    def test_safe_url_fetch_custom_encoding(self) -> None:
         """Test URL fetching with custom encoding."""
         import flext_ldif.format_handler_service as fh
 
@@ -177,7 +178,7 @@ class TestInternalFunctions:
 class TestFlextLDIFWriter:
     """Test LDIF writer functionality."""
 
-    def test_writer_initialization_default(self):
+    def test_writer_initialization_default(self) -> None:
         """Test writer initialization with defaults."""
         writer = FlextLDIFWriter()
         assert writer._cols == 76
@@ -185,7 +186,7 @@ class TestFlextLDIFWriter:
         assert writer._encoding == "utf-8"
         assert writer.records_written == 0
 
-    def test_writer_initialization_custom(self):
+    def test_writer_initialization_custom(self) -> None:
         """Test writer with custom parameters."""
         writer = FlextLDIFWriter(
             cols=80, line_sep="\r\n", base64_attrs=["userCertificate"], encoding="utf-8"
@@ -195,13 +196,13 @@ class TestFlextLDIFWriter:
         assert "usercertificate" in writer._base64_attrs  # Should be lowercased
         assert writer._encoding == "utf-8"
 
-    def test_needs_base64_encoding_safe_string(self):
+    def test_needs_base64_encoding_safe_string(self) -> None:
         """Test base64 encoding detection with safe string."""
         writer = FlextLDIFWriter()
         assert writer._needs_base64_encoding("cn", "John Doe") is False
         assert writer._needs_base64_encoding("mail", "john@example.com") is False
 
-    def test_needs_base64_encoding_unsafe_string(self):
+    def test_needs_base64_encoding_unsafe_string(self) -> None:
         """Test base64 encoding detection with unsafe string."""
         writer = FlextLDIFWriter()
         # String starting with space
@@ -211,19 +212,19 @@ class TestFlextLDIFWriter:
         # String with non-ASCII characters
         assert writer._needs_base64_encoding("cn", "José María") is True
 
-    def test_needs_base64_encoding_forced_attrs(self):
+    def test_needs_base64_encoding_forced_attrs(self) -> None:
         """Test base64 encoding for forced attributes."""
         writer = FlextLDIFWriter(base64_attrs=["userCertificate"])
         assert writer._needs_base64_encoding("userCertificate", "safe value") is True
         assert writer._needs_base64_encoding("cn", "safe value") is False
 
-    def test_get_output_empty(self):
+    def test_get_output_empty(self) -> None:
         """Test getting output from empty writer."""
         writer = FlextLDIFWriter()
         output = writer.get_output()
         assert output == ""
 
-    def test_unparse_simple_entry(self):
+    def test_unparse_simple_entry(self) -> None:
         """Test unparsing a simple entry."""
         writer = FlextLDIFWriter()
         dn = "cn=John Doe,ou=people,dc=example,dc=com"
@@ -236,7 +237,7 @@ class TestFlextLDIFWriter:
         assert "objectClass: person" in output
         assert writer.records_written == 1
 
-    def test_unparse_entry_with_base64(self):
+    def test_unparse_entry_with_base64(self) -> None:
         """Test unparsing entry with base64 encoded values."""
         writer = FlextLDIFWriter()
         dn = "cn=José María,ou=people,dc=example,dc=com"
@@ -248,7 +249,7 @@ class TestFlextLDIFWriter:
         assert "cn:: " in output  # Should be base64 encoded
         assert "description:: " in output  # Should be base64 encoded
 
-    def test_unparse_multiple_entries(self):
+    def test_unparse_multiple_entries(self) -> None:
         """Test unparsing multiple entries."""
         writer = FlextLDIFWriter()
 
@@ -265,7 +266,7 @@ class TestFlextLDIFWriter:
         assert "dn: dc=example,dc=com" in output
         assert "dn: ou=people,dc=example,dc=com" in output
 
-    def test_unparse_with_line_wrapping(self):
+    def test_unparse_with_line_wrapping(self) -> None:
         """Test unparsing entries with long lines that require wrapping."""
         writer = FlextLDIFWriter(cols=40)  # Short line length to force wrapping
 
@@ -290,7 +291,7 @@ class TestFlextLDIFWriter:
         assert "description:" in output
         assert long_description[:20] in output  # First part should be present
 
-    def test_unparse_with_line_wrapping_exact_boundary(self):
+    def test_unparse_with_line_wrapping_exact_boundary(self) -> None:
         """Test line wrapping at exact column boundary."""
         writer = FlextLDIFWriter(cols=76)  # Standard LDIF line length
 
@@ -304,12 +305,12 @@ class TestFlextLDIFWriter:
 
         # Should not wrap if it fits exactly
         lines = output.split("\n")
-        description_line = [line for line in lines if line.startswith("description:")][
-            0
-        ]
+        description_line = next(
+            line for line in lines if line.startswith("description:")
+        )
         assert len(description_line) <= 76
 
-    def test_unparse_with_line_wrapping_over_boundary(self):
+    def test_unparse_with_line_wrapping_over_boundary(self) -> None:
         """Test line wrapping when exceeding column boundary."""
         writer = FlextLDIFWriter(cols=30)  # Short to force wrapping
 
@@ -323,11 +324,7 @@ class TestFlextLDIFWriter:
 
         lines = output.split("\n")
         # Find lines that start with description or continuation
-        desc_lines = [
-            line
-            for line in lines
-            if line.startswith("description:") or line.startswith(" ")
-        ]
+        desc_lines = [line for line in lines if line.startswith(("description:", " "))]
 
         # Should have multiple lines due to wrapping
         assert len(desc_lines) > 1, "Expected line wrapping for long value"
@@ -342,14 +339,14 @@ class TestFlextLDIFWriter:
 class TestFlextLDIFParser:
     """Test LDIF parser functionality."""
 
-    def test_parser_initialization_simple(self):
+    def test_parser_initialization_simple(self) -> None:
         """Test parser initialization."""
         ldif_content = "dn: dc=example,dc=com\nobjectClass: dcObject\n\n"
         parser = FlextLDIFParser(ldif_content)
         assert parser._encoding == "utf-8"
         assert parser._ignored_attr_types == []
 
-    def test_parser_initialization_with_ignored_attrs(self):
+    def test_parser_initialization_with_ignored_attrs(self) -> None:
         """Test parser with ignored attributes."""
         ldif_content = "dn: dc=example,dc=com\nobjectClass: dcObject\n\n"
         parser = FlextLDIFParser(
@@ -358,7 +355,7 @@ class TestFlextLDIFParser:
         assert "modifiersname" in parser._ignored_attr_types  # lowercased by lower_list
         assert "modifytimestamp" in parser._ignored_attr_types
 
-    def test_parse_simple_entry(self):
+    def test_parse_simple_entry(self) -> None:
         """Test parsing simple entry."""
         ldif_content = """dn: dc=example,dc=com
 objectClass: dcObject
@@ -374,7 +371,7 @@ dc: example
         assert record["objectClass"] == ["dcObject"]
         assert record["dc"] == ["example"]
 
-    def test_parse_multiple_entries(self):
+    def test_parse_multiple_entries(self) -> None:
         """Test parsing multiple entries."""
         ldif_content = """dn: dc=example,dc=com
 objectClass: dcObject
@@ -398,7 +395,7 @@ ou: people
         assert dn2 == "ou=people,dc=example,dc=com"
         assert record2["objectClass"] == ["organizationalUnit"]
 
-    def test_parse_entry_with_multivalue_attrs(self):
+    def test_parse_entry_with_multivalue_attrs(self) -> None:
         """Test parsing entry with multi-value attributes."""
         ldif_content = """dn: cn=John Doe,ou=people,dc=example,dc=com
 cn: John Doe
@@ -412,11 +409,11 @@ mail: johndoe@example.com
         entries = list(parser.parse())
 
         assert len(entries) == 1
-        dn, record = entries[0]
+        _dn, record = entries[0]
         assert record["objectClass"] == ["person", "inetOrgPerson"]
         assert record["mail"] == ["john@example.com", "johndoe@example.com"]
 
-    def test_parse_entry_with_base64_values(self):
+    def test_parse_entry_with_base64_values(self) -> None:
         """Test parsing entry with base64 encoded values."""
         # Create base64 encoded value
         original_value = "José María"
@@ -431,10 +428,10 @@ objectClass: person
         entries = list(parser.parse())
 
         assert len(entries) == 1
-        dn, record = entries[0]
+        _dn, record = entries[0]
         assert record["cn"] == [original_value]
 
-    def test_parse_with_folded_lines(self):
+    def test_parse_with_folded_lines(self) -> None:
         """Test parsing LDIF with folded lines."""
         ldif_content = """dn: cn=very long name that needs
  to be folded across multiple lines,ou=people,dc=example,dc=com
@@ -455,7 +452,7 @@ objectClass: person
             in record["cn"][0]
         )
 
-    def test_parse_with_ignored_attributes(self):
+    def test_parse_with_ignored_attributes(self) -> None:
         """Test parsing with ignored attributes."""
         ldif_content = """dn: cn=John Doe,ou=people,dc=example,dc=com
 cn: John Doe
@@ -470,13 +467,13 @@ modifyTimestamp: 20230101120000Z
         entries = list(parser.parse())
 
         assert len(entries) == 1
-        dn, record = entries[0]
+        _dn, record = entries[0]
         assert record["cn"] == ["John Doe"]
         assert record["objectClass"] == ["person"]
         assert "modifiersName" not in record
         assert "modifyTimestamp" not in record
 
-    def test_parse_base64_decode_error(self):
+    def test_parse_base64_decode_error(self) -> None:
         """Test parsing LDIF with invalid base64 values."""
         # Invalid base64 content
         ldif_content = """dn: cn=test,dc=example,dc=com
@@ -490,7 +487,7 @@ objectClass: person
         with pytest.raises(ValueError, match="Base64 decode error"):
             list(parser.parse())
 
-    def test_parse_url_reference(self):
+    def test_parse_url_reference(self) -> None:
         """Test parsing LDIF with URL references."""
         # Mock _safe_url_fetch to avoid actual HTTP requests
         import flext_ldif.format_handler_service as fh
@@ -507,11 +504,11 @@ objectClass: person
             entries = list(parser.parse())
 
             assert len(entries) == 1
-            dn, record = entries[0]
+            _dn, record = entries[0]
             assert record["cn"] == ["Test User"]
             mock_fetch.assert_called_once_with("https://example.com/name.txt", "utf-8")
 
-    def test_parse_url_reference_fetch_error(self):
+    def test_parse_url_reference_fetch_error(self) -> None:
         """Test parsing LDIF with URL reference fetch error."""
         import flext_ldif.format_handler_service as fh
 
@@ -530,7 +527,7 @@ objectClass: person
             with pytest.raises(ValueError, match="URL fetch error"):
                 list(parser.parse())
 
-    def test_parse_strict_mode_utf8_validation(self):
+    def test_parse_strict_mode_utf8_validation(self) -> None:
         """Test parser in strict mode with UTF-8 validation."""
         # Create parser with strict mode
         ldif_content = """dn: cn=José,dc=example,dc=com
@@ -542,10 +539,10 @@ objectClass: person
         entries = list(parser.parse())
 
         assert len(entries) == 1
-        dn, record = entries[0]
+        _dn, record = entries[0]
         assert record["cn"] == ["José María"]
 
-    def test_parse_multiple_dn_entries_error(self):
+    def test_parse_multiple_dn_entries_error(self) -> None:
         """Test parsing LDIF with multiple DN entries in one record."""
         ldif_content = """dn: cn=test,dc=example,dc=com
 dn: cn=duplicate,dc=example,dc=com
@@ -558,7 +555,7 @@ objectClass: person
         with pytest.raises(ValueError, match="Multiple dn: lines in one record"):
             list(parser.parse())
 
-    def test_parse_invalid_dn_format_error(self):
+    def test_parse_invalid_dn_format_error(self) -> None:
         """Test parsing LDIF with invalid DN format."""
         ldif_content = """dn: invalid_dn_format
 objectClass: person
@@ -570,7 +567,7 @@ objectClass: person
         with pytest.raises(ValueError, match="Invalid distinguished name format"):
             list(parser.parse())
 
-    def test_parse_attribute_before_dn_error(self):
+    def test_parse_attribute_before_dn_error(self) -> None:
         """Test parsing LDIF with attribute before DN."""
         ldif_content = """objectClass: person
 dn: cn=test,dc=example,dc=com
@@ -582,7 +579,7 @@ dn: cn=test,dc=example,dc=com
         with pytest.raises(ValueError, match="Attribute before dn: line"):
             list(parser.parse())
 
-    def test_parse_version_line_handling(self):
+    def test_parse_version_line_handling(self) -> None:
         """Test parsing LDIF with version line."""
         ldif_content = """version: 1
 dn: cn=test,dc=example,dc=com
@@ -599,7 +596,7 @@ cn: test
         assert dn == "cn=test,dc=example,dc=com"
         assert record["objectClass"] == ["person"]
 
-    def test_parse_strip_line_functionality(self):
+    def test_parse_strip_line_functionality(self) -> None:
         """Test parsing LDIF with line stripping functionality."""
         # Create simple content to test the _strip_line_sep method
         ldif_content = "dn: cn=test,dc=example,dc=com\nobjectClass: person\n\n"
@@ -614,7 +611,7 @@ cn: test
         entries = list(parser.parse())
         assert len(entries) == 1
 
-    def test_parse_line_counter_functionality(self):
+    def test_parse_line_counter_functionality(self) -> None:
         """Test that parser tracks line numbers correctly."""
         ldif_content = """dn: cn=test,dc=example,dc=com
 objectClass: person
@@ -633,7 +630,7 @@ cn: test
         assert parser.line_counter > 0  # Should have processed some lines
         assert parser.records_read == 1  # Should have read one record
 
-    def test_parse_invalid_line_format(self):
+    def test_parse_invalid_line_format(self) -> None:
         """Test parsing LDIF with invalid line format (no colon)."""
         ldif_content = """dn: cn=test,dc=example,dc=com
 invalid_line_without_colon
@@ -646,7 +643,7 @@ objectClass: person
         with pytest.raises(ValueError, match="Invalid LDIF line format"):
             list(parser.parse())
 
-    def test_parse_error_handling_strict_mode(self):
+    def test_parse_error_handling_strict_mode(self) -> None:
         """Test error handling in strict mode."""
         ldif_content = """dn: cn=test,dc=example,dc=com
 cn: test
@@ -659,7 +656,7 @@ objectClass: person
         with pytest.raises(ValueError, match="Test error in strict mode"):
             parser._error("Test error in strict mode")
 
-    def test_parse_error_handling_non_strict_mode(self):
+    def test_parse_error_handling_non_strict_mode(self) -> None:
         """Test error handling in non-strict mode (warning only)."""
         ldif_content = """dn: cn=test,dc=example,dc=com
 cn: test
@@ -677,20 +674,21 @@ objectClass: person
                 "LDIF parsing warning: %s", "Test warning message"
             )
 
-    def test_parse_dn_utf8_validation_strict_mode(self):
+    def test_parse_dn_utf8_validation_strict_mode(self) -> None:
         """Test DN UTF-8 validation in strict mode."""
         # Create parser in strict mode
         parser = FlextLDIFParser("", strict=True)
 
         # Create a mock string object that raises UnicodeError on encode
         class MockString:
-            def __init__(self, value):
+            def __init__(self, value) -> None:
                 self.value = value
 
-            def encode(self, encoding):
-                raise UnicodeError("Invalid UTF-8")
+            def encode(self, encoding) -> Never:
+                msg = "Invalid UTF-8"
+                raise UnicodeError(msg)
 
-            def __str__(self):
+            def __str__(self) -> str:
                 return self.value
 
         mock_str = MockString("test value with invalid utf-8")
@@ -699,20 +697,21 @@ objectClass: person
         with pytest.raises(ValueError, match="Invalid UTF-8"):
             parser._decode_value("dn", mock_str)
 
-    def test_parse_dn_utf8_validation_non_strict_mode(self):
+    def test_parse_dn_utf8_validation_non_strict_mode(self) -> None:
         """Test DN UTF-8 validation in non-strict mode."""
         # Create parser in non-strict mode
         parser = FlextLDIFParser("", strict=False)
 
         # Create a mock string object that raises UnicodeError on encode
         class MockString:
-            def __init__(self, value):
+            def __init__(self, value) -> None:
                 self.value = value
 
-            def encode(self, encoding):
-                raise UnicodeError("Invalid UTF-8")
+            def encode(self, encoding) -> Never:
+                msg = "Invalid UTF-8"
+                raise UnicodeError(msg)
 
-            def __str__(self):
+            def __str__(self) -> str:
                 return self.value
 
         mock_str = MockString("test value")
@@ -725,7 +724,7 @@ objectClass: person
 class TestModernizedFunctions:
     """Test modernized LDIF functions."""
 
-    def test_modernized_ldif_parse_simple(self):
+    def test_modernized_ldif_parse_simple(self) -> None:
         """Test modernized parse function."""
         ldif_content = """dn: dc=example,dc=com
 objectClass: dcObject
@@ -742,7 +741,7 @@ dc: example
         assert record["objectClass"] == ["dcObject"]
         assert record["dc"] == ["example"]
 
-    def test_modernized_ldif_parse_with_params(self):
+    def test_modernized_ldif_parse_with_params(self) -> None:
         """Test modernized parse function with parameters."""
         ldif_content = """dn: cn=John Doe,ou=people,dc=example,dc=com
 cn: John Doe
@@ -760,7 +759,7 @@ objectClass: person
         assert "cn" in record
         assert "objectClass" in record
 
-    def test_modernized_ldif_write_simple(self):
+    def test_modernized_ldif_write_simple(self) -> None:
         """Test modernized write function."""
         entries = [
             ("dc=example,dc=com", {"objectClass": ["dcObject"], "dc": ["example"]}),
@@ -781,7 +780,7 @@ objectClass: person
         assert "objectClass: organizationalUnit" in ldif_output
         assert "ou: people" in ldif_output
 
-    def test_modernized_ldif_write_with_params(self):
+    def test_modernized_ldif_write_with_params(self) -> None:
         """Test modernized write function with custom parameters."""
         entries = [
             (
@@ -798,13 +797,13 @@ objectClass: person
         assert "cn: Test" in ldif_output
         assert "description:: " in ldif_output  # Should be base64 encoded
 
-    def test_modernized_ldif_write_none_entries(self):
+    def test_modernized_ldif_write_none_entries(self) -> None:
         """Test modernized write function with None entries."""
         result = modernized_ldif_write(None)
         assert result.is_failure
         assert "entries cannot be none" in result.error.lower()
 
-    def test_modernized_ldif_roundtrip(self):
+    def test_modernized_ldif_roundtrip(self) -> None:
         """Test that parse -> write -> parse produces same result."""
         original_ldif = """dn: dc=example,dc=com
 objectClass: dcObject
@@ -840,7 +839,7 @@ mail: john@example.com
         reparsed_dns = [dn for dn, _ in reparsed_entries]
         assert original_dns == reparsed_dns
 
-    def test_modernized_ldif_parse_error_handling(self):
+    def test_modernized_ldif_parse_error_handling(self) -> None:
         """Test error handling in modernized_ldif_parse function."""
         # Mock FlextLDIFParser to raise an error
         with unittest.mock.patch(
@@ -853,7 +852,7 @@ mail: john@example.com
             assert result.is_failure
             assert "Modernized LDIF parse failed" in result.error
 
-    def test_modernized_ldif_write_error_handling(self):
+    def test_modernized_ldif_write_error_handling(self) -> None:
         """Test error handling in modernized_ldif_write function."""
         # Mock FlextLDIFWriter to raise an error
         with unittest.mock.patch(
@@ -867,7 +866,7 @@ mail: john@example.com
             assert result.is_failure
             assert "Modernized LDIF write failed" in result.error
 
-    def test_modernized_ldif_parse_unicode_error(self):
+    def test_modernized_ldif_parse_unicode_error(self) -> None:
         """Test Unicode error handling in modernized_ldif_parse."""
         # Mock the parser to raise UnicodeError during parsing
         with unittest.mock.patch(
@@ -881,7 +880,7 @@ mail: john@example.com
             assert result.is_failure
             assert "Modernized LDIF parse failed" in result.error
 
-    def test_modernized_ldif_write_unicode_error(self):
+    def test_modernized_ldif_write_unicode_error(self) -> None:
         """Test Unicode error handling in modernized_ldif_write."""
         # Mock the writer to raise UnicodeError during writing
         with unittest.mock.patch(

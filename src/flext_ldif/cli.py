@@ -54,10 +54,16 @@ class FlextLdifCliService:
         else:
             api = self.api
 
-        return api.parse_file(str(input_file)).tap(
-            lambda entries: logger.info(f"Parsed {len(entries)} entries from {input_file}")
-        ).tap_error(
-            lambda error: logger.error(f"Failed to parse {input_file}: {error}")
+        return (
+            api.parse_file(str(input_file))
+            .tap(
+                lambda entries: logger.info(
+                    f"Parsed {len(entries)} entries from {input_file}"
+                )
+            )
+            .tap_error(
+                lambda error: logger.error(f"Failed to parse {input_file}: {error}")
+            )
         )
 
     def validate_entries(
@@ -77,7 +83,9 @@ class FlextLdifCliService:
                 )
                 errors.append(error_msg)
 
-        return FlextResult[tuple[list[FlextLdifEntry], list[str]]].ok((valid_entries, errors))
+        return FlextResult[tuple[list[FlextLdifEntry], list[str]]].ok(
+            (valid_entries, errors)
+        )
 
     def transform_entries(
         self,
@@ -100,7 +108,9 @@ class FlextLdifCliService:
         if sort_hierarchically:
             sort_result = self.api.sort_hierarchically(result_entries)
             return sort_result.tap(
-                lambda sorted_entries: logger.info(f"Sorted {len(sorted_entries)} entries hierarchically")
+                lambda sorted_entries: logger.info(
+                    f"Sorted {len(sorted_entries)} entries hierarchically"
+                )
             )
 
         return FlextResult[list[FlextLdifEntry]].ok(result_entries)
@@ -179,7 +189,9 @@ def cli(
     ctx.obj["cli_service"] = cli_service
 
     if debug:
-        logger.info("FLEXT LDIF CLI initialized", debug=debug, output_format=output_format)
+        logger.info(
+            "FLEXT LDIF CLI initialized", debug=debug, output_format=output_format
+        )
 
     # Show help if no command
     if ctx.invoked_subcommand is None:
@@ -213,9 +225,7 @@ def parse(
     parse_result = service.parse_and_process(
         input_file, validate=validate, max_entries=max_entries
     )
-    entries = handle_result_or_exit(
-        parse_result, f"Successfully parsed {input_file}"
-    )
+    entries = handle_result_or_exit(parse_result, f"Successfully parsed {input_file}")
 
     console.print(f"✅ Parsed {len(entries)} entries")
 
@@ -230,7 +240,9 @@ def parse(
             for error in errors[:max_errors_to_show]:
                 console.print(f"  • {error}")
             if len(errors) > max_errors_to_show:
-                console.print(f"  ... and {len(errors) - max_errors_to_show} more errors")
+                console.print(
+                    f"  ... and {len(errors) - max_errors_to_show} more errors"
+                )
             if not output:  # Exit if validation fails and no output requested
                 sys.exit(1)
         else:

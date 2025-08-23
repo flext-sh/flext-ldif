@@ -45,7 +45,7 @@ class FlextLdifTransformerService(FlextDomainService[list[FlextLdifEntry]]):
         for entry in entries:
             result = self.transform_entry(entry)
             # Use tap for successful transformations instead of conditional check
-            result.tap(lambda transformed_entry: transformed.append(transformed_entry))
+            result.tap(transformed.append)
 
         return FlextResult[list[FlextLdifEntry]].ok(transformed)
 

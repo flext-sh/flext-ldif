@@ -586,16 +586,16 @@ class TestEdgeCases:
 
     def test_edge_cases_for_complete_coverage(self) -> None:
         """Test edge cases that may be theoretically impossible due to Pydantic validation.
-        
+
         This test documents the scenarios we attempted to cover but could not
         due to Pydantic's validation preventing invalid states from being created.
-        
+
         Lines 158 and 195 in format_validator_service.py represent defensive programming
         against states that Pydantic validation should prevent:
-        
+
         - Line 158: entry.dn is None or entry.dn.value is None/empty
         - Line 195: objectClass attribute is None after completeness validation passes
-        
+
         These lines may be uncoverable in practice due to the domain model constraints.
         """
         # Simply assert that we've documented these edge cases

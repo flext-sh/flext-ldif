@@ -157,7 +157,9 @@ class FlextLdifUtilities:
             result = initial_value
             for operation in operations:
                 if callable(operation):
-                    result = operation(result)  # FlextCallable accepts *args, **kwargs but can be called with single arg
+                    result = operation(
+                        result
+                    )  # FlextCallable accepts *args, **kwargs but can be called with single arg
             return result
 
         return pipeline
@@ -603,8 +605,10 @@ class FlextLdifUtilities:
             Final FlextResult after all operations (or first failure)
 
         Example:
-            >>> def validate(entry): return FlextResult.ok(entry)
-            >>> def transform(entry): return FlextResult.ok(entry)
+            >>> def validate(entry):
+            ...     return FlextResult.ok(entry)
+            >>> def transform(entry):
+            ...     return FlextResult.ok(entry)
             >>> operations = [validate, transform]
             >>> result = FlextLdifUtilities.chain_operations(initial_result, operations)
 
@@ -639,9 +643,7 @@ class FlextLdifUtilities:
         collected: list[T] = []
         for i, result in enumerate(results):
             if result.is_failure:
-                return FlextResult[list[T]].fail(
-                    f"Item {i + 1} failed: {result.error}"
-                )
+                return FlextResult[list[T]].fail(f"Item {i + 1} failed: {result.error}")
             collected.append(result.value)
         return FlextResult[list[T]].ok(collected)
 
@@ -661,7 +663,9 @@ class FlextLdifUtilities:
             Tuple of (valid_entries, invalid_entries_with_errors)
 
         Example:
-            >>> valid, invalid = FlextLdifUtilities.partition_entries_by_validation(entries)
+            >>> valid, invalid = FlextLdifUtilities.partition_entries_by_validation(
+            ...     entries
+            ... )
             >>> print(f"Valid: {len(valid)}, Invalid: {len(invalid)}")
 
         """

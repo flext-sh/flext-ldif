@@ -146,7 +146,6 @@ sn: User
 
         entries = parse_result.unwrap_or([])
         if entries:
-
             # Validate - geraria "EntryValidated" event via logging
             api.validate(entries)
 
