@@ -19,15 +19,15 @@ class TestDnField:
     def test_dn_field_default_parameters(self):
         """Test dn_field with default parameters."""
         field = dn_field()
-        
+
         assert isinstance(field, FieldInfo)
         assert field.description == "Distinguished Name"
         # Verify min_length and max_length are set in metadata
         metadata = field.metadata
         assert len(metadata) == 2
         # Check that we have MinLen and MaxLen constraints
-        min_len = next((m for m in metadata if hasattr(m, 'min_length')), None)
-        max_len = next((m for m in metadata if hasattr(m, 'max_length')), None)
+        min_len = next((m for m in metadata if hasattr(m, "min_length")), None)
+        max_len = next((m for m in metadata if hasattr(m, "max_length")), None)
         assert min_len is not None and min_len.min_length == 1
         assert max_len is not None and max_len.max_length == 1024
 
@@ -38,11 +38,11 @@ class TestDnField:
             min_length=5,
             max_length=500
         )
-        
+
         assert field.description == "Custom DN Description"
         metadata = field.metadata
-        min_len = next((m for m in metadata if hasattr(m, 'min_length')), None)
-        max_len = next((m for m in metadata if hasattr(m, 'max_length')), None)
+        min_len = next((m for m in metadata if hasattr(m, "min_length")), None)
+        max_len = next((m for m in metadata if hasattr(m, "max_length")), None)
         assert min_len is not None and min_len.min_length == 5
         assert max_len is not None and max_len.max_length == 500
 
@@ -50,15 +50,15 @@ class TestDnField:
         """Test DN field works in actual Pydantic model."""
         class TestModel(BaseModel):
             dn: str = dn_field()
-        
+
         # Valid DN
         model = TestModel(dn="cn=test,dc=example,dc=com")
         assert model.dn == "cn=test,dc=example,dc=com"
-        
+
         # Test min_length constraint
         with pytest.raises(ValidationError) as exc_info:
             TestModel(dn="")
-        
+
         errors = exc_info.value.errors()
         assert len(errors) >= 1
         assert "string_too_short" in str(errors[0]["type"])
@@ -67,15 +67,15 @@ class TestDnField:
         """Test DN field max length constraint."""
         class TestModel(BaseModel):
             dn: str = dn_field(max_length=10)
-        
+
         # Valid short DN
         model = TestModel(dn="cn=test")
         assert model.dn == "cn=test"
-        
+
         # Too long DN
         with pytest.raises(ValidationError) as exc_info:
             TestModel(dn="cn=this_is_way_too_long_for_the_constraint")
-        
+
         errors = exc_info.value.errors()
         assert len(errors) >= 1
         assert "string_too_long" in str(errors[0]["type"])
@@ -87,12 +87,12 @@ class TestAttributeNameField:
     def test_attribute_name_field_default_parameters(self):
         """Test attribute_name_field with default parameters."""
         field = attribute_name_field()
-        
+
         assert isinstance(field, FieldInfo)
         assert field.description == "LDAP Attribute Name"
         metadata = field.metadata
-        pattern_constraint = next((m for m in metadata if hasattr(m, 'pattern')), None)
-        max_len_constraint = next((m for m in metadata if hasattr(m, 'max_length')), None)
+        pattern_constraint = next((m for m in metadata if hasattr(m, "pattern")), None)
+        max_len_constraint = next((m for m in metadata if hasattr(m, "max_length")), None)
         assert pattern_constraint is not None and pattern_constraint.pattern == r"^[a-zA-Z][a-zA-Z0-9\-]*$"
         assert max_len_constraint is not None and max_len_constraint.max_length == 255
 
@@ -103,11 +103,11 @@ class TestAttributeNameField:
             pattern=r"^[a-z]+$",
             max_length=50
         )
-        
+
         assert field.description == "Custom Attribute"
         metadata = field.metadata
-        pattern_constraint = next((m for m in metadata if hasattr(m, 'pattern')), None)
-        max_len_constraint = next((m for m in metadata if hasattr(m, 'max_length')), None)
+        pattern_constraint = next((m for m in metadata if hasattr(m, "pattern")), None)
+        max_len_constraint = next((m for m in metadata if hasattr(m, "max_length")), None)
         assert pattern_constraint is not None and pattern_constraint.pattern == r"^[a-z]+$"
         assert max_len_constraint is not None and max_len_constraint.max_length == 50
 
@@ -115,7 +115,7 @@ class TestAttributeNameField:
         """Test attribute name field works in actual Pydantic model."""
         class TestModel(BaseModel):
             attr_name: str = attribute_name_field()
-        
+
         # Valid attribute names
         valid_names = ["cn", "mail", "objectClass", "user-id", "attr123"]
         for name in valid_names:
@@ -132,15 +132,15 @@ class TestAttributeNameField:
         """Test attribute name field max length constraint."""
         class TestModel(BaseModel):
             attr_name: str = attribute_name_field(max_length=5)
-        
+
         # Valid short name
         model = TestModel(attr_name="cn")
         assert model.attr_name == "cn"
-        
+
         # Too long name
         with pytest.raises(ValidationError) as exc_info:
             TestModel(attr_name="verylongattributename")
-        
+
         errors = exc_info.value.errors()
         assert len(errors) >= 1
         assert "string_too_long" in str(errors[0]["type"])
@@ -152,11 +152,11 @@ class TestAttributeValueField:
     def test_attribute_value_field_default_parameters(self):
         """Test attribute_value_field with default parameters."""
         field = attribute_value_field()
-        
+
         assert isinstance(field, FieldInfo)
         assert field.description == "LDAP Attribute Value"
         metadata = field.metadata
-        max_len_constraint = next((m for m in metadata if hasattr(m, 'max_length')), None)
+        max_len_constraint = next((m for m in metadata if hasattr(m, "max_length")), None)
         assert max_len_constraint is not None and max_len_constraint.max_length == 65536
 
     def test_attribute_value_field_custom_parameters(self):
@@ -165,27 +165,27 @@ class TestAttributeValueField:
             description="Custom Value",
             max_length=100
         )
-        
+
         assert field.description == "Custom Value"
         metadata = field.metadata
-        max_len_constraint = next((m for m in metadata if hasattr(m, 'max_length')), None)
+        max_len_constraint = next((m for m in metadata if hasattr(m, "max_length")), None)
         assert max_len_constraint is not None and max_len_constraint.max_length == 100
 
     def test_attribute_value_field_in_model(self):
         """Test attribute value field works in actual Pydantic model."""
         class TestModel(BaseModel):
             value: str = attribute_value_field()
-        
+
         # Various valid values
         valid_values = [
             "simple value",
-            "email@example.com", 
+            "email@example.com",
             "123456",
             "mixed123ABC",
             "special!@#$%^&*()",
             "unicode: áéíóú ñç"
         ]
-        
+
         for value in valid_values:
             model = TestModel(value=value)
             assert model.value == value
@@ -194,15 +194,15 @@ class TestAttributeValueField:
         """Test attribute value field max length constraint."""
         class TestModel(BaseModel):
             value: str = attribute_value_field(max_length=10)
-        
+
         # Valid short value
         model = TestModel(value="short")
         assert model.value == "short"
-        
+
         # Too long value
         with pytest.raises(ValidationError) as exc_info:
             TestModel(value="this is way too long for the constraint")
-        
+
         errors = exc_info.value.errors()
         assert len(errors) >= 1
         assert "string_too_long" in str(errors[0]["type"])
@@ -214,12 +214,12 @@ class TestObjectClassField:
     def test_object_class_field_default_parameters(self):
         """Test object_class_field with default parameters."""
         field = object_class_field()
-        
+
         assert isinstance(field, FieldInfo)
         assert field.description == "LDAP Object Class"
         metadata = field.metadata
-        pattern_constraint = next((m for m in metadata if hasattr(m, 'pattern')), None)
-        max_len_constraint = next((m for m in metadata if hasattr(m, 'max_length')), None)
+        pattern_constraint = next((m for m in metadata if hasattr(m, "pattern")), None)
+        max_len_constraint = next((m for m in metadata if hasattr(m, "max_length")), None)
         assert pattern_constraint is not None and pattern_constraint.pattern == r"^[a-zA-Z][a-zA-Z0-9\-]*$"
         assert max_len_constraint is not None and max_len_constraint.max_length == 255
 
@@ -230,11 +230,11 @@ class TestObjectClassField:
             pattern=r"^[A-Z][a-zA-Z]*$",
             max_length=100
         )
-        
+
         assert field.description == "Custom Object Class"
         metadata = field.metadata
-        pattern_constraint = next((m for m in metadata if hasattr(m, 'pattern')), None)
-        max_len_constraint = next((m for m in metadata if hasattr(m, 'max_length')), None)
+        pattern_constraint = next((m for m in metadata if hasattr(m, "pattern")), None)
+        max_len_constraint = next((m for m in metadata if hasattr(m, "max_length")), None)
         assert pattern_constraint is not None and pattern_constraint.pattern == r"^[A-Z][a-zA-Z]*$"
         assert max_len_constraint is not None and max_len_constraint.max_length == 100
 
@@ -242,17 +242,17 @@ class TestObjectClassField:
         """Test object class field works in actual Pydantic model."""
         class TestModel(BaseModel):
             object_class: str = object_class_field()
-        
+
         # Valid object class names
         valid_classes = [
-            "person", 
-            "inetOrgPerson", 
+            "person",
+            "inetOrgPerson",
             "organizationalUnit",
             "groupOfNames",
             "dcObject",
             "top123"
         ]
-        
+
         for class_name in valid_classes:
             model = TestModel(object_class=class_name)
             assert model.object_class == class_name
@@ -267,15 +267,15 @@ class TestObjectClassField:
         """Test object class field max length constraint."""
         class TestModel(BaseModel):
             object_class: str = object_class_field(max_length=10)
-        
+
         # Valid short class
         model = TestModel(object_class="person")
         assert model.object_class == "person"
-        
+
         # Too long class
         with pytest.raises(ValidationError) as exc_info:
             TestModel(object_class="verylongobjectclassname")
-        
+
         errors = exc_info.value.errors()
         assert len(errors) >= 1
         assert "string_too_long" in str(errors[0]["type"])
@@ -286,12 +286,12 @@ class TestFieldDefaults:
 
     def test_field_defaults_constants_exist(self):
         """Test that all expected constants exist."""
-        assert hasattr(FieldDefaults, 'DN_MAX_LENGTH')
-        assert hasattr(FieldDefaults, 'ATTRIBUTE_NAME_MAX_LENGTH')
-        assert hasattr(FieldDefaults, 'ATTRIBUTE_VALUE_MAX_LENGTH')
-        assert hasattr(FieldDefaults, 'LDIF_LINE_MAX_LENGTH')
-        assert hasattr(FieldDefaults, 'DN_PATTERN')
-        assert hasattr(FieldDefaults, 'ATTRIBUTE_NAME_PATTERN')
+        assert hasattr(FieldDefaults, "DN_MAX_LENGTH")
+        assert hasattr(FieldDefaults, "ATTRIBUTE_NAME_MAX_LENGTH")
+        assert hasattr(FieldDefaults, "ATTRIBUTE_VALUE_MAX_LENGTH")
+        assert hasattr(FieldDefaults, "LDIF_LINE_MAX_LENGTH")
+        assert hasattr(FieldDefaults, "DN_PATTERN")
+        assert hasattr(FieldDefaults, "ATTRIBUTE_NAME_PATTERN")
 
     def test_field_defaults_values(self):
         """Test that constants have expected values."""
@@ -317,13 +317,13 @@ class TestFieldDefaults:
             dn: str = dn_field(max_length=FieldDefaults.DN_MAX_LENGTH)
             attr_name: str = attribute_name_field(max_length=FieldDefaults.ATTRIBUTE_NAME_MAX_LENGTH)
             attr_value: str = attribute_value_field(max_length=FieldDefaults.ATTRIBUTE_VALUE_MAX_LENGTH)
-        
+
         model = TestModel(
             dn="cn=test,dc=example,dc=com",
             attr_name="mail",
             attr_value="test@example.com"
         )
-        
+
         assert model.dn == "cn=test,dc=example,dc=com"
         assert model.attr_name == "mail"
         assert model.attr_value == "test@example.com"
@@ -339,14 +339,14 @@ class TestFieldIntegration:
             attr_name: str = attribute_name_field()
             attr_value: str = attribute_value_field()
             object_class: str = object_class_field()
-        
+
         model = CompleteModel(
             dn="cn=John Doe,ou=people,dc=example,dc=com",
             attr_name="mail",
             attr_value="john.doe@example.com",
             object_class="inetOrgPerson"
         )
-        
+
         assert model.dn == "cn=John Doe,ou=people,dc=example,dc=com"
         assert model.attr_name == "mail"
         assert model.attr_value == "john.doe@example.com"
@@ -358,7 +358,7 @@ class TestFieldIntegration:
         attr_name = attribute_name_field(description="LDAP Attr")
         attr_value = attribute_value_field(description="Attr Value")
         obj_class = object_class_field(description="Object Class")
-        
+
         assert dn.description == "Entry DN"
         assert attr_name.description == "LDAP Attr"
         assert attr_value.description == "Attr Value"
@@ -369,15 +369,15 @@ class TestFieldIntegration:
         class TestModel(BaseModel):
             attr_name: str = attribute_name_field()
             object_class: str = object_class_field()
-        
+
         # Test valid patterns
         valid_data = TestModel(attr_name="validName123", object_class="validClass")
         assert valid_data.attr_name == "validName123"
         assert valid_data.object_class == "validClass"
-        
+
         # Test invalid patterns - starting with number
         with pytest.raises(ValidationError):
             TestModel(attr_name="123invalid", object_class="validClass")
-        
+
         with pytest.raises(ValidationError):
             TestModel(attr_name="validName", object_class="123invalid")

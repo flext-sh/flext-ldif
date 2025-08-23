@@ -106,7 +106,7 @@ class TestFlextLdifExceptions:
         """Test that error codes enum contains expected values."""
         expected_codes = [
             "LDIF_ERROR",
-            "LDIF_VALIDATION_ERROR", 
+            "LDIF_VALIDATION_ERROR",
             "LDIF_PARSE_ERROR",
             "LDIF_ENTRY_ERROR",
             "LDIF_CONFIGURATION_ERROR",
@@ -115,7 +115,7 @@ class TestFlextLdifExceptions:
             "LDIF_AUTHENTICATION_ERROR",
             "LDIF_TIMEOUT_ERROR",
         ]
-        
+
         for code in expected_codes:
             assert hasattr(FlextLdifErrorCodes, code)
             assert getattr(FlextLdifErrorCodes, code).value == code
@@ -163,14 +163,14 @@ class TestFlextLdifExceptions:
         context = {"file": "test.ldif", "line": 42}
         error = FlextLdifError("Error with context", context=context)
         # Context should be preserved in the exception
-        assert hasattr(error, 'context') or str(error)  # Either attribute exists or context is in string
+        assert hasattr(error, "context") or str(error)  # Either attribute exists or context is in string
 
     def test_exception_with_cause(self) -> None:
         """Test exceptions with cause parameter."""
         cause = ValueError("Original error")
         error = FlextLdifError("LDIF error", cause=cause)
         # Cause should be preserved
-        assert hasattr(error, 'cause') or str(error)  # Either attribute exists or cause is referenced
+        assert hasattr(error, "cause") or str(error)  # Either attribute exists or cause is referenced
 
     def test_file_error_with_file_path(self) -> None:
         """Test FlextLdifFileError with file_path parameter."""
@@ -181,7 +181,7 @@ class TestFlextLdifExceptions:
     def test_entry_validation_error_with_params(self) -> None:
         """Test FlextLdifEntryValidationError with additional parameters."""
         error = FlextLdifEntryValidationError(
-            "Validation failed", 
+            "Validation failed",
             dn="cn=test,dc=example,dc=com",
             attribute_name="cn",
             validation_rule="required_attribute"
@@ -203,7 +203,7 @@ class TestFlextLdifExceptions:
         """Test FlextLdifEntryValidationError with long attribute value to cover truncation logic."""
         # Create a very long attribute value (over 100 characters)
         long_value = "x" * 150  # 150 characters
-        
+
         error = FlextLdifEntryValidationError(
             "Attribute too long",
             dn="cn=test,dc=example,dc=com",
@@ -217,7 +217,7 @@ class TestFlextLdifExceptions:
     def test_entry_validation_error_with_short_attribute_value(self) -> None:
         """Test FlextLdifEntryValidationError with short attribute value to cover non-truncation path."""
         short_value = "short"  # Under 100 characters
-        
+
         error = FlextLdifEntryValidationError(
             "Attribute validation failed",
             attribute_value=short_value,  # This ensures the else path in truncation logic is covered
