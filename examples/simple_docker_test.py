@@ -62,8 +62,9 @@ def test_with_docker_container() -> bool | None:
         api = __import__("flext_ldif").flext_ldif.FlextLdifAPI
         api = api()
 
-        # Filter pessoas usando API real com railway programming
-        person_entries = api.filter_persons(entries).unwrap_or([])
+        # Filter pessoas usando API real com modern FlextResult pattern
+        person_filter_result = api.filter_persons(entries)
+        person_entries = person_filter_result.unwrap_or([])
         len(person_entries)
 
         # Contar entries por objectClass usando API real

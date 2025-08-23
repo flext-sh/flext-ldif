@@ -60,11 +60,12 @@ def main() -> None:
 
     result = api.parse_file(sample_file)
 
-    # Use railway programming with chaining
-    entries = result.tap_error(
-        lambda error: print(f"❌ Parse failed: {error}")
-    ).unwrap_or([])
+    # Use railway programming with modern FlextResult pattern
+    if not result.is_success:
+        print(f"❌ Parse failed: {result.error}")
+        return
 
+    entries = result.value
     if not entries:
         print("⚠️  No entries found in LDIF file")
         return

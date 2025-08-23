@@ -29,12 +29,9 @@ from flext_core import FlextValidationError
 # Use proper import from root level
 from flext_ldif import FlextLdifEntry
 
-# Alias for backward compatibility in test
-LDIFEntry = FlextLdifEntry
 
-
-class TestLDIFEntry:
-    """Test LDIFEntry functionality."""
+class TestFlextLdifEntry:
+    """Test FlextLdifEntry functionality."""
 
     def test_ldif_entry_creation(self) -> None:
         """Test basic LDIF entry creation."""
@@ -44,7 +41,7 @@ class TestLDIFEntry:
             "objectClass": ["person"],
         }
 
-        entry = LDIFEntry.model_validate({"dn": dn, "attributes": attributes})
+        entry = FlextLdifEntry.model_validate({"dn": dn, "attributes": attributes})
 
         if entry.dn != dn:
             msg: str = f"Expected {dn}, got {entry.dn}"
@@ -54,7 +51,7 @@ class TestLDIFEntry:
     def test_ldif_entry_default_attributes(self) -> None:
         """Test LDIF entry creation with default attributes."""
         dn = "cn=test,dc=example,dc=com"
-        entry = LDIFEntry.model_validate({"dn": dn})
+        entry = FlextLdifEntry.model_validate({"dn": dn})
 
         if entry.dn != dn:
             msg: str = f"Expected {dn}, got {entry.dn}"
@@ -63,7 +60,7 @@ class TestLDIFEntry:
 
     def test_get_attribute_exists(self) -> None:
         """Test getting an existing attribute."""
-        entry = LDIFEntry.model_validate(
+        entry = FlextLdifEntry.model_validate(
             {
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {
@@ -82,7 +79,7 @@ class TestLDIFEntry:
 
     def test_get_attribute_not_exists(self) -> None:
         """Test getting a non-existing attribute."""
-        entry = LDIFEntry.model_validate(
+        entry = FlextLdifEntry.model_validate(
             {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}},
         )
 
@@ -90,7 +87,7 @@ class TestLDIFEntry:
 
     def test_set_attribute(self) -> None:
         """Test setting an attribute."""
-        entry = LDIFEntry.model_validate(
+        entry = FlextLdifEntry.model_validate(
             {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}},
         )
 
@@ -107,7 +104,7 @@ class TestLDIFEntry:
 
     def test_set_attribute_overwrites(self) -> None:
         """Test setting an attribute overwrites existing values."""
-        entry = LDIFEntry.model_validate(
+        entry = FlextLdifEntry.model_validate(
             {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}},
         )
 
@@ -121,7 +118,7 @@ class TestLDIFEntry:
 
     def test_has_attribute_true(self) -> None:
         """Test has_attribute returns True for existing attribute."""
-        entry = LDIFEntry.model_validate(
+        entry = FlextLdifEntry.model_validate(
             {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}},
         )
 
@@ -131,7 +128,7 @@ class TestLDIFEntry:
 
     def test_has_attribute_false(self) -> None:
         """Test has_attribute returns False for non-existing attribute."""
-        entry = LDIFEntry.model_validate(
+        entry = FlextLdifEntry.model_validate(
             {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}},
         )
 
@@ -143,7 +140,7 @@ class TestLDIFEntry:
 
     def test_get_single_attribute_exists(self) -> None:
         """Test getting single attribute value when it exists."""
-        entry = LDIFEntry.model_validate(
+        entry = FlextLdifEntry.model_validate(
             {
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {
@@ -162,7 +159,7 @@ class TestLDIFEntry:
 
     def test_get_single_attribute_not_exists(self) -> None:
         """Test getting single attribute value when it doesn't exist."""
-        entry = LDIFEntry.model_validate(
+        entry = FlextLdifEntry.model_validate(
             {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}},
         )
 
@@ -170,7 +167,7 @@ class TestLDIFEntry:
 
     def test_get_single_attribute_empty_list(self) -> None:
         """Test getting single attribute value from empty list."""
-        entry = LDIFEntry.model_validate(
+        entry = FlextLdifEntry.model_validate(
             {"dn": "cn=test,dc=example,dc=com", "attributes": {"empty": []}},
         )
 
@@ -178,7 +175,7 @@ class TestLDIFEntry:
 
     def test_to_ldif(self) -> None:
         """Test converting entry to LDIF string."""
-        entry = LDIFEntry.model_validate(
+        entry = FlextLdifEntry.model_validate(
             {
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {
@@ -214,7 +211,7 @@ objectClass: person
 objectClass: inetOrgPerson
 mail: test@example.com"""
 
-        entry = LDIFEntry.from_ldif_block(ldif_block)
+        entry = FlextLdifEntry.from_ldif_block(ldif_block)
 
         # SOLID fix: use correct DN value property instead of object comparison
         if entry.dn != "cn=test,dc=example,dc=com":
@@ -233,12 +230,12 @@ mail: test@example.com"""
     def test_from_ldif_block_empty(self) -> None:
         """Test creating entry from empty LDIF block."""
         with pytest.raises(ValueError, match="LDIF block cannot be empty"):
-            LDIFEntry.from_ldif_block("")
+            FlextLdifEntry.from_ldif_block("")
 
     def test_from_ldif_block_whitespace_only(self) -> None:
         """Test creating entry from whitespace-only LDIF block."""
         with pytest.raises(ValueError, match="LDIF block cannot be empty"):
-            LDIFEntry.from_ldif_block("   \n   \n   ")
+            FlextLdifEntry.from_ldif_block("   \n   \n   ")
 
     def test_from_ldif_block_no_dn(self) -> None:
         """Test creating entry from LDIF block without DN."""
@@ -246,13 +243,13 @@ mail: test@example.com"""
 objectClass: person"""
 
         with pytest.raises(FlextValidationError, match="LDIF block must start with DN"):
-            LDIFEntry.from_ldif_block(ldif_block)
+            FlextLdifEntry.from_ldif_block(ldif_block)
 
     def test_from_ldif_block_dn_only(self) -> None:
         """Test creating entry from LDIF block with DN only."""
         ldif_block = "dn: cn=test,dc=example,dc=com"
 
-        entry = LDIFEntry.from_ldif_block(ldif_block)
+        entry = FlextLdifEntry.from_ldif_block(ldif_block)
 
         if entry.dn != "cn=test,dc=example,dc=com":
             msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn}"
@@ -270,7 +267,7 @@ objectClass: person"""
 
       """
 
-        entry = LDIFEntry.from_ldif_block(ldif_block)
+        entry = FlextLdifEntry.from_ldif_block(ldif_block)
 
         if entry.dn != "cn=test,dc=example,dc=com":
             msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn}"
@@ -294,7 +291,7 @@ objectClass: inetOrgPerson
 mail: test@example.com
 mail: test2@example.com"""
 
-        entry = LDIFEntry.from_ldif_block(ldif_block)
+        entry = FlextLdifEntry.from_ldif_block(ldif_block)
 
         if entry.get_attribute("objectClass") != ["person", "inetOrgPerson"]:
             msg: str = f"Expected {['person', 'inetOrgPerson']}, got {entry.get_attribute('objectClass')}"
@@ -309,7 +306,7 @@ mail: test2@example.com"""
 description: This is a test: with colon
 url: http://example.com:8080/path"""
 
-        entry = LDIFEntry.from_ldif_block(ldif_block)
+        entry = FlextLdifEntry.from_ldif_block(ldif_block)
 
         if entry.get_attribute("description") != ["This is a test: with colon"]:
             msg: str = f"Expected {['This is a test: with colon']}, got {entry.get_attribute('description')}"
@@ -325,7 +322,7 @@ cn: test
 invalid line without colon"""
 
         # Should ignore lines without colons
-        entry = LDIFEntry.from_ldif_block(ldif_block)
+        entry = FlextLdifEntry.from_ldif_block(ldif_block)
 
         if entry.dn != "cn=test,dc=example,dc=com":
             msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn}"

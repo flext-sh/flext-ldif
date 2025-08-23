@@ -15,10 +15,12 @@ from typing import override
 from flext_core import FlextDomainService, FlextResult, get_logger
 from pydantic import Field
 
-from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifValidationMessages
 from flext_ldif.format_validator_service import LdifValidator
-from flext_ldif.models import FlextLdifEntry  # noqa: TC001
+from flext_ldif.models import (
+    FlextLdifConfig,
+    FlextLdifEntry,  # noqa: TC001
+)
 
 logger = get_logger(__name__)
 
@@ -109,6 +111,18 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
                     )
         return FlextResult[bool].ok(True)  # noqa: FBT003
 
+    def validate_ldif_entries(self, entries: list[FlextLdifEntry]) -> FlextResult[bool]:
+        """Validate multiple LDIF entries - main public interface.
+
+        Args:
+            entries: Entries to validate.
+
+        Returns:
+            FlextResult[bool]: Success if all entries are valid.
+
+        """
+        return self.validate_entries(entries)
+
     def validate_entries(self, entries: list[FlextLdifEntry]) -> FlextResult[bool]:
         """Validate multiple LDIF entries.
 
@@ -163,7 +177,7 @@ __all__ = ["FlextLdifValidatorService"]
 # Rebuild model to resolve forward references after config is defined
 # Ensure forward-ref targets are available at runtime for Pydantic
 try:
-    from .config import FlextLdifConfig as _FlextLdifConfigRuntime
+    from .models import FlextLdifConfig as _FlextLdifConfigRuntime
 
     globals()["FlextLdifConfig"] = _FlextLdifConfigRuntime
 except (ImportError, AttributeError, ModuleNotFoundError) as _e:

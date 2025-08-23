@@ -12,8 +12,7 @@ from typing import override
 from flext_core import FlextDomainService, FlextResult, get_logger
 from pydantic import Field
 
-from flext_ldif.config import FlextLdifConfig
-from flext_ldif.models import FlextLdifEntry
+from flext_ldif.models import FlextLdifConfig, FlextLdifEntry
 
 logger = get_logger(__name__)
 

@@ -237,12 +237,12 @@ objectClass: person
 valid_result = api.parse(valid_ldif)
 if valid_result.is_success:
     validation = api.validate(valid_result.value)
-    print(f"Valid LDIF validation: {'PASSED' if validation.success else 'FAILED'}")
+    print(f"Valid LDIF validation: {'PASSED' if validation.is_success else 'FAILED'}")
 
 invalid_result = api.parse(invalid_ldif)
 if invalid_result.is_success:
     validation = api.validate(invalid_result.value)
-    print(f"Invalid LDIF validation: {'PASSED' if validation.success else 'FAILED'}")
+    print(f"Invalid LDIF validation: {'PASSED' if validation.is_success else 'FAILED'}")
     if validation.is_failure:
         print(f"Validation error: {validation.error}")
 ```
@@ -343,9 +343,9 @@ if result.is_success:
 
     # Write to string
     ldif_output = api.write(entries)
-    if ldif_output.success:
+    if ldif_output.is_success:
         print("LDIF String Output:")
-        print(ldif_output.data[:500] + "..." if len(ldif_output.data) > 500 else ldif_output.data)
+        print(ldif_output.value[:500] + "..." if len(ldif_output.value) > 500 else ldif_output.value)
 
     # Write to file
     file_result = api.write_file(entries, "output/exported_users.ldif")
@@ -381,10 +381,10 @@ if result.is_success:
 
     # Export only person entries
     person_export = api.write(person_entries)
-    if person_export.success:
+    if person_export.is_success:
         # Save to file
         with open("output/people_only.ldif", "w", encoding="utf-8") as f:
-            f.write(person_export.data)
+            f.write(person_export.value)
         print("✅ Exported person entries to people_only.ldif")
 
     # Filter by department
@@ -396,9 +396,9 @@ if result.is_success:
 
     if engineering_entries:
         eng_export = api.write(engineering_entries)
-        if eng_export.success:
+        if eng_export.is_success:
             with open("output/engineering_team.ldif", "w", encoding="utf-8") as f:
-                f.write(eng_export.data)
+                f.write(eng_export.value)
             print(f"✅ Exported {len(engineering_entries)} engineering team members")
 ```
 

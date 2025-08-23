@@ -111,8 +111,9 @@ sn: Doe
     # Testar parsing e validação
     with contextlib.suppress(Exception):
         parse_result = api.parse(ldif_content)
-        if parse_result.is_success and parse_result.unwrap_or([]):
-            entry = parse_result.unwrap_or([])[0]
+        entries = parse_result.unwrap_or([])
+        if entries:
+            entry = entries[0]
             # Testar specifications integradas
             entry.has_object_class("person")
             entry.validate_business_rules()
@@ -143,8 +144,8 @@ sn: User
         # Parse - geraria "DocumentParsed" event via logging
         parse_result = api.parse(sample_ldif)
 
-        if parse_result.is_success and parse_result.unwrap_or([]):
-            entries = parse_result.unwrap_or([])
+        entries = parse_result.unwrap_or([])
+        if entries:
 
             # Validate - geraria "EntryValidated" event via logging
             api.validate(entries)
@@ -240,7 +241,7 @@ member: uid=jdoe,ou=people,dc=example,dc=com"""
         # Test parsing capabilities usando API real
         with contextlib.suppress(Exception):
             result = api.parse(self.ldif_content)
-            if result.is_success and result.unwrap_or([]):
+            if result.unwrap_or([]):
                 pass
 
     def _test_processing_stage(self) -> None:
@@ -249,8 +250,8 @@ member: uid=jdoe,ou=people,dc=example,dc=com"""
 
         with contextlib.suppress(Exception):
             result = api.parse(self.ldif_content)
-            if result.is_success and result.unwrap_or([]):
-                entries = result.unwrap_or([])
+            entries = result.unwrap_or([])
+            if entries:
                 # Test filtering (processing)
                 api.filter_persons(entries)
                 api.filter_valid(entries)
@@ -261,8 +262,9 @@ member: uid=jdoe,ou=people,dc=example,dc=com"""
 
         with contextlib.suppress(Exception):
             parse_result = api.parse(self.ldif_content)
-            if parse_result.is_success and parse_result.unwrap_or([]):
-                api.validate(parse_result.unwrap_or([]))
+            entries = parse_result.unwrap_or([])
+            if entries:
+                api.validate(entries)
 
     def _test_writing_stage(self) -> None:
         """Test writing stage with FlextLdifAPI."""
@@ -270,8 +272,9 @@ member: uid=jdoe,ou=people,dc=example,dc=com"""
 
         with contextlib.suppress(Exception):
             parse_result = api.parse(self.ldif_content)
-            if parse_result.is_success and parse_result.unwrap_or([]):
-                api.write(parse_result.unwrap_or([]))
+            entries = parse_result.unwrap_or([])
+            if entries:
+                api.write(entries)
 
     def _test_utilities_stage(self) -> None:
         """Test utilities stage with FlextLdifAPI."""
@@ -294,8 +297,9 @@ cn: User
 
         with contextlib.suppress(Exception):
             parse_result = api.parse(test_entries_ldif)
-            if parse_result.is_success and parse_result.unwrap_or([]):
-                api.sort_hierarchically(parse_result.unwrap_or([]))
+            entries = parse_result.unwrap_or([])
+            if entries:
+                api.sort_hierarchically(entries)
 
 
 def test_5_complete_ldif_processing_workflow() -> None:

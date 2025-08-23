@@ -53,8 +53,8 @@ def _validate_ldap_dn(dn: str) -> bool:
 class TLdif:
     """Core LDIF processing functionality."""
 
-    # Legacy-compatible validation patterns exposed for tests
-    # These mirror flext-ldap validation rules at a high level
+    # Standard validation patterns following RFC compliance
+    # These provide consistent LDIF validation rules
     DN_PATTERN = re.compile(FlextLdifCoreConstants.DN_PATTERN_REGEX)
     ATTR_NAME_PATTERN = re.compile(FlextLdifCoreConstants.ATTR_NAME_PATTERN_REGEX)
 

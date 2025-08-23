@@ -25,7 +25,7 @@ mail: john.doe@example.com
 """
 parsed = api.parse(ldif)
 if parsed.is_success:
-    entries = parsed.data
+    entries = parsed.value
     print(f"{len(entries)} entradas")
 ```
 

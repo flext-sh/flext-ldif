@@ -12,7 +12,7 @@ from __future__ import annotations
 from .api import FlextLdifAPI
 
 # Configuration management
-from .config import FlextLdifConfig
+from .models import FlextLdifConfig
 
 # Service classes
 from .analytics_service import FlextLdifAnalyticsService

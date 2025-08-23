@@ -8,16 +8,19 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextDomainService, FlextResult, get_logger
+from flext_core import FlextDomainService, FlextResult, FlextValidationError, get_logger
 from pydantic import Field
 
-from flext_ldif.config import FlextLdifConfig  # noqa: TC001
 from flext_ldif.constants import (
     DEFAULT_INPUT_ENCODING,
     FlextLdifCoreMessages,
     FlextLdifValidationMessages,
 )
-from flext_ldif.models import FlextLdifEntry, FlextLdifFactory
+from flext_ldif.models import (
+    FlextLdifConfig,  # noqa: TC001
+    FlextLdifEntry,
+    FlextLdifFactory,
+)
 
 logger = get_logger(__name__)
 
@@ -202,7 +205,11 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifEntry]]):
                 attributes[attr_name] = []
             attributes[attr_name].append(attr_value)
 
-        return FlextLdifFactory.create_entry(dn, attributes, changetype)
+        # Create entry with proper error handling
+        try:
+            return FlextLdifFactory.create_entry(dn, attributes, changetype)
+        except (ValueError, FlextValidationError) as e:
+            return FlextResult[FlextLdifEntry].fail(str(e))
 
 
 __all__ = ["FlextLdifParserService"]

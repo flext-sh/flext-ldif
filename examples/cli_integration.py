@@ -176,7 +176,7 @@ class CliIntegrationDemonstrator:
         """Verify transform command output."""
         api = FlextLdifAPI()
         result = api.parse_file(self.output_file)
-        if result.is_success and result.unwrap_or([]):
+        if result.unwrap_or([]):
             pass  # Transform output verified
         self.output_file.unlink()  # Clean up
 
@@ -186,8 +186,8 @@ class CliIntegrationDemonstrator:
         api = FlextLdifAPI(config)
 
         result = api.parse_file(self.sample_file)
-        if result.is_success and result.unwrap_or([]):
-            entries = result.unwrap_or([])
+        entries = result.unwrap_or([])
+        if entries:
             stats_result = api.get_entry_statistics(entries)
             stats = stats_result.unwrap_or({})
 

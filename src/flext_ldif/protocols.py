@@ -163,33 +163,18 @@ class FlextLdifAnalyticsProtocol(Protocol):
         ...
 
 
-# =============================================================================
-# BACKWARD COMPATIBILITY ALIASES (DEPRECATED - use FlextLdif* versions)
-# =============================================================================
-
-# Legacy protocol aliases for backward compatibility
-LdifParserProtocol = FlextLdifParserProtocol
-LdifValidatorProtocol = FlextLdifValidatorProtocol
-LdifWriterProtocol = FlextLdifWriterProtocol
-LdifRepositoryProtocol = FlextLdifRepositoryProtocol
-LdifTransformerProtocol = FlextLdifTransformerProtocol
+# Removed legacy aliases - use FlextLdif* versions directly
 
 # =============================================================================
 # COMPREHENSIVE PUBLIC API - All protocols exported
 # =============================================================================
 
 __all__ = [
-    # Modern Protocols (RECOMMENDED - use these in new code)
+    # Modern Protocols - clean API without legacy aliases
     "FlextLdifAnalyticsProtocol",
     "FlextLdifParserProtocol",
     "FlextLdifRepositoryProtocol",
     "FlextLdifTransformerProtocol",
     "FlextLdifValidatorProtocol",
     "FlextLdifWriterProtocol",
-    # Legacy Aliases (DEPRECATED - for backward compatibility only)
-    "LdifParserProtocol",  # Use FlextLdifParserProtocol instead
-    "LdifRepositoryProtocol",  # Use FlextLdifRepositoryProtocol instead
-    "LdifTransformerProtocol",  # Use FlextLdifTransformerProtocol instead
-    "LdifValidatorProtocol",  # Use FlextLdifValidatorProtocol instead
-    "LdifWriterProtocol",  # Use FlextLdifWriterProtocol instead
 ]
