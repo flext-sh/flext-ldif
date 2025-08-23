@@ -1,6 +1,6 @@
 # 🏗️ FLEXT-LDIF Architecture Guide
 
-**Version**: 0.9.0 | **Target**: 1.0.0
+**Version**: 0.9.0 | **Target**: 0.9.0
 **Status**: Clean Architecture Implementation
 **Integration**: FLEXT Ecosystem Compatible
 
@@ -1640,7 +1640,7 @@ class LdifEntryCache:
 
 ---
 
-**Architecture Version**: 0.9.0 → 1.0.0
+**Architecture Version**: 0.9.0 → 0.9.0
 **Last Updated**: 2025-08-03
 **Status**: Migration In Progress
 **FLEXT Ecosystem**: Full Integration Target
