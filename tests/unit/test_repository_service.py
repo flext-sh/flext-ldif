@@ -37,7 +37,7 @@ class TestFlextLdifRepositoryService:
         result = service.find_by_dn(entries, "")
 
         assert result.is_failure
-        assert FlextLdifValidationMessages.DN_EMPTY_ERROR in result.error
+        assert result.error is not None and FlextLdifValidationMessages.DN_EMPTY_ERROR in result.error
 
     def test_find_by_dn_whitespace_only_dn(self) -> None:
         """Test find_by_dn with whitespace-only DN."""
@@ -47,7 +47,7 @@ class TestFlextLdifRepositoryService:
         result = service.find_by_dn(entries, "   ")
 
         assert result.is_failure
-        assert FlextLdifValidationMessages.DN_EMPTY_ERROR in result.error
+        assert result.error is not None and FlextLdifValidationMessages.DN_EMPTY_ERROR in result.error
 
     def test_find_by_dn_not_found(self) -> None:
         """Test find_by_dn when entry not found."""
@@ -128,7 +128,7 @@ class TestFlextLdifRepositoryService:
         result = service.filter_by_objectclass(entries, "")
 
         assert result.is_failure
-        assert FlextLdifCoreMessages.MISSING_OBJECTCLASS in result.error
+        assert result.error is not None and FlextLdifCoreMessages.MISSING_OBJECTCLASS in result.error
 
     def test_filter_by_objectclass_whitespace_only(self) -> None:
         """Test filter_by_objectclass with whitespace-only objectclass."""
@@ -138,7 +138,7 @@ class TestFlextLdifRepositoryService:
         result = service.filter_by_objectclass(entries, "   ")
 
         assert result.is_failure
-        assert FlextLdifCoreMessages.MISSING_OBJECTCLASS in result.error
+        assert result.error is not None and FlextLdifCoreMessages.MISSING_OBJECTCLASS in result.error
 
     def test_filter_by_objectclass_no_matches(self) -> None:
         """Test filter_by_objectclass with no matches."""
@@ -226,7 +226,7 @@ class TestFlextLdifRepositoryService:
         result = service.filter_by_attribute(entries, "", "value")
 
         assert result.is_failure
-        assert "attribute" in result.error
+        assert result.error is not None and "attribute" in result.error
 
     def test_filter_by_attribute_whitespace_attribute(self) -> None:
         """Test filter_by_attribute with whitespace-only attribute name."""
@@ -236,7 +236,7 @@ class TestFlextLdifRepositoryService:
         result = service.filter_by_attribute(entries, "   ", "value")
 
         assert result.is_failure
-        assert "attribute" in result.error
+        assert result.error is not None and "attribute" in result.error
 
     def test_filter_by_attribute_no_matches(self) -> None:
         """Test filter_by_attribute with no matches."""

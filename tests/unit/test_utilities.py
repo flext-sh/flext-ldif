@@ -653,7 +653,7 @@ cn: invalid
             return value
 
         # Create pipeline with operations
-        pipeline = FlextLdifUtilities.create_processing_pipeline(add_one, multiply_two)
+        pipeline = FlextLdifUtilities.create_processing_pipeline(add_one, multiply_two)  # type: ignore[arg-type]
 
         # Test the pipeline
         result = pipeline(5)  # Should be (5 + 1) * 2 = 12
@@ -667,7 +667,7 @@ cn: invalid
 
         # Create pipeline with mixed valid and invalid operations
         pipeline = FlextLdifUtilities.create_processing_pipeline(
-            valid_operation,
+            valid_operation,  # type: ignore[arg-type]
             "not_callable",  # type: ignore[arg-type]
         )
 
@@ -736,13 +736,13 @@ cn: invalid
 
         # Test with valid callables
         result_valid = FlextLdifUtilities.validate_callable_chain(
-            validator1, validator2
+            validator1, validator2  # type: ignore[arg-type]
         )
         assert result_valid is True
 
         # Test with non-callable (this should cover error paths)
         result_invalid = FlextLdifUtilities.validate_callable_chain(
-            validator1, "not_a_callable"
+            validator1, "not_a_callable"  # type: ignore[arg-type]
         )  # type: ignore[arg-type]
         assert result_invalid is False
 
@@ -783,7 +783,7 @@ cn: invalid
             None,  # batch_size=10, processor=None
         )
         assert result.is_failure
-        assert "Processor function required" in result.error
+        assert result.error is not None and "Processor function required" in result.error
 
     def test_batch_process_entries_with_batch_failure(
         self, sample_entries: list[FlextLdifEntry]
@@ -800,7 +800,7 @@ cn: invalid
             failing_processor,  # batch_size=1
         )
         assert result.is_failure
-        assert "Batch 1 failed" in result.error
+        assert result.error is not None and "Batch 1 failed" in result.error
 
     def test_batch_process_entries_with_single_result(
         self, sample_entries: list[FlextLdifEntry]

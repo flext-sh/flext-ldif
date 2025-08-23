@@ -2,7 +2,7 @@
 
 import base64
 import unittest.mock
-from typing import Never
+from typing import Never, Self
 from unittest.mock import Mock
 
 import pytest
@@ -680,22 +680,19 @@ objectClass: person
         parser = FlextLDIFParser("", strict=True)
 
         # Create a mock string object that raises UnicodeError on encode
-        class MockString:
-            def __init__(self, value) -> None:
-                self.value = value
+        class MockString(str):
+            def __new__(cls, value: str) -> Self:
+                return str.__new__(cls, value)
 
-            def encode(self, encoding) -> Never:
+            def encode(self, encoding: str = "utf-8", errors: str = "strict") -> Never:  # type: ignore[override]
                 msg = "Invalid UTF-8"
                 raise UnicodeError(msg)
-
-            def __str__(self) -> str:
-                return self.value
 
         mock_str = MockString("test value with invalid utf-8")
 
         # This should raise ValueError for invalid UTF-8 in strict mode
         with pytest.raises(ValueError, match="Invalid UTF-8"):
-            parser._decode_value("dn", mock_str)
+            parser._decode_value("dn", mock_str)  # type: ignore[arg-type]
 
     def test_parse_dn_utf8_validation_non_strict_mode(self) -> None:
         """Test DN UTF-8 validation in non-strict mode."""
@@ -703,21 +700,18 @@ objectClass: person
         parser = FlextLDIFParser("", strict=False)
 
         # Create a mock string object that raises UnicodeError on encode
-        class MockString:
-            def __init__(self, value) -> None:
-                self.value = value
+        class MockString(str):
+            def __new__(cls, value: str) -> Self:
+                return str.__new__(cls, value)
 
-            def encode(self, encoding) -> Never:
+            def encode(self, encoding: str = "utf-8", errors: str = "strict") -> Never:  # type: ignore[override]
                 msg = "Invalid UTF-8"
                 raise UnicodeError(msg)
-
-            def __str__(self) -> str:
-                return self.value
 
         mock_str = MockString("test value")
 
         # Should not raise error in non-strict mode, just return the value
-        result = parser._decode_value("dn", mock_str)
+        result = parser._decode_value("dn", mock_str)  # type: ignore[arg-type]
         assert result == ("dn", mock_str)
 
 
@@ -801,7 +795,7 @@ objectClass: person
         """Test modernized write function with None entries."""
         result = modernized_ldif_write(None)
         assert result.is_failure
-        assert "entries cannot be none" in result.error.lower()
+        assert result.error is not None and "entries cannot be none" in result.error.lower()
 
     def test_modernized_ldif_roundtrip(self) -> None:
         """Test that parse -> write -> parse produces same result."""
@@ -850,7 +844,7 @@ mail: john@example.com
             result = modernized_ldif_parse("invalid content")
 
             assert result.is_failure
-            assert "Modernized LDIF parse failed" in result.error
+            assert result.error is not None and "Modernized LDIF parse failed" in result.error
 
     def test_modernized_ldif_write_error_handling(self) -> None:
         """Test error handling in modernized_ldif_write function."""
@@ -864,7 +858,7 @@ mail: john@example.com
             result = modernized_ldif_write(entries)
 
             assert result.is_failure
-            assert "Modernized LDIF write failed" in result.error
+            assert result.error is not None and "Modernized LDIF write failed" in result.error
 
     def test_modernized_ldif_parse_unicode_error(self) -> None:
         """Test Unicode error handling in modernized_ldif_parse."""
@@ -878,7 +872,7 @@ mail: john@example.com
             result = modernized_ldif_parse("content with encoding issues")
 
             assert result.is_failure
-            assert "Modernized LDIF parse failed" in result.error
+            assert result.error is not None and "Modernized LDIF parse failed" in result.error
 
     def test_modernized_ldif_write_unicode_error(self) -> None:
         """Test Unicode error handling in modernized_ldif_write."""
@@ -893,4 +887,4 @@ mail: john@example.com
             result = modernized_ldif_write(entries)
 
             assert result.is_failure
-            assert "Modernized LDIF write failed" in result.error
+            assert result.error is not None and "Modernized LDIF write failed" in result.error
