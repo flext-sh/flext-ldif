@@ -1,5 +1,8 @@
 """Comprehensive tests for format_validator_service.py to achieve 100% coverage."""
 
+# pyright: reportArgumentType=false
+# Reason: FlextLdifEntry accepts dict[str, list[str]] via field validator mode="before" but pyright doesn't understand this
+
 from flext_core import FlextResult
 
 from flext_ldif import FlextLdifDistinguishedName, FlextLdifEntry
@@ -143,7 +146,7 @@ class TestLdifValidator:
         for empty_val in empty_values:
             result = LdifValidator.validate_dn(empty_val)
             assert result.is_failure
-            assert (
+            assert result.error is not None and (
                 "DN cannot be empty" in result.error or "empty" in result.error.lower()
             )
 
@@ -159,7 +162,7 @@ class TestLdifValidator:
         for invalid_dn in invalid_dns:
             result = LdifValidator.validate_dn(invalid_dn)
             assert result.is_failure
-            assert invalid_dn in result.error
+            assert result.error is not None and invalid_dn in result.error
 
     def test_validate_attribute_name_success(self) -> None:
         """Test validate_attribute_name with valid names."""
@@ -194,13 +197,13 @@ class TestLdifValidator:
         for name in invalid_names:
             result = LdifValidator.validate_attribute_name(name)
             assert result.is_failure
-            assert name in result.error
+            assert result.error is not None and name in result.error
 
     def test_validate_attribute_name_empty_whitespace(self) -> None:
         """Test validate_attribute_name with empty and whitespace values."""
         result = LdifValidator.validate_attribute_name("  ")
         assert result.is_failure
-        assert "cannot be empty" in result.error
+        assert result.error is not None and "cannot be empty" in result.error
 
     def test_validate_required_objectclass_success(self) -> None:
         """Test validate_required_objectclass with entry having objectClass."""
@@ -222,7 +225,7 @@ class TestLdifValidator:
 
         result = LdifValidator.validate_required_objectclass(entry)
         assert result.is_failure
-        assert "objectClass" in result.error
+        assert result.error is not None and "objectClass" in result.error
 
     def test_validate_entry_completeness_complete(self) -> None:
         """Test validate_entry_completeness with complete entry."""
@@ -269,7 +272,7 @@ class TestLdifValidator:
 
             result = LdifValidator.validate_entry_completeness(entry)
             assert result.is_failure
-            assert "DN validation failed" in result.error
+            assert result.error is not None and "DN validation failed" in result.error
 
     def test_validate_entry_type_person(self) -> None:
         """Test validate_entry_type with person entry."""
@@ -352,7 +355,7 @@ class TestLdifValidator:
 
         result = LdifValidator.validate_entry_type(entry, {"person"})
         assert result.is_failure
-        assert "objectclass" in result.error.lower()
+        assert result.error is not None and "objectclass" in result.error.lower()
 
     def test_validate_entry_type_no_matching_classes(self) -> None:
         """Test validate_entry_type when objectClasses don't match expected."""
@@ -366,7 +369,7 @@ class TestLdifValidator:
             entry, {"organizationalUnit", "device"}
         )
         assert result.is_failure
-        assert "does not match expected type" in result.error.lower()
+        assert result.error is not None and "does not match expected type" in result.error.lower()
 
     def test_is_person_entry_true(self) -> None:
         """Test is_person_entry returns true for person entries."""
@@ -452,8 +455,8 @@ class TestLdifSchemaValidator:
         required_attrs = ["cn", "sn", "mail"]
         result = LdifSchemaValidator.validate_required_attributes(entry, required_attrs)
         assert result.is_failure
-        assert "sn" in result.error
-        assert "mail" in result.error
+        assert result.error is not None and "sn" in result.error
+        assert result.error is not None and "mail" in result.error
 
     def test_validate_person_schema_success(self) -> None:
         """Test validate_person_schema with valid person entry."""
@@ -522,13 +525,13 @@ class TestPublicFunctions:
         """Test validate_attribute_format with empty attribute value."""
         result = validate_attribute_format("cn", "")
         assert result.is_failure
-        assert "empty" in result.error.lower()
+        assert result.error is not None and "empty" in result.error.lower()
 
     def test_validate_attribute_format_whitespace_only_value(self) -> None:
         """Test validate_attribute_format with whitespace-only value."""
         result = validate_attribute_format("cn", "   ")
         assert result.is_failure
-        assert "empty" in result.error.lower()
+        assert result.error is not None and "empty" in result.error.lower()
 
     def test_validate_dn_format_success(self) -> None:
         """Test validate_dn_format with valid DN."""
@@ -556,7 +559,7 @@ class TestPublicFunctions:
         """Test validate_ldif_structure with invalid object."""
         result = validate_ldif_structure("not an entry")
         assert result.is_failure
-        assert "FlextLdifEntry" in result.error
+        assert result.error is not None and "FlextLdifEntry" in result.error
 
 
 class TestObjectClassConstants:
@@ -657,13 +660,13 @@ class TestEdgeCases:
         for empty_dn in ["", "   ", "\t", "\n", "  \t\n  "]:
             result = LdifValidator.validate_dn(empty_dn)
             assert result.is_failure
-            assert "empty" in result.error.lower()
+            assert result.error is not None and "empty" in result.error.lower()
 
         # Test attribute name validation with whitespace
         for empty_attr in ["", "   ", "\t\n"]:
             result = LdifValidator.validate_attribute_name(empty_attr)
             assert result.is_failure
-            assert "empty" in result.error.lower()
+            assert result.error is not None and "empty" in result.error.lower()
 
     def test_constants_validation(self) -> None:
         """Test that all constants are properly defined and work."""

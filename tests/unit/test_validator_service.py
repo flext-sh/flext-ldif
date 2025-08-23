@@ -54,7 +54,7 @@ class TestFlextLdifValidatorService:
         result = service.execute()
 
         assert result.is_failure
-        assert "Invalid config" in result.error
+        assert result.error is not None and "Invalid config" in result.error
 
     def test_validate_data(self) -> None:
         """Test validate_data method delegates to validate_entries."""
@@ -105,7 +105,7 @@ class TestFlextLdifValidatorService:
         result = service.validate_entry(mock_entry)
 
         assert result.is_failure
-        assert "Business rule failed" in result.error
+        assert result.error is not None and "Business rule failed" in result.error
 
     def test_validate_configuration_rules_no_config(self) -> None:
         """Test configuration rules validation with no config."""
@@ -326,11 +326,11 @@ class TestFlextLdifValidatorService:
         result = service.validate_entries(entries)
 
         assert result.is_failure
-        assert "Entry 1" in result.error
-        assert (
+        assert result.error is not None and "Entry 1" in result.error
+        assert result.error is not None and (
             FlextLdifValidationMessages.ENTRY_VALIDATION_FAILED.lower() in result.error
         )
-        assert "Invalid entry" in result.error
+        assert result.error is not None and "Invalid entry" in result.error
 
     def test_validate_dn_format_success(self) -> None:
         """Test validate_dn_format with valid DN."""
@@ -359,7 +359,7 @@ class TestFlextLdifValidatorService:
             result = service.validate_dn_format("invalid-dn")
 
             assert result.is_failure
-            assert "Invalid DN format" in result.error
+            assert result.error is not None and "Invalid DN format" in result.error
             mock_validate.assert_called_once_with("invalid-dn")
 
     def test_validate_entries_first_entry_fails(self) -> None:
@@ -377,8 +377,8 @@ class TestFlextLdifValidatorService:
         result = service.validate_entries(entries)
 
         assert result.is_failure
-        assert "Entry 0" in result.error
-        assert "First entry invalid" in result.error
+        assert result.error is not None and "Entry 0" in result.error
+        assert result.error is not None and "First entry invalid" in result.error
 
     def test_configuration_rules_allow_empty_attributes_true(self) -> None:
         """Test configuration rules when allow_empty_attributes is True."""

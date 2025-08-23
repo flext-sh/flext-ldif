@@ -1,5 +1,8 @@
 """Tests for FLEXT-LDIF field definitions - comprehensive coverage."""
 
+# pyright: reportAssignmentType=false
+# Reason: Pydantic field assignment pattern is not understood by pyright but is valid
+
 import pytest
 from pydantic import BaseModel, ValidationError
 from pydantic.fields import FieldInfo

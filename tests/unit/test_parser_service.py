@@ -63,8 +63,10 @@ mail: jane.smith@example.com"""
         # Verify first entry
         first_entry = result.value[0]
         assert str(first_entry.dn) == "cn=John Doe,ou=people,dc=example,dc=com"
-        assert "John Doe" in first_entry.get_attribute("cn")
-        assert "inetOrgPerson" in first_entry.get_attribute("objectClass")
+        cn_attr = first_entry.get_attribute("cn")
+        assert cn_attr is not None and "John Doe" in cn_attr
+        oc_attr = first_entry.get_attribute("objectClass")
+        assert oc_attr is not None and "inetOrgPerson" in oc_attr
 
     def test_parse_empty_content(self) -> None:
         """Test parsing empty content returns empty list."""
@@ -217,7 +219,8 @@ sn: user"""
         assert result.is_success
         entry = result.value
         assert str(entry.dn) == "cn=test,dc=example,dc=com"
-        assert "person" in entry.get_attribute("objectClass")
+        oc_attr = entry.get_attribute("objectClass")
+        assert oc_attr is not None and "person" in oc_attr
 
     def test_parse_entry_block_invalid(self) -> None:
         """Test parsing invalid entry block."""
