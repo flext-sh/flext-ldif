@@ -54,7 +54,7 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
                     cfg_validation.error
                     or FlextLdifValidationMessages.INVALID_CONFIGURATION
                 )
-        return FlextResult[bool].ok(True)  # noqa: FBT003
+        return FlextResult[bool].ok(data=True)  # noqa: FBT003
 
     def validate_data(self, data: list[FlextLdifEntry]) -> FlextResult[bool]:
         """Validate a list of LDIF entries.
@@ -109,7 +109,7 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
                             attr_name=attr_name,
                         ),
                     )
-        return FlextResult[bool].ok(True)  # noqa: FBT003
+        return FlextResult[bool].ok(data=True)  # noqa: FBT003
 
     def validate_ldif_entries(self, entries: list[FlextLdifEntry]) -> FlextResult[bool]:
         """Validate multiple LDIF entries - main public interface.
@@ -155,7 +155,7 @@ class FlextLdifValidatorService(FlextDomainService[bool]):
         return reduce(
             chain_validations,
             enumerate(entries),
-            FlextResult[bool].ok(True),  # noqa: FBT003
+            FlextResult[bool].ok(data=True),  # noqa: FBT003
         )
 
     def validate_dn_format(self, dn: str) -> FlextResult[bool]:

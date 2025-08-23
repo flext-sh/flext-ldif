@@ -26,7 +26,7 @@ class TestFlextLdifAnalyticsService:
         """Test default execute method."""
         service = FlextLdifAnalyticsService()
         result = service.execute()
-        
+
         assert result.is_success
         assert result.value is not None
         assert FlextLdifAnalyticsConstants.TOTAL_ENTRIES_KEY in result.value
@@ -36,7 +36,7 @@ class TestFlextLdifAnalyticsService:
         """Test analyzing empty entry list."""
         service = FlextLdifAnalyticsService()
         result = service.analyze_entry_patterns([])
-        
+
         assert result.is_success
         assert result.value is not None
         assert result.value[FlextLdifAnalyticsConstants.TOTAL_ENTRIES_KEY] == 0
@@ -48,7 +48,7 @@ class TestFlextLdifAnalyticsService:
         """Test analyzing entries with CN attribute."""
         service = FlextLdifAnalyticsService()
         result = service.analyze_entry_patterns([sample_entry_with_cn])
-        
+
         assert result.is_success
         assert result.value is not None
         assert result.value[FlextLdifAnalyticsConstants.TOTAL_ENTRIES_KEY] == 1
@@ -60,7 +60,7 @@ class TestFlextLdifAnalyticsService:
         """Test analyzing entries with mail attribute."""
         service = FlextLdifAnalyticsService()
         result = service.analyze_entry_patterns([sample_entry_with_mail])
-        
+
         assert result.is_success
         assert result.value is not None
         assert result.value[FlextLdifAnalyticsConstants.TOTAL_ENTRIES_KEY] == 1
@@ -72,7 +72,7 @@ class TestFlextLdifAnalyticsService:
         """Test analyzing entries with telephoneNumber attribute."""
         service = FlextLdifAnalyticsService()
         result = service.analyze_entry_patterns([sample_entry_with_telephone])
-        
+
         assert result.is_success
         assert result.value is not None
         assert result.value[FlextLdifAnalyticsConstants.TOTAL_ENTRIES_KEY] == 1
@@ -91,10 +91,10 @@ class TestFlextLdifAnalyticsService:
                 "objectClass": ["person", "inetOrgPerson"]
             }
         })
-        
+
         service = FlextLdifAnalyticsService()
         result = service.analyze_entry_patterns([entry])
-        
+
         assert result.is_success
         assert result.value is not None
         assert result.value[FlextLdifAnalyticsConstants.TOTAL_ENTRIES_KEY] == 1
@@ -106,7 +106,7 @@ class TestFlextLdifAnalyticsService:
         """Test analyzing multiple entries."""
         service = FlextLdifAnalyticsService()
         result = service.analyze_entry_patterns([sample_entry_with_cn, sample_entry_with_mail])
-        
+
         assert result.is_success
         assert result.value is not None
         assert result.value[FlextLdifAnalyticsConstants.TOTAL_ENTRIES_KEY] == 2
@@ -126,16 +126,16 @@ class TestFlextLdifAnalyticsService:
                 attrs["mail"] = [f"person{i}@example.com"]
             if i % 5 == 0:
                 attrs["telephoneNumber"] = [f"+123456{i:04d}"]
-                
+
             entry = FlextLdifEntry.model_validate({
                 "dn": f"cn=person{i},ou=people,dc=example,dc=com",
                 "attributes": attrs
             })
             entries.append(entry)
-        
+
         service = FlextLdifAnalyticsService()
         result = service.analyze_entry_patterns(entries)
-        
+
         assert result.is_success
         assert result.value is not None
         assert result.value[FlextLdifAnalyticsConstants.TOTAL_ENTRIES_KEY] == 100
@@ -148,7 +148,7 @@ class TestFlextLdifAnalyticsService:
         """Test objectClass distribution with empty list."""
         service = FlextLdifAnalyticsService()
         result = service.get_objectclass_distribution([])
-        
+
         assert result.is_success
         assert result.value is not None
         assert result.value == {}
@@ -162,10 +162,10 @@ class TestFlextLdifAnalyticsService:
                 "objectClass": ["person", "inetOrgPerson"]
             }
         })
-        
+
         service = FlextLdifAnalyticsService()
         result = service.get_objectclass_distribution([entry])
-        
+
         assert result.is_success
         assert result.value is not None
         assert result.value["person"] == 1
@@ -179,7 +179,7 @@ class TestFlextLdifAnalyticsService:
                 "attributes": {"objectClass": ["person"]}
             }),
             FlextLdifEntry.model_validate({
-                "dn": "ou=people,dc=example,dc=com", 
+                "dn": "ou=people,dc=example,dc=com",
                 "attributes": {"objectClass": ["organizationalUnit"]}
             }),
             FlextLdifEntry.model_validate({
@@ -187,10 +187,10 @@ class TestFlextLdifAnalyticsService:
                 "attributes": {"objectClass": ["person", "inetOrgPerson"]}
             })
         ]
-        
+
         service = FlextLdifAnalyticsService()
         result = service.get_objectclass_distribution(entries)
-        
+
         assert result.is_success
         assert result.value is not None
         assert result.value["person"] == 2
@@ -201,7 +201,7 @@ class TestFlextLdifAnalyticsService:
         """Test DN depth analysis with empty list."""
         service = FlextLdifAnalyticsService()
         result = service.get_dn_depth_analysis([])
-        
+
         assert result.is_success
         assert result.value is not None
         assert result.value == {}
@@ -230,19 +230,19 @@ class TestFlextLdifAnalyticsService:
                 "attributes": {"objectClass": ["person"]}
             })
         ]
-        
+
         service = FlextLdifAnalyticsService()
         result = service.get_dn_depth_analysis(entries)
-        
+
         assert result.is_success
         assert result.value is not None
-        
+
         # Check depth distribution using the constant format
         depth_1_key = FlextLdifAnalyticsConstants.DEPTH_KEY_FORMAT.format(depth=1)
-        depth_2_key = FlextLdifAnalyticsConstants.DEPTH_KEY_FORMAT.format(depth=2)  
+        depth_2_key = FlextLdifAnalyticsConstants.DEPTH_KEY_FORMAT.format(depth=2)
         depth_3_key = FlextLdifAnalyticsConstants.DEPTH_KEY_FORMAT.format(depth=3)
         depth_4_key = FlextLdifAnalyticsConstants.DEPTH_KEY_FORMAT.format(depth=4)
-        
+
         assert result.value[depth_1_key] == 1
         assert result.value[depth_2_key] == 1
         assert result.value[depth_3_key] == 1

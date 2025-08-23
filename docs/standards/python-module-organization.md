@@ -1041,7 +1041,7 @@ class FlextLdifAPI:
                 "file_path": str(file_path)
             })
 
-            return FlextResult[None].ok(True)
+            return FlextResult[None].ok(data=True)
 
         except Exception as e:
             error_msg: str = f"Failed to write LDIF file {file_path}: {str(e)}"

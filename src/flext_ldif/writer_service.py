@@ -82,7 +82,7 @@ class FlextLdifWriterService(FlextDomainService[str]):
                 )
             path_obj.write_text(content, encoding=encoding)
 
-            return FlextResult[bool].ok(True)  # noqa: FBT003
+            return FlextResult[bool].ok(data=True)  # noqa: FBT003
 
         except (OSError, UnicodeError) as e:
             return FlextResult[bool].fail(

@@ -1213,7 +1213,7 @@ class FileLdifRepository(ILdifRepository):
             temp_path.rename(file_path)
 
             self._logger.info("Successfully saved entries to %s", file_path)
-            return FlextResult[None].ok(True)
+            return FlextResult[None].ok(data=True)
 
         except Exception as e:
             self._logger.error("Failed to save entries: %s", e)

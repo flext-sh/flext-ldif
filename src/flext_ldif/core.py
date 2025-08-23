@@ -166,9 +166,10 @@ class TLdif:
                                     error=entry_result.error
                                 )
                             )
-                        return FlextResult[list[FlextLdifEntry]].ok(
-                            [*entries_list, entry_result.value]
-                        )
+                        return FlextResult[list[FlextLdifEntry]].ok([
+                            *entries_list,
+                            entry_result.value,
+                        ])
 
                     return acc.flat_map(process_entry)
 
@@ -230,7 +231,7 @@ class TLdif:
             error_message = cls._get_validation_error(entry)
             if error_message is not None:
                 return FlextResult[bool].fail(error_message)
-            return FlextResult[bool].ok(True)  # noqa: FBT003
+            return FlextResult[bool].ok(data=True)  # noqa: FBT003
         except (ValueError, TypeError, AttributeError) as e:
             logger.debug(FlextLdifCoreConstants.EXCEPTION_TYPE_LOG, type(e).__name__)
             logger.debug(
@@ -375,7 +376,7 @@ class TLdif:
                 reduce(
                     chain_validations,
                     enumerate(entries),
-                    FlextResult[bool].ok(True),  # noqa: FBT003
+                    FlextResult[bool].ok(data=True),  # noqa: FBT003
                 )
                 .tap(
                     lambda _: logger.debug(
@@ -566,7 +567,7 @@ class TLdif:
                         encoding=encoding,
                     ) as f:
                         f.write(content)
-                    return FlextResult[bool].ok(True)  # noqa: FBT003  # noqa: FBT003
+                    return FlextResult[bool].ok(data=True)  # noqa: FBT003  # noqa: FBT003
                 except (OSError, UnicodeError) as e:
                     error_msg = FlextLdifCoreConstants.FILE_WRITE_FAILED_MSG.format(
                         error=str(e)
@@ -681,9 +682,9 @@ class TLdif:
                     FlextLdifCoreConstants.EMPTY_LDIF_FILE_DETECTED_WARNING_LOG,
                     absolute_path,
                 )
-                return FlextResult[list[FlextLdifEntry]].ok(
-                    []
-                )  # Return empty list for empty files
+                return FlextResult[
+                    list[FlextLdifEntry]
+                ].ok([])  # Return empty list for empty files
 
             # Read file content with enhanced error handling
             logger.debug(

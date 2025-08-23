@@ -91,7 +91,7 @@ class LdifValidator:
                 ),
             )
 
-        return FlextResult[bool].ok(True)  # noqa: FBT003  # noqa: FBT003
+        return FlextResult[bool].ok(data=True)  # noqa: FBT003  # noqa: FBT003
 
     @classmethod
     def validate_attribute_name(cls, attr_name: str) -> FlextResult[bool]:
@@ -122,7 +122,7 @@ class LdifValidator:
                 ),
             )
 
-        return FlextResult[bool].ok(True)  # noqa: FBT003  # noqa: FBT003
+        return FlextResult[bool].ok(data=True)  # noqa: FBT003  # noqa: FBT003
 
     @classmethod
     def validate_required_objectclass(cls, entry: FlextLdifEntry) -> FlextResult[bool]:
@@ -140,7 +140,7 @@ class LdifValidator:
                 FlextLdifFormatConstants.ENTRY_MISSING_OBJECTCLASS_FORMAT,
             )
 
-        return FlextResult[bool].ok(True)  # noqa: FBT003  # noqa: FBT003
+        return FlextResult[bool].ok(data=True)  # noqa: FBT003  # noqa: FBT003
 
     @classmethod
     def validate_entry_completeness(cls, entry: FlextLdifEntry) -> FlextResult[bool]:
@@ -207,7 +207,7 @@ class LdifValidator:
                 ),
             )
 
-        return FlextResult[bool].ok(True)  # noqa: FBT003  # noqa: FBT003
+        return FlextResult[bool].ok(data=True)  # noqa: FBT003  # noqa: FBT003
 
     @classmethod
     def is_person_entry(cls, entry: FlextLdifEntry) -> FlextResult[bool]:
@@ -281,7 +281,7 @@ class LdifSchemaValidator:
                 ),
             )
 
-        return FlextResult[bool].ok(True)  # noqa: FBT003  # noqa: FBT003
+        return FlextResult[bool].ok(data=True)  # noqa: FBT003  # noqa: FBT003
 
     @classmethod
     def validate_person_schema(cls, entry: FlextLdifEntry) -> FlextResult[bool]:

@@ -1,6 +1,5 @@
 """Tests for FlextLdifRepositoryService - comprehensive coverage."""
 
-import pytest
 
 from flext_ldif.constants import FlextLdifCoreMessages, FlextLdifValidationMessages
 from flext_ldif.models import FlextLdifConfig, FlextLdifEntry
@@ -26,7 +25,7 @@ class TestFlextLdifRepositoryService:
         """Test default execute method returns empty dict."""
         service = FlextLdifRepositoryService()
         result = service.execute()
-        
+
         assert result.is_success
         assert result.value is not None
         assert result.value == {}
@@ -35,9 +34,9 @@ class TestFlextLdifRepositoryService:
         """Test find_by_dn with empty DN."""
         service = FlextLdifRepositoryService()
         entries = []
-        
+
         result = service.find_by_dn(entries, "")
-        
+
         assert result.is_failure
         assert FlextLdifValidationMessages.DN_EMPTY_ERROR in result.error
 
@@ -45,9 +44,9 @@ class TestFlextLdifRepositoryService:
         """Test find_by_dn with whitespace-only DN."""
         service = FlextLdifRepositoryService()
         entries = []
-        
+
         result = service.find_by_dn(entries, "   ")
-        
+
         assert result.is_failure
         assert FlextLdifValidationMessages.DN_EMPTY_ERROR in result.error
 
@@ -63,9 +62,9 @@ class TestFlextLdifRepositoryService:
                 }
             })
         ]
-        
+
         result = service.find_by_dn(entries, "cn=Jane,dc=example,dc=com")
-        
+
         assert result.is_success
         assert result.value is None
 
@@ -80,9 +79,9 @@ class TestFlextLdifRepositoryService:
             }
         })
         entries = [entry]
-        
+
         result = service.find_by_dn(entries, "cn=John Doe,ou=people,dc=example,dc=com")
-        
+
         assert result.is_success
         assert result.value == entry
 
@@ -97,9 +96,9 @@ class TestFlextLdifRepositoryService:
             }
         })
         entries = [entry]
-        
+
         result = service.find_by_dn(entries, "cn=john doe,ou=people,dc=example,dc=com")
-        
+
         assert result.is_success
         assert result.value == entry
 
@@ -121,9 +120,9 @@ class TestFlextLdifRepositoryService:
             }
         })
         entries = [entry1, entry2]
-        
+
         result = service.find_by_dn(entries, "cn=Jane,dc=example,dc=com")
-        
+
         assert result.is_success
         assert result.value == entry2
 
@@ -131,9 +130,9 @@ class TestFlextLdifRepositoryService:
         """Test filter_by_objectclass with empty objectclass."""
         service = FlextLdifRepositoryService()
         entries = []
-        
+
         result = service.filter_by_objectclass(entries, "")
-        
+
         assert result.is_failure
         assert FlextLdifCoreMessages.MISSING_OBJECTCLASS in result.error
 
@@ -141,9 +140,9 @@ class TestFlextLdifRepositoryService:
         """Test filter_by_objectclass with whitespace-only objectclass."""
         service = FlextLdifRepositoryService()
         entries = []
-        
+
         result = service.filter_by_objectclass(entries, "   ")
-        
+
         assert result.is_failure
         assert FlextLdifCoreMessages.MISSING_OBJECTCLASS in result.error
 
@@ -159,9 +158,9 @@ class TestFlextLdifRepositoryService:
                 }
             })
         ]
-        
+
         result = service.filter_by_objectclass(entries, "organizationalUnit")
-        
+
         assert result.is_success
         assert result.value == []
 
@@ -183,9 +182,9 @@ class TestFlextLdifRepositoryService:
             }
         })
         entries = [person_entry, org_entry]
-        
+
         result = service.filter_by_objectclass(entries, "person")
-        
+
         assert result.is_success
         assert len(result.value) == 1
         assert result.value[0] == person_entry
@@ -216,9 +215,9 @@ class TestFlextLdifRepositoryService:
                 }
             })
         ]
-        
+
         result = service.filter_by_objectclass(entries, "person")
-        
+
         assert result.is_success
         assert len(result.value) == 2
 
@@ -226,9 +225,9 @@ class TestFlextLdifRepositoryService:
         """Test filter_by_attribute with empty attribute name."""
         service = FlextLdifRepositoryService()
         entries = []
-        
+
         result = service.filter_by_attribute(entries, "", "value")
-        
+
         assert result.is_failure
         assert "attribute" in result.error
 
@@ -236,9 +235,9 @@ class TestFlextLdifRepositoryService:
         """Test filter_by_attribute with whitespace-only attribute name."""
         service = FlextLdifRepositoryService()
         entries = []
-        
+
         result = service.filter_by_attribute(entries, "   ", "value")
-        
+
         assert result.is_failure
         assert "attribute" in result.error
 
@@ -255,9 +254,9 @@ class TestFlextLdifRepositoryService:
                 }
             })
         ]
-        
+
         result = service.filter_by_attribute(entries, "cn", "Jane")
-        
+
         assert result.is_success
         assert result.value == []
 
@@ -281,9 +280,9 @@ class TestFlextLdifRepositoryService:
             }
         })
         entries = [john_entry, jane_entry]
-        
+
         result = service.filter_by_attribute(entries, "givenName", "John")
-        
+
         assert result.is_success
         assert len(result.value) == 1
         assert result.value[0] == john_entry
@@ -300,18 +299,18 @@ class TestFlextLdifRepositoryService:
                 }
             })
         ]
-        
+
         result = service.filter_by_attribute(entries, "mail", "john@example.com")
-        
+
         assert result.is_success
         assert result.value == []
 
     def test_get_statistics_empty_list(self):
         """Test get_statistics with empty list."""
         service = FlextLdifRepositoryService()
-        
+
         result = service.get_statistics([])
-        
+
         assert result.is_success
         assert result.value == {
             "total_entries": 0,
@@ -339,9 +338,9 @@ class TestFlextLdifRepositoryService:
                 }
             })
         ]
-        
+
         result = service.get_statistics(entries)
-        
+
         assert result.is_success
         assert result.value["total_entries"] == 2
         assert result.value["person_entries"] == 2
@@ -360,9 +359,9 @@ class TestFlextLdifRepositoryService:
                 }
             })
         ]
-        
+
         result = service.get_statistics(entries)
-        
+
         assert result.is_success
         assert result.value["total_entries"] == 1
         assert result.value["person_entries"] == 0
@@ -388,9 +387,9 @@ class TestFlextLdifRepositoryService:
                 }
             })
         ]
-        
+
         result = service.get_statistics(entries)
-        
+
         assert result.is_success
         assert result.value["total_entries"] == 2
         assert result.value["person_entries"] == 0
@@ -430,9 +429,9 @@ class TestFlextLdifRepositoryService:
                 }
             })
         ]
-        
+
         result = service.get_statistics(entries)
-        
+
         assert result.is_success
         assert result.value["total_entries"] == 4
         assert result.value["person_entries"] == 2

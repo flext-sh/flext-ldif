@@ -1,6 +1,5 @@
 """Tests for FlextLdifTransformerService - comprehensive coverage."""
 
-import pytest
 
 from flext_ldif.models import FlextLdifConfig, FlextLdifEntry
 from flext_ldif.transformer_service import FlextLdifTransformerService
@@ -25,7 +24,7 @@ class TestFlextLdifTransformerService:
         """Test default execute method returns empty list."""
         service = FlextLdifTransformerService()
         result = service.execute()
-        
+
         assert result.is_success
         assert result.value is not None
         assert result.value == []
@@ -40,9 +39,9 @@ class TestFlextLdifTransformerService:
                 "objectClass": ["person"]
             }
         })
-        
+
         result = service.transform_entry(entry)
-        
+
         assert result.is_success
         assert result.value is not None
         assert result.value == entry  # Base implementation returns as-is
@@ -51,7 +50,7 @@ class TestFlextLdifTransformerService:
         """Test transforming empty list of entries."""
         service = FlextLdifTransformerService()
         result = service.transform_entries([])
-        
+
         assert result.is_success
         assert result.value is not None
         assert result.value == []
@@ -67,9 +66,9 @@ class TestFlextLdifTransformerService:
                 "objectClass": ["person", "inetOrgPerson"]
             }
         })
-        
+
         result = service.transform_entries([entry])
-        
+
         assert result.is_success
         assert result.value is not None
         assert len(result.value) == 1
@@ -101,9 +100,9 @@ class TestFlextLdifTransformerService:
                 }
             })
         ]
-        
+
         result = service.transform_entries(entries)
-        
+
         assert result.is_success
         assert result.value is not None
         assert len(result.value) == 3
@@ -114,7 +113,7 @@ class TestFlextLdifTransformerService:
     def test_transform_entries_large_dataset(self):
         """Test transforming large dataset performance."""
         service = FlextLdifTransformerService()
-        
+
         # Create 50 entries
         entries = []
         for i in range(50):
@@ -127,9 +126,9 @@ class TestFlextLdifTransformerService:
                 }
             })
             entries.append(entry)
-        
+
         result = service.transform_entries(entries)
-        
+
         assert result.is_success
         assert result.value is not None
         assert len(result.value) == 50
@@ -141,7 +140,7 @@ class TestFlextLdifTransformerService:
         """Test DN normalization with empty list."""
         service = FlextLdifTransformerService()
         result = service.normalize_dns([])
-        
+
         assert result.is_success
         assert result.value is not None
         assert result.value == []
@@ -156,9 +155,9 @@ class TestFlextLdifTransformerService:
                 "objectClass": ["person"]
             }
         })
-        
+
         result = service.normalize_dns([entry])
-        
+
         assert result.is_success
         assert result.value is not None
         assert len(result.value) == 1
@@ -184,9 +183,9 @@ class TestFlextLdifTransformerService:
                 }
             })
         ]
-        
+
         result = service.normalize_dns(entries)
-        
+
         assert result.is_success
         assert result.value is not None
         assert len(result.value) == 2
@@ -197,11 +196,11 @@ class TestFlextLdifTransformerService:
         # Test with strict validation
         strict_config = FlextLdifConfig(strict_validation=True)
         strict_service = FlextLdifTransformerService(config=strict_config)
-        
+
         # Test with non-strict validation
         lenient_config = FlextLdifConfig(strict_validation=False)
         lenient_service = FlextLdifTransformerService(config=lenient_config)
-        
+
         entry = FlextLdifEntry.model_validate({
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {
@@ -209,11 +208,11 @@ class TestFlextLdifTransformerService:
                 "objectClass": ["person"]
             }
         })
-        
+
         # Both should work the same for base implementation
         strict_result = strict_service.transform_entry(entry)
         lenient_result = lenient_service.transform_entry(entry)
-        
+
         assert strict_result.is_success
         assert lenient_result.is_success
         assert strict_result.value == lenient_result.value
@@ -221,7 +220,7 @@ class TestFlextLdifTransformerService:
     def test_transform_entries_uses_transform_entry(self):
         """Test that transform_entries calls transform_entry for each entry."""
         service = FlextLdifTransformerService()
-        
+
         # Create a simple entry
         entry = FlextLdifEntry.model_validate({
             "dn": "cn=test,dc=example,dc=com",
@@ -230,13 +229,13 @@ class TestFlextLdifTransformerService:
                 "objectClass": ["person"]
             }
         })
-        
+
         # Transform single entry directly
         single_result = service.transform_entry(entry)
-        
+
         # Transform same entry through transform_entries
         list_result = service.transform_entries([entry])
-        
+
         # Both should produce same result
         assert single_result.is_success
         assert list_result.is_success
@@ -251,9 +250,9 @@ class TestFlextLdifTransformerService:
                 "objectClass": ["dcObject"]
             }
         })
-        
+
         result = service.transform_entry(entry)
-        
+
         assert result.is_success
         assert result.value == entry
 
@@ -268,8 +267,8 @@ class TestFlextLdifTransformerService:
                 "objectClass": ["person"]
             }
         })
-        
+
         result = service.transform_entry(entry)
-        
+
         assert result.is_success
         assert result.value == entry
