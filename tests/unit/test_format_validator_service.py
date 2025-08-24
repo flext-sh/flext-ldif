@@ -6,6 +6,8 @@
 # pyright: reportArgumentType=false
 # Reason: FlextLdifEntry accepts dict[str, list[str]] via field validator mode="before" but pyright doesn't understand this
 
+from unittest.mock import MagicMock, patch
+
 from flext_core import FlextResult
 
 from flext_ldif import FlextLdifDistinguishedName, FlextLdifEntry
@@ -57,7 +59,7 @@ class TestPrivateFunctions:
         """Test _validate_ldap_attribute_name with invalid names."""
         # Empty/None
         assert _validate_ldap_attribute_name("") is VALIDATION_FAILURE
-        assert _validate_ldap_attribute_name(None) is VALIDATION_FAILURE  # type: ignore
+        assert _validate_ldap_attribute_name(None) is VALIDATION_FAILURE
 
         # Starting with numbers or special chars
         assert _validate_ldap_attribute_name("123attr") is VALIDATION_FAILURE
@@ -70,8 +72,8 @@ class TestPrivateFunctions:
         assert _validate_ldap_attribute_name("attr$") is VALIDATION_FAILURE
 
         # Non-string types
-        assert _validate_ldap_attribute_name(123) is VALIDATION_FAILURE  # type: ignore
-        assert _validate_ldap_attribute_name(["attr"]) is VALIDATION_FAILURE  # type: ignore
+        assert _validate_ldap_attribute_name(123) is VALIDATION_FAILURE
+        assert _validate_ldap_attribute_name(["attr"]) is VALIDATION_FAILURE
 
     def test_validate_ldap_dn_valid(self) -> None:
         """Test _validate_ldap_dn with valid DNs."""
@@ -98,7 +100,7 @@ class TestPrivateFunctions:
         """Test _validate_ldap_dn with invalid DNs."""
         # Empty/None
         assert _validate_ldap_dn("") is VALIDATION_FAILURE
-        assert _validate_ldap_dn(None) is VALIDATION_FAILURE  # type: ignore
+        assert _validate_ldap_dn(None) is VALIDATION_FAILURE
         assert _validate_ldap_dn("   ") is VALIDATION_FAILURE
 
         # Missing attribute type
@@ -111,8 +113,8 @@ class TestPrivateFunctions:
         assert _validate_ldap_dn("cn John Doe") is VALIDATION_FAILURE
 
         # Non-string types
-        assert _validate_ldap_dn(123) is VALIDATION_FAILURE  # type: ignore
-        assert _validate_ldap_dn(["cn=test"]) is VALIDATION_FAILURE  # type: ignore
+        assert _validate_ldap_dn(123) is VALIDATION_FAILURE
+        assert _validate_ldap_dn(["cn=test"]) is VALIDATION_FAILURE
 
     def test_get_ldap_validators_cached(self) -> None:
         """Test that _get_ldap_validators returns cached validators."""
@@ -260,8 +262,6 @@ class TestLdifValidator:
 
     def test_validate_entry_completeness_dn_validation_fail(self) -> None:
         """Test validate_entry_completeness when DN validation fails."""
-        from unittest.mock import patch
-
         entry = FlextLdifEntry(
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes={"objectClass": ["person"], "cn": ["test"]},
@@ -324,8 +324,6 @@ class TestLdifValidator:
 
     def test_validate_entry_type_completeness_failure(self) -> None:
         """Test validate_entry_type when completeness validation fails."""
-        from unittest.mock import patch
-
         entry = FlextLdifEntry(
             dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes={"objectClass": ["person"]},
@@ -372,7 +370,10 @@ class TestLdifValidator:
             entry, {"organizationalUnit", "device"}
         )
         assert result.is_failure
-        assert result.error is not None and "does not match expected type" in result.error.lower()
+        assert (
+            result.error is not None
+            and "does not match expected type" in result.error.lower()
+        )
 
     def test_is_person_entry_true(self) -> None:
         """Test is_person_entry returns true for person entries."""
@@ -687,3 +688,35 @@ class TestEdgeCases:
         ]:
             assert isinstance(class_set, set)
             assert len(class_set) > 0
+
+    def test_validate_entry_completeness_empty_dn_coverage(self) -> None:
+        """Test validate_entry_completeness with empty DN (line 158)."""
+        # Create valid entry first
+        entry = FlextLdifEntry(
+            dn=FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes={"objectClass": ["person"]},
+        )
+
+        # Use object.__setattr__ to bypass Pydantic validation and set DN to None
+        object.__setattr__(entry, "dn", None)
+
+        result = LdifValidator.validate_entry_completeness(entry)
+        assert result.is_failure
+        assert result.error is not None and ("dn" in result.error or "valid" in result.error)
+
+    def test_validate_entry_type_missing_objectclass_coverage(self) -> None:
+        """Test validate_entry_type with missing objectClass (line 195)."""
+        # Create mock entry that passes completeness but fails get_attribute
+        mock_entry = MagicMock()
+        mock_entry.dn = FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com")
+        mock_entry.get_attribute.return_value = None
+
+        # Mock validate_entry_completeness to return success
+        with patch.object(
+            LdifValidator,
+            "validate_entry_completeness",
+            return_value=FlextResult[bool].ok(True),
+        ):
+            result = LdifValidator.validate_entry_type(mock_entry, {"person"})
+            assert result.is_failure
+            assert result.error is not None and "objectclass" in result.error.lower()

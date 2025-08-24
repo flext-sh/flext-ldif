@@ -43,7 +43,7 @@ class FlextLdifCliService:
         self,
         input_file: Path,
         *,
-        validate: bool = False,  # noqa: ARG002
+        validate: bool = False,
         max_entries: int | None = None,
     ) -> FlextResult[list[FlextLdifEntry]]:
         """Parse LDIF file with optional validation."""
@@ -54,7 +54,7 @@ class FlextLdifCliService:
         else:
             api = self.api
 
-        return (
+        parse_result = (
             api.parse_file(str(input_file))
             .tap(
                 lambda entries: logger.info(
@@ -65,6 +65,22 @@ class FlextLdifCliService:
                 lambda error: logger.error(f"Failed to parse {input_file}: {error}")
             )
         )
+
+        # If validation requested, validate entries after parsing
+        if validate and parse_result.is_success:
+            validation_result = self.validate_entries(parse_result.value)
+            if not validation_result.is_success:
+                logger.error(f"Validation failed: {validation_result.error}")
+                return FlextResult[list[FlextLdifEntry]].fail(
+                    f"Validation failed: {validation_result.error}"
+                )
+            _, errors = validation_result.value
+            if errors:
+                error_summary = f"{len(errors)} validation errors found"
+                logger.error(error_summary)
+                return FlextResult[list[FlextLdifEntry]].fail(error_summary)
+
+        return parse_result
 
     def validate_entries(
         self, entries: list[FlextLdifEntry]
@@ -83,9 +99,10 @@ class FlextLdifCliService:
                 )
                 errors.append(error_msg)
 
-        return FlextResult[tuple[list[FlextLdifEntry], list[str]]].ok(
-            (valid_entries, errors)
-        )
+        return FlextResult[tuple[list[FlextLdifEntry], list[str]]].ok((
+            valid_entries,
+            errors,
+        ))
 
     def transform_entries(
         self,

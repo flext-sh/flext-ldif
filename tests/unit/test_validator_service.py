@@ -175,7 +175,7 @@ class TestFlextLdifValidatorService:
         result = service._validate_configuration_rules(mock_entry)
 
         assert result.is_failure
-        assert (
+        assert result.error is not None and (
             FlextLdifValidationMessages.EMPTY_ATTRIBUTES_NOT_ALLOWED.format(
                 attr_name="cn"
             )
@@ -196,7 +196,7 @@ class TestFlextLdifValidatorService:
         result = service._validate_configuration_rules(mock_entry)
 
         assert result.is_failure
-        assert (
+        assert result.error is not None and (
             FlextLdifValidationMessages.EMPTY_ATTRIBUTE_VALUE_NOT_ALLOWED.format(
                 attr_name="cn"
             )
@@ -219,7 +219,7 @@ class TestFlextLdifValidatorService:
         result = service._validate_configuration_rules(mock_entry)
 
         assert result.is_failure
-        assert (
+        assert result.error is not None and (
             FlextLdifValidationMessages.EMPTY_ATTRIBUTE_VALUE_NOT_ALLOWED.format(
                 attr_name="cn"
             )
@@ -377,11 +377,10 @@ class TestFlextLdifValidatorService:
 
         entries = [mock_entry]
 
-        result = service.validate_entries(entries)
+        result = service.validate_entries(entries)  # type: ignore[arg-type]
 
         assert result.is_failure
-        assert result.error is not None and "Entry 0" in result.error
-        assert result.error is not None and "First entry invalid" in result.error
+        assert result.error is not None and ("Entry 0" in result.error and "First entry invalid" in result.error)
 
     def test_configuration_rules_allow_empty_attributes_true(self) -> None:
         """Test configuration rules when allow_empty_attributes is True."""

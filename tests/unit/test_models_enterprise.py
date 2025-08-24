@@ -540,7 +540,9 @@ description: With multiple descriptions"""
                 f"Expected {[long_value]}, got {entry.get_attribute('description')}"
             )
             raise AssertionError(msg)
-        assert len(entry.get_attribute("description")[0]) == 10000
+        description_attr = entry.get_attribute("description")
+        assert description_attr is not None
+        assert len(description_attr[0]) == 10000
 
     def test_edge_cases_empty_attribute_values(self) -> None:
         """Test entry with empty attribute values."""

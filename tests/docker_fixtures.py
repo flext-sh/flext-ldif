@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 OPENLDAP_IMAGE = "osixia/openldap:1.5.0"
 OPENLDAP_CONTAINER_NAME = "flext-ldif-test-server"
 OPENLDAP_PORT = 3390  # Use unique port to avoid conflicts with flext-ldap
-OPENLDAP_ADMIN_PASSWORD = "REDACTED_LDAP_BIND_PASSWORD123"
+OPENLDAP_ADMIN_PASSWORD = "REDACTED_LDAP_BIND_PASSWORD123"  # noqa: S105
 OPENLDAP_DOMAIN = "internal.invalid"
 OPENLDAP_BASE_DN = f"dc={',dc='.join(OPENLDAP_DOMAIN.split('.'))}"
 OPENLDAP_ADMIN_DN = f"cn=REDACTED_LDAP_BIND_PASSWORD,{OPENLDAP_BASE_DN}"
@@ -58,7 +58,7 @@ class OpenLDAPContainerManager:
         """Initialize the container manager."""
         self.client: DockerClient | None = None
         if DOCKER_AVAILABLE:
-            self.client = docker.from_env()
+            self.client = docker.from_env()  # type: ignore[attr-defined]
         self.container: Container | None = None
 
     def start_container(self) -> Container | None:

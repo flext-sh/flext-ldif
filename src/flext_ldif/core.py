@@ -12,42 +12,23 @@ from collections.abc import Callable as _Callable
 from functools import reduce
 from pathlib import Path
 
-from flext_core import FlextResult, get_logger
-from flext_core.exceptions import FlextValidationError
+from flext_core import FlextResult, FlextValidationError, get_logger
 
 from flext_ldif.constants import FlextLdifCoreConstants
 from flext_ldif.format_handler_service import (
     modernized_ldif_parse,
     modernized_ldif_write,
 )
+
+# Import validators from centralized location to avoid duplication
+from flext_ldif.format_validator_service import (
+    _validate_ldap_attribute_name,
+    _validate_ldap_dn,
+)
 from flext_ldif.models import FlextLdifEntry, FlextLdifFactory
 from flext_ldif.typings import LDIFContent
 
 logger = get_logger(__name__)
-
-
-def _validate_ldap_attribute_name(name: str) -> bool:
-    """Local LDAP attribute name validator - breaks circular dependency.
-
-    Validates attribute names per RFC 4512: base name + optional language tags/options.
-    Supports: displayname;lang-es_es, orclinstancecount;oid-prd-app01.network.ctbc
-    """
-    if not name or not isinstance(name, str):
-        return False
-    attr_pattern = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]*(?:;[a-zA-Z0-9_.-]+)*$")
-    return bool(attr_pattern.match(name))
-
-
-def _validate_ldap_dn(dn: str) -> bool:
-    """Local LDAP DN validator - breaks circular dependency.
-
-    Basic DN validation pattern to avoid circular import from flext-ldap.
-    """
-    if not dn or not isinstance(dn, str):
-        return False
-    # Basic DN validation pattern
-    dn_pattern = re.compile(r"^[a-zA-Z][\w-]*=.+(?:,[a-zA-Z][\w-]*=.+)*$")
-    return bool(dn_pattern.match(dn.strip()))
 
 
 class TLdif:
@@ -166,12 +147,10 @@ class TLdif:
                                     error=entry_result.error
                                 )
                             )
-                        return FlextResult[list[FlextLdifEntry]].ok(
-                            [
-                                *entries_list,
-                                entry_result.value,
-                            ]
-                        )
+                        return FlextResult[list[FlextLdifEntry]].ok([
+                            *entries_list,
+                            entry_result.value,
+                        ])
 
                     return acc.flat_map(process_entry)
 
@@ -233,7 +212,7 @@ class TLdif:
             error_message = cls._get_validation_error(entry)
             if error_message is not None:
                 return FlextResult[bool].fail(error_message)
-            return FlextResult[bool].ok(data=True)  # noqa: FBT003
+            return FlextResult[bool].ok(data=True)
         except (ValueError, TypeError, AttributeError) as e:
             logger.debug(FlextLdifCoreConstants.EXCEPTION_TYPE_LOG, type(e).__name__)
             logger.debug(
@@ -378,7 +357,7 @@ class TLdif:
                 reduce(
                     chain_validations,
                     enumerate(entries),
-                    FlextResult[bool].ok(data=True),  # noqa: FBT003
+                    FlextResult[bool].ok(data=True),
                 )
                 .tap(
                     lambda _: logger.debug(
@@ -569,7 +548,7 @@ class TLdif:
                         encoding=encoding,
                     ) as f:
                         f.write(content)
-                    return FlextResult[bool].ok(data=True)  # noqa: FBT003  # noqa: FBT003
+                    return FlextResult[bool].ok(data=True)
                 except (OSError, UnicodeError) as e:
                     error_msg = FlextLdifCoreConstants.FILE_WRITE_FAILED_MSG.format(
                         error=str(e)
@@ -684,9 +663,9 @@ class TLdif:
                     FlextLdifCoreConstants.EMPTY_LDIF_FILE_DETECTED_WARNING_LOG,
                     absolute_path,
                 )
-                return FlextResult[list[FlextLdifEntry]].ok(
-                    []
-                )  # Return empty list for empty files
+                return FlextResult[
+                    list[FlextLdifEntry]
+                ].ok([])  # Return empty list for empty files
 
             # Read file content with enhanced error handling
             logger.debug(

@@ -95,10 +95,8 @@ class TestFlextLdifWriterService:
         result = service.write([mock_entry])
 
         assert result.is_failure
-        assert (
-            FlextLdifCoreMessages.WRITE_FAILED.format(error="Test error")
-            in result.error
-        )
+        assert result.error is not None
+        assert FlextLdifCoreMessages.WRITE_FAILED.format(error="Test error") in result.error
 
     def test_write_entry_attribute_error(self) -> None:
         """Test write handles AttributeError from entry.to_ldif()."""
@@ -111,10 +109,8 @@ class TestFlextLdifWriterService:
         result = service.write([mock_entry])
 
         assert result.is_failure
-        assert (
-            FlextLdifCoreMessages.WRITE_FAILED.format(error="Missing attribute")
-            in result.error
-        )
+        assert result.error is not None
+        assert FlextLdifCoreMessages.WRITE_FAILED.format(error="Missing attribute") in result.error
 
     def test_write_entry_type_error(self) -> None:
         """Test write handles TypeError from entry.to_ldif()."""
@@ -127,10 +123,8 @@ class TestFlextLdifWriterService:
         result = service.write([mock_entry])
 
         assert result.is_failure
-        assert (
-            FlextLdifCoreMessages.WRITE_FAILED.format(error="Type error")
-            in result.error
-        )
+        assert result.error is not None
+        assert FlextLdifCoreMessages.WRITE_FAILED.format(error="Type error") in result.error
 
     def test_write_entry_success(self) -> None:
         """Test write_entry with single entry."""
@@ -154,7 +148,6 @@ class TestFlextLdifWriterService:
         assert "cn: Test User" in result.value
         assert "mail: test@example.com" in result.value
 
-
     def test_write_entry_attribute_error_handling(self) -> None:
         """Test write_entry handles AttributeError."""
         service = FlextLdifWriterService()
@@ -165,10 +158,8 @@ class TestFlextLdifWriterService:
         result = service.write_entry(mock_entry)
 
         assert result.is_failure
-        assert (
-            FlextLdifCoreMessages.WRITE_FAILED.format(error="Attribute missing")
-            in result.error
-        )
+        assert result.error is not None
+        assert FlextLdifCoreMessages.WRITE_FAILED.format(error="Attribute missing") in result.error
 
     def test_write_entry_type_error_handling(self) -> None:
         """Test write_entry handles TypeError."""
@@ -180,10 +171,8 @@ class TestFlextLdifWriterService:
         result = service.write_entry(mock_entry)
 
         assert result.is_failure
-        assert (
-            FlextLdifCoreMessages.WRITE_FAILED.format(error="Type mismatch")
-            in result.error
-        )
+        assert result.error is not None
+        assert FlextLdifCoreMessages.WRITE_FAILED.format(error="Type mismatch") in result.error
 
     def test_write_file_success(self) -> None:
         """Test write_file success with temporary file."""
@@ -259,10 +248,8 @@ class TestFlextLdifWriterService:
         result = service.write_file([mock_entry], tmp_path)
 
         assert result.is_failure
-        assert (
-            FlextLdifCoreMessages.FILE_WRITE_FAILED.format(error="Unexpected error")
-            in result.error
-        )
+        assert result.error is not None
+        assert FlextLdifCoreMessages.FILE_WRITE_FAILED.format(error="Unexpected error") in result.error
 
     def test_write_content_to_file_success(self) -> None:
         """Test _write_content_to_file success."""
@@ -302,12 +289,10 @@ class TestFlextLdifWriterService:
             )
 
             assert result.is_failure
-            assert (
-                FlextLdifCoreMessages.FILE_WRITE_FAILED.format(
-                    error="Permission denied"
-                )
-                in result.error
-            )
+            assert result.error is not None
+            assert FlextLdifCoreMessages.FILE_WRITE_FAILED.format(
+                error="Permission denied"
+            ) in result.error
 
     def test_write_content_to_file_os_error(self) -> None:
         """Test _write_content_to_file handles OSError."""
@@ -324,10 +309,8 @@ class TestFlextLdifWriterService:
             )
 
             assert result.is_failure
-            assert (
-                FlextLdifCoreMessages.FILE_WRITE_FAILED.format(error="Disk full")
-                in result.error
-            )
+            assert result.error is not None
+            assert FlextLdifCoreMessages.FILE_WRITE_FAILED.format(error="Disk full") in result.error
 
     def test_write_content_to_file_unicode_error(self) -> None:
         """Test _write_content_to_file handles UnicodeError."""
@@ -342,12 +325,10 @@ class TestFlextLdifWriterService:
             result = service._write_content_to_file(content, tmp_path, "ascii")
 
             assert result.is_failure
-            assert (
-                FlextLdifCoreMessages.FILE_WRITE_FAILED.format(
-                    error="Unicode encoding error"
-                )
-                in result.error
-            )
+            assert result.error is not None
+            assert FlextLdifCoreMessages.FILE_WRITE_FAILED.format(
+                error="Unicode encoding error"
+            ) in result.error
 
     def test_write_file_empty_entries(self) -> None:
         """Test write_file with empty entries list."""

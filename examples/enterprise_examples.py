@@ -52,7 +52,6 @@ uid: janesmith
     if parse_result.is_success:
         entries = parse_result.value
     else:
-        print(f"Parse failed: {parse_result.error}")
         return
 
     if entries:
@@ -113,7 +112,6 @@ member: cn=Alice Johnson,ou=people,dc=company,dc=com
     # Railway programming chain for parsing and filtering - modern pattern
     parse_result = api.parse(ldif_content)
     if not parse_result.is_success:
-        print(f"Parse failed: {parse_result.error}")
         return
     entries = parse_result.value
 
@@ -123,7 +121,6 @@ member: cn=Alice Johnson,ou=people,dc=company,dc=com
         if person_filter_result.is_success:
             person_entries = person_filter_result.value
         else:
-            print(f"Person filter failed: {person_filter_result.error}")
             person_entries = []
         for _entry in person_entries:
             pass  # Process each person entry
@@ -139,11 +136,7 @@ member: cn=Alice Johnson,ou=people,dc=company,dc=com
 
         # Sort hierarchically with railway programming - modern pattern
         sort_result = api.sort_hierarchically(entries)
-        if sort_result.is_success:
-            sorted_entries = sort_result.value
-        else:
-            print(f"Sort failed: {sort_result.error}")
-            sorted_entries = entries
+        sorted_entries = sort_result.value if sort_result.is_success else entries
         for entry in sorted_entries:
             str(entry.dn).count(",")
 
@@ -397,9 +390,8 @@ def _demonstrate_hierarchical_analysis(
 
     def print_hierarchy(sorted_entries: list[FlextLdifEntry]) -> None:
         for entry in sorted_entries:
-            indent = "   " + "  " * str(entry.dn).count(",")
-            entry_type = _determine_entry_type(entry)
-            print(f"{indent}{entry_type}")
+            "   " + "  " * str(entry.dn).count(",")
+            _determine_entry_type(entry)
 
     api.sort_hierarchically(entries).tap(print_hierarchy)
 
@@ -449,19 +441,16 @@ description: Test user {i:03d} for performance monitoring
     api = FlextLdifAPI()
 
     def measure_performance(entries: list[FlextLdifEntry]) -> None:
-        parse_time = time.time() - start_time
-        print(f"Parse time: {parse_time:.3f}s")
+        time.time() - start_time
 
         filter_start = time.time()
         person_filter_result = api.filter_persons(entries)
         person_entries = person_filter_result.unwrap_or([])
-        filter_time = time.time() - filter_start
-        print(f"Filter time: {filter_time:.3f}s")
+        time.time() - filter_start
 
         write_start = time.time()
         api.write(person_entries)
-        write_time = time.time() - write_start
-        print(f"Write time: {write_time:.3f}s")
+        time.time() - write_start
 
     api.parse(large_ldif).tap(measure_performance)
 

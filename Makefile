@@ -84,7 +84,10 @@ type-check: ## Run type checking
 .PHONY: security
 security: ## Run security scanning
 	$(POETRY) run bandit -r $(SRC_DIR)
-	$(POETRY) run pip-audit
+	# Ignore GHSA-wj6h-64fc-37mp: Minerva timing attack in python-ecdsa (transitional dependency)
+	# This is a side-channel attack that ecdsa maintainers consider out-of-scope
+	# Risk assessment: Acceptable for LDIF processing use case (no JWT signing operations)
+	$(POETRY) run pip-audit --ignore-vuln GHSA-wj6h-64fc-37mp
 
 .PHONY: fix
 fix: ## Auto-fix issues
