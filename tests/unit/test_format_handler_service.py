@@ -5,7 +5,8 @@
 
 import base64
 import unittest.mock
-from typing import Never, Self
+from collections import UserString
+from typing import Never
 from unittest.mock import Mock
 
 import pytest
@@ -110,8 +111,6 @@ class TestInternalFunctions:
 
     def test_safe_url_fetch_network_error(self) -> None:
         """Test URL fetching with network errors."""
-        import flext_ldif.format_handler_service as fh
-
         with unittest.mock.patch(
             "flext_ldif.format_handler_service.urllib3.PoolManager"
         ) as mock_pool:
@@ -126,15 +125,11 @@ class TestInternalFunctions:
 
     def test_safe_url_fetch_invalid_url_scheme(self) -> None:
         """Test URL fetching with invalid URL scheme."""
-        import flext_ldif.format_handler_service as fh
-
         with pytest.raises(ValueError, match="URL scheme 'ftp' not allowed"):
             fh._safe_url_fetch("ftp://example.com/test.ldif")
 
     def test_safe_url_fetch_encoding_error(self) -> None:
         """Test URL fetching with encoding issues."""
-        import flext_ldif.format_handler_service as fh
-
         with unittest.mock.patch(
             "flext_ldif.format_handler_service.urllib3.PoolManager"
         ) as mock_pool:
@@ -151,8 +146,6 @@ class TestInternalFunctions:
 
     def test_safe_url_fetch_custom_encoding(self) -> None:
         """Test URL fetching with custom encoding."""
-        import flext_ldif.format_handler_service as fh
-
         with unittest.mock.patch(
             "flext_ldif.format_handler_service.urllib3.PoolManager"
         ) as mock_pool:
@@ -487,7 +480,6 @@ objectClass: person
     def test_parse_url_reference(self) -> None:
         """Test parsing LDIF with URL references."""
         # Mock _safe_url_fetch to avoid actual HTTP requests
-        import flext_ldif.format_handler_service as fh
 
         with unittest.mock.patch.object(fh, "_safe_url_fetch") as mock_fetch:
             mock_fetch.return_value = "Test User"
@@ -507,8 +499,6 @@ objectClass: person
 
     def test_parse_url_reference_fetch_error(self) -> None:
         """Test parsing LDIF with URL reference fetch error."""
-        import flext_ldif.format_handler_service as fh
-
         # Mock _safe_url_fetch to raise error
         with unittest.mock.patch.object(fh, "_safe_url_fetch") as mock_fetch:
             mock_fetch.side_effect = ValueError("Network error")
@@ -677,11 +667,8 @@ objectClass: person
         parser = FlextLDIFParser("", strict=True)
 
         # Create a mock string object that raises UnicodeError on encode
-        class MockString(str):
-            def __new__(cls, value: str) -> Self:
-                return str.__new__(cls, value)
-
-            def encode(self, encoding: str = "utf-8", errors: str = "strict") -> Never:  # type: ignore[override]
+        class MockString(UserString):
+            def encode(self, encoding: str | None = "utf-8", errors: str | None = "strict") -> Never:  # noqa: ARG002
                 msg = "Invalid UTF-8"
                 raise UnicodeError(msg)
 
@@ -697,11 +684,8 @@ objectClass: person
         parser = FlextLDIFParser("", strict=False)
 
         # Create a mock string object that raises UnicodeError on encode
-        class MockString(str):
-            def __new__(cls, value: str) -> Self:
-                return str.__new__(cls, value)
-
-            def encode(self, encoding: str = "utf-8", errors: str = "strict") -> Never:  # type: ignore[override]
+        class MockString(UserString):
+            def encode(self, encoding: str | None = "utf-8", errors: str | None = "strict") -> Never:  # noqa: ARG002
                 msg = "Invalid UTF-8"
                 raise UnicodeError(msg)
 
@@ -792,7 +776,10 @@ objectClass: person
         """Test modernized write function with None entries."""
         result = modernized_ldif_write(None)
         assert result.is_failure
-        assert result.error is not None and "entries cannot be none" in result.error.lower()
+        assert (
+            result.error is not None
+            and "entries cannot be none" in result.error.lower()
+        )
 
     def test_modernized_ldif_roundtrip(self) -> None:
         """Test that parse -> write -> parse produces same result."""
@@ -841,7 +828,10 @@ mail: john@example.com
             result = modernized_ldif_parse("invalid content")
 
             assert result.is_failure
-            assert result.error is not None and "Modernized LDIF parse failed" in result.error
+            assert (
+                result.error is not None
+                and "Modernized LDIF parse failed" in result.error
+            )
 
     def test_modernized_ldif_write_error_handling(self) -> None:
         """Test error handling in modernized_ldif_write function."""
@@ -855,7 +845,10 @@ mail: john@example.com
             result = modernized_ldif_write(entries)
 
             assert result.is_failure
-            assert result.error is not None and "Modernized LDIF write failed" in result.error
+            assert (
+                result.error is not None
+                and "Modernized LDIF write failed" in result.error
+            )
 
     def test_modernized_ldif_parse_unicode_error(self) -> None:
         """Test Unicode error handling in modernized_ldif_parse."""
@@ -869,7 +862,10 @@ mail: john@example.com
             result = modernized_ldif_parse("content with encoding issues")
 
             assert result.is_failure
-            assert result.error is not None and "Modernized LDIF parse failed" in result.error
+            assert (
+                result.error is not None
+                and "Modernized LDIF parse failed" in result.error
+            )
 
     def test_modernized_ldif_write_unicode_error(self) -> None:
         """Test Unicode error handling in modernized_ldif_write."""
@@ -884,4 +880,139 @@ mail: john@example.com
             result = modernized_ldif_write(entries)
 
             assert result.is_failure
-            assert result.error is not None and "Modernized LDIF write failed" in result.error
+            assert (
+                result.error is not None
+                and "Modernized LDIF write failed" in result.error
+            )
+
+    def test_process_line_attribute_empty_line_coverage(self) -> None:
+        """Test _process_line_attribute with empty line (line 447)."""
+        parser = FlextLDIFParser("")
+        dn = "cn=test,dc=example,dc=com"
+        entry: dict[str, list[str]] = {}
+
+        # Test empty line handling - this should return the DN unchanged
+        result = parser._process_line_attribute("   ", dn, entry)
+        assert result == dn
+
+        # Test completely empty line
+        result = parser._process_line_attribute("", dn, entry)
+        assert result == dn
+
+    def test_parse_entry_record_missing_dn_coverage(self) -> None:
+        """Test _parse_entry_record with missing DN (lines 475-476)."""
+        parser = FlextLDIFParser("")
+
+        # Create lines that are ignored by processing but don't set DN
+        # This will cause dn to remain None and trigger lines 475-476
+        lines_without_dn = [
+            "",  # Empty line - ignored in line 447
+            "   ",  # Whitespace line - ignored in line 447
+            "  \n",  # Whitespace line - ignored in line 447
+        ]
+
+        # This should raise ValueError on lines 475-476 because dn remains None
+        with pytest.raises(ValueError) as exc_info:
+            parser._parse_entry_record(lines_without_dn)
+
+        # Check that it's the specific error from lines 475-476
+        assert "missing" in str(exc_info.value).lower() and "dn" in str(exc_info.value).lower()
+
+    def test_comment_lines_branch_coverage(self) -> None:
+        """Test parsing with comment lines to cover branch 284->272."""
+        ldif_with_comments = """# This is a comment at the start
+dn: cn=test,dc=example,dc=com
+objectClass: person
+# Comment in the middle
+cn: test
+sn: user
+# Comment at the end
+"""
+
+        # Test via modernized_ldif_parse to ensure we hit the branch
+        result = modernized_ldif_parse(ldif_with_comments)
+        assert result.is_success
+        assert len(result.value) == 1
+
+        dn, attributes = result.value[0]
+        assert dn == "cn=test,dc=example,dc=com"
+        assert "person" in attributes["objectClass"]
+
+    def test_empty_lines_branch_coverage(self) -> None:
+        """Test parsing with empty lines to cover branch 294->291."""
+        # Test LDIF starting with empty lines (lines=[] when empty line hit)
+        ldif_empty_start = """
+
+dn: cn=test,dc=example,dc=com
+objectClass: person
+cn: test
+"""
+
+        result = modernized_ldif_parse(ldif_empty_start)
+        assert result.is_success
+        assert len(result.value) == 1
+
+        # Test LDIF with multiple consecutive empty lines between entries
+        ldif_multiple_empty = """dn: cn=test1,dc=example,dc=com
+objectClass: person
+
+
+
+dn: cn=test2,dc=example,dc=com
+objectClass: person
+"""
+
+        result2 = modernized_ldif_parse(ldif_multiple_empty)
+        assert result2.is_success
+        assert len(result2.value) == 2
+
+    def test_empty_blocks_branch_coverage(self) -> None:
+        """Test parsing with empty blocks to cover branch 489->488."""
+        # Test LDIF with comment-only block that becomes empty after filtering
+        ldif_comment_block = """dn: cn=test1,dc=example,dc=com
+objectClass: person
+
+# This block contains only comments
+# Another comment line
+# Yet another comment
+
+dn: cn=test2,dc=example,dc=com
+objectClass: person
+"""
+
+        result = modernized_ldif_parse(ldif_comment_block)
+        assert result.is_success
+        assert len(result.value) == 2
+
+        # Test LDIF ending with trailing empty lines
+        ldif_trailing_empty = """dn: cn=test,dc=example,dc=com
+objectClass: person
+
+
+
+"""
+
+        result2 = modernized_ldif_parse(ldif_trailing_empty)
+        assert result2.is_success
+        assert len(result2.value) == 1
+
+    def test_space_only_blocks_branch_coverage(self) -> None:
+        """Test parsing with space-only lines to cover branch 489->488."""
+        # Test LDIF that contains only spaces (may create empty blocks)
+        ldif_only_spaces = """    \n  \n    \n"""  # noqa: W291, W293
+
+        result = modernized_ldif_parse(ldif_only_spaces)
+        assert result.is_success
+        assert len(result.value) == 0  # No entries expected
+
+        # Test LDIF with space-only lines between entries
+        ldif_spaces_between = """dn: cn=test1,dc=example,dc=com
+objectClass: person
+
+    \n\ndn: cn=test2,dc=example,dc=com  # noqa: W293
+objectClass: person
+"""
+
+        result2 = modernized_ldif_parse(ldif_spaces_between)
+        assert result2.is_success
+        assert len(result2.value) == 2

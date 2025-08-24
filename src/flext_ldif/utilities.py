@@ -10,8 +10,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, TypeVar, cast
 
 import click
-from flext_core import FlextResult
-from flext_core.typings import FlextCallable
+from flext_core import FlextCallable, FlextResult
 
 if TYPE_CHECKING:
     from flext_ldif.api import FlextLdifAPI

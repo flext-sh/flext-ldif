@@ -328,21 +328,18 @@ cn: Simple User"""
         # flext_ldif_validate expects list of entries, not LDIF string
         test_entries = flext_ldif_parse(test_ldif)
         is_valid = flext_ldif_validate(test_entries)
-        print(f"Validation result: {is_valid}")
 
     # Test flext_ldif_write function - EXISTE
     try:
         # Create a test entry for writing
         if "entries" in locals() and entries:
             ldif_output = flext_ldif_write(entries)
-            print(f"Generated LDIF output: {len(ldif_output)} characters")
     except (RuntimeError, ValueError, TypeError):
         pass
 
     # Test flext_ldif_get_api function - EXISTE
     with contextlib.suppress(Exception):
         api = flext_ldif_get_api()
-        print(f"API instance: {type(api).__name__}")
 
 
 def test_7_flext_core_integration_validation() -> None:
@@ -351,8 +348,7 @@ def test_7_flext_core_integration_validation() -> None:
         # ✅ Verificar se flext-core ainda funciona independentemente
 
         # Test FlextResult (core functionality)
-        result_test = FlextResult[str].ok("test data")
-        print(f"FlextResult test: {result_test.is_success}")
+        FlextResult[str].ok("test data")
 
         # Test FlextContainer (core functionality)
         FlextContainer()

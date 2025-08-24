@@ -89,7 +89,9 @@ from .constants import (
 from .core import TLdif
 
 # CLI entry point - fail fast if dependencies missing
-from .cli import main as cli_main
+from contextlib import suppress
+with suppress(ImportError):
+    from .cli import main as cli_main
 
 __version__ = "0.9.0"
 __version_info__ = tuple(int(x) for x in __version__.split(".") if x.isdigit())

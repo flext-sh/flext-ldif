@@ -15,7 +15,7 @@ from pydantic import Field
 from flext_ldif.constants import FlextLdifAnalyticsConstants
 from flext_ldif.models import (
     FlextLdifConfig,
-    FlextLdifEntry,  # noqa: TC001
+    FlextLdifEntry,
 )
 
 logger = get_logger(__name__)
@@ -30,9 +30,9 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, int]]):
     def execute(self) -> FlextResult[dict[str, int]]:
         """Execute analytics operation - required by FlextDomainService."""
         # This would be called with specific entries in real usage
-        return FlextResult[dict[str, int]].ok(
-            {FlextLdifAnalyticsConstants.TOTAL_ENTRIES_KEY: 0}
-        )
+        return FlextResult[dict[str, int]].ok({
+            FlextLdifAnalyticsConstants.TOTAL_ENTRIES_KEY: 0
+        })
 
     def analyze_entry_patterns(
         self,

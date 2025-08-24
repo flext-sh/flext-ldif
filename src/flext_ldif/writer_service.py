@@ -15,9 +15,9 @@ from flext_ldif.constants import (
     DEFAULT_OUTPUT_ENCODING,
     FlextLdifCoreMessages,
 )
-from flext_ldif.models import FlextLdifConfig  # noqa: TC001
+from flext_ldif.models import FlextLdifConfig
 
-from .models import FlextLdifEntry  # noqa: TC001
+from .models import FlextLdifEntry
 
 logger = get_logger(__name__)
 
@@ -82,7 +82,7 @@ class FlextLdifWriterService(FlextDomainService[str]):
                 )
             path_obj.write_text(content, encoding=encoding)
 
-            return FlextResult[bool].ok(data=True)  # noqa: FBT003
+            return FlextResult[bool].ok(data=True)
 
         except (OSError, UnicodeError) as e:
             return FlextResult[bool].fail(

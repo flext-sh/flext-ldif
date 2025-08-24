@@ -97,7 +97,6 @@ class LdifValidationDemonstrator:
         sample_file = Path(__file__).parent / "sample_complex.ldif"
         parse_result = self.api.parse_file(sample_file)
         if not parse_result.is_success:
-            print(f"Parse failed: {parse_result.error}")
             return None
         entries = parse_result.value
         return entries or None

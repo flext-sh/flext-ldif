@@ -17,7 +17,7 @@ from flext_ldif.constants import (
     FlextLdifValidationMessages,
 )
 from flext_ldif.models import (
-    FlextLdifConfig,  # noqa: TC001
+    FlextLdifConfig,
     FlextLdifEntry,
     FlextLdifFactory,
 )
