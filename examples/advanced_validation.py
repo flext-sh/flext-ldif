@@ -15,6 +15,8 @@ from flext_core import get_logger
 
 from flext_ldif import FlextLdifAPI, FlextLdifConfig, FlextLdifEntry
 
+logger = get_logger(__name__)
+
 if TYPE_CHECKING:
     from flext_core import FlextResult
 
@@ -140,9 +142,9 @@ class LdifValidationDemonstrator:
         ]
         for filter_func in filter_functions:
             filter_func(entries).tap(
-                lambda filtered_entries: print(f"Found {len(filtered_entries)} entries")
+                lambda filtered_entries: logger.info(f"Found {len(filtered_entries)} entries")
                 if filtered_entries
-                else print("No entries found")
+                else logger.info("No entries found")
             )
 
     def _test_invalid_ldif(self) -> None:

@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 import click
-from flext_cli import (
+from flext_cli import (  # type: ignore[import-untyped]
     cli_handle_keyboard_interrupt,
     cli_measure_time,
     flext_cli_output_data,
@@ -221,8 +221,8 @@ def cli(
 @click.option("--max-entries", type=int, help="Maximum entries to parse")
 @click.option("--validate", is_flag=True, help="Validate entries after parsing")
 @click.option("--stats", is_flag=True, help="Show statistics")
-@cli_measure_time
-@cli_handle_keyboard_interrupt
+@cli_measure_time  # type: ignore[misc]
+@cli_handle_keyboard_interrupt  # type: ignore[misc]
 @click.pass_context
 def parse(
     ctx: click.Context,
@@ -284,8 +284,8 @@ def parse(
 
 @cli.command()
 @click.argument("input_file", type=click.Path(exists=True, path_type=Path))
-@cli_measure_time
-@cli_handle_keyboard_interrupt
+@cli_measure_time  # type: ignore[misc]
+@cli_handle_keyboard_interrupt  # type: ignore[misc]
 @click.pass_context
 def validate(ctx: click.Context, input_file: Path) -> None:
     """Validate LDIF entries for business rule compliance."""
@@ -318,8 +318,8 @@ def validate(ctx: click.Context, input_file: Path) -> None:
     help="Filter entries by type",
 )
 @click.option("--sort", is_flag=True, help="Sort entries hierarchically")
-@cli_measure_time
-@cli_handle_keyboard_interrupt
+@cli_measure_time  # type: ignore[misc]
+@cli_handle_keyboard_interrupt  # type: ignore[misc]
 @click.pass_context
 def transform(
     ctx: click.Context,
@@ -363,7 +363,7 @@ def transform(
 @cli.command()
 @click.argument("input_file", type=click.Path(exists=True, path_type=Path))
 @click.pass_context
-@cli_handle_keyboard_interrupt
+@cli_handle_keyboard_interrupt  # type: ignore[misc]
 def stats(ctx: click.Context, input_file: Path) -> None:
     """Display comprehensive statistics for LDIF file."""
     service: FlextLdifCliService = ctx.obj["cli_service"]

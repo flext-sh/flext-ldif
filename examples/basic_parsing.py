@@ -38,7 +38,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from flext_core import get_logger
+
 from flext_ldif import FlextLdifAPI, FlextLdifConfig, FlextLdifEntry
+
+logger = get_logger(__name__)
 
 
 def main() -> None:
@@ -76,8 +80,8 @@ def main() -> None:
 
         # Validate domain rules with railway programming
         first_entry.validate_business_rules().tap(
-            lambda _: print("   ✅ Domain validation passed")
-        ).tap_error(lambda error: print(f"   ❌ Domain validation failed: {error}"))
+            lambda _: logger.info("   ✅ Domain validation passed")
+        ).tap_error(lambda error: logger.error(f"   ❌ Domain validation failed: {error}"))
 
     # Demonstrate filtering with railway programming
     output_file = Path(__file__).parent / "output_basic.ldif"
@@ -90,8 +94,8 @@ def main() -> None:
     api.filter_persons(entries).tap(process_person_entries).flat_map(
         lambda person_entries: api.write_file(person_entries, str(output_file))
     ).tap(
-        lambda _: print("✅ Successfully wrote filtered entries to output file")
-    ).tap_error(lambda error: print(f"❌ Operation failed: {error}"))
+        lambda _: logger.info("✅ Successfully wrote filtered entries to output file")
+    ).tap_error(lambda error: logger.error(f"❌ Operation failed: {error}"))
 
 
 if __name__ == "__main__":

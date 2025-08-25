@@ -10,6 +10,8 @@ import tempfile
 import time
 from pathlib import Path
 
+from flext_core import get_logger
+
 from flext_ldif import (
     FlextLdifAPI,
     FlextLdifConfig,
@@ -19,6 +21,8 @@ from flext_ldif import (
     flext_ldif_validate,
     flext_ldif_write,
 )
+
+logger = get_logger(__name__)
 
 
 def example_basic_ldif_processing() -> None:
@@ -56,13 +60,13 @@ uid: janesmith
 
     if entries:
         # Validate entries with railway programming
-        api.validate(entries).tap(lambda _: print("Validation successful")).tap_error(
-            lambda error: print(f"Validation failed: {error}")
+        api.validate(entries).tap(lambda _: logger.info("Validation successful")).tap_error(
+            lambda error: logger.error(f"Validation failed: {error}")
         )
 
         # Write back to LDIF with railway programming
-        api.write(entries).tap(lambda _: print("Write successful")).tap_error(
-            lambda error: print(f"Write failed: {error}")
+        api.write(entries).tap(lambda _: logger.info("Write successful")).tap_error(
+            lambda error: logger.error(f"Write failed: {error}")
         )
 
 
@@ -180,7 +184,7 @@ mail: test.user@filetest.com
         api = FlextLdifAPI()
         api.parse_file(input_path).flat_map(api.filter_persons).flat_map(
             lambda person_entries: api.write_file(person_entries, output_path)
-        ).tap(lambda _: print(f"Wrote filtered entries to {output_path}"))
+        ).tap(lambda _: logger.info(f"Wrote filtered entries to {output_path}"))
 
         # Using API for file operations with railway programming
         api.parse_file(input_path).tap(lambda _: None)
