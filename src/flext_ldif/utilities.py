@@ -108,13 +108,13 @@ class FlextLdifTransformerService(FlextDomainService["list[FlextLdifEntry]"]):
 
 def flext_ldif_parse(content: str) -> list[FlextLdifEntry]:
     """Parse LDIF content using default configuration.
-    
+
     Args:
         content: LDIF content string to parse
-        
+
     Returns:
         List of parsed LDIF entries
-        
+
     Raises:
         FlextLdifParseError: If parsing fails
 
@@ -131,13 +131,13 @@ def flext_ldif_parse(content: str) -> list[FlextLdifEntry]:
 
 def flext_ldif_validate(entries: list[FlextLdifEntry]) -> bool:
     """Validate LDIF entries using default configuration.
-    
+
     Args:
         entries: List of LDIF entries to validate
-        
+
     Returns:
         True if all entries are valid
-        
+
     Raises:
         FlextLdifValidationError: If validation fails
 
@@ -155,13 +155,13 @@ def flext_ldif_validate(entries: list[FlextLdifEntry]) -> bool:
 
 def flext_ldif_write(entries: list[FlextLdifEntry]) -> str:
     """Write LDIF entries to string format.
-    
+
     Args:
         entries: List of LDIF entries to write
-        
+
     Returns:
         LDIF content as string
-        
+
     Raises:
         FlextLdifError: If writing fails
 
@@ -178,7 +178,7 @@ def flext_ldif_write(entries: list[FlextLdifEntry]) -> str:
 
 def flext_ldif_get_api() -> FlextLdifAPI:
     """Get default FLEXT LDIF API instance.
-    
+
     Returns:
         FlextLdifAPI instance configured with default settings
 
@@ -939,6 +939,10 @@ __all__ = [
     "FlextLdifAttributesDict",
     "FlextLdifDNDict",
     "FlextLdifEntryDict",
+    # Transformer Service
+    "FlextLdifTransformerService",
+    # Utilities Class
+    "FlextLdifUtilities",
     "LDAPObjectClass",
     "LDIFContent",
     "LDIFLines",
@@ -947,18 +951,11 @@ __all__ = [
     "SequenceType",
     "StringList",
     "ValidationLevel",
-
-    # Transformer Service
-    "FlextLdifTransformerService",
-
+    "flext_ldif_get_api",
     # Helper Functions
     "flext_ldif_parse",
     "flext_ldif_validate",
     "flext_ldif_write",
-    "flext_ldif_get_api",
-
-    # Utilities Class
-    "FlextLdifUtilities",
 ]
 
 # Note: Forward references will be resolved when models are imported

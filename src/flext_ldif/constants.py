@@ -158,16 +158,23 @@ class FlextLdifValidationMessages:
     # DN Validation Messages
     DN_EMPTY_ERROR: Final[str] = "DN must be a non-empty string"
     DN_CANNOT_BE_EMPTY: Final[str] = "DN cannot be empty"
+    EMPTY_DN: Final[str] = "DN cannot be empty"
     DN_INVALID_COMPONENT: Final[str] = "Invalid DN component"
     DN_MISSING_EQUALS: Final[str] = "DN must contain at least one attribute=value pair"
     DN_FORMAT_INVALID: Final[str] = "DN format is invalid"
     DN_INVALID_FORMAT: Final[str] = "Invalid DN format: {dn}"
+    INVALID_DN: Final[str] = "Invalid DN format: {dn}"
+    DN_TOO_SHORT: Final[str] = (
+        "DN has {components} components, minimum required: {minimum}"
+    )
 
     # Entry Validation Messages
     ENTRY_VALIDATION_FAILED: Final[str] = "Entry validation failed"
     ENTRY_MISSING_DN: Final[str] = "Entry must have a DN"
+    MISSING_DN: Final[str] = "Entry must have a DN"
     ENTRY_MISSING_ATTRIBUTES: Final[str] = "LDIF entry must have at least one attribute"
     ENTRY_MISSING_OBJECTCLASS: Final[str] = "Entry must have objectClass attribute"
+    MISSING_OBJECTCLASS: Final[str] = "Entry missing required objectClass attribute"
     ENTRY_MISSING_REQUIRED_OBJECTCLASS: Final[str] = (
         "Entry missing required objectClass attribute"
     )
@@ -191,6 +198,7 @@ class FlextLdifValidationMessages:
         "Invalid LDAP attribute name format: {attr_name}"
     )
     INVALID_ATTRIBUTE_NAME: Final[str] = "Invalid attribute name format: {attr_name}"
+    INVALID_ATTRIBUTES: Final[str] = "Invalid attributes format"
 
     # Configuration Validation Messages
     INVALID_CONFIGURATION: Final[str] = "Invalid configuration"

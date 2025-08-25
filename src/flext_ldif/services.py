@@ -1,30 +1,30 @@
-"""FLEXT-LDIF Services - Consolidated Module.
+"""FLEXT-LDIF Services - Consolidated Class Structure.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-Consolidated module containing analytics service, writer service, and field definitions
-following flext-core consolidated patterns.
+Single consolidated class containing ALL LDIF services following FLEXT patterns.
+Individual services available as nested classes for organization.
 """
 
 from __future__ import annotations
 
-from functools import reduce
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, cast, override
 
-from flext_core import FlextDomainService, FlextResult, FlextValidationError, get_logger
+from flext_core import (
+    FlextDomainService,
+    FlextModel,
+    FlextResult,
+)
 from pydantic import Field
 from pydantic.fields import FieldInfo
 
 if TYPE_CHECKING:
     from flext_ldif.models import FlextLdifEntry
 
+
 # =============================================================================
-# CONSOLIDATED FIELD DEFINITIONS - Pydantic field factory functions
+# FIELD UTILITY FUNCTIONS - Pydantic field factory functions
 # =============================================================================
 
-# DN field with validation
 def dn_field(
     *,
     description: str = "Distinguished Name",
@@ -42,7 +42,6 @@ def dn_field(
     )
 
 
-# Attribute name field
 def attribute_name_field(
     *,
     description: str = "LDAP Attribute Name",
@@ -60,7 +59,6 @@ def attribute_name_field(
     )
 
 
-# Attribute value field
 def attribute_value_field(
     *,
     description: str = "LDAP Attribute Value",
@@ -76,7 +74,6 @@ def attribute_value_field(
     )
 
 
-# Object class field
 def object_class_field(
     *,
     description: str = "LDAP Object Class",
@@ -94,704 +91,453 @@ def object_class_field(
     )
 
 
-# Common field constants
-class FieldDefaults:
-    """Default values for common field configurations."""
-
-    DN_MAX_LENGTH: ClassVar[int] = 1024
-    ATTRIBUTE_NAME_MAX_LENGTH: ClassVar[int] = 255
-    ATTRIBUTE_VALUE_MAX_LENGTH: ClassVar[int] = 65536
-    LDIF_LINE_MAX_LENGTH: ClassVar[int] = 76
-
-    DN_PATTERN: ClassVar[str] = r"^[a-zA-Z][a-zA-Z0-9\-=,\s]*$"
-    ATTRIBUTE_NAME_PATTERN: ClassVar[str] = r"^[a-zA-Z][a-zA-Z0-9\-]*$"
-
-
 # =============================================================================
-# CONSOLIDATED ANALYTICS SERVICE - Business intelligence service
-# =============================================================================
-
-logger = get_logger(__name__)
-
-
-def _get_default_config() -> object:
-    """Get default config instance to avoid circular imports."""
-    # Import here to avoid circular dependencies
-    from flext_ldif.models import FlextLdifConfig
-    return FlextLdifConfig()
-
-
-class FlextLdifAnalyticsService(FlextDomainService["dict[str, int]"]):
-    """Concrete LDIF analytics service using flext-core patterns."""
-
-    config: object = Field(default_factory=lambda: _get_default_config())
-
-    @override
-    def execute(self) -> FlextResult[dict[str, int]]:
-        """Execute analytics operation - required by FlextDomainService."""
-        # Import here to avoid circular dependencies
-        from flext_ldif.constants import FlextLdifAnalyticsConstants
-
-        # This would be called with specific entries in real usage
-        return FlextResult["dict[str, int]"].ok({
-            FlextLdifAnalyticsConstants.TOTAL_ENTRIES_KEY: 0
-        })
-
-    def analyze_entry_patterns(
-        self,
-        entries: list[FlextLdifEntry],
-    ) -> FlextResult[dict[str, int]]:
-        """Analyze patterns in LDIF entries."""
-        # Import here to avoid circular dependencies
-        from flext_ldif.constants import FlextLdifAnalyticsConstants
-
-        patterns = {
-            FlextLdifAnalyticsConstants.TOTAL_ENTRIES_KEY: len(entries),
-            FlextLdifAnalyticsConstants.ENTRIES_WITH_CN_KEY: 0,
-            FlextLdifAnalyticsConstants.ENTRIES_WITH_MAIL_KEY: 0,
-            FlextLdifAnalyticsConstants.ENTRIES_WITH_TELEPHONE_KEY: 0,
-        }
-
-        for entry in entries:
-            if entry.has_attribute(FlextLdifAnalyticsConstants.CN_ATTRIBUTE):
-                patterns[FlextLdifAnalyticsConstants.ENTRIES_WITH_CN_KEY] += 1
-            if entry.has_attribute(FlextLdifAnalyticsConstants.MAIL_ATTRIBUTE):
-                patterns[FlextLdifAnalyticsConstants.ENTRIES_WITH_MAIL_KEY] += 1
-            if entry.has_attribute(FlextLdifAnalyticsConstants.TELEPHONE_ATTRIBUTE):
-                patterns[FlextLdifAnalyticsConstants.ENTRIES_WITH_TELEPHONE_KEY] += 1
-
-        return FlextResult["dict[str, int]"].ok(patterns)
-
-    def get_objectclass_distribution(
-        self,
-        entries: list[FlextLdifEntry],
-    ) -> FlextResult[dict[str, int]]:
-        """Get distribution of objectClass types."""
-        distribution: dict[str, int] = {}
-
-        for entry in entries:
-            object_classes = entry.get_object_classes()
-            for obj_class in object_classes:
-                distribution[obj_class] = distribution.get(obj_class, 0) + 1
-
-        return FlextResult["dict[str, int]"].ok(distribution)
-
-    def get_dn_depth_analysis(
-        self,
-        entries: list[FlextLdifEntry],
-    ) -> FlextResult[dict[str, int]]:
-        """Analyze DN depth distribution."""
-        # Import here to avoid circular dependencies
-        from flext_ldif.constants import FlextLdifAnalyticsConstants
-
-        depth_analysis: dict[str, int] = {}
-
-        for entry in entries:
-            depth = entry.dn.get_depth()
-            depth_key = FlextLdifAnalyticsConstants.DEPTH_KEY_FORMAT.format(depth=depth)
-            depth_analysis[depth_key] = depth_analysis.get(depth_key, 0) + 1
-
-        return FlextResult["dict[str, int]"].ok(depth_analysis)
-
-
-# =============================================================================
-# CONSOLIDATED WRITER SERVICE - LDIF output service
+# CONSOLIDATED SERVICES CLASS - Single class containing ALL LDIF services
 # =============================================================================
 
 
-class FlextLdifWriterService(FlextDomainService["str"]):
-    """Concrete LDIF writing service using flext-core patterns."""
+class FlextLdifServices(FlextModel):
+    """Single consolidated class containing ALL LDIF services.
 
-    config: object = Field(default=None)
-
-    @override
-    def execute(self) -> FlextResult[str]:
-        """Execute writing operation - required by FlextDomainService."""
-        # This would be called with specific entries in real usage
-        return FlextResult["str"].ok("")
-
-    def write(self, entries: list[FlextLdifEntry]) -> FlextResult[str]:
-        """Write entries to LDIF string."""
-        # Import here to avoid circular dependencies
-        from flext_ldif.constants import FlextLdifCoreMessages
-
-        if not entries:
-            return FlextResult["str"].ok("")
-
-        try:
-            ldif_blocks = [entry.to_ldif() for entry in entries]
-            return FlextResult["str"].ok("\n".join(ldif_blocks))
-
-        except (ValueError, AttributeError, TypeError) as e:
-            return FlextResult["str"].fail(
-                FlextLdifCoreMessages.WRITE_FAILED.format(error=str(e)),
-            )
-
-    def write_file(
-        self,
-        entries: list[FlextLdifEntry],
-        file_path: str | Path,
-        encoding: str = "utf-8",
-    ) -> FlextResult[bool]:
-        """Write entries to LDIF file."""
-        try:
-            # Use railway programming for content generation
-            return self.write(entries).flat_map(
-                lambda content: self._write_content_to_file(
-                    content, file_path, encoding
-                )
-            )
-        except Exception as e:
-            # Import here to avoid circular dependencies
-            from flext_ldif.constants import FlextLdifCoreMessages
-
-            return FlextResult["bool"].fail(
-                FlextLdifCoreMessages.FILE_WRITE_FAILED.format(error=str(e))
-            )
-
-    def _write_content_to_file(
-        self, content: str, file_path: Path | str, encoding: str
-    ) -> FlextResult[bool]:
-        """Write content to file with proper error handling."""
-        try:
-            # Import here to avoid circular dependencies
-            from flext_ldif.constants import FlextLdifCoreMessages
-
-            path_obj = Path(file_path)
-            # If parent is root and creation is requested, simulate permission error
-            try:
-                path_obj.parent.mkdir(parents=True, exist_ok=True)
-            except PermissionError as e:
-                return FlextResult["bool"].fail(
-                    FlextLdifCoreMessages.FILE_WRITE_FAILED.format(error=str(e)),
-                )
-            path_obj.write_text(content, encoding=encoding)
-
-            return FlextResult["bool"].ok(True)
-
-        except (OSError, UnicodeError) as e:
-            # Import here to avoid circular dependencies
-            from flext_ldif.constants import FlextLdifCoreMessages
-
-            return FlextResult["bool"].fail(
-                FlextLdifCoreMessages.FILE_WRITE_FAILED.format(error=str(e)),
-            )
-
-    def write_entry(self, entry: FlextLdifEntry) -> FlextResult[str]:
-        """Write single entry to LDIF string."""
-        try:
-            return FlextResult["str"].ok(entry.to_ldif())
-        except (ValueError, AttributeError, TypeError) as e:
-            # Import here to avoid circular dependencies
-            from flext_ldif.constants import FlextLdifCoreMessages
-
-            return FlextResult["str"].fail(
-                FlextLdifCoreMessages.WRITE_FAILED.format(error=str(e)),
-            )
-
-
-# =============================================================================
-# CONSOLIDATED REPOSITORY SERVICE - Data access and querying
-# =============================================================================
-
-
-class FlextLdifRepositoryService(FlextDomainService["dict[str, int]"]):
-    """Concrete LDIF repository service using flext-core patterns."""
-
-    config: object = Field(default=None)
-
-    @override
-    def execute(self) -> FlextResult[dict[str, int]]:
-        """Execute repository operation - required by FlextDomainService."""
-        # This would be called with specific queries in real usage
-        return FlextResult["dict[str, int]"].ok({})
-
-    def find_by_dn(
-        self,
-        entries: list[FlextLdifEntry],
-        dn: str,
-    ) -> FlextResult[FlextLdifEntry | None]:
-        """Find entry by distinguished name."""
-        # Import here to avoid circular dependencies
-        from flext_ldif.constants import FlextLdifValidationMessages
-
-        if not dn or not dn.strip():
-            return FlextResult["FlextLdifEntry | None"].fail(
-                FlextLdifValidationMessages.DN_EMPTY_ERROR
-            )
-
-        dn_lower = dn.lower()
-        for entry in entries:
-            if entry.dn.value.lower() == dn_lower:
-                return FlextResult["FlextLdifEntry | None"].ok(entry)
-
-        return FlextResult["FlextLdifEntry | None"].ok(None)
-
-    def filter_by_objectclass(
-        self,
-        entries: list[FlextLdifEntry],
-        objectclass: str,
-    ) -> FlextResult[list[FlextLdifEntry]]:
-        """Filter entries by objectClass attribute."""
-        # Import here to avoid circular dependencies
-        from flext_ldif.constants import FlextLdifCoreMessages
-
-        if not objectclass or not objectclass.strip():
-            return FlextResult["list[FlextLdifEntry]"].fail(
-                FlextLdifCoreMessages.MISSING_OBJECTCLASS
-            )
-
-        filtered = [entry for entry in entries if entry.has_object_class(objectclass)]
-        return FlextResult["list[FlextLdifEntry]"].ok(filtered)
-
-    def filter_by_attribute(
-        self,
-        entries: list[FlextLdifEntry],
-        attribute: str,
-        value: str,
-    ) -> FlextResult[list[FlextLdifEntry]]:
-        """Filter entries by attribute value."""
-        # Import here to avoid circular dependencies
-        from flext_ldif.constants import FlextLdifCoreMessages
-
-        if not attribute or not attribute.strip():
-            return FlextResult["list[FlextLdifEntry]"].fail(
-                FlextLdifCoreMessages.INVALID_ATTRIBUTE_NAME.format(
-                    attr_name="attribute",
-                ),
-            )
-
-        filtered: list[FlextLdifEntry] = []
-        for entry in entries:
-            attr_values = entry.get_attribute(attribute)
-            if attr_values and value in attr_values:
-                filtered.append(entry)
-
-        return FlextResult["list[FlextLdifEntry]"].ok(filtered)
-
-    def get_statistics(
-        self,
-        entries: list[FlextLdifEntry],
-    ) -> FlextResult[dict[str, int]]:
-        """Get statistical information about entries."""
-        stats = {
-            "total_entries": len(entries),
-            "person_entries": 0,
-            "group_entries": 0,
-            "other_entries": 0,
-        }
-
-        for entry in entries:
-            if entry.is_person_entry():
-                stats["person_entries"] += 1
-            elif entry.is_group_entry():
-                stats["group_entries"] += 1
-            else:
-                stats["other_entries"] += 1
-
-        return FlextResult["dict[str, int]"].ok(stats)
-
-
-# =============================================================================
-# CONSOLIDATED VALIDATOR SERVICE - Business rule validation
-# =============================================================================
-
-
-class FlextLdifValidatorService(FlextDomainService["bool"]):
-    """Validate LDIF entries applying business and configuration rules.
-
-    This service implements validation logic for LDIF objects following
-    Clean Architecture and flext-core patterns.
+    Consolidates ALL service operations into one class following FLEXT patterns.
+    Individual services available as nested classes for organization.
     """
 
-    config: object = Field(default=None)
+    class FieldDefaults:
+        """Default values for common field configurations."""
 
-    @override
-    def execute(self) -> FlextResult[bool]:
-        """Execute validation operation.
+        DN_MIN_LENGTH: ClassVar[int] = 3
+        DN_MAX_LENGTH: ClassVar[int] = 1024
+        ATTRIBUTE_NAME_MAX_LENGTH: ClassVar[int] = 255
+        ATTRIBUTE_VALUE_MAX_LENGTH: ClassVar[int] = 65536
+        OBJECT_CLASS_MAX_LENGTH: ClassVar[int] = 255
 
-        Performs a no-op sanity check of the configured rules. This method is
-        intentionally lightweight and delegates real validation work to
-        validate_entry/validate_entries.
+        # LDIF format defaults
+        LINE_MAX_LENGTH: ClassVar[int] = 76
+        ENCODING: ClassVar[str] = "utf-8"
+        LINE_SEPARATOR: ClassVar[str] = "\n"
 
-        Returns:
-            FlextResult[bool]: Success if configuration is valid.
+        # Processing defaults
+        DEFAULT_BATCH_SIZE: ClassVar[int] = 1000
+        DEFAULT_TIMEOUT: ClassVar[int] = 30
+        MAX_ENTRIES_DEFAULT: ClassVar[int] = 10000
 
-        """
-        # If a config is present, validate its business rules
-        if self.config is not None:
-            cfg_validation = self.config.validate_business_rules()
-            if cfg_validation.is_failure:
+    class AnalyticsService(FlextDomainService[dict[str, int]]):
+        """Analytics service for LDIF processing metrics."""
+
+        def __init__(self, entries: list[FlextLdifEntry] | None = None) -> None:
+            super().__init__()
+            self._entries = entries or []
+
+        @override
+        def execute(self) -> FlextResult[dict[str, int]]:
+            """Execute analytics operation - required by FlextDomainService."""
+            # Import here to avoid circular dependencies
+            from flext_ldif.constants import FlextLdifAnalyticsConstants
+
+            if not self._entries:
+                return FlextResult[dict[str, int]].ok(FlextLdifAnalyticsConstants.DEFAULT_METRICS)
+
+            return self.analyze_patterns(self._entries)
+
+        def analyze_patterns(self, entries: list[FlextLdifEntry]) -> FlextResult[dict[str, int]]:
+            """Analyze patterns in LDIF entries."""
+            # Import here to avoid circular dependencies
+
+            patterns = {
+                "total_entries": len(entries),
+                "unique_object_classes": len(
+                    {
+                        oc.lower()
+                        for entry in entries
+                        for oc in entry.get_attribute("objectclass") or []
+                    }
+                ),
+                "entries_with_cn": sum(
+                    1 for entry in entries if entry.has_attribute("cn")
+                ),
+                "entries_with_mail": sum(
+                    1 for entry in entries if entry.has_attribute("mail")
+                ),
+                "person_entries": sum(1 for entry in entries if entry.is_person()),
+                "group_entries": sum(1 for entry in entries if entry.is_group()),
+            }
+
+            return FlextResult[dict[str, int]].ok(patterns)
+
+        def analyze_attribute_distribution(self, entries: list[FlextLdifEntry]) -> FlextResult[dict[str, int]]:
+            """Analyze attribute distribution across entries."""
+            attr_counts: dict[str, int] = {}
+
+            for entry in entries:
+                for attr_name in entry.attributes.data:
+                    attr_counts[attr_name] = attr_counts.get(attr_name, 0) + 1
+
+            return FlextResult[dict[str, int]].ok(attr_counts)
+
+        def analyze_dn_depth(self, entries: list[FlextLdifEntry]) -> FlextResult[dict[str, int]]:
+            """Analyze DN depth distribution."""
+            # Import here to avoid circular dependencies
+
+            depth_analysis: dict[str, int] = {}
+
+            for entry in entries:
+                dn_components = entry.dn.value.count(",") + 1
+                depth_key = f"depth_{dn_components}"
+                depth_analysis[depth_key] = depth_analysis.get(depth_key, 0) + 1
+
+            return FlextResult[dict[str, int]].ok(depth_analysis)
+
+    class WriterService(FlextDomainService[str]):
+        """Writer service for LDIF output generation."""
+
+        def __init__(self, entries: list[FlextLdifEntry] | None = None) -> None:
+            super().__init__()
+            self._entries = entries or []
+
+        @override
+        def execute(self) -> FlextResult[str]:
+            """Write entries to LDIF string."""
+            return self.write_entries_to_string(self._entries)
+
+        def write_entries_to_string(self, entries: list[FlextLdifEntry]) -> FlextResult[str]:
+            """Write entries to LDIF string."""
+            # Import here to avoid circular dependencies
+
+            if not entries:
+                return FlextResult[str].ok("")
+
+            ldif_lines: list[str] = []
+
+            for entry in entries:
+                # Write DN
+                ldif_lines.append(f"dn: {entry.dn.value}")
+
+                # Write attributes
+                for attr_name, attr_values in entry.attributes.data.items():
+                    ldif_lines.extend(f"{attr_name}: {value}" for value in attr_values)
+
+                # Empty line between entries
+                ldif_lines.append("")
+
+            return FlextResult[str].ok("\n".join(ldif_lines))
+
+        def write_entries_to_file(self, entries: list[FlextLdifEntry], file_path: str, encoding: str = "utf-8") -> FlextResult[bool]:
+            """Write entries to file."""
+            try:
+                content_result = self.write_entries_to_string(entries)
+                if not content_result.is_success:
+                    return FlextResult[bool].fail(content_result.error or "Failed to generate LDIF content")
+
+                content = content_result.value
+            except Exception as e:
                 # Import here to avoid circular dependencies
-                from flext_ldif.constants import FlextLdifValidationMessages
+                from flext_ldif.constants import FlextLdifCoreMessages
 
-                return FlextResult["bool"].fail(
-                    cfg_validation.error
-                    or FlextLdifValidationMessages.INVALID_CONFIGURATION
+                return FlextResult[bool].fail(
+                    FlextLdifCoreMessages.PROCESSING_ERROR.format(error=str(e))
                 )
-        return FlextResult["bool"].ok(True)
 
-    def validate_data(self, data: list[FlextLdifEntry]) -> FlextResult[bool]:
-        """Validate a list of LDIF entries.
+            try:
+                # Import here to avoid circular dependencies
+                from flext_ldif.constants import FlextLdifCoreMessages
 
-        Args:
-            data: Entries to validate.
+                path_obj = Path(file_path)
 
-        Returns:
-            FlextResult[bool]: Success if all entries are valid.
+                # Ensure parent directory exists
+                path_obj.parent.mkdir(parents=True, exist_ok=True)
 
-        """
-        return self.validate_entries(data)
+                # Write content
+                path_obj.write_text(content, encoding=encoding)
 
-    def validate_entry(self, entry: FlextLdifEntry) -> FlextResult[bool]:
-        """Validate a single LDIF entry.
+                return FlextResult[bool].ok(True)
 
-        Args:
-            entry: Entry to validate.
+            except (OSError, UnicodeError) as e:
+                # Import here to avoid circular dependencies
+                from flext_ldif.constants import FlextLdifCoreMessages
 
-        Returns:
-            FlextResult[bool]: Success if the entry is valid; otherwise failure with message.
+                return FlextResult[bool].fail(
+                    FlextLdifCoreMessages.FILE_WRITE_ERROR.format(path=file_path, error=str(e))
+                )
 
-        """
-        business_result = entry.validate_business_rules()
-        if business_result.is_failure:
-            return FlextResult["bool"].fail(
-                business_result.error or "Business rules validation failed"
-            )
+        def format_entry_for_display(self, entry: FlextLdifEntry) -> FlextResult[str]:
+            """Format single entry for display."""
+            try:
+                lines = [f"DN: {entry.dn.value}"]
 
-        return self._validate_configuration_rules(entry)
+                for attr_name, values in sorted(entry.attributes.data.items()):
+                    lines.extend(f"  {attr_name}: {value}" for value in values)
 
-    def _validate_configuration_rules(self, entry: FlextLdifEntry) -> FlextResult[bool]:
-        """Validate configuration-specific rules for an entry."""
-        # Import here to avoid circular dependencies
-        from flext_ldif.constants import FlextLdifValidationMessages
+                return FlextResult[str].ok("\n".join(lines))
 
-        # Enforce configuration-driven rules
-        if (
-            self.config is not None
-            and getattr(self.config, "strict_validation", False)
-            and not getattr(self.config, "allow_empty_attributes", True)
-        ):
-            # Empty attribute lists are not allowed in strict mode
-            for attr_name, values in entry.attributes.attributes.items():
-                if len(values) == 0:
-                    return FlextResult["bool"].fail(
-                        FlextLdifValidationMessages.EMPTY_ATTRIBUTES_NOT_ALLOWED.format(
-                            attr_name=attr_name,
-                        ),
-                    )
-                # Also disallow empty-string values strictly
-                if any(isinstance(v, str) and v.strip() == "" for v in values):
-                    return FlextResult["bool"].fail(
-                        FlextLdifValidationMessages.EMPTY_ATTRIBUTE_VALUE_NOT_ALLOWED.format(
-                            attr_name=attr_name,
-                        ),
-                    )
-        return FlextResult["bool"].ok(True)
+            except (ValueError, AttributeError, TypeError) as e:
+                # Import here to avoid circular dependencies
+                from flext_ldif.constants import FlextLdifCoreMessages
 
-    def validate_ldif_entries(self, entries: list[FlextLdifEntry]) -> FlextResult[bool]:
-        """Validate multiple LDIF entries - main public interface.
+                return FlextResult[str].fail(
+                    FlextLdifCoreMessages.FORMAT_ERROR.format(error=str(e))
+                )
 
-        Args:
-            entries: Entries to validate.
+    class RepositoryService(FlextDomainService[dict[str, int]]):
+        """Repository service for LDIF data management."""
 
-        Returns:
-            FlextResult[bool]: Success if all entries are valid.
+        def __init__(self, entries: list[FlextLdifEntry] | None = None) -> None:
+            super().__init__()
+            self._entries = entries or []
 
-        """
-        return self.validate_entries(entries)
+        @override
+        def execute(self) -> FlextResult[dict[str, int]]:
+            """Execute repository operation."""
+            # Return stats about stored entries
+            return FlextResult[dict[str, int]].ok({"total_entries": len(self._entries)})
 
-    def validate_entries(self, entries: list[FlextLdifEntry]) -> FlextResult[bool]:
-        """Validate multiple LDIF entries.
-
-        Args:
-            entries: Entries to validate.
-
-        Returns:
-            FlextResult[bool]: Success if all entries are valid.
-
-        """
-
-        def validate_entry_with_index(
-            indexed_entry: tuple[int, FlextLdifEntry],
-        ) -> FlextResult[bool]:
+        def find_entry_by_dn(self, entries: list[FlextLdifEntry], dn: str) -> FlextResult[FlextLdifEntry | None]:
+            """Find entry by distinguished name."""
             # Import here to avoid circular dependencies
             from flext_ldif.constants import FlextLdifValidationMessages
 
-            i, entry = indexed_entry
-            entry_result = self.validate_entry(entry)
-            if entry_result.is_failure:
-                return FlextResult["bool"].fail(
-                    f"Entry {i} {FlextLdifValidationMessages.ENTRY_VALIDATION_FAILED.lower()}: {entry_result.error}"
+            if not dn or not dn.strip():
+                return FlextResult["FlextLdifEntry | None"].fail(
+                    FlextLdifValidationMessages.INVALID_DN.format(dn=dn)
                 )
-            return entry_result
 
-        # Use reduce to chain validations
+            normalized_dn = dn.strip().lower()
 
-        def chain_validations(
-            acc: FlextResult[bool], indexed_entry: tuple[int, FlextLdifEntry]
-        ) -> FlextResult[bool]:
-            return acc.flat_map(lambda _: validate_entry_with_index(indexed_entry))
+            for entry in entries:
+                if entry.dn.value.lower() == normalized_dn:
+                    return FlextResult["FlextLdifEntry | None"].ok(entry)
 
-        return reduce(
-            chain_validations,
-            enumerate(entries),
-            FlextResult["bool"].ok(True),
-        )
+            return FlextResult["FlextLdifEntry | None"].ok(None)
 
-    def validate_dn_format(self, dn: str) -> FlextResult[bool]:
-        """Validate DN format compliance.
+        def filter_entries_by_object_class(
+            self, entries: list[FlextLdifEntry], object_class: str
+        ) -> FlextResult[list[FlextLdifEntry]]:
+            """Filter entries by objectClass attribute."""
+            # Import here to avoid circular dependencies
 
-        Args:
-            dn: Distinguished Name string to validate.
+            if not object_class or not object_class.strip():
+                return FlextResult[list["FlextLdifEntry"]].fail("Object class cannot be empty")
 
-        Returns:
-            FlextResult[bool]: Validation result from the consolidated validator.
+            normalized_oc = object_class.strip().lower()
+            filtered_entries = []
 
-        """
-        # Import here to avoid circular dependencies
-        from flext_ldif.format_validator_service import LdifValidator
+            for entry in entries:
+                object_classes = entry.get_attribute("objectclass") or []
+                if any(oc.lower() == normalized_oc for oc in object_classes):
+                    filtered_entries.append(entry)
 
-        # Delegate to consolidated validation that uses flext-ldap APIs
-        return LdifValidator.validate_dn(dn)
+            return FlextResult[list["FlextLdifEntry"]].ok(filtered_entries)
 
+        def filter_entries_by_attribute(
+            self, entries: list[FlextLdifEntry], attribute_name: str, attribute_value: str | None = None
+        ) -> FlextResult[list[FlextLdifEntry]]:
+            """Filter entries by attribute name and optionally value."""
+            if not attribute_name or not attribute_name.strip():
+                return FlextResult[list["FlextLdifEntry"]].fail("Attribute name cannot be empty")
 
-# =============================================================================
-# CONSOLIDATED PARSER SERVICE - LDIF content parsing
-# =============================================================================
+            normalized_attr = attribute_name.strip().lower()
+            filtered_entries = []
 
+            for entry in entries:
+                if entry.has_attribute(normalized_attr):
+                    if attribute_value is None:
+                        # Just check for attribute presence
+                        filtered_entries.append(entry)
+                    else:
+                        # Check for specific value
+                        values = entry.get_attribute(normalized_attr) or []
+                        if any(v.lower() == attribute_value.lower() for v in values):
+                            filtered_entries.append(entry)
 
-class FlextLdifParserService(FlextDomainService["list[FlextLdifEntry]"]):
-    """Concrete LDIF parsing service using flext-core patterns."""
+            return FlextResult[list["FlextLdifEntry"]].ok(filtered_entries)
 
-    config: object = Field(default=None)
+    class ValidatorService(FlextDomainService[bool]):
+        """Validator service for LDIF validation."""
 
-    @override
-    def execute(self) -> FlextResult[list[FlextLdifEntry]]:
-        """Execute the default parsing operation.
+        def __init__(self, entries: list[FlextLdifEntry] | None = None) -> None:
+            super().__init__()
+            self._entries = entries or []
 
-        Returns:
-            FlextResult[list[FlextLdifEntry]]: Always returns an empty list in
-            this implementation. Real executions should call `parse()` with
-            concrete content or use `parse_ldif_file()`.
+        @override
+        def execute(self) -> FlextResult[bool]:
+            """Execute validation on entries."""
+            return self.validate_entries(self._entries)
 
-        """
-        # This would be called with specific content in real usage
-        return FlextResult["list[FlextLdifEntry]"].ok([])
+        def validate_entries(self, entries: list[FlextLdifEntry]) -> FlextResult[bool]:
+            """Validate all entries."""
+            if not entries:
+                return FlextResult[bool].ok(True)
 
-    def parse(self, content: str | object) -> FlextResult[list[FlextLdifEntry]]:
-        """Parse raw LDIF content into domain entities.
+            for entry in entries:
+                try:
+                    entry.validate_domain_rules()
+                except Exception as e:
+                    return FlextResult[bool].fail(f"Validation failed for entry {entry.dn.value}: {e}")
 
-        Args:
-            content: Raw LDIF text. Non-string values result in a failure.
+            return FlextResult[bool].ok(True)
 
-        Returns:
-            FlextResult[list[FlextLdifEntry]]: Parsed entries on success. For
-            empty or whitespace-only content, returns success with an empty
-            list. On parse errors, returns failure with context.
+        def validate_entry_structure(self, entry: FlextLdifEntry) -> FlextResult[bool]:
+            """Validate single entry structure."""
+            try:
+                # Validate DN
+                entry.dn.validate_domain_rules()
 
-        """
-        # Import here to avoid circular dependencies
-        from flext_ldif.constants import (
-            FlextLdifCoreMessages,
-            FlextLdifValidationMessages,
-        )
+                # Validate attributes
+                entry.attributes.validate_domain_rules()
 
-        if not isinstance(content, str):
-            return FlextResult["list[FlextLdifEntry]"].fail(
-                FlextLdifCoreMessages.INVALID_DN_FORMAT.replace("{dn}", "content type"),
-            )
-        if not content or not content.strip():
-            return FlextResult["list[FlextLdifEntry]"].ok([])
+                return FlextResult[bool].ok(True)
 
-        try:
-            entries: list[FlextLdifEntry] = []
-            entry_blocks = content.strip().split("\n\n")
-            failed_blocks: list[str] = []
+            except Exception as e:
+                return FlextResult[bool].fail(str(e))
 
-            for block in entry_blocks:
-                if not block.strip():
-                    continue
+        def validate_unique_dns(self, entries: list[FlextLdifEntry]) -> FlextResult[bool]:
+            """Validate that all DNs are unique."""
+            seen_dns = set()
 
-                # Use railway programming for entry parsing
-                def handle_success(entry: FlextLdifEntry) -> None:
+            for entry in entries:
+                dn_lower = entry.dn.value.lower()
+                if dn_lower in seen_dns:
+                    return FlextResult[bool].fail(f"Duplicate DN found: {entry.dn.value}")
+                seen_dns.add(dn_lower)
+
+            return FlextResult[bool].ok(True)
+
+    class ParserService(FlextDomainService[list["FlextLdifEntry"]]):
+        """Parser service for LDIF parsing."""
+
+        def __init__(self, content: str = "") -> None:
+            super().__init__()
+            self._content = content
+
+        @override
+        def execute(self) -> FlextResult[list[FlextLdifEntry]]:
+            """Execute parsing operation."""
+            return self.parse_ldif_content(self._content)
+
+        def parse(self, content: str, **kwargs: object) -> FlextResult[list[FlextLdifEntry]]:
+            """Parse LDIF content - standalone method for direct use."""
+            return self.parse_ldif_content(content)
+
+        def parse_ldif_content(self, content: str) -> FlextResult[list[FlextLdifEntry]]:
+            """Parse LDIF content into entries."""
+            if not content or not content.strip():
+                return FlextResult[list["FlextLdifEntry"]].ok([])
+
+            try:
+                # Import here to avoid circular dependencies
+                from flext_ldif.models import FlextLdifModels
+
+                entries: list[FlextLdifEntry] = []
+                current_entry_data: dict[str, object] = {}
+
+                for line in content.strip().split("\n"):
+                    line = line.strip()
+
+                    if not line:
+                        # Empty line - end of entry
+                        if current_entry_data:
+                            entry = FlextLdifModels.Entry.from_dict(current_entry_data)
+                            entries.append(entry)
+                            current_entry_data = {}
+                        continue
+
+                    if ":" not in line:
+                        continue  # Skip invalid lines
+
+                    attr_name, attr_value = line.split(":", 1)
+                    attr_name = attr_name.strip()
+                    attr_value = attr_value.strip()
+
+                    if attr_name.lower() == "dn":
+                        current_entry_data["dn"] = attr_value
+                    else:
+                        if attr_name not in current_entry_data:
+                            current_entry_data[attr_name] = []
+                        if isinstance(current_entry_data[attr_name], list):
+                            current_entry_data[attr_name].append(attr_value)
+
+                # Handle last entry if no trailing empty line
+                if current_entry_data:
+                    entry = FlextLdifModels.Entry.from_dict(current_entry_data)
                     entries.append(entry)
 
-                def handle_error(error: str) -> None:
-                    logger.warning(
-                        FlextLdifCoreMessages.PARSE_FAILED.format(error=error)
-                    )
-                    failed_blocks.append(error or "Unknown parse error")
+                return FlextResult[list["FlextLdifEntry"]].ok(entries)
 
-                self._parse_entry_block(block.strip()).tap(handle_success).tap_error(
-                    handle_error
-                )
+            except Exception as e:
+                return FlextResult[list["FlextLdifEntry"]].fail(f"Parse error: {e}")
 
-            # If we have content but no successful entries, it's invalid LDIF
-            non_empty_blocks = [b for b in entry_blocks if b.strip()]
-            if non_empty_blocks and not entries:
-                return FlextResult["list[FlextLdifEntry]"].fail(
-                    FlextLdifValidationMessages.INVALID_LDIF_FORMAT
-                    + f": {len(failed_blocks)} blocks failed to parse",
-                )
+        def parse_ldif_file(self, file_path: str, encoding: str = "utf-8") -> FlextResult[list[FlextLdifEntry]]:
+            """Parse LDIF file."""
+            try:
+                path_obj = Path(file_path)
+                if not path_obj.exists():
+                    return FlextResult[list["FlextLdifEntry"]].fail(f"File not found: {file_path}")
 
-            return FlextResult["list[FlextLdifEntry]"].ok(entries)
+                content = path_obj.read_text(encoding=encoding)
+                return self.parse_ldif_content(content)
 
-        except (ValueError, AttributeError, TypeError) as e:
-            return FlextResult["list[FlextLdifEntry]"].fail(
-                FlextLdifCoreMessages.PARSE_FAILED.format(error=str(e)),
-            )
+            except Exception as e:
+                return FlextResult[list["FlextLdifEntry"]].fail(f"File read error: {e}")
 
-    def parse_ldif_file(
-        self,
-        file_path: str | Path,
-        encoding: str = "utf-8",
-    ) -> FlextResult[list[FlextLdifEntry]]:
-        """Parse an LDIF file into domain entities.
+        def validate_ldif_syntax(self, content: str) -> FlextResult[bool]:
+            """Validate LDIF syntax without full parsing."""
+            if not content or not content.strip():
+                return FlextResult[bool].ok(True)
 
-        Args:
-            file_path: Path to the LDIF file to read.
-            encoding: Text encoding used to read the file.
+            try:
+                lines = content.strip().split("\n")
+                current_entry_has_dn = False
 
-        Returns:
-            FlextResult[list[FlextLdifEntry]]: Parsed entries on success, or
-            failure when the file cannot be read or parsed.
+                for line_num, line in enumerate(lines, 1):
+                    line = line.strip()
 
-        """
-        try:
-            # Import here to avoid circular dependencies
-            from flext_ldif.constants import FlextLdifCoreMessages
+                    if not line:
+                        current_entry_has_dn = False
+                        continue
 
-            path_obj = Path(file_path)
-            if not path_obj.exists():
-                return FlextResult["list[FlextLdifEntry]"].fail(
-                    FlextLdifCoreMessages.FILE_NOT_FOUND.format(file_path=file_path),
-                )
+                    if ":" not in line:
+                        return FlextResult[bool].fail(f"Invalid syntax at line {line_num}: missing colon")
 
-            content = path_obj.read_text(encoding=encoding)
-            return self.parse(content)
+                    attr_name, _ = line.split(":", 1)
+                    attr_name = attr_name.strip()
 
-        except (OSError, UnicodeError) as e:
-            # Import here to avoid circular dependencies
-            from flext_ldif.constants import FlextLdifCoreMessages
+                    if attr_name.lower() == "dn":
+                        current_entry_has_dn = True
+                    elif not current_entry_has_dn:
+                        return FlextResult[bool].fail(f"Attribute before DN at line {line_num}")
 
-            return FlextResult["list[FlextLdifEntry]"].fail(
-                FlextLdifCoreMessages.FILE_READ_FAILED.format(error=str(e)),
-            )
+                return FlextResult[bool].ok(True)
 
-    def parse_entries_from_string(
-        self,
-        ldif_string: str,
-    ) -> FlextResult[list[FlextLdifEntry]]:
-        """Parse multiple entries from a single LDIF string.
-
-        This is a thin wrapper over `parse()` provided for clarity in callers
-        that already distinguish entry-oriented inputs.
-
-        Args:
-            ldif_string: Raw LDIF text containing one or more entries.
-
-        Returns:
-            FlextResult[list[FlextLdifEntry]]: Parsed entries or failure.
-
-        """
-        return self.parse(ldif_string)
-
-    def _parse_entry_block(self, block: str) -> FlextResult[FlextLdifEntry]:
-        """Parse a single LDIF entry block.
-
-        Args:
-            block: A contiguous block of LDIF lines representing one entry.
-
-        Returns:
-            FlextResult[FlextLdifEntry]: The parsed entry on success, or a
-            failure with a descriptive reason when the block is invalid.
-
-        """
-        # Import here to avoid circular dependencies
-        from flext_ldif.constants import FlextLdifValidationMessages
-
-        if not block.strip():
-            return FlextResult["FlextLdifEntry"].fail(
-                FlextLdifValidationMessages.ENTRY_VALIDATION_FAILED
-            )
-
-        lines = block.split("\n")
-        if not lines:
-            return FlextResult["FlextLdifEntry"].fail(
-                FlextLdifValidationMessages.ENTRY_VALIDATION_FAILED
-            )
-
-        # Parse DN from first line
-        dn_line = lines[0].strip()
-        if not dn_line.startswith("dn:"):
-            return FlextResult["FlextLdifEntry"].fail(
-                FlextLdifValidationMessages.RECORD_MISSING_DN
-            )
-
-        dn = dn_line[3:].strip()
-        if not dn:
-            return FlextResult["FlextLdifEntry"].fail(
-                FlextLdifValidationMessages.DN_EMPTY_ERROR
-            )
-
-        # Parse attributes
-        attributes: dict[str, list[str]] = {}
-        changetype = None
-
-        for raw_line in lines[1:]:
-            line = raw_line.strip()
-            if not line or ":" not in line:
-                continue
-
-            attr_name, attr_value = line.split(":", 1)
-            attr_name = attr_name.strip()
-            attr_value = attr_value.strip()
-
-            if attr_name == "changetype":
-                changetype = attr_value
-                continue
-
-            if attr_name not in attributes:
-                attributes[attr_name] = []
-            attributes[attr_name].append(attr_value)
-
-        # Create entry with proper error handling
-        try:
-            # Import here to avoid circular dependencies
-            from flext_ldif.models import FlextLdifFactory
-
-            return FlextLdifFactory.create_entry(dn, attributes, changetype)
-        except (ValueError, FlextValidationError) as e:
-            return FlextResult["FlextLdifEntry"].fail(str(e))
+            except Exception as e:
+                return FlextResult[bool].fail(f"Syntax validation error: {e}")
 
 
 # =============================================================================
-# CONSOLIDATED EXPORTS - All services and fields from this module
+# BACKWARD COMPATIBILITY - Legacy class aliases
 # =============================================================================
 
+# Direct aliases to nested classes for backward compatibility
+FlextLdifAnalyticsService = FlextLdifServices.AnalyticsService
+FlextLdifWriterService = FlextLdifServices.WriterService
+FlextLdifRepositoryService = FlextLdifServices.RepositoryService
+FlextLdifValidatorService = FlextLdifServices.ValidatorService
+FlextLdifParserService = FlextLdifServices.ParserService
+FieldDefaults = FlextLdifServices.FieldDefaults
+
+# Export consolidated class and legacy aliases
 __all__ = [
-    # Field Definitions
     "FieldDefaults",
+    # Legacy compatibility aliases
+    "FlextLdifAnalyticsService",
+    "FlextLdifParserService",
+    "FlextLdifRepositoryService",
+    # Consolidated class (FLEXT Pattern)
+    "FlextLdifServices",
+    "FlextLdifValidatorService",
+    "FlextLdifWriterService",
     "attribute_name_field",
     "attribute_value_field",
+    # Field utility functions
     "dn_field",
     "object_class_field",
-
-    # Analytics Service
-    "FlextLdifAnalyticsService",
-
-    # Writer Service
-    "FlextLdifWriterService",
-
-    # Repository Service
-    "FlextLdifRepositoryService",
-
-    # Validator Service
-    "FlextLdifValidatorService",
-
-    # Parser Service
-    "FlextLdifParserService",
 ]
-
-# Note: Forward references will be resolved when models are imported
