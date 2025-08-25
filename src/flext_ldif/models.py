@@ -222,14 +222,15 @@ class FlextLdifModels(FlextModel):
 
                 # Ensure values is a list
                 if not isinstance(attr_values, list):
-                    attr_values = [str(attr_values)]
+                    values_list = [str(attr_values)]
+                else:
+                    values_list = attr_values
 
                 # Validate each value is string
                 validated_values = []
-                for value in attr_values:
-                    if not isinstance(value, str):
-                        value = str(value)
-                    validated_values.append(value)
+                for val in values_list:
+                    validated_val = str(val) if not isinstance(val, str) else val
+                    validated_values.append(validated_val)
 
                 validated[attr_name.lower()] = validated_values
 
@@ -464,8 +465,10 @@ class FlextLdifModels(FlextModel):
         @classmethod
         def validate_line_length(cls, v: int) -> int:
             """Validate line length limits."""
-            if v < 20 or v > 1000:
-                msg = f"Line length must be between 20 and 1000, got {v}"
+            min_line_length = 20
+            max_line_length = 1000
+            if v < min_line_length or v > max_line_length:
+                msg = f"Line length must be between {min_line_length} and {max_line_length}, got {v}"
                 raise FlextValidationError(msg)
             return v
 

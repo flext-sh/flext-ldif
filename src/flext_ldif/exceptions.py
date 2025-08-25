@@ -329,9 +329,9 @@ FlextLdifParseError = FlextLdifExceptions.ParseError
 FlextLdifEntryError = FlextLdifExceptions.EntryError
 FlextLdifConfigurationError = FlextLdifExceptions.ConfigurationError
 FlextLdifProcessingError = FlextLdifExceptions.ProcessingError
-FlextLdifConnectionError = FlextLdifExceptions.ConnectionError
+FlextLdifConnectionError = FlextLdifExceptions.FlextConnectionError
 FlextLdifAuthenticationError = FlextLdifExceptions.AuthenticationError
-FlextLdifTimeoutError = FlextLdifExceptions.TimeoutError
+FlextLdifTimeoutError = FlextLdifExceptions.FlextTimeoutError
 FlextLdifFileError = FlextLdifExceptions.FileError
 FlextLdifEntryValidationError = FlextLdifExceptions.EntryValidationError
 

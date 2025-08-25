@@ -14,6 +14,9 @@ from flext_core import (
     FlextModel,
     FlextResult,
 )
+
+# Constants for boolean literals
+SUCCESS_VALUE = True
 from pydantic import Field
 from pydantic.fields import FieldInfo
 
@@ -250,7 +253,7 @@ class FlextLdifServices(FlextModel):
                 # Write content
                 path_obj.write_text(content, encoding=encoding)
 
-                return FlextResult[bool].ok(True)
+                return FlextResult[bool].ok(SUCCESS_VALUE)
 
             except (OSError, UnicodeError) as e:
                 # Import here to avoid circular dependencies
@@ -366,7 +369,7 @@ class FlextLdifServices(FlextModel):
         def validate_entries(self, entries: list[FlextLdifEntry]) -> FlextResult[bool]:
             """Validate all entries."""
             if not entries:
-                return FlextResult[bool].ok(True)
+                return FlextResult[bool].ok(SUCCESS_VALUE)
 
             for entry in entries:
                 try:
@@ -385,7 +388,7 @@ class FlextLdifServices(FlextModel):
                 # Validate attributes
                 entry.attributes.validate_domain_rules()
 
-                return FlextResult[bool].ok(True)
+                return FlextResult[bool].ok(SUCCESS_VALUE)
 
             except Exception as e:
                 return FlextResult[bool].fail(str(e))
@@ -414,7 +417,7 @@ class FlextLdifServices(FlextModel):
             """Execute parsing operation."""
             return self.parse_ldif_content(self._content)
 
-        def parse(self, content: str, **kwargs: object) -> FlextResult[list[FlextLdifEntry]]:
+        def parse(self, content: str) -> FlextResult[list[FlextLdifEntry]]:
             """Parse LDIF content - standalone method for direct use."""
             return self.parse_ldif_content(content)
 
@@ -430,8 +433,8 @@ class FlextLdifServices(FlextModel):
                 entries: list[FlextLdifEntry] = []
                 current_entry_data: dict[str, object] = {}
 
-                for line in content.strip().split("\n"):
-                    line = line.strip()
+                for raw_line in content.strip().split("\n"):
+                    line = raw_line.strip()
 
                     if not line:
                         # Empty line - end of entry
@@ -482,14 +485,14 @@ class FlextLdifServices(FlextModel):
         def validate_ldif_syntax(self, content: str) -> FlextResult[bool]:
             """Validate LDIF syntax without full parsing."""
             if not content or not content.strip():
-                return FlextResult[bool].ok(True)
+                return FlextResult[bool].ok(SUCCESS_VALUE)
 
             try:
                 lines = content.strip().split("\n")
                 current_entry_has_dn = False
 
-                for line_num, line in enumerate(lines, 1):
-                    line = line.strip()
+                for line_num, raw_line in enumerate(lines, 1):
+                    line = raw_line.strip()
 
                     if not line:
                         current_entry_has_dn = False
@@ -506,7 +509,7 @@ class FlextLdifServices(FlextModel):
                     elif not current_entry_has_dn:
                         return FlextResult[bool].fail(f"Attribute before DN at line {line_num}")
 
-                return FlextResult[bool].ok(True)
+                return FlextResult[bool].ok(SUCCESS_VALUE)
 
             except Exception as e:
                 return FlextResult[bool].fail(f"Syntax validation error: {e}")
