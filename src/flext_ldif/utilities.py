@@ -1,22 +1,197 @@
-"""FLEXT-LDIF Utilities.
+"""FLEXT-LDIF Utilities - Consolidated Module.
 
-Utility functions and classes following flext-core patterns.
+Utility functions, classes, type definitions, transformer service, and helper functions
+following flext-core consolidated patterns.
 """
 
 from __future__ import annotations
 
 import sys
-from collections.abc import Callable
-from typing import TYPE_CHECKING, TypeVar, cast
+from collections.abc import Callable, Mapping, Sequence
+from pathlib import Path
+from typing import TYPE_CHECKING, TypeVar, cast, override
 
 import click
-from flext_core import FlextCallable, FlextResult
+from flext_core import FlextCallable, FlextDomainService, FlextResult, get_logger
+from pydantic import Field
 
 if TYPE_CHECKING:
     from flext_ldif.api import FlextLdifAPI
     from flext_ldif.models import FlextLdifEntry
 
+# Simplified approach - remove unused delayed imports
+# Type checking is handled via TYPE_CHECKING block
+
 T = TypeVar("T")
+
+# =============================================================================
+# CONSOLIDATED TYPE SYSTEM - Centralized type definitions
+# =============================================================================
+
+# Basic type aliases
+AttributeName = str
+AttributeValue = str | bytes | int | float | bool
+StringList = list[str]
+FilePath = str | Path
+
+# LDIF-specific types
+LDIFContent = str
+LDIFLines = list[str]
+LDAPObjectClass = str
+
+# Processing configuration types
+ProcessingMode = str  # 'strict' | 'permissive' | 'fast'
+ValidationLevel = str  # 'strict' | 'standard' | 'minimal'
+
+# Dictionary types for data exchange
+FlextLdifAttributesDict = dict[str, list[AttributeValue]]
+FlextLdifDNDict = dict[str, str]
+FlextLdifEntryDict = dict[str, str | int | float | bool | list[AttributeValue]]
+
+# Type unions for flexibility
+AttributeValueType = str | bytes | int | float | bool
+MappingType = Mapping[str, str | int | float | bool]
+SequenceType = Sequence[str | int | float | bool]
+
+# =============================================================================
+# CONSOLIDATED TRANSFORMER SERVICE - Domain service implementation
+# =============================================================================
+
+logger = get_logger(__name__)
+
+
+class FlextLdifTransformerService(FlextDomainService["list[FlextLdifEntry]"]):
+    """Concrete LDIF transformation service using flext-core patterns.
+
+    ✅ CORRECT ARCHITECTURE: Extends FlextDomainService from flext-core.
+    ZERO duplication - uses existing flext-core service patterns.
+    """
+
+    config: object = Field(default=None)
+
+    @override
+    def execute(self) -> FlextResult[list[FlextLdifEntry]]:
+        """Execute transformation - implements FlextDomainService contract."""
+        return FlextResult["list[FlextLdifEntry]"].ok([])
+
+    def transform_entry(self, entry: FlextLdifEntry) -> FlextResult[FlextLdifEntry]:
+        """Transform single LDIF entry."""
+        # Base implementation returns entry as-is
+        return FlextResult["FlextLdifEntry"].ok(entry)
+
+    def transform_entries(
+        self,
+        entries: list[FlextLdifEntry],
+    ) -> FlextResult[list[FlextLdifEntry]]:
+        """Transform multiple LDIF entries."""
+        transformed: list[FlextLdifEntry] = []
+        for entry in entries:
+            result = self.transform_entry(entry)
+            # Use tap for successful transformations instead of conditional check
+            result.tap(transformed.append)
+
+        return FlextResult["list[FlextLdifEntry]"].ok(transformed)
+
+    def normalize_dns(
+        self,
+        entries: list[FlextLdifEntry],
+    ) -> FlextResult[list[FlextLdifEntry]]:
+        """Normalize all DN values in entries."""
+        # DN normalization is handled automatically by the domain model
+        return FlextResult["list[FlextLdifEntry]"].ok(entries)
+
+
+# =============================================================================
+# CONSOLIDATED HELPER FUNCTIONS - Convenience functions for common operations
+# =============================================================================
+
+
+def flext_ldif_parse(content: str) -> list[FlextLdifEntry]:
+    """Parse LDIF content using default configuration.
+    
+    Args:
+        content: LDIF content string to parse
+        
+    Returns:
+        List of parsed LDIF entries
+        
+    Raises:
+        FlextLdifParseError: If parsing fails
+
+    """
+    # Import here to avoid circular imports
+    from .core import TLdif
+    from .exceptions import FlextLdifParseError
+
+    result = TLdif.parse(content)
+    if not result.is_success:
+        raise FlextLdifParseError(result.error or "Unknown parsing error")
+    return result.value or []
+
+
+def flext_ldif_validate(entries: list[FlextLdifEntry]) -> bool:
+    """Validate LDIF entries using default configuration.
+    
+    Args:
+        entries: List of LDIF entries to validate
+        
+    Returns:
+        True if all entries are valid
+        
+    Raises:
+        FlextLdifValidationError: If validation fails
+
+    """
+    # Import here to avoid circular imports
+    from .api import FlextLdifAPI
+    from .exceptions import FlextLdifValidationError
+
+    api = FlextLdifAPI()
+    result = api.validate(entries)
+    if not result.is_success:
+        raise FlextLdifValidationError(result.error or "Unknown validation error")
+    return result.value or False
+
+
+def flext_ldif_write(entries: list[FlextLdifEntry]) -> str:
+    """Write LDIF entries to string format.
+    
+    Args:
+        entries: List of LDIF entries to write
+        
+    Returns:
+        LDIF content as string
+        
+    Raises:
+        FlextLdifError: If writing fails
+
+    """
+    # Import here to avoid circular imports
+    from .core import TLdif
+    from .exceptions import FlextLdifError
+
+    result = TLdif.write(entries)
+    if not result.is_success:
+        raise FlextLdifError(result.error or "Unknown writing error")
+    return result.value or ""
+
+
+def flext_ldif_get_api() -> FlextLdifAPI:
+    """Get default FLEXT LDIF API instance.
+    
+    Returns:
+        FlextLdifAPI instance configured with default settings
+
+    """
+    # Import here to avoid circular imports
+    from .api import FlextLdifAPI
+
+    return FlextLdifAPI()
+
+
+# =============================================================================
+# CONSOLIDATED UTILITIES CLASS - Static utility methods
+# =============================================================================
 
 
 class FlextLdifUtilities:
@@ -751,4 +926,39 @@ class FlextLdifUtilities:
         return circular
 
 
-__all__ = ["FlextLdifUtilities"]
+# =============================================================================
+# CONSOLIDATED EXPORTS - All functionality from this module
+# =============================================================================
+
+__all__ = [
+    # Type System
+    "AttributeName",
+    "AttributeValue",
+    "AttributeValueType",
+    "FilePath",
+    "FlextLdifAttributesDict",
+    "FlextLdifDNDict",
+    "FlextLdifEntryDict",
+    "LDAPObjectClass",
+    "LDIFContent",
+    "LDIFLines",
+    "MappingType",
+    "ProcessingMode",
+    "SequenceType",
+    "StringList",
+    "ValidationLevel",
+
+    # Transformer Service
+    "FlextLdifTransformerService",
+
+    # Helper Functions
+    "flext_ldif_parse",
+    "flext_ldif_validate",
+    "flext_ldif_write",
+    "flext_ldif_get_api",
+
+    # Utilities Class
+    "FlextLdifUtilities",
+]
+
+# Note: Forward references will be resolved when models are imported

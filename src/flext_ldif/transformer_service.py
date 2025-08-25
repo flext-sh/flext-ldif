@@ -1,66 +1,15 @@
-"""FLEXT-LDIF Transformer Service.
+"""FLEXT-LDIF Transformer Service (Compatibility Facade).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
+COMPATIBILITY FACADE: FlextLdifTransformerService is now consolidated in utilities.py
+Import from utilities for backward compatibility.
 """
 
 from __future__ import annotations
 
-from typing import override
-
-from flext_core import FlextDomainService, FlextResult, get_logger
-from pydantic import Field
-
-from flext_ldif.models import FlextLdifConfig, FlextLdifEntry
-
-logger = get_logger(__name__)
-
-
-class FlextLdifTransformerService(FlextDomainService[list[FlextLdifEntry]]):
-    """Concrete LDIF transformation service using flext-core patterns.
-
-    ✅ CORRECT ARCHITECTURE: Extends FlextDomainService from flext-core.
-    ZERO duplication - uses existing flext-core service patterns.
-    """
-
-    config: FlextLdifConfig | None = Field(default=None)
-
-    @override
-    def execute(self) -> FlextResult[list[FlextLdifEntry]]:
-        """Execute transformation - implements FlextDomainService contract."""
-        return FlextResult[list[FlextLdifEntry]].ok([])
-
-    def transform_entry(self, entry: FlextLdifEntry) -> FlextResult[FlextLdifEntry]:
-        """Transform single LDIF entry."""
-        # Base implementation returns entry as-is
-        return FlextResult[FlextLdifEntry].ok(entry)
-
-    def transform_entries(
-        self,
-        entries: list[FlextLdifEntry],
-    ) -> FlextResult[list[FlextLdifEntry]]:
-        """Transform multiple LDIF entries."""
-        transformed: list[FlextLdifEntry] = []
-        for entry in entries:
-            result = self.transform_entry(entry)
-            # Use tap for successful transformations instead of conditional check
-            result.tap(transformed.append)
-
-        return FlextResult[list[FlextLdifEntry]].ok(transformed)
-
-    def normalize_dns(
-        self,
-        entries: list[FlextLdifEntry],
-    ) -> FlextResult[list[FlextLdifEntry]]:
-        """Normalize all DN values in entries."""
-        # DN normalization is handled automatically by the domain model
-        return FlextResult[list[FlextLdifEntry]].ok(entries)
-
+# Import transformer service from consolidated utilities module
+from .utilities import FlextLdifTransformerService
 
 __all__ = ["FlextLdifTransformerService"]
-
-# Forward references resolved through API initialization
-FlextLdifTransformerService.model_rebuild(
-    _types_namespace={"FlextLdifConfig": FlextLdifConfig},
-)
