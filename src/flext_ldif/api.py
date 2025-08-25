@@ -39,11 +39,11 @@ class FlextLdifAPI:
 
         """
         self.config = config or FlextLdifConfig()
-        self._parser_service = _FlextLdifParserService(config=self.config)
-        self._validator_service = _FlextLdifValidatorService(config=self.config)
-        self._writer_service = _FlextLdifWriterService(config=self.config)
-        self._repository_service = FlextLdifRepositoryService(config=self.config)
-        self._analytics_service = FlextLdifAnalyticsService(config=self.config)
+        self._parser_service = _FlextLdifParserService()
+        self._validator_service = _FlextLdifValidatorService()
+        self._writer_service = _FlextLdifWriterService()
+        self._repository_service = FlextLdifRepositoryService()
+        self._analytics_service = FlextLdifAnalyticsService()
 
     def parse(self, content: str) -> FlextResult[list[FlextLdifEntry]]:
         """Parse LDIF content using railway-oriented programming."""

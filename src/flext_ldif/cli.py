@@ -401,5 +401,8 @@ def main() -> None:
         sys.exit(1)
 
 
+__all__ = ["cli", "main"]
+
+
 if __name__ == "__main__":
     main()
