@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from enum import Enum
 
-from flext_core import FlextError, FlextModel
+from flext_core import FlextExceptions, FlextModel
 
 
 # Error codes enum for LDIF operations
@@ -40,7 +40,7 @@ class FlextLdifExceptions(FlextModel):
     Individual exceptions available as nested classes for organization.
     """
 
-    class Error(FlextError):
+    class Error(FlextExceptions.Error):
         """Base LDIF error."""
 
         def __init__(
@@ -73,7 +73,8 @@ class FlextLdifExceptions(FlextModel):
             """Initialize validation error."""
             super().__init__(
                 message,
-                error_code=error_code or FlextLdifErrorCodes.LDIF_VALIDATION_ERROR.value,
+                error_code=error_code
+                or FlextLdifErrorCodes.LDIF_VALIDATION_ERROR.value,
                 context=context,
                 cause=cause,
             )
@@ -151,7 +152,8 @@ class FlextLdifExceptions(FlextModel):
 
             super().__init__(
                 message,
-                error_code=error_code or FlextLdifErrorCodes.LDIF_CONFIGURATION_ERROR.value,
+                error_code=error_code
+                or FlextLdifErrorCodes.LDIF_CONFIGURATION_ERROR.value,
                 context=config_context,
                 cause=cause,
             )
@@ -176,12 +178,13 @@ class FlextLdifExceptions(FlextModel):
 
             super().__init__(
                 message,
-                error_code=error_code or FlextLdifErrorCodes.LDIF_PROCESSING_ERROR.value,
+                error_code=error_code
+                or FlextLdifErrorCodes.LDIF_PROCESSING_ERROR.value,
                 context=processing_context,
                 cause=cause,
             )
 
-    class FlextConnectionError(Error):
+    class FlextExceptions.ConnectionError(Error):
         """LDIF connection error."""
 
         def __init__(
@@ -204,7 +207,8 @@ class FlextLdifExceptions(FlextModel):
 
             super().__init__(
                 message,
-                error_code=error_code or FlextLdifErrorCodes.LDIF_CONNECTION_ERROR.value,
+                error_code=error_code
+                or FlextLdifErrorCodes.LDIF_CONNECTION_ERROR.value,
                 context=conn_context,
                 cause=cause,
             )
@@ -229,12 +233,13 @@ class FlextLdifExceptions(FlextModel):
 
             super().__init__(
                 message,
-                error_code=error_code or FlextLdifErrorCodes.LDIF_AUTHENTICATION_ERROR.value,
+                error_code=error_code
+                or FlextLdifErrorCodes.LDIF_AUTHENTICATION_ERROR.value,
                 context=auth_context,
                 cause=cause,
             )
 
-    class FlextTimeoutError(Error):
+    class FlextExceptions.TimeoutError(Error):
         """LDIF timeout error."""
 
         def __init__(
@@ -271,6 +276,8 @@ class FlextLdifExceptions(FlextModel):
             cause: Exception | None = None,
             file_path: str | None = None,
             operation: str | None = None,
+            line_number: int | None = None,
+            encoding: str | None = None,
         ) -> None:
             """Initialize file error."""
             # Add file information to context
@@ -279,6 +286,10 @@ class FlextLdifExceptions(FlextModel):
                 file_context["file_path"] = file_path
             if operation is not None:
                 file_context["operation"] = operation
+            if line_number is not None:
+                file_context["line_number"] = line_number
+            if encoding is not None:
+                file_context["encoding"] = encoding
 
             super().__init__(
                 message,
@@ -298,23 +309,39 @@ class FlextLdifExceptions(FlextModel):
             context: Mapping[str, object] | None = None,
             cause: Exception | None = None,
             entry_dn: str | None = None,
+            dn: str
+            | None = None,  # Alternative parameter name for backward compatibility
             attribute_name: str | None = None,
+            attribute_value: str | None = None,
             validation_rule: str | None = None,
+            entry_index: int | None = None,
         ) -> None:
             """Initialize entry validation error with detailed information."""
             # Add validation details to context
             validation_context = dict(context) if context else {}
             if attribute_name is not None:
                 validation_context["attribute_name"] = attribute_name
+            if attribute_value is not None:
+                # Truncate very long attribute values for readability
+                if len(attribute_value) > 100:
+                    truncated_value = attribute_value[:97] + "..."
+                    validation_context["attribute_value"] = truncated_value
+                else:
+                    validation_context["attribute_value"] = attribute_value
             if validation_rule is not None:
                 validation_context["validation_rule"] = validation_rule
+            if entry_index is not None:
+                validation_context["entry_index"] = entry_index
+
+            # Use 'dn' as alternative for 'entry_dn' if provided
+            final_dn = entry_dn or dn
 
             super().__init__(
                 message,
                 error_code=error_code,
                 context=validation_context,
                 cause=cause,
-                entry_dn=entry_dn,
+                entry_dn=final_dn,
             )
 
 
@@ -329,9 +356,9 @@ FlextLdifParseError = FlextLdifExceptions.ParseError
 FlextLdifEntryError = FlextLdifExceptions.EntryError
 FlextLdifConfigurationError = FlextLdifExceptions.ConfigurationError
 FlextLdifProcessingError = FlextLdifExceptions.ProcessingError
-FlextLdifConnectionError = FlextLdifExceptions.FlextConnectionError
+FlextLdifConnectionError = FlextLdifExceptions.FlextExceptions.ConnectionError
 FlextLdifAuthenticationError = FlextLdifExceptions.AuthenticationError
-FlextLdifTimeoutError = FlextLdifExceptions.FlextTimeoutError
+FlextLdifTimeoutError = FlextLdifExceptions.FlextExceptions.TimeoutError
 FlextLdifFileError = FlextLdifExceptions.FileError
 FlextLdifEntryValidationError = FlextLdifExceptions.EntryValidationError
 

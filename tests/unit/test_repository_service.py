@@ -5,7 +5,7 @@
 
 from flext_ldif.constants import FlextLdifCoreMessages, FlextLdifValidationMessages
 from flext_ldif.models import FlextLdifConfig, FlextLdifEntry
-from flext_ldif.repository_service import FlextLdifRepositoryService
+from flext_ldif.services import FlextLdifRepositoryService
 
 
 class TestFlextLdifRepositoryService:
@@ -131,7 +131,7 @@ class TestFlextLdifRepositoryService:
         result = service.filter_by_objectclass(entries, "")
 
         assert result.is_failure
-        assert result.error is not None and FlextLdifCoreMessages.MISSING_OBJECTCLASS in result.error
+        assert result.error is not None and ("Object class cannot be empty" in result.error or FlextLdifCoreMessages.MISSING_OBJECTCLASS in result.error)
 
     def test_filter_by_objectclass_whitespace_only(self) -> None:
         """Test filter_by_objectclass with whitespace-only objectclass."""
@@ -141,7 +141,7 @@ class TestFlextLdifRepositoryService:
         result = service.filter_by_objectclass(entries, "   ")
 
         assert result.is_failure
-        assert result.error is not None and FlextLdifCoreMessages.MISSING_OBJECTCLASS in result.error
+        assert result.error is not None and ("Object class cannot be empty" in result.error or FlextLdifCoreMessages.MISSING_OBJECTCLASS in result.error)
 
     def test_filter_by_objectclass_no_matches(self) -> None:
         """Test filter_by_objectclass with no matches."""

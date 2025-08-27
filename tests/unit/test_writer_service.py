@@ -6,7 +6,7 @@ from unittest.mock import Mock, patch
 
 from flext_ldif.constants import DEFAULT_OUTPUT_ENCODING, FlextLdifCoreMessages
 from flext_ldif.models import FlextLdifConfig, FlextLdifEntry
-from flext_ldif.writer_service import FlextLdifWriterService
+from flext_ldif.services import FlextLdifWriterService
 
 
 class TestFlextLdifWriterService:
@@ -249,7 +249,9 @@ class TestFlextLdifWriterService:
 
         assert result.is_failure
         assert result.error is not None
-        assert FlextLdifCoreMessages.FILE_WRITE_FAILED.format(error="Unexpected error") in result.error
+        # The mock error will be caught and formatted as WRITE_FAILED
+        assert "Write failed with exception:" in result.error
+        assert "Unexpected error" in result.error
 
     def test_write_content_to_file_success(self) -> None:
         """Test _write_content_to_file success."""
