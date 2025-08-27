@@ -2,9 +2,9 @@
 
 import pytest
 
-from flext_ldif.analytics_service import FlextLdifAnalyticsService
 from flext_ldif.constants import FlextLdifAnalyticsConstants
 from flext_ldif.models import FlextLdifConfig, FlextLdifEntry
+from flext_ldif.services import FlextLdifAnalyticsService
 
 
 class TestFlextLdifAnalyticsService:

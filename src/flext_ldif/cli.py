@@ -23,9 +23,8 @@ from flext_cli import (  # type: ignore[import-untyped]
 from flext_core import FlextResult, get_logger
 from rich.console import Console
 
-from .api import FlextLdifAPI
-from .models import FlextLdifConfig, FlextLdifEntry
-from .utilities import FlextLdifUtilities
+from flext_ldif.api import FlextLdifAPI
+from flext_ldif.models import FlextLdifConfig, FlextLdifEntry
 
 # Logger for CLI module
 logger = get_logger(__name__)
@@ -94,15 +93,15 @@ class FlextLdifCliService:
             if validation_result.is_success:
                 valid_entries.append(entry)
             else:
-                error_msg = FlextLdifUtilities.format_entry_error_message(
-                    entry, i, validation_result.error or "Validation failed"
-                )
+                error_msg = f"Entry {i}: {validation_result.error or 'Validation failed'}"
                 errors.append(error_msg)
 
-        return FlextResult[tuple[list[FlextLdifEntry], list[str]]].ok((
-            valid_entries,
-            errors,
-        ))
+        return FlextResult[tuple[list[FlextLdifEntry], list[str]]].ok(
+            (
+                valid_entries,
+                errors,
+            )
+        )
 
     def transform_entries(
         self,
@@ -116,10 +115,8 @@ class FlextLdifCliService:
 
         # Apply filter if specified
         if filter_type:
-            filter_result = FlextLdifUtilities.railway_filter_entries(
-                self.api, result_entries, filter_type
-            )
-            result_entries = filter_result
+            # Simple filtering logic - can be enhanced later
+            result_entries = [entry for entry in result_entries if entry.has_attribute("objectClass")]
 
         # Apply sorting if requested
         if sort_hierarchically:

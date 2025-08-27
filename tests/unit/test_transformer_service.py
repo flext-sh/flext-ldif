@@ -1,7 +1,7 @@
 """Tests for FlextLdifTransformerService - comprehensive coverage."""
 
 from flext_ldif.models import FlextLdifConfig, FlextLdifEntry
-from flext_ldif.transformer_service import FlextLdifTransformerService
+from flext_ldif.services import FlextLdifTransformerService
 
 
 class TestFlextLdifTransformerService:

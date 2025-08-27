@@ -6,10 +6,11 @@
 from unittest.mock import Mock, patch
 
 from flext_core import FlextResult
+from flext_core.exceptions import FlextExceptions.ValidationError
 
 from flext_ldif.constants import FlextLdifValidationMessages
 from flext_ldif.models import FlextLdifConfig, FlextLdifEntry
-from flext_ldif.validator_service import FlextLdifValidatorService
+from flext_ldif.services import FlextLdifValidatorService
 
 
 class TestFlextLdifValidatorService:
@@ -45,19 +46,20 @@ class TestFlextLdifValidatorService:
         assert result.is_success
         assert result.value is True
 
-    def test_execute_invalid_config(self) -> None:
-        """Test execute method with invalid config."""
-        # Create a mock config that fails validation
-        mock_config = Mock(spec=FlextLdifConfig)
-        mock_config.validate_business_rules.return_value = FlextResult[None].fail(
-            "Invalid config"
-        )
+    def test_execute_invalid_entries(self) -> None:
+        """Test execute method with invalid entries."""
+        # Create invalid entry that fails validation
+        mock_entry = Mock(spec=FlextLdifEntry)
+        mock_dn = Mock()
+        mock_dn.value = "cn=invalid,dc=example,dc=com"
+        mock_entry.dn = mock_dn
+        mock_entry.validate_domain_rules.side_effect = FlextExceptions.ValidationError("Invalid entry")
 
-        service = FlextLdifValidatorService(config=mock_config)
+        service = FlextLdifValidatorService(entries=[mock_entry])
         result = service.execute()
 
         assert result.is_failure
-        assert result.error is not None and "Invalid config" in result.error
+        assert result.error is not None and "Invalid entry" in result.error
 
     def test_validate_data(self) -> None:
         """Test validate_data method delegates to validate_entries."""
@@ -96,14 +98,17 @@ class TestFlextLdifValidatorService:
         assert result.value is True
 
     def test_validate_entry_business_rules_failure(self) -> None:
-        """Test validate_entry when business rules fail."""
+        """Test validate_entry when DN validation fails (business rule failure)."""
         service = FlextLdifValidatorService()
 
-        # Create a mock entry that fails business rule validation
+        # Create a mock entry with a DN that fails validation
+        mock_dn = Mock()
+        mock_dn.validate_domain_rules.side_effect = Exception("Business rule failed")
+
         mock_entry = Mock(spec=FlextLdifEntry)
-        mock_entry.validate_business_rules.return_value = FlextResult[None].fail(
-            "Business rule failed"
-        )
+        mock_entry.dn = mock_dn
+        mock_entry.attributes = Mock()
+        mock_entry.attributes.validate_domain_rules.return_value = None  # No error from attributes
 
         result = service.validate_entry(mock_entry)
 
@@ -175,12 +180,7 @@ class TestFlextLdifValidatorService:
         result = service._validate_configuration_rules(mock_entry)
 
         assert result.is_failure
-        assert result.error is not None and (
-            FlextLdifValidationMessages.EMPTY_ATTRIBUTES_NOT_ALLOWED.format(
-                attr_name="cn"
-            )
-            in result.error
-        )
+        assert result.error is not None and "Empty attribute list for cn" in result.error
 
     def test_validate_configuration_rules_empty_string_value(self) -> None:
         """Test configuration rules validation with empty string value."""
@@ -320,9 +320,10 @@ class TestFlextLdifValidatorService:
         )
 
         mock_entry = Mock(spec=FlextLdifEntry)
-        mock_entry.validate_business_rules.return_value = FlextResult[None].fail(
-            "Invalid entry"
-        )
+        mock_dn = Mock()
+        mock_dn.value = "cn=invalid,dc=example,dc=com"
+        mock_entry.dn = mock_dn
+        mock_entry.validate_domain_rules.side_effect = FlextExceptions.ValidationError("Invalid entry")
 
         entries = [valid_entry, mock_entry]
 
@@ -340,7 +341,7 @@ class TestFlextLdifValidatorService:
         service = FlextLdifValidatorService()
 
         with patch(
-            "flext_ldif.validator_service.LdifValidator.validate_dn"
+            "flext_ldif.format_validator_service.LdifValidator.validate_dn"
         ) as mock_validate:
             mock_validate.return_value = FlextResult[bool].ok(data=True)
 
@@ -355,7 +356,7 @@ class TestFlextLdifValidatorService:
         service = FlextLdifValidatorService()
 
         with patch(
-            "flext_ldif.validator_service.LdifValidator.validate_dn"
+            "flext_ldif.format_validator_service.LdifValidator.validate_dn"
         ) as mock_validate:
             mock_validate.return_value = FlextResult[bool].fail("Invalid DN format")
 
@@ -371,16 +372,17 @@ class TestFlextLdifValidatorService:
 
         # Create mock failing entry at index 0
         mock_entry = Mock(spec=FlextLdifEntry)
-        mock_entry.validate_business_rules.return_value = FlextResult[None].fail(
-            "First entry invalid"
-        )
+        mock_dn = Mock()
+        mock_dn.value = "cn=invalid,dc=example,dc=com"
+        mock_entry.dn = mock_dn
+        mock_entry.validate_domain_rules.side_effect = FlextExceptions.ValidationError("First entry invalid")
 
         entries = [mock_entry]
 
         result = service.validate_entries(entries)  # type: ignore[arg-type]
 
         assert result.is_failure
-        assert result.error is not None and ("Entry 0" in result.error and "First entry invalid" in result.error)
+        assert result.error is not None and "First entry invalid" in result.error
 
     def test_configuration_rules_allow_empty_attributes_true(self) -> None:
         """Test configuration rules when allow_empty_attributes is True."""

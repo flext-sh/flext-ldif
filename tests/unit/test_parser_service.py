@@ -12,7 +12,7 @@ import pytest
 from flext_core import FlextResult
 
 from flext_ldif.models import FlextLdifConfig
-from flext_ldif.parser_service import FlextLdifParserService
+from flext_ldif.services import FlextLdifParserService
 
 
 class TestFlextLdifParserService:
@@ -145,9 +145,9 @@ sn: entry"""
 
         result = service.parse(mixed_content)
 
-        # Should succeed with the valid entries, ignoring invalid ones
-        assert result.is_success
-        assert len(result.value) >= 1  # At least one valid entry should be parsed
+        # Should fail due to strict syntax validation (attributes before DN)
+        assert result.is_failure
+        assert result.error is not None and "Attribute before DN" in result.error
 
     def test_parse_ldif_file_success(self) -> None:
         """Test parsing LDIF file successfully."""

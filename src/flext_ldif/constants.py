@@ -48,6 +48,51 @@ MAX_ENTRY_SIZE_LIMIT: Final[int] = 104857600  # 100MB
 
 MIN_DN_COMPONENTS: Final[int] = 2
 MAX_DN_DEPTH: Final[int] = 20
+
+# DN Attribute Types - consolidated with DN-valued attributes
+LDAP_DN_ATTRIBUTES: Final[frozenset[str]] = frozenset({
+    "cn", "commonname",
+    "o", "organization",
+    "ou", "organizationalunit",
+    "c", "country",
+    "dc", "domaincomponent",
+    "uid", "userid",
+    "mail", "email",
+    # DN-valued attributes requiring DN normalization
+    "orcldaspublicgroupdns",
+    "member",
+    "uniquemember",
+    "owner",
+    "roleoccupant",
+    "seealso",
+    "manager",
+    "secretary",
+    "directreports",
+    "distinguishedname",
+    "dn"
+})
+
+# =============================================================================
+# LDAP OBJECT CLASS CONSTANTS
+# =============================================================================
+
+# Person object classes (using proper LDAP case formatting)
+LDAP_PERSON_CLASSES: Final[frozenset[str]] = frozenset({
+    "person",
+    "organizationalPerson",
+    "inetOrgPerson",
+    "posixAccount",
+    "user",
+})
+
+# Group object classes (using proper LDAP case formatting)
+LDAP_GROUP_CLASSES: Final[frozenset[str]] = frozenset({
+    "groupOfNames",
+    "groupOfUniqueNames",
+    "posixGroup",
+    "organizationalRole",
+    "group",
+})
 DN_SEPARATOR: Final[str] = ","
 DN_ATTRIBUTE_SEPARATOR: Final[str] = "="
 
@@ -55,32 +100,7 @@ DN_ATTRIBUTE_SEPARATOR: Final[str] = "="
 LDAP_ATTRIBUTE_PATTERN: Final[str] = r"^[a-zA-Z][a-zA-Z0-9-]*$"
 DN_COMPONENT_PATTERN: Final[str] = r"^[a-zA-Z]+=.+"
 
-# =============================================================================
-# LDAP OBJECT CLASSES (CONSOLIDATED - NO DUPLICATION)
-# =============================================================================
-
-# Person Object Classes (merged from constants.py + ldif_constants.py)
-LDAP_PERSON_CLASSES: Final[frozenset[str]] = frozenset(
-    {
-        "person",
-        "organizationalPerson",
-        "inetOrgPerson",
-        "user",
-        "posixAccount",
-    },
-)
-
-# Group Object Classes (merged from constants.py + ldif_constants.py)
-LDAP_GROUP_CLASSES: Final[frozenset[str]] = frozenset(
-    {
-        "group",
-        "groupOfNames",
-        "groupOfUniqueNames",
-        "posixGroup",
-        "organizationalRole",
-        "groupOfMembers",
-    },
-)
+# NOTE: LDAP_PERSON_CLASSES and LDAP_GROUP_CLASSES are defined above with proper case formatting
 
 # Organizational Unit Object Classes
 LDAP_OU_CLASSES: Final[frozenset[str]] = frozenset(
@@ -99,20 +119,7 @@ OU_OBJECT_CLASSES: Final[frozenset[str]] = LDAP_OU_CLASSES
 # LDAP ATTRIBUTES (CONSOLIDATED - NO DUPLICATION)
 # =============================================================================
 
-# DN-Valued Attributes requiring DN normalization (merged from both files)
-LDAP_DN_ATTRIBUTES: Final[frozenset[str]] = frozenset(
-    {
-        "orcldaspublicgroupdns",
-        "member",
-        "uniquemember",
-        "owner",
-        "seealso",
-        "distinguishedname",
-        "manager",
-        "secretary",
-        "roleoccupant",
-    },
-)
+# Note: LDAP_DN_ATTRIBUTES already defined above with all DN attributes consolidated
 
 # Backward Compatibility Alias (DEPRECATED - use LDAP_DN_ATTRIBUTES)
 DN_VALUED_ATTRIBUTES: Final[frozenset[str]] = LDAP_DN_ATTRIBUTES

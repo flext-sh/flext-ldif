@@ -12,21 +12,18 @@ from collections.abc import Callable as _Callable
 from functools import reduce
 from pathlib import Path
 
-from flext_core import FlextResult, FlextValidationError, get_logger
+from flext_core import FlextResult, FlextExceptions.ValidationError, get_logger
 
 from flext_ldif.constants import FlextLdifCoreConstants
 from flext_ldif.format_handler_service import (
     modernized_ldif_parse,
     modernized_ldif_write,
 )
-
-# Import validators from centralized location to avoid duplication
 from flext_ldif.format_validator_service import (
     _validate_ldap_attribute_name,
     _validate_ldap_dn,
 )
 from flext_ldif.models import FlextLdifEntry, FlextLdifFactory
-from flext_ldif.typings import LDIFContent
 
 logger = get_logger(__name__)
 
@@ -46,11 +43,11 @@ class TLdif:
         return (_validate_ldap_attribute_name, _validate_ldap_dn)
 
     @classmethod
-    def parse(cls, content: str | LDIFContent) -> FlextResult[list[FlextLdifEntry]]:
+    def parse(cls, content: str) -> FlextResult[list[FlextLdifEntry]]:
         """Parse LDIF content into domain entities.
 
         Args:
-            content: LDIF content as string or LDIFContent type
+            content: LDIF content as string
 
         Returns:
             FlextResult[list[FlextLdifEntry]]: Parsed entries or error
@@ -82,7 +79,7 @@ class TLdif:
             AttributeError,
             OSError,
             ImportError,
-            FlextValidationError,
+            FlextExceptions.ValidationError,
         ) as e:
             logger.debug(FlextLdifCoreConstants.EXCEPTION_TYPE_LOG, type(e).__name__)
             logger.debug(
@@ -140,17 +137,20 @@ class TLdif:
                     def process_entry(
                         entries_list: list[FlextLdifEntry],
                     ) -> FlextResult[list[FlextLdifEntry]]:
-                        entry_result = FlextLdifFactory.create_entry(dn, attrs)
-                        if entry_result.is_failure:
+                        try:
+                            entry = FlextLdifFactory.create_entry(dn, attrs)
+                        except Exception as e:
                             return FlextResult[list[FlextLdifEntry]].fail(
                                 FlextLdifCoreConstants.FAILED_TO_CREATE_ENTRY_MSG.format(
-                                    error=entry_result.error
+                                    error=str(e)
                                 )
                             )
-                        return FlextResult[list[FlextLdifEntry]].ok([
-                            *entries_list,
-                            entry_result.value,
-                        ])
+                        return FlextResult[list[FlextLdifEntry]].ok(
+                            [
+                                *entries_list,
+                                entry,
+                            ]
+                        )
 
                     return acc.flat_map(process_entry)
 
@@ -183,7 +183,7 @@ class TLdif:
             TypeError,
             AttributeError,
             ImportError,
-            FlextValidationError,
+            FlextExceptions.ValidationError,
         ) as e:
             logger.debug(FlextLdifCoreConstants.EXCEPTION_TYPE_LOG, type(e).__name__)
             logger.debug(
@@ -663,9 +663,9 @@ class TLdif:
                     FlextLdifCoreConstants.EMPTY_LDIF_FILE_DETECTED_WARNING_LOG,
                     absolute_path,
                 )
-                return FlextResult[
-                    list[FlextLdifEntry]
-                ].ok([])  # Return empty list for empty files
+                return FlextResult[list[FlextLdifEntry]].ok(
+                    []
+                )  # Return empty list for empty files
 
             # Read file content with enhanced error handling
             logger.debug(

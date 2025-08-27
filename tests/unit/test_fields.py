@@ -7,7 +7,7 @@ import pytest
 from pydantic import BaseModel, ValidationError
 from pydantic.fields import FieldInfo
 
-from flext_ldif.fields import (
+from flext_ldif.services import (
     FieldDefaults,
     attribute_name_field,
     attribute_value_field,

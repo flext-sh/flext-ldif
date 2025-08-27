@@ -10,7 +10,7 @@ import sys
 import time
 
 import pytest
-from flext_core import FlextValidationError
+from flext_core import FlextExceptions
 
 from flext_ldif import FlextLdifAttributes, FlextLdifDistinguishedName, FlextLdifEntry
 
@@ -314,7 +314,7 @@ mail: test@example.com"""
         ldif_block = """cn: test
 objectClass: person"""
 
-        with pytest.raises((ValueError, FlextValidationError)):
+        with pytest.raises((ValueError, FlextExceptions.ValidationError)):
             FlextLdifEntry.from_ldif_block(ldif_block)
 
     def test_from_ldif_block_multiline_attributes(self) -> None:

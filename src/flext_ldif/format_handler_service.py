@@ -16,7 +16,7 @@ from urllib.parse import urlparse
 import urllib3
 from flext_core import FlextResult, get_logger
 
-from .constants import FlextLdifOperationMessages, FlextLdifValidationMessages
+from flext_ldif.constants import FlextLdifOperationMessages, FlextLdifValidationMessages
 
 logger = get_logger(__name__)
 # LDIF Pattern Constants
