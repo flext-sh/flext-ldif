@@ -12,7 +12,7 @@ from collections.abc import Callable as _Callable
 from functools import reduce
 from pathlib import Path
 
-from flext_core import FlextResult, FlextExceptions.ValidationError, get_logger
+from flext_core import FlextResult, FlextExceptions, get_logger
 
 from flext_ldif.constants import FlextLdifCoreConstants
 from flext_ldif.format_handler_service import (
@@ -79,7 +79,7 @@ class TLdif:
             AttributeError,
             OSError,
             ImportError,
-            FlextExceptions.ValidationError,
+            FlextExceptions,
         ) as e:
             logger.debug(FlextLdifCoreConstants.EXCEPTION_TYPE_LOG, type(e).__name__)
             logger.debug(
@@ -183,7 +183,7 @@ class TLdif:
             TypeError,
             AttributeError,
             ImportError,
-            FlextExceptions.ValidationError,
+            FlextExceptions,
         ) as e:
             logger.debug(FlextLdifCoreConstants.EXCEPTION_TYPE_LOG, type(e).__name__)
             logger.debug(

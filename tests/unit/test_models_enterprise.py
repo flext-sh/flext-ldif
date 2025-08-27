@@ -314,7 +314,7 @@ mail: test@example.com"""
         ldif_block = """cn: test
 objectClass: person"""
 
-        with pytest.raises((ValueError, FlextExceptions.ValidationError)):
+        with pytest.raises((ValueError, FlextExceptions)):
             FlextLdifEntry.from_ldif_block(ldif_block)
 
     def test_from_ldif_block_multiline_attributes(self) -> None:

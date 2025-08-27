@@ -6,7 +6,7 @@
 from unittest.mock import Mock, patch
 
 from flext_core import FlextResult
-from flext_core.exceptions import FlextExceptions.ValidationError
+from flext_core.exceptions import FlextExceptions
 
 from flext_ldif.constants import FlextLdifValidationMessages
 from flext_ldif.models import FlextLdifConfig, FlextLdifEntry
@@ -53,7 +53,7 @@ class TestFlextLdifValidatorService:
         mock_dn = Mock()
         mock_dn.value = "cn=invalid,dc=example,dc=com"
         mock_entry.dn = mock_dn
-        mock_entry.validate_domain_rules.side_effect = FlextExceptions.ValidationError("Invalid entry")
+        mock_entry.validate_domain_rules.side_effect = FlextExceptions("Invalid entry")
 
         service = FlextLdifValidatorService(entries=[mock_entry])
         result = service.execute()
@@ -323,7 +323,7 @@ class TestFlextLdifValidatorService:
         mock_dn = Mock()
         mock_dn.value = "cn=invalid,dc=example,dc=com"
         mock_entry.dn = mock_dn
-        mock_entry.validate_domain_rules.side_effect = FlextExceptions.ValidationError("Invalid entry")
+        mock_entry.validate_domain_rules.side_effect = FlextExceptions("Invalid entry")
 
         entries = [valid_entry, mock_entry]
 
@@ -375,7 +375,7 @@ class TestFlextLdifValidatorService:
         mock_dn = Mock()
         mock_dn.value = "cn=invalid,dc=example,dc=com"
         mock_entry.dn = mock_dn
-        mock_entry.validate_domain_rules.side_effect = FlextExceptions.ValidationError("First entry invalid")
+        mock_entry.validate_domain_rules.side_effect = FlextExceptions("First entry invalid")
 
         entries = [mock_entry]
 

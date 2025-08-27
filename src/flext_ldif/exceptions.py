@@ -40,7 +40,7 @@ class FlextLdifExceptions(FlextModel):
     Individual exceptions available as nested classes for organization.
     """
 
-    class Error(FlextExceptions.Error):
+    class Error(FlextExceptions):
         """Base LDIF error."""
 
         def __init__(
@@ -184,7 +184,7 @@ class FlextLdifExceptions(FlextModel):
                 cause=cause,
             )
 
-    class FlextExceptions.ConnectionError(Error):
+    class FlextExceptions(Error):
         """LDIF connection error."""
 
         def __init__(
@@ -239,7 +239,7 @@ class FlextLdifExceptions(FlextModel):
                 cause=cause,
             )
 
-    class FlextExceptions.TimeoutError(Error):
+    class FlextExceptions(Error):
         """LDIF timeout error."""
 
         def __init__(
@@ -356,9 +356,9 @@ FlextLdifParseError = FlextLdifExceptions.ParseError
 FlextLdifEntryError = FlextLdifExceptions.EntryError
 FlextLdifConfigurationError = FlextLdifExceptions.ConfigurationError
 FlextLdifProcessingError = FlextLdifExceptions.ProcessingError
-FlextLdifConnectionError = FlextLdifExceptions.FlextExceptions.ConnectionError
+FlextLdifConnectionError = FlextLdifExceptions.FlextExceptions
 FlextLdifAuthenticationError = FlextLdifExceptions.AuthenticationError
-FlextLdifTimeoutError = FlextLdifExceptions.FlextExceptions.TimeoutError
+FlextLdifTimeoutError = FlextLdifExceptions.FlextExceptions
 FlextLdifFileError = FlextLdifExceptions.FileError
 FlextLdifEntryValidationError = FlextLdifExceptions.EntryValidationError
 
