@@ -1309,7 +1309,7 @@ def register_ldif_services(container: FlextContainer) -> None:
 
 def get_ldif_api() -> FlextLdifAPI:
     """Get configured LDIF API from container."""
-    container = get_flext_container()
+    container = FlextContainer.get_global()
     register_ldif_services(container)
     return container.get(FlextLdifAPI)
 ```

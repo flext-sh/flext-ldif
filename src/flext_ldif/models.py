@@ -21,7 +21,7 @@ from flext_core import (
     FlextEntityId,
     FlextModel,
     FlextResult,
-    FlextExceptions.ValidationError,
+    FlextExceptions,
     FlextValue,
 )
 from pydantic import Field, field_validator, model_validator
@@ -56,11 +56,11 @@ class AttributesDict(UserDict[str, list[str]]):
         for attr_name, attr_values in self.items():
             if not _validate_ldap_attribute_name(attr_name):
                 msg = f"Invalid LDAP attribute name: {attr_name}"
-                raise FlextExceptions.ValidationError(msg)
+                raise FlextExceptions(msg)
             # Values should always be lists in AttributesDict by definition
             if not attr_values:
                 msg = f"Attribute cannot be empty: {attr_name}"
-                raise FlextExceptions.ValidationError(msg)
+                raise FlextExceptions(msg)
 
     def get(self, key: str, default: list[str] | None = None) -> list[str] | None:  # type: ignore[override]
         """Case-insensitive get method."""
@@ -179,13 +179,13 @@ class FlextLdifModels(FlextModel):
             if not v or not isinstance(v, str) or not v.strip():
                 # Domain-specific validation error
                 msg = FlextLdifValidationMessages.INVALID_DN.format(dn=v or "empty")
-                raise FlextExceptions.ValidationError(msg)
+                raise FlextExceptions(msg)
 
             # Use local validator to avoid circular dependency
             _, validate_dn = _get_ldap_validators()
             if not validate_dn(v.strip()):
                 msg = FlextLdifValidationMessages.INVALID_DN.format(dn=v)
-                raise FlextExceptions.ValidationError(msg)
+                raise FlextExceptions(msg)
 
             # Normalize: strip but preserve case for DN
             return v.strip()
@@ -194,7 +194,7 @@ class FlextLdifModels(FlextModel):
             """Validate business rules for DN."""
             if not self.value:
                 msg = FlextLdifValidationMessages.EMPTY_DN
-                raise FlextExceptions.ValidationError(msg)
+                raise FlextExceptions(msg)
 
             # Check minimum DN components (at least one attribute=value pair)
             components = [c.strip() for c in self.value.split(",") if c.strip()]
@@ -202,7 +202,7 @@ class FlextLdifModels(FlextModel):
                 msg = FlextLdifValidationMessages.DN_TOO_SHORT.format(
                     components=len(components), minimum=MIN_DN_COMPONENTS
                 )
-                raise FlextExceptions.ValidationError(msg)
+                raise FlextExceptions(msg)
 
         @override
         def validate_business_rules(self) -> FlextResult[None]:
@@ -210,7 +210,7 @@ class FlextLdifModels(FlextModel):
             try:
                 self.validate_domain_rules()
                 return FlextResult[None].ok(None)
-            except FlextExceptions.ValidationError as e:
+            except FlextExceptions as e:
                 return FlextResult[None].fail(str(e))
 
         def get_rdn(self) -> str:
@@ -240,7 +240,7 @@ class FlextLdifModels(FlextModel):
             """Create DN from components."""
             if not components:
                 msg = FlextLdifValidationMessages.EMPTY_DN
-                raise FlextExceptions.ValidationError(msg)
+                raise FlextExceptions(msg)
 
             dn_value = ",".join(str(c).strip() for c in components if c.strip())
             return cls(value=dn_value)
@@ -261,7 +261,7 @@ class FlextLdifModels(FlextModel):
             """Validate attribute names and values."""
             if not isinstance(v, dict):
                 msg = f"{FlextLdifValidationMessages.INVALID_ATTRIBUTES}: {v!r}"
-                raise FlextExceptions.ValidationError(msg)
+                raise FlextExceptions(msg)
 
             validate_attr_name, _ = _get_ldap_validators()
             validated = {}
@@ -275,7 +275,7 @@ class FlextLdifModels(FlextModel):
                     msg = FlextLdifValidationMessages.INVALID_ATTRIBUTE_NAME.format(
                         attr_name=attr_name
                     )
-                    raise FlextExceptions.ValidationError(msg)
+                    raise FlextExceptions(msg)
 
                 # Ensure values is a list
                 if not isinstance(attr_values, list):
@@ -301,7 +301,7 @@ class FlextLdifModels(FlextModel):
             # Check for required objectClass
             if "objectclass" not in self.data:
                 msg = FlextLdifValidationMessages.MISSING_OBJECTCLASS
-                raise FlextExceptions.ValidationError(msg)
+                raise FlextExceptions(msg)
 
         @override
         def validate_business_rules(self) -> FlextResult[None]:
@@ -309,7 +309,7 @@ class FlextLdifModels(FlextModel):
             try:
                 self.validate_domain_rules()
                 return FlextResult[None].ok(None)
-            except FlextExceptions.ValidationError as e:
+            except FlextExceptions as e:
                 return FlextResult[None].fail(str(e))
 
         def get_attribute(self, name: str) -> list[str] | None:
@@ -327,7 +327,7 @@ class FlextLdifModels(FlextModel):
                 msg = FlextLdifValidationMessages.INVALID_ATTRIBUTE_NAME.format(
                     name=name
                 )
-                raise FlextExceptions.ValidationError(msg)
+                raise FlextExceptions(msg)
 
             values = [value] if isinstance(value, str) else list(value)
             attr_key = name.lower()
@@ -426,7 +426,7 @@ class FlextLdifModels(FlextModel):
             )
             if not has_objectclass:
                 msg = FlextLdifValidationMessages.MISSING_OBJECTCLASS
-                raise FlextExceptions.ValidationError(msg)
+                raise FlextExceptions(msg)
 
         @override
         def validate_business_rules(self) -> FlextResult[None]:
@@ -434,7 +434,7 @@ class FlextLdifModels(FlextModel):
             try:
                 self.validate_domain_rules()
                 return FlextResult[None].ok(None)
-            except FlextExceptions.ValidationError as e:
+            except FlextExceptions as e:
                 return FlextResult[None].fail(str(e))
 
         def get_attribute(self, name: str) -> list[str] | None:
@@ -519,7 +519,7 @@ class FlextLdifModels(FlextModel):
                 # Validate basic domain rules
                 self.validate_domain_rules()
                 return True
-            except FlextExceptions.ValidationError:
+            except FlextExceptions:
                 return False
 
         def get_rdn(self) -> str:
@@ -575,7 +575,7 @@ class FlextLdifModels(FlextModel):
             """Create entry from dictionary."""
             if "dn" not in data:
                 msg = FlextLdifValidationMessages.MISSING_DN
-                raise FlextExceptions.ValidationError(msg)
+                raise FlextExceptions(msg)
 
             dn = FlextLdifModels.DistinguishedName(value=str(data["dn"]))
 
@@ -621,7 +621,7 @@ class FlextLdifModels(FlextModel):
                 return v
             except (LookupError, TypeError) as e:
                 msg = f"Invalid encoding: {v}"
-                raise FlextExceptions.ValidationError(msg) from e
+                raise FlextExceptions(msg) from e
 
         @field_validator("max_line_length")
         @classmethod
@@ -631,7 +631,7 @@ class FlextLdifModels(FlextModel):
             max_line_length = 1000
             if v < min_line_length or v > max_line_length:
                 msg = f"Line length must be between {min_line_length} and {max_line_length}, got {v}"
-                raise FlextExceptions.ValidationError(msg)
+                raise FlextExceptions(msg)
             return v
 
         def validate_domain_rules(self) -> None:

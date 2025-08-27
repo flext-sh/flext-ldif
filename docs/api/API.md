@@ -643,7 +643,7 @@ from flext_core import get_flext_container
 from flext_ldif import FlextLdifAPI
 
 # Use DI container
-container = get_flext_container()
+container = FlextContainer.get_global()
 
 # Register LDIF services
 from flext_ldif.services import register_ldif_services

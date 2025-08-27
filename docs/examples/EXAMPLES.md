@@ -1383,7 +1383,7 @@ from flext_ldif import FlextLdifAPI
 from flext_ldif.services import register_ldif_services
 
 # Register FLEXT-LDIF services in the DI container
-container = get_flext_container()
+container = FlextContainer.get_global()
 register_ldif_services(container)
 
 # Get API instance from container
