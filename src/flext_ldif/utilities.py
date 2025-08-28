@@ -15,18 +15,25 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from flext_core import FlextResult, get_logger
-from flext_core.utilities import FlextUtilities as CoreUtilities
 
 from flext_ldif.models import FlextLdifEntry
 
 logger = get_logger(__name__)
 
 
-class FlextLdifUtilities(CoreUtilities):
-    """LDIF-specific utilities extending FlextUtilities from flext-core.
+class FlextLdifUtilities:
+    """LDIF-specific utilities using FlextUtilities composition.
 
-    Inherits all generic functionality (ID generation, text processing, conversions, etc.)
-    and adds only LDIF-domain-specific methods.
+    Uses composition with all FlextUtilities functionalities while adding
+    LDIF-domain-specific methods. Eliminates inheritance complexity.
+
+    Composes with FlextUtilities from flext-core:
+    - Generators: ID/timestamp generation
+    - TextProcessor: Text cleaning/formatting
+    - TypeGuards: Type checking
+    - Conversions: Type conversions
+    - Performance: Function timing
+    - ProcessingUtils: Processing operations
     """
 
     class LdifDomainProcessors:
@@ -34,8 +41,7 @@ class FlextLdifUtilities(CoreUtilities):
 
         @staticmethod
         def validate_entries_or_warn(
-            entries: list[FlextLdifEntry],
-            max_errors: int = 10
+            entries: list[FlextLdifEntry], max_errors: int = 10
         ) -> FlextResult[bool]:
             """Validate LDIF entries with warning collection."""
             warnings: list[str] = []
@@ -62,14 +68,12 @@ class FlextLdifUtilities(CoreUtilities):
 
         @staticmethod
         def filter_entries_by_object_class(
-            entries: list[FlextLdifEntry],
-            object_class: str
+            entries: list[FlextLdifEntry], object_class: str
         ) -> FlextResult[list[FlextLdifEntry]]:
             """Filter entries by objectClass (case-insensitive)."""
             try:
                 filtered = [
-                    entry for entry in entries
-                    if entry.has_object_class(object_class)
+                    entry for entry in entries if entry.has_object_class(object_class)
                 ]
                 return FlextResult[list[FlextLdifEntry]].ok(filtered)
             except Exception as e:
@@ -77,8 +81,7 @@ class FlextLdifUtilities(CoreUtilities):
 
         @staticmethod
         def find_entries_with_missing_required_attributes(
-            entries: list[FlextLdifEntry],
-            required_attrs: list[str]
+            entries: list[FlextLdifEntry], required_attrs: list[str]
         ) -> FlextResult[list[FlextLdifEntry]]:
             """Find entries missing required attributes."""
             try:
@@ -90,13 +93,16 @@ class FlextLdifUtilities(CoreUtilities):
                             break
                 return FlextResult[list[FlextLdifEntry]].ok(missing)
             except Exception as e:
-                return FlextResult[list[FlextLdifEntry]].fail(f"Missing attributes search error: {e}")
+                return FlextResult[list[FlextLdifEntry]].fail(
+                    f"Missing attributes search error: {e}"
+                )
 
         @staticmethod
         def batch_process_entries(
             entries: list[FlextLdifEntry],
             batch_size: int = 1000,
-            process_func: Callable[[list[FlextLdifEntry]], list[FlextLdifEntry]] | None = None
+            process_func: Callable[[list[FlextLdifEntry]], list[FlextLdifEntry]]
+            | None = None,
         ) -> FlextResult[list[FlextLdifEntry]]:
             """Process entries in batches for performance."""
             if not process_func:
@@ -105,7 +111,7 @@ class FlextLdifUtilities(CoreUtilities):
             try:
                 processed = []
                 for i in range(0, len(entries), batch_size):
-                    batch = entries[i:i + batch_size]
+                    batch = entries[i : i + batch_size]
                     batch_result = process_func(batch)
                     if isinstance(batch_result, list):
                         processed.extend(batch_result)
@@ -114,14 +120,16 @@ class FlextLdifUtilities(CoreUtilities):
 
                 return FlextResult[list[FlextLdifEntry]].ok(processed)
             except Exception as e:
-                return FlextResult[list[FlextLdifEntry]].fail(f"Batch processing error: {e}")
+                return FlextResult[list[FlextLdifEntry]].fail(
+                    f"Batch processing error: {e}"
+                )
 
     class LdifConverters:
         """LDIF-specific data conversion utilities."""
 
         @staticmethod
         def attributes_dict_to_ldif_format(
-            attributes: dict[str, list[str]]
+            attributes: dict[str, list[str]],
         ) -> FlextResult[dict[str, list[str]]]:
             """Convert attributes dictionary to proper LDIF format."""
             try:
@@ -129,13 +137,17 @@ class FlextLdifUtilities(CoreUtilities):
                 ldif_attrs = {}
                 for key, values in attributes.items():
                     # Convert values to proper string list format
-                    converted_values = CoreUtilities.LdapConverters.safe_convert_to_ldap_attribute_list(values)
+                    converted_values = CoreUtilities.LdapConverters.safe_convert_to_ldap_attribute_list(
+                        values
+                    )
                     if converted_values:  # Only include non-empty values
                         ldif_attrs[key.lower()] = converted_values
 
                 return FlextResult[dict[str, list[str]]].ok(ldif_attrs)
             except Exception as e:
-                return FlextResult[dict[str, list[str]]].fail(f"LDIF conversion error: {e}")
+                return FlextResult[dict[str, list[str]]].fail(
+                    f"LDIF conversion error: {e}"
+                )
 
         @staticmethod
         def normalize_dn_components(dn: str) -> FlextResult[str]:
@@ -155,7 +167,7 @@ class FlextLdifUtilities(CoreUtilities):
 def flext_ldif_parse(content: str) -> list[FlextLdifEntry]:
     """Parse LDIF content - simple function using FlextUtilities."""
     # Deferred import to avoid circular dependency
-    from flext_ldif.api import FlextLdifAPI  # noqa: PLC0415
+    from flext_ldif.api import FlextLdifAPI
 
     api = FlextLdifAPI()
     result = api.parse(content)
@@ -187,5 +199,5 @@ __all__ = [
     "FlextLdifUtilities",
     "flext_ldif_parse",
     "flext_ldif_validate",
-    "flext_ldif_write"
+    "flext_ldif_write",
 ]

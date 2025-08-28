@@ -668,7 +668,9 @@ objectClass: person
 
         # Create a mock string object that raises UnicodeError on encode
         class MockString(UserString):
-            def encode(self, encoding: str | None = "utf-8", errors: str | None = "strict") -> Never:  # noqa: ARG002
+            def encode(
+                self, encoding: str | None = "utf-8", errors: str | None = "strict"
+            ) -> Never:
                 msg = "Invalid UTF-8"
                 raise UnicodeError(msg)
 
@@ -676,7 +678,7 @@ objectClass: person
 
         # This should raise ValueError for invalid UTF-8 in strict mode
         with pytest.raises(ValueError, match="Invalid UTF-8"):
-            parser._decode_value("dn", mock_str)  # type: ignore[arg-type]
+            parser._decode_value("dn", mock_str)
 
     def test_parse_dn_utf8_validation_non_strict_mode(self) -> None:
         """Test DN UTF-8 validation in non-strict mode."""
@@ -685,14 +687,16 @@ objectClass: person
 
         # Create a mock string object that raises UnicodeError on encode
         class MockString(UserString):
-            def encode(self, encoding: str | None = "utf-8", errors: str | None = "strict") -> Never:  # noqa: ARG002
+            def encode(
+                self, encoding: str | None = "utf-8", errors: str | None = "strict"
+            ) -> Never:
                 msg = "Invalid UTF-8"
                 raise UnicodeError(msg)
 
         mock_str = MockString("test value")
 
         # Should not raise error in non-strict mode, just return the value
-        result = parser._decode_value("dn", mock_str)  # type: ignore[arg-type]
+        result = parser._decode_value("dn", mock_str)
         assert result == ("dn", mock_str)
 
 
@@ -916,7 +920,10 @@ mail: john@example.com
             parser._parse_entry_record(lines_without_dn)
 
         # Check that it's the specific error from lines 475-476
-        assert "missing" in str(exc_info.value).lower() and "dn" in str(exc_info.value).lower()
+        assert (
+            "missing" in str(exc_info.value).lower()
+            and "dn" in str(exc_info.value).lower()
+        )
 
     def test_comment_lines_branch_coverage(self) -> None:
         """Test parsing with comment lines to cover branch 284->272."""
@@ -999,7 +1006,7 @@ objectClass: person
     def test_space_only_blocks_branch_coverage(self) -> None:
         """Test parsing with space-only lines to cover branch 489->488."""
         # Test LDIF that contains only spaces (may create empty blocks)
-        ldif_only_spaces = """    \n  \n    \n"""  # noqa: W291, W293
+        ldif_only_spaces = """    \n  \n    \n"""
 
         result = modernized_ldif_parse(ldif_only_spaces)
         assert result.is_success
@@ -1009,7 +1016,7 @@ objectClass: person
         ldif_spaces_between = """dn: cn=test1,dc=example,dc=com
 objectClass: person
 
-    \n\ndn: cn=test2,dc=example,dc=com  # noqa: W293
+    \n\ndn: cn=test2,dc=example,dc=com
 objectClass: person
 """
 

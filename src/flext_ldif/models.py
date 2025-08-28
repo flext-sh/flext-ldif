@@ -159,7 +159,9 @@ class FlextLdifModels(FlextModel):
             """Compare DN with another DN or string."""
             if isinstance(other, str):
                 return self.value == other
-            if hasattr(other, "value") and isinstance(getattr(other, "value", None), str):
+            if hasattr(other, "value") and isinstance(
+                getattr(other, "value", None), str
+            ):
                 return self.value == other.value
             return False
 
@@ -389,7 +391,7 @@ class FlextLdifModels(FlextModel):
                 if not isinstance(data["attributes"], AttributesDict):  # type: ignore[unreachable]
                     data["attributes"] = AttributesDict(data["attributes"])
 
-            super().__init__(**data)  # type: ignore[arg-type]
+            super().__init__(**data)
 
         @model_validator(mode="before")
         @classmethod
@@ -665,7 +667,7 @@ class FlextLdifModels(FlextModel):
         @staticmethod
         def create_config(**kwargs: object) -> FlextLdifModels.Config:
             """Create configuration with overrides."""
-            return FlextLdifModels.Config(**kwargs)  # type: ignore[arg-type]
+            return FlextLdifModels.Config(**kwargs)
 
 
 # =============================================================================
