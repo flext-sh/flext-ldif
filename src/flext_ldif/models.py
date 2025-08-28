@@ -19,9 +19,9 @@ from flext_core import (
     FlextConfig,
     FlextEntity,
     FlextEntityId,
+    FlextExceptions,
     FlextModel,
     FlextResult,
-    FlextExceptions,
     FlextValue,
 )
 from pydantic import Field, field_validator, model_validator

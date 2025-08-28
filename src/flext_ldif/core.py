@@ -12,7 +12,7 @@ from collections.abc import Callable as _Callable
 from functools import reduce
 from pathlib import Path
 
-from flext_core import FlextResult, FlextExceptions, get_logger
+from flext_core import FlextExceptions, FlextResult, get_logger
 
 from flext_ldif.constants import FlextLdifCoreConstants
 from flext_ldif.format_handler_service import (
