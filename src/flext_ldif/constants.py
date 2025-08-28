@@ -34,27 +34,27 @@ class FlextLdifConstants(FlextConstants):
     DEFAULT_FILE_BUFFER_SIZE: Final[int] = 8192
     DEFAULT_LDIF_FILE_PATTERN: Final[str] = "*.ldif"
     DEFAULT_MAX_FILE_SIZE_MB: Final[int] = 100
-    
+
     # =============================================================================
     # ENTRY PROCESSING LIMITS
     # =============================================================================
-    
+
     DEFAULT_MAX_ENTRIES: Final[int] = 20000
     MAX_ENTRIES_LIMIT: Final[int] = 1000000
     MIN_ENTRIES_LIMIT: Final[int] = 1
-    
+
     # Entry Size Limits
     DEFAULT_MAX_ENTRY_SIZE: Final[int] = 1048576  # 1MB
     MIN_ENTRY_SIZE: Final[int] = 1024  # 1KB
     MAX_ENTRY_SIZE_LIMIT: Final[int] = 104857600  # 100MB
-    
+
     # =============================================================================
     # DN (DISTINGUISHED NAME) CONSTANTS
     # =============================================================================
-    
+
     MIN_DN_COMPONENTS: Final[int] = 2
     MAX_DN_DEPTH: Final[int] = 20
-    
+
     # DN Attribute Types - consolidated with DN-valued attributes
     LDAP_DN_ATTRIBUTES: Final[frozenset[str]] = frozenset({
         "cn", "commonname",
@@ -77,11 +77,11 @@ class FlextLdifConstants(FlextConstants):
         "distinguishedname",
         "dn"
     })
-    
+
     # =============================================================================
     # LDAP OBJECT CLASS CONSTANTS
     # =============================================================================
-    
+
     # Person object classes (using proper LDAP case formatting)
     LDAP_PERSON_CLASSES: Final[frozenset[str]] = frozenset({
         "person",
@@ -90,7 +90,7 @@ class FlextLdifConstants(FlextConstants):
         "posixAccount",
         "user",
     })
-    
+
     # Group object classes (using proper LDAP case formatting)
     LDAP_GROUP_CLASSES: Final[frozenset[str]] = frozenset({
         "groupOfNames",
@@ -101,13 +101,13 @@ class FlextLdifConstants(FlextConstants):
     })
     DN_SEPARATOR: Final[str] = ","
     DN_ATTRIBUTE_SEPARATOR: Final[str] = "="
-    
+
     # DN Validation Patterns
     LDAP_ATTRIBUTE_PATTERN: Final[str] = r"^[a-zA-Z][a-zA-Z0-9-]*$"
     DN_COMPONENT_PATTERN: Final[str] = r"^[a-zA-Z]+=.+"
-    
+
     # NOTE: LDAP_PERSON_CLASSES and LDAP_GROUP_CLASSES are defined above with proper case formatting
-    
+
     # Organizational Unit Object Classes
     LDAP_OU_CLASSES: Final[frozenset[str]] = frozenset(
         {
@@ -115,25 +115,25 @@ class FlextLdifConstants(FlextConstants):
             "top",
         },
     )
-    
+
     # Backward Compatibility Aliases (DEPRECATED - use LDAP_ prefixed versions)
     PERSON_OBJECT_CLASSES: Final[frozenset[str]] = LDAP_PERSON_CLASSES
     GROUP_OBJECT_CLASSES: Final[frozenset[str]] = LDAP_GROUP_CLASSES
     OU_OBJECT_CLASSES: Final[frozenset[str]] = LDAP_OU_CLASSES
-    
+
     # =============================================================================
     # LDAP ATTRIBUTES (CONSOLIDATED - NO DUPLICATION)
     # =============================================================================
-    
+
     # Note: LDAP_DN_ATTRIBUTES already defined above with all DN attributes consolidated
-    
+
     # Backward Compatibility Alias (DEPRECATED - use LDAP_DN_ATTRIBUTES)
     DN_VALUED_ATTRIBUTES: Final[frozenset[str]] = LDAP_DN_ATTRIBUTES
-    
+
     # =============================================================================
     # LDIF CHANGE TYPES
     # =============================================================================
-    
+
     LDIF_CHANGE_TYPES: Final[frozenset[str]] = frozenset(
         {
             "add",
@@ -142,32 +142,31 @@ class FlextLdifConstants(FlextConstants):
             "modrdn",
         },
     )
-    
+
     # =============================================================================
     # VALIDATION SETTINGS
     # =============================================================================
-    
+
     DEFAULT_STRICT_VALIDATION: Final[bool] = True
     DEFAULT_ALLOW_EMPTY_ATTRIBUTES: Final[bool] = False
     DEFAULT_NORMALIZE_DN: Final[bool] = False
     DEFAULT_SORT_ATTRIBUTES: Final[bool] = False
-    
+
     # =============================================================================
     # LIBRARY METADATA
     # =============================================================================
-    
+
     LIBRARY_NAME: Final[str] = "flext-ldif"
     LIBRARY_VERSION: Final[str] = "0.9.0"
     LIBRARY_DESCRIPTION: Final[str] = "Enterprise LDIF Processing Library"
-    
+
     # =============================================================================
     # FLEXT-LDIF VALIDATION MESSAGES
     # =============================================================================
-    
-    
+
     class FlextLdifValidationMessages:
         """Validation messages centralized for flext-ldif operations."""
-    
+
         # DN Validation Messages
         DN_EMPTY_ERROR: Final[str] = "DN must be a non-empty string"
         DN_CANNOT_BE_EMPTY: Final[str] = "DN cannot be empty"
@@ -180,7 +179,7 @@ class FlextLdifConstants(FlextConstants):
         DN_TOO_SHORT: Final[str] = (
             "DN has {components} components, minimum required: {minimum}"
         )
-    
+
         # Entry Validation Messages
         ENTRY_VALIDATION_FAILED: Final[str] = "Entry validation failed"
         ENTRY_MISSING_DN: Final[str] = "Entry must have a DN"
@@ -200,7 +199,7 @@ class FlextLdifConstants(FlextConstants):
         EMPTY_ATTRIBUTE_VALUE_NOT_ALLOWED: Final[str] = (
             "Empty attribute value not allowed for '{attr_name}' in strict mode"
         )
-    
+
         # Attribute Validation Messages
         ATTRIBUTE_NAME_EMPTY: Final[str] = "Attribute name cannot be empty"
         ATTRIBUTE_NAME_CANNOT_BE_EMPTY: Final[str] = "Attribute name cannot be empty"
@@ -212,16 +211,16 @@ class FlextLdifConstants(FlextConstants):
         )
         INVALID_ATTRIBUTE_NAME: Final[str] = "Invalid attribute name format: {attr_name}"
         INVALID_ATTRIBUTES: Final[str] = "Invalid attributes format"
-    
+
         # Configuration Validation Messages
         INVALID_CONFIGURATION: Final[str] = "Invalid configuration"
         INVALID_ENCODING: Final[str] = "Invalid input or output encoding specified"
-    
+
         # File Processing Messages
         FILE_NOT_FOUND: Final[str] = "File not found: {file_path}"
         FILE_READ_ERROR: Final[str] = "Failed to read file: {file_path}"
         FILE_WRITE_ERROR: Final[str] = "Failed to write file: {file_path}"
-    
+
         # Entry Count Messages
         ENTRY_COUNT_EXCEEDED: Final[str] = (
             "Entry count {count} exceeds configured limit {limit}"
@@ -229,41 +228,39 @@ class FlextLdifConstants(FlextConstants):
         FILE_ENTRY_COUNT_EXCEEDED: Final[str] = (
             "File entry count {count} exceeds configured limit {limit}"
         )
-    
+
         # LDIF Format Messages
         RECORD_MISSING_DN: Final[str] = "Record missing dn: line"
         INVALID_LDIF_FORMAT: Final[str] = "Invalid LDIF format"
-    
+
         # Modernized LDIF Messages
         MODERNIZED_PARSING_FAILED: Final[str] = "Modernized LDIF parsing failed"
         MODERNIZED_WRITING_FAILED: Final[str] = "Modernized LDIF writing failed"
-    
+
         # Entries Processing Messages
         ENTRIES_CANNOT_BE_NONE: Final[str] = "Entries cannot be None"
         INTERNAL_ERROR_ENTRIES_NONE: Final[str] = (
             "Internal error: entries is None after successful parse"
         )
-    
-    
+
     # =============================================================================
     # FLEXT-LDIF DEFAULT VALUES
     # =============================================================================
-    
-    
+
     class FlextLdifDefaultValues:
         """Default values centralized for flext-ldif configurations."""
-    
+
         # CLI Default Values
         OUTPUT_FORMAT_DEFAULT: Final[str] = "text"
         OUTPUT_FORMAT_PLAIN: Final[str] = "plain"
         STATS_FORMAT_DEFAULT: Final[str] = "table"
-    
+
         # Test Values
         TEST_LDIF_ENTRY: Final[str] = """dn: cn=test,dc=example,dc=com
     objectClass: person
     cn: test
     """
-    
+
         # Help Messages
         CONFIG_HELP: Final[str] = "Configuration file path"
         OUTPUT_FORMAT_HELP: Final[str] = "Output format"
@@ -284,13 +281,13 @@ class FlextLdifConstants(FlextConstants):
         ATTRIBUTE_HELP: Final[str] = "Attribute name to display"
         OUTPUT_FILTER_HELP: Final[str] = "Output file for filtered entries"
         LINE_WRAP_HELP: Final[str] = "Optional line wrap width (ignored)"
-    
+
         # CLI Command Descriptions
         CLI_DESCRIPTION: Final[str] = """FLEXT LDIF - Enterprise LDIF Processing CLI.
-    
+
     Comprehensive command-line interface para parsing, validação
     e transformação LDIF com Clean Architecture."""
-    
+
         PARSE_DESCRIPTION: Final[str] = "Parse LDIF file and display or save entries"
         VALIDATE_DESCRIPTION: Final[str] = "Validate LDIF file entries against schema rules"
         TRANSFORM_DESCRIPTION: Final[str] = (
@@ -304,45 +301,41 @@ class FlextLdifConstants(FlextConstants):
             "Validate CLI configuration and display settings"
         )
         WRITE_DESCRIPTION: Final[str] = "Reformat LDIF file and print or save the output"
-    
-    
+
     # =============================================================================
     # FLEXT-LDIF ANALYTICS CONSTANTS
     # =============================================================================
-    
-    
+
     class FlextLdifAnalyticsConstants:
         """Analytics constants centralized for flext-ldif processing."""
-    
+
         # Pattern Analysis Keys
         TOTAL_ENTRIES_KEY: Final[str] = "total_entries"
         ENTRIES_WITH_CN_KEY: Final[str] = "entries_with_cn"
         ENTRIES_WITH_MAIL_KEY: Final[str] = "entries_with_mail"
         ENTRIES_WITH_TELEPHONE_KEY: Final[str] = "entries_with_telephoneNumber"
-    
+
         # Attribute Names for Analysis
         CN_ATTRIBUTE: Final[str] = "cn"
         MAIL_ATTRIBUTE: Final[str] = "mail"
         TELEPHONE_ATTRIBUTE: Final[str] = "telephoneNumber"
-    
+
         # DN Depth Analysis
         DEPTH_KEY_FORMAT: Final[str] = "depth_{depth}"
-    
-    
+
     # =============================================================================
     # FLEXT-LDIF CORE PROCESSING MESSAGES
     # =============================================================================
-    
-    
+
     class FlextLdifCoreMessages:
         """Core processing messages centralized for flext-ldif operations."""
-    
+
         # Parsing Messages
         PARSE_FAILED: Final[str] = "Parse failed: {error}"
         MODERNIZED_PARSE_FAILED: Final[str] = "Modernized LDIF parse failed: {error}"
         VALIDATION_FAILED: Final[str] = "Validation failed: {error}"
         WRITE_FAILED: Final[str] = "Write failed with exception: {error}"
-    
+
         # Entry Validation Messages
         ENTRY_CANNOT_BE_NONE: Final[str] = "Entry cannot be None"
         INVALID_DN_FORMAT: Final[str] = "Invalid DN format: {dn}"
@@ -354,7 +347,7 @@ class FlextLdifConstants(FlextConstants):
         BULK_VALIDATION_FAILED: Final[str] = (
             "Bulk validation failed with exception: {error}"
         )
-    
+
         # File Operation Messages
         FILE_NOT_FOUND: Final[str] = "LDIF file not found: {file_path}"
         PATH_NOT_FILE: Final[str] = "Path is not a file: {file_path}"
@@ -368,21 +361,19 @@ class FlextLdifConstants(FlextConstants):
         CONTENT_GENERATION_NULL: Final[str] = (
             "Content generation succeeded but returned None data"
         )
-    
+
         # Parse Specific Messages
         PARSE_FAILED_FOR_FILE: Final[str] = (
             "LDIF parsing failed for file {file_path}: {error}"
         )
-    
-    
+
     # =============================================================================
     # FLEXT-LDIF OPERATION MESSAGES
     # =============================================================================
-    
-    
+
     class FlextLdifOperationMessages:
         """Operation messages centralized for flext-ldif processing."""
-    
+
         # Success Messages
         PARSE_SUCCESS: Final[str] = "✅ Parsed {count} entries successfully"
         WRITE_SUCCESS: Final[str] = "Entries written to {path}"
@@ -394,7 +385,7 @@ class FlextLdifConstants(FlextConstants):
         )
         LDIF_PARSED_SUCCESS: Final[str] = "Successfully parsed {count} LDIF entries"
         LDIF_WRITTEN_SUCCESS: Final[str] = "Successfully wrote {count} LDIF entries"
-    
+
         # Error Messages
         PARSE_FAILED: Final[str] = "❌ Parse failed: {error}"
         WRITE_FAILED: Final[str] = "Write failed: {error}"
@@ -405,14 +396,14 @@ class FlextLdifConstants(FlextConstants):
         CONVERT_FAILED: Final[str] = "Failed to convert entries to LDIF: {error}"
         DISPLAY_FAILED: Final[str] = "Statistics display failed: {error}"
         CLI_SETUP_FAILED: Final[str] = "Failed to setup CLI: {error}"
-    
+
         # Processing Messages
         LOADED_ENTRIES: Final[str] = "Loaded {count} entries"
         FILTERED_ENTRIES: Final[str] = "Filtered to {count} {filter_type} entries"
         ENTRIES_SORTED: Final[str] = "Entries sorted hierarchically"
         FOUND_ENTRIES: Final[str] = "Found {count} entries with objectClass '{objectclass}'"
         CONVERTED_ENTRIES: Final[str] = "Converted {count} entries to {format}: {path}"
-    
+
         # Status Messages
         VALIDATION_MODE: Final[str] = "Validation mode: {mode}"
         VALIDATION_ERRORS_FOUND: Final[str] = "Validation found {count} errors:"
@@ -424,43 +415,41 @@ class FlextLdifConstants(FlextConstants):
         SCHEMA_NOTE: Final[str] = (
             "Note: Schema-based validation will be implemented with flext-ldap integration"
         )
-    
+
         # CLI Configuration Messages
         CLI_CONFIGURATION: Final[str] = "CLI Configuration:"
         OUTPUT_FORMAT_CONFIG: Final[str] = "  Output Format: {format}"
         VERBOSE_CONFIG: Final[str] = "  Verbose: {verbose}"
         DEBUG_CONFIG: Final[str] = "  Debug: {debug}"
         CONFIG_PATH_CONFIG: Final[str] = "  Config Path: {path}"
-    
+
         # Operation Cancelled Messages
         OPERATION_CANCELLED: Final[str] = "Operation cancelled by user"
-    
+
         # Filter Messages
         UNKNOWN_FILTER_TYPE: Final[str] = "Unknown filter type: {filter_type}"
         FILTER_OPERATION_FAILED: Final[str] = "Filter operation failed: {error}"
-    
+
         # Convert Messages
         CONVERTED_TO_LDIF: Final[str] = "Converted to LDIF: {path}"
         CONVERTED_TO_FORMAT: Final[str] = "Converted {count} entries to {format}: {path}"
-    
-    
+
     # =============================================================================
     # FLEXT-LDIF FORMAT VALIDATORS CONSTANTS
     # =============================================================================
-    
-    
+
     class FlextLdifFormatConstants:
         """Format validation constants for flext-ldif operations."""
-    
+
         # Module Import Names
         FLEXT_LDAP_UTILS_MODULE: Final[str] = "flext_ldap.utils"
-    
+
         # Attribute Names
         OBJECTCLASS_ATTRIBUTE: Final[str] = "objectClass"
         CN_ATTRIBUTE: Final[str] = "cn"
         SN_ATTRIBUTE: Final[str] = "sn"
         OU_ATTRIBUTE: Final[str] = "ou"
-    
+
         # Validation Error Messages - Format Validators
         DN_CANNOT_BE_EMPTY_FORMAT: Final[str] = "DN cannot be empty"
         INVALID_DN_FORMAT_MSG: Final[str] = "Invalid DN format: {dn_value}"
@@ -487,7 +476,7 @@ class FlextLdifConstants(FlextConstants):
         ENTRY_MUST_BE_FLEXTLDIFENTRY_FORMAT: Final[str] = (
             "Entry must be FlextLdifEntry instance"
         )
-    
+
         # Object Class Sets (for validation)
         PERSON_OBJECTCLASSES: Final[set[str]] = {
             "person",
@@ -496,12 +485,12 @@ class FlextLdifConstants(FlextConstants):
             "user",
             "posixAccount",
         }
-    
+
         OU_OBJECTCLASSES: Final[set[str]] = {
             "organizationalUnit",
             "top",
         }
-    
+
         GROUP_OBJECTCLASSES: Final[set[str]] = {
             "group",
             "groupOfNames",
@@ -509,26 +498,24 @@ class FlextLdifConstants(FlextConstants):
             "posixGroup",
             "groupOfMembers",
         }
-    
+
         # Required Attributes for Schema Validation
         PERSON_REQUIRED_ATTRIBUTES: Final[list[str]] = ["cn", "sn"]
         OU_REQUIRED_ATTRIBUTES: Final[list[str]] = ["ou"]
-    
-    
+
     # =============================================================================
     # FLEXT-LDIF CORE PROCESSING CONSTANTS
     # =============================================================================
-    
-    
+
     class FlextLdifCoreConstants:
         """Core processing constants for flext-ldif operations."""
-    
+
         # Regular Expression Patterns
         DN_PATTERN_REGEX: Final[str] = (
             r"^[A-Za-z][A-Za-z0-9-]*=[^,]+(,[A-Za-z][A-Za-z0-9-]*=[^,]+)*$"
         )
         ATTR_NAME_PATTERN_REGEX: Final[str] = r"^[A-Za-z][A-Za-z0-9-]*$"
-    
+
         # Debug Log Messages
         TLDIF_PARSE_CALLED_LOG: Final[str] = "TLdif.parse called with content type: %s"
         CONTENT_LENGTH_LOG: Final[str] = "Content length: %d characters"
@@ -547,7 +534,7 @@ class FlextLdifConstants(FlextConstants):
         RETURNING_FAILURE_FROM_MODERNIZED_LOG: Final[str] = (
             "Returning failure from modernized parser"
         )
-    
+
         # Parser Processing Log Messages
         MODERNIZED_PARSER_RETURNED_ENTRIES_LOG: Final[str] = (
             "Modernized parser returned %d raw entries"
@@ -566,7 +553,7 @@ class FlextLdifConstants(FlextConstants):
         EXCEPTION_IN_MODERNIZED_PARSING_LOG: Final[str] = (
             "Exception in modernized LDIF parsing"
         )
-    
+
         # Validation Log Messages
         VALIDATION_EXCEPTION_DETAILS_LOG: Final[str] = "Validation exception details"
         EXCEPTION_DURING_ENTRY_VALIDATION_LOG: Final[str] = (
@@ -604,7 +591,7 @@ class FlextLdifConstants(FlextConstants):
         LDIF_ENTRY_VALIDATION_SUCCESSFUL_LOG: Final[str] = (
             "LDIF entry validation successful - dn=%s, attributes_count=%d, object_classes=%s"
         )
-    
+
         # Bulk Validation Log Messages
         STARTING_BULK_VALIDATION_LOG: Final[str] = "Starting bulk validation of %d entries"
         VALIDATING_ENTRY_INDEX_LOG: Final[str] = "Validating entry %d/%d: %s"
@@ -620,7 +607,7 @@ class FlextLdifConstants(FlextConstants):
         EXCEPTION_DURING_BULK_VALIDATION_LOG: Final[str] = (
             "Exception during bulk validation"
         )
-    
+
         # Write Operation Log Messages
         STARTING_LDIF_WRITE_OPERATION_LOG: Final[str] = (
             "Starting LDIF write operation for %d entries"
@@ -638,7 +625,7 @@ class FlextLdifConstants(FlextConstants):
         EXCEPTION_DURING_LDIF_WRITE_LOG: Final[str] = (
             "Exception during LDIF write operation"
         )
-    
+
         # File Operation Log Messages
         STARTING_FILE_WRITE_OPERATION_LOG: Final[str] = (
             "Starting file write operation for %d entries to: %s"
@@ -660,7 +647,7 @@ class FlextLdifConstants(FlextConstants):
         )
         FILE_WRITE_EXCEPTION_DETAILS_LOG: Final[str] = "File write exception details"
         EXCEPTION_DURING_FILE_WRITE_LOG: Final[str] = "Exception during file write"
-    
+
         # File Read Operation Log Messages
         STARTING_LDIF_FILE_READ_LOG: Final[str] = "Starting LDIF file read operation: %s"
         RESOLVED_ABSOLUTE_FILE_PATH_LOG: Final[str] = "Resolved absolute file path: %s"
@@ -688,11 +675,11 @@ class FlextLdifConstants(FlextConstants):
         PARSE_METHOD_FAILED_LOG: Final[str] = (
             "Parse method failed after successful file read - file accessible but content invalid"
         )
-    
+
         # String Replacement Characters
         NEWLINE_ESCAPE: Final[str] = "\\n"
         CONTENT_PREVIEW_LENGTH: Final[int] = 200
-    
+
         # Error Messages for FlextResult[None].fail()
         PARSE_FAILED_MSG: Final[str] = "Parse failed: {error}"
         MODERNIZED_LDIF_PARSE_FAILED_MSG: Final[str] = "Modernized LDIF parse failed"
@@ -734,18 +721,18 @@ class FlextLdifConstants(FlextConstants):
         LDIF_PARSING_FAILED_FOR_FILE_MSG: Final[str] = (
             "LDIF parsing failed for file {path}: {error}"
         )
-    
+
         # Attribute Names
         OBJECTCLASS_ATTRIBUTE: Final[str] = "objectClass"
-    
+
         # Default Values
         DEFAULT_UTF8_ENCODING: Final[str] = "utf-8"
         FILE_WRITE_MODE: Final[str] = "w"
         FILE_READ_MODE: Final[str] = "r"
-    
+
         # Replacement Characters for Content Preview
         NEWLINE_REPLACEMENT: Final[str] = "\\n"
-    
+
         # Additional Bulk Validation Log Messages (not yet centralized)
         BULK_VALIDATION_ENTRY_FAILED_MSG: Final[str] = (
             "Entry {index} of {total} failed validation ({dn}): {error}"
@@ -753,19 +740,19 @@ class FlextLdifConstants(FlextConstants):
         BULK_VALIDATION_EXCEPTION_MSG: Final[str] = (
             "Bulk validation failed with exception: {error}"
         )
-    
+
         # Additional Write Operation Log Messages (not yet centralized)
         MODERNIZED_LDIF_WRITE_FAILED_NO_ERROR_MSG: Final[str] = (
             "Modernized LDIF write failed"
         )
         EMPTY_WRITE_RESULT_MSG: Final[str] = ""
-    
+
         # Additional File Operation Constants (not yet centralized)
         CONTENT_PREVIEW_SIZE: Final[int] = 100
         CONTENT_PREVIEW_REPLACEMENT: Final[str] = "\\n"
         FILE_CONTENT_PREVIEW_SIZE: Final[int] = 200
         FILE_MODE_FORMAT: Final[str] = "%o"
-    
+
         # Additional File Write Operation Messages (not yet centralized)
         CONTENT_GENERATION_FAILED_FOR_ENTRIES_MSG: Final[str] = (
             "Content generation failed for {entries_count} entries: {error}"
@@ -773,7 +760,7 @@ class FlextLdifConstants(FlextConstants):
         CONTENT_GENERATION_NULL_DATA_MSG: Final[str] = (
             "Content generation succeeded but returned None data"
         )
-    
+
         # File Read Operation Log Messages (remaining hardcoded strings to centralize)
         STARTING_LDIF_FILE_READ_OPERATION_LOG: Final[str] = (
             "Starting LDIF file read operation: %s"
@@ -815,16 +802,15 @@ class FlextLdifConstants(FlextConstants):
         PARSE_METHOD_FAILED_AFTER_SUCCESSFUL_READ_LOG: Final[str] = (
             "Parse method failed after successful file read - file accessible but content invalid"
         )
-    
+
         # File Read Operation Constants
         FILE_READ_CONTENT_PREVIEW_SIZE: Final[int] = 200
         NEWLINE_TO_ESCAPED_NEWLINE: Final[str] = "\\n"
-    
-    
+
     # =============================================================================
     # COMPREHENSIVE PUBLIC API - All constants exported
     # =============================================================================
-    
+
     __all__ = [
         "DEFAULT_ALLOW_EMPTY_ATTRIBUTES",
         "DEFAULT_ENTRY_SEPARATOR",
