@@ -870,3 +870,17 @@ class FlextLdifConstants(FlextConstants):
         # NEW ORGANIZED CLASSES
         "FlextLdifValidationMessages",
     ]
+
+
+# =============================================================================
+# MODULE LEVEL ALIASES FOR NESTED CLASSES
+# =============================================================================
+
+# Make nested message classes available as top-level imports
+FlextLdifValidationMessages = FlextLdifConstants.FlextLdifValidationMessages
+FlextLdifOperationMessages = FlextLdifConstants.FlextLdifOperationMessages
+
+# Make nested constants available as top-level imports
+LDAP_GROUP_CLASSES = FlextLdifConstants.LDAP_GROUP_CLASSES
+LDAP_PERSON_CLASSES = FlextLdifConstants.LDAP_PERSON_CLASSES
+MIN_DN_COMPONENTS = FlextLdifConstants.MIN_DN_COMPONENTS

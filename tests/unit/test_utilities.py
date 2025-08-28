@@ -288,7 +288,7 @@ cn: invalid
         def func3(*args: object, **_kwargs: object) -> object:
             x = args[0] if args else None
             if hasattr(x, "__len__"):
-                return len(x)  # type: ignore[arg-type]
+                return len(x)
             return 0
 
         is_valid = FlextLdifUtilities.validate_callable_chain(func1, func2, func3)
@@ -300,7 +300,7 @@ cn: invalid
         def func1() -> None:
             pass
 
-        is_valid = FlextLdifUtilities.validate_callable_chain(func1, "not callable")  # type: ignore[arg-type]
+        is_valid = FlextLdifUtilities.validate_callable_chain(func1, "not callable")
         assert not is_valid
 
     def test_count_entries_by_objectclass(
@@ -655,7 +655,7 @@ cn: invalid
             return value
 
         # Create pipeline with operations
-        pipeline = FlextLdifUtilities.create_processing_pipeline(add_one, multiply_two)  # type: ignore[arg-type]
+        pipeline = FlextLdifUtilities.create_processing_pipeline(add_one, multiply_two)
 
         # Test the pipeline
         result = pipeline(5)  # Should be (5 + 1) * 2 = 12
@@ -669,8 +669,8 @@ cn: invalid
 
         # Create pipeline with mixed valid and invalid operations
         pipeline = FlextLdifUtilities.create_processing_pipeline(
-            valid_operation,  # type: ignore[arg-type]
-            "not_callable",  # type: ignore[arg-type]
+            valid_operation,
+            "not_callable",
         )
 
         # Should handle gracefully (skip non-callable operations)
@@ -783,7 +783,7 @@ cn: invalid
 
         # Test with valid callables
         result_valid = FlextLdifUtilities.validate_callable_chain(
-            validator1, validator2  # type: ignore[arg-type]
+            validator1, validator2
         )
         assert result_valid is True
 
@@ -1239,7 +1239,7 @@ cn: invalid
     def test_chain_operations_error_none_fallback(self) -> None:
         """Test chain_operations with None error fallback (line 619)."""
         # Create a failure result with None error to trigger line 619
-        initial_failure = FlextResult[str].fail("operation failed")  # type: ignore[arg-type]
+        initial_failure = FlextResult[str].fail("operation failed")
 
         def dummy_op(value: str) -> FlextResult[str]:
             return FlextResult[str].ok(value)
@@ -1247,9 +1247,9 @@ cn: invalid
         result = FlextLdifUtilities.chain_operations(initial_failure, [dummy_op])
         assert result.is_failure
         # The actual error might be "Unknown error occurred" from FlextResult implementation
-        assert (
-            result.error is not None and ("operation failed" in result.error.lower()
-            or "unknown error" in result.error.lower())
+        assert result.error is not None and (
+            "operation failed" in result.error.lower()
+            or "unknown error" in result.error.lower()
         )
 
     def test_partition_entries_validation_with_none_error(self) -> None:

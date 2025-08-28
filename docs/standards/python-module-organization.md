@@ -795,7 +795,7 @@ Version: 0.9.0
 License: MIT
 """
 
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, object
 from pathlib import Path
 from flext_core import FlextResult, get_logger
 from ..domain import FlextLdifEntry, FlextLdifDistinguishedName, FlextLdifAttributes
@@ -1054,7 +1054,7 @@ class FlextLdifAPI:
     def search_entries(
         self,
         entries: List[FlextLdifEntry],
-        filter_criteria: Dict[str, Any]
+        filter_criteria: Dict[str, object]
     ) -> FlextResult[List[FlextLdifEntry]]:
         """
         Search LDIF entries based on filter criteria.
@@ -1104,7 +1104,7 @@ class FlextLdifAPI:
             logger.error("LDIF entry search failed", extra={"error": str(e)})
             return FlextResult[None].fail(error_msg)
 
-    def _matches_criteria(self, entry: FlextLdifEntry, criteria: Dict[str, Any]) -> bool:
+    def _matches_criteria(self, entry: FlextLdifEntry, criteria: Dict[str, object]) -> bool:
         """Check if entry matches search criteria."""
         for key, value in criteria.items():
             if key == "objectClass":
@@ -1166,7 +1166,8 @@ Version: 0.9.0
 License: MIT
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, List
+
 from pathlib import Path
 from flext_core import FlextConfig
 from pydantic import Field, validator
@@ -1448,7 +1449,7 @@ class FlextLdifSettings(FlextConfig):
         """Check if large file processing optimizations should be enabled."""
         return self.enable_streaming or self.max_entries > 50000
 
-    def get_performance_profile(self) -> Dict[str, Any]:
+    def get_performance_profile(self) -> Dict[str, object]:
         """Get performance configuration profile."""
         return {
             "streaming_enabled": self.enable_streaming,
@@ -1459,7 +1460,7 @@ class FlextLdifSettings(FlextConfig):
             "large_file_mode": self.is_large_file_mode_enabled()
         }
 
-    def get_validation_profile(self) -> Dict[str, Any]:
+    def get_validation_profile(self) -> Dict[str, object]:
         """Get validation configuration profile."""
         return {
             "strict_validation": self.strict_validation,
@@ -1531,7 +1532,8 @@ License: MIT
 """
 
 import click
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, List
+
 from pathlib import Path
 from rich.console import Console
 from rich.table import Table
@@ -2081,14 +2083,14 @@ def _print_output(entries: List[FlextLdifEntry], format: str, quiet: bool):
         if len(entries) > 20:
             console.print(f"... and {len(entries) - 20} more entries")
 
-def _entry_to_dict(entry: FlextLdifEntry) -> Dict[str, Any]:
+def _entry_to_dict(entry: FlextLdifEntry) -> Dict[str, object]:
     """Convert entry to dictionary representation."""
     return {
         'dn': entry.dn.value,
         'attributes': dict(entry.attributes.attributes)
     }
 
-def _parse_filter_expression(filter_expr: str) -> Dict[str, Any]:
+def _parse_filter_expression(filter_expr: str) -> Dict[str, object]:
     """Parse filter expression into criteria dictionary."""
     # Simple parsing - enhance with proper LDAP filter parsing
     criteria = {}
@@ -2099,7 +2101,7 @@ def _parse_filter_expression(filter_expr: str) -> Dict[str, Any]:
 
     return criteria
 
-def _apply_transformations(entries: List[FlextLdifEntry], rules: Dict[str, Any]) -> List[FlextLdifEntry]:
+def _apply_transformations(entries: List[FlextLdifEntry], rules: Dict[str, object]) -> List[FlextLdifEntry]:
     """Apply transformation rules to entries."""
     # Implementation would apply various transformation rules
     # This is a simplified version
@@ -2310,7 +2312,7 @@ utils/
 
 ```python
 # Standard library imports first
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, object
 from pathlib import Path
 import re
 
