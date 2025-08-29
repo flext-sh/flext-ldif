@@ -10,7 +10,7 @@ from __future__ import annotations
 import contextlib
 from pathlib import Path
 
-from flext_core import get_logger
+from flext_core import FlextLogger
 
 from flext_ldif import (
     FlextLdifAPI,
@@ -118,7 +118,7 @@ def demonstrate_result_patterns() -> None:
 
 def demonstrate_exception_handling() -> None:
     """Demonstrate proper exception handling patterns."""
-    logger = get_logger(__name__)
+    logger = FlextLogger(__name__)
 
     # Test different exception types
     def _test_parse_error() -> None:
@@ -213,7 +213,7 @@ def demonstrate_configuration_error_handling() -> None:
                 pass
 
     except Exception as exc:  # Log instead of bare pass
-        logger = get_logger(__name__)
+        logger = FlextLogger(__name__)
         logger.exception("Configuration test failed", exc_info=exc)
 
     # Test with strict validation
@@ -239,7 +239,7 @@ description:
 def main() -> None:
     """Demonstrate comprehensive error handling patterns."""
     # Set up logging
-    logger = get_logger(__name__)
+    logger = FlextLogger(__name__)
     logger.info("Starting error handling demonstration")
 
     try:

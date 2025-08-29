@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_core import FlextResult, get_logger
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldif.constants import FlextLdifOperationMessages, FlextLdifValidationMessages
 from flext_ldif.models import FlextLdifConfig, FlextLdifEntry
@@ -21,7 +21,7 @@ from flext_ldif.services import (
     FlextLdifWriterService as _FlextLdifWriterService,
 )
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 
 # TLdif class removed - use FlextLdifAPI instead
@@ -500,7 +500,9 @@ class FlextLdifAPI:
                 FlextLdifValidationMessages.ENTRIES_CANNOT_BE_NONE
             )
         try:
-            sorted_entries = sorted(entries, key=lambda entry: len(entry.dn.value.split(",")))
+            sorted_entries = sorted(
+                entries, key=lambda entry: len(entry.dn.value.split(","))
+            )
             return FlextResult[list[FlextLdifEntry]].ok(sorted_entries)
         except (ValueError, AttributeError, TypeError) as e:
             return FlextResult[list[FlextLdifEntry]].fail(

@@ -196,11 +196,11 @@ FLEXT-LDIF implements **Clean Architecture** with **Domain-Driven Design** princ
 
 ```python
 # domain/entities/ldif_entry.py
-from flext_core import FlextEntity, FlextResult
+from flext_core import FlextModels.Entity, FlextResult
 from ..values.distinguished_name import FlextLdifDistinguishedName
 from ..values.attributes import FlextLdifAttributes
 
-class FlextLdifEntry(FlextEntity):
+class FlextLdifEntry(FlextModels.Entity):
     """
     Domain entity representing an LDIF entry with business logic.
 
@@ -462,10 +462,10 @@ class FlextLdifDocument(FlextAggregates):
 
 ```python
 # domain/values/distinguished_name.py
-from flext_core import FlextValue
+from flext_core import FlextModels.Value
 import re
 
-class FlextLdifDistinguishedName(FlextValue):
+class FlextLdifDistinguishedName(FlextModels.Value):
     """
     Immutable value object representing LDAP Distinguished Names.
 
@@ -569,10 +569,10 @@ class FlextLdifDistinguishedName(FlextValue):
 
 ```python
 # domain/values/attributes.py
-from flext_core import FlextValue
+from flext_core import FlextModels.Value
 from typing import Dict, List
 
-class FlextLdifAttributes(FlextValue):
+class FlextLdifAttributes(FlextModels.Value):
     """
     Immutable value object representing LDIF entry attributes.
 
@@ -928,7 +928,7 @@ class ParseLdifHandler:
 
 ```python
 # application/api.py
-from flext_core import FlextResult, get_logger
+from flext_core import FlextResult, FlextLogger
 from flext_observability import flext_monitor_function, flext_create_trace
 from .handlers.parse_handler import ParseLdifHandler
 from .handlers.validate_handler import ValidateHandler
@@ -955,7 +955,7 @@ class FlextLdifAPI:
         self._validate_handler = validate_handler
         self._write_handler = write_handler
         self._config = config or FlextLdifConfig()
-        self._logger = get_logger(self.__class__.__name__)
+        self._logger = FlextLogger(self.__class__.__name__)
 
     @flext_monitor_function("ldif_parse")
     def parse(self, content: str) -> FlextResult[list[FlextLdifEntryDTO]]:
@@ -1036,7 +1036,7 @@ class FlextLdifAPI:
 
 ```python
 # infrastructure/parsers/ldif_parser.py
-from flext_core import FlextResult, get_logger
+from flext_core import FlextResult, FlextLogger
 from ...domain.entities.ldif_entry import FlextLdifEntry
 from ...domain.values.distinguished_name import FlextLdifDistinguishedName
 from ...domain.values.attributes import FlextLdifAttributes
@@ -1052,7 +1052,7 @@ class LdifParserService(ILdifParser):
 
     def __init__(self, config: FlextLdifConfig) -> None:
         self._config = config
-        self._logger = get_logger(self.__class__.__name__)
+        self._logger = FlextLogger(self.__class__.__name__)
 
     def parse_content(self, content: str) -> FlextResult[list[FlextLdifEntry]]:
         """Parse LDIF content into domain entities."""
@@ -1172,7 +1172,7 @@ class LdifParserService(ILdifParser):
 
 ```python
 # infrastructure/persistence/file_repository.py
-from flext_core import FlextResult, get_logger
+from flext_core import FlextResult, FlextLogger
 from pathlib import Path
 from ...domain.entities.ldif_entry import FlextLdifEntry
 from ...domain.interfaces.repository_interface import ILdifRepository
@@ -1187,7 +1187,7 @@ class FileLdifRepository(ILdifRepository):
 
     def __init__(self, base_path: Path) -> None:
         self._base_path = base_path
-        self._logger = get_logger(self.__class__.__name__)
+        self._logger = FlextLogger(self.__class__.__name__)
         self._ensure_base_path_exists()
 
     def save_entries(
