@@ -10,7 +10,7 @@ import tempfile
 import time
 from pathlib import Path
 
-from flext_core import get_logger
+from flext_core import FlextLogger
 
 from flext_ldif import (
     FlextLdifAPI,
@@ -22,7 +22,7 @@ from flext_ldif import (
     flext_ldif_write,
 )
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 
 def example_basic_ldif_processing() -> None:
@@ -60,9 +60,9 @@ uid: janesmith
 
     if entries:
         # Validate entries with railway programming
-        api.validate(entries).tap(lambda _: logger.info("Validation successful")).tap_error(
-            lambda error: logger.error(f"Validation failed: {error}")
-        )
+        api.validate(entries).tap(
+            lambda _: logger.info("Validation successful")
+        ).tap_error(lambda error: logger.error(f"Validation failed: {error}"))
 
         # Write back to LDIF with railway programming
         api.write(entries).tap(lambda _: logger.info("Write successful")).tap_error(

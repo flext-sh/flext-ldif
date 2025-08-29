@@ -17,9 +17,9 @@ from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_core import get_logger
+from flext_core import FlextLogger
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 try:
     import docker

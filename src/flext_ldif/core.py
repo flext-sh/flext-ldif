@@ -12,7 +12,7 @@ from collections.abc import Callable as _Callable
 from functools import reduce
 from pathlib import Path
 
-from flext_core import FlextExceptions, FlextResult, get_logger
+from flext_core import FlextExceptions, FlextLogger, FlextResult
 
 from flext_ldif.constants import FlextLdifCoreConstants
 from flext_ldif.format_handler_service import (
@@ -25,7 +25,7 @@ from flext_ldif.format_validator_service import (
 )
 from flext_ldif.models import FlextLdifEntry, FlextLdifFactory
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 
 class TLdif:
@@ -145,12 +145,10 @@ class TLdif:
                                     error=str(e)
                                 )
                             )
-                        return FlextResult[list[FlextLdifEntry]].ok(
-                            [
-                                *entries_list,
-                                entry,
-                            ]
-                        )
+                        return FlextResult[list[FlextLdifEntry]].ok([
+                            *entries_list,
+                            entry,
+                        ])
 
                     return acc.flat_map(process_entry)
 
@@ -663,9 +661,9 @@ class TLdif:
                     FlextLdifCoreConstants.EMPTY_LDIF_FILE_DETECTED_WARNING_LOG,
                     absolute_path,
                 )
-                return FlextResult[list[FlextLdifEntry]].ok(
-                    []
-                )  # Return empty list for empty files
+                return FlextResult[
+                    list[FlextLdifEntry]
+                ].ok([])  # Return empty list for empty files
 
             # Read file content with enhanced error handling
             logger.debug(

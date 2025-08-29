@@ -148,7 +148,7 @@ FLEXT-LDIF Domain Entities
 This module contains the core domain entities for LDIF processing, implementing
 Domain-Driven Design patterns with Clean Architecture principles.
 
-All entities extend FlextEntity from flext-core and encapsulate business logic
+All entities extend FlextModels.Entity from flext-core and encapsulate business logic
 and invariants specific to LDIF data processing.
 
 Key Components:
@@ -167,7 +167,7 @@ Example:
     >>> entry.validate_domain_rules()
 
 Integration:
-    - Built on flext-core FlextEntity foundation
+    - Built on flext-core FlextModels.Entity foundation
     - Implements Domain-Driven Design patterns
     - Used by Application Layer services
     - Validated by Domain Services
@@ -178,11 +178,11 @@ License: MIT
 """
 
 from typing import List, Dict, Optional, Set
-from flext_core import FlextEntity, FlextResult
+from flext_core import FlextModels.Entity, FlextResult
 from .value_objects import FlextLdifDistinguishedName, FlextLdifAttributes
 from .events import LdifEntryCreated, LdifEntryModified
 
-class FlextLdifEntry(FlextEntity):
+class FlextLdifEntry(FlextModels.Entity):
     """
     Core LDIF entry domain entity encapsulating business logic and invariants.
 
@@ -302,7 +302,7 @@ class FlextLdifEntry(FlextEntity):
             if not name.replace("-", "").replace("_", "").isalnum():
                 raise FlextLdifDomainError(f"Invalid attribute name: {name}")
 
-class FlextLdifChangeRecord(FlextEntity):
+class FlextLdifChangeRecord(FlextModels.Entity):
     """
     LDIF change record entity for modification operations.
 
@@ -348,7 +348,7 @@ FLEXT-LDIF Domain Value Objects
 This module contains immutable value objects for LDIF processing, implementing
 Domain-Driven Design patterns with strong typing and validation.
 
-All value objects extend FlextValue from flext-core and provide
+All value objects extend FlextModels.Value from flext-core and provide
 immutable data structures with business rule validation.
 
 Key Components:
@@ -367,7 +367,7 @@ Example:
     >>> print(parent.value)  # "ou=people,dc=example,dc=com"
 
 Integration:
-    - Built on flext-core FlextValue foundation
+    - Built on flext-core FlextModels.Value foundation
     - Used by Domain Entities for data encapsulation
     - Implements immutability patterns
     - Provides business logic for data validation
@@ -379,12 +379,12 @@ License: MIT
 
 from typing import Dict, List, Set, Optional, Tuple
 from dataclasses import dataclass
-from flext_core import FlextValue
+from flext_core import FlextModels.Value
 import re
 from .exceptions import FlextLdifDomainError
 
 @dataclass(frozen=True)
-class FlextLdifDistinguishedName(FlextValue):
+class FlextLdifDistinguishedName(FlextModels.Value):
     """
     Immutable distinguished name value object with hierarchy operations.
 
@@ -581,7 +581,7 @@ class FlextLdifDistinguishedName(FlextValue):
                 raise FlextLdifDomainError(f"Empty attribute value in: {component}")
 
 @dataclass(frozen=True)
-class FlextLdifAttributes(FlextValue):
+class FlextLdifAttributes(FlextModels.Value):
     """
     Immutable attributes collection with business rule validation.
 
@@ -797,13 +797,13 @@ License: MIT
 
 from typing import List, Optional, Dict, object
 from pathlib import Path
-from flext_core import FlextResult, get_logger
+from flext_core import FlextResult, FlextLogger
 from ..domain import FlextLdifEntry, FlextLdifDistinguishedName, FlextLdifAttributes
 from ..infrastructure import FlextLdifSettings, FlextLdifParserService, FlextLdifValidatorService, FlextLdifWriterService
 from .commands import ParseLdifCommand, ValidateLdifCommand, WriteLdifCommand
 from .queries import GetEntriesQuery, SearchEntriesQuery
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 class FlextLdifAPI:
     """
@@ -1542,12 +1542,12 @@ from rich.panel import Panel
 import json
 import sys
 
-from flext_core import get_logger, FlextResult
+from flext_core import FlextLogger, FlextResult
 from ..application import FlextLdifAPI
 from ..infrastructure import FlextLdifSettings
 from ..domain import FlextLdifEntry
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 console = Console()
 
 # CLI Configuration
@@ -2258,8 +2258,8 @@ utils/
 
 ### **Phase 2: Domain Layer Implementation**
 
-1. **Implement proper domain entities** extending FlextEntity
-2. **Create immutable value objects** extending FlextValue
+1. **Implement proper domain entities** extending FlextModels.Entity
+2. **Create immutable value objects** extending FlextModels.Value
 3. **Add domain services** for complex business logic
 4. **Implement domain events** for integration patterns
 
@@ -2321,7 +2321,7 @@ from pydantic import BaseModel, Field
 import click
 
 # FLEXT ecosystem imports third
-from flext_core import FlextResult, FlextEntity, get_logger
+from flext_core import FlextResult, FlextModels.Entity, FlextLogger
 
 # Local imports last (relative imports within same layer)
 from .value_objects import FlextLdifDistinguishedName

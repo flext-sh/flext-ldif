@@ -679,9 +679,9 @@ def process_ldif_pipeline(content: str) -> FlextResult[str]:
 #### Logging Integration
 
 ```python
-from flext_core import get_logger
+from flext_core import FlextLogger
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 # LDIF operations are automatically logged
 result = api.parse(ldif_content)

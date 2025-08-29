@@ -1771,13 +1771,13 @@ all major features and best practices.
 """
 
 from flext_ldif import FlextLdifAPI, FlextLdifConfig
-from flext_core import get_logger
+from flext_core import FlextLogger
 from pathlib import Path
 import time
 import json
 
 # Setup enterprise logging
-logger = get_logger("enterprise_ldif_processor")
+logger = FlextLogger("enterprise_ldif_processor")
 
 class EnterpriseLdifProcessor:
     """

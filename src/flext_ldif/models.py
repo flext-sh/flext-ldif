@@ -17,12 +17,12 @@ from typing import cast, override
 
 from flext_core import (
     FlextConfig,
-    FlextEntity,
-    FlextEntityId,
+    FlextModels.Entity,
+    FlextModels.EntityId,
     FlextExceptions,
     FlextModel,
     FlextResult,
-    FlextValue,
+    FlextModels.Value,
 )
 from pydantic import Field, field_validator, model_validator
 
@@ -146,7 +146,7 @@ class FlextLdifModels(FlextModel):
     Individual models available as nested classes for organization.
     """
 
-    class DistinguishedName(FlextValue):
+    class DistinguishedName(FlextModels.Value):
         """Distinguished Name value object."""
 
         value: str = Field(...)
@@ -208,7 +208,7 @@ class FlextLdifModels(FlextModel):
 
         @override
         def validate_business_rules(self) -> FlextResult[None]:
-            """Validate business rules for DN - required by FlextValue."""
+            """Validate business rules for DN - required by FlextModels.Value."""
             try:
                 self.validate_domain_rules()
                 return FlextResult[None].ok(None)
@@ -247,7 +247,7 @@ class FlextLdifModels(FlextModel):
             dn_value = ",".join(str(c).strip() for c in components if c.strip())
             return cls(value=dn_value)
 
-    class Attributes(FlextValue):
+    class Attributes(FlextModels.Value):
         """LDIF attributes collection value object."""
 
         data: dict[str, list[str]] = Field(default_factory=dict)
@@ -307,7 +307,7 @@ class FlextLdifModels(FlextModel):
 
         @override
         def validate_business_rules(self) -> FlextResult[None]:
-            """Validate business rules for attributes - required by FlextValue."""
+            """Validate business rules for attributes - required by FlextModels.Value."""
             try:
                 self.validate_domain_rules()
                 return FlextResult[None].ok(None)
@@ -362,7 +362,7 @@ class FlextLdifModels(FlextModel):
             object_classes = {oc.lower() for oc in self.get_object_classes()}
             return bool(object_classes.intersection(LDAP_GROUP_CLASSES))
 
-    class Entry(FlextEntity):
+    class Entry(FlextModels.Entity):
         """LDIF entry domain entity."""
 
         dn: FlextLdifModels.DistinguishedName = Field(...)
@@ -370,7 +370,7 @@ class FlextLdifModels(FlextModel):
 
         def __init__(self, **data: object) -> None:
             """Initialize with auto-generated ID if not provided."""
-            # Ensure we have an id for FlextEntity
+            # Ensure we have an id for FlextModels.Entity
             if "id" not in data and "dn" in data:
                 # Generate ID from DN if not provided
                 dn_value = (
@@ -408,10 +408,10 @@ class FlextLdifModels(FlextModel):
             """Serialize to JSON string."""
             return json.dumps(self.model_dump(), default=str)
 
-        def get_entity_id(self) -> FlextEntityId:
+        def get_entity_id(self) -> FlextModels.EntityId:
             """Get unique entity identifier based on DN."""
             dn_hash = hashlib.sha256(self.dn.value.encode()).hexdigest()[:16]
-            return FlextEntityId(f"ldif_entry_{dn_hash}")
+            return FlextModels.EntityId(f"ldif_entry_{dn_hash}")
 
         def validate_domain_rules(self) -> None:
             """Validate business rules for LDIF entry."""
@@ -432,7 +432,7 @@ class FlextLdifModels(FlextModel):
 
         @override
         def validate_business_rules(self) -> FlextResult[None]:
-            """Validate business rules for entry - required by FlextEntity."""
+            """Validate business rules for entry - required by FlextModels.Entity."""
             try:
                 self.validate_domain_rules()
                 return FlextResult[None].ok(None)

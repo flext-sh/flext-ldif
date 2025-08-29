@@ -14,11 +14,11 @@ from collections.abc import Iterator, Sequence
 from urllib.parse import urlparse
 
 import urllib3
-from flext_core import FlextResult, get_logger
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldif.constants import FlextLdifOperationMessages, FlextLdifValidationMessages
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 # LDIF Pattern Constants
 ATTRTYPE_PATTERN = r"[\w;.-]+(;[\w_-]+)*"
 ATTRVALUE_PATTERN = r'(([^,]|\\,)+|".*?")'
