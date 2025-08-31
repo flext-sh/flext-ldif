@@ -331,11 +331,11 @@ class FlextLdifEntry(FlextModels.Entity):
 
 ```python
 # domain/aggregates/ldif_processing_aggregate.py
-from flext_core import FlextAggregates, FlextDomainEvent
-from ..entities.ldif_entry import FlextLdifEntry
+from flext_core import FlextModels.AggregateRoot, FlextDomainEvent
+from ..entities.ldif_entry import
 from ..events.processing_completed import FlextLdifProcessingCompleted
 
-class FlextLdifDocument(FlextAggregates):
+class FlextLdifDocument(FlextModels.AggregateRoot):
     """
     Aggregate root for LDIF document processing operations.
 

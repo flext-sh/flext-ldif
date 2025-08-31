@@ -56,49 +56,62 @@ class FlextLdifConstants(FlextConstants):
     MAX_DN_DEPTH: Final[int] = 20
 
     # DN Attribute Types - consolidated with DN-valued attributes
-    LDAP_DN_ATTRIBUTES: Final[frozenset[str]] = frozenset({
-        "cn", "commonname",
-        "o", "organization",
-        "ou", "organizationalunit",
-        "c", "country",
-        "dc", "domaincomponent",
-        "uid", "userid",
-        "mail", "email",
-        # DN-valued attributes requiring DN normalization
-        "orcldaspublicgroupdns",
-        "member",
-        "uniquemember",
-        "owner",
-        "roleoccupant",
-        "seealso",
-        "manager",
-        "secretary",
-        "directreports",
-        "distinguishedname",
-        "dn"
-    })
+    LDAP_DN_ATTRIBUTES: Final[frozenset[str]] = frozenset(
+        {
+            "cn",
+            "commonname",
+            "o",
+            "organization",
+            "ou",
+            "organizationalunit",
+            "c",
+            "country",
+            "dc",
+            "domaincomponent",
+            "uid",
+            "userid",
+            "mail",
+            "email",
+            # DN-valued attributes requiring DN normalization
+            "orcldaspublicgroupdns",
+            "member",
+            "uniquemember",
+            "owner",
+            "roleoccupant",
+            "seealso",
+            "manager",
+            "secretary",
+            "directreports",
+            "distinguishedname",
+            "dn",
+        }
+    )
 
     # =============================================================================
     # LDAP OBJECT CLASS CONSTANTS
     # =============================================================================
 
     # Person object classes (using proper LDAP case formatting)
-    LDAP_PERSON_CLASSES: Final[frozenset[str]] = frozenset({
-        "person",
-        "organizationalPerson",
-        "inetOrgPerson",
-        "posixAccount",
-        "user",
-    })
+    LDAP_PERSON_CLASSES: Final[frozenset[str]] = frozenset(
+        {
+            "person",
+            "organizationalPerson",
+            "inetOrgPerson",
+            "posixAccount",
+            "user",
+        }
+    )
 
     # Group object classes (using proper LDAP case formatting)
-    LDAP_GROUP_CLASSES: Final[frozenset[str]] = frozenset({
-        "groupOfNames",
-        "groupOfUniqueNames",
-        "posixGroup",
-        "organizationalRole",
-        "group",
-    })
+    LDAP_GROUP_CLASSES: Final[frozenset[str]] = frozenset(
+        {
+            "groupOfNames",
+            "groupOfUniqueNames",
+            "posixGroup",
+            "organizationalRole",
+            "group",
+        }
+    )
     DN_SEPARATOR: Final[str] = ","
     DN_ATTRIBUTE_SEPARATOR: Final[str] = "="
 
@@ -172,7 +185,9 @@ class FlextLdifConstants(FlextConstants):
         DN_CANNOT_BE_EMPTY: Final[str] = "DN cannot be empty"
         EMPTY_DN: Final[str] = "DN cannot be empty"
         DN_INVALID_COMPONENT: Final[str] = "Invalid DN component"
-        DN_MISSING_EQUALS: Final[str] = "DN must contain at least one attribute=value pair"
+        DN_MISSING_EQUALS: Final[str] = (
+            "DN must contain at least one attribute=value pair"
+        )
         DN_FORMAT_INVALID: Final[str] = "DN format is invalid"
         DN_INVALID_FORMAT: Final[str] = "Invalid DN format: {dn}"
         INVALID_DN: Final[str] = "Invalid DN format: {dn}"
@@ -184,7 +199,9 @@ class FlextLdifConstants(FlextConstants):
         ENTRY_VALIDATION_FAILED: Final[str] = "Entry validation failed"
         ENTRY_MISSING_DN: Final[str] = "Entry must have a DN"
         MISSING_DN: Final[str] = "Entry must have a DN"
-        ENTRY_MISSING_ATTRIBUTES: Final[str] = "LDIF entry must have at least one attribute"
+        ENTRY_MISSING_ATTRIBUTES: Final[str] = (
+            "LDIF entry must have at least one attribute"
+        )
         ENTRY_MISSING_OBJECTCLASS: Final[str] = "Entry must have objectClass attribute"
         MISSING_OBJECTCLASS: Final[str] = "Entry missing required objectClass attribute"
         ENTRY_MISSING_REQUIRED_OBJECTCLASS: Final[str] = (
@@ -209,7 +226,9 @@ class FlextLdifConstants(FlextConstants):
         INVALID_ATTRIBUTE_NAME_FORMAT: Final[str] = (
             "Invalid LDAP attribute name format: {attr_name}"
         )
-        INVALID_ATTRIBUTE_NAME: Final[str] = "Invalid attribute name format: {attr_name}"
+        INVALID_ATTRIBUTE_NAME: Final[str] = (
+            "Invalid attribute name format: {attr_name}"
+        )
         INVALID_ATTRIBUTES: Final[str] = "Invalid attributes format"
 
         # Configuration Validation Messages
@@ -289,18 +308,24 @@ class FlextLdifConstants(FlextConstants):
     e transformação LDIF com Clean Architecture."""
 
         PARSE_DESCRIPTION: Final[str] = "Parse LDIF file and display or save entries"
-        VALIDATE_DESCRIPTION: Final[str] = "Validate LDIF file entries against schema rules"
+        VALIDATE_DESCRIPTION: Final[str] = (
+            "Validate LDIF file entries against schema rules"
+        )
         TRANSFORM_DESCRIPTION: Final[str] = (
             "Transform LDIF file with filtering and sorting options"
         )
         STATS_DESCRIPTION: Final[str] = "Display comprehensive statistics for LDIF file"
         FIND_DESCRIPTION: Final[str] = "Find specific entry by Distinguished Name"
-        FILTER_BY_CLASS_DESCRIPTION: Final[str] = "Filter entries by objectClass attribute"
+        FILTER_BY_CLASS_DESCRIPTION: Final[str] = (
+            "Filter entries by objectClass attribute"
+        )
         CONVERT_DESCRIPTION: Final[str] = "Convert between different file formats"
         CONFIG_CHECK_DESCRIPTION: Final[str] = (
             "Validate CLI configuration and display settings"
         )
-        WRITE_DESCRIPTION: Final[str] = "Reformat LDIF file and print or save the output"
+        WRITE_DESCRIPTION: Final[str] = (
+            "Reformat LDIF file and print or save the output"
+        )
 
     # =============================================================================
     # FLEXT-LDIF ANALYTICS CONSTANTS
@@ -352,7 +377,9 @@ class FlextLdifConstants(FlextConstants):
         FILE_NOT_FOUND: Final[str] = "LDIF file not found: {file_path}"
         PATH_NOT_FILE: Final[str] = "Path is not a file: {file_path}"
         EMPTY_FILE_WARNING: Final[str] = "Empty LDIF file detected: {file_path}"
-        ENCODING_ERROR: Final[str] = "Encoding error reading file with {encoding}: {error}"
+        ENCODING_ERROR: Final[str] = (
+            "Encoding error reading file with {encoding}: {error}"
+        )
         FILE_READ_FAILED: Final[str] = "LDIF file read failed: {error}"
         FILE_WRITE_FAILED: Final[str] = "File write failed: {error}"
         CONTENT_GENERATION_FAILED: Final[str] = (
@@ -401,7 +428,9 @@ class FlextLdifConstants(FlextConstants):
         LOADED_ENTRIES: Final[str] = "Loaded {count} entries"
         FILTERED_ENTRIES: Final[str] = "Filtered to {count} {filter_type} entries"
         ENTRIES_SORTED: Final[str] = "Entries sorted hierarchically"
-        FOUND_ENTRIES: Final[str] = "Found {count} entries with objectClass '{objectclass}'"
+        FOUND_ENTRIES: Final[str] = (
+            "Found {count} entries with objectClass '{objectclass}'"
+        )
         CONVERTED_ENTRIES: Final[str] = "Converted {count} entries to {format}: {path}"
 
         # Status Messages
@@ -432,7 +461,9 @@ class FlextLdifConstants(FlextConstants):
 
         # Convert Messages
         CONVERTED_TO_LDIF: Final[str] = "Converted to LDIF: {path}"
-        CONVERTED_TO_FORMAT: Final[str] = "Converted {count} entries to {format}: {path}"
+        CONVERTED_TO_FORMAT: Final[str] = (
+            "Converted {count} entries to {format}: {path}"
+        )
 
     # =============================================================================
     # FLEXT-LDIF FORMAT VALIDATORS CONSTANTS
@@ -453,7 +484,9 @@ class FlextLdifConstants(FlextConstants):
         # Validation Error Messages - Format Validators
         DN_CANNOT_BE_EMPTY_FORMAT: Final[str] = "DN cannot be empty"
         INVALID_DN_FORMAT_MSG: Final[str] = "Invalid DN format: {dn_value}"
-        ATTRIBUTE_NAME_CANNOT_BE_EMPTY_FORMAT: Final[str] = "Attribute name cannot be empty"
+        ATTRIBUTE_NAME_CANNOT_BE_EMPTY_FORMAT: Final[str] = (
+            "Attribute name cannot be empty"
+        )
         INVALID_ATTRIBUTE_NAME_FORMAT_MSG: Final[str] = (
             "Invalid attribute name format: {attr_name}"
         )
@@ -521,7 +554,9 @@ class FlextLdifConstants(FlextConstants):
         CONTENT_LENGTH_LOG: Final[str] = "Content length: %d characters"
         CONTENT_CONVERTED_LOG: Final[str] = "Content converted to string, length: %d"
         CONTENT_PREVIEW_LOG: Final[str] = "Content preview: %s..."
-        DELEGATING_TO_MODERNIZED_LOG: Final[str] = "Delegating to modernized LDIF parser"
+        DELEGATING_TO_MODERNIZED_LOG: Final[str] = (
+            "Delegating to modernized LDIF parser"
+        )
         EXCEPTION_TYPE_LOG: Final[str] = "Exception type: %s"
         FULL_EXCEPTION_DETAILS_LOG: Final[str] = "Full exception details"
         EXCEPTION_IN_TLDIF_PARSE_LOG: Final[str] = "Exception in TLdif.parse"
@@ -566,7 +601,9 @@ class FlextLdifConstants(FlextConstants):
         INVALID_DN_FORMAT_BY_PATTERN_LOG: Final[str] = (
             "Invalid DN format by TLdif pattern: %s"
         )
-        DN_FAILED_FLEXT_LDAP_VALIDATION_LOG: Final[str] = "DN failed flext-ldap validation"
+        DN_FAILED_FLEXT_LDAP_VALIDATION_LOG: Final[str] = (
+            "DN failed flext-ldap validation"
+        )
         DN_FORMAT_VALIDATION_PASSED_LOG: Final[str] = "DN format validation passed"
         VALIDATING_ATTRIBUTE_NAMES_LOG: Final[str] = "Validating %d attribute names"
         VALIDATING_ATTRIBUTE_NAME_LOG: Final[str] = "Validating attribute name: %s"
@@ -593,7 +630,9 @@ class FlextLdifConstants(FlextConstants):
         )
 
         # Bulk Validation Log Messages
-        STARTING_BULK_VALIDATION_LOG: Final[str] = "Starting bulk validation of %d entries"
+        STARTING_BULK_VALIDATION_LOG: Final[str] = (
+            "Starting bulk validation of %d entries"
+        )
         VALIDATING_ENTRY_INDEX_LOG: Final[str] = "Validating entry %d/%d: %s"
         BULK_VALIDATION_FAILED_AT_ENTRY_LOG: Final[str] = (
             "Bulk validation failed at entry %d: %s"
@@ -633,9 +672,13 @@ class FlextLdifConstants(FlextConstants):
         FILE_ENCODING_LOG: Final[str] = "File encoding: %s"
         RESOLVED_FILE_PATH_LOG: Final[str] = "Resolved file path: %s"
         CREATING_PARENT_DIRECTORY_LOG: Final[str] = "Creating parent directory: %s"
-        PARENT_DIRECTORY_CREATED_LOG: Final[str] = "Parent directory created successfully"
+        PARENT_DIRECTORY_CREATED_LOG: Final[str] = (
+            "Parent directory created successfully"
+        )
         FILE_PATH_EXISTS_LOG: Final[str] = "File path exists: %s"
-        CONVERTING_ENTRIES_TO_LDIF_LOG: Final[str] = "Converting %d entries to LDIF content"
+        CONVERTING_ENTRIES_TO_LDIF_LOG: Final[str] = (
+            "Converting %d entries to LDIF content"
+        )
         GENERATED_LDIF_CONTENT_LOG: Final[str] = "Generated LDIF content: %d characters"
         CONTENT_PREVIEW_FILE_LOG: Final[str] = "Content preview: %s..."
         WRITING_CONTENT_TO_FILE_LOG: Final[str] = (
@@ -649,7 +692,9 @@ class FlextLdifConstants(FlextConstants):
         EXCEPTION_DURING_FILE_WRITE_LOG: Final[str] = "Exception during file write"
 
         # File Read Operation Log Messages
-        STARTING_LDIF_FILE_READ_LOG: Final[str] = "Starting LDIF file read operation: %s"
+        STARTING_LDIF_FILE_READ_LOG: Final[str] = (
+            "Starting LDIF file read operation: %s"
+        )
         RESOLVED_ABSOLUTE_FILE_PATH_LOG: Final[str] = "Resolved absolute file path: %s"
         FILE_EXISTS_COLLECTING_METADATA_LOG: Final[str] = (
             "File exists, collecting file metadata"
@@ -665,7 +710,9 @@ class FlextLdifConstants(FlextConstants):
             "Delegating to parse method for content processing"
         )
         FILE_READ_EXCEPTION_DETAILS_LOG: Final[str] = "File read exception details"
-        EXCEPTION_DURING_FILE_READ_LOG: Final[str] = "Exception during file read operation"
+        EXCEPTION_DURING_FILE_READ_LOG: Final[str] = (
+            "Exception during file read operation"
+        )
         FILE_READ_AND_PARSE_SUCCESSFUL_LOG: Final[str] = (
             "File read and parse successful: %d entries from %s"
         )
@@ -700,7 +747,9 @@ class FlextLdifConstants(FlextConstants):
         BULK_VALIDATION_FAILED_MSG: Final[str] = (
             "Bulk validation failed with exception: {error}"
         )
-        WRITE_FAILED_WITH_EXCEPTION_MSG: Final[str] = "Write failed with exception: {error}"
+        WRITE_FAILED_WITH_EXCEPTION_MSG: Final[str] = (
+            "Write failed with exception: {error}"
+        )
         MODERNIZED_LDIF_WRITE_FAILED_MSG: Final[str] = "Modernized LDIF write failed"
         MODERNIZED_LDIF_WRITE_FAILED_WITH_ERROR_MSG: Final[str] = (
             "Modernized LDIF write failed: {error}"
@@ -766,11 +815,19 @@ class FlextLdifConstants(FlextConstants):
             "Starting LDIF file read operation: %s"
         )
         FILE_ENCODING_READ_LOG: Final[str] = "File encoding: %s"
-        RESOLVED_ABSOLUTE_FILE_PATH_READ_LOG: Final[str] = "Resolved absolute file path: %s"
-        LDIF_FILE_NOT_FOUND_ERROR_MSG: Final[str] = "LDIF file not found: {absolute_path}"
+        RESOLVED_ABSOLUTE_FILE_PATH_READ_LOG: Final[str] = (
+            "Resolved absolute file path: %s"
+        )
+        LDIF_FILE_NOT_FOUND_ERROR_MSG: Final[str] = (
+            "LDIF file not found: {absolute_path}"
+        )
         PATH_NOT_FILE_ERROR_MSG: Final[str] = "Path is not a file: {absolute_path}"
-        FILE_METADATA_SIZE_MODE_LOG: Final[str] = "File metadata - size: %d bytes, mode: %o"
-        EMPTY_LDIF_FILE_DETECTED_WARNING_LOG: Final[str] = "Empty LDIF file detected: %s"
+        FILE_METADATA_SIZE_MODE_LOG: Final[str] = (
+            "File metadata - size: %d bytes, mode: %o"
+        )
+        EMPTY_LDIF_FILE_DETECTED_WARNING_LOG: Final[str] = (
+            "Empty LDIF file detected: %s"
+        )
         READING_FILE_CONTENT_ENCODING_LOG: Final[str] = (
             "Reading file content with encoding: %s"
         )

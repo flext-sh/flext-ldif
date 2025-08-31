@@ -98,10 +98,12 @@ class FlextLdifCliService:
                 )
                 errors.append(error_msg)
 
-        return FlextResult[tuple[list[FlextLdifEntry], list[str]]].ok((
-            valid_entries,
-            errors,
-        ))
+        return FlextResult[tuple[list[FlextLdifEntry], list[str]]].ok(
+            (
+                valid_entries,
+                errors,
+            )
+        )
 
     def transform_entries(
         self,

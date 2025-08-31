@@ -702,7 +702,9 @@ class TestEdgeCases:
 
         result = LdifValidator.validate_entry_completeness(entry)
         assert result.is_failure
-        assert result.error is not None and ("dn" in result.error or "valid" in result.error)
+        assert result.error is not None and (
+            "dn" in result.error or "valid" in result.error
+        )
 
     def test_validate_entry_type_missing_objectclass_coverage(self) -> None:
         """Test validate_entry_type with missing objectClass (line 195)."""

@@ -44,7 +44,9 @@ class TestFlextLdifAnalyticsService:
         assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_MAIL_KEY] == 0
         assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_TELEPHONE_KEY] == 0
 
-    def test_analyze_entry_patterns_with_cn(self, sample_entry_with_cn: FlextLdifEntry) -> None:
+    def test_analyze_entry_patterns_with_cn(
+        self, sample_entry_with_cn: FlextLdifEntry
+    ) -> None:
         """Test analyzing entries with CN attribute."""
         service = FlextLdifAnalyticsService()
         result = service.analyze_entry_patterns([sample_entry_with_cn])
@@ -56,7 +58,9 @@ class TestFlextLdifAnalyticsService:
         assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_MAIL_KEY] == 0
         assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_TELEPHONE_KEY] == 0
 
-    def test_analyze_entry_patterns_with_mail(self, sample_entry_with_mail: FlextLdifEntry) -> None:
+    def test_analyze_entry_patterns_with_mail(
+        self, sample_entry_with_mail: FlextLdifEntry
+    ) -> None:
         """Test analyzing entries with mail attribute."""
         service = FlextLdifAnalyticsService()
         result = service.analyze_entry_patterns([sample_entry_with_mail])
@@ -107,7 +111,9 @@ class TestFlextLdifAnalyticsService:
         assert result.value[FlextLdifAnalyticsConstants.ENTRIES_WITH_TELEPHONE_KEY] == 1
 
     def test_analyze_entry_patterns_multiple_entries(
-        self, sample_entry_with_cn: FlextLdifEntry, sample_entry_with_mail: FlextLdifEntry
+        self,
+        sample_entry_with_cn: FlextLdifEntry,
+        sample_entry_with_mail: FlextLdifEntry,
     ) -> None:
         """Test analyzing multiple entries."""
         service = FlextLdifAnalyticsService()

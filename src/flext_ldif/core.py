@@ -145,10 +145,12 @@ class TLdif:
                                     error=str(e)
                                 )
                             )
-                        return FlextResult[list[FlextLdifEntry]].ok([
-                            *entries_list,
-                            entry,
-                        ])
+                        return FlextResult[list[FlextLdifEntry]].ok(
+                            [
+                                *entries_list,
+                                entry,
+                            ]
+                        )
 
                     return acc.flat_map(process_entry)
 
@@ -661,9 +663,9 @@ class TLdif:
                     FlextLdifCoreConstants.EMPTY_LDIF_FILE_DETECTED_WARNING_LOG,
                     absolute_path,
                 )
-                return FlextResult[
-                    list[FlextLdifEntry]
-                ].ok([])  # Return empty list for empty files
+                return FlextResult[list[FlextLdifEntry]].ok(
+                    []
+                )  # Return empty list for empty files
 
             # Read file content with enhanced error handling
             logger.debug(

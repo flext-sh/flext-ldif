@@ -410,7 +410,10 @@ objectClass: person
         nonexistent_file = Path("/nonexistent/file.ldif")
         file_result = api.parse_file(nonexistent_file)
         assert not file_result.is_success
-        if file_result.error is not None and "not found" not in file_result.error.lower():
+        if (
+            file_result.error is not None
+            and "not found" not in file_result.error.lower()
+        ):
             msg: str = f"Expected 'not found' in {file_result.error.lower() if file_result.error else 'None'}"
             raise AssertionError(msg)
 
