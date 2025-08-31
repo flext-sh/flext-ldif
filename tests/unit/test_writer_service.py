@@ -96,7 +96,10 @@ class TestFlextLdifWriterService:
 
         assert result.is_failure
         assert result.error is not None
-        assert FlextLdifCoreMessages.WRITE_FAILED.format(error="Test error") in result.error
+        assert (
+            FlextLdifCoreMessages.WRITE_FAILED.format(error="Test error")
+            in result.error
+        )
 
     def test_write_entry_attribute_error(self) -> None:
         """Test write handles AttributeError from entry.to_ldif()."""
@@ -110,7 +113,10 @@ class TestFlextLdifWriterService:
 
         assert result.is_failure
         assert result.error is not None
-        assert FlextLdifCoreMessages.WRITE_FAILED.format(error="Missing attribute") in result.error
+        assert (
+            FlextLdifCoreMessages.WRITE_FAILED.format(error="Missing attribute")
+            in result.error
+        )
 
     def test_write_entry_type_error(self) -> None:
         """Test write handles TypeError from entry.to_ldif()."""
@@ -124,7 +130,10 @@ class TestFlextLdifWriterService:
 
         assert result.is_failure
         assert result.error is not None
-        assert FlextLdifCoreMessages.WRITE_FAILED.format(error="Type error") in result.error
+        assert (
+            FlextLdifCoreMessages.WRITE_FAILED.format(error="Type error")
+            in result.error
+        )
 
     def test_write_entry_success(self) -> None:
         """Test write_entry with single entry."""
@@ -159,7 +168,10 @@ class TestFlextLdifWriterService:
 
         assert result.is_failure
         assert result.error is not None
-        assert FlextLdifCoreMessages.WRITE_FAILED.format(error="Attribute missing") in result.error
+        assert (
+            FlextLdifCoreMessages.WRITE_FAILED.format(error="Attribute missing")
+            in result.error
+        )
 
     def test_write_entry_type_error_handling(self) -> None:
         """Test write_entry handles TypeError."""
@@ -172,7 +184,10 @@ class TestFlextLdifWriterService:
 
         assert result.is_failure
         assert result.error is not None
-        assert FlextLdifCoreMessages.WRITE_FAILED.format(error="Type mismatch") in result.error
+        assert (
+            FlextLdifCoreMessages.WRITE_FAILED.format(error="Type mismatch")
+            in result.error
+        )
 
     def test_write_file_success(self) -> None:
         """Test write_file success with temporary file."""
@@ -292,9 +307,12 @@ class TestFlextLdifWriterService:
 
             assert result.is_failure
             assert result.error is not None
-            assert FlextLdifCoreMessages.FILE_WRITE_FAILED.format(
-                error="Permission denied"
-            ) in result.error
+            assert (
+                FlextLdifCoreMessages.FILE_WRITE_FAILED.format(
+                    error="Permission denied"
+                )
+                in result.error
+            )
 
     def test_write_content_to_file_os_error(self) -> None:
         """Test _write_content_to_file handles OSError."""
@@ -312,7 +330,10 @@ class TestFlextLdifWriterService:
 
             assert result.is_failure
             assert result.error is not None
-            assert FlextLdifCoreMessages.FILE_WRITE_FAILED.format(error="Disk full") in result.error
+            assert (
+                FlextLdifCoreMessages.FILE_WRITE_FAILED.format(error="Disk full")
+                in result.error
+            )
 
     def test_write_content_to_file_unicode_error(self) -> None:
         """Test _write_content_to_file handles UnicodeError."""
@@ -328,9 +349,12 @@ class TestFlextLdifWriterService:
 
             assert result.is_failure
             assert result.error is not None
-            assert FlextLdifCoreMessages.FILE_WRITE_FAILED.format(
-                error="Unicode encoding error"
-            ) in result.error
+            assert (
+                FlextLdifCoreMessages.FILE_WRITE_FAILED.format(
+                    error="Unicode encoding error"
+                )
+                in result.error
+            )
 
     def test_write_file_empty_entries(self) -> None:
         """Test write_file with empty entries list."""

@@ -40,7 +40,10 @@ class TestFlextLdifRepositoryService:
         result = service.find_by_dn(entries, "")
 
         assert result.is_failure
-        assert result.error is not None and FlextLdifValidationMessages.DN_EMPTY_ERROR in result.error
+        assert (
+            result.error is not None
+            and FlextLdifValidationMessages.DN_EMPTY_ERROR in result.error
+        )
 
     def test_find_by_dn_whitespace_only_dn(self) -> None:
         """Test find_by_dn with whitespace-only DN."""
@@ -50,7 +53,10 @@ class TestFlextLdifRepositoryService:
         result = service.find_by_dn(entries, "   ")
 
         assert result.is_failure
-        assert result.error is not None and FlextLdifValidationMessages.DN_EMPTY_ERROR in result.error
+        assert (
+            result.error is not None
+            and FlextLdifValidationMessages.DN_EMPTY_ERROR in result.error
+        )
 
     def test_find_by_dn_not_found(self) -> None:
         """Test find_by_dn when entry not found."""
@@ -131,7 +137,10 @@ class TestFlextLdifRepositoryService:
         result = service.filter_by_objectclass(entries, "")
 
         assert result.is_failure
-        assert result.error is not None and ("Object class cannot be empty" in result.error or FlextLdifCoreMessages.MISSING_OBJECTCLASS in result.error)
+        assert result.error is not None and (
+            "Object class cannot be empty" in result.error
+            or FlextLdifCoreMessages.MISSING_OBJECTCLASS in result.error
+        )
 
     def test_filter_by_objectclass_whitespace_only(self) -> None:
         """Test filter_by_objectclass with whitespace-only objectclass."""
@@ -141,7 +150,10 @@ class TestFlextLdifRepositoryService:
         result = service.filter_by_objectclass(entries, "   ")
 
         assert result.is_failure
-        assert result.error is not None and ("Object class cannot be empty" in result.error or FlextLdifCoreMessages.MISSING_OBJECTCLASS in result.error)
+        assert result.error is not None and (
+            "Object class cannot be empty" in result.error
+            or FlextLdifCoreMessages.MISSING_OBJECTCLASS in result.error
+        )
 
     def test_filter_by_objectclass_no_matches(self) -> None:
         """Test filter_by_objectclass with no matches."""

@@ -795,9 +795,9 @@ cn: invalid
 
         # Test batch processing (lines 447, 460)
         def list_processor(entries: list[FlextLdifEntry]) -> FlextResult[list[str]]:
-            return FlextResult[list[str]].ok([
-                f"processed-{i}" for i in range(len(entries))
-            ])
+            return FlextResult[list[str]].ok(
+                [f"processed-{i}" for i in range(len(entries))]
+            )
 
         if sample_entries:
             result = FlextLdifUtilities.batch_process_entries(
@@ -1265,9 +1265,9 @@ cn: invalid
         mock_entry = MagicMock()
         mock_entry.validate_business_rules.return_value = mock_result
 
-        valid, invalid = FlextLdifUtilities.partition_entries_by_validation([
-            mock_entry
-        ])
+        valid, invalid = FlextLdifUtilities.partition_entries_by_validation(
+            [mock_entry]
+        )
 
         # Should have no valid entries and one invalid with fallback message
         assert len(valid) == 0

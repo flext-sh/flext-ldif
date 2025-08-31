@@ -66,6 +66,7 @@ class TestModuleImports:
         # Disabled due to flext-cli issues
         try:
             from flext_ldif.cli import main  # type: ignore[import-untyped]
+
             assert callable(main)
         except ImportError:
             # If import fails, it means dependencies are missing, which is acceptable in test environment

@@ -373,13 +373,17 @@ description: Some description with\n newlines and special chars: !@#$%"""
         empty_dn_content = "dn: \nobjectClass: person"
         result = service.parse(empty_dn_content)
         if result.is_failure:
-            assert result.error is not None and ("failed" in result.error.lower() or "invalid" in result.error.lower())
+            assert result.error is not None and (
+                "failed" in result.error.lower() or "invalid" in result.error.lower()
+            )
 
         # Test DN with only spaces
         spaces_dn_content = "dn:    \nobjectClass: person"
         result = service.parse(spaces_dn_content)
         if result.is_failure:
-            assert result.error is not None and ("failed" in result.error.lower() or "invalid" in result.error.lower())
+            assert result.error is not None and (
+                "failed" in result.error.lower() or "invalid" in result.error.lower()
+            )
 
         # Test exception handling paths (lines 98-99, 211-212)
         # Create content that might trigger AttributeError or TypeError

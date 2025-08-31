@@ -20,7 +20,7 @@ from flext_core import (
     FlextModels.Entity,
     FlextModels.EntityId,
     FlextExceptions,
-    FlextModel,
+    FlextModels,
     FlextResult,
     FlextModels.Value,
 )
@@ -139,7 +139,7 @@ def _get_ldap_validators() -> tuple[ValidatorFunc, ValidatorFunc]:
 # =============================================================================
 
 
-class FlextLdifModels(FlextModel):
+class FlextLdifModels(FlextModels):
     """Single consolidated class containing ALL LDIF models.
 
     Consolidates ALL model definitions into one class following FLEXT patterns.

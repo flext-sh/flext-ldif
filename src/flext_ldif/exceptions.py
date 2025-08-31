@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from enum import Enum
 
-from flext_core import FlextExceptions, FlextModel
+from flext_core import FlextExceptions, FlextModels
 
 
 # Error codes enum for LDIF operations
@@ -33,7 +33,7 @@ class FlextLdifErrorCodes(Enum):
 # =============================================================================
 
 
-class FlextLdifExceptions(FlextModel):
+class FlextLdifExceptions(FlextModels):
     """Single consolidated class containing ALL LDIF exceptions.
 
     Consolidates ALL exception definitions into one class following FLEXT patterns.

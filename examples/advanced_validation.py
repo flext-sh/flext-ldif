@@ -142,7 +142,9 @@ class LdifValidationDemonstrator:
         ]
         for filter_func in filter_functions:
             filter_func(entries).tap(
-                lambda filtered_entries: logger.info(f"Found {len(filtered_entries)} entries")
+                lambda filtered_entries: logger.info(
+                    f"Found {len(filtered_entries)} entries"
+                )
                 if filtered_entries
                 else logger.info("No entries found")
             )
