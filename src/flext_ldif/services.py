@@ -18,6 +18,7 @@ from pydantic import Field
 from pydantic.fields import FieldInfo
 
 # Import models needed at runtime
+from flext_ldif.constants import FlextLDIFCoreMessages
 from flext_ldif.models import FlextLDIFEntry, FlextLDIFModels
 
 # Constants for boolean literals
@@ -100,7 +101,7 @@ def object_class_field(
 # =============================================================================
 
 
-class FlextLDIFServices(FlextModels):
+class FlextLDIFServices(FlextModels.BaseConfig):
     """Single consolidated class containing ALL LDIF services.
 
     Consolidates ALL service operations into one class following FLEXT patterns.
@@ -290,8 +291,6 @@ class FlextLDIFServices(FlextModels):
                 return FlextResult[str].ok("\n\n".join(ldif_blocks))
 
             except Exception as e:
-                from flext_ldif.constants import FlextLDIFCoreMessages
-
                 error_msg = FlextLDIFCoreMessages.WRITE_FAILED.format(error=str(e))
                 return FlextResult[str].fail(error_msg)
 
@@ -300,8 +299,6 @@ class FlextLDIFServices(FlextModels):
             try:
                 return FlextResult[str].ok(entry.to_ldif())
             except Exception as e:
-                from flext_ldif.constants import FlextLDIFCoreMessages
-
                 error_msg = FlextLDIFCoreMessages.WRITE_FAILED.format(error=str(e))
                 return FlextResult[str].fail(error_msg)
 

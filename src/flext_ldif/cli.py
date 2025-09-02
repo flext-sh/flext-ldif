@@ -226,7 +226,7 @@ def cli(
 @click.option("--max-entries", type=int, help="Maximum entries to parse")
 @click.option("--validate", is_flag=True, help="Validate entries after parsing")
 @click.option("--stats", is_flag=True, help="Show statistics")
-@flext_cli_handle_exceptions
+@flext_cli_handle_exceptions("Parse operation failed")
 @click.pass_context
 def parse(
     ctx: click.Context,
@@ -286,7 +286,7 @@ def parse(
 
 @cli.command()
 @click.argument("input_file", type=click.Path(exists=True, path_type=Path))
-@flext_cli_handle_exceptions
+@flext_cli_handle_exceptions("Validation operation failed")
 @click.pass_context
 def validate(ctx: click.Context, input_file: Path) -> None:
     """Validate LDIF entries for business rule compliance."""
@@ -319,7 +319,7 @@ def validate(ctx: click.Context, input_file: Path) -> None:
     help="Filter entries by type",
 )
 @click.option("--sort", is_flag=True, help="Sort entries hierarchically")
-@flext_cli_handle_exceptions
+@flext_cli_handle_exceptions("Transform operation failed")
 @click.pass_context
 def transform(
     ctx: click.Context,
@@ -364,7 +364,7 @@ def transform(
 
 @cli.command()
 @click.argument("input_file", type=click.Path(exists=True, path_type=Path))
-@flext_cli_handle_exceptions
+@flext_cli_handle_exceptions("Stats operation failed")
 @click.pass_context
 def stats(ctx: click.Context, input_file: Path) -> None:
     """Display comprehensive statistics for LDIF file."""

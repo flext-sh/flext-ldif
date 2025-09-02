@@ -4,7 +4,8 @@
 # Reason: Pydantic field assignment pattern is not understood by pyright but is valid
 
 import pytest
-from pydantic import BaseModel, ValidationError
+from flext_core import FlextModels
+from pydantic import ValidationError
 from pydantic.fields import FieldInfo
 
 from flext_ldif.services import (
@@ -54,7 +55,7 @@ class TestDnField:
     def test_dn_field_in_model(self) -> None:
         """Test DN field works in actual Pydantic model."""
 
-        class TestModel(BaseModel):
+        class TestModel(FlextModels.BaseConfig):
             dn: str = dn_field()
 
         # Valid DN
@@ -72,7 +73,7 @@ class TestDnField:
     def test_dn_field_max_length_constraint(self) -> None:
         """Test DN field max length constraint."""
 
-        class TestModel(BaseModel):
+        class TestModel(FlextModels.BaseConfig):
             dn: str = dn_field(max_length=10)
 
         # Valid short DN
@@ -127,7 +128,7 @@ class TestAttributeNameField:
     def test_attribute_name_field_in_model(self) -> None:
         """Test attribute name field works in actual Pydantic model."""
 
-        class TestModel(BaseModel):
+        class TestModel(FlextModels.BaseConfig):
             attr_name: str = attribute_name_field()
 
         # Valid attribute names
@@ -145,7 +146,7 @@ class TestAttributeNameField:
     def test_attribute_name_field_max_length_constraint(self) -> None:
         """Test attribute name field max length constraint."""
 
-        class TestModel(BaseModel):
+        class TestModel(FlextModels.BaseConfig):
             attr_name: str = attribute_name_field(max_length=5)
 
         # Valid short name
@@ -192,7 +193,7 @@ class TestAttributeValueField:
     def test_attribute_value_field_in_model(self) -> None:
         """Test attribute value field works in actual Pydantic model."""
 
-        class TestModel(BaseModel):
+        class TestModel(FlextModels.BaseConfig):
             value: str = attribute_value_field()
 
         # Various valid values
@@ -212,7 +213,7 @@ class TestAttributeValueField:
     def test_attribute_value_field_max_length_constraint(self) -> None:
         """Test attribute value field max length constraint."""
 
-        class TestModel(BaseModel):
+        class TestModel(FlextModels.BaseConfig):
             value: str = attribute_value_field(max_length=10)
 
         # Valid short value
@@ -269,7 +270,7 @@ class TestObjectClassField:
     def test_object_class_field_in_model(self) -> None:
         """Test object class field works in actual Pydantic model."""
 
-        class TestModel(BaseModel):
+        class TestModel(FlextModels.BaseConfig):
             object_class: str = object_class_field()
 
         # Valid object class names
@@ -295,7 +296,7 @@ class TestObjectClassField:
     def test_object_class_field_max_length_constraint(self) -> None:
         """Test object class field max length constraint."""
 
-        class TestModel(BaseModel):
+        class TestModel(FlextModels.BaseConfig):
             object_class: str = object_class_field(max_length=10)
 
         # Valid short class
@@ -344,7 +345,7 @@ class TestFieldDefaults:
     def test_field_defaults_can_be_used_in_fields(self) -> None:
         """Test that defaults can be used to create fields."""
 
-        class TestModel(BaseModel):
+        class TestModel(FlextModels.BaseConfig):
             dn: str = dn_field(max_length=FieldDefaults.DN_MAX_LENGTH)
             attr_name: str = attribute_name_field(
                 max_length=FieldDefaults.ATTRIBUTE_NAME_MAX_LENGTH
@@ -370,7 +371,7 @@ class TestFieldIntegration:
     def test_all_fields_in_single_model(self) -> None:
         """Test using all field types in one model."""
 
-        class CompleteModel(BaseModel):
+        class CompleteModel(FlextModels.BaseConfig):
             dn: str = dn_field()
             attr_name: str = attribute_name_field()
             attr_value: str = attribute_value_field()
@@ -403,7 +404,7 @@ class TestFieldIntegration:
     def test_patterns_work_correctly(self) -> None:
         """Test that regex patterns work as expected."""
 
-        class TestModel(BaseModel):
+        class TestModel(FlextModels.BaseConfig):
             attr_name: str = attribute_name_field()
             object_class: str = object_class_field()
 
