@@ -19,16 +19,16 @@ cd flext-ldif
 poetry install
 
 # Verify installation
-poetry run python -c "from flext_ldif import FlextLdifAPI; print('✅ Installation successful')"
+poetry run python -c "from flext_ldif import FlextLDIFAPI; print('✅ Installation successful')"
 ```
 
 ### Basic Usage Pattern
 
 ```python
-from flext_ldif import FlextLdifAPI
+from flext_ldif import FlextLDIFAPI
 
 # Initialize with default configuration
-api = FlextLdifAPI()
+api = FlextLDIFAPI()
 
 # Parse LDIF content
 ldif_content = """
@@ -63,15 +63,15 @@ else:
 
 ### Application Layer
 
-#### FlextLdifAPI
+#### FlextLDIFAPI
 
 **Primary application service providing unified LDIF operations**
 
 ```python
-from flext_ldif import FlextLdifAPI, FlextLdifConfig
+from flext_ldif import FlextLDIFAPI, FlextLDIFConfig
 
 # Configuration options
-config = FlextLdifConfig(
+config = FlextLDIFConfig(
     max_entries=10000,           # Maximum entries to process
     strict_validation=True,      # Enable strict business rule validation
     input_encoding="utf-8",      # Input file encoding
@@ -80,12 +80,12 @@ config = FlextLdifConfig(
 )
 
 # Initialize API with configuration
-api = FlextLdifAPI(config)
+api = FlextLDIFAPI(config)
 ```
 
 ##### Core Operations
 
-**`parse(content: str | LDIFContent) -> FlextResult[list[FlextLdifEntry]]`**
+**`parse(content: str | LDIFContent) -> FlextResult[list[FlextLDIFEntry]]`**
 
 Parse LDIF content into domain objects.
 
@@ -109,7 +109,7 @@ else:
     print(f"Error details: {result.error_details}")  # Additional context
 ```
 
-**`parse_file(file_path: str | Path) -> FlextResult[list[FlextLdifEntry]]`**
+**`parse_file(file_path: str | Path) -> FlextResult[list[FlextLDIFEntry]]`**
 
 Parse LDIF files with proper encoding handling.
 
@@ -122,12 +122,12 @@ result = api.parse_file("data/sample.ldif")
 result = api.parse_file(Path("data/sample.ldif"))
 
 # Handle large files
-config = FlextLdifConfig(max_entries=50000)  # Increase limit
-api = FlextLdifAPI(config)
+config = FlextLDIFConfig(max_entries=50000)  # Increase limit
+api = FlextLDIFAPI(config)
 result = api.parse_file("data/large_export.ldif")
 ```
 
-**`validate(entries: list[FlextLdifEntry]) -> FlextResult[bool]`**
+**`validate(entries: list[FlextLDIFEntry]) -> FlextResult[bool]`**
 
 Validate entries against business rules and LDIF compliance.
 
@@ -146,7 +146,7 @@ else:
             print(f"  Entry {entry.dn.value}: {e}")
 ```
 
-**`write(entries: list[FlextLdifEntry]) -> FlextResult[str]`**
+**`write(entries: list[FlextLDIFEntry]) -> FlextResult[str]`**
 
 Generate LDIF output from domain objects.
 
@@ -165,7 +165,7 @@ else:
     print(f"Write error: {output_result.error}")
 ```
 
-**`write_file(entries: list[FlextLdifEntry], file_path: str | Path) -> FlextResult[bool]`**
+**`write_file(entries: list[FlextLDIFEntry], file_path: str | Path) -> FlextResult[bool]`**
 
 Write entries directly to file.
 
@@ -185,17 +185,17 @@ else:
 
 ### Domain Entities
 
-#### FlextLdifEntry
+#### FlextLDIFEntry
 
 **Main domain entity representing LDIF entries**
 
 ```python
-from flext_ldif import FlextLdifEntry, FlextLdifDistinguishedName, FlextLdifAttributes
+from flext_ldif import FlextLDIFEntry, FlextLDIFDistinguishedName, FlextLDIFAttributes
 
 # Create entry from data
-entry = FlextLdifEntry.model_validate({
-    "dn": FlextLdifDistinguishedName(value="cn=John Doe,ou=people,dc=example,dc=com"),
-    "attributes": FlextLdifAttributes(attributes={
+entry = FlextLDIFEntry.model_validate({
+    "dn": FlextLDIFDistinguishedName(value="cn=John Doe,ou=people,dc=example,dc=com"),
+    "attributes": FlextLDIFAttributes(attributes={
         "cn": ["John Doe"],
         "objectClass": ["person", "inetOrgPerson"],
         "mail": ["john.doe@example.com", "j.doe@example.com"],
@@ -208,8 +208,8 @@ entry = FlextLdifEntry.model_validate({
 
 ##### Properties
 
-- **`dn: FlextLdifDistinguishedName`** - Distinguished name (immutable)
-- **`attributes: FlextLdifAttributes`** - Entry attributes (immutable)
+- **`dn: FlextLDIFDistinguishedName`** - Distinguished name (immutable)
+- **`attributes: FlextLDIFAttributes`** - Entry attributes (immutable)
 
 ##### Domain Methods
 
@@ -329,7 +329,7 @@ else:
 
 ##### Factory Methods
 
-**`from_ldif_block(ldif_block: str) -> FlextLdifEntry`**
+**`from_ldif_block(ldif_block: str) -> FlextLDIFEntry`**
 
 Create entry from LDIF text.
 
@@ -342,25 +342,25 @@ objectClass: inetOrgPerson
 mail: test@example.com
 """
 
-entry = FlextLdifEntry.from_ldif_block(ldif_block)
+entry = FlextLDIFEntry.from_ldif_block(ldif_block)
 print(f"Created entry: {entry.dn.value}")
 ```
 
 ### Value Objects
 
-#### FlextLdifDistinguishedName
+#### FlextLDIFDistinguishedName
 
 **Immutable value object for Distinguished Names**
 
 ```python
-from flext_ldif import FlextLdifDistinguishedName
+from flext_ldif import FlextLDIFDistinguishedName
 
 # Create DN
-dn = FlextLdifDistinguishedName(value="cn=John Doe,ou=people,dc=example,dc=com")
+dn = FlextLDIFDistinguishedName(value="cn=John Doe,ou=people,dc=example,dc=com")
 
 # DN validation happens automatically
 try:
-    invalid_dn = FlextLdifDistinguishedName(value="invalid-dn-format")
+    invalid_dn = FlextLDIFDistinguishedName(value="invalid-dn-format")
 except ValueError as e:
     print(f"DN validation error: {e}")
 ```
@@ -380,7 +380,7 @@ rdn = dn.get_rdn()  # "cn=John Doe"
 print(f"RDN: {rdn}")
 ```
 
-**`get_parent_dn() -> FlextLdifDistinguishedName | None`**
+**`get_parent_dn() -> FlextLDIFDistinguishedName | None`**
 
 Get parent DN.
 
@@ -392,13 +392,13 @@ else:
     print("This is a root DN")
 ```
 
-**`is_child_of(parent: FlextLdifDistinguishedName) -> bool`**
+**`is_child_of(parent: FlextLDIFDistinguishedName) -> bool`**
 
 Check parent-child relationship.
 
 ```python
-parent_dn = FlextLdifDistinguishedName(value="ou=people,dc=example,dc=com")
-child_dn = FlextLdifDistinguishedName(value="cn=John,ou=people,dc=example,dc=com")
+parent_dn = FlextLDIFDistinguishedName(value="ou=people,dc=example,dc=com")
+child_dn = FlextLDIFDistinguishedName(value="cn=John,ou=people,dc=example,dc=com")
 
 if child_dn.is_child_of(parent_dn):
     print("✅ Child relationship confirmed")
@@ -425,15 +425,15 @@ components = dn.get_components()
 # ["cn=John Doe", "ou=people", "dc=example", "dc=com"]
 ```
 
-#### FlextLdifAttributes
+#### FlextLDIFAttributes
 
 **Immutable value object for LDIF attributes**
 
 ```python
-from flext_ldif import FlextLdifAttributes
+from flext_ldif import FlextLDIFAttributes
 
 # Create attributes
-attrs = FlextLdifAttributes(attributes={
+attrs = FlextLDIFAttributes(attributes={
     "cn": ["John Doe"],
     "mail": ["john@example.com", "j.doe@example.com"],
     "objectClass": ["person", "inetOrgPerson"]
@@ -475,7 +475,7 @@ if attrs.has_attribute("mail"):
     print("Has email address")
 ```
 
-**`add_value(name: str, value: str) -> FlextLdifAttributes`**
+**`add_value(name: str, value: str) -> FlextLDIFAttributes`**
 
 Return new instance with added value (immutable).
 
@@ -488,7 +488,7 @@ updated_attrs = attrs.add_value("mobile", "+1-555-987-6543") \
                     .add_value("fax", "+1-555-123-4568")
 ```
 
-**`remove_value(name: str, value: str) -> FlextLdifAttributes`**
+**`remove_value(name: str, value: str) -> FlextLDIFAttributes`**
 
 Return new instance with removed value.
 
@@ -531,25 +531,25 @@ if attrs.is_empty():
 
 ### Service Classes
 
-#### FlextLdifParserService
+#### FlextLDIFParserService
 
 **Domain service for LDIF parsing operations**
 
 ```python
-from flext_ldif.services import FlextLdifParserService
-from flext_ldif import FlextLdifConfig
+from flext_ldif.services import FlextLDIFParserService
+from flext_ldif import FlextLDIFConfig
 
 # Configure parser
-config = FlextLdifConfig(
+config = FlextLDIFConfig(
     max_entries=5000,
     strict_validation=True,
     input_encoding="utf-8"
 )
 
-parser = FlextLdifParserService(config)
+parser = FlextLDIFParserService(config)
 ```
 
-**`parse(content: str | LDIFContent) -> FlextResult[list[FlextLdifEntry]]`**
+**`parse(content: str | LDIFContent) -> FlextResult[list[FlextLDIFEntry]]`**
 
 ```python
 result = parser.parse(ldif_content)
@@ -561,7 +561,7 @@ entries = result.value
 print(f"Parsed {len(entries)} entries")
 ```
 
-**`parse_file(file_path: str | Path) -> FlextResult[list[FlextLdifEntry]]`**
+**`parse_file(file_path: str | Path) -> FlextResult[list[FlextLDIFEntry]]`**
 
 ```python
 from pathlib import Path
@@ -572,17 +572,17 @@ if result.is_success:
     print(f"Loaded {len(entries)} entries from file")
 ```
 
-#### FlextLdifValidatorService
+#### FlextLDIFValidatorService
 
 **Domain service for LDIF validation**
 
 ```python
-from flext_ldif.services import FlextLdifValidatorService
+from flext_ldif.services import FlextLDIFValidatorService
 
-validator = FlextLdifValidatorService(config)
+validator = FlextLDIFValidatorService(config)
 ```
 
-**`validate(entries: list[FlextLdifEntry]) -> FlextResult[bool]`**
+**`validate(entries: list[FlextLDIFEntry]) -> FlextResult[bool]`**
 
 ```python
 result = validator.validate(entries)
@@ -592,7 +592,7 @@ else:
     print(f"❌ Validation failed: {result.error}")
 ```
 
-**`validate_entry(entry: FlextLdifEntry) -> FlextResult[bool]`**
+**`validate_entry(entry: FlextLDIFEntry) -> FlextResult[bool]`**
 
 ```python
 for entry in entries:
@@ -601,17 +601,17 @@ for entry in entries:
         print(f"Entry {entry.dn.value}: {result.error}")
 ```
 
-#### FlextLdifWriterService
+#### FlextLDIFWriterService
 
 **Domain service for LDIF output generation**
 
 ```python
-from flext_ldif.services import FlextLdifWriterService
+from flext_ldif.services import FlextLDIFWriterService
 
-writer = FlextLdifWriterService(config)
+writer = FlextLDIFWriterService(config)
 ```
 
-**`write(entries: list[FlextLdifEntry]) -> FlextResult[str]`**
+**`write(entries: list[FlextLDIFEntry]) -> FlextResult[str]`**
 
 ```python
 result = writer.write(entries)
@@ -622,7 +622,7 @@ else:
     print(f"❌ Write error: {result.error}")
 ```
 
-**`write_file(entries: list[FlextLdifEntry], file_path: str | Path) -> FlextResult[bool]`**
+**`write_file(entries: list[FlextLDIFEntry], file_path: str | Path) -> FlextResult[bool]`**
 
 ```python
 result = writer.write_file(entries, "output/processed.ldif")
@@ -640,7 +640,7 @@ if result.is_success:
 
 ```python
 from flext_core import get_flext_container
-from flext_ldif import FlextLdifAPI
+from flext_ldif import FlextLDIFAPI
 
 # Use DI container
 container = FlextContainer.get_global()
@@ -650,7 +650,7 @@ from flext_ldif.services import register_ldif_services
 register_ldif_services(container)
 
 # Get API instance from container
-api = container.get(FlextLdifAPI)
+api = container.get(FlextLDIFAPI)
 ```
 
 #### FlextResult Pattern
@@ -659,7 +659,7 @@ api = container.get(FlextLdifAPI)
 from flext_core import FlextResult
 
 # All service methods return FlextResult
-result: FlextResult[list[FlextLdifEntry]] = api.parse(content)
+result: FlextResult[list[FlextLDIFEntry]] = api.parse(content)
 
 # Pattern matching style
 match result:
@@ -697,9 +697,9 @@ result = api.parse(ldif_content)
 from flext_observability import flext_monitor_function, flext_create_trace
 
 @flext_monitor_function("ldif_processing")
-def process_ldif_file(file_path: str) -> FlextResult[list[FlextLdifEntry]]:
+def process_ldif_file(file_path: str) -> FlextResult[list[FlextLDIFEntry]]:
     with flext_create_trace("parse_ldif_file") as trace:
-        api = FlextLdifAPI()
+        api = FlextLDIFAPI()
         result = api.parse_file(file_path)
 
         if result.is_success:
@@ -720,7 +720,7 @@ from flext_observability import FlextObservabilityMonitor
 monitor = FlextObservabilityMonitor("ldif_operations")
 
 # API automatically creates metrics
-api = FlextLdifAPI()
+api = FlextLDIFAPI()
 result = api.parse(large_ldif_content)
 # Creates metrics: ldif_parse_duration, ldif_entries_processed, etc.
 ```
@@ -731,12 +731,12 @@ result = api.parse(large_ldif_content)
 
 ```python
 # Planned integration
-from flext_ldap import FlextLdapConnection
-from flext_ldif import FlextLdifAPI
+from flext_ldap import FlextLDAPConnection
+from flext_ldif import FlextLDIFAPI
 
 # LDAP-aware LDIF processing
-connection = FlextLdapConnection("ldap://directory.example.com")
-api = FlextLdifAPI(ldap_connection=connection)
+connection = FlextLDAPConnection("ldap://directory.example.com")
+api = FlextLDIFAPI(ldap_connection=connection)
 
 # Schema validation against LDAP server
 result = api.parse_with_schema_validation(ldif_content)
@@ -752,11 +752,11 @@ import_result = api.import_to_ldap(entries, base_dn="ou=people,dc=example,dc=com
 
 ```python
 # Planned Singer SDK integration
-from flext_tap_ldif import FlextLdifTap
-from flext_target_ldif import FlextLdifTarget
+from flext_tap_ldif import FlextLDIFTap
+from flext_target_ldif import FlextLDIFTarget
 
 # Extract LDIF data for pipelines
-tap = FlextLdifTap(config={
+tap = FlextLDIFTap(config={
     "file_path": "data/users.ldif",
     "batch_size": 1000
 })
@@ -771,7 +771,7 @@ for stream in streams:
         print(f"Record: {record}")
 
 # Load to LDIF format
-target = FlextLdifTarget(config={
+target = FlextLDIFTarget(config={
     "output_path": "output/processed.ldif",
     "format": "standard"
 })
@@ -827,11 +827,11 @@ pytest tests/test_large_files.py -v  # Large file handling
 
 ```python
 from flext_ldif.exceptions import (
-    FlextLdifError,              # Base exception
-    FlextLdifParseError,         # Parsing failures
-    FlextLdifValidationError,    # Validation failures
-    FlextLdifEntryError,         # Entry-specific errors
-    FlextLdifConfigurationError  # Configuration errors
+    FlextLDIFError,              # Base exception
+    FlextLDIFParseError,         # Parsing failures
+    FlextLDIFValidationError,    # Validation failures
+    FlextLDIFEntryError,         # Entry-specific errors
+    FlextLDIFConfigurationError  # Configuration errors
 )
 
 # Exception handling patterns
@@ -843,18 +843,18 @@ try:
     else:
         entries = result.value
 
-except FlextLdifParseError as e:
+except FlextLDIFParseError as e:
     # Direct exception handling
     print(f"Parse error: {e}")
     print(f"Line number: {e.line_number}")
     print(f"Content: {e.content_snippet}")
 
-except FlextLdifValidationError as e:
+except FlextLDIFValidationError as e:
     print(f"Validation error: {e}")
     print(f"Field: {e.field_name}")
     print(f"Value: {e.field_value}")
 
-except FlextLdifError as e:
+except FlextLDIFError as e:
     print(f"General LDIF error: {e}")
 ```
 
@@ -877,12 +877,12 @@ if result.is_failure:
 
 ## 📊 Configuration Reference
 
-### FlextLdifConfig
+### FlextLDIFConfig
 
 ```python
-from flext_ldif import FlextLdifConfig
+from flext_ldif import FlextLDIFConfig
 
-config = FlextLdifConfig(
+config = FlextLDIFConfig(
     # Processing limits
     max_entries=10000,                    # Maximum entries to process
     max_attribute_values=100,             # Maximum values per attribute
@@ -914,7 +914,7 @@ config = FlextLdifConfig(
     metric_prefix="flext_ldif"            # Metric name prefix
 )
 
-api = FlextLdifAPI(config)
+api = FlextLDIFAPI(config)
 ```
 
 ### Environment Variables
@@ -942,20 +942,20 @@ export FLEXT_LDIF_ENABLE_SCHEMA_VALIDATION=true
 from flext_ldif.models import (
     LDIFContent,                 # Union[str, bytes] for LDIF content
     LDIFLines,                   # list[str] for LDIF lines
-    FlextLdifDNDict,             # TypedDict for DN structure
-    FlextLdifAttributesDict,     # TypedDict for attributes
-    FlextLdifEntryDict           # TypedDict for entry structure
+    FlextLDIFDNDict,             # TypedDict for DN structure
+    FlextLDIFAttributesDict,     # TypedDict for attributes
+    FlextLDIFEntryDict           # TypedDict for entry structure
 )
 
 from flext_core import FlextResult
 
 # Type-safe operations
-def process_ldif(content: LDIFContent) -> FlextResult[list[FlextLdifEntry]]:
-    api = FlextLdifAPI()
+def process_ldif(content: LDIFContent) -> FlextResult[list[FlextLDIFEntry]]:
+    api = FlextLDIFAPI()
     return api.parse(content)
 
 # Type checking with mypy
-result: FlextResult[list[FlextLdifEntry]] = process_ldif(ldif_content)
+result: FlextResult[list[FlextLDIFEntry]] = process_ldif(ldif_content)
 ```
 
 ### Generic Usage
@@ -967,10 +967,10 @@ T = TypeVar('T')
 
 def process_ldif_with_transform(
     content: LDIFContent,
-    transform: Callable[[FlextLdifEntry], T]
+    transform: Callable[[FlextLDIFEntry], T]
 ) -> FlextResult[list[T]]:
     """Process LDIF with custom transformation."""
-    api = FlextLdifAPI()
+    api = FlextLDIFAPI()
     parse_result = api.parse(content)
 
     if parse_result.is_failure:
@@ -988,8 +988,8 @@ def process_ldif_with_transform(
 
 ```python
 # ✅ Recommended: Check result status
-def safe_parse(content: str) -> list[FlextLdifEntry]:
-    api = FlextLdifAPI()
+def safe_parse(content: str) -> list[FlextLDIFEntry]:
+    api = FlextLDIFAPI()
     result = api.parse(content)
 
     if result.is_success:
@@ -999,8 +999,8 @@ def safe_parse(content: str) -> list[FlextLdifEntry]:
         return []
 
 # ❌ Avoid: Assuming success
-def unsafe_parse(content: str) -> list[FlextLdifEntry]:
-    api = FlextLdifAPI()
+def unsafe_parse(content: str) -> list[FlextLDIFEntry]:
+    api = FlextLDIFAPI()
     return api.parse(content).value  # May be None!
 ```
 
@@ -1008,7 +1008,7 @@ def unsafe_parse(content: str) -> list[FlextLdifEntry]:
 
 ```python
 # ✅ Use domain rules
-def validate_person_entry(entry: FlextLdifEntry) -> bool:
+def validate_person_entry(entry: FlextLDIFEntry) -> bool:
     try:
         entry.validate_domain_rules()
         return entry.has_object_class("person")
@@ -1016,9 +1016,9 @@ def validate_person_entry(entry: FlextLdifEntry) -> bool:
         return False
 
 # ✅ Use specifications for complex business logic
-from flext_ldif.domain.specifications import FlextLdifPersonSpecification
+from flext_ldif.domain.specifications import FlextLDIFPersonSpecification
 
-person_spec = FlextLdifPersonSpecification()
+person_spec = FlextLDIFPersonSpecification()
 person_entries = [e for e in entries if person_spec.is_satisfied_by(e)]
 ```
 
@@ -1026,13 +1026,13 @@ person_entries = [e for e in entries if person_spec.is_satisfied_by(e)]
 
 ```python
 # ✅ Configure for large files
-config = FlextLdifConfig(
+config = FlextLDIFConfig(
     max_entries=100000,
     enable_streaming=True,
     buffer_size=16384
 )
 
-api = FlextLdifAPI(config)
+api = FlextLDIFAPI(config)
 
 # ✅ Process in batches
 def process_large_ldif(file_path: str) -> None:
@@ -1051,24 +1051,24 @@ def process_large_ldif(file_path: str) -> None:
 
 ```python
 # ✅ Environment-specific configuration
-def create_api_for_environment() -> FlextLdifAPI:
+def create_api_for_environment() -> FlextLDIFAPI:
     env = os.getenv("ENVIRONMENT", "development")
 
     if env == "production":
-        config = FlextLdifConfig(
+        config = FlextLDIFConfig(
             max_entries=50000,
             strict_validation=True,
             enable_observability=True,
             log_level="INFO"
         )
     else:
-        config = FlextLdifConfig(
+        config = FlextLDIFConfig(
             max_entries=10000,
             strict_validation=False,
             log_level="DEBUG"
         )
 
-    return FlextLdifAPI(config)
+    return FlextLDIFAPI(config)
 ```
 
 ### 5. Implement Proper Error Handling
@@ -1077,7 +1077,7 @@ def create_api_for_environment() -> FlextLdifAPI:
 # ✅ Comprehensive error handling
 def robust_ldif_processing(content: str) -> Optional[str]:
     try:
-        api = FlextLdifAPI()
+        api = FlextLDIFAPI()
 
         # Parse with error handling
         parse_result = api.parse(content)
@@ -1122,9 +1122,9 @@ parser.parse()
 records = parser.all_records
 
 # After: FLEXT-LDIF
-from flext_ldif import FlextLdifAPI
+from flext_ldif import FlextLDIFAPI
 
-api = FlextLdifAPI()
+api = FlextLDIFAPI()
 result = api.parse(content)
 if result.is_success:
     entries = result.value
@@ -1134,18 +1134,18 @@ if result.is_success:
 
 ```python
 # Before: Complex imports (deprecated)
-from flext_ldif.domain.entities import FlextLdifEntry
+from flext_ldif.domain.entities import FlextLDIFEntry
 from flext_ldif.infrastructure.parsers import LDIFParser
 
 # After: Simple imports
-from flext_ldif import FlextLdifEntry, FlextLdifAPI
+from flext_ldif import FlextLDIFEntry, FlextLDIFAPI
 
 # Before: Direct parser usage
 parser = LDIFParser()
 entries = parser.parse(content)
 
 # After: Unified API with error handling
-api = FlextLdifAPI()
+api = FlextLDIFAPI()
 result = api.parse(content)
 # Use FlextResult's unwrap_or method for cleaner code
 entries = result.unwrap_or([])

@@ -5,67 +5,67 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif.exceptions import (
-    FlextLdifAuthenticationError,
-    FlextLdifConfigurationError,
-    FlextLdifConnectionError,
-    FlextLdifEntryError,
-    FlextLdifEntryValidationError,
-    FlextLdifError,
-    FlextLdifErrorCodes,
-    FlextLdifFileError,
-    FlextLdifParseError,
-    FlextLdifProcessingError,
-    FlextLdifTimeoutError,
-    FlextLdifValidationError,
+    FlextLDIFAuthenticationError,
+    FlextLDIFConfigurationError,
+    FlextLDIFConnectionError,
+    FlextLDIFEntryError,
+    FlextLDIFEntryValidationError,
+    FlextLDIFError,
+    FlextLDIFErrorCodes,
+    FlextLDIFFileError,
+    FlextLDIFParseError,
+    FlextLDIFProcessingError,
+    FlextLDIFTimeoutError,
+    FlextLDIFValidationError,
 )
 
 
-class TestFlextLdifExceptions:
+class TestFlextLDIFExceptions:
     """Test suite for FLEXT LDIF exceptions."""
 
     def test_flext_ldif_error_default(self) -> None:
-        """Test FlextLdifError with default parameters."""
-        error = FlextLdifError()
+        """Test FlextLDIFError with default parameters."""
+        error = FlextLDIFError()
         assert isinstance(error, Exception)
-        assert isinstance(error, FlextLdifError)
+        assert isinstance(error, FlextLDIFError)
 
     def test_flext_ldif_error_custom_message(self) -> None:
-        """Test FlextLdifError with custom message."""
-        error = FlextLdifError("Custom LDIF error")
+        """Test FlextLDIFError with custom message."""
+        error = FlextLDIFError("Custom LDIF error")
         assert "Custom LDIF error" in str(error)
 
     def test_flext_ldif_parse_error_inheritance(self) -> None:
-        """Test FlextLdifParseError inheritance."""
-        error = FlextLdifParseError("Parse error")
-        assert isinstance(error, FlextLdifError)
-        assert isinstance(error, FlextLdifParseError)
+        """Test FlextLDIFParseError inheritance."""
+        error = FlextLDIFParseError("Parse error")
+        assert isinstance(error, FlextLDIFError)
+        assert isinstance(error, FlextLDIFParseError)
         assert "Parse error" in str(error)
 
     def test_flext_ldif_validation_error_inheritance(self) -> None:
-        """Test FlextLdifValidationError inheritance."""
-        error = FlextLdifValidationError("Validation error")
-        assert isinstance(error, FlextLdifError)
-        assert isinstance(error, FlextLdifValidationError)
+        """Test FlextLDIFValidationError inheritance."""
+        error = FlextLDIFValidationError("Validation error")
+        assert isinstance(error, FlextLDIFError)
+        assert isinstance(error, FlextLDIFValidationError)
         assert "Validation error" in str(error)
 
     def test_flext_ldif_entry_error_inheritance(self) -> None:
-        """Test FlextLdifEntryError inheritance."""
-        error = FlextLdifEntryError("Entry error")
-        assert isinstance(error, FlextLdifValidationError)
-        assert isinstance(error, FlextLdifEntryError)
+        """Test FlextLDIFEntryError inheritance."""
+        error = FlextLDIFEntryError("Entry error")
+        assert isinstance(error, FlextLDIFValidationError)
+        assert isinstance(error, FlextLDIFEntryError)
         assert "Entry error" in str(error)
 
     def test_exception_hierarchy(self) -> None:
         """Test exception hierarchy is correct."""
-        # Test that all exceptions inherit from FlextLdifError
-        parse_error = FlextLdifParseError("test")
-        validation_error = FlextLdifValidationError("test")
-        entry_error = FlextLdifEntryError("test")
+        # Test that all exceptions inherit from FlextLDIFError
+        parse_error = FlextLDIFParseError("test")
+        validation_error = FlextLDIFValidationError("test")
+        entry_error = FlextLDIFEntryError("test")
 
-        assert isinstance(parse_error, FlextLdifError)
-        assert isinstance(validation_error, FlextLdifError)
-        assert isinstance(entry_error, FlextLdifError)
-        assert isinstance(entry_error, FlextLdifValidationError)
+        assert isinstance(parse_error, FlextLDIFError)
+        assert isinstance(validation_error, FlextLDIFError)
+        assert isinstance(entry_error, FlextLDIFError)
+        assert isinstance(entry_error, FlextLDIFValidationError)
 
     def test_exception_can_be_raised_and_caught(self) -> None:
         """Test exceptions can be raised and caught properly."""
@@ -74,32 +74,32 @@ class TestFlextLdifExceptions:
         validation_error_msg = "validation error"
         entry_error_msg = "entry error"
 
-        with pytest.raises(FlextLdifError):
-            raise FlextLdifError(test_error_msg)
+        with pytest.raises(FlextLDIFError):
+            raise FlextLDIFError(test_error_msg)
 
-        with pytest.raises(FlextLdifParseError):
-            raise FlextLdifParseError(parse_error_msg)
+        with pytest.raises(FlextLDIFParseError):
+            raise FlextLDIFParseError(parse_error_msg)
 
-        with pytest.raises(FlextLdifValidationError):
-            raise FlextLdifValidationError(validation_error_msg)
+        with pytest.raises(FlextLDIFValidationError):
+            raise FlextLDIFValidationError(validation_error_msg)
 
-        with pytest.raises(FlextLdifEntryError):
-            raise FlextLdifEntryError(entry_error_msg)
+        with pytest.raises(FlextLDIFEntryError):
+            raise FlextLDIFEntryError(entry_error_msg)
 
     def test_exception_messages(self) -> None:
         """Test exception messages are preserved and include error codes."""
         message = "Custom error message"
 
-        error = FlextLdifError(message)
+        error = FlextLDIFError(message)
         assert message in str(error)  # Message should be in the string representation
 
-        parse_error = FlextLdifParseError(message)
+        parse_error = FlextLDIFParseError(message)
         assert message in str(parse_error)
 
-        validation_error = FlextLdifValidationError(message)
+        validation_error = FlextLDIFValidationError(message)
         assert message in str(validation_error)
 
-        entry_error = FlextLdifEntryError(message)
+        entry_error = FlextLDIFEntryError(message)
         assert message in str(entry_error)
 
     def test_error_codes_enum(self) -> None:
@@ -117,51 +117,51 @@ class TestFlextLdifExceptions:
         ]
 
         for code in expected_codes:
-            assert hasattr(FlextLdifErrorCodes, code)
-            assert getattr(FlextLdifErrorCodes, code).value == code
+            assert hasattr(FlextLDIFErrorCodes, code)
+            assert getattr(FlextLDIFErrorCodes, code).value == code
 
     def test_all_exception_classes(self) -> None:
         """Test all exception classes can be instantiated and inherit correctly."""
         # Test configuration error
-        config_error = FlextLdifConfigurationError("Config error")
-        assert isinstance(config_error, FlextLdifError)
+        config_error = FlextLDIFConfigurationError("Config error")
+        assert isinstance(config_error, FlextLDIFError)
         assert "Config error" in str(config_error)
 
         # Test processing error
-        processing_error = FlextLdifProcessingError("Processing error")
-        assert isinstance(processing_error, FlextLdifError)
+        processing_error = FlextLDIFProcessingError("Processing error")
+        assert isinstance(processing_error, FlextLDIFError)
         assert "Processing error" in str(processing_error)
 
         # Test connection error
-        connection_error = FlextLdifConnectionError("Connection error")
-        assert isinstance(connection_error, FlextLdifError)
+        connection_error = FlextLDIFConnectionError("Connection error")
+        assert isinstance(connection_error, FlextLDIFError)
         assert "Connection error" in str(connection_error)
 
         # Test authentication error
-        auth_error = FlextLdifAuthenticationError("Auth error")
-        assert isinstance(auth_error, FlextLdifError)
+        auth_error = FlextLDIFAuthenticationError("Auth error")
+        assert isinstance(auth_error, FlextLDIFError)
         assert "Auth error" in str(auth_error)
 
         # Test timeout error
-        timeout_error = FlextLdifTimeoutError("Timeout error")
-        assert isinstance(timeout_error, FlextLdifError)
+        timeout_error = FlextLDIFTimeoutError("Timeout error")
+        assert isinstance(timeout_error, FlextLDIFError)
         assert "Timeout error" in str(timeout_error)
 
         # Test file error
-        file_error = FlextLdifFileError("File error")
-        assert isinstance(file_error, FlextLdifError)
+        file_error = FlextLDIFFileError("File error")
+        assert isinstance(file_error, FlextLDIFError)
         assert "File error" in str(file_error)
 
         # Test entry validation error
-        entry_validation_error = FlextLdifEntryValidationError("Entry validation error")
-        assert isinstance(entry_validation_error, FlextLdifEntryError)
-        assert isinstance(entry_validation_error, FlextLdifValidationError)
+        entry_validation_error = FlextLDIFEntryValidationError("Entry validation error")
+        assert isinstance(entry_validation_error, FlextLDIFEntryError)
+        assert isinstance(entry_validation_error, FlextLDIFValidationError)
         assert "Entry validation error" in str(entry_validation_error)
 
     def test_exception_with_context(self) -> None:
         """Test exceptions with context parameter."""
         context = {"file": "test.ldif", "line": 42}
-        error = FlextLdifError("Error with context", context=context)
+        error = FlextLDIFError("Error with context", context=context)
         # Context should be preserved in the exception
         assert hasattr(error, "context") or str(
             error
@@ -170,21 +170,21 @@ class TestFlextLdifExceptions:
     def test_exception_with_cause(self) -> None:
         """Test exceptions with cause parameter."""
         cause = ValueError("Original error")
-        error = FlextLdifError("LDIF error", cause=cause)
+        error = FlextLDIFError("LDIF error", cause=cause)
         # Cause should be preserved
         assert hasattr(error, "cause") or str(
             error
         )  # Either attribute exists or cause is referenced
 
     def test_file_error_with_file_path(self) -> None:
-        """Test FlextLdifFileError with file_path parameter."""
+        """Test FlextLDIFFileError with file_path parameter."""
         file_path = "/path/to/test.ldif"
-        error = FlextLdifFileError("File not found", file_path=file_path)
+        error = FlextLDIFFileError("File not found", file_path=file_path)
         assert "File not found" in str(error)
 
     def test_entry_validation_error_with_params(self) -> None:
-        """Test FlextLdifEntryValidationError with additional parameters."""
-        error = FlextLdifEntryValidationError(
+        """Test FlextLDIFEntryValidationError with additional parameters."""
+        error = FlextLDIFEntryValidationError(
             "Validation failed",
             dn="cn=test,dc=example,dc=com",
             attribute_name="cn",
@@ -193,8 +193,8 @@ class TestFlextLdifExceptions:
         assert "Validation failed" in str(error)
 
     def test_file_error_with_all_context_parameters(self) -> None:
-        """Test FlextLdifFileError with all context parameters to cover missing lines."""
-        error = FlextLdifFileError(
+        """Test FlextLDIFFileError with all context parameters to cover missing lines."""
+        error = FlextLDIFFileError(
             "File operation failed",
             file_path="/path/to/test.ldif",
             line_number=42,  # This covers line 239
@@ -204,11 +204,11 @@ class TestFlextLdifExceptions:
         assert "File operation failed" in str(error)
 
     def test_entry_validation_error_with_long_attribute_value(self) -> None:
-        """Test FlextLdifEntryValidationError with long attribute value to cover truncation logic."""
+        """Test FlextLDIFEntryValidationError with long attribute value to cover truncation logic."""
         # Create a very long attribute value (over 100 characters)
         long_value = "x" * 150  # 150 characters
 
-        error = FlextLdifEntryValidationError(
+        error = FlextLDIFEntryValidationError(
             "Attribute too long",
             dn="cn=test,dc=example,dc=com",
             attribute_name="description",
@@ -219,10 +219,10 @@ class TestFlextLdifExceptions:
         assert "Attribute too long" in str(error)
 
     def test_entry_validation_error_with_short_attribute_value(self) -> None:
-        """Test FlextLdifEntryValidationError with short attribute value to cover non-truncation path."""
+        """Test FlextLDIFEntryValidationError with short attribute value to cover non-truncation path."""
         short_value = "short"  # Under 100 characters
 
-        error = FlextLdifEntryValidationError(
+        error = FlextLDIFEntryValidationError(
             "Attribute validation failed",
             attribute_value=short_value,  # This ensures the else path in truncation logic is covered
             entry_index=10,

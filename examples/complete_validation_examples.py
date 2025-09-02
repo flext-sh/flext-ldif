@@ -6,9 +6,9 @@ garantindo que todos os prefixos estão corretos e que a biblioteca
 suplementa (não substitui) o flext-core.
 
 Prefixos obrigatórios:
-- FlextLdif* (classes principais)
+- FlextLDIF* (classes principais)
 - flext_ldif_* (funções utilitárias)
-- TFlextLdif* (types/aliases)
+- TFlextLDIF* (types/aliases)
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 """
@@ -26,51 +26,49 @@ from flext_core import FlextContainer, FlextResult
 # ═══════════════════════════════════════════════════════════════════════════════
 # 🎯 IMPORTS - Validando todos os prefixos corretos
 # ═══════════════════════════════════════════════════════════════════════════════
-# Core entities com prefixos FlextLdif*
-# Value objects com prefixos FlextLdif*
-# Exceptions com prefixos FlextLdif*
-# Domain events com prefixos FlextLdif*
-# Domain specifications com prefixos FlextLdif*
-# Utilities com prefixos FlextLdif* e flext_ldif_*
+# Core entities com prefixos FlextLDIF*
+# Value objects com prefixos FlextLDIF*
+# Exceptions com prefixos FlextLDIF*
+# Domain events com prefixos FlextLDIF*
+# Domain specifications com prefixos FlextLDIF*
+# Utilities com prefixos FlextLDIF* e flext_ldif_*
 # Types com prefixes corretos
 # Simple API aliases (validated)
 # CORREÇÃO CRÍTICA: Imports verificados no __init__.py
 from flext_ldif import (
-    FlextLdifAPI,
-    FlextLdifAttributes,
-    FlextLdifConfig,
-    FlextLdifDistinguishedName,
-    FlextLdifEntryError,
-    FlextLdifError,
-    FlextLdifParseError,
-    FlextLdifParserService,
-    FlextLdifValidationError,
-    FlextLdifValidatorService,
-    FlextLdifWriterService,
-    flext_ldif_get_api,
-    flext_ldif_parse,
-    flext_ldif_validate,
-    flext_ldif_write,
+    FlextLDIFAPI,
+    FlextLDIFAttributes,
+    FlextLDIFConfig,
+    FlextLDIFCore,
+    FlextLDIFDistinguishedName,
+    FlextLDIFEntryError,
+    FlextLDIFError,
+    FlextLDIFFormatHandler,
+    FlextLDIFParseError,
+    FlextLDIFParserService,
+    FlextLDIFValidationError,
+    FlextLDIFValidatorService,
+    FlextLDIFWriterService,
 )
 
 
 def test_1_flext_ldif_prefixes_validation() -> dict[str, object]:
-    """Teste 1: Validação de todos os prefixos FlextLdif* que REALMENTE EXISTEM."""
-    # ✅ Testando classes principais com prefixo FlextLdif* (APENAS as que existem)
-    config = FlextLdifConfig()
+    """Teste 1: Validação de todos os prefixos FlextLDIF* que REALMENTE EXISTEM."""
+    # ✅ Testando classes principais com prefixo FlextLDIF* (APENAS as que existem)
+    config = FlextLDIFConfig()
 
     # ✅ API unificada que realmente existe
-    api = FlextLdifAPI()
+    api = FlextLDIFAPI()
 
-    # ✅ Testando value objects com prefixo FlextLdif* (APENAS os que existem)
-    dn = FlextLdifDistinguishedName(value="uid=test,dc=example,dc=com")
+    # ✅ Testando value objects com prefixo FlextLDIF* (APENAS os que existem)
+    dn = FlextLDIFDistinguishedName(value="uid=test,dc=example,dc=com")
 
-    attrs = FlextLdifAttributes(attributes={"objectClass": ["person"]})
+    attrs = FlextLDIFAttributes(attributes={"objectClass": ["person"]})
 
-    # ✅ Testando services com prefixos FlextLdif* (os que realmente existem)
-    parser_service = FlextLdifParserService()
-    validator_service = FlextLdifValidatorService()
-    writer_service = FlextLdifWriterService()
+    # ✅ Testando services com prefixos FlextLDIF* (os que realmente existem)
+    parser_service = FlextLDIFParserService()
+    validator_service = FlextLDIFValidatorService()
+    writer_service = FlextLDIFWriterService()
 
     return {
         "config": config,
@@ -84,8 +82,8 @@ def test_1_flext_ldif_prefixes_validation() -> dict[str, object]:
 
 
 def test_2_domain_specifications_validation() -> dict[str, object]:
-    """Teste 2: Validação usando FlextLdifEntry (specifications integradas via composição)."""
-    # ✅ CORREÇÃO: Specifications estão integradas no FlextLdifEntry via composição
+    """Teste 2: Validação usando FlextLDIFEntry (specifications integradas via composição)."""
+    # ✅ CORREÇÃO: Specifications estão integradas no FlextLDIFEntry via composição
     # Testando funcionalidade através da API que realmente existe
 
     test_entry_data: dict[str, str | list[str]] = {
@@ -97,7 +95,7 @@ def test_2_domain_specifications_validation() -> dict[str, object]:
     }
 
     # ✅ Usar API real para validar entry
-    api = FlextLdifAPI()
+    api = FlextLDIFAPI()
 
     # Criar LDIF válido para teste
     ldif_content = """dn: uid=jdoe,ou=people,dc=example,dc=com
@@ -131,7 +129,7 @@ def test_3_domain_events_validation() -> None:
     # Testando funcionalidade real existente ao invés de events inexistentes
 
     # Testar funcionalidade real que geraria "eventos" via logging
-    api = FlextLdifAPI()
+    api = FlextLDIFAPI()
 
     sample_ldif = """dn: uid=test,dc=example,dc=com
 objectClass: person
@@ -157,35 +155,35 @@ sn: User
 
 
 def test_4_exceptions_validation() -> None:
-    """Teste 4: Validação das Exceptions com prefixos FlextLdif*."""
-    # ✅ Testando exceptions com prefixo FlextLdif*
+    """Teste 4: Validação das Exceptions com prefixos FlextLDIF*."""
+    # ✅ Testando exceptions com prefixo FlextLDIF*
 
     def _test_base_error() -> None:
         msg = "Test base error"
-        raise FlextLdifError(msg)
+        raise FlextLDIFError(msg)
 
     def _test_parse_error() -> None:
         msg = "Test parse error"
-        raise FlextLdifParseError(msg)
+        raise FlextLDIFParseError(msg)
 
-    with contextlib.suppress(FlextLdifError):
+    with contextlib.suppress(FlextLDIFError):
         _test_base_error()
 
-    with contextlib.suppress(FlextLdifParseError):
+    with contextlib.suppress(FlextLDIFParseError):
         _test_parse_error()
 
     def _test_validation_error() -> None:
         msg = "Test validation error"
-        raise FlextLdifValidationError(msg)
+        raise FlextLDIFValidationError(msg)
 
     def _test_entry_error() -> None:
         msg = "Test entry error"
-        raise FlextLdifEntryError(msg)
+        raise FlextLDIFEntryError(msg)
 
-    with contextlib.suppress(FlextLdifValidationError):
+    with contextlib.suppress(FlextLDIFValidationError):
         _test_validation_error()
 
-    with contextlib.suppress(FlextLdifEntryError):
+    with contextlib.suppress(FlextLDIFEntryError):
         _test_entry_error()
 
 
@@ -234,8 +232,8 @@ member: uid=jdoe,ou=people,dc=example,dc=com"""
             pass
 
     def _test_parsing_stage(self) -> None:
-        """Test parsing stage with FlextLdifAPI (unified API)."""
-        api = FlextLdifAPI()
+        """Test parsing stage with FlextLDIFAPI (unified API)."""
+        api = FlextLDIFAPI()
 
         # Test parsing capabilities usando API real
         with contextlib.suppress(Exception):
@@ -244,8 +242,8 @@ member: uid=jdoe,ou=people,dc=example,dc=com"""
                 pass
 
     def _test_processing_stage(self) -> None:
-        """Test processing stage with FlextLdifAPI (unified processing)."""
-        api = FlextLdifAPI()
+        """Test processing stage with FlextLDIFAPI (unified processing)."""
+        api = FlextLDIFAPI()
 
         with contextlib.suppress(Exception):
             result = api.parse(self.ldif_content)
@@ -256,8 +254,8 @@ member: uid=jdoe,ou=people,dc=example,dc=com"""
                 api.filter_valid(entries)
 
     def _test_validation_stage(self) -> None:
-        """Test validation stage with FlextLdifAPI."""
-        api = FlextLdifAPI()
+        """Test validation stage with FlextLDIFAPI."""
+        api = FlextLDIFAPI()
 
         with contextlib.suppress(Exception):
             parse_result = api.parse(self.ldif_content)
@@ -266,8 +264,8 @@ member: uid=jdoe,ou=people,dc=example,dc=com"""
                 api.validate(entries)
 
     def _test_writing_stage(self) -> None:
-        """Test writing stage with FlextLdifAPI."""
-        api = FlextLdifAPI()
+        """Test writing stage with FlextLDIFAPI."""
+        api = FlextLDIFAPI()
 
         with contextlib.suppress(Exception):
             parse_result = api.parse(self.ldif_content)
@@ -276,8 +274,8 @@ member: uid=jdoe,ou=people,dc=example,dc=com"""
                 api.write(entries)
 
     def _test_utilities_stage(self) -> None:
-        """Test utilities stage with FlextLdifAPI."""
-        api = FlextLdifAPI()
+        """Test utilities stage with FlextLDIFAPI."""
+        api = FlextLDIFAPI()
 
         # Test hierarchical sorting using API real
         test_entries_ldif = """dn: dc=example,dc=com
@@ -321,25 +319,25 @@ cn: Simple User"""
 
     # Test flext_ldif_parse function - EXISTE
     with contextlib.suppress(Exception):
-        entries = flext_ldif_parse(test_ldif)
+        entries = FlextLDIFFormatHandler.parse_ldif(test_ldif).unwrap_or_raise()
 
     # Test flext_ldif_validate function - EXISTE
     with contextlib.suppress(Exception):
         # flext_ldif_validate expects list of entries, not LDIF string
-        test_entries = flext_ldif_parse(test_ldif)
-        is_valid = flext_ldif_validate(test_entries)
+        test_entries = FlextLDIFFormatHandler.parse_ldif(test_ldif).unwrap_or_raise()
+        is_valid = FlextLDIFCore().validate_entries(test_entries).unwrap_or_raise()
 
     # Test flext_ldif_write function - EXISTE
     try:
         # Create a test entry for writing
         if "entries" in locals() and entries:
-            ldif_output = flext_ldif_write(entries)
+            ldif_output = FlextLDIFFormatHandler.write_ldif(entries).unwrap_or_raise()
     except (RuntimeError, ValueError, TypeError):
         pass
 
     # Test flext_ldif_get_api function - EXISTE
     with contextlib.suppress(Exception):
-        api = flext_ldif_get_api()
+        api = FlextLDIFAPI()
 
 
 def test_7_flext_core_integration_validation() -> None:
@@ -355,8 +353,8 @@ def test_7_flext_core_integration_validation() -> None:
 
         # ✅ Verificar que flext-ldif usa flext-core (não substitui)
 
-        # FlextLdif API usa FlextResult internally
-        api = FlextLdifAPI()
+        # FlextLDIF API usa FlextResult internally
+        api = FlextLDIFAPI()
 
         # Check if methods return FlextResult (good integration)
         test_ldif = """dn: uid=test,dc=example,dc=com
@@ -432,9 +430,9 @@ member: uid=user1,ou=people,dc=comprehensive,dc=test"""
 
     try:
         # ✅ CORREÇÃO: Usar funções que realmente existem
-        entries = flext_ldif_parse(complex_ldif)
+        entries = FlextLDIFFormatHandler.parse_ldif(complex_ldif).unwrap_or_raise()
 
-        flext_ldif_validate(entries)
+        FlextLDIFCore().validate_entries(entries).unwrap_or_raise()
 
         if entries:
             for entry in entries:
@@ -450,7 +448,7 @@ member: uid=user1,ou=people,dc=comprehensive,dc=test"""
 
         # ✅ CORREÇÃO: Usar API para sorting ao invés de função inexistente
         if entries:
-            api = FlextLdifAPI()
+            api = FlextLDIFAPI()
             with contextlib.suppress(Exception):
                 api.sort_hierarchically(entries)
 
@@ -464,13 +462,13 @@ member: uid=user1,ou=people,dc=comprehensive,dc=test"""
 
         try:
             # Test writing to string and then to file
-            ldif_content = flext_ldif_write(entries)
+            ldif_content = FlextLDIFFormatHandler.write_ldif(entries).unwrap_or_raise()
             temp_file.write_text(ldif_content, encoding="utf-8")
 
             # Test reading from file
             if temp_file.exists():
                 file_content = temp_file.read_text(encoding="utf-8")
-                flext_ldif_parse(file_content)
+                FlextLDIFFormatHandler.parse_ldif(file_content).unwrap_or_raise()
 
         finally:
             # Cleanup

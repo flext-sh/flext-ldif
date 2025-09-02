@@ -1,27 +1,27 @@
-"""Tests for FlextLdifTransformerService - comprehensive coverage."""
+"""Tests for FlextLDIFTransformerService - comprehensive coverage."""
 
-from flext_ldif.models import FlextLdifConfig, FlextLdifEntry
-from flext_ldif.services import FlextLdifTransformerService
+from flext_ldif.models import FlextLDIFConfig, FlextLDIFEntry
+from flext_ldif.services import FlextLDIFTransformerService
 
 
-class TestFlextLdifTransformerService:
+class TestFlextLDIFTransformerService:
     """Test transformer service functionality."""
 
     def test_service_initialization(self) -> None:
         """Test service can be initialized."""
-        service = FlextLdifTransformerService()
+        service = FlextLDIFTransformerService()
         assert service.config is None
 
     def test_service_initialization_with_config(self) -> None:
         """Test service can be initialized with custom config."""
-        config = FlextLdifConfig(strict_validation=True)
-        service = FlextLdifTransformerService(config=config)
+        config = FlextLDIFConfig(strict_validation=True)
+        service = FlextLDIFTransformerService(config=config)
         assert service.config is not None
         assert service.config.strict_validation is True
 
     def test_execute_default(self) -> None:
         """Test default execute method returns empty list."""
-        service = FlextLdifTransformerService()
+        service = FlextLDIFTransformerService()
         result = service.execute()
 
         assert result.is_success
@@ -30,8 +30,8 @@ class TestFlextLdifTransformerService:
 
     def test_transform_entry_success(self) -> None:
         """Test transforming single entry."""
-        service = FlextLdifTransformerService()
-        entry = FlextLdifEntry.model_validate(
+        service = FlextLDIFTransformerService()
+        entry = FlextLDIFEntry.model_validate(
             {
                 "dn": "cn=John Doe,ou=people,dc=example,dc=com",
                 "attributes": {"cn": ["John Doe"], "objectClass": ["person"]},
@@ -46,7 +46,7 @@ class TestFlextLdifTransformerService:
 
     def test_transform_entries_empty_list(self) -> None:
         """Test transforming empty list of entries."""
-        service = FlextLdifTransformerService()
+        service = FlextLDIFTransformerService()
         result = service.transform_entries([])
 
         assert result.is_success
@@ -55,8 +55,8 @@ class TestFlextLdifTransformerService:
 
     def test_transform_entries_single_entry(self) -> None:
         """Test transforming single entry in list."""
-        service = FlextLdifTransformerService()
-        entry = FlextLdifEntry.model_validate(
+        service = FlextLDIFTransformerService()
+        entry = FlextLDIFEntry.model_validate(
             {
                 "dn": "cn=Jane Doe,ou=people,dc=example,dc=com",
                 "attributes": {
@@ -76,21 +76,21 @@ class TestFlextLdifTransformerService:
 
     def test_transform_entries_multiple_entries(self) -> None:
         """Test transforming multiple entries."""
-        service = FlextLdifTransformerService()
+        service = FlextLDIFTransformerService()
         entries = [
-            FlextLdifEntry.model_validate(
+            FlextLDIFEntry.model_validate(
                 {
                     "dn": "cn=John,dc=example,dc=com",
                     "attributes": {"cn": ["John"], "objectClass": ["person"]},
                 }
             ),
-            FlextLdifEntry.model_validate(
+            FlextLDIFEntry.model_validate(
                 {
                     "dn": "cn=Jane,dc=example,dc=com",
                     "attributes": {"cn": ["Jane"], "objectClass": ["person"]},
                 }
             ),
-            FlextLdifEntry.model_validate(
+            FlextLDIFEntry.model_validate(
                 {
                     "dn": "ou=people,dc=example,dc=com",
                     "attributes": {
@@ -112,12 +112,12 @@ class TestFlextLdifTransformerService:
 
     def test_transform_entries_large_dataset(self) -> None:
         """Test transforming large dataset performance."""
-        service = FlextLdifTransformerService()
+        service = FlextLDIFTransformerService()
 
         # Create 50 entries
         entries = []
         for i in range(50):
-            entry = FlextLdifEntry.model_validate(
+            entry = FlextLDIFEntry.model_validate(
                 {
                     "dn": f"cn=person{i},ou=people,dc=example,dc=com",
                     "attributes": {
@@ -140,7 +140,7 @@ class TestFlextLdifTransformerService:
 
     def test_normalize_dns_empty_list(self) -> None:
         """Test DN normalization with empty list."""
-        service = FlextLdifTransformerService()
+        service = FlextLDIFTransformerService()
         result = service.normalize_dns([])
 
         assert result.is_success
@@ -149,8 +149,8 @@ class TestFlextLdifTransformerService:
 
     def test_normalize_dns_single_entry(self) -> None:
         """Test DN normalization with single entry."""
-        service = FlextLdifTransformerService()
-        entry = FlextLdifEntry.model_validate(
+        service = FlextLDIFTransformerService()
+        entry = FlextLDIFEntry.model_validate(
             {
                 "dn": "CN=John Doe,OU=People,DC=Example,DC=Com",  # Mixed case DN
                 "attributes": {"cn": ["John Doe"], "objectClass": ["person"]},
@@ -167,15 +167,15 @@ class TestFlextLdifTransformerService:
 
     def test_normalize_dns_multiple_entries(self) -> None:
         """Test DN normalization with multiple entries."""
-        service = FlextLdifTransformerService()
+        service = FlextLDIFTransformerService()
         entries = [
-            FlextLdifEntry.model_validate(
+            FlextLDIFEntry.model_validate(
                 {
                     "dn": "CN=John,DC=Example,DC=Com",
                     "attributes": {"cn": ["John"], "objectClass": ["person"]},
                 }
             ),
-            FlextLdifEntry.model_validate(
+            FlextLDIFEntry.model_validate(
                 {
                     "dn": "OU=People,DC=Example,DC=Com",
                     "attributes": {
@@ -196,14 +196,14 @@ class TestFlextLdifTransformerService:
     def test_service_with_different_configurations(self) -> None:
         """Test service behavior with different configurations."""
         # Test with strict validation
-        strict_config = FlextLdifConfig(strict_validation=True)
-        strict_service = FlextLdifTransformerService(config=strict_config)
+        strict_config = FlextLDIFConfig(strict_validation=True)
+        strict_service = FlextLDIFTransformerService(config=strict_config)
 
         # Test with non-strict validation
-        lenient_config = FlextLdifConfig(strict_validation=False)
-        lenient_service = FlextLdifTransformerService(config=lenient_config)
+        lenient_config = FlextLDIFConfig(strict_validation=False)
+        lenient_service = FlextLDIFTransformerService(config=lenient_config)
 
-        entry = FlextLdifEntry.model_validate(
+        entry = FlextLDIFEntry.model_validate(
             {
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {"cn": ["test"], "objectClass": ["person"]},
@@ -220,10 +220,10 @@ class TestFlextLdifTransformerService:
 
     def test_transform_entries_uses_transform_entry(self) -> None:
         """Test that transform_entries calls transform_entry for each entry."""
-        service = FlextLdifTransformerService()
+        service = FlextLDIFTransformerService()
 
         # Create a simple entry
-        entry = FlextLdifEntry.model_validate(
+        entry = FlextLDIFEntry.model_validate(
             {
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {"cn": ["test"], "objectClass": ["person"]},
@@ -243,9 +243,12 @@ class TestFlextLdifTransformerService:
 
     def test_edge_case_empty_attributes(self) -> None:
         """Test handling entry with minimal attributes."""
-        service = FlextLdifTransformerService()
-        entry = FlextLdifEntry.model_validate(
-            {"dn": "dc=com", "attributes": {"objectClass": ["dcObject"]}}
+        service = FlextLDIFTransformerService()
+        entry = FlextLDIFEntry.model_validate(
+            {
+                "dn": "dc=com",
+                "attributes": {"objectClass": ["dcObject"]},
+            }
         )
 
         result = service.transform_entry(entry)
@@ -255,8 +258,8 @@ class TestFlextLdifTransformerService:
 
     def test_edge_case_complex_dn(self) -> None:
         """Test handling entry with complex DN."""
-        service = FlextLdifTransformerService()
-        entry = FlextLdifEntry.model_validate(
+        service = FlextLDIFTransformerService()
+        entry = FlextLDIFEntry.model_validate(
             {
                 "dn": "cn=John+sn=Doe,ou=people,o=example corp,c=us",
                 "attributes": {

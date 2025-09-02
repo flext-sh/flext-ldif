@@ -58,7 +58,7 @@ Este exemplo:
 3. **Exporta** dados LDIF do container
 4. **Demonstra** todas as funcionalidades da biblioteca:
    - Parsing simples com `parse_ldif()`
-   - Processamento avançado com `FlextLdifProcessor`
+   - Processamento avançado com `FlextLDIFProcessor`
    - Validação com `validate_ldif()`
    - Especificações de domínio (pessoas, grupos, OUs)
    - Escrita de LDIF com `write_ldif()`

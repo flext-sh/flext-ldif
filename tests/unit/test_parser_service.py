@@ -1,4 +1,4 @@
-"""Tests for FlextLdifParserService - comprehensive real functionality coverage."""
+"""Tests for FlextLDIFParserService - comprehensive real functionality coverage."""
 
 # ruff: noqa: PT018
 # Reason: Multiple assertion checks are common in tests for comprehensive error validation
@@ -11,28 +11,28 @@ from unittest.mock import patch
 import pytest
 from flext_core import FlextResult
 
-from flext_ldif.models import FlextLdifConfig
-from flext_ldif.services import FlextLdifParserService
+from flext_ldif.models import FlextLDIFConfig
+from flext_ldif.services import FlextLDIFParserService
 
 
-class TestFlextLdifParserService:
-    """Test FlextLdifParserService with real functionality."""
+class TestFlextLDIFParserService:
+    """Test FlextLDIFParserService with real functionality."""
 
     def test_service_initialization(self) -> None:
         """Test service can be initialized."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
         assert service.config is None
 
     def test_service_initialization_with_config(self) -> None:
         """Test service initialization with custom config."""
-        config = FlextLdifConfig(strict_validation=True)
-        service = FlextLdifParserService(config=config)
+        config = FlextLDIFConfig(strict_validation=True)
+        service = FlextLDIFParserService(config=config)
         assert service.config is not None
         assert service.config.strict_validation is True
 
     def test_execute_default(self) -> None:
         """Test execute method returns empty list by default."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
         result = service.execute()
 
         assert result.is_success
@@ -40,7 +40,7 @@ class TestFlextLdifParserService:
 
     def test_parse_valid_ldif_content(self) -> None:
         """Test parsing valid LDIF content."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
 
         ldif_content = """dn: cn=John Doe,ou=people,dc=example,dc=com
 objectClass: inetOrgPerson
@@ -77,7 +77,7 @@ mail: jane.smith@example.com"""
 
     def test_parse_empty_content(self) -> None:
         """Test parsing empty content returns empty list."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
 
         result = service.parse("")
         assert result.is_success
@@ -85,7 +85,7 @@ mail: jane.smith@example.com"""
 
     def test_parse_whitespace_only_content(self) -> None:
         """Test parsing whitespace-only content returns empty list."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
 
         result = service.parse("   \n\t  \n  ")
         assert result.is_success
@@ -93,7 +93,7 @@ mail: jane.smith@example.com"""
 
     def test_parse_non_string_content(self) -> None:
         """Test parsing non-string content fails gracefully."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
 
         # Test with integer
         result = service.parse(123)
@@ -110,7 +110,7 @@ mail: jane.smith@example.com"""
 
     def test_parse_invalid_ldif_blocks(self) -> None:
         """Test parsing invalid LDIF blocks."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
 
         # Invalid LDIF that can't be parsed at all
         invalid_content = """invalid: format
@@ -125,7 +125,7 @@ broken: completely"""
 
     def test_parse_mixed_valid_invalid_blocks(self) -> None:
         """Test parsing mixed valid/invalid LDIF blocks."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
 
         mixed_content = """dn: cn=valid,dc=example,dc=com
 objectClass: person
@@ -151,7 +151,7 @@ sn: entry"""
 
     def test_parse_ldif_file_success(self) -> None:
         """Test parsing LDIF file successfully."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
 
         # Create a temporary LDIF file
         ldif_content = """dn: cn=test,dc=example,dc=com
@@ -176,7 +176,7 @@ sn: user"""
 
     def test_parse_ldif_file_not_found(self) -> None:
         """Test parsing non-existent LDIF file."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
 
         result = service.parse_ldif_file("/nonexistent/file.ldif")
 
@@ -185,7 +185,7 @@ sn: user"""
 
     def test_parse_ldif_file_permission_error(self) -> None:
         """Test parsing LDIF file with permission issues."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
 
         # Try to read a directory instead of a file to trigger permission/type error
         result = service.parse_ldif_file("/")
@@ -194,7 +194,7 @@ sn: user"""
 
     def test_parse_ldif_file_encoding_issues(self) -> None:
         """Test parsing LDIF file with encoding problems."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
 
         # Create a file with problematic encoding
 
@@ -211,7 +211,7 @@ sn: user"""
 
     def test_parse_entry_block_valid(self) -> None:
         """Test parsing a single valid entry block."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
 
         block = """dn: cn=test,dc=example,dc=com
 objectClass: person
@@ -229,7 +229,7 @@ sn: user"""
 
     def test_parse_entry_block_invalid(self) -> None:
         """Test parsing invalid entry block."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
 
         # Block without DN
         invalid_block = """objectClass: person
@@ -241,7 +241,7 @@ cn: test"""
 
     def test_parse_entry_block_empty(self) -> None:
         """Test parsing empty entry block."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
 
         result = service._parse_entry_block("")
 
@@ -249,7 +249,7 @@ cn: test"""
 
     def test_error_handling_with_malformed_content(self) -> None:
         """Test error handling with malformed LDIF content."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
 
         # Test with content that causes parsing errors
         malformed_content = """dn: cn=test,dc=example,dc=com
@@ -265,8 +265,8 @@ invalid-attribute-format: value with \x00 null bytes"""
 
     def test_parse_with_config(self) -> None:
         """Test parsing with specific configuration."""
-        config = FlextLdifConfig(strict_validation=True, allow_empty_attributes=False)
-        service = FlextLdifParserService(config=config)
+        config = FlextLDIFConfig(strict_validation=True, allow_empty_attributes=False)
+        service = FlextLDIFParserService(config=config)
 
         ldif_content = """dn: cn=test,dc=example,dc=com
 objectClass: person
@@ -281,7 +281,7 @@ sn: user"""
 
     def test_tap_error_functionality(self) -> None:
         """Test tap_error callback functionality during parsing."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
 
         # Mix valid and invalid blocks to test tap_error callback
         content_with_errors = """dn: cn=valid,dc=example,dc=com
@@ -308,7 +308,7 @@ cn: another_valid"""
 
     def test_parse_empty_blocks_handling(self) -> None:
         """Test parsing with empty blocks to cover line 72."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
 
         # Content with empty blocks between valid entries
         content_with_empty_blocks = """
@@ -330,7 +330,7 @@ cn: second
 
     def test_parse_exception_handling(self) -> None:
         """Test exception handling in parse method (lines 98-99)."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
 
         # Malformed content that could trigger ValueError/AttributeError/TypeError
         malformed_content = "dn: \x00invalid\x00characters\nobjectClass:"
@@ -345,7 +345,7 @@ cn: second
 
     def test_single_entry_parsing_scenarios(self) -> None:
         """Test single entry parsing to cover missing lines."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
 
         # Test minimal valid entry
         minimal_entry = "dn: cn=minimal,dc=example,dc=com\nobjectClass: person"
@@ -367,7 +367,7 @@ description: Some description with\n newlines and special chars: !@#$%"""
 
     def test_parse_edge_cases_for_complete_coverage(self) -> None:
         """Test edge cases to achieve complete coverage of missing lines."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
 
         # Test empty DN case (line 183) - DN with just "dn:" and no value
         empty_dn_content = "dn: \nobjectClass: person"
@@ -410,7 +410,7 @@ objectClass: person"""
 
     def test_parse_entries_from_string_method(self) -> None:
         """Test parse_entries_from_string method to cover line 150."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
 
         valid_ldif = "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test"
 
@@ -421,7 +421,7 @@ objectClass: person"""
 
     def test_comprehensive_error_coverage(self) -> None:
         """Test comprehensive error scenarios to achieve 100% coverage."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
 
         # Test continue condition (line 72) - empty blocks within content
         content_with_empty_blocks = "dn: cn=test1,dc=example,dc=com\nobjectClass: person\n\n\n\ndn: cn=test2,dc=example,dc=com\nobjectClass: person"
@@ -430,7 +430,7 @@ objectClass: person"""
 
         # Test exception handling in main parse (lines 98-99)
         with patch(
-            "flext_ldif.parser_service.FlextLdifFactory.create_entry"
+            "flext_ldif.parser_service.FlextLDIFFactory.create_entry"
         ) as mock_create:
             mock_create.side_effect = ValueError("Entry creation failed")
             # This will trigger the exception handling in the main parse method
@@ -440,7 +440,7 @@ objectClass: person"""
 
         # Try to test some edge cases that might trigger other error paths
         with patch(
-            "flext_ldif.parser_service.FlextLdifFactory.create_entry"
+            "flext_ldif.parser_service.FlextLDIFFactory.create_entry"
         ) as mock_create:
             mock_create.side_effect = AttributeError("Attribute error")
             result = service.parse("dn: cn=test,dc=example,dc=com\nobjectClass: person")

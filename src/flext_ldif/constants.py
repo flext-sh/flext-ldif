@@ -7,12 +7,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Final
+from typing import ClassVar, Final
 
 from flext_core import FlextConstants
 
 
-class FlextLdifConstants(FlextConstants):
+class FlextLDIFConstants(FlextConstants):
     """FLEXT LDIF constants extending FlextConstants."""
 
     # =============================================================================
@@ -177,7 +177,7 @@ class FlextLdifConstants(FlextConstants):
     # FLEXT-LDIF VALIDATION MESSAGES
     # =============================================================================
 
-    class FlextLdifValidationMessages:
+    class FlextLDIFValidationMessages:
         """Validation messages centralized for flext-ldif operations."""
 
         # DN Validation Messages
@@ -207,7 +207,7 @@ class FlextLdifConstants(FlextConstants):
         ENTRY_MISSING_REQUIRED_OBJECTCLASS: Final[str] = (
             "Entry missing required objectClass attribute"
         )
-        ENTRY_INVALID_TYPE: Final[str] = "Entry must be FlextLdifEntry instance"
+        ENTRY_INVALID_TYPE: Final[str] = "Entry must be FlextLDIFEntry instance"
         ENTRY_CANNOT_BE_NONE: Final[str] = "Entry cannot be None"
         ENTRY_MUST_HAVE_VALID_DN: Final[str] = "LDIF entry must have a valid DN"
         EMPTY_ATTRIBUTES_NOT_ALLOWED: Final[str] = (
@@ -266,7 +266,7 @@ class FlextLdifConstants(FlextConstants):
     # FLEXT-LDIF DEFAULT VALUES
     # =============================================================================
 
-    class FlextLdifDefaultValues:
+    class FlextLDIFDefaultValues:
         """Default values centralized for flext-ldif configurations."""
 
         # CLI Default Values
@@ -331,7 +331,7 @@ class FlextLdifConstants(FlextConstants):
     # FLEXT-LDIF ANALYTICS CONSTANTS
     # =============================================================================
 
-    class FlextLdifAnalyticsConstants:
+    class FlextLDIFAnalyticsConstants:
         """Analytics constants centralized for flext-ldif processing."""
 
         # Pattern Analysis Keys
@@ -352,7 +352,7 @@ class FlextLdifConstants(FlextConstants):
     # FLEXT-LDIF CORE PROCESSING MESSAGES
     # =============================================================================
 
-    class FlextLdifCoreMessages:
+    class FlextLDIFCoreMessages:
         """Core processing messages centralized for flext-ldif operations."""
 
         # Parsing Messages
@@ -398,7 +398,7 @@ class FlextLdifConstants(FlextConstants):
     # FLEXT-LDIF OPERATION MESSAGES
     # =============================================================================
 
-    class FlextLdifOperationMessages:
+    class FlextLDIFOperationMessages:
         """Operation messages centralized for flext-ldif processing."""
 
         # Success Messages
@@ -469,7 +469,7 @@ class FlextLdifConstants(FlextConstants):
     # FLEXT-LDIF FORMAT VALIDATORS CONSTANTS
     # =============================================================================
 
-    class FlextLdifFormatConstants:
+    class FlextLDIFFormatConstants:
         """Format validation constants for flext-ldif operations."""
 
         # Module Import Names
@@ -507,7 +507,7 @@ class FlextLdifConstants(FlextConstants):
             "Empty attribute value not allowed for {attr_name}"
         )
         ENTRY_MUST_BE_FLEXTLDIFENTRY_FORMAT: Final[str] = (
-            "Entry must be FlextLdifEntry instance"
+            "Entry must be FlextLDIFEntry instance"
         )
 
         # Object Class Sets (for validation)
@@ -540,7 +540,7 @@ class FlextLdifConstants(FlextConstants):
     # FLEXT-LDIF CORE PROCESSING CONSTANTS
     # =============================================================================
 
-    class FlextLdifCoreConstants:
+    class FlextLDIFCoreConstants:
         """Core processing constants for flext-ldif operations."""
 
         # Regular Expression Patterns
@@ -550,7 +550,9 @@ class FlextLdifConstants(FlextConstants):
         ATTR_NAME_PATTERN_REGEX: Final[str] = r"^[A-Za-z][A-Za-z0-9-]*$"
 
         # Debug Log Messages
-        TLDIF_PARSE_CALLED_LOG: Final[str] = "TLdif.parse called with content type: %s"
+        TLDIF_PARSE_CALLED_LOG: Final[str] = (
+            "FlextLDIFCore.parse called with content type: %s"
+        )
         CONTENT_LENGTH_LOG: Final[str] = "Content length: %d characters"
         CONTENT_CONVERTED_LOG: Final[str] = "Content converted to string, length: %d"
         CONTENT_PREVIEW_LOG: Final[str] = "Content preview: %s..."
@@ -559,7 +561,7 @@ class FlextLdifConstants(FlextConstants):
         )
         EXCEPTION_TYPE_LOG: Final[str] = "Exception type: %s"
         FULL_EXCEPTION_DETAILS_LOG: Final[str] = "Full exception details"
-        EXCEPTION_IN_TLDIF_PARSE_LOG: Final[str] = "Exception in TLdif.parse"
+        EXCEPTION_IN_TLDIF_PARSE_LOG: Final[str] = "Exception in FlextLDIFCore.parse"
         STARTING_MODERNIZED_PARSING_LOG: Final[str] = "Starting modernized LDIF parsing"
         CONTENT_LINES_COUNT_LOG: Final[str] = "Content lines count: %d"
         CALLING_MODERNIZED_LDIF_PARSE_LOG: Final[str] = "Calling modernized_ldif_parse"
@@ -576,11 +578,11 @@ class FlextLdifConstants(FlextConstants):
         )
         RAW_ENTRIES_DNS_LOG: Final[str] = "Raw entries DNs: %s"
         CONVERTING_ENTRIES_LOG: Final[str] = (
-            "Converting raw entries to FlextLdifEntry objects"
+            "Converting raw entries to FlextLDIFEntry objects"
         )
         PROCESSING_ENTRY_LOG: Final[str] = "Processing entry %d: DN=%s, attrs_count=%d"
         SUCCESSFULLY_CONVERTED_ENTRIES_LOG: Final[str] = (
-            "Successfully converted %d entries to FlextLdifEntry objects"
+            "Successfully converted %d entries to FlextLDIFEntry objects"
         )
         MODERNIZED_PARSING_COMPLETED_LOG: Final[str] = (
             "Modernized LDIF parsing completed successfully - raw_entries=%d, converted_entries=%d"
@@ -599,7 +601,7 @@ class FlextLdifConstants(FlextConstants):
         ENTRY_ATTRIBUTES_COUNT_LOG: Final[str] = "Entry attributes count: %d"
         VALIDATING_DN_FORMAT_LOG: Final[str] = "Validating DN format: %s"
         INVALID_DN_FORMAT_BY_PATTERN_LOG: Final[str] = (
-            "Invalid DN format by TLdif pattern: %s"
+            "Invalid DN format by FlextLDIFCore pattern: %s"
         )
         DN_FAILED_FLEXT_LDAP_VALIDATION_LOG: Final[str] = (
             "DN failed flext-ldap validation"
@@ -868,7 +870,7 @@ class FlextLdifConstants(FlextConstants):
     # COMPREHENSIVE PUBLIC API - All constants exported
     # =============================================================================
 
-    __all__ = [
+    __all__: ClassVar[list[str]] = [
         "DEFAULT_ALLOW_EMPTY_ATTRIBUTES",
         "DEFAULT_ENTRY_SEPARATOR",
         "DEFAULT_FILE_BUFFER_SIZE",
@@ -917,15 +919,15 @@ class FlextLdifConstants(FlextConstants):
         "OU_OBJECT_CLASSES",  # Use LDAP_OU_CLASSES instead
         # Backward Compatibility Aliases (DEPRECATED)
         "PERSON_OBJECT_CLASSES",  # Use LDAP_PERSON_CLASSES instead
-        "FlextLdifAnalyticsConstants",
-        "FlextLdifCoreConstants",
-        "FlextLdifCoreMessages",
-        "FlextLdifDefaultValues",
+        "FlextLDIFAnalyticsConstants",
+        "FlextLDIFCoreConstants",
+        "FlextLDIFCoreMessages",
+        "FlextLDIFDefaultValues",
         # 100% String Centralization Classes
-        "FlextLdifFormatConstants",
-        "FlextLdifOperationMessages",
+        "FlextLDIFFormatConstants",
+        "FlextLDIFOperationMessages",
         # NEW ORGANIZED CLASSES
-        "FlextLdifValidationMessages",
+        "FlextLDIFValidationMessages",
     ]
 
 
@@ -934,10 +936,14 @@ class FlextLdifConstants(FlextConstants):
 # =============================================================================
 
 # Make nested message classes available as top-level imports
-FlextLdifValidationMessages = FlextLdifConstants.FlextLdifValidationMessages
-FlextLdifOperationMessages = FlextLdifConstants.FlextLdifOperationMessages
+FlextLDIFValidationMessages = FlextLDIFConstants.FlextLDIFValidationMessages
+FlextLDIFOperationMessages = FlextLDIFConstants.FlextLDIFOperationMessages
 
 # Make nested constants available as top-level imports
-LDAP_GROUP_CLASSES = FlextLdifConstants.LDAP_GROUP_CLASSES
-LDAP_PERSON_CLASSES = FlextLdifConstants.LDAP_PERSON_CLASSES
-MIN_DN_COMPONENTS = FlextLdifConstants.MIN_DN_COMPONENTS
+LDAP_DN_ATTRIBUTES = FlextLDIFConstants.LDAP_DN_ATTRIBUTES
+LDAP_GROUP_CLASSES = FlextLDIFConstants.LDAP_GROUP_CLASSES
+LDAP_PERSON_CLASSES = FlextLDIFConstants.LDAP_PERSON_CLASSES
+MIN_DN_COMPONENTS = FlextLDIFConstants.MIN_DN_COMPONENTS
+
+# Make nested class available as top-level import
+FlextLDIFAnalyticsConstants = FlextLDIFConstants.FlextLDIFAnalyticsConstants

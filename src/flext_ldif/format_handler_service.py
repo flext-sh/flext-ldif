@@ -1,4 +1,4 @@
-"""Modernized LDIF parser and writer based on ldif3 library.
+"""FLEXT-LDIF Format Handler - Class-based LDIF parsing and writing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,121 +11,202 @@ import base64
 import re
 from collections import OrderedDict
 from collections.abc import Iterator, Sequence
+from typing import ClassVar
 from urllib.parse import urlparse
 
 import urllib3
 from flext_core import FlextLogger, FlextResult
 
-from flext_ldif.constants import FlextLdifOperationMessages, FlextLdifValidationMessages
+from flext_ldif.constants import FlextLDIFOperationMessages, FlextLDIFValidationMessages
+
+# Import needed for proper type conversions
+from flext_ldif.models import FlextLDIFEntry
 
 logger = FlextLogger(__name__)
-# LDIF Pattern Constants
-ATTRTYPE_PATTERN = r"[\w;.-]+(;[\w_-]+)*"
-ATTRVALUE_PATTERN = r'(([^,]|\\,)+|".*?")'
-ATTR_PATTERN = ATTRTYPE_PATTERN + r"[ ]*=[ ]*" + ATTRVALUE_PATTERN
-RDN_PATTERN = ATTR_PATTERN + r"([ ]*\+[ ]*" + ATTR_PATTERN + r")*[ ]*"
-DN_PATTERN = RDN_PATTERN + r"([ ]*,[ ]*" + RDN_PATTERN + r")*[ ]*"
-DN_REGEX = re.compile(f"^{DN_PATTERN}$")
-
-LDIF_PATTERN = f"^((dn(:|::) {DN_PATTERN})|({ATTRTYPE_PATTERN}s(:|::) .*)$)+"
-
-MOD_OPS = ["add", "delete", "replace"]
-CHANGE_TYPES = ["add", "delete", "modify", "modrdn"]
-
-UNSAFE_STRING_PATTERN = (
-    r"(^[^\x01-\x09\x0b-\x0c\x0e-\x1f\x21-\x39\x3b\x3d-\x7f]"
-    r"|[^\x01-\x09\x0b-\x0c\x0e-\x7f])"
-)
-UNSAFE_STRING_RE = re.compile(UNSAFE_STRING_PATTERN)
-
-# Allowed URL schemes for LDIF URL references
-ALLOWED_URL_SCHEMES = {"http", "https"}
-
-# HTTP status codes
-HTTP_OK = 200
 
 
-def _validate_url_scheme(url: str) -> None:
-    """Validate URL scheme for security.
+class FlextLDIFFormatHandler:
+    """LDIF format handling using FlextLDIF[Module] pattern.
 
-    Args:
-      url: URL to validate
-
-    Raises:
-      ValueError: If URL scheme is not allowed
-
+    Centralized parsing and writing for all LDIF format operations.
+    No helper functions - all functionality through class methods.
     """
-    parsed = urlparse(url)
-    if parsed.scheme not in ALLOWED_URL_SCHEMES:
-        schemes_str = ", ".join(ALLOWED_URL_SCHEMES)
-        msg = (
-            f"URL scheme '{parsed.scheme}' not allowed. "
-            f"Only {schemes_str} schemes are permitted."
-        )
-        raise ValueError(msg)
 
+    # LDIF Pattern Constants
+    ATTRTYPE_PATTERN = r"[\w;.-]+(;[\w_-]+)*"
+    ATTRVALUE_PATTERN = r'(([^,]|\\,)+|".*?")'
+    ATTR_PATTERN = ATTRTYPE_PATTERN + r"[ ]*=[ ]*" + ATTRVALUE_PATTERN
+    RDN_PATTERN = ATTR_PATTERN + r"([ ]*\+[ ]*" + ATTR_PATTERN + r")*[ ]*"
+    DN_PATTERN = RDN_PATTERN + r"([ ]*,[ ]*" + RDN_PATTERN + r")*[ ]*"
+    DN_REGEX = re.compile(f"^{DN_PATTERN}$")
 
-def _safe_url_fetch(url: str, encoding: str = "utf-8") -> str:
-    """Safely fetch URL content using urllib3.
+    LDIF_PATTERN = f"^((dn(:|::) {DN_PATTERN})|({ATTRTYPE_PATTERN}s(:|::) .*)$)+"
 
-    Args:
-      url: URL to fetch
-      encoding: Character encoding for response
+    MOD_OPS: ClassVar[list[str]] = ["add", "delete", "replace"]
+    CHANGE_TYPES: ClassVar[list[str]] = ["add", "delete", "modify", "modrdn"]
 
-    Returns:
-      Decoded content as string
+    UNSAFE_STRING_PATTERN = (
+        r"(^[^\x01-\x09\x0b-\x0c\x0e-\x1f\x21-\x39\x3b\x3d-\x7f]"
+        r"|[^\x01-\x09\x0b-\x0c\x0e-\x7f])"
+    )
+    UNSAFE_STRING_RE = re.compile(UNSAFE_STRING_PATTERN)
 
-    Raises:
-      ValueError: If fetch fails
+    # Allowed URL schemes for LDIF URL references
+    ALLOWED_URL_SCHEMES: ClassVar[set[str]] = {"http", "https"}
 
-    """
-    _validate_url_scheme(url)
+    # HTTP status codes
+    HTTP_OK = 200
 
-    # Use urllib3 for better security and modern HTTP handling
-    http = urllib3.PoolManager()
+    @classmethod
+    def validate_url_scheme(cls, url: str) -> None:
+        """Validate URL scheme for security.
 
-    def _handle_http_error(status: int, url: str) -> None:
-        """Handle HTTP error responses."""
-        msg: str = f"HTTP {status}: Failed to fetch {url}"
-        raise ValueError(msg)
+        Args:
+          url: URL to validate
 
-    try:
-        response = http.request("GET", url)
-        if response.status != HTTP_OK:
-            _handle_http_error(response.status, url)
-        return response.data.decode(encoding)
-    except (ValueError, TypeError, OSError) as e:
-        msg: str = f"urllib3 fetch error for {url}: {e}"
-        raise ValueError(msg) from e
+        Raises:
+          ValueError: If URL scheme is not allowed
 
+        """
+        parsed = urlparse(url)
+        if parsed.scheme not in cls.ALLOWED_URL_SCHEMES:
+            schemes_str = ", ".join(cls.ALLOWED_URL_SCHEMES)
+            msg = (
+                f"URL scheme '{parsed.scheme}' not allowed. "
+                f"Only {schemes_str} schemes are permitted."
+            )
+            raise ValueError(msg)
 
-def is_dn(s: str) -> bool:
-    """Return True if s is a valid LDAP DN.
+    @classmethod
+    def safe_url_fetch(cls, url: str, encoding: str = "utf-8") -> str:
+        """Safely fetch URL content using urllib3.
 
-    Args:
-      s: String to validate as DN
+        Args:
+          url: URL to fetch
+          encoding: Character encoding for response
 
-    Returns:
-      True if valid DN format
+        Returns:
+          Decoded content as string
 
-    """
-    if s == "":
-        return True
-    match = DN_REGEX.match(s)
-    return match is not None and match.group(0) == s
+        Raises:
+          ValueError: If fetch fails
 
+        """
+        cls.validate_url_scheme(url)
 
-def lower_list(items: Sequence[str] | None) -> list[str]:
-    """Return a list with the lowercased items.
+        # Use urllib3 for better security and modern HTTP handling
+        http = urllib3.PoolManager()
 
-    Args:
-      items: List of strings to lowercase
+        def _handle_http_error(status: int, url: str) -> None:
+            """Handle HTTP error responses."""
+            msg: str = f"HTTP {status}: Failed to fetch {url}"
+            raise ValueError(msg)
 
-    Returns:
-      List of lowercased strings
+        try:
+            response = http.request("GET", url)
+            if response.status != cls.HTTP_OK:
+                _handle_http_error(response.status, url)
+            return response.data.decode(encoding)
+        except (ValueError, TypeError, OSError) as e:
+            msg: str = f"urllib3 fetch error for {url}: {e}"
+            raise ValueError(msg) from e
 
-    """
-    return [item.lower() for item in items or []]
+    @classmethod
+    def is_dn(cls, s: str) -> bool:
+        """Return True if s is a valid LDAP DN.
+
+        Args:
+          s: String to validate as DN
+
+        Returns:
+          True if valid DN format
+
+        """
+        if s == "":
+            return True
+        match = cls.DN_REGEX.match(s)
+        return match is not None and match.group(0) == s
+
+    @staticmethod
+    def lower_list(items: Sequence[str] | None) -> list[str]:
+        """Return a list with the lowercased items.
+
+        Args:
+          items: List of strings to lowercase
+
+        Returns:
+          List of lowercased strings
+
+        """
+        return [item.lower() for item in items or []]
+
+    @classmethod
+    def parse_ldif(cls, content: str) -> FlextResult[list[FlextLDIFEntry]]:
+        """Parse LDIF content using modernized parser.
+
+        Args:
+          content: LDIF content as string
+
+        Returns:
+          FlextResult containing list of FlextLDIFEntry objects
+
+        """
+        try:
+            parser = FlextLDIFParser(content)
+            raw_entries = list(parser.parse())
+
+            # Convert tuples to FlextLDIFEntry objects
+            entries = []
+            for dn, attributes in raw_entries:
+                entry = FlextLDIFEntry(dn=dn, attributes=attributes)
+                entries.append(entry)
+
+            logger.info(
+                FlextLDIFOperationMessages.LDIF_PARSED_SUCCESS.format(
+                    count=len(entries)
+                ),
+            )
+            return FlextResult[list[FlextLDIFEntry]].ok(entries)
+
+        except (ValueError, AttributeError, TypeError, UnicodeError) as e:
+            error_msg: str = f"Modernized LDIF parse failed: {e}"
+            logger.exception(FlextLDIFValidationMessages.MODERNIZED_PARSING_FAILED)
+            return FlextResult[list[FlextLDIFEntry]].fail(error_msg)
+
+    @classmethod
+    def write_ldif(cls, entries: list[FlextLDIFEntry] | None) -> FlextResult[str]:
+        """Write LDIF entries using modernized writer.
+
+        Args:
+          entries: List of FlextLDIFEntry objects
+
+        Returns:
+          FlextResult containing LDIF string
+
+        """
+        if entries is None:
+            logger.error("Cannot write None entries")
+            return FlextResult[str].fail(
+                FlextLDIFValidationMessages.ENTRIES_CANNOT_BE_NONE
+            )
+
+        try:
+            writer = FlextLDIFWriter()
+            for entry in entries:
+                writer.unparse(str(entry.dn), dict(entry.attributes))
+
+            output = writer.get_output()
+            logger.info(
+                FlextLDIFOperationMessages.LDIF_WRITTEN_SUCCESS.format(
+                    count=writer.records_written,
+                ),
+            )
+            return FlextResult[str].ok(output)
+
+        except (ValueError, AttributeError, TypeError, UnicodeError) as e:
+            error_msg: str = f"Modernized LDIF write failed: {e}"
+            logger.exception(FlextLDIFValidationMessages.MODERNIZED_WRITING_FAILED)
+            return FlextResult[str].fail(error_msg)
 
 
 class FlextLDIFWriter:
@@ -151,7 +232,7 @@ class FlextLDIFWriter:
             encoding: Character encoding to use
 
         """
-        self._base64_attrs = lower_list(base64_attrs)
+        self._base64_attrs = FlextLDIFFormatHandler.lower_list(base64_attrs)
         self._cols = cols
         self._line_sep = line_sep
         self._encoding = encoding
@@ -186,7 +267,7 @@ class FlextLDIFWriter:
         """
         return (
             attr_type.lower() in self._base64_attrs
-            or UNSAFE_STRING_RE.search(attr_value) is not None
+            or FlextLDIFFormatHandler.UNSAFE_STRING_RE.search(attr_value) is not None
         )
 
     def _unparse_attr(self, attr_type: str, attr_value: str) -> None:
@@ -255,7 +336,7 @@ class FlextLDIFParser:
 
         """
         self._input_lines = input_content.splitlines()
-        self._ignored_attr_types = lower_list(ignored_attr_types)
+        self._ignored_attr_types = FlextLDIFFormatHandler.lower_list(ignored_attr_types)
         self._encoding = encoding
         self._strict = strict
 
@@ -357,7 +438,7 @@ class FlextLDIFParser:
         elif line[colon_pos:].startswith(":<"):
             url = line[colon_pos + 2 :].strip()
             try:
-                attr_value = _safe_url_fetch(url, self._encoding)
+                attr_value = FlextLDIFFormatHandler.safe_url_fetch(url, self._encoding)
             except (ValueError, TypeError, OSError) as e:
                 url_fetch_error_msg: str = f"URL fetch error: {e}"
                 raise ValueError(url_fetch_error_msg) from e
@@ -385,7 +466,7 @@ class FlextLDIFParser:
         if dn is not None:
             self._error("Multiple dn: lines in one record.")
 
-        if not is_dn(attr_value):
+        if not FlextLDIFFormatHandler.is_dn(attr_value):
             self._error(f"Invalid distinguished name format: {attr_value}")
 
     def _handle_dn_attribute(self, dn: str | None, attr_value: str) -> str:
@@ -472,7 +553,7 @@ class FlextLDIFParser:
             dn = self._process_line_attribute(line, dn, entry)
 
         if dn is None:
-            msg = FlextLdifValidationMessages.RECORD_MISSING_DN
+            msg = FlextLDIFValidationMessages.RECORD_MISSING_DN
             raise ValueError(msg)
 
         return dn, entry
@@ -493,71 +574,17 @@ class FlextLDIFParser:
             raise
 
 
-def modernized_ldif_parse(
-    content: str,
-) -> FlextResult[list[tuple[str, dict[str, list[str]]]]]:
-    """Parse LDIF content using modernized parser.
-
-    Args:
-      content: LDIF content as string
-
-    Returns:
-      FlextResult containing list of (dn, attributes) tuples
-
-    """
-    try:
-        parser = FlextLDIFParser(content)
-        entries = list(parser.parse())
-        logger.info(
-            FlextLdifOperationMessages.LDIF_PARSED_SUCCESS.format(count=len(entries)),
-        )
-        return FlextResult[list[tuple[str, dict[str, list[str]]]]].ok(entries)
-
-    except (ValueError, AttributeError, TypeError, UnicodeError) as e:
-        error_msg: str = f"Modernized LDIF parse failed: {e}"
-        logger.exception(FlextLdifValidationMessages.MODERNIZED_PARSING_FAILED)
-        return FlextResult[list[tuple[str, dict[str, list[str]]]]].fail(error_msg)
-
-
-def modernized_ldif_write(
-    entries: list[tuple[str, dict[str, list[str]]]] | None,
-) -> FlextResult[str]:
-    """Write LDIF entries using modernized writer.
-
-    Args:
-      entries: List of (dn, attributes) tuples
-
-    Returns:
-      FlextResult containing LDIF string
-
-    """
-    if entries is None:
-        logger.error("Cannot write None entries")
-        return FlextResult[str].fail(FlextLdifValidationMessages.ENTRIES_CANNOT_BE_NONE)
-
-    try:
-        writer = FlextLDIFWriter()
-        for dn, attrs in entries:
-            writer.unparse(dn, attrs)
-
-        output = writer.get_output()
-        logger.info(
-            FlextLdifOperationMessages.LDIF_WRITTEN_SUCCESS.format(
-                count=writer.records_written,
-            ),
-        )
-        return FlextResult[str].ok(output)
-
-    except (ValueError, AttributeError, TypeError, UnicodeError) as e:
-        error_msg: str = f"Modernized LDIF write failed: {e}"
-        logger.exception(FlextLdifValidationMessages.MODERNIZED_WRITING_FAILED)
-        return FlextResult[str].fail(error_msg)
-
+# All format handling functionality is now available through class methods:
+# - FlextLDIFFormatHandler.parse_ldif()
+# - FlextLDIFFormatHandler.write_ldif()
+# - FlextLDIFFormatHandler.is_dn()
+# - FlextLDIFFormatHandler.validate_url_scheme()
+# - FlextLDIFFormatHandler.safe_url_fetch()
+# - FlextLDIFFormatHandler.lower_list()
+# No helper functions - use class methods instead
 
 __all__: list[str] = [
+    "FlextLDIFFormatHandler",
     "FlextLDIFParser",
     "FlextLDIFWriter",
-    "is_dn",
-    "modernized_ldif_parse",
-    "modernized_ldif_write",
 ]

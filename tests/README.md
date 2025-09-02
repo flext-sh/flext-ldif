@@ -68,8 +68,8 @@ def test_flext_ldif_entry_validation(sample_entry):
     assert result.is_success
 
     # Test business rule violations
-    invalid_entry = FlextLdifEntry(dn="", attributes={})
-    with pytest.raises(FlextLdifValidationError):
+    invalid_entry = FlextLDIFEntry(dn="", attributes={})
+    with pytest.raises(FlextLDIFValidationError):
         result = invalid_entry.validate_business_rules()
         assert not result.is_success
 ```
@@ -185,21 +185,21 @@ def test_large_file_processing_performance():
 ```python
 @pytest.fixture
 def flext_ldif_api():
-    """Configured FlextLdifAPI instance for testing."""
-    config = FlextLdifConfig(
+    """Configured FlextLDIFAPI instance for testing."""
+    config = FlextLDIFConfig(
         max_entries=1000,
         strict_validation=True,
         enable_observability=False  # Disable for testing
     )
-    return FlextLdifAPI(config)
+    return FlextLDIFAPI(config)
 
 @pytest.fixture
 def sample_entries():
     """Sample LDIF entries for testing."""
     return [
-        FlextLdifEntry.model_validate({
-            "dn": FlextLdifDistinguishedName(value="cn=John Doe,ou=people,dc=example,dc=com"),
-            "attributes": FlextLdifAttributes(attributes={
+        FlextLDIFEntry.model_validate({
+            "dn": FlextLDIFDistinguishedName(value="cn=John Doe,ou=people,dc=example,dc=com"),
+            "attributes": FlextLDIFAttributes(attributes={
                 "cn": ["John Doe"],
                 "objectClass": ["person", "inetOrgPerson"],
                 "mail": ["john@example.com"]
@@ -367,7 +367,7 @@ pytest --tb=long                  # Detailed traceback
 def test_new_feature_specification():
     """Test specification for new feature (TDD)."""
     # Arrange - Set up test conditions
-    api = FlextLdifAPI()
+    api = FlextLDIFAPI()
     test_data = create_test_ldif()
 
     # Act - Execute the feature

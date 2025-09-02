@@ -12,11 +12,11 @@ import tempfile
 from pathlib import Path
 
 from flext_ldif import (
-    FlextLdifAPI,
-    FlextLdifConfig,
-    FlextLdifParserService,
-    FlextLdifValidatorService,
-    FlextLdifWriterService,
+    FlextLDIFAPI,
+    FlextLDIFConfig,
+    FlextLDIFParserService,
+    FlextLDIFValidatorService,
+    FlextLDIFWriterService,
 )
 
 
@@ -25,13 +25,13 @@ class TestRealApiIntegration:
 
     def test_api_with_real_config(self) -> None:
         """Test API with real configuration."""
-        config = FlextLdifConfig(
+        config = FlextLDIFConfig(
             strict_validation=True,
             input_encoding="utf-8",
             line_wrap_length=76,
         )
 
-        api = FlextLdifAPI(config)
+        api = FlextLDIFAPI(config)
 
         ldif_content = """dn: cn=ConfigTest,dc=example,dc=com
 objectClass: person
@@ -62,7 +62,7 @@ mail: filetest@example.com
 
             try:
                 # Parse from file using parser service directly
-                parser = FlextLdifParserService()
+                parser = FlextLDIFParserService()
                 file_result = parser.parse_ldif_file(tmp_file.name)
 
                 assert file_result.is_success
@@ -78,7 +78,7 @@ mail: filetest@example.com
 
     def test_parser_service_integration(self) -> None:
         """Test real parser service integration."""
-        parser = FlextLdifParserService()
+        parser = FlextLDIFParserService()
 
         multi_entry_ldif = """dn: ou=departments,dc=company,dc=com
 objectClass: organizationalUnit
@@ -116,10 +116,10 @@ departmentNumber: IT001
 
     def test_validator_service_integration(self) -> None:
         """Test real validator service integration."""
-        validator = FlextLdifValidatorService()
+        validator = FlextLDIFValidatorService()
 
         # Create real entries using parser
-        parser = FlextLdifParserService()
+        parser = FlextLDIFParserService()
         valid_ldif = """dn: cn=ValidUser,dc=test,dc=com
 objectClass: person
 cn: ValidUser
@@ -138,7 +138,7 @@ sn: User
     def test_writer_service_integration(self) -> None:
         """Test real writer service integration."""
         # Parse entries first
-        parser = FlextLdifParserService()
+        parser = FlextLDIFParserService()
         original_ldif = """dn: cn=WriteUser,dc=test,dc=com
 objectClass: person
 objectClass: organizationalPerson
@@ -154,7 +154,7 @@ telephoneNumber: +1-555-WRITE-1
         entries = parse_result.value
 
         # Write using writer service
-        writer = FlextLdifWriterService()
+        writer = FlextLDIFWriterService()
         write_result = writer.write(entries)
 
         assert write_result.is_success
@@ -170,7 +170,7 @@ telephoneNumber: +1-555-WRITE-1
     def test_analytics_service_integration(self) -> None:
         """Test real analytics service integration."""
         # Create sample entries
-        parser = FlextLdifParserService()
+        parser = FlextLDIFParserService()
         sample_ldif = """dn: dc=analytics,dc=com
 objectClass: domain
 dc: analytics
@@ -213,7 +213,7 @@ member: cn=user2,ou=users,dc=analytics,dc=com
 
     def test_full_workflow_integration(self) -> None:
         """Test complete workflow integration without mocks."""
-        api = FlextLdifAPI()
+        api = FlextLDIFAPI()
 
         # Complex real-world scenario
         enterprise_ldif = """dn: dc=enterprise,dc=local
@@ -306,7 +306,7 @@ member: cn=bob.smith,ou=Employees,ou=Corporate,dc=enterprise,dc=local
 
     def test_error_handling_integration(self) -> None:
         """Test real error handling integration."""
-        api = FlextLdifAPI()
+        api = FlextLDIFAPI()
 
         # Test with malformed LDIF (missing DN line)
         malformed_ldif = """not a dn: invalid
@@ -324,7 +324,7 @@ objectClass: person
 
     def test_empty_and_edge_cases_integration(self) -> None:
         """Test edge cases integration."""
-        api = FlextLdifAPI()
+        api = FlextLDIFAPI()
 
         # Empty content
         empty_result = api.parse("")

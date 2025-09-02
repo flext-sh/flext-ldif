@@ -13,9 +13,9 @@ poetry install
 
 Uso básico
 ```python
-from flext_ldif import FlextLdifAPI
+from flext_ldif import FlextLDIFAPI
 
-api = FlextLdifAPI()
+api = FlextLDIFAPI()
 ldif = """
 dn: cn=John Doe,ou=people,dc=example,dc=com
 cn: John Doe

@@ -17,11 +17,10 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import (
-    FlextLdifAPI,
-    FlextLdifConfig,
-    flext_ldif_parse,
-    flext_ldif_validate,
-    flext_ldif_write,
+    FlextLDIFAPI,
+    FlextLDIFConfig,
+    FlextLDIFCore,
+    FlextLDIFFormatHandler,
 )
 
 # Constants
@@ -133,7 +132,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
     ) -> None:
         """Test complete LDIF processing workflow from input to output."""
         # Step 1: Parse LDIF content
-        api = FlextLdifAPI()
+        api = FlextLDIFAPI()
         parse_result = api.parse(enterprise_ldif_sample)
 
         assert parse_result.is_success
@@ -201,7 +200,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
 
     def test_e2e_file_processing_workflow(self, enterprise_ldif_sample: str) -> None:
         """Test complete file processing workflow."""
-        api = FlextLdifAPI()
+        api = FlextLDIFAPI()
 
         # Create temporary input file
         with tempfile.NamedTemporaryFile(
@@ -258,9 +257,9 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
             output_path.unlink(missing_ok=True)
 
     def test_e2e_core_tldif_workflow(self, enterprise_ldif_sample: str) -> None:
-        """Test complete workflow using FlextLdifAPI core directly."""
+        """Test complete workflow using FlextLDIFAPI core directly."""
         # Use the main API instead of TLdif directly
-        api = FlextLdifAPI()
+        api = FlextLDIFAPI()
 
         # Step 1: Parse using main API
         parse_result = api.parse(enterprise_ldif_sample)
@@ -308,23 +307,27 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
     ) -> None:
         """Test complete workflow using convenience functions."""
         # Step 1: Parse using convenience function
-        entries = flext_ldif_parse(enterprise_ldif_sample)
+        entries = FlextLDIFFormatHandler.parse_ldif(
+            enterprise_ldif_sample
+        ).unwrap_or_raise()
         if len(entries) != 9:
             msg: str = f"Expected {9}, got {len(entries)}"
             raise AssertionError(msg)
 
         # Step 2: Validate using convenience function (SOLID fix: validate parsed entries, not raw LDIF)
-        is_valid = flext_ldif_validate(entries)
+        is_valid = FlextLDIFCore().validate_entries(entries).unwrap_or_raise()
         if not (is_valid):
             msg: str = f"Expected True, got {is_valid}"
             raise AssertionError(msg)
 
         # Step 3: Write using convenience function
-        output_content = flext_ldif_write(entries)
+        output_content = FlextLDIFFormatHandler.write_ldif(entries).unwrap_or_raise()
         assert len(output_content) > 0
 
         # Step 4: Round-trip with convenience functions
-        reparsed_entries = flext_ldif_parse(output_content)
+        reparsed_entries = FlextLDIFFormatHandler.parse_ldif(
+            output_content
+        ).unwrap_or_raise()
         if len(reparsed_entries) != len(entries):
             msg: str = f"Expected {len(entries)}, got {len(reparsed_entries)}"
             raise AssertionError(msg)
@@ -335,7 +338,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
 
         try:
             # Use API for file writing, convenience function only returns string content
-            api = FlextLdifAPI()
+            api = FlextLDIFAPI()
             file_result = api.write_file(entries, temp_path)
             assert file_result.is_success
             assert temp_path.exists()
@@ -346,7 +349,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
     def test_e2e_configuration_scenarios(self, enterprise_ldif_sample: str) -> None:
         """Test E2E workflows with different configurations."""
         # Scenario 1: Strict configuration
-        strict_config = FlextLdifConfig.model_validate(
+        strict_config = FlextLDIFConfig.model_validate(
             {
                 "strict_validation": True,
                 "max_entries": 20,
@@ -354,12 +357,12 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
             },
         )
 
-        strict_api = FlextLdifAPI(strict_config)
+        strict_api = FlextLDIFAPI(strict_config)
         strict_result = strict_api.parse(enterprise_ldif_sample)
         assert strict_result.is_success  # Should pass with valid data
 
         # Scenario 2: Permissive configuration
-        permissive_config = FlextLdifConfig.model_validate(
+        permissive_config = FlextLDIFConfig.model_validate(
             {
                 "strict_validation": False,
                 "max_entries": 1000,
@@ -367,24 +370,24 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
             },
         )
 
-        permissive_api = FlextLdifAPI(permissive_config)
+        permissive_api = FlextLDIFAPI(permissive_config)
         permissive_result = permissive_api.parse(enterprise_ldif_sample)
         assert permissive_result.is_success
 
         # Scenario 3: Restrictive configuration
-        restrictive_config = FlextLdifConfig.model_validate(
+        restrictive_config = FlextLDIFConfig.model_validate(
             {
                 "max_entries": 5,  # Less than our sample
             },
         )
 
-        restrictive_api = FlextLdifAPI(restrictive_config)
+        restrictive_api = FlextLDIFAPI(restrictive_config)
         restrictive_result = restrictive_api.parse(enterprise_ldif_sample)
         assert not restrictive_result.is_success  # Should fail due to limits
 
     def test_e2e_error_recovery_workflow(self) -> None:
         """Test E2E workflow with error conditions and recovery."""
-        api = FlextLdifAPI()
+        api = FlextLDIFAPI()
 
         # Step 1: Try to parse invalid content
         invalid_content = "This is not LDIF content at all"
@@ -447,7 +450,7 @@ employeeNumber: EMP{i:03d}
 
 """
 
-        api = FlextLdifAPI()
+        api = FlextLDIFAPI()
 
         # Time the complete workflow
         start_time = time.time()
@@ -515,7 +518,7 @@ description: User number {i} for memory testing
         gc.collect()
         memory_before = sys.getsizeof(content)
 
-        api = FlextLdifAPI()
+        api = FlextLDIFAPI()
 
         # Process workflow
         parse_result = api.parse(content)
@@ -539,7 +542,7 @@ description: User number {i} for memory testing
     def _execute_workflow(self, ldif_sample: str) -> str:
         """Execute a single LDIF workflow."""
         try:
-            api = FlextLdifAPI()
+            api = FlextLDIFAPI()
 
             parse_result = api.parse(ldif_sample)
             if not parse_result.is_success:
@@ -594,7 +597,7 @@ description: User number {i} for memory testing
         enterprise_data = self._create_realistic_enterprise_data()
 
         # Step 2: Process with enterprise requirements
-        config = FlextLdifConfig.model_validate(
+        config = FlextLDIFConfig.model_validate(
             {
                 "strict_validation": True,
                 "max_entries": 500,
@@ -602,7 +605,7 @@ description: User number {i} for memory testing
             },
         )
 
-        api = FlextLdifAPI(config)
+        api = FlextLDIFAPI(config)
 
         # Step 3: Parse and validate
         parse_result = api.parse(enterprise_data)

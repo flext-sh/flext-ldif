@@ -11,31 +11,32 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import TypeVar
 
 import click
-from flext_cli import (  # type: ignore[import-untyped]
-    cli_handle_keyboard_interrupt,
-    cli_measure_time,
-    flext_cli_output_data,
-    get_cli_config,
+from flext_cli import (
+    get_cmd as get_cli_config,
     setup_cli,
 )
+from flext_cli.decorators import flext_cli_handle_exceptions
 from flext_core import FlextLogger, FlextResult
 from rich.console import Console
 
-from flext_ldif.api import FlextLdifAPI
-from flext_ldif.models import FlextLdifConfig, FlextLdifEntry
+from flext_ldif.api import FlextLDIFAPI
+from flext_ldif.models import FlextLDIFConfig, FlextLDIFEntry
 
 # Logger for CLI module
 logger = FlextLogger(__name__)
 
+T = TypeVar("T")
 
-class FlextLdifCliService:
+
+class FlextLDIFCliService:
     """LDIF CLI service using flext-cli and flext-core patterns."""
 
-    def __init__(self, config: FlextLdifConfig | None = None) -> None:
+    def __init__(self, config: FlextLDIFConfig | None = None) -> None:
         """Initialize CLI service."""
-        self.api = FlextLdifAPI(config or FlextLdifConfig())
+        self.api = FlextLDIFAPI(config or FlextLDIFConfig())
         self.console = Console()
 
     def parse_and_process(
@@ -44,12 +45,12 @@ class FlextLdifCliService:
         *,
         validate: bool = False,
         max_entries: int | None = None,
-    ) -> FlextResult[list[FlextLdifEntry]]:
+    ) -> FlextResult[list[FlextLDIFEntry]]:
         """Parse LDIF file with optional validation."""
         # Update config if max_entries specified
         if max_entries:
-            config = FlextLdifConfig(max_entries=max_entries)
-            api = FlextLdifAPI(config)
+            config = FlextLDIFConfig(max_entries=max_entries)
+            api = FlextLDIFAPI(config)
         else:
             api = self.api
 
@@ -70,22 +71,22 @@ class FlextLdifCliService:
             validation_result = self.validate_entries(parse_result.value)
             if not validation_result.is_success:
                 logger.error(f"Validation failed: {validation_result.error}")
-                return FlextResult[list[FlextLdifEntry]].fail(
+                return FlextResult[list[FlextLDIFEntry]].fail(
                     f"Validation failed: {validation_result.error}"
                 )
             _, errors = validation_result.value
             if errors:
                 error_summary = f"{len(errors)} validation errors found"
                 logger.error(error_summary)
-                return FlextResult[list[FlextLdifEntry]].fail(error_summary)
+                return FlextResult[list[FlextLDIFEntry]].fail(error_summary)
 
         return parse_result
 
     def validate_entries(
-        self, entries: list[FlextLdifEntry]
-    ) -> FlextResult[tuple[list[FlextLdifEntry], list[str]]]:
+        self, entries: list[FlextLDIFEntry]
+    ) -> FlextResult[tuple[list[FlextLDIFEntry], list[str]]]:
         """Validate entries and return valid entries with error list."""
-        valid_entries: list[FlextLdifEntry] = []
+        valid_entries: list[FlextLDIFEntry] = []
         errors: list[str] = []
 
         for i, entry in enumerate(entries, 1):
@@ -98,7 +99,7 @@ class FlextLdifCliService:
                 )
                 errors.append(error_msg)
 
-        return FlextResult[tuple[list[FlextLdifEntry], list[str]]].ok(
+        return FlextResult[tuple[list[FlextLDIFEntry], list[str]]].ok(
             (
                 valid_entries,
                 errors,
@@ -107,11 +108,11 @@ class FlextLdifCliService:
 
     def transform_entries(
         self,
-        entries: list[FlextLdifEntry],
+        entries: list[FlextLDIFEntry],
         filter_type: str | None = None,
         *,
         sort_hierarchically: bool = False,
-    ) -> FlextResult[list[FlextLdifEntry]]:
+    ) -> FlextResult[list[FlextLDIFEntry]]:
         """Transform entries with filtering and sorting."""
         result_entries = entries
 
@@ -131,10 +132,10 @@ class FlextLdifCliService:
                 )
             )
 
-        return FlextResult[list[FlextLdifEntry]].ok(result_entries)
+        return FlextResult[list[FlextLDIFEntry]].ok(result_entries)
 
     def write_entries(
-        self, entries: list[FlextLdifEntry], output_path: Path
+        self, entries: list[FlextLDIFEntry], output_path: Path
     ) -> FlextResult[bool]:
         """Write entries to output file."""
         return self.api.write_file(entries, str(output_path)).tap(
@@ -142,27 +143,30 @@ class FlextLdifCliService:
         )
 
     def get_statistics(
-        self, entries: list[FlextLdifEntry]
+        self, entries: list[FlextLDIFEntry]
     ) -> FlextResult[dict[str, int]]:
         """Get comprehensive statistics for entries."""
         return self.api.get_entry_statistics(entries)
 
+    def handle_result_or_exit(
+        self, result: FlextResult[T], success_msg: str | None = None
+    ) -> T:
+        """Handle FlextResult with CLI-appropriate error reporting."""
+        if result.is_success:
+            if success_msg:
+                click.echo(success_msg)
+            return result.value
+
+        click.echo(f"Error: {result.error}", err=True)
+        sys.exit(1)
+
 
 # Global CLI service
-cli_service = FlextLdifCliService()
+cli_service = FlextLDIFCliService()
 
 
-def handle_result_or_exit[T](
-    result: FlextResult[T], success_msg: str | None = None
-) -> T:
-    """Handle FlextResult with CLI-appropriate error reporting."""
-    if result.is_success:
-        if success_msg:
-            click.echo(success_msg)
-        return result.value
-
-    click.echo(f"Error: {result.error}", err=True)
-    sys.exit(1)
+# All result handling is now done through FlextLDIFCli class methods
+# No helper functions - use class methods instead
 
 
 @click.group(
@@ -222,8 +226,7 @@ def cli(
 @click.option("--max-entries", type=int, help="Maximum entries to parse")
 @click.option("--validate", is_flag=True, help="Validate entries after parsing")
 @click.option("--stats", is_flag=True, help="Show statistics")
-@cli_measure_time  # type: ignore[misc]
-@cli_handle_keyboard_interrupt  # type: ignore[misc]
+@flext_cli_handle_exceptions
 @click.pass_context
 def parse(
     ctx: click.Context,
@@ -235,22 +238,23 @@ def parse(
     stats: bool,
 ) -> None:
     """Parse LDIF file with optional validation and statistics."""
-    service: FlextLdifCliService = ctx.obj["cli_service"]
-    config = ctx.obj["config"]
+    service: FlextLDIFCliService = ctx.obj["cli_service"]
     console: Console = ctx.obj["console"]
 
     # Parse file
     parse_result = service.parse_and_process(
         input_file, validate=validate, max_entries=max_entries
     )
-    entries = handle_result_or_exit(parse_result, f"Successfully parsed {input_file}")
+    entries = service.handle_result_or_exit(
+        parse_result, f"Successfully parsed {input_file}"
+    )
 
     console.print(f"✅ Parsed {len(entries)} entries")
 
     # Validate if requested
     if validate:
         validation_result = service.validate_entries(entries)
-        _, errors = handle_result_or_exit(validation_result)
+        _, errors = service.handle_result_or_exit(validation_result)
 
         if errors:
             console.print(f"❌ Found {len(errors)} validation errors:")
@@ -269,36 +273,32 @@ def parse(
     # Show statistics if requested
     if stats:
         stats_result = service.get_statistics(entries)
-        statistics = handle_result_or_exit(stats_result)
+        statistics = service.handle_result_or_exit(stats_result)
 
-        # Use flext-cli output formatting
-        output_result = flext_cli_output_data(
-            statistics, config.output_format, console=console
-        )
-        handle_result_or_exit(output_result)
+        # Output statistics directly via console
+        console.print(statistics)
 
     # Write output if requested
     if output:
         write_result = service.write_entries(entries, output)
-        handle_result_or_exit(write_result, f"Entries written to {output}")
+        service.handle_result_or_exit(write_result, f"Entries written to {output}")
 
 
 @cli.command()
 @click.argument("input_file", type=click.Path(exists=True, path_type=Path))
-@cli_measure_time  # type: ignore[misc]
-@cli_handle_keyboard_interrupt  # type: ignore[misc]
+@flext_cli_handle_exceptions
 @click.pass_context
 def validate(ctx: click.Context, input_file: Path) -> None:
     """Validate LDIF entries for business rule compliance."""
-    service: FlextLdifCliService = ctx.obj["cli_service"]
+    service: FlextLDIFCliService = ctx.obj["cli_service"]
     console: Console = ctx.obj["console"]
 
     # Parse and validate
     parse_result = service.parse_and_process(input_file)
-    entries = handle_result_or_exit(parse_result)
+    entries = service.handle_result_or_exit(parse_result)
 
     validation_result = service.validate_entries(entries)
-    _, errors = handle_result_or_exit(validation_result)
+    _, errors = service.handle_result_or_exit(validation_result)
 
     if errors:
         console.print(f"❌ Validation failed: {len(errors)} errors found")
@@ -319,8 +319,7 @@ def validate(ctx: click.Context, input_file: Path) -> None:
     help="Filter entries by type",
 )
 @click.option("--sort", is_flag=True, help="Sort entries hierarchically")
-@cli_measure_time  # type: ignore[misc]
-@cli_handle_keyboard_interrupt  # type: ignore[misc]
+@flext_cli_handle_exceptions
 @click.pass_context
 def transform(
     ctx: click.Context,
@@ -331,12 +330,12 @@ def transform(
     sort: bool,
 ) -> None:
     """Transform LDIF file with filtering and sorting."""
-    service: FlextLdifCliService = ctx.obj["cli_service"]
+    service: FlextLDIFCliService = ctx.obj["cli_service"]
     console: Console = ctx.obj["console"]
 
     # Parse file
     parse_result = service.parse_and_process(input_file)
-    entries = handle_result_or_exit(parse_result)
+    entries = service.handle_result_or_exit(parse_result)
 
     console.print(f"📄 Loaded {len(entries)} entries from {input_file}")
 
@@ -344,7 +343,7 @@ def transform(
     transform_result = service.transform_entries(
         entries, filter_type, sort_hierarchically=sort
     )
-    transformed_entries = handle_result_or_exit(transform_result)
+    transformed_entries = service.handle_result_or_exit(transform_result)
 
     operations: list[str] = []
     if filter_type:
@@ -358,33 +357,29 @@ def transform(
 
     # Write transformed entries
     write_result = service.write_entries(transformed_entries, output_file)
-    handle_result_or_exit(write_result, f"Transformed entries saved to {output_file}")
+    service.handle_result_or_exit(
+        write_result, f"Transformed entries saved to {output_file}"
+    )
 
 
 @cli.command()
 @click.argument("input_file", type=click.Path(exists=True, path_type=Path))
+@flext_cli_handle_exceptions
 @click.pass_context
-@cli_handle_keyboard_interrupt  # type: ignore[misc]
 def stats(ctx: click.Context, input_file: Path) -> None:
     """Display comprehensive statistics for LDIF file."""
-    service: FlextLdifCliService = ctx.obj["cli_service"]
-    config = ctx.obj["config"]
+    service: FlextLDIFCliService = ctx.obj["cli_service"]
     console: Console = ctx.obj["console"]
 
     # Parse and analyze
     parse_result = service.parse_and_process(input_file)
-    entries = handle_result_or_exit(parse_result)
+    entries = service.handle_result_or_exit(parse_result)
 
     stats_result = service.get_statistics(entries)
-    statistics = handle_result_or_exit(stats_result)
+    statistics = service.handle_result_or_exit(stats_result)
 
     console.print(f"📊 Statistics for {input_file}:")
-
-    # Use flext-cli formatting
-    output_result = flext_cli_output_data(
-        statistics, config.output_format, console=console
-    )
-    handle_result_or_exit(output_result)
+    console.print(statistics)
 
 
 def main() -> None:

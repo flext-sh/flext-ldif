@@ -13,7 +13,7 @@ from flext_core import FlextExceptions, FlextModels
 
 
 # Error codes enum for LDIF operations
-class FlextLdifErrorCodes(Enum):
+class FlextLDIFErrorCodes(Enum):
     """Error codes for LDIF domain operations."""
 
     LDIF_ERROR = "LDIF_ERROR"
@@ -33,14 +33,14 @@ class FlextLdifErrorCodes(Enum):
 # =============================================================================
 
 
-class FlextLdifExceptions(FlextModels):
+class FlextLDIFExceptions(FlextModels):
     """Single consolidated class containing ALL LDIF exceptions.
 
     Consolidates ALL exception definitions into one class following FLEXT patterns.
     Individual exceptions available as nested classes for organization.
     """
 
-    class Error(FlextExceptions):
+    class Error(FlextExceptions.BaseError):
         """Base LDIF error."""
 
         def __init__(
@@ -49,14 +49,12 @@ class FlextLdifExceptions(FlextModels):
             *,
             error_code: str | None = None,
             context: Mapping[str, object] | None = None,
-            cause: Exception | None = None,
         ) -> None:
             """Initialize LDIF error with proper defaults."""
             super().__init__(
                 message,
-                error_code=error_code or FlextLdifErrorCodes.LDIF_ERROR.value,
+                code=error_code or FlextLDIFErrorCodes.LDIF_ERROR.value,
                 context=dict(context) if context else None,
-                cause=cause,
             )
 
     class ValidationError(Error):
@@ -68,15 +66,13 @@ class FlextLdifExceptions(FlextModels):
             *,
             error_code: str | None = None,
             context: Mapping[str, object] | None = None,
-            cause: Exception | None = None,
         ) -> None:
             """Initialize validation error."""
             super().__init__(
                 message,
                 error_code=error_code
-                or FlextLdifErrorCodes.LDIF_VALIDATION_ERROR.value,
+                or FlextLDIFErrorCodes.LDIF_VALIDATION_ERROR.value,
                 context=context,
-                cause=cause,
             )
 
     class ParseError(Error):
@@ -88,7 +84,6 @@ class FlextLdifExceptions(FlextModels):
             *,
             error_code: str | None = None,
             context: Mapping[str, object] | None = None,
-            cause: Exception | None = None,
             line_number: int | None = None,
             column: int | None = None,
         ) -> None:
@@ -102,9 +97,8 @@ class FlextLdifExceptions(FlextModels):
 
             super().__init__(
                 message,
-                error_code=error_code or FlextLdifErrorCodes.LDIF_PARSE_ERROR.value,
+                error_code=error_code or FlextLDIFErrorCodes.LDIF_PARSE_ERROR.value,
                 context=parse_context,
-                cause=cause,
             )
 
     class EntryError(ValidationError):
@@ -116,7 +110,6 @@ class FlextLdifExceptions(FlextModels):
             *,
             error_code: str | None = None,
             context: Mapping[str, object] | None = None,
-            cause: Exception | None = None,
             entry_dn: str | None = None,
         ) -> None:
             """Initialize entry error with DN information."""
@@ -127,9 +120,8 @@ class FlextLdifExceptions(FlextModels):
 
             super().__init__(
                 message,
-                error_code=error_code or FlextLdifErrorCodes.LDIF_ENTRY_ERROR.value,
+                error_code=error_code or FlextLDIFErrorCodes.LDIF_ENTRY_ERROR.value,
                 context=entry_context,
-                cause=cause,
             )
 
     class ConfigurationError(Error):
@@ -141,7 +133,6 @@ class FlextLdifExceptions(FlextModels):
             *,
             error_code: str | None = None,
             context: Mapping[str, object] | None = None,
-            cause: Exception | None = None,
             config_key: str | None = None,
         ) -> None:
             """Initialize configuration error."""
@@ -153,9 +144,8 @@ class FlextLdifExceptions(FlextModels):
             super().__init__(
                 message,
                 error_code=error_code
-                or FlextLdifErrorCodes.LDIF_CONFIGURATION_ERROR.value,
+                or FlextLDIFErrorCodes.LDIF_CONFIGURATION_ERROR.value,
                 context=config_context,
-                cause=cause,
             )
 
     class ProcessingError(Error):
@@ -167,7 +157,6 @@ class FlextLdifExceptions(FlextModels):
             *,
             error_code: str | None = None,
             context: Mapping[str, object] | None = None,
-            cause: Exception | None = None,
             operation: str | None = None,
         ) -> None:
             """Initialize processing error."""
@@ -179,12 +168,11 @@ class FlextLdifExceptions(FlextModels):
             super().__init__(
                 message,
                 error_code=error_code
-                or FlextLdifErrorCodes.LDIF_PROCESSING_ERROR.value,
+                or FlextLDIFErrorCodes.LDIF_PROCESSING_ERROR.value,
                 context=processing_context,
-                cause=cause,
             )
 
-    class FlextExceptions(Error):
+    class LdifConnectionError(Error):
         """LDIF connection error."""
 
         def __init__(
@@ -193,7 +181,6 @@ class FlextLdifExceptions(FlextModels):
             *,
             error_code: str | None = None,
             context: Mapping[str, object] | None = None,
-            cause: Exception | None = None,
             server: str | None = None,
             port: int | None = None,
         ) -> None:
@@ -208,9 +195,8 @@ class FlextLdifExceptions(FlextModels):
             super().__init__(
                 message,
                 error_code=error_code
-                or FlextLdifErrorCodes.LDIF_CONNECTION_ERROR.value,
+                or FlextLDIFErrorCodes.LDIF_CONNECTION_ERROR.value,
                 context=conn_context,
-                cause=cause,
             )
 
     class AuthenticationError(Error):
@@ -222,7 +208,6 @@ class FlextLdifExceptions(FlextModels):
             *,
             error_code: str | None = None,
             context: Mapping[str, object] | None = None,
-            cause: Exception | None = None,
             username: str | None = None,
         ) -> None:
             """Initialize authentication error."""
@@ -234,12 +219,11 @@ class FlextLdifExceptions(FlextModels):
             super().__init__(
                 message,
                 error_code=error_code
-                or FlextLdifErrorCodes.LDIF_AUTHENTICATION_ERROR.value,
+                or FlextLDIFErrorCodes.LDIF_AUTHENTICATION_ERROR.value,
                 context=auth_context,
-                cause=cause,
             )
 
-    class FlextExceptions(Error):
+    class LdifTimeoutError(Error):
         """LDIF timeout error."""
 
         def __init__(
@@ -248,7 +232,6 @@ class FlextLdifExceptions(FlextModels):
             *,
             error_code: str | None = None,
             context: Mapping[str, object] | None = None,
-            cause: Exception | None = None,
             timeout_seconds: float | None = None,
         ) -> None:
             """Initialize timeout error."""
@@ -259,9 +242,8 @@ class FlextLdifExceptions(FlextModels):
 
             super().__init__(
                 message,
-                error_code=error_code or FlextLdifErrorCodes.LDIF_TIMEOUT_ERROR.value,
+                error_code=error_code or FlextLDIFErrorCodes.LDIF_TIMEOUT_ERROR.value,
                 context=timeout_context,
-                cause=cause,
             )
 
     class FileError(Error):
@@ -273,7 +255,6 @@ class FlextLdifExceptions(FlextModels):
             *,
             error_code: str | None = None,
             context: Mapping[str, object] | None = None,
-            cause: Exception | None = None,
             file_path: str | None = None,
             operation: str | None = None,
             line_number: int | None = None,
@@ -293,9 +274,8 @@ class FlextLdifExceptions(FlextModels):
 
             super().__init__(
                 message,
-                error_code=error_code or FlextLdifErrorCodes.LDIF_FILE_ERROR.value,
+                error_code=error_code or FlextLDIFErrorCodes.LDIF_FILE_ERROR.value,
                 context=file_context,
-                cause=cause,
             )
 
     class EntryValidationError(EntryError):
@@ -307,7 +287,6 @@ class FlextLdifExceptions(FlextModels):
             *,
             error_code: str | None = None,
             context: Mapping[str, object] | None = None,
-            cause: Exception | None = None,
             entry_dn: str | None = None,
             dn: str
             | None = None,  # Alternative parameter name for backward compatibility
@@ -323,7 +302,8 @@ class FlextLdifExceptions(FlextModels):
                 validation_context["attribute_name"] = attribute_name
             if attribute_value is not None:
                 # Truncate very long attribute values for readability
-                if len(attribute_value) > 100:
+                max_attribute_value_length = 100
+                if len(attribute_value) > max_attribute_value_length:
                     truncated_value = attribute_value[:97] + "..."
                     validation_context["attribute_value"] = truncated_value
                 else:
@@ -340,7 +320,6 @@ class FlextLdifExceptions(FlextModels):
                 message,
                 error_code=error_code,
                 context=validation_context,
-                cause=cause,
                 entry_dn=final_dn,
             )
 
@@ -350,34 +329,34 @@ class FlextLdifExceptions(FlextModels):
 # =============================================================================
 
 # Direct aliases to nested classes for backward compatibility
-FlextLdifError = FlextLdifExceptions.Error
-FlextLdifValidationError = FlextLdifExceptions.ValidationError
-FlextLdifParseError = FlextLdifExceptions.ParseError
-FlextLdifEntryError = FlextLdifExceptions.EntryError
-FlextLdifConfigurationError = FlextLdifExceptions.ConfigurationError
-FlextLdifProcessingError = FlextLdifExceptions.ProcessingError
-FlextLdifConnectionError = FlextLdifExceptions.FlextExceptions
-FlextLdifAuthenticationError = FlextLdifExceptions.AuthenticationError
-FlextLdifTimeoutError = FlextLdifExceptions.FlextExceptions
-FlextLdifFileError = FlextLdifExceptions.FileError
-FlextLdifEntryValidationError = FlextLdifExceptions.EntryValidationError
+FlextLDIFError = FlextLDIFExceptions.Error
+FlextLDIFValidationError = FlextLDIFExceptions.ValidationError
+FlextLDIFParseError = FlextLDIFExceptions.ParseError
+FlextLDIFEntryError = FlextLDIFExceptions.EntryError
+FlextLDIFConfigurationError = FlextLDIFExceptions.ConfigurationError
+FlextLDIFProcessingError = FlextLDIFExceptions.ProcessingError
+FlextLDIFConnectionError = FlextLDIFExceptions.LdifConnectionError
+FlextLDIFAuthenticationError = FlextLDIFExceptions.AuthenticationError
+FlextLDIFTimeoutError = FlextLDIFExceptions.LdifTimeoutError
+FlextLDIFFileError = FlextLDIFExceptions.FileError
+FlextLDIFEntryValidationError = FlextLDIFExceptions.EntryValidationError
 
 # Export consolidated class and legacy aliases
 __all__ = [
-    "FlextLdifAuthenticationError",
-    "FlextLdifConfigurationError",
-    "FlextLdifConnectionError",
-    "FlextLdifEntryError",
-    "FlextLdifEntryValidationError",
+    "FlextLDIFAuthenticationError",
+    "FlextLDIFConfigurationError",
+    "FlextLDIFConnectionError",
+    "FlextLDIFEntryError",
+    "FlextLDIFEntryValidationError",
     # Legacy compatibility aliases
-    "FlextLdifError",
+    "FlextLDIFError",
     # Error codes
-    "FlextLdifErrorCodes",
+    "FlextLDIFErrorCodes",
     # Consolidated class (FLEXT Pattern)
-    "FlextLdifExceptions",
-    "FlextLdifFileError",
-    "FlextLdifParseError",
-    "FlextLdifProcessingError",
-    "FlextLdifTimeoutError",
-    "FlextLdifValidationError",
+    "FlextLDIFExceptions",
+    "FlextLDIFFileError",
+    "FlextLDIFParseError",
+    "FlextLDIFProcessingError",
+    "FlextLDIFTimeoutError",
+    "FlextLDIFValidationError",
 ]

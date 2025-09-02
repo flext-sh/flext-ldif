@@ -8,10 +8,9 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import (
-    FlextLdifAPI,
-    flext_ldif_parse,
-    flext_ldif_validate,
-    flext_ldif_write,
+    FlextLDIFAPI,
+    FlextLDIFCore,
+    FlextLDIFFormatHandler,
 )
 
 
@@ -71,8 +70,8 @@ member: cn=John Doe,ou=people,dc=example,dc=com
 """
 
     def test_complete_api_workflow(self, complex_ldif_content: str) -> None:
-        """Test complete workflow using FlextLdifAPI."""
-        api = FlextLdifAPI()
+        """Test complete workflow using FlextLDIFAPI."""
+        api = FlextLDIFAPI()
 
         # Step 1: Parse LDIF content
         parse_result = api.parse(complex_ldif_content)
@@ -119,21 +118,23 @@ member: cn=John Doe,ou=people,dc=example,dc=com
     ) -> None:
         """Test complete workflow using convenience functions."""
         # Step 1: Parse using convenience function
-        entries = flext_ldif_parse(complex_ldif_content)
+        entries = FlextLDIFFormatHandler.parse_ldif(
+            complex_ldif_content
+        ).unwrap_or_raise()
         assert len(entries) == 6
 
         # Step 2: Validate using convenience function
-        is_valid = flext_ldif_validate(entries)
+        is_valid = FlextLDIFCore().validate_entries(entries).unwrap_or_raise()
         assert is_valid is True
 
         # Step 3: Write using convenience function
-        ldif_output = flext_ldif_write(entries)
+        ldif_output = FlextLDIFFormatHandler.write_ldif(entries).unwrap_or_raise()
         assert isinstance(ldif_output, str)
         assert "cn=John Doe,ou=people,dc=example,dc=com" in ldif_output
 
     def test_file_processing_workflow(self, complex_ldif_content: str) -> None:
         """Test complete file processing workflow."""
-        api = FlextLdifAPI()
+        api = FlextLDIFAPI()
 
         with tempfile.NamedTemporaryFile(
             encoding="utf-8",
@@ -177,7 +178,7 @@ member: cn=John Doe,ou=people,dc=example,dc=com
 
     def test_error_recovery_workflow(self) -> None:
         """Test error handling and recovery in workflows."""
-        api = FlextLdifAPI()
+        api = FlextLDIFAPI()
 
         # Test with invalid LDIF
         invalid_ldif = """invalid ldif
@@ -194,7 +195,7 @@ missing dns"""
 
     def test_performance_workflow(self) -> None:
         """Test workflow performance with larger dataset."""
-        api = FlextLdifAPI()
+        api = FlextLDIFAPI()
 
         # Generate larger LDIF content
         large_ldif_parts = ["dn: dc=example,dc=com\nobjectClass: domain\ndc: example\n"]

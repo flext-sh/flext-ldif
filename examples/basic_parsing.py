@@ -10,8 +10,8 @@ file parsing, entry validation, attribute access, and proper error handling
 using railway-oriented programming patterns.
 
 Operations Demonstrated:
-    - LDIF file parsing with FlextLdifAPI
-    - Configuration setup with FlextLdifConfig
+    - LDIF file parsing with FlextLDIFAPI
+    - Configuration setup with FlextLDIFConfig
     - FlextResult pattern for error handling
     - Domain entity operations and attribute access
     - Entry validation and business rule enforcement
@@ -40,7 +40,7 @@ from pathlib import Path
 
 from flext_core import FlextLogger
 
-from flext_ldif import FlextLdifAPI, FlextLdifConfig, FlextLdifEntry
+from flext_ldif import FlextLDIFAPI, FlextLDIFConfig, FlextLDIFEntry
 
 logger = FlextLogger(__name__)
 
@@ -48,11 +48,11 @@ logger = FlextLogger(__name__)
 def main() -> None:
     """Demonstrate basic LDIF parsing operations."""
     # Create API with configuration
-    config = FlextLdifConfig(
+    config = FlextLDIFConfig(
         strict_validation=True,
         max_entries=100,
     )
-    api = FlextLdifAPI(config)
+    api = FlextLDIFAPI(config)
 
     # Parse LDIF from file
     sample_file = Path(__file__).parent / "sample_basic.ldif"
@@ -88,7 +88,7 @@ def main() -> None:
     # Demonstrate filtering with railway programming
     output_file = Path(__file__).parent / "output_basic.ldif"
 
-    def process_person_entries(person_entries: list[FlextLdifEntry]) -> None:
+    def process_person_entries(person_entries: list[FlextLDIFEntry]) -> None:
         for entry in person_entries:
             entry.get_single_attribute("cn") or "Unknown"
             entry.get_single_attribute("mail") or "No email"
