@@ -8,9 +8,9 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import (
-    FlextLdifAPI,
-    FlextLdifConfig,
-    FlextLdifEntry,
+    FlextLDIFAPI,
+    FlextLDIFConfig,
+    FlextLDIFEntry,
 )
 
 
@@ -18,21 +18,21 @@ class TestAdvancedAPIFeatures:
     """Test advanced API features and edge cases."""
 
     @pytest.fixture
-    def api_with_config(self) -> FlextLdifAPI:
+    def api_with_config(self) -> FlextLDIFAPI:
         """Create API with custom configuration."""
-        config = FlextLdifConfig(
+        config = FlextLDIFConfig(
             max_entries=100,
             strict_validation=True,
             sort_attributes=True,
         )
-        return FlextLdifAPI(config)
+        return FlextLDIFAPI(config)
 
-    def test_api_with_large_entries(self, api_with_config: FlextLdifAPI) -> None:
+    def test_api_with_large_entries(self, api_with_config: FlextLDIFAPI) -> None:
         """Test API with large number of entries."""
         # Generate large LDIF content
-        entries: list[FlextLdifEntry] = []
+        entries: list[FlextLDIFEntry] = []
         for i in range(50):
-            entry = FlextLdifEntry.model_validate(
+            entry = FlextLDIFEntry.model_validate(
                 {
                     "id": f"user-{i:03d}",
                     "dn": f"cn=user{i:03d},ou=people,dc=example,dc=com",
@@ -55,7 +55,7 @@ class TestAdvancedAPIFeatures:
         assert stats_result.value is not None
         assert stats_result.value["total_entries"] == 50
 
-    def test_api_error_handling_edge_cases(self, api_with_config: FlextLdifAPI) -> None:
+    def test_api_error_handling_edge_cases(self, api_with_config: FlextLDIFAPI) -> None:
         """Test API error handling with various edge cases."""
         # Test with empty content (returns empty list, which is valid)
         result = api_with_config.parse("")
@@ -73,7 +73,7 @@ cn invalid"""
         result = api_with_config.parse_file(Path("/totally/invalid/path/file.ldif"))
         assert not result.is_success
 
-    def test_api_filtering_capabilities(self, api_with_config: FlextLdifAPI) -> None:
+    def test_api_filtering_capabilities(self, api_with_config: FlextLDIFAPI) -> None:
         """Test advanced filtering capabilities."""
         ldif_content = """dn: cn=John Doe,ou=people,dc=example,dc=com
 cn: John Doe
@@ -111,7 +111,7 @@ objectClass: groupOfNames
         assert ou_result.is_success
         assert len(ou_result.value) == 1
 
-    def test_api_file_operations_advanced(self, api_with_config: FlextLdifAPI) -> None:
+    def test_api_file_operations_advanced(self, api_with_config: FlextLDIFAPI) -> None:
         """Test advanced file operations."""
         content = """dn: cn=test,dc=example,dc=com
 cn: test
@@ -151,7 +151,7 @@ objectClass: person
         finally:
             temp_file.unlink()
 
-    def test_api_performance_monitoring(self, api_with_config: FlextLdifAPI) -> None:
+    def test_api_performance_monitoring(self, api_with_config: FlextLDIFAPI) -> None:
         """Test API performance monitoring capabilities."""
         # Generate moderately large content
         content_parts = [

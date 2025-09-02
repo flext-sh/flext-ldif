@@ -12,10 +12,10 @@
 ### **Core Functionality**
 
 1. **LDIF Parsing**: ✅ RFC-compliant LDIF parsing implementation
-2. **Domain Models**: ✅ FlextLdifEntry, FlextLdifDistinguishedName, FlextLdifAttributes
+2. **Domain Models**: ✅ FlextLDIFEntry, FlextLDIFDistinguishedName, FlextLDIFAttributes
 3. **FlextResult Integration**: ✅ Railway-oriented programming patterns
 4. **CLI Interface**: ✅ Basic command-line operations
-5. **Configuration**: ✅ FlextLdifConfig with environment variable support
+5. **Configuration**: ✅ FlextLDIFConfig with environment variable support
 6. **API Layer**: ✅ Refactored with enterprise-grade error handling and logging
 7. **Service Layer**: ✅ Domain services with dependency injection
 8. **Exception Handling**: ✅ Structured exception hierarchy
@@ -47,9 +47,9 @@
 
 **Tasks**:
 
-- [ ] Enhance FlextLdifEntry with comprehensive logging
-- [ ] Improve FlextLdifDistinguishedName validation and error handling
-- [ ] Add enterprise patterns to FlextLdifAttributes
+- [ ] Enhance FlextLDIFEntry with comprehensive logging
+- [ ] Improve FlextLDIFDistinguishedName validation and error handling
+- [ ] Add enterprise patterns to FlextLDIFAttributes
 - [ ] Apply consistent FlextResult patterns throughout
 
 **Priority**: HIGH - Core domain functionality improvement

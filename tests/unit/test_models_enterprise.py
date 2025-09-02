@@ -1,4 +1,4 @@
-"""Enterprise tests for FlextLdifEntry and related models.
+"""Enterprise tests for FlextLDIFEntry and related models.
 
 Comprehensive test suite covering all model functionality with enterprise-grade
 validation, edge cases, and domain rule enforcement.
@@ -12,11 +12,11 @@ import time
 import pytest
 from flext_core import FlextExceptions
 
-from flext_ldif import FlextLdifAttributes, FlextLdifDistinguishedName, FlextLdifEntry
+from flext_ldif import FlextLDIFAttributes, FlextLDIFDistinguishedName, FlextLDIFEntry
 
 
-class TestFlextLdifEntryEnterprise:
-    """Enterprise-grade tests for FlextLdifEntry model."""
+class TestFlextLDIFEntryEnterprise:
+    """Enterprise-grade tests for FlextLDIFEntry model."""
 
     @pytest.fixture
     def sample_entry_data(self) -> dict[str, str | dict[str, list[str]]]:
@@ -46,8 +46,8 @@ class TestFlextLdifEntryEnterprise:
         }
 
     def test_entry_creation_success(self, sample_entry_data: dict[str, object]) -> None:
-        """Test successful FlextLdifEntry creation."""
-        entry = FlextLdifEntry.model_validate(sample_entry_data)
+        """Test successful FlextLDIFEntry creation."""
+        entry = FlextLDIFEntry.model_validate(sample_entry_data)
 
         assert entry is not None
         if str(entry.dn) != sample_entry_data["dn"]:
@@ -59,9 +59,9 @@ class TestFlextLdifEntryEnterprise:
         self, sample_entry_data: dict[str, object]
     ) -> None:
         """Test entry creation with string DN (auto-conversion)."""
-        entry = FlextLdifEntry.model_validate(sample_entry_data)
+        entry = FlextLDIFEntry.model_validate(sample_entry_data)
 
-        assert isinstance(entry.dn, FlextLdifDistinguishedName)
+        assert isinstance(entry.dn, FlextLDIFDistinguishedName)
         if str(entry.dn) != sample_entry_data["dn"]:
             msg: str = f"Expected {sample_entry_data['dn']}, got {entry.dn!s}"
             raise AssertionError(msg)
@@ -70,9 +70,9 @@ class TestFlextLdifEntryEnterprise:
         self, sample_entry_data: dict[str, object]
     ) -> None:
         """Test entry creation with dict attributes (auto-conversion)."""
-        entry = FlextLdifEntry.model_validate(sample_entry_data)
+        entry = FlextLDIFEntry.model_validate(sample_entry_data)
 
-        assert isinstance(entry.attributes, FlextLdifAttributes)
+        assert isinstance(entry.attributes, FlextLDIFAttributes)
         if entry.attributes.attributes != sample_entry_data["attributes"]:
             msg: str = f"Expected {sample_entry_data['attributes']}, got {entry.attributes.attributes}"
             raise AssertionError(msg)
@@ -80,7 +80,7 @@ class TestFlextLdifEntryEnterprise:
     def test_entry_validation_invalid_dn_type(self) -> None:
         """Test entry validation fails with invalid DN type."""
         with pytest.raises(ValueError, match="Invalid DN type"):
-            FlextLdifEntry.model_validate(
+            FlextLDIFEntry.model_validate(
                 {
                     "dn": 123,  # Invalid type
                     "attributes": {"objectClass": ["top"]},
@@ -90,7 +90,7 @@ class TestFlextLdifEntryEnterprise:
     def test_entry_validation_invalid_attributes_type(self) -> None:
         """Test entry validation fails with invalid attributes type."""
         with pytest.raises(ValueError, match="Input should be a valid dictionary"):
-            FlextLdifEntry.model_validate(
+            FlextLDIFEntry.model_validate(
                 {
                     "dn": "cn=test,dc=example,dc=com",
                     "attributes": "invalid",  # Invalid type
@@ -99,7 +99,7 @@ class TestFlextLdifEntryEnterprise:
 
     def test_get_attribute_success(self, sample_entry_data: dict[str, object]) -> None:
         """Test getting attribute values succeeds."""
-        entry = FlextLdifEntry.model_validate(sample_entry_data)
+        entry = FlextLDIFEntry.model_validate(sample_entry_data)
 
         cn_values = entry.get_attribute("cn")
         if cn_values != ["John Doe"]:
@@ -122,14 +122,14 @@ class TestFlextLdifEntryEnterprise:
         self, sample_entry_data: dict[str, object]
     ) -> None:
         """Test getting nonexistent attribute returns None."""
-        entry = FlextLdifEntry.model_validate(sample_entry_data)
+        entry = FlextLDIFEntry.model_validate(sample_entry_data)
 
         result = entry.get_attribute("nonexistent")
         assert result is None
 
     def test_set_attribute_success(self, sample_entry_data: dict[str, object]) -> None:
         """Test setting attribute values succeeds."""
-        entry = FlextLdifEntry.model_validate(sample_entry_data)
+        entry = FlextLDIFEntry.model_validate(sample_entry_data)
 
         # Set new attribute
         entry.set_attribute("telephoneNumber", ["+1-555-0123"])
@@ -145,7 +145,7 @@ class TestFlextLdifEntryEnterprise:
 
     def test_has_attribute_success(self, sample_entry_data: dict[str, object]) -> None:
         """Test checking attribute existence succeeds."""
-        entry = FlextLdifEntry.model_validate(sample_entry_data)
+        entry = FlextLDIFEntry.model_validate(sample_entry_data)
 
         if not (entry.has_attribute("cn")):
             msg: str = f"Expected True, got {entry.has_attribute('cn')}"
@@ -162,7 +162,7 @@ class TestFlextLdifEntryEnterprise:
         self, sample_entry_data: dict[str, object]
     ) -> None:
         """Test getting object classes succeeds."""
-        entry = FlextLdifEntry.model_validate(sample_entry_data)
+        entry = FlextLDIFEntry.model_validate(sample_entry_data)
 
         object_classes = entry.get_object_classes()
         if object_classes != ["person", "inetOrgPerson"]:
@@ -173,7 +173,7 @@ class TestFlextLdifEntryEnterprise:
         self, sample_entry_data: dict[str, object]
     ) -> None:
         """Test checking object class existence succeeds."""
-        entry = FlextLdifEntry.model_validate(sample_entry_data)
+        entry = FlextLDIFEntry.model_validate(sample_entry_data)
 
         if not (entry.has_object_class("person")):
             msg: str = f"Expected True, got {entry.has_object_class('person')}"
@@ -189,7 +189,7 @@ class TestFlextLdifEntryEnterprise:
         self, sample_entry_data: dict[str, object]
     ) -> None:
         """Test getting attribute values using modern API."""
-        entry = FlextLdifEntry.model_validate(sample_entry_data)
+        entry = FlextLDIFEntry.model_validate(sample_entry_data)
 
         cn_values = entry.attributes.get_values("cn")
         if cn_values != ["John Doe"]:
@@ -200,7 +200,7 @@ class TestFlextLdifEntryEnterprise:
         self, sample_entry_data: dict[str, object]
     ) -> None:
         """Test operation check methods return correct LDIF behavior."""
-        entry = FlextLdifEntry.model_validate(sample_entry_data)
+        entry = FlextLDIFEntry.model_validate(sample_entry_data)
 
         # When no changetype is specified, LDIF defaults to add operation
         assert entry.is_add_operation() is True
@@ -211,7 +211,7 @@ class TestFlextLdifEntryEnterprise:
         self, sample_entry_data: dict[str, object]
     ) -> None:
         """Test getting single attribute value succeeds."""
-        entry = FlextLdifEntry.model_validate(sample_entry_data)
+        entry = FlextLDIFEntry.model_validate(sample_entry_data)
 
         cn_value = entry.get_single_attribute("cn")
         if cn_value != "John Doe":
@@ -227,14 +227,14 @@ class TestFlextLdifEntryEnterprise:
         self, sample_entry_data: dict[str, object]
     ) -> None:
         """Test getting single value from nonexistent attribute returns None."""
-        entry = FlextLdifEntry.model_validate(sample_entry_data)
+        entry = FlextLDIFEntry.model_validate(sample_entry_data)
 
         result = entry.get_single_attribute("nonexistent")
         assert result is None
 
     def test_to_ldif_success(self, sample_entry_data: dict[str, object]) -> None:
         """Test converting entry to LDIF string succeeds."""
-        entry = FlextLdifEntry.model_validate(sample_entry_data)
+        entry = FlextLDIFEntry.model_validate(sample_entry_data)
 
         ldif_output = entry.to_ldif()
 
@@ -251,7 +251,7 @@ class TestFlextLdifEntryEnterprise:
         self, sample_entry_data: dict[str, object]
     ) -> None:
         """Test domain rules validation succeeds for valid entry."""
-        entry = FlextLdifEntry.model_validate(sample_entry_data)
+        entry = FlextLDIFEntry.model_validate(sample_entry_data)
 
         # Should not raise exception
         result = entry.validate_business_rules()
@@ -260,7 +260,7 @@ class TestFlextLdifEntryEnterprise:
     def test_validate_domain_rules_empty_dn_fails(self) -> None:
         """Test domain rules validation fails for empty DN."""
         with pytest.raises(ValueError, match="DN must be a non-empty string"):
-            FlextLdifEntry.model_validate(
+            FlextLDIFEntry.model_validate(
                 {
                     "dn": "",
                     "attributes": {"objectClass": ["top"]},
@@ -269,7 +269,7 @@ class TestFlextLdifEntryEnterprise:
 
     def test_validate_domain_rules_no_attributes_fails(self) -> None:
         """Test domain rules validation fails for no attributes."""
-        entry = FlextLdifEntry.model_validate(
+        entry = FlextLDIFEntry.model_validate(
             {
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {},
@@ -289,7 +289,7 @@ cn: test
 sn: user
 mail: test@example.com"""
 
-        entry = FlextLdifEntry.from_ldif_block(ldif_block)
+        entry = FlextLDIFEntry.from_ldif_block(ldif_block)
 
         if str(entry.dn) != "cn=test,ou=people,dc=example,dc=com":
             msg: str = (
@@ -307,7 +307,7 @@ mail: test@example.com"""
     def test_from_ldif_block_empty_fails(self) -> None:
         """Test creating entry from empty LDIF block fails."""
         with pytest.raises(ValueError, match="LDIF block cannot be empty"):
-            FlextLdifEntry.from_ldif_block("")
+            FlextLDIFEntry.from_ldif_block("")
 
     def test_from_ldif_block_no_dn_fails(self) -> None:
         """Test creating entry from LDIF block without DN fails."""
@@ -315,7 +315,7 @@ mail: test@example.com"""
 objectClass: person"""
 
         with pytest.raises((ValueError, FlextExceptions)):
-            FlextLdifEntry.from_ldif_block(ldif_block)
+            FlextLDIFEntry.from_ldif_block(ldif_block)
 
     def test_from_ldif_block_multiline_attributes(self) -> None:
         """Test creating entry from LDIF block with multiline attributes."""
@@ -326,7 +326,7 @@ cn: Test User
 description: This is a test user
 description: With multiple descriptions"""
 
-        entry = FlextLdifEntry.from_ldif_block(ldif_block)
+        entry = FlextLDIFEntry.from_ldif_block(ldif_block)
 
         if entry.get_attribute("cn") != ["test", "Test User"]:
             msg: str = (
@@ -348,7 +348,7 @@ description: With multiple descriptions"""
             "mail": ["test@example.com"],
         }
 
-        entry = FlextLdifEntry.from_ldif_dict(dn, attributes)
+        entry = FlextLDIFEntry.from_ldif_dict(dn, attributes)
 
         if str(entry.dn) != dn:
             msg: str = f"Expected {dn}, got {entry.dn!s}"
@@ -363,7 +363,7 @@ description: With multiple descriptions"""
         self, sample_entry_data: dict[str, object]
     ) -> None:
         """Test entry immutability through Pydantic frozen behavior."""
-        entry = FlextLdifEntry.model_validate(sample_entry_data)
+        entry = FlextLDIFEntry.model_validate(sample_entry_data)
 
         # Direct assignment should work through set_attribute method
         # but direct modification of internal structures should be controlled
@@ -384,8 +384,8 @@ description: With multiple descriptions"""
         self, sample_entry_data: dict[str, object]
     ) -> None:
         """Test entry equality and hash behavior."""
-        entry1 = FlextLdifEntry.model_validate(sample_entry_data)
-        entry2 = FlextLdifEntry.model_validate(sample_entry_data)
+        entry1 = FlextLDIFEntry.model_validate(sample_entry_data)
+        entry2 = FlextLDIFEntry.model_validate(sample_entry_data)
 
         # Should be equal with same data
         if entry1 != entry2:
@@ -414,7 +414,7 @@ description: With multiple descriptions"""
         self, sample_entry_data: dict[str, object]
     ) -> None:
         """Test entry serialization and deserialization."""
-        entry = FlextLdifEntry.model_validate(sample_entry_data)
+        entry = FlextLDIFEntry.model_validate(sample_entry_data)
 
         # Serialize to dict
         entry_dict = entry.model_dump()
@@ -435,7 +435,7 @@ description: With multiple descriptions"""
         self, sample_entry_data: dict[str, object]
     ) -> None:
         """Test entry JSON serialization."""
-        entry = FlextLdifEntry.model_validate(sample_entry_data)
+        entry = FlextLDIFEntry.model_validate(sample_entry_data)
 
         # Serialize to JSON
         json_str = entry.to_json()
@@ -461,7 +461,7 @@ description: With multiple descriptions"""
         }
 
         start_time = time.time()
-        entry = FlextLdifEntry.model_validate(entry_data)
+        entry = FlextLDIFEntry.model_validate(entry_data)
         creation_time = time.time() - start_time
 
         # Should create quickly
@@ -481,7 +481,7 @@ description: With multiple descriptions"""
     def test_entry_memory_efficiency(self) -> None:
         """Test entry memory efficiency."""
         # Create multiple similar entries
-        entries: list[FlextLdifEntry] = []
+        entries: list[FlextLDIFEntry] = []
         for i in range(10):
             entry_data: dict[str, str | dict[str, list[str]]] = {
                 "dn": f"cn=user{i},dc=example,dc=com",
@@ -491,7 +491,7 @@ description: With multiple descriptions"""
                     "sn": [f"User{i}"],
                 },
             }
-            entries.append(FlextLdifEntry.model_validate(entry_data))
+            entries.append(FlextLDIFEntry.model_validate(entry_data))
 
         # Memory usage should be reasonable
         total_size = sum(sys.getsizeof(entry) for entry in entries)
@@ -511,7 +511,7 @@ description: With multiple descriptions"""
             },
         }
 
-        entry = FlextLdifEntry.model_validate(entry_data)
+        entry = FlextLDIFEntry.model_validate(entry_data)
 
         if "Üser Spëcial" not in str(entry.dn):
             msg: str = f"Expected {'Üser Spëcial'} in {entry.dn!s}"
@@ -533,7 +533,7 @@ description: With multiple descriptions"""
             },
         }
 
-        entry = FlextLdifEntry.model_validate(entry_data)
+        entry = FlextLDIFEntry.model_validate(entry_data)
 
         if entry.get_attribute("description") != [long_value]:
             msg: str = (
@@ -555,7 +555,7 @@ description: With multiple descriptions"""
             },
         }
 
-        entry = FlextLdifEntry.model_validate(entry_data)
+        entry = FlextLDIFEntry.model_validate(entry_data)
 
         if entry.get_attribute("description") != [""]:
             msg: str = f"Expected {['']}, got {entry.get_attribute('description')}"
@@ -566,14 +566,14 @@ description: With multiple descriptions"""
 
     def test_dn_get_rdn(self) -> None:
         """Test getting relative distinguished name."""
-        dn = FlextLdifDistinguishedName.model_validate(
+        dn = FlextLDIFDistinguishedName.model_validate(
             {"value": "cn=John Doe,ou=people,dc=example,dc=com"},
         )
         assert dn.get_rdn() == "cn=John Doe"
 
     def test_dn_get_parent_dn_with_parent(self) -> None:
         """Test getting parent DN when parent exists."""
-        dn = FlextLdifDistinguishedName.model_validate(
+        dn = FlextLDIFDistinguishedName.model_validate(
             {"value": "cn=John Doe,ou=people,dc=example,dc=com"},
         )
         parent = dn.get_parent_dn()
@@ -582,40 +582,40 @@ description: With multiple descriptions"""
 
     def test_dn_get_parent_dn_no_parent(self) -> None:
         """Test getting parent DN when no parent exists."""
-        dn = FlextLdifDistinguishedName.model_validate({"value": "dc=com"})
+        dn = FlextLDIFDistinguishedName.model_validate({"value": "dc=com"})
         parent = dn.get_parent_dn()
         assert parent is None
 
     def test_dn_is_child_of_true(self) -> None:
         """Test DN is child of another DN."""
-        child = FlextLdifDistinguishedName.model_validate(
+        child = FlextLDIFDistinguishedName.model_validate(
             {"value": "cn=John Doe,ou=people,dc=example,dc=com"},
         )
-        parent = FlextLdifDistinguishedName.model_validate(
+        parent = FlextLDIFDistinguishedName.model_validate(
             {"value": "ou=people,dc=example,dc=com"},
         )
         assert child.is_child_of(parent)
 
     def test_dn_is_child_of_false(self) -> None:
         """Test DN is not child of another DN."""
-        dn1 = FlextLdifDistinguishedName.model_validate(
+        dn1 = FlextLDIFDistinguishedName.model_validate(
             {"value": "cn=John Doe,ou=people,dc=example,dc=com"},
         )
-        dn2 = FlextLdifDistinguishedName.model_validate(
+        dn2 = FlextLDIFDistinguishedName.model_validate(
             {"value": "ou=groups,dc=example,dc=com"},
         )
         assert not dn1.is_child_of(dn2)
 
     def test_dn_get_depth(self) -> None:
         """Test getting DN depth."""
-        dn = FlextLdifDistinguishedName.model_validate(
+        dn = FlextLDIFDistinguishedName.model_validate(
             {"value": "cn=John Doe,ou=people,dc=example,dc=com"},
         )
         assert dn.get_depth() == 4
 
     def test_dn_equality_with_string(self) -> None:
         """Test DN equality with string."""
-        dn = FlextLdifDistinguishedName.model_validate(
+        dn = FlextLDIFDistinguishedName.model_validate(
             {"value": "cn=test,dc=example,dc=com"},
         )
         assert dn == "cn=test,dc=example,dc=com"
@@ -623,13 +623,13 @@ description: With multiple descriptions"""
 
     def test_dn_equality_with_dn(self) -> None:
         """Test DN equality with another DN."""
-        dn1 = FlextLdifDistinguishedName.model_validate(
+        dn1 = FlextLDIFDistinguishedName.model_validate(
             {"value": "cn=test,dc=example,dc=com"},
         )
-        dn2 = FlextLdifDistinguishedName.model_validate(
+        dn2 = FlextLDIFDistinguishedName.model_validate(
             {"value": "cn=test,dc=example,dc=com"},
         )
-        dn3 = FlextLdifDistinguishedName.model_validate(
+        dn3 = FlextLDIFDistinguishedName.model_validate(
             {"value": "cn=other,dc=example,dc=com"},
         )
         assert dn1 == dn2
@@ -637,10 +637,10 @@ description: With multiple descriptions"""
 
     def test_dn_hash(self) -> None:
         """Test DN hashing for use in sets and dicts."""
-        dn1 = FlextLdifDistinguishedName.model_validate(
+        dn1 = FlextLDIFDistinguishedName.model_validate(
             {"value": "cn=test,dc=example,dc=com"},
         )
-        dn2 = FlextLdifDistinguishedName.model_validate(
+        dn2 = FlextLDIFDistinguishedName.model_validate(
             {"value": "cn=test,dc=example,dc=com"},
         )
         assert hash(dn1) == hash(dn2)
@@ -651,7 +651,7 @@ description: With multiple descriptions"""
 
     def test_attributes_add_value(self) -> None:
         """Test adding values to attributes."""
-        attrs = FlextLdifAttributes.model_validate({"attributes": {"cn": ["John"]}})
+        attrs = FlextLDIFAttributes.model_validate({"attributes": {"cn": ["John"]}})
         new_attrs = attrs.add_value("cn", "Johnny")
         assert new_attrs.get_values("cn") == ["John", "Johnny"]
         # Original should be unchanged (immutable)
@@ -659,7 +659,7 @@ description: With multiple descriptions"""
 
     def test_attributes_remove_value(self) -> None:
         """Test removing values from attributes."""
-        attrs = FlextLdifAttributes.model_validate(
+        attrs = FlextLDIFAttributes.model_validate(
             {"attributes": {"cn": ["John", "Johnny"]}},
         )
         new_attrs = attrs.remove_value("cn", "Johnny")
@@ -669,7 +669,7 @@ description: With multiple descriptions"""
 
     def test_attributes_get_attribute_names(self) -> None:
         """Test getting all attribute names."""
-        attrs = FlextLdifAttributes.model_validate(
+        attrs = FlextLDIFAttributes.model_validate(
             {
                 "attributes": {
                     "cn": ["John"],
@@ -683,7 +683,7 @@ description: With multiple descriptions"""
 
     def test_attributes_get_total_values(self) -> None:
         """Test getting total number of attribute values."""
-        attrs = FlextLdifAttributes.model_validate(
+        attrs = FlextLDIFAttributes.model_validate(
             {
                 "attributes": {
                     "cn": ["John", "Johnny"],
@@ -696,19 +696,19 @@ description: With multiple descriptions"""
 
     def test_attributes_is_empty(self) -> None:
         """Test checking if attributes are empty."""
-        empty_attrs = FlextLdifAttributes.model_validate({"attributes": {}})
+        empty_attrs = FlextLDIFAttributes.model_validate({"attributes": {}})
         assert empty_attrs.is_empty()
 
-        non_empty_attrs = FlextLdifAttributes.model_validate(
+        non_empty_attrs = FlextLDIFAttributes.model_validate(
             {"attributes": {"cn": ["John"]}},
         )
         assert not non_empty_attrs.is_empty()
 
     def test_attributes_equality(self) -> None:
         """Test attributes equality with dict and other attributes."""
-        attrs1 = FlextLdifAttributes.model_validate({"attributes": {"cn": ["John"]}})
-        attrs2 = FlextLdifAttributes.model_validate({"attributes": {"cn": ["John"]}})
-        attrs3 = FlextLdifAttributes.model_validate({"attributes": {"cn": ["Jane"]}})
+        attrs1 = FlextLDIFAttributes.model_validate({"attributes": {"cn": ["John"]}})
+        attrs2 = FlextLDIFAttributes.model_validate({"attributes": {"cn": ["John"]}})
+        attrs3 = FlextLDIFAttributes.model_validate({"attributes": {"cn": ["Jane"]}})
 
         assert attrs1 == attrs2
         assert attrs1 != attrs3
@@ -717,8 +717,8 @@ description: With multiple descriptions"""
 
     def test_attributes_hash(self) -> None:
         """Test attributes hashing for use in sets and dicts."""
-        attrs1 = FlextLdifAttributes.model_validate({"attributes": {"cn": ["John"]}})
-        attrs2 = FlextLdifAttributes.model_validate({"attributes": {"cn": ["John"]}})
+        attrs1 = FlextLDIFAttributes.model_validate({"attributes": {"cn": ["John"]}})
+        attrs2 = FlextLDIFAttributes.model_validate({"attributes": {"cn": ["John"]}})
         assert hash(attrs1) == hash(attrs2)
 
         # Test usage in set

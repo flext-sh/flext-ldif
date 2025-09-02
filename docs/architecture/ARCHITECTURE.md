@@ -37,7 +37,7 @@ FLEXT-LDIF implements **Clean Architecture** with **Domain-Driven Design** princ
 ┌─────────────────────────────────────────────────────────────────┐
 │                   📊 APPLICATION LAYER                         │
 │                                                                 │
-│  api.py                    # FlextLdifAPI - main service        │
+│  api.py                    # FlextLDIFAPI - main service        │
 │  models.py                 # API models and DTOs               │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
@@ -47,9 +47,9 @@ FLEXT-LDIF implements **Clean Architecture** with **Domain-Driven Design** princ
 │                     🎯 DOMAIN LAYER                            │
 │                                                                 │
 │  Domain Objects (in models.py):                                │
-│  ├── FlextLdifEntry           # Main domain entity             │
-│  ├── FlextLdifDistinguishedName # DN value object              │
-│  ├── FlextLdifAttributes      # Attributes value object        │
+│  ├── FlextLDIFEntry           # Main domain entity             │
+│  ├── FlextLDIFDistinguishedName # DN value object              │
+│  ├── FlextLDIFAttributes      # Attributes value object        │
 │  └── Domain Rules & Validation                                 │
 │                                                                 │
 │  Business Logic:                                                │
@@ -97,7 +97,7 @@ FLEXT-LDIF implements **Clean Architecture** with **Domain-Driven Design** princ
 │                                                                 │
 │  application/                                                   │
 │  ├── __init__.py                                               │
-│  ├── api.py                # FlextLdifAPI - application service │
+│  ├── api.py                # FlextLDIFAPI - application service │
 │  ├── handlers/             # Command/Query handlers (CQRS)     │
 │  │   ├── __init__.py                                           │
 │  │   ├── parse_handler.py  # Parse LDIF command handler        │
@@ -122,8 +122,8 @@ FLEXT-LDIF implements **Clean Architecture** with **Domain-Driven Design** princ
 │  ├── __init__.py                                               │
 │  ├── entities/             # Domain entities with identity     │
 │  │   ├── __init__.py                                           │
-│  │   ├── ldif_entry.py     # FlextLdifEntry entity             │
-│  │   └── ldif_document.py  # FlextLdifDocument aggregate       │
+│  │   ├── ldif_entry.py     # FlextLDIFEntry entity             │
+│  │   └── ldif_document.py  # FlextLDIFDocument aggregate       │
 │  ├── values/               # Immutable value objects           │
 │  │   ├── __init__.py                                           │
 │  │   ├── distinguished_name.py # DN value object               │
@@ -192,15 +192,15 @@ FLEXT-LDIF implements **Clean Architecture** with **Domain-Driven Design** princ
 
 #### Domain Entities
 
-**FlextLdifEntry** - Main domain entity representing LDIF entries:
+**FlextLDIFEntry** - Main domain entity representing LDIF entries:
 
 ```python
 # domain/entities/ldif_entry.py
 from flext_core import FlextModels.Entity, FlextResult
-from ..values.distinguished_name import FlextLdifDistinguishedName
-from ..values.attributes import FlextLdifAttributes
+from ..values.distinguished_name import FlextLDIFDistinguishedName
+from ..values.attributes import FlextLDIFAttributes
 
-class FlextLdifEntry(FlextModels.Entity):
+class FlextLDIFEntry(FlextModels.Entity):
     """
     Domain entity representing an LDIF entry with business logic.
 
@@ -210,8 +210,8 @@ class FlextLdifEntry(FlextModels.Entity):
 
     def __init__(
         self,
-        dn: FlextLdifDistinguishedName,
-        attributes: FlextLdifAttributes,
+        dn: FlextLDIFDistinguishedName,
+        attributes: FlextLDIFAttributes,
         changetype: str | None = None
     ) -> None:
         super().__init__()
@@ -220,12 +220,12 @@ class FlextLdifEntry(FlextModels.Entity):
         self._changetype = changetype
 
     @property
-    def dn(self) -> FlextLdifDistinguishedName:
+    def dn(self) -> FlextLDIFDistinguishedName:
         """Distinguished name (immutable)."""
         return self._dn
 
     @property
-    def attributes(self) -> FlextLdifAttributes:
+    def attributes(self) -> FlextLDIFAttributes:
         """Entry attributes (immutable)."""
         return self._attributes
 
@@ -327,15 +327,15 @@ class FlextLdifEntry(FlextModels.Entity):
         return self._changetype == "delete"
 ```
 
-**FlextLdifDocument** - Aggregate root for LDIF document processing:
+**FlextLDIFDocument** - Aggregate root for LDIF document processing:
 
 ```python
 # domain/aggregates/ldif_processing_aggregate.py
 from flext_core import FlextModels.AggregateRoot, FlextDomainEvent
 from ..entities.ldif_entry import
-from ..events.processing_completed import FlextLdifProcessingCompleted
+from ..events.processing_completed import FlextLDIFProcessingCompleted
 
-class FlextLdifDocument(FlextModels.AggregateRoot):
+class FlextLDIFDocument(FlextModels.AggregateRoot):
     """
     Aggregate root for LDIF document processing operations.
 
@@ -347,7 +347,7 @@ class FlextLdifDocument(FlextModels.AggregateRoot):
         super().__init__()
         self._content = content
         self._document_id = document_id or self._generate_id()
-        self._entries: list[FlextLdifEntry] = []
+        self._entries: list[FlextLDIFEntry] = []
         self._is_parsed = False
         self._is_validated = False
         self._validation_errors: list[str] = []
@@ -363,7 +363,7 @@ class FlextLdifDocument(FlextModels.AggregateRoot):
         return self._content
 
     @property
-    def entries(self) -> list[FlextLdifEntry]:
+    def entries(self) -> list[FlextLDIFEntry]:
         """Parsed LDIF entries."""
         return self._entries.copy()  # Return copy to maintain encapsulation
 
@@ -382,7 +382,7 @@ class FlextLdifDocument(FlextModels.AggregateRoot):
         """Validation errors found during processing."""
         return self._validation_errors.copy()
 
-    def parse_entries(self, entries: list[FlextLdifEntry]) -> None:
+    def parse_entries(self, entries: list[FlextLDIFEntry]) -> None:
         """
         Set parsed entries and mark document as parsed.
 
@@ -395,7 +395,7 @@ class FlextLdifDocument(FlextModels.AggregateRoot):
         self._is_parsed = True
 
         # Raise domain event
-        event = FlextLdifDocumentParsed(
+        event = FlextLDIFDocumentParsed(
             aggregate_id=self._document_id,
             entry_count=len(entries),
             content_length=len(self._content)
@@ -423,7 +423,7 @@ class FlextLdifDocument(FlextModels.AggregateRoot):
         success = len(self._validation_errors) == 0
 
         # Raise domain event
-        event = FlextLdifProcessingCompleted(
+        event = FlextLDIFProcessingCompleted(
             aggregate_id=self._document_id,
             entry_count=len(self._entries),
             success=success,
@@ -433,14 +433,14 @@ class FlextLdifDocument(FlextModels.AggregateRoot):
 
         return success
 
-    def get_person_entries(self) -> list[FlextLdifEntry]:
+    def get_person_entries(self) -> list[FlextLDIFEntry]:
         """Get entries that represent persons (business logic)."""
         if not self._is_parsed:
             raise ValueError("Document must be parsed first")
 
         return [entry for entry in self._entries if entry.is_person_entry()]
 
-    def get_valid_entries(self) -> list[FlextLdifEntry]:
+    def get_valid_entries(self) -> list[FlextLDIFEntry]:
         """Get entries that pass domain validation."""
         if not self._is_validated:
             raise ValueError("Document must be validated first")
@@ -458,14 +458,14 @@ class FlextLdifDocument(FlextModels.AggregateRoot):
 
 #### Value Objects
 
-**FlextLdifDistinguishedName** - Immutable DN representation:
+**FlextLDIFDistinguishedName** - Immutable DN representation:
 
 ```python
 # domain/values/distinguished_name.py
 from flext_core import FlextModels.Value
 import re
 
-class FlextLdifDistinguishedName(FlextModels.Value):
+class FlextLDIFDistinguishedName(FlextModels.Value):
     """
     Immutable value object representing LDAP Distinguished Names.
 
@@ -514,16 +514,16 @@ class FlextLdifDistinguishedName(FlextModels.Value):
         """Get Relative Distinguished Name (first component)."""
         return self._components[0] if self._components else ""
 
-    def get_parent_dn(self) -> "FlextLdifDistinguishedName | None":
+    def get_parent_dn(self) -> "FlextLDIFDistinguishedName | None":
         """Get parent DN or None if this is root."""
         if len(self._components) <= 1:
             return None
 
         parent_components = self._components[1:]
         parent_value = ",".join(parent_components)
-        return FlextLdifDistinguishedName(parent_value)
+        return FlextLDIFDistinguishedName(parent_value)
 
-    def is_child_of(self, parent: "FlextLdifDistinguishedName") -> bool:
+    def is_child_of(self, parent: "FlextLDIFDistinguishedName") -> bool:
         """Check if this DN is a child of the given parent DN."""
         if len(self._components) <= len(parent._components):
             return False
@@ -544,11 +544,11 @@ class FlextLdifDistinguishedName(FlextModels.Value):
         """Value equality based on normalized DN."""
         if isinstance(other, str):
             try:
-                other_dn = FlextLdifDistinguishedName(other)
+                other_dn = FlextLDIFDistinguishedName(other)
                 return self._value.lower() == other_dn._value.lower()
             except ValueError:
                 return False
-        elif isinstance(other, FlextLdifDistinguishedName):
+        elif isinstance(other, FlextLDIFDistinguishedName):
             return self._value.lower() == other._value.lower()
         return False
 
@@ -562,17 +562,17 @@ class FlextLdifDistinguishedName(FlextModels.Value):
 
     def __repr__(self) -> str:
         """Developer representation."""
-        return f"FlextLdifDistinguishedName(value='{self._value}')"
+        return f"FlextLDIFDistinguishedName(value='{self._value}')"
 ```
 
-**FlextLdifAttributes** - Immutable attribute collection:
+**FlextLDIFAttributes** - Immutable attribute collection:
 
 ```python
 # domain/values/attributes.py
 from flext_core import FlextModels.Value
 from typing import Dict, List
 
-class FlextLdifAttributes(FlextModels.Value):
+class FlextLDIFAttributes(FlextModels.Value):
     """
     Immutable value object representing LDIF entry attributes.
 
@@ -651,7 +651,7 @@ class FlextLdifAttributes(FlextModels.Value):
 
     # Immutable operations that return new instances
 
-    def add_value(self, name: str, value: str) -> "FlextLdifAttributes":
+    def add_value(self, name: str, value: str) -> "FlextLDIFAttributes":
         """Return new instance with added value."""
         if not name.strip() or not value.strip():
             raise ValueError("Attribute name and value cannot be empty")
@@ -664,9 +664,9 @@ class FlextLdifAttributes(FlextModels.Value):
         else:
             new_attributes[name] = [value]
 
-        return FlextLdifAttributes(new_attributes)
+        return FlextLDIFAttributes(new_attributes)
 
-    def remove_value(self, name: str, value: str) -> "FlextLdifAttributes":
+    def remove_value(self, name: str, value: str) -> "FlextLDIFAttributes":
         """Return new instance with removed value."""
         new_attributes = self.attributes  # Get copy
 
@@ -676,15 +676,15 @@ class FlextLdifAttributes(FlextModels.Value):
             if not new_attributes[name]:
                 del new_attributes[name]
 
-        return FlextLdifAttributes(new_attributes)
+        return FlextLDIFAttributes(new_attributes)
 
-    def remove_attribute(self, name: str) -> "FlextLdifAttributes":
+    def remove_attribute(self, name: str) -> "FlextLDIFAttributes":
         """Return new instance with removed attribute."""
         new_attributes = self.attributes  # Get copy
         new_attributes.pop(name, None)
-        return FlextLdifAttributes(new_attributes)
+        return FlextLDIFAttributes(new_attributes)
 
-    def replace_values(self, name: str, values: List[str]) -> "FlextLdifAttributes":
+    def replace_values(self, name: str, values: List[str]) -> "FlextLDIFAttributes":
         """Return new instance with replaced attribute values."""
         if not name.strip():
             raise ValueError("Attribute name cannot be empty")
@@ -697,11 +697,11 @@ class FlextLdifAttributes(FlextModels.Value):
         else:
             new_attributes.pop(name, None)  # Remove if no valid values
 
-        return FlextLdifAttributes(new_attributes)
+        return FlextLDIFAttributes(new_attributes)
 
     def __eq__(self, other: object) -> bool:
         """Value equality based on attributes."""
-        if isinstance(other, FlextLdifAttributes):
+        if isinstance(other, FlextLDIFAttributes):
             return self._attributes == other._attributes
         return False
 
@@ -731,7 +731,7 @@ from flext_core import FlextDomainEvent
 from datetime import datetime
 from typing import List
 
-class FlextLdifProcessingCompleted(FlextDomainEvent):
+class FlextLDIFProcessingCompleted(FlextDomainEvent):
     """
     Domain event raised when LDIF document processing is completed.
 
@@ -779,9 +779,9 @@ class FlextLdifProcessingCompleted(FlextDomainEvent):
 ```python
 # domain/specifications/person_spec.py
 from flext_core import FlextSpecification
-from ..entities.ldif_entry import FlextLdifEntry
+from ..entities.ldif_entry import FlextLDIFEntry
 
-class FlextLdifPersonSpecification(FlextSpecification[FlextLdifEntry]):
+class FlextLDIFPersonSpecification(FlextSpecification[FlextLDIFEntry]):
     """
     Business specification for identifying person entries in LDIF.
 
@@ -797,7 +797,7 @@ class FlextLdifPersonSpecification(FlextSpecification[FlextLdifEntry]):
             "uidObject"  # Often used with person entries
         }
 
-    def is_satisfied_by(self, entry: FlextLdifEntry) -> bool:
+    def is_satisfied_by(self, entry: FlextLDIFEntry) -> bool:
         """Check if entry satisfies person specification."""
         entry_classes = set(entry.get_object_classes())
         return bool(entry_classes.intersection(self._person_object_classes))
@@ -806,7 +806,7 @@ class FlextLdifPersonSpecification(FlextSpecification[FlextLdifEntry]):
         """Get attributes required for person entries."""
         return {"cn", "sn"}  # Common name and surname required
 
-    def validate_person_entry(self, entry: FlextLdifEntry) -> list[str]:
+    def validate_person_entry(self, entry: FlextLDIFEntry) -> list[str]:
         """Validate person entry and return list of violations."""
         violations = []
 
@@ -833,16 +833,16 @@ class FlextLdifPersonSpecification(FlextSpecification[FlextLdifEntry]):
 
 # domain/specifications/valid_entry_spec.py
 from flext_core import FlextSpecification
-from ..entities.ldif_entry import FlextLdifEntry
+from ..entities.ldif_entry import FlextLDIFEntry
 
-class FlextLdifValidSpecification(FlextSpecification[FlextLdifEntry]):
+class FlextLDIFValidSpecification(FlextSpecification[FlextLDIFEntry]):
     """
     Business specification for validating LDIF entries.
 
     Encapsulates all business rules for entry validity.
     """
 
-    def is_satisfied_by(self, entry: FlextLdifEntry) -> bool:
+    def is_satisfied_by(self, entry: FlextLDIFEntry) -> bool:
         """Check if entry satisfies validity specification."""
         try:
             entry.validate_domain_rules()
@@ -850,7 +850,7 @@ class FlextLdifValidSpecification(FlextSpecification[FlextLdifEntry]):
         except ValueError:
             return False
 
-    def get_validation_errors(self, entry: FlextLdifEntry) -> list[str]:
+    def get_validation_errors(self, entry: FlextLDIFEntry) -> list[str]:
         """Get detailed validation errors for entry."""
         errors = []
 
@@ -879,8 +879,8 @@ class FlextLdifValidSpecification(FlextSpecification[FlextLdifEntry]):
 # application/handlers/parse_handler.py
 from flext_core import FlextResult
 from ..dto.request_dto import ParseLdifRequest
-from ..dto.entry_dto import FlextLdifEntryDTO
-from ...domain.aggregates.ldif_processing_aggregate import FlextLdifDocument
+from ..dto.entry_dto import FlextLDIFEntryDTO
+from ...domain.aggregates.ldif_processing_aggregate import FlextLDIFDocument
 from ...infrastructure.parsers.ldif_parser import LdifParserService
 
 class ParseLdifHandler:
@@ -894,11 +894,11 @@ class ParseLdifHandler:
     def __init__(self, parser_service: LdifParserService) -> None:
         self._parser_service = parser_service
 
-    def handle(self, request: ParseLdifRequest) -> FlextResult[list[FlextLdifEntryDTO]]:
+    def handle(self, request: ParseLdifRequest) -> FlextResult[list[FlextLDIFEntryDTO]]:
         """Handle LDIF parsing command."""
         try:
             # Create domain aggregate
-            document = FlextLdifDocument(
+            document = FlextLDIFDocument(
                 content=request.content,
                 document_id=request.document_id
             )
@@ -914,7 +914,7 @@ class ParseLdifHandler:
 
             # Convert to DTOs for application layer
             entry_dtos = [
-                FlextLdifEntryDTO.from_domain_entity(entry)
+                FlextLDIFEntryDTO.from_domain_entity(entry)
                 for entry in document.entries
             ]
 
@@ -934,9 +934,9 @@ from .handlers.parse_handler import ParseLdifHandler
 from .handlers.validate_handler import ValidateHandler
 from .handlers.write_handler import WriteHandler
 from .dto.request_dto import ParseLdifRequest, ValidateRequest, WriteRequest
-from .dto.entry_dto import FlextLdifEntryDTO
+from .dto.entry_dto import FlextLDIFEntryDTO
 
-class FlextLdifAPI:
+class FlextLDIFAPI:
     """
     Main application service providing unified LDIF operations.
 
@@ -949,16 +949,16 @@ class FlextLdifAPI:
         parse_handler: ParseLdifHandler,
         validate_handler: ValidateHandler,
         write_handler: WriteHandler,
-        config: FlextLdifConfig | None = None
+        config: FlextLDIFConfig | None = None
     ) -> None:
         self._parse_handler = parse_handler
         self._validate_handler = validate_handler
         self._write_handler = write_handler
-        self._config = config or FlextLdifConfig()
+        self._config = config or FlextLDIFConfig()
         self._logger = FlextLogger(self.__class__.__name__)
 
     @flext_monitor_function("ldif_parse")
-    def parse(self, content: str) -> FlextResult[list[FlextLdifEntryDTO]]:
+    def parse(self, content: str) -> FlextResult[list[FlextLDIFEntryDTO]]:
         """Parse LDIF content into domain objects."""
         with flext_create_trace("parse_ldif_content") as trace:
             self._logger.debug("Parsing LDIF content (%d chars)", len(content))
@@ -982,7 +982,7 @@ class FlextLdifAPI:
             return result
 
     @flext_monitor_function("ldif_validate")
-    def validate(self, entries: list[FlextLdifEntryDTO]) -> FlextResult[bool]:
+    def validate(self, entries: list[FlextLDIFEntryDTO]) -> FlextResult[bool]:
         """Validate LDIF entries against business rules."""
         with flext_create_trace("validate_ldif_entries") as trace:
             self._logger.debug("Validating %d LDIF entries", len(entries))
@@ -1005,7 +1005,7 @@ class FlextLdifAPI:
             return result
 
     @flext_monitor_function("ldif_write")
-    def write(self, entries: list[FlextLdifEntryDTO]) -> FlextResult[str]:
+    def write(self, entries: list[FlextLDIFEntryDTO]) -> FlextResult[str]:
         """Generate LDIF output from domain objects."""
         with flext_create_trace("write_ldif_entries") as trace:
             self._logger.debug("Writing %d LDIF entries", len(entries))
@@ -1037,9 +1037,9 @@ class FlextLdifAPI:
 ```python
 # infrastructure/parsers/ldif_parser.py
 from flext_core import FlextResult, FlextLogger
-from ...domain.entities.ldif_entry import FlextLdifEntry
-from ...domain.values.distinguished_name import FlextLdifDistinguishedName
-from ...domain.values.attributes import FlextLdifAttributes
+from ...domain.entities.ldif_entry import FlextLDIFEntry
+from ...domain.values.distinguished_name import FlextLDIFDistinguishedName
+from ...domain.values.attributes import FlextLDIFAttributes
 from ...domain.interfaces.parser_interface import ILdifParser
 
 class LdifParserService(ILdifParser):
@@ -1050,11 +1050,11 @@ class LdifParserService(ILdifParser):
     business logic to domain objects.
     """
 
-    def __init__(self, config: FlextLdifConfig) -> None:
+    def __init__(self, config: FlextLDIFConfig) -> None:
         self._config = config
         self._logger = FlextLogger(self.__class__.__name__)
 
-    def parse_content(self, content: str) -> FlextResult[list[FlextLdifEntry]]:
+    def parse_content(self, content: str) -> FlextResult[list[FlextLDIFEntry]]:
         """Parse LDIF content into domain entities."""
         try:
             self._logger.debug("Starting LDIF content parsing")
@@ -1133,13 +1133,13 @@ class LdifParserService(ILdifParser):
 
         return entries
 
-    def _create_domain_entry(self, raw_entry: dict) -> FlextLdifEntry:
+    def _create_domain_entry(self, raw_entry: dict) -> FlextLDIFEntry:
         """Convert raw entry to domain entity."""
         # Extract DN
         if 'dn' not in raw_entry:
             raise ValueError("Entry missing required 'dn' attribute")
 
-        dn = FlextLdifDistinguishedName(raw_entry['dn'])
+        dn = FlextLDIFDistinguishedName(raw_entry['dn'])
 
         # Extract attributes (exclude dn and changetype)
         attributes_dict = {}
@@ -1157,10 +1157,10 @@ class LdifParserService(ILdifParser):
                 else:
                     attributes_dict[name] = value
 
-        attributes = FlextLdifAttributes(attributes_dict)
+        attributes = FlextLDIFAttributes(attributes_dict)
 
         # Create domain entity
-        entry = FlextLdifEntry(dn=dn, attributes=attributes, changetype=changetype)
+        entry = FlextLDIFEntry(dn=dn, attributes=attributes, changetype=changetype)
 
         # Domain validation happens in entity constructor
         entry.validate_domain_rules()
@@ -1174,7 +1174,7 @@ class LdifParserService(ILdifParser):
 # infrastructure/persistence/file_repository.py
 from flext_core import FlextResult, FlextLogger
 from pathlib import Path
-from ...domain.entities.ldif_entry import FlextLdifEntry
+from ...domain.entities.ldif_entry import FlextLDIFEntry
 from ...domain.interfaces.repository_interface import ILdifRepository
 
 class FileLdifRepository(ILdifRepository):
@@ -1192,7 +1192,7 @@ class FileLdifRepository(ILdifRepository):
 
     def save_entries(
         self,
-        entries: list[FlextLdifEntry],
+        entries: list[FlextLDIFEntry],
         filename: str
     ) -> FlextResult[bool]:
         """Save entries to file."""
@@ -1219,7 +1219,7 @@ class FileLdifRepository(ILdifRepository):
             self._logger.error("Failed to save entries: %s", e)
             return FlextResult[None].fail(f"Save operation failed: {e}")
 
-    def load_entries(self, filename: str) -> FlextResult[list[FlextLdifEntry]]:
+    def load_entries(self, filename: str) -> FlextResult[list[FlextLDIFEntry]]:
         """Load entries from file."""
         try:
             file_path = self._base_path / filename
@@ -1242,7 +1242,7 @@ class FileLdifRepository(ILdifRepository):
             self._logger.error("Failed to load entries: %s", e)
             return FlextResult[None].fail(f"Load operation failed: {e}")
 
-    def _generate_ldif_content(self, entries: list[FlextLdifEntry]) -> str:
+    def _generate_ldif_content(self, entries: list[FlextLDIFEntry]) -> str:
         """Generate LDIF content from domain entities."""
         lines = []
 
@@ -1278,14 +1278,14 @@ from ..parsers.ldif_parser import LdifParserService
 from ..validators.format_validator import FormatValidatorService
 from ..persistence.file_repository import FileLdifRepository
 from ...application.handlers.parse_handler import ParseLdifHandler
-from ...application.api import FlextLdifAPI
+from ...application.api import FlextLDIFAPI
 
 def register_ldif_services(container: FlextContainer) -> None:
     """Register FLEXT-LDIF services in DI container."""
 
     # Infrastructure services
     container.register_singleton(LdifParserService, lambda: LdifParserService(
-        config=container.get(FlextLdifConfig)
+        config=container.get(FlextLDIFConfig)
     ))
 
     container.register_singleton(FormatValidatorService, FormatValidatorService)
@@ -1300,18 +1300,18 @@ def register_ldif_services(container: FlextContainer) -> None:
     ))
 
     # Application API
-    container.register_singleton(FlextLdifAPI, lambda: FlextLdifAPI(
+    container.register_singleton(FlextLDIFAPI, lambda: FlextLDIFAPI(
         parse_handler=container.get(ParseLdifHandler),
         validate_handler=container.get(ValidateHandler),
         write_handler=container.get(WriteHandler),
-        config=container.get(FlextLdifConfig)
+        config=container.get(FlextLDIFConfig)
     ))
 
-def get_ldif_api() -> FlextLdifAPI:
+def get_ldif_api() -> FlextLDIFAPI:
     """Get configured LDIF API from container."""
     container = FlextContainer.get_global()
     register_ldif_services(container)
-    return container.get(FlextLdifAPI)
+    return container.get(FlextLDIFAPI)
 ```
 
 ### Observability Integration
@@ -1319,7 +1319,7 @@ def get_ldif_api() -> FlextLdifAPI:
 ```python
 # infrastructure/observability/metrics.py
 from flext_observability import FlextObservabilityMonitor, MetricType
-from ...domain.events.processing_completed import FlextLdifProcessingCompleted
+from ...domain.events.processing_completed import FlextLDIFProcessingCompleted
 
 class LdifMetricsCollector:
     """
@@ -1352,7 +1352,7 @@ class LdifMetricsCollector:
             description="Number of LDIF documents currently being processed"
         )
 
-    def record_processing_completed(self, event: FlextLdifProcessingCompleted) -> None:
+    def record_processing_completed(self, event: FlextLDIFProcessingCompleted) -> None:
         """Record metrics from processing completed event."""
         # Record entry count
         self._monitor.increment_counter(
@@ -1440,41 +1440,41 @@ class ArchitectureTest:
 ```python
 # tests/domain/test_domain_rules.py
 import pytest
-from src.flext_ldif.domain.entities.ldif_entry import FlextLdifEntry
-from src.flext_ldif.domain.values.distinguished_name import FlextLdifDistinguishedName
-from src.flext_ldif.domain.values.attributes import FlextLdifAttributes
+from src.flext_ldif.domain.entities.ldif_entry import FlextLDIFEntry
+from src.flext_ldif.domain.values.distinguished_name import FlextLDIFDistinguishedName
+from src.flext_ldif.domain.values.attributes import FlextLDIFAttributes
 
 class TestDomainRules:
     """Test domain business rules and invariants."""
 
     def test_entry_must_have_objectclass(self):
         """Business rule: Every entry must have objectClass."""
-        dn = FlextLdifDistinguishedName("cn=test,dc=example,dc=com")
-        attrs = FlextLdifAttributes({"cn": ["test"]})  # No objectClass
+        dn = FlextLDIFDistinguishedName("cn=test,dc=example,dc=com")
+        attrs = FlextLDIFAttributes({"cn": ["test"]})  # No objectClass
 
-        entry = FlextLdifEntry(dn=dn, attributes=attrs)
+        entry = FlextLDIFEntry(dn=dn, attributes=attrs)
 
         with pytest.raises(ValueError, match="objectClass"):
             entry.validate_domain_rules()
 
     def test_person_entry_requires_common_name_and_surname(self):
         """Business rule: Person entries need cn and sn."""
-        dn = FlextLdifDistinguishedName("cn=test,dc=example,dc=com")
-        attrs = FlextLdifAttributes({
+        dn = FlextLDIFDistinguishedName("cn=test,dc=example,dc=com")
+        attrs = FlextLDIFAttributes({
             "objectClass": ["person"],
             "cn": ["John Doe"]  # Missing sn
         })
 
-        entry = FlextLdifEntry(dn=dn, attributes=attrs)
+        entry = FlextLDIFEntry(dn=dn, attributes=attrs)
 
         with pytest.raises(ValueError, match="sn"):
             entry.validate_domain_rules()
 
     def test_dn_hierarchy_validation(self):
         """Test DN parent-child relationships."""
-        parent = FlextLdifDistinguishedName("ou=people,dc=example,dc=com")
-        child = FlextLdifDistinguishedName("cn=john,ou=people,dc=example,dc=com")
-        unrelated = FlextLdifDistinguishedName("cn=jane,ou=groups,dc=example,dc=com")
+        parent = FlextLDIFDistinguishedName("ou=people,dc=example,dc=com")
+        child = FlextLDIFDistinguishedName("cn=john,ou=people,dc=example,dc=com")
+        unrelated = FlextLDIFDistinguishedName("cn=jane,ou=groups,dc=example,dc=com")
 
         assert child.is_child_of(parent)
         assert not unrelated.is_child_of(parent)
@@ -1491,7 +1491,7 @@ class TestDomainRules:
 # infrastructure/streaming/ldif_stream_processor.py
 from typing import Iterator, Generator
 from flext_core import FlextResult
-from ...domain.entities.ldif_entry import FlextLdifEntry
+from ...domain.entities.ldif_entry import FlextLDIFEntry
 
 class LdifStreamProcessor:
     """
@@ -1504,7 +1504,7 @@ class LdifStreamProcessor:
     def __init__(self, chunk_size: int = 1000) -> None:
         self._chunk_size = chunk_size
 
-    def stream_parse(self, file_path: Path) -> Generator[list[FlextLdifEntry], None, None]:
+    def stream_parse(self, file_path: Path) -> Generator[list[FlextLDIFEntry], None, None]:
         """Stream parse large LDIF files in batches."""
         current_batch = []
 
@@ -1533,7 +1533,7 @@ class LdifStreamProcessor:
             if current_batch:
                 yield current_batch
 
-    def _parse_entry_lines(self, lines: list[str]) -> FlextLdifEntry | None:
+    def _parse_entry_lines(self, lines: list[str]) -> FlextLDIFEntry | None:
         """Parse entry from lines."""
         # Implementation similar to main parser but for single entry
         pass
@@ -1544,7 +1544,7 @@ class LdifStreamProcessor:
 ```python
 # infrastructure/caching/entry_cache.py
 from typing import Dict, Optional, LRU
-from ...domain.entities.ldif_entry import FlextLdifEntry
+from ...domain.entities.ldif_entry import FlextLDIFEntry
 
 class LdifEntryCache:
     """
@@ -1555,11 +1555,11 @@ class LdifEntryCache:
     """
 
     def __init__(self, max_size: int = 10000) -> None:
-        self._cache: Dict[str, FlextLdifEntry] = {}
+        self._cache: Dict[str, FlextLDIFEntry] = {}
         self._max_size = max_size
         self._access_order = []
 
-    def get(self, dn: str) -> Optional[FlextLdifEntry]:
+    def get(self, dn: str) -> Optional[FlextLDIFEntry]:
         """Get cached entry by DN."""
         if dn in self._cache:
             # Update access order
@@ -1568,7 +1568,7 @@ class LdifEntryCache:
             return self._cache[dn]
         return None
 
-    def put(self, entry: FlextLdifEntry) -> None:
+    def put(self, entry: FlextLDIFEntry) -> None:
         """Cache entry."""
         dn = entry.dn.value
 

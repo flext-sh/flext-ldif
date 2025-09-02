@@ -61,9 +61,9 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import (
-    FlextLdifAPI,
-    FlextLdifParserService,
-    FlextLdifValidatorService,
+    FlextLDIFAPI,
+    FlextLDIFParserService,
+    FlextLDIFValidatorService,
 )
 
 # Try to import Docker fixtures - optional for testing without Docker
@@ -258,9 +258,9 @@ def ldif_binary_file(test_ldif_dir: Path, sample_ldif_with_binary: str) -> Path:
 
 # LDIF parsing fixtures
 @pytest.fixture
-def ldif_api() -> FlextLdifAPI:
+def ldif_api() -> FlextLDIFAPI:
     """Provide a LDIF API for testing."""
-    return FlextLdifAPI()
+    return FlextLDIFAPI()
 
 
 # Removed unused ldif_core fixture - use api fixture instead
@@ -405,16 +405,16 @@ def pytest_configure(config: pytest.Config) -> None:
 @pytest.fixture
 def real_ldif_service() -> object:
     """Real LDIF service for functional testing."""
-    return FlextLdifAPI()
+    return FlextLDIFAPI()
 
 
 @pytest.fixture
 def real_parser_service() -> object:
     """Real parser service for functional testing."""
-    return FlextLdifParserService()
+    return FlextLDIFParserService()
 
 
 @pytest.fixture
 def real_validator_service() -> object:
     """Real validator service for functional testing."""
-    return FlextLdifValidatorService()
+    return FlextLDIFValidatorService()

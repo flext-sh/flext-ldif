@@ -1,31 +1,31 @@
-"""Tests for FlextLdifRepositoryService - comprehensive coverage."""
+"""Tests for FlextLDIFRepositoryService - comprehensive coverage."""
 
 # ruff: noqa: PT018
 # Reason: Multiple assertion checks are common in tests for comprehensive error validation
 
-from flext_ldif.constants import FlextLdifCoreMessages, FlextLdifValidationMessages
-from flext_ldif.models import FlextLdifConfig, FlextLdifEntry
-from flext_ldif.services import FlextLdifRepositoryService
+from flext_ldif.constants import FlextLDIFValidationMessages
+from flext_ldif.models import FlextLDIFConfig, FlextLDIFEntry
+from flext_ldif.services import FlextLDIFRepositoryService
 
 
-class TestFlextLdifRepositoryService:
+class TestFlextLDIFRepositoryService:
     """Test repository service functionality."""
 
     def test_service_initialization(self) -> None:
         """Test service can be initialized."""
-        service = FlextLdifRepositoryService()
+        service = FlextLDIFRepositoryService()
         assert service.config is None
 
     def test_service_initialization_with_config(self) -> None:
         """Test service can be initialized with custom config."""
-        config = FlextLdifConfig(strict_validation=True)
-        service = FlextLdifRepositoryService(config=config)
+        config = FlextLDIFConfig(strict_validation=True)
+        service = FlextLDIFRepositoryService(config=config)
         assert service.config is not None
         assert service.config.strict_validation is True
 
     def test_execute_default(self) -> None:
         """Test default execute method returns empty dict."""
-        service = FlextLdifRepositoryService()
+        service = FlextLDIFRepositoryService()
         result = service.execute()
 
         assert result.is_success
@@ -34,7 +34,7 @@ class TestFlextLdifRepositoryService:
 
     def test_find_by_dn_empty_dn(self) -> None:
         """Test find_by_dn with empty DN."""
-        service = FlextLdifRepositoryService()
+        service = FlextLDIFRepositoryService()
         entries = []
 
         result = service.find_by_dn(entries, "")
@@ -42,12 +42,12 @@ class TestFlextLdifRepositoryService:
         assert result.is_failure
         assert (
             result.error is not None
-            and FlextLdifValidationMessages.DN_EMPTY_ERROR in result.error
+            and FlextLDIFValidationMessages.DN_EMPTY_ERROR in result.error
         )
 
     def test_find_by_dn_whitespace_only_dn(self) -> None:
         """Test find_by_dn with whitespace-only DN."""
-        service = FlextLdifRepositoryService()
+        service = FlextLDIFRepositoryService()
         entries = []
 
         result = service.find_by_dn(entries, "   ")
@@ -55,14 +55,14 @@ class TestFlextLdifRepositoryService:
         assert result.is_failure
         assert (
             result.error is not None
-            and FlextLdifValidationMessages.DN_EMPTY_ERROR in result.error
+            and FlextLDIFValidationMessages.DN_EMPTY_ERROR in result.error
         )
 
     def test_find_by_dn_not_found(self) -> None:
         """Test find_by_dn when entry not found."""
-        service = FlextLdifRepositoryService()
+        service = FlextLDIFRepositoryService()
         entries = [
-            FlextLdifEntry.model_validate(
+            FlextLDIFEntry.model_validate(
                 {
                     "dn": "cn=John,dc=example,dc=com",
                     "attributes": {"cn": ["John"], "objectClass": ["person"]},
@@ -77,8 +77,8 @@ class TestFlextLdifRepositoryService:
 
     def test_find_by_dn_found_exact_match(self) -> None:
         """Test find_by_dn when entry is found with exact match."""
-        service = FlextLdifRepositoryService()
-        entry = FlextLdifEntry.model_validate(
+        service = FlextLDIFRepositoryService()
+        entry = FlextLDIFEntry.model_validate(
             {
                 "dn": "cn=John Doe,ou=people,dc=example,dc=com",
                 "attributes": {"cn": ["John Doe"], "objectClass": ["person"]},
@@ -93,8 +93,8 @@ class TestFlextLdifRepositoryService:
 
     def test_find_by_dn_case_insensitive(self) -> None:
         """Test find_by_dn is case insensitive."""
-        service = FlextLdifRepositoryService()
-        entry = FlextLdifEntry.model_validate(
+        service = FlextLDIFRepositoryService()
+        entry = FlextLDIFEntry.model_validate(
             {
                 "dn": "CN=John Doe,OU=People,DC=Example,DC=Com",
                 "attributes": {"cn": ["John Doe"], "objectClass": ["person"]},
@@ -109,14 +109,14 @@ class TestFlextLdifRepositoryService:
 
     def test_find_by_dn_multiple_entries(self) -> None:
         """Test find_by_dn with multiple entries."""
-        service = FlextLdifRepositoryService()
-        entry1 = FlextLdifEntry.model_validate(
+        service = FlextLDIFRepositoryService()
+        entry1 = FlextLDIFEntry.model_validate(
             {
                 "dn": "cn=John,dc=example,dc=com",
                 "attributes": {"cn": ["John"], "objectClass": ["person"]},
             }
         )
-        entry2 = FlextLdifEntry.model_validate(
+        entry2 = FlextLDIFEntry.model_validate(
             {
                 "dn": "cn=Jane,dc=example,dc=com",
                 "attributes": {"cn": ["Jane"], "objectClass": ["person"]},
@@ -131,7 +131,7 @@ class TestFlextLdifRepositoryService:
 
     def test_filter_by_objectclass_empty_objectclass(self) -> None:
         """Test filter_by_objectclass with empty objectclass."""
-        service = FlextLdifRepositoryService()
+        service = FlextLDIFRepositoryService()
         entries = []
 
         result = service.filter_by_objectclass(entries, "")
@@ -139,12 +139,12 @@ class TestFlextLdifRepositoryService:
         assert result.is_failure
         assert result.error is not None and (
             "Object class cannot be empty" in result.error
-            or FlextLdifCoreMessages.MISSING_OBJECTCLASS in result.error
+            or FlextLDIFCoreMessages.MISSING_OBJECTCLASS in result.error
         )
 
     def test_filter_by_objectclass_whitespace_only(self) -> None:
         """Test filter_by_objectclass with whitespace-only objectclass."""
-        service = FlextLdifRepositoryService()
+        service = FlextLDIFRepositoryService()
         entries = []
 
         result = service.filter_by_objectclass(entries, "   ")
@@ -152,14 +152,14 @@ class TestFlextLdifRepositoryService:
         assert result.is_failure
         assert result.error is not None and (
             "Object class cannot be empty" in result.error
-            or FlextLdifCoreMessages.MISSING_OBJECTCLASS in result.error
+            or FlextLDIFCoreMessages.MISSING_OBJECTCLASS in result.error
         )
 
     def test_filter_by_objectclass_no_matches(self) -> None:
         """Test filter_by_objectclass with no matches."""
-        service = FlextLdifRepositoryService()
+        service = FlextLDIFRepositoryService()
         entries = [
-            FlextLdifEntry.model_validate(
+            FlextLDIFEntry.model_validate(
                 {
                     "dn": "cn=John,dc=example,dc=com",
                     "attributes": {"cn": ["John"], "objectClass": ["person"]},
@@ -174,8 +174,8 @@ class TestFlextLdifRepositoryService:
 
     def test_filter_by_objectclass_with_matches(self) -> None:
         """Test filter_by_objectclass with matches."""
-        service = FlextLdifRepositoryService()
-        person_entry = FlextLdifEntry.model_validate(
+        service = FlextLDIFRepositoryService()
+        person_entry = FlextLDIFEntry.model_validate(
             {
                 "dn": "cn=John,dc=example,dc=com",
                 "attributes": {
@@ -184,7 +184,7 @@ class TestFlextLdifRepositoryService:
                 },
             }
         )
-        org_entry = FlextLdifEntry.model_validate(
+        org_entry = FlextLDIFEntry.model_validate(
             {
                 "dn": "ou=people,dc=example,dc=com",
                 "attributes": {"ou": ["people"], "objectClass": ["organizationalUnit"]},
@@ -200,15 +200,15 @@ class TestFlextLdifRepositoryService:
 
     def test_filter_by_objectclass_multiple_matches(self) -> None:
         """Test filter_by_objectclass with multiple matches."""
-        service = FlextLdifRepositoryService()
+        service = FlextLDIFRepositoryService()
         entries = [
-            FlextLdifEntry.model_validate(
+            FlextLDIFEntry.model_validate(
                 {
                     "dn": "cn=John,dc=example,dc=com",
                     "attributes": {"cn": ["John"], "objectClass": ["person"]},
                 }
             ),
-            FlextLdifEntry.model_validate(
+            FlextLDIFEntry.model_validate(
                 {
                     "dn": "cn=Jane,dc=example,dc=com",
                     "attributes": {
@@ -217,7 +217,7 @@ class TestFlextLdifRepositoryService:
                     },
                 }
             ),
-            FlextLdifEntry.model_validate(
+            FlextLDIFEntry.model_validate(
                 {
                     "dn": "ou=people,dc=example,dc=com",
                     "attributes": {
@@ -235,7 +235,7 @@ class TestFlextLdifRepositoryService:
 
     def test_filter_by_attribute_empty_attribute(self) -> None:
         """Test filter_by_attribute with empty attribute name."""
-        service = FlextLdifRepositoryService()
+        service = FlextLDIFRepositoryService()
         entries = []
 
         result = service.filter_by_attribute(entries, "", "value")
@@ -245,7 +245,7 @@ class TestFlextLdifRepositoryService:
 
     def test_filter_by_attribute_whitespace_attribute(self) -> None:
         """Test filter_by_attribute with whitespace-only attribute name."""
-        service = FlextLdifRepositoryService()
+        service = FlextLDIFRepositoryService()
         entries = []
 
         result = service.filter_by_attribute(entries, "   ", "value")
@@ -255,9 +255,9 @@ class TestFlextLdifRepositoryService:
 
     def test_filter_by_attribute_no_matches(self) -> None:
         """Test filter_by_attribute with no matches."""
-        service = FlextLdifRepositoryService()
+        service = FlextLDIFRepositoryService()
         entries = [
-            FlextLdifEntry.model_validate(
+            FlextLDIFEntry.model_validate(
                 {
                     "dn": "cn=John,dc=example,dc=com",
                     "attributes": {
@@ -276,8 +276,8 @@ class TestFlextLdifRepositoryService:
 
     def test_filter_by_attribute_with_matches(self) -> None:
         """Test filter_by_attribute with matches."""
-        service = FlextLdifRepositoryService()
-        john_entry = FlextLdifEntry.model_validate(
+        service = FlextLDIFRepositoryService()
+        john_entry = FlextLDIFEntry.model_validate(
             {
                 "dn": "cn=John Doe,dc=example,dc=com",
                 "attributes": {
@@ -287,7 +287,7 @@ class TestFlextLdifRepositoryService:
                 },
             }
         )
-        jane_entry = FlextLdifEntry.model_validate(
+        jane_entry = FlextLDIFEntry.model_validate(
             {
                 "dn": "cn=Jane Smith,dc=example,dc=com",
                 "attributes": {
@@ -307,9 +307,9 @@ class TestFlextLdifRepositoryService:
 
     def test_filter_by_attribute_no_attribute_values(self) -> None:
         """Test filter_by_attribute when entry has no values for attribute."""
-        service = FlextLdifRepositoryService()
+        service = FlextLDIFRepositoryService()
         entries = [
-            FlextLdifEntry.model_validate(
+            FlextLDIFEntry.model_validate(
                 {
                     "dn": "cn=John,dc=example,dc=com",
                     "attributes": {"cn": ["John"], "objectClass": ["person"]},
@@ -324,7 +324,7 @@ class TestFlextLdifRepositoryService:
 
     def test_get_statistics_empty_list(self) -> None:
         """Test get_statistics with empty list."""
-        service = FlextLdifRepositoryService()
+        service = FlextLDIFRepositoryService()
 
         result = service.get_statistics([])
 
@@ -338,15 +338,15 @@ class TestFlextLdifRepositoryService:
 
     def test_get_statistics_with_person_entries(self) -> None:
         """Test get_statistics with person entries."""
-        service = FlextLdifRepositoryService()
+        service = FlextLDIFRepositoryService()
         entries = [
-            FlextLdifEntry.model_validate(
+            FlextLDIFEntry.model_validate(
                 {
                     "dn": "cn=John,dc=example,dc=com",
                     "attributes": {"cn": ["John"], "objectClass": ["person"]},
                 }
             ),
-            FlextLdifEntry.model_validate(
+            FlextLDIFEntry.model_validate(
                 {
                     "dn": "cn=Jane,dc=example,dc=com",
                     "attributes": {"cn": ["Jane"], "objectClass": ["inetOrgPerson"]},
@@ -364,9 +364,9 @@ class TestFlextLdifRepositoryService:
 
     def test_get_statistics_with_group_entries(self) -> None:
         """Test get_statistics with group entries."""
-        service = FlextLdifRepositoryService()
+        service = FlextLDIFRepositoryService()
         entries = [
-            FlextLdifEntry.model_validate(
+            FlextLDIFEntry.model_validate(
                 {
                     "dn": "cn=admins,ou=groups,dc=example,dc=com",
                     "attributes": {"cn": ["admins"], "objectClass": ["groupOfNames"]},
@@ -384,9 +384,9 @@ class TestFlextLdifRepositoryService:
 
     def test_get_statistics_with_other_entries(self) -> None:
         """Test get_statistics with other entry types."""
-        service = FlextLdifRepositoryService()
+        service = FlextLDIFRepositoryService()
         entries = [
-            FlextLdifEntry.model_validate(
+            FlextLDIFEntry.model_validate(
                 {
                     "dn": "ou=people,dc=example,dc=com",
                     "attributes": {
@@ -395,7 +395,7 @@ class TestFlextLdifRepositoryService:
                     },
                 }
             ),
-            FlextLdifEntry.model_validate(
+            FlextLDIFEntry.model_validate(
                 {
                     "dn": "dc=example,dc=com",
                     "attributes": {"dc": ["example"], "objectClass": ["dcObject"]},
@@ -413,21 +413,21 @@ class TestFlextLdifRepositoryService:
 
     def test_get_statistics_mixed_entries(self) -> None:
         """Test get_statistics with mixed entry types."""
-        service = FlextLdifRepositoryService()
+        service = FlextLDIFRepositoryService()
         entries = [
-            FlextLdifEntry.model_validate(
+            FlextLDIFEntry.model_validate(
                 {
                     "dn": "cn=John,dc=example,dc=com",
                     "attributes": {"cn": ["John"], "objectClass": ["person"]},
                 }
             ),
-            FlextLdifEntry.model_validate(
+            FlextLDIFEntry.model_validate(
                 {
                     "dn": "cn=admins,ou=groups,dc=example,dc=com",
                     "attributes": {"cn": ["admins"], "objectClass": ["groupOfNames"]},
                 }
             ),
-            FlextLdifEntry.model_validate(
+            FlextLDIFEntry.model_validate(
                 {
                     "dn": "ou=people,dc=example,dc=com",
                     "attributes": {
@@ -436,7 +436,7 @@ class TestFlextLdifRepositoryService:
                     },
                 }
             ),
-            FlextLdifEntry.model_validate(
+            FlextLDIFEntry.model_validate(
                 {
                     "dn": "cn=Jane,dc=example,dc=com",
                     "attributes": {"cn": ["Jane"], "objectClass": ["inetOrgPerson"]},

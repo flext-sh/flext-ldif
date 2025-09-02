@@ -12,7 +12,7 @@ from pathlib import Path
 from click.testing import CliRunner
 from flext_cli import get_config
 
-from flext_ldif import FlextLdifAPI, FlextLdifConfig, cli as ldif_cli
+from flext_ldif import FlextLDIFAPI, FlextLDIFConfig, cli as ldif_cli
 
 ALLOWED_COMMANDS: set[str] = {
     "parse",
@@ -174,7 +174,7 @@ class CliIntegrationDemonstrator:
 
     def _verify_transform_output(self) -> None:
         """Verify transform command output."""
-        api = FlextLdifAPI()
+        api = FlextLDIFAPI()
         result = api.parse_file(self.output_file)
         if result.unwrap_or([]):
             pass  # Transform output verified
@@ -182,8 +182,8 @@ class CliIntegrationDemonstrator:
 
     def _demonstrate_programmatic_api(self) -> None:
         """Demonstrate programmatic API usage alongside CLI."""
-        config = FlextLdifConfig(strict_validation=True, max_entries=10)
-        api = FlextLdifAPI(config)
+        config = FlextLDIFConfig(strict_validation=True, max_entries=10)
+        api = FlextLDIFAPI(config)
 
         result = api.parse_file(self.sample_file)
         entries = result.unwrap_or([])

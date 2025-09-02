@@ -5,12 +5,12 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import (
-    FlextLdifEntry,
-    FlextLdifParserService,
-    FlextLdifRepositoryService,
-    FlextLdifTransformerService,
-    FlextLdifValidatorService,
-    FlextLdifWriterService,
+    FlextLDIFEntry,
+    FlextLDIFParserService,
+    FlextLDIFRepositoryService,
+    FlextLDIFTransformerService,
+    FlextLDIFValidatorService,
+    FlextLDIFWriterService,
 )
 
 
@@ -19,34 +19,34 @@ class TestServices:
 
     def test_parser_service_initialization(self) -> None:
         """Test parser service can be initialized."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
         assert service is not None
 
     def test_writer_service_initialization(self) -> None:
         """Test writer service can be initialized."""
-        service = FlextLdifWriterService()
+        service = FlextLDIFWriterService()
         assert service is not None
 
     def test_validator_service_initialization(self) -> None:
         """Test validator service can be initialized."""
-        service = FlextLdifValidatorService()
+        service = FlextLDIFValidatorService()
         assert service is not None
 
     def test_repository_service_initialization(self) -> None:
         """Test repository service can be initialized."""
-        service = FlextLdifRepositoryService()
+        service = FlextLDIFRepositoryService()
         assert service is not None
 
     def test_transformer_service_initialization(self) -> None:
         """Test transformer service can be initialized."""
-        service = FlextLdifTransformerService()
+        service = FlextLDIFTransformerService()
         assert service is not None
 
 
 @pytest.fixture
-def sample_entry() -> FlextLdifEntry:
+def sample_entry() -> FlextLDIFEntry:
     """Create a sample LDIF entry for testing."""
-    return FlextLdifEntry.model_validate(
+    return FlextLDIFEntry.model_validate(
         {
             "id": "test-entry-123",
             "dn": "cn=test,dc=example,dc=com",
@@ -60,7 +60,7 @@ class TestServiceFunctionality:
 
     def test_parser_service_with_valid_ldif(self) -> None:
         """Test parser service with valid LDIF content."""
-        service = FlextLdifParserService()
+        service = FlextLDIFParserService()
         ldif_content = """dn: cn=test,dc=example,dc=com
 cn: test
 objectClass: person
@@ -71,20 +71,20 @@ objectClass: person
 
     def test_validator_service_with_valid_entry(
         self,
-        sample_entry: FlextLdifEntry,
+        sample_entry: FlextLDIFEntry,
     ) -> None:
         """Test validator service with valid entry."""
-        service = FlextLdifValidatorService()
+        service = FlextLDIFValidatorService()
         # Use unwrap_or() for cleaner validation testing
         is_valid = service.validate_data([sample_entry]).unwrap_or(False)
         assert is_valid
 
     def test_writer_service_with_valid_entries(
         self,
-        sample_entry: FlextLdifEntry,
+        sample_entry: FlextLDIFEntry,
     ) -> None:
         """Test writer service with valid entries."""
-        service = FlextLdifWriterService()
+        service = FlextLDIFWriterService()
         # Use unwrap_or() for cleaner writer testing
         output = service.write([sample_entry]).unwrap_or("")
         assert "dn: cn=test,dc=example,dc=com" in output

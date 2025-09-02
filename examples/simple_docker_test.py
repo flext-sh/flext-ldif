@@ -14,7 +14,7 @@ from tests.docker_fixtures import (
     check_docker_available,
 )
 
-from flext_ldif import flext_ldif_parse, flext_ldif_validate
+from flext_ldif import FlextLDIFCore, FlextLDIFFormatHandler
 
 
 def test_with_docker_container() -> bool | None:
@@ -41,7 +41,7 @@ def test_with_docker_container() -> bool | None:
             return False
 
         # Test parsing
-        entries = flext_ldif_parse(ldif_data)
+        entries = FlextLDIFFormatHandler.parse_ldif(ldif_data).unwrap_or_raise()
 
         # Constants for testing
         max_entries_to_show = 3
@@ -55,11 +55,11 @@ def test_with_docker_container() -> bool | None:
             pass
 
         # Test validation - parse first, then validate
-        entries = flext_ldif_parse(ldif_data)
-        flext_ldif_validate(entries)
+        entries = FlextLDIFFormatHandler.parse_ldif(ldif_data).unwrap_or_raise()
+        FlextLDIFCore().validate_entries(entries).unwrap_or_raise()
 
         # Usar API real para filtrar pessoas e grupos
-        api = __import__("flext_ldif").flext_ldif.FlextLdifAPI
+        api = __import__("flext_ldif").flext_ldif.FlextLDIFAPI
         api = api()
 
         # Filter pessoas usando API real com modern FlextResult pattern

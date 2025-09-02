@@ -7,16 +7,16 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif import FlextLdifAPI, FlextLdifConfig
+from flext_ldif import FlextLDIFAPI, FlextLDIFConfig
 
 
 class TestAPIIntegration:
     """Test API integration functionality."""
 
     @pytest.fixture
-    def api(self) -> FlextLdifAPI:
+    def api(self) -> FlextLDIFAPI:
         """Create API instance for testing."""
-        return FlextLdifAPI()
+        return FlextLDIFAPI()
 
     @pytest.fixture
     def sample_ldif_content(self) -> str:
@@ -42,7 +42,7 @@ objectClass: organizationalUnit
 
     def test_parse_and_validate_flow(
         self,
-        api: FlextLdifAPI,
+        api: FlextLDIFAPI,
         sample_ldif_content: str,
     ) -> None:
         """Test complete parse and validate flow."""
@@ -56,7 +56,7 @@ objectClass: organizationalUnit
 
     def test_parse_and_write_flow(
         self,
-        api: FlextLdifAPI,
+        api: FlextLDIFAPI,
         sample_ldif_content: str,
     ) -> None:
         """Test complete parse and write flow."""
@@ -68,7 +68,7 @@ objectClass: organizationalUnit
         output_ldif = api.write(entries).unwrap_or("")
         assert "dn: cn=John Doe,ou=people,dc=example,dc=com" in output_ldif
 
-    def test_file_operations(self, api: FlextLdifAPI, sample_ldif_content: str) -> None:
+    def test_file_operations(self, api: FlextLDIFAPI, sample_ldif_content: str) -> None:
         """Test file read and write operations."""
         with tempfile.NamedTemporaryFile(
             encoding="utf-8",
@@ -100,18 +100,18 @@ objectClass: organizationalUnit
 
     def test_api_with_custom_config(self, sample_ldif_content: str) -> None:
         """Test API with custom configuration."""
-        config = FlextLdifConfig(
+        config = FlextLDIFConfig(
             max_entries=10,
             strict_validation=True,
             sort_attributes=True,
         )
-        api = FlextLdifAPI(config)
+        api = FlextLDIFAPI(config)
 
         parse_result = api.parse(sample_ldif_content)
         assert parse_result.is_success
         assert parse_result.value is not None
 
-    def test_error_handling(self, api: FlextLdifAPI) -> None:
+    def test_error_handling(self, api: FlextLDIFAPI) -> None:
         """Test API error handling."""
         # Test invalid LDIF content
         invalid_ldif = "invalid ldif content without proper format"

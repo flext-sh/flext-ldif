@@ -13,46 +13,61 @@ import pytest
 
 import flext_ldif.format_handler_service as fh
 from flext_ldif.format_handler_service import (
-    HTTP_OK,
+    FlextLDIFFormatHandler,
     FlextLDIFParser,
     FlextLDIFWriter,
-    is_dn,
-    lower_list,
-    modernized_ldif_parse,
-    modernized_ldif_write,
 )
+from flext_ldif.models import FlextLDIFEntry
 
 
-class TestUtilityFunctions:
-    """Test utility functions."""
+class TestFlextLDIFFormatHandler:
+    """Test FlextLDIFFormatHandler class methods."""
 
-    def test_is_dn_valid_dns(self) -> None:
-        """Test is_dn with valid DNs."""
-        assert is_dn("cn=John Doe,ou=people,dc=example,dc=com") is True
-        assert is_dn("uid=johndoe,ou=people,dc=example,dc=com") is True
-        assert is_dn("dc=example,dc=com") is True
-        assert is_dn("cn=test") is True
-        assert is_dn("") is True  # Empty DN is valid (root DN)
+    def test_parse_ldif_basic(self) -> None:
+        """Test basic LDIF parsing through class method."""
+        ldif_content = """dn: cn=John Doe,ou=people,dc=example,dc=com
+cn: John Doe
+sn: Doe
+objectClass: person
 
-    def test_is_dn_invalid_dns(self) -> None:
-        """Test is_dn with invalid DNs."""
-        assert is_dn("not a dn") is False
-        assert is_dn("invalid=,dc=com") is False
+dn: cn=Jane Smith,ou=people,dc=example,dc=com
+cn: Jane Smith
+sn: Smith
+objectClass: person
+"""
+        result = FlextLDIFFormatHandler.parse_ldif(ldif_content)
+        assert result.is_success
+        entries = result.value
+        assert len(entries) == 2
+        assert isinstance(entries[0], FlextLDIFEntry)
+        assert str(entries[0].dn) == "cn=John Doe,ou=people,dc=example,dc=com"
 
-    def test_lower_list_with_list(self) -> None:
-        """Test lower_list with string list."""
-        result = lower_list(["UPPER", "Mixed", "lower"])
-        assert result == ["upper", "mixed", "lower"]
+    def test_write_ldif_basic(self) -> None:
+        """Test basic LDIF writing through class method."""
+        entry = FlextLDIFEntry(
+            dn="cn=Test User,ou=people,dc=example,dc=com",
+            attributes={"cn": ["Test User"], "sn": ["User"], "objectClass": ["person"]},
+        )
 
-    def test_lower_list_with_none(self) -> None:
-        """Test lower_list with None."""
-        result = lower_list(None)
-        assert result == []
+        result = FlextLDIFFormatHandler.write_ldif([entry])
+        assert result.is_success
+        ldif_output = result.value
+        assert "dn: cn=Test User,ou=people,dc=example,dc=com" in ldif_output
+        assert "cn: Test User" in ldif_output
 
-    def test_lower_list_with_empty_list(self) -> None:
-        """Test lower_list with empty list."""
-        result = lower_list([])
-        assert result == []
+    def test_parse_ldif_empty_content(self) -> None:
+        """Test parsing empty LDIF content."""
+        result = FlextLDIFFormatHandler.parse_ldif("")
+        assert result.is_success
+        entries = result.value
+        assert len(entries) == 0
+
+    def test_write_ldif_empty_entries(self) -> None:
+        """Test writing empty entry list."""
+        result = FlextLDIFFormatHandler.write_ldif([])
+        assert result.is_success
+        ldif_output = result.value
+        assert ldif_output == ""
 
 
 class TestInternalFunctions:

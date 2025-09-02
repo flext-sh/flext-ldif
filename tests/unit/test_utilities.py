@@ -1,4 +1,4 @@
-"""Tests for FlextLdifUtilities class with REAL functionality (no mocks)."""
+"""Tests for FlextLDIFUtilities class with REAL functionality (no mocks)."""
 
 # ruff: noqa: PT018
 # Reason: Multiple assertion checks are common in tests for comprehensive error validation
@@ -11,19 +11,19 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 from flext_core import FlextResult
 
-from flext_ldif import FlextLdifAPI
-from flext_ldif.models import FlextLdifEntry
-from flext_ldif.utilities import FlextLdifUtilities
+from flext_ldif import FlextLDIFAPI
+from flext_ldif.models import FlextLDIFEntry
+from flext_ldif.utilities import FlextLDIFUtilities
 
 
 @pytest.fixture
-def api() -> FlextLdifAPI:
-    """Get a real FlextLdifAPI instance."""
-    return FlextLdifAPI()
+def api() -> FlextLDIFAPI:
+    """Get a real FlextLDIFAPI instance."""
+    return FlextLDIFAPI()
 
 
 @pytest.fixture
-def sample_entries(api: FlextLdifAPI) -> list[FlextLdifEntry]:
+def sample_entries(api: FlextLDIFAPI) -> list[FlextLDIFEntry]:
     """Create real LDIF entries for testing utilities."""
     ldif_content = """dn: cn=John Doe,ou=people,dc=example,dc=com
 objectClass: inetOrgPerson
@@ -63,11 +63,11 @@ description: People OU
     return api.parse(ldif_content).unwrap_or([])
 
 
-class TestFlextLdifUtilities:
-    """Test FlextLdifUtilities with real functionality."""
+class TestFlextLDIFUtilities:
+    """Test FlextLDIFUtilities with real functionality."""
 
     def test_parse_file_or_exit_success(
-        self, api: FlextLdifAPI, tmp_path: Path
+        self, api: FlextLDIFAPI, tmp_path: Path
     ) -> None:
         """Test parse_file_or_exit with successful parsing."""
         # Create a temporary LDIF file with real content
@@ -82,19 +82,19 @@ sn: user
         )
 
         # Test real parsing - should succeed
-        entries = FlextLdifUtilities.parse_file_or_exit(api, str(test_file))
+        entries = FlextLDIFUtilities.parse_file_or_exit(api, str(test_file))
 
         assert len(entries) == 1
         assert entries[0].dn == "cn=test,dc=example,dc=com"
         assert "person" in (entries[0].get_attribute("objectClass") or [])
 
-    def test_parse_file_or_exit_failure(self, api: FlextLdifAPI) -> None:
+    def test_parse_file_or_exit_failure(self, api: FlextLDIFAPI) -> None:
         """Test parse_file_or_exit with file not found (should exit)."""
         # Test real behavior: SystemExit should be raised on failure
         nonexistent_file = "/definitely/nonexistent/path/test.ldif"
 
         with pytest.raises(SystemExit) as exc_info:
-            FlextLdifUtilities.parse_file_or_exit(api, nonexistent_file)
+            FlextLDIFUtilities.parse_file_or_exit(api, nonexistent_file)
 
         # Should exit with code 1 on failure
         assert exc_info.value.code == 1
@@ -103,7 +103,7 @@ sn: user
         """Test write_result_or_exit with successful result."""
         success_result = FlextResult[str].ok("test data")
 
-        value = FlextLdifUtilities.write_result_or_exit(
+        value = FlextLDIFUtilities.write_result_or_exit(
             success_result, "test operation"
         )
 
@@ -115,16 +115,16 @@ sn: user
 
         # Test real behavior: SystemExit should be raised on failure
         with pytest.raises(SystemExit) as exc_info:
-            FlextLdifUtilities.write_result_or_exit(failure_result, "test operation")
+            FlextLDIFUtilities.write_result_or_exit(failure_result, "test operation")
 
         # Should exit with code 1 on failure
         assert exc_info.value.code == 1
 
     def test_validate_entries_or_warn_no_warnings(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test validate_entries_or_warn with valid entries."""
-        warnings = FlextLdifUtilities.validate_entries_or_warn(
+        warnings = FlextLDIFUtilities.validate_entries_or_warn(
             sample_entries, max_warnings=5
         )
 
@@ -133,7 +133,7 @@ sn: user
         assert len(warnings) == 0
 
     def test_validate_entries_or_warn_with_invalid_entry(
-        self, api: FlextLdifAPI
+        self, api: FlextLDIFAPI
     ) -> None:
         """Test validate_entries_or_warn with entry that fails business rules."""
         # Create an entry with minimal data that might fail business validation
@@ -145,7 +145,7 @@ cn: invalid
 
         # Force some entries to test warning behavior
         if entries:
-            warnings = FlextLdifUtilities.validate_entries_or_warn(
+            warnings = FlextLDIFUtilities.validate_entries_or_warn(
                 entries, max_warnings=5
             )
 
@@ -154,7 +154,7 @@ cn: invalid
 
             # Test max_warnings limit with multiple entries
             multiple_entries = entries * 10  # Duplicate entry to test warning limit
-            warnings_limited = FlextLdifUtilities.validate_entries_or_warn(
+            warnings_limited = FlextLDIFUtilities.validate_entries_or_warn(
                 multiple_entries, max_warnings=3
             )
 
@@ -162,10 +162,10 @@ cn: invalid
             assert len(warnings_limited) <= 4  # max 3 + overflow message
 
     def test_railway_filter_entries_persons(
-        self, api: FlextLdifAPI, sample_entries: list[FlextLdifEntry]
+        self, api: FlextLDIFAPI, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test railway_filter_entries with persons filter."""
-        filtered = FlextLdifUtilities.railway_filter_entries(
+        filtered = FlextLDIFUtilities.railway_filter_entries(
             api, sample_entries, "persons"
         )
 
@@ -176,10 +176,10 @@ cn: invalid
             assert "person" in object_classes
 
     def test_railway_filter_entries_groups(
-        self, api: FlextLdifAPI, sample_entries: list[FlextLdifEntry]
+        self, api: FlextLDIFAPI, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test railway_filter_entries with groups filter."""
-        filtered = FlextLdifUtilities.railway_filter_entries(
+        filtered = FlextLDIFUtilities.railway_filter_entries(
             api, sample_entries, "groups"
         )
 
@@ -189,10 +189,10 @@ cn: invalid
         assert "groupOfNames" in object_classes
 
     def test_railway_filter_entries_ous(
-        self, api: FlextLdifAPI, sample_entries: list[FlextLdifEntry]
+        self, api: FlextLDIFAPI, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test railway_filter_entries with organizational units filter."""
-        filtered = FlextLdifUtilities.railway_filter_entries(api, sample_entries, "ous")
+        filtered = FlextLDIFUtilities.railway_filter_entries(api, sample_entries, "ous")
 
         # Should return OU entries
         assert len(filtered) == 1  # people OU
@@ -200,11 +200,11 @@ cn: invalid
         assert "organizationalUnit" in object_classes
 
     def test_railway_filter_entries_unknown_filter(
-        self, api: FlextLdifAPI, sample_entries: list[FlextLdifEntry]
+        self, api: FlextLDIFAPI, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test railway_filter_entries with unknown filter type."""
         # Test real behavior: should return original entries when filter unknown
-        filtered = FlextLdifUtilities.railway_filter_entries(
+        filtered = FlextLDIFUtilities.railway_filter_entries(
             api, sample_entries, "unknown"
         )
 
@@ -225,7 +225,7 @@ cn: invalid
             success_called = True
             assert data == "success data"
 
-        value = FlextLdifUtilities.process_result_with_default(
+        value = FlextLDIFUtilities.process_result_with_default(
             success_result, "default", success_action=success_action
         )
 
@@ -242,7 +242,7 @@ cn: invalid
             error_called = True
             assert error == "test error"
 
-        value = FlextLdifUtilities.process_result_with_default(
+        value = FlextLDIFUtilities.process_result_with_default(
             failure_result, "default value", error_action=error_action
         )
 
@@ -257,7 +257,7 @@ cn: invalid
                 return args[0] + args[1]
             return None
 
-        result = FlextLdifUtilities.safe_execute_callable(test_func, 2, 3)
+        result = FlextLDIFUtilities.safe_execute_callable(test_func, 2, 3)
         assert result == 5
 
     def test_create_processing_pipeline(self) -> None:
@@ -271,7 +271,7 @@ cn: invalid
             x = args[0] if args else None
             return int(x) * 2 if isinstance(x, int) else x
 
-        pipeline = FlextLdifUtilities.create_processing_pipeline(add_one, multiply_two)
+        pipeline = FlextLDIFUtilities.create_processing_pipeline(add_one, multiply_two)
 
         result = pipeline(5)  # (5 + 1) * 2 = 12
         assert result == 12
@@ -291,7 +291,7 @@ cn: invalid
                 return len(x)
             return 0
 
-        is_valid = FlextLdifUtilities.validate_callable_chain(func1, func2, func3)
+        is_valid = FlextLDIFUtilities.validate_callable_chain(func1, func2, func3)
         assert is_valid
 
     def test_validate_callable_chain_invalid(self) -> None:
@@ -300,20 +300,20 @@ cn: invalid
         def func1() -> None:
             pass
 
-        is_valid = FlextLdifUtilities.validate_callable_chain(func1, "not callable")
+        is_valid = FlextLDIFUtilities.validate_callable_chain(func1, "not callable")
         assert not is_valid
 
     def test_count_entries_by_objectclass(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test count_entries_by_objectclass with real entries."""
-        person_count = FlextLdifUtilities.count_entries_by_objectclass(
+        person_count = FlextLDIFUtilities.count_entries_by_objectclass(
             sample_entries, "person"
         )
-        group_count = FlextLdifUtilities.count_entries_by_objectclass(
+        group_count = FlextLDIFUtilities.count_entries_by_objectclass(
             sample_entries, "groupOfNames"
         )
-        ou_count = FlextLdifUtilities.count_entries_by_objectclass(
+        ou_count = FlextLDIFUtilities.count_entries_by_objectclass(
             sample_entries, "organizationalUnit"
         )
 
@@ -322,26 +322,26 @@ cn: invalid
         assert ou_count == 1  # people OU
 
     def test_count_entries_by_objectclass_case_insensitive(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test count_entries_by_objectclass is case insensitive."""
-        count_lower = FlextLdifUtilities.count_entries_by_objectclass(
+        count_lower = FlextLDIFUtilities.count_entries_by_objectclass(
             sample_entries, "person"
         )
-        count_upper = FlextLdifUtilities.count_entries_by_objectclass(
+        count_upper = FlextLDIFUtilities.count_entries_by_objectclass(
             sample_entries, "PERSON"
         )
-        count_mixed = FlextLdifUtilities.count_entries_by_objectclass(
+        count_mixed = FlextLDIFUtilities.count_entries_by_objectclass(
             sample_entries, "Person"
         )
 
         assert count_lower == count_upper == count_mixed == 2
 
     def test_batch_validate_entries_success(
-        self, api: FlextLdifAPI, sample_entries: list[FlextLdifEntry]
+        self, api: FlextLDIFAPI, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test batch_validate_entries with valid entries."""
-        result = FlextLdifUtilities.batch_validate_entries(
+        result = FlextLDIFUtilities.batch_validate_entries(
             api, sample_entries, batch_size=2
         )
 
@@ -353,17 +353,17 @@ cn: invalid
 
     def test_create_ldif_summary_stats_empty(self) -> None:
         """Test create_ldif_summary_stats with empty entries."""
-        stats = FlextLdifUtilities.create_ldif_summary_stats([])
+        stats = FlextLDIFUtilities.create_ldif_summary_stats([])
 
         assert stats["total_entries"] == 0
         assert stats["unique_objectclasses"] == 0
         assert stats["avg_attributes_per_entry"] == 0
 
     def test_create_ldif_summary_stats_with_entries(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test create_ldif_summary_stats with real entries."""
-        stats = FlextLdifUtilities.create_ldif_summary_stats(sample_entries)
+        stats = FlextLDIFUtilities.create_ldif_summary_stats(sample_entries)
 
         assert stats["total_entries"] == len(sample_entries)
         assert isinstance(stats["unique_objectclasses"], int)
@@ -375,11 +375,11 @@ cn: invalid
         assert "groupofnames" in stats["objectclass_list"]
 
     def test_find_entries_by_pattern(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test find_entries_by_pattern with real entries."""
         # Find entries with "people" in DN
-        people_entries = FlextLdifUtilities.find_entries_by_pattern(
+        people_entries = FlextLDIFUtilities.find_entries_by_pattern(
             sample_entries, "people"
         )
 
@@ -388,38 +388,38 @@ cn: invalid
             assert "people" in str(entry.dn).lower()
 
     def test_find_entries_by_pattern_case_insensitive(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test find_entries_by_pattern is case insensitive."""
-        lower_results = FlextLdifUtilities.find_entries_by_pattern(
+        lower_results = FlextLDIFUtilities.find_entries_by_pattern(
             sample_entries, "example"
         )
-        upper_results = FlextLdifUtilities.find_entries_by_pattern(
+        upper_results = FlextLDIFUtilities.find_entries_by_pattern(
             sample_entries, "EXAMPLE"
         )
 
         assert len(lower_results) == len(upper_results) == len(sample_entries)
 
     def test_merge_entry_lists_no_duplicates(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test merge_entry_lists with different lists."""
         list1 = sample_entries[:2]  # First 2 entries
         list2 = sample_entries[2:]  # Remaining entries
 
-        merged = FlextLdifUtilities.merge_entry_lists(list1, list2)
+        merged = FlextLDIFUtilities.merge_entry_lists(list1, list2)
 
         assert len(merged) == len(sample_entries)
 
     def test_merge_entry_lists_with_duplicates(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test merge_entry_lists removes duplicates."""
         # Create lists with overlapping entries
         list1 = sample_entries[:3]
         list2 = sample_entries[1:]  # Overlaps with list1
 
-        merged = FlextLdifUtilities.merge_entry_lists(list1, list2)
+        merged = FlextLDIFUtilities.merge_entry_lists(list1, list2)
 
         # Should have unique entries only
         assert len(merged) == len(sample_entries)
@@ -430,7 +430,7 @@ cn: invalid
 
     def test_merge_entry_lists_empty_lists(self) -> None:
         """Test merge_entry_lists with empty lists."""
-        merged = FlextLdifUtilities.merge_entry_lists([], [])
+        merged = FlextLDIFUtilities.merge_entry_lists([], [])
         assert len(merged) == 0
 
     def test_chain_operations_success(self) -> None:
@@ -444,7 +444,7 @@ cn: invalid
             return FlextResult[int].ok(x + 10)
 
         operations = [multiply_by_two, add_ten]
-        result = FlextLdifUtilities.chain_operations(initial, operations)
+        result = FlextLDIFUtilities.chain_operations(initial, operations)
 
         assert result.is_success
         assert result.value == 20  # (5 * 2) + 10
@@ -460,7 +460,7 @@ cn: invalid
             return FlextResult[int].fail("Operation failed")
 
         operations = [multiply_by_two, fail_operation]
-        result = FlextLdifUtilities.chain_operations(initial, operations)
+        result = FlextLDIFUtilities.chain_operations(initial, operations)
 
         assert result.is_failure
         assert result.error == "Operation failed"
@@ -473,7 +473,7 @@ cn: invalid
             FlextResult[str].ok("third"),
         ]
 
-        collected = FlextLdifUtilities.collect_results(results)
+        collected = FlextLDIFUtilities.collect_results(results)
 
         assert collected.is_success
         assert collected.value == ["first", "second", "third"]
@@ -486,17 +486,17 @@ cn: invalid
             FlextResult[str].ok("third"),
         ]
 
-        collected = FlextLdifUtilities.collect_results(results)
+        collected = FlextLDIFUtilities.collect_results(results)
 
         assert collected.is_failure
         assert "Item 2 failed: second failed" in (collected.error or "")
 
     def test_partition_entries_by_validation(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test partition_entries_by_validation separates valid/invalid."""
         # Use real entries from fixture
-        valid, invalid = FlextLdifUtilities.partition_entries_by_validation(
+        valid, invalid = FlextLDIFUtilities.partition_entries_by_validation(
             sample_entries
         )
 
@@ -505,14 +505,14 @@ cn: invalid
         assert len(invalid) == 0
 
     def test_map_entries_safely_success(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test map_entries_safely with successful mapper."""
 
-        def extract_dn(entry: FlextLdifEntry) -> FlextResult[str]:
+        def extract_dn(entry: FlextLDIFEntry) -> FlextResult[str]:
             return FlextResult[str].ok(str(entry.dn))
 
-        result = FlextLdifUtilities.map_entries_safely(sample_entries, extract_dn)
+        result = FlextLDIFUtilities.map_entries_safely(sample_entries, extract_dn)
 
         assert result.is_success
         dns = result.value
@@ -520,17 +520,17 @@ cn: invalid
         assert all(isinstance(dn, str) for dn in dns)
 
     def test_map_entries_safely_fail_fast(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test map_entries_safely with fail_fast=True."""
 
-        def failing_mapper(entry: FlextLdifEntry) -> FlextResult[str]:
+        def failing_mapper(entry: FlextLDIFEntry) -> FlextResult[str]:
             # Fail on Jane entry
             if "Jane" in str(entry.dn):
                 return FlextResult[str].fail("Jane failed")
             return FlextResult[str].ok(str(entry.dn))
 
-        result = FlextLdifUtilities.map_entries_safely(
+        result = FlextLDIFUtilities.map_entries_safely(
             sample_entries, failing_mapper, fail_fast=True
         )
 
@@ -539,28 +539,28 @@ cn: invalid
             assert "Jane failed" in (result.error or "")
 
     def test_find_entries_with_circular_references(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test find_entries_with_circular_references."""
         # Sample entries may have group references to person entries
-        circular = FlextLdifUtilities.find_entries_with_circular_references(
+        circular = FlextLDIFUtilities.find_entries_with_circular_references(
             sample_entries
         )
 
         # Check that the function works (may find legitimate member references)
         # Each circular reference should be a tuple of (entry, reason)
         for entry, reason in circular:
-            assert isinstance(entry, FlextLdifEntry)
+            assert isinstance(entry, FlextLDIFEntry)
             assert isinstance(reason, str)
             assert "Member" in reason
             assert "circular reference" in reason
 
     def test_validate_entries_or_warn_with_actual_warnings(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test validate_entries_or_warn that generates actual warnings."""
         # This should test the warning functionality on line 65
-        warnings = FlextLdifUtilities.validate_entries_or_warn(
+        warnings = FlextLDIFUtilities.validate_entries_or_warn(
             sample_entries, max_warnings=3
         )
 
@@ -569,7 +569,7 @@ cn: invalid
         assert len(warnings) >= 0
 
     def test_validate_entries_or_warn_with_many_entries_truncation(
-        self, api: FlextLdifAPI
+        self, api: FlextLDIFAPI
     ) -> None:
         """Test validate_entries_or_warn with max_warnings to cover truncation logic."""
         # Create many valid entries to test the truncation path
@@ -585,13 +585,13 @@ sn: User{i}
         entries = api.parse(many_entries_ldif).unwrap_or([])
 
         # Test with low max_warnings to potentially trigger the truncation message
-        warnings = FlextLdifUtilities.validate_entries_or_warn(entries, max_warnings=2)
+        warnings = FlextLDIFUtilities.validate_entries_or_warn(entries, max_warnings=2)
 
         assert isinstance(warnings, list)
         # May contain truncation message if there are validation issues
 
     def test_batch_validate_entries_with_batch_failure_fallback(
-        self, api: FlextLdifAPI
+        self, api: FlextLDIFAPI
     ) -> None:
         """Test batch_validate_entries fallback to individual validation (lines 232-235)."""
         # Create mixed valid/invalid entries to potentially trigger batch failure
@@ -609,7 +609,7 @@ cn: invalid
 
         # Force a scenario that might cause batch validation to fail
         # and fall back to individual validation (lines 232-235)
-        result = FlextLdifUtilities.batch_validate_entries(api, entries, batch_size=1)
+        result = FlextLDIFUtilities.batch_validate_entries(api, entries, batch_size=1)
 
         assert result.is_success
         assert isinstance(result.value, list)
@@ -618,11 +618,11 @@ cn: invalid
         """Test to cover TYPE_CHECKING imports (lines 17-18)."""
         # This imports the module which covers the TYPE_CHECKING block
         # Ensure the class exists and has expected methods
-        assert hasattr(FlextLdifUtilities, "parse_file_or_exit")
-        assert hasattr(FlextLdifUtilities, "write_result_or_exit")
+        assert hasattr(FlextLDIFUtilities, "parse_file_or_exit")
+        assert hasattr(FlextLDIFUtilities, "write_result_or_exit")
 
     def test_validate_entry_with_error_handler_functionality(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test validate_entry_with_error_handler to cover error handling paths."""
         entry = sample_entries[0]
@@ -632,7 +632,7 @@ cn: invalid
             error_messages.append(error_msg)
 
         # Test with real entry and error handler
-        result = FlextLdifUtilities.validate_entry_with_error_handler(
+        result = FlextLDIFUtilities.validate_entry_with_error_handler(
             entry, error_handler
         )
 
@@ -655,7 +655,7 @@ cn: invalid
             return value
 
         # Create pipeline with operations
-        pipeline = FlextLdifUtilities.create_processing_pipeline(add_one, multiply_two)
+        pipeline = FlextLDIFUtilities.create_processing_pipeline(add_one, multiply_two)
 
         # Test the pipeline
         result = pipeline(5)  # Should be (5 + 1) * 2 = 12
@@ -668,7 +668,7 @@ cn: invalid
             return value
 
         # Create pipeline with mixed valid and invalid operations
-        pipeline = FlextLdifUtilities.create_processing_pipeline(
+        pipeline = FlextLDIFUtilities.create_processing_pipeline(
             valid_operation,
             "not_callable",
         )
@@ -678,63 +678,63 @@ cn: invalid
         assert result == "test"
 
     def test_additional_utility_methods_coverage(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test additional utility methods to improve coverage."""
         entry = sample_entries[0]
 
         # Test get_entry_dn_string
-        dn_string = FlextLdifUtilities.get_entry_dn_string(entry)
+        dn_string = FlextLDIFUtilities.get_entry_dn_string(entry)
         assert isinstance(dn_string, str)
         assert len(dn_string) > 0
 
         # Test get_entry_dn_string with lowercase
-        dn_lowercase = FlextLdifUtilities.get_entry_dn_string(entry, lowercase=True)
+        dn_lowercase = FlextLDIFUtilities.get_entry_dn_string(entry, lowercase=True)
         assert isinstance(dn_lowercase, str)
         assert dn_lowercase == dn_string.lower()
 
         # Test calculate_dn_depth
-        depth = FlextLdifUtilities.calculate_dn_depth(entry)
+        depth = FlextLDIFUtilities.calculate_dn_depth(entry)
         assert isinstance(depth, int)
         assert depth >= 0
 
         # Test get_entry_objectclasses
-        objectclasses = FlextLdifUtilities.get_entry_objectclasses(entry)
+        objectclasses = FlextLDIFUtilities.get_entry_objectclasses(entry)
         assert isinstance(objectclasses, list)
         assert len(objectclasses) > 0
 
     def test_safe_get_attribute_value_functionality(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test safe_get_attribute_value to cover missing functionality."""
         person_entry = sample_entries[0]  # Should be John Doe
 
         # Test getting existing attribute
-        cn_value = FlextLdifUtilities.safe_get_attribute_value(person_entry, "cn")
+        cn_value = FlextLDIFUtilities.safe_get_attribute_value(person_entry, "cn")
         assert isinstance(cn_value, str)
         assert len(cn_value) > 0
 
         # Test getting non-existent attribute with default
-        missing_result = FlextLdifUtilities.safe_get_attribute_value(
+        missing_result = FlextLDIFUtilities.safe_get_attribute_value(
             person_entry, "nonexistent", default="default_value"
         )
         assert missing_result == "default_value"
 
         # Test getting non-existent attribute without default
-        missing_result_empty = FlextLdifUtilities.safe_get_attribute_value(
+        missing_result_empty = FlextLDIFUtilities.safe_get_attribute_value(
             person_entry, "nonexistent"
         )
         assert missing_result_empty == ""
 
     @pytest.mark.usefixtures("api")
     def test_missing_coverage_scenarios(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test specific scenarios to reach better coverage for utilities.py."""
         # Test TYPE_CHECKING import scenario (lines 17-18)
         # These lines are only executed during type checking, not at runtime
         # But we can test that the module imports work correctly
-        assert FlextLdifUtilities is not None
+        assert FlextLDIFUtilities is not None
 
         # Test line 65: warning collection in validate_entries_or_warn
         invalid_entry = Mock()
@@ -743,7 +743,7 @@ cn: invalid
         )
         invalid_entry.dn = "cn=test,dc=example,dc=com"
 
-        warnings = FlextLdifUtilities.validate_entries_or_warn(
+        warnings = FlextLDIFUtilities.validate_entries_or_warn(
             [invalid_entry], max_warnings=5
         )
         assert len(warnings) > 0
@@ -758,14 +758,14 @@ cn: invalid
             "Test validation error"
         )
 
-        result = FlextLdifUtilities.validate_entry_with_error_handler(
+        result = FlextLDIFUtilities.validate_entry_with_error_handler(
             mock_entry, error_callback
         )
         assert result is False
 
         # Test lines 564-567: extract_unique_attribute_names
         if sample_entries:
-            unique_attrs = FlextLdifUtilities.extract_unique_attribute_names(
+            unique_attrs = FlextLDIFUtilities.extract_unique_attribute_names(
                 sample_entries[:2]
             )
             assert isinstance(unique_attrs, set)
@@ -782,32 +782,32 @@ cn: invalid
             return "@" in value if value else False
 
         # Test with valid callables
-        result_valid = FlextLdifUtilities.validate_callable_chain(
+        result_valid = FlextLDIFUtilities.validate_callable_chain(
             validator1, validator2
         )
         assert result_valid is True
 
     @pytest.mark.usefixtures("api")
     def test_advanced_coverage_scenarios(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test advanced scenarios to maximize coverage."""
 
         # Test batch processing (lines 447, 460)
-        def list_processor(entries: list[FlextLdifEntry]) -> FlextResult[list[str]]:
+        def list_processor(entries: list[FlextLDIFEntry]) -> FlextResult[list[str]]:
             return FlextResult[list[str]].ok(
                 [f"processed-{i}" for i in range(len(entries))]
             )
 
         if sample_entries:
-            result = FlextLdifUtilities.batch_process_entries(
+            result = FlextLDIFUtilities.batch_process_entries(
                 sample_entries[:2], batch_size=1, processor=list_processor
             )
             assert result.is_success
             assert len(result.value) >= 2  # Should have processed entries
 
         # Test with processor that returns None (should fail)
-        result_no_processor = FlextLdifUtilities.batch_process_entries(
+        result_no_processor = FlextLDIFUtilities.batch_process_entries(
             sample_entries[:1] if sample_entries else [], processor=None
         )
         assert result_no_processor.is_failure
@@ -823,7 +823,7 @@ cn: invalid
             mock_entry.dn = f"cn=test{i},dc=example,dc=com"
             mock_entries.append(mock_entry)
 
-        valid_count, errors = FlextLdifUtilities.bulk_validate_entries_with_summary(
+        valid_count, errors = FlextLDIFUtilities.bulk_validate_entries_with_summary(
             mock_entries, max_errors=3
         )
         assert valid_count == 0
@@ -833,7 +833,7 @@ cn: invalid
         if sample_entries:
             # Test with entries that have all required attributes
             entries_with_all = (
-                FlextLdifUtilities.find_entries_with_missing_required_attributes(
+                FlextLDIFUtilities.find_entries_with_missing_required_attributes(
                     sample_entries,
                     ["objectClass"],  # Most entries should have this
                 )
@@ -842,29 +842,29 @@ cn: invalid
             assert isinstance(entries_with_all, list)
 
         # Test extract_unique_attribute_names edge case (lines 619)
-        empty_attrs = FlextLdifUtilities.extract_unique_attribute_names([])
+        empty_attrs = FlextLDIFUtilities.extract_unique_attribute_names([])
         assert empty_attrs == set()
 
         # Test existing methods (lines 680, 716, 719)
         if sample_entries:
             entry = sample_entries[0]
-            dn_depth = FlextLdifUtilities.calculate_dn_depth(entry)
+            dn_depth = FlextLDIFUtilities.calculate_dn_depth(entry)
             assert isinstance(dn_depth, int)
             assert dn_depth >= 0
 
-            objectclasses = FlextLdifUtilities.get_entry_objectclasses(entry)
+            objectclasses = FlextLDIFUtilities.get_entry_objectclasses(entry)
             assert isinstance(objectclasses, list)
 
         # Test completed successfully
         assert True
 
     def test_format_entry_error_message_functionality(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test format_entry_error_message to cover formatting functionality."""
         entry = sample_entries[0]
 
-        formatted = FlextLdifUtilities.format_entry_error_message(
+        formatted = FlextLDIFUtilities.format_entry_error_message(
             entry, 1, "Test error message"
         )
 
@@ -873,14 +873,14 @@ cn: invalid
         assert "1" in formatted  # Entry number should be present
 
     def test_batch_validate_entries_individual_fallback(
-        self, api: FlextLdifAPI, sample_entries: list[FlextLdifEntry]
+        self, api: FlextLDIFAPI, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test batch_validate_entries with individual validation fallback."""
         # Create entries with mixed validity to test fallback logic
         entries = sample_entries[:2]  # Use first 2 valid entries
 
         # Test with valid entries to ensure individual fallback path works
-        result = FlextLdifUtilities.batch_validate_entries(api, entries, batch_size=1)
+        result = FlextLDIFUtilities.batch_validate_entries(api, entries, batch_size=1)
         assert result.is_success
         assert isinstance(result.value, list)
         assert len(result.value) == len(entries)
@@ -889,7 +889,7 @@ cn: invalid
         """Test batch_process_entries with None processor (line 444)."""
         entries = []  # Empty list for processor test
 
-        result = FlextLdifUtilities.batch_process_entries(
+        result = FlextLDIFUtilities.batch_process_entries(
             entries,
             10,
             None,  # batch_size=10, processor=None
@@ -900,15 +900,15 @@ cn: invalid
         )
 
     def test_batch_process_entries_with_batch_failure(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test batch_process_entries when batch processor fails."""
 
-        def failing_processor(_batch: list[FlextLdifEntry]) -> FlextResult[list[str]]:
+        def failing_processor(_batch: list[FlextLDIFEntry]) -> FlextResult[list[str]]:
             """Processor that always fails."""
             return FlextResult[list[str]].fail("Batch processing failed")
 
-        result = FlextLdifUtilities.batch_process_entries(
+        result = FlextLDIFUtilities.batch_process_entries(
             sample_entries[:2],
             1,
             failing_processor,  # batch_size=1
@@ -917,15 +917,15 @@ cn: invalid
         assert result.error is not None and "Batch 1 failed" in result.error
 
     def test_batch_process_entries_with_single_result(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test batch_process_entries when processor returns single result."""
 
-        def single_result_processor(batch: list[FlextLdifEntry]) -> FlextResult[str]:
+        def single_result_processor(batch: list[FlextLDIFEntry]) -> FlextResult[str]:
             """Processor that returns a single result."""
             return FlextResult[str].ok(f"Processed {len(batch)} entries")
 
-        result = FlextLdifUtilities.batch_process_entries(
+        result = FlextLDIFUtilities.batch_process_entries(
             sample_entries[:1],
             1,
             single_result_processor,  # batch_size=1
@@ -936,13 +936,13 @@ cn: invalid
         assert "Processed 1 entries" in result.value[0]
 
     def test_validate_entries_with_max_errors_limit(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test bulk_validate_entries_with_summary with max_errors limit (lines 380-382)."""
         # Create entries that will have validation errors
         entries = sample_entries * 10  # Duplicate entries to get more
 
-        valid_count, errors = FlextLdifUtilities.bulk_validate_entries_with_summary(
+        valid_count, errors = FlextLDIFUtilities.bulk_validate_entries_with_summary(
             entries, max_errors=2
         )
 
@@ -955,7 +955,7 @@ cn: invalid
             assert len(errors) <= 3  # max_errors (2) + 1 for the "... and X more"
 
     def test_validate_entry_with_error_handler_true_path(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test validate_entry_with_error_handler returning True."""
         entry = sample_entries[0]  # Valid entry
@@ -965,7 +965,7 @@ cn: invalid
         def error_handler(error: str) -> None:
             errors_collected.append(error)
 
-        result = FlextLdifUtilities.validate_entry_with_error_handler(
+        result = FlextLDIFUtilities.validate_entry_with_error_handler(
             entry, error_handler
         )
 
@@ -975,51 +975,51 @@ cn: invalid
         assert len(errors_collected) == 0
 
     def test_get_entry_dn_string_functionality(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test get_entry_dn_string functionality."""
         entry = sample_entries[0]
 
-        dn_string = FlextLdifUtilities.get_entry_dn_string(entry)
+        dn_string = FlextLDIFUtilities.get_entry_dn_string(entry)
 
         assert isinstance(dn_string, str)
         assert len(dn_string) > 0
         assert "cn=" in dn_string.lower()
 
     def test_get_entry_objectclasses_functionality(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test get_entry_objectclasses functionality."""
         entry = sample_entries[0]
 
-        objectclasses = FlextLdifUtilities.get_entry_objectclasses(entry)
+        objectclasses = FlextLDIFUtilities.get_entry_objectclasses(entry)
 
         assert isinstance(objectclasses, list)
         assert len(objectclasses) > 0
         assert all(isinstance(oc, str) for oc in objectclasses)
 
     def test_safe_get_attribute_value_with_default(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test safe_get_attribute_value with default value."""
         entry = sample_entries[0]
 
         # Test with existing attribute
-        cn_value = FlextLdifUtilities.safe_get_attribute_value(entry, "cn", "default")
+        cn_value = FlextLDIFUtilities.safe_get_attribute_value(entry, "cn", "default")
         assert cn_value != "default"
         assert isinstance(cn_value, str)
 
         # Test with non-existing attribute
-        missing_value = FlextLdifUtilities.safe_get_attribute_value(
+        missing_value = FlextLDIFUtilities.safe_get_attribute_value(
             entry, "nonexistent", "default"
         )
         assert missing_value == "default"
 
     def test_create_ldif_summary_stats_comprehensive(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test create_ldif_summary_stats with comprehensive coverage."""
-        stats = FlextLdifUtilities.create_ldif_summary_stats(sample_entries)
+        stats = FlextLDIFUtilities.create_ldif_summary_stats(sample_entries)
 
         assert isinstance(stats, dict)
         assert "total_entries" in stats
@@ -1032,14 +1032,14 @@ cn: invalid
         assert isinstance(stats["objectclass_list"], list)
 
     def test_error_message_handling_in_validation(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test that error message formatting works properly."""
         # Create an entry and test error message formatting
         entry = sample_entries[0]
 
         # Test the format_entry_error_message method
-        formatted = FlextLdifUtilities.format_entry_error_message(
+        formatted = FlextLDIFUtilities.format_entry_error_message(
             entry, 1, "Test validation error"
         )
 
@@ -1048,11 +1048,11 @@ cn: invalid
         assert "Entry 1" in formatted or "1" in formatted
 
     def test_group_entries_by_object_class_functionality(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test group_entries_by_object_class to cover lines 496-503."""
         # Group entries by their object classes
-        grouped = FlextLdifUtilities.group_entries_by_object_class(sample_entries)
+        grouped = FlextLDIFUtilities.group_entries_by_object_class(sample_entries)
 
         assert isinstance(grouped, dict)
         # Should have different object classes as keys
@@ -1063,59 +1063,59 @@ cn: invalid
             assert isinstance(obj_class, str)
             assert isinstance(entry_list, list)
             assert len(entry_list) > 0
-            assert all(isinstance(e, FlextLdifEntry) for e in entry_list)
+            assert all(isinstance(e, FlextLDIFEntry) for e in entry_list)
 
     def test_safe_get_attribute_value_edge_cases(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test safe_get_attribute_value edge cases."""
         entry = sample_entries[0]
 
         # Test with None entry attribute method returning None
-        none_value = FlextLdifUtilities.safe_get_attribute_value(
+        none_value = FlextLDIFUtilities.safe_get_attribute_value(
             entry, "nonexistent_attr", "fallback_value"
         )
         assert none_value == "fallback_value"
 
     def test_additional_utility_functions_coverage(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test additional utility functions for missing line coverage."""
         entries = sample_entries
 
         # Test functions that might have missing coverage
-        stats = FlextLdifUtilities.create_ldif_summary_stats(entries)
+        stats = FlextLDIFUtilities.create_ldif_summary_stats(entries)
         assert "total_entries" in stats
 
         # Test entry counting by objectclass
-        person_count = FlextLdifUtilities.count_entries_by_objectclass(
+        person_count = FlextLDIFUtilities.count_entries_by_objectclass(
             entries, "person"
         )
         assert isinstance(person_count, int)
         assert person_count >= 0
 
     def test_validate_entries_or_warn_with_warnings_collection(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test validate_entries_or_warn warning collection (line 65)."""
         entries = sample_entries[:2]  # Use a couple entries
 
         # This should collect warnings if any business rule violations exist
-        warnings = FlextLdifUtilities.validate_entries_or_warn(entries)
+        warnings = FlextLDIFUtilities.validate_entries_or_warn(entries)
 
         assert isinstance(warnings, list)
         # Warnings list should be valid (empty or contain strings)
         assert all(isinstance(w, str) for w in warnings)
 
     def test_bulk_validate_error_limit_exceeded(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test bulk validation when error limit is exceeded (lines 381-382)."""
         # Create many entries to potentially trigger error limit
         entries = sample_entries * 5  # Multiply to get more entries
 
         # Set a very low max_errors to trigger the limit
-        valid_count, errors = FlextLdifUtilities.bulk_validate_entries_with_summary(
+        valid_count, errors = FlextLDIFUtilities.bulk_validate_entries_with_summary(
             entries, max_errors=1
         )
 
@@ -1127,16 +1127,16 @@ cn: invalid
         # This might be True if we hit the limit, or False if all entries are valid
 
     def test_filter_entries_by_dn_pattern_case_sensitive_coverage(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test filter_entries_by_dn_pattern with case_sensitive=True (lines 537-542)."""
         # Test case sensitive search
-        case_sensitive_results = FlextLdifUtilities.filter_entries_by_dn_pattern(
+        case_sensitive_results = FlextLDIFUtilities.filter_entries_by_dn_pattern(
             sample_entries, "John", case_sensitive=True
         )
 
         # Test case insensitive search
-        case_insensitive_results = FlextLdifUtilities.filter_entries_by_dn_pattern(
+        case_insensitive_results = FlextLDIFUtilities.filter_entries_by_dn_pattern(
             sample_entries, "john", case_sensitive=False
         )
 
@@ -1147,43 +1147,43 @@ cn: invalid
         assert len(case_insensitive_results) >= len(case_sensitive_results)
 
     def test_additional_missing_lines_coverage(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test additional scenarios to cover remaining missing lines."""
         # Test validation with actual warning collection (line 65)
-        warnings = FlextLdifUtilities.validate_entries_or_warn(sample_entries[:1])
+        warnings = FlextLDIFUtilities.validate_entries_or_warn(sample_entries[:1])
         assert isinstance(warnings, list)
 
         # Test other utility methods to cover missing lines
         entry = sample_entries[0]
 
         # Test methods that might not be covered
-        depth = FlextLdifUtilities.calculate_dn_depth(entry)
+        depth = FlextLDIFUtilities.calculate_dn_depth(entry)
         assert isinstance(depth, int)
         assert depth >= 0
 
     def test_comprehensive_error_scenarios_coverage(
-        self, api: FlextLdifAPI, sample_entries: list[FlextLdifEntry]
+        self, api: FlextLDIFAPI, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test comprehensive error scenarios to achieve higher coverage."""
         # Test batch validation with individual fallback scenarios (lines 234-237)
         entries = sample_entries[:3]
 
         # Force smaller batch size to test individual validation path
-        result = FlextLdifUtilities.batch_validate_entries(api, entries, batch_size=1)
+        result = FlextLDIFUtilities.batch_validate_entries(api, entries, batch_size=1)
         assert result.is_success
         assert isinstance(result.value, list)
         assert len(result.value) == len(entries)
 
     @pytest.mark.usefixtures("api")
     def test_complete_missing_lines_coverage(
-        self, sample_entries: list[FlextLdifEntry]
+        self, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test specific missing lines for 100% coverage."""
         entries = sample_entries[:2]
 
         # Test find_entries_with_missing_required_attributes (line 587)
-        missing = FlextLdifUtilities.find_entries_with_missing_required_attributes(
+        missing = FlextLDIFUtilities.find_entries_with_missing_required_attributes(
             entries, ["nonExistentAttribute"]
         )
         assert isinstance(missing, list)
@@ -1193,31 +1193,31 @@ cn: invalid
         def failing_op(_value: str) -> FlextResult[str]:
             return FlextResult[str].fail("Operation failed")
 
-        result = FlextLdifUtilities.chain_operations(
+        result = FlextLDIFUtilities.chain_operations(
             FlextResult[str].ok("initial"), [failing_op]
         )
         assert result.is_failure
         assert result.error is not None and "operation failed" in result.error.lower()
 
         # Test map_entries_safely with fail_fast=True and error (lines 716, 719)
-        def error_mapper(_entry: FlextLdifEntry) -> FlextResult[str]:
+        def error_mapper(_entry: FlextLDIFEntry) -> FlextResult[str]:
             return FlextResult[str].fail("Mapper error")
 
-        result = FlextLdifUtilities.map_entries_safely(
+        result = FlextLDIFUtilities.map_entries_safely(
             entries[:1], error_mapper, fail_fast=True
         )
         assert result.is_failure
         assert result.error is not None and "entry 1" in result.error.lower()
 
         # Test with fail_fast=False to trigger line 719
-        result = FlextLdifUtilities.map_entries_safely(
+        result = FlextLDIFUtilities.map_entries_safely(
             entries, error_mapper, fail_fast=False
         )
         assert result.is_failure
         assert result.error is not None and "multiple errors" in result.error.lower()
 
     def test_batch_validation_individual_fallback(
-        self, api: FlextLdifAPI, sample_entries: list[FlextLdifEntry]
+        self, api: FlextLDIFAPI, sample_entries: list[FlextLDIFEntry]
     ) -> None:
         """Test batch validation with individual fallback (lines 234-237)."""
         entries = sample_entries[:3]
@@ -1227,7 +1227,7 @@ cn: invalid
             mock_batch.return_value = FlextResult[bool].fail("Batch validation failed")
 
             # This should trigger the individual validation fallback
-            result = FlextLdifUtilities.batch_validate_entries(
+            result = FlextLDIFUtilities.batch_validate_entries(
                 api, entries, batch_size=10
             )
 
@@ -1244,7 +1244,7 @@ cn: invalid
         def dummy_op(value: str) -> FlextResult[str]:
             return FlextResult[str].ok(value)
 
-        result = FlextLdifUtilities.chain_operations(initial_failure, [dummy_op])
+        result = FlextLDIFUtilities.chain_operations(initial_failure, [dummy_op])
         assert result.is_failure
         # The actual error might be "Unknown error occurred" from FlextResult implementation
         assert result.error is not None and (
@@ -1265,7 +1265,7 @@ cn: invalid
         mock_entry = MagicMock()
         mock_entry.validate_business_rules.return_value = mock_result
 
-        valid, invalid = FlextLdifUtilities.partition_entries_by_validation(
+        valid, invalid = FlextLDIFUtilities.partition_entries_by_validation(
             [mock_entry]
         )
 

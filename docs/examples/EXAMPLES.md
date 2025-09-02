@@ -28,10 +28,10 @@ Comprehensive examples demonstrating FLEXT-LDIF enterprise LDIF processing libra
 ### Simple LDIF Processing
 
 ```python
-from flext_ldif import FlextLdifAPI
+from flext_ldif import FlextLDIFAPI
 
 # Initialize API with default configuration
-api = FlextLdifAPI()
+api = FlextLDIFAPI()
 
 # Sample LDIF content
 ldif_content = """
@@ -92,12 +92,12 @@ else:
 ### Working with Individual Entries
 
 ```python
-from flext_ldif import FlextLdifEntry, FlextLdifDistinguishedName, FlextLdifAttributes
+from flext_ldif import FlextLDIFEntry, FlextLDIFDistinguishedName, FlextLDIFAttributes
 
 # Create entry programmatically using domain objects
-dn = FlextLdifDistinguishedName(value="cn=Alice Johnson,ou=people,dc=example,dc=com")
+dn = FlextLDIFDistinguishedName(value="cn=Alice Johnson,ou=people,dc=example,dc=com")
 
-attributes = FlextLdifAttributes(attributes={
+attributes = FlextLDIFAttributes(attributes={
     "cn": ["Alice Johnson"],
     "sn": ["Johnson"],
     "givenName": ["Alice"],
@@ -108,7 +108,7 @@ attributes = FlextLdifAttributes(attributes={
     "telephoneNumber": ["+1-555-456-7890"]
 })
 
-entry = FlextLdifEntry.model_validate({
+entry = FlextLDIFEntry.model_validate({
     "dn": dn,
     "attributes": attributes
 })
@@ -143,10 +143,10 @@ except ValueError as e:
 ### Configuration and Customization
 
 ```python
-from flext_ldif import FlextLdifAPI, FlextLdifConfig
+from flext_ldif import FlextLDIFAPI, FlextLDIFConfig
 
 # Advanced configuration
-config = FlextLdifConfig(
+config = FlextLDIFConfig(
     max_entries=50000,              # Handle large LDIF files
     strict_validation=True,         # Enable strict business rules
     input_encoding="utf-8",         # Input file encoding
@@ -155,7 +155,7 @@ config = FlextLdifConfig(
     enable_observability=True       # Enable monitoring
 )
 
-api = FlextLdifAPI(config)
+api = FlextLDIFAPI(config)
 
 # Parse large LDIF file
 large_file_result = api.parse_file("data/large_export.ldif")
@@ -174,17 +174,17 @@ if large_file_result.is_success:
 
 ```python
 from flext_ldif.services import (
-    FlextLdifParserService,
-    FlextLdifValidatorService,
-    FlextLdifWriterService
+    FlextLDIFParserService,
+    FlextLDIFValidatorService,
+    FlextLDIFWriterService
 )
 
 # Use individual services for fine-grained control
-config = FlextLdifConfig(strict_validation=True)
+config = FlextLDIFConfig(strict_validation=True)
 
-parser = FlextLdifParserService(config)
-validator = FlextLdifValidatorService(config)
-writer = FlextLdifWriterService(config)
+parser = FlextLDIFParserService(config)
+validator = FlextLDIFValidatorService(config)
+writer = FlextLDIFWriterService(config)
 
 # Parse with service
 parse_result = parser.parse(ldif_content)
@@ -212,9 +212,9 @@ if parse_result.is_success:
 ### Basic Validation
 
 ```python
-from flext_ldif import FlextLdifAPI
+from flext_ldif import FlextLDIFAPI
 
-api = FlextLdifAPI()
+api = FlextLDIFAPI()
 
 # Valid LDIF content
 valid_ldif = """
@@ -250,35 +250,35 @@ if invalid_result.is_success:
 ### Domain Rule Validation
 
 ```python
-from flext_ldif import FlextLdifEntry, FlextLdifDistinguishedName, FlextLdifAttributes
+from flext_ldif import FlextLDIFEntry, FlextLDIFDistinguishedName, FlextLDIFAttributes
 
 # Create entry with business rule violations
 try:
     # Invalid DN (empty)
-    invalid_dn = FlextLdifDistinguishedName(value="")
+    invalid_dn = FlextLDIFDistinguishedName(value="")
 except ValueError as e:
     print(f"DN validation error: {e}")
 
 try:
     # Invalid attributes (no objectClass)
-    dn = FlextLdifDistinguishedName(value="cn=test,dc=example,dc=com")
-    attrs = FlextLdifAttributes(attributes={"cn": ["test"]})  # Missing objectClass
+    dn = FlextLDIFDistinguishedName(value="cn=test,dc=example,dc=com")
+    attrs = FlextLDIFAttributes(attributes={"cn": ["test"]})  # Missing objectClass
 
-    entry = FlextLdifEntry.model_validate({"dn": dn, "attributes": attrs})
+    entry = FlextLDIFEntry.model_validate({"dn": dn, "attributes": attrs})
     entry.validate_domain_rules()  # Will raise ValueError
 
 except ValueError as e:
     print(f"Domain validation error: {e}")
 
 # Valid entry with all required attributes
-valid_dn = FlextLdifDistinguishedName(value="cn=Valid User,ou=people,dc=example,dc=com")
-valid_attrs = FlextLdifAttributes(attributes={
+valid_dn = FlextLDIFDistinguishedName(value="cn=Valid User,ou=people,dc=example,dc=com")
+valid_attrs = FlextLDIFAttributes(attributes={
     "cn": ["Valid User"],
     "sn": ["User"],  # Required for person
     "objectClass": ["person", "organizationalPerson"]
 })
 
-valid_entry = FlextLdifEntry.model_validate({"dn": valid_dn, "attributes": valid_attrs})
+valid_entry = FlextLDIFEntry.model_validate({"dn": valid_dn, "attributes": valid_attrs})
 
 try:
     valid_entry.validate_domain_rules()
@@ -292,13 +292,13 @@ except ValueError as e:
 ```python
 # Future implementation with specifications
 from flext_ldif.domain.specifications import (
-    FlextLdifPersonSpecification,
-    FlextLdifValidSpecification
+    FlextLDIFPersonSpecification,
+    FlextLDIFValidSpecification
 )
 
 # Business rule specifications
-person_spec = FlextLdifPersonSpecification()
-valid_spec = FlextLdifValidSpecification()
+person_spec = FlextLDIFPersonSpecification()
+valid_spec = FlextLDIFValidSpecification()
 
 # Check if entry satisfies business rules
 if person_spec.is_satisfied_by(entry):
@@ -330,10 +330,10 @@ else:
 ### Basic Writing Operations
 
 ```python
-from flext_ldif import FlextLdifAPI
+from flext_ldif import FlextLDIFAPI
 from pathlib import Path
 
-api = FlextLdifAPI()
+api = FlextLDIFAPI()
 
 # Parse entries from file
 result = api.parse_file("input/users.ldif")
@@ -361,9 +361,9 @@ if result.is_success:
 ### Filtered Export
 
 ```python
-from flext_ldif import FlextLdifAPI
+from flext_ldif import FlextLDIFAPI
 
-api = FlextLdifAPI()
+api = FlextLDIFAPI()
 
 # Parse all entries
 result = api.parse_file("data/organization.ldif")
@@ -409,12 +409,12 @@ if result.is_success:
 ### DN Hierarchy Operations
 
 ```python
-from flext_ldif import FlextLdifDistinguishedName
+from flext_ldif import FlextLDIFDistinguishedName
 
 # Create DN hierarchy
-base_dn = FlextLdifDistinguishedName(value="dc=example,dc=com")
-org_dn = FlextLdifDistinguishedName(value="ou=people,dc=example,dc=com")
-user_dn = FlextLdifDistinguishedName(value="cn=John Doe,ou=people,dc=example,dc=com")
+base_dn = FlextLDIFDistinguishedName(value="dc=example,dc=com")
+org_dn = FlextLDIFDistinguishedName(value="ou=people,dc=example,dc=com")
+user_dn = FlextLDIFDistinguishedName(value="cn=John Doe,ou=people,dc=example,dc=com")
 
 # Check hierarchy relationships
 print(f"Base DN: {base_dn.value}")
@@ -444,10 +444,10 @@ if parent:
 ### Attribute Manipulation
 
 ```python
-from flext_ldif import FlextLdifAttributes
+from flext_ldif import FlextLDIFAttributes
 
 # Create attributes
-original_attrs = FlextLdifAttributes(attributes={
+original_attrs = FlextLDIFAttributes(attributes={
     "cn": ["John Doe"],
     "sn": ["Doe"],
     "givenName": ["John"],
@@ -490,12 +490,12 @@ print(f"  title: {title_attrs.get_values('title')}")
 ### Entry Transformation
 
 ```python
-from flext_ldif import FlextLdifEntry, FlextLdifDistinguishedName, FlextLdifAttributes
+from flext_ldif import FlextLDIFEntry, FlextLDIFDistinguishedName, FlextLDIFAttributes
 
 # Original entry
-original_entry = FlextLdifEntry.model_validate({
-    "dn": FlextLdifDistinguishedName(value="cn=John Doe,ou=people,dc=example,dc=com"),
-    "attributes": FlextLdifAttributes(attributes={
+original_entry = FlextLDIFEntry.model_validate({
+    "dn": FlextLDIFDistinguishedName(value="cn=John Doe,ou=people,dc=example,dc=com"),
+    "attributes": FlextLDIFAttributes(attributes={
         "cn": ["John Doe"],
         "sn": ["Doe"],
         "givenName": ["John"],
@@ -510,7 +510,7 @@ promoted_attrs = original_entry.attributes.replace_values("title", ["Senior Soft
 promoted_attrs = promoted_attrs.add_value("mail", "john.doe@senior.company.com")
 
 # Create new entry with transformations
-promoted_entry = FlextLdifEntry.model_validate({
+promoted_entry = FlextLDIFEntry.model_validate({
     "dn": original_entry.dn,
     "attributes": promoted_attrs
 })
@@ -538,9 +538,9 @@ except ValueError as e:
 ### Entry Filtering
 
 ```python
-from flext_ldif import FlextLdifAPI
+from flext_ldif import FlextLDIFAPI
 
-api = FlextLdifAPI()
+api = FlextLDIFAPI()
 
 # Load sample organization data
 result = api.parse_file("data/organization.ldif")
@@ -600,9 +600,9 @@ if result.is_success:
 ### DN-based Filtering
 
 ```python
-from flext_ldif import FlextLdifAPI
+from flext_ldif import FlextLDIFAPI
 
-api = FlextLdifAPI()
+api = FlextLDIFAPI()
 
 # Parse organizational data
 result = api.parse_file("data/company.ldif")
@@ -638,9 +638,9 @@ if result.is_success:
     print(f"Deep entries (depth > 5): {len(deep_entries)}")
 
     # Find entries under specific parent DN
-from flext_ldif import FlextLdifDistinguishedName
+from flext_ldif import FlextLDIFDistinguishedName
 
-    people_base = FlextLdifDistinguishedName(value="ou=people,dc=company,dc=com")
+    people_base = FlextLDIFDistinguishedName(value="ou=people,dc=company,dc=com")
 
     people_under_base = [
         entry for entry in all_entries
@@ -657,18 +657,18 @@ from flext_ldif import FlextLdifDistinguishedName
 ### Batch Processing
 
 ```python
-from flext_ldif import FlextLdifAPI, FlextLdifConfig
+from flext_ldif import FlextLDIFAPI, FlextLDIFConfig
 from pathlib import Path
 import time
 
 # Configure for enterprise workloads
-config = FlextLdifConfig(
+config = FlextLDIFConfig(
     max_entries=100000,           # Handle large files
     strict_validation=True,       # Enforce business rules
     enable_observability=True     # Monitor performance
 )
 
-api = FlextLdifAPI(config)
+api = FlextLDIFAPI(config)
 
 def process_ldif_files_batch(input_dir: str, output_dir: str):
     """Process multiple LDIF files in batch."""
@@ -752,21 +752,21 @@ process_ldif_files_batch("input/ldif_files", "output/processed")
 ### Data Transformation Pipeline
 
 ```python
-from flext_ldif import FlextLdifAPI, FlextLdifEntry, FlextLdifDistinguishedName, FlextLdifAttributes
+from flext_ldif import FlextLDIFAPI, FlextLDIFEntry, FlextLDIFDistinguishedName, FlextLDIFAttributes
 from typing import List, Callable
 
-api = FlextLdifAPI()
+api = FlextLDIFAPI()
 
-def create_transformation_pipeline(*transformations: Callable[[FlextLdifEntry], FlextLdifEntry]) -> Callable:
+def create_transformation_pipeline(*transformations: Callable[[FlextLDIFEntry], FlextLDIFEntry]) -> Callable:
     """Create a pipeline of entry transformations."""
-    def pipeline(entries: List[FlextLdifEntry]) -> List[FlextLdifEntry]:
+    def pipeline(entries: List[FlextLDIFEntry]) -> List[FlextLDIFEntry]:
         result = entries.copy()
         for transformation in transformations:
             result = [transformation(entry) for entry in result]
         return result
     return pipeline
 
-def normalize_email_domains(entry: FlextLdifEntry) -> FlextLdifEntry:
+def normalize_email_domains(entry: FlextLDIFEntry) -> FlextLDIFEntry:
     """Transform to standardize email domains."""
     if not entry.has_attribute("mail"):
         return entry
@@ -783,12 +783,12 @@ def normalize_email_domains(entry: FlextLdifEntry) -> FlextLdifEntry:
 
     new_attrs = entry.attributes.replace_values("mail", normalized_emails)
 
-    return FlextLdifEntry.model_validate({
+    return FlextLDIFEntry.model_validate({
         "dn": entry.dn,
         "attributes": new_attrs
     })
 
-def add_employee_id(entry: FlextLdifEntry) -> FlextLdifEntry:
+def add_employee_id(entry: FlextLDIFEntry) -> FlextLDIFEntry:
     """Add employee ID based on CN."""
     if not entry.has_object_class("person") or entry.has_attribute("employeeId"):
         return entry
@@ -799,14 +799,14 @@ def add_employee_id(entry: FlextLdifEntry) -> FlextLdifEntry:
         employee_id = cn.lower().replace(" ", ".") + ".001"
         new_attrs = entry.attributes.add_value("employeeId", employee_id)
 
-        return FlextLdifEntry.model_validate({
+        return FlextLDIFEntry.model_validate({
             "dn": entry.dn,
             "attributes": new_attrs
         })
 
     return entry
 
-def standardize_phone_numbers(entry: FlextLdifEntry) -> FlextLdifEntry:
+def standardize_phone_numbers(entry: FlextLDIFEntry) -> FlextLDIFEntry:
     """Standardize phone number format."""
     if not entry.has_attribute("telephoneNumber"):
         return entry
@@ -825,7 +825,7 @@ def standardize_phone_numbers(entry: FlextLdifEntry) -> FlextLdifEntry:
 
     new_attrs = entry.attributes.replace_values("telephoneNumber", standardized_phones)
 
-    return FlextLdifEntry.model_validate({
+    return FlextLDIFEntry.model_validate({
         "dn": entry.dn,
         "attributes": new_attrs
     })
@@ -891,24 +891,24 @@ if result.is_success:
 ### Comprehensive Error Handling
 
 ```python
-from flext_ldif import FlextLdifAPI, FlextLdifConfig
+from flext_ldif import FlextLDIFAPI, FlextLDIFConfig
 from flext_ldif.exceptions import (
-    FlextLdifError,
-    FlextLdifParseError,
-    FlextLdifValidationError,
-    FlextLdifEntryError
+    FlextLDIFError,
+    FlextLDIFParseError,
+    FlextLDIFValidationError,
+    FlextLDIFEntryError
 )
 
 def robust_ldif_processing(file_path: str) -> bool:
     """Process LDIF with comprehensive error handling."""
     try:
         # Configure with error tolerance
-        config = FlextLdifConfig(
+        config = FlextLDIFConfig(
             strict_validation=False,  # Continue on validation errors
             max_entries=10000
         )
 
-        api = FlextLdifAPI(config)
+        api = FlextLDIFAPI(config)
 
         print(f"Processing LDIF file: {file_path}")
 
@@ -972,7 +972,7 @@ def robust_ldif_processing(file_path: str) -> bool:
             print("❌ No valid entries to process")
             return False
 
-    except FlextLdifParseError as e:
+    except FlextLDIFParseError as e:
         print(f"❌ LDIF Parse Error: {e}")
         if hasattr(e, 'line_number'):
             print(f"  At line: {e.line_number}")
@@ -980,7 +980,7 @@ def robust_ldif_processing(file_path: str) -> bool:
             print(f"  Content: {e.content_snippet}")
         return False
 
-    except FlextLdifValidationError as e:
+    except FlextLDIFValidationError as e:
         print(f"❌ LDIF Validation Error: {e}")
         if hasattr(e, 'field_name'):
             print(f"  Field: {e.field_name}")
@@ -988,11 +988,11 @@ def robust_ldif_processing(file_path: str) -> bool:
             print(f"  Value: {e.field_value}")
         return False
 
-    except FlextLdifEntryError as e:
+    except FlextLDIFEntryError as e:
         print(f"❌ LDIF Entry Error: {e}")
         return False
 
-    except FlextLdifError as e:
+    except FlextLDIFError as e:
         print(f"❌ FLEXT LDIF Error: {e}")
         return False
 
@@ -1018,7 +1018,7 @@ for test_file in test_files:
 ### Recovery Strategies
 
 ```python
-from flext_ldif import FlextLdifAPI, FlextLdifConfig
+from flext_ldif import FlextLDIFAPI, FlextLDIFConfig
 import logging
 
 # Setup logging for error tracking
@@ -1043,19 +1043,19 @@ def process_with_recovery(file_path: str, max_retries: int = 3) -> bool:
             # Adjust configuration based on attempt
             if attempt == 0:
                 # First attempt: strict mode
-                config = FlextLdifConfig(strict_validation=True, max_entries=50000)
+                config = FlextLDIFConfig(strict_validation=True, max_entries=50000)
             elif attempt == 1:
                 # Second attempt: relaxed validation
-                config = FlextLdifConfig(strict_validation=False, max_entries=50000)
+                config = FlextLDIFConfig(strict_validation=False, max_entries=50000)
             else:
                 # Final attempts: minimal requirements
-                config = FlextLdifConfig(
+                config = FlextLDIFConfig(
                     strict_validation=False,
                     max_entries=10000,
                     allow_empty_attributes=True
                 )
 
-            api = FlextLdifAPI(config)
+            api = FlextLDIFAPI(config)
 
             # Parse with current configuration
             result = api.parse_file(file_path)
@@ -1114,7 +1114,7 @@ for problem_file in problem_files:
 ### Large File Processing
 
 ```python
-from flext_ldif import FlextLdifAPI, FlextLdifConfig
+from flext_ldif import FlextLDIFAPI, FlextLDIFConfig
 import time
 import psutil
 import os
@@ -1159,13 +1159,13 @@ def process_large_file(file_path: str, chunk_size: int = 10000):
     """Process large LDIF files efficiently."""
 
     # Configure for large file processing
-    config = FlextLdifConfig(
+    config = FlextLDIFConfig(
         max_entries=chunk_size,
         strict_validation=False,
         enable_observability=True
     )
 
-    api = FlextLdifAPI(config)
+    api = FlextLDIFAPI(config)
 
     print(f"🔄 Processing large file: {file_path}")
     print(f"   Chunk size: {chunk_size} entries")
@@ -1238,19 +1238,19 @@ for file_path, chunk_size in performance_tests:
 ### Memory-Efficient Streaming
 
 ```python
-from flext_ldif import FlextLdifAPI, FlextLdifConfig
+from flext_ldif import FlextLDIFAPI, FlextLDIFConfig
 from typing import Generator, List
 import gc
 
 def stream_process_ldif(file_path: str, batch_size: int = 1000) -> Generator[List, None, None]:
     """Stream process LDIF file in batches to minimize memory usage."""
 
-    config = FlextLdifConfig(
+    config = FlextLDIFConfig(
         max_entries=batch_size * 2,  # Allow some buffer
         strict_validation=False       # Focus on throughput
     )
 
-    api = FlextLdifAPI(config)
+    api = FlextLDIFAPI(config)
 
     print(f"🌊 Streaming LDIF file: {file_path}")
     print(f"   Batch size: {batch_size} entries")
@@ -1327,7 +1327,7 @@ def process_stream_batches(file_path: str):
 
                 if person_entries:
                     # Export person entries from this batch
-                    api = FlextLdifAPI()
+                    api = FlextLDIFAPI()
                     output_file = f"output/stream_batch_{batch_info['batch_number']}_people.ldif"
 
                     write_result = api.write_file(person_entries, output_file)
@@ -1379,7 +1379,7 @@ for test_file in stream_test_files:
 
 ```python
 from flext_core import get_flext_container
-from flext_ldif import FlextLdifAPI
+from flext_ldif import FlextLDIFAPI
 from flext_ldif.services import register_ldif_services
 
 # Register FLEXT-LDIF services in the DI container
@@ -1387,7 +1387,7 @@ container = FlextContainer.get_global()
 register_ldif_services(container)
 
 # Get API instance from container
-api = container.get(FlextLdifAPI)
+api = container.get(FlextLDIFAPI)
 
 # Use API with dependency injection
 result = api.parse_file("data/sample.ldif")
@@ -1401,13 +1401,13 @@ if result.is_success:
 
 ```python
 from flext_observability import flext_monitor_function, flext_create_trace
-from flext_ldif import FlextLdifAPI
+from flext_ldif import FlextLDIFAPI
 
 @flext_monitor_function("ldif_bulk_processing")
 def process_multiple_files(file_paths: list[str]) -> dict:
     """Process multiple LDIF files with observability."""
 
-    api = FlextLdifAPI()
+    api = FlextLDIFAPI()
     results = {
         "processed_files": 0,
         "total_entries": 0,
@@ -1475,12 +1475,12 @@ if processing_results['processing_errors']:
 
 ```python
 from flext_core import FlextResult
-from flext_ldif import FlextLdifAPI
+from flext_ldif import FlextLDIFAPI
 
 def chain_ldif_operations(file_path: str) -> FlextResult[str]:
     """Chain LDIF operations using FlextResult pattern."""
 
-    api = FlextLdifAPI()
+    api = FlextLDIFAPI()
 
     # Chain operations using bind method
     return (api.parse_file(file_path)
@@ -1513,7 +1513,7 @@ else:
 def process_files_railway(*file_paths: str) -> FlextResult[dict]:
     """Process multiple files using railway-oriented programming."""
 
-    api = FlextLdifAPI()
+    api = FlextLDIFAPI()
     results = {"files": {}, "summary": {"success": 0, "failed": 0}}
 
     for file_path in file_paths:
@@ -1588,12 +1588,12 @@ for dn, entry in parser.records:
 """
 
 # After: Using FLEXT-LDIF
-from flext_ldif import FlextLdifAPI
+from flext_ldif import FlextLDIFAPI
 
 def migrate_from_standard_ldif():
     """Migrate from standard LDIF processing."""
 
-    api = FlextLdifAPI()
+    api = FlextLDIFAPI()
 
     # Parse LDIF (much simpler)
     result = api.parse_file('data.ldif')
@@ -1630,7 +1630,7 @@ migrate_from_standard_ldif()
 ```python
 # Before: Complex imports and manual instantiation
 """
-from flext_ldif.domain.entities import FlextLdifEntry
+from flext_ldif.domain.entities import FlextLDIFEntry
 from flext_ldif.infrastructure.parsers import LDIFParser
 from flext_ldif.infrastructure.validators import LDIFValidator
 
@@ -1643,13 +1643,13 @@ is_valid = validator.validate(entries)
 """
 
 # After: Unified API
-from flext_ldif import FlextLdifAPI
+from flext_ldif import FlextLDIFAPI
 
 def migrate_from_legacy_flext():
     """Migrate from legacy FLEXT-LDIF versions."""
 
     # New unified approach
-    api = FlextLdifAPI()
+    api = FlextLDIFAPI()
 
     # All operations through single API
     content = """
@@ -1702,13 +1702,13 @@ class OldConfig:
 """
 
 # After: Structured configuration with validation
-from flext_ldif import FlextLdifConfig, FlextLdifAPI
+from flext_ldif import FlextLDIFConfig, FlextLDIFAPI
 
 def migrate_configuration():
     """Migrate configuration to new structured approach."""
 
     # Environment-specific configurations
-    development_config = FlextLdifConfig(
+    development_config = FlextLDIFConfig(
         max_entries=5000,
         strict_validation=False,
         input_encoding="utf-8",
@@ -1717,7 +1717,7 @@ def migrate_configuration():
         enable_observability=False
     )
 
-    production_config = FlextLdifConfig(
+    production_config = FlextLDIFConfig(
         max_entries=100000,
         strict_validation=True,
         input_encoding="utf-8",
@@ -1731,10 +1731,10 @@ def migrate_configuration():
     env = os.getenv("ENVIRONMENT", "development")
 
     if env == "production":
-        api = FlextLdifAPI(production_config)
+        api = FlextLDIFAPI(production_config)
         print("🏭 Using production configuration")
     else:
-        api = FlextLdifAPI(development_config)
+        api = FlextLDIFAPI(development_config)
         print("🔧 Using development configuration")
 
     # Configuration is now type-safe and validated
@@ -1770,7 +1770,7 @@ Complete enterprise LDIF processing example demonstrating
 all major features and best practices.
 """
 
-from flext_ldif import FlextLdifAPI, FlextLdifConfig
+from flext_ldif import FlextLDIFAPI, FlextLDIFConfig
 from flext_core import FlextLogger
 from pathlib import Path
 import time
@@ -1787,7 +1787,7 @@ class EnterpriseLdifProcessor:
     def __init__(self, config_file: str | None = None):
         """Initialize with configuration."""
         self.config = self._load_config(config_file)
-        self.api = FlextLdifAPI(self.config)
+        self.api = FlextLDIFAPI(self.config)
         self.statistics = {
             "files_processed": 0,
             "total_entries": 0,
@@ -1797,14 +1797,14 @@ class EnterpriseLdifProcessor:
             "errors": []
         }
 
-    def _load_config(self, config_file: str | None) -> FlextLdifConfig:
+    def _load_config(self, config_file: str | None) -> FlextLDIFConfig:
         """Load configuration from file or use defaults."""
         if config_file and Path(config_file).exists():
             with open(config_file, 'r') as f:
                 config_data = json.load(f)
-            return FlextLdifConfig(**config_data)
+            return FlextLDIFConfig(**config_data)
         else:
-            return FlextLdifConfig(
+            return FlextLDIFConfig(
                 max_entries=50000,
                 strict_validation=True,
                 enable_observability=True

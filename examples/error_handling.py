@@ -13,12 +13,12 @@ from pathlib import Path
 from flext_core import FlextLogger
 
 from flext_ldif import (
-    FlextLdifAPI,
-    FlextLdifConfig,
-    FlextLdifEntry,
-    FlextLdifError,
-    FlextLdifParseError,
-    FlextLdifValidationError,
+    FlextLDIFAPI,
+    FlextLDIFConfig,
+    FlextLDIFEntry,
+    FlextLDIFError,
+    FlextLDIFParseError,
+    FlextLDIFValidationError,
 )
 
 
@@ -32,7 +32,7 @@ class ResultPatternDemonstrator:
 
     def __init__(self) -> None:
         """Initialize result pattern demonstrator."""
-        self.api = FlextLdifAPI()
+        self.api = FlextLDIFAPI()
         self.valid_ldif = """dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -94,7 +94,7 @@ without proper structure
 
         return f"Successfully processed {len(filtered_entries)} person entries"
 
-    def _validate_entries(self, entries: list[FlextLdifEntry]) -> list[str]:
+    def _validate_entries(self, entries: list[FlextLDIFEntry]) -> list[str]:
         """Validate entries and return errors."""
         validation_errors: list[str] = []
         for entry in entries:
@@ -102,7 +102,7 @@ without proper structure
             try:
                 if hasattr(entry, "validate_business_rules"):
                     entry.validate_business_rules()
-            except FlextLdifValidationError as e:
+            except FlextLDIFValidationError as e:
                 validation_errors.append(str(e))
         return validation_errors
 
@@ -124,36 +124,36 @@ def demonstrate_exception_handling() -> None:
     def _test_parse_error() -> None:
         msg = "Test parse error"
         parse_error_msg = f"{msg} (line 42)"
-        raise FlextLdifParseError(parse_error_msg)
+        raise FlextLDIFParseError(parse_error_msg)
 
     try:
         _test_parse_error()
-    except FlextLdifParseError:
+    except FlextLDIFParseError:
         logger.exception("Parse error occurred")
 
     def _test_validation_error() -> None:
         msg = "Test validation error"
         validation_error_msg = f"{msg} - field: dn, issue: empty"
-        raise FlextLdifValidationError(validation_error_msg)
+        raise FlextLDIFValidationError(validation_error_msg)
 
     try:
         _test_validation_error()
-    except FlextLdifValidationError:
+    except FlextLDIFValidationError:
         logger.exception("Validation error occurred")
 
     def _test_base_error() -> None:
         msg = "Test base error"
-        raise FlextLdifError(msg)
+        raise FlextLDIFError(msg)
 
     try:
         _test_base_error()
-    except FlextLdifError:
+    except FlextLDIFError:
         logger.exception("LDIF error occurred")
 
 
 def demonstrate_file_error_handling() -> None:
     """Demonstrate file operation error handling."""
-    api = FlextLdifAPI()
+    api = FlextLDIFAPI()
 
     # Test with non-existent file
     nonexistent_file = Path("/nonexistent/path/file.ldif")
@@ -203,8 +203,8 @@ def demonstrate_configuration_error_handling() -> None:
     # Test with extreme configurations
     try:
         # Very low max_entries
-        config = FlextLdifConfig(max_entries=0)
-        api = FlextLdifAPI(config)
+        config = FlextLDIFConfig(max_entries=0)
+        api = FlextLDIFAPI(config)
 
         sample_file = Path(__file__).parent / "sample_basic.ldif"
         if sample_file.exists():
@@ -217,8 +217,8 @@ def demonstrate_configuration_error_handling() -> None:
         logger.exception("Configuration test failed", exc_info=exc)
 
     # Test with strict validation
-    config = FlextLdifConfig(strict_validation=True, allow_empty_attributes=False)
-    api = FlextLdifAPI(config)
+    config = FlextLDIFConfig(strict_validation=True, allow_empty_attributes=False)
+    api = FlextLDIFAPI(config)
 
     # Create LDIF with empty attributes
     empty_attr_ldif = """dn: cn=test,dc=example,dc=com
@@ -232,7 +232,7 @@ description:
     if entries:
         # Test validation
         for entry in entries:
-            with contextlib.suppress(FlextLdifValidationError):
+            with contextlib.suppress(FlextLDIFValidationError):
                 entry.validate_business_rules()
 
 

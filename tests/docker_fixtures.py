@@ -58,7 +58,7 @@ class OpenLDAPContainerManager:
         """Initialize the container manager."""
         self.client: DockerClient | None = None
         if DOCKER_AVAILABLE:
-            self.client = docker.from_env()  # type: ignore[attr-defined]
+            self.client = docker.from_env()
         self.container: Container | None = None
 
     def start_container(self) -> Container | None:
