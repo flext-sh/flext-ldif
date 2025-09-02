@@ -193,10 +193,8 @@ class FlextLDIFCore:
                     )
                 )
 
-            # Railway-oriented programming chain
-            return FlextLDIFFormatHandler.parse_ldif(content).flat_map(
-                convert_raw_entries
-            )
+            # Parse LDIF content - format handler already returns FlextResult[list[FlextLDIFEntry]]
+            return FlextLDIFFormatHandler.parse_ldif(content)
 
         except (
             ValueError,
@@ -505,17 +503,10 @@ class FlextLDIFCore:
     ) -> FlextResult[str]:
         """Write using modernized LDIF writer with full string compatibility."""
         try:
-            # Convert FlextLDIFEntry objects to (dn, attrs) tuples
-            raw_entries: list[tuple[str, dict[str, list[str]]]] = []
-            for entry in entries:
-                dn = str(entry.dn)
-                attrs = entry.attributes.attributes
-                raw_entries.append((dn, attrs))
-
-            # Use modernized writer
+            # Use modernized writer - pass entries directly
             # Railway-oriented programming for LDIF writing
             return (
-                FlextLDIFFormatHandler.write_ldif(raw_entries)
+                FlextLDIFFormatHandler.write_ldif(entries)
                 .map(
                     lambda content: content
                     or FlextLDIFConstants.FlextLDIFCoreConstants.EMPTY_WRITE_RESULT_MSG

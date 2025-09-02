@@ -56,7 +56,7 @@ class TestFlextLDIFFormatValidator:
             FlextLDIFFormatValidator._validate_ldap_attribute_name("invalid@name")
             is False
         )
-        assert FlextLDIFFormatValidator._validate_ldap_attribute_name(None) is False  # type: ignore
+        assert FlextLDIFFormatValidator._validate_ldap_attribute_name(None) is False
 
     def test_validate_ldap_dn_valid(self) -> None:
         """Test DN validation through FlextLDIFFormatValidator."""
@@ -80,7 +80,7 @@ class TestFlextLDIFFormatValidator:
         # Invalid DNs
         assert FlextLDIFFormatValidator._validate_ldap_dn("") is False
         assert FlextLDIFFormatValidator._validate_ldap_dn("not a dn") is False
-        assert FlextLDIFFormatValidator._validate_ldap_dn(None) is False  # type: ignore
+        assert FlextLDIFFormatValidator._validate_ldap_dn(None) is False
 
     def test_get_ldap_validators(self) -> None:
         """Test getting LDAP validators through class method."""

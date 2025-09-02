@@ -13,7 +13,7 @@ import uuid
 from collections import UserDict
 from collections.abc import Callable
 from functools import lru_cache
-from typing import TypeVar, cast, overload, override
+from typing import TypeVar, cast, override
 
 from flext_core import (
     FlextConfig,
@@ -60,13 +60,7 @@ class AttributesDict(UserDict[str, list[str]]):
                 msg = f"Attribute cannot be empty: {attr_name}"
                 raise FlextLDIFExceptions.ValidationError(msg)
 
-    @overload
-    def get(self, key: str) -> list[str] | None: ...
-
-    @overload
-    def get(self, key: str, default: _T) -> list[str] | _T: ...
-
-    def get(self, key: str, default: _T | None = None) -> list[str] | _T | None:
+    def get(self, key: str, default=None):
         """Case-insensitive get method."""
         # First try exact match
         if super().__contains__(key):
@@ -163,10 +157,10 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             """Compare DN with another DN or string."""
             if isinstance(other, str):
                 return self.value == other
-            if hasattr(other, "value") and isinstance(
-                getattr(other, "value", None), str
-            ):
-                return self.value == other.value
+            if hasattr(other, "value"):
+                other_value = getattr(other, "value", None)
+                if isinstance(other_value, str):
+                    return self.value == other_value
             return False
 
         def __hash__(self) -> int:
@@ -394,8 +388,51 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             ):
                 data["attributes"] = AttributesDict(data["attributes"])
 
-            # Cast to avoid PyRight issues with object types in data dict
-            super().__init__(**cast("dict[str, object]", data))
+            # Extract specific typed parameters for Entity constructor
+            entity_kwargs = {}
+            if "id" in data:
+                entity_kwargs["id"] = str(data["id"])
+            if "version" in data:
+                version_val = data["version"]
+                if version_val is not None:
+                    try:
+                        entity_kwargs["version"] = int(str(version_val))
+                    except (ValueError, TypeError):
+                        entity_kwargs["version"] = 1
+                else:
+                    entity_kwargs["version"] = 1
+            if "created_at" in data:
+                from datetime import datetime
+
+                entity_kwargs["created_at"] = (
+                    data["created_at"]
+                    if isinstance(data["created_at"], datetime)
+                    else datetime.now()
+                )
+            if "updated_at" in data:
+                from datetime import datetime
+
+                entity_kwargs["updated_at"] = (
+                    data["updated_at"]
+                    if isinstance(data["updated_at"], datetime)
+                    else datetime.now()
+                )
+            if "created_by" in data:
+                entity_kwargs["created_by"] = (
+                    str(data["created_by"]) if data["created_by"] is not None else None
+                )
+            if "updated_by" in data:
+                entity_kwargs["updated_by"] = (
+                    str(data["updated_by"]) if data["updated_by"] is not None else None
+                )
+
+            # Domain-specific fields
+            if "dn" in data:
+                entity_kwargs["dn"] = data["dn"]
+            if "attributes" in data:
+                entity_kwargs["attributes"] = data["attributes"]
+
+            super().__init__(**entity_kwargs)
 
         @model_validator(mode="before")
         @classmethod
@@ -444,7 +481,8 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
 
         def get_attribute(self, name: str) -> list[str] | None:
             """Get attribute values."""
-            return self.attributes.get(name.lower(), None)
+            result = self.attributes.get(name.lower(), [])
+            return result if result else None
 
         def get_single_attribute(self, name: str) -> str | None:
             """Get single attribute value."""
@@ -670,7 +708,69 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
         @staticmethod
         def create_config(**kwargs: object) -> FlextLDIFModels.Config:
             """Create configuration with overrides."""
-            return FlextLDIFModels.Config(**cast("dict[str, object]", kwargs))
+            # Convert kwargs to proper types for Config constructor
+            config_kwargs = {}
+
+            # String fields
+            for field in [
+                "encoding",
+                "line_separator",
+                "log_level",
+                "app_name",
+                "name",
+                "version",
+                "description",
+                "config_source",
+                "config_namespace",
+            ]:
+                if field in kwargs:
+                    config_kwargs[field] = str(kwargs[field])
+
+            # Integer fields
+            for field in [
+                "max_line_length",
+                "max_entries",
+                "max_workers",
+                "timeout_seconds",
+                "config_priority",
+            ]:
+                if field in kwargs:
+                    val = kwargs[field]
+                    if val is not None:
+                        try:
+                            config_kwargs[field] = int(str(val))
+                        except (ValueError, TypeError):
+                            config_kwargs[field] = 0
+                    else:
+                        config_kwargs[field] = 0
+
+            # Boolean fields
+            for field in [
+                "fold_lines",
+                "validate_dn",
+                "validate_attributes",
+                "strict_parsing",
+                "strict_validation",
+                "allow_empty_values",
+                "normalize_attribute_names",
+                "sort_attributes",
+                "enable_logging",
+                "enable_metrics",
+                "enable_tracing",
+                "enable_caching",
+                "debug",
+            ]:
+                if field in kwargs:
+                    val = kwargs[field]
+                    config_kwargs[field] = bool(val)
+
+            # Special handling for environment enum
+            if "environment" in kwargs:
+                env_val = str(kwargs["environment"])
+                if env_val in ["development", "production", "staging", "test", "local"]:
+                    config_kwargs["environment"] = env_val
+
+            return FlextLDIFModels.Config(**config_kwargs)
 
 
 # =============================================================================

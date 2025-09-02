@@ -937,6 +937,7 @@ class FlextLDIFConstants(FlextConstants):
 
 # Make nested message classes available as top-level imports
 FlextLDIFValidationMessages = FlextLDIFConstants.FlextLDIFValidationMessages
+FlextLDIFCoreMessages = FlextLDIFConstants.FlextLDIFCoreMessages
 FlextLDIFOperationMessages = FlextLDIFConstants.FlextLDIFOperationMessages
 
 # Make nested constants available as top-level imports
