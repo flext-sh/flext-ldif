@@ -13,7 +13,7 @@ import uuid
 from collections import UserDict
 from collections.abc import Callable
 from functools import lru_cache
-from typing import TypeVar, cast, override
+from typing import cast, override
 
 from flext_core import (
     FlextConfig,
@@ -31,7 +31,6 @@ from flext_ldif.constants import (
 from flext_ldif.exceptions import FlextLDIFExceptions
 
 ValidatorFunc = Callable[[str], bool]
-_T = TypeVar("_T")
 
 
 class AttributesDict(UserDict[str, list[str]]):
@@ -482,7 +481,7 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
         def get_attribute(self, name: str) -> list[str] | None:
             """Get attribute values."""
             result = self.attributes.get(name.lower(), [])
-            return result if result else None
+            return result or None
 
         def get_single_attribute(self, name: str) -> str | None:
             """Get single attribute value."""
@@ -767,7 +766,7 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             # Special handling for environment enum
             if "environment" in kwargs:
                 env_val = str(kwargs["environment"])
-                if env_val in ["development", "production", "staging", "test", "local"]:
+                if env_val in {"development", "production", "staging", "test", "local"}:
                     config_kwargs["environment"] = env_val
 
             return FlextLDIFModels.Config(**config_kwargs)
