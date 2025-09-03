@@ -15,6 +15,7 @@ import time
 from pathlib import Path
 
 import pytest
+from flext_core import FlextResult
 
 from flext_ldif import (
     FlextLDIFAPI,
@@ -307,27 +308,27 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
     ) -> None:
         """Test complete workflow using convenience functions."""
         # Step 1: Parse using convenience function
-        entries = FlextLDIFFormatHandler.parse_ldif(
+        entries = FlextResult.unwrap_or_raise(FlextLDIFFormatHandler.parse_ldif(
             enterprise_ldif_sample
-        ).unwrap_or_raise()
+        ))
         if len(entries) != 9:
             msg: str = f"Expected {9}, got {len(entries)}"
             raise AssertionError(msg)
 
         # Step 2: Validate using convenience function (SOLID fix: validate parsed entries, not raw LDIF)
-        is_valid = FlextLDIFCore().validate_entries(entries).unwrap_or_raise()
+        is_valid = FlextResult.unwrap_or_raise(FlextLDIFCore().validate_entries(entries))
         if not (is_valid):
             msg: str = f"Expected True, got {is_valid}"
             raise AssertionError(msg)
 
         # Step 3: Write using convenience function
-        output_content = FlextLDIFFormatHandler.write_ldif(entries).unwrap_or_raise()
+        output_content = FlextResult.unwrap_or_raise(FlextLDIFFormatHandler.write_ldif(entries))
         assert len(output_content) > 0
 
         # Step 4: Round-trip with convenience functions
-        reparsed_entries = FlextLDIFFormatHandler.parse_ldif(
+        reparsed_entries = FlextResult.unwrap_or_raise(FlextLDIFFormatHandler.parse_ldif(
             output_content
-        ).unwrap_or_raise()
+        ))
         if len(reparsed_entries) != len(entries):
             msg: str = f"Expected {len(entries)}, got {len(reparsed_entries)}"
             raise AssertionError(msg)
@@ -353,7 +354,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
             {
                 "strict_validation": True,
                 "max_entries": 20,
-                "max_entry_size": 2048,
+                "max_line_length": 120,
             },
         )
 
@@ -366,7 +367,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
             {
                 "strict_validation": False,
                 "max_entries": 1000,
-                "max_entry_size": 10240,
+                "max_line_length": 200,
             },
         )
 
@@ -601,7 +602,6 @@ description: User number {i} for memory testing
             {
                 "strict_validation": True,
                 "max_entries": 500,
-                "create_output_dir": True,
             },
         )
 

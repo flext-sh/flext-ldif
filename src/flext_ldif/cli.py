@@ -11,24 +11,19 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import TypeVar
 
 import click
 from flext_cli import (
-    get_cmd as get_cli_config,
     setup_cli,
 )
 from flext_cli.decorators import flext_cli_handle_exceptions
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, T
 from rich.console import Console
 
 from flext_ldif.api import FlextLDIFAPI
 from flext_ldif.models import FlextLDIFConfig, FlextLDIFEntry
 
-# Logger for CLI module
 logger = FlextLogger(__name__)
-
-T = TypeVar("T")
 
 
 class FlextLDIFCliService:
@@ -99,12 +94,10 @@ class FlextLDIFCliService:
                 )
                 errors.append(error_msg)
 
-        return FlextResult[tuple[list[FlextLDIFEntry], list[str]]].ok(
-            (
-                valid_entries,
-                errors,
-            )
-        )
+        return FlextResult[tuple[list[FlextLDIFEntry], list[str]]].ok((
+            valid_entries,
+            errors,
+        ))
 
     def transform_entries(
         self,
@@ -199,7 +192,7 @@ def cli(
         sys.exit(1)
 
     # Configure CLI context
-    config = get_cli_config()
+    config = FlextLDIFConfig()
     if debug or quiet:
         config = config.model_copy(
             update={"debug": debug, "quiet": quiet, "output_format": output_format}

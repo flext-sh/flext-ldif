@@ -17,83 +17,11 @@ from flext_core import (
 from pydantic import Field
 from pydantic.fields import FieldInfo
 
-# Import models needed at runtime
 from flext_ldif.constants import FlextLDIFCoreMessages
 from flext_ldif.models import FlextLDIFEntry, FlextLDIFModels
 
 # Constants for boolean literals
 SUCCESS_VALUE = True
-
-
-# =============================================================================
-# FIELD UTILITY FUNCTIONS - Pydantic field factory functions
-# =============================================================================
-
-
-def dn_field(
-    *,
-    description: str = "Distinguished Name",
-    min_length: int = 1,
-    max_length: int = 1024,
-) -> FieldInfo:
-    """Create a DN field with standard validation."""
-    return cast(
-        "FieldInfo",
-        Field(
-            description=description,
-            min_length=min_length,
-            max_length=max_length,
-        ),
-    )
-
-
-def attribute_name_field(
-    *,
-    description: str = "LDAP Attribute Name",
-    pattern: str = r"^[a-zA-Z][a-zA-Z0-9\-]*$",
-    max_length: int = 255,
-) -> FieldInfo:
-    """Create an attribute name field with validation."""
-    return cast(
-        "FieldInfo",
-        Field(
-            description=description,
-            pattern=pattern,
-            max_length=max_length,
-        ),
-    )
-
-
-def attribute_value_field(
-    *,
-    description: str = "LDAP Attribute Value",
-    max_length: int = 65536,
-) -> FieldInfo:
-    """Create an attribute value field with validation."""
-    return cast(
-        "FieldInfo",
-        Field(
-            description=description,
-            max_length=max_length,
-        ),
-    )
-
-
-def object_class_field(
-    *,
-    description: str = "LDAP Object Class",
-    pattern: str = r"^[a-zA-Z][a-zA-Z0-9\-]*$",
-    max_length: int = 255,
-) -> FieldInfo:
-    """Create an object class field with validation."""
-    return cast(
-        "FieldInfo",
-        Field(
-            description=description,
-            pattern=pattern,
-            max_length=max_length,
-        ),
-    )
 
 
 # =============================================================================
@@ -188,13 +116,11 @@ class FlextLDIFServices(FlextModels.BaseConfig):
                         FlextLDIFAnalyticsConstants.TELEPHONE_ATTRIBUTE
                     )
                 ),
-                "unique_object_classes": len(
-                    {
-                        oc.lower()
-                        for entry in entries
-                        for oc in entry.get_attribute("objectclass") or []
-                    }
-                ),
+                "unique_object_classes": len({
+                    oc.lower()
+                    for entry in entries
+                    for oc in entry.get_attribute("objectclass") or []
+                }),
                 "person_entries": sum(1 for entry in entries if entry.is_person()),
                 "group_entries": sum(1 for entry in entries if entry.is_group()),
             }
@@ -888,30 +814,87 @@ class FlextLDIFServices(FlextModels.BaseConfig):
 
 
 # =============================================================================
-# BACKWARD COMPATIBILITY - Legacy class aliases
+# FIELD UTILITY FUNCTIONS - Pydantic field factory functions
 # =============================================================================
 
-# Direct aliases to nested classes for backward compatibility
-FlextLDIFAnalyticsService = FlextLDIFServices.AnalyticsService
-FlextLDIFWriterService = FlextLDIFServices.WriterService
-FlextLDIFRepositoryService = FlextLDIFServices.RepositoryService
-FlextLDIFValidatorService = FlextLDIFServices.ValidatorService
+
+def dn_field(
+    *,
+    description: str = "Distinguished Name",
+    min_length: int = 1,
+    max_length: int = 1024,
+) -> FieldInfo:
+    """Create a DN field with standard validation."""
+    return cast(
+        "FieldInfo",
+        Field(
+            description=description,
+            min_length=min_length,
+            max_length=max_length,
+        ),
+    )
+
+
+def attribute_name_field(
+    *,
+    description: str = "LDAP Attribute Name",
+    pattern: str = r"^[a-zA-Z][a-zA-Z0-9\-]*$",
+    max_length: int = 255,
+) -> FieldInfo:
+    """Create an attribute name field with validation."""
+    return cast(
+        "FieldInfo",
+        Field(
+            description=description,
+            pattern=pattern,
+            max_length=max_length,
+        ),
+    )
+
+
+def attribute_value_field(
+    *,
+    description: str = "LDAP Attribute Value",
+    max_length: int = 65536,
+) -> FieldInfo:
+    """Create an attribute value field with validation."""
+    return cast(
+        "FieldInfo",
+        Field(
+            description=description,
+            max_length=max_length,
+        ),
+    )
+
+
+def object_class_field(
+    *,
+    description: str = "LDAP Object Class",
+    pattern: str = r"^[a-zA-Z][a-zA-Z0-9\-]*$",
+    max_length: int = 255,
+) -> FieldInfo:
+    """Create an object class field with validation."""
+    return cast(
+        "FieldInfo",
+        Field(
+            description=description,
+            pattern=pattern,
+            max_length=max_length,
+        ),
+    )
+
+
+# Backward compatibility aliases
 FlextLDIFParserService = FlextLDIFServices.ParserService
-FlextLDIFTransformerService = FlextLDIFServices.TransformerService
-FieldDefaults = FlextLDIFServices.FieldDefaults
+FlextLDIFValidatorService = FlextLDIFServices.ValidatorService
+FlextLDIFWriterService = FlextLDIFServices.WriterService
 
 # Export consolidated class and legacy aliases
 __all__ = [
-    "FieldDefaults",
-    # Legacy compatibility aliases
-    "FlextLDIFAnalyticsService",
-    "FlextLDIFParserService",
-    "FlextLDIFRepositoryService",
-    # Consolidated class (FLEXT Pattern)
+    "FlextLDIFParserService",  # Legacy alias
     "FlextLDIFServices",
-    "FlextLDIFTransformerService",
-    "FlextLDIFValidatorService",
-    "FlextLDIFWriterService",
+    "FlextLDIFValidatorService",  # Legacy alias
+    "FlextLDIFWriterService",  # Legacy alias
     "attribute_name_field",
     "attribute_value_field",
     # Field utility functions

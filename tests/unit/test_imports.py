@@ -16,13 +16,9 @@ from flext_ldif import (
     FlextLDIFFormatHandler,
     FlextLDIFFormatValidator,
     FlextLDIFParseError,
-    FlextLDIFParserService,
-    FlextLDIFRepositoryService,
-    FlextLDIFTransformerService,
+    FlextLDIFServices,
     FlextLDIFUtilities,
     FlextLDIFValidationError,
-    FlextLDIFValidatorService,
-    FlextLDIFWriterService,
     __version__,
 )
 
@@ -47,11 +43,13 @@ class TestModuleImports:
 
     def test_service_imports(self) -> None:
         """Test service imports work correctly."""
-        assert FlextLDIFParserService is not None
-        assert FlextLDIFRepositoryService is not None
-        assert FlextLDIFTransformerService is not None
-        assert FlextLDIFValidatorService is not None
-        assert FlextLDIFWriterService is not None
+        # Test service classes are accessible through FlextLDIFServices
+        assert hasattr(FlextLDIFServices, "ParserService")
+        assert hasattr(FlextLDIFServices, "ValidatorService")
+        assert hasattr(FlextLDIFServices, "WriterService")
+        assert FlextLDIFServices.ParserService is not None
+        assert FlextLDIFServices.ValidatorService is not None
+        assert FlextLDIFServices.WriterService is not None
 
     def test_class_based_interface_imports(self) -> None:
         """Test class-based interface imports."""

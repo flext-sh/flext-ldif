@@ -18,8 +18,6 @@ import urllib3
 from flext_core import FlextLogger, FlextResult
 
 from flext_ldif.constants import FlextLDIFOperationMessages, FlextLDIFValidationMessages
-
-# Import needed for proper type conversions
 from flext_ldif.models import FlextLDIFEntry
 
 logger = FlextLogger(__name__)

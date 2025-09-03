@@ -9,7 +9,7 @@ from pydantic import ValidationError
 from pydantic.fields import FieldInfo
 
 from flext_ldif.services import (
-    FieldDefaults,
+    FlextLDIFServices,
     attribute_name_field,
     attribute_value_field,
     dn_field,
@@ -138,7 +138,8 @@ class TestAttributeNameField:
             assert model.attr_name == name
 
         # Invalid attribute names (start with number, special chars)
-        invalid_names = ["123attr", "attr$", "attr.name", " attr", ""]
+        # Note: str_strip_whitespace=True in BaseConfig, so " attr" becomes "attr"
+        invalid_names = ["123attr", "attr$", "attr.name", "attr with space", ""]
         for name in invalid_names:
             with pytest.raises(ValidationError):
                 TestModel(attr_name=name)
@@ -288,7 +289,8 @@ class TestObjectClassField:
             assert model.object_class == class_name
 
         # Invalid object class names
-        invalid_classes = ["123person", "class$", "class.name", " person"]
+        # Note: str_strip_whitespace=True in BaseConfig, so " person" becomes "person"
+        invalid_classes = ["123person", "class$", "class.name", "class with space"]
         for class_name in invalid_classes:
             with pytest.raises(ValidationError):
                 TestModel(object_class=class_name)
@@ -313,45 +315,45 @@ class TestObjectClassField:
 
 
 class TestFieldDefaults:
-    """Test FieldDefaults class constants."""
+    """Test FlextLDIFServices.FieldDefaults class constants."""
 
     def test_field_defaults_constants_exist(self) -> None:
         """Test that all expected constants exist."""
-        assert hasattr(FieldDefaults, "DN_MAX_LENGTH")
-        assert hasattr(FieldDefaults, "ATTRIBUTE_NAME_MAX_LENGTH")
-        assert hasattr(FieldDefaults, "ATTRIBUTE_VALUE_MAX_LENGTH")
-        assert hasattr(FieldDefaults, "LDIF_LINE_MAX_LENGTH")
-        assert hasattr(FieldDefaults, "DN_PATTERN")
-        assert hasattr(FieldDefaults, "ATTRIBUTE_NAME_PATTERN")
+        assert hasattr(FlextLDIFServices.FieldDefaults, "DN_MAX_LENGTH")
+        assert hasattr(FlextLDIFServices.FieldDefaults, "ATTRIBUTE_NAME_MAX_LENGTH")
+        assert hasattr(FlextLDIFServices.FieldDefaults, "ATTRIBUTE_VALUE_MAX_LENGTH")
+        assert hasattr(FlextLDIFServices.FieldDefaults, "LDIF_LINE_MAX_LENGTH")
+        assert hasattr(FlextLDIFServices.FieldDefaults, "DN_PATTERN")
+        assert hasattr(FlextLDIFServices.FieldDefaults, "ATTRIBUTE_NAME_PATTERN")
 
     def test_field_defaults_values(self) -> None:
         """Test that constants have expected values."""
-        assert FieldDefaults.DN_MAX_LENGTH == 1024
-        assert FieldDefaults.ATTRIBUTE_NAME_MAX_LENGTH == 255
-        assert FieldDefaults.ATTRIBUTE_VALUE_MAX_LENGTH == 65536
-        assert FieldDefaults.LDIF_LINE_MAX_LENGTH == 76
-        assert FieldDefaults.DN_PATTERN == r"^[a-zA-Z][a-zA-Z0-9\-=,\s]*$"
-        assert FieldDefaults.ATTRIBUTE_NAME_PATTERN == r"^[a-zA-Z][a-zA-Z0-9\-]*$"
+        assert FlextLDIFServices.FieldDefaults.DN_MAX_LENGTH == 1024
+        assert FlextLDIFServices.FieldDefaults.ATTRIBUTE_NAME_MAX_LENGTH == 255
+        assert FlextLDIFServices.FieldDefaults.ATTRIBUTE_VALUE_MAX_LENGTH == 65536
+        assert FlextLDIFServices.FieldDefaults.LDIF_LINE_MAX_LENGTH == 76
+        assert FlextLDIFServices.FieldDefaults.DN_PATTERN == r"^[a-zA-Z][a-zA-Z0-9\-=,\s]*$"
+        assert FlextLDIFServices.FieldDefaults.ATTRIBUTE_NAME_PATTERN == r"^[a-zA-Z][a-zA-Z0-9\-]*$"
 
     def test_field_defaults_types(self) -> None:
         """Test that constants have correct types."""
-        assert isinstance(FieldDefaults.DN_MAX_LENGTH, int)
-        assert isinstance(FieldDefaults.ATTRIBUTE_NAME_MAX_LENGTH, int)
-        assert isinstance(FieldDefaults.ATTRIBUTE_VALUE_MAX_LENGTH, int)
-        assert isinstance(FieldDefaults.LDIF_LINE_MAX_LENGTH, int)
-        assert isinstance(FieldDefaults.DN_PATTERN, str)
-        assert isinstance(FieldDefaults.ATTRIBUTE_NAME_PATTERN, str)
+        assert isinstance(FlextLDIFServices.FieldDefaults.DN_MAX_LENGTH, int)
+        assert isinstance(FlextLDIFServices.FieldDefaults.ATTRIBUTE_NAME_MAX_LENGTH, int)
+        assert isinstance(FlextLDIFServices.FieldDefaults.ATTRIBUTE_VALUE_MAX_LENGTH, int)
+        assert isinstance(FlextLDIFServices.FieldDefaults.LDIF_LINE_MAX_LENGTH, int)
+        assert isinstance(FlextLDIFServices.FieldDefaults.DN_PATTERN, str)
+        assert isinstance(FlextLDIFServices.FieldDefaults.ATTRIBUTE_NAME_PATTERN, str)
 
     def test_field_defaults_can_be_used_in_fields(self) -> None:
         """Test that defaults can be used to create fields."""
 
         class TestModel(FlextModels.BaseConfig):
-            dn: str = dn_field(max_length=FieldDefaults.DN_MAX_LENGTH)
+            dn: str = dn_field(max_length=FlextLDIFServices.FieldDefaults.DN_MAX_LENGTH)
             attr_name: str = attribute_name_field(
-                max_length=FieldDefaults.ATTRIBUTE_NAME_MAX_LENGTH
+                max_length=FlextLDIFServices.FieldDefaults.ATTRIBUTE_NAME_MAX_LENGTH
             )
             attr_value: str = attribute_value_field(
-                max_length=FieldDefaults.ATTRIBUTE_VALUE_MAX_LENGTH
+                max_length=FlextLDIFServices.FieldDefaults.ATTRIBUTE_VALUE_MAX_LENGTH
             )
 
         model = TestModel(
