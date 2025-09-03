@@ -799,7 +799,7 @@ from typing import List, Optional, Dict, object
 from pathlib import Path
 from flext_core import FlextResult, FlextLogger
 from ..domain import FlextLDIFEntry, FlextLDIFDistinguishedName, FlextLDIFAttributes
-from ..infrastructure import FlextLDIFSettings, FlextLDIFParserService, FlextLDIFValidatorService, FlextLDIFWriterService
+from ..infrastructure import FlextLDIFSettings, FlextLDIFServices.ParserService, FlextLDIFServices.ValidatorService, FlextLDIFServices.WriterService
 from .commands import ParseLdifCommand, ValidateLdifCommand, WriteLdifCommand
 from .queries import GetEntriesQuery, SearchEntriesQuery
 
@@ -821,9 +821,9 @@ class FlextLDIFAPI:
     def __init__(
         self,
         settings: Optional[FlextLDIFSettings] = None,
-        parser_service: Optional[FlextLDIFParserService] = None,
-        validator_service: Optional[FlextLDIFValidatorService] = None,
-        writer_service: Optional[FlextLDIFWriterService] = None
+        parser_service: Optional[FlextLDIFServices.ParserService] = None,
+        validator_service: Optional[FlextLDIFServices.ValidatorService] = None,
+        writer_service: Optional[FlextLDIFServices.WriterService] = None
     ) -> None:
         """
         Initialize LDIF API with optional service dependencies.
@@ -835,9 +835,9 @@ class FlextLDIFAPI:
             writer_service: Writer service, creates default if None
         """
         self._settings = settings or FlextLDIFSettings()
-        self._parser = parser_service or FlextLDIFParserService(self._settings)
-        self._validator = validator_service or FlextLDIFValidatorService(self._settings)
-        self._writer = writer_service or FlextLDIFWriterService(self._settings)
+        self._parser = parser_service or FlextLDIFServices.ParserService(self._settings)
+        self._validator = validator_service or FlextLDIFServices.ValidatorService(self._settings)
+        self._writer = writer_service or FlextLDIFServices.WriterService(self._settings)
 
         logger.info("FlextLDIFAPI initialized", extra={
             "max_entries": self._settings.max_entries,

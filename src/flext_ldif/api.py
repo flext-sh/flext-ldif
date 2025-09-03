@@ -13,18 +13,9 @@ from flext_core import FlextLogger, FlextResult
 
 from flext_ldif.constants import FlextLDIFOperationMessages, FlextLDIFValidationMessages
 from flext_ldif.models import FlextLDIFConfig, FlextLDIFEntry
-from flext_ldif.services import (
-    FlextLDIFAnalyticsService,
-    FlextLDIFParserService as _FlextLDIFParserService,
-    FlextLDIFRepositoryService,
-    FlextLDIFValidatorService as _FlextLDIFValidatorService,
-    FlextLDIFWriterService as _FlextLDIFWriterService,
-)
+from flext_ldif.services import FlextLDIFServices
 
 logger = FlextLogger(__name__)
-
-
-# TLdif class removed - use FlextLDIFAPI instead
 
 
 class FlextLDIFAPI:
@@ -38,11 +29,11 @@ class FlextLDIFAPI:
 
         """
         self.config = config or FlextLDIFConfig()
-        self._parser_service = _FlextLDIFParserService()
-        self._validator_service = _FlextLDIFValidatorService()
-        self._writer_service = _FlextLDIFWriterService()
-        self._repository_service = FlextLDIFRepositoryService()
-        self._analytics_service = FlextLDIFAnalyticsService()
+        self._parser_service = FlextLDIFServices.ParserService()
+        self._validator_service = FlextLDIFServices.ValidatorService()
+        self._writer_service = FlextLDIFServices.WriterService()
+        self._repository_service = FlextLDIFServices.RepositoryService()
+        self._analytics_service = FlextLDIFServices.AnalyticsService()
 
     def parse(self, content: str) -> FlextResult[list[FlextLDIFEntry]]:
         """Parse LDIF content using railway-oriented programming."""

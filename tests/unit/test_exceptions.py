@@ -168,13 +168,13 @@ class TestFlextLDIFExceptions:
         )  # Either attribute exists or context is in string
 
     def test_exception_with_cause(self) -> None:
-        """Test exceptions with cause parameter."""
+        """Test exceptions with context containing cause information."""
         cause = ValueError("Original error")
-        error = FlextLDIFError("LDIF error", cause=cause)
-        # Cause should be preserved
-        assert hasattr(error, "cause") or str(
-            error
-        )  # Either attribute exists or cause is referenced
+        error = FlextLDIFError("LDIF error", context={"cause": str(cause)})
+        # Context should contain cause information
+        assert error.context is not None
+        assert "cause" in error.context
+        assert "Original error" in str(error.context["cause"])
 
     def test_file_error_with_file_path(self) -> None:
         """Test FlextLDIFFileError with file_path parameter."""

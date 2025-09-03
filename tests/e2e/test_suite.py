@@ -6,6 +6,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from flext_core import FlextResult
 
 from flext_ldif import (
     FlextLDIFAPI,
@@ -118,17 +119,21 @@ member: cn=John Doe,ou=people,dc=example,dc=com
     ) -> None:
         """Test complete workflow using convenience functions."""
         # Step 1: Parse using convenience function
-        entries = FlextLDIFFormatHandler.parse_ldif(
-            complex_ldif_content
-        ).unwrap_or_raise()
+        entries = FlextResult.unwrap_or_raise(
+            FlextLDIFFormatHandler.parse_ldif(complex_ldif_content)
+        )
         assert len(entries) == 6
 
         # Step 2: Validate using convenience function
-        is_valid = FlextLDIFCore().validate_entries(entries).unwrap_or_raise()
+        is_valid = FlextResult.unwrap_or_raise(
+            FlextLDIFCore().validate_entries(entries)
+        )
         assert is_valid is True
 
         # Step 3: Write using convenience function
-        ldif_output = FlextLDIFFormatHandler.write_ldif(entries).unwrap_or_raise()
+        ldif_output = FlextResult.unwrap_or_raise(
+            FlextLDIFFormatHandler.write_ldif(entries)
+        )
         assert isinstance(ldif_output, str)
         assert "cn=John Doe,ou=people,dc=example,dc=com" in ldif_output
 

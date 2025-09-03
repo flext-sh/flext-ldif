@@ -140,7 +140,7 @@ class FlextLDIFUtilities:
                     if isinstance(values, list):
                         converted_values = [str(v) for v in values if v is not None]
                     else:
-                        converted_values = [str(values)] if values is not None else []
+                        converted_values = [str(values)] if values is not None else []  # type: ignore[unreachable]
                     if converted_values:  # Only include non-empty values
                         ldif_attrs[key.lower()] = converted_values
 

@@ -56,62 +56,56 @@ class FlextLDIFConstants(FlextConstants):
     MAX_DN_DEPTH: Final[int] = 20
 
     # DN Attribute Types - consolidated with DN-valued attributes
-    LDAP_DN_ATTRIBUTES: Final[frozenset[str]] = frozenset(
-        {
-            "cn",
-            "commonname",
-            "o",
-            "organization",
-            "ou",
-            "organizationalunit",
-            "c",
-            "country",
-            "dc",
-            "domaincomponent",
-            "uid",
-            "userid",
-            "mail",
-            "email",
-            # DN-valued attributes requiring DN normalization
-            "orcldaspublicgroupdns",
-            "member",
-            "uniquemember",
-            "owner",
-            "roleoccupant",
-            "seealso",
-            "manager",
-            "secretary",
-            "directreports",
-            "distinguishedname",
-            "dn",
-        }
-    )
+    LDAP_DN_ATTRIBUTES: Final[frozenset[str]] = frozenset({
+        "cn",
+        "commonname",
+        "o",
+        "organization",
+        "ou",
+        "organizationalunit",
+        "c",
+        "country",
+        "dc",
+        "domaincomponent",
+        "uid",
+        "userid",
+        "mail",
+        "email",
+        # DN-valued attributes requiring DN normalization
+        "orcldaspublicgroupdns",
+        "member",
+        "uniquemember",
+        "owner",
+        "roleoccupant",
+        "seealso",
+        "manager",
+        "secretary",
+        "directreports",
+        "distinguishedname",
+        "dn",
+    })
 
     # =============================================================================
     # LDAP OBJECT CLASS CONSTANTS
     # =============================================================================
 
     # Person object classes (using proper LDAP case formatting)
-    LDAP_PERSON_CLASSES: Final[frozenset[str]] = frozenset(
-        {
-            "person",
-            "organizationalPerson",
-            "inetOrgPerson",
-            "posixAccount",
-            "user",
-        }
-    )
+    LDAP_PERSON_CLASSES: Final[frozenset[str]] = frozenset({
+        "person",
+        "organizationalPerson",
+        "inetOrgPerson",
+        "posixAccount",
+        "user",
+    })
 
     # Group object classes (using proper LDAP case formatting)
-    LDAP_GROUP_CLASSES: Final[frozenset[str]] = frozenset(
-        {
-            "groupOfNames",
-            "groupOfUniqueNames",
-            "posixGroup",
-            "organizationalRole",
-            "group",
-        }
-    )
+    LDAP_GROUP_CLASSES: Final[frozenset[str]] = frozenset({
+        "groupOfNames",
+        "groupOfUniqueNames",
+        "posixGroup",
+        "organizationalRole",
+        "group",
+    })
     DN_SEPARATOR: Final[str] = ","
     DN_ATTRIBUTE_SEPARATOR: Final[str] = "="
 

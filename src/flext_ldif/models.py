@@ -59,7 +59,7 @@ class AttributesDict(UserDict[str, list[str]]):
                 msg = f"Attribute cannot be empty: {attr_name}"
                 raise FlextLDIFExceptions.ValidationError(msg)
 
-    def get(self, key: str, default=None):
+    def get(self, key: str, default: object = None) -> object:  # type: ignore[override]
         """Case-insensitive get method."""
         # First try exact match
         if super().__contains__(key):
@@ -350,12 +350,14 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
         def is_person(self) -> bool:
             """Check if entry represents a person."""
             object_classes = {oc.lower() for oc in self.get_object_classes()}
-            return bool(object_classes.intersection(LDAP_PERSON_CLASSES))
+            person_classes = {oc.lower() for oc in LDAP_PERSON_CLASSES}
+            return bool(object_classes.intersection(person_classes))
 
         def is_group(self) -> bool:
             """Check if entry represents a group."""
             object_classes = {oc.lower() for oc in self.get_object_classes()}
-            return bool(object_classes.intersection(LDAP_GROUP_CLASSES))
+            group_classes = {oc.lower() for oc in LDAP_GROUP_CLASSES}
+            return bool(object_classes.intersection(group_classes))
 
     class Entry(FlextModels.Entity):
         """LDIF entry domain entity."""
@@ -382,56 +384,16 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             # Ensure attributes field is provided and is AttributesDict
             if "attributes" not in data:
                 data["attributes"] = AttributesDict()
-            elif isinstance(data["attributes"], dict) and not isinstance(
-                data["attributes"], AttributesDict
-            ):
-                data["attributes"] = AttributesDict(data["attributes"])
-
-            # Extract specific typed parameters for Entity constructor
-            entity_kwargs = {}
-            if "id" in data:
-                entity_kwargs["id"] = str(data["id"])
-            if "version" in data:
-                version_val = data["version"]
-                if version_val is not None:
-                    try:
-                        entity_kwargs["version"] = int(str(version_val))
-                    except (ValueError, TypeError):
-                        entity_kwargs["version"] = 1
+            elif not isinstance(data["attributes"], AttributesDict):
+                # Convert regular dict to AttributesDict
+                attr_data = data["attributes"]
+                if isinstance(attr_data, dict):
+                    data["attributes"] = AttributesDict(attr_data)
                 else:
-                    entity_kwargs["version"] = 1
-            if "created_at" in data:
-                from datetime import datetime
+                    data["attributes"] = AttributesDict()
 
-                entity_kwargs["created_at"] = (
-                    data["created_at"]
-                    if isinstance(data["created_at"], datetime)
-                    else datetime.now()
-                )
-            if "updated_at" in data:
-                from datetime import datetime
-
-                entity_kwargs["updated_at"] = (
-                    data["updated_at"]
-                    if isinstance(data["updated_at"], datetime)
-                    else datetime.now()
-                )
-            if "created_by" in data:
-                entity_kwargs["created_by"] = (
-                    str(data["created_by"]) if data["created_by"] is not None else None
-                )
-            if "updated_by" in data:
-                entity_kwargs["updated_by"] = (
-                    str(data["updated_by"]) if data["updated_by"] is not None else None
-                )
-
-            # Domain-specific fields
-            if "dn" in data:
-                entity_kwargs["dn"] = data["dn"]
-            if "attributes" in data:
-                entity_kwargs["attributes"] = data["attributes"]
-
-            super().__init__(**entity_kwargs)
+            # Pass all data to pydantic model - it will handle type validation and conversion
+            super().__init__(**data)  # type: ignore[arg-type]
 
         @model_validator(mode="before")
         @classmethod
@@ -481,7 +443,7 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
         def get_attribute(self, name: str) -> list[str] | None:
             """Get attribute values."""
             result = self.attributes.get(name.lower(), [])
-            return result or None
+            return result or None  # type: ignore[return-value]
 
         def get_single_attribute(self, name: str) -> str | None:
             """Get single attribute value."""
@@ -540,12 +502,14 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
         def is_person(self) -> bool:
             """Check if entry represents a person."""
             object_classes = {oc.lower() for oc in self.get_object_classes()}
-            return bool(object_classes.intersection(LDAP_PERSON_CLASSES))
+            person_classes = {oc.lower() for oc in LDAP_PERSON_CLASSES}
+            return bool(object_classes.intersection(person_classes))
 
         def is_group(self) -> bool:
             """Check if entry represents a group."""
             object_classes = {oc.lower() for oc in self.get_object_classes()}
-            return bool(object_classes.intersection(LDAP_GROUP_CLASSES))
+            group_classes = {oc.lower() for oc in LDAP_GROUP_CLASSES}
+            return bool(object_classes.intersection(group_classes))
 
         def is_person_entry(self) -> bool:
             """Check if entry represents a person - alias for is_person."""
@@ -706,70 +670,9 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
 
         @staticmethod
         def create_config(**kwargs: object) -> FlextLDIFModels.Config:
-            """Create configuration with overrides."""
-            # Convert kwargs to proper types for Config constructor
-            config_kwargs = {}
-
-            # String fields
-            for field in [
-                "encoding",
-                "line_separator",
-                "log_level",
-                "app_name",
-                "name",
-                "version",
-                "description",
-                "config_source",
-                "config_namespace",
-            ]:
-                if field in kwargs:
-                    config_kwargs[field] = str(kwargs[field])
-
-            # Integer fields
-            for field in [
-                "max_line_length",
-                "max_entries",
-                "max_workers",
-                "timeout_seconds",
-                "config_priority",
-            ]:
-                if field in kwargs:
-                    val = kwargs[field]
-                    if val is not None:
-                        try:
-                            config_kwargs[field] = int(str(val))
-                        except (ValueError, TypeError):
-                            config_kwargs[field] = 0
-                    else:
-                        config_kwargs[field] = 0
-
-            # Boolean fields
-            for field in [
-                "fold_lines",
-                "validate_dn",
-                "validate_attributes",
-                "strict_parsing",
-                "strict_validation",
-                "allow_empty_values",
-                "normalize_attribute_names",
-                "sort_attributes",
-                "enable_logging",
-                "enable_metrics",
-                "enable_tracing",
-                "enable_caching",
-                "debug",
-            ]:
-                if field in kwargs:
-                    val = kwargs[field]
-                    config_kwargs[field] = bool(val)
-
-            # Special handling for environment enum
-            if "environment" in kwargs:
-                env_val = str(kwargs["environment"])
-                if env_val in {"development", "production", "staging", "test", "local"}:
-                    config_kwargs["environment"] = env_val
-
-            return FlextLDIFModels.Config(**config_kwargs)
+            """Create configuration with proper type handling."""
+            # Let Pydantic handle type conversion and validation
+            return FlextLDIFModels.Config(**kwargs)  # type: ignore[arg-type]
 
 
 # =============================================================================

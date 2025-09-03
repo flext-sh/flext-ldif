@@ -9,6 +9,7 @@ No mocks - only real code exercising real functionality.
 from __future__ import annotations
 
 import pytest
+from flext_core import FlextResult
 
 from flext_ldif import (
     FlextLDIFAPI,
@@ -64,7 +65,7 @@ cn: User
 sn: Regular
 """
 
-        entries = FlextLDIFFormatHandler.parse_ldif(ldif_content).unwrap_or_raise()
+        entries = FlextResult.unwrap_or_raise(FlextLDIFFormatHandler.parse_ldif(ldif_content))
 
         assert len(entries) == 2
 
@@ -90,7 +91,7 @@ member: cn=John Doe,ou=people,dc=example,dc=com
 member: cn=Jane Smith,ou=people,dc=example,dc=com
 """
 
-        entries = FlextLDIFFormatHandler.parse_ldif(ldif_content).unwrap_or_raise()
+        entries = FlextResult.unwrap_or_raise(FlextLDIFFormatHandler.parse_ldif(ldif_content))
 
         assert len(entries) == 1
         group = entries[0]
@@ -113,7 +114,7 @@ ou: people
 description: All users in the organization
 """
 
-        entries = FlextLDIFFormatHandler.parse_ldif(ldif_content).unwrap_or_raise()
+        entries = FlextResult.unwrap_or_raise(FlextLDIFFormatHandler.parse_ldif(ldif_content))
 
         assert len(entries) == 1
         ou = entries[0]
@@ -131,10 +132,10 @@ cn: TestUser
 sn: User
 """
 
-        entries = FlextLDIFFormatHandler.parse_ldif(ldif_content).unwrap_or_raise()
+        entries = FlextResult.unwrap_or_raise(FlextLDIFFormatHandler.parse_ldif(ldif_content))
 
         # Test validation using convenience function
-        is_valid = FlextLDIFCore().validate_entries(entries).unwrap_or_raise()
+        is_valid = FlextResult.unwrap_or_raise(FlextLDIFCore().validate_entries(entries))
         assert is_valid is True
 
     def test_write_real_entries(self) -> None:
@@ -146,10 +147,10 @@ sn: Test
 """
 
         # Parse original
-        entries = FlextLDIFFormatHandler.parse_ldif(original_ldif).unwrap_or_raise()
+        entries = FlextResult.unwrap_or_raise(FlextLDIFFormatHandler.parse_ldif(original_ldif))
 
         # Write back to LDIF
-        written_ldif = FlextLDIFFormatHandler.write_ldif(entries).unwrap_or_raise()
+        written_ldif = FlextResult.unwrap_or_raise(FlextLDIFFormatHandler.write_ldif(entries))
 
         # Should contain the essential data
         assert "dn: cn=WriteTest,dc=example,dc=com" in written_ldif
@@ -158,9 +159,9 @@ sn: Test
         assert "sn: Test" in written_ldif
 
         # Parse the written LDIF to verify it's valid
-        reparsed_entries = FlextLDIFFormatHandler.parse_ldif(
+        reparsed_entries = FlextResult.unwrap_or_raise(FlextLDIFFormatHandler.parse_ldif(
             written_ldif
-        ).unwrap_or_raise()
+        ))
         assert len(reparsed_entries) == 1
         assert reparsed_entries[0].dn == entries[0].dn
 
@@ -228,7 +229,7 @@ description: System Administrators
 member: cn=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=example,dc=com
 """
 
-        entries = FlextLDIFFormatHandler.parse_ldif(complex_ldif).unwrap_or_raise()
+        entries = FlextResult.unwrap_or_raise(FlextLDIFFormatHandler.parse_ldif(complex_ldif))
 
         # Should have 5 entries
         assert len(entries) == 5
@@ -259,12 +260,12 @@ member: cn=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=example,dc=com
 
     def test_empty_ldif_content(self) -> None:
         """Test handling empty LDIF content."""
-        empty_entries = FlextLDIFFormatHandler.parse_ldif("").unwrap_or_raise()
+        empty_entries = FlextResult.unwrap_or_raise(FlextLDIFFormatHandler.parse_ldif(""))
         assert len(empty_entries) == 0
 
-        whitespace_entries = FlextLDIFFormatHandler.parse_ldif(
+        whitespace_entries = FlextResult.unwrap_or_raise(FlextLDIFFormatHandler.parse_ldif(
             "   \n\n   "
-        ).unwrap_or_raise()
+        ))
         assert len(whitespace_entries) == 0
 
     def test_invalid_ldif_raises_error(self) -> None:
@@ -274,7 +275,7 @@ objectClass: person
 """
 
         with pytest.raises(Exception):  # Should raise FlextLDIFParseError
-            FlextLDIFFormatHandler.parse_ldif(invalid_ldif).unwrap_or_raise()
+            FlextResult.unwrap_or_raise(FlextLDIFFormatHandler.parse_ldif(invalid_ldif))
 
     def test_roundtrip_consistency(self) -> None:
         """Test that parse -> write -> parse maintains data consistency."""
@@ -291,13 +292,13 @@ telephoneNumber: +1-555-999-8888
 """
 
         # First parse
-        entries1 = FlextLDIFFormatHandler.parse_ldif(original_ldif).unwrap_or_raise()
+        entries1 = FlextResult.unwrap_or_raise(FlextLDIFFormatHandler.parse_ldif(original_ldif))
 
         # Write to LDIF
-        written_ldif = FlextLDIFFormatHandler.write_ldif(entries1).unwrap_or_raise()
+        written_ldif = FlextResult.unwrap_or_raise(FlextLDIFFormatHandler.write_ldif(entries1))
 
         # Parse again
-        entries2 = FlextLDIFFormatHandler.parse_ldif(written_ldif).unwrap_or_raise()
+        entries2 = FlextResult.unwrap_or_raise(FlextLDIFFormatHandler.parse_ldif(written_ldif))
 
         # Should have same number of entries
         assert len(entries1) == len(entries2) == 1

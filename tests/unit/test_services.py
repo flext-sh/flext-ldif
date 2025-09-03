@@ -7,8 +7,6 @@ import pytest
 from flext_ldif import (
     FlextLDIFEntry,
     FlextLDIFParserService,
-    FlextLDIFRepositoryService,
-    FlextLDIFTransformerService,
     FlextLDIFValidatorService,
     FlextLDIFWriterService,
 )
@@ -30,16 +28,6 @@ class TestServices:
     def test_validator_service_initialization(self) -> None:
         """Test validator service can be initialized."""
         service = FlextLDIFValidatorService()
-        assert service is not None
-
-    def test_repository_service_initialization(self) -> None:
-        """Test repository service can be initialized."""
-        service = FlextLDIFRepositoryService()
-        assert service is not None
-
-    def test_transformer_service_initialization(self) -> None:
-        """Test transformer service can be initialized."""
-        service = FlextLDIFTransformerService()
         assert service is not None
 
 

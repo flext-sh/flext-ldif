@@ -531,12 +531,12 @@ if attrs.is_empty():
 
 ### Service Classes
 
-#### FlextLDIFParserService
+#### FlextLDIFServices.ParserService
 
 **Domain service for LDIF parsing operations**
 
 ```python
-from flext_ldif.services import FlextLDIFParserService
+from flext_ldif.services import FlextLDIFServices.ParserService
 from flext_ldif import FlextLDIFConfig
 
 # Configure parser
@@ -546,7 +546,7 @@ config = FlextLDIFConfig(
     input_encoding="utf-8"
 )
 
-parser = FlextLDIFParserService(config)
+parser = FlextLDIFServices.ParserService(config)
 ```
 
 **`parse(content: str | LDIFContent) -> FlextResult[list[FlextLDIFEntry]]`**
@@ -572,14 +572,14 @@ if result.is_success:
     print(f"Loaded {len(entries)} entries from file")
 ```
 
-#### FlextLDIFValidatorService
+#### FlextLDIFServices.ValidatorService
 
 **Domain service for LDIF validation**
 
 ```python
-from flext_ldif.services import FlextLDIFValidatorService
+from flext_ldif.services import FlextLDIFServices.ValidatorService
 
-validator = FlextLDIFValidatorService(config)
+validator = FlextLDIFServices.ValidatorService(config)
 ```
 
 **`validate(entries: list[FlextLDIFEntry]) -> FlextResult[bool]`**
@@ -601,14 +601,14 @@ for entry in entries:
         print(f"Entry {entry.dn.value}: {result.error}")
 ```
 
-#### FlextLDIFWriterService
+#### FlextLDIFServices.WriterService
 
 **Domain service for LDIF output generation**
 
 ```python
-from flext_ldif.services import FlextLDIFWriterService
+from flext_ldif.services import FlextLDIFServices.WriterService
 
-writer = FlextLDIFWriterService(config)
+writer = FlextLDIFServices.WriterService(config)
 ```
 
 **`write(entries: list[FlextLDIFEntry]) -> FlextResult[str]`**

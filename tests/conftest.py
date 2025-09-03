@@ -64,6 +64,13 @@ from flext_ldif import (
     FlextLDIFAPI,
     FlextLDIFParserService,
     FlextLDIFValidatorService,
+    FlextLDIFWriterService,
+)
+from tests.support import (
+    LdifTestData,
+    RealServiceFactory,
+    TestFileManager,
+    TestValidators,
 )
 
 # Try to import Docker fixtures - optional for testing without Docker
@@ -114,7 +121,7 @@ def set_test_environment() -> Generator[None]:
     os.environ.pop("FLEXT_LOG_LEVEL", None)
 
 
-# LDIF processing fixtures
+# LDIF processing fixtures - optimized with real services
 @pytest.fixture
 def ldif_processor_config() -> dict[str, object]:
     """LDIF processor configuration for testing."""
@@ -128,6 +135,43 @@ def ldif_processor_config() -> dict[str, object]:
 
 
 @pytest.fixture
+def real_ldif_api() -> FlextLDIFAPI:
+    """Real LDIF API instance for functional testing."""
+    return RealServiceFactory.create_api()
+
+
+@pytest.fixture
+def strict_ldif_api() -> FlextLDIFAPI:
+    """Strict LDIF API for validation testing."""
+    return RealServiceFactory.create_strict_api()
+
+
+@pytest.fixture
+def lenient_ldif_api() -> FlextLDIFAPI:
+    """Lenient LDIF API for error recovery testing."""
+    return RealServiceFactory.create_lenient_api()
+
+
+@pytest.fixture
+def ldif_test_data() -> LdifTestData:
+    """LDIF test data provider."""
+    return LdifTestData()
+
+
+@pytest.fixture
+def test_file_manager() -> Generator[TestFileManager]:
+    """Test file manager with automatic cleanup."""
+    with TestFileManager() as manager:
+        yield manager
+
+
+@pytest.fixture
+def test_validators() -> TestValidators:
+    """Test validators for comprehensive validation."""
+    return TestValidators()
+
+
+@pytest.fixture
 def test_ldif_dir() -> Generator[Path]:
     """Temporary directory for LDIF test files."""
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -136,85 +180,28 @@ def test_ldif_dir() -> Generator[Path]:
         yield ldif_dir
 
 
-# Sample LDIF data fixtures
+# Sample LDIF data fixtures - using real test data
 @pytest.fixture
-def sample_ldif_entries() -> str:
+def sample_ldif_entries(ldif_test_data: LdifTestData) -> str:
     """Sample LDIF entries for testing."""
-    return """dn: uid=john.doe,ou=people,dc=example,dc=com
-objectClass: inetOrgPerson
-objectClass: organizationalPerson
-objectClass: person
-objectClass: top
-uid: john.doe
-cn: John Doe
-sn: Doe
-givenName: John
-mail: john.doe@example.com
-telephoneNumber: +1 555 123 4567
-employeeNumber: 12345
-departmentNumber: IT
-title: Software Engineer
-
-dn: uid=jane.smith,ou=people,dc=example,dc=com
-objectClass: inetOrgPerson
-objectClass: organizationalPerson
-objectClass: person
-objectClass: top
-uid: jane.smith
-cn: Jane Smith
-sn: Smith
-givenName: Jane
-mail: jane.smith@example.com
-telephoneNumber: +1 555 234 5678
-employeeNumber: 23456
-departmentNumber: HR
-title: HR Manager
-
-dn: cn=IT Department,ou=groups,dc=example,dc=com
-objectClass: groupOfNames
-objectClass: top
-cn: IT Department
-description: Information Technology Department
-member: uid=john.doe,ou=people,dc=example,dc=com
-
-dn: cn=HR Department,ou=groups,dc=example,dc=com
-objectClass: groupOfNames
-objectClass: top
-cn: HR Department
-description: Human Resources Department
-member: uid=jane.smith,ou=people,dc=example,dc=com"""
+    return ldif_test_data.basic_entries().content
 
 
 @pytest.fixture
-def sample_ldif_with_changes() -> str:
+def sample_ldif_with_changes(ldif_test_data: LdifTestData) -> str:
     """Sample LDIF with change records for testing."""
-    return """dn: uid=john.doe,ou=people,dc=example,dc=com
-changetype: modify
-replace: mail
-mail: john.doe.new@example.com
--
-replace: telephoneNumber
-telephoneNumber: +1 555 999 8888
-
-dn: uid=new.user,ou=people,dc=example,dc=com
-changetype: add
-objectClass: inetOrgPerson
-objectClass: organizationalPerson
-objectClass: person
-objectClass: top
-uid: new.user
-cn: New User
-sn: User
-givenName: New
-mail: new.user@example.com
-
-dn: uid=old.user,ou=people,dc=example,dc=com
-changetype: delete"""
+    return ldif_test_data.with_changes().content
 
 
 @pytest.fixture
-def sample_ldif_with_binary() -> str:
+def sample_ldif_with_binary(ldif_test_data: LdifTestData) -> str:
     """Sample LDIF with binary data for testing."""
+    return ldif_test_data.with_binary_data().content
+
+
+@pytest.fixture
+def sample_ldif_with_binary_old() -> str:
+    """Sample LDIF with binary data for testing - old version."""
     return """dn: uid=user.photo,ou=people,dc=example,dc=com
 objectClass: inetOrgPerson
 objectClass: organizationalPerson
@@ -256,14 +243,36 @@ def ldif_binary_file(test_ldif_dir: Path, sample_ldif_with_binary: str) -> Path:
     return ldif_file
 
 
-# LDIF parsing fixtures
+# Real service fixtures for functional testing
 @pytest.fixture
-def ldif_api() -> FlextLDIFAPI:
-    """Provide a LDIF API for testing."""
-    return FlextLDIFAPI()
+def real_parser_service() -> FlextLDIFParserService:
+    """Real parser service for functional testing."""
+    return RealServiceFactory.create_parser()
 
 
-# Removed unused ldif_core fixture - use api fixture instead
+@pytest.fixture
+def real_validator_service() -> FlextLDIFValidatorService:
+    """Real validator service for functional testing."""
+    return RealServiceFactory.create_validator()
+
+
+@pytest.fixture
+def real_writer_service() -> FlextLDIFWriterService:
+    """Real writer service for functional testing."""
+    return RealServiceFactory.create_writer()
+
+
+@pytest.fixture
+def integration_services() -> dict[str, object]:
+    """Complete service set for integration testing."""
+    return RealServiceFactory.services_for_integration_test()
+
+
+# Legacy fixture for backward compatibility
+@pytest.fixture
+def ldif_api(real_ldif_api: FlextLDIFAPI) -> FlextLDIFAPI:
+    """Backward compatibility fixture."""
+    return real_ldif_api
 
 
 # Schema validation fixtures
@@ -399,22 +408,3 @@ def pytest_configure(config: pytest.Config) -> None:
         "docker: Tests requiring Docker OpenLDAP container",
     )
     config.addinivalue_line("markers", "real_ldap: Tests using real LDAP server")
-
-
-# Real service fixtures for functional testing
-@pytest.fixture
-def real_ldif_service() -> object:
-    """Real LDIF service for functional testing."""
-    return FlextLDIFAPI()
-
-
-@pytest.fixture
-def real_parser_service() -> object:
-    """Real parser service for functional testing."""
-    return FlextLDIFParserService()
-
-
-@pytest.fixture
-def real_validator_service() -> object:
-    """Real validator service for functional testing."""
-    return FlextLDIFValidatorService()

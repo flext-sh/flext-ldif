@@ -174,17 +174,17 @@ if large_file_result.is_success:
 
 ```python
 from flext_ldif.services import (
-    FlextLDIFParserService,
-    FlextLDIFValidatorService,
-    FlextLDIFWriterService
+    FlextLDIFServices.ParserService,
+    FlextLDIFServices.ValidatorService,
+    FlextLDIFServices.WriterService
 )
 
 # Use individual services for fine-grained control
 config = FlextLDIFConfig(strict_validation=True)
 
-parser = FlextLDIFParserService(config)
-validator = FlextLDIFValidatorService(config)
-writer = FlextLDIFWriterService(config)
+parser = FlextLDIFServices.ParserService(config)
+validator = FlextLDIFServices.ValidatorService(config)
+writer = FlextLDIFServices.WriterService(config)
 
 # Parse with service
 parse_result = parser.parse(ldif_content)

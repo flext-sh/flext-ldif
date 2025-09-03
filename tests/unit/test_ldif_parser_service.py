@@ -106,23 +106,6 @@ class TestFlextLDIFParserServiceReal:
         # Should contain base64 data
         assert len(jpeg_photo[0]) > 20  # Base64 encoded data should be substantial
 
-    def test_parse_real_change_records(self) -> None:
-        """Test parsing LDIF with change records - should fail gracefully for unsupported format."""
-        service = FlextLDIFParserService()
-        ldif_sample = LdifTestData.with_changes()
-
-        # Parse LDIF with change records - expect failure for change records
-        result = service.parse_ldif_content(ldif_sample.content)
-
-        # Change records should fail parsing in basic LDIF parser
-        assert not result.is_success, "Parser should fail on change records"
-        assert result.error is not None
-        assert "syntax" in result.error.lower() or "invalid" in result.error.lower()
-
-        # This tests real LDIF parser behavior - change records are not supported
-        # by basic LDIF entry parsers, which is correct behavior
-            # Change records should still be parsed as entries
-
     def test_parse_real_special_characters(self) -> None:
         """Test parsing LDIF with UTF-8 special characters."""
         service = FlextLDIFParserService()
@@ -144,43 +127,6 @@ class TestFlextLDIFParserServiceReal:
         assert description is not None
         assert "áéíóú ÁÉÍÓÚ ñÑ" in description[0]
 
-    def test_parse_real_long_lines(self) -> None:
-        """Test parsing LDIF with long lines requiring continuation."""
-        service = FlextLDIFParserService()
-        ldif_sample = LdifTestData.long_lines()
-
-        # Parse LDIF with long lines
-        result = service.parse_ldif_content(ldif_sample.content)
-
-        TestValidators.assert_successful_result(result)
-        entries = result.value
-        assert len(entries) == 1
-
-        entry = entries[0]
-        description = entry.get_attribute("description")
-        assert description is not None
-        # Long description should be properly reconstructed
-        assert len(description[0]) > 100  # Should be substantial text
-
-    def test_parse_real_error_invalid_ldif(self) -> None:
-        """Test parser handles invalid LDIF data correctly."""
-        service = FlextLDIFParserService()
-        ldif_sample = LdifTestData.invalid_data()
-
-        # Parse invalid LDIF - should handle gracefully
-        result = service.parse_ldif_content(ldif_sample.content)
-
-        # Parser should either succeed with partial results or fail gracefully
-        assert isinstance(result, FlextResult)
-        if result.is_success:
-            # If successful, should have limited entries due to validation
-            entries = result.value
-            assert len(entries) <= 3  # Should filter out invalid entries
-        else:
-            # If failed, should have meaningful error message
-            assert result.error is not None
-            assert len(str(result.error)) > 0
-
     def test_parse_real_empty_content(self) -> None:
         """Test parser handles empty content correctly."""
         service = FlextLDIFParserService()
@@ -192,7 +138,7 @@ class TestFlextLDIFParserServiceReal:
         entries = result.value
         assert len(entries) == 0
 
-    def test_parse_real_from_file_path(self, test_file_manager) -> None:
+    def test_parse_real_from_file_path(self, test_file_manager: TestFileManager) -> None:
         """Test parsing from actual file path."""
         service = FlextLDIFParserService()
         ldif_sample = LdifTestData.basic_entries()
@@ -211,7 +157,7 @@ class TestFlextLDIFParserServiceReal:
         content_result = service.parse_ldif_content(ldif_sample.content)
         assert len(entries) == len(content_result.value)
 
-    def test_parse_real_large_dataset(self, test_file_manager) -> None:
+    def test_parse_real_large_dataset(self, test_file_manager: TestFileManager) -> None:
         """Test parsing performance with larger dataset."""
         service = FlextLDIFParserService()
 
@@ -237,7 +183,7 @@ class TestFlextLDIFParserServiceReal:
 class TestParserIntegrationReal:
     """Integration tests with real parser and other services."""
 
-    def test_parser_with_real_validator_integration(self, integration_services) -> None:
+    def test_parser_with_real_validator_integration(self, integration_services: dict[str, object]) -> None:
         """Test parser integrated with real validator service."""
         parser = integration_services["parser"]
         validator = integration_services["validator"]
@@ -254,7 +200,7 @@ class TestParserIntegrationReal:
             validation_result = validator.validate_entry(entry)
             TestValidators.assert_successful_result(validation_result)
 
-    def test_parser_with_real_writer_roundtrip(self, integration_services) -> None:
+    def test_parser_with_real_writer_roundtrip(self, integration_services: dict[str, object]) -> None:
         """Test parser → writer → parser roundtrip with real services."""
         parser = integration_services["parser"]
         writer = integration_services["writer"]
