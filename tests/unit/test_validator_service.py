@@ -1,30 +1,29 @@
-"""Tests for FlextLDIFValidatorService - comprehensive coverage."""
+"""Tests for FlextLDIFServices.ValidatorService - comprehensive coverage."""
 
 # ruff: noqa: PT018
 # Reason: Multiple assertion checks are common in tests for comprehensive error validation
 
-from flext_ldif import FlextLDIFValidatorService
-from flext_ldif.models import FlextLDIFConfig, FlextLDIFEntry
+from flext_ldif import FlextLDIFModels, FlextLDIFServices
 
 
-class TestFlextLDIFValidatorService:
+class TestFlextLDIFServicesValidatorService:
     """Test validator service functionality."""
 
     def test_service_initialization(self) -> None:
         """Test service can be initialized."""
-        service = FlextLDIFValidatorService()
+        service = FlextLDIFServices.ValidatorService()
         assert service.config is None
 
     def test_service_initialization_with_config(self) -> None:
         """Test service can be initialized with custom config."""
-        config = FlextLDIFConfig(strict_validation=True)
-        service = FlextLDIFValidatorService(config=config)
+        config = FlextLDIFModels.Config(strict_validation=True)
+        service = FlextLDIFServices.ValidatorService(config=config)
         assert service.config is not None
         assert service.config.strict_validation is True
 
     def test_execute_no_config(self) -> None:
         """Test execute method with no config."""
-        service = FlextLDIFValidatorService()
+        service = FlextLDIFServices.ValidatorService()
         result = service.execute()
 
         assert result.is_success
@@ -32,8 +31,8 @@ class TestFlextLDIFValidatorService:
 
     def test_execute_valid_config(self) -> None:
         """Test execute method with valid config."""
-        config = FlextLDIFConfig(strict_validation=True)
-        service = FlextLDIFValidatorService(config=config)
+        config = FlextLDIFModels.Config(strict_validation=True)
+        service = FlextLDIFServices.ValidatorService(config=config)
 
         result = service.execute()
 
@@ -46,12 +45,12 @@ class TestFlextLDIFValidatorService:
         from flext_ldif.models import FlextLDIFAttributes, FlextLDIFDistinguishedName
 
         # Create an entry with empty DN which should fail validation
-        invalid_entry = FlextLDIFEntry(
+        invalid_entry = FlextLDIFModels.Entry(
             dn=FlextLDIFDistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLDIFAttributes(data={}),  # Empty attributes should fail
         )
 
-        service = FlextLDIFValidatorService(entries=[invalid_entry])
+        service = FlextLDIFServices.ValidatorService(entries=[invalid_entry])
         result = service.execute()
 
         # The service should handle validation errors and return success/failure appropriately
@@ -62,9 +61,9 @@ class TestFlextLDIFValidatorService:
 
     def test_validate_data(self) -> None:
         """Test validate_data method delegates to validate_entries."""
-        service = FlextLDIFValidatorService()
+        service = FlextLDIFServices.ValidatorService()
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "cn=test,dc=example,dc=com",
                     "attributes": {"cn": ["test"], "objectClass": ["person"]},
@@ -79,8 +78,8 @@ class TestFlextLDIFValidatorService:
 
     def test_validate_entry_success(self) -> None:
         """Test successful validation of single entry."""
-        service = FlextLDIFValidatorService()
-        entry = FlextLDIFEntry.model_validate(
+        service = FlextLDIFServices.ValidatorService()
+        entry = FlextLDIFModels.Entry.model_validate(
             {
                 "dn": "cn=John Doe,ou=people,dc=example,dc=com",
                 "attributes": {
@@ -98,7 +97,7 @@ class TestFlextLDIFValidatorService:
 
     def test_validate_entry_business_rules_failure(self) -> None:
         """Test validate_entry when DN validation fails (business rule failure)."""
-        service = FlextLDIFValidatorService()
+        service = FlextLDIFServices.ValidatorService()
 
         # Test that service handles validation errors properly
         # Try to create an entry that will cause business rule validation issues
@@ -107,7 +106,7 @@ class TestFlextLDIFValidatorService:
 
         try:
             # Try to create entry with empty DN - this should fail during creation
-            invalid_entry = FlextLDIFEntry(
+            invalid_entry = FlextLDIFModels.Entry(
                 dn=FlextLDIFDistinguishedName(value=""),  # Empty DN should fail
                 attributes=FlextLDIFAttributes(data={"cn": ["test"]}),
             )
@@ -123,8 +122,8 @@ class TestFlextLDIFValidatorService:
 
     def test_validate_configuration_rules_no_config(self) -> None:
         """Test configuration rules validation with no config."""
-        service = FlextLDIFValidatorService()
-        entry = FlextLDIFEntry.model_validate(
+        service = FlextLDIFServices.ValidatorService()
+        entry = FlextLDIFModels.Entry.model_validate(
             {
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {"cn": ["test"], "objectClass": ["person"]},
@@ -138,9 +137,9 @@ class TestFlextLDIFValidatorService:
 
     def test_validate_configuration_rules_non_strict(self) -> None:
         """Test configuration rules validation with non-strict config."""
-        config = FlextLDIFConfig(strict_validation=False)
-        service = FlextLDIFValidatorService(config=config)
-        entry = FlextLDIFEntry.model_validate(
+        config = FlextLDIFModels.Config(strict_validation=False)
+        service = FlextLDIFServices.ValidatorService(config=config)
+        entry = FlextLDIFModels.Entry.model_validate(
             {
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {"cn": ["test"], "objectClass": ["person"]},
@@ -154,9 +153,9 @@ class TestFlextLDIFValidatorService:
 
     def test_validate_configuration_rules_strict_valid(self) -> None:
         """Test configuration rules validation with strict config and valid entry."""
-        config = FlextLDIFConfig(strict_validation=True, allow_empty_values=False)
-        service = FlextLDIFValidatorService(config=config)
-        entry = FlextLDIFEntry.model_validate(
+        config = FlextLDIFModels.Config(strict_validation=True, allow_empty_values=False)
+        service = FlextLDIFServices.ValidatorService(config=config)
+        entry = FlextLDIFModels.Entry.model_validate(
             {
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {
@@ -174,13 +173,13 @@ class TestFlextLDIFValidatorService:
 
     def test_validate_configuration_rules_empty_attribute_list(self) -> None:
         """Test configuration rules validation with empty attribute list."""
-        config = FlextLDIFConfig(strict_validation=True, allow_empty_values=False)
-        service = FlextLDIFValidatorService(config=config)
+        config = FlextLDIFModels.Config(strict_validation=True, allow_empty_values=False)
+        service = FlextLDIFServices.ValidatorService(config=config)
 
         # Create real entry with empty attribute values
         from flext_ldif.models import FlextLDIFAttributes, FlextLDIFDistinguishedName
 
-        entry = FlextLDIFEntry(
+        entry = FlextLDIFModels.Entry(
             dn=FlextLDIFDistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLDIFAttributes(data={"cn": []}),  # Empty list
         )
@@ -194,13 +193,13 @@ class TestFlextLDIFValidatorService:
 
     def test_validate_configuration_rules_empty_string_value(self) -> None:
         """Test configuration rules validation with empty string value."""
-        config = FlextLDIFConfig(strict_validation=True, allow_empty_values=False)
-        service = FlextLDIFValidatorService(config=config)
+        config = FlextLDIFModels.Config(strict_validation=True, allow_empty_values=False)
+        service = FlextLDIFServices.ValidatorService(config=config)
 
         # Create real entry with empty string value
         from flext_ldif.models import FlextLDIFAttributes, FlextLDIFDistinguishedName
 
-        entry = FlextLDIFEntry(
+        entry = FlextLDIFModels.Entry(
             dn=FlextLDIFDistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLDIFAttributes(
                 data={"cn": ["", "valid"]}
@@ -219,13 +218,13 @@ class TestFlextLDIFValidatorService:
 
     def test_validate_configuration_rules_whitespace_only_value(self) -> None:
         """Test configuration rules validation with whitespace-only value."""
-        config = FlextLDIFConfig(strict_validation=True, allow_empty_values=False)
-        service = FlextLDIFValidatorService(config=config)
+        config = FlextLDIFModels.Config(strict_validation=True, allow_empty_values=False)
+        service = FlextLDIFServices.ValidatorService(config=config)
 
         # Create real entry with whitespace-only value
         from flext_ldif.models import FlextLDIFAttributes, FlextLDIFDistinguishedName
 
-        entry = FlextLDIFEntry(
+        entry = FlextLDIFModels.Entry(
             dn=FlextLDIFDistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLDIFAttributes(
                 data={"cn": ["   ", "valid"]}
@@ -245,15 +244,15 @@ class TestFlextLDIFValidatorService:
 
     def test_validate_ldif_entries(self) -> None:
         """Test validate_ldif_entries delegates to validate_entries."""
-        service = FlextLDIFValidatorService()
+        service = FlextLDIFServices.ValidatorService()
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "cn=test1,dc=example,dc=com",
                     "attributes": {"cn": ["test1"], "objectClass": ["person"]},
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "cn=test2,dc=example,dc=com",
                     "attributes": {"cn": ["test2"], "objectClass": ["person"]},
@@ -268,7 +267,7 @@ class TestFlextLDIFValidatorService:
 
     def test_validate_entries_empty_list(self) -> None:
         """Test validate_entries with empty list."""
-        service = FlextLDIFValidatorService()
+        service = FlextLDIFServices.ValidatorService()
 
         result = service.validate_entries([])
 
@@ -277,9 +276,9 @@ class TestFlextLDIFValidatorService:
 
     def test_validate_entries_single_valid_entry(self) -> None:
         """Test validate_entries with single valid entry."""
-        service = FlextLDIFValidatorService()
+        service = FlextLDIFServices.ValidatorService()
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "cn=test,dc=example,dc=com",
                     "attributes": {"cn": ["test"], "objectClass": ["person"]},
@@ -294,21 +293,21 @@ class TestFlextLDIFValidatorService:
 
     def test_validate_entries_multiple_valid_entries(self) -> None:
         """Test validate_entries with multiple valid entries."""
-        service = FlextLDIFValidatorService()
+        service = FlextLDIFServices.ValidatorService()
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "cn=test1,dc=example,dc=com",
                     "attributes": {"cn": ["test1"], "objectClass": ["person"]},
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "cn=test2,dc=example,dc=com",
                     "attributes": {"cn": ["test2"], "objectClass": ["person"]},
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "ou=people,dc=example,dc=com",
                     "attributes": {
@@ -326,10 +325,10 @@ class TestFlextLDIFValidatorService:
 
     def test_validate_entries_with_failure(self) -> None:
         """Test validate_entries with one failing entry."""
-        service = FlextLDIFValidatorService()
+        service = FlextLDIFServices.ValidatorService()
 
         # Create mix of valid entry and mock failing entry
-        valid_entry = FlextLDIFEntry.model_validate(
+        valid_entry = FlextLDIFModels.Entry.model_validate(
             {
                 "dn": "cn=valid,dc=example,dc=com",
                 "attributes": {"cn": ["valid"], "objectClass": ["person"]},
@@ -339,7 +338,7 @@ class TestFlextLDIFValidatorService:
         # Create invalid entry using real models that will fail validation
         from flext_ldif.models import FlextLDIFAttributes, FlextLDIFDistinguishedName
 
-        invalid_entry = FlextLDIFEntry(
+        invalid_entry = FlextLDIFModels.Entry(
             dn=FlextLDIFDistinguishedName(value="cn=invalid,dc=example,dc=com"),
             attributes=FlextLDIFAttributes(
                 data={}
@@ -359,7 +358,7 @@ class TestFlextLDIFValidatorService:
 
     def test_validate_dn_format_success(self) -> None:
         """Test validate_dn_format with valid DN using REAL flext-core validation."""
-        service = FlextLDIFValidatorService()
+        service = FlextLDIFServices.ValidatorService()
 
         # REAL test with valid DN - no mocks needed
         result = service.validate_dn_format("cn=test,dc=example,dc=com")
@@ -369,7 +368,7 @@ class TestFlextLDIFValidatorService:
 
     def test_validate_dn_format_failure(self) -> None:
         """Test validate_dn_format with invalid DN using REAL flext-core validation."""
-        service = FlextLDIFValidatorService()
+        service = FlextLDIFServices.ValidatorService()
 
         # REAL test with invalid DN - no mocks needed
         result = service.validate_dn_format("")
@@ -379,7 +378,7 @@ class TestFlextLDIFValidatorService:
 
     def test_validate_entries_first_entry_fails(self) -> None:
         """Test validate_entries when first entry fails."""
-        service = FlextLDIFValidatorService()
+        service = FlextLDIFServices.ValidatorService()
 
         # Test validation with real entries - some might fail validation during creation
         from flext_ldif.exceptions import FlextLDIFExceptions
@@ -387,7 +386,7 @@ class TestFlextLDIFValidatorService:
 
         try:
             # Try to create entry with empty DN - this might fail during creation
-            invalid_entry = FlextLDIFEntry(
+            invalid_entry = FlextLDIFModels.Entry(
                 dn=FlextLDIFDistinguishedName(value=""),  # Empty DN might fail
                 attributes=FlextLDIFAttributes(data={}),  # Empty attributes might fail
             )
@@ -405,7 +404,7 @@ class TestFlextLDIFValidatorService:
             # Expected behavior - validation fails during creation
             # This demonstrates that real validation is working
             # Let's test with a valid entry instead to test the service behavior
-            valid_entry = FlextLDIFEntry.model_validate(
+            valid_entry = FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "cn=test,dc=example,dc=com",
                     "attributes": {"cn": ["test"], "objectClass": ["person"]},
@@ -416,13 +415,13 @@ class TestFlextLDIFValidatorService:
 
     def test_configuration_rules_allow_empty_values_true(self) -> None:
         """Test configuration rules when allow_empty_values is True."""
-        config = FlextLDIFConfig(strict_validation=True, allow_empty_values=True)
-        service = FlextLDIFValidatorService(config=config)
+        config = FlextLDIFModels.Config(strict_validation=True, allow_empty_values=True)
+        service = FlextLDIFServices.ValidatorService(config=config)
 
         # Create real entry with empty values - should pass when allow_empty_values=True
         from flext_ldif.models import FlextLDIFAttributes, FlextLDIFDistinguishedName
 
-        entry = FlextLDIFEntry(
+        entry = FlextLDIFModels.Entry(
             dn=FlextLDIFDistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLDIFAttributes(data={"cn": []}),  # Empty list
         )
@@ -446,7 +445,7 @@ class TestFlextLDIFValidatorService:
 
         # Test that we can still create and use the service
         # This shows the exception handling path works
-        service = FlextLDIFValidatorService()
+        service = FlextLDIFServices.ValidatorService()
         assert service is not None
 
         # The fact that we can instantiate the service shows that

@@ -4,7 +4,7 @@
 # Reason: Multiple assertion checks are common in tests for comprehensive error validation
 
 # pyright: reportArgumentType=false
-# Reason: FlextLDIFEntry accepts dict[str, list[str]] via field validator mode="before" but pyright doesn't understand this
+# Reason: FlextLDIFModels.Entry accepts dict[str, list[str]] via field validator mode="before" but pyright doesn't understand this
 
 from flext_ldif.format_validators import (
     FlextLDIFFormatValidator,

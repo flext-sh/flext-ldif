@@ -2,20 +2,20 @@
 
 from __future__ import annotations
 
-from flext_ldif import FlextLDIFConfig
+from flext_ldif import FlextLDIFModels
 
 
-class TestFlextLDIFConfig:
+class TestFlextLDIFModelsConfig:
     """Test configuration functionality."""
 
     def test_config_initialization_default(self) -> None:
         """Test config initialization with default values."""
-        config = FlextLDIFConfig()
+        config = FlextLDIFModels.Config()
         assert config is not None
 
     def test_config_initialization_with_params(self) -> None:
         """Test config initialization with custom parameters."""
-        config = FlextLDIFConfig(
+        config = FlextLDIFModels.Config(
             max_entries=1000,
             strict_validation=True,
             sort_attributes=False,
@@ -27,19 +27,19 @@ class TestFlextLDIFConfig:
     def test_config_validation(self) -> None:
         """Test config validation."""
         # Test valid config
-        config = FlextLDIFConfig(max_entries=100)
+        config = FlextLDIFModels.Config(max_entries=100)
         assert config.max_entries == 100
 
         # Test boundary values are accepted
-        config_zero = FlextLDIFConfig(max_entries=1)
+        config_zero = FlextLDIFModels.Config(max_entries=1)
         assert config_zero.max_entries == 1
 
-        config_large = FlextLDIFConfig(max_entries=100000)
+        config_large = FlextLDIFModels.Config(max_entries=100000)
         assert config_large.max_entries == 100000
 
     def test_config_properties(self) -> None:
         """Test config properties are accessible."""
-        config = FlextLDIFConfig()
+        config = FlextLDIFModels.Config()
 
         # Test that properties exist and have reasonable defaults
         assert hasattr(config, "max_entries")

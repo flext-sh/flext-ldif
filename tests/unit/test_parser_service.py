@@ -1,4 +1,4 @@
-"""Tests for FlextLDIFParserService - Real functionality testing without mocks.
+"""Tests for FlextLDIFServices.ParserService - Real functionality testing without mocks.
 
 Comprehensive tests using actual LDIF data and real service functionality.
 No mocks, bypasses, or fake implementations - only real LDIF processing.
@@ -8,23 +8,22 @@ from __future__ import annotations
 
 from flext_core import FlextResult
 
-from flext_ldif import FlextLDIFParserService
-from flext_ldif.models import FlextLDIFConfig, FlextLDIFEntry
+from flext_ldif import FlextLDIFModels, FlextLDIFServices
 from tests.support import LdifTestData, TestValidators
 
 
-class TestFlextLDIFParserServiceReal:
-    """Test FlextLDIFParserService with real functionality - no mocks."""
+class TestFlextLDIFServicesParserServiceReal:
+    """Test FlextLDIFServices.ParserService with real functionality - no mocks."""
 
     def test_service_initialization_real_config(self) -> None:
         """Test service initializes with real configuration."""
-        config = FlextLDIFConfig(
+        config = FlextLDIFModels.Config(
             encoding="utf-8",
             strict_parsing=True,
             validate_dn=True,
             max_entries=1000,
         )
-        service = FlextLDIFParserService(config=config)
+        service = FlextLDIFServices.ParserService(config=config)
 
         # Validate service has real configuration
         assert service.config is not None
@@ -35,7 +34,7 @@ class TestFlextLDIFParserServiceReal:
 
     def test_service_initialization_default_config(self) -> None:
         """Test service works with default configuration."""
-        service = FlextLDIFParserService()
+        service = FlextLDIFServices.ParserService()
 
         # Even without explicit config, service should work
         result = service.execute()
@@ -44,7 +43,7 @@ class TestFlextLDIFParserServiceReal:
 
     def test_parse_real_basic_ldif_entries(self) -> None:
         """Test parsing real LDIF entries with actual data."""
-        service = FlextLDIFParserService()
+        service = FlextLDIFServices.ParserService()
         ldif_sample = LdifTestData.basic_entries()
 
         # Parse real LDIF content
@@ -58,13 +57,13 @@ class TestFlextLDIFParserServiceReal:
         # Validate each entry is real and complete
         for entry in entries:
             TestValidators.assert_valid_ldif_entry(entry)
-            assert isinstance(entry, FlextLDIFEntry)
+            assert isinstance(entry, FlextLDIFModels.Entry)
             assert entry.dn is not None
             assert len(entry.attributes) > 0
 
     def test_parse_real_multi_valued_attributes(self) -> None:
         """Test parsing LDIF with multi-valued attributes."""
-        service = FlextLDIFParserService()
+        service = FlextLDIFServices.ParserService()
         ldif_sample = LdifTestData.multi_valued_attributes()
 
         # Parse LDIF with multi-valued attributes
@@ -88,7 +87,7 @@ class TestFlextLDIFParserServiceReal:
 
     def test_parse_real_binary_data(self) -> None:
         """Test parsing LDIF with binary (base64) data."""
-        service = FlextLDIFParserService()
+        service = FlextLDIFServices.ParserService()
         ldif_sample = LdifTestData.with_binary_data()
 
         # Parse LDIF with binary data
@@ -108,7 +107,7 @@ class TestFlextLDIFParserServiceReal:
 
     def test_parse_real_change_records(self) -> None:
         """Test parsing LDIF with change records - should fail gracefully for unsupported format."""
-        service = FlextLDIFParserService()
+        service = FlextLDIFServices.ParserService()
         ldif_sample = LdifTestData.with_changes()
 
         # Parse LDIF with change records - expect failure for change records
@@ -125,7 +124,7 @@ class TestFlextLDIFParserServiceReal:
 
     def test_parse_real_special_characters(self) -> None:
         """Test parsing LDIF with UTF-8 special characters."""
-        service = FlextLDIFParserService()
+        service = FlextLDIFServices.ParserService()
         ldif_sample = LdifTestData.special_characters()
 
         # Parse LDIF with special characters
@@ -146,7 +145,7 @@ class TestFlextLDIFParserServiceReal:
 
     def test_parse_real_long_lines(self) -> None:
         """Test parsing LDIF with long lines requiring continuation."""
-        service = FlextLDIFParserService()
+        service = FlextLDIFServices.ParserService()
         ldif_sample = LdifTestData.long_lines()
 
         # Parse LDIF with long lines
@@ -164,7 +163,7 @@ class TestFlextLDIFParserServiceReal:
 
     def test_parse_real_error_invalid_ldif(self) -> None:
         """Test parser handles invalid LDIF data correctly."""
-        service = FlextLDIFParserService()
+        service = FlextLDIFServices.ParserService()
         ldif_sample = LdifTestData.invalid_data()
 
         # Parse invalid LDIF - should handle gracefully
@@ -183,7 +182,7 @@ class TestFlextLDIFParserServiceReal:
 
     def test_parse_real_empty_content(self) -> None:
         """Test parser handles empty content correctly."""
-        service = FlextLDIFParserService()
+        service = FlextLDIFServices.ParserService()
 
         # Parse empty content
         result = service.parse_ldif_content("")
@@ -194,7 +193,7 @@ class TestFlextLDIFParserServiceReal:
 
     def test_parse_real_from_file_path(self, test_file_manager) -> None:
         """Test parsing from actual file path."""
-        service = FlextLDIFParserService()
+        service = FlextLDIFServices.ParserService()
         ldif_sample = LdifTestData.basic_entries()
 
         # Create real file with LDIF content
@@ -213,7 +212,7 @@ class TestFlextLDIFParserServiceReal:
 
     def test_parse_real_large_dataset(self, test_file_manager) -> None:
         """Test parsing performance with larger dataset."""
-        service = FlextLDIFParserService()
+        service = FlextLDIFServices.ParserService()
 
         # Create larger dataset for performance testing
         ldif_sample = LdifTestData.large_dataset(50)  # 50 entries

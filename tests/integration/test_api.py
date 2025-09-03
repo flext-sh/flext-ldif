@@ -9,8 +9,7 @@ import pytest
 
 from flext_ldif import (
     FlextLDIFAPI,
-    FlextLDIFConfig,
-    FlextLDIFEntry,
+    FlextLDIFModels,
 )
 
 
@@ -20,7 +19,7 @@ class TestAdvancedAPIFeatures:
     @pytest.fixture
     def api_with_config(self) -> FlextLDIFAPI:
         """Create API with custom configuration."""
-        config = FlextLDIFConfig(
+        config = FlextLDIFModels.Config(
             max_entries=100,
             strict_validation=True,
             sort_attributes=True,
@@ -30,9 +29,9 @@ class TestAdvancedAPIFeatures:
     def test_api_with_large_entries(self, api_with_config: FlextLDIFAPI) -> None:
         """Test API with large number of entries."""
         # Generate large LDIF content
-        entries: list[FlextLDIFEntry] = []
+        entries: list[FlextLDIFModels.Entry] = []
         for i in range(50):
-            entry = FlextLDIFEntry.model_validate(
+            entry = FlextLDIFModels.Entry.model_validate(
                 {
                     "id": f"user-{i:03d}",
                     "dn": f"cn=user{i:03d},ou=people,dc=example,dc=com",

@@ -4,21 +4,12 @@ from __future__ import annotations
 
 from flext_ldif import (
     FlextLDIFAPI,
-    FlextLDIFAttributes,
-    FlextLDIFConfig,
-    # main,  # Disabled due to flext-cli issues
+    FlextLDIFModels,
     FlextLDIFCore,
-    FlextLDIFDistinguishedName,
-    FlextLDIFEntry,
-    FlextLDIFEntryError,
-    FlextLDIFError,
-    FlextLDIFFactory,
+    FlextLDIFServices,
     FlextLDIFFormatHandler,
     FlextLDIFFormatValidator,
-    FlextLDIFParseError,
-    FlextLDIFServices,
     FlextLDIFUtilities,
-    FlextLDIFValidationError,
     __version__,
 )
 
@@ -29,17 +20,11 @@ class TestModuleImports:
     def test_main_imports(self) -> None:
         """Test main module imports work correctly."""
         assert FlextLDIFAPI is not None
-        assert FlextLDIFConfig is not None
-
-        assert FlextLDIFAttributes is not None
-        assert FlextLDIFDistinguishedName is not None
-        assert FlextLDIFEntry is not None
-        assert FlextLDIFFactory is not None
-
-        assert FlextLDIFError is not None
-        assert FlextLDIFValidationError is not None
-        assert FlextLDIFParseError is not None
-        assert FlextLDIFEntryError is not None
+        assert FlextLDIFModels.Config is not None
+        assert FlextLDIFModels.Entry is not None
+        assert FlextLDIFModels.DistinguishedName is not None
+        assert FlextLDIFModels.Attributes is not None
+        assert FlextLDIFModels.Factory is not None
 
     def test_service_imports(self) -> None:
         """Test service imports work correctly."""

@@ -4,7 +4,7 @@ Test suite for domain specifications implementing business rules and validation
 logic for LDIF entries, following Domain-Driven Design specification patterns
 integrated via composition in the main domain entities.
 
-The specification patterns were consolidated into FlextLDIFEntry methods to
+The specification patterns were consolidated into FlextLDIFModels.Entry methods to
 reduce complexity while maintaining clean business rule enforcement and
 type safety with comprehensive validation coverage.
 
@@ -27,7 +27,7 @@ License: MIT
 
 from __future__ import annotations
 
-from flext_ldif import FlextLDIFEntry
+from flext_ldif import FlextLDIFModels
 
 
 class TestFlextLDIFValidSpecification:
@@ -35,7 +35,7 @@ class TestFlextLDIFValidSpecification:
 
     def test_valid_entry_with_objectclass(self) -> None:
         """Test valid entry with objectClass."""
-        entry = FlextLDIFEntry.from_ldif_block(
+        entry = FlextLDIFModels.Entry.from_ldif_block(
             """dn: cn=test,dc=example,dc=com
 cn: test
 objectClass: person""",
@@ -45,7 +45,7 @@ objectClass: person""",
 
     def test_invalid_entry_no_objectclass(self) -> None:
         """Test invalid entry without objectClass."""
-        entry = FlextLDIFEntry.from_ldif_block(
+        entry = FlextLDIFModels.Entry.from_ldif_block(
             """dn: cn=test,dc=example,dc=com
 cn: test""",
         )
@@ -57,7 +57,7 @@ cn: test""",
         # Since domain validation prevents truly invalid DNs,
         # we test the specification logic by creating a valid entry
         # but removing objectClass to make it invalid
-        entry = FlextLDIFEntry.from_ldif_block(
+        entry = FlextLDIFModels.Entry.from_ldif_block(
             """dn: cn=test,dc=example,dc=com
 cn: test""",
         )
@@ -68,7 +68,7 @@ cn: test""",
         """Test invalid entry logic validation."""
         # Test that specification correctly validates DN format
         # Create a valid entry first
-        entry = FlextLDIFEntry.from_ldif_block(
+        entry = FlextLDIFModels.Entry.from_ldif_block(
             """dn: cn=test,dc=example,dc=com
 cn: test
 objectClass: person""",
@@ -83,7 +83,7 @@ class TestFlextLDIFPersonSpecification:
 
     def test_person_entry(self) -> None:
         """Test person entry."""
-        entry = FlextLDIFEntry.from_ldif_block(
+        entry = FlextLDIFModels.Entry.from_ldif_block(
             """dn: uid=john,ou=people,dc=example,dc=com
 uid: john
 cn: John Doe
@@ -95,7 +95,7 @@ objectClass: inetOrgPerson""",
 
     def test_organizational_person_entry(self) -> None:
         """Test organizational person entry."""
-        entry = FlextLDIFEntry.from_ldif_block(
+        entry = FlextLDIFModels.Entry.from_ldif_block(
             """dn: uid=jane,ou=people,dc=example,dc=com
 uid: jane
 cn: Jane Smith
@@ -106,7 +106,7 @@ objectClass: organizationalPerson""",
 
     def test_inet_org_person_entry(self) -> None:
         """Test inetOrgPerson entry."""
-        entry = FlextLDIFEntry.from_ldif_block(
+        entry = FlextLDIFModels.Entry.from_ldif_block(
             """dn: uid=bob,ou=people,dc=example,dc=com
 uid: bob
 cn: Bob Wilson
@@ -117,7 +117,7 @@ objectClass: inetOrgPerson""",
 
     def test_user_entry(self) -> None:
         """Test user entry."""
-        entry = FlextLDIFEntry.from_ldif_block(
+        entry = FlextLDIFModels.Entry.from_ldif_block(
             """dn: uid=alice,ou=people,dc=example,dc=com
 uid: alice
 cn: Alice Brown
@@ -128,7 +128,7 @@ objectClass: user""",
 
     def test_posix_account_entry(self) -> None:
         """Test posixAccount entry."""
-        entry = FlextLDIFEntry.from_ldif_block(
+        entry = FlextLDIFModels.Entry.from_ldif_block(
             """dn: uid=charlie,ou=people,dc=example,dc=com
 uid: charlie
 cn: Charlie Green
@@ -139,7 +139,7 @@ objectClass: posixAccount""",
 
     def test_non_person_entry(self) -> None:
         """Test non-person entry."""
-        entry = FlextLDIFEntry.from_ldif_block(
+        entry = FlextLDIFModels.Entry.from_ldif_block(
             """dn: cn=groups,dc=example,dc=com
 cn: groups
 objectClass: organizationalUnit""",
@@ -149,7 +149,7 @@ objectClass: organizationalUnit""",
 
     def test_entry_no_objectclass(self) -> None:
         """Test entry without objectClass."""
-        entry = FlextLDIFEntry.from_ldif_block(
+        entry = FlextLDIFModels.Entry.from_ldif_block(
             """dn: uid=test,ou=people,dc=example,dc=com
 uid: test
 cn: Test User""",

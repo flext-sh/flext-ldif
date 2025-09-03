@@ -7,8 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import FlextLDIFAPI
-from flext_ldif.models import FlextLDIFEntry
+from flext_ldif import FlextLDIFAPI, FlextLDIFModels
 from flext_ldif.utilities import FlextLDIFUtilities
 
 
@@ -19,7 +18,7 @@ def api() -> FlextLDIFAPI:
 
 
 @pytest.fixture
-def sample_entries(api: FlextLDIFAPI) -> list[FlextLDIFEntry]:
+def sample_entries(api: FlextLDIFAPI) -> list[FlextLDIFModels.Entry]:
     """Create real LDIF entries for testing utilities."""
     ldif_content = """dn: cn=John Doe,ou=people,dc=example,dc=com
 objectClass: inetOrgPerson
@@ -60,13 +59,13 @@ description: People OU
 
 
 @pytest.fixture
-def invalid_entries() -> list[FlextLDIFEntry]:
+def invalid_entries() -> list[FlextLDIFModels.Entry]:
     """Create entries with validation issues for testing."""
     # Create entries directly that have validation issues
     from flext_ldif.models import FlextLDIFAttributes, FlextLDIFDistinguishedName
 
     # Entry with missing objectClass
-    entry1 = FlextLDIFEntry(
+    entry1 = FlextLDIFModels.Entry(
         dn=FlextLDIFDistinguishedName(value="cn=NoObjectClass,dc=example,dc=com"),
         attributes=FlextLDIFAttributes(
             data={"cn": ["NoObjectClass"], "mail": ["test@example.com"]}
@@ -75,7 +74,7 @@ def invalid_entries() -> list[FlextLDIFEntry]:
 
     # Entry with empty DN (DN validation will actually fail during model creation)
     # So create a valid DN but entry that will fail validation logic
-    entry2 = FlextLDIFEntry(
+    entry2 = FlextLDIFModels.Entry(
         dn=FlextLDIFDistinguishedName(value="cn=ValidDN,dc=example,dc=com"),
         attributes=FlextLDIFAttributes(data={"cn": ["ValidDN"]}),  # Missing objectClass
     )
@@ -108,7 +107,7 @@ class TestFlextLDIFUtilities:
         assert utilities._logger is not None
 
     def test_validate_entries_or_warn_with_valid_entries(
-        self, sample_entries: list[FlextLDIFEntry]
+        self, sample_entries: list[FlextLDIFModels.Entry]
     ) -> None:
         """Test validate_entries_or_warn with valid entries."""
         result = FlextLDIFUtilities.LdifDomainProcessors.validate_entries_or_warn(
@@ -119,7 +118,7 @@ class TestFlextLDIFUtilities:
         assert result.value is True  # All sample entries should be valid
 
     def test_validate_entries_or_warn_with_invalid_entries(
-        self, invalid_entries: list[FlextLDIFEntry]
+        self, invalid_entries: list[FlextLDIFModels.Entry]
     ) -> None:
         """Test validate_entries_or_warn with entries that have issues."""
         result = FlextLDIFUtilities.LdifDomainProcessors.validate_entries_or_warn(
@@ -130,7 +129,7 @@ class TestFlextLDIFUtilities:
         assert result.value is False  # Should return False due to validation issues
 
     def test_validate_entries_or_warn_max_errors_limit(
-        self, invalid_entries: list[FlextLDIFEntry]
+        self, invalid_entries: list[FlextLDIFModels.Entry]
     ) -> None:
         """Test validate_entries_or_warn respects max_errors limit."""
         result = FlextLDIFUtilities.LdifDomainProcessors.validate_entries_or_warn(
@@ -141,7 +140,7 @@ class TestFlextLDIFUtilities:
         assert result.value is False  # Should stop early due to max_errors limit
 
     def test_filter_entries_by_object_class(
-        self, sample_entries: list[FlextLDIFEntry]
+        self, sample_entries: list[FlextLDIFModels.Entry]
     ) -> None:
         """Test filtering entries by objectClass."""
         result = FlextLDIFUtilities.LdifDomainProcessors.filter_entries_by_object_class(
@@ -155,7 +154,7 @@ class TestFlextLDIFUtilities:
             assert entry.has_object_class("person")
 
     def test_filter_entries_by_object_class_case_insensitive(
-        self, sample_entries: list[FlextLDIFEntry]
+        self, sample_entries: list[FlextLDIFModels.Entry]
     ) -> None:
         """Test filtering is case-insensitive."""
         result = FlextLDIFUtilities.LdifDomainProcessors.filter_entries_by_object_class(
@@ -167,7 +166,7 @@ class TestFlextLDIFUtilities:
         assert len(filtered_entries) == 2
 
     def test_filter_entries_by_object_class_no_matches(
-        self, sample_entries: list[FlextLDIFEntry]
+        self, sample_entries: list[FlextLDIFModels.Entry]
     ) -> None:
         """Test filtering with no matching entries."""
         result = FlextLDIFUtilities.LdifDomainProcessors.filter_entries_by_object_class(
@@ -178,7 +177,7 @@ class TestFlextLDIFUtilities:
         assert len(result.value) == 0
 
     def test_find_entries_with_missing_required_attributes(
-        self, sample_entries: list[FlextLDIFEntry]
+        self, sample_entries: list[FlextLDIFModels.Entry]
     ) -> None:
         """Test finding entries missing required attributes."""
         # All sample entries should have 'objectClass' attribute
@@ -190,7 +189,7 @@ class TestFlextLDIFUtilities:
         assert len(result.value) == 0  # All entries should have objectClass
 
     def test_find_entries_with_missing_required_attributes_found(
-        self, sample_entries: list[FlextLDIFEntry]
+        self, sample_entries: list[FlextLDIFModels.Entry]
     ) -> None:
         """Test finding entries missing a required attribute that some don't have."""
         # Look for 'telephoneNumber' which none of our sample entries have

@@ -1,4 +1,4 @@
-"""Tests for FlextLDIFValidatorService - Real functionality testing without mocks.
+"""Tests for FlextLDIFServices.ValidatorService - Real functionality testing without mocks.
 
 Comprehensive tests using actual LDIF data and real validation functionality.
 No mocks, bypasses, or fake implementations - only real LDIF validation.
@@ -6,22 +6,21 @@ No mocks, bypasses, or fake implementations - only real LDIF validation.
 
 from __future__ import annotations
 
-from flext_ldif import FlextLDIFValidatorService
-from flext_ldif.models import FlextLDIFConfig, FlextLDIFEntry
+from flext_ldif import FlextLDIFModels, FlextLDIFServices
 from tests.support import LdifTestData, TestValidators
 
 
-class TestFlextLDIFValidatorServiceReal:
-    """Test FlextLDIFValidatorService with real functionality - no mocks."""
+class TestFlextLDIFServicesValidatorServiceReal:
+    """Test FlextLDIFServices.ValidatorService with real functionality - no mocks."""
 
     def test_service_initialization_with_config(self) -> None:
         """Test validator service initializes with configuration."""
-        config = FlextLDIFConfig(
+        config = FlextLDIFModels.Config(
             validate_dn=True,
             validate_attributes=True,
             strict_validation=True,
         )
-        service = FlextLDIFValidatorService(config=config)
+        service = FlextLDIFServices.ValidatorService(config=config)
 
         # Validate service has real configuration
         assert service.config is not None
@@ -31,7 +30,7 @@ class TestFlextLDIFValidatorServiceReal:
 
     def test_service_initialization_default_config(self) -> None:
         """Test validator service works with default configuration."""
-        service = FlextLDIFValidatorService()
+        service = FlextLDIFServices.ValidatorService()
 
         # Service should work with defaults
         result = service.execute()
@@ -39,7 +38,7 @@ class TestFlextLDIFValidatorServiceReal:
 
     def test_validate_real_valid_entry(self) -> None:
         """Test validation of a real valid LDIF entry."""
-        service = FlextLDIFValidatorService()
+        service = FlextLDIFServices.ValidatorService()
         LdifTestData.basic_entries()
 
         # Create a real entry from test data
@@ -59,7 +58,7 @@ class TestFlextLDIFValidatorServiceReal:
                 "mail": ["john.doe@example.com"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Validate real entry
         result = service.validate_entry(entry)
@@ -78,7 +77,7 @@ class TestFlextLDIFValidatorServiceReal:
 
     def test_validate_real_invalid_dn(self) -> None:
         """Test validation of entry with invalid DN."""
-        service = FlextLDIFValidatorService()
+        service = FlextLDIFServices.ValidatorService()
 
         # Try to create entry with invalid DN - should fail during model validation
         entry_data = {
@@ -92,7 +91,7 @@ class TestFlextLDIFValidatorServiceReal:
 
         # Entry creation should fail due to invalid DN
         try:
-            entry = FlextLDIFEntry.model_validate(entry_data)
+            entry = FlextLDIFModels.Entry.model_validate(entry_data)
             # If it doesn't fail, the validation is lenient
             result = service.validate_entry(entry)
             # Should have validation issues
@@ -116,7 +115,7 @@ class TestFlextLDIFValidatorServiceReal:
 
     def test_validate_real_missing_required_attributes(self) -> None:
         """Test validation of entry missing required attributes."""
-        service = FlextLDIFValidatorService()
+        service = FlextLDIFServices.ValidatorService()
 
         # Create entry missing required attributes for person class
         entry_data = {
@@ -127,7 +126,7 @@ class TestFlextLDIFValidatorServiceReal:
                 # Missing 'sn' which is required for person class
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Validate entry with missing required attributes
         result = service.validate_entry(entry)
@@ -160,7 +159,7 @@ class TestFlextLDIFValidatorServiceReal:
 
     def test_validate_real_multi_valued_attributes(self) -> None:
         """Test validation of entry with multi-valued attributes."""
-        service = FlextLDIFValidatorService()
+        service = FlextLDIFServices.ValidatorService()
 
         # Create entry with multi-valued attributes
         entry_data = {
@@ -179,7 +178,7 @@ class TestFlextLDIFValidatorServiceReal:
                 "telephoneNumber": ["+1-555-0123", "+1-555-0124"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Validate entry with multi-valued attributes
         result = service.validate_entry(entry)
@@ -196,7 +195,7 @@ class TestFlextLDIFValidatorServiceReal:
 
     def test_validate_real_binary_attribute(self) -> None:
         """Test validation of entry with binary attributes."""
-        service = FlextLDIFValidatorService()
+        service = FlextLDIFServices.ValidatorService()
 
         # Create entry with binary attribute (base64 encoded)
         entry_data = {
@@ -216,7 +215,7 @@ class TestFlextLDIFValidatorServiceReal:
                 ],  # Mock base64
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Validate entry with binary attribute
         result = service.validate_entry(entry)
@@ -233,7 +232,7 @@ class TestFlextLDIFValidatorServiceReal:
 
     def test_validate_real_special_characters(self) -> None:
         """Test validation of entry with UTF-8 special characters."""
-        service = FlextLDIFValidatorService()
+        service = FlextLDIFServices.ValidatorService()
 
         # Create entry with special characters
         entry_data = {
@@ -252,7 +251,7 @@ class TestFlextLDIFValidatorServiceReal:
                 "description": ["Contains special characters: áéíóú ÁÉÍÓÚ ñÑ çÇ"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Validate entry with special characters
         result = service.validate_entry(entry)
@@ -269,11 +268,11 @@ class TestFlextLDIFValidatorServiceReal:
 
     def test_validate_batch_real_entries(self) -> None:
         """Test validation of multiple real entries in batch."""
-        service = FlextLDIFValidatorService()
+        service = FlextLDIFServices.ValidatorService()
 
         # Create multiple real entries
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": f"uid=user{i},ou=people,dc=example,dc=com",
                     "attributes": {
@@ -308,8 +307,8 @@ class TestFlextLDIFValidatorServiceReal:
 
     def test_validate_with_strict_mode(self) -> None:
         """Test validation with strict mode enabled."""
-        config = FlextLDIFConfig(strict_validation=True)
-        service = FlextLDIFValidatorService(config=config)
+        config = FlextLDIFModels.Config(strict_validation=True)
+        service = FlextLDIFServices.ValidatorService(config=config)
 
         # Create entry that might pass in lenient mode but fail in strict
         entry_data = {
@@ -322,7 +321,7 @@ class TestFlextLDIFValidatorServiceReal:
                 "customAttribute": ["Custom Value"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Validate with strict mode
         result = service.validate_entry(entry)

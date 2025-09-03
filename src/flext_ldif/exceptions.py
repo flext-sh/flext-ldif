@@ -33,7 +33,7 @@ class FlextLDIFErrorCodes(Enum):
 # =============================================================================
 
 
-class FlextLDIFExceptions(FlextModels.BaseConfig):
+class FlextLDIFExceptions(FlextModels.Config):
     """Single consolidated class containing ALL LDIF exceptions.
 
     Consolidates ALL exception definitions into one class following FLEXT patterns.
