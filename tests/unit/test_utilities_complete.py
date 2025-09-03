@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_ldif.models import FlextLDIFEntry
+from flext_ldif import FlextLDIFModels
 from flext_ldif.utilities import FlextLDIFUtilities
 
 
@@ -12,13 +12,13 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
     def test_validate_entries_or_warn_valid_entries(self) -> None:
         """Test validate_entries_or_warn with valid entries."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=user1,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["User 1"]},
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=user2,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["User 2"]},
@@ -36,7 +36,7 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
     def test_validate_entries_or_warn_missing_objectclass(self) -> None:
         """Test validate_entries_or_warn with entry missing objectClass."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",  # Valid DN
                     "attributes": {
@@ -58,7 +58,7 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
         """Test validate_entries_or_warn with max_errors limit."""
         # Create more than 3 entries with missing objectClass (validation issue)
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": f"uid=user{i},ou=people,dc=example,dc=com",  # Valid DN
                     "attributes": {
@@ -80,7 +80,7 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
     def test_filter_entries_by_object_class_found(self) -> None:
         """Test filter_entries_by_object_class with matches."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=person1,ou=people,dc=example,dc=com",
                     "attributes": {
@@ -89,13 +89,13 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
                     },
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "cn=group1,ou=groups,dc=example,dc=com",
                     "attributes": {"objectClass": ["groupOfNames"], "cn": ["Group 1"]},
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=person2,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["Person 2"]},
@@ -114,7 +114,7 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
     def test_filter_entries_by_object_class_none_found(self) -> None:
         """Test filter_entries_by_object_class with no matches."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "cn=group1,ou=groups,dc=example,dc=com",
                     "attributes": {"objectClass": ["groupOfNames"], "cn": ["Group 1"]},
@@ -133,7 +133,7 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
         """Test filter_entries_by_object_class with exception in has_object_class."""
         # Create entry that might cause exception
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["Test"]},
@@ -151,7 +151,7 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
     def test_find_entries_with_missing_required_attributes_found(self) -> None:
         """Test find_entries_with_missing_required_attributes with missing attrs."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=complete,ou=people,dc=example,dc=com",
                     "attributes": {
@@ -162,7 +162,7 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
                     },
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=incomplete,ou=people,dc=example,dc=com",
                     "attributes": {
@@ -188,7 +188,7 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
     def test_find_entries_with_missing_required_attributes_none_missing(self) -> None:
         """Test find_entries_with_missing_required_attributes with no missing attrs."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=complete1,ou=people,dc=example,dc=com",
                     "attributes": {
@@ -199,7 +199,7 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
                     },
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=complete2,ou=people,dc=example,dc=com",
                     "attributes": {
@@ -224,7 +224,7 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
     ) -> None:
         """Test exception handling in find_entries_with_missing_required_attributes."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["Test"]},
@@ -242,7 +242,7 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
     def test_get_entry_statistics_basic(self) -> None:
         """Test get_entry_statistics with basic entries."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=person1,ou=people,dc=example,dc=com",
                     "attributes": {
@@ -253,7 +253,7 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
                     },
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "cn=group1,ou=groups,dc=example,dc=com",
                     "attributes": {

@@ -124,11 +124,11 @@ class FlextLDIFFormatValidators:
 
             """
             if not entry.has_attribute("objectClass"):
-                return FlextResult[bool].ok(False)
+                return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_FAILURE)
 
             object_class_values = entry.get_attribute("objectClass")
             if object_class_values is None:
-                return FlextResult[bool].ok(False)
+                return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_FAILURE)
             object_classes = {oc.lower() for oc in object_class_values}
             is_person = bool(object_classes.intersection(cls.PERSON_CLASSES))
             return FlextResult[bool].ok(is_person)
@@ -145,11 +145,11 @@ class FlextLDIFFormatValidators:
 
             """
             if not entry.has_attribute("objectClass"):
-                return FlextResult[bool].ok(False)
+                return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_FAILURE)
 
             object_class_values = entry.get_attribute("objectClass")
             if object_class_values is None:
-                return FlextResult[bool].ok(False)
+                return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_FAILURE)
             object_classes = {oc.lower() for oc in object_class_values}
             is_group = bool(object_classes.intersection(cls.GROUP_CLASSES))
             return FlextResult[bool].ok(is_group)
@@ -166,11 +166,11 @@ class FlextLDIFFormatValidators:
 
             """
             if not entry.has_attribute("objectClass"):
-                return FlextResult[bool].ok(False)
+                return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_FAILURE)
 
             object_class_values = entry.get_attribute("objectClass")
             if object_class_values is None:
-                return FlextResult[bool].ok(False)
+                return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_FAILURE)
             object_classes = {oc.lower() for oc in object_class_values}
             is_ou = bool(object_classes.intersection(cls.OU_CLASSES))
             return FlextResult[bool].ok(is_ou)
@@ -197,7 +197,7 @@ class FlextLDIFFormatValidators:
             if not entry.has_attribute("objectClass"):
                 return FlextResult[bool].fail("Missing objectClass attribute")
 
-            return FlextResult[bool].ok(True)
+            return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_SUCCESS)
 
     class SchemaValidator:
         """LDIF schema validation functionality."""
@@ -227,7 +227,7 @@ class FlextLDIFFormatValidators:
                     f"Missing required attributes: {', '.join(missing_attrs)}"
                 )
 
-            return FlextResult[bool].ok(True)
+            return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_SUCCESS)
 
         @classmethod
         def validate_person_schema(

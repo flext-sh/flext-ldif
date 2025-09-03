@@ -1,4 +1,4 @@
-"""Tests for FlextLDIFWriterService - Real functionality testing without mocks.
+"""Tests for FlextLDIFServices.WriterService - Real functionality testing without mocks.
 
 Comprehensive tests using actual LDIF data and real writer functionality.
 No mocks, bypasses, or fake implementations - only real LDIF writing.
@@ -6,22 +6,21 @@ No mocks, bypasses, or fake implementations - only real LDIF writing.
 
 from __future__ import annotations
 
-from flext_ldif import FlextLDIFWriterService
-from flext_ldif.models import FlextLDIFConfig, FlextLDIFEntry
+from flext_ldif import FlextLDIFModels, FlextLDIFServices
 from tests.support import TestFileManager, TestValidators
 
 
-class TestFlextLDIFWriterServiceReal:
-    """Test FlextLDIFWriterService with real functionality - no mocks."""
+class TestFlextLDIFServicesWriterServiceReal:
+    """Test FlextLDIFServices.WriterService with real functionality - no mocks."""
 
     def test_service_initialization_with_config(self) -> None:
         """Test writer service initializes with configuration."""
-        config = FlextLDIFConfig(
+        config = FlextLDIFModels.Config(
             encoding="utf-8",
             max_line_length=76,
             fold_lines=True,
         )
-        service = FlextLDIFWriterService(config=config)
+        service = FlextLDIFServices.WriterService(config=config)
 
         # Validate service has real configuration
         assert service.config is not None
@@ -31,7 +30,7 @@ class TestFlextLDIFWriterServiceReal:
 
     def test_service_initialization_default_config(self) -> None:
         """Test writer service works with default configuration."""
-        service = FlextLDIFWriterService()
+        service = FlextLDIFServices.WriterService()
 
         # Service should work with defaults
         result = service.execute()
@@ -39,7 +38,7 @@ class TestFlextLDIFWriterServiceReal:
 
     def test_write_real_single_entry_to_string(self) -> None:
         """Test writing a single real LDIF entry to string."""
-        service = FlextLDIFWriterService()
+        service = FlextLDIFServices.WriterService()
 
         # Create a real entry
         entry_data = {
@@ -58,7 +57,7 @@ class TestFlextLDIFWriterServiceReal:
                 "mail": ["john.doe@example.com"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Write entry to string
         result = service.write_entries_to_string([entry])
@@ -75,7 +74,7 @@ class TestFlextLDIFWriterServiceReal:
 
     def test_write_real_multiple_entries_to_string(self) -> None:
         """Test writing multiple real LDIF entries to string."""
-        service = FlextLDIFWriterService()
+        service = FlextLDIFServices.WriterService()
 
         # Create multiple real entries
         entries = []
@@ -95,7 +94,7 @@ class TestFlextLDIFWriterServiceReal:
                     "mail": [f"user{i}@example.com"],
                 },
             }
-            entries.append(FlextLDIFEntry.model_validate(entry_data))
+            entries.append(FlextLDIFModels.Entry.model_validate(entry_data))
 
         # Write entries to string
         result = service.write_entries_to_string(entries)
@@ -114,7 +113,7 @@ class TestFlextLDIFWriterServiceReal:
 
     def test_write_real_entry_with_multi_valued_attributes(self) -> None:
         """Test writing entry with multi-valued attributes."""
-        service = FlextLDIFWriterService()
+        service = FlextLDIFServices.WriterService()
 
         # Create entry with multi-valued attributes
         entry_data = {
@@ -133,7 +132,7 @@ class TestFlextLDIFWriterServiceReal:
                 "telephoneNumber": ["+1-555-0123", "+1-555-0124"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Write entry to string
         result = service.write_entries_to_string([entry])
@@ -149,7 +148,7 @@ class TestFlextLDIFWriterServiceReal:
 
     def test_write_real_entry_with_binary_data(self) -> None:
         """Test writing entry with binary (base64) data."""
-        service = FlextLDIFWriterService()
+        service = FlextLDIFServices.WriterService()
 
         # Create entry with binary data
         entry_data = {
@@ -167,7 +166,7 @@ class TestFlextLDIFWriterServiceReal:
                 "jpegPhoto": ["/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQ=="],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Write entry to string
         result = service.write_entries_to_string([entry])
@@ -181,7 +180,7 @@ class TestFlextLDIFWriterServiceReal:
 
     def test_write_real_entry_with_special_characters(self) -> None:
         """Test writing entry with UTF-8 special characters."""
-        service = FlextLDIFWriterService()
+        service = FlextLDIFServices.WriterService()
 
         # Create entry with special characters
         entry_data = {
@@ -199,7 +198,7 @@ class TestFlextLDIFWriterServiceReal:
                 "description": ["Contains special characters: áéíóú ÁÉÍÓÚ ñÑ"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Write entry to string
         result = service.write_entries_to_string([entry])
@@ -215,7 +214,7 @@ class TestFlextLDIFWriterServiceReal:
         self, test_file_manager: TestFileManager
     ) -> None:
         """Test writing real entries to actual file."""
-        service = FlextLDIFWriterService()
+        service = FlextLDIFServices.WriterService()
 
         # Create real entries
         entries = []
@@ -235,7 +234,7 @@ class TestFlextLDIFWriterServiceReal:
                     "mail": [f"file{i}@example.com"],
                 },
             }
-            entries.append(FlextLDIFEntry.model_validate(entry_data))
+            entries.append(FlextLDIFModels.Entry.model_validate(entry_data))
 
         # Create temporary file using the file manager
         with test_file_manager.temporary_directory() as temp_dir:
@@ -257,7 +256,7 @@ class TestFlextLDIFWriterServiceReal:
 
     def test_write_real_empty_entry_list(self) -> None:
         """Test writing empty list of entries."""
-        service = FlextLDIFWriterService()
+        service = FlextLDIFServices.WriterService()
 
         # Write empty list
         result = service.write_entries_to_string([])
@@ -271,8 +270,8 @@ class TestFlextLDIFWriterServiceReal:
 
     def test_write_with_custom_line_length(self) -> None:
         """Test writing with custom line length configuration."""
-        config = FlextLDIFConfig(max_line_length=40)  # Shorter lines
-        service = FlextLDIFWriterService(config=config)
+        config = FlextLDIFModels.Config(max_line_length=40)  # Shorter lines
+        service = FlextLDIFServices.WriterService(config=config)
 
         # Create entry with long attribute value
         entry_data = {
@@ -294,7 +293,7 @@ class TestFlextLDIFWriterServiceReal:
                 ],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Write entry to string
         result = service.write_entries_to_string([entry])
@@ -308,8 +307,8 @@ class TestFlextLDIFWriterServiceReal:
 
     def test_write_with_different_encodings(self) -> None:
         """Test writing with different character encodings."""
-        config = FlextLDIFConfig(encoding="utf-8")
-        service = FlextLDIFWriterService(config=config)
+        config = FlextLDIFModels.Config(encoding="utf-8")
+        service = FlextLDIFServices.WriterService(config=config)
 
         # Create entry with unicode characters
         entry_data = {
@@ -327,7 +326,7 @@ class TestFlextLDIFWriterServiceReal:
                 "description": ["Unicode: αβγ 中文 العربية русский"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Write entry to string
         result = service.write_entries_to_string([entry])
@@ -368,7 +367,7 @@ class TestWriterIntegrationReal:
                     "mail": [f"roundtrip{i}@example.com"],
                 },
             }
-            original_entries.append(FlextLDIFEntry.model_validate(entry_data))
+            original_entries.append(FlextLDIFModels.Entry.model_validate(entry_data))
 
         # Write entries to LDIF string
         write_result = writer.write_entries_to_string(original_entries)

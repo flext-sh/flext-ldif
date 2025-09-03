@@ -55,7 +55,7 @@ class TestDnField:
     def test_dn_field_in_model(self) -> None:
         """Test DN field works in actual Pydantic model."""
 
-        class TestModel(FlextModels.BaseConfig):
+        class TestModel(FlextModelsConfig):
             dn: str = dn_field()
 
         # Valid DN
@@ -73,7 +73,7 @@ class TestDnField:
     def test_dn_field_max_length_constraint(self) -> None:
         """Test DN field max length constraint."""
 
-        class TestModel(FlextModels.BaseConfig):
+        class TestModel(FlextModelsConfig):
             dn: str = dn_field(max_length=10)
 
         # Valid short DN
@@ -128,7 +128,7 @@ class TestAttributeNameField:
     def test_attribute_name_field_in_model(self) -> None:
         """Test attribute name field works in actual Pydantic model."""
 
-        class TestModel(FlextModels.BaseConfig):
+        class TestModel(FlextModelsConfig):
             attr_name: str = attribute_name_field()
 
         # Valid attribute names
@@ -138,7 +138,7 @@ class TestAttributeNameField:
             assert model.attr_name == name
 
         # Invalid attribute names (start with number, special chars)
-        # Note: str_strip_whitespace=True in BaseConfig, so " attr" becomes "attr"
+        # Note: str_strip_whitespace=True in Config, so " attr" becomes "attr"
         invalid_names = ["123attr", "attr$", "attr.name", "attr with space", ""]
         for name in invalid_names:
             with pytest.raises(ValidationError):
@@ -147,7 +147,7 @@ class TestAttributeNameField:
     def test_attribute_name_field_max_length_constraint(self) -> None:
         """Test attribute name field max length constraint."""
 
-        class TestModel(FlextModels.BaseConfig):
+        class TestModel(FlextModelsConfig):
             attr_name: str = attribute_name_field(max_length=5)
 
         # Valid short name
@@ -194,7 +194,7 @@ class TestAttributeValueField:
     def test_attribute_value_field_in_model(self) -> None:
         """Test attribute value field works in actual Pydantic model."""
 
-        class TestModel(FlextModels.BaseConfig):
+        class TestModel(FlextModelsConfig):
             value: str = attribute_value_field()
 
         # Various valid values
@@ -214,7 +214,7 @@ class TestAttributeValueField:
     def test_attribute_value_field_max_length_constraint(self) -> None:
         """Test attribute value field max length constraint."""
 
-        class TestModel(FlextModels.BaseConfig):
+        class TestModel(FlextModelsConfig):
             value: str = attribute_value_field(max_length=10)
 
         # Valid short value
@@ -271,7 +271,7 @@ class TestObjectClassField:
     def test_object_class_field_in_model(self) -> None:
         """Test object class field works in actual Pydantic model."""
 
-        class TestModel(FlextModels.BaseConfig):
+        class TestModel(FlextModelsConfig):
             object_class: str = object_class_field()
 
         # Valid object class names
@@ -289,7 +289,7 @@ class TestObjectClassField:
             assert model.object_class == class_name
 
         # Invalid object class names
-        # Note: str_strip_whitespace=True in BaseConfig, so " person" becomes "person"
+        # Note: str_strip_whitespace=True in Config, so " person" becomes "person"
         invalid_classes = ["123person", "class$", "class.name", "class with space"]
         for class_name in invalid_classes:
             with pytest.raises(ValidationError):
@@ -298,7 +298,7 @@ class TestObjectClassField:
     def test_object_class_field_max_length_constraint(self) -> None:
         """Test object class field max length constraint."""
 
-        class TestModel(FlextModels.BaseConfig):
+        class TestModel(FlextModelsConfig):
             object_class: str = object_class_field(max_length=10)
 
         # Valid short class
@@ -357,7 +357,7 @@ class TestFieldDefaults:
     def test_field_defaults_can_be_used_in_fields(self) -> None:
         """Test that defaults can be used to create fields."""
 
-        class TestModel(FlextModels.BaseConfig):
+        class TestModel(FlextModelsConfig):
             dn: str = dn_field(max_length=FlextLDIFServices.FieldDefaults.DN_MAX_LENGTH)
             attr_name: str = attribute_name_field(
                 max_length=FlextLDIFServices.FieldDefaults.ATTRIBUTE_NAME_MAX_LENGTH
@@ -383,7 +383,7 @@ class TestFieldIntegration:
     def test_all_fields_in_single_model(self) -> None:
         """Test using all field types in one model."""
 
-        class CompleteModel(FlextModels.BaseConfig):
+        class CompleteModel(FlextModels.Config):
             dn: str = dn_field()
             attr_name: str = attribute_name_field()
             attr_value: str = attribute_value_field()
@@ -416,7 +416,7 @@ class TestFieldIntegration:
     def test_patterns_work_correctly(self) -> None:
         """Test that regex patterns work as expected."""
 
-        class TestModel(FlextModels.BaseConfig):
+        class TestModel(FlextModelsConfig):
             attr_name: str = attribute_name_field()
             object_class: str = object_class_field()
 

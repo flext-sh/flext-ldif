@@ -8,18 +8,17 @@ from __future__ import annotations
 
 from flext_ldif.models import (
     FlextLDIFAttributes,
-    FlextLDIFConfig,
     FlextLDIFDistinguishedName,
-    FlextLDIFEntry,
+    FlextLDIFModels,
 )
 
 
-class TestFlextLDIFConfigReal:
-    """Test FlextLDIFConfig with real functionality."""
+class TestFlextLDIFModelsConfigReal:
+    """Test FlextLDIFModels.Config with real functionality."""
 
     def test_config_creation_with_defaults(self) -> None:
         """Test config creation with default values."""
-        config = FlextLDIFConfig()
+        config = FlextLDIFModels.Config()
 
         # Verify default values are set correctly
         assert config.encoding == "utf-8"
@@ -32,7 +31,7 @@ class TestFlextLDIFConfigReal:
 
     def test_config_creation_with_custom_values(self) -> None:
         """Test config creation with custom values."""
-        config = FlextLDIFConfig(
+        config = FlextLDIFModels.Config(
             encoding="iso-8859-1",
             max_line_length=120,
             fold_lines=False,
@@ -52,16 +51,16 @@ class TestFlextLDIFConfigReal:
     def test_config_model_validation(self) -> None:
         """Test config model validation rules."""
         # Test valid configuration
-        config = FlextLDIFConfig(max_entries=1000)
+        config = FlextLDIFModels.Config(max_entries=1000)
         assert config.max_entries == 1000
 
         # Config should handle edge cases gracefully
-        config_small = FlextLDIFConfig(max_entries=1)
+        config_small = FlextLDIFModels.Config(max_entries=1)
         assert config_small.max_entries == 1
 
     def test_config_serialization(self) -> None:
         """Test config serialization to dict."""
-        config = FlextLDIFConfig(
+        config = FlextLDIFModels.Config(
             encoding="utf-8",
             max_line_length=100,
             strict_parsing=True,
@@ -75,8 +74,8 @@ class TestFlextLDIFConfigReal:
         assert config_dict["strict_parsing"] is True
 
 
-class TestFlextLDIFEntryReal:
-    """Test FlextLDIFEntry with real functionality."""
+class TestFlextLDIFModelsEntryReal:
+    """Test FlextLDIFModels.Entry with real functionality."""
 
     def test_entry_creation_basic(self) -> None:
         """Test basic entry creation."""
@@ -89,7 +88,7 @@ class TestFlextLDIFEntryReal:
                 "sn": ["User"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Verify entry properties
         assert entry.dn is not None
@@ -117,7 +116,7 @@ class TestFlextLDIFEntryReal:
                 "telephoneNumber": ["+1-555-0123", "+1-555-0124", "+1-555-0125"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Verify multi-valued attributes
         mail_values = entry.get_attribute("mail")
@@ -147,7 +146,7 @@ class TestFlextLDIFEntryReal:
                 "jpegPhoto": ["/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQ=="],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Verify binary attribute
         jpeg_photo = entry.get_attribute("jpegPhoto")
@@ -173,7 +172,7 @@ class TestFlextLDIFEntryReal:
                 "description": ["Contains special characters: áéíóú ÁÉÍÓÚ ñÑ çÇ"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Verify special characters are preserved
         cn_values = entry.get_attribute("cn")
@@ -196,7 +195,7 @@ class TestFlextLDIFEntryReal:
                 "description": ["Original description"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Test getting attributes
         uid_values = entry.get_attribute("uid")
@@ -222,7 +221,7 @@ class TestFlextLDIFEntryReal:
                 "sn": ["User"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Test DN string representation
         dn_str = str(entry.dn)
@@ -248,7 +247,7 @@ class TestFlextLDIFEntryReal:
                 "mail": ["valid.user@example.com"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Should be able to validate business rules (if implemented)
         try:
@@ -273,7 +272,7 @@ class TestFlextLDIFEntryReal:
                 "sn": ["User"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Should be able to convert to dict
         entry_dict = entry.model_dump()
@@ -449,7 +448,7 @@ class TestModelIntegrationReal:
                 "description": ["User for testing model integration"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Verify all components work together
         assert entry.dn is not None

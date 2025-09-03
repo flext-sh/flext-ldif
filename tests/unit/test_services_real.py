@@ -5,7 +5,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from flext_ldif.models import FlextLDIFConfig, FlextLDIFEntry
+from flext_ldif import FlextLDIFModels
 from flext_ldif.services import FlextLDIFServices
 
 
@@ -15,7 +15,7 @@ class TestAnalyticsService:
     def test_init_with_entries_and_config(self) -> None:
         """Test analytics service initialization with entries and config."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=test1,ou=people,dc=example,dc=com",
                     "attributes": {
@@ -26,7 +26,7 @@ class TestAnalyticsService:
                 }
             )
         ]
-        config = FlextLDIFConfig()
+        config = FlextLDIFModels.Config()
         service = FlextLDIFServices.AnalyticsService(entries=entries, config=config)
 
         assert len(service.entries) == 1
@@ -51,7 +51,7 @@ class TestAnalyticsService:
     def test_execute_with_entries(self) -> None:
         """Test execute with real entries."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=test1,ou=people,dc=example,dc=com",
                     "attributes": {
@@ -63,7 +63,7 @@ class TestAnalyticsService:
                     },
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=test2,ou=people,dc=example,dc=com",
                     "attributes": {
@@ -91,7 +91,7 @@ class TestAnalyticsService:
         """Test analyze_patterns method."""
         service = FlextLDIFServices.AnalyticsService()
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=user1,ou=people,dc=example,dc=com",
                     "attributes": {
@@ -102,7 +102,7 @@ class TestAnalyticsService:
                     },
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "cn=group1,ou=groups,dc=example,dc=com",
                     "attributes": {
@@ -129,7 +129,7 @@ class TestAnalyticsService:
         """Test analyze_attribute_distribution method."""
         service = FlextLDIFServices.AnalyticsService()
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=user1,ou=people,dc=example,dc=com",
                     "attributes": {
@@ -140,7 +140,7 @@ class TestAnalyticsService:
                     },
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=user2,ou=people,dc=example,dc=com",
                     "attributes": {
@@ -165,13 +165,13 @@ class TestAnalyticsService:
         """Test analyze_dn_depth method."""
         service = FlextLDIFServices.AnalyticsService()
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=user1,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["User"]},
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "cn=admin,ou=system,ou=config,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["Admin"]},
@@ -194,7 +194,7 @@ class TestAnalyticsService:
         """Test get_objectclass_distribution method."""
         service = FlextLDIFServices.AnalyticsService()
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=user1,ou=people,dc=example,dc=com",
                     "attributes": {
@@ -203,7 +203,7 @@ class TestAnalyticsService:
                     },
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "cn=group1,ou=groups,dc=example,dc=com",
                     "attributes": {
@@ -227,7 +227,7 @@ class TestAnalyticsService:
         """Test get_dn_depth_analysis method (alias)."""
         service = FlextLDIFServices.AnalyticsService()
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=user1,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["User"]},
@@ -244,7 +244,7 @@ class TestAnalyticsService:
         """Test analyze_entry_patterns method (alias)."""
         service = FlextLDIFServices.AnalyticsService()
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=user1,ou=people,dc=example,dc=com",
                     "attributes": {
@@ -269,14 +269,14 @@ class TestWriterService:
     def test_init_with_entries_and_config(self) -> None:
         """Test writer service initialization with entries and config."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["Test User"]},
                 }
             )
         ]
-        config = FlextLDIFConfig()
+        config = FlextLDIFModels.Config()
         service = FlextLDIFServices.WriterService(entries=entries, config=config)
 
         assert len(service.entries) == 1
@@ -301,7 +301,7 @@ class TestWriterService:
     def test_execute_with_entries(self) -> None:
         """Test execute with real entries."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",
                     "attributes": {
@@ -334,7 +334,7 @@ class TestWriterService:
     def test_write_entries_to_string_single(self) -> None:
         """Test write_entries_to_string with single entry."""
         service = FlextLDIFServices.WriterService()
-        entry = FlextLDIFEntry.model_validate(
+        entry = FlextLDIFModels.Entry.model_validate(
             {
                 "dn": "uid=single,ou=people,dc=example,dc=com",
                 "attributes": {"objectClass": ["person"], "cn": ["Single User"]},
@@ -351,13 +351,13 @@ class TestWriterService:
         """Test write_entries_to_string with multiple entries."""
         service = FlextLDIFServices.WriterService()
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=user1,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["User 1"]},
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=user2,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["User 2"]},
@@ -376,7 +376,7 @@ class TestWriterService:
     def test_write_entry(self) -> None:
         """Test write_entry method."""
         service = FlextLDIFServices.WriterService()
-        entry = FlextLDIFEntry.model_validate(
+        entry = FlextLDIFModels.Entry.model_validate(
             {
                 "dn": "uid=single,ou=people,dc=example,dc=com",
                 "attributes": {"objectClass": ["person"], "cn": ["Single User"]},
@@ -393,7 +393,7 @@ class TestWriterService:
         """Test write method (alias)."""
         service = FlextLDIFServices.WriterService()
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=alias,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["Alias User"]},
@@ -410,7 +410,7 @@ class TestWriterService:
         """Test write_entries_to_file with successful write."""
         service = FlextLDIFServices.WriterService()
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=filetest,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["File Test User"]},
@@ -441,7 +441,7 @@ class TestWriterService:
         """Test write_entries_to_file with custom encoding."""
         service = FlextLDIFServices.WriterService()
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=encoding,ou=people,dc=example,dc=com",
                     "attributes": {
@@ -469,7 +469,7 @@ class TestWriterService:
         """Test write_file method (alias)."""
         service = FlextLDIFServices.WriterService()
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=alias,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["Alias User"]},
@@ -529,7 +529,7 @@ class TestWriterService:
         """Test write_entries_to_file creates parent directories."""
         service = FlextLDIFServices.WriterService()
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=dirtest,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["Dir Test User"]},
@@ -549,7 +549,7 @@ class TestWriterService:
     def test_format_entry_for_display(self) -> None:
         """Test format_entry_for_display method."""
         service = FlextLDIFServices.WriterService()
-        entry = FlextLDIFEntry.model_validate(
+        entry = FlextLDIFModels.Entry.model_validate(
             {
                 "dn": "uid=display,ou=people,dc=example,dc=com",
                 "attributes": {

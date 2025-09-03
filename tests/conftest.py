@@ -62,9 +62,7 @@ import pytest
 
 from flext_ldif import (
     FlextLDIFAPI,
-    FlextLDIFParserService,
-    FlextLDIFValidatorService,
-    FlextLDIFWriterService,
+    FlextLDIFServices,
 )
 from tests.support import (
     LdifTestData,
@@ -245,19 +243,19 @@ def ldif_binary_file(test_ldif_dir: Path, sample_ldif_with_binary: str) -> Path:
 
 # Real service fixtures for functional testing
 @pytest.fixture
-def real_parser_service() -> FlextLDIFParserService:
+def real_parser_service() -> FlextLDIFServices.ParserService:
     """Real parser service for functional testing."""
     return RealServiceFactory.create_parser()
 
 
 @pytest.fixture
-def real_validator_service() -> FlextLDIFValidatorService:
+def real_validator_service() -> FlextLDIFServices.ValidatorService:
     """Real validator service for functional testing."""
     return RealServiceFactory.create_validator()
 
 
 @pytest.fixture
-def real_writer_service() -> FlextLDIFWriterService:
+def real_writer_service() -> FlextLDIFServices.WriterService:
     """Real writer service for functional testing."""
     return RealServiceFactory.create_writer()
 

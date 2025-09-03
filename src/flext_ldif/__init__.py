@@ -19,22 +19,22 @@ from flext_ldif.protocols import *
 # =============================================================================
 
 from flext_ldif.models import *
-from flext_ldif.core import *  # type: ignore[assignment]
+from flext_ldif.core import *
 
 # =============================================================================
 # APPLICATION LAYER - Use cases and orchestration, depends on Domain
 # =============================================================================
 
-from flext_ldif.api import *  # type: ignore[assignment]
+from flext_ldif.api import *
 
 # =============================================================================
 # INFRASTRUCTURE LAYER - External services and adapters
 # =============================================================================
 
-from flext_ldif.services import *  # type: ignore[assignment]
-from flext_ldif.format_handlers import *  # type: ignore[assignment]
-from flext_ldif.format_validators import *  # type: ignore[assignment]
-from flext_ldif.utilities import *  # type: ignore[assignment]
+from flext_ldif.services import *
+from flext_ldif.format_handlers import *
+from flext_ldif.format_validators import *
+from flext_ldif.utilities import *
 
 # =============================================================================
 # INTERFACE LAYER - CLI and external interfaces
@@ -78,7 +78,8 @@ for _module in [
         _temp_exports.extend(_module.__all__)
 
 # Remove duplicates and sort following flext-core pattern
-__all__ = sorted(set(_temp_exports))
+# Using list() to satisfy Ruff PLE0605 requirement that __all__ must be list or tuple
+__all__ = list(sorted(set(_temp_exports)))  # noqa: C413
 
 # Version information
 __version__ = "0.9.0"

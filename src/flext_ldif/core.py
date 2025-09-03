@@ -156,7 +156,7 @@ class FlextLDIFCore:
                         entries_list: list[FlextLDIFModels.Entry],
                     ) -> FlextResult[list[FlextLDIFModels.Entry]]:
                         try:
-                            entry = FlextLDIFModels.create_entry(dn, attrs)
+                            entry = FlextLDIFModels.Factory.create_entry(dn, attrs)
                         except Exception as e:
                             return FlextResult[list[FlextLDIFModels.Entry]].fail(
                                 FlextLDIFConstants.FlextLDIFCoreConstants.FAILED_TO_CREATE_ENTRY_MSG.format(
@@ -384,7 +384,7 @@ class FlextLDIFCore:
             )
 
             def validate_single_entry(
-                entry_with_index: tuple[int, FlextLDIFModels],
+                entry_with_index: tuple[int, FlextLDIFModels.Entry],
             ) -> FlextResult[bool]:
                 """Validate single entry with index for error context."""
                 i, entry = entry_with_index
@@ -408,7 +408,7 @@ class FlextLDIFCore:
 
             # Use railway programming with reduce to chain all validations
             def chain_validations(
-                acc: FlextResult[bool], indexed_entry: tuple[int, FlextLDIFModels]
+                acc: FlextResult[bool], indexed_entry: tuple[int, FlextLDIFModels.Entry]
             ) -> FlextResult[bool]:
                 return acc.flat_map(lambda _: validate_single_entry(indexed_entry))
 

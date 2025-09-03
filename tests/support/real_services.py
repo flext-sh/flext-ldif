@@ -6,15 +6,11 @@ All services are properly configured and use real implementations.
 
 from __future__ import annotations
 
-from typing import object
-
+# object is built-in, no need to import
 from flext_ldif import (
     FlextLDIFAPI,
-    FlextLDIFConfig,
-    FlextLDIFParserService,
+    FlextLDIFModels,
     FlextLDIFServices,
-    FlextLDIFValidatorService,
-    FlextLDIFWriterService,
 )
 
 
@@ -28,7 +24,7 @@ class RealServiceFactory:
             config = {}
 
         # Create proper config object
-        ldif_config = FlextLDIFConfig(
+        ldif_config = FlextLDIFModels.Config(
             encoding=config.get("encoding", "utf-8"),
             strict_parsing=config.get("strict_parsing", True),
             validate_dn=config.get("validate_dn", True),
@@ -47,13 +43,13 @@ class RealServiceFactory:
             config = {}
 
         # Use default configuration or create from provided values
-        ldif_config = FlextLDIFConfig(
+        ldif_config = FlextLDIFModels.Config(
             encoding=config.get("encoding", "utf-8"),
             strict_parsing=config.get("strict_parsing", True),
             validate_dn=config.get("validate_dn", True),
         )
 
-        return FlextLDIFParserService(config=ldif_config)
+        return FlextLDIFServices.ParserService(config=ldif_config)
 
     @staticmethod
     def create_validator(config: dict[str, object] | None = None):
@@ -62,7 +58,7 @@ class RealServiceFactory:
             config = {}
 
         # Create validator with proper configuration
-        ldif_config = FlextLDIFConfig(
+        ldif_config = FlextLDIFModels.Config(
             validate_dn=config.get("validate_dn", True),
             validate_attributes=config.get("validate_attributes", True),
             strict_validation=config.get("strict_validation", True),
@@ -76,7 +72,7 @@ class RealServiceFactory:
         if config is None:
             config = {}
 
-        ldif_config = FlextLDIFConfig(
+        ldif_config = FlextLDIFModels.Config(
             encoding=config.get("encoding", "utf-8"),
             max_line_length=config.get("max_line_length", 76),
         )
@@ -136,9 +132,9 @@ class RealServiceFactory:
         max_entries: int = 10000,
         max_line_length: int = 76,
         **kwargs: object,
-    ) -> FlextLDIFConfig:
+    ) -> FlextLDIFModels.Config:
         """Create a test configuration object."""
-        return FlextLDIFConfig(
+        return FlextLDIFModels.Config(
             encoding=encoding,
             strict_parsing=strict_parsing,
             validate_dn=validate_dn,
@@ -154,9 +150,9 @@ class RealServiceFactory:
 
         return {
             "api": FlextLDIFAPI(config=config),
-            "parser": FlextLDIFParserService(config=config),
-            "validator": FlextLDIFValidatorService(config=config),
-            "writer": FlextLDIFWriterService(config=config),
+            "parser": FlextLDIFServices.ParserService(config=config),
+            "validator": FlextLDIFServices.ValidatorService(config=config),
+            "writer": FlextLDIFServices.WriterService(config=config),
             "config": config,
         }
 

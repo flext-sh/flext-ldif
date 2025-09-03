@@ -9,7 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from flext_ldif.models import FlextLDIFEntry
+from flext_ldif import FlextLDIFModels
 from flext_ldif.services import FlextLDIFServices
 
 
@@ -19,7 +19,7 @@ class TestRepositoryServiceComprehensive:
     def test_filter_entries_by_object_class_success(self) -> None:
         """Test filter_entries_by_object_class with various object classes."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=person1,ou=people,dc=example,dc=com",
                     "attributes": {
@@ -28,13 +28,13 @@ class TestRepositoryServiceComprehensive:
                     },
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "cn=group1,ou=groups,dc=example,dc=com",
                     "attributes": {"objectClass": ["groupOfNames"], "cn": ["Group 1"]},
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=person2,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["Person 2"]},
@@ -60,7 +60,7 @@ class TestRepositoryServiceComprehensive:
     def test_filter_entries_by_object_class_empty_input(self) -> None:
         """Test filter_entries_by_object_class with empty object class."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"]},
@@ -83,7 +83,7 @@ class TestRepositoryServiceComprehensive:
     def test_filter_entries_by_attribute_with_value(self) -> None:
         """Test filter_entries_by_attribute with specific value matching."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=john,ou=people,dc=example,dc=com",
                     "attributes": {
@@ -94,7 +94,7 @@ class TestRepositoryServiceComprehensive:
                     },
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=jane,ou=people,dc=example,dc=com",
                     "attributes": {
@@ -127,7 +127,7 @@ class TestRepositoryServiceComprehensive:
     def test_filter_entries_by_attribute_empty_input(self) -> None:
         """Test filter_entries_by_attribute with empty attribute name."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"]},
@@ -150,7 +150,7 @@ class TestRepositoryServiceComprehensive:
     def test_find_by_dn_error_cases(self) -> None:
         """Test find_by_dn with error conditions."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"]},
@@ -185,7 +185,7 @@ class TestRepositoryServiceComprehensive:
     def test_get_statistics_mixed_entries(self) -> None:
         """Test get_statistics with mixed entry types."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=person1,ou=people,dc=example,dc=com",
                     "attributes": {
@@ -194,13 +194,13 @@ class TestRepositoryServiceComprehensive:
                     },
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "cn=group1,ou=groups,dc=example,dc=com",
                     "attributes": {"objectClass": ["groupOfNames"], "cn": ["Group 1"]},
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "ou=department,dc=example,dc=com",
                     "attributes": {
@@ -227,19 +227,19 @@ class TestValidatorServiceComprehensive:
     def test_validate_unique_dns_duplicate_found(self) -> None:
         """Test validate_unique_dns with duplicate DNs."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=duplicate,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["User 1"]},
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=unique,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["User 2"]},
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=duplicate,ou=people,dc=example,dc=com",  # Duplicate
                     "attributes": {"objectClass": ["person"], "cn": ["User 3"]},
@@ -257,13 +257,13 @@ class TestValidatorServiceComprehensive:
     def test_validate_unique_dns_case_insensitive(self) -> None:
         """Test validate_unique_dns is case-insensitive."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=Test,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"]},
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",  # Same DN different case
                     "attributes": {"objectClass": ["person"]},
@@ -286,7 +286,7 @@ class TestValidatorServiceComprehensive:
 
     def test_validate_entry_structure_success(self) -> None:
         """Test validate_entry_structure with valid entry."""
-        entry = FlextLDIFEntry.model_validate(
+        entry = FlextLDIFModels.Entry.model_validate(
             {
                 "dn": "uid=valid,ou=people,dc=example,dc=com",
                 "attributes": {"objectClass": ["person"], "cn": ["Valid User"]},
@@ -465,7 +465,7 @@ class TestTransformerServiceComprehensive:
 
     def test_transform_entry_default(self) -> None:
         """Test transform_entry default implementation."""
-        entry = FlextLDIFEntry.model_validate(
+        entry = FlextLDIFModels.Entry.model_validate(
             {
                 "dn": "uid=transform,ou=people,dc=example,dc=com",
                 "attributes": {"objectClass": ["person"], "cn": ["Transform User"]},
@@ -489,13 +489,13 @@ class TestTransformerServiceComprehensive:
     def test_transform_entries_success(self) -> None:
         """Test transform_entries with real entries."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=transform1,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["User 1"]},
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=transform2,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["User 2"]},
@@ -514,7 +514,7 @@ class TestTransformerServiceComprehensive:
     def test_normalize_dns_default(self) -> None:
         """Test normalize_dns default implementation."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=normalize,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"]},
@@ -535,7 +535,7 @@ class TestAnalyticsServiceComprehensive:
     def test_analyze_attribute_distribution(self) -> None:
         """Test analyze_attribute_distribution method."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=user1,ou=people,dc=example,dc=com",
                     "attributes": {
@@ -545,7 +545,7 @@ class TestAnalyticsServiceComprehensive:
                     },
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=user2,ou=people,dc=example,dc=com",
                     "attributes": {
@@ -570,19 +570,19 @@ class TestAnalyticsServiceComprehensive:
     def test_analyze_dn_depth(self) -> None:
         """Test analyze_dn_depth method."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=shallow,dc=example,dc=com",  # depth_3: uid, dc, dc
                     "attributes": {"objectClass": ["person"]},
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=deep,ou=people,dc=example,dc=com",  # depth_4: uid, ou, dc, dc
                     "attributes": {"objectClass": ["person"]},
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=deeper,ou=people,ou=corp,dc=example,dc=com",  # depth_5: uid, ou, ou, dc, dc
                     "attributes": {"objectClass": ["person"]},
@@ -602,19 +602,19 @@ class TestAnalyticsServiceComprehensive:
     def test_get_objectclass_distribution(self) -> None:
         """Test get_objectclass_distribution method."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=person1,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["inetOrgPerson", "person"]},
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "cn=group1,ou=groups,dc=example,dc=com",
                     "attributes": {"objectClass": ["groupOfNames"]},
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=person2,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"]},
@@ -634,7 +634,7 @@ class TestAnalyticsServiceComprehensive:
     def test_get_dn_depth_analysis_alias(self) -> None:
         """Test get_dn_depth_analysis as alias for analyze_dn_depth."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",  # depth_4: uid, ou, dc, dc
                     "attributes": {"objectClass": ["person"]},
@@ -651,7 +651,7 @@ class TestAnalyticsServiceComprehensive:
     def test_analyze_entry_patterns_alias(self) -> None:
         """Test analyze_entry_patterns as alias for analyze_patterns."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"]},
@@ -674,7 +674,7 @@ class TestServiceAliases:
     def test_repository_service_aliases(self) -> None:
         """Test RepositoryService method aliases."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"]},
@@ -697,7 +697,7 @@ class TestServiceAliases:
     def test_validator_service_aliases(self) -> None:
         """Test ValidatorService method aliases."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"]},
@@ -722,7 +722,7 @@ class TestServiceAliases:
     def test_writer_service_aliases(self) -> None:
         """Test WriterService method aliases."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"]},

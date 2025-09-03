@@ -9,12 +9,12 @@ from typing import Never
 
 import pytest
 
+from flext_ldif import FlextLDIFModels
 from flext_ldif.format_handlers import (
     FlextLDIFFormatHandler,
     FlextLDIFParser,
     FlextLDIFWriter,
 )
-from flext_ldif.models import FlextLDIFEntry
 
 
 class TestFlextLDIFFormatHandler:
@@ -36,12 +36,12 @@ objectClass: person
         assert result.is_success
         entries = result.value
         assert len(entries) == 2
-        assert isinstance(entries[0], FlextLDIFEntry)
+        assert isinstance(entries[0], FlextLDIFModels.Entry)
         assert str(entries[0].dn) == "cn=John Doe,ou=people,dc=example,dc=com"
 
     def test_write_ldif_basic(self) -> None:
         """Test basic LDIF writing through class method."""
-        entry = FlextLDIFEntry(
+        entry = FlextLDIFModels.Entry(
             dn="cn=Test User,ou=people,dc=example,dc=com",
             attributes={"cn": ["Test User"], "sn": ["User"], "objectClass": ["person"]},
         )

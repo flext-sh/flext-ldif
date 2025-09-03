@@ -19,6 +19,7 @@ from flext_core import (
 from pydantic import Field
 from pydantic.fields import FieldInfo
 
+from flext_ldif.constants import FlextLDIFConstants
 from flext_ldif.models import FlextLDIFModels
 
 # Use FlextConstants instead of local constants
@@ -30,7 +31,7 @@ from flext_ldif.models import FlextLDIFModels
 # =============================================================================
 
 
-class FlextLDIFServices(FlextModels.BaseConfig):
+class FlextLDIFServices(FlextModels.Config):
     """Single consolidated class containing ALL LDIF services.
 
     Consolidates ALL service operations into one class following FLEXT patterns.
@@ -78,34 +79,32 @@ class FlextLDIFServices(FlextModels.BaseConfig):
             """Analyze patterns in LDIF entries."""
             from flext_ldif.constants import FlextLDIFConstants
 
-            FlextLDIFAnalyticsConstants = FlextLDIFConstants.FlextLDIFAnalyticsConstants
+            analytics_constants = FlextLDIFConstants.FlextLDIFAnalyticsConstants
 
             patterns = {
-                FlextLDIFAnalyticsConstants.TOTAL_ENTRIES_KEY: len(entries),
-                FlextLDIFAnalyticsConstants.ENTRIES_WITH_CN_KEY: sum(
+                analytics_constants.TOTAL_ENTRIES_KEY: len(entries),
+                analytics_constants.ENTRIES_WITH_CN_KEY: sum(
                     1
                     for entry in entries
-                    if entry.has_attribute(FlextLDIFAnalyticsConstants.CN_ATTRIBUTE)
+                    if entry.has_attribute(analytics_constants.CN_ATTRIBUTE)
                 ),
-                FlextLDIFAnalyticsConstants.ENTRIES_WITH_MAIL_KEY: sum(
+                analytics_constants.ENTRIES_WITH_MAIL_KEY: sum(
                     1
                     for entry in entries
-                    if entry.has_attribute(FlextLDIFAnalyticsConstants.MAIL_ATTRIBUTE)
+                    if entry.has_attribute(analytics_constants.MAIL_ATTRIBUTE)
                 ),
-                FlextLDIFAnalyticsConstants.ENTRIES_WITH_TELEPHONE_KEY: sum(
+                analytics_constants.ENTRIES_WITH_TELEPHONE_KEY: sum(
                     1
                     for entry in entries
                     if entry.has_attribute(
-                        FlextLDIFAnalyticsConstants.TELEPHONE_ATTRIBUTE
+                        analytics_constants.TELEPHONE_ATTRIBUTE
                     )
                 ),
-                "unique_object_classes": len(
-                    {
-                        oc.lower()
-                        for entry in entries
-                        for oc in entry.get_attribute("objectclass") or []
-                    }
-                ),
+                "unique_object_classes": len({
+                    oc.lower()
+                    for entry in entries
+                    for oc in entry.get_attribute("objectclass") or []
+                }),
                 "person_entries": sum(1 for entry in entries if entry.is_person()),
                 "group_entries": sum(1 for entry in entries if entry.is_group()),
             }
@@ -246,7 +245,7 @@ class FlextLDIFServices(FlextModels.BaseConfig):
                 path_obj.parent.mkdir(parents=True, exist_ok=True)
                 path_obj.write_text(content, encoding=encoding)
 
-                return FlextResult[bool].ok(True)
+                return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_SUCCESS)
 
             except (OSError, PermissionError, UnicodeError) as e:
                 error_msg = f"File write failed: {e}"
@@ -490,7 +489,7 @@ class FlextLDIFServices(FlextModels.BaseConfig):
             """Validate all entries using flext-core type guards."""
             # Use FlextUtilities.TypeGuards.is_list_non_empty for validation
             if not FlextUtilities.TypeGuards.is_list_non_empty(entries):
-                return FlextResult[bool].ok(True)
+                return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_SUCCESS)
 
             for entry in entries:
                 try:
@@ -500,7 +499,7 @@ class FlextLDIFServices(FlextModels.BaseConfig):
                         f"Validation failed for entry {entry.dn.value}: {e}"
                     )
 
-            return FlextResult[bool].ok(True)
+            return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_SUCCESS)
 
         def validate_entry_structure(
             self, entry: FlextLDIFModels.Entry
@@ -513,7 +512,7 @@ class FlextLDIFServices(FlextModels.BaseConfig):
                 # Validate attributes
                 entry.attributes.validate_domain_rules()
 
-                return FlextResult[bool].ok(True)
+                return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_SUCCESS)
 
             except Exception as e:
                 return FlextResult[bool].fail(str(e))
@@ -524,7 +523,7 @@ class FlextLDIFServices(FlextModels.BaseConfig):
             """Validate that all DNs are unique using flext-core utilities."""
             # Use FlextUtilities.TypeGuards.is_list_non_empty for validation
             if not FlextUtilities.TypeGuards.is_list_non_empty(entries):
-                return FlextResult[bool].ok(True)
+                return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_SUCCESS)
 
             seen_dns = set()
 
@@ -539,7 +538,7 @@ class FlextLDIFServices(FlextModels.BaseConfig):
                     return FlextResult[bool].fail(f"Duplicate DN found: {dn_value}")
                 seen_dns.add(dn_normalized)
 
-            return FlextResult[bool].ok(True)
+            return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_SUCCESS)
 
         def validate_ldif_entries(
             self, entries: list[FlextLDIFModels.Entry]
@@ -559,7 +558,7 @@ class FlextLDIFServices(FlextModels.BaseConfig):
 
             # Use FlextUtilities.TypeGuards.is_string_non_empty for additional validation
             if FlextUtilities.TypeGuards.is_string_non_empty(dn):
-                return FlextResult[bool].ok(True)
+                return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_SUCCESS)
             return FlextResult[bool].fail(f"Invalid DN format: {dn}")
 
         def validate_data(
@@ -574,10 +573,7 @@ class FlextLDIFServices(FlextModels.BaseConfig):
             """Validate entry against configuration rules."""
             # Use FlextUtilities.TypeGuards.is_not_none for config validation
             if not FlextUtilities.TypeGuards.is_not_none(self.config):
-                return FlextResult[bool].ok(True)
-
-            # Import here to avoid circular imports
-            from flext_ldif.constants import FlextLDIFConstants
+                return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_SUCCESS)
 
             config = self.config
 
@@ -597,7 +593,7 @@ class FlextLDIFServices(FlextModels.BaseConfig):
                 ):  # Real AttributesDict
                     attributes_dict = dict(attributes_obj)
                 else:
-                    return FlextResult[bool].ok(True)  # Can't validate
+                    return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_SUCCESS)  # Can't validate
 
                 for attr_name, attr_values in attributes_dict.items():
                     # Use FlextUtilities.TypeGuards.is_list_non_empty for validation
@@ -616,7 +612,7 @@ class FlextLDIFServices(FlextModels.BaseConfig):
                                 )
                             )
 
-            return FlextResult[bool].ok(True)
+            return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_SUCCESS)
 
     class ParserService(FlextDomainService["list[FlextLDIFModels.Entry]"]):
         """Parser service for LDIF parsing."""
@@ -736,7 +732,7 @@ class FlextLDIFServices(FlextModels.BaseConfig):
         def validate_ldif_syntax(self, content: str) -> FlextResult[bool]:
             """Validate LDIF syntax without full parsing."""
             if not content or not content.strip():
-                return FlextResult[bool].ok(True)
+                return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_SUCCESS)
 
             try:
                 lines = content.strip().split("\n")
@@ -764,7 +760,7 @@ class FlextLDIFServices(FlextModels.BaseConfig):
                             f"Attribute before DN at line {line_num}"
                         )
 
-                return FlextResult[bool].ok(True)
+                return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_SUCCESS)
 
             except Exception as e:
                 return FlextResult[bool].fail(f"Syntax validation error: {e}")

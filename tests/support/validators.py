@@ -11,14 +11,14 @@ from pathlib import Path
 
 from flext_core import FlextResult
 
-from flext_ldif import FlextLDIFEntry
+from flext_ldif import FlextLDIFModels
 
 
 class TestValidators:
     """Validators for testing LDIF functionality."""
 
     @staticmethod
-    def validate_ldif_entry(entry: FlextLDIFEntry) -> dict[str, bool]:
+    def validate_ldif_entry(entry: FlextLDIFModels.Entry) -> dict[str, bool]:
         """Validate a real LDIF entry object."""
         validations = {
             "has_dn": bool(entry.dn and str(entry.dn).strip()),
@@ -169,7 +169,7 @@ class TestValidators:
 
     @classmethod
     def validate_parsing_result(
-        cls, result: FlextResult[list[FlextLDIFEntry]], expected_count: int
+        cls, result: FlextResult[list[FlextLDIFModels.Entry]], expected_count: int
     ) -> dict[str, object]:
         """Validate parsing result comprehensively."""
         base_validation = cls.validate_result_success(result)
@@ -203,7 +203,7 @@ class TestValidators:
         return {**base_validation, **entries_validation}
 
     @staticmethod
-    def assert_valid_ldif_entry(entry: FlextLDIFEntry) -> None:
+    def assert_valid_ldif_entry(entry: FlextLDIFModels.Entry) -> None:
         """Assert that an LDIF entry is valid (for use in tests)."""
         validation = TestValidators.validate_ldif_entry(entry)
 

@@ -11,13 +11,12 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import TypeVar
 
 # Use flext-cli instead of click/rich directly - MANDATORY per standards
 sys.path.insert(0, "/home/marlonsc/flext/flext-cli/src")
-from typing import TypeVar
 
 from flext_cli import (
-    FlextCliContext,
     FlextCliFormatters,
     FlextCliService,
 )
@@ -27,6 +26,11 @@ from flext_ldif.api import FlextLDIFAPI
 from flext_ldif.models import FlextLDIFModels
 
 T = TypeVar("T")
+
+# Constants for CLI command parsing
+MIN_ARGS_WITH_COMMAND = 2
+MIN_ARGS_WITH_INPUT_FILE = 3
+MAX_ERRORS_TO_SHOW = 10
 
 # Use consolidated class directly - NO aliases
 FlextLDIFConfig = FlextLDIFModels.Config
@@ -48,30 +52,21 @@ class FlextLDIFCli(FlextCliService):
     """
 
     def __init__(self, config: FlextLDIFConfig | None = None) -> None:
-        """Initialize CLI service with flext-cli patterns."""
-        # Initialize components before calling super().__init__() for frozen models
-        config_ = config or FlextLDIFModels.Config()
-        api = FlextLDIFAPI(config_)
-        formatter = FlextCliFormatters()
-        context = FlextCliContext.create()
-
-        # Call super after preparing all attributes
+        """Initialize CLI service with configuration and dependencies."""
         super().__init__()
+        self.config = config or FlextLDIFConfig()
+        self.api = FlextLDIFAPI(config=self.config)
+        self.formatter = FlextCliFormatters()
 
-        # Use object.__setattr__ to bypass frozen model restrictions
-        object.__setattr__(self, "config", config_)
-        object.__setattr__(self, "api", api)
-        object.__setattr__(self, "formatter", formatter)
-        object.__setattr__(self, "context", context)
-
-    def execute(self) -> FlextResult[FlextResult[str]]:
+    def execute(self) -> FlextResult[str]:  # type: ignore[override]
         """Abstract method implementation required by FlextCliService."""
         # This is implemented by individual command functions
-        return FlextResult[FlextResult[str]].ok(FlextResult[str].ok("CLI ready"))
+        return FlextResult[str].ok("CLI ready")
 
     def parse_and_process(
         self,
         input_file: Path,
+        *,
         output_file: Path | None = None,
         validate: bool = False,
         max_entries: int | None = None,
@@ -105,7 +100,15 @@ class FlextLDIFCli(FlextCliService):
                 if errors:
                     error_summary = f"{len(errors)} validation errors found"
                     self.formatter.print_error(error_summary)
-                    return FlextResult[list[FlextLDIFModels.Entry]].fail(error_summary)
+                    return FlextResult[list[FlextLDIFEntry]].fail(error_summary)
+
+            # Use output_file if provided
+            if output_file:
+                write_result = self.write_entries(entries, output_file)
+                if not write_result.is_success:
+                    return FlextResult[list[FlextLDIFEntry]].fail(
+                        f"Write failed: {write_result.error}"
+                    )
 
             return parse_result
 
@@ -231,6 +234,7 @@ class FlextLDIFCli(FlextCliService):
     @staticmethod
     def parse_command(
         input_file: str,
+        *,
         output: str | None = None,
         validate: bool = False,
         stats: bool = False,
@@ -246,7 +250,9 @@ class FlextLDIFCli(FlextCliService):
 
             # Parse entries
             parse_result = service.parse_and_process(
-                input_path, Path(output) if output else None, validate=validate
+                input_path,
+                output_file=Path(output) if output else None,
+                validate=validate
             )
             entries = service.handle_result_or_exit(parse_result)
 
@@ -259,12 +265,11 @@ class FlextLDIFCli(FlextCliService):
                     service.formatter.print_error(
                         f"❌ Found {len(errors)} validation errors:"
                     )
-                    max_errors_to_show = 10
-                    for error in errors[:max_errors_to_show]:
+                    for error in errors[:MAX_ERRORS_TO_SHOW]:
                         service.formatter.print_error(f"  {error}")
-                    if len(errors) > max_errors_to_show:
+                    if len(errors) > MAX_ERRORS_TO_SHOW:
                         service.formatter.print_error(
-                            f"  ... and {len(errors) - max_errors_to_show} more errors"
+                            f"  ... and {len(errors) - MAX_ERRORS_TO_SHOW} more errors"
                         )
                     sys.exit(1)
                 else:
@@ -392,29 +397,35 @@ class FlextLDIFCli(FlextCliService):
     @staticmethod
     def main() -> None:
         """Main CLI entry point using flext-cli patterns."""
-
-    if len(sys.argv) < 2:
-        sys.exit(1)
-
-    command = sys.argv[1]
-
-    if command == "parse":
-        if len(sys.argv) < 3:
+        if len(sys.argv) < MIN_ARGS_WITH_COMMAND:
             sys.exit(1)
-        FlextLDIFCli.parse_command(
-            sys.argv[2], validate="--validate" in sys.argv, stats="--stats" in sys.argv
-        )
-    elif command == "validate":
-        if len(sys.argv) < 3:
+
+        command = sys.argv[1]
+
+        if command == "parse":
+            if len(sys.argv) < MIN_ARGS_WITH_INPUT_FILE:
+                sys.exit(1)
+            FlextLDIFCli.parse_command(
+                sys.argv[2],
+                validate="--validate" in sys.argv,
+                stats="--stats" in sys.argv
+            )
+        elif command == "validate":
+            if len(sys.argv) < MIN_ARGS_WITH_INPUT_FILE:
+                sys.exit(1)
+            FlextLDIFCli.validate_command(sys.argv[2])
+        elif command == "stats":
+            if len(sys.argv) < MIN_ARGS_WITH_INPUT_FILE:
+                sys.exit(1)
+            FlextLDIFCli.stats_command(sys.argv[2])
+        else:
             sys.exit(1)
-        FlextLDIFCli.validate_command(sys.argv[2])
-    elif command == "stats":
-        if len(sys.argv) < 3:
-            sys.exit(1)
-        FlextLDIFCli.stats_command(sys.argv[2])
-    else:
-        sys.exit(1)
+
+
+def main() -> None:
+    """Main CLI entry point."""
+    FlextLDIFCli.main()
 
 
 if __name__ == "__main__":
-    FlextLDIFCli.main()
+    main()

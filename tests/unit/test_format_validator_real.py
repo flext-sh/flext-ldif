@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+from flext_ldif import FlextLDIFModels
 from flext_ldif.format_validators import (
     FlextLDIFFormatValidator,
     LdifSchemaValidator,
     LdifValidator,
 )
-from flext_ldif.models import FlextLDIFEntry
 
 
 class TestFlextLDIFFormatValidator:
@@ -190,7 +190,7 @@ class TestLdifValidator:
                 "sn": ["User"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         result = LdifValidator.validate_required_objectclass(entry)
 
@@ -203,7 +203,7 @@ class TestLdifValidator:
             "dn": "uid=test,ou=people,dc=example,dc=com",
             "attributes": {"cn": ["Test User"], "sn": ["User"]},
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         result = LdifValidator.validate_required_objectclass(entry)
 
@@ -221,7 +221,7 @@ class TestLdifValidator:
                 "sn": ["User"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         result = LdifValidator.validate_entry_completeness(entry)
 
@@ -237,7 +237,7 @@ class TestLdifValidator:
 
         # Should fail during model validation or create entry with empty DN
         try:
-            entry = FlextLDIFEntry.model_validate(entry_data)
+            entry = FlextLDIFModels.Entry.model_validate(entry_data)
             result = LdifValidator.validate_entry_completeness(entry)
             assert result.is_success is False
         except Exception:
@@ -254,7 +254,7 @@ class TestLdifValidator:
                 "sn": ["User"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         result = LdifValidator.validate_entry_type(entry, {"person"})
 
@@ -271,7 +271,7 @@ class TestLdifValidator:
                 "sn": ["User"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         result = LdifValidator.validate_entry_type(entry, {"organizationalUnit"})
 
@@ -285,7 +285,7 @@ class TestLdifValidator:
             "dn": "uid=test,ou=people,dc=example,dc=com",
             "attributes": {"cn": ["Test User"], "sn": ["User"]},
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         result = LdifValidator.validate_entry_type(entry, {"person"})
 
@@ -302,7 +302,7 @@ class TestLdifValidator:
                 "sn": ["User"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         result = LdifValidator.is_person_entry(entry)
 
@@ -315,7 +315,7 @@ class TestLdifValidator:
             "dn": "ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["organizationalUnit"], "ou": ["people"]},
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         result = LdifValidator.is_person_entry(entry)
 
@@ -327,7 +327,7 @@ class TestLdifValidator:
             "dn": "ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["organizationalUnit"], "ou": ["people"]},
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         result = LdifValidator.is_ou_entry(entry)
 
@@ -340,7 +340,7 @@ class TestLdifValidator:
             "dn": "uid=test,ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["Test User"]},
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         result = LdifValidator.is_ou_entry(entry)
 
@@ -356,7 +356,7 @@ class TestLdifValidator:
                 "member": ["uid=admin,ou=people,dc=example,dc=com"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         result = LdifValidator.is_group_entry(entry)
 
@@ -369,7 +369,7 @@ class TestLdifValidator:
             "dn": "uid=test,ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["Test User"]},
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         result = LdifValidator.is_group_entry(entry)
 
@@ -389,7 +389,7 @@ class TestLdifSchemaValidator:
                 "sn": ["User"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         result = LdifSchemaValidator.validate_required_attributes(entry, ["cn", "sn"])
 
@@ -406,7 +406,7 @@ class TestLdifSchemaValidator:
                 # Missing 'sn'
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         result = LdifSchemaValidator.validate_required_attributes(entry, ["cn", "sn"])
 
@@ -420,7 +420,7 @@ class TestLdifSchemaValidator:
             "dn": "uid=test,ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["Test User"]},
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         result = LdifSchemaValidator.validate_required_attributes(entry, [])
 
@@ -443,7 +443,7 @@ class TestLdifSchemaValidator:
                 "sn": ["User"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         result = LdifSchemaValidator.validate_person_schema(entry)
 
@@ -456,7 +456,7 @@ class TestLdifSchemaValidator:
             "dn": "ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["organizationalUnit"], "ou": ["people"]},
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         result = LdifSchemaValidator.validate_person_schema(entry)
 
@@ -472,7 +472,7 @@ class TestLdifSchemaValidator:
                 "description": ["People organizational unit"],
             },
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         result = LdifSchemaValidator.validate_ou_schema(entry)
 
@@ -485,7 +485,7 @@ class TestLdifSchemaValidator:
             "dn": "uid=test,ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["Test User"]},
         }
-        entry = FlextLDIFEntry.model_validate(entry_data)
+        entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         result = LdifSchemaValidator.validate_ou_schema(entry)
 

@@ -335,13 +335,13 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             group_classes = {oc.lower() for oc in FlextLDIFConstants.LDAP_GROUP_CLASSES}
             return bool(object_classes.intersection(group_classes))
 
-    class Entry(FlextModels.Entity):
+    class Entry(FlextModels.Value):
         """LDIF entry domain entity."""
 
         dn: FlextLDIFModels.DistinguishedName = Field(...)
         attributes: AttributesDict = Field(default_factory=AttributesDict)
 
-        def __init__(self, **data: object) -> None:  # type: ignore[explicit-any]
+        def __init__(self, **data: object) -> None:
             """Initialize with auto-generated ID if not provided."""
             # Ensure we have an id for FlextModels
             if "id" not in data and "dn" in data:
@@ -368,8 +368,16 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
                 else:
                     data["attributes"] = AttributesDict()
 
-            # Pass all data to pydantic model - it will handle type validation and conversion
-            super().__init__(**data)
+            # Extract only the fields that belong to this Entry class
+            entry_fields = {"dn", "attributes"}
+            entry_data = {k: v for k, v in data.items() if k in entry_fields}
+
+            # Initialize the parent Value class with default values
+            super().__init__()
+
+            # Set the Entry-specific fields
+            for field_name, value in entry_data.items():
+                setattr(self, field_name, value)
 
         @model_validator(mode="before")
         @classmethod
@@ -646,10 +654,14 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             return FlextLDIFModels.Entry(dn=dn_obj, attributes=attrs_dict)
 
         @staticmethod
-        def create_config(**kwargs: object) -> FlextLDIFModels.Config:  # type: ignore[explicit-any]
+        def create_config(**kwargs: object) -> FlextLDIFModels.Config:
             """Create configuration with proper type handling."""
-            # Let Pydantic handle type conversion and validation
-            return FlextLDIFModels.Config(**kwargs)
+            try:
+                # Use model_validate for better type conversion
+                return FlextLDIFModels.Config.model_validate(kwargs)
+            except Exception:
+                # Fallback to default config
+                return FlextLDIFModels.Config()
 
     # =========================================================================
     # HELPER METHODS - Moved from loose functions for FLEXT pattern compliance

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from tempfile import TemporaryDirectory
 
-from flext_ldif.models import FlextLDIFEntry
+from flext_ldif import FlextLDIFModels
 from flext_ldif.services import FlextLDIFServices
 
 
@@ -18,13 +18,13 @@ class TestFlextLDIFServicesAdvanced:
     def test_repository_service_initialization_and_execution(self) -> None:
         """Test RepositoryService initialization and execute method."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=user1,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["User 1"]},
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=user2,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["User 2"]},
@@ -47,7 +47,7 @@ class TestFlextLDIFServicesAdvanced:
     def test_repository_service_find_entry_by_dn(self) -> None:
         """Test find_entry_by_dn method with real entries."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=john,ou=people,dc=example,dc=com",
                     "attributes": {
@@ -57,7 +57,7 @@ class TestFlextLDIFServicesAdvanced:
                     },
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=jane,ou=people,dc=example,dc=com",
                     "attributes": {
@@ -88,7 +88,7 @@ class TestFlextLDIFServicesAdvanced:
 
     def test_writer_service_format_entry_for_display(self) -> None:
         """Test format_entry_for_display method with real entry."""
-        entry = FlextLDIFEntry.model_validate(
+        entry = FlextLDIFModels.Entry.model_validate(
             {
                 "dn": "cn=John Doe,ou=people,dc=example,dc=com",
                 "attributes": {
@@ -115,13 +115,13 @@ class TestFlextLDIFServicesAdvanced:
     def test_writer_service_write_entries_to_file_real_file(self) -> None:
         """Test write_entries_to_file with real file operations."""
         entries = [
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=test1,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["Test User 1"]},
                 }
             ),
-            FlextLDIFEntry.model_validate(
+            FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=test2,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["Test User 2"]},
@@ -149,7 +149,7 @@ class TestFlextLDIFServicesAdvanced:
 
     def test_writer_service_write_entry_single(self) -> None:
         """Test write_entry method for single entry."""
-        entry = FlextLDIFEntry.model_validate(
+        entry = FlextLDIFModels.Entry.model_validate(
             {
                 "dn": "cn=Single Entry,ou=test,dc=example,dc=com",
                 "attributes": {

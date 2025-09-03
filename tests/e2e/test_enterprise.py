@@ -19,9 +19,9 @@ from flext_core import FlextResult
 
 from flext_ldif import (
     FlextLDIFAPI,
-    FlextLDIFConfig,
     FlextLDIFCore,
     FlextLDIFFormatHandler,
+    FlextLDIFModels,
 )
 
 # Constants
@@ -354,7 +354,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
     def test_e2e_configuration_scenarios(self, enterprise_ldif_sample: str) -> None:
         """Test E2E workflows with different configurations."""
         # Scenario 1: Strict configuration
-        strict_config = FlextLDIFConfig.model_validate(
+        strict_config = FlextLDIFModels.Config.model_validate(
             {
                 "strict_validation": True,
                 "max_entries": 20,
@@ -367,7 +367,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         assert strict_result.is_success  # Should pass with valid data
 
         # Scenario 2: Permissive configuration
-        permissive_config = FlextLDIFConfig.model_validate(
+        permissive_config = FlextLDIFModels.Config.model_validate(
             {
                 "strict_validation": False,
                 "max_entries": 1000,
@@ -380,7 +380,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         assert permissive_result.is_success
 
         # Scenario 3: Restrictive configuration
-        restrictive_config = FlextLDIFConfig.model_validate(
+        restrictive_config = FlextLDIFModels.Config.model_validate(
             {
                 "max_entries": 5,  # Less than our sample
             },
@@ -602,7 +602,7 @@ description: User number {i} for memory testing
         enterprise_data = self._create_realistic_enterprise_data()
 
         # Step 2: Process with enterprise requirements
-        config = FlextLDIFConfig.model_validate(
+        config = FlextLDIFModels.Config.model_validate(
             {
                 "strict_validation": True,
                 "max_entries": 500,
