@@ -6,7 +6,7 @@ All services are properly configured and use real implementations.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import object
 
 from flext_ldif import (
     FlextLDIFAPI,
@@ -22,7 +22,7 @@ class RealServiceFactory:
     """Factory for creating real service instances for testing."""
 
     @staticmethod
-    def create_api(config: dict[str, Any] | None = None) -> FlextLDIFAPI:
+    def create_api(config: dict[str, object] | None = None) -> FlextLDIFAPI:
         """Create a real LDIF API instance."""
         if config is None:
             config = {}
@@ -39,7 +39,9 @@ class RealServiceFactory:
         return FlextLDIFAPI(config=ldif_config)
 
     @staticmethod
-    def create_parser(config: dict[str, Any] | None = None) -> FlextLDIFServices.ParserService:
+    def create_parser(
+        config: dict[str, object] | None = None,
+    ) -> FlextLDIFServices.ParserService:
         """Create a real parser service."""
         if config is None:
             config = {}
@@ -54,7 +56,7 @@ class RealServiceFactory:
         return FlextLDIFParserService(config=ldif_config)
 
     @staticmethod
-    def create_validator(config: dict[str, Any] | None = None):
+    def create_validator(config: dict[str, object] | None = None):
         """Create a real validator service."""
         if config is None:
             config = {}
@@ -69,7 +71,7 @@ class RealServiceFactory:
         return FlextLDIFServices.ValidatorService(config=ldif_config)
 
     @staticmethod
-    def create_writer(config: dict[str, Any] | None = None):
+    def create_writer(config: dict[str, object] | None = None):
         """Create a real writer service."""
         if config is None:
             config = {}
@@ -133,7 +135,7 @@ class RealServiceFactory:
         validate_dn: bool = True,
         max_entries: int = 10000,
         max_line_length: int = 76,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> FlextLDIFConfig:
         """Create a test configuration object."""
         return FlextLDIFConfig(
@@ -146,7 +148,7 @@ class RealServiceFactory:
         )
 
     @classmethod
-    def services_for_integration_test(cls) -> dict[str, Any]:
+    def services_for_integration_test(cls) -> dict[str, object]:
         """Create all services configured for integration testing."""
         config = cls.create_test_config()
 
@@ -159,7 +161,7 @@ class RealServiceFactory:
         }
 
     @classmethod
-    def minimal_services(cls) -> dict[str, Any]:
+    def minimal_services(cls) -> dict[str, object]:
         """Create minimal service set for basic testing."""
         return {
             "api": cls.create_api(),

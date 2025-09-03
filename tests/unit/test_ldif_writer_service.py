@@ -45,13 +45,18 @@ class TestFlextLDIFWriterServiceReal:
         entry_data = {
             "dn": "uid=john.doe,ou=people,dc=example,dc=com",
             "attributes": {
-                "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                "objectClass": [
+                    "inetOrgPerson",
+                    "organizationalPerson",
+                    "person",
+                    "top",
+                ],
                 "uid": ["john.doe"],
                 "cn": ["John Doe"],
                 "sn": ["Doe"],
                 "givenName": ["John"],
                 "mail": ["john.doe@example.com"],
-            }
+            },
         }
         entry = FlextLDIFEntry.model_validate(entry_data)
 
@@ -78,12 +83,17 @@ class TestFlextLDIFWriterServiceReal:
             entry_data = {
                 "dn": f"uid=user{i},ou=people,dc=example,dc=com",
                 "attributes": {
-                    "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                    "objectClass": [
+                        "inetOrgPerson",
+                        "organizationalPerson",
+                        "person",
+                        "top",
+                    ],
                     "uid": [f"user{i}"],
                     "cn": [f"User {i}"],
                     "sn": ["User"],
                     "mail": [f"user{i}@example.com"],
-                }
+                },
             }
             entries.append(FlextLDIFEntry.model_validate(entry_data))
 
@@ -110,13 +120,18 @@ class TestFlextLDIFWriterServiceReal:
         entry_data = {
             "dn": "uid=multi.user,ou=people,dc=example,dc=com",
             "attributes": {
-                "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                "objectClass": [
+                    "inetOrgPerson",
+                    "organizationalPerson",
+                    "person",
+                    "top",
+                ],
                 "uid": ["multi.user"],
                 "cn": ["Multi User"],
                 "sn": ["User"],
                 "mail": ["multi.user@example.com", "multi.user.alt@example.com"],
                 "telephoneNumber": ["+1-555-0123", "+1-555-0124"],
-            }
+            },
         }
         entry = FlextLDIFEntry.model_validate(entry_data)
 
@@ -140,12 +155,17 @@ class TestFlextLDIFWriterServiceReal:
         entry_data = {
             "dn": "uid=photo.user,ou=people,dc=example,dc=com",
             "attributes": {
-                "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                "objectClass": [
+                    "inetOrgPerson",
+                    "organizationalPerson",
+                    "person",
+                    "top",
+                ],
                 "uid": ["photo.user"],
                 "cn": ["Photo User"],
                 "sn": ["User"],
                 "jpegPhoto": ["/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQ=="],
-            }
+            },
         }
         entry = FlextLDIFEntry.model_validate(entry_data)
 
@@ -167,12 +187,17 @@ class TestFlextLDIFWriterServiceReal:
         entry_data = {
             "dn": "uid=special.chars,ou=people,dc=example,dc=com",
             "attributes": {
-                "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                "objectClass": [
+                    "inetOrgPerson",
+                    "organizationalPerson",
+                    "person",
+                    "top",
+                ],
                 "uid": ["special.chars"],
                 "cn": ["José María Ñuñez"],
                 "sn": ["Ñuñez"],
                 "description": ["Contains special characters: áéíóú ÁÉÍÓÚ ñÑ"],
-            }
+            },
         }
         entry = FlextLDIFEntry.model_validate(entry_data)
 
@@ -186,7 +211,9 @@ class TestFlextLDIFWriterServiceReal:
         assert "José María Ñuñez" in ldif_content
         assert "áéíóú ÁÉÍÓÚ ñÑ" in ldif_content
 
-    def test_write_real_entries_to_file(self, test_file_manager: TestFileManager) -> None:
+    def test_write_real_entries_to_file(
+        self, test_file_manager: TestFileManager
+    ) -> None:
         """Test writing real entries to actual file."""
         service = FlextLDIFWriterService()
 
@@ -196,12 +223,17 @@ class TestFlextLDIFWriterServiceReal:
             entry_data = {
                 "dn": f"uid=file{i},ou=people,dc=example,dc=com",
                 "attributes": {
-                    "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                    "objectClass": [
+                        "inetOrgPerson",
+                        "organizationalPerson",
+                        "person",
+                        "top",
+                    ],
                     "uid": [f"file{i}"],
                     "cn": [f"File User {i}"],
                     "sn": ["User"],
                     "mail": [f"file{i}@example.com"],
-                }
+                },
             }
             entries.append(FlextLDIFEntry.model_validate(entry_data))
 
@@ -246,12 +278,21 @@ class TestFlextLDIFWriterServiceReal:
         entry_data = {
             "dn": "uid=long.lines,ou=people,dc=example,dc=com",
             "attributes": {
-                "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                "objectClass": [
+                    "inetOrgPerson",
+                    "organizationalPerson",
+                    "person",
+                    "top",
+                ],
                 "uid": ["long.lines"],
-                "cn": ["User With Very Long Common Name That Exceeds Normal Line Length"],
+                "cn": [
+                    "User With Very Long Common Name That Exceeds Normal Line Length"
+                ],
                 "sn": ["User"],
-                "description": ["This is a very long description that should be folded across multiple lines when the line length limit is reached"],
-            }
+                "description": [
+                    "This is a very long description that should be folded across multiple lines when the line length limit is reached"
+                ],
+            },
         }
         entry = FlextLDIFEntry.model_validate(entry_data)
 
@@ -274,12 +315,17 @@ class TestFlextLDIFWriterServiceReal:
         entry_data = {
             "dn": "uid=unicode,ou=people,dc=example,dc=com",
             "attributes": {
-                "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                "objectClass": [
+                    "inetOrgPerson",
+                    "organizationalPerson",
+                    "person",
+                    "top",
+                ],
                 "uid": ["unicode"],
                 "cn": ["Unicode Test 测试 🌟"],
                 "sn": ["Test"],
                 "description": ["Unicode: αβγ 中文 العربية русский"],
-            }
+            },
         }
         entry = FlextLDIFEntry.model_validate(entry_data)
 
@@ -297,7 +343,9 @@ class TestFlextLDIFWriterServiceReal:
 class TestWriterIntegrationReal:
     """Integration tests with real writer and other services."""
 
-    def test_writer_with_parser_roundtrip(self, integration_services: dict[str, object]) -> None:
+    def test_writer_with_parser_roundtrip(
+        self, integration_services: dict[str, object]
+    ) -> None:
         """Test writer → parser roundtrip with real services."""
         parser = integration_services["parser"]
         writer = integration_services["writer"]
@@ -308,12 +356,17 @@ class TestWriterIntegrationReal:
             entry_data = {
                 "dn": f"uid=roundtrip{i},ou=people,dc=example,dc=com",
                 "attributes": {
-                    "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                    "objectClass": [
+                        "inetOrgPerson",
+                        "organizationalPerson",
+                        "person",
+                        "top",
+                    ],
                     "uid": [f"roundtrip{i}"],
                     "cn": [f"Roundtrip User {i}"],
                     "sn": ["User"],
                     "mail": [f"roundtrip{i}@example.com"],
-                }
+                },
             }
             original_entries.append(FlextLDIFEntry.model_validate(entry_data))
 
@@ -333,4 +386,6 @@ class TestWriterIntegrationReal:
         for original, parsed in zip(original_entries, parsed_entries, strict=False):
             assert str(original.dn) == str(parsed.dn)
             # Should have same number of attributes (allowing for minor differences)
-            assert len(original.attributes) <= len(parsed.attributes) + 2  # Allow some variation
+            assert (
+                len(original.attributes) <= len(parsed.attributes) + 2
+            )  # Allow some variation

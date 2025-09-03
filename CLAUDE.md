@@ -270,6 +270,7 @@ This project is part of the larger FLEXT ecosystem and:
 ### TYPING ERROR PATTERNS AND SOLUTIONS
 
 #### ErrorMessage Null-Safety Pattern
+
 ```python
 # PROBLEM: result.error can be None but code assumes string
 assert "error text" in result.error  # ❌ Type error
@@ -279,6 +280,7 @@ assert result.error is not None and "error text" in result.error  # ✅ Correct
 ```
 
 #### Pydantic Field Assignment False Positives
+
 ```python
 # PROBLEM: PyRight doesn't understand Pydantic field validators
 class Model(BaseModel):
@@ -290,6 +292,7 @@ class Model(BaseModel):
 ```
 
 #### Mock Type Compatibility
+
 ```python
 # PROBLEM: Mock objects vs real types in tests
 entries: list[FlextLdifEntry] = [mock_entry]  # ❌ Type error
@@ -302,6 +305,7 @@ entries: list[FlextLdifEntry] = [mock_entry]  # ❌ Type error
 ### AUTOMATION LESSONS LEARNED
 
 #### SAFE AUTOMATION APPROACH
+
 ```bash
 # ❌ DANGEROUS: Blanket sed replacements
 sed -i 's/pattern/replacement/g' file.py  # Can break syntax
@@ -313,6 +317,7 @@ grep -n "pattern" file.py                 # Understand scope
 ```
 
 #### ROI-AWARE QUALITY IMPROVEMENT
+
 - **Victory Condition**: 90%+ coverage with 0 source code type errors
 - **Diminishing Returns**: Last 10% of quality metrics often take 50%+ of time
 - **Pragmatic Stop Point**: When false positives outnumber real issues

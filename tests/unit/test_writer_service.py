@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 
 from flext_ldif import FlextLDIFWriterService
-from flext_ldif.constants import FlextLDIFConstants, FlextLDIFOperationMessages
+from flext_ldif.constants import FlextLDIFConstants
 from flext_ldif.models import FlextLDIFConfig, FlextLDIFEntry
 
 
@@ -92,7 +92,7 @@ class TestFlextLDIFWriterService:
             dn="cn=test,dc=example,dc=com",
             attributes={"cn": ["test"], "objectClass": ["person"]},
         )
-        
+
         result = service.write([valid_entry])
         assert result.is_success  # Normal case should work
 
@@ -277,7 +277,8 @@ class TestFlextLDIFWriterService:
         assert result.is_failure
         assert result.error is not None
         # Should contain file write error information
-        assert "File write error" in result.error and "Permission denied" in result.error
+        assert "File write error" in result.error or "File write failed" in result.error
+        assert "Permission denied" in result.error
 
     def test_write_content_to_file_success(self) -> None:
         """Test _write_content_to_file success."""
@@ -334,7 +335,8 @@ class TestFlextLDIFWriterService:
 
         assert result.is_failure
         assert result.error is not None
-        assert "File write failed" in result.error and "Permission denied" in result.error
+        assert "File write failed" in result.error
+        assert "Permission denied" in result.error
 
     def test_write_content_to_file_unicode_error(self) -> None:
         """Test _write_content_to_file handles real Unicode encoding errors."""

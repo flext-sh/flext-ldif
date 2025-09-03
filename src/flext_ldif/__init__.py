@@ -1,29 +1,84 @@
 """FLEXT-LDIF - LDIF Processing Library.
 
 This module provides LDIF processing functionality following FLEXT architectural patterns.
-All exports use wildcard imports from individual modules.
+Enterprise-grade LDIF parsing, validation, transformation, and writing capabilities.
 """
 
 from __future__ import annotations
 
-from flext_ldif.api import *
-from flext_ldif.cli import *
+# =============================================================================
+# FOUNDATION LAYER - Core components, no internal dependencies
+# =============================================================================
+
 from flext_ldif.constants import *
-from flext_ldif.core import *
 from flext_ldif.exceptions import *
-from flext_ldif.format_handler_service import *
-from flext_ldif.format_validator_service import *
-from flext_ldif.models import *
 from flext_ldif.protocols import *
-from flext_ldif.services import *
-from flext_ldif.utilities import *
+
+# =============================================================================
+# DOMAIN LAYER - Core business logic, depends on Foundation
+# =============================================================================
+
+from flext_ldif.models import *
+from flext_ldif.core import *  # type: ignore[assignment]
+
+# =============================================================================
+# APPLICATION LAYER - Use cases and orchestration, depends on Domain
+# =============================================================================
+
+from flext_ldif.api import *  # type: ignore[assignment]
+
+# =============================================================================
+# INFRASTRUCTURE LAYER - External services and adapters
+# =============================================================================
+
+from flext_ldif.services import *  # type: ignore[assignment]
+from flext_ldif.format_handlers import *  # type: ignore[assignment]
+from flext_ldif.format_validators import *  # type: ignore[assignment]
+from flext_ldif.utilities import *  # type: ignore[assignment]
+
+# =============================================================================
+# INTERFACE LAYER - CLI and external interfaces
+# =============================================================================
 
 # CLI aliases for backward compatibility
 from flext_ldif.cli import main as cli_main
 
-# Note: __all__ is constructed dynamically at runtime from imported modules
-# This pattern is necessary for library aggregation but causes pyright warnings
-__all__: list[str] = []
+# =============================================================================
+# CONSOLIDATED EXPORTS - Combine all __all__ from modules following flext-core pattern
+# =============================================================================
+
+import flext_ldif.api as _api
+import flext_ldif.cli as _cli
+import flext_ldif.constants as _constants
+import flext_ldif.core as _core
+import flext_ldif.exceptions as _exceptions
+import flext_ldif.format_handlers as _format_handlers
+import flext_ldif.format_validators as _format_validators
+import flext_ldif.models as _models
+import flext_ldif.protocols as _protocols
+import flext_ldif.services as _services
+import flext_ldif.utilities as _utilities
+
+# Collect all __all__ exports from imported modules following flext-core pattern
+_temp_exports: list[str] = []
+
+for _module in [
+    _constants,
+    _exceptions,
+    _protocols,
+    _models,
+    _core,
+    _api,
+    _services,
+    _format_handlers,
+    _format_validators,
+    _utilities,
+]:
+    if hasattr(_module, "__all__"):
+        _temp_exports.extend(_module.__all__)
+
+# Remove duplicates and sort following flext-core pattern
+__all__ = sorted(set(_temp_exports))
 
 # Version information
 __version__ = "0.9.0"

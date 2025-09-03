@@ -17,8 +17,8 @@ from urllib.parse import urlparse
 import urllib3
 from flext_core import FlextLogger, FlextResult
 
-from flext_ldif.constants import FlextLDIFOperationMessages, FlextLDIFValidationMessages
-from flext_ldif.models import FlextLDIFEntry
+from flext_ldif.constants import FlextLDIFConstants
+from flext_ldif.models import FlextLDIFModels
 
 logger = FlextLogger(__name__)
 
@@ -139,44 +139,48 @@ class FlextLDIFFormatHandler:
         return [item.lower() for item in items or []]
 
     @classmethod
-    def parse_ldif(cls, content: str) -> FlextResult[list[FlextLDIFEntry]]:
+    def parse_ldif(cls, content: str) -> FlextResult[list[FlextLDIFModels.Entry]]:
         """Parse LDIF content using modernized parser.
 
         Args:
           content: LDIF content as string
 
         Returns:
-          FlextResult containing list of FlextLDIFEntry objects
+          FlextResult containing list of FlextLDIFModels.Entry objects
 
         """
         try:
             parser = FlextLDIFParser(content)
             raw_entries = list(parser.parse())
 
-            # Convert tuples to FlextLDIFEntry objects
+            # Convert tuples to FlextLDIFModels.Entry objects
             entries = []
             for dn, attributes in raw_entries:
-                entry = FlextLDIFEntry(dn=dn, attributes=attributes)
+                entry = FlextLDIFModels.Entry(dn=dn, attributes=attributes)
                 entries.append(entry)
 
             logger.info(
-                FlextLDIFOperationMessages.LDIF_PARSED_SUCCESS.format(
+                FlextLDIFConstants.FlextLDIFOperationMessages.LDIF_PARSED_SUCCESS.format(
                     count=len(entries)
                 ),
             )
-            return FlextResult[list[FlextLDIFEntry]].ok(entries)
+            return FlextResult[list[FlextLDIFModels.Entry]].ok(entries)
 
         except (ValueError, AttributeError, TypeError, UnicodeError) as e:
             error_msg: str = f"Modernized LDIF parse failed: {e}"
-            logger.exception(FlextLDIFValidationMessages.MODERNIZED_PARSING_FAILED)
-            return FlextResult[list[FlextLDIFEntry]].fail(error_msg)
+            logger.exception(
+                FlextLDIFConstants.FlextLDIFValidationMessages.MODERNIZED_PARSING_FAILED
+            )
+            return FlextResult[list[FlextLDIFModels.Entry]].fail(error_msg)
 
     @classmethod
-    def write_ldif(cls, entries: list[FlextLDIFEntry] | None) -> FlextResult[str]:
+    def write_ldif(
+        cls, entries: list[FlextLDIFModels.Entry] | None
+    ) -> FlextResult[str]:
         """Write LDIF entries using modernized writer.
 
         Args:
-          entries: List of FlextLDIFEntry objects
+          entries: List of FlextLDIFModels.Entry objects
 
         Returns:
           FlextResult containing LDIF string
@@ -185,7 +189,7 @@ class FlextLDIFFormatHandler:
         if entries is None:
             logger.error("Cannot write None entries")
             return FlextResult[str].fail(
-                FlextLDIFValidationMessages.ENTRIES_CANNOT_BE_NONE
+                FlextLDIFConstants.FlextLDIFValidationMessages.ENTRIES_CANNOT_BE_NONE
             )
 
         try:
@@ -195,7 +199,7 @@ class FlextLDIFFormatHandler:
 
             output = writer.get_output()
             logger.info(
-                FlextLDIFOperationMessages.LDIF_WRITTEN_SUCCESS.format(
+                FlextLDIFConstants.FlextLDIFOperationMessages.LDIF_WRITTEN_SUCCESS.format(
                     count=writer.records_written,
                 ),
             )
@@ -203,7 +207,9 @@ class FlextLDIFFormatHandler:
 
         except (ValueError, AttributeError, TypeError, UnicodeError) as e:
             error_msg: str = f"Modernized LDIF write failed: {e}"
-            logger.exception(FlextLDIFValidationMessages.MODERNIZED_WRITING_FAILED)
+            logger.exception(
+                FlextLDIFConstants.FlextLDIFValidationMessages.MODERNIZED_WRITING_FAILED
+            )
             return FlextResult[str].fail(error_msg)
 
 
@@ -551,7 +557,7 @@ class FlextLDIFParser:
             dn = self._process_line_attribute(line, dn, entry)
 
         if dn is None:
-            msg = FlextLDIFValidationMessages.RECORD_MISSING_DN
+            msg = FlextLDIFConstants.FlextLDIFValidationMessages.RECORD_MISSING_DN
             raise ValueError(msg)
 
         return dn, entry

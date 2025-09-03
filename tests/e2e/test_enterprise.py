@@ -308,27 +308,31 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
     ) -> None:
         """Test complete workflow using convenience functions."""
         # Step 1: Parse using convenience function
-        entries = FlextResult.unwrap_or_raise(FlextLDIFFormatHandler.parse_ldif(
-            enterprise_ldif_sample
-        ))
+        entries = FlextResult.unwrap_or_raise(
+            FlextLDIFFormatHandler.parse_ldif(enterprise_ldif_sample)
+        )
         if len(entries) != 9:
             msg: str = f"Expected {9}, got {len(entries)}"
             raise AssertionError(msg)
 
         # Step 2: Validate using convenience function (SOLID fix: validate parsed entries, not raw LDIF)
-        is_valid = FlextResult.unwrap_or_raise(FlextLDIFCore().validate_entries(entries))
+        is_valid = FlextResult.unwrap_or_raise(
+            FlextLDIFCore().validate_entries(entries)
+        )
         if not (is_valid):
             msg: str = f"Expected True, got {is_valid}"
             raise AssertionError(msg)
 
         # Step 3: Write using convenience function
-        output_content = FlextResult.unwrap_or_raise(FlextLDIFFormatHandler.write_ldif(entries))
+        output_content = FlextResult.unwrap_or_raise(
+            FlextLDIFFormatHandler.write_ldif(entries)
+        )
         assert len(output_content) > 0
 
         # Step 4: Round-trip with convenience functions
-        reparsed_entries = FlextResult.unwrap_or_raise(FlextLDIFFormatHandler.parse_ldif(
-            output_content
-        ))
+        reparsed_entries = FlextResult.unwrap_or_raise(
+            FlextLDIFFormatHandler.parse_ldif(output_content)
+        )
         if len(reparsed_entries) != len(entries):
             msg: str = f"Expected {len(entries)}, got {len(reparsed_entries)}"
             raise AssertionError(msg)

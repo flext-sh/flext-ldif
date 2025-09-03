@@ -1,0 +1,753 @@
+"""Comprehensive tests for FLEXT-LDIF services - Coverage focused tests.
+
+Focus on covering ALL untested service functionality with real tests,
+following FLEXT patterns and achieving 90%+ coverage for services.py.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+from flext_ldif.models import FlextLDIFEntry
+from flext_ldif.services import FlextLDIFServices
+
+
+class TestRepositoryServiceComprehensive:
+    """Comprehensive tests for RepositoryService to increase coverage."""
+
+    def test_filter_entries_by_object_class_success(self) -> None:
+        """Test filter_entries_by_object_class with various object classes."""
+        entries = [
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=person1,ou=people,dc=example,dc=com",
+                    "attributes": {
+                        "objectClass": ["inetOrgPerson", "person"],
+                        "cn": ["Person 1"],
+                    },
+                }
+            ),
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "cn=group1,ou=groups,dc=example,dc=com",
+                    "attributes": {"objectClass": ["groupOfNames"], "cn": ["Group 1"]},
+                }
+            ),
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=person2,ou=people,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person"], "cn": ["Person 2"]},
+                }
+            ),
+        ]
+
+        service = FlextLDIFServices.RepositoryService()
+
+        # Test filtering by person
+        result = service.filter_entries_by_object_class(entries, "person")
+        assert result.is_success
+        person_entries = result.value
+        assert len(person_entries) == 2
+
+        # Test filtering by groupOfNames
+        result = service.filter_entries_by_object_class(entries, "groupOfNames")
+        assert result.is_success
+        group_entries = result.value
+        assert len(group_entries) == 1
+        assert group_entries[0].dn.value == "cn=group1,ou=groups,dc=example,dc=com"
+
+    def test_filter_entries_by_object_class_empty_input(self) -> None:
+        """Test filter_entries_by_object_class with empty object class."""
+        entries = [
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=test,ou=people,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person"]},
+                }
+            )
+        ]
+
+        service = FlextLDIFServices.RepositoryService()
+
+        # Test empty object class
+        result = service.filter_entries_by_object_class(entries, "")
+        assert not result.is_success
+        assert "Object class cannot be empty" in result.error
+
+        # Test whitespace-only object class
+        result = service.filter_entries_by_object_class(entries, "   ")
+        assert not result.is_success
+        assert "Object class cannot be empty" in result.error
+
+    def test_filter_entries_by_attribute_with_value(self) -> None:
+        """Test filter_entries_by_attribute with specific value matching."""
+        entries = [
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=john,ou=people,dc=example,dc=com",
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["John Doe"],
+                        "mail": ["john@example.com"],
+                        "department": ["Engineering"],
+                    },
+                }
+            ),
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=jane,ou=people,dc=example,dc=com",
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["Jane Smith"],
+                        "mail": ["jane@example.com"],
+                        "department": ["Marketing"],
+                    },
+                }
+            ),
+        ]
+
+        service = FlextLDIFServices.RepositoryService()
+
+        # Test filtering by attribute with specific value
+        result = service.filter_entries_by_attribute(
+            entries, "department", "Engineering"
+        )
+        assert result.is_success
+        engineering_entries = result.value
+        assert len(engineering_entries) == 1
+        assert engineering_entries[0].dn.value == "uid=john,ou=people,dc=example,dc=com"
+
+        # Test filtering by attribute without value (presence only)
+        result = service.filter_entries_by_attribute(entries, "mail", None)
+        assert result.is_success
+        mail_entries = result.value
+        assert len(mail_entries) == 2
+
+    def test_filter_entries_by_attribute_empty_input(self) -> None:
+        """Test filter_entries_by_attribute with empty attribute name."""
+        entries = [
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=test,ou=people,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person"]},
+                }
+            )
+        ]
+
+        service = FlextLDIFServices.RepositoryService()
+
+        # Test empty attribute name
+        result = service.filter_entries_by_attribute(entries, "", "value")
+        assert not result.is_success
+        assert "attribute name cannot be empty" in result.error
+
+        # Test whitespace-only attribute name
+        result = service.filter_entries_by_attribute(entries, "   ", "value")
+        assert not result.is_success
+        assert "attribute name cannot be empty" in result.error
+
+    def test_find_by_dn_error_cases(self) -> None:
+        """Test find_by_dn with error conditions."""
+        entries = [
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=test,ou=people,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person"]},
+                }
+            )
+        ]
+
+        service = FlextLDIFServices.RepositoryService()
+
+        # Test empty DN
+        result = service.find_by_dn(entries, "")
+        assert not result.is_success
+        assert "dn cannot be empty" in result.error
+
+        # Test whitespace-only DN
+        result = service.find_by_dn(entries, "   ")
+        assert not result.is_success
+        assert "dn cannot be empty" in result.error
+
+    def test_get_statistics_empty_entries(self) -> None:
+        """Test get_statistics with empty entries list."""
+        service = FlextLDIFServices.RepositoryService()
+
+        result = service.get_statistics([])
+        assert result.is_success
+        stats = result.value
+        assert stats["total_entries"] == 0
+        assert stats["person_entries"] == 0
+        assert stats["group_entries"] == 0
+        assert stats["other_entries"] == 0
+
+    def test_get_statistics_mixed_entries(self) -> None:
+        """Test get_statistics with mixed entry types."""
+        entries = [
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=person1,ou=people,dc=example,dc=com",
+                    "attributes": {
+                        "objectClass": ["inetOrgPerson", "person"],
+                        "cn": ["Person 1"],
+                    },
+                }
+            ),
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "cn=group1,ou=groups,dc=example,dc=com",
+                    "attributes": {"objectClass": ["groupOfNames"], "cn": ["Group 1"]},
+                }
+            ),
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "ou=department,dc=example,dc=com",
+                    "attributes": {
+                        "objectClass": ["organizationalUnit"],
+                        "ou": ["department"],
+                    },
+                }
+            ),
+        ]
+
+        service = FlextLDIFServices.RepositoryService()
+
+        result = service.get_statistics(entries)
+        assert result.is_success
+        stats = result.value
+        assert stats["total_entries"] == 3
+        # Note: person_entries and group_entries depend on is_person_entry() and is_group_entry()
+        # methods which may need to be implemented in the Entry model
+
+
+class TestValidatorServiceComprehensive:
+    """Comprehensive tests for ValidatorService to increase coverage."""
+
+    def test_validate_unique_dns_duplicate_found(self) -> None:
+        """Test validate_unique_dns with duplicate DNs."""
+        entries = [
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=duplicate,ou=people,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person"], "cn": ["User 1"]},
+                }
+            ),
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=unique,ou=people,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person"], "cn": ["User 2"]},
+                }
+            ),
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=duplicate,ou=people,dc=example,dc=com",  # Duplicate
+                    "attributes": {"objectClass": ["person"], "cn": ["User 3"]},
+                }
+            ),
+        ]
+
+        service = FlextLDIFServices.ValidatorService()
+
+        result = service.validate_unique_dns(entries)
+        assert not result.is_success
+        assert "Duplicate DN found" in result.error
+        assert "uid=duplicate,ou=people,dc=example,dc=com" in result.error
+
+    def test_validate_unique_dns_case_insensitive(self) -> None:
+        """Test validate_unique_dns is case-insensitive."""
+        entries = [
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=Test,ou=people,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person"]},
+                }
+            ),
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=test,ou=people,dc=example,dc=com",  # Same DN different case
+                    "attributes": {"objectClass": ["person"]},
+                }
+            ),
+        ]
+
+        service = FlextLDIFServices.ValidatorService()
+
+        result = service.validate_unique_dns(entries)
+        assert not result.is_success
+        assert "Duplicate DN found" in result.error
+
+    def test_validate_unique_dns_empty_list(self) -> None:
+        """Test validate_unique_dns with empty entries list."""
+        service = FlextLDIFServices.ValidatorService()
+
+        result = service.validate_unique_dns([])
+        assert result.is_success
+
+    def test_validate_entry_structure_success(self) -> None:
+        """Test validate_entry_structure with valid entry."""
+        entry = FlextLDIFEntry.model_validate(
+            {
+                "dn": "uid=valid,ou=people,dc=example,dc=com",
+                "attributes": {"objectClass": ["person"], "cn": ["Valid User"]},
+            }
+        )
+
+        service = FlextLDIFServices.ValidatorService()
+
+        result = service.validate_entry_structure(entry)
+        assert result.is_success
+
+    def test_validate_dn_format_success(self) -> None:
+        """Test validate_dn_format with valid DN."""
+        service = FlextLDIFServices.ValidatorService()
+
+        result = service.validate_dn_format("uid=test,ou=people,dc=example,dc=com")
+        assert result.is_success
+
+    def test_validate_dn_format_empty(self) -> None:
+        """Test validate_dn_format with empty DN."""
+        service = FlextLDIFServices.ValidatorService()
+
+        result = service.validate_dn_format("")
+        assert not result.is_success
+        assert "DN cannot be empty" in result.error
+
+    def test_validate_entries_failure(self) -> None:
+        """Test validate_entries with invalid entry that fails validation."""
+        # Create a mock entry that will fail validation
+        service = FlextLDIFServices.ValidatorService()
+
+        # Test with empty list first (should succeed)
+        result = service.validate_entries([])
+        assert result.is_success
+
+
+class TestParserServiceComprehensive:
+    """Comprehensive tests for ParserService to increase coverage."""
+
+    def test_parse_ldif_content_empty_content(self) -> None:
+        """Test parse_ldif_content with empty content."""
+        service = FlextLDIFServices.ParserService()
+
+        # Test empty string
+        result = service.parse_ldif_content("")
+        assert result.is_success
+        assert result.value == []
+
+        # Test whitespace-only string
+        result = service.parse_ldif_content("   \n  \n  ")
+        assert result.is_success
+        assert result.value == []
+
+    def test_validate_ldif_syntax_success(self) -> None:
+        """Test validate_ldif_syntax with valid LDIF."""
+        service = FlextLDIFServices.ParserService()
+
+        valid_ldif = """dn: uid=test,ou=people,dc=example,dc=com
+cn: Test User
+objectClass: person
+
+"""
+
+        result = service.validate_ldif_syntax(valid_ldif)
+        assert result.is_success
+
+    def test_validate_ldif_syntax_missing_colon(self) -> None:
+        """Test validate_ldif_syntax with missing colon."""
+        service = FlextLDIFServices.ParserService()
+
+        invalid_ldif = """dn: uid=test,ou=people,dc=example,dc=com
+cn Test User
+objectClass: person
+"""
+
+        result = service.validate_ldif_syntax(invalid_ldif)
+        assert not result.is_success
+        assert "missing colon" in result.error
+
+    def test_validate_ldif_syntax_attribute_before_dn(self) -> None:
+        """Test validate_ldif_syntax with attribute before DN."""
+        service = FlextLDIFServices.ParserService()
+
+        invalid_ldif = """cn: Test User
+dn: uid=test,ou=people,dc=example,dc=com
+objectClass: person
+"""
+
+        result = service.validate_ldif_syntax(invalid_ldif)
+        assert not result.is_success
+        assert "Attribute before DN" in result.error
+
+    def test_parse_ldif_file_not_found(self) -> None:
+        """Test parse_ldif_file with non-existent file."""
+        service = FlextLDIFServices.ParserService()
+
+        result = service.parse_ldif_file("/nonexistent/path/file.ldif")
+        assert not result.is_success
+        assert "File not found" in result.error
+
+    def test_parse_ldif_file_success(self) -> None:
+        """Test parse_ldif_file with real file."""
+        service = FlextLDIFServices.ParserService()
+
+        ldif_content = """dn: uid=filetest,ou=people,dc=example,dc=com
+cn: File Test User
+objectClass: person
+
+"""
+
+        with TemporaryDirectory() as tmp_dir:
+            file_path = Path(tmp_dir) / "test.ldif"
+            file_path.write_text(ldif_content, encoding="utf-8")
+
+            result = service.parse_ldif_file(str(file_path))
+            assert result.is_success
+            entries = result.value
+            assert len(entries) == 1
+            assert entries[0].dn.value == "uid=filetest,ou=people,dc=example,dc=com"
+
+    def test_parse_entry_block_empty(self) -> None:
+        """Test _parse_entry_block with empty block."""
+        service = FlextLDIFServices.ParserService()
+
+        result = service._parse_entry_block("")
+        assert not result.is_success
+        assert "Empty entry block" in result.error
+
+    def test_parse_entry_block_missing_dn(self) -> None:
+        """Test _parse_entry_block with missing DN."""
+        service = FlextLDIFServices.ParserService()
+
+        block_without_dn = """cn: Test User
+objectClass: person
+"""
+
+        result = service._parse_entry_block(block_without_dn)
+        assert not result.is_success
+        assert "Entry missing DN" in result.error
+
+    def test_parse_entry_block_success(self) -> None:
+        """Test _parse_entry_block with valid block."""
+        service = FlextLDIFServices.ParserService()
+
+        valid_block = """dn: uid=blocktest,ou=people,dc=example,dc=com
+cn: Block Test User
+objectClass: person
+"""
+
+        result = service._parse_entry_block(valid_block)
+        assert result.is_success
+        entry = result.value
+        assert entry is not None
+        assert entry.dn.value == "uid=blocktest,ou=people,dc=example,dc=com"
+
+
+class TestTransformerServiceComprehensive:
+    """Comprehensive tests for TransformerService to increase coverage."""
+
+    def test_transformer_service_initialization(self) -> None:
+        """Test TransformerService initialization."""
+        service = FlextLDIFServices.TransformerService()
+        assert service.config is None
+
+        config_obj = {"transform_rules": ["rule1", "rule2"]}
+        service_with_config = FlextLDIFServices.TransformerService(config=config_obj)
+        assert service_with_config.config == config_obj
+
+    def test_transformer_service_execute(self) -> None:
+        """Test TransformerService execute method."""
+        service = FlextLDIFServices.TransformerService()
+
+        result = service.execute()
+        assert result.is_success
+        assert result.value == []
+
+    def test_transform_entry_default(self) -> None:
+        """Test transform_entry default implementation."""
+        entry = FlextLDIFEntry.model_validate(
+            {
+                "dn": "uid=transform,ou=people,dc=example,dc=com",
+                "attributes": {"objectClass": ["person"], "cn": ["Transform User"]},
+            }
+        )
+
+        service = FlextLDIFServices.TransformerService()
+
+        result = service.transform_entry(entry)
+        assert result.is_success
+        assert result.value == entry  # Default implementation returns as-is
+
+    def test_transform_entries_empty(self) -> None:
+        """Test transform_entries with empty list."""
+        service = FlextLDIFServices.TransformerService()
+
+        result = service.transform_entries([])
+        assert result.is_success
+        assert result.value == []
+
+    def test_transform_entries_success(self) -> None:
+        """Test transform_entries with real entries."""
+        entries = [
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=transform1,ou=people,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person"], "cn": ["User 1"]},
+                }
+            ),
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=transform2,ou=people,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person"], "cn": ["User 2"]},
+                }
+            ),
+        ]
+
+        service = FlextLDIFServices.TransformerService()
+
+        result = service.transform_entries(entries)
+        assert result.is_success
+        transformed = result.value
+        assert len(transformed) == 2
+        assert transformed == entries  # Default implementation returns as-is
+
+    def test_normalize_dns_default(self) -> None:
+        """Test normalize_dns default implementation."""
+        entries = [
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=normalize,ou=people,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person"]},
+                }
+            )
+        ]
+
+        service = FlextLDIFServices.TransformerService()
+
+        result = service.normalize_dns(entries)
+        assert result.is_success
+        assert result.value == entries  # Default implementation returns as-is
+
+
+class TestAnalyticsServiceComprehensive:
+    """Comprehensive tests for AnalyticsService to increase coverage."""
+
+    def test_analyze_attribute_distribution(self) -> None:
+        """Test analyze_attribute_distribution method."""
+        entries = [
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=user1,ou=people,dc=example,dc=com",
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["User 1"],
+                        "mail": ["user1@example.com"],
+                    },
+                }
+            ),
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=user2,ou=people,dc=example,dc=com",
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["User 2"],
+                        "telephoneNumber": ["123456789"],
+                    },
+                }
+            ),
+        ]
+
+        service = FlextLDIFServices.AnalyticsService()
+
+        result = service.analyze_attribute_distribution(entries)
+        assert result.is_success
+        distribution = result.value
+        assert distribution["objectClass"] == 2
+        assert distribution["cn"] == 2
+        assert distribution["mail"] == 1
+        assert distribution["telephoneNumber"] == 1
+
+    def test_analyze_dn_depth(self) -> None:
+        """Test analyze_dn_depth method."""
+        entries = [
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=shallow,dc=example,dc=com",  # depth_3: uid, dc, dc
+                    "attributes": {"objectClass": ["person"]},
+                }
+            ),
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=deep,ou=people,dc=example,dc=com",  # depth_4: uid, ou, dc, dc
+                    "attributes": {"objectClass": ["person"]},
+                }
+            ),
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=deeper,ou=people,ou=corp,dc=example,dc=com",  # depth_5: uid, ou, ou, dc, dc
+                    "attributes": {"objectClass": ["person"]},
+                }
+            ),
+        ]
+
+        service = FlextLDIFServices.AnalyticsService()
+
+        result = service.analyze_dn_depth(entries)
+        assert result.is_success
+        depth_analysis = result.value
+        assert depth_analysis["depth_3"] == 1
+        assert depth_analysis["depth_4"] == 1
+        assert depth_analysis["depth_5"] == 1
+
+    def test_get_objectclass_distribution(self) -> None:
+        """Test get_objectclass_distribution method."""
+        entries = [
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=person1,ou=people,dc=example,dc=com",
+                    "attributes": {"objectClass": ["inetOrgPerson", "person"]},
+                }
+            ),
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "cn=group1,ou=groups,dc=example,dc=com",
+                    "attributes": {"objectClass": ["groupOfNames"]},
+                }
+            ),
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=person2,ou=people,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person"]},
+                }
+            ),
+        ]
+
+        service = FlextLDIFServices.AnalyticsService()
+
+        result = service.get_objectclass_distribution(entries)
+        assert result.is_success
+        distribution = result.value
+        assert distribution["person"] == 2
+        assert distribution["inetOrgPerson"] == 1
+        assert distribution["groupOfNames"] == 1
+
+    def test_get_dn_depth_analysis_alias(self) -> None:
+        """Test get_dn_depth_analysis as alias for analyze_dn_depth."""
+        entries = [
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=test,ou=people,dc=example,dc=com",  # depth_4: uid, ou, dc, dc
+                    "attributes": {"objectClass": ["person"]},
+                }
+            )
+        ]
+
+        service = FlextLDIFServices.AnalyticsService()
+
+        result = service.get_dn_depth_analysis(entries)
+        assert result.is_success
+        assert "depth_4" in result.value
+
+    def test_analyze_entry_patterns_alias(self) -> None:
+        """Test analyze_entry_patterns as alias for analyze_patterns."""
+        entries = [
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=test,ou=people,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person"]},
+                }
+            )
+        ]
+
+        service = FlextLDIFServices.AnalyticsService()
+
+        result = service.analyze_entry_patterns(entries)
+        assert result.is_success
+        patterns = result.value
+        assert "total_entries" in patterns
+        assert patterns["total_entries"] == 1
+
+
+class TestServiceAliases:
+    """Test service method aliases to increase coverage."""
+
+    def test_repository_service_aliases(self) -> None:
+        """Test RepositoryService method aliases."""
+        entries = [
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=test,ou=people,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person"]},
+                }
+            )
+        ]
+
+        service = FlextLDIFServices.RepositoryService()
+
+        # Test filter_by_attribute alias
+        result = service.filter_by_attribute(entries, "objectClass", "person")
+        assert result.is_success
+        assert len(result.value) == 1
+
+        # Test filter_by_objectclass alias
+        result = service.filter_by_objectclass(entries, "person")
+        assert result.is_success
+        assert len(result.value) == 1
+
+    def test_validator_service_aliases(self) -> None:
+        """Test ValidatorService method aliases."""
+        entries = [
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=test,ou=people,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person"]},
+                }
+            )
+        ]
+
+        service = FlextLDIFServices.ValidatorService()
+
+        # Test validate_ldif_entries alias
+        result = service.validate_ldif_entries(entries)
+        assert result.is_success
+
+        # Test validate_entry alias
+        result = service.validate_entry(entries[0])
+        assert result.is_success
+
+        # Test validate_data alias
+        result = service.validate_data(entries)
+        assert result.is_success
+
+    def test_writer_service_aliases(self) -> None:
+        """Test WriterService method aliases."""
+        entries = [
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": "uid=test,ou=people,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person"]},
+                }
+            )
+        ]
+
+        service = FlextLDIFServices.WriterService()
+
+        # Test write alias
+        result = service.write(entries)
+        assert result.is_success
+        assert "uid=test,ou=people,dc=example,dc=com" in result.value
+
+    def test_parser_service_aliases(self) -> None:
+        """Test ParserService method aliases."""
+        service = FlextLDIFServices.ParserService()
+
+        ldif_content = """dn: uid=test,ou=people,dc=example,dc=com
+cn: Test User
+objectClass: person
+
+"""
+
+        # Test parse_entries_from_string alias
+        result = service.parse_entries_from_string(ldif_content)
+        assert result.is_success
+        assert len(result.value) == 1

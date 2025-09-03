@@ -23,7 +23,9 @@ class TestValidators:
         validations = {
             "has_dn": bool(entry.dn and str(entry.dn).strip()),
             "has_attributes": bool(entry.attributes and len(entry.attributes) > 0),
-            "has_object_class": "objectClass" in entry.attributes if entry.attributes else False,
+            "has_object_class": "objectClass" in entry.attributes
+            if entry.attributes
+            else False,
             "dn_format_valid": bool(
                 entry.dn and "=" in str(entry.dn) and "," in str(entry.dn)
             ),
@@ -36,7 +38,13 @@ class TestValidators:
                 object_classes = [object_classes]
 
             # Basic validation for common object classes
-            object_classes_list = list(object_classes) if isinstance(object_classes, list) else [object_classes] if object_classes else []
+            object_classes_list = (
+                list(object_classes)
+                if isinstance(object_classes, list)
+                else [object_classes]
+                if object_classes
+                else []
+            )
             if "person" in object_classes_list:
                 validations["person_has_cn"] = "cn" in entry.attributes
                 validations["person_has_sn"] = "sn" in entry.attributes
@@ -74,7 +82,9 @@ class TestValidators:
             "is_success": result.is_success,
             "has_value": hasattr(result, "value") and result.value is not None,
             "no_error": result.error is None,
-            "value_type": type(result.value).__name__ if hasattr(result, "value") else None,
+            "value_type": type(result.value).__name__
+            if hasattr(result, "value")
+            else None,
         }
 
     @staticmethod
@@ -91,10 +101,7 @@ class TestValidators:
     def validate_ldif_content(content: str) -> dict[str, object]:
         """Validate raw LDIF content format."""
         if not content or not isinstance(content, str):
-            return {
-                "is_valid": False,
-                "reason": "Empty or non-string content"
-            }
+            return {"is_valid": False, "reason": "Empty or non-string content"}
 
         lines = content.strip().split("\n")
         entry_count = 0
@@ -113,14 +120,14 @@ class TestValidators:
                 if not TestValidators.validate_dn_format(current_dn):
                     return {
                         "is_valid": False,
-                        "reason": f"Invalid DN format: {current_dn}"
+                        "reason": f"Invalid DN format: {current_dn}",
                     }
             elif ":" in line:
                 attr_name = line.split(":", 1)[0].strip()
                 if not TestValidators.validate_attribute_name(attr_name):
                     return {
                         "is_valid": False,
-                        "reason": f"Invalid attribute name: {attr_name}"
+                        "reason": f"Invalid attribute name: {attr_name}",
                     }
 
         # Count last entry if file doesn't end with empty line
@@ -134,7 +141,9 @@ class TestValidators:
         }
 
     @staticmethod
-    def validate_file_operations(file_path: Path, expected_content: str) -> dict[str, bool]:
+    def validate_file_operations(
+        file_path: Path, expected_content: str
+    ) -> dict[str, bool]:
         """Validate file operations for LDIF files."""
         validations = {
             "file_exists": file_path.exists(),
@@ -147,7 +156,9 @@ class TestValidators:
             try:
                 actual_content = file_path.read_text(encoding="utf-8")
                 validations["file_readable"] = True
-                validations["content_matches"] = actual_content.strip() == expected_content.strip()
+                validations["content_matches"] = (
+                    actual_content.strip() == expected_content.strip()
+                )
                 validations["encoding_valid"] = True
             except UnicodeDecodeError:
                 validations["encoding_valid"] = False
@@ -158,9 +169,7 @@ class TestValidators:
 
     @classmethod
     def validate_parsing_result(
-        cls,
-        result: FlextResult[list[FlextLDIFEntry]],
-        expected_count: int
+        cls, result: FlextResult[list[FlextLDIFEntry]], expected_count: int
     ) -> dict[str, object]:
         """Validate parsing result comprehensively."""
         base_validation = cls.validate_result_success(result)
@@ -180,11 +189,13 @@ class TestValidators:
         # Validate each entry
         for i, entry in enumerate(entries):
             entry_validation = cls.validate_ldif_entry(entry)
-            entries_validation["entry_validations"].append({
-                "index": i,
-                "dn": str(entry.dn) if entry.dn else None,
-                **entry_validation,
-            })
+            entries_validation["entry_validations"].append(
+                {
+                    "index": i,
+                    "dn": str(entry.dn) if entry.dn else None,
+                    **entry_validation,
+                }
+            )
 
             if not all(entry_validation.values()):
                 entries_validation["all_entries_valid"] = False
@@ -201,7 +212,7 @@ class TestValidators:
         assert validation["dn_format_valid"], f"Invalid DN format: {entry.dn}"
 
     @staticmethod
-    def assert_successful_result(result: FlextResult[Any]) -> None:
+    def assert_successful_result(result: FlextResult[object]) -> None:
         """Assert that a FlextResult is successful (for use in tests)."""
         validation = TestValidators.validate_result_success(result)
 

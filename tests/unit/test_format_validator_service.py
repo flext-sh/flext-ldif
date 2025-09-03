@@ -6,7 +6,7 @@
 # pyright: reportArgumentType=false
 # Reason: FlextLDIFEntry accepts dict[str, list[str]] via field validator mode="before" but pyright doesn't understand this
 
-from flext_ldif.format_validator_service import (
+from flext_ldif.format_validators import (
     FlextLDIFFormatValidator,
 )
 

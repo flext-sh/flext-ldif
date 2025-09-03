@@ -5,6 +5,7 @@ Biblioteca Python para processar arquivos LDIF (LDAP Data Interchange Format), a
 ## ⚡ Início rápido
 
 Instalação
+
 ```bash
 git clone https://github.com/flext-sh/flext-ldif.git
 cd flext-ldif
@@ -12,6 +13,7 @@ poetry install
 ```
 
 Uso básico
+
 ```python
 from flext_ldif import FlextLDIFAPI
 
@@ -30,6 +32,7 @@ if parsed.is_success:
 ```
 
 CLI
+
 ```bash
 flext-ldif parse sample.ldif
 flext-ldif validate --strict sample.ldif

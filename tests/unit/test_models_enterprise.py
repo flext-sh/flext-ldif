@@ -10,12 +10,10 @@ import sys
 import time
 
 import pytest
-from flext_core import FlextExceptions
 from pydantic import ValidationError
 
-from flext_ldif.exceptions import FlextLDIFExceptions
-
 from flext_ldif import FlextLDIFAttributes, FlextLDIFDistinguishedName, FlextLDIFEntry
+from flext_ldif.exceptions import FlextLDIFExceptions
 
 
 class TestFlextLDIFEntryEnterprise:
@@ -84,7 +82,10 @@ class TestFlextLDIFEntryEnterprise:
 
     def test_entry_validation_invalid_dn_type(self) -> None:
         """Test entry validation fails with invalid DN type."""
-        with pytest.raises(ValidationError, match="Input should be a valid dictionary or instance of DistinguishedName"):
+        with pytest.raises(
+            ValidationError,
+            match="Input should be a valid dictionary or instance of DistinguishedName",
+        ):
             FlextLDIFEntry.model_validate(
                 {
                     "dn": 123,  # Invalid type
@@ -101,11 +102,11 @@ class TestFlextLDIFEntryEnterprise:
                 "attributes": "invalid",  # Invalid type - may be converted to empty dict
             },
         )
-        
+
         # Verify the entry is created with reasonable defaults
         assert entry.dn.value == "cn=test,dc=example,dc=com"
         # Attributes might be converted to empty dict or handled gracefully
-        assert hasattr(entry, 'attributes')
+        assert hasattr(entry, "attributes")
 
     def test_get_attribute_success(self, sample_entry_data: dict[str, object]) -> None:
         """Test getting attribute values succeeds."""
@@ -278,8 +279,10 @@ class TestFlextLDIFEntryEnterprise:
     def test_validate_domain_rules_empty_dn_fails(self) -> None:
         """Test domain rules validation fails for empty DN."""
         from flext_ldif.exceptions import FlextLDIFExceptions
-        
-        with pytest.raises(FlextLDIFExceptions.ValidationError, match="Invalid DN format"):
+
+        with pytest.raises(
+            FlextLDIFExceptions.ValidationError, match="Invalid DN format"
+        ):
             FlextLDIFEntry.model_validate(
                 {
                     "dn": "",
@@ -289,11 +292,11 @@ class TestFlextLDIFEntryEnterprise:
 
     def test_validate_domain_rules_no_attributes_fails(self) -> None:
         """Test domain rules validation fails for no attributes."""
-        from flext_ldif.models import FlextLDIFDistinguishedName, FlextLDIFAttributes
-        
+        from flext_ldif.models import FlextLDIFAttributes, FlextLDIFDistinguishedName
+
         entry = FlextLDIFEntry(
             dn=FlextLDIFDistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLDIFAttributes(data={})  # Empty attributes
+            attributes=FlextLDIFAttributes(data={}),  # Empty attributes
         )
         result = entry.validate_business_rules()
         # Note: The actual behavior may be that empty attributes are allowed
@@ -332,7 +335,9 @@ mail: test@example.com"""
 
     def test_from_ldif_block_empty_fails(self) -> None:
         """Test creating entry from empty LDIF block fails."""
-        with pytest.raises(FlextLDIFExceptions.ValidationError, match="Entry must have a DN"):
+        with pytest.raises(
+            FlextLDIFExceptions.ValidationError, match="Entry must have a DN"
+        ):
             FlextLDIFEntry.from_ldif_block("")
 
     def test_from_ldif_block_no_dn_fails(self) -> None:
@@ -438,8 +443,10 @@ description: With multiple descriptions"""
         assert entry1.dn.value in str1
         assert entry2.dn.value in str2
         # Both should have similar structure (contain dn= and attributes=)
-        assert "dn=" in str1 and "attributes=" in str1
-        assert "dn=" in str2 and "attributes=" in str2
+        assert "dn=" in str1
+        assert "attributes=" in str1
+        assert "dn=" in str2
+        assert "attributes=" in str2
 
     def test_entry_serialization_deserialization(
         self, sample_entry_data: dict[str, object]
@@ -609,9 +616,9 @@ description: With multiple descriptions"""
         )
         parent = dn.get_parent_dn()
         assert parent is not None
-        
+
         # Handle real return type - might be string or DN object
-        if hasattr(parent, 'value'):
+        if hasattr(parent, "value"):
             assert parent.value == "ou=people,dc=example,dc=com"
         else:
             # If it's a string, compare directly
@@ -621,9 +628,13 @@ description: With multiple descriptions"""
         """Test getting parent DN when no parent exists."""
         dn = FlextLDIFDistinguishedName.model_validate({"value": "dc=com"})
         parent = dn.get_parent_dn()
-        
+
         # Handle real return type - might be None, empty string, or similar
-        assert parent is None or parent == "" or (hasattr(parent, 'value') and parent.value == "")
+        assert (
+            parent is None
+            or parent == ""
+            or (hasattr(parent, "value") and parent.value == "")
+        )
 
     def test_dn_is_child_of_true(self) -> None:
         """Test DN is child of another DN using real string comparison."""
@@ -633,13 +644,13 @@ description: With multiple descriptions"""
         parent = FlextLDIFDistinguishedName.model_validate(
             {"value": "ou=people,dc=example,dc=com"},
         )
-        
+
         # Implement real parent-child DN logic using string operations
         child_str = child.value
         parent_str = parent.value
-        
+
         # A DN is a child if it ends with the parent DN
-        is_child = child_str != parent_str and child_str.endswith(',' + parent_str)
+        is_child = child_str != parent_str and child_str.endswith("," + parent_str)
         assert is_child
 
     def test_dn_is_child_of_false(self) -> None:
@@ -650,13 +661,13 @@ description: With multiple descriptions"""
         dn2 = FlextLDIFDistinguishedName.model_validate(
             {"value": "ou=groups,dc=example,dc=com"},
         )
-        
+
         # Implement real parent-child DN logic using string operations
         dn1_str = dn1.value
         dn2_str = dn2.value
-        
+
         # A DN is a child if it ends with the parent DN
-        is_child = dn1_str != dn2_str and dn1_str.endswith(',' + dn2_str)
+        is_child = dn1_str != dn2_str and dn1_str.endswith("," + dn2_str)
         assert not is_child
 
     def test_dn_depth_calculation(self) -> None:
@@ -718,11 +729,11 @@ description: With multiple descriptions"""
         attrs = FlextLDIFAttributes.model_validate(
             {"data": {"cn": ["John", "Johnny"]}},
         )
-        
+
         # Test real functionality - check what methods actually exist
         assert "cn" in attrs.data
         assert attrs.data["cn"] == ["John", "Johnny"]
-        
+
         # If remove_value and get_values methods don't exist, test basic data manipulation
         # This tests the real model functionality without assuming non-existent methods
         try:
@@ -765,7 +776,7 @@ description: With multiple descriptions"""
                 },
             },
         )
-        
+
         # Test real functionality - if get_total_values doesn't exist, calculate manually
         try:
             assert attrs.get_total_values() == 4
@@ -777,7 +788,7 @@ description: With multiple descriptions"""
     def test_attributes_is_empty(self) -> None:
         """Test checking if attributes are empty using real functionality."""
         empty_attrs = FlextLDIFAttributes.model_validate({"data": {}})
-        
+
         # Test real functionality - use data inspection instead of non-existent method
         try:
             assert empty_attrs.is_empty()
@@ -788,7 +799,7 @@ description: With multiple descriptions"""
         non_empty_attrs = FlextLDIFAttributes.model_validate(
             {"data": {"cn": ["John"]}},
         )
-        
+
         try:
             assert not non_empty_attrs.is_empty()
         except AttributeError:
@@ -803,7 +814,7 @@ description: With multiple descriptions"""
 
         assert attrs1 == attrs2
         assert attrs1 != attrs3
-        
+
         # Test data content equality instead of direct dict comparison
         assert attrs1.data == {"cn": ["John"]}
         assert attrs1.data != {"cn": ["Jane"]}
@@ -812,16 +823,16 @@ description: With multiple descriptions"""
         """Test attributes hashing for use in sets and dicts."""
         attrs1 = FlextLDIFAttributes.model_validate({"data": {"cn": ["John"]}})
         attrs2 = FlextLDIFAttributes.model_validate({"data": {"cn": ["John"]}})
-        
+
         # Test that attributes can be created and compared
         assert attrs1 == attrs2
-        
+
         # Test hashing behavior - may or may not be hashable depending on implementation
         try:
             hash1 = hash(attrs1)
             hash2 = hash(attrs2)
             assert hash1 == hash2
-            
+
             # Test usage in set if hashing works
             attrs_set = {attrs1, attrs2}
             assert len(attrs_set) == 1

@@ -46,13 +46,18 @@ class TestFlextLDIFValidatorServiceReal:
         entry_data = {
             "dn": "uid=john.doe,ou=people,dc=example,dc=com",
             "attributes": {
-                "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                "objectClass": [
+                    "inetOrgPerson",
+                    "organizationalPerson",
+                    "person",
+                    "top",
+                ],
                 "uid": ["john.doe"],
                 "cn": ["John Doe"],
                 "sn": ["Doe"],
                 "givenName": ["John"],
                 "mail": ["john.doe@example.com"],
-            }
+            },
         }
         entry = FlextLDIFEntry.model_validate(entry_data)
 
@@ -82,7 +87,7 @@ class TestFlextLDIFValidatorServiceReal:
                 "objectClass": ["person"],
                 "cn": ["Test User"],
                 "sn": ["User"],
-            }
+            },
         }
 
         # Entry creation should fail due to invalid DN
@@ -94,12 +99,20 @@ class TestFlextLDIFValidatorServiceReal:
             if result.is_success:
                 validation_result = result.value
                 if isinstance(validation_result, dict):
-                    assert "warnings" in validation_result or "dn_issues" in validation_result or not validation_result.get("is_valid", True)
+                    assert (
+                        "warnings" in validation_result
+                        or "dn_issues" in validation_result
+                        or not validation_result.get("is_valid", True)
+                    )
                 else:
                     assert not validation_result
         except Exception as e:
             # Expected: DN validation should fail during model creation
-            assert "dn" in str(e).lower() or "invalid" in str(e).lower() or "validation" in str(e).lower()
+            assert (
+                "dn" in str(e).lower()
+                or "invalid" in str(e).lower()
+                or "validation" in str(e).lower()
+            )
 
     def test_validate_real_missing_required_attributes(self) -> None:
         """Test validation of entry missing required attributes."""
@@ -112,7 +125,7 @@ class TestFlextLDIFValidatorServiceReal:
                 "objectClass": ["person"],
                 "cn": ["Incomplete User"],
                 # Missing 'sn' which is required for person class
-            }
+            },
         }
         entry = FlextLDIFEntry.model_validate(entry_data)
 
@@ -125,15 +138,25 @@ class TestFlextLDIFValidatorServiceReal:
             # Either accepts the entry (lenient mode) or reports issues
             if isinstance(validation_result, dict):
                 # Could have warnings about missing attributes or still be valid
-                assert ("warnings" in validation_result and len(validation_result["warnings"]) > 0) or \
-                       ("attribute_issues" in validation_result and len(validation_result["attribute_issues"]) > 0) or \
-                       validation_result.get("is_valid") is not False  # Could be True or None
+                assert (
+                    (
+                        "warnings" in validation_result
+                        and len(validation_result["warnings"]) > 0
+                    )
+                    or (
+                        "attribute_issues" in validation_result
+                        and len(validation_result["attribute_issues"]) > 0
+                    )
+                    or validation_result.get("is_valid") is not False
+                )  # Could be True or None
             else:
                 # Boolean result - validator might be lenient for basic structure validation
                 assert isinstance(validation_result, bool)
         else:
             assert result.error is not None
-            assert "required" in result.error.lower() or "missing" in result.error.lower()
+            assert (
+                "required" in result.error.lower() or "missing" in result.error.lower()
+            )
 
     def test_validate_real_multi_valued_attributes(self) -> None:
         """Test validation of entry with multi-valued attributes."""
@@ -143,13 +166,18 @@ class TestFlextLDIFValidatorServiceReal:
         entry_data = {
             "dn": "uid=multi.user,ou=people,dc=example,dc=com",
             "attributes": {
-                "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                "objectClass": [
+                    "inetOrgPerson",
+                    "organizationalPerson",
+                    "person",
+                    "top",
+                ],
                 "uid": ["multi.user"],
                 "cn": ["Multi User"],
                 "sn": ["User"],
                 "mail": ["multi.user@example.com", "multi.user.alt@example.com"],
                 "telephoneNumber": ["+1-555-0123", "+1-555-0124"],
-            }
+            },
         }
         entry = FlextLDIFEntry.model_validate(entry_data)
 
@@ -174,12 +202,19 @@ class TestFlextLDIFValidatorServiceReal:
         entry_data = {
             "dn": "uid=photo.user,ou=people,dc=example,dc=com",
             "attributes": {
-                "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                "objectClass": [
+                    "inetOrgPerson",
+                    "organizationalPerson",
+                    "person",
+                    "top",
+                ],
                 "uid": ["photo.user"],
                 "cn": ["Photo User"],
                 "sn": ["User"],
-                "jpegPhoto": ["/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQ=="],  # Mock base64
-            }
+                "jpegPhoto": [
+                    "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQ=="
+                ],  # Mock base64
+            },
         }
         entry = FlextLDIFEntry.model_validate(entry_data)
 
@@ -204,13 +239,18 @@ class TestFlextLDIFValidatorServiceReal:
         entry_data = {
             "dn": "uid=special.chars,ou=people,dc=example,dc=com",
             "attributes": {
-                "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                "objectClass": [
+                    "inetOrgPerson",
+                    "organizationalPerson",
+                    "person",
+                    "top",
+                ],
                 "uid": ["special.chars"],
                 "cn": ["José María Ñuñez"],
                 "sn": ["Ñuñez"],
                 "givenName": ["José María"],
                 "description": ["Contains special characters: áéíóú ÁÉÍÓÚ ñÑ çÇ"],
-            }
+            },
         }
         entry = FlextLDIFEntry.model_validate(entry_data)
 
@@ -233,16 +273,23 @@ class TestFlextLDIFValidatorServiceReal:
 
         # Create multiple real entries
         entries = [
-            FlextLDIFEntry.model_validate({
-                "dn": f"uid=user{i},ou=people,dc=example,dc=com",
-                "attributes": {
-                    "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
-                    "uid": [f"user{i}"],
-                    "cn": [f"User {i}"],
-                    "sn": ["User"],
-                    "mail": [f"user{i}@example.com"],
+            FlextLDIFEntry.model_validate(
+                {
+                    "dn": f"uid=user{i},ou=people,dc=example,dc=com",
+                    "attributes": {
+                        "objectClass": [
+                            "inetOrgPerson",
+                            "organizationalPerson",
+                            "person",
+                            "top",
+                        ],
+                        "uid": [f"user{i}"],
+                        "cn": [f"User {i}"],
+                        "sn": ["User"],
+                        "mail": [f"user{i}@example.com"],
+                    },
                 }
-            })
+            )
             for i in range(5)
         ]
 
@@ -273,7 +320,7 @@ class TestFlextLDIFValidatorServiceReal:
                 "sn": ["User"],
                 # Might have attributes not typical for person class
                 "customAttribute": ["Custom Value"],
-            }
+            },
         }
         entry = FlextLDIFEntry.model_validate(entry_data)
 
@@ -296,7 +343,9 @@ class TestFlextLDIFValidatorServiceReal:
 class TestValidatorIntegrationReal:
     """Integration tests with real validator and other services."""
 
-    def test_validator_with_parser_integration(self, integration_services: dict[str, object]) -> None:
+    def test_validator_with_parser_integration(
+        self, integration_services: dict[str, object]
+    ) -> None:
         """Test validator integrated with real parser service."""
         parser = integration_services["parser"]
         validator = integration_services["validator"]

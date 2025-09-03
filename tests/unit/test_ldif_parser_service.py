@@ -138,7 +138,9 @@ class TestFlextLDIFParserServiceReal:
         entries = result.value
         assert len(entries) == 0
 
-    def test_parse_real_from_file_path(self, test_file_manager: TestFileManager) -> None:
+    def test_parse_real_from_file_path(
+        self, test_file_manager: TestFileManager
+    ) -> None:
         """Test parsing from actual file path."""
         service = FlextLDIFParserService()
         ldif_sample = LdifTestData.basic_entries()
@@ -183,7 +185,9 @@ class TestFlextLDIFParserServiceReal:
 class TestParserIntegrationReal:
     """Integration tests with real parser and other services."""
 
-    def test_parser_with_real_validator_integration(self, integration_services: dict[str, object]) -> None:
+    def test_parser_with_real_validator_integration(
+        self, integration_services: dict[str, object]
+    ) -> None:
         """Test parser integrated with real validator service."""
         parser = integration_services["parser"]
         validator = integration_services["validator"]
@@ -200,7 +204,9 @@ class TestParserIntegrationReal:
             validation_result = validator.validate_entry(entry)
             TestValidators.assert_successful_result(validation_result)
 
-    def test_parser_with_real_writer_roundtrip(self, integration_services: dict[str, object]) -> None:
+    def test_parser_with_real_writer_roundtrip(
+        self, integration_services: dict[str, object]
+    ) -> None:
         """Test parser → writer → parser roundtrip with real services."""
         parser = integration_services["parser"]
         writer = integration_services["writer"]
