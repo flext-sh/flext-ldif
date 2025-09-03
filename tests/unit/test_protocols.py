@@ -2,57 +2,52 @@
 
 from __future__ import annotations
 
-from flext_ldif import (
-    FlextLDIFAnalyticsProtocol,
-    FlextLDIFParserProtocol,
-    FlextLDIFRepositoryProtocol,
-    FlextLDIFTransformerProtocol,
-    FlextLDIFValidatorProtocol,
-    FlextLDIFWriterProtocol,
-)
+from flext_ldif.protocols import FlextLDIFProtocols
 
 
 class TestProtocolDefinitions:
     """Test protocol definitions are properly defined."""
 
     def test_parser_protocol_exists(self) -> None:
-        """Test FlextLDIFParserProtocol is properly defined."""  # Check if it's a Protocol class
-        assert hasattr(FlextLDIFParserProtocol, "__annotations__")
+        """Test FlextLDIFProtocols.ParserProtocol is properly defined."""  # Check if it's a Protocol class
+        assert hasattr(FlextLDIFProtocols.ParserProtocol, "__annotations__")
         # Check if it has the expected methods
-        assert hasattr(FlextLDIFParserProtocol, "parse")
-        assert hasattr(FlextLDIFParserProtocol, "parse_file")
+        assert hasattr(FlextLDIFProtocols.ParserProtocol, "parse")
+        assert hasattr(FlextLDIFProtocols.ParserProtocol, "parse_file")
 
     def test_validator_protocol_exists(self) -> None:
-        """Test FlextLDIFValidatorProtocol is properly defined."""  # Check if it's a Protocol class
-        assert hasattr(FlextLDIFValidatorProtocol, "__annotations__")
+        """Test FlextLDIFProtocols.ValidatorProtocol is properly defined."""  # Check if it's a Protocol class
+        assert hasattr(FlextLDIFProtocols.ValidatorProtocol, "__annotations__")
         # Check if it has the expected methods
-        assert hasattr(FlextLDIFValidatorProtocol, "validate_entry")
-        assert hasattr(FlextLDIFValidatorProtocol, "validate_entries")
+        assert hasattr(FlextLDIFProtocols.ValidatorProtocol, "validate_entry")
+        assert hasattr(FlextLDIFProtocols.ValidatorProtocol, "validate_entries")
 
     def test_writer_protocol_exists(self) -> None:
-        """Test FlextLDIFWriterProtocol is properly defined."""  # Check if it's a Protocol class
-        assert hasattr(FlextLDIFWriterProtocol, "__annotations__")
+        """Test FlextLDIFProtocols.WriterProtocol is properly defined."""  # Check if it's a Protocol class
+        assert hasattr(FlextLDIFProtocols.WriterProtocol, "__annotations__")
         # Check if it has the expected methods
-        assert hasattr(FlextLDIFWriterProtocol, "write")
-        assert hasattr(FlextLDIFWriterProtocol, "write_file")
+        assert hasattr(FlextLDIFProtocols.WriterProtocol, "write")
+        assert hasattr(FlextLDIFProtocols.WriterProtocol, "write_file")
 
     def test_repository_protocol_exists(self) -> None:
-        """Test FlextLDIFRepositoryProtocol is properly defined."""  # Check if it's a Protocol class
-        assert hasattr(FlextLDIFRepositoryProtocol, "__annotations__")
+        """Test FlextLDIFProtocols.RepositoryProtocol is properly defined."""  # Check if it's a Protocol class
+        assert hasattr(FlextLDIFProtocols.RepositoryProtocol, "__annotations__")
         # Check if it has the expected methods
-        assert hasattr(FlextLDIFRepositoryProtocol, "find_by_dn")
-        assert hasattr(FlextLDIFRepositoryProtocol, "filter_by_objectclass")
+        assert hasattr(FlextLDIFProtocols.RepositoryProtocol, "find_by_dn")
+        assert hasattr(FlextLDIFProtocols.RepositoryProtocol, "filter_by_objectclass")
 
     def test_transformer_protocol_exists(self) -> None:
-        """Test FlextLDIFTransformerProtocol is properly defined."""  # Check if it's a Protocol class
-        assert hasattr(FlextLDIFTransformerProtocol, "__annotations__")
+        """Test FlextLDIFProtocols.TransformerProtocol is properly defined."""  # Check if it's a Protocol class
+        assert hasattr(FlextLDIFProtocols.TransformerProtocol, "__annotations__")
         # Check if it has the expected methods
-        assert hasattr(FlextLDIFTransformerProtocol, "transform_entry")
-        assert hasattr(FlextLDIFTransformerProtocol, "transform_entries")
+        assert hasattr(FlextLDIFProtocols.TransformerProtocol, "transform_entry")
+        assert hasattr(FlextLDIFProtocols.TransformerProtocol, "transform_entries")
 
     def test_analytics_protocol_exists(self) -> None:
-        """Test FlextLDIFAnalyticsProtocol is properly defined."""  # Check if it's a Protocol class
-        assert hasattr(FlextLDIFAnalyticsProtocol, "__annotations__")
+        """Test FlextLDIFProtocols.AnalyticsProtocol is properly defined."""  # Check if it's a Protocol class
+        assert hasattr(FlextLDIFProtocols.AnalyticsProtocol, "__annotations__")
         # Check if it has the expected methods
-        assert hasattr(FlextLDIFAnalyticsProtocol, "analyze_entry_patterns")
-        assert hasattr(FlextLDIFAnalyticsProtocol, "get_objectclass_distribution")
+        assert hasattr(FlextLDIFProtocols.AnalyticsProtocol, "analyze_entry_patterns")
+        assert hasattr(
+            FlextLDIFProtocols.AnalyticsProtocol, "get_objectclass_distribution"
+        )

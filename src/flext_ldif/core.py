@@ -15,9 +15,9 @@ from pathlib import Path
 from flext_core import FlextLogger, FlextResult
 
 from flext_ldif.constants import FlextLDIFConstants
-from flext_ldif.format_handler_service import FlextLDIFFormatHandler
-from flext_ldif.format_validator_service import FlextLDIFFormatValidator
-from flext_ldif.models import FlextLDIFEntry, FlextLDIFFactory
+from flext_ldif.format_handlers import FlextLDIFFormatHandler
+from flext_ldif.format_validators import FlextLDIFFormatValidator
+from flext_ldif.models import FlextLDIFModels
 
 logger = FlextLogger(__name__)
 
@@ -39,14 +39,14 @@ class FlextLDIFCore:
         return FlextLDIFFormatValidator.get_ldap_validators()
 
     @classmethod
-    def parse(cls, content: str) -> FlextResult[list[FlextLDIFEntry]]:
+    def parse(cls, content: str) -> FlextResult[list[FlextLDIFModels.Entry]]:
         """Parse LDIF content into domain entities.
 
         Args:
             content: LDIF content as string
 
         Returns:
-            FlextResult[list[FlextLDIFEntry]]: Parsed entries or error
+            FlextResult[list[FlextLDIFModels.Entry]]: Parsed entries or error
 
         """
         logger.debug(
@@ -97,7 +97,7 @@ class FlextLDIFCore:
             logger.exception(
                 FlextLDIFConstants.FlextLDIFCoreConstants.EXCEPTION_IN_TLDIF_PARSE_LOG
             )
-            return FlextResult[list[FlextLDIFEntry]].fail(
+            return FlextResult[list[FlextLDIFModels.Entry]].fail(
                 FlextLDIFConstants.FlextLDIFCoreConstants.PARSE_FAILED_MSG.format(
                     error=e
                 ),
@@ -107,7 +107,7 @@ class FlextLDIFCore:
     def _parse_with_modernized_ldif(
         cls,
         content: str,
-    ) -> FlextResult[list[FlextLDIFEntry]]:
+    ) -> FlextResult[list[FlextLDIFModels.Entry]]:
         """Parse using modernized LDIF parser with full string compatibility."""
         logger.debug(
             FlextLDIFConstants.FlextLDIFCoreConstants.STARTING_MODERNIZED_PARSING_LOG
@@ -124,8 +124,8 @@ class FlextLDIFCore:
 
             def convert_raw_entries(
                 raw_entries: list[tuple[str, dict[str, list[str]]]],
-            ) -> FlextResult[list[FlextLDIFEntry]]:
-                """Convert raw entries to FlextLDIFEntry objects using railway-oriented programming."""
+            ) -> FlextResult[list[FlextLDIFModels.Entry]]:
+                """Convert raw entries to FlextLDIFModels.Entry objects using railway-oriented programming."""
                 logger.debug(
                     FlextLDIFConstants.FlextLDIFCoreConstants.MODERNIZED_PARSER_RETURNED_ENTRIES_LOG,
                     len(raw_entries),
@@ -141,9 +141,9 @@ class FlextLDIFCore:
 
                 # Process each entry using railway-oriented programming with reduce pattern
                 def process_indexed_entry(
-                    acc: FlextResult[list[FlextLDIFEntry]],
+                    acc: FlextResult[list[FlextLDIFModels.Entry]],
                     indexed_raw: tuple[int, tuple[str, dict[str, list[str]]]],
-                ) -> FlextResult[list[FlextLDIFEntry]]:
+                ) -> FlextResult[list[FlextLDIFModels.Entry]]:
                     i, (dn, attrs) = indexed_raw
                     logger.debug(
                         FlextLDIFConstants.FlextLDIFCoreConstants.PROCESSING_ENTRY_LOG,
@@ -153,20 +153,22 @@ class FlextLDIFCore:
                     )
 
                     def process_entry(
-                        entries_list: list[FlextLDIFEntry],
-                    ) -> FlextResult[list[FlextLDIFEntry]]:
+                        entries_list: list[FlextLDIFModels.Entry],
+                    ) -> FlextResult[list[FlextLDIFModels.Entry]]:
                         try:
-                            entry = FlextLDIFFactory.create_entry(dn, attrs)
+                            entry = FlextLDIFModels.create_entry(dn, attrs)
                         except Exception as e:
-                            return FlextResult[list[FlextLDIFEntry]].fail(
+                            return FlextResult[list[FlextLDIFModels.Entry]].fail(
                                 FlextLDIFConstants.FlextLDIFCoreConstants.FAILED_TO_CREATE_ENTRY_MSG.format(
                                     error=str(e)
                                 )
                             )
-                        return FlextResult[list[FlextLDIFEntry]].ok([
-                            *entries_list,
-                            entry,
-                        ])
+                        return FlextResult[list[FlextLDIFModels.Entry]].ok(
+                            [
+                                *entries_list,
+                                entry,
+                            ]
+                        )
 
                     return acc.flat_map(process_entry)
 
@@ -174,7 +176,7 @@ class FlextLDIFCore:
                     reduce(
                         process_indexed_entry,
                         enumerate(raw_entries),
-                        FlextResult[list[FlextLDIFEntry]].ok([]),
+                        FlextResult[list[FlextLDIFModels.Entry]].ok([]),
                     )
                     .tap(
                         lambda entries: logger.debug(
@@ -191,7 +193,7 @@ class FlextLDIFCore:
                     )
                 )
 
-            # Parse LDIF content - format handler already returns FlextResult[list[FlextLDIFEntry]]
+            # Parse LDIF content - format handler already returns FlextResult[list[FlextLDIFModels.Entry]]
             return FlextLDIFFormatHandler.parse_ldif(content)
 
         except (
@@ -211,18 +213,18 @@ class FlextLDIFCore:
             logger.exception(
                 FlextLDIFConstants.FlextLDIFCoreConstants.EXCEPTION_IN_MODERNIZED_PARSING_LOG
             )
-            return FlextResult[list[FlextLDIFEntry]].fail(
+            return FlextResult[list[FlextLDIFModels.Entry]].fail(
                 FlextLDIFConstants.FlextLDIFCoreConstants.MODERNIZED_LDIF_PARSE_FAILED_WITH_ERROR_MSG.format(
                     error=e,
                 ),
             )
 
     @classmethod
-    def validate(cls, entry: FlextLDIFEntry | None) -> FlextResult[bool]:
+    def validate(cls, entry: FlextLDIFModels.Entry | None) -> FlextResult[bool]:
         """Validate LDIF entry with format and business rule validation.
 
         Args:
-            entry: FlextLDIFEntry domain object to validate
+            entry: FlextLDIFModels.Entry domain object to validate
 
         Returns:
             FlextResult[bool]: True if valid, error details on failure
@@ -252,7 +254,7 @@ class FlextLDIFCore:
             )
 
     @classmethod
-    def _get_validation_error(cls, entry: FlextLDIFEntry | None) -> str | None:
+    def _get_validation_error(cls, entry: FlextLDIFModels.Entry | None) -> str | None:
         """Return an error message if validation fails; otherwise None."""
         if entry is None:
             logger.error(
@@ -361,11 +363,13 @@ class FlextLDIFCore:
         return None
 
     @classmethod
-    def validate_entries(cls, entries: list[FlextLDIFEntry]) -> FlextResult[bool]:
+    def validate_entries(
+        cls, entries: list[FlextLDIFModels.Entry]
+    ) -> FlextResult[bool]:
         """Validate multiple LDIF entries with early failure detection.
 
         Args:
-            entries: List of FlextLDIFEntry domain objects to validate
+            entries: List of FlextLDIFModels.Entry domain objects to validate
 
         Returns:
             FlextResult[bool]: True if all valid, error with entry index on failure
@@ -380,7 +384,7 @@ class FlextLDIFCore:
             )
 
             def validate_single_entry(
-                entry_with_index: tuple[int, FlextLDIFEntry],
+                entry_with_index: tuple[int, FlextLDIFModels],
             ) -> FlextResult[bool]:
                 """Validate single entry with index for error context."""
                 i, entry = entry_with_index
@@ -404,7 +408,7 @@ class FlextLDIFCore:
 
             # Use railway programming with reduce to chain all validations
             def chain_validations(
-                acc: FlextResult[bool], indexed_entry: tuple[int, FlextLDIFEntry]
+                acc: FlextResult[bool], indexed_entry: tuple[int, FlextLDIFModels]
             ) -> FlextResult[bool]:
                 return acc.flat_map(lambda _: validate_single_entry(indexed_entry))
 
@@ -439,11 +443,11 @@ class FlextLDIFCore:
             )
 
     @classmethod
-    def write(cls, entries: list[FlextLDIFEntry]) -> FlextResult[str]:
+    def write(cls, entries: list[FlextLDIFModels.Entry]) -> FlextResult[str]:
         """Write entries to RFC 2849 compliant LDIF string.
 
         Args:
-            entries: List of FlextLDIFEntry domain objects to serialize
+            entries: List of FlextLDIFModels.Entry domain objects to serialize
 
         Returns:
             FlextResult[str]: LDIF string or error
@@ -464,7 +468,7 @@ class FlextLDIFCore:
             result = cls._write_with_modernized_ldif(entries)
 
             # REFACTORING: Enhanced result logging and metrics
-            content = result.unwrap_or("")
+            content = FlextResult.safe_unwrap_or_none(result) or ""
             if content:
                 content_length = len(content)
                 logger.debug(
@@ -497,7 +501,7 @@ class FlextLDIFCore:
     @classmethod
     def _write_with_modernized_ldif(
         cls,
-        entries: list[FlextLDIFEntry],
+        entries: list[FlextLDIFModels.Entry],
     ) -> FlextResult[str]:
         """Write using modernized LDIF writer with full string compatibility."""
         try:
@@ -526,14 +530,14 @@ class FlextLDIFCore:
     @classmethod
     def write_file(
         cls,
-        entries: list[FlextLDIFEntry],
+        entries: list[FlextLDIFModels.Entry],
         file_path: str | Path,
         encoding: str = "utf-8",
     ) -> FlextResult[bool]:
         """Write LDIF entries to file with automatic directory creation.
 
         Args:
-            entries: List of FlextLDIFEntry domain objects to write
+            entries: List of FlextLDIFModels.Entry domain objects to write
             file_path: Target file path for LDIF output
             encoding: File encoding (default: utf-8)
 
@@ -673,7 +677,7 @@ class FlextLDIFCore:
         cls,
         file_path: str | Path,
         encoding: str = "utf-8",
-    ) -> FlextResult[list[FlextLDIFEntry]]:
+    ) -> FlextResult[list[FlextLDIFModels.Entry]]:
         """Read and parse LDIF file with comprehensive validation.
 
         Args:
@@ -681,7 +685,7 @@ class FlextLDIFCore:
             encoding: File encoding (default: utf-8)
 
         Returns:
-            FlextResult[list[FlextLDIFEntry]]: Parsed entries or error
+            FlextResult[list[FlextLDIFModels.Entry]]: Parsed entries or error
 
         """
         # REFACTORING: Enhanced file validation and error context
@@ -707,14 +711,16 @@ class FlextLDIFCore:
                     absolute_path=absolute_path,
                 )
                 logger.error(not_found_error_msg)
-                return FlextResult[list[FlextLDIFEntry]].fail(not_found_error_msg)
+                return FlextResult[list[FlextLDIFModels.Entry]].fail(
+                    not_found_error_msg
+                )
 
             if not file_path.is_file():
                 not_file_error_msg: str = FlextLDIFConstants.FlextLDIFCoreConstants.PATH_NOT_FILE_ERROR_MSG.format(
                     absolute_path=absolute_path,
                 )
                 logger.error(not_file_error_msg)
-                return FlextResult[list[FlextLDIFEntry]].fail(not_file_error_msg)
+                return FlextResult[list[FlextLDIFModels.Entry]].fail(not_file_error_msg)
 
             # REFACTORING: Enhanced file metadata collection
             logger.debug(
@@ -734,9 +740,9 @@ class FlextLDIFCore:
                     FlextLDIFConstants.FlextLDIFCoreConstants.EMPTY_LDIF_FILE_DETECTED_WARNING_LOG,
                     absolute_path,
                 )
-                return FlextResult[
-                    list[FlextLDIFEntry]
-                ].ok([])  # Return empty list for empty files
+                return FlextResult[list[FlextLDIFModels.Entry]].ok(
+                    []
+                )  # Return empty list for empty files
 
             # Read file content with enhanced error handling
             logger.debug(
@@ -755,7 +761,7 @@ class FlextLDIFCore:
                     error=e,
                 )
                 logger.exception(encoding_error_msg)
-                return FlextResult[list[FlextLDIFEntry]].fail(encoding_error_msg)
+                return FlextResult[list[FlextLDIFModels.Entry]].fail(encoding_error_msg)
 
             # REFACTORING: Enhanced content validation and metrics
             content_size = len(content)
@@ -793,14 +799,14 @@ class FlextLDIFCore:
             logger.exception(
                 FlextLDIFConstants.FlextLDIFCoreConstants.EXCEPTION_DURING_FILE_READ_OPERATION_LOG,
             )
-            return FlextResult[list[FlextLDIFEntry]].fail(
+            return FlextResult[list[FlextLDIFModels.Entry]].fail(
                 FlextLDIFConstants.FlextLDIFCoreConstants.LDIF_FILE_READ_FAILED_ERROR_MSG.format(
                     error=e
                 ),
             )
         else:
             # REFACTORING: Enhanced result logging with comprehensive metrics
-            entries = result.unwrap_or([])
+            entries = FlextResult.safe_unwrap_or_none(result) or []
             if entries:
                 entries_count = len(entries)
                 logger.debug(

@@ -9,8 +9,7 @@ from typing import Never
 
 import pytest
 
-import flext_ldif.format_handler_service as fh
-from flext_ldif.format_handler_service import (
+from flext_ldif.format_handlers import (
     FlextLDIFFormatHandler,
     FlextLDIFParser,
     FlextLDIFWriter,
@@ -66,6 +65,63 @@ objectClass: person
         assert result.is_success
         ldif_output = result.value
         assert ldif_output == ""
+
+    def test_validate_url_scheme_valid(self) -> None:
+        """Test URL scheme validation with valid schemes."""
+        # These should not raise an exception
+        FlextLDIFFormatHandler.validate_url_scheme("http://example.com")
+        FlextLDIFFormatHandler.validate_url_scheme("https://example.com/path")
+
+    def test_validate_url_scheme_invalid(self) -> None:
+        """Test URL scheme validation with invalid schemes."""
+        with pytest.raises(ValueError, match="URL scheme 'ftp' not allowed"):
+            FlextLDIFFormatHandler.validate_url_scheme("ftp://example.com")
+
+        with pytest.raises(ValueError, match="URL scheme 'file' not allowed"):
+            FlextLDIFFormatHandler.validate_url_scheme("file:///path/to/file")
+
+    def test_is_dn_valid(self) -> None:
+        """Test is_dn method with valid DNs."""
+        valid_dns = [
+            "cn=John Doe,ou=people,dc=example,dc=com",
+            "uid=user,ou=users,dc=company,dc=org",
+            "o=Organization,c=US",
+        ]
+
+        for dn in valid_dns:
+            assert FlextLDIFFormatHandler.is_dn(dn)
+
+    def test_is_dn_invalid(self) -> None:
+        """Test is_dn method with invalid DNs."""
+        invalid_dns = [
+            "invalid dn format",
+            "no equals sign",
+            "just text without format",
+        ]
+
+        for dn in invalid_dns:
+            assert not FlextLDIFFormatHandler.is_dn(dn)
+
+    def test_is_dn_empty_string(self) -> None:
+        """Test is_dn method with empty string (valid according to regex)."""
+        # Empty string is considered valid DN by the regex
+        assert FlextLDIFFormatHandler.is_dn("")
+
+    def test_lower_list_utility(self) -> None:
+        """Test lower_list utility method."""
+        # Test with valid list
+        result = FlextLDIFFormatHandler.lower_list(["UPPER", "MixedCase"])
+        assert result == ["upper", "mixedcase"]
+
+        # Test with None
+        result = FlextLDIFFormatHandler.lower_list(None)
+        assert result == []
+
+    def test_write_ldif_none_input(self) -> None:
+        """Test write_ldif with None input."""
+        result = FlextLDIFFormatHandler.write_ldif(None)
+        assert result.is_failure
+        assert "Entries cannot be None" in result.error
 
 
 class TestFlextLDIFWriter:
@@ -384,7 +440,7 @@ objectClass: person
         """Test parsing LDIF with URL reference validation (scheme check)."""
         # Test with valid HTTPS URL scheme that passes validation
         # Note: This doesn't make actual HTTP requests, just validates the URL format
-        
+
         ldif_content = """dn: cn=test,dc=example,dc=com
 cn: Test User
 objectClass: person
@@ -410,7 +466,7 @@ objectClass: person
 
         # Should raise ValueError for invalid URL scheme
         with pytest.raises(ValueError, match="not allowed"):
-                list(parser.parse())
+            list(parser.parse())
 
     def test_parse_strict_mode_utf8_validation(self) -> None:
         """Test parser in strict mode with UTF-8 validation."""
@@ -591,5 +647,3 @@ objectClass: person
         # Should not raise error in non-strict mode, just return the value
         result = parser._decode_value("dn", mock_str)
         assert result == ("dn", mock_str)
-
-

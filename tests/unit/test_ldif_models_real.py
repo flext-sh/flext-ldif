@@ -87,7 +87,7 @@ class TestFlextLDIFEntryReal:
                 "uid": ["test.user"],
                 "cn": ["Test User"],
                 "sn": ["User"],
-            }
+            },
         }
         entry = FlextLDIFEntry.model_validate(entry_data)
 
@@ -104,13 +104,18 @@ class TestFlextLDIFEntryReal:
         entry_data = {
             "dn": "uid=multi.user,ou=people,dc=example,dc=com",
             "attributes": {
-                "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                "objectClass": [
+                    "inetOrgPerson",
+                    "organizationalPerson",
+                    "person",
+                    "top",
+                ],
                 "uid": ["multi.user"],
                 "cn": ["Multi User"],
                 "sn": ["User"],
                 "mail": ["multi.user@example.com", "multi.user.alt@example.com"],
                 "telephoneNumber": ["+1-555-0123", "+1-555-0124", "+1-555-0125"],
-            }
+            },
         }
         entry = FlextLDIFEntry.model_validate(entry_data)
 
@@ -130,12 +135,17 @@ class TestFlextLDIFEntryReal:
         entry_data = {
             "dn": "uid=photo.user,ou=people,dc=example,dc=com",
             "attributes": {
-                "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                "objectClass": [
+                    "inetOrgPerson",
+                    "organizationalPerson",
+                    "person",
+                    "top",
+                ],
                 "uid": ["photo.user"],
                 "cn": ["Photo User"],
                 "sn": ["User"],
                 "jpegPhoto": ["/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQ=="],
-            }
+            },
         }
         entry = FlextLDIFEntry.model_validate(entry_data)
 
@@ -150,13 +160,18 @@ class TestFlextLDIFEntryReal:
         entry_data = {
             "dn": "uid=special.chars,ou=people,dc=example,dc=com",
             "attributes": {
-                "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                "objectClass": [
+                    "inetOrgPerson",
+                    "organizationalPerson",
+                    "person",
+                    "top",
+                ],
                 "uid": ["special.chars"],
                 "cn": ["José María Ñuñez"],
                 "sn": ["Ñuñez"],
                 "givenName": ["José María"],
                 "description": ["Contains special characters: áéíóú ÁÉÍÓÚ ñÑ çÇ"],
-            }
+            },
         }
         entry = FlextLDIFEntry.model_validate(entry_data)
 
@@ -179,7 +194,7 @@ class TestFlextLDIFEntryReal:
                 "cn": ["Operations User"],
                 "sn": ["User"],
                 "description": ["Original description"],
-            }
+            },
         }
         entry = FlextLDIFEntry.model_validate(entry_data)
 
@@ -205,7 +220,7 @@ class TestFlextLDIFEntryReal:
                 "uid": ["dn.user"],
                 "cn": ["DN User"],
                 "sn": ["User"],
-            }
+            },
         }
         entry = FlextLDIFEntry.model_validate(entry_data)
 
@@ -221,12 +236,17 @@ class TestFlextLDIFEntryReal:
         entry_data = {
             "dn": "uid=valid.user,ou=people,dc=example,dc=com",
             "attributes": {
-                "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                "objectClass": [
+                    "inetOrgPerson",
+                    "organizationalPerson",
+                    "person",
+                    "top",
+                ],
                 "uid": ["valid.user"],
                 "cn": ["Valid User"],
                 "sn": ["User"],
                 "mail": ["valid.user@example.com"],
-            }
+            },
         }
         entry = FlextLDIFEntry.model_validate(entry_data)
 
@@ -251,7 +271,7 @@ class TestFlextLDIFEntryReal:
                 "uid": ["serial.user"],
                 "cn": ["Serial User"],
                 "sn": ["User"],
-            }
+            },
         }
         entry = FlextLDIFEntry.model_validate(entry_data)
 
@@ -415,14 +435,19 @@ class TestModelIntegrationReal:
         entry_data = {
             "dn": "uid=integration.user,ou=people,dc=example,dc=com",
             "attributes": {
-                "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                "objectClass": [
+                    "inetOrgPerson",
+                    "organizationalPerson",
+                    "person",
+                    "top",
+                ],
                 "uid": ["integration.user"],
                 "cn": ["Integration User"],
                 "sn": ["User"],
                 "mail": ["integration.user@example.com"],
                 "telephoneNumber": ["+1-555-9999"],
                 "description": ["User for testing model integration"],
-            }
+            },
         }
         entry = FlextLDIFEntry.model_validate(entry_data)
 

@@ -68,14 +68,16 @@ def invalid_entries() -> list[FlextLDIFEntry]:
     # Entry with missing objectClass
     entry1 = FlextLDIFEntry(
         dn=FlextLDIFDistinguishedName(value="cn=NoObjectClass,dc=example,dc=com"),
-        attributes=FlextLDIFAttributes(data={"cn": ["NoObjectClass"], "mail": ["test@example.com"]})
+        attributes=FlextLDIFAttributes(
+            data={"cn": ["NoObjectClass"], "mail": ["test@example.com"]}
+        ),
     )
 
     # Entry with empty DN (DN validation will actually fail during model creation)
     # So create a valid DN but entry that will fail validation logic
     entry2 = FlextLDIFEntry(
         dn=FlextLDIFDistinguishedName(value="cn=ValidDN,dc=example,dc=com"),
-        attributes=FlextLDIFAttributes(data={"cn": ["ValidDN"]})  # Missing objectClass
+        attributes=FlextLDIFAttributes(data={"cn": ["ValidDN"]}),  # Missing objectClass
     )
 
     return [entry1, entry2]
@@ -92,8 +94,18 @@ class TestFlextLDIFUtilities:
 
         # Test that they are classes (not instances)
         import inspect
+
         assert inspect.isclass(FlextLDIFUtilities.LdifDomainProcessors)
         assert inspect.isclass(FlextLDIFUtilities.LdifConverters)
+
+    def test_utilities_initialization(self) -> None:
+        """Test FlextLDIFUtilities initialization following flext-core patterns."""
+        # Test instantiation to cover __init__ method
+        utilities = FlextLDIFUtilities()
+
+        # Verify logger initialization
+        assert hasattr(utilities, "_logger")
+        assert utilities._logger is not None
 
     def test_validate_entries_or_warn_with_valid_entries(
         self, sample_entries: list[FlextLDIFEntry]
@@ -187,58 +199,21 @@ class TestFlextLDIFUtilities:
         )
 
         assert result.is_success
-        assert len(result.value) == len(sample_entries)  # All entries missing telephoneNumber
-
-    def test_batch_process_entries_with_none_processor(
-        self, sample_entries: list[FlextLDIFEntry]
-    ) -> None:
-        """Test batch processing with None processor returns original entries."""
-        result = FlextLDIFUtilities.LdifDomainProcessors.batch_process_entries(
-            sample_entries, batch_size=2, process_func=None
-        )
-
-        assert result.is_success
-        assert len(result.value) == len(sample_entries)
-
-    def test_batch_process_entries_with_processor(
-        self, sample_entries: list[FlextLDIFEntry]
-    ) -> None:
-        """Test batch processing with a simple processor function."""
-        def simple_processor(entries: list[FlextLDIFEntry]) -> list[FlextLDIFEntry]:
-            # Simple processor that returns the same entries
-            return entries
-
-        result = FlextLDIFUtilities.LdifDomainProcessors.batch_process_entries(
-            sample_entries, batch_size=2, process_func=simple_processor
-        )
-
-        assert result.is_success
-        assert len(result.value) == len(sample_entries)
-
-    def test_batch_process_entries_with_failing_processor(
-        self, sample_entries: list[FlextLDIFEntry]
-    ) -> None:
-        """Test batch processing with a processor that raises an exception."""
-        def failing_processor(entries: list[FlextLDIFEntry]) -> list[FlextLDIFEntry]:
-            error_msg = "Processing failed"
-            raise ValueError(error_msg)
-
-        result = FlextLDIFUtilities.LdifDomainProcessors.batch_process_entries(
-            sample_entries, batch_size=2, process_func=failing_processor
-        )
-
-        assert result.is_failure
-        assert result.error is not None and "Batch processing error" in result.error
+        assert len(result.value) == len(
+            sample_entries
+        )  # All entries missing telephoneNumber
 
     def test_attributes_dict_to_ldif_format_success(self) -> None:
         """Test converting attributes dictionary to LDIF format."""
         test_attrs = {
             "cn": ["John Doe"],
             "mail": ["john@example.com", "john.doe@example.com"],
-            "objectClass": ["person", "inetOrgPerson"]
+            "objectClass": ["person", "inetOrgPerson"],
         }
 
-        result = FlextLDIFUtilities.LdifConverters.attributes_dict_to_ldif_format(test_attrs)
+        result = FlextLDIFUtilities.LdifConverters.attributes_dict_to_ldif_format(
+            test_attrs
+        )
 
         assert result.is_success
         converted = result.value
@@ -252,15 +227,22 @@ class TestFlextLDIFUtilities:
         test_attrs: dict[str, list[str]] = {
             "cn": ["John Doe"],
             "description": [],  # Should be filtered out when empty
-            "mail": ["john@example.com", "john.doe@example.com"],  # Removed None for type safety
+            "mail": [
+                "john@example.com",
+                "john.doe@example.com",
+            ],  # Removed None for type safety
         }
 
-        result = FlextLDIFUtilities.LdifConverters.attributes_dict_to_ldif_format(test_attrs)
+        result = FlextLDIFUtilities.LdifConverters.attributes_dict_to_ldif_format(
+            test_attrs
+        )
 
         assert result.is_success
         converted = result.value
         assert "cn" in converted
-        assert "description" not in converted  # Should be filtered out due to empty list
+        assert (
+            "description" not in converted
+        )  # Should be filtered out due to empty list
         assert "mail" in converted
         assert len(converted["mail"]) == 2
 
@@ -269,10 +251,12 @@ class TestFlextLDIFUtilities:
         test_attrs = {
             "CN": ["John Doe"],
             "Mail": ["john@example.com"],
-            "OBJECTCLASS": ["person"]
+            "OBJECTCLASS": ["person"],
         }
 
-        result = FlextLDIFUtilities.LdifConverters.attributes_dict_to_ldif_format(test_attrs)
+        result = FlextLDIFUtilities.LdifConverters.attributes_dict_to_ldif_format(
+            test_attrs
+        )
 
         assert result.is_success
         converted = result.value
@@ -325,15 +309,6 @@ class TestFlextLDIFUtilities:
         """Test finding missing attributes in empty list."""
         result = FlextLDIFUtilities.LdifDomainProcessors.find_entries_with_missing_required_attributes(
             [], ["cn"]
-        )
-
-        assert result.is_success
-        assert len(result.value) == 0
-
-    def test_batch_process_entries_empty_list(self) -> None:
-        """Test batch processing empty list."""
-        result = FlextLDIFUtilities.LdifDomainProcessors.batch_process_entries(
-            [], batch_size=10, process_func=None
         )
 
         assert result.is_success

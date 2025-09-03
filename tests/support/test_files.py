@@ -62,8 +62,9 @@ class TestFileManager:
         """Create file from LDIF sample."""
         if filename is None:
             # Generate filename from sample description
-            safe_name = "".join(c for c in sample.description.lower()
-                              if c.isalnum() or c in " -_").strip()
+            safe_name = "".join(
+                c for c in sample.description.lower() if c.isalnum() or c in " -_"
+            ).strip()
             safe_name = safe_name.replace(" ", "_")
             filename = f"{safe_name}.ldif"
 
@@ -77,11 +78,7 @@ class TestFileManager:
 
         files = {}
         for name, sample in LdifTestData.all_samples().items():
-            file_path = self.create_sample_file(
-                sample,
-                f"{name}.ldif",
-                directory
-            )
+            file_path = self.create_sample_file(sample, f"{name}.ldif", directory)
             files[name] = file_path
 
         return files

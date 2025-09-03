@@ -332,14 +332,24 @@ class TestFieldDefaults:
         assert FlextLDIFServices.FieldDefaults.ATTRIBUTE_NAME_MAX_LENGTH == 255
         assert FlextLDIFServices.FieldDefaults.ATTRIBUTE_VALUE_MAX_LENGTH == 65536
         assert FlextLDIFServices.FieldDefaults.LDIF_LINE_MAX_LENGTH == 76
-        assert FlextLDIFServices.FieldDefaults.DN_PATTERN == r"^[a-zA-Z][a-zA-Z0-9\-=,\s]*$"
-        assert FlextLDIFServices.FieldDefaults.ATTRIBUTE_NAME_PATTERN == r"^[a-zA-Z][a-zA-Z0-9\-]*$"
+        assert (
+            FlextLDIFServices.FieldDefaults.DN_PATTERN
+            == r"^[a-zA-Z][a-zA-Z0-9\-=,\s]*$"
+        )
+        assert (
+            FlextLDIFServices.FieldDefaults.ATTRIBUTE_NAME_PATTERN
+            == r"^[a-zA-Z][a-zA-Z0-9\-]*$"
+        )
 
     def test_field_defaults_types(self) -> None:
         """Test that constants have correct types."""
         assert isinstance(FlextLDIFServices.FieldDefaults.DN_MAX_LENGTH, int)
-        assert isinstance(FlextLDIFServices.FieldDefaults.ATTRIBUTE_NAME_MAX_LENGTH, int)
-        assert isinstance(FlextLDIFServices.FieldDefaults.ATTRIBUTE_VALUE_MAX_LENGTH, int)
+        assert isinstance(
+            FlextLDIFServices.FieldDefaults.ATTRIBUTE_NAME_MAX_LENGTH, int
+        )
+        assert isinstance(
+            FlextLDIFServices.FieldDefaults.ATTRIBUTE_VALUE_MAX_LENGTH, int
+        )
         assert isinstance(FlextLDIFServices.FieldDefaults.LDIF_LINE_MAX_LENGTH, int)
         assert isinstance(FlextLDIFServices.FieldDefaults.DN_PATTERN, str)
         assert isinstance(FlextLDIFServices.FieldDefaults.ATTRIBUTE_NAME_PATTERN, str)

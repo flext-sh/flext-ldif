@@ -121,7 +121,7 @@ class TestFlextLDIFParserServiceReal:
 
         # This tests real LDIF parser behavior - change records are not supported
         # by basic LDIF entry parsers, which is correct behavior
-            # Change records should still be parsed as entries
+        # Change records should still be parsed as entries
 
     def test_parse_real_special_characters(self) -> None:
         """Test parsing LDIF with UTF-8 special characters."""

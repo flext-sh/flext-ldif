@@ -229,12 +229,16 @@ mail: test@example.com"""
 
     def test_from_ldif_block_empty(self) -> None:
         """Test creating entry from empty LDIF block."""
-        with pytest.raises(FlextLDIFExceptions.ValidationError, match="Entry must have a DN"):
+        with pytest.raises(
+            FlextLDIFExceptions.ValidationError, match="Entry must have a DN"
+        ):
             FlextLDIFEntry.from_ldif_block("")
 
     def test_from_ldif_block_whitespace_only(self) -> None:
         """Test creating entry from whitespace-only LDIF block."""
-        with pytest.raises(FlextLDIFExceptions.ValidationError, match="Entry must have a DN"):
+        with pytest.raises(
+            FlextLDIFExceptions.ValidationError, match="Entry must have a DN"
+        ):
             FlextLDIFEntry.from_ldif_block("   \n   \n   ")
 
     def test_from_ldif_block_no_dn(self) -> None:
@@ -242,7 +246,9 @@ mail: test@example.com"""
         ldif_block = """cn: test
 objectClass: person"""
 
-        with pytest.raises(FlextLDIFExceptions.ValidationError, match="Entry must have a DN"):
+        with pytest.raises(
+            FlextLDIFExceptions.ValidationError, match="Entry must have a DN"
+        ):
             FlextLDIFEntry.from_ldif_block(ldif_block)
 
     def test_from_ldif_block_dn_only(self) -> None:

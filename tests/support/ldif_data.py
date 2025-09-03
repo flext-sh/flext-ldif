@@ -63,14 +63,16 @@ member: uid=john.doe,ou=people,dc=example,dc=com
         return LdifSample(
             content=content,
             description="Basic LDIF entries with people and groups",
-            expected_entries=3
+            expected_entries=3,
         )
 
     @staticmethod
     def with_binary_data() -> LdifSample:
         """LDIF with binary data (base64 encoded)."""
         # Create a small PNG-like binary data
-        binary_data = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01"
+        binary_data = (
+            b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01"
+        )
         encoded_data = base64.b64encode(binary_data).decode("ascii")
 
         content = f"""dn: uid=photo.user,ou=people,dc=example,dc=com
@@ -89,7 +91,7 @@ jpegPhoto:: {encoded_data}
             content=content,
             description="LDIF with binary data (base64 encoded)",
             expected_entries=1,
-            has_binary=True
+            has_binary=True,
         )
 
     @staticmethod
@@ -123,7 +125,7 @@ changetype: delete
             content=content,
             description="LDIF with change records (modify, add, delete)",
             expected_entries=3,
-            has_changes=True
+            has_changes=True,
         )
 
     @staticmethod
@@ -148,7 +150,7 @@ description: Secondary description
         return LdifSample(
             content=content,
             description="LDIF with multi-valued attributes",
-            expected_entries=1
+            expected_entries=1,
         )
 
     @staticmethod
@@ -171,7 +173,7 @@ description: {long_description}
         return LdifSample(
             content=content,
             description="LDIF with long lines requiring continuation",
-            expected_entries=1
+            expected_entries=1,
         )
 
     @staticmethod
@@ -193,7 +195,7 @@ postalAddress: Calle de la Paz, 123$ Piso 2º$ Madrid, España
         return LdifSample(
             content=content,
             description="LDIF with UTF-8 special characters",
-            expected_entries=1
+            expected_entries=1,
         )
 
     @staticmethod
@@ -215,7 +217,7 @@ telephoneNumber:
         return LdifSample(
             content=content,
             description="LDIF with empty attribute values",
-            expected_entries=1
+            expected_entries=1,
         )
 
     @staticmethod
@@ -237,7 +239,7 @@ missing required attributes like cn, sn
         return LdifSample(
             content=content,
             description="Invalid LDIF data for error testing",
-            expected_entries=0  # Should fail parsing
+            expected_entries=0,  # Should fail parsing
         )
 
     @staticmethod
@@ -264,7 +266,7 @@ employeeNumber: E{i:06d}
         return LdifSample(
             content=content,
             description=f"Large LDIF dataset with {num_entries} entries",
-            expected_entries=num_entries
+            expected_entries=num_entries,
         )
 
     @classmethod

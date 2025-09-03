@@ -9,25 +9,20 @@ from __future__ import annotations
 import hashlib
 import json
 import re as _re
-import uuid
 from collections import UserDict
 from collections.abc import Callable
 from functools import lru_cache
-from typing import cast, override
+from typing import ClassVar, cast, override
 
 from flext_core import (
     FlextConfig,
     FlextModels,
     FlextResult,
+    FlextUtilities,
 )
 from pydantic import Field, field_validator, model_validator
 
-from flext_ldif.constants import (
-    LDAP_GROUP_CLASSES,
-    LDAP_PERSON_CLASSES,
-    MIN_DN_COMPONENTS,
-    FlextLDIFValidationMessages,
-)
+from flext_ldif.constants import FlextLDIFConstants
 from flext_ldif.exceptions import FlextLDIFExceptions
 
 ValidatorFunc = Callable[[str], bool]
@@ -51,7 +46,7 @@ class AttributesDict(UserDict[str, list[str]]):
     def validate_domain_rules(self) -> None:
         """Validate domain rules for attributes."""
         for attr_name, attr_values in self.items():
-            if not _validate_ldap_attribute_name(attr_name):
+            if not FlextLDIFModels._validate_ldap_attribute_name(attr_name):
                 msg = f"Invalid LDAP attribute name: {attr_name}"
                 raise FlextLDIFExceptions.ValidationError(msg)
             # Values should always be lists in AttributesDict by definition
@@ -59,7 +54,7 @@ class AttributesDict(UserDict[str, list[str]]):
                 msg = f"Attribute cannot be empty: {attr_name}"
                 raise FlextLDIFExceptions.ValidationError(msg)
 
-    def get(self, key: str, default: object = None) -> object:  # type: ignore[override]
+    def get_case_insensitive(self, key: str) -> list[str] | None:
         """Case-insensitive get method."""
         # First try exact match
         if super().__contains__(key):
@@ -71,7 +66,7 @@ class AttributesDict(UserDict[str, list[str]]):
             if actual_key.lower() == key_lower:
                 return super().__getitem__(actual_key)
 
-        return default
+        return None
 
     def __contains__(self, key: object) -> bool:
         """Case-insensitive contains check."""
@@ -87,48 +82,7 @@ class AttributesDict(UserDict[str, list[str]]):
         return any(actual_key.lower() == key_lower for actual_key in self)
 
 
-def _create_empty_attributes() -> dict[str, list[str]]:
-    """Create empty attributes dict that will be converted to Attributes object."""
-    return {}
-
-
-def _validate_ldap_attribute_name(name: str) -> bool:
-    """Local LDAP attribute name validator - breaks circular dependency.
-
-    Validates attribute names per RFC 4512: base name + optional language tags/options.
-    Supports: displayname;lang-es_es, orclinstancecount;oid-prd-app01.network.ctbc
-    """
-    if not name or not isinstance(name, str):
-        return False
-    attr_pattern = _re.compile(r"^[a-zA-Z][a-zA-Z0-9-]*(?:;[a-zA-Z0-9_.-]+)*$")
-    return bool(attr_pattern.match(name))
-
-
-def _validate_ldap_dn(dn: str) -> bool:
-    """Local LDAP DN validator - breaks circular dependency.
-
-    Basic DN validation pattern to avoid circular import from flext-ldap.
-    """
-    if not dn or not isinstance(dn, str):
-        return False
-    # Basic DN validation pattern
-    dn_pattern = _re.compile(r"^[a-zA-Z][\w-]*=.+(?:,[a-zA-Z][\w-]*=.+)*$")
-    return bool(dn_pattern.match(dn.strip()))
-
-
-@lru_cache(maxsize=1)
-def _get_ldap_validators() -> tuple[ValidatorFunc, ValidatorFunc]:
-    """Use local validators to avoid circular dependency with flext-ldap.
-
-    Previously imported from flext-ldap.utils, but this creates circular dependency:
-    flext-ldap imports flext-ldif, flext-ldif imports flext-ldap.utils.
-
-    Now uses local implementations that match the LDAP RFC requirements.
-    """
-    return (
-        _validate_ldap_attribute_name,
-        _validate_ldap_dn,
-    )
+# Loose helper functions moved to FlextLDIFModels class for FLEXT compliance
 
 
 # =============================================================================
@@ -142,6 +96,9 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
     Consolidates ALL model definitions into one class following FLEXT patterns.
     Individual models available as nested classes for organization.
     """
+
+    # Reference to module-level AttributesDict for single-class-per-module pattern
+    AttributesDict: ClassVar[type[AttributesDict]] = AttributesDict
 
     class DistinguishedName(FlextModels.Value):
         """Distinguished Name value object."""
@@ -176,13 +133,17 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             """Validate and normalize DN format."""
             if not v or not isinstance(v, str) or not v.strip():
                 # Domain-specific validation error
-                msg = FlextLDIFValidationMessages.INVALID_DN.format(dn=v or "empty")
+                msg = FlextLDIFConstants.FlextLDIFValidationMessages.INVALID_DN.format(
+                    dn=v or "empty"
+                )
                 raise FlextLDIFExceptions.ValidationError(msg)
 
             # Use local validator to avoid circular dependency
-            _, validate_dn = _get_ldap_validators()
+            _, validate_dn = FlextLDIFModels._get_ldap_validators()
             if not validate_dn(v.strip()):
-                msg = FlextLDIFValidationMessages.INVALID_DN.format(dn=v)
+                msg = FlextLDIFConstants.FlextLDIFValidationMessages.INVALID_DN.format(
+                    dn=v
+                )
                 raise FlextLDIFExceptions.ValidationError(msg)
 
             # Normalize: strip but preserve case for DN
@@ -191,14 +152,17 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
         def validate_domain_rules(self) -> None:
             """Validate business rules for DN."""
             if not self.value:
-                msg = FlextLDIFValidationMessages.EMPTY_DN
+                msg = FlextLDIFConstants.FlextLDIFValidationMessages.EMPTY_DN
                 raise FlextLDIFExceptions.ValidationError(msg)
 
             # Check minimum DN components (at least one attribute=value pair)
             components = [c.strip() for c in self.value.split(",") if c.strip()]
-            if len(components) < MIN_DN_COMPONENTS:
-                msg = FlextLDIFValidationMessages.DN_TOO_SHORT.format(
-                    components=len(components), minimum=MIN_DN_COMPONENTS
+            if len(components) < FlextLDIFConstants.MIN_DN_COMPONENTS:
+                msg = (
+                    FlextLDIFConstants.FlextLDIFValidationMessages.DN_TOO_SHORT.format(
+                        components=len(components),
+                        minimum=FlextLDIFConstants.MIN_DN_COMPONENTS,
+                    )
                 )
                 raise FlextLDIFExceptions.ValidationError(msg)
 
@@ -237,7 +201,7 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
         def from_components(cls, *components: str) -> FlextLDIFModels.DistinguishedName:
             """Create DN from components."""
             if not components:
-                msg = FlextLDIFValidationMessages.EMPTY_DN
+                msg = FlextLDIFConstants.FlextLDIFValidationMessages.EMPTY_DN
                 raise FlextLDIFExceptions.ValidationError(msg)
 
             dn_value = ",".join(str(c).strip() for c in components if c.strip())
@@ -257,10 +221,10 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
         def validate_attributes(cls, v: object) -> dict[str, list[str]]:
             """Validate attribute names and values."""
             if not isinstance(v, dict):
-                msg = f"{FlextLDIFValidationMessages.INVALID_ATTRIBUTES}: {v!r}"
+                msg = f"{FlextLDIFConstants.FlextLDIFValidationMessages.INVALID_ATTRIBUTES}: {v!r}"
                 raise FlextLDIFExceptions.ValidationError(msg)
 
-            validate_attr_name, _ = _get_ldap_validators()
+            validate_attr_name, _ = FlextLDIFModels._get_ldap_validators()
             validated = {}
 
             # We know v is a dict at this point due to the isinstance check above
@@ -269,7 +233,7 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             for attr_name, attr_values in v_dict.items():
                 # Validate attribute name
                 if not validate_attr_name(attr_name):
-                    msg = FlextLDIFValidationMessages.INVALID_ATTRIBUTE_NAME.format(
+                    msg = FlextLDIFConstants.FlextLDIFValidationMessages.INVALID_ATTRIBUTE_NAME.format(
                         attr_name=attr_name
                     )
                     raise FlextLDIFExceptions.ValidationError(msg)
@@ -297,7 +261,7 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
 
             # Check for required objectClass
             if "objectclass" not in self.data:
-                msg = FlextLDIFValidationMessages.MISSING_OBJECTCLASS
+                msg = FlextLDIFConstants.FlextLDIFValidationMessages.MISSING_OBJECTCLASS
                 raise FlextLDIFExceptions.ValidationError(msg)
 
         @override
@@ -311,7 +275,17 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
 
         def get_attribute(self, name: str) -> list[str] | None:
             """Get attribute values by name (case-insensitive)."""
-            return self.data.get(name.lower())
+            # First try exact match
+            if name in self.data:
+                return self.data[name]
+
+            # Then try case-insensitive match
+            name_lower = name.lower()
+            for attr_name in self.data:
+                if attr_name.lower() == name_lower:
+                    return self.data[attr_name]
+
+            return None
 
         def has_attribute(self, name: str) -> bool:
             """Check if attribute exists."""
@@ -319,9 +293,9 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
 
         def add_attribute(self, name: str, value: str | list[str]) -> None:
             """Add attribute value(s)."""
-            validate_attr_name, _ = _get_ldap_validators()
+            validate_attr_name, _ = FlextLDIFModels._get_ldap_validators()
             if not validate_attr_name(name):
-                msg = FlextLDIFValidationMessages.INVALID_ATTRIBUTE_NAME.format(
+                msg = FlextLDIFConstants.FlextLDIFValidationMessages.INVALID_ATTRIBUTE_NAME.format(
                     name=name
                 )
                 raise FlextLDIFExceptions.ValidationError(msg)
@@ -350,13 +324,15 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
         def is_person(self) -> bool:
             """Check if entry represents a person."""
             object_classes = {oc.lower() for oc in self.get_object_classes()}
-            person_classes = {oc.lower() for oc in LDAP_PERSON_CLASSES}
+            person_classes = {
+                oc.lower() for oc in FlextLDIFConstants.LDAP_PERSON_CLASSES
+            }
             return bool(object_classes.intersection(person_classes))
 
         def is_group(self) -> bool:
             """Check if entry represents a group."""
             object_classes = {oc.lower() for oc in self.get_object_classes()}
-            group_classes = {oc.lower() for oc in LDAP_GROUP_CLASSES}
+            group_classes = {oc.lower() for oc in FlextLDIFConstants.LDAP_GROUP_CLASSES}
             return bool(object_classes.intersection(group_classes))
 
     class Entry(FlextModels.Entity):
@@ -365,7 +341,7 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
         dn: FlextLDIFModels.DistinguishedName = Field(...)
         attributes: AttributesDict = Field(default_factory=AttributesDict)
 
-        def __init__(self, **data: object) -> None:
+        def __init__(self, **data: object) -> None:  # type: ignore[explicit-any]
             """Initialize with auto-generated ID if not provided."""
             # Ensure we have an id for FlextModels
             if "id" not in data and "dn" in data:
@@ -378,8 +354,8 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
                 dn_hash = hashlib.sha256(dn_value.encode()).hexdigest()[:16]
                 data["id"] = f"ldif_entry_{dn_hash}"
             elif "id" not in data:
-                # Fallback ID generation
-                data["id"] = f"ldif_entry_{uuid.uuid4().hex[:16]}"
+                # Fallback ID generation using FlextUtilities
+                data["id"] = FlextUtilities.Generators.generate_entity_id()
 
             # Ensure attributes field is provided and is AttributesDict
             if "attributes" not in data:
@@ -393,7 +369,7 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
                     data["attributes"] = AttributesDict()
 
             # Pass all data to pydantic model - it will handle type validation and conversion
-            super().__init__(**data)  # type: ignore[arg-type]
+            super().__init__(**data)
 
         @model_validator(mode="before")
         @classmethod
@@ -428,7 +404,7 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
                 key.lower() == "objectclass" for key in self.attributes
             )
             if not has_objectclass:
-                msg = FlextLDIFValidationMessages.MISSING_OBJECTCLASS
+                msg = FlextLDIFConstants.FlextLDIFValidationMessages.MISSING_OBJECTCLASS
                 raise FlextLDIFExceptions.ValidationError(msg)
 
         @override
@@ -442,8 +418,7 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
 
         def get_attribute(self, name: str) -> list[str] | None:
             """Get attribute values."""
-            result = self.attributes.get(name.lower(), [])
-            return result or None  # type: ignore[return-value]
+            return self.attributes.get_case_insensitive(name)
 
         def get_single_attribute(self, name: str) -> str | None:
             """Get single attribute value."""
@@ -502,13 +477,15 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
         def is_person(self) -> bool:
             """Check if entry represents a person."""
             object_classes = {oc.lower() for oc in self.get_object_classes()}
-            person_classes = {oc.lower() for oc in LDAP_PERSON_CLASSES}
+            person_classes = {
+                oc.lower() for oc in FlextLDIFConstants.LDAP_PERSON_CLASSES
+            }
             return bool(object_classes.intersection(person_classes))
 
         def is_group(self) -> bool:
             """Check if entry represents a group."""
             object_classes = {oc.lower() for oc in self.get_object_classes()}
-            group_classes = {oc.lower() for oc in LDAP_GROUP_CLASSES}
+            group_classes = {oc.lower() for oc in FlextLDIFConstants.LDAP_GROUP_CLASSES}
             return bool(object_classes.intersection(group_classes))
 
         def is_person_entry(self) -> bool:
@@ -580,7 +557,7 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
         def from_dict(cls, data: dict[str, object]) -> FlextLDIFModels.Entry:
             """Create entry from dictionary."""
             if "dn" not in data:
-                msg = FlextLDIFValidationMessages.MISSING_DN
+                msg = FlextLDIFConstants.FlextLDIFValidationMessages.MISSING_DN
                 raise FlextLDIFExceptions.ValidationError(msg)
 
             dn = FlextLDIFModels.DistinguishedName(value=str(data["dn"]))
@@ -669,31 +646,66 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             return FlextLDIFModels.Entry(dn=dn_obj, attributes=attrs_dict)
 
         @staticmethod
-        def create_config(**kwargs: object) -> FlextLDIFModels.Config:
+        def create_config(**kwargs: object) -> FlextLDIFModels.Config:  # type: ignore[explicit-any]
             """Create configuration with proper type handling."""
             # Let Pydantic handle type conversion and validation
-            return FlextLDIFModels.Config(**kwargs)  # type: ignore[arg-type]
+            return FlextLDIFModels.Config(**kwargs)
+
+    # =========================================================================
+    # HELPER METHODS - Moved from loose functions for FLEXT pattern compliance
+    # =========================================================================
+
+    @staticmethod
+    def _create_empty_attributes() -> dict[str, list[str]]:
+        """Create empty attributes dict that will be converted to Attributes object."""
+        return {}
+
+    @staticmethod
+    def _validate_ldap_attribute_name(name: str) -> bool:
+        """Local LDAP attribute name validator - breaks circular dependency.
+
+        Validates attribute names per RFC 4512: base name + optional language tags/options.
+        Supports: displayname;lang-es_es, orclinstancecount;oid-prd-app01.network.ctbc
+        """
+        if not name or not isinstance(name, str):
+            return False
+        attr_pattern = _re.compile(r"^[a-zA-Z][a-zA-Z0-9-]*(?:;[a-zA-Z0-9_.-]+)*$")
+        return bool(attr_pattern.match(name))
+
+    @staticmethod
+    def _validate_ldap_dn(dn: str) -> bool:
+        """Local LDAP DN validator - breaks circular dependency.
+
+        Basic DN validation pattern to avoid circular import from flext-ldap.
+        """
+        if not dn or not isinstance(dn, str):
+            return False
+        # Basic DN validation pattern
+        dn_pattern = _re.compile(r"^[a-zA-Z][\w-]*=.+(?:,[a-zA-Z][\w-]*=.+)*$")
+        return bool(dn_pattern.match(dn.strip()))
+
+    @staticmethod
+    @lru_cache(maxsize=1)
+    def _get_ldap_validators() -> tuple[ValidatorFunc, ValidatorFunc]:
+        """Use local validators to avoid circular dependency with flext-ldap.
+
+        Previously imported from flext-ldap.utils, but this creates circular dependency:
+        flext-ldap imports flext-ldif, flext-ldif imports flext-ldap.utils.
+
+        Now uses local implementations that match the LDAP RFC requirements.
+        """
+        return (
+            FlextLDIFModels._validate_ldap_attribute_name,
+            FlextLDIFModels._validate_ldap_dn,
+        )
 
 
 # =============================================================================
-# BACKWARD COMPATIBILITY - Legacy class aliases
+# FLEXT PATTERN EXPORTS - Only consolidated class, NO compatibility aliases
 # =============================================================================
 
-# Direct aliases to nested classes for backward compatibility
-FlextLDIFDistinguishedName = FlextLDIFModels.DistinguishedName
-FlextLDIFAttributes = FlextLDIFModels.Attributes
-FlextLDIFEntry = FlextLDIFModels.Entry
-FlextLDIFConfig = FlextLDIFModels.Config
-FlextLDIFFactory = FlextLDIFModels.Factory
-
-# Export consolidated class and legacy aliases
+# ONLY export the unified class - force usage of FlextLDIFModels.* pattern
 __all__ = [
-    "FlextLDIFAttributes",
-    "FlextLDIFConfig",
-    # Legacy compatibility aliases
-    "FlextLDIFDistinguishedName",
-    "FlextLDIFEntry",
-    "FlextLDIFFactory",
-    # Consolidated class (FLEXT Pattern)
-    "FlextLDIFModels",
+    "AttributesDict",  # Module-level helper class
+    "FlextLDIFModels",  # Consolidated class (FLEXT Pattern)
 ]
