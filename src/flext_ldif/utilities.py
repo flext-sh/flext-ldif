@@ -65,14 +65,12 @@ class FlextLDIFUtilities:
         ) -> FlextResult[dict[str, int]]:
             """Get comprehensive entry statistics."""
             if not entries:
-                return FlextResult[dict[str, int]].ok(
-                    {
-                        "total_entries": 0,
-                        "person_entries": 0,
-                        "group_entries": 0,
-                        "unique_attributes": 0,
-                    }
-                )
+                return FlextResult[dict[str, int]].ok({
+                    "total_entries": 0,
+                    "person_entries": 0,
+                    "group_entries": 0,
+                    "unique_attributes": 0,
+                })
 
             # Collect all attributes efficiently
             all_attrs: list[str] = reduce(

@@ -6,11 +6,7 @@ No mocks, bypasses, or fake implementations - only real model functionality.
 
 from __future__ import annotations
 
-from flext_ldif.models import (
-    FlextLDIFAttributes,
-    FlextLDIFDistinguishedName,
-    FlextLDIFModels,
-)
+from flext_ldif.models import FlextLDIFModels
 
 
 class TestFlextLDIFModelsConfigReal:
@@ -88,7 +84,9 @@ class TestFlextLDIFModelsEntryReal:
                 "sn": ["User"],
             },
         }
-        entry = FlextLDIFModels.Entry.model_validate(entry_data)
+        entry = FlextLDIFModels.Factory.create_entry(
+            entry_data["dn"], entry_data["attributes"]
+        )
 
         # Verify entry properties
         assert entry.dn is not None
@@ -116,7 +114,9 @@ class TestFlextLDIFModelsEntryReal:
                 "telephoneNumber": ["+1-555-0123", "+1-555-0124", "+1-555-0125"],
             },
         }
-        entry = FlextLDIFModels.Entry.model_validate(entry_data)
+        entry = FlextLDIFModels.Factory.create_entry(
+            entry_data["dn"], entry_data["attributes"]
+        )
 
         # Verify multi-valued attributes
         mail_values = entry.get_attribute("mail")
@@ -146,7 +146,9 @@ class TestFlextLDIFModelsEntryReal:
                 "jpegPhoto": ["/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQ=="],
             },
         }
-        entry = FlextLDIFModels.Entry.model_validate(entry_data)
+        entry = FlextLDIFModels.Factory.create_entry(
+            entry_data["dn"], entry_data["attributes"]
+        )
 
         # Verify binary attribute
         jpeg_photo = entry.get_attribute("jpegPhoto")
@@ -172,7 +174,9 @@ class TestFlextLDIFModelsEntryReal:
                 "description": ["Contains special characters: áéíóú ÁÉÍÓÚ ñÑ çÇ"],
             },
         }
-        entry = FlextLDIFModels.Entry.model_validate(entry_data)
+        entry = FlextLDIFModels.Factory.create_entry(
+            entry_data["dn"], entry_data["attributes"]
+        )
 
         # Verify special characters are preserved
         cn_values = entry.get_attribute("cn")
@@ -195,7 +199,9 @@ class TestFlextLDIFModelsEntryReal:
                 "description": ["Original description"],
             },
         }
-        entry = FlextLDIFModels.Entry.model_validate(entry_data)
+        entry = FlextLDIFModels.Factory.create_entry(
+            entry_data["dn"], entry_data["attributes"]
+        )
 
         # Test getting attributes
         uid_values = entry.get_attribute("uid")
@@ -221,7 +227,9 @@ class TestFlextLDIFModelsEntryReal:
                 "sn": ["User"],
             },
         }
-        entry = FlextLDIFModels.Entry.model_validate(entry_data)
+        entry = FlextLDIFModels.Factory.create_entry(
+            entry_data["dn"], entry_data["attributes"]
+        )
 
         # Test DN string representation
         dn_str = str(entry.dn)
@@ -247,7 +255,9 @@ class TestFlextLDIFModelsEntryReal:
                 "mail": ["valid.user@example.com"],
             },
         }
-        entry = FlextLDIFModels.Entry.model_validate(entry_data)
+        entry = FlextLDIFModels.Factory.create_entry(
+            entry_data["dn"], entry_data["attributes"]
+        )
 
         # Should be able to validate business rules (if implemented)
         try:
@@ -272,7 +282,9 @@ class TestFlextLDIFModelsEntryReal:
                 "sn": ["User"],
             },
         }
-        entry = FlextLDIFModels.Entry.model_validate(entry_data)
+        entry = FlextLDIFModels.Factory.create_entry(
+            entry_data["dn"], entry_data["attributes"]
+        )
 
         # Should be able to convert to dict
         entry_dict = entry.model_dump()
@@ -282,12 +294,12 @@ class TestFlextLDIFModelsEntryReal:
 
 
 class TestFlextLDIFDistinguishedNameReal:
-    """Test FlextLDIFDistinguishedName with real functionality."""
+    """Test FlextLDIFModels.DistinguishedName with real functionality."""
 
     def test_dn_creation_simple(self) -> None:
         """Test DN creation with simple format."""
         dn_str = "uid=test,ou=people,dc=example,dc=com"
-        dn = FlextLDIFDistinguishedName(value=dn_str)
+        dn = FlextLDIFModels.DistinguishedName(value=dn_str)
 
         # Verify DN properties
         assert str(dn) == dn_str
@@ -296,7 +308,7 @@ class TestFlextLDIFDistinguishedNameReal:
     def test_dn_creation_complex(self) -> None:
         """Test DN creation with complex format."""
         dn_str = "cn=John Doe+mail=john@example.com,ou=people,dc=example,dc=com"
-        dn = FlextLDIFDistinguishedName(value=dn_str)
+        dn = FlextLDIFModels.DistinguishedName(value=dn_str)
 
         # Verify complex DN
         assert str(dn) == dn_str
@@ -305,7 +317,7 @@ class TestFlextLDIFDistinguishedNameReal:
     def test_dn_creation_with_spaces(self) -> None:
         """Test DN creation with spaces in values."""
         dn_str = "cn=John Doe,ou=Human Resources,dc=example,dc=com"
-        dn = FlextLDIFDistinguishedName(value=dn_str)
+        dn = FlextLDIFModels.DistinguishedName(value=dn_str)
 
         # Verify DN with spaces
         assert str(dn) == dn_str
@@ -314,7 +326,7 @@ class TestFlextLDIFDistinguishedNameReal:
     def test_dn_creation_with_special_characters(self) -> None:
         """Test DN creation with special characters."""
         dn_str = "cn=José María,ou=people,dc=example,dc=com"
-        dn = FlextLDIFDistinguishedName(value=dn_str)
+        dn = FlextLDIFModels.DistinguishedName(value=dn_str)
 
         # Verify DN with special characters
         assert str(dn) == dn_str
@@ -322,9 +334,15 @@ class TestFlextLDIFDistinguishedNameReal:
 
     def test_dn_equality(self) -> None:
         """Test DN equality comparison."""
-        dn1 = FlextLDIFDistinguishedName(value="uid=test,ou=people,dc=example,dc=com")
-        dn2 = FlextLDIFDistinguishedName(value="uid=test,ou=people,dc=example,dc=com")
-        dn3 = FlextLDIFDistinguishedName(value="uid=other,ou=people,dc=example,dc=com")
+        dn1 = FlextLDIFModels.DistinguishedName(
+            value="uid=test,ou=people,dc=example,dc=com"
+        )
+        dn2 = FlextLDIFModels.DistinguishedName(
+            value="uid=test,ou=people,dc=example,dc=com"
+        )
+        dn3 = FlextLDIFModels.DistinguishedName(
+            value="uid=other,ou=people,dc=example,dc=com"
+        )
 
         # Test equality
         assert dn1 == dn2
@@ -341,12 +359,12 @@ class TestFlextLDIFDistinguishedNameReal:
         ]
 
         for dn_str in valid_dns:
-            dn = FlextLDIFDistinguishedName(value=dn_str)
+            dn = FlextLDIFModels.DistinguishedName(value=dn_str)
             assert str(dn) == dn_str
 
 
 class TestFlextLDIFAttributesReal:
-    """Test FlextLDIFAttributes with real functionality."""
+    """Test FlextLDIFModels.Attributes with real functionality."""
 
     def test_attributes_creation_basic(self) -> None:
         """Test basic attributes creation."""
@@ -356,7 +374,7 @@ class TestFlextLDIFAttributesReal:
             "cn": ["Test User"],
             "sn": ["User"],
         }
-        attrs = FlextLDIFAttributes(data=attrs_data)
+        attrs = FlextLDIFModels.Attributes(data=attrs_data)
 
         # Verify attributes (keys normalized to lowercase)
         assert len(attrs.data) == 4
@@ -371,7 +389,7 @@ class TestFlextLDIFAttributesReal:
             "mail": ["user@example.com", "user.alt@example.com"],
             "telephoneNumber": ["+1-555-0123", "+1-555-0124"],
         }
-        attrs = FlextLDIFAttributes(data=attrs_data)
+        attrs = FlextLDIFModels.Attributes(data=attrs_data)
 
         # Verify multi-valued attributes (keys normalized to lowercase)
         assert len(attrs.data["mail"]) == 2
@@ -386,7 +404,7 @@ class TestFlextLDIFAttributesReal:
             "uid": ["ops.user"],
             "cn": ["Operations User"],
         }
-        attrs = FlextLDIFAttributes(data=attrs_data)
+        attrs = FlextLDIFModels.Attributes(data=attrs_data)
 
         # Test getting values through data field
         uid_values = attrs.data.get("uid")
@@ -408,7 +426,7 @@ class TestFlextLDIFAttributesReal:
             "cn": ["Iteration User"],
             "sn": ["User"],
         }
-        attrs = FlextLDIFAttributes(data=attrs_data)
+        attrs = FlextLDIFModels.Attributes(data=attrs_data)
 
         # Test iteration over keys (note: keys are normalized to lowercase)
         keys = list(attrs.data.keys())
@@ -448,7 +466,9 @@ class TestModelIntegrationReal:
                 "description": ["User for testing model integration"],
             },
         }
-        entry = FlextLDIFModels.Entry.model_validate(entry_data)
+        entry = FlextLDIFModels.Factory.create_entry(
+            entry_data["dn"], entry_data["attributes"]
+        )
 
         # Verify all components work together
         assert entry.dn is not None

@@ -62,12 +62,12 @@ description: People OU
 def invalid_entries() -> list[FlextLDIFModels.Entry]:
     """Create entries with validation issues for testing."""
     # Create entries directly that have validation issues
-    from flext_ldif.models import FlextLDIFAttributes, FlextLDIFDistinguishedName
-
     # Entry with missing objectClass
     entry1 = FlextLDIFModels.Entry(
-        dn=FlextLDIFDistinguishedName(value="cn=NoObjectClass,dc=example,dc=com"),
-        attributes=FlextLDIFAttributes(
+        dn=FlextLDIFModels.DistinguishedName(
+            value="cn=NoObjectClass,dc=example,dc=com"
+        ),
+        attributes=FlextLDIFModels.Attributes(
             data={"cn": ["NoObjectClass"], "mail": ["test@example.com"]}
         ),
     )
@@ -75,8 +75,10 @@ def invalid_entries() -> list[FlextLDIFModels.Entry]:
     # Entry with empty DN (DN validation will actually fail during model creation)
     # So create a valid DN but entry that will fail validation logic
     entry2 = FlextLDIFModels.Entry(
-        dn=FlextLDIFDistinguishedName(value="cn=ValidDN,dc=example,dc=com"),
-        attributes=FlextLDIFAttributes(data={"cn": ["ValidDN"]}),  # Missing objectClass
+        dn=FlextLDIFModels.DistinguishedName(value="cn=ValidDN,dc=example,dc=com"),
+        attributes=FlextLDIFModels.Attributes(
+            data={"cn": ["ValidDN"]}
+        ),  # Missing objectClass
     )
 
     return [entry1, entry2]

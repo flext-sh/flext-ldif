@@ -7,7 +7,11 @@ Individual services available as nested classes for organization.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast, override
+from typing import TYPE_CHECKING, cast, override
+
+if TYPE_CHECKING:
+    from flext_ldif.constants import FlextLDIFConstants
+    from flext_ldif.models import FlextLDIFModels
 
 from flext_core import (
     FlextDomainService,
@@ -48,12 +52,16 @@ class FlextLDIFServices(FlextModels.Config):
             entries: list[FlextLDIFModels.Entry] | None = None,
             config: object = None,
         ) -> None:
-            # Import here to avoid circular imports
-            from flext_ldif.models import FlextLDIFModels
-
             super().__init__()
             self._entries = entries or []
-            self._config = config or FlextLDIFModels.Config()
+
+            # Lazy import to avoid circular dependencies
+            if config is None:
+                from flext_ldif.models import FlextLDIFModels  # noqa: PLC0415
+                self._config = FlextLDIFModels.Config()
+            else:
+                from flext_ldif.models import FlextLDIFModels  # noqa: PLC0415
+                self._config = cast("FlextLDIFModels.Config", config)
 
         @property
         def entries(self) -> list[FlextLDIFModels.Entry]:
@@ -77,7 +85,8 @@ class FlextLDIFServices(FlextModels.Config):
             self, entries: list[FlextLDIFModels.Entry]
         ) -> FlextResult[dict[str, int]]:
             """Analyze patterns in LDIF entries."""
-            from flext_ldif.constants import FlextLDIFConstants
+            # Lazy import to avoid circular dependencies
+            from flext_ldif.constants import FlextLDIFConstants  # noqa: PLC0415
 
             analytics_constants = FlextLDIFConstants.FlextLDIFAnalyticsConstants
 
@@ -96,15 +105,15 @@ class FlextLDIFServices(FlextModels.Config):
                 analytics_constants.ENTRIES_WITH_TELEPHONE_KEY: sum(
                     1
                     for entry in entries
-                    if entry.has_attribute(
-                        analytics_constants.TELEPHONE_ATTRIBUTE
-                    )
+                    if entry.has_attribute(analytics_constants.TELEPHONE_ATTRIBUTE)
                 ),
-                "unique_object_classes": len({
-                    oc.lower()
-                    for entry in entries
-                    for oc in entry.get_attribute("objectclass") or []
-                }),
+                "unique_object_classes": len(
+                    {
+                        oc.lower()
+                        for entry in entries
+                        for oc in entry.get_attribute("objectclass") or []
+                    }
+                ),
                 "person_entries": sum(1 for entry in entries if entry.is_person()),
                 "group_entries": sum(1 for entry in entries if entry.is_group()),
             }
@@ -493,7 +502,7 @@ class FlextLDIFServices(FlextModels.Config):
 
             for entry in entries:
                 try:
-                    entry.validate_domain_rules()
+                    entry.validate_business_rules()
                 except Exception as e:
                     return FlextResult[bool].fail(
                         f"Validation failed for entry {entry.dn.value}: {e}"
@@ -507,10 +516,10 @@ class FlextLDIFServices(FlextModels.Config):
             """Validate single entry structure."""
             try:
                 # Validate DN
-                entry.dn.validate_domain_rules()
+                entry.dn.validate_business_rules()
 
                 # Validate attributes
-                entry.attributes.validate_domain_rules()
+                entry.attributes.validate_business_rules()
 
                 return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_SUCCESS)
 
@@ -585,15 +594,17 @@ class FlextLDIFServices(FlextModels.Config):
                 # Handle both real AttributesDict and Mock objects
                 attributes_obj = entry.attributes
                 if FlextUtilities.TypeGuards.has_attribute(
-                    attributes_obj, "attributes"
-                ):  # Mock object setup
-                    attributes_dict = attributes_obj.attributes
+                    attributes_obj, "data"
+                ):  # FlextLDIFModels.LdifAttributes
+                    attributes_dict = attributes_obj.data
                 elif FlextUtilities.TypeGuards.has_attribute(
                     attributes_obj, "items"
                 ):  # Real AttributesDict
                     attributes_dict = dict(attributes_obj)
                 else:
-                    return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_SUCCESS)  # Can't validate
+                    return FlextResult[bool].ok(
+                        FlextLDIFConstants.VALIDATION_SUCCESS
+                    )  # Can't validate
 
                 for attr_name, attr_values in attributes_dict.items():
                     # Use FlextUtilities.TypeGuards.is_list_non_empty for validation
@@ -673,7 +684,7 @@ class FlextLDIFServices(FlextModels.Config):
                     if not line:
                         # Empty line - end of entry
                         if current_entry_data:
-                            entry = FlextLDIFModels.Entry.from_dict(
+                            entry = FlextLDIFModels.Entry.model_validate(
                                 cast("dict[str, object]", current_entry_data)
                             )
                             entries.append(entry)
@@ -698,7 +709,7 @@ class FlextLDIFServices(FlextModels.Config):
 
                 # Handle last entry if no trailing empty line
                 if current_entry_data:
-                    entry = FlextLDIFModels.Entry.from_dict(
+                    entry = FlextLDIFModels.Entry.model_validate(
                         cast("dict[str, object]", current_entry_data)
                     )
                     entries.append(entry)
@@ -800,7 +811,7 @@ class FlextLDIFServices(FlextModels.Config):
                         "Entry missing DN"
                     )
 
-                entry = FlextLDIFModels.Entry.from_dict(
+                entry = FlextLDIFModels.Entry.model_validate(
                     cast("dict[str, object]", entry_data)
                 )
                 return FlextResult[FlextLDIFModels.Entry | None].ok(entry)

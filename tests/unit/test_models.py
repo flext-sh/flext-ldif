@@ -1,7 +1,7 @@
 """FLEXT-LDIF Domain Models Test Suite.
 
 Comprehensive test suite for FLEXT-LDIF domain models including FlextLDIFModels,
-FlextLDIFDistinguishedName, and FlextLDIFAttributes, validating business logic,
+FlextLDIFModels.DistinguishedName, and FlextLDIFModels.Attributes, validating business logic,
 domain rules, and value object behaviors following Clean Architecture patterns.
 
 Test Coverage:
@@ -41,7 +41,12 @@ class TestFlextLDIFModelsEntry:
             "objectClass": ["person"],
         }
 
-        entry = FlextLDIFModels.Entry.model_validate({"dn": dn, "attributes": attributes})
+        entry = FlextLDIFModels.Entry.model_validate(
+            {
+                "dn": dn,
+                "attributes": attributes,
+            }
+        )
 
         if entry.dn != dn:
             msg: str = f"Expected {dn}, got {entry.dn}"
@@ -229,16 +234,12 @@ mail: test@example.com"""
 
     def test_from_ldif_block_empty(self) -> None:
         """Test creating entry from empty LDIF block."""
-        with pytest.raises(
-            FlextLDIFExceptions.ValidationError, match="Entry must have a DN"
-        ):
+        with pytest.raises(FlextLDIFExceptions.ValidationError, match="Missing DN"):
             FlextLDIFModels.Entry.from_ldif_block("")
 
     def test_from_ldif_block_whitespace_only(self) -> None:
         """Test creating entry from whitespace-only LDIF block."""
-        with pytest.raises(
-            FlextLDIFExceptions.ValidationError, match="Entry must have a DN"
-        ):
+        with pytest.raises(FlextLDIFExceptions.ValidationError, match="Missing DN"):
             FlextLDIFModels.Entry.from_ldif_block("   \n   \n   ")
 
     def test_from_ldif_block_no_dn(self) -> None:
@@ -246,9 +247,7 @@ mail: test@example.com"""
         ldif_block = """cn: test
 objectClass: person"""
 
-        with pytest.raises(
-            FlextLDIFExceptions.ValidationError, match="Entry must have a DN"
-        ):
+        with pytest.raises(FlextLDIFExceptions.ValidationError, match="Missing DN"):
             FlextLDIFModels.Entry.from_ldif_block(ldif_block)
 
     def test_from_ldif_block_dn_only(self) -> None:

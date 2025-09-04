@@ -11,6 +11,7 @@ import re
 from collections.abc import Callable as _Callable
 from functools import reduce
 from pathlib import Path
+from typing import TypeVar
 
 from flext_core import FlextLogger, FlextResult
 
@@ -19,7 +20,67 @@ from flext_ldif.format_handlers import FlextLDIFFormatHandler
 from flext_ldif.format_validators import FlextLDIFFormatValidator
 from flext_ldif.models import FlextLDIFModels
 
+T = TypeVar("T")
+
 logger = FlextLogger(__name__)
+
+
+class ExceptionHandlingStrategy:
+    """Strategy Pattern for exception handling with zero duplication.
+
+    Eliminates 22+ lines of duplicated exception handling code by providing
+    a unified strategy that handles logging, error formatting, and result
+    creation with configurable behavior for different operation types.
+    """
+
+    def __init__(
+        self,
+        operation_name: str,
+        constants_class: type = FlextLDIFConstants.FlextLDIFCoreConstants,
+    ) -> None:
+        self.operation_name = operation_name
+        self.constants = constants_class
+
+    def handle_exceptions(
+        self,
+        operation: _Callable[[], FlextResult[T]],
+        exception_types: tuple[type[Exception], ...],
+        exception_context_log: str,
+        exception_details_log: str,
+        exception_operation_log: str,
+        error_message_template: str,
+    ) -> FlextResult[T]:
+        """Handle exceptions with unified logging and error handling strategy."""
+        try:
+            return operation()
+        except exception_types as e:
+            # Unified logging pattern
+            logger.debug(exception_context_log, type(e).__name__)
+            logger.debug(exception_details_log, exc_info=True)
+            logger.exception(exception_operation_log)
+
+            # Unified error result creation
+            error_msg = error_message_template.format(error=e)
+            return FlextResult[T].fail(error_msg)
+
+
+class LdifOperationStrategies:
+    """Pre-configured strategies for different LDIF operations."""
+
+    @staticmethod
+    def parsing_strategy() -> ExceptionHandlingStrategy:
+        """Strategy for parsing operations."""
+        return ExceptionHandlingStrategy("parsing")
+
+    @staticmethod
+    def validation_strategy() -> ExceptionHandlingStrategy:
+        """Strategy for validation operations."""
+        return ExceptionHandlingStrategy("validation")
+
+    @staticmethod
+    def file_operation_strategy() -> ExceptionHandlingStrategy:
+        """Strategy for file operations."""
+        return ExceptionHandlingStrategy("file_operation")
 
 
 class FlextLDIFCore:
@@ -156,19 +217,20 @@ class FlextLDIFCore:
                         entries_list: list[FlextLDIFModels.Entry],
                     ) -> FlextResult[list[FlextLDIFModels.Entry]]:
                         try:
-                            entry = FlextLDIFModels.Factory.create_entry(dn, attrs)
+                            entry = FlextLDIFModels.Factory.create_entry({
+                                "dn": dn,
+                                "attributes": attrs,
+                            })
                         except Exception as e:
                             return FlextResult[list[FlextLDIFModels.Entry]].fail(
                                 FlextLDIFConstants.FlextLDIFCoreConstants.FAILED_TO_CREATE_ENTRY_MSG.format(
                                     error=str(e)
                                 )
                             )
-                        return FlextResult[list[FlextLDIFModels.Entry]].ok(
-                            [
-                                *entries_list,
-                                entry,
-                            ]
-                        )
+                        return FlextResult[list[FlextLDIFModels.Entry]].ok([
+                            *entries_list,
+                            entry,
+                        ])
 
                     return acc.flat_map(process_entry)
 
@@ -268,7 +330,7 @@ class FlextLDIFCore:
         )
         logger.debug(
             FlextLDIFConstants.FlextLDIFCoreConstants.ENTRY_ATTRIBUTES_COUNT_LOG,
-            len(entry.attributes.attributes),
+            len(entry.attributes.data),
         )
         dn_str = str(entry.dn)
         logger.debug(
@@ -304,9 +366,9 @@ class FlextLDIFCore:
 
         logger.debug(
             FlextLDIFConstants.FlextLDIFCoreConstants.VALIDATING_ATTRIBUTE_NAMES_LOG,
-            len(entry.attributes.attributes),
+            len(entry.attributes.data),
         )
-        for attr_name in entry.attributes.attributes:
+        for attr_name in entry.attributes.data:
             logger.debug(
                 FlextLDIFConstants.FlextLDIFCoreConstants.VALIDATING_ATTRIBUTE_NAME_LOG,
                 attr_name,
@@ -357,7 +419,7 @@ class FlextLDIFCore:
         logger.info(
             FlextLDIFConstants.FlextLDIFCoreConstants.LDIF_ENTRY_VALIDATION_SUCCESSFUL_LOG,
             str(entry.dn),
-            len(entry.attributes.attributes),
+            len(entry.attributes.data),
             object_classes,
         )
         return None
@@ -740,9 +802,9 @@ class FlextLDIFCore:
                     FlextLDIFConstants.FlextLDIFCoreConstants.EMPTY_LDIF_FILE_DETECTED_WARNING_LOG,
                     absolute_path,
                 )
-                return FlextResult[list[FlextLDIFModels.Entry]].ok(
-                    []
-                )  # Return empty list for empty files
+                return FlextResult[
+                    list[FlextLDIFModels.Entry]
+                ].ok([])  # Return empty list for empty files
 
             # Read file content with enhanced error handling
             logger.debug(

@@ -156,7 +156,12 @@ class FlextLDIFFormatHandler:
             # Convert tuples to FlextLDIFModels.Entry objects
             entries = []
             for dn, attributes in raw_entries:
-                entry = FlextLDIFModels.Entry(dn=dn, attributes=attributes)
+                # Create proper value objects
+                dn_obj = FlextLDIFModels.DistinguishedName(value=dn)
+                attrs_obj = FlextLDIFModels.LdifAttributes(data=attributes)
+                entry = FlextLDIFModels.Entry(
+                    id=f"entry_{hash(dn)}", dn=dn_obj, attributes=attrs_obj
+                )
                 entries.append(entry)
 
             logger.info(

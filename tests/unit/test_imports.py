@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from flext_ldif import (
     FlextLDIFAPI,
-    FlextLDIFModels,
     FlextLDIFCore,
-    FlextLDIFServices,
     FlextLDIFFormatHandler,
     FlextLDIFFormatValidator,
+    FlextLDIFModels,
+    FlextLDIFServices,
     FlextLDIFUtilities,
     __version__,
 )

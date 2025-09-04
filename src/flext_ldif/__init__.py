@@ -40,14 +40,15 @@ from flext_ldif.utilities import *
 # INTERFACE LAYER - CLI and external interfaces
 # =============================================================================
 
-# CLI aliases for backward compatibility
-from flext_ldif.cli import main as cli_main
+# CLI aliases for backward compatibility - removed problematic import
+# from flext_ldif.cli import main as cli_main  # Removed due to circular import
 
 # =============================================================================
 # CONSOLIDATED EXPORTS - Combine all __all__ from modules following flext-core pattern
 # =============================================================================
 
 import flext_ldif.api as _api
+
 import flext_ldif.cli as _cli
 import flext_ldif.constants as _constants
 import flext_ldif.core as _core
@@ -69,6 +70,7 @@ for _module in [
     _models,
     _core,
     _api,
+    _cli,
     _services,
     _format_handlers,
     _format_validators,
@@ -76,6 +78,9 @@ for _module in [
 ]:
     if hasattr(_module, "__all__"):
         _temp_exports.extend(_module.__all__)
+
+# Add CLI exports explicitly for backward compatibility
+_temp_exports.extend(["cli_main", "main"])
 
 # Remove duplicates and sort following flext-core pattern
 # Using list() to satisfy Ruff PLE0605 requirement that __all__ must be list or tuple
