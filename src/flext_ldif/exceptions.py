@@ -151,6 +151,16 @@ class FlextLDIFExceptions:
         return ExceptionBuilder()
 
     @staticmethod
+    def error(message: str = "LDIF operation failed") -> FlextExceptions.BaseError:
+        """Create generic LDIF error."""
+        return (
+            FlextLDIFExceptions.builder()
+            .message(message)
+            .code(FlextLDIFErrorCodes.LDIF_ERROR)
+            .build()
+        )
+
+    @staticmethod
     def parse_error(
         message: str = "LDIF parsing failed",
         line: int | None = None,
@@ -307,5 +317,50 @@ class FlextLDIFExceptions:
     )
 
 
-# Export only the main class
-__all__ = ["ExceptionBuilder", "FlextLDIFErrorCodes", "FlextLDIFExceptions"]
+# Backward compatibility class aliases for tests - use proper inheritance
+class FlextLDIFError(FlextExceptions.BaseError):
+    """Base LDIF error for backward compatibility."""
+
+
+class FlextLDIFValidationError(FlextLDIFError):
+    """LDIF validation error for backward compatibility."""
+
+
+class FlextLDIFParseError(FlextLDIFError):
+    """LDIF parse error for backward compatibility."""
+
+
+class FlextLDIFAuthenticationError(FlextLDIFError):
+    """LDIF authentication error for backward compatibility."""
+
+
+class FlextLDIFConnectionError(FlextLDIFError):
+    """LDIF connection error for backward compatibility."""
+
+
+class FlextLDIFFileError(FlextLDIFError):
+    """LDIF file error for backward compatibility."""
+
+
+class FlextLDIFProcessingError(FlextLDIFError):
+    """LDIF processing error for backward compatibility."""
+
+
+class FlextLDIFTimeoutError(FlextLDIFError):
+    """LDIF timeout error for backward compatibility."""
+
+
+# Export all classes and compatibility aliases
+__all__ = [
+    "ExceptionBuilder",
+    "FlextLDIFAuthenticationError",
+    "FlextLDIFConnectionError",
+    "FlextLDIFError",
+    "FlextLDIFErrorCodes",
+    "FlextLDIFExceptions",
+    "FlextLDIFFileError",
+    "FlextLDIFParseError",
+    "FlextLDIFProcessingError",
+    "FlextLDIFTimeoutError",
+    "FlextLDIFValidationError",
+]

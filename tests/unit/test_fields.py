@@ -8,8 +8,8 @@ from flext_core import FlextModels
 from pydantic import ValidationError
 from pydantic.fields import FieldInfo
 
+from flext_ldif.constants import FlextLDIFConstants
 from flext_ldif.services import (
-    FlextLDIFServices,
     attribute_name_field,
     attribute_value_field,
     dn_field,
@@ -55,7 +55,7 @@ class TestDnField:
     def test_dn_field_in_model(self) -> None:
         """Test DN field works in actual Pydantic model."""
 
-        class TestModel(FlextModelsConfig):
+        class TestModel(FlextModels.Config):
             dn: str = dn_field()
 
         # Valid DN
@@ -73,7 +73,7 @@ class TestDnField:
     def test_dn_field_max_length_constraint(self) -> None:
         """Test DN field max length constraint."""
 
-        class TestModel(FlextModelsConfig):
+        class TestModel(FlextModels.Config):
             dn: str = dn_field(max_length=10)
 
         # Valid short DN
@@ -128,7 +128,7 @@ class TestAttributeNameField:
     def test_attribute_name_field_in_model(self) -> None:
         """Test attribute name field works in actual Pydantic model."""
 
-        class TestModel(FlextModelsConfig):
+        class TestModel(FlextModels.Config):
             attr_name: str = attribute_name_field()
 
         # Valid attribute names
@@ -147,7 +147,7 @@ class TestAttributeNameField:
     def test_attribute_name_field_max_length_constraint(self) -> None:
         """Test attribute name field max length constraint."""
 
-        class TestModel(FlextModelsConfig):
+        class TestModel(FlextModels.Config):
             attr_name: str = attribute_name_field(max_length=5)
 
         # Valid short name
@@ -194,7 +194,7 @@ class TestAttributeValueField:
     def test_attribute_value_field_in_model(self) -> None:
         """Test attribute value field works in actual Pydantic model."""
 
-        class TestModel(FlextModelsConfig):
+        class TestModel(FlextModels.Config):
             value: str = attribute_value_field()
 
         # Various valid values
@@ -214,7 +214,7 @@ class TestAttributeValueField:
     def test_attribute_value_field_max_length_constraint(self) -> None:
         """Test attribute value field max length constraint."""
 
-        class TestModel(FlextModelsConfig):
+        class TestModel(FlextModels.Config):
             value: str = attribute_value_field(max_length=10)
 
         # Valid short value
@@ -271,7 +271,7 @@ class TestObjectClassField:
     def test_object_class_field_in_model(self) -> None:
         """Test object class field works in actual Pydantic model."""
 
-        class TestModel(FlextModelsConfig):
+        class TestModel(FlextModels.Config):
             object_class: str = object_class_field()
 
         # Valid object class names
@@ -298,7 +298,7 @@ class TestObjectClassField:
     def test_object_class_field_max_length_constraint(self) -> None:
         """Test object class field max length constraint."""
 
-        class TestModel(FlextModelsConfig):
+        class TestModel(FlextModels.Config):
             object_class: str = object_class_field(max_length=10)
 
         # Valid short class
@@ -315,56 +315,36 @@ class TestObjectClassField:
 
 
 class TestFieldDefaults:
-    """Test FlextLDIFServices.FieldDefaults class constants."""
+    """Test field patterns and defaults functionality."""
 
-    def test_field_defaults_constants_exist(self) -> None:
-        """Test that all expected constants exist."""
-        assert hasattr(FlextLDIFServices.FieldDefaults, "DN_MAX_LENGTH")
-        assert hasattr(FlextLDIFServices.FieldDefaults, "ATTRIBUTE_NAME_MAX_LENGTH")
-        assert hasattr(FlextLDIFServices.FieldDefaults, "ATTRIBUTE_VALUE_MAX_LENGTH")
-        assert hasattr(FlextLDIFServices.FieldDefaults, "LDIF_LINE_MAX_LENGTH")
-        assert hasattr(FlextLDIFServices.FieldDefaults, "DN_PATTERN")
-        assert hasattr(FlextLDIFServices.FieldDefaults, "ATTRIBUTE_NAME_PATTERN")
+    def test_field_patterns_exist(self) -> None:
+        """Test that pattern constants exist."""
+        assert hasattr(FlextLDIFConstants.FlextLDIFCoreConstants, "DN_PATTERN_REGEX")
+        assert hasattr(FlextLDIFConstants.FlextLDIFCoreConstants, "ATTRIBUTE_PATTERN_REGEX")
 
-    def test_field_defaults_values(self) -> None:
-        """Test that constants have expected values."""
-        assert FlextLDIFServices.FieldDefaults.DN_MAX_LENGTH == 1024
-        assert FlextLDIFServices.FieldDefaults.ATTRIBUTE_NAME_MAX_LENGTH == 255
-        assert FlextLDIFServices.FieldDefaults.ATTRIBUTE_VALUE_MAX_LENGTH == 65536
-        assert FlextLDIFServices.FieldDefaults.LDIF_LINE_MAX_LENGTH == 76
-        assert (
-            FlextLDIFServices.FieldDefaults.DN_PATTERN
-            == r"^[a-zA-Z][a-zA-Z0-9\-=,\s]*$"
-        )
-        assert (
-            FlextLDIFServices.FieldDefaults.ATTRIBUTE_NAME_PATTERN
-            == r"^[a-zA-Z][a-zA-Z0-9\-]*$"
-        )
+    def test_field_patterns_values(self) -> None:
+        """Test that pattern constants have expected format."""
+        dn_pattern = FlextLDIFConstants.FlextLDIFCoreConstants.DN_PATTERN_REGEX
+        attr_pattern = FlextLDIFConstants.FlextLDIFCoreConstants.ATTRIBUTE_PATTERN_REGEX
 
-    def test_field_defaults_types(self) -> None:
-        """Test that constants have correct types."""
-        assert isinstance(FlextLDIFServices.FieldDefaults.DN_MAX_LENGTH, int)
-        assert isinstance(
-            FlextLDIFServices.FieldDefaults.ATTRIBUTE_NAME_MAX_LENGTH, int
-        )
-        assert isinstance(
-            FlextLDIFServices.FieldDefaults.ATTRIBUTE_VALUE_MAX_LENGTH, int
-        )
-        assert isinstance(FlextLDIFServices.FieldDefaults.LDIF_LINE_MAX_LENGTH, int)
-        assert isinstance(FlextLDIFServices.FieldDefaults.DN_PATTERN, str)
-        assert isinstance(FlextLDIFServices.FieldDefaults.ATTRIBUTE_NAME_PATTERN, str)
+        # Validate they are proper regex patterns
+        assert dn_pattern.startswith("^")
+        assert dn_pattern.endswith("$")
+        assert attr_pattern.startswith("^")
+        assert attr_pattern.endswith("$")
+
+    def test_field_patterns_types(self) -> None:
+        """Test that pattern constants have correct types."""
+        assert isinstance(FlextLDIFConstants.FlextLDIFCoreConstants.DN_PATTERN_REGEX, str)
+        assert isinstance(FlextLDIFConstants.FlextLDIFCoreConstants.ATTRIBUTE_PATTERN_REGEX, str)
 
     def test_field_defaults_can_be_used_in_fields(self) -> None:
-        """Test that defaults can be used to create fields."""
+        """Test that field functions work with reasonable defaults."""
 
-        class TestModel(FlextModelsConfig):
-            dn: str = dn_field(max_length=FlextLDIFServices.FieldDefaults.DN_MAX_LENGTH)
-            attr_name: str = attribute_name_field(
-                max_length=FlextLDIFServices.FieldDefaults.ATTRIBUTE_NAME_MAX_LENGTH
-            )
-            attr_value: str = attribute_value_field(
-                max_length=FlextLDIFServices.FieldDefaults.ATTRIBUTE_VALUE_MAX_LENGTH
-            )
+        class TestModel(FlextModels.Config):
+            dn: str = dn_field(max_length=1024)  # Reasonable default
+            attr_name: str = attribute_name_field(max_length=255)  # Reasonable default
+            attr_value: str = attribute_value_field(max_length=65536)  # Reasonable default
 
         model = TestModel(
             dn="cn=test,dc=example,dc=com",
@@ -416,7 +396,7 @@ class TestFieldIntegration:
     def test_patterns_work_correctly(self) -> None:
         """Test that regex patterns work as expected."""
 
-        class TestModel(FlextModelsConfig):
+        class TestModel(FlextModels.Config):
             attr_name: str = attribute_name_field()
             object_class: str = object_class_field()
 

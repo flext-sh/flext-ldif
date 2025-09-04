@@ -42,7 +42,7 @@ telephoneNumber: +1-555-123-4567
         assert len(entries) == 1
         entry = entries[0]
 
-        assert entry.dn == "cn=John Doe,ou=people,dc=example,dc=com"
+        assert entry.dn.value == "cn=John Doe,ou=people,dc=example,dc=com"
         object_classes = entry.get_attribute("objectClass") or []
         assert "person" in object_classes
         assert "organizationalPerson" in object_classes
@@ -73,13 +73,13 @@ sn: Regular
 
         # Check first entry
         admin = entries[0]
-        assert admin.dn == "cn=Admin,ou=people,dc=example,dc=com"
+        assert admin.dn.value == "cn=Admin,ou=people,dc=example,dc=com"
         assert admin.get_attribute("cn") == ["Admin"]
         assert admin.get_attribute("sn") == ["Administrator"]
 
         # Check second entry
         user = entries[1]
-        assert user.dn == "cn=User,ou=people,dc=example,dc=com"
+        assert user.dn.value == "cn=User,ou=people,dc=example,dc=com"
         assert user.get_attribute("cn") == ["User"]
         assert user.get_attribute("sn") == ["Regular"]
 
@@ -100,7 +100,7 @@ member: cn=Jane Smith,ou=people,dc=example,dc=com
         assert len(entries) == 1
         group = entries[0]
 
-        assert group.dn == "cn=developers,ou=groups,dc=example,dc=com"
+        assert group.dn.value == "cn=developers,ou=groups,dc=example,dc=com"
         assert group.get_attribute("objectClass") == ["groupOfNames"]
         assert group.get_attribute("cn") == ["developers"]
         assert group.get_attribute("description") == ["Development Team"]
@@ -125,7 +125,7 @@ description: All users in the organization
         assert len(entries) == 1
         ou = entries[0]
 
-        assert ou.dn == "ou=people,dc=example,dc=com"
+        assert ou.dn.value == "ou=people,dc=example,dc=com"
         assert ou.get_attribute("objectClass") == ["organizationalUnit"]
         assert ou.get_attribute("ou") == ["people"]
         assert ou.get_attribute("description") == ["All users in the organization"]
@@ -177,7 +177,7 @@ sn: Test
             FlextLDIFFormatHandler.parse_ldif(written_ldif)
         )
         assert len(reparsed_entries) == 1
-        assert reparsed_entries[0].dn == entries[0].dn
+        assert reparsed_entries[0].dn.value == entries[0].dn.value
 
     def test_api_class_directly(self) -> None:
         """Test using FlextLDIFAPI class directly."""
@@ -328,7 +328,7 @@ telephoneNumber: +1-555-999-8888
         assert len(entries1) == len(entries2) == 1
 
         # Should have same DN
-        assert entries1[0].dn == entries2[0].dn
+        assert entries1[0].dn.value == entries2[0].dn.value
 
         # Should have same core attributes
         entry1 = entries1[0]

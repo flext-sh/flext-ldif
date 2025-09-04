@@ -78,13 +78,20 @@ class TestValidators:
     @staticmethod
     def validate_result_success(result: FlextResult[object]) -> dict[str, object]:
         """Validate FlextResult success characteristics."""
+        has_value = False
+        value_type_name = None
+        if result.is_success:
+            try:
+                has_value = result.value is not None
+                value_type_name = type(result.value).__name__
+            except (AttributeError, TypeError):
+                pass
+
         return {
             "is_success": result.is_success,
-            "has_value": hasattr(result, "value") and result.value is not None,
+            "has_value": has_value,
             "no_error": result.error is None,
-            "value_type": type(result.value).__name__
-            if hasattr(result, "value")
-            else None,
+            "value_type": value_type_name,
         }
 
     @staticmethod
@@ -107,8 +114,8 @@ class TestValidators:
         entry_count = 0
         current_dn = None
 
-        for line in lines:
-            line = line.strip()
+        for raw_line in lines:
+            line = raw_line.strip()
             if not line:  # Empty line separates entries
                 if current_dn:
                     entry_count += 1

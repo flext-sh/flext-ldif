@@ -84,9 +84,7 @@ class TestFlextLDIFModelsEntryReal:
                 "sn": ["User"],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(
-            entry_data["dn"], entry_data["attributes"]
-        )
+        entry = FlextLDIFModels.Factory.create_entry(entry_data)
 
         # Verify entry properties
         assert entry.dn is not None
@@ -114,9 +112,7 @@ class TestFlextLDIFModelsEntryReal:
                 "telephoneNumber": ["+1-555-0123", "+1-555-0124", "+1-555-0125"],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(
-            entry_data["dn"], entry_data["attributes"]
-        )
+        entry = FlextLDIFModels.Factory.create_entry(entry_data)
 
         # Verify multi-valued attributes
         mail_values = entry.get_attribute("mail")
@@ -146,9 +142,7 @@ class TestFlextLDIFModelsEntryReal:
                 "jpegPhoto": ["/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQ=="],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(
-            entry_data["dn"], entry_data["attributes"]
-        )
+        entry = FlextLDIFModels.Factory.create_entry(entry_data)
 
         # Verify binary attribute
         jpeg_photo = entry.get_attribute("jpegPhoto")
@@ -174,9 +168,7 @@ class TestFlextLDIFModelsEntryReal:
                 "description": ["Contains special characters: áéíóú ÁÉÍÓÚ ñÑ çÇ"],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(
-            entry_data["dn"], entry_data["attributes"]
-        )
+        entry = FlextLDIFModels.Factory.create_entry(entry_data)
 
         # Verify special characters are preserved
         cn_values = entry.get_attribute("cn")
@@ -199,9 +191,7 @@ class TestFlextLDIFModelsEntryReal:
                 "description": ["Original description"],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(
-            entry_data["dn"], entry_data["attributes"]
-        )
+        entry = FlextLDIFModels.Factory.create_entry(entry_data)
 
         # Test getting attributes
         uid_values = entry.get_attribute("uid")
@@ -227,9 +217,7 @@ class TestFlextLDIFModelsEntryReal:
                 "sn": ["User"],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(
-            entry_data["dn"], entry_data["attributes"]
-        )
+        entry = FlextLDIFModels.Factory.create_entry(entry_data)
 
         # Test DN string representation
         dn_str = str(entry.dn)
@@ -255,9 +243,7 @@ class TestFlextLDIFModelsEntryReal:
                 "mail": ["valid.user@example.com"],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(
-            entry_data["dn"], entry_data["attributes"]
-        )
+        entry = FlextLDIFModels.Factory.create_entry(entry_data)
 
         # Should be able to validate business rules (if implemented)
         try:
@@ -282,9 +268,7 @@ class TestFlextLDIFModelsEntryReal:
                 "sn": ["User"],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(
-            entry_data["dn"], entry_data["attributes"]
-        )
+        entry = FlextLDIFModels.Factory.create_entry(entry_data)
 
         # Should be able to convert to dict
         entry_dict = entry.model_dump()
@@ -364,7 +348,7 @@ class TestFlextLDIFDistinguishedNameReal:
 
 
 class TestFlextLDIFAttributesReal:
-    """Test FlextLDIFModels.Attributes with real functionality."""
+    """Test FlextLDIFModels.LdifAttributes with real functionality."""
 
     def test_attributes_creation_basic(self) -> None:
         """Test basic attributes creation."""
@@ -374,11 +358,11 @@ class TestFlextLDIFAttributesReal:
             "cn": ["Test User"],
             "sn": ["User"],
         }
-        attrs = FlextLDIFModels.Attributes(data=attrs_data)
+        attrs = FlextLDIFModels.LdifAttributes(data=attrs_data)
 
-        # Verify attributes (keys normalized to lowercase)
+        # Verify attributes (keys preserved as-is)
         assert len(attrs.data) == 4
-        assert "objectclass" in attrs.data  # Normalized to lowercase
+        assert "objectClass" in attrs.data  # Original case preserved
         assert "uid" in attrs.data
         assert attrs.data["uid"] == ["test.user"]
 
@@ -389,13 +373,13 @@ class TestFlextLDIFAttributesReal:
             "mail": ["user@example.com", "user.alt@example.com"],
             "telephoneNumber": ["+1-555-0123", "+1-555-0124"],
         }
-        attrs = FlextLDIFModels.Attributes(data=attrs_data)
+        attrs = FlextLDIFModels.LdifAttributes(data=attrs_data)
 
-        # Verify multi-valued attributes (keys normalized to lowercase)
+        # Verify multi-valued attributes (keys preserved as-is)
         assert len(attrs.data["mail"]) == 2
-        assert len(attrs.data["telephonenumber"]) == 2  # Normalized to lowercase
+        assert len(attrs.data["telephoneNumber"]) == 2  # Original case preserved
         assert "user@example.com" in attrs.data["mail"]
-        assert "+1-555-0123" in attrs.data["telephonenumber"]
+        assert "+1-555-0123" in attrs.data["telephoneNumber"]
 
     def test_attributes_operations(self) -> None:
         """Test attributes operations."""
@@ -404,7 +388,7 @@ class TestFlextLDIFAttributesReal:
             "uid": ["ops.user"],
             "cn": ["Operations User"],
         }
-        attrs = FlextLDIFModels.Attributes(data=attrs_data)
+        attrs = FlextLDIFModels.LdifAttributes(data=attrs_data)
 
         # Test getting values through data field
         uid_values = attrs.data.get("uid")
@@ -426,11 +410,11 @@ class TestFlextLDIFAttributesReal:
             "cn": ["Iteration User"],
             "sn": ["User"],
         }
-        attrs = FlextLDIFModels.Attributes(data=attrs_data)
+        attrs = FlextLDIFModels.LdifAttributes(data=attrs_data)
 
-        # Test iteration over keys (note: keys are normalized to lowercase)
+        # Test iteration over keys (keys preserved as-is)
         keys = list(attrs.data.keys())
-        assert "objectclass" in keys  # Normalized to lowercase
+        assert "objectClass" in keys  # Original case preserved
         assert "uid" in keys
         assert len(keys) == 4
 
@@ -466,9 +450,7 @@ class TestModelIntegrationReal:
                 "description": ["User for testing model integration"],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(
-            entry_data["dn"], entry_data["attributes"]
-        )
+        entry = FlextLDIFModels.Factory.create_entry(entry_data)
 
         # Verify all components work together
         assert entry.dn is not None

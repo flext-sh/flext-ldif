@@ -9,15 +9,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Generator
 from functools import lru_cache
-from typing import override
+from typing import ClassVar, override
 
 from flext_core import (
     FlextModels,
     FlextResult,
     FlextValidations,
 )
-from pydantic import Field, field_validator, model_validator
+from pydantic import ConfigDict, Field, field_validator, model_validator
 
 from flext_ldif.constants import FlextLDIFConstants
 from flext_ldif.exceptions import FlextLDIFExceptions
@@ -59,7 +60,7 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
                 raise FlextLDIFExceptions.validation_error(msg, dn=v)
 
             # Basic DN format validation
-            dn_pattern = r"^[^=]+=[^=]+(,[^=]+=[^=]+)*$"
+            dn_pattern = FlextLDIFConstants.FlextLDIFCoreConstants.DN_PATTERN_REGEX
             pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
                 v.strip(), dn_pattern, "DN format"
             )
@@ -137,6 +138,39 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             values = self.get_attribute(name)
             return values[0] if values else None
 
+        def __getitem__(self, key: str) -> list[str]:
+            """Allow dict-like access to attributes."""
+            result = self.get_attribute(key)
+            if result is None:
+                msg = f"Attribute '{key}' not found"
+                raise KeyError(msg)
+            return result
+
+        def __contains__(self, key: str) -> bool:
+            """Allow 'in' operator for attributes."""
+            return self.has_attribute(key)
+
+        def __iter__(self) -> Generator[tuple[str, list[str]]]:
+            """Allow iteration over attribute name-value pairs (BaseModel compatibility)."""
+            for key in self.data:
+                yield (key, self.data[key])
+
+        def __len__(self) -> int:
+            """Return number of attributes."""
+            return len(self.data)
+
+        def keys(self) -> object:
+            """Return attribute names."""
+            return self.data.keys()
+
+        def values(self) -> object:
+            """Return attribute values."""
+            return self.data.values()
+
+        def items(self) -> object:
+            """Return attribute name-value pairs."""
+            return self.data.items()
+
         def get_object_classes(self) -> list[str]:
             """Get objectClass values."""
             return self.get_attribute("objectClass") or []
@@ -200,8 +234,10 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
     # ENTITIES - Using FlextModels.Entity for mutable domain objects
     # =============================================================================
 
-    class Entry(FlextModels.Entity):
-        """LDIF entry entity using FlextModels.Entity base."""
+    class Entry(FlextModels.Value):
+        """LDIF entry value object using FlextModels.Value base."""
+
+        model_config: ClassVar[ConfigDict] = ConfigDict(extra="allow")  # LDIF entries can have dynamic attributes
 
         dn: FlextLDIFModels.DistinguishedName = Field(
             ..., description="Distinguished Name"
@@ -319,7 +355,6 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
                 attributes_data[attr_name].append(attr_value)
 
             return cls(
-                id=f"entry_{hash(dn_value)}",  # Required by FlextModels.Entity
                 dn=FlextLDIFModels.DistinguishedName(value=dn_value),
                 attributes=FlextLDIFModels.LdifAttributes(data=attributes_data),
             )
@@ -355,6 +390,26 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
         def is_group_entry(self) -> bool:
             """Alias for is_group() for compatibility."""
             return self.is_group()
+
+        def to_json(self) -> str:
+            """Convert entry to JSON string."""
+            return self.model_dump_json()
+
+        def is_add_operation(self) -> bool:
+            """Check if this is an add operation (LDIF default when no changetype)."""
+            # In LDIF, if no changetype is specified, it's an add operation
+            changetype = self.get_single_attribute("changetype")
+            return changetype is None or changetype.lower() == "add"
+
+        def is_modify_operation(self) -> bool:
+            """Check if this is a modify operation."""
+            changetype = self.get_single_attribute("changetype")
+            return changetype is not None and changetype.lower() == "modify"
+
+        def is_delete_operation(self) -> bool:
+            """Check if this is a delete operation."""
+            changetype = self.get_single_attribute("changetype")
+            return changetype is not None and changetype.lower() == "delete"
 
     # =============================================================================
     # CONFIGURATION - Using FlextModels.Config correctly
@@ -459,9 +514,8 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             else:
                 attrs_obj = FlextLDIFModels.LdifAttributes(data={})
 
-            # Create entity with required ID
-            entry_id = f"entry_{hash(str(dn_obj))}"
-            return FlextLDIFModels.Entry(id=entry_id, dn=dn_obj, attributes=attrs_obj)
+            # Create entry with dn and attributes
+            return FlextLDIFModels.Entry(dn=dn_obj, attributes=attrs_obj)
 
         @staticmethod
         def create_config(**kwargs: object) -> FlextLDIFModels.Config:

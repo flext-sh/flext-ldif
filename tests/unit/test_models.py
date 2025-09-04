@@ -1,7 +1,7 @@
 """FLEXT-LDIF Domain Models Test Suite.
 
 Comprehensive test suite for FLEXT-LDIF domain models including FlextLDIFModels,
-FlextLDIFModels.DistinguishedName, and FlextLDIFModels.Attributes, validating business logic,
+FlextLDIFModels.DistinguishedName, and FlextLDIFModels.LdifAttributes, validating business logic,
 domain rules, and value object behaviors following Clean Architecture patterns.
 
 Test Coverage:
@@ -24,10 +24,10 @@ License: MIT
 from __future__ import annotations
 
 import pytest
+from flext_core import FlextExceptions
 
 # Use proper import from root level
 from flext_ldif import FlextLDIFModels
-from flext_ldif.exceptions import FlextLDIFExceptions
 
 
 class TestFlextLDIFModelsEntry:
@@ -48,20 +48,20 @@ class TestFlextLDIFModelsEntry:
             }
         )
 
-        if entry.dn != dn:
-            msg: str = f"Expected {dn}, got {entry.dn}"
+        if entry.dn.value != dn:
+            msg: str = f"Expected {dn}, got {entry.dn.value}"
             raise AssertionError(msg)
-        assert entry.attributes.attributes == attributes
+        assert entry.attributes.data == attributes
 
     def test_ldif_entry_default_attributes(self) -> None:
         """Test LDIF entry creation with default attributes."""
         dn = "cn=test,dc=example,dc=com"
         entry = FlextLDIFModels.Entry.model_validate({"dn": dn})
 
-        if entry.dn != dn:
-            msg: str = f"Expected {dn}, got {entry.dn}"
+        if entry.dn.value != dn:
+            msg: str = f"Expected {dn}, got {entry.dn.value}"
             raise AssertionError(msg)
-        assert entry.attributes.attributes == {}
+        assert entry.attributes.data == {}
 
     def test_get_attribute_exists(self) -> None:
         """Test getting an existing attribute."""
@@ -219,8 +219,8 @@ mail: test@example.com"""
         entry = FlextLDIFModels.Entry.from_ldif_block(ldif_block)
 
         # SOLID fix: use correct DN value property instead of object comparison
-        if entry.dn != "cn=test,dc=example,dc=com":
-            msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn}"
+        if entry.dn.value != "cn=test,dc=example,dc=com":
+            msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn.value}"
             raise AssertionError(
                 msg,
             )
@@ -234,12 +234,12 @@ mail: test@example.com"""
 
     def test_from_ldif_block_empty(self) -> None:
         """Test creating entry from empty LDIF block."""
-        with pytest.raises(FlextLDIFExceptions.ValidationError, match="Missing DN"):
+        with pytest.raises(FlextExceptions.BaseError, match="Missing DN"):
             FlextLDIFModels.Entry.from_ldif_block("")
 
     def test_from_ldif_block_whitespace_only(self) -> None:
         """Test creating entry from whitespace-only LDIF block."""
-        with pytest.raises(FlextLDIFExceptions.ValidationError, match="Missing DN"):
+        with pytest.raises(FlextExceptions.BaseError, match="Missing DN"):
             FlextLDIFModels.Entry.from_ldif_block("   \n   \n   ")
 
     def test_from_ldif_block_no_dn(self) -> None:
@@ -247,7 +247,7 @@ mail: test@example.com"""
         ldif_block = """cn: test
 objectClass: person"""
 
-        with pytest.raises(FlextLDIFExceptions.ValidationError, match="Missing DN"):
+        with pytest.raises(FlextExceptions.BaseError, match="Missing DN"):
             FlextLDIFModels.Entry.from_ldif_block(ldif_block)
 
     def test_from_ldif_block_dn_only(self) -> None:
@@ -261,7 +261,7 @@ objectClass: person"""
             raise AssertionError(
                 msg,
             )
-        assert entry.attributes.attributes == {}
+        assert entry.attributes.data == {}
 
     def test_from_ldif_block_with_whitespace(self) -> None:
         """Test creating entry from LDIF block with extra whitespace."""

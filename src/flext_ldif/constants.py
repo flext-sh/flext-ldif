@@ -54,8 +54,15 @@ class FlextLDIFConstants:
     class FlextLDIFCoreConstants:
         """Core LDIF processing constants."""
 
+        # Encoding constants
+        DEFAULT_ENCODING: ClassVar[str] = "utf-8"
+
+        # File operation modes
+        FILE_READ_MODE: ClassVar[str] = "r"
+        FILE_WRITE_MODE: ClassVar[str] = "w"
+
         # Regex patterns
-        DN_PATTERN_REGEX: ClassVar[str] = r"^[a-zA-Z][\w-]*=.+(?:,[a-zA-Z][\w-]*=.+)*$"
+        DN_PATTERN_REGEX: ClassVar[str] = r"^[a-zA-Z][\w-]*=.+(?:[,+][a-zA-Z][\w-]*=.+)*$"
         ATTRIBUTE_PATTERN_REGEX: ClassVar[str] = r"^[a-zA-Z][\w-]*$"
         ATTR_NAME_PATTERN_REGEX: ClassVar[str] = r"^[a-zA-Z][\w-]*$"
 
@@ -216,7 +223,6 @@ class FlextLDIFConstants:
         WRITING_CONTENT_TO_FILE_LOG: ClassVar[str] = (
             "Writing content to file with encoding: %s"
         )
-        FILE_WRITE_MODE: ClassVar[str] = "w"
         CONTENT_GENERATION_FAILED_FOR_ENTRIES_MSG: ClassVar[str] = (
             "Content generation failed for {entries_count} entries: {error}"
         )
@@ -257,7 +263,6 @@ class FlextLDIFConstants:
         READING_FILE_CONTENT_ENCODING_LOG: ClassVar[str] = (
             "Reading file with encoding: %s"
         )
-        FILE_READ_MODE: ClassVar[str] = "r"
         ENCODING_ERROR_READING_FILE_MSG: ClassVar[str] = (
             "Encoding error reading file (encoding: {encoding}): {error}"
         )

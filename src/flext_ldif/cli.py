@@ -320,7 +320,7 @@ class FlextLDIFCli(FlextCliService):
         self.validation_template = ValidationProcessingTemplate(self.formatter)
         self.write_template = WriteProcessingTemplate(self.api, self.formatter)
 
-    def execute(self) -> FlextResult[str]:  # type: ignore[override]
+    def execute(self) -> FlextResult[str]:
         """Abstract method implementation required by FlextCliService."""
         return FlextResult[str].ok("CLI ready")
 
@@ -399,7 +399,7 @@ def main() -> None:
             input_file = Path(sys.argv[2])
             result = cli.parse_and_process(input_file)
             if result.is_success:
-                pass
+                sys.exit(0)
             else:
                 sys.exit(1)
 
@@ -409,7 +409,7 @@ def main() -> None:
             input_file = Path(sys.argv[2])
             result = cli.parse_and_process(input_file, validate=True)
             if result.is_success:
-                pass
+                sys.exit(0)
             else:
                 sys.exit(1)
 

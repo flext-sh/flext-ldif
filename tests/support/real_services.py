@@ -52,7 +52,7 @@ class RealServiceFactory:
         return FlextLDIFServices.ParserService(config=ldif_config)
 
     @staticmethod
-    def create_validator(config: dict[str, object] | None = None):
+    def create_validator(config: dict[str, object] | None = None) -> object:
         """Create a real validator service."""
         if config is None:
             config = {}
@@ -67,7 +67,7 @@ class RealServiceFactory:
         return FlextLDIFServices.ValidatorService(config=ldif_config)
 
     @staticmethod
-    def create_writer(config: dict[str, object] | None = None):
+    def create_writer(config: dict[str, object] | None = None) -> object:
         """Create a real writer service."""
         if config is None:
             config = {}
