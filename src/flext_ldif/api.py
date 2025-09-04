@@ -8,8 +8,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, get_flext_container
 
 from flext_ldif.constants import FlextLDIFConstants
 from flext_ldif.models import FlextLDIFModels
@@ -22,18 +23,59 @@ class FlextLDIFAPI:
     """LDIF processing API."""
 
     def __init__(self, config: FlextLDIFModels.Config | None = None) -> None:
-        """Initialize API with configuration.
+        """Initialize API with FlextContainer dependency injection.
 
         Args:
             config: Optional configuration object.
 
         """
         self.config = config or FlextLDIFModels.Config()
-        self._parser_service = FlextLDIFServices.ParserService()
-        self._validator_service = FlextLDIFServices.ValidatorService()
-        self._writer_service = FlextLDIFServices.WriterService()
-        self._repository_service = FlextLDIFServices.RepositoryService()
-        self._analytics_service = FlextLDIFServices.AnalyticsService()
+        self._container = get_flext_container()
+
+        # Register services in container for dependency injection
+        self._container.register("ldif_config", self.config)
+        self._container.register("ldif_parser", FlextLDIFServices.ParserService())
+        self._container.register("ldif_validator", FlextLDIFServices.ValidatorService())
+        self._container.register("ldif_writer", FlextLDIFServices.WriterService())
+        self._container.register(
+            "ldif_repository", FlextLDIFServices.RepositoryService()
+        )
+        self._container.register("ldif_analytics", FlextLDIFServices.AnalyticsService())
+
+        # Get services from container (enables dependency injection)
+        parser_result = self._container.get("ldif_parser")
+        validator_result = self._container.get("ldif_validator")
+        writer_result = self._container.get("ldif_writer")
+        repository_result = self._container.get("ldif_repository")
+        analytics_result = self._container.get("ldif_analytics")
+
+        # Extract values from FlextResult if needed and cast to proper types
+        self._parser_service = cast(
+            "FlextLDIFServices.ParserService",
+            parser_result.value if hasattr(parser_result, "value") else parser_result,
+        )
+        self._validator_service = cast(
+            "FlextLDIFServices.ValidatorService",
+            validator_result.value
+            if hasattr(validator_result, "value")
+            else validator_result,
+        )
+        self._writer_service = cast(
+            "FlextLDIFServices.WriterService",
+            writer_result.value if hasattr(writer_result, "value") else writer_result,
+        )
+        self._repository_service = cast(
+            "FlextLDIFServices.RepositoryService",
+            repository_result.value
+            if hasattr(repository_result, "value")
+            else repository_result,
+        )
+        self._analytics_service = cast(
+            "FlextLDIFServices.AnalyticsService",
+            analytics_result.value
+            if hasattr(analytics_result, "value")
+            else analytics_result,
+        )
 
     def parse(self, content: str) -> FlextResult[list[FlextLDIFModels.Entry]]:
         """Parse LDIF content using railway-oriented programming."""

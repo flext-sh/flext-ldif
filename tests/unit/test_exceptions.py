@@ -150,7 +150,9 @@ class TestFlextLDIFExceptions:
         assert "File error" in str(file_error)
 
         # Test entry validation error
-        entry_validation_error = FlextLDIFModels.EntryValidationError("Entry validation error")
+        entry_validation_error = FlextLDIFModels.EntryValidationError(
+            "Entry validation error"
+        )
         assert isinstance(entry_validation_error, FlextLDIFModels.EntryError)
         assert isinstance(entry_validation_error, FlextLDIFValidationError)
         assert "Entry validation error" in str(entry_validation_error)
