@@ -159,9 +159,7 @@ class FlextLDIFFormatHandler:
                 # Create proper value objects
                 dn_obj = FlextLDIFModels.DistinguishedName(value=dn)
                 attrs_obj = FlextLDIFModels.LdifAttributes(data=attributes)
-                entry = FlextLDIFModels.Entry(
-                    id=f"entry_{hash(dn)}", dn=dn_obj, attributes=attrs_obj
-                )
+                entry = FlextLDIFModels.Entry(dn=dn_obj, attributes=attrs_obj)
                 entries.append(entry)
 
             logger.info(

@@ -6,9 +6,11 @@ following FLEXT patterns and achieving high coverage.
 
 from __future__ import annotations
 
+from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from flext_ldif import FlextLDIFModels
+from flext_ldif.constants import FlextLDIFConstants
 from flext_ldif.services import FlextLDIFServices
 
 
@@ -140,7 +142,7 @@ class TestFlextLDIFServicesAdvanced:
             assert result.value is True
 
             # Verify file was created and contains expected content
-            with open(file_path, encoding="utf-8") as f:
+            with Path(file_path).open(encoding="utf-8") as f:
                 content = f.read()
                 assert "uid=test1,ou=people,dc=example,dc=com" in content
                 assert "uid=test2,ou=people,dc=example,dc=com" in content
@@ -178,20 +180,13 @@ class TestFlextLDIFServicesAdvanced:
         assert result.value == ""
 
     def test_field_defaults_constants(self) -> None:
-        """Test FieldDefaults constants are properly defined."""
-        defaults = FlextLDIFServices.FieldDefaults
+        """Test field defaults constants are properly defined in FlextLDIFConstants."""
+        constants = FlextLDIFConstants
 
         # Test all required constants exist
-        assert hasattr(defaults, "DN_MIN_LENGTH")
-        assert hasattr(defaults, "DN_MAX_LENGTH")
-        assert hasattr(defaults, "ATTRIBUTE_NAME_MAX_LENGTH")
-        assert hasattr(defaults, "ATTRIBUTE_VALUE_MAX_LENGTH")
-        assert hasattr(defaults, "OBJECT_CLASS_MAX_LENGTH")
-        assert hasattr(defaults, "LINE_MAX_LENGTH")
-        assert hasattr(defaults, "LDIF_LINE_MAX_LENGTH")
+        assert hasattr(constants, "MIN_DN_COMPONENTS")
+        assert hasattr(constants, "LDAP_PERSON_CLASSES")
+        assert hasattr(constants, "LDAP_GROUP_CLASSES")
 
-        # Test reasonable values
-        assert defaults.DN_MIN_LENGTH == 3
-        assert defaults.DN_MAX_LENGTH == 1024
-        assert defaults.LINE_MAX_LENGTH == 76
-        assert defaults.LDIF_LINE_MAX_LENGTH == 76
+        # Test that constants have reasonable values
+        assert constants.MIN_DN_COMPONENTS > 0

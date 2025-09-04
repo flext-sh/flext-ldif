@@ -6,12 +6,20 @@ from flext_ldif import (
     FlextLDIFAPI,
     FlextLDIFCore,
     FlextLDIFFormatHandler,
-    FlextLDIFFormatValidator,
+    FlextLDIFFormatValidators,
     FlextLDIFModels,
     FlextLDIFServices,
     FlextLDIFUtilities,
     __version__,
 )
+
+# CLI availability flag for testing
+CLI_AVAILABLE = False
+try:
+    from flext_ldif.cli import main as cli_main
+    CLI_AVAILABLE = True
+except ImportError:
+    pass
 
 
 class TestModuleImports:
@@ -23,7 +31,7 @@ class TestModuleImports:
         assert FlextLDIFModels.Config is not None
         assert FlextLDIFModels.Entry is not None
         assert FlextLDIFModels.DistinguishedName is not None
-        assert FlextLDIFModels.Attributes is not None
+        assert FlextLDIFModels.LdifAttributes is not None
         assert FlextLDIFModels.Factory is not None
 
     def test_service_imports(self) -> None:
@@ -40,18 +48,15 @@ class TestModuleImports:
         """Test class-based interface imports."""
         assert FlextLDIFCore is not None
         assert FlextLDIFFormatHandler is not None
-        assert FlextLDIFFormatValidator is not None
+        assert FlextLDIFFormatValidators is not None
         assert FlextLDIFUtilities is not None
 
     def test_cli_import(self) -> None:
         """Test CLI import functionality."""
         # Test that CLI import works and function is callable
-        # Disabled due to flext-cli issues
-        try:
-            from flext_ldif.cli import main
-
-            assert callable(main)
-        except ImportError:
+        if CLI_AVAILABLE:
+            assert callable(cli_main)
+        else:
             # If import fails, it means dependencies are missing, which is acceptable in test environment
             pass
 
@@ -71,7 +76,7 @@ class TestModuleImports:
         # Test that class methods exist and are callable
         assert callable(FlextLDIFFormatHandler.parse_ldif)
         assert callable(FlextLDIFFormatHandler.write_ldif)
-        assert callable(FlextLDIFFormatValidator.get_ldap_validators)
+        assert callable(FlextLDIFFormatValidators.get_ldap_validators)
         assert callable(
             FlextLDIFUtilities.LdifDomainProcessors.validate_entries_or_warn
         )

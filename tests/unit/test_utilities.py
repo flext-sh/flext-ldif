@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import inspect
+
 import pytest
 
 from flext_ldif import FlextLDIFAPI, FlextLDIFModels
@@ -67,7 +69,7 @@ def invalid_entries() -> list[FlextLDIFModels.Entry]:
         dn=FlextLDIFModels.DistinguishedName(
             value="cn=NoObjectClass,dc=example,dc=com"
         ),
-        attributes=FlextLDIFModels.Attributes(
+        attributes=FlextLDIFModels.LdifAttributes(
             data={"cn": ["NoObjectClass"], "mail": ["test@example.com"]}
         ),
     )
@@ -76,7 +78,7 @@ def invalid_entries() -> list[FlextLDIFModels.Entry]:
     # So create a valid DN but entry that will fail validation logic
     entry2 = FlextLDIFModels.Entry(
         dn=FlextLDIFModels.DistinguishedName(value="cn=ValidDN,dc=example,dc=com"),
-        attributes=FlextLDIFModels.Attributes(
+        attributes=FlextLDIFModels.LdifAttributes(
             data={"cn": ["ValidDN"]}
         ),  # Missing objectClass
     )
@@ -94,7 +96,6 @@ class TestFlextLDIFUtilities:
         assert hasattr(FlextLDIFUtilities, "LdifConverters")
 
         # Test that they are classes (not instances)
-        import inspect
 
         assert inspect.isclass(FlextLDIFUtilities.LdifDomainProcessors)
         assert inspect.isclass(FlextLDIFUtilities.LdifConverters)

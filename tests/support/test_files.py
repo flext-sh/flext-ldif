@@ -6,6 +6,7 @@ with real LDIF content for comprehensive functionality testing.
 
 from __future__ import annotations
 
+import shutil
 import tempfile
 from collections.abc import Generator
 from contextlib import contextmanager
@@ -147,8 +148,6 @@ class TestFileManager:
 
     def cleanup(self) -> None:
         """Clean up created files and directories."""
-        import shutil
-
         # Remove files
         for file_path in self.created_files:
             if file_path.exists():
@@ -166,7 +165,7 @@ class TestFileManager:
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type: type, exc_val: Exception, exc_tb: object) -> None:
+    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: object) -> None:
         """Context manager exit with cleanup."""
         self.cleanup()
 

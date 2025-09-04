@@ -10,81 +10,106 @@ from __future__ import annotations
 # FOUNDATION LAYER - Core components, no internal dependencies
 # =============================================================================
 
-from flext_ldif.constants import *
-from flext_ldif.exceptions import *
-from flext_ldif.protocols import *
+from flext_ldif.constants import FlextLDIFConstants
+from flext_ldif.exceptions import (
+    ExceptionBuilder,
+    FlextLDIFExceptions,
+    FlextLDIFError,
+    FlextLDIFValidationError,
+    FlextLDIFParseError,
+    FlextLDIFAuthenticationError,
+    FlextLDIFConnectionError,
+    FlextLDIFFileError,
+    FlextLDIFProcessingError,
+    FlextLDIFTimeoutError,
+    FlextLDIFErrorCodes,
+)
+from flext_ldif.protocols import FlextLDIFProtocols
 
 # =============================================================================
 # DOMAIN LAYER - Core business logic, depends on Foundation
 # =============================================================================
 
-from flext_ldif.models import *
-from flext_ldif.core import *
+from flext_ldif.models import FlextLDIFModels
+from flext_ldif.core import FlextLDIFCore
 
 # =============================================================================
 # APPLICATION LAYER - Use cases and orchestration, depends on Domain
 # =============================================================================
 
-from flext_ldif.api import *
+from flext_ldif.api import FlextLDIFAPI
 
 # =============================================================================
 # INFRASTRUCTURE LAYER - External services and adapters
 # =============================================================================
 
-from flext_ldif.services import *
-from flext_ldif.format_handlers import *
-from flext_ldif.format_validators import *
-from flext_ldif.utilities import *
+from flext_ldif.services import FlextLDIFServices
+from flext_ldif.format_handlers import FlextLDIFFormatHandler
+from flext_ldif.format_validators import FlextLDIFFormatValidators
+from flext_ldif.utilities import FlextLDIFUtilities
 
 # =============================================================================
 # INTERFACE LAYER - CLI and external interfaces
 # =============================================================================
 
-# CLI aliases for backward compatibility - removed problematic import
-# from flext_ldif.cli import main as cli_main  # Removed due to circular import
+# CLI aliases for backward compatibility - import properly now
+from flext_ldif.cli import main as cli_main, main
 
 # =============================================================================
-# CONSOLIDATED EXPORTS - Combine all __all__ from modules following flext-core pattern
+# PUBLIC EXPORTS - Manual definition of all public APIs
 # =============================================================================
 
-import flext_ldif.api as _api
+__all__ = [
+    # Version and metadata
+    "__version__",
+    "__author__",
+    "__email__",
+    "__license__",
 
-import flext_ldif.cli as _cli
-import flext_ldif.constants as _constants
-import flext_ldif.core as _core
-import flext_ldif.exceptions as _exceptions
-import flext_ldif.format_handlers as _format_handlers
-import flext_ldif.format_validators as _format_validators
-import flext_ldif.models as _models
-import flext_ldif.protocols as _protocols
-import flext_ldif.services as _services
-import flext_ldif.utilities as _utilities
+    # CLI interface
+    "cli_main",
+    "main",
 
-# Collect all __all__ exports from imported modules following flext-core pattern
-_temp_exports: list[str] = []
+    # Core API classes
+    "FlextLDIFAPI",
 
-for _module in [
-    _constants,
-    _exceptions,
-    _protocols,
-    _models,
-    _core,
-    _api,
-    _cli,
-    _services,
-    _format_handlers,
-    _format_validators,
-    _utilities,
-]:
-    if hasattr(_module, "__all__"):
-        _temp_exports.extend(_module.__all__)
+    # Models and data structures
+    "FlextLDIFModels",
 
-# Add CLI exports explicitly for backward compatibility
-_temp_exports.extend(["cli_main", "main"])
+    # Services
+    "FlextLDIFServices",
 
-# Remove duplicates and sort following flext-core pattern
-# Using list() to satisfy Ruff PLE0605 requirement that __all__ must be list or tuple
-__all__ = list(sorted(set(_temp_exports)))  # noqa: C413
+    # Exceptions and error handling
+    "FlextLDIFExceptions",
+    "ExceptionBuilder",
+    "FlextLDIFError",
+    "FlextLDIFValidationError",
+    "FlextLDIFParseError",
+    "FlextLDIFAuthenticationError",
+    "FlextLDIFConnectionError",
+    "FlextLDIFFileError",
+    "FlextLDIFProcessingError",
+    "FlextLDIFTimeoutError",
+    "FlextLDIFErrorCodes",
+
+    # Constants
+    "FlextLDIFConstants",
+
+    # Protocols
+    "FlextLDIFProtocols",
+
+    # Core processing
+    "FlextLDIFCore",
+
+    # Format handlers
+    "FlextLDIFFormatHandler",
+
+    # Format validators
+    "FlextLDIFFormatValidators",
+
+    # Utilities
+    "FlextLDIFUtilities",
+]
 
 # Version information
 __version__ = "0.9.0"

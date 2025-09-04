@@ -10,6 +10,7 @@ from flext_core import FlextResult
 
 from flext_ldif import FlextLDIFModels, FlextLDIFServices
 from tests.support import LdifTestData, TestValidators
+from tests.support.test_files import TestFileManager
 
 
 class TestFlextLDIFServicesParserServiceReal:
@@ -191,7 +192,7 @@ class TestFlextLDIFServicesParserServiceReal:
         entries = result.value
         assert len(entries) == 0
 
-    def test_parse_real_from_file_path(self, test_file_manager) -> None:
+    def test_parse_real_from_file_path(self, test_file_manager: TestFileManager) -> None:
         """Test parsing from actual file path."""
         service = FlextLDIFServices.ParserService()
         ldif_sample = LdifTestData.basic_entries()
@@ -210,7 +211,7 @@ class TestFlextLDIFServicesParserServiceReal:
         content_result = service.parse_ldif_content(ldif_sample.content)
         assert len(entries) == len(content_result.value)
 
-    def test_parse_real_large_dataset(self, test_file_manager) -> None:
+    def test_parse_real_large_dataset(self, test_file_manager: TestFileManager) -> None:
         """Test parsing performance with larger dataset."""
         service = FlextLDIFServices.ParserService()
 
@@ -236,7 +237,7 @@ class TestFlextLDIFServicesParserServiceReal:
 class TestParserIntegrationReal:
     """Integration tests with real parser and other services."""
 
-    def test_parser_with_real_validator_integration(self, integration_services) -> None:
+    def test_parser_with_real_validator_integration(self, integration_services: dict[str, object]) -> None:
         """Test parser integrated with real validator service."""
         parser = integration_services["parser"]
         validator = integration_services["validator"]
@@ -253,7 +254,7 @@ class TestParserIntegrationReal:
             validation_result = validator.validate_entry(entry)
             TestValidators.assert_successful_result(validation_result)
 
-    def test_parser_with_real_writer_roundtrip(self, integration_services) -> None:
+    def test_parser_with_real_writer_roundtrip(self, integration_services: dict[str, object]) -> None:
         """Test parser → writer → parser roundtrip with real services."""
         parser = integration_services["parser"]
         writer = integration_services["writer"]
