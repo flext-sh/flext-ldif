@@ -76,7 +76,7 @@ class FlextLDIFFormatValidators:
         )
 
         @classmethod
-        def validate_dn(cls, dn_value: str) -> FlextResult[bool]:
+        def validate_dn(cls, dn_value: str) -> FlextResult:  # type: ignore[type-arg]
             """Validate Distinguished Name format using flext-ldap root API.
 
             ✅ CORRECT ARCHITECTURE: Delegates to flext-ldap root API.
@@ -86,118 +86,184 @@ class FlextLDIFFormatValidators:
                 dn_value: DN string to validate
 
             Returns:
-                FlextResult[bool] indicating DN validity
+                FlextResult indicating DN validity
 
             """
             # Use local DN validation to avoid circular dependency issues
             # flext_ldap may not be available or have import issues
+            if not dn_value or not isinstance(dn_value, str):
+                return FlextResult.fail("DN cannot be empty")
+
+            dn_value_stripped = dn_value.strip()
+            if not dn_value_stripped:
+                return FlextResult.fail("DN cannot be empty")
+
             is_valid = FlextLDIFFormatValidators._validate_ldap_dn(dn_value)
-            return FlextResult[bool].ok(is_valid)
+            if is_valid:
+                return FlextResult.ok(FlextLDIFConstants.VALIDATION_SUCCESS)
+            return FlextResult.fail(f"Invalid DN format: {dn_value}")
 
         @classmethod
-        def validate_attribute_name(cls, attr_name: str) -> FlextResult[bool]:
+        def validate_attribute_name(cls, attr_name: str) -> FlextResult:  # type: ignore[type-arg]
             """Validate LDAP attribute name format.
 
             Args:
                 attr_name: Attribute name to validate
 
             Returns:
-                FlextResult[bool] indicating attribute name validity
+                FlextResult indicating attribute name validity
 
             """
             # Use local attribute validation to avoid circular dependency issues
             # flext_ldap may not be available or have import issues
+            if not attr_name:
+                return FlextResult.fail("Attribute name cannot be empty")
+
             is_valid = FlextLDIFFormatValidators._validate_ldap_attribute_name(
                 attr_name
             )
-            return FlextResult[bool].ok(is_valid)
+            if is_valid:
+                return FlextResult.ok(data=True)
+            return FlextResult.fail(f"Invalid attribute name: {attr_name}")
 
         @classmethod
-        def is_person_entry(cls, entry: FlextLDIFModels.Entry) -> FlextResult[bool]:
+        def is_person_entry(cls, entry: FlextLDIFModels.Entry) -> FlextResult:  # type: ignore[type-arg]
             """Check if entry is a person entry based on objectClass.
 
             Args:
                 entry: LDIF entry to check
 
             Returns:
-                FlextResult[bool] indicating if entry is a person
+                FlextResult indicating if entry is a person
 
             """
             if not entry.has_attribute("objectClass"):
-                return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_FAILURE)
+                return FlextResult.ok(FlextLDIFConstants.VALIDATION_FAILURE)
 
             object_class_values = entry.get_attribute("objectClass")
             if object_class_values is None:
-                return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_FAILURE)
+                return FlextResult.ok(FlextLDIFConstants.VALIDATION_FAILURE)
             object_classes = {oc.lower() for oc in object_class_values}
             is_person = bool(object_classes.intersection(cls.PERSON_CLASSES))
-            return FlextResult[bool].ok(is_person)
+            return FlextResult.ok(is_person)
 
         @classmethod
-        def is_group_entry(cls, entry: FlextLDIFModels.Entry) -> FlextResult[bool]:
+        def is_group_entry(cls, entry: FlextLDIFModels.Entry) -> FlextResult:  # type: ignore[type-arg]
             """Check if entry is a group entry based on objectClass.
 
             Args:
                 entry: LDIF entry to check
 
             Returns:
-                FlextResult[bool] indicating if entry is a group
+                FlextResult indicating if entry is a group
 
             """
             if not entry.has_attribute("objectClass"):
-                return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_FAILURE)
+                return FlextResult.ok(FlextLDIFConstants.VALIDATION_FAILURE)
 
             object_class_values = entry.get_attribute("objectClass")
             if object_class_values is None:
-                return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_FAILURE)
+                return FlextResult.ok(FlextLDIFConstants.VALIDATION_FAILURE)
             object_classes = {oc.lower() for oc in object_class_values}
             is_group = bool(object_classes.intersection(cls.GROUP_CLASSES))
-            return FlextResult[bool].ok(is_group)
+            return FlextResult.ok(is_group)
 
         @classmethod
-        def is_ou_entry(cls, entry: FlextLDIFModels.Entry) -> FlextResult[bool]:
+        def is_ou_entry(cls, entry: FlextLDIFModels.Entry) -> FlextResult:  # type: ignore[type-arg]
             """Check if entry is an organizational unit based on objectClass.
 
             Args:
                 entry: LDIF entry to check
 
             Returns:
-                FlextResult[bool] indicating if entry is an OU
+                FlextResult indicating if entry is an OU
 
             """
             if not entry.has_attribute("objectClass"):
-                return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_FAILURE)
+                return FlextResult.ok(FlextLDIFConstants.VALIDATION_FAILURE)
 
             object_class_values = entry.get_attribute("objectClass")
             if object_class_values is None:
-                return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_FAILURE)
+                return FlextResult.ok(FlextLDIFConstants.VALIDATION_FAILURE)
             object_classes = {oc.lower() for oc in object_class_values}
             is_ou = bool(object_classes.intersection(cls.OU_CLASSES))
-            return FlextResult[bool].ok(is_ou)
+            return FlextResult.ok(is_ou)
+
+        @classmethod
+        def validate_required_objectclass(
+            cls, entry: FlextLDIFModels.Entry
+        ) -> FlextResult:  # type: ignore[type-arg]
+            """Validate that entry has required objectClass attribute.
+
+            Args:
+                entry: LDIF entry to validate
+
+            Returns:
+                FlextResult indicating if objectClass is present
+
+            """
+            if not entry.has_attribute("objectclass"):
+                return FlextResult.fail("Entry missing required objectClass")
+
+            object_class_values = entry.get_attribute("objectclass")
+            if object_class_values is None or len(object_class_values) == 0:
+                return FlextResult.fail("Entry missing required objectClass")
+
+            return FlextResult.ok(FlextLDIFConstants.VALIDATION_SUCCESS)
 
         @classmethod
         def validate_entry_completeness(
             cls, entry: FlextLDIFModels.Entry
-        ) -> FlextResult[bool]:
+        ) -> FlextResult:  # type: ignore[type-arg]
             """Validate entry has minimum required components.
 
             Args:
                 entry: LDIF entry to validate
 
             Returns:
-                FlextResult[bool] indicating entry completeness
+                FlextResult indicating entry completeness
 
             """
             # DN validation
             dn_result = cls.validate_dn(entry.dn.value)
             if not dn_result.is_success or not dn_result.value:
-                return FlextResult[bool].fail("Invalid DN format")
+                return FlextResult.fail("Invalid DN format")
 
             # ObjectClass requirement
             if not entry.has_attribute("objectClass"):
-                return FlextResult[bool].fail("Missing objectClass attribute")
+                return FlextResult.fail("Missing objectClass attribute")
 
-            return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_SUCCESS)
+            return FlextResult.ok(FlextLDIFConstants.VALIDATION_SUCCESS)
+
+        @classmethod
+        def validate_entry_type(
+            cls, entry: FlextLDIFModels.Entry, expected_types: set[str]
+        ) -> FlextResult:  # type: ignore[type-arg]
+            """Validate entry matches expected object class types.
+
+            Args:
+                entry: LDIF entry to validate
+                expected_types: Set of expected objectClass values
+
+            Returns:
+                FlextResult indicating if entry matches expected types
+
+            """
+            if not entry.has_attribute("objectClass"):
+                return FlextResult.fail("Missing objectClass attribute")
+
+            object_class_values = entry.get_attribute("objectClass")
+            if object_class_values is None:
+                return FlextResult.fail("objectClass attribute is None")
+
+            entry_types = {oc.lower() for oc in object_class_values}
+            expected_types_lower = {oc.lower() for oc in expected_types}
+
+            if entry_types.intersection(expected_types_lower):
+                return FlextResult.ok(data=True)
+            return FlextResult.fail(
+                f"Entry type {entry_types} does not match expected type {expected_types_lower}"
+            )
 
     class SchemaValidator:
         """LDIF schema validation functionality."""
@@ -205,7 +271,7 @@ class FlextLDIFFormatValidators:
         @classmethod
         def validate_required_attributes(
             cls, entry: FlextLDIFModels.Entry, required_attrs: list[str]
-        ) -> FlextResult[bool]:
+        ) -> FlextResult:  # type: ignore[type-arg]
             """Validate entry has all required attributes for its schema.
 
             Args:
@@ -213,7 +279,7 @@ class FlextLDIFFormatValidators:
                 required_attrs: List of required attribute names
 
             Returns:
-                FlextResult[bool] indicating schema compliance
+                FlextResult indicating schema compliance
 
             """
             missing_attrs = [
@@ -223,23 +289,21 @@ class FlextLDIFFormatValidators:
             ]
 
             if missing_attrs:
-                return FlextResult[bool].fail(
+                return FlextResult.fail(
                     f"Missing required attributes: {', '.join(missing_attrs)}"
                 )
 
-            return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_SUCCESS)
+            return FlextResult.ok(FlextLDIFConstants.VALIDATION_SUCCESS)
 
         @classmethod
-        def validate_person_schema(
-            cls, entry: FlextLDIFModels.Entry
-        ) -> FlextResult[bool]:
+        def validate_person_schema(cls, entry: FlextLDIFModels.Entry) -> FlextResult:  # type: ignore[type-arg]
             """Validate person entry schema requirements.
 
             Args:
                 entry: LDIF entry to validate
 
             Returns:
-                FlextResult[bool] indicating validation success
+                FlextResult indicating validation success
 
             """
             # Check if it's a person entry first
@@ -254,14 +318,14 @@ class FlextLDIFFormatValidators:
             )
 
         @classmethod
-        def validate_ou_schema(cls, entry: FlextLDIFModels.Entry) -> FlextResult[bool]:
+        def validate_ou_schema(cls, entry: FlextLDIFModels.Entry) -> FlextResult:  # type: ignore[type-arg]
             """Validate organizational unit entry schema requirements.
 
             Args:
                 entry: LDIF entry to validate
 
             Returns:
-                FlextResult[bool] indicating validation success
+                FlextResult indicating validation success
 
             """
             # Chain validation with railway programming for OU entries

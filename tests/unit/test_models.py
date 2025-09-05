@@ -256,8 +256,8 @@ objectClass: person"""
 
         entry = FlextLDIFModels.Entry.from_ldif_block(ldif_block)
 
-        if entry.dn != "cn=test,dc=example,dc=com":
-            msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn}"
+        if entry.dn.value != "cn=test,dc=example,dc=com":
+            msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn.value}"
             raise AssertionError(
                 msg,
             )
@@ -274,8 +274,8 @@ objectClass: person"""
 
         entry = FlextLDIFModels.Entry.from_ldif_block(ldif_block)
 
-        if entry.dn != "cn=test,dc=example,dc=com":
-            msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn}"
+        if entry.dn.value != "cn=test,dc=example,dc=com":
+            msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn.value}"
             raise AssertionError(
                 msg,
             )
@@ -329,8 +329,8 @@ invalid line without colon"""
         # Should ignore lines without colons
         entry = FlextLDIFModels.Entry.from_ldif_block(ldif_block)
 
-        if entry.dn != "cn=test,dc=example,dc=com":
-            msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn}"
+        if entry.dn.value != "cn=test,dc=example,dc=com":
+            msg: str = f"Expected {'cn=test,dc=example,dc=com'}, got {entry.dn.value}"
             raise AssertionError(
                 msg,
             )

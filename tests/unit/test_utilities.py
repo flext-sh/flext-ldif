@@ -322,3 +322,22 @@ class TestFlextLDIFUtilities:
 
         assert result.is_success
         assert len(result.value) == 0
+
+    def test_coverage_edge_cases_real(self) -> None:
+        """Test real edge cases for comprehensive coverage."""
+        # Test with max_errors limit
+        entries = []
+        for i in range(15):  # More than default max_errors=10
+            entry = FlextLDIFModels.Entry(
+                dn=FlextLDIFModels.DistinguishedName(value=f"cn=user{i},dc=example,dc=com"),
+                attributes=FlextLDIFModels.LdifAttributes(data={})  # Missing objectClass
+            )
+            entries.append(entry)
+
+        result = FlextLDIFUtilities.LdifDomainProcessors.validate_entries_or_warn(
+            entries, max_errors=5
+        )
+
+        # Should return False due to missing objectClass
+        assert result.is_success
+        assert result.value is False

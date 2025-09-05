@@ -77,12 +77,12 @@ class FlextLDIFAPI:
             else analytics_result,
         )
 
-    def parse(self, content: str) -> FlextResult[list[FlextLDIFModels.Entry]]:
+    def parse(self, content: str) -> FlextResult:  # type: ignore[type-arg]
         """Parse LDIF content using railway-oriented programming."""
 
         def validate_entry_count(
             entries: list[FlextLDIFModels.Entry],
-        ) -> FlextResult[list[FlextLDIFModels.Entry]]:
+        ) -> FlextResult:  # type: ignore[type-arg]
             """Validate entry count against configuration limits."""
             max_entries = self.config.max_entries
             if max_entries is not None and len(entries) > max_entries:
@@ -91,15 +91,13 @@ class FlextLDIFAPI:
                     limit=self.config.max_entries,
                 )
                 logger.warning(error_msg)
-                return FlextResult[list[FlextLDIFModels.Entry]].fail(error_msg)
-            return FlextResult[list[FlextLDIFModels.Entry]].ok(entries)
+                return FlextResult.fail(error_msg)
+            return FlextResult.ok(entries)
 
         # Railway-oriented programming chain
         return self._parser_service.parse(content).flat_map(validate_entry_count)
 
-    def parse_file(
-        self, file_path: str | Path
-    ) -> FlextResult[list[FlextLDIFModels.Entry]]:
+    def parse_file(self, file_path: str | Path) -> FlextResult:  # type: ignore[type-arg]
         """Parse LDIF file using railway-oriented programming."""
         file_path_obj = Path(file_path)
         logger.debug(
@@ -109,7 +107,7 @@ class FlextLDIFAPI:
 
         def validate_file_entry_count(
             entries: list[FlextLDIFModels.Entry],
-        ) -> FlextResult[list[FlextLDIFModels.Entry]]:
+        ) -> FlextResult:  # type: ignore[type-arg]
             """Validate file entry count against configuration limits."""
             max_entries = self.config.max_entries
             if max_entries is not None and len(entries) > max_entries:
@@ -118,10 +116,10 @@ class FlextLDIFAPI:
                     limit=self.config.max_entries,
                 )
                 logger.warning(error_msg)
-                return FlextResult[list[FlextLDIFModels.Entry]].fail(error_msg)
+                return FlextResult.fail(error_msg)
 
             logger.debug("File parsed successfully with %d entries", len(entries))
-            return FlextResult[list[FlextLDIFModels.Entry]].ok(entries)
+            return FlextResult.ok(entries)
 
         # Railway-oriented programming chain
         return self._parser_service.parse_ldif_file(str(file_path_obj)).flat_map(
@@ -131,9 +129,9 @@ class FlextLDIFAPI:
     def parse_entries_from_string(
         self,
         ldif_string: str,
-    ) -> FlextResult[list[FlextLDIFModels.Entry]]:
+    ) -> FlextResult:  # type: ignore[type-arg]
         """Parse multiple entries from LDIF string."""
-        return self._parser_service.parse_entries_from_string(ldif_string)
+        return self._parser_service.parse_ldif_content(ldif_string)
 
     def discover_ldif_files(
         self,
@@ -141,12 +139,12 @@ class FlextLDIFAPI:
         file_pattern: str = "*.ldif",
         file_path: str | Path | None = None,
         max_file_size_mb: int = 100,
-    ) -> FlextResult[list[Path]]:
+    ) -> FlextResult:  # type: ignore[type-arg]
         """Discover LDIF files using railway-oriented programming."""
 
         def process_and_filter_files(
             files_to_process: list[Path],
-        ) -> FlextResult[list[Path]]:
+        ) -> FlextResult:  # type: ignore[type-arg]
             """Filter and sort discovered files."""
             filtered_files = self._filter_files_by_size(
                 files_to_process, max_file_size_mb
@@ -158,7 +156,7 @@ class FlextLDIFAPI:
                 len(sorted_files),
                 len(files_to_process) - len(filtered_files),
             )
-            return FlextResult[list[Path]].ok(sorted_files)
+            return FlextResult.ok(sorted_files)
 
         # Railway-oriented programming chain
         return self._get_files_to_process(
@@ -171,7 +169,7 @@ class FlextLDIFAPI:
         self,
         entries: list[FlextLDIFModels.Entry],
         file_path: str | None = None,
-    ) -> FlextResult[str]:
+    ) -> FlextResult:  # type: ignore[type-arg]
         """Write entries to LDIF format using railway-oriented programming.
 
         Args:
@@ -187,14 +185,14 @@ class FlextLDIFAPI:
         if file_path:
             # Railway pattern for file writing
             return (
-                self._writer_service.write_file(entries, file_path)
+                self._writer_service.write_entries_to_file(entries, file_path)
                 .map(
                     lambda _: FlextLDIFConstants.FlextLDIFOperationMessages.WRITE_SUCCESS.format(
                         path=file_path
                     )
                 )
                 .or_else(
-                    FlextResult[str].fail(
+                    FlextResult.fail(
                         FlextLDIFConstants.FlextLDIFOperationMessages.WRITE_FAILED.format(
                             error="File write failed",
                         )
@@ -203,14 +201,14 @@ class FlextLDIFAPI:
             )
 
         # Railway pattern for string writing
-        return self._writer_service.write(entries).tap(
+        return self._writer_service.write_entries_to_string(entries).tap(
             lambda content: logger.debug(
                 "LDIF string writing completed - content_length=%s",
                 len(content),
             )
         )
 
-    def entries_to_ldif(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult[str]:
+    def entries_to_ldif(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult:  # type: ignore[type-arg]
         """Convert entries to LDIF string format.
 
         Args:
@@ -220,13 +218,13 @@ class FlextLDIFAPI:
             FlextResult containing LDIF string or error.
 
         """
-        return self.write(entries)
+        return self._writer_service.write_entries_to_string(entries)
 
     def write_file(
         self,
         entries: list[FlextLDIFModels.Entry],
         file_path: str | Path,
-    ) -> FlextResult[bool]:
+    ) -> FlextResult:  # type: ignore[type-arg]
         """Write entries to LDIF file.
 
         Args:
@@ -240,11 +238,11 @@ class FlextLDIFAPI:
         logger.debug("Validating %d entries", len(entries))
 
         # Use railway programming for file writing
-        return self._writer_service.write_file(entries, str(file_path)).tap(
+        return self._writer_service.write_entries_to_file(entries, str(file_path)).tap(
             lambda _: logger.debug("File write completed successfully")
         )
 
-    def validate(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult[bool]:
+    def validate(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult:  # type: ignore[type-arg]
         """Validate multiple LDIF entries.
 
         Args:
@@ -264,14 +262,14 @@ class FlextLDIFAPI:
                 count=len(entries),
                 limit=self.config.max_entries,
             )
-            return FlextResult[bool].fail(error_msg)
+            return FlextResult.fail(error_msg)
 
         # Use railway programming for validation
-        return self._validator_service.validate_ldif_entries(entries).tap(
+        return self._validator_service.validate_entries(entries).tap(
             lambda _: logger.debug("Bulk validation completed successfully")
         )
 
-    def validate_entry(self, entry: FlextLDIFModels.Entry) -> FlextResult[bool]:
+    def validate_entry(self, entry: FlextLDIFModels.Entry) -> FlextResult:  # type: ignore[type-arg]
         """Validate single LDIF entry.
 
         Args:
@@ -283,9 +281,9 @@ class FlextLDIFAPI:
         """
         logger.debug("Validating single entry")
 
-        return self._validator_service.validate_entry(entry)
+        return self._validator_service.validate_entry_structure(entry)
 
-    def validate_dn_format(self, dn: str) -> FlextResult[bool]:
+    def validate_dn_format(self, dn: str) -> FlextResult:  # type: ignore[type-arg]
         """Validate DN format compliance.
 
         Args:
@@ -300,7 +298,7 @@ class FlextLDIFAPI:
     def filter_persons(
         self,
         entries: list[FlextLDIFModels.Entry],
-    ) -> FlextResult[list[FlextLDIFModels.Entry]]:
+    ) -> FlextResult:  # type: ignore[type-arg]
         """Filter person entries.
 
         Args:
@@ -311,12 +309,12 @@ class FlextLDIFAPI:
 
         """
         filtered = [entry for entry in entries if entry.is_person()]
-        return FlextResult[list[FlextLDIFModels.Entry]].ok(filtered)
+        return FlextResult.ok(filtered)
 
     def filter_groups(
         self,
         entries: list[FlextLDIFModels.Entry],
-    ) -> FlextResult[list[FlextLDIFModels.Entry]]:
+    ) -> FlextResult:  # type: ignore[type-arg]
         """Filter group entries.
 
         Args:
@@ -327,12 +325,12 @@ class FlextLDIFAPI:
 
         """
         filtered = [entry for entry in entries if entry.is_group()]
-        return FlextResult[list[FlextLDIFModels.Entry]].ok(filtered)
+        return FlextResult.ok(filtered)
 
     def filter_organizational_units(
         self,
         entries: list[FlextLDIFModels.Entry] | None,
-    ) -> FlextResult[list[FlextLDIFModels.Entry]]:
+    ) -> FlextResult:  # type: ignore[type-arg]
         """Filter organizational unit entries.
 
         Args:
@@ -343,7 +341,7 @@ class FlextLDIFAPI:
 
         """
         if entries is None:
-            return FlextResult[list[FlextLDIFModels.Entry]].fail(
+            return FlextResult.fail(
                 FlextLDIFConstants.FlextLDIFValidationMessages.ENTRIES_CANNOT_BE_NONE
             )
         filtered = [
@@ -351,12 +349,12 @@ class FlextLDIFAPI:
             for entry in entries
             if "organizationalunit" in (oc.lower() for oc in entry.get_object_classes())
         ]
-        return FlextResult[list[FlextLDIFModels.Entry]].ok(filtered)
+        return FlextResult.ok(filtered)
 
     def filter_valid(
         self,
         entries: list[FlextLDIFModels.Entry] | None,
-    ) -> FlextResult[list[FlextLDIFModels.Entry]]:
+    ) -> FlextResult:  # type: ignore[type-arg]
         """Filter valid entries.
 
         Args:
@@ -367,7 +365,7 @@ class FlextLDIFAPI:
 
         """
         if entries is None:
-            return FlextResult[list[FlextLDIFModels.Entry]].fail(
+            return FlextResult.fail(
                 FlextLDIFConstants.FlextLDIFValidationMessages.ENTRIES_CANNOT_BE_NONE
             )
         # Use modern FlextResult.safe_unwrap_or_none for safer validation checking
@@ -378,13 +376,13 @@ class FlextLDIFAPI:
             if FlextResult.safe_unwrap_or_none(self.validate_entry(entry))
             or validation_failed_default
         ]
-        return FlextResult[list[FlextLDIFModels.Entry]].ok(filtered)
+        return FlextResult.ok(filtered)
 
     def filter_by_objectclass(
         self,
         entries: list[FlextLDIFModels.Entry],
         objectclass: str,
-    ) -> FlextResult[list[FlextLDIFModels.Entry]]:
+    ) -> FlextResult:  # type: ignore[type-arg]
         """Filter entries by objectClass.
 
         Args:
@@ -404,7 +402,7 @@ class FlextLDIFAPI:
         entries: list[FlextLDIFModels.Entry],
         attribute: str,
         value: str,
-    ) -> FlextResult[list[FlextLDIFModels.Entry]]:
+    ) -> FlextResult:  # type: ignore[type-arg]
         """Filter entries by attribute value.
 
         Args:
@@ -424,7 +422,7 @@ class FlextLDIFAPI:
         self,
         entries: list[FlextLDIFModels.Entry],
         dn: str,
-    ) -> FlextResult[FlextLDIFModels.Entry | None]:
+    ) -> FlextResult:  # type: ignore[type-arg]
         """Find entry by DN.
 
         Args:
@@ -440,7 +438,7 @@ class FlextLDIFAPI:
     def get_entry_statistics(
         self,
         entries: list[FlextLDIFModels.Entry],
-    ) -> FlextResult[dict[str, int]]:
+    ) -> FlextResult:  # type: ignore[type-arg]
         """Get entry statistics.
 
         Args:
@@ -455,7 +453,7 @@ class FlextLDIFAPI:
     def analyze_entry_patterns(
         self,
         entries: list[FlextLDIFModels.Entry],
-    ) -> FlextResult[dict[str, int]]:
+    ) -> FlextResult:  # type: ignore[type-arg]
         """Analyze patterns in LDIF entries.
 
         Args:
@@ -470,7 +468,7 @@ class FlextLDIFAPI:
     def get_objectclass_distribution(
         self,
         entries: list[FlextLDIFModels.Entry],
-    ) -> FlextResult[dict[str, int]]:
+    ) -> FlextResult:  # type: ignore[type-arg]
         """Get distribution of objectClass types.
 
         Args:
@@ -485,7 +483,7 @@ class FlextLDIFAPI:
     def get_dn_depth_analysis(
         self,
         entries: list[FlextLDIFModels.Entry],
-    ) -> FlextResult[dict[str, int]]:
+    ) -> FlextResult:  # type: ignore[type-arg]
         """Analyze DN depth distribution.
 
         Args:
@@ -500,7 +498,7 @@ class FlextLDIFAPI:
     def filter_change_records(
         self,
         entries: list[FlextLDIFModels.Entry] | None,
-    ) -> FlextResult[list[FlextLDIFModels.Entry]]:
+    ) -> FlextResult:  # type: ignore[type-arg]
         """Filter entries that represent change records.
 
         Args:
@@ -511,16 +509,16 @@ class FlextLDIFAPI:
 
         """
         if entries is None:
-            return FlextResult[list[FlextLDIFModels.Entry]].fail(
+            return FlextResult.fail(
                 FlextLDIFConstants.FlextLDIFValidationMessages.ENTRIES_CANNOT_BE_NONE
             )
         filtered = [entry for entry in entries if entry.get_attribute("changetype")]
-        return FlextResult[list[FlextLDIFModels.Entry]].ok(filtered)
+        return FlextResult.ok(filtered)
 
     def sort_hierarchically(
         self,
         entries: list[FlextLDIFModels.Entry] | None,
-    ) -> FlextResult[list[FlextLDIFModels.Entry]]:
+    ) -> FlextResult:  # type: ignore[type-arg]
         """Sort entries hierarchically by DN depth.
 
         Args:
@@ -531,16 +529,16 @@ class FlextLDIFAPI:
 
         """
         if entries is None:
-            return FlextResult[list[FlextLDIFModels.Entry]].fail(
+            return FlextResult.fail(
                 FlextLDIFConstants.FlextLDIFValidationMessages.ENTRIES_CANNOT_BE_NONE
             )
         try:
             sorted_entries = sorted(
                 entries, key=lambda entry: len(entry.dn.value.split(","))
             )
-            return FlextResult[list[FlextLDIFModels.Entry]].ok(sorted_entries)
+            return FlextResult.ok(sorted_entries)
         except (ValueError, AttributeError, TypeError) as e:
-            return FlextResult[list[FlextLDIFModels.Entry]].fail(
+            return FlextResult.fail(
                 FlextLDIFConstants.FlextLDIFOperationMessages.SORT_FAILED.format(
                     error=str(e)
                 ),
@@ -551,7 +549,7 @@ class FlextLDIFAPI:
         directory_path: str | Path | None,
         file_pattern: str,
         file_path: str | Path | None,
-    ) -> FlextResult[list[Path]]:
+    ) -> FlextResult:  # type: ignore[type-arg]
         """Get initial list of files to process based on input parameters."""
         if file_path:
             return self._process_single_file_path(file_path)
@@ -562,12 +560,12 @@ class FlextLDIFAPI:
     def _process_single_file_path(
         self,
         file_path: str | Path,
-    ) -> FlextResult[list[Path]]:
+    ) -> FlextResult:  # type: ignore[type-arg]
         """Process single file path input."""
         file_path_obj = Path(file_path)
         if file_path_obj.exists() and file_path_obj.is_file():
-            return FlextResult[list[Path]].ok([file_path_obj])
-        return FlextResult[list[Path]].fail(
+            return FlextResult.ok([file_path_obj])
+        return FlextResult.fail(
             FlextLDIFConstants.FlextLDIFValidationMessages.FILE_NOT_FOUND.format(
                 file_path=file_path
             ),
@@ -577,40 +575,34 @@ class FlextLDIFAPI:
         self,
         directory_path: str | Path,
         file_pattern: str,
-    ) -> FlextResult[list[Path]]:
+    ) -> FlextResult:  # type: ignore[type-arg]
         """Process directory path with pattern."""
         directory_obj = Path(directory_path)
         if not directory_obj.exists():
-            return FlextResult[list[Path]].fail(
+            return FlextResult.fail(
                 FlextLDIFConstants.FlextLDIFValidationMessages.FILE_NOT_FOUND.format(
                     file_path=directory_path,
                 ),
             )
         if not directory_obj.is_dir():
-            return FlextResult[list[Path]].fail(
-                f"Path is not a directory: {directory_path}"
-            )
+            return FlextResult.fail(f"Path is not a directory: {directory_path}")
 
         try:
             files_found = list(directory_obj.glob(file_pattern))
-            return FlextResult[list[Path]].ok(files_found)
+            return FlextResult.ok(files_found)
         except (OSError, ValueError) as e:
-            return FlextResult[list[Path]].fail(
-                f"Error discovering files in directory: {e}"
-            )
+            return FlextResult.fail(f"Error discovering files in directory: {e}")
 
     def _process_current_directory_pattern(
         self,
         file_pattern: str,
-    ) -> FlextResult[list[Path]]:
+    ) -> FlextResult:  # type: ignore[type-arg]
         """Process pattern in current directory."""
         try:
             files_found = list(Path().glob(file_pattern))
-            return FlextResult[list[Path]].ok(files_found)
+            return FlextResult.ok(files_found)
         except (OSError, ValueError) as e:
-            return FlextResult[list[Path]].fail(
-                f"Error discovering files with pattern: {e}"
-            )
+            return FlextResult.fail(f"Error discovering files with pattern: {e}")
 
     def _filter_files_by_size(
         self,

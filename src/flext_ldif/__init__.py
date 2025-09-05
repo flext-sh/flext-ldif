@@ -52,8 +52,8 @@ from flext_ldif.utilities import FlextLDIFUtilities
 # INTERFACE LAYER - CLI and external interfaces
 # =============================================================================
 
-# CLI aliases for backward compatibility - import properly now
-from flext_ldif.cli import main as cli_main, main
+# CLI interface
+from flext_ldif.cli import main
 
 # =============================================================================
 # PUBLIC EXPORTS - Manual definition of all public APIs
@@ -65,20 +65,14 @@ __all__ = [
     "__author__",
     "__email__",
     "__license__",
-
     # CLI interface
-    "cli_main",
     "main",
-
     # Core API classes
     "FlextLDIFAPI",
-
     # Models and data structures
     "FlextLDIFModels",
-
     # Services
     "FlextLDIFServices",
-
     # Exceptions and error handling
     "FlextLDIFExceptions",
     "ExceptionBuilder",
@@ -91,22 +85,16 @@ __all__ = [
     "FlextLDIFProcessingError",
     "FlextLDIFTimeoutError",
     "FlextLDIFErrorCodes",
-
     # Constants
     "FlextLDIFConstants",
-
     # Protocols
     "FlextLDIFProtocols",
-
     # Core processing
     "FlextLDIFCore",
-
     # Format handlers
     "FlextLDIFFormatHandler",
-
     # Format validators
     "FlextLDIFFormatValidators",
-
     # Utilities
     "FlextLDIFUtilities",
 ]

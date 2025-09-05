@@ -9,12 +9,7 @@ from pydantic import ValidationError
 from pydantic.fields import FieldInfo
 
 from flext_ldif.constants import FlextLDIFConstants
-from flext_ldif.services import (
-    attribute_name_field,
-    attribute_value_field,
-    dn_field,
-    object_class_field,
-)
+from flext_ldif.services import FlextLDIFServices
 
 
 class TestDnField:
@@ -22,7 +17,7 @@ class TestDnField:
 
     def test_dn_field_default_parameters(self) -> None:
         """Test dn_field with default parameters."""
-        field = dn_field()
+        field = FlextLDIFServices.dn_field()
 
         assert isinstance(field, FieldInfo)
         assert field.description == "Distinguished Name"
@@ -39,7 +34,7 @@ class TestDnField:
 
     def test_dn_field_custom_parameters(self) -> None:
         """Test dn_field with custom parameters."""
-        field = dn_field(
+        field = FlextLDIFServices.dn_field(
             description="Custom DN Description", min_length=5, max_length=500
         )
 
@@ -56,7 +51,7 @@ class TestDnField:
         """Test DN field works in actual Pydantic model."""
 
         class TestModel(FlextModels.Config):
-            dn: str = dn_field()
+            dn: str = FlextLDIFServices.dn_field()
 
         # Valid DN
         model = TestModel(dn="cn=test,dc=example,dc=com")
@@ -74,7 +69,7 @@ class TestDnField:
         """Test DN field max length constraint."""
 
         class TestModel(FlextModels.Config):
-            dn: str = dn_field(max_length=10)
+            dn: str = FlextLDIFServices.dn_field(max_length=10)
 
         # Valid short DN
         model = TestModel(dn="cn=test")
@@ -94,7 +89,7 @@ class TestAttributeNameField:
 
     def test_attribute_name_field_default_parameters(self) -> None:
         """Test attribute_name_field with default parameters."""
-        field = attribute_name_field()
+        field = FlextLDIFServices.attribute_name_field()
 
         assert isinstance(field, FieldInfo)
         assert field.description == "LDAP Attribute Name"
@@ -110,7 +105,7 @@ class TestAttributeNameField:
 
     def test_attribute_name_field_custom_parameters(self) -> None:
         """Test attribute_name_field with custom parameters."""
-        field = attribute_name_field(
+        field = FlextLDIFServices.attribute_name_field(
             description="Custom Attribute", pattern=r"^[a-z]+$", max_length=50
         )
 
@@ -129,7 +124,7 @@ class TestAttributeNameField:
         """Test attribute name field works in actual Pydantic model."""
 
         class TestModel(FlextModels.Config):
-            attr_name: str = attribute_name_field()
+            attr_name: str = FlextLDIFServices.attribute_name_field()
 
         # Valid attribute names
         valid_names = ["cn", "mail", "objectClass", "user-id", "attr123"]
@@ -148,7 +143,7 @@ class TestAttributeNameField:
         """Test attribute name field max length constraint."""
 
         class TestModel(FlextModels.Config):
-            attr_name: str = attribute_name_field(max_length=5)
+            attr_name: str = FlextLDIFServices.attribute_name_field(max_length=5)
 
         # Valid short name
         model = TestModel(attr_name="cn")
@@ -168,7 +163,7 @@ class TestAttributeValueField:
 
     def test_attribute_value_field_default_parameters(self) -> None:
         """Test attribute_value_field with default parameters."""
-        field = attribute_value_field()
+        field = FlextLDIFServices.attribute_value_field()
 
         assert isinstance(field, FieldInfo)
         assert field.description == "LDAP Attribute Value"
@@ -181,7 +176,7 @@ class TestAttributeValueField:
 
     def test_attribute_value_field_custom_parameters(self) -> None:
         """Test attribute_value_field with custom parameters."""
-        field = attribute_value_field(description="Custom Value", max_length=100)
+        field = FlextLDIFServices.attribute_value_field(description="Custom Value", max_length=100)
 
         assert field.description == "Custom Value"
         metadata = field.metadata
@@ -195,7 +190,7 @@ class TestAttributeValueField:
         """Test attribute value field works in actual Pydantic model."""
 
         class TestModel(FlextModels.Config):
-            value: str = attribute_value_field()
+            value: str = FlextLDIFServices.attribute_value_field()
 
         # Various valid values
         valid_values = [
@@ -215,7 +210,7 @@ class TestAttributeValueField:
         """Test attribute value field max length constraint."""
 
         class TestModel(FlextModels.Config):
-            value: str = attribute_value_field(max_length=10)
+            value: str = FlextLDIFServices.attribute_value_field(max_length=10)
 
         # Valid short value
         model = TestModel(value="short")
@@ -235,7 +230,7 @@ class TestObjectClassField:
 
     def test_object_class_field_default_parameters(self) -> None:
         """Test object_class_field with default parameters."""
-        field = object_class_field()
+        field = FlextLDIFServices.object_class_field()
 
         assert isinstance(field, FieldInfo)
         assert field.description == "LDAP Object Class"
@@ -251,7 +246,7 @@ class TestObjectClassField:
 
     def test_object_class_field_custom_parameters(self) -> None:
         """Test object_class_field with custom parameters."""
-        field = object_class_field(
+        field = FlextLDIFServices.object_class_field(
             description="Custom Object Class",
             pattern=r"^[A-Z][a-zA-Z]*$",
             max_length=100,
@@ -272,7 +267,7 @@ class TestObjectClassField:
         """Test object class field works in actual Pydantic model."""
 
         class TestModel(FlextModels.Config):
-            object_class: str = object_class_field()
+            object_class: str = FlextLDIFServices.object_class_field()
 
         # Valid object class names
         valid_classes = [
@@ -299,7 +294,7 @@ class TestObjectClassField:
         """Test object class field max length constraint."""
 
         class TestModel(FlextModels.Config):
-            object_class: str = object_class_field(max_length=10)
+            object_class: str = FlextLDIFServices.object_class_field(max_length=10)
 
         # Valid short class
         model = TestModel(object_class="person")
@@ -320,7 +315,9 @@ class TestFieldDefaults:
     def test_field_patterns_exist(self) -> None:
         """Test that pattern constants exist."""
         assert hasattr(FlextLDIFConstants.FlextLDIFCoreConstants, "DN_PATTERN_REGEX")
-        assert hasattr(FlextLDIFConstants.FlextLDIFCoreConstants, "ATTRIBUTE_PATTERN_REGEX")
+        assert hasattr(
+            FlextLDIFConstants.FlextLDIFCoreConstants, "ATTRIBUTE_PATTERN_REGEX"
+        )
 
     def test_field_patterns_values(self) -> None:
         """Test that pattern constants have expected format."""
@@ -335,16 +332,22 @@ class TestFieldDefaults:
 
     def test_field_patterns_types(self) -> None:
         """Test that pattern constants have correct types."""
-        assert isinstance(FlextLDIFConstants.FlextLDIFCoreConstants.DN_PATTERN_REGEX, str)
-        assert isinstance(FlextLDIFConstants.FlextLDIFCoreConstants.ATTRIBUTE_PATTERN_REGEX, str)
+        assert isinstance(
+            FlextLDIFConstants.FlextLDIFCoreConstants.DN_PATTERN_REGEX, str
+        )
+        assert isinstance(
+            FlextLDIFConstants.FlextLDIFCoreConstants.ATTRIBUTE_PATTERN_REGEX, str
+        )
 
     def test_field_defaults_can_be_used_in_fields(self) -> None:
         """Test that field functions work with reasonable defaults."""
 
         class TestModel(FlextModels.Config):
-            dn: str = dn_field(max_length=1024)  # Reasonable default
-            attr_name: str = attribute_name_field(max_length=255)  # Reasonable default
-            attr_value: str = attribute_value_field(max_length=65536)  # Reasonable default
+            dn: str = FlextLDIFServices.dn_field(max_length=1024)  # Reasonable default
+            attr_name: str = FlextLDIFServices.attribute_name_field(max_length=255)  # Reasonable default
+            attr_value: str = FlextLDIFServices.attribute_value_field(
+                max_length=65536
+            )  # Reasonable default
 
         model = TestModel(
             dn="cn=test,dc=example,dc=com",
@@ -364,10 +367,10 @@ class TestFieldIntegration:
         """Test using all field types in one model."""
 
         class CompleteModel(FlextModels.Config):
-            dn: str = dn_field()
-            attr_name: str = attribute_name_field()
-            attr_value: str = attribute_value_field()
-            object_class: str = object_class_field()
+            dn: str = FlextLDIFServices.dn_field()
+            attr_name: str = FlextLDIFServices.attribute_name_field()
+            attr_value: str = FlextLDIFServices.attribute_value_field()
+            object_class: str = FlextLDIFServices.object_class_field()
 
         model = CompleteModel(
             dn="cn=John Doe,ou=people,dc=example,dc=com",
@@ -383,10 +386,10 @@ class TestFieldIntegration:
 
     def test_field_inheritance_with_custom_descriptions(self) -> None:
         """Test that custom descriptions work correctly."""
-        dn = dn_field(description="Entry DN")
-        attr_name = attribute_name_field(description="LDAP Attr")
-        attr_value = attribute_value_field(description="Attr Value")
-        obj_class = object_class_field(description="Object Class")
+        dn = FlextLDIFServices.dn_field(description="Entry DN")
+        attr_name = FlextLDIFServices.attribute_name_field(description="LDAP Attr")
+        attr_value = FlextLDIFServices.attribute_value_field(description="Attr Value")
+        obj_class = FlextLDIFServices.object_class_field(description="Object Class")
 
         assert dn.description == "Entry DN"
         assert attr_name.description == "LDAP Attr"
@@ -397,8 +400,8 @@ class TestFieldIntegration:
         """Test that regex patterns work as expected."""
 
         class TestModel(FlextModels.Config):
-            attr_name: str = attribute_name_field()
-            object_class: str = object_class_field()
+            attr_name: str = FlextLDIFServices.attribute_name_field()
+            object_class: str = FlextLDIFServices.object_class_field()
 
         # Test valid patterns
         valid_data = TestModel(attr_name="validName123", object_class="validClass")

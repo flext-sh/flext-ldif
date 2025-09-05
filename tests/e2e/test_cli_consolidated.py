@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif import cli_main
+from flext_ldif import main as cli_main
 
 
 @contextmanager

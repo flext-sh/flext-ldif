@@ -62,7 +62,9 @@ class FlextLDIFConstants:
         FILE_WRITE_MODE: ClassVar[str] = "w"
 
         # Regex patterns
-        DN_PATTERN_REGEX: ClassVar[str] = r"^[a-zA-Z][\w-]*=.+(?:[,+][a-zA-Z][\w-]*=.+)*$"
+        DN_PATTERN_REGEX: ClassVar[str] = (
+            r"^[a-zA-Z][\w-]*=.+(?:[,+][a-zA-Z][\w-]*=.+)*$"
+        )
         ATTRIBUTE_PATTERN_REGEX: ClassVar[str] = r"^[a-zA-Z][\w-]*$"
         ATTR_NAME_PATTERN_REGEX: ClassVar[str] = r"^[a-zA-Z][\w-]*$"
 
@@ -354,12 +356,14 @@ class FlextLDIFConstants:
         "inetorgperson",
         "organizationalperson",
         "user",
+        "posixaccount",
     }
 
     LDAP_GROUP_CLASSES: ClassVar[set[str]] = {
         "group",
         "groupofnames",
         "groupofuniquenames",
+        "posixgroup",
     }
 
     class FlextLDIFOperationMessages:
@@ -371,6 +375,16 @@ class FlextLDIFConstants:
         LDIF_WRITTEN_SUCCESS: ClassVar[str] = "LDIF written successfully"
         WRITE_SUCCESS: ClassVar[str] = "Write operation successful"
         WRITE_FAILED: ClassVar[str] = "Write operation failed"
+
+    class FlextLDIFCliConstants:
+        """CLI-specific constants."""
+
+        # Command line argument validation
+        MIN_ARGS_WITH_COMMAND: ClassVar[int] = 2
+        MIN_ARGS_WITH_INPUT_FILE: ClassVar[int] = 3
+        MAX_ERRORS_TO_SHOW: ClassVar[int] = 10
+        CLI_MIN_ARGS_NO_COMMAND: ClassVar[int] = 2
+        CLI_MIN_ARGS_WITH_INPUT: ClassVar[int] = 3
 
 
 # Export only the main constants class

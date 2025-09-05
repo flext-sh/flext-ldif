@@ -63,7 +63,7 @@ class TestFlextLDIFServicesValidatorServiceReal:
         entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Validate real entry
-        result = service.validate_entry(entry)
+        result = service.validate_entry_structure(entry)
 
         TestValidators.assert_successful_result(result)
         validation_result = result.value
@@ -95,10 +95,12 @@ class TestFlextLDIFServicesValidatorServiceReal:
         def _validate_invalid_dn() -> None:
             entry = FlextLDIFModels.Entry.model_validate(entry_data)
             # If model validation is lenient, the validation service should catch it
-            result = service.validate_entry(entry)
+            result = service.validate_entry_structure(entry)
             if result.is_success:
                 validation_result = result.value
-                if isinstance(validation_result, dict) and validation_result.get("is_valid", True):
+                if isinstance(validation_result, dict) and validation_result.get(
+                    "is_valid", True
+                ):
                     # Force an exception if validation incorrectly passes
                     msg = "Expected validation to fail for invalid DN"
                     raise ValueError(msg)
@@ -108,11 +110,7 @@ class TestFlextLDIFServicesValidatorServiceReal:
 
         # Verify the exception message contains expected keywords
         error_msg = str(exc_info.value).lower()
-        assert (
-            "dn" in error_msg
-            or "invalid" in error_msg
-            or "validation" in error_msg
-        )
+        assert "dn" in error_msg or "invalid" in error_msg or "validation" in error_msg
 
     def test_validate_real_missing_required_attributes(self) -> None:
         """Test validation of entry missing required attributes."""
@@ -130,7 +128,7 @@ class TestFlextLDIFServicesValidatorServiceReal:
         entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Validate entry with missing required attributes
-        result = service.validate_entry(entry)
+        result = service.validate_entry_structure(entry)
 
         # The validator may be lenient about missing attributes (realistic behavior)
         if result.is_success:
@@ -182,7 +180,7 @@ class TestFlextLDIFServicesValidatorServiceReal:
         entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Validate entry with multi-valued attributes
-        result = service.validate_entry(entry)
+        result = service.validate_entry_structure(entry)
 
         TestValidators.assert_successful_result(result)
         validation_result = result.value
@@ -219,7 +217,7 @@ class TestFlextLDIFServicesValidatorServiceReal:
         entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Validate entry with binary attribute
-        result = service.validate_entry(entry)
+        result = service.validate_entry_structure(entry)
 
         TestValidators.assert_successful_result(result)
         validation_result = result.value
@@ -255,7 +253,7 @@ class TestFlextLDIFServicesValidatorServiceReal:
         entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Validate entry with special characters
-        result = service.validate_entry(entry)
+        result = service.validate_entry_structure(entry)
 
         TestValidators.assert_successful_result(result)
         validation_result = result.value
@@ -295,7 +293,7 @@ class TestFlextLDIFServicesValidatorServiceReal:
 
         # Validate all entries
         for entry in entries:
-            result = service.validate_entry(entry)
+            result = service.validate_entry_structure(entry)
             TestValidators.assert_successful_result(result)
             validation_result = result.value
             # Handle both boolean and dict validation results
@@ -325,7 +323,7 @@ class TestFlextLDIFServicesValidatorServiceReal:
         entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Validate with strict mode
-        result = service.validate_entry(entry)
+        result = service.validate_entry_structure(entry)
 
         # Should either succeed or have detailed validation info
         if result.is_success:
@@ -359,7 +357,7 @@ class TestValidatorIntegrationReal:
         # Validate each parsed entry
         valid_entries = 0
         for entry in entries:
-            validation_result = validator.validate_entry(entry)
+            validation_result = validator.validate_entry_structure(entry)
             if validation_result.is_success:
                 valid_entries += 1
 

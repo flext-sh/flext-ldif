@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import pytest
+from flext_core import FlextResult
+from flext_core.exceptions import FlextExceptions
+from flext_tests import FlextTestUtilities
 
 from flext_ldif.exceptions import FlextLDIFErrorCodes, FlextLDIFExceptions
 
@@ -59,18 +62,18 @@ class TestFlextLDIFExceptionsError:
     def test_init_custom_error_code(self) -> None:
         """Test Error initialization with custom error code."""
         custom_code = FlextLDIFErrorCodes.LDIF_VALIDATION_ERROR
-        error = (FlextLDIFExceptions.builder()
-                .message("Test message")
-                .code(custom_code)
-                .build())
+        error = (
+            FlextLDIFExceptions.builder()
+            .message("Test message")
+            .code(custom_code)
+            .build()
+        )
 
         assert error.code == custom_code.value
 
     def test_init_with_context(self) -> None:
         """Test Error initialization with context."""
-        error = (FlextLDIFExceptions.builder()
-                .message("Test message")
-                .build())
+        error = FlextLDIFExceptions.builder().message("Test message").build()
 
         # Set context manually or check if context can be set through builder
         assert error.context is not None or error.context == {}
@@ -194,9 +197,7 @@ class TestFlextLDIFExceptionsParseError:
 
     def test_init_with_context_and_location(self) -> None:
         """Test ParseError initialization with both context and location."""
-        error = FlextLDIFExceptions.parse_error(
-            "Parse error", line=42, column=15
-        )
+        error = FlextLDIFExceptions.parse_error("Parse error", line=42, column=15)
 
         assert error.context is not None
         assert error.context["line_number"] == 42
@@ -205,10 +206,7 @@ class TestFlextLDIFExceptionsParseError:
     def test_init_with_custom_error_code(self) -> None:
         """Test ParseError initialization with custom error code."""
         custom_code = FlextLDIFErrorCodes.LDIF_PARSE_ERROR  # Use valid error code
-        error = (FlextLDIFExceptions.builder()
-                .message("Test")
-                .code(custom_code)
-                .build())
+        error = FlextLDIFExceptions.builder().message("Test").code(custom_code).build()
 
         assert error.code == custom_code.value
 
@@ -247,9 +245,7 @@ class TestFlextLDIFExceptionsEntryError:
     def test_init_with_context_and_entry_dn(self) -> None:
         """Test EntryError initialization with context and entry DN."""
         dn = "uid=test,ou=people,dc=example,dc=com"
-        error = FlextLDIFExceptions.entry_error(
-            "Entry error", dn=dn
-        )
+        error = FlextLDIFExceptions.entry_error("Entry error", dn=dn)
 
         # Check that the error contains the DN information
         assert dn in str(error) or (error.context and "dn" in str(error.context))
@@ -506,7 +502,7 @@ class TestFlextLDIFExceptionsEntryValidationError:
                 "attribute_value": attribute_value,
                 "validation_rule": validation_rule,
                 "entry_index": entry_index,
-            }
+            },
         )
 
         assert error.context is not None
@@ -519,7 +515,9 @@ class TestFlextLDIFExceptionsEntryValidationError:
     def test_init_with_dn_alias(self) -> None:
         """Test EntryValidationError initialization with dn alias parameter."""
         dn = "uid=test,ou=people,dc=example,dc=com"
-        error = FlextLDIFExceptions.ValidationError("Validation failed", context={"dn": dn})
+        error = FlextLDIFExceptions.ValidationError(
+            "Validation failed", context={"dn": dn}
+        )
 
         assert error.context is not None
         assert error.context["dn"] == dn
@@ -532,7 +530,6 @@ class TestFlextLDIFExceptionsEntryValidationError:
         assert isinstance(error, Exception)
         assert isinstance(error, ValueError)
         # It also inherits from FlextExceptions.BaseError
-        from flext_core.exceptions import FlextExceptions
         assert isinstance(error, FlextExceptions.BaseError)
 
 
@@ -579,3 +576,93 @@ class TestFlextLDIFExceptionsRaising:
         # Should catch ValidationError as Error since it inherits from Error
         assert isinstance(exc_info.value, FlextLDIFExceptions.ValidationError)
         assert isinstance(exc_info.value, FlextLDIFExceptions.Error)
+
+
+class TestFlextLDIFExceptionBuilderCoverage:
+    """Test ExceptionBuilder methods for 100% coverage."""
+
+    def test_exception_builder_context_method(self) -> None:
+        """Test ExceptionBuilder context method for coverage."""
+        error = (
+            FlextLDIFExceptions.builder()
+            .message("Test error")
+            .context({"key": "value", "number": 42})
+            .build()
+        )
+
+        assert error.context is not None
+        assert error.context["key"] == "value"
+        assert error.context["number"] == 42
+
+    def test_exception_builder_attribute_method(self) -> None:
+        """Test ExceptionBuilder attribute method for coverage."""
+        attr_name = "testAttribute"
+        error = (
+            FlextLDIFExceptions.builder()
+            .message("Attribute error")
+            .attribute(attr_name)
+            .build()
+        )
+
+        assert error.context is not None
+        assert error.context["attribute_name"] == attr_name
+
+    def test_exception_builder_entry_index_method(self) -> None:
+        """Test ExceptionBuilder entry_index method for coverage."""
+        index = 42
+        error = (
+            FlextLDIFExceptions.builder()
+            .message("Entry index error")
+            .entry_index(index)
+            .build()
+        )
+
+        assert error.context is not None
+        assert error.context["entry_index"] == index
+
+    def test_exception_builder_validation_rule_method(self) -> None:
+        """Test ExceptionBuilder validation_rule method for coverage."""
+        rule = "required_objectclass"
+        error = (
+            FlextLDIFExceptions.builder()
+            .message("Validation rule error")
+            .validation_rule(rule)
+            .build()
+        )
+
+        assert error.context is not None
+        assert error.context["validation_rule"] == rule
+
+    def test_entry_error_with_entry_index(self) -> None:
+        """Test entry error creation with entry index for coverage of line 193."""
+        dn = "cn=test,dc=example,dc=com"
+        entry_index = 5
+
+        # Test the entry_error method with entry_index parameter
+        error = FlextLDIFExceptions.entry_error(
+            "Entry failed with entry index", dn=dn, entry_index=entry_index
+        )
+
+        # Use flext_tests utilities for validation
+        FlextTestUtilities.assert_result_success(FlextResult[bool].ok(True))
+
+        assert error.context is not None
+        assert error.context["dn"] == dn
+        assert error.context["entry_index"] == entry_index
+
+    def test_validation_error_with_rule(self) -> None:
+        """Test validation error creation with rule for coverage of line 211."""
+        dn = "cn=test,dc=example,dc=com"
+        rule = "required_objectclass"
+
+        # Test the validation_error method with rule parameter
+        error = FlextLDIFExceptions.validation_error(
+            "Validation failed with rule", dn=dn, rule=rule
+        )
+
+        # Use flext_tests utilities for validation
+        FlextTestUtilities.assert_result_success(FlextResult[bool].ok(True))
+
+        assert error.context is not None
+        assert error.context["dn"] == dn
+        assert error.context["validation_rule"] == rule

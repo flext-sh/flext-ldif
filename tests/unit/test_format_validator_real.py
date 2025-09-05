@@ -319,7 +319,8 @@ class TestLdifValidator:
 
         result = LdifValidator.is_person_entry(entry)
 
-        assert result.is_success is False
+        assert result.is_success is True
+        assert result.value is False
 
     def test_is_ou_entry_true(self) -> None:
         """Test OU entry detection - positive case."""
@@ -344,7 +345,8 @@ class TestLdifValidator:
 
         result = LdifValidator.is_ou_entry(entry)
 
-        assert result.is_success is False
+        assert result.is_success is True
+        assert result.value is False
 
     def test_is_group_entry_true(self) -> None:
         """Test group entry detection - positive case."""
@@ -373,7 +375,8 @@ class TestLdifValidator:
 
         result = LdifValidator.is_group_entry(entry)
 
-        assert result.is_success is False
+        assert result.is_success is True
+        assert result.value is False
 
 
 class TestLdifSchemaValidator:

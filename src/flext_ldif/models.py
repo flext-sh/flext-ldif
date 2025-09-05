@@ -11,13 +11,20 @@ from __future__ import annotations
 
 from collections.abc import Generator
 from functools import lru_cache
-from typing import ClassVar, override
+
+# Type alias for mypy compatibility with Python 3.12+ generic syntax
+from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_core import (
     FlextModels,
     FlextResult,
     FlextValidations,
 )
+
+if TYPE_CHECKING:
+    type FlextResultNone = FlextResult[None]
+else:
+    FlextResultNone = FlextResult
 from pydantic import ConfigDict, Field, field_validator, model_validator
 
 from flext_ldif.constants import FlextLDIFConstants
@@ -73,10 +80,10 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             return v.strip()
 
         @override
-        def validate_business_rules(self) -> FlextResult[None]:
+        def validate_business_rules(self) -> FlextResultNone:
             """Validate DN business rules using FlextResult."""
             if not self.value:
-                return FlextResult[None].fail(
+                return FlextResult.fail(
                     FlextLDIFConstants.FlextLDIFValidationMessages.EMPTY_DN
                 )
 
@@ -89,9 +96,9 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
                         minimum=FlextLDIFConstants.MIN_DN_COMPONENTS,
                     )
                 )
-                return FlextResult[None].fail(error_msg)
+                return FlextResult.fail(error_msg)
 
-            return FlextResult[None].ok(None)
+            return FlextResult.ok(None)
 
         def get_rdn(self) -> str:
             """Get Relative Distinguished Name (first component)."""
@@ -190,7 +197,7 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             return bool(object_classes.intersection(group_classes))
 
         @override
-        def validate_business_rules(self) -> FlextResult[None]:
+        def validate_business_rules(self) -> FlextResultNone:
             """Validate attributes using FlextValidations."""
             for attr_name, attr_values in self.data.items():
                 # Validate attribute name using flext-core string validation
@@ -201,7 +208,7 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
                     error_msg = FlextLDIFConstants.FlextLDIFValidationMessages.INVALID_ATTRIBUTE_NAME.format(
                         attr_name=attr_name
                     )
-                    return FlextResult[None].fail(error_msg)
+                    return FlextResult.fail(error_msg)
 
                 # Validate attribute name pattern (LDAP attribute names)
                 attr_pattern = r"^[a-zA-Z][a-zA-Z0-9-]*$"
@@ -214,7 +221,7 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
                     error_msg = FlextLDIFConstants.FlextLDIFValidationMessages.INVALID_ATTRIBUTE_NAME.format(
                         attr_name=attr_name
                     )
-                    return FlextResult[None].fail(error_msg)
+                    return FlextResult.fail(error_msg)
 
                 # Validate values are not empty using collection rules
                 list_validation = (
@@ -226,9 +233,9 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
                     error_msg = FlextLDIFConstants.FlextLDIFValidationMessages.EMPTY_ATTRIBUTE_VALUE_NOT_ALLOWED.format(
                         attr_name=attr_name
                     )
-                    return FlextResult[None].fail(error_msg)
+                    return FlextResult.fail(error_msg)
 
-            return FlextResult[None].ok(None)
+            return FlextResult.ok(None)
 
     # =============================================================================
     # ENTITIES - Using FlextModels.Entity for mutable domain objects
@@ -237,7 +244,9 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
     class Entry(FlextModels.Value):
         """LDIF entry value object using FlextModels.Value base."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra="allow")  # LDIF entries can have dynamic attributes
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            extra="allow"
+        )  # LDIF entries can have dynamic attributes
 
         dn: FlextLDIFModels.DistinguishedName = Field(
             ..., description="Distinguished Name"
@@ -265,7 +274,7 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             return data
 
         @override
-        def validate_business_rules(self) -> FlextResult[None]:
+        def validate_business_rules(self) -> FlextResultNone:
             """Validate entry business rules using FlextResult pattern."""
             # Validate DN
             dn_result = self.dn.validate_business_rules()
@@ -282,9 +291,9 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
                 error_msg = (
                     FlextLDIFConstants.FlextLDIFValidationMessages.MISSING_OBJECTCLASS
                 )
-                return FlextResult[None].fail(error_msg)
+                return FlextResult.fail(error_msg)
 
-            return FlextResult[None].ok(None)
+            return FlextResult.ok(None)
 
         def get_attribute(self, name: str) -> list[str] | None:
             """Delegate to attributes collection."""
@@ -364,24 +373,23 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             object_classes = self.get_attribute("objectClass") or []
             return object_class.lower() in [oc.lower() for oc in object_classes]
 
-        def is_person(self) -> bool:
-            """Check if entry represents a person."""
-            person_classes = ["person", "inetOrgPerson", "organizationalPerson"]
-            return any(self.has_object_class(oc) for oc in person_classes)
-
-        def is_group(self) -> bool:
-            """Check if entry represents a group."""
-            group_classes = [
-                "group",
-                "groupOfNames",
-                "groupOfUniqueNames",
-                "posixGroup",
-            ]
-            return any(self.has_object_class(oc) for oc in group_classes)
-
         def get_object_classes(self) -> list[str]:
             """Get all object classes for this entry."""
             return self.get_attribute("objectClass") or []
+
+        def is_person(self) -> bool:
+            """Check if entry represents a person."""
+            object_classes = {oc.lower() for oc in self.get_object_classes()}
+            person_classes = {
+                oc.lower() for oc in FlextLDIFConstants.LDAP_PERSON_CLASSES
+            }
+            return bool(object_classes.intersection(person_classes))
+
+        def is_group(self) -> bool:
+            """Check if entry represents a group."""
+            object_classes = {oc.lower() for oc in self.get_object_classes()}
+            group_classes = {oc.lower() for oc in FlextLDIFConstants.LDAP_GROUP_CLASSES}
+            return bool(object_classes.intersection(group_classes))
 
         def is_person_entry(self) -> bool:
             """Alias for is_person() for compatibility."""
@@ -390,6 +398,14 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
         def is_group_entry(self) -> bool:
             """Alias for is_group() for compatibility."""
             return self.is_group()
+
+        def is_valid_entry(self) -> bool:
+            """Check if entry is valid (has DN and objectClass)."""
+            return (
+                bool(self.dn.value)
+                and self.has_attribute("objectClass")
+                and bool(self.get_attribute("objectClass"))
+            )
 
         def to_json(self) -> str:
             """Convert entry to JSON string."""
@@ -548,9 +564,9 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
 
     # Required by FlextModels.AggregateRoot
     @override
-    def validate_business_rules(self) -> FlextResult[None]:
+    def validate_business_rules(self) -> FlextResultNone:
         """Validate aggregate business rules."""
-        return FlextResult[None].ok(None)
+        return FlextResult.ok(None)
 
 
 # Export only the consolidated class

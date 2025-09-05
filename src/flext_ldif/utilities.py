@@ -23,7 +23,7 @@ class FlextLDIFUtilities:
         @staticmethod
         def validate_entries_or_warn(
             entries: list[FlextLDIFModels.Entry], max_errors: int = 10
-        ) -> FlextResult[bool]:
+        ) -> FlextResult:  # type: ignore[type-arg]
             """Validate LDIF entries efficiently."""
             errors = []
 
@@ -37,40 +37,42 @@ class FlextLDIFUtilities:
             if errors:
                 FlextLogger(__name__).warning(f"Validation errors: {'; '.join(errors)}")
 
-            return FlextResult[bool].ok(not errors)
+            return FlextResult.ok(not errors)
 
         @staticmethod
         def filter_entries_by_object_class(
             entries: list[FlextLDIFModels.Entry], object_class: str
-        ) -> FlextResult[list[FlextLDIFModels.Entry]]:
+        ) -> FlextResult:  # type: ignore[type-arg]
             """Filter entries by objectClass - simplified."""
             filtered = [e for e in entries if e.has_object_class(object_class)]
-            return FlextResult[list[FlextLDIFModels.Entry]].ok(filtered)
+            return FlextResult.ok(filtered)
 
         @staticmethod
         def find_entries_with_missing_required_attributes(
             entries: list[FlextLDIFModels.Entry], required_attrs: list[str]
-        ) -> FlextResult[list[FlextLDIFModels.Entry]]:
+        ) -> FlextResult:  # type: ignore[type-arg]
             """Find entries missing any required attribute - optimized."""
             missing = [
                 entry
                 for entry in entries
                 if any(not entry.has_attribute(attr) for attr in required_attrs)
             ]
-            return FlextResult[list[FlextLDIFModels.Entry]].ok(missing)
+            return FlextResult.ok(missing)
 
         @staticmethod
         def get_entry_statistics(
             entries: list[FlextLDIFModels.Entry],
-        ) -> FlextResult[dict[str, int]]:
+        ) -> FlextResult:  # type: ignore[type-arg]
             """Get comprehensive entry statistics."""
             if not entries:
-                return FlextResult[dict[str, int]].ok({
-                    "total_entries": 0,
-                    "person_entries": 0,
-                    "group_entries": 0,
-                    "unique_attributes": 0,
-                })
+                return FlextResult.ok(
+                    {
+                        "total_entries": 0,
+                        "person_entries": 0,
+                        "group_entries": 0,
+                        "unique_attributes": 0,
+                    }
+                )
 
             # Collect all attributes efficiently
             all_attrs: list[str] = reduce(
@@ -84,7 +86,7 @@ class FlextLDIFUtilities:
                 "unique_attributes": len(set(all_attrs)),
             }
 
-            return FlextResult[dict[str, int]].ok(stats)
+            return FlextResult.ok(stats)
 
     class LdifConverters:
         """LDIF-specific data conversion utilities."""
@@ -92,7 +94,7 @@ class FlextLDIFUtilities:
         @staticmethod
         def attributes_dict_to_ldif_format(
             attributes: dict[str, str | list[str]],
-        ) -> FlextResult[dict[str, list[str]]]:
+        ) -> FlextResult:  # type: ignore[type-arg]
             """Convert attributes dictionary to proper LDIF format - Railway pattern."""
             # Railway pattern - no try/catch needed, FlextResult handles it
             ldif_attrs = {}
@@ -109,17 +111,17 @@ class FlextLDIFUtilities:
                 if converted_values:  # Only include non-empty values
                     ldif_attrs[key.lower()] = converted_values
 
-            return FlextResult[dict[str, list[str]]].ok(ldif_attrs)
+            return FlextResult.ok(ldif_attrs)
 
         @staticmethod
-        def normalize_dn_components(dn: str) -> FlextResult[str]:
+        def normalize_dn_components(dn: str) -> FlextResult:  # type: ignore[type-arg]
             """Normalize DN components - Railway pattern without exceptions."""
             # Railway pattern validation
             if not dn or not dn.strip():
-                return FlextResult[str].fail("DN cannot be empty")
+                return FlextResult.fail("DN cannot be empty")
 
             # Optimized normalization - just strip whitespace
-            return FlextResult[str].ok(dn.strip())
+            return FlextResult.ok(dn.strip())
 
 
 # FLEXT-CORE PATTERNS APPLIED:

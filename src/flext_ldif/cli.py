@@ -15,7 +15,9 @@ from __future__ import annotations
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Protocol, TypedDict, TypeVar, cast
+from typing import TYPE_CHECKING, Protocol, TypedDict, TypeVar, cast
+
+from flext_core.container import FlextContainer
 
 # Use flext-cli instead of click/rich directly - MANDATORY per standards
 sys.path.insert(0, "/home/marlonsc/flext/flext-cli/src")
@@ -26,7 +28,23 @@ from flext_cli import FlextCliFormatters, FlextCliService
 from flext_core import FlextLogger, FlextResult, get_flext_container
 
 from flext_ldif.api import FlextLDIFAPI
+from flext_ldif.constants import FlextLDIFConstants
 from flext_ldif.models import FlextLDIFModels
+
+# Use constants from unified location
+MIN_ARGS_WITH_COMMAND = FlextLDIFConstants.FlextLDIFCliConstants.MIN_ARGS_WITH_COMMAND
+MIN_ARGS_WITH_INPUT_FILE = (
+    FlextLDIFConstants.FlextLDIFCliConstants.MIN_ARGS_WITH_INPUT_FILE
+)
+MAX_ERRORS_TO_SHOW = FlextLDIFConstants.FlextLDIFCliConstants.MAX_ERRORS_TO_SHOW
+CLI_MIN_ARGS_NO_COMMAND = (
+    FlextLDIFConstants.FlextLDIFCliConstants.CLI_MIN_ARGS_NO_COMMAND
+)
+CLI_MIN_ARGS_WITH_INPUT = (
+    FlextLDIFConstants.FlextLDIFCliConstants.CLI_MIN_ARGS_WITH_INPUT
+)
+
+T = TypeVar("T")
 
 
 class CLIContextRequired(TypedDict):
@@ -59,18 +77,21 @@ class CLIContext(CLIContextRequired, total=False):
     validation_errors: list[str]
 
 
-T = TypeVar("T")
-
-# Constants for CLI operations
-MIN_ARGS_WITH_COMMAND = 2
-MIN_ARGS_WITH_INPUT_FILE = 3
-MAX_ERRORS_TO_SHOW = 10
-CLI_MIN_ARGS_NO_COMMAND = 2
-CLI_MIN_ARGS_WITH_INPUT = 3
-
 # Use consolidated class directly - NO aliases
 FlextLDIFConfig = FlextLDIFModels.Config
 FlextLDIFEntry = FlextLDIFModels.Entry
+
+# Type aliases for mypy compatibility with Python 3.12+ generic syntax
+if TYPE_CHECKING:
+    type FlextResultCLI = FlextResult[CLIContext]
+    type FlextResultStr = FlextResult[str]
+    type FlextResultEntries = FlextResult[list[FlextLDIFEntry]]
+    type FlextResultValidation = FlextResult[tuple[list[FlextLDIFEntry], list[str]]]
+else:
+    FlextResultCLI = FlextResult
+    FlextResultStr = FlextResult
+    FlextResultEntries = FlextResult
+    FlextResultValidation = FlextResult
 
 logger = FlextLogger(__name__)
 
@@ -78,7 +99,7 @@ logger = FlextLogger(__name__)
 class ProcessingStep(Protocol):
     """Protocol for processing steps in the pipeline."""
 
-    def execute(self, context: CLIContext) -> FlextResult[CLIContext]:
+    def execute(self, context: CLIContext) -> FlextResultCLI:
         """Execute the processing step with context."""
         ...
 
@@ -105,27 +126,27 @@ class LdifProcessingTemplate(ABC):
         )
 
     @abstractmethod
-    def _validate_inputs(self, context: CLIContext) -> FlextResult[CLIContext]:
+    def _validate_inputs(self, context: CLIContext) -> FlextResultCLI:
         """Validate input parameters."""
         ...
 
     @abstractmethod
-    def _prepare_processing(self, context: CLIContext) -> FlextResult[CLIContext]:
+    def _prepare_processing(self, context: CLIContext) -> FlextResultCLI:
         """Prepare for main processing operation."""
         ...
 
     @abstractmethod
-    def _execute_main_operation(self, context: CLIContext) -> FlextResult[CLIContext]:
+    def _execute_main_operation(self, context: CLIContext) -> FlextResultCLI:
         """Execute the main processing operation."""
         ...
 
-    def _post_process(self, context: CLIContext) -> FlextResult[CLIContext]:
+    def _post_process(self, context: CLIContext) -> FlextResultCLI:
         """Post-process results (optional override)."""
-        return FlextResult[CLIContext].ok(context)
+        return FlextResult.ok(context)
 
-    def _finalize_results(self, context: CLIContext) -> FlextResult[CLIContext]:
+    def _finalize_results(self, context: CLIContext) -> FlextResultCLI:
         """Finalize and return results (optional override)."""
-        return FlextResult[CLIContext].ok(context)
+        return FlextResult.ok(context)
 
 
 class ParseProcessingTemplate(LdifProcessingTemplate):
@@ -135,22 +156,22 @@ class ParseProcessingTemplate(LdifProcessingTemplate):
         super().__init__(formatter)
         self.api = api
 
-    def _validate_inputs(self, context: CLIContext) -> FlextResult[CLIContext]:
+    def _validate_inputs(self, context: CLIContext) -> FlextResultCLI:
         """Validate parse operation inputs."""
         input_file = context.get("input_file")
         if not input_file or not Path(input_file).exists():
-            return FlextResult[CLIContext].fail("Input file not found or invalid")
-        return FlextResult[CLIContext].ok(context)
+            return FlextResult.fail("Input file not found or invalid")
+        return FlextResult.ok(context)
 
-    def _prepare_processing(self, context: CLIContext) -> FlextResult[CLIContext]:
+    def _prepare_processing(self, context: CLIContext) -> FlextResultCLI:
         """Prepare for parsing operation."""
         max_entries = context.get("max_entries")
         if max_entries:
             # Update config through context
             context["config_updated"] = True
-        return FlextResult[CLIContext].ok(context)
+        return FlextResult.ok(context)
 
-    def _execute_main_operation(self, context: CLIContext) -> FlextResult[CLIContext]:
+    def _execute_main_operation(self, context: CLIContext) -> FlextResultCLI:
         """Execute LDIF parsing."""
         input_file = Path(context["input_file"])
 
@@ -178,24 +199,24 @@ class ParseProcessingTemplate(LdifProcessingTemplate):
 class ValidationProcessingTemplate(LdifProcessingTemplate):
     """Concrete template for LDIF validation operations."""
 
-    def _validate_inputs(self, context: CLIContext) -> FlextResult[CLIContext]:
+    def _validate_inputs(self, context: CLIContext) -> FlextResultCLI:
         """Validate validation operation inputs."""
         entries = context.get("entries", [])
         if not entries:
-            return FlextResult[CLIContext].ok(context)  # Skip validation if no entries
-        return FlextResult[CLIContext].ok(context)
+            return FlextResult.ok(context)  # Skip validation if no entries
+        return FlextResult.ok(context)
 
-    def _prepare_processing(self, context: CLIContext) -> FlextResult[CLIContext]:
+    def _prepare_processing(self, context: CLIContext) -> FlextResultCLI:
         """Prepare for validation operation."""
         context["validation_started"] = True
-        return FlextResult[CLIContext].ok(context)
+        return FlextResult.ok(context)
 
-    def _execute_main_operation(self, context: CLIContext) -> FlextResult[CLIContext]:
+    def _execute_main_operation(self, context: CLIContext) -> FlextResultCLI:
         """Execute LDIF validation using functional approach."""
         entries = context.get("entries", [])
         if not entries:
             context["validation_skipped"] = True
-            return FlextResult[CLIContext].ok(context)
+            return FlextResult.ok(context)
 
         # Functional validation processing
         validation_results = [
@@ -219,11 +240,9 @@ class ValidationProcessingTemplate(LdifProcessingTemplate):
 
         if errors:
             self.formatter.print_error(f"{len(errors)} validation errors found")
-            return FlextResult[CLIContext].fail(
-                f"Validation failed: {len(errors)} errors"
-            )
+            return FlextResult.fail(f"Validation failed: {len(errors)} errors")
 
-        return FlextResult[CLIContext].ok(context)
+        return FlextResult.ok(context)
 
 
 class WriteProcessingTemplate(LdifProcessingTemplate):
@@ -233,37 +252,41 @@ class WriteProcessingTemplate(LdifProcessingTemplate):
         super().__init__(formatter)
         self.api = api
 
-    def _validate_inputs(self, context: CLIContext) -> FlextResult[CLIContext]:
+    def _validate_inputs(self, context: CLIContext) -> FlextResultCLI:
         """Validate write operation inputs."""
         output_file = context.get("output_file")
         entries = context.get("entries", [])
 
         if not output_file:
             context["write_skipped"] = True
-            return FlextResult[CLIContext].ok(context)
+            return FlextResult.ok(context)
 
         if not entries:
-            return FlextResult[CLIContext].fail("No entries to write")
+            return FlextResult.fail("No entries to write")
 
-        return FlextResult[CLIContext].ok(context)
+        return FlextResult.ok(context)
 
-    def _prepare_processing(self, context: CLIContext) -> FlextResult[CLIContext]:
+    def _prepare_processing(self, context: CLIContext) -> FlextResultCLI:
         """Prepare for write operation."""
         if context.get("write_skipped"):
-            return FlextResult[CLIContext].ok(context)
+            return FlextResult.ok(context)
         context["write_prepared"] = True
-        return FlextResult[CLIContext].ok(context)
+        return FlextResult.ok(context)
 
-    def _execute_main_operation(self, context: CLIContext) -> FlextResult[CLIContext]:
+    def _execute_main_operation(self, context: CLIContext) -> FlextResultCLI:
         """Execute LDIF writing."""
         if context.get("write_skipped"):
-            return FlextResult[CLIContext].ok(context)
+            return FlextResult.ok(context)
 
         entries = context["entries"]
         output_file_path = context.get("output_file")
         if output_file_path is None:
-            return FlextResult[CLIContext].fail("Output file path is required")
-        output_file = output_file_path if isinstance(output_file_path, Path) else Path(str(output_file_path))
+            return FlextResult.fail("Output file path is required")
+        output_file = (
+            output_file_path
+            if isinstance(output_file_path, Path)
+            else Path(str(output_file_path))
+        )
 
         return self.api.write_file(entries, output_file).map(
             lambda _: self._add_write_success_to_context(context, output_file)
@@ -291,8 +314,19 @@ class FlextLDIFCli(FlextCliService):
     def __init__(self, config: FlextLDIFConfig | None = None) -> None:
         """Initialize CLI service with FlextContainer dependency injection."""
         super().__init__()
-        self.config = config or FlextLDIFConfig()
-        self._container = get_flext_container()
+        # Use object.__setattr__ to bypass frozen model restrictions
+        object.__setattr__(self, "config", config or FlextLDIFConfig())
+        object.__setattr__(self, "_container", get_flext_container())
+
+        # Type annotations for mypy (dynamically set attributes)
+        if TYPE_CHECKING:
+            self.config: FlextLDIFConfig
+            self._container: FlextContainer
+            self.api: FlextLDIFAPI
+            self.formatter: FlextCliFormatters
+            self.parse_template: ParseProcessingTemplate
+            self.validation_template: ValidationProcessingTemplate
+            self.write_template: WriteProcessingTemplate
 
         # Register CLI components in container
         self._container.register("cli_config", self.config)
@@ -303,26 +337,40 @@ class FlextLDIFCli(FlextCliService):
         api_result = self._container.get("cli_api")
         formatter_result = self._container.get("cli_formatter")
 
-        # Extract values from FlextResult if needed
-        self.api = cast(
-            "FlextLDIFAPI",
-            api_result.value if hasattr(api_result, "value") else api_result
+        # Extract values from FlextResult if needed and use object.__setattr__ for frozen classes
+        object.__setattr__(
+            self,
+            "api",
+            cast(
+                "FlextLDIFAPI",
+                api_result.value if hasattr(api_result, "value") else api_result,
+            ),
         )
-        self.formatter = cast(
-            "FlextCliFormatters",
-            formatter_result.value
-            if hasattr(formatter_result, "value")
-            else formatter_result
+        object.__setattr__(
+            self,
+            "formatter",
+            cast(
+                "FlextCliFormatters",
+                formatter_result.value
+                if hasattr(formatter_result, "value")
+                else formatter_result,
+            ),
         )
 
         # Initialize processing templates with dependency injection
-        self.parse_template = ParseProcessingTemplate(self.api, self.formatter)
-        self.validation_template = ValidationProcessingTemplate(self.formatter)
-        self.write_template = WriteProcessingTemplate(self.api, self.formatter)
+        object.__setattr__(
+            self, "parse_template", ParseProcessingTemplate(self.api, self.formatter)
+        )
+        object.__setattr__(
+            self, "validation_template", ValidationProcessingTemplate(self.formatter)
+        )
+        object.__setattr__(
+            self, "write_template", WriteProcessingTemplate(self.api, self.formatter)
+        )
 
-    def execute(self) -> FlextResult[str]:
+    def execute(self) -> FlextResultStr:  # type: ignore[override]
         """Abstract method implementation required by FlextCliService."""
-        return FlextResult[str].ok("CLI ready")
+        return FlextResult.ok("CLI ready")
 
     def parse_and_process(
         self,
@@ -331,7 +379,7 @@ class FlextLDIFCli(FlextCliService):
         output_file: Path | None = None,
         validate: bool = False,
         max_entries: int | None = None,
-    ) -> FlextResult[list[FlextLDIFEntry]]:
+    ) -> FlextResultEntries:
         """Process LDIF using Template Method Pattern with zero complexity.
 
         Single monadic chain of template processing eliminating all conditional
@@ -339,12 +387,15 @@ class FlextLDIFCli(FlextCliService):
         and processing logic while maintaining functional purity.
         """
         # Create processing context
-        context = cast("CLIContext", {
-            "input_file": Path(str(input_file)),
-            "output_file": Path(str(output_file)) if output_file else None,
-            "validate": validate,
-            "max_entries": max_entries,
-        })
+        context = cast(
+            "CLIContext",
+            {
+                "input_file": Path(str(input_file)),
+                "output_file": Path(str(output_file)) if output_file else None,
+                "validate": validate,
+                "max_entries": max_entries,
+            },
+        )
 
         # Execute processing pipeline using Template Method Pattern
         return (
@@ -352,19 +403,17 @@ class FlextLDIFCli(FlextCliService):
             .bind(
                 lambda ctx: self._conditional_validation(ctx)
                 if validate
-                else FlextResult[CLIContext].ok(ctx)
+                else FlextResult.ok(ctx)
             )
             .bind(self.write_template.process)
             .map(operator.itemgetter("entries"))
         )
 
-    def _conditional_validation(self, context: CLIContext) -> FlextResult[CLIContext]:
+    def _conditional_validation(self, context: CLIContext) -> FlextResultCLI:
         """Conditionally execute validation template."""
         return self.validation_template.process(context)
 
-    def validate_entries(
-        self, entries: list[FlextLDIFEntry]
-    ) -> FlextResult[tuple[list[FlextLDIFEntry], list[str]]]:
+    def validate_entries(self, entries: list[FlextLDIFEntry]) -> FlextResultValidation:
         """Validate entries using template pattern."""
         context = cast("CLIContext", {"entries": entries})
 
@@ -374,7 +423,7 @@ class FlextLDIFCli(FlextCliService):
 
     def write_entries(
         self, entries: list[FlextLDIFEntry], output_file: Path
-    ) -> FlextResult[str]:
+    ) -> FlextResultStr:
         """Write entries using template pattern."""
         context = cast("CLIContext", {"entries": entries, "output_file": output_file})
 
@@ -390,33 +439,43 @@ def main() -> None:
 
     command = sys.argv[1].lower()
 
+    # Handle help command
+    if command in {"--help", "-h", "help"}:
+        sys.exit(0)
+
     try:
         cli = FlextLDIFCli()
 
         if command == "parse":
             if len(sys.argv) < CLI_MIN_ARGS_WITH_INPUT:
+                logger.error("Parse command requires input file argument")
                 sys.exit(1)
             input_file = Path(sys.argv[2])
             result = cli.parse_and_process(input_file)
             if result.is_success:
                 sys.exit(0)
             else:
+                logger.error(f"Parse failed: {result.error}")
                 sys.exit(1)
 
         elif command == "validate":
             if len(sys.argv) < CLI_MIN_ARGS_WITH_INPUT:
+                logger.error("Validate command requires input file argument")
                 sys.exit(1)
             input_file = Path(sys.argv[2])
             result = cli.parse_and_process(input_file, validate=True)
             if result.is_success:
                 sys.exit(0)
             else:
+                logger.error(f"Validation failed: {result.error}")
                 sys.exit(1)
 
         else:
+            logger.error(f"Unknown command: {command}")
             sys.exit(1)
 
     except Exception:
+        logger.exception("CLI execution failed")
         sys.exit(1)
 
 
