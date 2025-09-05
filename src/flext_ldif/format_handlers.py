@@ -139,7 +139,7 @@ class FlextLDIFFormatHandler:
         return [item.lower() for item in items or []]
 
     @classmethod
-    def parse_ldif(cls, content: str) -> FlextResult[list[FlextLDIFModels.Entry]]:
+    def parse_ldif(cls, content: str) -> FlextResult:  # type: ignore[type-arg]
         """Parse LDIF content using modernized parser.
 
         Args:
@@ -167,19 +167,17 @@ class FlextLDIFFormatHandler:
                     count=len(entries)
                 ),
             )
-            return FlextResult[list[FlextLDIFModels.Entry]].ok(entries)
+            return FlextResult.ok(entries)
 
         except (ValueError, AttributeError, TypeError, UnicodeError) as e:
             error_msg: str = f"Modernized LDIF parse failed: {e}"
             logger.exception(
                 FlextLDIFConstants.FlextLDIFValidationMessages.MODERNIZED_PARSING_FAILED
             )
-            return FlextResult[list[FlextLDIFModels.Entry]].fail(error_msg)
+            return FlextResult.fail(error_msg)
 
     @classmethod
-    def write_ldif(
-        cls, entries: list[FlextLDIFModels.Entry] | None
-    ) -> FlextResult[str]:
+    def write_ldif(cls, entries: list[FlextLDIFModels.Entry] | None) -> FlextResult:  # type: ignore[type-arg]
         """Write LDIF entries using modernized writer.
 
         Args:
@@ -191,7 +189,7 @@ class FlextLDIFFormatHandler:
         """
         if entries is None:
             logger.error("Cannot write None entries")
-            return FlextResult[str].fail(
+            return FlextResult.fail(
                 FlextLDIFConstants.FlextLDIFValidationMessages.ENTRIES_CANNOT_BE_NONE
             )
 
@@ -206,14 +204,14 @@ class FlextLDIFFormatHandler:
                     count=writer.records_written,
                 ),
             )
-            return FlextResult[str].ok(output)
+            return FlextResult.ok(output)
 
         except (ValueError, AttributeError, TypeError, UnicodeError) as e:
             error_msg: str = f"Modernized LDIF write failed: {e}"
             logger.exception(
                 FlextLDIFConstants.FlextLDIFValidationMessages.MODERNIZED_WRITING_FAILED
             )
-            return FlextResult[str].fail(error_msg)
+            return FlextResult.fail(error_msg)
 
 
 class FlextLDIFWriter:

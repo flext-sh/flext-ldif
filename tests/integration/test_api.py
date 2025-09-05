@@ -134,7 +134,7 @@ objectClass: person
 
             # Test write file
             output_file = temp_file.with_suffix(".output.ldif")
-            write_result = api_with_config.write_file(
+            write_result = api_with_config.write_entries_to_file(
                 parse_result.value,
                 str(output_file),
             )

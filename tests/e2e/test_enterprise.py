@@ -233,7 +233,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
             sorted_persons = sort_result.value
 
             # Step 3: Write to output file
-            write_result = api.write_file(sorted_persons, output_path)
+            write_result = api.write_entries_to_file(sorted_persons, output_path)
             assert write_result.is_success
 
             # Step 4: Verify output file
@@ -289,7 +289,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
 
         try:
             # Write to file
-            file_write_result = api.write_file(entries, str(temp_path))
+            file_write_result = api.write_entries_to_file(entries, str(temp_path))
             assert file_write_result.is_success
 
             # Read from file
@@ -344,7 +344,7 @@ member: cn=Bob Wilson,ou=people,dc=enterprise,dc=com
         try:
             # Use API for file writing, convenience function only returns string content
             api = FlextLDIFAPI()
-            file_result = api.write_file(entries, temp_path)
+            file_result = api.write_entries_to_file(entries, temp_path)
             assert file_result.is_success
             assert temp_path.exists()
 

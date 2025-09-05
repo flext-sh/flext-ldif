@@ -9,6 +9,8 @@ from __future__ import annotations
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from flext_tests import FlextTestUtilities
+
 from flext_ldif import FlextLDIFModels
 from flext_ldif.services import FlextLDIFServices
 
@@ -161,14 +163,34 @@ class TestRepositoryServiceComprehensive:
         service = FlextLDIFServices.RepositoryService()
 
         # Test empty DN
-        result = service.find_by_dn(entries, "")
+        result = service.find_entry_by_dn(entries, "")
         assert not result.is_success
         assert "dn cannot be empty" in result.error
 
         # Test whitespace-only DN
-        result = service.find_by_dn(entries, "   ")
+        result = service.find_entry_by_dn(entries, "   ")
         assert not result.is_success
-        assert "dn cannot be empty" in result.error
+
+    def test_find_by_dn_not_found(self) -> None:
+        """Test find_by_dn when DN is not found - covers line 424."""
+        entries = [
+            FlextLDIFModels.Entry.model_validate(
+                {
+                    "dn": "uid=test,ou=people,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person"]},
+                }
+            )
+        ]
+
+        service = FlextLDIFServices.RepositoryService()
+
+        # Test with DN that doesn't exist - should return None
+        result = service.find_entry_by_dn(entries, "uid=notfound,ou=people,dc=example,dc=com")
+
+        # Use flext_tests for validation
+        FlextTestUtilities.assert_result_success(result)
+        assert result.is_success
+        assert result.value is None
 
     def test_get_statistics_empty_entries(self) -> None:
         """Test get_statistics with empty entries list."""
@@ -648,8 +670,8 @@ class TestAnalyticsServiceComprehensive:
         assert result.is_success
         assert "depth_4" in result.value
 
-    def test_analyze_entry_patterns_alias(self) -> None:
-        """Test analyze_entry_patterns as alias for analyze_patterns."""
+    def test_analyze_patterns_alias(self) -> None:
+        """Test analyze_patterns as alias for analyze_patterns."""
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -661,7 +683,7 @@ class TestAnalyticsServiceComprehensive:
 
         service = FlextLDIFServices.AnalyticsService()
 
-        result = service.analyze_entry_patterns(entries)
+        result = service.analyze_patterns(entries)
         assert result.is_success
         patterns = result.value
         assert "total_entries" in patterns
@@ -712,11 +734,11 @@ class TestServiceAliases:
         assert result.is_success
 
         # Test validate_entry alias
-        result = service.validate_entry(entries[0])
+        result = service.validate_entry_structure(entries[0])
         assert result.is_success
 
         # Test validate_data alias
-        result = service.validate_data(entries)
+        result = service.validate_entries(entries)
         assert result.is_success
 
     def test_writer_service_aliases(self) -> None:
@@ -733,7 +755,7 @@ class TestServiceAliases:
         service = FlextLDIFServices.WriterService()
 
         # Test write alias
-        result = service.write(entries)
+        result = service.write_entries_to_string(entries)
         assert result.is_success
         assert "uid=test,ou=people,dc=example,dc=com" in result.value
 

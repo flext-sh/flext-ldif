@@ -148,9 +148,7 @@ class TestFlextLDIFExceptions:
         assert "File error" in str(file_error)
 
         # Test entry validation error
-        entry_validation_error = FlextLDIFValidationError(
-            "Entry validation error"
-        )
+        entry_validation_error = FlextLDIFValidationError("Entry validation error")
         assert isinstance(entry_validation_error, FlextLDIFValidationError)
         assert "Entry validation error" in str(entry_validation_error)
 
@@ -180,9 +178,7 @@ class TestFlextLDIFExceptions:
 
     def test_entry_validation_error_with_params(self) -> None:
         """Test FlextLDIFValidationError with additional parameters."""
-        error = FlextLDIFValidationError(
-            "Validation failed"
-        )
+        error = FlextLDIFValidationError("Validation failed")
         assert "Validation failed" in str(error)
 
     def test_file_error_with_all_context_parameters(self) -> None:
@@ -194,7 +190,7 @@ class TestFlextLDIFExceptions:
                 "line_number": 42,
                 "operation": "read",
                 "encoding": "utf-8",
-            }
+            },
         )
         assert "File operation failed" in str(error)
 

@@ -33,7 +33,7 @@ class TestValidators:
 
         # Check for required attributes based on objectClass
         if validations["has_object_class"] and entry.attributes:
-            object_classes = entry.attributes.get("objectClass", [])
+            object_classes = entry.get_attribute("objectClass") or []
             if isinstance(object_classes, str):
                 object_classes = [object_classes]
 

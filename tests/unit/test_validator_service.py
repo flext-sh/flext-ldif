@@ -73,7 +73,7 @@ class TestFlextLDIFServicesValidatorService:
             )
         ]
 
-        result = service.validate_data(entries)
+        result = service.validate_entries(entries)
 
         assert result.is_success
         assert result.value is True
@@ -92,7 +92,7 @@ class TestFlextLDIFServicesValidatorService:
             }
         )
 
-        result = service.validate_entry(entry)
+        result = service.validate_entry_structure(entry)
 
         assert result.is_success
         assert result.value is True
@@ -112,7 +112,7 @@ class TestFlextLDIFServicesValidatorService:
             )
 
             # If creation succeeds (shouldn't), test service validation
-            result = service.validate_entry(invalid_entry)
+            result = service.validate_entry_structure(invalid_entry)
             assert result.is_success or result.is_failure
 
         except (FlextLDIFExceptions.ValidationError, ValueError, Exception):
@@ -265,7 +265,7 @@ class TestFlextLDIFServicesValidatorService:
             ),
         ]
 
-        result = service.validate_ldif_entries(entries)
+        result = service.validate_entries(entries)
 
         assert result.is_success
         assert result.value is True
@@ -390,7 +390,9 @@ class TestFlextLDIFServicesValidatorService:
             # Try to create entry with empty DN - this will fail during creation
             # due to pydantic validation, so we need to handle it
             invalid_entry = FlextLDIFModels.Entry(
-                dn=FlextLDIFModels.DistinguishedName(value="cn=invalid"),  # Valid format but will fail business rules
+                dn=FlextLDIFModels.DistinguishedName(
+                    value="cn=invalid"
+                ),  # Valid format but will fail business rules
                 attributes=FlextLDIFModels.LdifAttributes(
                     data={}
                 ),  # Empty attributes will fail validation

@@ -9,7 +9,7 @@ from __future__ import annotations
 from flext_core import FlextResult
 
 from flext_ldif import FlextLDIFModels, FlextLDIFServices
-from tests.support import LdifTestData, TestFileManager, TestValidators
+from tests.test_support import LdifTestData, TestFileManager, TestValidators
 
 
 class TestFlextLDIFServicesParserServiceReal:
@@ -200,7 +200,7 @@ class TestParserIntegrationReal:
 
         # Validate each parsed entry with real validator
         for entry in entries:
-            validation_result = validator.validate_entry(entry)
+            validation_result = validator.validate_entry_structure(entry)
             TestValidators.assert_successful_result(validation_result)
 
     def test_parser_with_real_writer_roundtrip(

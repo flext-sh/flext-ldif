@@ -62,7 +62,7 @@ objectClass: person
         """Test validator service with valid entry."""
         service = FlextLDIFServices.ValidatorService()
         # Use unwrap_or() for cleaner validation testing
-        is_valid = service.validate_data([sample_entry]).unwrap_or(False)
+        is_valid = service.validate_entries([sample_entry]).unwrap_or(False)
         assert is_valid
 
     def test_writer_service_with_valid_entries(
@@ -72,5 +72,5 @@ objectClass: person
         """Test writer service with valid entries."""
         service = FlextLDIFServices.WriterService()
         # Use unwrap_or() for cleaner writer testing
-        output = service.write([sample_entry]).unwrap_or("")
+        output = service.write_entries_to_string([sample_entry]).unwrap_or("")
         assert "dn: cn=test,dc=example,dc=com" in output

@@ -177,6 +177,16 @@ markers = [
     "slow: Slow tests",
     "smoke: Smoke tests",
     "e2e: End-to-end tests",
+    "concurrency: Concurrency tests",
+    "race_condition: Race condition tests",
+    "performance: Performance tests",
+    "memory: Memory tests",
+    "benchmark: Benchmark tests",
+    "regression: Regression tests",
+    "complexity: Complexity tests",
+    "memory_limit: Memory limit tests",
+    "timeout: Timeout tests",
+    "asyncio: Async tests",
 ]
 filterwarnings = ["error", "ignore::UserWarning", "ignore::DeprecationWarning"]
 

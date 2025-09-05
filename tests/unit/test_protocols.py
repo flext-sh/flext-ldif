@@ -47,7 +47,7 @@ class TestProtocolDefinitions:
         """Test FlextLDIFProtocols.AnalyticsProtocol is properly defined."""  # Check if it's a Protocol class
         assert hasattr(FlextLDIFProtocols.AnalyticsProtocol, "__annotations__")
         # Check if it has the expected methods
-        assert hasattr(FlextLDIFProtocols.AnalyticsProtocol, "analyze_entry_patterns")
+        assert hasattr(FlextLDIFProtocols.AnalyticsProtocol, "analyze_patterns")
         assert hasattr(
             FlextLDIFProtocols.AnalyticsProtocol, "get_objectclass_distribution"
         )

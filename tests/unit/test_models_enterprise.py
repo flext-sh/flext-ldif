@@ -785,7 +785,9 @@ description: With multiple descriptions"""
 
     def test_attributes_add_value(self) -> None:
         """Test adding values to attributes."""
-        attrs = FlextLDIFModels.LdifAttributes.model_validate({"data": {"cn": ["John"]}})
+        attrs = FlextLDIFModels.LdifAttributes.model_validate(
+            {"data": {"cn": ["John"]}}
+        )
         # Test that we can access the data
         assert "cn" in attrs.data
         assert attrs.data["cn"] == ["John"]
@@ -876,9 +878,15 @@ description: With multiple descriptions"""
 
     def test_attributes_equality(self) -> None:
         """Test attributes equality with dict and other attributes."""
-        attrs1 = FlextLDIFModels.LdifAttributes.model_validate({"data": {"cn": ["John"]}})
-        attrs2 = FlextLDIFModels.LdifAttributes.model_validate({"data": {"cn": ["John"]}})
-        attrs3 = FlextLDIFModels.LdifAttributes.model_validate({"data": {"cn": ["Jane"]}})
+        attrs1 = FlextLDIFModels.LdifAttributes.model_validate(
+            {"data": {"cn": ["John"]}}
+        )
+        attrs2 = FlextLDIFModels.LdifAttributes.model_validate(
+            {"data": {"cn": ["John"]}}
+        )
+        attrs3 = FlextLDIFModels.LdifAttributes.model_validate(
+            {"data": {"cn": ["Jane"]}}
+        )
 
         assert attrs1 == attrs2
         assert attrs1 != attrs3
@@ -889,8 +897,12 @@ description: With multiple descriptions"""
 
     def test_attributes_hash(self) -> None:
         """Test attributes hashing for use in sets and dicts."""
-        attrs1 = FlextLDIFModels.LdifAttributes.model_validate({"data": {"cn": ["John"]}})
-        attrs2 = FlextLDIFModels.LdifAttributes.model_validate({"data": {"cn": ["John"]}})
+        attrs1 = FlextLDIFModels.LdifAttributes.model_validate(
+            {"data": {"cn": ["John"]}}
+        )
+        attrs2 = FlextLDIFModels.LdifAttributes.model_validate(
+            {"data": {"cn": ["John"]}}
+        )
 
         # Test that attributes can be created and compared
         assert attrs1 == attrs2

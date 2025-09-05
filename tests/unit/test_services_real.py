@@ -85,7 +85,7 @@ class TestAnalyticsService:
         assert metrics["total_entries"] == 2
         assert metrics["entries_with_cn"] == 2
         assert metrics["entries_with_mail"] == 1
-        assert metrics["entries_with_telephoneNumber"] == 1
+        assert metrics["entries_with_telephone"] == 1
 
     def test_analyze_patterns(self) -> None:
         """Test analyze_patterns method."""
@@ -240,8 +240,8 @@ class TestAnalyticsService:
         assert result.is_success is True
         assert "depth_4" in result.value
 
-    def test_analyze_entry_patterns(self) -> None:
-        """Test analyze_entry_patterns method (alias)."""
+    def test_analyze_patterns_with_entries(self) -> None:
+        """Test analyze_patterns method with real entries."""
         service = FlextLDIFServices.AnalyticsService()
         entries = [
             FlextLDIFModels.Entry.model_validate(
@@ -256,7 +256,7 @@ class TestAnalyticsService:
             )
         ]
 
-        result = service.analyze_entry_patterns(entries)
+        result = service.analyze_patterns(entries)
 
         assert result.is_success is True
         patterns = result.value
@@ -401,7 +401,7 @@ class TestWriterService:
             )
         ]
 
-        result = service.write(entries)
+        result = service.write_entries_to_string(entries)
 
         assert result.is_success is True
         assert "uid=alias" in result.value
@@ -483,7 +483,7 @@ class TestWriterService:
             tmp_path = tmp_file.name
 
         try:
-            result = service.write_file(entries, tmp_path)
+            result = service.write_entries_to_file(entries, tmp_path)
 
             assert result.is_success is True
 

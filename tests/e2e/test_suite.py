@@ -164,7 +164,7 @@ member: cn=John Doe,ou=people,dc=example,dc=com
 
             # Step 3: Write processed entries to new file
             output_path = input_path.with_suffix(".processed.ldif")
-            write_result = api.write_file(people_entries, str(output_path))
+            write_result = api.write_entries_to_file(people_entries, str(output_path))
             assert write_result.is_success
 
             # Step 4: Verify output file

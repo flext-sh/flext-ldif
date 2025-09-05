@@ -33,7 +33,7 @@ class TestFlextLDIFServicesWriterService:
     def test_write_empty_entries(self) -> None:
         """Test writing empty list of entries."""
         service = FlextLDIFServices.WriterService()
-        result = service.write([])
+        result = service.write_entries_to_string([])
 
         assert result.is_success
         assert result.value == ""
@@ -48,7 +48,7 @@ class TestFlextLDIFServicesWriterService:
             }
         )
 
-        result = service.write([entry])
+        result = service.write_entries_to_string([entry])
 
         assert result.is_success
         assert result.value is not None
@@ -74,7 +74,7 @@ class TestFlextLDIFServicesWriterService:
             ),
         ]
 
-        result = service.write(entries)
+        result = service.write_entries_to_string(entries)
 
         assert result.is_success
         assert result.value is not None
@@ -92,7 +92,7 @@ class TestFlextLDIFServicesWriterService:
             attributes={"cn": ["test"], "objectClass": ["person"]},
         )
 
-        result = service.write([valid_entry])
+        result = service.write_entries_to_string([valid_entry])
         assert result.is_success  # Normal case should work
 
     def test_write_entry_with_special_characters(self) -> None:
@@ -105,7 +105,7 @@ class TestFlextLDIFServicesWriterService:
             attributes={"cn": ["José María"], "objectClass": ["person"]},
         )
 
-        result = service.write([entry])
+        result = service.write_entries_to_string([entry])
 
         assert result.is_success
         assert result.value is not None
@@ -125,7 +125,7 @@ class TestFlextLDIFServicesWriterService:
             },
         )
 
-        result = service.write([entry])
+        result = service.write_entries_to_string([entry])
 
         assert result.is_success
         assert result.value is not None
@@ -214,14 +214,14 @@ class TestFlextLDIFServicesWriterService:
             tmp_path = tmp_file.name
 
         try:
-            result = service.write_file(entries, tmp_path)
+            result = service.write_entries_to_file(entries, tmp_path)
 
             assert result.is_success
             assert result.value is True
 
             # Verify file was written
             with Path(tmp_path).open(
-                encoding=FlextLDIFConstants.DEFAULT_OUTPUT_ENCODING
+                encoding=FlextLDIFConstants.FlextLDIFCoreConstants.DEFAULT_ENCODING
             ) as f:
                 content = f.read()
                 assert "dn: cn=Test,dc=example,dc=com" in content
@@ -247,7 +247,7 @@ class TestFlextLDIFServicesWriterService:
             tmp_path = tmp_file.name
 
         try:
-            result = service.write_file(entries, tmp_path, encoding="utf-8")
+            result = service.write_entries_to_file(entries, tmp_path, encoding="utf-8")
 
             assert result.is_success
             assert result.value is True
@@ -271,7 +271,7 @@ class TestFlextLDIFServicesWriterService:
 
         # Try to write to an invalid path that will cause a file system exception
         invalid_path = "/non/existent/directory/test.ldif"
-        result = service.write_file([entry], invalid_path)
+        result = service.write_entries_to_file([entry], invalid_path)
 
         assert result.is_failure
         assert result.error is not None
@@ -291,7 +291,9 @@ class TestFlextLDIFServicesWriterService:
 
         try:
             result = service._write_content_to_file(
-                content, tmp_path, FlextLDIFConstants.DEFAULT_OUTPUT_ENCODING
+                content,
+                tmp_path,
+                FlextLDIFConstants.FlextLDIFCoreConstants.DEFAULT_ENCODING,
             )
 
             assert result.is_success
@@ -299,7 +301,7 @@ class TestFlextLDIFServicesWriterService:
 
             # Verify content was written
             with Path(tmp_path).open(
-                encoding=FlextLDIFConstants.DEFAULT_OUTPUT_ENCODING
+                encoding=FlextLDIFConstants.FlextLDIFCoreConstants.DEFAULT_ENCODING
             ) as f:
                 written_content = f.read()
                 assert written_content == content
@@ -314,7 +316,9 @@ class TestFlextLDIFServicesWriterService:
         # Try to write to a path that will likely cause permission error (non-existent directory)
         invalid_path = "/non/existent/directory/test.ldif"
         result = service._write_content_to_file(
-            content, invalid_path, FlextLDIFConstants.DEFAULT_OUTPUT_ENCODING
+            content,
+            invalid_path,
+            FlextLDIFConstants.FlextLDIFCoreConstants.DEFAULT_ENCODING,
         )
 
         assert result.is_failure
@@ -329,7 +333,9 @@ class TestFlextLDIFServicesWriterService:
         # Create a real scenario that causes OSError - try to write to non-existent directory
         invalid_path = "/non/existent/directory/test.ldif"
         result = service._write_content_to_file(
-            content, invalid_path, FlextLDIFConstants.DEFAULT_OUTPUT_ENCODING
+            content,
+            invalid_path,
+            FlextLDIFConstants.FlextLDIFCoreConstants.DEFAULT_ENCODING,
         )
 
         assert result.is_failure
@@ -367,14 +373,14 @@ class TestFlextLDIFServicesWriterService:
             tmp_path = tmp_file.name
 
         try:
-            result = service.write_file([], tmp_path)
+            result = service.write_entries_to_file([], tmp_path)
 
             assert result.is_success
             assert result.value is True
 
             # Verify empty file was created
             with Path(tmp_path).open(
-                encoding=FlextLDIFConstants.DEFAULT_OUTPUT_ENCODING
+                encoding=FlextLDIFConstants.FlextLDIFCoreConstants.DEFAULT_ENCODING
             ) as f:
                 content = f.read()
                 assert content == ""
@@ -399,14 +405,14 @@ class TestFlextLDIFServicesWriterService:
             tmp_path = Path(tmp_file.name)
 
         try:
-            result = service.write_file(entries, tmp_path)
+            result = service.write_entries_to_file(entries, tmp_path)
 
             assert result.is_success
             assert result.value is True
 
             # Verify file was written
             content = tmp_path.read_text(
-                encoding=FlextLDIFConstants.DEFAULT_OUTPUT_ENCODING
+                encoding=FlextLDIFConstants.FlextLDIFCoreConstants.DEFAULT_ENCODING
             )
             assert "dn: cn=PathTest,dc=example,dc=com" in content
         finally:

@@ -64,7 +64,7 @@ from flext_ldif import (
     FlextLDIFAPI,
     FlextLDIFServices,
 )
-from tests.support import (
+from tests.test_support import (
     LdifTestData,
     RealServiceFactory,
     TestFileManager,

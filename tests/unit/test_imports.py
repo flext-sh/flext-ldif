@@ -17,6 +17,7 @@ from flext_ldif import (
 CLI_AVAILABLE = False
 try:
     from flext_ldif.cli import main as cli_main
+
     CLI_AVAILABLE = True
 except ImportError:
     pass
