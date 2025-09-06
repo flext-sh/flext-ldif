@@ -9,7 +9,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import FlextLDIFModels, FlextLDIFServices
-from tests.support import LdifTestData, TestValidators
+from tests.test_support import LdifTestData, TestValidators
 
 
 class TestFlextLDIFServicesValidatorServiceReal:

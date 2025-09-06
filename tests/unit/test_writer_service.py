@@ -87,10 +87,10 @@ class TestFlextLDIFServicesWriterService:
         service = FlextLDIFServices.WriterService()
 
         # Create a regular entry and test successful writing first to ensure service works
-        valid_entry = FlextLDIFModels.Entry(
-            dn="cn=test,dc=example,dc=com",
-            attributes={"cn": ["test"], "objectClass": ["person"]},
-        )
+        valid_entry = FlextLDIFModels.Entry.model_validate({
+            "dn": "cn=test,dc=example,dc=com",
+            "attributes": {"cn": ["test"], "objectClass": ["person"]}
+        })
 
         result = service.write_entries_to_string([valid_entry])
         assert result.is_success  # Normal case should work
@@ -100,10 +100,10 @@ class TestFlextLDIFServicesWriterService:
         service = FlextLDIFServices.WriterService()
 
         # Create entry with special characters that require base64 encoding
-        entry = FlextLDIFModels.Entry(
-            dn="cn=José María,dc=example,dc=com",
-            attributes={"cn": ["José María"], "objectClass": ["person"]},
-        )
+        entry = FlextLDIFModels.Entry.model_validate({
+            "dn": "cn=José María,dc=example,dc=com",
+            "attributes": {"cn": ["José María"], "objectClass": ["person"]}
+        })
 
         result = service.write_entries_to_string([entry])
 
@@ -116,14 +116,14 @@ class TestFlextLDIFServicesWriterService:
         service = FlextLDIFServices.WriterService()
 
         # Create entry with binary-like data that should be base64 encoded
-        entry = FlextLDIFModels.Entry(
-            dn="cn=binary test,dc=example,dc=com",
-            attributes={
+        entry = FlextLDIFModels.Entry.model_validate({
+            "dn": "cn=binary test,dc=example,dc=com",
+            "attributes": {
                 "cn": ["binary test"],
                 "objectClass": ["person"],
                 "userCertificate": ["\x00\x01\x02\x03"],  # Binary data
             },
-        )
+        })
 
         result = service.write_entries_to_string([entry])
 
@@ -157,14 +157,14 @@ class TestFlextLDIFServicesWriterService:
         """Test write_entry handles entries with multi-valued attributes."""
         service = FlextLDIFServices.WriterService()
 
-        entry = FlextLDIFModels.Entry(
-            dn="cn=multi test,dc=example,dc=com",
-            attributes={
+        entry = FlextLDIFModels.Entry.model_validate({
+            "dn": "cn=multi test,dc=example,dc=com",
+            "attributes": {
                 "cn": ["multi test"],
                 "objectClass": ["person", "inetOrgPerson"],  # Multi-valued
                 "mail": ["test1@example.com", "test2@example.com"],  # Multi-valued
             },
-        )
+        })
 
         result = service.write_entry(entry)
 
@@ -180,13 +180,13 @@ class TestFlextLDIFServicesWriterService:
         service = FlextLDIFServices.WriterService()
 
         # Entry with minimal required attributes
-        entry = FlextLDIFModels.Entry(
-            dn="dc=example,dc=com",
-            attributes={
+        entry = FlextLDIFModels.Entry.model_validate({
+            "dn": "dc=example,dc=com",
+            "attributes": {
                 "objectClass": ["domain"],
                 "dc": ["example"],
             },
-        )
+        })
 
         result = service.write_entry(entry)
 
@@ -264,10 +264,10 @@ class TestFlextLDIFServicesWriterService:
         service = FlextLDIFServices.WriterService()
 
         # Create real entry
-        entry = FlextLDIFModels.Entry(
-            dn="cn=test,dc=example,dc=com",
-            attributes={"cn": ["test"], "objectClass": ["person"]},
-        )
+        entry = FlextLDIFModels.Entry.model_validate({
+            "dn": "cn=test,dc=example,dc=com",
+            "attributes": {"cn": ["test"], "objectClass": ["person"]}
+        })
 
         # Try to write to an invalid path that will cause a file system exception
         invalid_path = "/non/existent/directory/test.ldif"

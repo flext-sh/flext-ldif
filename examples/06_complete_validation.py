@@ -37,38 +37,34 @@ from flext_core import FlextContainer, FlextResult
 # CORREÇÃO CRÍTICA: Imports verificados no __init__.py
 from flext_ldif import (
     FlextLDIFAPI,
-    FlextLDIFAttributes,
-    FlextLDIFConfig,
+    FlextLDIFModels,
+    FlextLDIFServices,
+    FlextLDIFExceptions,
     FlextLDIFCore,
-    FlextLDIFDistinguishedName,
-    FlextLDIFEntryError,
-    FlextLDIFError,
     FlextLDIFFormatHandler,
+    FlextLDIFError,
     FlextLDIFParseError,
-    FlextLDIFParserService,
     FlextLDIFValidationError,
-    FlextLDIFValidatorService,
-    FlextLDIFWriterService,
 )
 
 
 def test_1_flext_ldif_prefixes_validation() -> dict[str, object]:
     """Teste 1: Validação de todos os prefixos FlextLDIF* que REALMENTE EXISTEM."""
     # ✅ Testando classes principais com prefixo FlextLDIF* (APENAS as que existem)
-    config = FlextLDIFConfig()
+    config = FlextLDIFModels.Config()
 
     # ✅ API unificada que realmente existe
     api = FlextLDIFAPI()
 
     # ✅ Testando value objects com prefixo FlextLDIF* (APENAS os que existem)
-    dn = FlextLDIFDistinguishedName(value="uid=test,dc=example,dc=com")
+    dn = FlextLDIFModels.DistinguishedName(value="uid=test,dc=example,dc=com")
 
-    attrs = FlextLDIFAttributes(attributes={"objectClass": ["person"]})
+    attrs = FlextLDIFModels.LdifAttributes(data={"objectClass": ["person"]})
 
     # ✅ Testando services com prefixos FlextLDIF* (os que realmente existem)
-    parser_service = FlextLDIFParserService()
-    validator_service = FlextLDIFValidatorService()
-    writer_service = FlextLDIFWriterService()
+    parser_service = FlextLDIFServices.ParserService()
+    validator_service = FlextLDIFServices.ValidatorService()
+    writer_service = FlextLDIFServices.WriterService()
 
     return {
         "config": config,

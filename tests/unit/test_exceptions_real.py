@@ -76,7 +76,7 @@ class TestFlextLDIFExceptionsError:
         error = FlextLDIFExceptions.builder().message("Test message").build()
 
         # Set context manually or check if context can be set through builder
-        assert error.context is not None or error.context == {}
+        assert error.context is not None
         # Since we're testing builder pattern, context may be managed differently
 
     def test_init_context_conversion(self) -> None:

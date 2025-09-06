@@ -1,25 +1,16 @@
-"""Test Support Utilities for FLEXT-LDIF.
+"""Test Support Module.
 
-This module provides comprehensive test utilities for real functionality testing
-without mocks, bypasses, or fake implementations. Utilities focus on:
-
-- Real LDIF data generation and validation
-- Actual service instance creation and configuration
-- File-based testing with proper cleanup
-- Error scenario generation for comprehensive testing
-- Performance testing utilities
-
-All utilities are designed to test real functionality using the actual
-flext-ldif libraries and services.
+This module provides test utilities and factories for FLEXT-LDIF testing.
 """
 
-from .ldif_data import LdifTestData
+from .ldif_data import LdifTestData, LdifSample
 from .real_services import RealServiceFactory
 from .test_files import TestFileManager
 from .validators import TestValidators
 
 __all__ = [
     "LdifTestData",
+    "LdifSample",
     "RealServiceFactory",
     "TestFileManager",
     "TestValidators",

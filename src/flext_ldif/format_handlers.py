@@ -139,7 +139,7 @@ class FlextLDIFFormatHandler:
         return [item.lower() for item in items or []]
 
     @classmethod
-    def parse_ldif(cls, content: str) -> FlextResult:  # type: ignore[type-arg]
+    def parse_ldif(cls, content: str) -> FlextResult:
         """Parse LDIF content using modernized parser.
 
         Args:
@@ -177,7 +177,7 @@ class FlextLDIFFormatHandler:
             return FlextResult.fail(error_msg)
 
     @classmethod
-    def write_ldif(cls, entries: list[FlextLDIFModels.Entry] | None) -> FlextResult:  # type: ignore[type-arg]
+    def write_ldif(cls, entries: list[FlextLDIFModels.Entry] | None) -> FlextResult:
         """Write LDIF entries using modernized writer.
 
         Args:

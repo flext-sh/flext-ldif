@@ -14,8 +14,7 @@ from flext_core import FlextLogger
 
 from flext_ldif import (
     FlextLDIFAPI,
-    FlextLDIFConfig,
-    FlextLDIFEntry,
+    FlextLDIFModels,
     FlextLDIFError,
     FlextLDIFParseError,
     FlextLDIFValidationError,
@@ -94,7 +93,7 @@ without proper structure
 
         return f"Successfully processed {len(filtered_entries)} person entries"
 
-    def _validate_entries(self, entries: list[FlextLDIFEntry]) -> list[str]:
+    def _validate_entries(self, entries: list[FlextLDIFModels.Entry]) -> list[str]:
         """Validate entries and return errors."""
         validation_errors: list[str] = []
         for entry in entries:
@@ -203,7 +202,7 @@ def demonstrate_configuration_error_handling() -> None:
     # Test with extreme configurations
     try:
         # Very low max_entries
-        config = FlextLDIFConfig(max_entries=0)
+        config = FlextLDIFModels.Config(max_entries=0)
         api = FlextLDIFAPI(config)
 
         sample_file = Path(__file__).parent / "sample_basic.ldif"
@@ -217,7 +216,7 @@ def demonstrate_configuration_error_handling() -> None:
         logger.exception("Configuration test failed", exc_info=exc)
 
     # Test with strict validation
-    config = FlextLDIFConfig(strict_validation=True, allow_empty_attributes=False)
+    config = FlextLDIFModels.Config(strict_validation=True, allow_empty_attributes=False)
     api = FlextLDIFAPI(config)
 
     # Create LDIF with empty attributes

@@ -10,9 +10,9 @@ from __future__ import annotations
 from pathlib import Path
 
 from click.testing import CliRunner
-from flext_cli import get_config
+from flext_cli import FlextCliConfig
 
-from flext_ldif import FlextLDIFAPI, FlextLDIFConfig, cli as ldif_cli
+from flext_ldif import FlextLDIFAPI, FlextLDIFModels, main as ldif_cli
 
 ALLOWED_COMMANDS: set[str] = {
     "parse",
@@ -93,7 +93,7 @@ class CliIntegrationDemonstrator:
     def demonstrate_all(self) -> None:
         """Template method: demonstrate all CLI integration patterns."""
         # Test flext-cli configuration integration
-        get_config()
+        FlextCliConfig()
 
         self._run_basic_commands()
         self._run_file_operations()
@@ -182,7 +182,7 @@ class CliIntegrationDemonstrator:
 
     def _demonstrate_programmatic_api(self) -> None:
         """Demonstrate programmatic API usage alongside CLI."""
-        config = FlextLDIFConfig(strict_validation=True, max_entries=10)
+        config = FlextLDIFModels.Config(strict_validation=True, max_entries=10)
         api = FlextLDIFAPI(config)
 
         result = api.parse_file(self.sample_file)

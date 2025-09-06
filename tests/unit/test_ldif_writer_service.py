@@ -7,7 +7,7 @@ No mocks, bypasses, or fake implementations - only real LDIF writing.
 from __future__ import annotations
 
 from flext_ldif import FlextLDIFModels, FlextLDIFServices
-from tests.support import TestFileManager, TestValidators
+from tests.test_support import TestFileManager, TestValidators
 
 
 class TestFlextLDIFServicesWriterServiceReal:

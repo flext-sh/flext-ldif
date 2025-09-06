@@ -14,9 +14,8 @@ from flext_core import FlextLogger
 
 from flext_ldif import (
     FlextLDIFAPI,
-    FlextLDIFConfig,
+    FlextLDIFModels,
     FlextLDIFCore,
-    FlextLDIFEntry,
     FlextLDIFFormatHandler,
 )
 
