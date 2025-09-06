@@ -16,18 +16,13 @@ from contextlib import asynccontextmanager
 # Make docker import optional to avoid import errors when docker package is not available
 from typing import TYPE_CHECKING
 
+import docker
 import pytest
 from flext_core import FlextLogger
 
 logger = FlextLogger(__name__)
 
-try:
-    import docker
-
-    DOCKER_AVAILABLE = True
-except ImportError:
-    DOCKER_AVAILABLE = False
-    docker = None
+DOCKER_AVAILABLE = True
 
 if TYPE_CHECKING:
     from docker import DockerClient

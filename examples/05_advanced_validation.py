@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 
 from flext_core import get_logger
 
-from flext_ldif import FlextLdifAPI, FlextLdifConfig, FlextLdifEntry
+from flext_ldif import FlextLDIFAPI, FlextLDIFModels
 
 logger = get_logger(__name__)
 
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-def validate_business_rules(entry: FlextLdifEntry) -> tuple[bool, list[str]]:
+def validate_business_rules(entry: FlextLDIFModels.Entry) -> tuple[bool, list[str]]:
     """Apply custom business validation rules.
 
     Args:
@@ -37,12 +37,12 @@ def validate_business_rules(entry: FlextLdifEntry) -> tuple[bool, list[str]]:
 
     # Rule 1: Person entries must have email
     if entry.is_person_entry():
-        mail = entry.attributes.get_single_value("mail")
+        mail = entry.attributes.get_single_attribute("mail")
         if not mail or not mail[0]:
             errors.append("Person entries must have email address")
 
     # Rule 2: Employee numbers must be numeric
-    employee_num = entry.attributes.get_single_value("employeeNumber")
+    employee_num = entry.attributes.get_single_attribute("employeeNumber")
     if employee_num:
         try:
             int(employee_num[0])
@@ -50,14 +50,14 @@ def validate_business_rules(entry: FlextLdifEntry) -> tuple[bool, list[str]]:
             errors.append("Employee number must be numeric")
 
     # Rule 3: Phone numbers must follow format
-    phone = entry.attributes.get_single_value("telephoneNumber")
+    phone = entry.attributes.get_single_attribute("telephoneNumber")
     if phone and phone[0]:
         phone_num = phone[0]
         if not phone_num.startswith("+1-555-"):
             errors.append("Phone number must follow +1-555-XXXX format")
 
     # Rule 4: Manager must be a valid DN
-    manager = entry.attributes.get_single_value("manager")
+    manager = entry.attributes.get_single_attribute("manager")
     if manager and manager[0]:
         manager_dn = manager[0]
         if "ou=People" not in manager_dn:
@@ -76,12 +76,11 @@ class LdifValidationDemonstrator:
 
     def __init__(self) -> None:
         """Initialize demonstrator with strict validation config."""
-        config = FlextLdifConfig(
+        config = FlextLDIFModels.Config(
             strict_validation=True,
-            allow_empty_attributes=False,
-            max_entries=50,
+            max_entries=50
         )
-        self.api = FlextLdifAPI(config)
+        self.api = FlextLDIFAPI(config)
 
     def demonstrate(self) -> None:
         """Template method: demonstrate validation workflow."""
@@ -94,7 +93,7 @@ class LdifValidationDemonstrator:
         self._analyze_entry_types(entries)
         self._test_invalid_ldif()
 
-    def _parse_sample_file(self) -> list[FlextLdifEntry] | None:
+    def _parse_sample_file(self) -> list[FlextLDIFModels.Entry] | None:
         """Parse sample LDIF file and return entries."""
         sample_file = Path(__file__).parent / "sample_complex.ldif"
         parse_result = self.api.parse_file(sample_file)
@@ -103,7 +102,7 @@ class LdifValidationDemonstrator:
         entries = parse_result.value
         return entries or None
 
-    def _perform_domain_validation(self, entries: list[FlextLdifEntry]) -> None:
+    def _perform_domain_validation(self, entries: list[FlextLDIFModels.Entry]) -> None:
         """Perform domain validation on entries."""
         domain_errors: list[str] = []
 
@@ -117,7 +116,7 @@ class LdifValidationDemonstrator:
 
         self._log_validation_errors(domain_errors, "Domain validation")
 
-    def _perform_business_validation(self, entries: list[FlextLdifEntry]) -> None:
+    def _perform_business_validation(self, entries: list[FlextLDIFModels.Entry]) -> None:
         """Perform business rule validation on entries."""
         business_errors: list[str] = []
 
@@ -130,11 +129,11 @@ class LdifValidationDemonstrator:
 
         self._log_validation_errors(business_errors, "Business validation")
 
-    def _analyze_entry_types(self, entries: list[FlextLdifEntry]) -> None:
+    def _analyze_entry_types(self, entries: list[FlextLDIFModels.Entry]) -> None:
         """Analyze entry types using API filters."""
         # Use railway programming for filtering results
         filter_functions: list[
-            Callable[[list[FlextLdifEntry]], FlextResult[list[FlextLdifEntry]]]
+            Callable[[list[FlextLDIFModels.Entry]], FlextResult[list[FlextLDIFModels.Entry]]]
         ] = [
             self.api.filter_persons,
             self.api.filter_groups,
@@ -159,7 +158,7 @@ class LdifValidationDemonstrator:
         # Use railway programming for invalid file processing
         self.api.parse_file(invalid_file).tap(self._validate_invalid_entries)
 
-    def _validate_invalid_entries(self, entries: list[FlextLdifEntry]) -> None:
+    def _validate_invalid_entries(self, entries: list[FlextLDIFModels.Entry]) -> None:
         """Validate entries from invalid LDIF file."""
         for entry in entries:
             # Use railway programming for validation

@@ -6,6 +6,8 @@ No mocks, bypasses, or fake implementations - only real model functionality.
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_ldif.models import FlextLDIFModels
 
 
@@ -84,7 +86,7 @@ class TestFlextLDIFModelsEntryReal:
                 "sn": ["User"],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(entry_data)
+        entry = FlextLDIFModels.Factory.create_entry(cast("dict[str, object]", entry_data))
 
         # Verify entry properties
         assert entry.dn is not None
@@ -112,7 +114,7 @@ class TestFlextLDIFModelsEntryReal:
                 "telephoneNumber": ["+1-555-0123", "+1-555-0124", "+1-555-0125"],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(entry_data)
+        entry = FlextLDIFModels.Factory.create_entry(cast("dict[str, object]", entry_data))
 
         # Verify multi-valued attributes
         mail_values = entry.get_attribute("mail")
@@ -142,7 +144,7 @@ class TestFlextLDIFModelsEntryReal:
                 "jpegPhoto": ["/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQ=="],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(entry_data)
+        entry = FlextLDIFModels.Factory.create_entry(cast("dict[str, object]", entry_data))
 
         # Verify binary attribute
         jpeg_photo = entry.get_attribute("jpegPhoto")
@@ -168,7 +170,7 @@ class TestFlextLDIFModelsEntryReal:
                 "description": ["Contains special characters: áéíóú ÁÉÍÓÚ ñÑ çÇ"],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(entry_data)
+        entry = FlextLDIFModels.Factory.create_entry(cast("dict[str, object]", entry_data))
 
         # Verify special characters are preserved
         cn_values = entry.get_attribute("cn")
@@ -191,7 +193,7 @@ class TestFlextLDIFModelsEntryReal:
                 "description": ["Original description"],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(entry_data)
+        entry = FlextLDIFModels.Factory.create_entry(cast("dict[str, object]", entry_data))
 
         # Test getting attributes
         uid_values = entry.get_attribute("uid")
@@ -217,7 +219,7 @@ class TestFlextLDIFModelsEntryReal:
                 "sn": ["User"],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(entry_data)
+        entry = FlextLDIFModels.Factory.create_entry(cast("dict[str, object]", entry_data))
 
         # Test DN string representation
         dn_str = str(entry.dn)
@@ -243,11 +245,11 @@ class TestFlextLDIFModelsEntryReal:
                 "mail": ["valid.user@example.com"],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(entry_data)
+        entry = FlextLDIFModels.Factory.create_entry(cast("dict[str, object]", entry_data))
 
         # Should be able to validate business rules (if implemented)
         try:
-            entry.validate_domain_rules()
+            entry.validate_business_rules()
             # If it doesn't throw, validation passed
             validation_passed = True
         except Exception:
@@ -268,7 +270,7 @@ class TestFlextLDIFModelsEntryReal:
                 "sn": ["User"],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(entry_data)
+        entry = FlextLDIFModels.Factory.create_entry(cast("dict[str, object]", entry_data))
 
         # Should be able to convert to dict
         entry_dict = entry.model_dump()
@@ -450,7 +452,7 @@ class TestModelIntegrationReal:
                 "description": ["User for testing model integration"],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(entry_data)
+        entry = FlextLDIFModels.Factory.create_entry(cast("dict[str, object]", entry_data))
 
         # Verify all components work together
         assert entry.dn is not None

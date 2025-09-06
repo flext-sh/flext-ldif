@@ -9,8 +9,8 @@ from __future__ import annotations
 from flext_core import FlextResult
 
 from flext_ldif import FlextLDIFModels, FlextLDIFServices
-from tests.support import LdifTestData, TestValidators
-from tests.support.test_files import TestFileManager
+from tests.test_support import LdifTestData, TestValidators
+from tests.test_support.test_files import TestFileManager
 
 
 class TestFlextLDIFServicesParserServiceReal:

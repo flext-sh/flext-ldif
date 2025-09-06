@@ -43,13 +43,13 @@ class ExceptionHandlingStrategy:
 
     def handle_exceptions(
         self,
-        operation: _Callable[[], FlextResult],  # type: ignore[type-arg]
+        operation: _Callable[[], FlextResult],
         exception_types: tuple[type[Exception], ...],
         exception_context_log: str,
         exception_details_log: str,
         exception_operation_log: str,
         error_message_template: str,
-    ) -> FlextResult:  # type: ignore[type-arg]
+    ) -> FlextResult:
         """Handle exceptions with unified logging and error handling strategy."""
         try:
             return operation()
@@ -100,7 +100,7 @@ class FlextLDIFCore:
         return FlextLDIFFormatValidator.get_ldap_validators()
 
     @classmethod
-    def parse(cls, content: str) -> FlextResult:  # type: ignore[type-arg]
+    def parse(cls, content: str) -> FlextResult:
         """Parse LDIF content into domain entities.
 
         Args:
@@ -168,7 +168,7 @@ class FlextLDIFCore:
     def _parse_with_modernized_ldif(
         cls,
         content: str,
-    ) -> FlextResult:  # type: ignore[type-arg]
+    ) -> FlextResult:
         """Parse using modernized LDIF parser with full string compatibility."""
         logger.debug(
             FlextLDIFConstants.FlextLDIFCoreConstants.STARTING_MODERNIZED_PARSING_LOG
@@ -185,7 +185,7 @@ class FlextLDIFCore:
 
             def convert_raw_entries(
                 raw_entries: list[tuple[str, dict[str, list[str]]]],
-            ) -> FlextResult:  # type: ignore[type-arg]  # type: ignore[type-arg]
+            ) -> FlextResult:
                 """Convert raw entries to FlextLDIFModels.Entry objects using railway-oriented programming."""
                 logger.debug(
                     FlextLDIFConstants.FlextLDIFCoreConstants.MODERNIZED_PARSER_RETURNED_ENTRIES_LOG,
@@ -202,9 +202,9 @@ class FlextLDIFCore:
 
                 # Process each entry using railway-oriented programming with reduce pattern
                 def process_indexed_entry(
-                    acc: FlextResult,  # type: ignore[type-arg]
+                    acc: FlextResult,
                     indexed_raw: tuple[int, tuple[str, dict[str, list[str]]]],
-                ) -> FlextResult:  # type: ignore[type-arg]  # type: ignore[type-arg]  # type: ignore[type-arg]
+                ) -> FlextResult:
                     i, (dn, attrs) = indexed_raw
                     logger.debug(
                         FlextLDIFConstants.FlextLDIFCoreConstants.PROCESSING_ENTRY_LOG,
@@ -215,7 +215,7 @@ class FlextLDIFCore:
 
                     def process_entry(
                         entries_list: list[FlextLDIFModels.Entry],
-                    ) -> FlextResult:  # type: ignore[type-arg]  # type: ignore[type-arg]  # type: ignore[type-arg]  # type: ignore[type-arg]
+                    ) -> FlextResult:
                         try:
                             entry = FlextLDIFModels.Factory.create_entry(
                                 {
@@ -286,7 +286,7 @@ class FlextLDIFCore:
             )
 
     @classmethod
-    def validate(cls, entry: FlextLDIFModels.Entry | None) -> FlextResult:  # type: ignore[type-arg]
+    def validate(cls, entry: FlextLDIFModels.Entry | None) -> FlextResult:
         """Validate LDIF entry with format and business rule validation.
 
         Args:
@@ -429,7 +429,7 @@ class FlextLDIFCore:
         return None
 
     @classmethod
-    def validate_entries(cls, entries: list[FlextLDIFModels.Entry]) -> FlextResult:  # type: ignore[type-arg]
+    def validate_entries(cls, entries: list[FlextLDIFModels.Entry]) -> FlextResult:
         """Validate multiple LDIF entries with early failure detection.
 
         Args:
@@ -449,7 +449,7 @@ class FlextLDIFCore:
 
             def validate_single_entry(
                 entry_with_index: tuple[int, FlextLDIFModels.Entry],
-            ) -> FlextResult:  # type: ignore[type-arg]  # type: ignore[type-arg]
+            ) -> FlextResult:
                 """Validate single entry with index for error context."""
                 i, entry = entry_with_index
                 logger.debug(
@@ -472,9 +472,9 @@ class FlextLDIFCore:
 
             # Use railway programming with reduce to chain all validations
             def chain_validations(
-                acc: FlextResult,  # type: ignore[type-arg]
+                acc: FlextResult,
                 indexed_entry: tuple[int, FlextLDIFModels.Entry],
-            ) -> FlextResult:  # type: ignore[type-arg]  # type: ignore[type-arg]
+            ) -> FlextResult:
                 return acc.flat_map(lambda _: validate_single_entry(indexed_entry))
 
             return (
@@ -508,7 +508,7 @@ class FlextLDIFCore:
             )
 
     @classmethod
-    def write(cls, entries: list[FlextLDIFModels.Entry]) -> FlextResult:  # type: ignore[type-arg]
+    def write(cls, entries: list[FlextLDIFModels.Entry]) -> FlextResult:
         """Write entries to RFC 2849 compliant LDIF string.
 
         Args:
@@ -567,7 +567,7 @@ class FlextLDIFCore:
     def _write_with_modernized_ldif(
         cls,
         entries: list[FlextLDIFModels.Entry],
-    ) -> FlextResult:  # type: ignore[type-arg]
+    ) -> FlextResult:
         """Write using modernized LDIF writer with full string compatibility."""
         try:
             # Use modernized writer - pass entries directly
@@ -598,7 +598,7 @@ class FlextLDIFCore:
         entries: list[FlextLDIFModels.Entry],
         file_path: str | Path,
         encoding: str = "utf-8",
-    ) -> FlextResult:  # type: ignore[type-arg]
+    ) -> FlextResult:
         """Write LDIF entries to file with automatic directory creation.
 
         Args:
@@ -652,7 +652,7 @@ class FlextLDIFCore:
             )
 
             # Railway-oriented programming for content generation and file writing
-            def write_content_to_file(content: str) -> FlextResult:  # type: ignore[type-arg]
+            def write_content_to_file(content: str) -> FlextResult:
                 """Write content to file with proper error handling."""
                 content_size = len(content)
                 logger.debug(
@@ -742,7 +742,7 @@ class FlextLDIFCore:
         cls,
         file_path: str | Path,
         encoding: str = "utf-8",
-    ) -> FlextResult:  # type: ignore[type-arg]
+    ) -> FlextResult:
         """Read and parse LDIF file with comprehensive validation.
 
         Args:

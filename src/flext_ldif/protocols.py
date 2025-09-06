@@ -23,12 +23,12 @@ class FlextLDIFProtocols:
     class ParserProtocol(Protocol):
         """LDIF parsing protocol - extends flext-core patterns."""
 
-        def parse(self, content: str) -> FlextResult:  # type: ignore[type-arg]
+        def parse(self, content: str) -> FlextResult:
             """Parse LDIF content into domain entities."""
             msg = "Must be implemented by concrete parser"
             raise NotImplementedError(msg)
 
-        def parse_file(self, file_path: str | Path) -> FlextResult:  # type: ignore[type-arg]  # type: ignore[type-arg]
+        def parse_file(self, file_path: str | Path) -> FlextResult:
             """Parse LDIF file into domain entities."""
             msg = "Must be implemented by concrete parser"
             raise NotImplementedError(msg)
@@ -36,7 +36,7 @@ class FlextLDIFProtocols:
         def parse_entries_from_string(
             self,
             ldif_string: str,
-        ) -> FlextResult:  # type: ignore[type-arg]  # type: ignore[type-arg]
+        ) -> FlextResult:
             """Parse multiple entries from LDIF string."""
             msg = "Must be implemented by concrete parser"
             raise NotImplementedError(msg)
@@ -45,22 +45,22 @@ class FlextLDIFProtocols:
     class ValidatorProtocol(Protocol):
         """LDIF validation protocol using flext-core patterns."""
 
-        def validate(self, data: list[FlextLDIFModels.Entry]) -> FlextResult:  # type: ignore[type-arg]
+        def validate(self, data: list[FlextLDIFModels.Entry]) -> FlextResult:
             """Validate data using flext-core pattern."""
             msg = "Must be implemented by concrete validator"
             raise NotImplementedError(msg)
 
-        def validate_entry(self, entry: FlextLDIFModels.Entry) -> FlextResult:  # type: ignore[type-arg]
+        def validate_entry(self, entry: FlextLDIFModels.Entry) -> FlextResult:
             """Validate single LDIF entry."""
             msg = "Must be implemented by concrete validator"
             raise NotImplementedError(msg)
 
-        def validate_entries(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult:  # type: ignore[type-arg]  # type: ignore[type-arg]
+        def validate_entries(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult:
             """Validate multiple LDIF entries."""
             msg = "Must be implemented by concrete validator"
             raise NotImplementedError(msg)
 
-        def validate_dn_format(self, dn: str) -> FlextResult:  # type: ignore[type-arg]
+        def validate_dn_format(self, dn: str) -> FlextResult:
             """Validate DN format compliance."""
             msg = "Must be implemented by concrete validator"
             raise NotImplementedError(msg)
@@ -69,7 +69,7 @@ class FlextLDIFProtocols:
     class WriterProtocol(Protocol):
         """LDIF writing protocol."""
 
-        def write(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult:  # type: ignore[type-arg]
+        def write(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult:
             """Write entries to LDIF string."""
             msg = "Must be implemented by concrete writer"
             raise NotImplementedError(msg)
@@ -78,12 +78,12 @@ class FlextLDIFProtocols:
             self,
             entries: list[FlextLDIFModels.Entry],
             file_path: str | Path,
-        ) -> FlextResult:  # type: ignore[type-arg]  # type: ignore[type-arg]
+        ) -> FlextResult:
             """Write entries to LDIF file."""
             msg = "Must be implemented by concrete writer"
             raise NotImplementedError(msg)
 
-        def write_entry(self, entry: FlextLDIFModels.Entry) -> FlextResult:  # type: ignore[type-arg]
+        def write_entry(self, entry: FlextLDIFModels.Entry) -> FlextResult:
             """Write single entry to LDIF string."""
             msg = "Must be implemented by concrete writer"
             raise NotImplementedError(msg)
@@ -96,7 +96,7 @@ class FlextLDIFProtocols:
             self,
             entries: list[FlextLDIFModels.Entry],
             dn: str,
-        ) -> FlextResult:  # type: ignore[type-arg]  # type: ignore[type-arg]
+        ) -> FlextResult:
             """Find entry by distinguished name."""
             msg = "Must be implemented by concrete repository"
             raise NotImplementedError(msg)
@@ -105,7 +105,7 @@ class FlextLDIFProtocols:
             self,
             entries: list[FlextLDIFModels.Entry],
             objectclass: str,
-        ) -> FlextResult:  # type: ignore[type-arg]  # type: ignore[type-arg]
+        ) -> FlextResult:
             """Filter entries by objectClass attribute."""
             msg = "Must be implemented by concrete repository"
             raise NotImplementedError(msg)
@@ -115,7 +115,7 @@ class FlextLDIFProtocols:
             entries: list[FlextLDIFModels.Entry],
             attribute: str,
             value: str,
-        ) -> FlextResult:  # type: ignore[type-arg]  # type: ignore[type-arg]
+        ) -> FlextResult:
             """Filter entries by attribute value."""
             msg = "Must be implemented by concrete repository"
             raise NotImplementedError(msg)
@@ -123,7 +123,7 @@ class FlextLDIFProtocols:
         def get_statistics(
             self,
             entries: list[FlextLDIFModels.Entry],
-        ) -> FlextResult:  # type: ignore[type-arg]  # type: ignore[type-arg]
+        ) -> FlextResult:
             """Get statistical information about entries."""
             msg = "Must be implemented by concrete repository"
             raise NotImplementedError(msg)
@@ -132,7 +132,7 @@ class FlextLDIFProtocols:
     class TransformerProtocol(Protocol):
         """LDIF transformation protocol."""
 
-        def transform_entry(self, entry: FlextLDIFModels.Entry) -> FlextResult:  # type: ignore[type-arg]  # type: ignore[type-arg]
+        def transform_entry(self, entry: FlextLDIFModels.Entry) -> FlextResult:
             """Transform single LDIF entry."""
             msg = "Must be implemented by concrete transformer"
             raise NotImplementedError(msg)
@@ -140,7 +140,7 @@ class FlextLDIFProtocols:
         def transform_entries(
             self,
             entries: list[FlextLDIFModels.Entry],
-        ) -> FlextResult:  # type: ignore[type-arg]  # type: ignore[type-arg]
+        ) -> FlextResult:
             """Transform multiple LDIF entries."""
             msg = "Must be implemented by concrete transformer"
             raise NotImplementedError(msg)
@@ -148,7 +148,7 @@ class FlextLDIFProtocols:
         def normalize_dns(
             self,
             entries: list[FlextLDIFModels.Entry],
-        ) -> FlextResult:  # type: ignore[type-arg]  # type: ignore[type-arg]
+        ) -> FlextResult:
             """Normalize all DN values in entries."""
             msg = "Must be implemented by concrete transformer"
             raise NotImplementedError(msg)
@@ -157,10 +157,18 @@ class FlextLDIFProtocols:
     class AnalyticsProtocol(Protocol):
         """LDIF analytics protocol for business intelligence."""
 
+        def analyze_patterns(
+            self,
+            entries: list[FlextLDIFModels.Entry],
+        ) -> FlextResult:
+            """Analyze patterns in LDIF entries."""
+            msg = "Must be implemented by concrete analytics service"
+            raise NotImplementedError(msg)
+
         def analyze_entry_patterns(
             self,
             entries: list[FlextLDIFModels.Entry],
-        ) -> FlextResult:  # type: ignore[type-arg]  # type: ignore[type-arg]
+        ) -> FlextResult:
             """Analyze patterns in LDIF entries."""
             msg = "Must be implemented by concrete analytics service"
             raise NotImplementedError(msg)
@@ -168,7 +176,7 @@ class FlextLDIFProtocols:
         def get_objectclass_distribution(
             self,
             entries: list[FlextLDIFModels.Entry],
-        ) -> FlextResult:  # type: ignore[type-arg]  # type: ignore[type-arg]
+        ) -> FlextResult:
             """Get distribution of objectClass types."""
             msg = "Must be implemented by concrete analytics service"
             raise NotImplementedError(msg)
@@ -176,7 +184,7 @@ class FlextLDIFProtocols:
         def get_dn_depth_analysis(
             self,
             entries: list[FlextLDIFModels.Entry],
-        ) -> FlextResult:  # type: ignore[type-arg]  # type: ignore[type-arg]
+        ) -> FlextResult:
             """Analyze DN depth distribution."""
             msg = "Must be implemented by concrete analytics service"
             raise NotImplementedError(msg)

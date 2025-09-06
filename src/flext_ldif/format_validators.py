@@ -76,7 +76,7 @@ class FlextLDIFFormatValidators:
         )
 
         @classmethod
-        def validate_dn(cls, dn_value: str) -> FlextResult:  # type: ignore[type-arg]
+        def validate_dn(cls, dn_value: str) -> FlextResult:
             """Validate Distinguished Name format using flext-ldap root API.
 
             ✅ CORRECT ARCHITECTURE: Delegates to flext-ldap root API.
@@ -104,7 +104,7 @@ class FlextLDIFFormatValidators:
             return FlextResult.fail(f"Invalid DN format: {dn_value}")
 
         @classmethod
-        def validate_attribute_name(cls, attr_name: str) -> FlextResult:  # type: ignore[type-arg]
+        def validate_attribute_name(cls, attr_name: str) -> FlextResult:
             """Validate LDAP attribute name format.
 
             Args:
@@ -127,7 +127,7 @@ class FlextLDIFFormatValidators:
             return FlextResult.fail(f"Invalid attribute name: {attr_name}")
 
         @classmethod
-        def is_person_entry(cls, entry: FlextLDIFModels.Entry) -> FlextResult:  # type: ignore[type-arg]
+        def is_person_entry(cls, entry: FlextLDIFModels.Entry) -> FlextResult:
             """Check if entry is a person entry based on objectClass.
 
             Args:
@@ -148,7 +148,7 @@ class FlextLDIFFormatValidators:
             return FlextResult.ok(is_person)
 
         @classmethod
-        def is_group_entry(cls, entry: FlextLDIFModels.Entry) -> FlextResult:  # type: ignore[type-arg]
+        def is_group_entry(cls, entry: FlextLDIFModels.Entry) -> FlextResult:
             """Check if entry is a group entry based on objectClass.
 
             Args:
@@ -169,7 +169,7 @@ class FlextLDIFFormatValidators:
             return FlextResult.ok(is_group)
 
         @classmethod
-        def is_ou_entry(cls, entry: FlextLDIFModels.Entry) -> FlextResult:  # type: ignore[type-arg]
+        def is_ou_entry(cls, entry: FlextLDIFModels.Entry) -> FlextResult:
             """Check if entry is an organizational unit based on objectClass.
 
             Args:
@@ -192,7 +192,7 @@ class FlextLDIFFormatValidators:
         @classmethod
         def validate_required_objectclass(
             cls, entry: FlextLDIFModels.Entry
-        ) -> FlextResult:  # type: ignore[type-arg]
+        ) -> FlextResult:
             """Validate that entry has required objectClass attribute.
 
             Args:
@@ -214,7 +214,7 @@ class FlextLDIFFormatValidators:
         @classmethod
         def validate_entry_completeness(
             cls, entry: FlextLDIFModels.Entry
-        ) -> FlextResult:  # type: ignore[type-arg]
+        ) -> FlextResult:
             """Validate entry has minimum required components.
 
             Args:
@@ -238,7 +238,7 @@ class FlextLDIFFormatValidators:
         @classmethod
         def validate_entry_type(
             cls, entry: FlextLDIFModels.Entry, expected_types: set[str]
-        ) -> FlextResult:  # type: ignore[type-arg]
+        ) -> FlextResult:
             """Validate entry matches expected object class types.
 
             Args:
@@ -271,7 +271,7 @@ class FlextLDIFFormatValidators:
         @classmethod
         def validate_required_attributes(
             cls, entry: FlextLDIFModels.Entry, required_attrs: list[str]
-        ) -> FlextResult:  # type: ignore[type-arg]
+        ) -> FlextResult:
             """Validate entry has all required attributes for its schema.
 
             Args:
@@ -296,7 +296,7 @@ class FlextLDIFFormatValidators:
             return FlextResult.ok(FlextLDIFConstants.VALIDATION_SUCCESS)
 
         @classmethod
-        def validate_person_schema(cls, entry: FlextLDIFModels.Entry) -> FlextResult:  # type: ignore[type-arg]
+        def validate_person_schema(cls, entry: FlextLDIFModels.Entry) -> FlextResult:
             """Validate person entry schema requirements.
 
             Args:
@@ -318,7 +318,7 @@ class FlextLDIFFormatValidators:
             )
 
         @classmethod
-        def validate_ou_schema(cls, entry: FlextLDIFModels.Entry) -> FlextResult:  # type: ignore[type-arg]
+        def validate_ou_schema(cls, entry: FlextLDIFModels.Entry) -> FlextResult:
             """Validate organizational unit entry schema requirements.
 
             Args:

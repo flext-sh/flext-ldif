@@ -73,7 +73,7 @@ from tests.test_support import (
 
 # Try to import Docker fixtures - optional for testing without Docker
 try:
-    from tests.docker_fixtures import (
+    from tests.fixtures.docker_fixtures import (
         docker_openldap_container,
         ldif_test_config,
         real_ldif_data,

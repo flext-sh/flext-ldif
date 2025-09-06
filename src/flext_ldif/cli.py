@@ -368,7 +368,7 @@ class FlextLDIFCli(FlextCliService):
             self, "write_template", WriteProcessingTemplate(self.api, self.formatter)
         )
 
-    def execute(self) -> FlextResultStr:  # type: ignore[override]
+    def execute(self) -> FlextResultStr:
         """Abstract method implementation required by FlextCliService."""
         return FlextResult.ok("CLI ready")
 

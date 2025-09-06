@@ -23,7 +23,7 @@ class FlextLDIFUtilities:
         @staticmethod
         def validate_entries_or_warn(
             entries: list[FlextLDIFModels.Entry], max_errors: int = 10
-        ) -> FlextResult:  # type: ignore[type-arg]
+        ) -> FlextResult:
             """Validate LDIF entries efficiently."""
             errors = []
 
@@ -42,7 +42,7 @@ class FlextLDIFUtilities:
         @staticmethod
         def filter_entries_by_object_class(
             entries: list[FlextLDIFModels.Entry], object_class: str
-        ) -> FlextResult:  # type: ignore[type-arg]
+        ) -> FlextResult:
             """Filter entries by objectClass - simplified."""
             filtered = [e for e in entries if e.has_object_class(object_class)]
             return FlextResult.ok(filtered)
@@ -50,7 +50,7 @@ class FlextLDIFUtilities:
         @staticmethod
         def find_entries_with_missing_required_attributes(
             entries: list[FlextLDIFModels.Entry], required_attrs: list[str]
-        ) -> FlextResult:  # type: ignore[type-arg]
+        ) -> FlextResult:
             """Find entries missing any required attribute - optimized."""
             missing = [
                 entry
@@ -62,7 +62,7 @@ class FlextLDIFUtilities:
         @staticmethod
         def get_entry_statistics(
             entries: list[FlextLDIFModels.Entry],
-        ) -> FlextResult:  # type: ignore[type-arg]
+        ) -> FlextResult:
             """Get comprehensive entry statistics."""
             if not entries:
                 return FlextResult.ok(
@@ -94,7 +94,7 @@ class FlextLDIFUtilities:
         @staticmethod
         def attributes_dict_to_ldif_format(
             attributes: dict[str, str | list[str]],
-        ) -> FlextResult:  # type: ignore[type-arg]
+        ) -> FlextResult:
             """Convert attributes dictionary to proper LDIF format - Railway pattern."""
             # Railway pattern - no try/catch needed, FlextResult handles it
             ldif_attrs = {}
@@ -114,7 +114,7 @@ class FlextLDIFUtilities:
             return FlextResult.ok(ldif_attrs)
 
         @staticmethod
-        def normalize_dn_components(dn: str) -> FlextResult:  # type: ignore[type-arg]
+        def normalize_dn_components(dn: str) -> FlextResult:
             """Normalize DN components - Railway pattern without exceptions."""
             # Railway pattern validation
             if not dn or not dn.strip():

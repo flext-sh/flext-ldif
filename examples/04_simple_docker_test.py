@@ -9,7 +9,8 @@ from __future__ import annotations
 
 import sys
 
-from tests.docker_fixtures import (
+from flext_core import FlextResult
+from tests.fixtures.docker_fixtures import (
     OpenLDAPContainerManager,
     check_docker_available,
 )
@@ -41,7 +42,8 @@ def test_with_docker_container() -> bool | None:
             return False
 
         # Test parsing
-        entries = FlextLDIFFormatHandler.parse_ldif(ldif_data).unwrap_or_raise()
+        parse_result = FlextLDIFFormatHandler.parse_ldif(ldif_data)
+        entries = FlextResult.unwrap_or_raise(parse_result)
 
         # Constants for testing
         max_entries_to_show = 3
@@ -55,8 +57,10 @@ def test_with_docker_container() -> bool | None:
             pass
 
         # Test validation - parse first, then validate
-        entries = FlextLDIFFormatHandler.parse_ldif(ldif_data).unwrap_or_raise()
-        FlextLDIFCore().validate_entries(entries).unwrap_or_raise()
+        parse_result2 = FlextLDIFFormatHandler.parse_ldif(ldif_data)
+        entries2 = FlextResult.unwrap_or_raise(parse_result2)
+        validate_result = FlextLDIFCore().validate_entries(entries2)
+        FlextResult.unwrap_or_raise(validate_result)
 
         # Usar API real para filtrar pessoas e grupos
         api = __import__("flext_ldif").flext_ldif.FlextLDIFAPI
