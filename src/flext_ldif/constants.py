@@ -1,3 +1,14 @@
+"""Copyright (c) 2025 client-a Telecom. Todos os direitos reservados.
+
+SPDX-License-Identifier: Proprietário.
+"""
+
+from __future__ import annotations
+
+from typing import ClassVar
+
+from flext_core import FlextTypes
+
 """FLEXT-LDIF Constants - Unified constants following flext-core patterns.
 
 Single class per module containing all LDIF constants.
@@ -6,10 +17,6 @@ Uses FlextConstants from flext-core as foundation.
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
-
-from __future__ import annotations
-
-from typing import ClassVar
 
 
 class FlextLDIFConstants:
@@ -35,8 +42,14 @@ class FlextLDIFConstants:
         }
 
         # Required attributes for different entry types
-        PERSON_REQUIRED_ATTRIBUTES: ClassVar[list[str]] = ["cn", "objectclass"]
-        OU_REQUIRED_ATTRIBUTES: ClassVar[list[str]] = ["ou", "objectclass"]
+        PERSON_REQUIRED_ATTRIBUTES: ClassVar[FlextTypes.Core.StringList] = [
+            "cn",
+            "objectclass",
+        ]
+        OU_REQUIRED_ATTRIBUTES: ClassVar[FlextTypes.Core.StringList] = [
+            "ou",
+            "objectclass",
+        ]
 
     class FlextLDIFAnalyticsConstants:
         """Analytics-specific constants."""

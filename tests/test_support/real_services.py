@@ -2,9 +2,15 @@
 
 Creates real service instances for functional testing without mocks.
 All services are properly configured and use real implementations.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
+from flext_core import FlextTypes
 
 # object is built-in, no need to import
 from flext_ldif import (
@@ -18,7 +24,7 @@ class RealServiceFactory:
     """Factory for creating real service instances for testing."""
 
     @staticmethod
-    def create_api(config: dict[str, object] | None = None) -> FlextLDIFAPI:
+    def create_api(config: FlextTypes.Core.Dict | None = None) -> FlextLDIFAPI:
         """Create a real LDIF API instance."""
         if config is None:
             config = {}
@@ -36,7 +42,7 @@ class RealServiceFactory:
 
     @staticmethod
     def create_parser(
-        config: dict[str, object] | None = None,
+        config: FlextTypes.Core.Dict | None = None,
     ) -> FlextLDIFServices.ParserService:
         """Create a real parser service."""
         if config is None:
@@ -52,7 +58,7 @@ class RealServiceFactory:
         return FlextLDIFServices.ParserService(config=ldif_config)
 
     @staticmethod
-    def create_validator(config: dict[str, object] | None = None) -> object:
+    def create_validator(config: FlextTypes.Core.Dict | None = None) -> object:
         """Create a real validator service."""
         if config is None:
             config = {}
@@ -67,7 +73,7 @@ class RealServiceFactory:
         return FlextLDIFServices.ValidatorService(config=ldif_config)
 
     @staticmethod
-    def create_writer(config: dict[str, object] | None = None) -> object:
+    def create_writer(config: FlextTypes.Core.Dict | None = None) -> object:
         """Create a real writer service."""
         if config is None:
             config = {}
@@ -144,7 +150,7 @@ class RealServiceFactory:
         )
 
     @classmethod
-    def services_for_integration_test(cls) -> dict[str, object]:
+    def services_for_integration_test(cls) -> FlextTypes.Core.Dict:
         """Create all services configured for integration testing."""
         config = cls.create_test_config()
 
@@ -157,7 +163,7 @@ class RealServiceFactory:
         }
 
     @classmethod
-    def minimal_services(cls) -> dict[str, object]:
+    def minimal_services(cls) -> FlextTypes.Core.Dict:
         """Create minimal service set for basic testing."""
         return {
             "api": cls.create_api(),

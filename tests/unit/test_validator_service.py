@@ -1,4 +1,9 @@
-"""Tests for FlextLDIFServices.ValidatorService - comprehensive coverage."""
+"""Tests for FlextLDIFServices.ValidatorService - comprehensive coverage.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
 
 # ruff: noqa: PT018
 # Reason: Multiple assertion checks are common in tests for comprehensive error validation

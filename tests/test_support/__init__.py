@@ -1,6 +1,10 @@
 """Test Support Module.
 
 This module provides test utilities and factories for FLEXT-LDIF testing.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from .ldif_data import LdifTestData, LdifSample

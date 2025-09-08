@@ -17,6 +17,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, TypedDict, TypeVar, cast
 
+from flext_core import FlextTypes
 from flext_core.container import FlextContainer
 
 # Use flext-cli instead of click/rich directly - MANDATORY per standards
@@ -74,7 +75,7 @@ class CLIContext(CLIContextRequired, total=False):
     write_skipped: bool
     output_path: str
     valid_entries: list[FlextLDIFModels.Entry]
-    validation_errors: list[str]
+    validation_errors: FlextTypes.Core.StringList
 
 
 # Use consolidated class directly - NO aliases
@@ -86,7 +87,9 @@ if TYPE_CHECKING:
     type FlextResultCLI = FlextResult[CLIContext]
     type FlextResultStr = FlextResult[str]
     type FlextResultEntries = FlextResult[list[FlextLDIFEntry]]
-    type FlextResultValidation = FlextResult[tuple[list[FlextLDIFEntry], list[str]]]
+    type FlextResultValidation = FlextResult[
+        tuple[list[FlextLDIFEntry], FlextTypes.Core.StringList]
+    ]
 else:
     FlextResultCLI = FlextResult
     FlextResultStr = FlextResult
@@ -110,6 +113,10 @@ class LdifProcessingTemplate(ABC):
     Defines the skeleton of LDIF processing algorithm with Railway-oriented
     programming. Subclasses implement specific steps while maintaining
     single-path execution flow without multiple returns.
+
+    Returns:
+        FlextResultCLI: Processing result.
+
     """
 
     def __init__(self, formatter: FlextCliFormatters) -> None:
@@ -127,7 +134,12 @@ class LdifProcessingTemplate(ABC):
 
     @abstractmethod
     def _validate_inputs(self, context: CLIContext) -> FlextResultCLI:
-        """Validate input parameters."""
+        """Validate input parameters.
+
+        Returns:
+            object: Validation result.
+
+        """
         ...
 
     @abstractmethod
@@ -137,7 +149,12 @@ class LdifProcessingTemplate(ABC):
 
     @abstractmethod
     def _execute_main_operation(self, context: CLIContext) -> FlextResultCLI:
-        """Execute the main processing operation."""
+        """Execute the main processing operation.
+
+        Returns:
+            FlextResultCLI: Operation result.
+
+        """
         ...
 
     def _post_process(self, context: CLIContext) -> FlextResultCLI:
@@ -145,7 +162,12 @@ class LdifProcessingTemplate(ABC):
         return FlextResult.ok(context)
 
     def _finalize_results(self, context: CLIContext) -> FlextResultCLI:
-        """Finalize and return results (optional override)."""
+        """Finalize and return results (optional override).
+
+        Returns:
+            FlextResultCLI: Finalization result.
+
+        """
         return FlextResult.ok(context)
 
 
@@ -164,7 +186,12 @@ class ParseProcessingTemplate(LdifProcessingTemplate):
         return FlextResult.ok(context)
 
     def _prepare_processing(self, context: CLIContext) -> FlextResultCLI:
-        """Prepare for parsing operation."""
+        """Prepare for parsing operation.
+
+        Returns:
+            object: Preparation result.
+
+        """
         max_entries = context.get("max_entries")
         if max_entries:
             # Update config through context
@@ -184,7 +211,12 @@ class ParseProcessingTemplate(LdifProcessingTemplate):
     def _add_entries_to_context(
         self, context: CLIContext, entries: list[FlextLDIFEntry]
     ) -> CLIContext:
-        """Add parsed entries to context."""
+        """Add parsed entries to context.
+
+        Returns:
+            FlextResultCLI: Context with added entries.
+
+        """
         context["entries"] = entries
         context["entry_count"] = len(entries)
         return context
@@ -197,7 +229,12 @@ class ParseProcessingTemplate(LdifProcessingTemplate):
 
 
 class ValidationProcessingTemplate(LdifProcessingTemplate):
-    """Concrete template for LDIF validation operations."""
+    """Concrete template for LDIF validation operations.
+
+    Returns:
+        CLIContext: Validation context.
+
+    """
 
     def _validate_inputs(self, context: CLIContext) -> FlextResultCLI:
         """Validate validation operation inputs."""
@@ -207,7 +244,12 @@ class ValidationProcessingTemplate(LdifProcessingTemplate):
         return FlextResult.ok(context)
 
     def _prepare_processing(self, context: CLIContext) -> FlextResultCLI:
-        """Prepare for validation operation."""
+        """Prepare for validation operation.
+
+        Returns:
+            FlextResultCLI: Preparation result.
+
+        """
         context["validation_started"] = True
         return FlextResult.ok(context)
 
@@ -246,7 +288,12 @@ class ValidationProcessingTemplate(LdifProcessingTemplate):
 
 
 class WriteProcessingTemplate(LdifProcessingTemplate):
-    """Concrete template for LDIF write operations."""
+    """Concrete template for LDIF write operations.
+
+    Returns:
+        FlextResultCLI: Write operation result.
+
+    """
 
     def __init__(self, api: FlextLDIFAPI, formatter: FlextCliFormatters) -> None:
         super().__init__(formatter)
@@ -267,7 +314,12 @@ class WriteProcessingTemplate(LdifProcessingTemplate):
         return FlextResult.ok(context)
 
     def _prepare_processing(self, context: CLIContext) -> FlextResultCLI:
-        """Prepare for write operation."""
+        """Prepare for write operation.
+
+        Returns:
+            object: Preparation result.
+
+        """
         if context.get("write_skipped"):
             return FlextResult.ok(context)
         context["write_prepared"] = True
@@ -295,7 +347,12 @@ class WriteProcessingTemplate(LdifProcessingTemplate):
     def _add_write_success_to_context(
         self, context: CLIContext, output_file: Path
     ) -> CLIContext:
-        """Add write success to context."""
+        """Add write success to context.
+
+        Returns:
+            FlextResultCLI: Context with write success.
+
+        """
         context["write_completed"] = True
         context["output_path"] = str(output_file)
         self.formatter.print_success(f"✅ Written to {output_file}")
@@ -369,6 +426,12 @@ class FlextLDIFCli(FlextCliService):
         )
 
     def execute(self) -> FlextResultStr:
+        """Execute CLI command.
+
+        Returns:
+            object: Execution result.
+
+        """
         """Abstract method implementation required by FlextCliService."""
         return FlextResult.ok("CLI ready")
 
@@ -414,7 +477,12 @@ class FlextLDIFCli(FlextCliService):
         return self.validation_template.process(context)
 
     def validate_entries(self, entries: list[FlextLDIFEntry]) -> FlextResultValidation:
-        """Validate entries using template pattern."""
+        """Validate entries using template pattern.
+
+        Returns:
+            FlextResultCLI: Validation result.
+
+        """
         context = cast("CLIContext", {"entries": entries})
 
         return self.validation_template.process(context).map(

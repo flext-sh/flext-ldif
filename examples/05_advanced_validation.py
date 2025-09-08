@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Advanced LDIF validation example.
+"""FLEXT - Enterprise Data Integration Platform.
 
-Demonstrates domain validation with business rules using
-Clean Architecture patterns and FlextResult error handling.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+from flext_core import FlextTypes
 
 from collections.abc import Callable
 from pathlib import Path
@@ -13,7 +14,13 @@ from typing import TYPE_CHECKING
 
 from flext_core import get_logger
 
-from flext_ldif import FlextLDIFAPI, FlextLDIFModels
+from ..flext_ldif import FlextLDIFAPI, FlextLDIFModels
+
+"""Advanced LDIF validation example.
+
+Demonstrates domain validation with business rules using
+Clean Architecture patterns and FlextResult error handling.
+"""
 
 logger = get_logger(__name__)
 
@@ -23,7 +30,9 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-def validate_business_rules(entry: FlextLDIFModels.Entry) -> tuple[bool, list[str]]:
+def validate_business_rules(
+    entry: FlextLDIFModels.Entry,
+) -> tuple[bool, FlextTypes.Core.StringList]:
     """Apply custom business validation rules.
 
     Args:
@@ -33,7 +42,7 @@ def validate_business_rules(entry: FlextLDIFModels.Entry) -> tuple[bool, list[st
       Tuple of (is_valid, list_of_errors)
 
     """
-    errors: list[str] = []
+    errors: FlextTypes.Core.StringList = []
 
     # Rule 1: Person entries must have email
     if entry.is_person_entry():
@@ -76,10 +85,7 @@ class LdifValidationDemonstrator:
 
     def __init__(self) -> None:
         """Initialize demonstrator with strict validation config."""
-        config = FlextLDIFModels.Config(
-            strict_validation=True,
-            max_entries=50
-        )
+        config = FlextLDIFModels.Config(strict_validation=True, max_entries=50)
         self.api = FlextLDIFAPI(config)
 
     def demonstrate(self) -> None:
@@ -104,7 +110,7 @@ class LdifValidationDemonstrator:
 
     def _perform_domain_validation(self, entries: list[FlextLDIFModels.Entry]) -> None:
         """Perform domain validation on entries."""
-        domain_errors: list[str] = []
+        domain_errors: FlextTypes.Core.StringList = []
 
         for i, entry in enumerate(entries):
             # Use railway programming for validation
@@ -116,9 +122,11 @@ class LdifValidationDemonstrator:
 
         self._log_validation_errors(domain_errors, "Domain validation")
 
-    def _perform_business_validation(self, entries: list[FlextLDIFModels.Entry]) -> None:
+    def _perform_business_validation(
+        self, entries: list[FlextLDIFModels.Entry]
+    ) -> None:
         """Perform business rule validation on entries."""
-        business_errors: list[str] = []
+        business_errors: FlextTypes.Core.StringList = []
 
         for i, entry in enumerate(entries):
             is_valid, errors = validate_business_rules(entry)
@@ -133,7 +141,9 @@ class LdifValidationDemonstrator:
         """Analyze entry types using API filters."""
         # Use railway programming for filtering results
         filter_functions: list[
-            Callable[[list[FlextLDIFModels.Entry]], FlextResult[list[FlextLDIFModels.Entry]]]
+            Callable[
+                [list[FlextLDIFModels.Entry]], FlextResult[list[FlextLDIFModels.Entry]]
+            ]
         ] = [
             self.api.filter_persons,
             self.api.filter_groups,
@@ -166,7 +176,9 @@ class LdifValidationDemonstrator:
                 lambda _: None  # Log validation failure
             )
 
-    def _log_validation_errors(self, errors: list[str], validation_type: str) -> None:
+    def _log_validation_errors(
+        self, errors: FlextTypes.Core.StringList, validation_type: str
+    ) -> None:
         """Log validation errors with type prefix."""
         if not errors:
             return

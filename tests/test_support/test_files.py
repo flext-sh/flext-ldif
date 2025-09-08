@@ -2,6 +2,10 @@
 
 Provides utilities for creating, managing, and cleaning up test files
 with real LDIF content for comprehensive functionality testing.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -12,6 +16,8 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Self
+
+from flext_core import FlextTypes
 
 from .ldif_data import LdifSample, LdifTestData
 
@@ -130,7 +136,7 @@ class TestFileManager:
 
     def create_file_set(
         self,
-        samples: dict[str, str],
+        samples: FlextTypes.Core.Headers,
         directory: Path | None = None,
     ) -> dict[str, Path]:
         """Create multiple files from content dictionary."""
@@ -176,7 +182,9 @@ class TestFileManager:
 
     @classmethod
     @contextmanager
-    def temporary_files(cls, samples: dict[str, str]) -> Generator[dict[str, Path]]:
+    def temporary_files(
+        cls, samples: FlextTypes.Core.Headers
+    ) -> Generator[dict[str, Path]]:
         """Context manager for temporary files."""
         with cls() as manager:
             files = manager.create_file_set(samples)
@@ -190,7 +198,7 @@ class TestFileManager:
             files = manager.create_all_samples()
             yield files
 
-    def get_file_info(self, file_path: Path) -> dict[str, object]:
+    def get_file_info(self, file_path: Path) -> FlextTypes.Core.Dict:
         """Get information about a test file."""
         if not file_path.exists():
             return {"exists": False}

@@ -1,4 +1,8 @@
-"""Consolidated CLI tests for FLEXT-LDIF - Real functionality without mocks."""
+"""Consolidated CLI tests for FLEXT-LDIF - Real functionality without mocks.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -9,12 +13,13 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
+from flext_core import FlextTypes
 
 from flext_ldif import main as cli_main
 
 
 @contextmanager
-def argv_context(argv: list[str]) -> Generator[None]:
+def argv_context(argv: FlextTypes.Core.StringList) -> Generator[None]:
     """Context manager to temporarily replace sys.argv."""
     old_argv = sys.argv
     try:

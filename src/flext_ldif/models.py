@@ -11,20 +11,16 @@ from __future__ import annotations
 
 from collections.abc import Generator
 from functools import lru_cache
-
-# Type alias for mypy compatibility with Python 3.12+ generic syntax
-from typing import TYPE_CHECKING, ClassVar, override
+from typing import ClassVar, override
 
 from flext_core import (
     FlextModels,
     FlextResult,
+    FlextTypes,
     FlextValidations,
 )
 
-if TYPE_CHECKING:
-    type FlextResultNone = FlextResult[None]
-else:
-    FlextResultNone = FlextResult
+type FlextResultNone = FlextResult[None]
 from pydantic import ConfigDict, Field, field_validator, model_validator
 
 from flext_ldif.constants import FlextLDIFConstants
@@ -80,8 +76,13 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             return v.strip()
 
         @override
-        def validate_business_rules(self) -> FlextResultNone:
-            """Validate DN business rules using FlextResult."""
+        def validate_business_rules(self) -> FlextResult[None]:
+            """Validate DN business rules using FlextResult.
+
+            Returns:
+                FlextResult[None]: Validation result.
+
+            """
             if not self.value:
                 return FlextResult.fail(
                     FlextLDIFConstants.FlextLDIFValidationMessages.EMPTY_DN
@@ -107,7 +108,12 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             return self.value.split(",")[0].strip()
 
         def get_parent_dn(self) -> str | None:
-            """Get parent DN by removing RDN."""
+            """Get parent DN by removing RDN.
+
+            Returns:
+                str | None: Parent DN or None if no parent.
+
+            """
             if not self.value or "," not in self.value:
                 return None
             return ",".join(self.value.split(",")[1:]).strip()
@@ -119,11 +125,11 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
     class LdifAttributes(FlextModels.Value):
         """LDIF attributes collection using FlextModels.Value for immutability."""
 
-        data: dict[str, list[str]] = Field(
+        data: dict[str, FlextTypes.Core.StringList] = Field(
             default_factory=dict, description="Attribute data"
         )
 
-        def get_attribute(self, name: str) -> list[str] | None:
+        def get_attribute(self, name: str) -> FlextTypes.Core.StringList | None:
             """Get attribute values (case-insensitive)."""
             # Direct match first
             if name in self.data:
@@ -137,7 +143,12 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             return None
 
         def has_attribute(self, name: str) -> bool:
-            """Check if attribute exists (case-insensitive)."""
+            """Check if attribute exists (case-insensitive).
+
+            Returns:
+                bool: True if attribute exists.
+
+            """
             return self.get_attribute(name) is not None
 
         def get_single_attribute(self, name: str) -> str | None:
@@ -145,8 +156,13 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             values = self.get_attribute(name)
             return values[0] if values else None
 
-        def __getitem__(self, key: str) -> list[str]:
-            """Allow dict-like access to attributes."""
+        def __getitem__(self, key: str) -> FlextTypes.Core.StringList:
+            """Allow dict-like access to attributes.
+
+            Returns:
+                FlextTypes.Core.StringList: Attribute values.
+
+            """
             result = self.get_attribute(key)
             if result is None:
                 msg = f"Attribute '{key}' not found"
@@ -157,8 +173,13 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             """Allow 'in' operator for attributes."""
             return self.has_attribute(key)
 
-        def __iter__(self) -> Generator[tuple[str, list[str]]]:
-            """Allow iteration over attribute name-value pairs (BaseModel compatibility)."""
+        def __iter__(self) -> Generator[tuple[str, FlextTypes.Core.StringList]]:
+            """Allow iteration over attribute name-value pairs (BaseModel compatibility).
+
+            Returns:
+                Generator[tuple[str, FlextTypes.Core.StringList]]: Generator of attribute pairs.
+
+            """
             for key in self.data:
                 yield (key, self.data[key])
 
@@ -167,7 +188,12 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             return len(self.data)
 
         def keys(self) -> object:
-            """Return attribute names."""
+            """Return attribute names.
+
+            Returns:
+                object: Attribute names.
+
+            """
             return self.data.keys()
 
         def values(self) -> object:
@@ -175,15 +201,25 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             return self.data.values()
 
         def items(self) -> object:
-            """Return attribute name-value pairs."""
+            """Return attribute name-value pairs.
+
+            Returns:
+            object:: Description of return value.
+
+            """
             return self.data.items()
 
-        def get_object_classes(self) -> list[str]:
+        def get_object_classes(self) -> FlextTypes.Core.StringList:
             """Get objectClass values."""
             return self.get_attribute("objectClass") or []
 
         def is_person(self) -> bool:
-            """Check if entry represents a person."""
+            """Check if entry represents a person.
+
+            Returns:
+            FlextTypes.Core.StringList:: Description of return value.
+
+            """
             object_classes = {oc.lower() for oc in self.get_object_classes()}
             person_classes = {
                 oc.lower() for oc in FlextLDIFConstants.LDAP_PERSON_CLASSES
@@ -198,7 +234,12 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
 
         @override
         def validate_business_rules(self) -> FlextResultNone:
-            """Validate attributes using FlextValidations."""
+            """Validate attributes using FlextValidations.
+
+            Returns:
+            bool:: Description of return value.
+
+            """
             for attr_name, attr_values in self.data.items():
                 # Validate attribute name using flext-core string validation
                 name_validation = FlextValidations.Rules.StringRules.validate_non_empty(
@@ -275,7 +316,12 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
 
         @override
         def validate_business_rules(self) -> FlextResultNone:
-            """Validate entry business rules using FlextResult pattern."""
+            """Validate entry business rules using FlextResult pattern.
+
+            Returns:
+            object:: Description of return value.
+
+            """
             # Validate DN
             dn_result = self.dn.validate_business_rules()
             if not dn_result.is_success:
@@ -295,20 +341,30 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
 
             return FlextResult.ok(None)
 
-        def get_attribute(self, name: str) -> list[str] | None:
+        def get_attribute(self, name: str) -> FlextTypes.Core.StringList | None:
             """Delegate to attributes collection."""
             return self.attributes.get_attribute(name)
 
         def has_attribute(self, name: str) -> bool:
-            """Delegate to attributes collection."""
+            """Delegate to attributes collection.
+
+            Returns:
+                bool: True if attribute exists.
+
+            """
             return self.attributes.has_attribute(name)
 
         def get_single_attribute(self, name: str) -> str | None:
             """Delegate to attributes collection."""
             return self.attributes.get_single_attribute(name)
 
-        def set_attribute(self, name: str, values: list[str]) -> None:
-            """Set attribute values (creates new immutable attributes object)."""
+        def set_attribute(self, name: str, values: FlextTypes.Core.StringList) -> None:
+            """Set attribute values (creates new immutable attributes object).
+
+            Returns:
+                None: This method doesn't return a value.
+
+            """
             # Since attributes is immutable, create new one with updated data
             new_data = dict(self.attributes.data)
             new_data[name] = values
@@ -329,7 +385,12 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
 
         @classmethod
         def from_ldif_block(cls, ldif_block: str) -> FlextLDIFModels.Entry:
-            """Create entry from LDIF block text."""
+            """Create entry from LDIF block text.
+
+            Returns:
+            str:: Description of return value.
+
+            """
             lines = [
                 line.strip() for line in ldif_block.strip().split("\n") if line.strip()
             ]
@@ -350,7 +411,7 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
                 raise FlextLDIFExceptions.validation_error(msg)
 
             # Parse attributes
-            attributes_data: dict[str, list[str]] = {}
+            attributes_data: dict[str, FlextTypes.Core.StringList] = {}
             for line in lines[1:]:
                 if ":" not in line:
                     continue  # Skip invalid lines
@@ -373,8 +434,13 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             object_classes = self.get_attribute("objectClass") or []
             return object_class.lower() in [oc.lower() for oc in object_classes]
 
-        def get_object_classes(self) -> list[str]:
-            """Get all object classes for this entry."""
+        def get_object_classes(self) -> FlextTypes.Core.StringList:
+            """Get all object classes for this entry.
+
+            Returns:
+                FlextTypes.Core.StringList: List of object classes.
+
+            """
             return self.get_attribute("objectClass") or []
 
         def is_person(self) -> bool:
@@ -386,7 +452,12 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             return bool(object_classes.intersection(person_classes))
 
         def is_group(self) -> bool:
-            """Check if entry represents a group."""
+            """Check if entry represents a group.
+
+            Returns:
+            bool:: Description of return value.
+
+            """
             object_classes = {oc.lower() for oc in self.get_object_classes()}
             group_classes = {oc.lower() for oc in FlextLDIFConstants.LDAP_GROUP_CLASSES}
             return bool(object_classes.intersection(group_classes))
@@ -396,7 +467,12 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             return self.is_person()
 
         def is_group_entry(self) -> bool:
-            """Alias for is_group() for compatibility."""
+            """Alias for is_group() for compatibility.
+
+            Returns:
+                bool: True if this is a group entry.
+
+            """
             return self.is_group()
 
         def is_valid_entry(self) -> bool:
@@ -408,7 +484,12 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             )
 
         def to_json(self) -> str:
-            """Convert entry to JSON string."""
+            """Convert entry to JSON string.
+
+            Returns:
+                str: JSON representation of the entry.
+
+            """
             return self.model_dump_json()
 
         def is_add_operation(self) -> bool:
@@ -418,7 +499,12 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
             return changetype is None or changetype.lower() == "add"
 
         def is_modify_operation(self) -> bool:
-            """Check if this is a modify operation."""
+            """Check if this is a modify operation.
+
+            Returns:
+                bool: True if this is a modify operation.
+
+            """
             changetype = self.get_single_attribute("changetype")
             return changetype is not None and changetype.lower() == "modify"
 
@@ -500,13 +586,18 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
 
         @staticmethod
         def create_attributes(
-            data: dict[str, list[str]] | None = None,
+            data: dict[str, FlextTypes.Core.StringList] | None = None,
         ) -> FlextLDIFModels.LdifAttributes:
-            """Create attributes value object."""
+            """Create attributes value object.
+
+            Returns:
+                FlextLDIFModels.LdifAttributes: Attributes object.
+
+            """
             return FlextLDIFModels.LdifAttributes(data=data or {})
 
         @staticmethod
-        def create_entry(data: dict[str, object]) -> FlextLDIFModels.Entry:
+        def create_entry(data: FlextTypes.Core.Dict) -> FlextLDIFModels.Entry:
             """Create entry entity using FlextModels pattern."""
             # Extract dn
             dn_value = data.get("dn", "")
@@ -535,7 +626,12 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
 
         @staticmethod
         def create_config(**kwargs: object) -> FlextLDIFModels.Config:
-            """Create configuration using FlextModels pattern."""
+            """Create configuration using FlextModels pattern.
+
+            Returns:
+            FlextLDIFModels.Entry:: Description of return value.
+
+            """
             return FlextLDIFModels.Config.model_validate(kwargs)
 
     # =============================================================================
@@ -555,7 +651,12 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
     @staticmethod
     @lru_cache(maxsize=1000)
     def validate_ldap_attribute_name(name: str) -> bool:
-        """Validate LDAP attribute name using cached validation."""
+        """Validate LDAP attribute name using cached validation.
+
+        Returns:
+            bool: True if attribute name is valid.
+
+        """
         attr_pattern = r"^[a-zA-Z][a-zA-Z0-9-]*$"
         pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
             name, attr_pattern, "attribute name"

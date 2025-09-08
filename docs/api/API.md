@@ -230,7 +230,7 @@ except ValueError as e:
     # - Malformed attribute values
 ```
 
-**`get_object_classes() -> list[str]`**
+**`get_object_classes() -> FlextTypes.Core.StringList`**
 
 Get all objectClass values.
 
@@ -254,7 +254,7 @@ if entry.has_object_class("inetOrgPerson"):
     print("Has internet person attributes")
 ```
 
-**`get_attribute_values(name: str) -> list[str]`**
+**`get_attribute_values(name: str) -> FlextTypes.Core.StringList`**
 
 Get all values for an attribute.
 
@@ -416,7 +416,7 @@ print(f"DN depth: {depth}")
 entries_by_depth = sorted(entries, key=lambda e: e.dn.get_depth())
 ```
 
-**`get_components() -> list[str]`**
+**`get_components() -> FlextTypes.Core.StringList`**
 
 Get DN components.
 
@@ -442,11 +442,11 @@ attrs = FlextLDIFAttributes(attributes={
 
 ##### Properties
 
-- **`attributes: dict[str, list[str]]`** - Attribute dictionary
+- **`attributes: dict[str, FlextTypes.Core.StringList]`** - Attribute dictionary
 
 ##### Methods
 
-**`get_values(name: str) -> list[str]`**
+**`get_values(name: str) -> FlextTypes.Core.StringList`**
 
 Get all values for attribute.
 
@@ -498,7 +498,7 @@ new_attrs = attrs.remove_value("mail", "j.doe@example.com")
 # new_attrs only has "john@example.com"
 ```
 
-**`get_attribute_names() -> list[str]`**
+**`get_attribute_names() -> FlextTypes.Core.StringList`**
 
 Get all attribute names.
 
@@ -941,7 +941,7 @@ export FLEXT_LDIF_ENABLE_SCHEMA_VALIDATION=true
 ```python
 from flext_ldif.models import (
     LDIFContent,                 # Union[str, bytes] for LDIF content
-    LDIFLines,                   # list[str] for LDIF lines
+    LDIFLines,                   # FlextTypes.Core.StringList for LDIF lines
     FlextLDIFDNDict,             # TypedDict for DN structure
     FlextLDIFAttributesDict,     # TypedDict for attributes
     FlextLDIFEntryDict           # TypedDict for entry structure

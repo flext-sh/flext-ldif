@@ -1,10 +1,15 @@
-"""Comprehensive tests for format_validator_service.py to achieve 100% coverage."""
+"""Comprehensive tests for format_validator_service.py to achieve 100% coverage.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
 
 # ruff: noqa: PT018
 # Reason: Multiple assertion checks are common in tests for comprehensive error validation
 
 # pyright: reportArgumentType=false
-# Reason: FlextLDIFModels.Entry accepts dict[str, list[str]] via field validator mode="before" but pyright doesn't understand this
+# Reason: FlextLDIFModels.Entry accepts dict[str, FlextTypes.Core.StringList] via field validator mode="before" but pyright doesn't understand this
 
 from flext_ldif.format_validators import (
     FlextLDIFFormatValidator,

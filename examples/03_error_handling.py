@@ -6,13 +6,14 @@ using Clean Architecture principles and flext-core integration.
 """
 
 from __future__ import annotations
+from flext_core import FlextTypes
 
 import contextlib
 from pathlib import Path
 
 from flext_core import FlextLogger
 
-from flext_ldif import (
+from ..flext_ldif import (
     FlextLDIFAPI,
     FlextLDIFModels,
     FlextLDIFError,
@@ -93,9 +94,11 @@ without proper structure
 
         return f"Successfully processed {len(filtered_entries)} person entries"
 
-    def _validate_entries(self, entries: list[FlextLDIFModels.Entry]) -> list[str]:
+    def _validate_entries(
+        self, entries: list[FlextLDIFModels.Entry]
+    ) -> FlextTypes.Core.StringList:
         """Validate entries and return errors."""
-        validation_errors: list[str] = []
+        validation_errors: FlextTypes.Core.StringList = []
         for entry in entries:
             # CORREÇÃO: Usar método correto que existe na API
             try:
@@ -216,7 +219,9 @@ def demonstrate_configuration_error_handling() -> None:
         logger.exception("Configuration test failed", exc_info=exc)
 
     # Test with strict validation
-    config = FlextLDIFModels.Config(strict_validation=True, allow_empty_attributes=False)
+    config = FlextLDIFModels.Config(
+        strict_validation=True, allow_empty_attributes=False
+    )
     api = FlextLDIFAPI(config)
 
     # Create LDIF with empty attributes

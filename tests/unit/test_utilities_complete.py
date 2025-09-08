@@ -1,4 +1,8 @@
-"""Complete tests for FlextLDIFUtilities - 100% coverage, zero mocks."""
+"""Complete tests for FlextLDIFUtilities - 100% coverage, zero mocks.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -411,7 +415,6 @@ class TestFlextLDIFUtilitiesAdditionalCoverage:
 
         # Try to create an entry with whitespace-only DN using model_construct (bypass validation)
         try:
-
             # Create entry with minimal validation bypass
             entry_data = {
                 "dn": FlextLDIFModels.DistinguishedName.model_validate(

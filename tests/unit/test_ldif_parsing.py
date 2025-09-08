@@ -4,6 +4,10 @@ Tests that validate actual LDIF parsing without mocks, using real data and
 ensuring end-to-end functionality works correctly.
 
 No mocks - only real code exercising real functionality.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

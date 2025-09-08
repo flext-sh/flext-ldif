@@ -1,4 +1,8 @@
-"""Advanced API integration tests with edge cases and error handling."""
+"""Advanced API integration tests with edge cases and error handling.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

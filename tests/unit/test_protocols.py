@@ -1,4 +1,8 @@
-"""Unit tests for FLEXT-LDIF protocols and interfaces."""
+"""Unit tests for FLEXT-LDIF protocols and interfaces.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

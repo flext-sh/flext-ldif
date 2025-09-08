@@ -2,11 +2,16 @@
 
 Comprehensive tests using actual LDIF data and real validation functionality.
 No mocks, bypasses, or fake implementations - only real LDIF validation.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 import pytest
+from flext_core import FlextTypes
 
 from flext_ldif import FlextLDIFModels, FlextLDIFServices
 from tests.test_support import LdifTestData, TestValidators
@@ -342,7 +347,7 @@ class TestValidatorIntegrationReal:
     """Integration tests with real validator and other services."""
 
     def test_validator_with_parser_integration(
-        self, integration_services: dict[str, object]
+        self, integration_services: FlextTypes.Core.Dict
     ) -> None:
         """Test validator integrated with real parser service."""
         parser = integration_services["parser"]

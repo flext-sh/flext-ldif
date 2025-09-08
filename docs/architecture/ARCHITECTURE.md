@@ -234,7 +234,7 @@ class FlextLDIFEntry(FlextModels.Entity):
         """LDIF changetype (add, modify, delete, etc.)."""
         return self._changetype
 
-    def get_object_classes(self) -> list[str]:
+    def get_object_classes(self) -> FlextTypes.Core.StringList:
         """
         Get all objectClass values for this entry.
 
@@ -246,7 +246,7 @@ class FlextLDIFEntry(FlextModels.Entity):
         """Check if entry has specific object class."""
         return object_class in self.get_object_classes()
 
-    def get_attribute_values(self, name: str) -> list[str]:
+    def get_attribute_values(self, name: str) -> FlextTypes.Core.StringList:
         """Get all values for specified attribute."""
         return self._attributes.get_values(name)
 
@@ -277,7 +277,7 @@ class FlextLDIFEntry(FlextModels.Entity):
         # Validate attribute name format
         self._validate_attribute_names()
 
-    def _validate_required_attributes(self, object_classes: list[str]) -> None:
+    def _validate_required_attributes(self, object_classes: FlextTypes.Core.StringList) -> None:
         """Validate required attributes for object classes."""
         required_attrs = self._get_required_attributes(object_classes)
         for attr in required_attrs:
@@ -293,7 +293,7 @@ class FlextLDIFEntry(FlextModels.Entity):
             if not attr_pattern.match(attr_name):
                 raise ValueError(f"Invalid attribute name format: {attr_name}")
 
-    def _get_required_attributes(self, object_classes: list[str]) -> set[str]:
+    def _get_required_attributes(self, object_classes: FlextTypes.Core.StringList) -> set[str]:
         """Get required attributes for object classes."""
         # Business knowledge: Required attributes by object class
         required_map = {
@@ -350,7 +350,7 @@ class FlextLDIFDocument(FlextModels.AggregateRoot):
         self._entries: list[FlextLDIFEntry] = []
         self._is_parsed = False
         self._is_validated = False
-        self._validation_errors: list[str] = []
+        self._validation_errors: FlextTypes.Core.StringList = []
 
     @property
     def document_id(self) -> str:
@@ -378,7 +378,7 @@ class FlextLDIFDocument(FlextModels.AggregateRoot):
         return self._is_validated
 
     @property
-    def validation_errors(self) -> list[str]:
+    def validation_errors(self) -> FlextTypes.Core.StringList:
         """Validation errors found during processing."""
         return self._validation_errors.copy()
 
@@ -502,11 +502,11 @@ class FlextLDIFDistinguishedName(FlextModels.Value):
             if not attr_name.strip() or not attr_value.strip():
                 raise ValueError(f"Invalid DN component: {component}")
 
-    def _parse_components(self) -> list[str]:
+    def _parse_components(self) -> FlextTypes.Core.StringList:
         """Parse DN into components."""
         return [comp.strip() for comp in self._value.split(",")]
 
-    def get_components(self) -> list[str]:
+    def get_components(self) -> FlextTypes.Core.StringList:
         """Get DN components as list."""
         return self._components.copy()
 
@@ -806,7 +806,7 @@ class FlextLDIFPersonSpecification(FlextSpecification[FlextLDIFEntry]):
         """Get attributes required for person entries."""
         return {"cn", "sn"}  # Common name and surname required
 
-    def validate_person_entry(self, entry: FlextLDIFEntry) -> list[str]:
+    def validate_person_entry(self, entry: FlextLDIFEntry) -> FlextTypes.Core.StringList:
         """Validate person entry and return list of violations."""
         violations = []
 
@@ -850,7 +850,7 @@ class FlextLDIFValidSpecification(FlextSpecification[FlextLDIFEntry]):
         except ValueError:
             return False
 
-    def get_validation_errors(self, entry: FlextLDIFEntry) -> list[str]:
+    def get_validation_errors(self, entry: FlextLDIFEntry) -> FlextTypes.Core.StringList:
         """Get detailed validation errors for entry."""
         errors = []
 
@@ -1413,7 +1413,7 @@ class ArchitectureTest:
 
         assert not violations, f"Application layer violations: {violations}"
 
-    def _check_file_imports(self, file_path: Path, forbidden_imports: list[str]) -> list[str]:
+    def _check_file_imports(self, file_path: Path, forbidden_imports: FlextTypes.Core.StringList) -> FlextTypes.Core.StringList:
         """Check file for forbidden imports."""
         violations = []
 
@@ -1533,7 +1533,7 @@ class LdifStreamProcessor:
             if current_batch:
                 yield current_batch
 
-    def _parse_entry_lines(self, lines: list[str]) -> FlextLDIFEntry | None:
+    def _parse_entry_lines(self, lines: FlextTypes.Core.StringList) -> FlextLDIFEntry | None:
         """Parse entry from lines."""
         # Implementation similar to main parser but for single entry
         pass

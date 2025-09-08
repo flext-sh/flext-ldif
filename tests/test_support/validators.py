@@ -2,6 +2,10 @@
 
 Provides validation utilities for testing real LDIF functionality
 and ensuring correct behavior without relying on mocks.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -9,7 +13,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextTypes
 
 from flext_ldif import FlextLDIFModels
 
@@ -76,7 +80,7 @@ class TestValidators:
         return bool(re.match(attr_pattern, attr_name))
 
     @staticmethod
-    def validate_result_success(result: FlextResult[object]) -> dict[str, object]:
+    def validate_result_success(result: FlextResult[object]) -> FlextTypes.Core.Dict:
         """Validate FlextResult success characteristics."""
         has_value = False
         value_type_name = None
@@ -95,7 +99,7 @@ class TestValidators:
         }
 
     @staticmethod
-    def validate_result_failure(result: FlextResult[object]) -> dict[str, object]:
+    def validate_result_failure(result: FlextResult[object]) -> FlextTypes.Core.Dict:
         """Validate FlextResult failure characteristics."""
         return {
             "is_failure": result.is_failure,
@@ -105,7 +109,7 @@ class TestValidators:
         }
 
     @staticmethod
-    def validate_ldif_content(content: str) -> dict[str, object]:
+    def validate_ldif_content(content: str) -> FlextTypes.Core.Dict:
         """Validate raw LDIF content format."""
         if not content or not isinstance(content, str):
             return {"is_valid": False, "reason": "Empty or non-string content"}
@@ -177,7 +181,7 @@ class TestValidators:
     @classmethod
     def validate_parsing_result(
         cls, result: FlextResult[list[FlextLDIFModels.Entry]], expected_count: int
-    ) -> dict[str, object]:
+    ) -> FlextTypes.Core.Dict:
         """Validate parsing result comprehensively."""
         base_validation = cls.validate_result_success(result)
 

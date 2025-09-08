@@ -1,9 +1,6 @@
-"""FLEXT-LDIF Format Validators - Unified validation following flext-core patterns.
+"""Copyright (c) 2025 client-a Telecom. Todos os direitos reservados.
 
-Single class per module containing all LDIF validation functionality.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
+SPDX-License-Identifier: Proprietário.
 """
 
 from __future__ import annotations
@@ -13,10 +10,18 @@ from collections.abc import Callable
 from functools import lru_cache
 from typing import ClassVar
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextTypes
 
 from flext_ldif.constants import FlextLDIFConstants
 from flext_ldif.models import FlextLDIFModels
+
+"""FLEXT-LDIF Format Validators - Unified validation following flext-core patterns.
+
+Single class per module containing all LDIF validation functionality.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 ValidatorFunc = Callable[[str], bool]
 
@@ -37,6 +42,9 @@ class FlextLDIFFormatValidators:
 
         Validates attribute names per RFC 4512: base name + optional language tags/options.
         Supports: displayname;lang-es_es, orclinstancecount;oid-prd-app01.network.ctbc
+        Returns:
+            bool:: Description of return value.
+
         """
         if not name or not isinstance(name, str):
             return False
@@ -48,6 +56,10 @@ class FlextLDIFFormatValidators:
         """Local LDAP DN validator - breaks circular dependency.
 
         Basic DN validation pattern to avoid circular import from flext-ldap.
+
+        Returns:
+            bool:: Description of return value.
+
         """
         if not dn or not isinstance(dn, str):
             return False
@@ -76,7 +88,7 @@ class FlextLDIFFormatValidators:
         )
 
         @classmethod
-        def validate_dn(cls, dn_value: str) -> FlextResult:
+        def validate_dn(cls, dn_value: str) -> FlextResult[bool]:
             """Validate Distinguished Name format using flext-ldap root API.
 
             ✅ CORRECT ARCHITECTURE: Delegates to flext-ldap root API.
@@ -104,7 +116,7 @@ class FlextLDIFFormatValidators:
             return FlextResult.fail(f"Invalid DN format: {dn_value}")
 
         @classmethod
-        def validate_attribute_name(cls, attr_name: str) -> FlextResult:
+        def validate_attribute_name(cls, attr_name: str) -> FlextResult[bool]:
             """Validate LDAP attribute name format.
 
             Args:
@@ -127,7 +139,7 @@ class FlextLDIFFormatValidators:
             return FlextResult.fail(f"Invalid attribute name: {attr_name}")
 
         @classmethod
-        def is_person_entry(cls, entry: FlextLDIFModels.Entry) -> FlextResult:
+        def is_person_entry(cls, entry: FlextLDIFModels.Entry) -> FlextResult[bool]:
             """Check if entry is a person entry based on objectClass.
 
             Args:
@@ -148,7 +160,7 @@ class FlextLDIFFormatValidators:
             return FlextResult.ok(is_person)
 
         @classmethod
-        def is_group_entry(cls, entry: FlextLDIFModels.Entry) -> FlextResult:
+        def is_group_entry(cls, entry: FlextLDIFModels.Entry) -> FlextResult[bool]:
             """Check if entry is a group entry based on objectClass.
 
             Args:
@@ -169,7 +181,7 @@ class FlextLDIFFormatValidators:
             return FlextResult.ok(is_group)
 
         @classmethod
-        def is_ou_entry(cls, entry: FlextLDIFModels.Entry) -> FlextResult:
+        def is_ou_entry(cls, entry: FlextLDIFModels.Entry) -> FlextResult[bool]:
             """Check if entry is an organizational unit based on objectClass.
 
             Args:
@@ -192,7 +204,7 @@ class FlextLDIFFormatValidators:
         @classmethod
         def validate_required_objectclass(
             cls, entry: FlextLDIFModels.Entry
-        ) -> FlextResult:
+        ) -> FlextResult[bool]:
             """Validate that entry has required objectClass attribute.
 
             Args:
@@ -214,7 +226,7 @@ class FlextLDIFFormatValidators:
         @classmethod
         def validate_entry_completeness(
             cls, entry: FlextLDIFModels.Entry
-        ) -> FlextResult:
+        ) -> FlextResult[bool]:
             """Validate entry has minimum required components.
 
             Args:
@@ -238,7 +250,7 @@ class FlextLDIFFormatValidators:
         @classmethod
         def validate_entry_type(
             cls, entry: FlextLDIFModels.Entry, expected_types: set[str]
-        ) -> FlextResult:
+        ) -> FlextResult[bool]:
             """Validate entry matches expected object class types.
 
             Args:
@@ -270,8 +282,10 @@ class FlextLDIFFormatValidators:
 
         @classmethod
         def validate_required_attributes(
-            cls, entry: FlextLDIFModels.Entry, required_attrs: list[str]
-        ) -> FlextResult:
+            cls,
+            entry: FlextLDIFModels.Entry,
+            required_attrs: FlextTypes.Core.StringList,
+        ) -> FlextResult[bool]:
             """Validate entry has all required attributes for its schema.
 
             Args:
@@ -296,7 +310,9 @@ class FlextLDIFFormatValidators:
             return FlextResult.ok(FlextLDIFConstants.VALIDATION_SUCCESS)
 
         @classmethod
-        def validate_person_schema(cls, entry: FlextLDIFModels.Entry) -> FlextResult:
+        def validate_person_schema(
+            cls, entry: FlextLDIFModels.Entry
+        ) -> FlextResult[bool]:
             """Validate person entry schema requirements.
 
             Args:
@@ -318,7 +334,7 @@ class FlextLDIFFormatValidators:
             )
 
         @classmethod
-        def validate_ou_schema(cls, entry: FlextLDIFModels.Entry) -> FlextResult:
+        def validate_ou_schema(cls, entry: FlextLDIFModels.Entry) -> FlextResult[bool]:
             """Validate organizational unit entry schema requirements.
 
             Args:
