@@ -2,9 +2,15 @@
 
 Comprehensive tests using actual LDIF data and real writer functionality.
 No mocks, bypasses, or fake implementations - only real LDIF writing.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
+from flext_core import FlextTypes
 
 from flext_ldif import FlextLDIFModels, FlextLDIFServices
 from tests.test_support import TestFileManager, TestValidators
@@ -343,7 +349,7 @@ class TestWriterIntegrationReal:
     """Integration tests with real writer and other services."""
 
     def test_writer_with_parser_roundtrip(
-        self, integration_services: dict[str, object]
+        self, integration_services: FlextTypes.Core.Dict
     ) -> None:
         """Test writer → parser roundtrip with real services."""
         parser = integration_services["parser"]

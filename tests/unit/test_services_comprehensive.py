@@ -2,6 +2,10 @@
 
 Focus on covering ALL untested service functionality with real tests,
 following FLEXT patterns and achieving 90%+ coverage for services.py.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -185,7 +189,9 @@ class TestRepositoryServiceComprehensive:
         service = FlextLDIFServices.RepositoryService()
 
         # Test with DN that doesn't exist - should return None
-        result = service.find_entry_by_dn(entries, "uid=notfound,ou=people,dc=example,dc=com")
+        result = service.find_entry_by_dn(
+            entries, "uid=notfound,ou=people,dc=example,dc=com"
+        )
 
         # Use flext_tests for validation
         FlextTestUtilities.assert_result_success(result)

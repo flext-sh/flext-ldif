@@ -2,21 +2,21 @@
 
 Single consolidated class containing ALL LDIF services following FLEXT patterns.
 Individual services available as nested classes for organization.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, cast, override
-
-if TYPE_CHECKING:
-    from flext_ldif.constants import FlextLDIFConstants
-    from flext_ldif.models import FlextLDIFModels
+from typing import cast, override
 
 from flext_core import (
     FlextDomainService,
     FlextModels,
     FlextResult,
+    FlextTypes,
     FlextUtilities,
     FlextValidations,
 )
@@ -25,10 +25,6 @@ from pydantic.fields import FieldInfo
 
 from flext_ldif.constants import FlextLDIFConstants
 from flext_ldif.models import FlextLDIFModels
-
-# Use FlextConstants instead of local constants
-# SUCCESS_VALUE removed - use FlextConstants.Success.TRUE
-
 
 # =============================================================================
 # CONSOLIDATED SERVICES CLASS - Single class containing ALL LDIF services
@@ -55,14 +51,9 @@ class FlextLDIFServices(FlextModels.Config):
             super().__init__()
             self._entries = entries or []
 
-            # Lazy import to avoid circular dependencies
             if config is None:
-                from flext_ldif.models import FlextLDIFModels
-
                 self._config = FlextLDIFModels.Config()
             else:
-                from flext_ldif.models import FlextLDIFModels
-
                 self._config = cast("FlextLDIFModels.Config", config)
 
         @property
@@ -86,10 +77,12 @@ class FlextLDIFServices(FlextModels.Config):
         def analyze_patterns(
             self, entries: list[FlextLDIFModels.Entry]
         ) -> FlextResult[dict[str, int]]:
-            """Analyze patterns in LDIF entries."""
-            # Lazy import to avoid circular dependencies
-            from flext_ldif.constants import FlextLDIFConstants
+            """Analyze patterns in LDIF entries.
 
+            Returns:
+                FlextResult[dict[str, int]]: Pattern analysis result.
+
+            """
             analytics_constants = FlextLDIFConstants.FlextLDIFAnalyticsConstants
 
             patterns = {
@@ -192,7 +185,12 @@ class FlextLDIFServices(FlextModels.Config):
         def write_entries_to_string(
             self, entries: list[FlextLDIFModels.Entry]
         ) -> FlextResult[str]:
-            """Write entries to LDIF string - Railway pattern optimization."""
+            """Write entries to LDIF string - Railway pattern optimization.
+
+            Returns:
+                FlextResult[str]: LDIF string result.
+
+            """
             if not entries:
                 return FlextResult[str].ok("")
 
@@ -211,7 +209,12 @@ class FlextLDIFServices(FlextModels.Config):
             file_path: str,
             encoding: str = "utf-8",
         ) -> FlextResult[bool]:
-            """Write entries to file - Railway pattern with flat_map."""
+            """Write entries to file - Railway pattern with flat_map.
+
+            Returns:
+                FlextResult[bool]: File write operation result.
+
+            """
             # Railway pattern composition
             return self.write_entries_to_string(entries).flat_map(
                 lambda content: self._write_content_to_file(
@@ -292,7 +295,12 @@ class FlextLDIFServices(FlextModels.Config):
         def find_entry_by_dn(
             self, entries: list[FlextLDIFModels.Entry], dn: str
         ) -> FlextResult[FlextLDIFModels.Entry | None]:
-            """Find entry by distinguished name using flext-core utilities."""
+            """Find entry by distinguished name using flext-core utilities.
+
+            Returns:
+                FlextResult[FlextLDIFModels.Entry | None]: Found entry or None.
+
+            """
             # Use FlextUtilities.TypeGuards.is_string_non_empty for validation
             if not FlextUtilities.TypeGuards.is_string_non_empty(dn):
                 error_msg = "dn cannot be empty"
@@ -458,7 +466,12 @@ class FlextLDIFServices(FlextModels.Config):
         def validate_entries(
             self, entries: list[FlextLDIFModels.Entry]
         ) -> FlextResult[bool]:
-            """Validate all entries using flext-core type guards."""
+            """Validate all entries using flext-core type guards.
+
+            Returns:
+                FlextResult[bool]: Validation result.
+
+            """
             # Use FlextUtilities.TypeGuards.is_list_non_empty for validation
             if not FlextUtilities.TypeGuards.is_list_non_empty(entries):
                 return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_SUCCESS)
@@ -532,7 +545,12 @@ class FlextLDIFServices(FlextModels.Config):
         def _validate_configuration_rules(
             self, entry: FlextLDIFModels.Entry
         ) -> FlextResult[bool]:
-            """Validate entry against configuration rules."""
+            """Validate entry against configuration rules.
+
+            Returns:
+                FlextResult[bool]: Validation result.
+
+            """
             # Use FlextUtilities.TypeGuards.is_not_none for config validation
             if not FlextUtilities.TypeGuards.is_not_none(self.config):
                 return FlextResult[bool].ok(FlextLDIFConstants.VALIDATION_SUCCESS)
@@ -602,7 +620,12 @@ class FlextLDIFServices(FlextModels.Config):
             return self.parse_ldif_content(self.content)
 
         def parse(self, content: str) -> FlextResult[list[FlextLDIFModels.Entry]]:
-            """Parse LDIF content - standalone method for direct use."""
+            """Parse LDIF content - standalone method for direct use.
+
+            Returns:
+                FlextResult[list[FlextLDIFModels.Entry]]: Parsing result.
+
+            """
             return self.parse_ldif_content(content)
 
         def parse_entries_from_string(
@@ -629,7 +652,7 @@ class FlextLDIFServices(FlextModels.Config):
             try:
                 entries: list[FlextLDIFModels.Entry] = []
                 current_dn: str | None = None
-                current_attributes: dict[str, list[str]] = {}
+                current_attributes: dict[str, FlextTypes.Core.StringList] = {}
 
                 # Use FlextUtilities.TextProcessor.clean_text for line processing
                 for raw_line in content.strip().split("\n"):
@@ -742,7 +765,12 @@ class FlextLDIFServices(FlextModels.Config):
         def _parse_entry_block(
             self, block: str
         ) -> FlextResult[FlextLDIFModels.Entry | None]:
-            """Parse a single LDIF entry block."""
+            """Parse a single LDIF entry block.
+
+            Returns:
+                FlextResult[FlextLDIFModels.Entry | None]: Parsing result.
+
+            """
             if not block or not block.strip():
                 return FlextResult[FlextLDIFModels.Entry | None].fail(
                     "Empty entry block"
@@ -750,7 +778,7 @@ class FlextLDIFServices(FlextModels.Config):
 
             try:
                 lines = block.strip().split("\n")
-                entry_data: dict[str, str | list[str]] = {}
+                entry_data: dict[str, str | FlextTypes.Core.StringList] = {}
 
                 for raw_line in lines:
                     line = raw_line.strip()
@@ -766,7 +794,9 @@ class FlextLDIFServices(FlextModels.Config):
                     else:
                         if attr_name not in entry_data:
                             entry_data[attr_name] = []
-                        attr_list = cast("list[str]", entry_data[attr_name])
+                        attr_list = cast(
+                            "FlextTypes.Core.StringList", entry_data[attr_name]
+                        )
                         attr_list.append(attr_value)
 
                 if "dn" not in entry_data:
@@ -775,7 +805,7 @@ class FlextLDIFServices(FlextModels.Config):
                     )
 
                 entry = FlextLDIFModels.Entry.model_validate(
-                    cast("dict[str, object]", entry_data)
+                    cast("FlextTypes.Core.Dict", entry_data)
                 )
                 return FlextResult[FlextLDIFModels.Entry | None].ok(entry)
 
@@ -805,7 +835,12 @@ class FlextLDIFServices(FlextModels.Config):
         def transform_entry(
             self, entry: FlextLDIFModels.Entry
         ) -> FlextResult[FlextLDIFModels.Entry]:
-            """Transform a single entry (base implementation returns as-is)."""
+            """Transform a single entry (base implementation returns as-is).
+
+            Returns:
+                FlextResult[FlextLDIFModels.Entry]: Transformation result.
+
+            """
             return FlextResult[FlextLDIFModels.Entry].ok(entry)
 
         def transform_entries(

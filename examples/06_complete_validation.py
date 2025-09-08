@@ -14,6 +14,7 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 """
 
 from __future__ import annotations
+from flext_core import FlextTypes
 
 import contextlib
 import sys
@@ -35,7 +36,7 @@ from flext_core import FlextContainer, FlextResult
 # Types com prefixes corretos
 # Simple API aliases (validated)
 # CORREÇÃO CRÍTICA: Imports verificados no __init__.py
-from flext_ldif import (
+from ..flext_ldif import (
     FlextLDIFAPI,
     FlextLDIFModels,
     FlextLDIFServices,
@@ -48,7 +49,7 @@ from flext_ldif import (
 )
 
 
-def test_1_flext_ldif_prefixes_validation() -> dict[str, object]:
+def test_1_flext_ldif_prefixes_validation() -> FlextTypes.Core.Dict:
     """Teste 1: Validação de todos os prefixos FlextLDIF* que REALMENTE EXISTEM."""
     # ✅ Testando classes principais com prefixo FlextLDIF* (APENAS as que existem)
     config = FlextLDIFModels.Config()
@@ -77,12 +78,12 @@ def test_1_flext_ldif_prefixes_validation() -> dict[str, object]:
     }
 
 
-def test_2_domain_specifications_validation() -> dict[str, object]:
+def test_2_domain_specifications_validation() -> FlextTypes.Core.Dict:
     """Teste 2: Validação usando FlextLDIFEntry (specifications integradas via composição)."""
     # ✅ CORREÇÃO: Specifications estão integradas no FlextLDIFEntry via composição
     # Testando funcionalidade através da API que realmente existe
 
-    test_entry_data: dict[str, str | list[str]] = {
+    test_entry_data: dict[str, str | FlextTypes.Core.StringList] = {
         "dn": "uid=jdoe,ou=people,dc=example,dc=com",
         "objectClass": ["person", "inetOrgPerson"],
         "uid": ["jdoe"],

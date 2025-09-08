@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 
-from flext_core import FlextExceptions
+from flext_core import FlextExceptions, FlextTypes
 from pydantic import BaseModel, Field
 
 
@@ -35,7 +35,7 @@ class ExceptionSpec(BaseModel):
 
     message: str = Field(min_length=1)
     error_code: FlextLDIFErrorCodes = Field(default=FlextLDIFErrorCodes.LDIF_ERROR)
-    context: dict[str, object] = Field(default_factory=dict)
+    context: FlextTypes.Core.Dict = Field(default_factory=dict)
     line_number: int | None = Field(default=None, ge=1)
     column: int | None = Field(default=None, ge=1)
     dn: str | None = Field(default=None, min_length=1)
@@ -58,11 +58,16 @@ class ExceptionBuilder:
         return self
 
     def code(self, code: FlextLDIFErrorCodes) -> ExceptionBuilder:
-        """Set error code."""
+        """Set error code.
+
+        Returns:
+            object: Exception builder instance.
+
+        """
         self._spec.error_code = code
         return self
 
-    def context(self, ctx: dict[str, object]) -> ExceptionBuilder:
+    def context(self, ctx: FlextTypes.Core.Dict) -> ExceptionBuilder:
         """Set context dictionary."""
         self._spec.context.update(ctx)
         return self
@@ -70,7 +75,12 @@ class ExceptionBuilder:
     def location(
         self, line: int | None = None, column: int | None = None
     ) -> ExceptionBuilder:
-        """Set location information."""
+        """Set location information.
+
+        Returns:
+            ExceptionBuilder: Exception builder instance.
+
+        """
         if line is not None:
             self._spec.line_number = line
         if column is not None:
@@ -83,7 +93,12 @@ class ExceptionBuilder:
         return self
 
     def attribute(self, attr_name: str) -> ExceptionBuilder:
-        """Set attribute name context."""
+        """Set attribute name context.
+
+        Returns:
+            ExceptionBuilder: Exception builder instance.
+
+        """
         self._spec.attribute_name = attr_name
         return self
 
@@ -93,7 +108,12 @@ class ExceptionBuilder:
         return self
 
     def validation_rule(self, rule: str) -> ExceptionBuilder:
-        """Set validation rule context."""
+        """Set validation rule context.
+
+        Returns:
+            ExceptionBuilder: Exception builder instance.
+
+        """
         self._spec.validation_rule = rule
         return self
 
@@ -103,7 +123,12 @@ class ExceptionBuilder:
         return self
 
     def operation(self, op: str) -> ExceptionBuilder:
-        """Set operation context."""
+        """Set operation context.
+
+        Returns:
+            ExceptionBuilder: Exception builder instance.
+
+        """
         self._spec.operation = op
         return self
 
@@ -136,9 +161,9 @@ class ExceptionBuilder:
 class FlextLDIFExceptions:
     """Zero-duplication LDIF exception system using Builder Pattern.
 
-    Eliminates 127+ lines of duplicated code by using functional composition
-    and the Builder pattern. All exceptions are created through pre-configured
-    builders that eliminate constructor parameter duplication.
+    Returns:
+        ExceptionBuilder: Exception builder instance.
+
     """
 
     # Base exception types
@@ -152,7 +177,12 @@ class FlextLDIFExceptions:
 
     @staticmethod
     def error(message: str = "LDIF operation failed") -> FlextExceptions.BaseError:
-        """Create generic LDIF error."""
+        """Create generic LDIF error.
+
+        Returns:
+            ExceptionBuilder: Exception builder instance.
+
+        """
         return (
             FlextLDIFExceptions.builder()
             .message(message)

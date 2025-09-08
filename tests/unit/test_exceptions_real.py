@@ -1,9 +1,13 @@
-"""Real tests for exceptions module - 100% coverage, zero mocks."""
+"""Real tests for exceptions module - 100% coverage, zero mocks.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 import pytest
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextTypes
 from flext_core.exceptions import FlextExceptions
 from flext_tests import FlextTestUtilities
 
@@ -84,7 +88,7 @@ class TestFlextLDIFExceptionsError:
 
         # Use a mapping that's not a dict
         class CustomMapping:
-            def __init__(self, data: dict[str, object]) -> None:
+            def __init__(self, data: FlextTypes.Core.Dict) -> None:
                 self._data = data
 
             def __iter__(self) -> object:

@@ -1,10 +1,18 @@
-"""FLEXT-LDIF - LDIF Processing Library.
+"""Copyright (c) 2025 Algar Telecom. Todos os direitos reservados.
 
-This module provides LDIF processing functionality following FLEXT architectural patterns.
-Enterprise-grade LDIF parsing, validation, transformation, and writing capabilities.
+SPDX-License-Identifier: Proprietário.
 """
 
 from __future__ import annotations
+from flext_core import FlextTypes
+
+
+"""FLEXT-LDIF - LDIF Processing Library.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
 
 # =============================================================================
 # FOUNDATION LAYER - Core components, no internal dependencies

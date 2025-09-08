@@ -1,4 +1,8 @@
-"""End-to-end tests for complete FLEXT-LDIF workflows."""
+"""End-to-end tests for complete FLEXT-LDIF workflows.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

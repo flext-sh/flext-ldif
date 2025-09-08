@@ -6,13 +6,14 @@ CLI usage for enterprise automation scenarios.
 """
 
 from __future__ import annotations
+from flext_core import FlextTypes
 
 from pathlib import Path
 
 from click.testing import CliRunner
 from flext_cli import FlextCliConfig
 
-from flext_ldif import FlextLDIFAPI, FlextLDIFModels, main as ldif_cli
+from ..flext_ldif import FlextLDIFAPI, FlextLDIFModels, main as ldif_cli
 
 ALLOWED_COMMANDS: set[str] = {
     "parse",
@@ -24,7 +25,7 @@ ALLOWED_COMMANDS: set[str] = {
 }
 
 
-def _extract_primary_command(tokens: list[str]) -> str | None:
+def _extract_primary_command(tokens: FlextTypes.Core.StringList) -> str | None:
     """Return the first non-option token (the primary command), if any."""
     for token in tokens:
         if not token.startswith("-"):
@@ -32,7 +33,7 @@ def _extract_primary_command(tokens: list[str]) -> str | None:
     return None
 
 
-def _validate_args(tokens: list[str]) -> tuple[bool, str | None]:
+def _validate_args(tokens: FlextTypes.Core.StringList) -> tuple[bool, str | None]:
     """Perform basic safety validation on CLI tokens.
 
     Returns:
@@ -56,7 +57,7 @@ def _validate_args(tokens: list[str]) -> tuple[bool, str | None]:
     return True, None
 
 
-def run_cli_command(command_args: list[str]) -> tuple[int, str, str]:
+def run_cli_command(command_args: FlextTypes.Core.StringList) -> tuple[int, str, str]:
     """Run flext-ldif CLI command programmatically.
 
     Args:

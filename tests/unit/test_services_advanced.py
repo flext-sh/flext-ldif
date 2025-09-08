@@ -2,6 +2,10 @@
 
 Focus on covering untested service functionality with real tests,
 following FLEXT patterns and achieving high coverage.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

@@ -1,4 +1,8 @@
-"""Tests for LDIF exceptions - comprehensive coverage."""
+"""Tests for LDIF exceptions - comprehensive coverage.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

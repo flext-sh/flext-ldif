@@ -2,6 +2,10 @@
 
 Provides comprehensive LDIF test data for real functionality testing.
 All data follows RFC 2849 LDIF specifications and real-world patterns.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

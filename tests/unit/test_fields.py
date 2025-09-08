@@ -1,4 +1,9 @@
-"""Tests for FLEXT-LDIF field definitions - comprehensive coverage."""
+"""Tests for FLEXT-LDIF field definitions - comprehensive coverage.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
 
 # pyright: reportAssignmentType=false
 # Reason: Pydantic field assignment pattern is not understood by pyright but is valid
@@ -176,7 +181,9 @@ class TestAttributeValueField:
 
     def test_attribute_value_field_custom_parameters(self) -> None:
         """Test attribute_value_field with custom parameters."""
-        field = FlextLDIFServices.attribute_value_field(description="Custom Value", max_length=100)
+        field = FlextLDIFServices.attribute_value_field(
+            description="Custom Value", max_length=100
+        )
 
         assert field.description == "Custom Value"
         metadata = field.metadata
@@ -344,7 +351,9 @@ class TestFieldDefaults:
 
         class TestModel(FlextModels.Config):
             dn: str = FlextLDIFServices.dn_field(max_length=1024)  # Reasonable default
-            attr_name: str = FlextLDIFServices.attribute_name_field(max_length=255)  # Reasonable default
+            attr_name: str = FlextLDIFServices.attribute_name_field(
+                max_length=255
+            )  # Reasonable default
             attr_value: str = FlextLDIFServices.attribute_value_field(
                 max_length=65536
             )  # Reasonable default

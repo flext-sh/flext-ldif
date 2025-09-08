@@ -2,6 +2,10 @@
 
 This module provides Docker container management for running LDIF tests against
 a real OpenLDAP server, enabling full integration testing.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -13,20 +17,16 @@ import time
 from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager
 
-# Make docker import optional to avoid import errors when docker package is not available
-from typing import TYPE_CHECKING
-
 import docker
 import pytest
-from flext_core import FlextLogger
+from flext_core import FlextLogger, FlextTypes
 
 logger = FlextLogger(__name__)
 
 DOCKER_AVAILABLE = True
 
-if TYPE_CHECKING:
-    from docker import DockerClient
-    from docker.models.containers import Container
+from docker import DockerClient
+from docker.models.containers import Container
 
 # OpenLDAP Container Configuration
 OPENLDAP_IMAGE = "osixia/openldap:1.5.0"
@@ -381,7 +381,9 @@ def docker_openldap_container(
 
 
 @pytest.fixture
-def ldif_test_config(docker_openldap_container: Container | None) -> dict[str, object]:
+def ldif_test_config(
+    docker_openldap_container: Container | None,
+) -> FlextTypes.Core.Dict:
     """Provide LDIF test configuration for individual tests."""
     return {
         "server_url": TEST_ENV_VARS["LDIF_TEST_SERVER"],
@@ -394,7 +396,7 @@ def ldif_test_config(docker_openldap_container: Container | None) -> dict[str, o
 
 @pytest.fixture
 def real_ldif_data(
-    ldif_test_config: dict[str, object],
+    ldif_test_config: FlextTypes.Core.Dict,
     container_manager: OpenLDAPContainerManager,
 ) -> str:
     """Provide real LDIF data exported from the OpenLDAP container."""

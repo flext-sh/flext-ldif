@@ -2,7 +2,6 @@
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -15,7 +14,7 @@ from typing import ClassVar
 from urllib.parse import urlparse
 
 import urllib3
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextTypes
 
 from flext_ldif.constants import FlextLDIFConstants
 from flext_ldif.models import FlextLDIFModels
@@ -40,8 +39,13 @@ class FlextLDIFFormatHandler:
 
     LDIF_PATTERN = f"^((dn(:|::) {DN_PATTERN})|({ATTRTYPE_PATTERN}s(:|::) .*)$)+"
 
-    MOD_OPS: ClassVar[list[str]] = ["add", "delete", "replace"]
-    CHANGE_TYPES: ClassVar[list[str]] = ["add", "delete", "modify", "modrdn"]
+    MOD_OPS: ClassVar[FlextTypes.Core.StringList] = ["add", "delete", "replace"]
+    CHANGE_TYPES: ClassVar[FlextTypes.Core.StringList] = [
+        "add",
+        "delete",
+        "modify",
+        "modrdn",
+    ]
 
     UNSAFE_STRING_PATTERN = (
         r"(^[^\x01-\x09\x0b-\x0c\x0e-\x1f\x21-\x39\x3b\x3d-\x7f]"
@@ -64,6 +68,9 @@ class FlextLDIFFormatHandler:
 
         Raises:
           ValueError: If URL scheme is not allowed
+
+        Returns:
+            object: Description of return value.
 
         """
         parsed = urlparse(url)
@@ -113,11 +120,8 @@ class FlextLDIFFormatHandler:
     def is_dn(cls, s: str) -> bool:
         """Return True if s is a valid LDAP DN.
 
-        Args:
-          s: String to validate as DN
-
         Returns:
-          True if valid DN format
+            bool: True if s is a valid DN, False otherwise.
 
         """
         if s == "":
@@ -126,7 +130,7 @@ class FlextLDIFFormatHandler:
         return match is not None and match.group(0) == s
 
     @staticmethod
-    def lower_list(items: Sequence[str] | None) -> list[str]:
+    def lower_list(items: Sequence[str] | None) -> FlextTypes.Core.StringList:
         """Return a list with the lowercased items.
 
         Args:
@@ -139,7 +143,7 @@ class FlextLDIFFormatHandler:
         return [item.lower() for item in items or []]
 
     @classmethod
-    def parse_ldif(cls, content: str) -> FlextResult:
+    def parse_ldif(cls, content: str) -> FlextResult[list[FlextLDIFModels.Entry]]:
         """Parse LDIF content using modernized parser.
 
         Args:
@@ -177,7 +181,9 @@ class FlextLDIFFormatHandler:
             return FlextResult.fail(error_msg)
 
     @classmethod
-    def write_ldif(cls, entries: list[FlextLDIFModels.Entry] | None) -> FlextResult:
+    def write_ldif(
+        cls, entries: list[FlextLDIFModels.Entry] | None
+    ) -> FlextResult[str]:
         """Write LDIF entries using modernized writer.
 
         Args:
@@ -223,7 +229,7 @@ class FlextLDIFWriter:
 
     def __init__(
         self,
-        base64_attrs: list[str] | None = None,
+        base64_attrs: FlextTypes.Core.StringList | None = None,
         cols: int = 76,
         line_sep: str = "\n",
         encoding: str = "utf-8",
@@ -241,7 +247,7 @@ class FlextLDIFWriter:
         self._cols = cols
         self._line_sep = line_sep
         self._encoding = encoding
-        self._output_lines: list[str] = []
+        self._output_lines: FlextTypes.Core.StringList = []
         self.records_written = 0
 
     def _fold_line(self, line: str) -> None:
@@ -287,7 +293,9 @@ class FlextLDIFWriter:
 
         self._fold_line(line)
 
-    def _unparse_entry_record(self, entry: dict[str, list[str]]) -> None:
+    def _unparse_entry_record(
+        self, entry: dict[str, FlextTypes.Core.StringList]
+    ) -> None:
         """Write entry record.
 
         Args:
@@ -298,12 +306,15 @@ class FlextLDIFWriter:
             for attr_value in entry[attr_type]:
                 self._unparse_attr(attr_type, attr_value)
 
-    def unparse(self, dn: str, record: dict[str, list[str]]) -> None:
+    def unparse(self, dn: str, record: dict[str, FlextTypes.Core.StringList]) -> None:
         """Write an entry record.
 
         Args:
             dn: Distinguished name
             record: Dictionary holding entry attributes
+
+        Returns:
+            object: Description of return value.
 
         """
         self._unparse_attr("dn", dn)
@@ -321,12 +332,16 @@ class FlextLDIFParser:
 
     Reads LDIF entry records from string input with enhanced error handling
     and zero bytes/string compatibility issues.
+
+    Returns:
+        str: Parsing result.
+
     """
 
     def __init__(
         self,
         input_content: str,
-        ignored_attr_types: list[str] | None = None,
+        ignored_attr_types: FlextTypes.Core.StringList | None = None,
         encoding: str = "utf-8",
         *,
         strict: bool = True,
@@ -353,7 +368,12 @@ class FlextLDIFParser:
         return line.rstrip("\r\n")
 
     def _iter_unfolded_lines(self) -> Iterator[str]:
-        """Iterate input unfolded lines, skipping comments."""
+        """Iterate input unfolded lines, skipping comments.
+
+        Returns:
+            Iterator[str]: Iterator of unfolded lines.
+
+        """
         i = 0
         while i < len(self._input_lines):
             line = self._strip_line_sep(self._input_lines[i])
@@ -370,9 +390,9 @@ class FlextLDIFParser:
             if not line.startswith("#"):
                 yield line
 
-    def _iter_blocks(self) -> Iterator[list[str]]:
+    def _iter_blocks(self) -> Iterator[FlextTypes.Core.StringList]:
         """Iterate input lines in blocks separated by blank lines."""
-        lines: list[str] = []
+        lines: FlextTypes.Core.StringList = []
 
         for line in self._iter_unfolded_lines():
             if line.strip():  # Non-empty line
@@ -395,7 +415,7 @@ class FlextLDIFParser:
             attr_value: Raw attribute value
 
         Returns:
-            Tuple of (attr_type, decoded_value)
+            tuple[str, str]: Tuple of (attr_type, decoded_value)
 
         """
         # For DN attributes, ensure UTF-8 compliance
@@ -494,12 +514,17 @@ class FlextLDIFParser:
             self._error(f"Attribute before dn: line: {attr_type}")
 
     def _should_include_attribute(self, attr_type: str) -> bool:
-        """Check if attribute should be included based on ignore list."""
+        """Check if attribute should be included based on ignore list.
+
+        Returns:
+            object: Description of return value.
+
+        """
         return attr_type.lower() not in self._ignored_attr_types
 
     def _add_attribute_to_entry(
         self,
-        entry: dict[str, list[str]],
+        entry: dict[str, FlextTypes.Core.StringList],
         attr_type: str,
         attr_value: str,
     ) -> None:
@@ -511,7 +536,7 @@ class FlextLDIFParser:
 
     def _process_standard_attribute(
         self,
-        entry: dict[str, list[str]],
+        entry: dict[str, FlextTypes.Core.StringList],
         attr_type: str,
         attr_value: str,
         dn: str | None,
@@ -526,7 +551,7 @@ class FlextLDIFParser:
         self,
         line: str,
         dn: str | None,
-        entry: dict[str, list[str]],
+        entry: dict[str, FlextTypes.Core.StringList],
     ) -> str | None:
         """Process a single line and return updated DN if applicable."""
         if not line.strip():
@@ -541,7 +566,9 @@ class FlextLDIFParser:
         self._process_standard_attribute(entry, attr_type, attr_value, dn)
         return dn
 
-    def _parse_entry_record(self, lines: list[str]) -> tuple[str, dict[str, list[str]]]:
+    def _parse_entry_record(
+        self, lines: FlextTypes.Core.StringList
+    ) -> tuple[str, dict[str, FlextTypes.Core.StringList]]:
         """Parse a single entry record from lines.
 
         Args:
@@ -552,7 +579,7 @@ class FlextLDIFParser:
 
         """
         dn: str | None = None
-        entry: dict[str, list[str]] = OrderedDict()
+        entry: dict[str, FlextTypes.Core.StringList] = OrderedDict()
 
         for line in lines:
             dn = self._process_line_attribute(line, dn, entry)
@@ -563,11 +590,14 @@ class FlextLDIFParser:
 
         return dn, entry
 
-    def parse(self) -> Iterator[tuple[str, dict[str, list[str]]]]:
+    def parse(self) -> Iterator[tuple[str, dict[str, FlextTypes.Core.StringList]]]:
         """Iterate LDIF entry records.
 
         Yields:
             Tuple of (dn, entry_dict) for each record
+
+        Returns:
+            Iterator[tuple[str, dict[str, FlextTypes.Core.StringList]]]: Iterator of parsed entries.
 
         """
         try:
@@ -588,7 +618,7 @@ class FlextLDIFParser:
 # - FlextLDIFFormatHandler.lower_list()
 # No helper functions - use class methods instead
 
-__all__: list[str] = [
+__all__: FlextTypes.Core.StringList = [
     "FlextLDIFFormatHandler",
     "FlextLDIFParser",
     "FlextLDIFWriter",

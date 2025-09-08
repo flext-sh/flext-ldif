@@ -2,7 +2,6 @@
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -13,7 +12,7 @@ from functools import reduce
 from pathlib import Path
 from typing import TypeVar
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextTypes
 
 from flext_ldif.constants import FlextLDIFConstants
 from flext_ldif.format_handlers import FlextLDIFFormatHandler
@@ -43,13 +42,13 @@ class ExceptionHandlingStrategy:
 
     def handle_exceptions(
         self,
-        operation: _Callable[[], FlextResult],
+        operation: _Callable[[], FlextResult[T]],
         exception_types: tuple[type[Exception], ...],
         exception_context_log: str,
         exception_details_log: str,
         exception_operation_log: str,
         error_message_template: str,
-    ) -> FlextResult:
+    ) -> FlextResult[T]:
         """Handle exceptions with unified logging and error handling strategy."""
         try:
             return operation()
@@ -74,7 +73,12 @@ class LdifOperationStrategies:
 
     @staticmethod
     def validation_strategy() -> ExceptionHandlingStrategy:
-        """Strategy for validation operations."""
+        """Strategy for validation operations.
+
+        Returns:
+            ExceptionHandlingStrategy: Validation strategy.
+
+        """
         return ExceptionHandlingStrategy("validation")
 
     @staticmethod
@@ -84,7 +88,12 @@ class LdifOperationStrategies:
 
 
 class FlextLDIFCore:
-    """Core LDIF processing functionality."""
+    """Core LDIF processing functionality.
+
+    Returns:
+        ExceptionHandlingStrategy: Core processing result.
+
+    """
 
     # Standard validation patterns following RFC compliance
     # These provide consistent LDIF validation rules
@@ -100,7 +109,7 @@ class FlextLDIFCore:
         return FlextLDIFFormatValidator.get_ldap_validators()
 
     @classmethod
-    def parse(cls, content: str) -> FlextResult:
+    def parse(cls, content: str) -> FlextResult[list[FlextLDIFModels.Entry]]:
         """Parse LDIF content into domain entities.
 
         Args:
@@ -168,7 +177,7 @@ class FlextLDIFCore:
     def _parse_with_modernized_ldif(
         cls,
         content: str,
-    ) -> FlextResult:
+    ) -> FlextResult[list[FlextLDIFModels.Entry]]:
         """Parse using modernized LDIF parser with full string compatibility."""
         logger.debug(
             FlextLDIFConstants.FlextLDIFCoreConstants.STARTING_MODERNIZED_PARSING_LOG
@@ -184,8 +193,8 @@ class FlextLDIFCore:
             )
 
             def convert_raw_entries(
-                raw_entries: list[tuple[str, dict[str, list[str]]]],
-            ) -> FlextResult:
+                raw_entries: list[tuple[str, dict[str, FlextTypes.Core.StringList]]],
+            ) -> FlextResult[list[FlextLDIFModels.Entry]]:
                 """Convert raw entries to FlextLDIFModels.Entry objects using railway-oriented programming."""
                 logger.debug(
                     FlextLDIFConstants.FlextLDIFCoreConstants.MODERNIZED_PARSER_RETURNED_ENTRIES_LOG,
@@ -202,9 +211,11 @@ class FlextLDIFCore:
 
                 # Process each entry using railway-oriented programming with reduce pattern
                 def process_indexed_entry(
-                    acc: FlextResult,
-                    indexed_raw: tuple[int, tuple[str, dict[str, list[str]]]],
-                ) -> FlextResult:
+                    acc: FlextResult[list[FlextLDIFModels.Entry]],
+                    indexed_raw: tuple[
+                        int, tuple[str, dict[str, FlextTypes.Core.StringList]]
+                    ],
+                ) -> FlextResult[list[FlextLDIFModels.Entry]]:
                     i, (dn, attrs) = indexed_raw
                     logger.debug(
                         FlextLDIFConstants.FlextLDIFCoreConstants.PROCESSING_ENTRY_LOG,
@@ -215,7 +226,7 @@ class FlextLDIFCore:
 
                     def process_entry(
                         entries_list: list[FlextLDIFModels.Entry],
-                    ) -> FlextResult:
+                    ) -> FlextResult[list[FlextLDIFModels.Entry]]:
                         try:
                             entry = FlextLDIFModels.Factory.create_entry(
                                 {
@@ -242,7 +253,7 @@ class FlextLDIFCore:
                     reduce(
                         process_indexed_entry,
                         enumerate(raw_entries),
-                        FlextResult.ok([]),
+                        FlextResult[list[FlextLDIFModels.Entry]].ok([]),
                     )
                     .tap(
                         lambda entries: logger.debug(
@@ -286,7 +297,7 @@ class FlextLDIFCore:
             )
 
     @classmethod
-    def validate(cls, entry: FlextLDIFModels.Entry | None) -> FlextResult:
+    def validate(cls, entry: FlextLDIFModels.Entry | None) -> FlextResult[bool]:
         """Validate LDIF entry with format and business rule validation.
 
         Args:
@@ -429,7 +440,9 @@ class FlextLDIFCore:
         return None
 
     @classmethod
-    def validate_entries(cls, entries: list[FlextLDIFModels.Entry]) -> FlextResult:
+    def validate_entries(
+        cls, entries: list[FlextLDIFModels.Entry]
+    ) -> FlextResult[bool]:
         """Validate multiple LDIF entries with early failure detection.
 
         Args:
@@ -449,7 +462,7 @@ class FlextLDIFCore:
 
             def validate_single_entry(
                 entry_with_index: tuple[int, FlextLDIFModels.Entry],
-            ) -> FlextResult:
+            ) -> FlextResult[bool]:
                 """Validate single entry with index for error context."""
                 i, entry = entry_with_index
                 logger.debug(
@@ -472,9 +485,9 @@ class FlextLDIFCore:
 
             # Use railway programming with reduce to chain all validations
             def chain_validations(
-                acc: FlextResult,
+                acc: FlextResult[bool],
                 indexed_entry: tuple[int, FlextLDIFModels.Entry],
-            ) -> FlextResult:
+            ) -> FlextResult[bool]:
                 return acc.flat_map(lambda _: validate_single_entry(indexed_entry))
 
             return (
@@ -508,7 +521,7 @@ class FlextLDIFCore:
             )
 
     @classmethod
-    def write(cls, entries: list[FlextLDIFModels.Entry]) -> FlextResult:
+    def write(cls, entries: list[FlextLDIFModels.Entry]) -> FlextResult[str]:
         """Write entries to RFC 2849 compliant LDIF string.
 
         Args:
@@ -567,7 +580,7 @@ class FlextLDIFCore:
     def _write_with_modernized_ldif(
         cls,
         entries: list[FlextLDIFModels.Entry],
-    ) -> FlextResult:
+    ) -> FlextResult[str]:
         """Write using modernized LDIF writer with full string compatibility."""
         try:
             # Use modernized writer - pass entries directly
@@ -598,7 +611,7 @@ class FlextLDIFCore:
         entries: list[FlextLDIFModels.Entry],
         file_path: str | Path,
         encoding: str = "utf-8",
-    ) -> FlextResult:
+    ) -> FlextResult[None]:
         """Write LDIF entries to file with automatic directory creation.
 
         Args:
@@ -652,7 +665,7 @@ class FlextLDIFCore:
             )
 
             # Railway-oriented programming for content generation and file writing
-            def write_content_to_file(content: str) -> FlextResult:
+            def write_content_to_file(content: str) -> FlextResult[None]:
                 """Write content to file with proper error handling."""
                 content_size = len(content)
                 logger.debug(
@@ -680,7 +693,7 @@ class FlextLDIFCore:
                         encoding=encoding,
                     ) as f:
                         f.write(content)
-                    return FlextResult.ok(data=True)
+                    return FlextResult.ok(None)
                 except (OSError, UnicodeError) as e:
                     error_msg = FlextLDIFConstants.FlextLDIFCoreConstants.FILE_WRITE_FAILED_MSG.format(
                         error=str(e)
@@ -742,7 +755,7 @@ class FlextLDIFCore:
         cls,
         file_path: str | Path,
         encoding: str = "utf-8",
-    ) -> FlextResult:
+    ) -> FlextResult[list[FlextLDIFModels.Entry]]:
         """Read and parse LDIF file with comprehensive validation.
 
         Args:
@@ -898,6 +911,6 @@ class FlextLDIFCore:
             return result
 
 
-__all__: list[str] = [
+__all__: FlextTypes.Core.StringList = [
     "FlextLDIFCore",
 ]

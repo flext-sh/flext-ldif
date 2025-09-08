@@ -498,7 +498,7 @@ class FlextLDIFDistinguishedName(FlextModels.Value):
         Example:
             >>> dn = FlextLDIFDistinguishedName("cn=user,ou=people,dc=example,dc=com")
             >>> components = dn.get_components()
-            >>> print(components)  # ["cn=user", "ou=people", "dc=example", "dc=com"]
+            >>> print(components)  # ["cn=user", "ou=people", "dc=example", "dc=com"]:
         """
         return self._parse_components()
 
@@ -618,7 +618,7 @@ class FlextLDIFAttributes(FlextModels.Value):
         Example:
             >>> attrs = FlextLDIFAttributes({"mail": ["user@example.com", "alt@example.com"]})
             >>> emails = attrs.get_values("mail")
-            >>> print(emails)  # ["user@example.com", "alt@example.com"]
+            >>> print(emails)  # ["user@example.com", "alt@example.com"]:
         """
         return self.attributes.get(name.lower(), [])
 
@@ -666,7 +666,7 @@ class FlextLDIFAttributes(FlextModels.Value):
         Example:
             >>> attrs = FlextLDIFAttributes({"cn": ["John"]})
             >>> new_attrs = attrs.add_values("mail", ["john@example.com"])
-            >>> print(new_attrs.get_values("mail"))  # ["john@example.com"]
+            >>> print(new_attrs.get_values("mail"))  # ["john@example.com"]:
         """
         new_attributes = dict(self.attributes)
         existing_values = new_attributes.get(name.lower(), [])

@@ -2,6 +2,10 @@
 
 End-to-end tests that validate complete workflows from input to output,
 covering real-world scenarios and enterprise use cases.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

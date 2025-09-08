@@ -1,4 +1,8 @@
-"""Real tests for services module - 100% coverage, zero mocks."""
+"""Real tests for services module - 100% coverage, zero mocks.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

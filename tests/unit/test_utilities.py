@@ -1,4 +1,9 @@
-"""Tests for FlextLDIFUtilities class with REAL functionality (no mocks)."""
+"""Tests for FlextLDIFUtilities class with REAL functionality (no mocks).
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
 
 # ruff: noqa: PT018
 # Reason: Multiple assertion checks are common in tests for comprehensive error validation
@@ -8,6 +13,7 @@ from __future__ import annotations
 import inspect
 
 import pytest
+from flext_core import FlextTypes
 
 from flext_ldif import FlextLDIFAPI, FlextLDIFModels
 from flext_ldif.utilities import FlextLDIFUtilities
@@ -226,7 +232,7 @@ class TestFlextLDIFUtilities:
 
     def test_attributes_dict_to_ldif_format_with_none_values(self) -> None:
         """Test converting attributes with None values."""
-        test_attrs: dict[str, list[str]] = {
+        test_attrs: dict[str, FlextTypes.Core.StringList] = {
             "cn": ["John Doe"],
             "description": [],  # Should be filtered out when empty
             "mail": [
@@ -329,8 +335,12 @@ class TestFlextLDIFUtilities:
         entries = []
         for i in range(15):  # More than default max_errors=10
             entry = FlextLDIFModels.Entry(
-                dn=FlextLDIFModels.DistinguishedName(value=f"cn=user{i},dc=example,dc=com"),
-                attributes=FlextLDIFModels.LdifAttributes(data={})  # Missing objectClass
+                dn=FlextLDIFModels.DistinguishedName(
+                    value=f"cn=user{i},dc=example,dc=com"
+                ),
+                attributes=FlextLDIFModels.LdifAttributes(
+                    data={}
+                ),  # Missing objectClass
             )
             entries.append(entry)
 

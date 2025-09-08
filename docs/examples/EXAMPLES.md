@@ -1404,7 +1404,7 @@ from flext_observability import flext_monitor_function, flext_create_trace
 from flext_ldif import FlextLDIFAPI
 
 @flext_monitor_function("ldif_bulk_processing")
-def process_multiple_files(file_paths: list[str]) -> dict:
+def process_multiple_files(file_paths: FlextTypes.Core.StringList) -> dict:
     """Process multiple LDIF files with observability."""
 
     api = FlextLDIFAPI()

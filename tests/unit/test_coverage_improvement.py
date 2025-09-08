@@ -2,9 +2,15 @@
 
 These tests target specific lines and branches to achieve 100% coverage
 without using mocks - only real functionality testing.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
+from unittest.mock import Mock
 
 import pytest
 
@@ -16,31 +22,37 @@ from flext_ldif.utilities import FlextLDIFUtilities
 class TestCoverageImprovement:
     """Tests to improve coverage on specific missing lines."""
 
-    def test_utilities_validate_entries_with_whitespace_dn_and_missing_objectclass(self) -> None:
+    def test_utilities_validate_entries_with_whitespace_dn_and_missing_objectclass(
+        self,
+    ) -> None:
         """Test utilities validation with whitespace DN and missing objectClass to hit line 32."""
         # Test 1: Try to create entry with whitespace-only DN (should fail validation)
         with pytest.raises(Exception):
-            FlextLDIFModels.Entry.model_validate({
-                "dn": "   ",  # Invalid: whitespace-only DN
-                "attributes": {
-                    "cn": ["test"]
+            FlextLDIFModels.Entry.model_validate(
+                {
+                    "dn": "   ",  # Invalid: whitespace-only DN
+                    "attributes": {"cn": ["test"]},
                 }
-            })
+            )
 
         # Test 2: Valid DN but missing objectClass
-        entry2 = FlextLDIFModels.Entry.model_validate({
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": {
-                "cn": ["test"],
-                "description": ["A test entry"]
-                # Missing objectClass - valid for model but may fail business validation
+        entry2 = FlextLDIFModels.Entry.model_validate(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {
+                    "cn": ["test"],
+                    "description": ["A test entry"],
+                    # Missing objectClass - valid for model but may fail business validation
+                },
             }
-        })
+        )
 
         # Create valid entries for utilities testing
         entries = [entry2]
 
-        result = FlextLDIFUtilities.LdifDomainProcessors.validate_entries_or_warn(entries, max_errors=5)
+        result = FlextLDIFUtilities.LdifDomainProcessors.validate_entries_or_warn(
+            entries, max_errors=5
+        )
 
         # Should succeed but with warnings for missing objectClass
         assert result.is_success
@@ -48,8 +60,6 @@ class TestCoverageImprovement:
 
     def test_utilities_empty_dn_coverage(self) -> None:
         """Test to cover line 32 - Empty DN after strip."""
-        from unittest.mock import Mock
-
         # Create a mock entry with DN that has empty value after strip
         mock_entry = Mock()
         mock_entry.dn = Mock()
@@ -60,7 +70,9 @@ class TestCoverageImprovement:
         entries = [mock_entry]
 
         # This should trigger line 32: Empty DN warning
-        result = FlextLDIFUtilities.LdifDomainProcessors.validate_entries_or_warn(entries, max_errors=5)
+        result = FlextLDIFUtilities.LdifDomainProcessors.validate_entries_or_warn(
+            entries, max_errors=5
+        )
 
         # The function should still succeed but log warning
         assert result.is_success
@@ -95,13 +107,12 @@ objectClass: person"""
 
         # Test finding entry with empty DN
         entries = [
-            FlextLDIFModels.Entry.model_validate({
-                "dn": "cn=test,dc=example,dc=com",
-                "attributes": {
-                    "objectClass": ["person"],
-                    "cn": ["test"]
+            FlextLDIFModels.Entry.model_validate(
+                {
+                    "dn": "cn=test,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person"], "cn": ["test"]},
                 }
-            })
+            )
         ]
 
         # Test with empty DN search
@@ -123,14 +134,16 @@ objectClass: person"""
         validator = FlextLDIFServices.ValidatorService(config=config)
 
         # Create entry with empty attribute values to trigger strict validation paths
-        entry = FlextLDIFModels.Entry.model_validate({
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": {
-                "objectClass": ["person"],
-                "cn": [""],  # Empty value
-                "description": ["  "]  # Whitespace-only value
+        entry = FlextLDIFModels.Entry.model_validate(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {
+                    "objectClass": ["person"],
+                    "cn": [""],  # Empty value
+                    "description": ["  "],  # Whitespace-only value
+                },
             }
-        })
+        )
 
         # This should trigger the strict validation paths that check for empty values
         result = validator._validate_configuration_rules(entry)
@@ -159,13 +172,12 @@ objectClass: person"""
 
         # Test writing to invalid path to trigger exception path
         entries = [
-            FlextLDIFModels.Entry.model_validate({
-                "dn": "cn=test,dc=example,dc=com",
-                "attributes": {
-                    "objectClass": ["person"],
-                    "cn": ["test"]
+            FlextLDIFModels.Entry.model_validate(
+                {
+                    "dn": "cn=test,dc=example,dc=com",
+                    "attributes": {"objectClass": ["person"], "cn": ["test"]},
                 }
-            })
+            )
         ]
 
         # Try to write to a path that will cause an error (permission denied)

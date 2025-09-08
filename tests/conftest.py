@@ -4,50 +4,8 @@ This module provides comprehensive pytest configuration, fixtures, and test util
 for the FLEXT-LDIF test suite, implementing enterprise-grade testing patterns with
 comprehensive test data, real service integration, and functional test support.
 
-The test configuration supports multiple test categories including unit tests,
-integration tests, end-to-end tests, and performance benchmarks with proper
-isolation, realistic test data, and Docker-based integration testing capabilities.
-
-Key Components:
-    - Core Fixtures: API instances, configuration objects, and real service instances
-    - Test Data Fixtures: Sample LDIF content, entries, and validation scenarios
-    - Integration Fixtures: Docker containers, external service mocks, and test databases
-    - Utility Fixtures: Temporary files, directories, and cleanup management
-
-Test Categories:
-    - unit: Isolated component testing with real service functionality
-    - integration: Cross-component testing with real service integration
-    - e2e: End-to-end workflow testing with complete system integration
-    - ldif: LDIF-specific domain testing with RFC compliance validation
-    - parser: Parsing functionality testing with edge cases and error scenarios
-    - performance: Performance benchmarking and scalability validation
-
-Example:
-    Using fixtures for comprehensive testing:
-
-    >>> def test_ldif_parsing_with_fixtures(flext_ldif_api, sample_ldif_content):
-    ...     # API fixture provides configured instance
-    ...     result = flext_ldif_api.parse(sample_ldif_content)
-    ...     assert result.is_success
-    ...
-    ...     # Sample content fixture provides realistic test data
-    ...     entries = result.value
-    ...     assert len(entries) > 0
-    ...
-    ...     # Validate domain rules
-    ...     for entry in entries:
-    ...         result = entry.validate_business_rules()
-    ...         assert result.is_success
-
-Integration:
-    - Docker fixtures for external service integration testing
-    - Comprehensive test data with realistic LDIF scenarios
-    - Performance benchmarking fixtures with configurable parameters
-    - Real service integration with dependency injection patterns
-
-Author: FLEXT Development Team
-Version: 0.9.0
-License: MIT
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 
 """
 
@@ -59,6 +17,7 @@ from collections.abc import Generator
 from pathlib import Path
 
 import pytest
+from flext_core import FlextTypes
 
 from flext_ldif import (
     FlextLDIFAPI,
@@ -71,34 +30,11 @@ from tests.test_support import (
     TestValidators,
 )
 
-# Try to import Docker fixtures - optional for testing without Docker
-try:
-    from tests.fixtures.docker_fixtures import (
-        docker_openldap_container,
-        ldif_test_config,
-        real_ldif_data,
-        skip_if_no_docker,
-        temporary_ldif_data,
-    )
-
-    DOCKER_FIXTURES_AVAILABLE = True
-except ImportError:
-    DOCKER_FIXTURES_AVAILABLE = False
-
-    # Create dummy fixtures when Docker is not available
-    def skip_if_no_docker() -> object:
-        """Skip tests when Docker is not available."""
-        return pytest.mark.skip(reason="Docker not available")
-
-    docker_openldap_container = None
-    ldif_test_config = None
-    real_ldif_data = None
-    temporary_ldif_data = None
-
+s
 DOCKER_AVAILABLE = True
 
 # Make fixtures available by importing them into this module's namespace
-__all__: list[str] = [
+__all__: FlextTypes.Core.StringList = [
     "docker_openldap_container",
     "ldif_test_config",
     "real_ldif_data",
@@ -121,7 +57,7 @@ def set_test_environment() -> Generator[None]:
 
 # LDIF processing fixtures - optimized with real services
 @pytest.fixture
-def ldif_processor_config() -> dict[str, object]:
+def ldif_processor_config() -> FlextTypes.Core.Dict:
     """LDIF processor configuration for testing."""
     return {
         "encoding": "utf-8",
@@ -261,7 +197,7 @@ def real_writer_service() -> FlextLDIFServices.WriterService:
 
 
 @pytest.fixture
-def integration_services() -> dict[str, object]:
+def integration_services() -> FlextTypes.Core.Dict:
     """Complete service set for integration testing."""
     return RealServiceFactory.services_for_integration_test()
 
@@ -275,7 +211,7 @@ def ldif_api(real_ldif_api: FlextLDIFAPI) -> FlextLDIFAPI:
 
 # Schema validation fixtures
 @pytest.fixture
-def ldap_schema_config() -> dict[str, object]:
+def ldap_schema_config() -> FlextTypes.Core.Dict:
     """LDAP schema configuration for validation."""
     return {
         "validate_object_classes": True,
@@ -300,7 +236,7 @@ def ldap_schema_config() -> dict[str, object]:
 
 # Entry transformation fixtures
 @pytest.fixture
-def transformation_rules() -> dict[str, object]:
+def transformation_rules() -> FlextTypes.Core.Dict:
     """Provide transformation rules for LDIF processing."""
     return {
         "attribute_mappings": {
@@ -324,7 +260,7 @@ def transformation_rules() -> dict[str, object]:
 
 # Filter fixtures
 @pytest.fixture
-def ldif_filters() -> dict[str, object]:
+def ldif_filters() -> FlextTypes.Core.Dict:
     """LDIF entry filters for testing."""
     return {
         "include_object_classes": ["inetOrgPerson", "groupOfNames"],
@@ -339,7 +275,7 @@ def ldif_filters() -> dict[str, object]:
 
 # Statistics fixtures
 @pytest.fixture
-def expected_ldif_stats() -> dict[str, object]:
+def expected_ldif_stats() -> FlextTypes.Core.Dict:
     """Provide expected LDIF processing statistics."""
     return {
         "total_entries": 4,
@@ -377,7 +313,7 @@ objectClass: person
 
 # Performance fixtures
 @pytest.fixture
-def large_ldif_config() -> dict[str, object]:
+def large_ldif_config() -> FlextTypes.Core.Dict:
     """Provide configuration for large LDIF processing tests."""
     return {
         "batch_size": 1000,
