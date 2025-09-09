@@ -320,31 +320,23 @@ class TestFieldDefaults:
     """Test field patterns and defaults functionality."""
 
     def test_field_patterns_exist(self) -> None:
-        """Test that pattern constants exist."""
-        assert hasattr(FlextLDIFConstants.FlextLDIFCoreConstants, "DN_PATTERN_REGEX")
-        assert hasattr(
-            FlextLDIFConstants.FlextLDIFCoreConstants, "ATTRIBUTE_PATTERN_REGEX"
-        )
+        """Test that basic constants exist."""
+        assert hasattr(FlextLDIFConstants, "LDIF")
+        assert hasattr(FlextLDIFConstants.LDIF, "DN_ATTRIBUTE")
 
     def test_field_patterns_values(self) -> None:
-        """Test that pattern constants have expected format."""
-        dn_pattern = FlextLDIFConstants.FlextLDIFCoreConstants.DN_PATTERN_REGEX
-        attr_pattern = FlextLDIFConstants.FlextLDIFCoreConstants.ATTRIBUTE_PATTERN_REGEX
+        """Test that constants have expected values."""
+        dn_attr = FlextLDIFConstants.LDIF.DN_ATTRIBUTE
+        attr_sep = FlextLDIFConstants.LDIF.ATTRIBUTE_SEPARATOR
 
-        # Validate they are proper regex patterns
-        assert dn_pattern.startswith("^")
-        assert dn_pattern.endswith("$")
-        assert attr_pattern.startswith("^")
-        assert attr_pattern.endswith("$")
+        # Validate they have expected values
+        assert dn_attr == "dn"
+        assert attr_sep == ":"
 
     def test_field_patterns_types(self) -> None:
-        """Test that pattern constants have correct types."""
-        assert isinstance(
-            FlextLDIFConstants.FlextLDIFCoreConstants.DN_PATTERN_REGEX, str
-        )
-        assert isinstance(
-            FlextLDIFConstants.FlextLDIFCoreConstants.ATTRIBUTE_PATTERN_REGEX, str
-        )
+        """Test that constants have correct types."""
+        assert isinstance(FlextLDIFConstants.LDIF.DN_ATTRIBUTE, str)
+        assert isinstance(FlextLDIFConstants.LDIF.ATTRIBUTE_SEPARATOR, str)
 
     def test_field_defaults_can_be_used_in_fields(self) -> None:
         """Test that field functions work with reasonable defaults."""

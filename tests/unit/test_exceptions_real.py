@@ -657,8 +657,10 @@ class TestFlextLDIFExceptionBuilderCoverage:
         )
 
         # Use flext_tests utilities for validation
-        test_result = FlextResult[bool].ok(True)
-        assert test_result.is_success, f"Expected success, got failure: {test_result.error if hasattr(test_result, 'error') else test_result}"
+        test_result = FlextResult[bool].ok(data=True)
+        assert test_result.is_success, (
+            f"Expected success, got failure: {test_result.error if hasattr(test_result, 'error') else test_result}"
+        )
 
         assert error.context is not None
         assert error.context["dn"] == dn
@@ -675,8 +677,10 @@ class TestFlextLDIFExceptionBuilderCoverage:
         )
 
         # Use flext_tests utilities for validation
-        test_result = FlextResult[bool].ok(True)
-        assert test_result.is_success, f"Expected success, got failure: {test_result.error if hasattr(test_result, 'error') else test_result}"
+        test_result = FlextResult[bool].ok(data=True)
+        assert test_result.is_success, (
+            f"Expected success, got failure: {test_result.error if hasattr(test_result, 'error') else test_result}"
+        )
 
         assert error.context is not None
         assert error.context["dn"] == dn

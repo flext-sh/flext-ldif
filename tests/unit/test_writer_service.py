@@ -235,7 +235,7 @@ class TestFlextLDIFServicesWriterService:
 
             # Verify file was written
             with Path(tmp_path).open(
-                encoding=FlextLDIFConstants.FlextLDIFCoreConstants.DEFAULT_ENCODING
+                encoding=FlextLDIFConstants.DEFAULT_ENCODING
             ) as f:
                 content = f.read()
                 assert "dn: cn=Test,dc=example,dc=com" in content
@@ -309,7 +309,7 @@ class TestFlextLDIFServicesWriterService:
             result = service._write_content_to_file(
                 content,
                 tmp_path,
-                FlextLDIFConstants.FlextLDIFCoreConstants.DEFAULT_ENCODING,
+                FlextLDIFConstants.DEFAULT_ENCODING,
             )
 
             assert result.is_success
@@ -317,7 +317,7 @@ class TestFlextLDIFServicesWriterService:
 
             # Verify content was written
             with Path(tmp_path).open(
-                encoding=FlextLDIFConstants.FlextLDIFCoreConstants.DEFAULT_ENCODING
+                encoding=FlextLDIFConstants.DEFAULT_ENCODING
             ) as f:
                 written_content = f.read()
                 assert written_content == content
@@ -334,7 +334,7 @@ class TestFlextLDIFServicesWriterService:
         result = service._write_content_to_file(
             content,
             invalid_path,
-            FlextLDIFConstants.FlextLDIFCoreConstants.DEFAULT_ENCODING,
+            FlextLDIFConstants.DEFAULT_ENCODING,
         )
 
         assert result.is_failure
@@ -351,7 +351,7 @@ class TestFlextLDIFServicesWriterService:
         result = service._write_content_to_file(
             content,
             invalid_path,
-            FlextLDIFConstants.FlextLDIFCoreConstants.DEFAULT_ENCODING,
+            FlextLDIFConstants.DEFAULT_ENCODING,
         )
 
         assert result.is_failure
@@ -396,7 +396,7 @@ class TestFlextLDIFServicesWriterService:
 
             # Verify empty file was created
             with Path(tmp_path).open(
-                encoding=FlextLDIFConstants.FlextLDIFCoreConstants.DEFAULT_ENCODING
+                encoding=FlextLDIFConstants.DEFAULT_ENCODING
             ) as f:
                 content = f.read()
                 assert content == ""
@@ -428,7 +428,7 @@ class TestFlextLDIFServicesWriterService:
 
             # Verify file was written
             content = tmp_path.read_text(
-                encoding=FlextLDIFConstants.FlextLDIFCoreConstants.DEFAULT_ENCODING
+                encoding=FlextLDIFConstants.DEFAULT_ENCODING
             )
             assert "dn: cn=PathTest,dc=example,dc=com" in content
         finally:
