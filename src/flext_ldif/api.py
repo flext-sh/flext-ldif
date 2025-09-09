@@ -10,7 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import cast
 
-from flext_core import FlextLogger, FlextResult, FlextTypes, get_flext_container
+from flext_core import FlextContainer, FlextLogger, FlextResult, FlextTypes
 
 from flext_ldif.constants import FlextLDIFConstants
 from flext_ldif.models import FlextLDIFModels
@@ -30,7 +30,7 @@ class FlextLDIFAPI:
 
         """
         self.config = config or FlextLDIFModels.Config()
-        self._container = get_flext_container()
+        self._container = FlextContainer.get_global()
 
         # Register services in container for dependency injection
         self._container.register("ldif_config", self.config)

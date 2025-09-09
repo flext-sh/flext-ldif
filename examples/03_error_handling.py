@@ -13,7 +13,7 @@ from pathlib import Path
 
 from flext_core import FlextLogger
 
-from ..flext_ldif import (
+from flext_ldif import (
     FlextLDIFAPI,
     FlextLDIFModels,
     FlextLDIFError,
@@ -220,7 +220,7 @@ def demonstrate_configuration_error_handling() -> None:
 
     # Test with strict validation
     config = FlextLDIFModels.Config(
-        strict_validation=True, allow_empty_attributes=False
+        strict_validation=True, allow_empty_values=False
     )
     api = FlextLDIFAPI(config)
 

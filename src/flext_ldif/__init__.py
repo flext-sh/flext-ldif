@@ -4,6 +4,14 @@ SPDX-License-Identifier: Proprietário.
 """
 
 from __future__ import annotations
+
+# Suprimir warnings do Pydantic V2 para uma CLI limpa
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="pydantic._internal._config")
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="pydantic._internal._config")
+warnings.filterwarnings("ignore", message=".*validate_all.*renamed.*validate_default.*", category=UserWarning)
+warnings.filterwarnings("ignore", message=".*class-based.*config.*deprecated.*", category=DeprecationWarning)
+
 from flext_core import FlextTypes
 
 

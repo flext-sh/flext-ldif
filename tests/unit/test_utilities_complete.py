@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextResult
-from flext_tests import FlextTestUtilities
 
 from flext_ldif import FlextLDIFModels
 from flext_ldif.utilities import FlextLDIFUtilities
@@ -407,11 +406,12 @@ class TestFlextLDIFUtilitiesAdditionalCoverage:
         )
 
         # Use flext_tests utilities for validation
-        FlextTestUtilities.assert_result_success(empty_result)
+        assert empty_result.is_success, f"Expected success, got failure: {empty_result.error if hasattr(empty_result, 'error') else empty_result}"
         assert empty_result.value is True  # No errors for empty list
 
         # Test validation flow works correctly
-        FlextTestUtilities.assert_result_success(FlextResult[bool].ok(True))
+        test_result = FlextResult[bool].ok(True)
+        assert test_result.is_success, f"Expected success, got failure: {test_result.error if hasattr(test_result, 'error') else test_result}"
 
         # Try to create an entry with whitespace-only DN using model_construct (bypass validation)
         try:
@@ -430,7 +430,7 @@ class TestFlextLDIFUtilitiesAdditionalCoverage:
             result = FlextLDIFUtilities.LdifDomainProcessors.validate_entries_or_warn(
                 [entry]
             )
-            FlextTestUtilities.assert_result_success(result)
+            assert result.is_success, f"Expected success, got failure: {result.error if hasattr(result, 'error') else result}"
             assert result.value is False  # Should detect empty DN error
         except Exception:
             # If can't create such entry due to validation, that's fine -

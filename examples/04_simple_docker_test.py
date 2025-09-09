@@ -16,7 +16,7 @@ from tests.fixtures.docker_fixtures import (
     check_docker_available,
 )
 
-from ..flext_ldif import FlextLDIFCore, FlextLDIFFormatHandler
+from flext_ldif import FlextLDIFCore, FlextLDIFFormatHandler
 
 
 def test_with_docker_container() -> bool | None:

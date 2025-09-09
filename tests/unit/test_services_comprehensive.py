@@ -13,8 +13,6 @@ from __future__ import annotations
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from flext_tests import FlextTestUtilities
-
 from flext_ldif import FlextLDIFModels
 from flext_ldif.services import FlextLDIFServices
 
@@ -194,7 +192,7 @@ class TestRepositoryServiceComprehensive:
         )
 
         # Use flext_tests for validation
-        FlextTestUtilities.assert_result_success(result)
+        assert result.is_success, f"Expected success, got failure: {result.error if hasattr(result, 'error') else result}"
         assert result.is_success
         assert result.value is None
 

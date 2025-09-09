@@ -14,17 +14,18 @@ from functools import lru_cache
 from typing import ClassVar, override
 
 from flext_core import (
+    FlextConfig,
     FlextModels,
     FlextResult,
     FlextTypes,
     FlextValidations,
 )
-
-type FlextResultNone = FlextResult[None]
 from pydantic import ConfigDict, Field, field_validator, model_validator
 
 from flext_ldif.constants import FlextLDIFConstants
 from flext_ldif.exceptions import FlextLDIFExceptions
+
+type FlextResultNone = FlextResult[None]
 
 
 class FlextLDIFModels(FlextModels.AggregateRoot):
@@ -517,8 +518,8 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
     # CONFIGURATION - Using FlextModels.Config correctly
     # =============================================================================
 
-    class Config(FlextModels.Config):
-        """LDIF configuration using FlextModels.Config base."""
+    class Config(FlextConfig):
+        """LDIF configuration using FlextConfig base from flext-core."""
 
         # LDIF-specific settings
         encoding: str = Field(default="utf-8", description="File encoding")
@@ -546,6 +547,13 @@ class FlextLDIFModels(FlextModels.AggregateRoot):
         )
         max_entries: int = Field(
             default=10000, description="Maximum entries to process", ge=1
+        )
+        # EXTREME COVERAGE MODE: Enable for 100% branch coverage testing
+        extreme_debug_mode: bool = Field(
+            default=False, description="Enable extreme debug mode for 100% coverage"
+        )
+        force_all_branches: bool = Field(
+            default=False, description="Force all branch executions for 100% coverage"
         )
 
         @field_validator("encoding")

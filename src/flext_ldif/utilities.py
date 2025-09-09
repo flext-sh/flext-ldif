@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from functools import reduce
 from operator import add
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextTypes
 
 from flext_ldif.models import FlextLDIFModels
 

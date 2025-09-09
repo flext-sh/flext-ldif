@@ -36,7 +36,7 @@ from flext_core import FlextContainer, FlextResult
 # Types com prefixes corretos
 # Simple API aliases (validated)
 # CORREÇÃO CRÍTICA: Imports verificados no __init__.py
-from ..flext_ldif import (
+from flext_ldif import (
     FlextLDIFAPI,
     FlextLDIFModels,
     FlextLDIFServices,
@@ -175,12 +175,12 @@ def test_4_exceptions_validation() -> None:
 
     def _test_entry_error() -> None:
         msg = "Test entry error"
-        raise FlextLDIFEntryError(msg)
+        raise FlextLDIFValidationError(msg)
 
     with contextlib.suppress(FlextLDIFValidationError):
         _test_validation_error()
 
-    with contextlib.suppress(FlextLDIFEntryError):
+    with contextlib.suppress(FlextLDIFValidationError):
         _test_entry_error()
 
 

@@ -12,9 +12,9 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from flext_core import get_logger
+from flext_core import FlextLogger
 
-from ..flext_ldif import FlextLDIFAPI, FlextLDIFModels
+from flext_ldif import FlextLDIFAPI, FlextLDIFModels
 
 """Advanced LDIF validation example.
 
@@ -22,12 +22,12 @@ Demonstrates domain validation with business rules using
 Clean Architecture patterns and FlextResult error handling.
 """
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 if TYPE_CHECKING:
     from flext_core import FlextResult
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 
 def validate_business_rules(

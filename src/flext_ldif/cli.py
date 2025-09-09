@@ -12,25 +12,26 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import operator
 import sys
+import warnings
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, TypedDict, TypeVar, cast
 
-from flext_core import FlextTypes
-from flext_core.container import FlextContainer
-
-# Use flext-cli instead of click/rich directly - MANDATORY per standards
-sys.path.insert(0, "/home/marlonsc/flext/flext-cli/src")
-
-import operator
-
-from flext_cli import FlextCliFormatters, FlextCliService
-from flext_core import FlextLogger, FlextResult, get_flext_container
+from flext_cli import (
+    FlextCliFormatters,
+    FlextCliService,
+)
+from flext_core import FlextContainer, FlextLogger, FlextResult, FlextTypes
 
 from flext_ldif.api import FlextLDIFAPI
 from flext_ldif.constants import FlextLDIFConstants
 from flext_ldif.models import FlextLDIFModels
+
+# Suprimir warnings específicos do Pydantic V2 para CLI limpa (depois dos imports)
+warnings.filterwarnings("ignore", category=UserWarning, module="pydantic._internal._config")
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="pydantic._internal._config")
 
 # Use constants from unified location
 MIN_ARGS_WITH_COMMAND = FlextLDIFConstants.FlextLDIFCliConstants.MIN_ARGS_WITH_COMMAND
@@ -373,7 +374,7 @@ class FlextLDIFCli(FlextCliService):
         super().__init__()
         # Use object.__setattr__ to bypass frozen model restrictions
         object.__setattr__(self, "config", config or FlextLDIFConfig())
-        object.__setattr__(self, "_container", get_flext_container())
+        object.__setattr__(self, "_container", FlextContainer())
 
         # Type annotations for mypy (dynamically set attributes)
         if TYPE_CHECKING:
