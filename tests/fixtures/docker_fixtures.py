@@ -19,14 +19,13 @@ from contextlib import asynccontextmanager
 
 import docker
 import pytest
+from docker import DockerClient
+from docker.models.containers import Container
 from flext_core import FlextLogger, FlextTypes
 
 logger = FlextLogger(__name__)
 
 DOCKER_AVAILABLE = True
-
-from docker import DockerClient
-from docker.models.containers import Container
 
 # OpenLDAP Container Configuration
 OPENLDAP_IMAGE = "osixia/openldap:1.5.0"

@@ -41,7 +41,7 @@ from pathlib import Path
 
 from flext_core import FlextLogger
 
-from ..flext_ldif import FlextLDIFAPI, FlextLDIFModels
+from flext_ldif import FlextLDIFAPI, FlextLDIFModels
 
 logger = FlextLogger(__name__)
 

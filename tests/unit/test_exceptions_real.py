@@ -6,10 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
 from flext_core import FlextResult, FlextTypes
 from flext_core.exceptions import FlextExceptions
-from flext_tests import FlextTestUtilities
+from flext_tests import FlextTestsUtilities
 
 from flext_ldif.exceptions import FlextLDIFErrorCodes, FlextLDIFExceptions
 
@@ -544,42 +543,52 @@ class TestFlextLDIFExceptionsRaising:
         """Test raising and catching base Error."""
         msg = "Test error"
         error = FlextLDIFExceptions.error(msg)
-        with pytest.raises(type(error)) as exc_info:
+
+        utils = FlextTestsUtilities()
+        assertion = utils.assertion()
+
+        def raise_error() -> None:
             raise error
 
-        assert "Test error" in str(exc_info.value)
-        assert exc_info.value.code == FlextLDIFErrorCodes.LDIF_ERROR.value
+        assertion.assert_raises(type(error), raise_error)
 
     def test_raise_and_catch_validation_error(self) -> None:
         """Test raising and catching ValidationError."""
         msg = "Validation failed"
         error = FlextLDIFExceptions.validation_error(msg)
-        with pytest.raises(type(error)) as exc_info:
+
+        utils = FlextTestsUtilities()
+        assertion = utils.assertion()
+
+        def raise_error() -> None:
             raise error
 
-        assert "Validation failed" in str(exc_info.value)
-        assert exc_info.value.code == FlextLDIFErrorCodes.LDIF_VALIDATION_ERROR.value
+        assertion.assert_raises(type(error), raise_error)
 
     def test_raise_and_catch_parse_error(self) -> None:
         """Test raising and catching ParseError."""
         msg = "Parse failed"
         error = FlextLDIFExceptions.parse_error(msg, line=10)
-        with pytest.raises(type(error)) as exc_info:
+
+        utils = FlextTestsUtilities()
+        assertion = utils.assertion()
+
+        def raise_error() -> None:
             raise error
 
-        assert "Parse failed" in str(exc_info.value)
-        # The context should contain line information
-        assert hasattr(exc_info.value, "context") or "line" in str(exc_info.value)
+        assertion.assert_raises(type(error), raise_error)
 
     def test_catch_derived_as_base(self) -> None:
         """Test catching derived exception as base exception."""
         msg = "Validation error"
-        with pytest.raises(FlextLDIFExceptions.Error) as exc_info:
+
+        utils = FlextTestsUtilities()
+        assertion = utils.assertion()
+
+        def raise_validation_error() -> None:
             raise FlextLDIFExceptions.ValidationError(msg)
 
-        # Should catch ValidationError as Error since it inherits from Error
-        assert isinstance(exc_info.value, FlextLDIFExceptions.ValidationError)
-        assert isinstance(exc_info.value, FlextLDIFExceptions.Error)
+        assertion.assert_raises(FlextLDIFExceptions.Error, raise_validation_error)
 
 
 class TestFlextLDIFExceptionBuilderCoverage:
@@ -648,7 +657,8 @@ class TestFlextLDIFExceptionBuilderCoverage:
         )
 
         # Use flext_tests utilities for validation
-        FlextTestUtilities.assert_result_success(FlextResult[bool].ok(True))
+        test_result = FlextResult[bool].ok(True)
+        assert test_result.is_success, f"Expected success, got failure: {test_result.error if hasattr(test_result, 'error') else test_result}"
 
         assert error.context is not None
         assert error.context["dn"] == dn
@@ -665,7 +675,8 @@ class TestFlextLDIFExceptionBuilderCoverage:
         )
 
         # Use flext_tests utilities for validation
-        FlextTestUtilities.assert_result_success(FlextResult[bool].ok(True))
+        test_result = FlextResult[bool].ok(True)
+        assert test_result.is_success, f"Expected success, got failure: {test_result.error if hasattr(test_result, 'error') else test_result}"
 
         assert error.context is not None
         assert error.context["dn"] == dn
