@@ -10,9 +10,8 @@ from flext_ldif.models import FlextLDIFModels
 from flext_ldif.services import FlextLDIFServices
 
 
-def test_direct_method_calls_for_missing_lines():
+def test_direct_method_calls_for_missing_lines() -> None:
     """Chamadas diretas dos métodos para cobrir linhas específicas."""
-    
     # Criar entries de teste
     entry1 = FlextLDIFModels.Entry(
         dn=FlextLDIFModels.DistinguishedName(value="cn=test1,dc=example,dc=com"),
@@ -22,7 +21,7 @@ def test_direct_method_calls_for_missing_lines():
             "objectClass": ["person", "inetOrgPerson"]
         })
     )
-    
+
     entry2 = FlextLDIFModels.Entry(
         dn=FlextLDIFModels.DistinguishedName(value="cn=test2,dc=example,dc=com"),
         attributes=FlextLDIFModels.LdifAttributes(data={
@@ -30,61 +29,60 @@ def test_direct_method_calls_for_missing_lines():
             "objectClass": ["person"]
         })
     )
-    
+
     entries = [entry1, entry2]
-    
+
     # Testar RepositoryService.filter_entries_by_attribute (linhas 368-369)
     repository = FlextLDIFServices.RepositoryService()
-    
+
     # Isso deve exercitar as linhas 368-369 especificamente
     filter_result = repository.filter_entries_by_attribute(entries, "mail")
     assert filter_result.is_success
     if filter_result.is_success:
         filtered = filter_result.value
         assert len(filtered) == 1  # Apenas entry1 tem mail
-    
+
     # Testar com attribute_value específico
     filter_with_value = repository.filter_entries_by_attribute(entries, "mail", "test1@example.com")
     assert filter_with_value.is_success
-    
+
     # Testar com atributo que não existe
     no_attr_result = repository.filter_entries_by_attribute(entries, "telephoneNumber")
     assert no_attr_result.is_success
     if no_attr_result.is_success:
         assert len(no_attr_result.value) == 0
-        
+
     # Testar filter por objectClass também
     oc_filter_result = repository.filter_entries_by_object_class(entries, "person")
     assert oc_filter_result.is_success
-    
+
     # Testar ValidatorService com diferentes cenários
     validator = FlextLDIFServices.ValidatorService()
-    
-    # Isso deve exercitar as linhas de TypeGuards (571-576)  
+
+    # Isso deve exercitar as linhas de TypeGuards (571-576)
     validation_result = validator.validate_entries(entries)
     assert validation_result.is_success or validation_result.is_failure
-    
+
     # Teste específico para exercitar condition checking
     single_entry_validation = validator.validate_entries([entry1])
     assert single_entry_validation.is_success or single_entry_validation.is_failure
-    
+
     # Testar TransformerService
     transformer = FlextLDIFServices.TransformerService()
-    
+
     # Isso deve exercitar as linhas de transform (862-863, 868-869)
     transform_result = transformer.transform_entries(entries)
     assert transform_result.is_success or transform_result.is_failure
-    
+
     # Testar normalização de DNs
     normalize_result = transformer.normalize_dns(entries)
     assert normalize_result.is_success or normalize_result.is_failure
 
 
-def test_parser_edge_cases():
+def test_parser_edge_cases() -> None:
     """Testar casos específicos do parser."""
-    
     parser = FlextLDIFServices.ParserService()
-    
+
     # LDIF com linhas inválidas (linha 675)
     ldif_with_invalid = """dn: cn=valid,dc=example,dc=com
 cn: valid
@@ -97,10 +95,10 @@ dn: cn=valid2,dc=example,dc=com
 cn: valid2
 objectClass: person
 """
-    
+
     result = parser.parse(ldif_with_invalid)
     assert result.is_success or result.is_failure
-    
+
     # LDIF com linhas de continuação (linhas 698-703)
     ldif_with_continuation = """dn: cn=continuation,dc=example,dc=com
 cn: continuation
@@ -110,41 +108,41 @@ description: Primeira linha da descrição
 objectClass: person
 
 """
-    
+
     continuation_result = parser.parse(ldif_with_continuation)
     assert continuation_result.is_success or continuation_result.is_failure
-    
+
     # LDIF com múltiplos valores para mesmo atributo (linhas 795-797)
     ldif_multi_values = """dn: cn=multi,dc=example,dc=com
 cn: multi
 mail: primeiro@example.com
-mail: segundo@example.com  
+mail: segundo@example.com
 mail: terceiro@example.com
 objectClass: person
 objectClass: inetOrgPerson
 """
-    
+
     multi_result = parser.parse(ldif_multi_values)
     assert multi_result.is_success or multi_result.is_failure
-    
+
     if multi_result.is_success:
         entry = multi_result.value[0]
         mail_attrs = entry.get_attribute("mail")
         assert len(mail_attrs) >= 2
-    
+
     # LDIF simples para success path (linha 732)
     simple_ldif = """dn: cn=simple,dc=example,dc=com
 cn: simple
 objectClass: person
 """
-    
+
     simple_result = parser.parse(simple_ldif)
     assert simple_result.is_success
-    
+
     # Teste de validação de sintaxe (linhas 762-763)
     syntax_result = parser.validate_ldif_syntax("conteúdo inválido")
     assert syntax_result.is_success or syntax_result.is_failure
-    
+
     # LDIF para exercitar continue na lógica de processamento (linha 786)
     processing_ldif = """dn: cn=proc1,dc=example,dc=com
 cn: proc1
@@ -153,16 +151,15 @@ dn: cn=proc2,dc=example,dc=com
 cn: proc2
 objectClass: person
 """
-    
+
     processing_result = parser.parse(processing_ldif)
     assert processing_result.is_success or processing_result.is_failure
 
 
-def test_all_service_integrations():
+def test_all_service_integrations() -> None:
     """Testar integração de todos os services."""
-    
     # Criar dados de teste
-    test_entries = [
+    [
         FlextLDIFModels.Entry(
             dn=FlextLDIFModels.DistinguishedName(value="cn=integration,dc=example,dc=com"),
             attributes=FlextLDIFModels.LdifAttributes(data={
@@ -173,22 +170,22 @@ def test_all_service_integrations():
             })
         )
     ]
-    
+
     # Testar todos os services
     services = [
         FlextLDIFServices.ParserService(),
-        FlextLDIFServices.ValidatorService(),  
+        FlextLDIFServices.ValidatorService(),
         FlextLDIFServices.TransformerService(),
         FlextLDIFServices.WriterService(),
         FlextLDIFServices.AnalyticsService(),
         FlextLDIFServices.RepositoryService()
     ]
-    
+
     # Operações básicas em cada service
-    parser = services[0] 
+    parser = services[0]
     validator = services[1]
     transformer = services[2]
-    
+
     # Parse -> Validate -> Transform cycle
     ldif_content = """dn: cn=cycle,dc=example,dc=com
 cn: cycle
@@ -197,55 +194,54 @@ mail: cycle@example.com
 description: Cycle test with
  continuation lines
 """
-    
+
     parse_result = parser.parse(ldif_content)
     if parse_result.is_success:
         entries = parse_result.value
-        
+
         # Validate
         val_result = validator.validate_entries(entries)
         assert val_result.is_success or val_result.is_failure
-        
-        # Transform  
+
+        # Transform
         trans_result = transformer.transform_entries(entries)
         assert trans_result.is_success or trans_result.is_failure
-        
+
         # Normalize
         norm_result = transformer.normalize_dns(entries)
         assert norm_result.is_success or norm_result.is_failure
-    
+
     # Testar métodos específicos de cada service
     for service in services:
         # Métodos comuns
         config_info = service.get_config_info()
         assert config_info is not None or config_info is None
-        
+
         service_info = service.get_service_info()
         assert service_info is not None or service_info is None
 
 
-def test_exception_scenarios():
+def test_exception_scenarios() -> None:
     """Testar cenários que geram exceções específicas."""
-    
     # Criar entries problemáticas
     parser = FlextLDIFServices.ParserService()
-    
+
     # LDIF que pode gerar diferentes tipos de erros
     problematic_ldifs = [
         # Vazio
         "",
-        
+
         # Só espaços
         "   \n\n   ",
-        
+
         # Completamente inválido
         "isso não é LDIF de jeito nenhum",
-        
+
         # LDIF malformado
         """dn cn=malformed,dc=example,dc=com
 cn malformed
 objectClass person""",
-        
+
         # LDIF com encoding issues (simulado)
         """dn: cn=encoding,dc=example,dc=com
 cn: encoding
@@ -253,29 +249,28 @@ description: Descrição com caracteres especiais: áéíóú àèìòù âêî�
 objectClass: person
 """,
     ]
-    
+
     # Testar cada LDIF problemático
-    for i, ldif in enumerate(problematic_ldifs):
+    for ldif in problematic_ldifs:
         result = parser.parse(ldif)
         assert result.is_success or result.is_failure
         # Não importa se deu erro ou não, o importante é exercitar o código
-    
+
     # Testar validator com entries vazias
     validator = FlextLDIFServices.ValidatorService()
     empty_result = validator.validate_entries([])
     assert empty_result.is_success or empty_result.is_failure
-    
-    # Testar transformer com entries vazias  
+
+    # Testar transformer com entries vazias
     transformer = FlextLDIFServices.TransformerService()
     empty_transform = transformer.transform_entries([])
     assert empty_transform.is_success or empty_transform.is_failure
 
 
-def test_comprehensive_attribute_patterns():
+def test_comprehensive_attribute_patterns() -> None:
     """Testar padrões abrangentes de atributos."""
-    
     parser = FlextLDIFServices.ParserService()
-    
+
     # LDIF com todos os tipos de padrões possíveis
     comprehensive_ldif = """dn: cn=comprehensive,dc=example,dc=com
 cn: comprehensive
@@ -307,25 +302,25 @@ objectClass: organizationalUnit
 description: Organizational unit entry
 
 """
-    
+
     result = parser.parse(comprehensive_ldif)
     assert result.is_success or result.is_failure
-    
+
     if result.is_success:
         entries = result.value
         assert len(entries) >= 2
-        
+
         # Testar filtros por diferentes atributos usando RepositoryService
         repository = FlextLDIFServices.RepositoryService()
         for attr_name in ["mail", "telephoneNumber", "description", "objectClass"]:
             filter_result = repository.filter_entries_by_attribute(entries, attr_name)
             assert filter_result.is_success
-            
+
         # Testar validator com essas entries
         validator = FlextLDIFServices.ValidatorService()
         validation_result = validator.validate_entries(entries)
         assert validation_result.is_success or validation_result.is_failure
-        
+
         # Testar transformer
         transformer = FlextLDIFServices.TransformerService()
         transform_result = transformer.transform_entries(entries)

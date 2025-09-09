@@ -16,7 +16,6 @@ from urllib.parse import urlparse
 import urllib3
 from flext_core import FlextLogger, FlextResult, FlextTypes
 
-from flext_ldif.constants import FlextLDIFConstants
 from flext_ldif.models import FlextLDIFModels
 
 logger = FlextLogger(__name__)
@@ -166,17 +165,13 @@ class FlextLDIFFormatHandler:
                 entry = FlextLDIFModels.Entry(dn=dn_obj, attributes=attrs_obj)
                 entries.append(entry)
 
-            logger.info(
-                FlextLDIFConstants.FlextLDIFOperationMessages.LDIF_PARSED_SUCCESS.format(
-                    count=len(entries)
-                ),
-            )
+            logger.info(f"LDIF parsed successfully: {len(entries)} entries")
             return FlextResult.ok(entries)
 
         except (ValueError, AttributeError, TypeError, UnicodeError) as e:
             error_msg: str = f"Modernized LDIF parse failed: {e}"
             logger.exception(
-                FlextLDIFConstants.FlextLDIFValidationMessages.MODERNIZED_PARSING_FAILED
+"LDIF parsing failed"
             )
             return FlextResult.fail(error_msg)
 
@@ -196,7 +191,7 @@ class FlextLDIFFormatHandler:
         if entries is None:
             logger.error("Cannot write None entries")
             return FlextResult.fail(
-                FlextLDIFConstants.FlextLDIFValidationMessages.ENTRIES_CANNOT_BE_NONE
+"Entries cannot be None"
             )
 
         try:
@@ -205,17 +200,13 @@ class FlextLDIFFormatHandler:
                 writer.unparse(str(entry.dn), dict(entry.attributes))
 
             output = writer.get_output()
-            logger.info(
-                FlextLDIFConstants.FlextLDIFOperationMessages.LDIF_WRITTEN_SUCCESS.format(
-                    count=writer.records_written,
-                ),
-            )
+            logger.info(f"LDIF written successfully: {writer.records_written} entries")
             return FlextResult.ok(output)
 
         except (ValueError, AttributeError, TypeError, UnicodeError) as e:
             error_msg: str = f"Modernized LDIF write failed: {e}"
             logger.exception(
-                FlextLDIFConstants.FlextLDIFValidationMessages.MODERNIZED_WRITING_FAILED
+"LDIF writing failed"
             )
             return FlextResult.fail(error_msg)
 
@@ -585,7 +576,7 @@ class FlextLDIFParser:
             dn = self._process_line_attribute(line, dn, entry)
 
         if dn is None:
-            msg = FlextLDIFConstants.FlextLDIFValidationMessages.RECORD_MISSING_DN
+            msg = "Record missing DN"
             raise ValueError(msg)
 
         return dn, entry

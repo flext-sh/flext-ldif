@@ -406,12 +406,16 @@ class TestFlextLDIFUtilitiesAdditionalCoverage:
         )
 
         # Use flext_tests utilities for validation
-        assert empty_result.is_success, f"Expected success, got failure: {empty_result.error if hasattr(empty_result, 'error') else empty_result}"
+        assert empty_result.is_success, (
+            f"Expected success, got failure: {empty_result.error if hasattr(empty_result, 'error') else empty_result}"
+        )
         assert empty_result.value is True  # No errors for empty list
 
         # Test validation flow works correctly
-        test_result = FlextResult[bool].ok(True)
-        assert test_result.is_success, f"Expected success, got failure: {test_result.error if hasattr(test_result, 'error') else test_result}"
+        test_result = FlextResult[bool].ok(data=True)
+        assert test_result.is_success, (
+            f"Expected success, got failure: {test_result.error if hasattr(test_result, 'error') else test_result}"
+        )
 
         # Try to create an entry with whitespace-only DN using model_construct (bypass validation)
         try:
@@ -430,7 +434,9 @@ class TestFlextLDIFUtilitiesAdditionalCoverage:
             result = FlextLDIFUtilities.LdifDomainProcessors.validate_entries_or_warn(
                 [entry]
             )
-            assert result.is_success, f"Expected success, got failure: {result.error if hasattr(result, 'error') else result}"
+            assert result.is_success, (
+                f"Expected success, got failure: {result.error if hasattr(result, 'error') else result}"
+            )
             assert result.value is False  # Should detect empty DN error
         except Exception:
             # If can't create such entry due to validation, that's fine -

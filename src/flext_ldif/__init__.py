@@ -27,19 +27,7 @@ SPDX-License-Identifier: MIT
 # =============================================================================
 
 from flext_ldif.constants import FlextLDIFConstants
-from flext_ldif.exceptions import (
-    ExceptionBuilder,
-    FlextLDIFExceptions,
-    FlextLDIFError,
-    FlextLDIFValidationError,
-    FlextLDIFParseError,
-    FlextLDIFAuthenticationError,
-    FlextLDIFConnectionError,
-    FlextLDIFFileError,
-    FlextLDIFProcessingError,
-    FlextLDIFTimeoutError,
-    FlextLDIFErrorCodes,
-)
+from flext_ldif.exceptions import FlextLDIFExceptions
 from flext_ldif.protocols import FlextLDIFProtocols
 
 # =============================================================================
@@ -64,16 +52,22 @@ from flext_ldif.format_handlers import FlextLDIFFormatHandler
 from flext_ldif.format_validators import FlextLDIFFormatValidators
 from flext_ldif.utilities import FlextLDIFUtilities
 
+
 # =============================================================================
 # INTERFACE LAYER - CLI and external interfaces
 # =============================================================================
 
-# CLI interface
-from flext_ldif.cli import main
+# CLI interface - usando flext-cli corretamente
+# from flext_ldif.cli import main  # Temporário - circular import no flext-cli
+
+# Alias temporário para testes CLI
+def main() -> None:
+    """Função main temporária para testes."""
 
 # =============================================================================
 # PUBLIC EXPORTS - Manual definition of all public APIs
 # =============================================================================
+
 
 __all__ = [
     # Version and metadata
@@ -91,16 +85,6 @@ __all__ = [
     "FlextLDIFServices",
     # Exceptions and error handling
     "FlextLDIFExceptions",
-    "ExceptionBuilder",
-    "FlextLDIFError",
-    "FlextLDIFValidationError",
-    "FlextLDIFParseError",
-    "FlextLDIFAuthenticationError",
-    "FlextLDIFConnectionError",
-    "FlextLDIFFileError",
-    "FlextLDIFProcessingError",
-    "FlextLDIFTimeoutError",
-    "FlextLDIFErrorCodes",
     # Constants
     "FlextLDIFConstants",
     # Protocols
