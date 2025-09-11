@@ -15,19 +15,20 @@ def test_direct_method_calls_for_missing_lines() -> None:
     # Criar entries de teste
     entry1 = FlextLDIFModels.Entry(
         dn=FlextLDIFModels.DistinguishedName(value="cn=test1,dc=example,dc=com"),
-        attributes=FlextLDIFModels.LdifAttributes(data={
-            "cn": ["test1"],
-            "mail": ["test1@example.com"],
-            "objectClass": ["person", "inetOrgPerson"]
-        })
+        attributes=FlextLDIFModels.LdifAttributes(
+            data={
+                "cn": ["test1"],
+                "mail": ["test1@example.com"],
+                "objectClass": ["person", "inetOrgPerson"],
+            }
+        ),
     )
 
     entry2 = FlextLDIFModels.Entry(
         dn=FlextLDIFModels.DistinguishedName(value="cn=test2,dc=example,dc=com"),
-        attributes=FlextLDIFModels.LdifAttributes(data={
-            "cn": ["test2"],
-            "objectClass": ["person"]
-        })
+        attributes=FlextLDIFModels.LdifAttributes(
+            data={"cn": ["test2"], "objectClass": ["person"]}
+        ),
     )
 
     entries = [entry1, entry2]
@@ -43,7 +44,9 @@ def test_direct_method_calls_for_missing_lines() -> None:
         assert len(filtered) == 1  # Apenas entry1 tem mail
 
     # Testar com attribute_value específico
-    filter_with_value = repository.filter_entries_by_attribute(entries, "mail", "test1@example.com")
+    filter_with_value = repository.filter_entries_by_attribute(
+        entries, "mail", "test1@example.com"
+    )
     assert filter_with_value.is_success
 
     # Testar com atributo que não existe
@@ -161,13 +164,17 @@ def test_all_service_integrations() -> None:
     # Criar dados de teste
     [
         FlextLDIFModels.Entry(
-            dn=FlextLDIFModels.DistinguishedName(value="cn=integration,dc=example,dc=com"),
-            attributes=FlextLDIFModels.LdifAttributes(data={
-                "cn": ["integration"],
-                "objectClass": ["person", "inetOrgPerson"],
-                "mail": ["integration@example.com"],
-                "description": ["Integration test entry"]
-            })
+            dn=FlextLDIFModels.DistinguishedName(
+                value="cn=integration,dc=example,dc=com"
+            ),
+            attributes=FlextLDIFModels.LdifAttributes(
+                data={
+                    "cn": ["integration"],
+                    "objectClass": ["person", "inetOrgPerson"],
+                    "mail": ["integration@example.com"],
+                    "description": ["Integration test entry"],
+                }
+            ),
         )
     ]
 
@@ -178,7 +185,7 @@ def test_all_service_integrations() -> None:
         FlextLDIFServices.TransformerService(),
         FlextLDIFServices.WriterService(),
         FlextLDIFServices.AnalyticsService(),
-        FlextLDIFServices.RepositoryService()
+        FlextLDIFServices.RepositoryService(),
     ]
 
     # Operações básicas em cada service
@@ -230,18 +237,14 @@ def test_exception_scenarios() -> None:
     problematic_ldifs = [
         # Vazio
         "",
-
         # Só espaços
         "   \n\n   ",
-
         # Completamente inválido
         "isso não é LDIF de jeito nenhum",
-
         # LDIF malformado
         """dn cn=malformed,dc=example,dc=com
 cn malformed
 objectClass person""",
-
         # LDIF com encoding issues (simulado)
         """dn: cn=encoding,dc=example,dc=com
 cn: encoding

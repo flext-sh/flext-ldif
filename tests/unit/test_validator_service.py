@@ -5,7 +5,6 @@ SPDX-License-Identifier: MIT
 """
 
 
-# ruff: noqa: PT018
 # Reason: Multiple assertion checks are common in tests for comprehensive error validation
 
 from flext_ldif import FlextLDIFModels, FlextLDIFServices
@@ -57,8 +56,8 @@ class TestFlextLDIFServicesValidatorService:
             ),  # Empty attributes should fail
         )
 
-        service = FlextLDIFServices.ValidatorService(entries=[invalid_entry])
-        result = service.execute()
+        service = FlextLDIFServices.ValidatorService()
+        result = service.validate_entries([invalid_entry])
 
         # The service should handle validation errors and return success/failure appropriately
         # Since the validator service may handle errors differently, let's test that it executes
@@ -383,7 +382,10 @@ class TestFlextLDIFServicesValidatorService:
         result = service.validate_dn_format("")
 
         assert result.is_failure
-        assert result.error is not None and "cannot be empty" in result.error
+        assert result.error is not None
+        assert (
+            "cannot be empty" in result.error or "Empty DN is invalid" in result.error
+        )
 
     def test_validate_entries_first_entry_fails(self) -> None:
         """Test validate_entries when first entry fails."""

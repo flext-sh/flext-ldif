@@ -14,17 +14,23 @@ def test_branch_663_current_dn_none_ultra_precision() -> None:
     parser = FlextLDIFServices.ParserService()
 
     # Cenário 1: linha vazia logo no início (current_dn = None)
-    ldif_content_start_empty = "\n\ndn: cn=after_empty,dc=example,dc=com\ncn: after_empty"
+    ldif_content_start_empty = (
+        "\n\ndn: cn=after_empty,dc=example,dc=com\ncn: after_empty"
+    )
     result1 = parser.parse_ldif_content(ldif_content_start_empty)
     assert result1 is not None
 
     # Cenário 2: múltiplas linhas vazias no início
-    ldif_content_multi_empty = "\n\n\n\ndn: cn=after_multi_empty,dc=example,dc=com\ncn: after_multi_empty"
+    ldif_content_multi_empty = (
+        "\n\n\n\ndn: cn=after_multi_empty,dc=example,dc=com\ncn: after_multi_empty"
+    )
     result2 = parser.parse_ldif_content(ldif_content_multi_empty)
     assert result2 is not None
 
     # Cenário 3: entrada órfã seguida de linha vazia (current_dn permanece None)
-    ldif_content_orphan = "cn: orphan_entry\nobjectClass: person\n\ndn: cn=valid,dc=example,dc=com"
+    ldif_content_orphan = (
+        "cn: orphan_entry\nobjectClass: person\n\ndn: cn=valid,dc=example,dc=com"
+    )
     result3 = parser.parse_ldif_content(ldif_content_orphan)
     assert result3 is not None
 
@@ -97,12 +103,10 @@ def test_edge_cases_ultra_comprehensive() -> None:
         "\n",  # Apenas uma linha vazia
         "\n\n\n",  # Múltiplas linhas vazias
         "cn: orphan\n\n",  # Órfão seguido de vazio
-
         # Branch 674 TRUE: linha sem colon scenarios
         "no_colon",  # Linha simples sem colon
         "invalid line",  # Linha com espaços sem colon
         "multiple words no colon here",  # Múltiplas palavras sem colon
-
         # Combinações específicas
         "\nno_colon_after_empty",
         "no_colon_start\n\ndn: cn=test,dc=com",
@@ -159,12 +163,10 @@ def test_final_comprehensive_validation() -> None:
         ("\n\ndn: cn=test,dc=com", "Empty lines at start"),
         ("cn: orphan\n\ndn: cn=test,dc=com", "Orphan followed by empty"),
         ("\n\n\ndn: cn=multi_empty,dc=com", "Multiple empty lines"),
-
         # Branch 674 TRUE: linha sem colon
         ("dn: cn=test,dc=com\nno_colon", "No colon in middle"),
         ("invalid_start\ndn: cn=test,dc=com", "No colon at start"),
         ("dn: cn=test,dc=com\nline1\nline2\ncn: test", "Multiple no colon"),
-
         # Combinações críticas
         ("\ninvalid_no_colon\n\ndn: cn=combo,dc=com", "Empty + no colon combo"),
         ("no_colon_start\n\ndn: cn=test,dc=com\ninvalid_mid", "Complex combination"),

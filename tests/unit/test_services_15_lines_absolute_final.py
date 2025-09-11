@@ -75,8 +75,14 @@ def test_lines_724_727_file_reading_exception() -> None:
     parser = FlextLDIFServices.ParserService()
 
     # Mock Path methods para passar no exists() mas falhar no read_text()
-    with patch.object(Path, "exists", return_value=True), \
-         patch.object(Path, "read_text", side_effect=OSError("Forced file read error for lines 724-727")):
+    with (
+        patch.object(Path, "exists", return_value=True),
+        patch.object(
+            Path,
+            "read_text",
+            side_effect=OSError("Forced file read error for lines 724-727"),
+        ),
+    ):
         # Parse ldif file que deve forçar exception handling 724-727
         result = parser.parse_ldif_file("test_file.ldif")
 
@@ -90,7 +96,10 @@ def test_lines_762_763_syntax_validation_exception() -> None:
     parser = FlextLDIFServices.ParserService()
 
     # Mock interno para forçar exceção na validação de sintaxe
-    with patch("builtins.enumerate", side_effect=RuntimeError("Forced syntax error for lines 762-763")):
+    with patch(
+        "builtins.enumerate",
+        side_effect=RuntimeError("Forced syntax error for lines 762-763"),
+    ):
         invalid_content = "dn: cn=test,dc=example,dc=com\ncn: test"
 
         # Validate syntax que deve forçar exception 762-763
@@ -130,9 +139,11 @@ def test_lines_812_815_parse_entry_block_exception() -> None:
     parser = FlextLDIFServices.ParserService()
 
     # Mock Factory.create_entry para forçar exceção 812-815
-    with patch.object(FlextLDIFModels.Factory, "create_entry",
-                     side_effect=RuntimeError("Factory error lines 812-815")):
-
+    with patch.object(
+        FlextLDIFModels.Factory,
+        "create_entry",
+        side_effect=RuntimeError("Factory error lines 812-815"),
+    ):
         simple_ldif = """dn: cn=factory_error,dc=example,dc=com
 cn: factory_error
 objectClass: person
@@ -156,6 +167,7 @@ def test_lines_862_863_failed_results_error_handling() -> None:
     def failing_transform_entry(self, entry):
         # Força um resultado de failure
         from flext_core import FlextResult
+
         return FlextResult[object].fail("Forced failure for lines 862-863")
 
     # Substitui temporariamente o método
@@ -165,7 +177,7 @@ def test_lines_862_863_failed_results_error_handling() -> None:
         # Entry simples que vai falhar na transformação
         simple_entry = FlextLDIFModels.Entry(
             dn=FlextLDIFModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLDIFModels.LdifAttributes(data={"cn": ["test"]})
+            attributes=FlextLDIFModels.LdifAttributes(data={"cn": ["test"]}),
         )
 
         # Transform entries que deve exercitar linhas 862-863
@@ -191,7 +203,9 @@ def test_lines_868_871_transform_entries_exception() -> None:
         extreme_dn = "cn=" + "x" * 2000 + ",dc=example,dc=com"
         extreme_entry = FlextLDIFModels.Entry(
             dn=FlextLDIFModels.DistinguishedName(value=extreme_dn),
-            attributes=FlextLDIFModels.LdifAttributes(data={"cn": ["extreme_test"] * 1000})
+            attributes=FlextLDIFModels.LdifAttributes(
+                data={"cn": ["extreme_test"] * 1000}
+            ),
         )
         extreme_entries.append(extreme_entry)
     except Exception:
@@ -201,11 +215,16 @@ def test_lines_868_871_transform_entries_exception() -> None:
     # Se não conseguiu criar entry problemático, usa Mock de transform internal
     if not extreme_entries:
         # Usar patch em nível mais baixo para forçar exceção
-        with patch("flext_ldif.services.cast", side_effect=RuntimeError("Cast error for lines 868-871")):
+        with patch(
+            "flext_ldif.services.cast",
+            side_effect=RuntimeError("Cast error for lines 868-871"),
+        ):
             try:
                 simple_entry = FlextLDIFModels.Entry(
-                    dn=FlextLDIFModels.DistinguishedName(value="cn=simple,dc=example,dc=com"),
-                    attributes=FlextLDIFModels.LdifAttributes(data={"cn": ["simple"]})
+                    dn=FlextLDIFModels.DistinguishedName(
+                        value="cn=simple,dc=example,dc=com"
+                    ),
+                    attributes=FlextLDIFModels.LdifAttributes(data={"cn": ["simple"]}),
                 )
                 result = transformer.transform_entries([simple_entry])
                 assert result.is_success or result.is_failure
@@ -267,9 +286,14 @@ objectClass: inetOrgPerson
 
         # Transform comprehensive com exception handling
         try:
-            with patch.object(transformer, "transform_entry",
-                           side_effect=[Mock(is_success=False, error="Test error")] * len(entries)):
-                transformer.transform_entries(entries[:1])  # Só um para forçar failed_results
+            with patch.object(
+                transformer,
+                "transform_entry",
+                side_effect=[Mock(is_success=False, error="Test error")] * len(entries),
+            ):
+                transformer.transform_entries(
+                    entries[:1]
+                )  # Só um para forçar failed_results
         except Exception:
             pass
 

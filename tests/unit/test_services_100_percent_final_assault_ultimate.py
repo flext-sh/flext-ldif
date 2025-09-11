@@ -34,7 +34,9 @@ def test_lines_571_576_typeguards_elif_and_else() -> None:
 
     # Mock attributes que TEM items() mas NÃO tem data
     mock_attributes1 = Mock()
-    mock_attributes1.items = Mock(return_value=[("cn", ["test1"]), ("objectClass", ["person"])])
+    mock_attributes1.items = Mock(
+        return_value=[("cn", ["test1"]), ("objectClass", ["person"])]
+    )
     # CRITICAL: NÃO definir .data para forçar elif na linha 571
     if hasattr(mock_attributes1, "data"):
         del mock_attributes1.data
@@ -60,8 +62,8 @@ def test_lines_571_576_typeguards_elif_and_else() -> None:
     result1 = validator.validate_entries([mock_entry1])  # Força linha 571-574
     result2 = validator.validate_entries([mock_entry2])  # Força linha 575-578
 
-    assert (result1.is_success or result1.is_failure)
-    assert (result2.is_success or result2.is_failure)
+    assert result1.is_success or result1.is_failure
+    assert result2.is_success or result2.is_failure
 
 
 def test_line_675_continue_no_colon_in_line() -> None:
@@ -160,9 +162,11 @@ def test_lines_812_813_factory_create_entry_exception() -> None:
     parser = FlextLDIFServices.ParserService()
 
     # Mock Factory.create_entry para lançar exceção específica
-    with patch.object(FlextLDIFModels.Factory, "create_entry",
-                     side_effect=ValueError("Factory validation error for lines 812-813")):
-
+    with patch.object(
+        FlextLDIFModels.Factory,
+        "create_entry",
+        side_effect=ValueError("Factory validation error for lines 812-813"),
+    ):
         simple_ldif = """dn: cn=factory_fail,dc=example,dc=com
 cn: factory_fail
 objectClass: person
@@ -185,6 +189,7 @@ def test_lines_862_863_failed_results_not_empty() -> None:
 
     def force_failure_transform_entry(self, entry):
         from flext_core import FlextResult
+
         return FlextResult[object].fail("Forced failure for failed_results test")
 
     try:
@@ -193,8 +198,10 @@ def test_lines_862_863_failed_results_not_empty() -> None:
 
         # Entry que vai falhar na transformação
         test_entry = FlextLDIFModels.Entry(
-            dn=FlextLDIFModels.DistinguishedName(value="cn=fail_test,dc=example,dc=com"),
-            attributes=FlextLDIFModels.LdifAttributes(data={"cn": ["fail_test"]})
+            dn=FlextLDIFModels.DistinguishedName(
+                value="cn=fail_test,dc=example,dc=com"
+            ),
+            attributes=FlextLDIFModels.LdifAttributes(data={"cn": ["fail_test"]}),
         )
 
         # Transform entries que deve ter failed_results não vazio
@@ -279,6 +286,7 @@ telephoneNumber: +1-234-567-8900
 
         def failing_transform(self, entry):
             from flext_core import FlextResult
+
             return FlextResult[object].fail("Comprehensive test failure")
 
         try:

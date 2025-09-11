@@ -42,25 +42,29 @@ class FlextLDIFConstants:
     DEFAULT_BUFFER_SIZE = FlextConstants.LDIF.DEFAULT_BUFFER_SIZE
     MAX_LINE_LENGTH = FlextConstants.LDIF.MAX_LINE_LENGTH
 
-    # LDIF-specific constants not in flext-core (domain-specific additions only)
-    MIN_DN_COMPONENTS = 1  # Minimum DN components required
-    DN_PATTERN = r"^[\w\s\-=,.+:@/\\()\[\]{}#&*;|<>?'\"~`!$%^]*$"  # Comprehensive DN pattern for LDAP validation
+    # Use flext-core LDAP patterns as SOURCE OF TRUTH
+    DN_PATTERN = FlextConstants.LDAP.DN_PATTERN
+    MIN_DN_COMPONENTS = (
+        1  # LDIF-specific: minimum components (only if not in flext-core)
+    )
 
     # Use flext-core object classes with direct attribute access (convert frozenset to set for test compatibility)
     _person_classes: ClassVar[set[str]] = set(FlextConstants.LDIF.LDAP_PERSON_CLASSES)
     # Add lowercase aliases for test compatibility while keeping SOURCE OF TRUTH
-    _person_classes.add("inetorgperson")  # Alias for inetOrgPerson
-    _person_classes.add("organizationalperson")  # Alias for organizationalPerson
-    _person_classes.add("user")  # Simple alias for test compatibility
+    _person_classes.add("inetorgperson")
+    _person_classes.add("organizationalperson")
+    _person_classes.add("user")
     LDAP_PERSON_CLASSES: ClassVar[set[str]] = _person_classes
 
     _group_classes: ClassVar[set[str]] = set(FlextConstants.LDIF.LDAP_GROUP_CLASSES)
-    _group_classes.add("groupofnames")  # Alias for groupOfNames
-    _group_classes.add("groupofuniquenames")  # Alias for groupOfUniqueNames
-    _group_classes.add("group")  # Simple alias for test compatibility
+    _group_classes.add("groupofnames")
+    _group_classes.add("groupofuniquenames")
+    _group_classes.add("group")
     LDAP_GROUP_CLASSES: ClassVar[set[str]] = _group_classes
 
-    LDAP_ORGANIZATIONAL_CLASSES: ClassVar[set[str]] = set(FlextConstants.LDIF.LDAP_ORGANIZATIONAL_CLASSES)
+    LDAP_ORGANIZATIONAL_CLASSES: ClassVar[set[str]] = set(
+        FlextConstants.LDIF.LDAP_ORGANIZATIONAL_CLASSES
+    )
 
     # Minimal LDIF-specific analytics keys (only domain-specific additions)
     class Analytics:
@@ -87,8 +91,8 @@ class FlextLDIFConstants:
 
         # Configuration limits
         MAX_ENTRIES_LIMIT = 1000000  # 1M entries max
-        MAX_CACHE_SIZE = 10000      # 10K cache entries max
-        MIN_DN_DEPTH_FOR_BASE = 2   # Minimum depth for base DN extraction
+        MAX_CACHE_SIZE = 10000  # 10K cache entries max
+        MIN_DN_DEPTH_FOR_BASE = 2  # Minimum depth for base DN extraction
 
 
 __all__ = ["FlextLDIFConstants"]

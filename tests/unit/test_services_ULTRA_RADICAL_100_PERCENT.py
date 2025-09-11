@@ -25,7 +25,7 @@ class TestServicesUltraRadical100Percent:
             extreme_debug_mode=True,
             force_all_branches=True,
             strict_validation=False,
-            max_entries=50000  # High limit to avoid early termination
+            max_entries=50000,  # High limit to avoid early termination
         )
 
         parser = FlextLDIFServices.ParserService(config=config)
@@ -34,30 +34,26 @@ class TestServicesUltraRadical100Percent:
         ultra_radical_test_cases = [
             # 1. Empty string (early return branch)
             ("", "empty_content"),
-
             # 2. Invalid syntax (validation failure branch)
             ("invalid ldif without structure", "invalid_syntax"),
-
             # 3. Force empty line + no current_dn branch
             ("line1\n\nline3", "empty_no_dn_branch"),
-
             # 4. Force no colon branch
             ("dn: cn=test,dc=com\ninvalid_line_no_colon", "no_colon_branch"),
-
             # 5. Force _force_new_attr special attribute branch
-            ("dn: cn=test,dc=com\n_force_new_attr: test_value", "force_new_attr_branch"),
-
+            (
+                "dn: cn=test,dc=com\n_force_new_attr: test_value",
+                "force_new_attr_branch",
+            ),
             # 6. Force base64 attribute branch
             ("dn: cn=test,dc=com\nattr:: dGVzdA==", "base64_branch"),
-
             # 7. Force final entry without trailing empty line
             ("dn: cn=final,dc=com\nattr: value", "final_entry_branch"),
-
             # 8. Force artificial DN creation for orphaned attributes
             ("attr: orphaned_value\nattr2: another_value", "orphaned_attrs_branch"),
-
             # 9. Complex multi-entry with ALL branch conditions
-            ("""dn: cn=entry1,dc=com
+            (
+                """dn: cn=entry1,dc=com
 objectClass: person
 cn: entry1
 
@@ -71,10 +67,14 @@ orphaned: attribute
 without: dn
 
 dn: cn=final,dc=com
-final: entry""", "comprehensive_all_branches"),
-
+final: entry""",
+                "comprehensive_all_branches",
+            ),
             # 10. Force line count modulo branches (every 10th and 15th lines)
-            ("\n".join([f"line_{i}: value_{i}" for i in range(1, 21)]), "modulo_forcing"),
+            (
+                "\n".join([f"line_{i}: value_{i}" for i in range(1, 21)]),
+                "modulo_forcing",
+            ),
         ]
 
         # Execute all ultra-radical test cases
@@ -118,14 +118,21 @@ final: entry""", "comprehensive_all_branches"),
 
         # Create test entries
         entries = [
-            FlextLDIFModels.Entry.model_validate({
-                "dn": "cn=test1,dc=example,dc=com",
-                "attributes": {"cn": ["test1"], "objectClass": ["person"]}
-            }),
-            FlextLDIFModels.Entry.model_validate({
-                "dn": "cn=test2,dc=example,dc=com",
-                "attributes": {"cn": ["test2"], "objectClass": ["organizationalPerson"]}
-            })
+            FlextLDIFModels.Entry.model_validate(
+                {
+                    "dn": "cn=test1,dc=example,dc=com",
+                    "attributes": {"cn": ["test1"], "objectClass": ["person"]},
+                }
+            ),
+            FlextLDIFModels.Entry.model_validate(
+                {
+                    "dn": "cn=test2,dc=example,dc=com",
+                    "attributes": {
+                        "cn": ["test2"],
+                        "objectClass": ["organizationalPerson"],
+                    },
+                }
+            ),
         ]
 
         # VALIDATOR: Test all validation methods
@@ -156,7 +163,10 @@ final: entry""", "comprehensive_all_branches"),
 
             # Write to file (using temporary path)
             import tempfile
-            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", delete=False, suffix=".ldif") as f:
+
+            with tempfile.NamedTemporaryFile(
+                encoding="utf-8", mode="w", delete=False, suffix=".ldif"
+            ) as f:
                 temp_path = Path(f.name)
 
             try:
@@ -183,23 +193,27 @@ final: entry""", "comprehensive_all_branches"),
 
         # Create comprehensive test entries
         entries = [
-            FlextLDIFModels.Entry.model_validate({
-                "dn": "cn=person1,ou=users,dc=example,dc=com",
-                "attributes": {
-                    "cn": ["person1"],
-                    "objectClass": ["person", "organizationalPerson"],
-                    "mail": ["person1@example.com"],
-                    "telephoneNumber": ["+1234567890"]
+            FlextLDIFModels.Entry.model_validate(
+                {
+                    "dn": "cn=person1,ou=users,dc=example,dc=com",
+                    "attributes": {
+                        "cn": ["person1"],
+                        "objectClass": ["person", "organizationalPerson"],
+                        "mail": ["person1@example.com"],
+                        "telephoneNumber": ["+1234567890"],
+                    },
                 }
-            }),
-            FlextLDIFModels.Entry.model_validate({
-                "dn": "cn=group1,ou=groups,dc=example,dc=com",
-                "attributes": {
-                    "cn": ["group1"],
-                    "objectClass": ["groupOfNames"],
-                    "member": ["cn=person1,ou=users,dc=example,dc=com"]
+            ),
+            FlextLDIFModels.Entry.model_validate(
+                {
+                    "dn": "cn=group1,ou=groups,dc=example,dc=com",
+                    "attributes": {
+                        "cn": ["group1"],
+                        "objectClass": ["groupOfNames"],
+                        "member": ["cn=person1,ou=users,dc=example,dc=com"],
+                    },
                 }
-            }),
+            ),
         ]
 
         # TRANSFORMER SERVICE: Test all transformation methods
@@ -249,9 +263,7 @@ final: entry""", "comprehensive_all_branches"),
     def test_ultra_radical_edge_cases_all_branches(self) -> None:
         """Ultra-radical edge case testing to force remaining branches."""
         config = FlextLDIFModels.Config(
-            extreme_debug_mode=True,
-            force_all_branches=True,
-            strict_validation=False
+            extreme_debug_mode=True, force_all_branches=True, strict_validation=False
         )
 
         parser = FlextLDIFServices.ParserService(config=config)
@@ -261,14 +273,12 @@ final: entry""", "comprehensive_all_branches"),
             # Force exception handling branches
             None,  # This should trigger type handling
             1234,  # Non-string input
-            [],    # List input
-            {},    # Dict input
-
+            [],  # List input
+            {},  # Dict input
             # Force string edge cases
             " " * 1000,  # Very long whitespace
             "\t\n\r\f",  # Control characters
-            "ä ö ü ß",   # Unicode characters
-
+            "ä ö ü ß",  # Unicode characters
             # Force parser state combinations
             "dn: test\n" * 100,  # Many DNs without attributes
             "attr: value\n" * 100,  # Many attributes without DN
@@ -294,7 +304,7 @@ final: entry""", "comprehensive_all_branches"),
             force_all_branches=True,
             strict_validation=True,
             max_entries=1000,
-            encoding="utf-8"
+            encoding="utf-8",
         )
 
         # Test ALL services with comprehensive method calls
@@ -326,17 +336,32 @@ member: cn=comprehensive,dc=test,dc=com
             try:
                 # Test all available methods using reflection
                 import inspect
-                methods = [name for name, method in inspect.getmembers(service, predicate=inspect.ismethod)
-                          if not name.startswith("_")]
+
+                methods = [
+                    name
+                    for name, method in inspect.getmembers(
+                        service, predicate=inspect.ismethod
+                    )
+                    if not name.startswith("_")
+                ]
 
                 for method_name in methods:
                     method = getattr(service, method_name)
                     try:
                         # Try calling with various parameter combinations
-                        if method_name in {"parse_ldif_content", "parse_entries", "validate_ldif_syntax"}:
+                        if method_name in {
+                            "parse_ldif_content",
+                            "parse_entries",
+                            "validate_ldif_syntax",
+                        }:
                             result = method(test_content)
-                        elif method_name in {"validate_entries", "format_ldif", "transform_entries",
-                                           "normalize_entries", "analyze_patterns"}:
+                        elif method_name in {
+                            "validate_entries",
+                            "format_ldif",
+                            "transform_entries",
+                            "normalize_entries",
+                            "analyze_patterns",
+                        }:
                             # These need parsed entries
                             parser = FlextLDIFServices.ParserService(config=config)
                             entries_result = parser.parse_ldif_content(test_content)

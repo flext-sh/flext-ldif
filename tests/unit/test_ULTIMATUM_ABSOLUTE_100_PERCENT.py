@@ -37,13 +37,13 @@ class TestUltimatumAbsolute100Percent:
 
         # Mock entry with empty DN (triggers error line 40-41)
         mock_entry_empty = Mock()
-        mock_entry_empty.dn.value.strip.return_value = ""
+        mock_entry_empty.dn.value = ""  # Return string directly
         mock_entry_empty.has_attribute.return_value = False  # Missing objectClass
         mock_entries.append(mock_entry_empty)
 
         # Mock entry with missing objectClass (triggers error line 42-43)
         mock_entry_no_oc = Mock()
-        mock_entry_no_oc.dn.value.strip.return_value = "cn=test,dc=com"
+        mock_entry_no_oc.dn.value = "cn=test,dc=com"  # Return string directly
         mock_entry_no_oc.has_attribute.return_value = False  # Missing objectClass
         mock_entries.append(mock_entry_no_oc)
 
@@ -83,7 +83,7 @@ class TestUltimatumAbsolute100Percent:
             "list_attr": ["value1", "value2"],
             "empty_attr": "",
             "none_attr": None,
-            "mixed_attr": ["value", None, "another"]
+            "mixed_attr": ["value", None, "another"],
         }
         result = converters.attributes_dict_to_ldif_format(test_attrs)
         assert result is not None
@@ -104,18 +104,19 @@ class TestUltimatumAbsolute100Percent:
         builder = FlextLDIFExceptions.builder()
 
         # Test ALL builder methods with extreme combinations
-        exception = (builder
-                    .message("Ultimate test")
-                    .code(FlextLDIFErrorCodes.LDIF_PARSE_ERROR)
-                    .context({"key": "value", "number": 42})
-                    .location(line=100, column=50)
-                    .dn("cn=ultimate,dc=test,dc=com")
-                    .attribute("ultimateAttr")
-                    .entry_index(99)
-                    .validation_rule("ultimate_rule")
-                    .file_path("/ultimate/path.ldif")
-                    .operation("ultimate_operation")
-                    .build())
+        exception = (
+            builder.message("Ultimate test")
+            .code(FlextLDIFErrorCodes.LDIF_PARSE_ERROR)
+            .context({"key": "value", "number": 42})
+            .location(line=100, column=50)
+            .dn("cn=ultimate,dc=test,dc=com")
+            .attribute("ultimateAttr")
+            .entry_index(99)
+            .validation_rule("ultimate_rule")
+            .file_path("/ultimate/path.ldif")
+            .operation("ultimate_operation")
+            .build()
+        )
 
         assert exception is not None
         assert "Ultimate test" in str(exception)
@@ -124,29 +125,33 @@ class TestUltimatumAbsolute100Percent:
         exceptions_to_test = [
             FlextLDIFExceptions.error("Generic error"),
             FlextLDIFExceptions.parse_error("Parse error", line=1, column=1),
-            FlextLDIFExceptions.entry_error("Entry error", dn="test", entry_index=0),
-            FlextLDIFExceptions.validation_error("Validation error", dn="test", rule="test"),
+            FlextLDIFExceptions.entry_error("Entry error", entry_dn="test"),
+            FlextLDIFExceptions.validation_error(
+                "Validation error", entry_dn="test", validation_rule="test"
+            ),
             FlextLDIFExceptions.connection_error("Connection error"),
-            FlextLDIFExceptions.file_error("File error", file_path="/test", operation="read"),
+            FlextLDIFExceptions.file_error(
+                "File error", file_path="/test", operation="read"
+            ),
             FlextLDIFExceptions.configuration_error("Config error"),
             FlextLDIFExceptions.processing_error("Process error", operation="parse"),
             FlextLDIFExceptions.authentication_error("Auth error"),
-            FlextLDIFExceptions.timeout_error("Timeout error", operation="connect"),
+            FlextLDIFExceptions.timeout_error("Timeout error", timeout_duration=30.0),
         ]
 
         for exc in exceptions_to_test:
             assert exc is not None
 
-        # Force compatibility aliases
-        compat_exceptions = [
-            FlextLDIFExceptions.ParseError("Parse compat"),
-            FlextLDIFExceptions.EntryError("Entry compat"),
-            FlextLDIFExceptions.LdifConnectionError("Connection compat"),
-            FlextLDIFExceptions.LdifFileError("File compat"),
-            FlextLDIFExceptions.LdifValidationError("Validation compat"),
+        # Test direct class access (real classes that exist)
+        direct_exceptions = [
+            FlextLDIFExceptions.BaseError("Base error"),
+            FlextLDIFExceptions.ValidationError("Validation class"),
+            FlextLDIFExceptions.ConnectionError("Connection class"),
+            FlextLDIFExceptions.TimeoutError("Timeout class"),
+            FlextLDIFExceptions.ProcessingError("Processing class"),
         ]
 
-        for exc in compat_exceptions:
+        for exc in direct_exceptions:
             assert exc is not None
 
     def test_services_absolute_ultimatum_100_percent(self) -> None:
@@ -156,7 +161,7 @@ class TestUltimatumAbsolute100Percent:
             force_all_branches=True,
             strict_validation=False,
             max_entries=100000,  # High limit
-            encoding="utf-8"
+            encoding="utf-8",
         )
 
         # PARSER SERVICE - Force ALL branches
@@ -166,34 +171,24 @@ class TestUltimatumAbsolute100Percent:
         ultimatum_parse_tests = [
             # Force validation failure branch (668->680)
             ("invalid ldif format without proper structure", "validation_failure"),
-
             # Force empty content branch (early return)
             ("", "empty_content"),
-
             # Force exception handling branches (676-677)
             (None, "none_input"),
-
             # Force empty line + no current_dn branch (685-686)
             ("\n\n\norphaned: attribute", "empty_no_dn"),
-
             # Force no colon branch (707-708)
             ("dn: test\ninvalid_line_without_colon", "no_colon"),
-
             # Force base64 handling (:: branch)
             ("dn: test\nattr:: dGVzdA==", "base64"),
-
             # Force _force_new_attr branch (690-703 area)
             ("dn: test\n_force_new_attr: forced", "force_new_attr"),
-
             # Force final entry without trailing newline (736->748)
             ("dn: cn=final,dc=com\nattr: value", "final_entry"),
-
             # Force artificial DN creation (738-740)
             ("orphaned: attribute\nmore: attributes", "orphaned_attrs"),
-
             # Force attributes creation (743-745)
             ("dn: cn=empty,dc=com\n\n", "empty_entry"),
-
             # Force modulo branches (_line_count % 10 and % 15)
             ("\n".join([f"line{i}: value{i}" for i in range(1, 31)]), "modulo_forcing"),
         ]
@@ -217,10 +212,12 @@ class TestUltimatumAbsolute100Percent:
         test_entries = []
 
         # Valid entry
-        valid_entry = FlextLDIFModels.Entry.model_validate({
-            "dn": "cn=valid,dc=test,dc=com",
-            "attributes": {"cn": ["valid"], "objectClass": ["person"]}
-        })
+        valid_entry = FlextLDIFModels.Entry.model_validate(
+            {
+                "dn": "cn=valid,dc=test,dc=com",
+                "attributes": {"cn": ["valid"], "objectClass": ["person"]},
+            }
+        )
         test_entries.append(valid_entry)
 
         # Test all validator methods
@@ -260,7 +257,9 @@ class TestUltimatumAbsolute100Percent:
                 assert result is not None
 
             # File operations with extreme cases
-            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", delete=False, suffix=".ldif") as f:
+            with tempfile.NamedTemporaryFile(
+                encoding="utf-8", mode="w", delete=False, suffix=".ldif"
+            ) as f:
                 temp_path = Path(f.name)
 
             try:
@@ -269,17 +268,23 @@ class TestUltimatumAbsolute100Percent:
                 assert result is not None
 
                 # Force permission error
-                with patch.object(temp_path, "write_text", side_effect=PermissionError("Forced")):
+                with patch.object(
+                    temp_path, "write_text", side_effect=PermissionError("Forced")
+                ):
                     result = writer.write_to_file(test_entries, temp_path)
                     assert result is not None
 
                 # Force OSError
-                with patch.object(temp_path, "write_text", side_effect=OSError("Forced")):
+                with patch.object(
+                    temp_path, "write_text", side_effect=OSError("Forced")
+                ):
                     result = writer.write_to_file(test_entries, temp_path)
                     assert result is not None
 
                 # Force UnicodeError
-                with patch.object(temp_path, "write_text", side_effect=UnicodeError("Forced")):
+                with patch.object(
+                    temp_path, "write_text", side_effect=UnicodeError("Forced")
+                ):
                     result = writer.write_to_file(test_entries, temp_path)
                     assert result is not None
 
@@ -308,7 +313,9 @@ class TestUltimatumAbsolute100Percent:
                 pass
 
         # REPOSITORY SERVICE - Force ALL branches
-        repository = FlextLDIFServices.RepositoryService(entries=test_entries, config=config)
+        repository = FlextLDIFServices.RepositoryService(
+            entries=test_entries, config=config
+        )
 
         repository_tests = [
             repository.execute,
@@ -340,7 +347,7 @@ class TestUltimatumAbsolute100Percent:
             extreme_debug_mode=True,
             force_all_branches=True,
             strict_validation=True,
-            max_entries=999999
+            max_entries=999999,
         )
 
         # Test ALL service combinations
@@ -357,8 +364,14 @@ class TestUltimatumAbsolute100Percent:
 
                 # Call ALL methods using introspection
                 import inspect
-                methods = [name for name, method in inspect.getmembers(service, predicate=inspect.ismethod)
-                          if not name.startswith("_") and callable(method)]
+
+                methods = [
+                    name
+                    for name, method in inspect.getmembers(
+                        service, predicate=inspect.ismethod
+                    )
+                    if not name.startswith("_") and callable(method)
+                ]
 
                 for method_name in methods:
                     method = getattr(service, method_name)
@@ -372,11 +385,20 @@ class TestUltimatumAbsolute100Percent:
                             result = method()
                         elif len(params) == 1:
                             # Single parameter - try common types
-                            for test_val in ["", [], None, "test content",
-                                           [FlextLDIFModels.Entry.model_validate({
-                                               "dn": "cn=test,dc=com",
-                                               "attributes": {"cn": ["test"]}
-                                           })]]:
+                            for test_val in [
+                                "",
+                                [],
+                                None,
+                                "test content",
+                                [
+                                    FlextLDIFModels.Entry.model_validate(
+                                        {
+                                            "dn": "cn=test,dc=com",
+                                            "attributes": {"cn": ["test"]},
+                                        }
+                                    )
+                                ],
+                            ]:
                                 try:
                                     result = method(test_val)
                                     assert result is not None
@@ -402,26 +424,29 @@ class TestUltimatumAbsolute100Percent:
         # Force ALL possible error conditions and edge cases
         extreme_tests = [
             # Memory exhaustion simulation
-            lambda: FlextLDIFServices.ParserService("x" * 10000, FlextLDIFModels.Config()),
-
+            lambda: FlextLDIFServices.ParserService(
+                "x" * 10000, FlextLDIFModels.Config()
+            ),
             # Unicode edge cases
-            lambda: FlextLDIFServices.ParserService("dn: cn=ÄÖÜß,dc=тест,dc=한국", FlextLDIFModels.Config()),
-
+            lambda: FlextLDIFServices.ParserService(
+                "dn: cn=ÄÖÜß,dc=тест,dc=한국", FlextLDIFModels.Config()
+            ),
             # Control character edge cases
-            lambda: FlextLDIFServices.ParserService("dn: cn=test\x00\x01\x02", FlextLDIFModels.Config()),
-
+            lambda: FlextLDIFServices.ParserService(
+                "dn: cn=test\x00\x01\x02", FlextLDIFModels.Config()
+            ),
             # Extreme nesting
             lambda: FlextLDIFUtilities.LdifConverters.normalize_dn_components(
                 ",".join([f"component{i}=value{i}" for i in range(100)])
             ),
-
-            # Type confusion
-            lambda: FlextLDIFUtilities.LdifConverters.attributes_dict_to_ldif_format({
-                1: "numeric_key",
-                None: None,
-                "": "",
-                " ": " ",
-            }),
+            lambda: FlextLDIFUtilities.LdifConverters.attributes_dict_to_ldif_format(
+                {
+                    1: "numeric_key",
+                    None: None,
+                    "": "",
+                    " ": " ",
+                }
+            ),
         ]
 
         for test_func in extreme_tests:

@@ -55,12 +55,16 @@ objectClass: person
         # Criar entries para transformação
         entries = [
             FlextLDIFModels.Entry(
-                dn=FlextLDIFModels.DistinguishedName(value="cn=transform1,dc=example,dc=com"),
-                attributes=FlextLDIFModels.LdifAttributes(data={
-                    "cn": ["transform1"],
-                    "objectClass": ["person"],
-                    "mail": ["transform1@example.com"]
-                })
+                dn=FlextLDIFModels.DistinguishedName(
+                    value="cn=transform1,dc=example,dc=com"
+                ),
+                attributes=FlextLDIFModels.LdifAttributes(
+                    data={
+                        "cn": ["transform1"],
+                        "objectClass": ["person"],
+                        "mail": ["transform1@example.com"],
+                    }
+                ),
             )
         ]
 
@@ -79,20 +83,28 @@ objectClass: person
         # Criar entries com diferentes características
         entries = [
             FlextLDIFModels.Entry(
-                dn=FlextLDIFModels.DistinguishedName(value="cn=test1,dc=example,dc=com"),
-                attributes=FlextLDIFModels.LdifAttributes(data={
-                    "cn": ["test1"],
-                    "objectClass": ["person", "inetOrgPerson"],
-                    "mail": ["test1@example.com", "test1.alt@example.com"],
-                })
+                dn=FlextLDIFModels.DistinguishedName(
+                    value="cn=test1,dc=example,dc=com"
+                ),
+                attributes=FlextLDIFModels.LdifAttributes(
+                    data={
+                        "cn": ["test1"],
+                        "objectClass": ["person", "inetOrgPerson"],
+                        "mail": ["test1@example.com", "test1.alt@example.com"],
+                    }
+                ),
             ),
             FlextLDIFModels.Entry(
-                dn=FlextLDIFModels.DistinguishedName(value="cn=test2,dc=example,dc=com"),
-                attributes=FlextLDIFModels.LdifAttributes(data={
-                    "cn": ["test2"],
-                    "objectClass": ["organizationalUnit"],
-                })
-            )
+                dn=FlextLDIFModels.DistinguishedName(
+                    value="cn=test2,dc=example,dc=com"
+                ),
+                attributes=FlextLDIFModels.LdifAttributes(
+                    data={
+                        "cn": ["test2"],
+                        "objectClass": ["organizationalUnit"],
+                    }
+                ),
+            ),
         ]
 
         result = validator.validate_entries(entries)
@@ -129,10 +141,9 @@ objectClass: person
         entries = [
             FlextLDIFModels.Entry(
                 dn=FlextLDIFModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-                attributes=FlextLDIFModels.LdifAttributes(data={
-                    "cn": ["test"],
-                    "objectClass": ["person"]
-                })
+                attributes=FlextLDIFModels.LdifAttributes(
+                    data={"cn": ["test"], "objectClass": ["person"]}
+                ),
             )
         ]
 
@@ -291,7 +302,7 @@ objectClass: organizationalPerson
             FlextLDIFServices.TransformerService(),
             FlextLDIFServices.WriterService(),
             FlextLDIFServices.AnalyticsService(),
-            FlextLDIFServices.RepositoryService()
+            FlextLDIFServices.RepositoryService(),
         ]
 
         # Test basic operations on each service

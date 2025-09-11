@@ -53,7 +53,7 @@ class TestAdvancedAPIFeatures:
         assert validate_result.is_success
 
         # Test statistics
-        stats_result = api_with_config.get_entry_statistics(entries)
+        stats_result = api_with_config._analytics.entry_statistics(entries)
         assert stats_result.is_success
         assert stats_result.value is not None
         assert stats_result.value["total_entries"] == 50
@@ -102,15 +102,17 @@ objectClass: groupOfNames
         entries = parse_result.value
 
         # Test filtering by objectClass
-        person_result = api_with_config.filter_by_objectclass(entries, "person")
+        person_result = api_with_config._filters.by_object_class(entries, "person")
         assert person_result.is_success
         assert len(person_result.value) == 2
 
-        inet_result = api_with_config.filter_by_objectclass(entries, "inetOrgPerson")
+        inet_result = api_with_config._filters.by_object_class(entries, "inetOrgPerson")
         assert inet_result.is_success
         assert len(inet_result.value) == 1
 
-        ou_result = api_with_config.filter_by_objectclass(entries, "organizationalUnit")
+        ou_result = api_with_config._filters.by_object_class(
+            entries, "organizationalUnit"
+        )
         assert ou_result.is_success
         assert len(ou_result.value) == 1
 

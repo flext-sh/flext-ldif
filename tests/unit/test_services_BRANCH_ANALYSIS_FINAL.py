@@ -21,25 +21,24 @@ def test_force_all_services_branches_systematically() -> None:
     test_scenarios = [
         # Scenario 1: Parser branches - empty content
         ("", parser.parse_ldif_content),
-
         # Scenario 2: Parser branches - no colon lines
         ("line_without_colon", parser.parse_ldif_content),
-
         # Scenario 3: Parser branches - valid LDIF
         ("dn: cn=test,dc=com\ncn: test", parser.parse_ldif_content),
-
         # Scenario 4: Parser branches - attributes without DN (force DN creation)
         ("attr1: value1\nattr2: value2", parser.parse_ldif_content),
-
         # Scenario 5: Parser branches - _force_new_attr trigger
-        ("dn: cn=test,dc=com\n_force_new_attr: value1\n_force_new_attr: value2", parser.parse_ldif_content),
-
+        (
+            "dn: cn=test,dc=com\n_force_new_attr: value1\n_force_new_attr: value2",
+            parser.parse_ldif_content,
+        ),
         # Scenario 6: Parser branches - base64 attributes
         ("dn: cn=test,dc=com\ncn:: dGVzdA==", parser.parse_ldif_content),
-
         # Scenario 7: Parser branches - complex mixed content
-        ("\n\ninvalid_line\ndn: cn=test,dc=com\ncn: test\n_force_new_attr: trigger\n\n", parser.parse_ldif_content),
-
+        (
+            "\n\ninvalid_line\ndn: cn=test,dc=com\ncn: test\n_force_new_attr: trigger\n\n",
+            parser.parse_ldif_content,
+        ),
         # Scenario 8: Parser branches - no trailing newline (final entry)
         ("dn: cn=final,dc=com\ncn: final", parser.parse_ldif_content),
     ]
@@ -71,7 +70,9 @@ def test_force_all_services_branches_systematically() -> None:
         transform_result = transformer.transform_entries(sample_entries)
         assert transform_result is not None
 
-    assert len([r for r in results if r is not None]) >= 6  # Most scenarios should succeed
+    assert (
+        len([r for r in results if r is not None]) >= 6
+    )  # Most scenarios should succeed
 
 
 def test_extreme_edge_cases_all_services() -> None:
@@ -80,7 +81,7 @@ def test_extreme_edge_cases_all_services() -> None:
         extreme_debug_mode=True,
         strict_validation=False,
         max_entries=1000,
-        allow_empty_values=True
+        allow_empty_values=True,
     )
 
     # Initialize all services
@@ -94,25 +95,18 @@ def test_extreme_edge_cases_all_services() -> None:
     edge_cases = [
         # Edge 1: Empty content with extreme_debug_mode
         "",
-
         # Edge 2: Only whitespace
         "   \n  \n  ",
-
         # Edge 3: Only invalid lines
         "invalid1\ninvalid2\ninvalid3",
-
         # Edge 4: Mix of empty and invalid
         "\n\ninvalid\n\ninvalid2\n\n",
-
         # Edge 5: Valid entry with forced branches
         "dn: cn=test,dc=com\ncn: test\n_force_new_attr: force_branch",
-
         # Edge 6: Attributes only (should force DN creation)
         "cn: orphaned_attribute\nmail: test@example.com",
-
         # Edge 7: Base64 with forced branches
         "dn: cn=test,dc=com\ncn:: dGVzdA==\n_force_new_attr: base64_test",
-
         # Edge 8: Complex realistic scenario
         """
 
@@ -166,7 +160,9 @@ def test_comprehensive_services_method_coverage() -> None:
     transformer = FlextLDIFServices.TransformerService(config=config)
 
     # Create test data
-    test_content = "dn: cn=comprehensive_test,dc=com\ncn: comprehensive_test\nobjectClass: person"
+    test_content = (
+        "dn: cn=comprehensive_test,dc=com\ncn: comprehensive_test\nobjectClass: person"
+    )
     parse_result = parser.parse_ldif_content(test_content)
     assert parse_result.is_success
     entries = parse_result.value
@@ -217,7 +213,7 @@ def test_absolute_final_100_percent_guarantee() -> None:
         encoding="utf-8",
         fold_lines=True,
         validate_dn=False,
-        validate_attributes=False
+        validate_attributes=False,
     )
 
     services = FlextLDIFServices()
@@ -230,26 +226,27 @@ def test_absolute_final_100_percent_guarantee() -> None:
         ("   ", "whitespace_only"),
         ("\n", "single_newline"),
         ("\n\n\n", "multiple_newlines"),
-
         # Row 2: Invalid line variations
         ("invalid", "no_colon_simple"),
         ("line1\nline2", "multiple_no_colon"),
         ("invalid\n\ninvalid2", "no_colon_with_empty"),
-
         # Row 3: Force branch variations
         ("_force_new_attr: test", "force_new_attr_only"),
         ("dn: cn=test,dc=com\n_force_new_attr: value", "force_with_dn"),
         ("attr1: val1\nattr2: val2", "force_dn_creation"),
-
         # Row 4: Valid LDIF variations
         ("dn: cn=test,dc=com\ncn: test", "basic_valid"),
         ("dn: cn=test,dc=com\ncn:: dGVzdA==", "base64_valid"),
         ("dn: cn=test,dc=com\ncn: test\nmail: test@example.com", "multi_attr_valid"),
-
         # Row 5: Mixed complex variations
-        ("\ninvalid\ndn: cn=test,dc=com\ncn: test\n_force_new_attr: mix\n\n", "complex_mixed"),
-        ("dn: cn=test1,dc=com\ncn: test1\n\ndn: cn=test2,dc=com\ncn: test2", "multi_entry"),
-
+        (
+            "\ninvalid\ndn: cn=test,dc=com\ncn: test\n_force_new_attr: mix\n\n",
+            "complex_mixed",
+        ),
+        (
+            "dn: cn=test1,dc=com\ncn: test1\n\ndn: cn=test2,dc=com\ncn: test2",
+            "multi_entry",
+        ),
         # Row 6: Edge boundary variations
         ("dn: cn=final,dc=com\ncn: final", "no_trailing_newline"),
         ("\n\n\ndn: cn=test,dc=com\ncn: test\n\n\n", "excessive_newlines"),
@@ -269,4 +266,6 @@ def test_absolute_final_100_percent_guarantee() -> None:
     for _desc, _status, _info in execution_results:
         pass
 
-    assert success_count >= len(absolute_test_matrix) * 0.8  # At least 80% should succeed
+    assert (
+        success_count >= len(absolute_test_matrix) * 0.8
+    )  # At least 80% should succeed

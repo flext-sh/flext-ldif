@@ -60,6 +60,7 @@ objectClass: person"""  # No trailing newline
         mock_entry = Mock()
         mock_entry.dn = Mock()
         mock_entry.dn.value = "cn=test,dc=example,dc=com"
+        mock_entry.id = "test"  # Add missing id attribute for entity validation
         mock_entry.validate_business_rules = Mock(return_value=None)
 
         # Create attributes object without .data attribute and mock has_attribute to return False
@@ -68,7 +69,9 @@ objectClass: person"""  # No trailing newline
         if hasattr(mock_attributes, "data"):
             del mock_attributes.data
 
-        with patch("flext_ldif.services.FlextUtilities.TypeGuards.has_attribute") as mock_has_attr:
+        with patch(
+            "flext_ldif.services.FlextUtilities.TypeGuards.has_attribute"
+        ) as mock_has_attr:
             mock_has_attr.return_value = False  # No .items method either
             mock_entry.attributes = mock_attributes
 
@@ -158,6 +161,7 @@ objectClass: person
         mock_entry = Mock()
         mock_entry.dn = Mock()
         mock_entry.dn.value = "cn=test,dc=example,dc=com"
+        mock_entry.id = "test"  # Add missing id for validation
         mock_entry.validate_business_rules = Mock(return_value=None)
         mock_entry.attributes = Mock()
         mock_entry.attributes.data = {"cn": ["test"]}
@@ -180,7 +184,9 @@ objectClass: person
         utils = FlextTestsUtilities()
         assertion = utils.assertion()
 
-        assertion.assert_true(condition=empty_result.is_success or empty_result.is_failure)
+        assertion.assert_true(
+            condition=empty_result.is_success or empty_result.is_failure
+        )
 
     def test_lines_862_863_analytics_distribution(self) -> None:
         """Test lines 862-863: analytics attribute distribution."""

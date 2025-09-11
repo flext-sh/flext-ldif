@@ -192,7 +192,7 @@ objectClass: person
     base64_variations = [
         "description:: VGVzdA==",
         "userCertificate:: MIICdg==",
-        "jpegPhoto:: /9j/4AAQ=="
+        "jpegPhoto:: /9j/4AAQ==",
     ]
 
     for base64_line in base64_variations:

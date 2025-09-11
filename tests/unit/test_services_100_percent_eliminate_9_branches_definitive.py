@@ -161,8 +161,8 @@ def test_branch_850_entries_non_empty_false_path_definitive() -> None:
         "attributes": {
             "cn": ["def850"],
             "objectClass": ["person"],
-            "description": ["Definitivo 850 test"]
-        }
+            "description": ["Definitivo 850 test"],
+        },
     }
     non_empty_entries = [FlextLDIFModels.Factory.create_entry(entry_data)]
 
@@ -181,10 +181,12 @@ def test_definitive_comprehensive_9_branches_elimination() -> None:
     validator.validate_entries([])
 
     # 2. Branch 476 - non-empty entries False path
-    test_entry = FlextLDIFModels.Factory.create_entry({
-        "dn": "cn=def476,dc=example,dc=com",
-        "attributes": {"cn": ["def476"], "objectClass": ["person"]}
-    })
+    test_entry = FlextLDIFModels.Factory.create_entry(
+        {
+            "dn": "cn=def476,dc=example,dc=com",
+            "attributes": {"cn": ["def476"], "objectClass": ["person"]},
+        }
+    )
     validator.validate_entries([test_entry])  # Non-empty para False path
 
     # 3. Branch 642 - empty content
@@ -211,10 +213,12 @@ def test_definitive_comprehensive_9_branches_elimination() -> None:
     validator.validate_ldif_entries("   \n   ")
 
     # 9. Branch 850 - non-empty entries for False path
-    entry_850 = FlextLDIFModels.Factory.create_entry({
-        "dn": "cn=def850,dc=example,dc=com",
-        "attributes": {"cn": ["def850"], "objectClass": ["person"]}
-    })
+    entry_850 = FlextLDIFModels.Factory.create_entry(
+        {
+            "dn": "cn=def850,dc=example,dc=com",
+            "attributes": {"cn": ["def850"], "objectClass": ["person"]},
+        }
+    )
     writer.write_entries_to_string([entry_850])
 
     assert True, "🎯 DEFINITIVO 9 BRANCHES ELIMINADOS - 100% COVERAGE!"
@@ -253,8 +257,8 @@ objectClass: organizationalPerson
             "attributes": {
                 "cn": [f"definitivo_writer_{i}"],
                 "objectClass": ["person"],
-                "description": [f"Definitivo writer test {i}"]
-            }
+                "description": [f"Definitivo writer test {i}"],
+            },
         }
         writer_entries = [FlextLDIFModels.Factory.create_entry(def_entry)]
         writer.write_entries_to_string(writer_entries)
@@ -263,7 +267,7 @@ objectClass: organizationalPerson
     definitivo_problematic = [
         "linha_sem_colon_definitivo_1",
         "linha_sem_colon_definitivo_2",
-        "linha_sem_colon_definitivo_3"
+        "linha_sem_colon_definitivo_3",
     ]
 
     for i, prob_line in enumerate(definitivo_problematic):
@@ -275,7 +279,7 @@ objectClass: organizationalPerson
         "cn: duplicate1",
         "cn: duplicate2",
         "description: dup1",
-        "description: dup2"
+        "description: dup2",
     ]
 
     for i, dup_attr in enumerate(definitivo_duplicates):
@@ -319,10 +323,12 @@ objectClass: person
         assert writer_result.is_success or writer_result.is_failure
 
     # Definitivo non-empty writer test - branch 850 False path
-    def_entry = FlextLDIFModels.Factory.create_entry({
-        "dn": "cn=definitivo_non_empty,dc=example,dc=com",
-        "attributes": {"cn": ["definitivo_non_empty"], "objectClass": ["person"]}
-    })
+    def_entry = FlextLDIFModels.Factory.create_entry(
+        {
+            "dn": "cn=definitivo_non_empty,dc=example,dc=com",
+            "attributes": {"cn": ["definitivo_non_empty"], "objectClass": ["person"]},
+        }
+    )
     writer_non_empty = writer.write_entries_to_string([def_entry])
     assert writer_non_empty.is_success or writer_non_empty.is_failure
 
@@ -367,24 +373,35 @@ objectClass: organizationalPerson
         "attributes": {
             "cn": ["definitivo_writer_absolute"],
             "objectClass": ["person"],
-            "description": ["Definitivo absolute writer test"]
-        }
+            "description": ["Definitivo absolute writer test"],
+        },
     }
-    definitivo_absolute_entries = [FlextLDIFModels.Factory.create_entry(definitivo_writer_entry)]
-    definitivo_writer_absolute = writer.write_entries_to_string(definitivo_absolute_entries)
+    definitivo_absolute_entries = [
+        FlextLDIFModels.Factory.create_entry(definitivo_writer_entry)
+    ]
+    definitivo_writer_absolute = writer.write_entries_to_string(
+        definitivo_absolute_entries
+    )
 
     # Definitivo branch 476 test - non-empty entries for False path
-    def_476_entry = FlextLDIFModels.Factory.create_entry({
-        "dn": "cn=definitivo_476,dc=example,dc=com",
-        "attributes": {"cn": ["definitivo_476"], "objectClass": ["person"]}
-    })
+    def_476_entry = FlextLDIFModels.Factory.create_entry(
+        {
+            "dn": "cn=definitivo_476,dc=example,dc=com",
+            "attributes": {"cn": ["definitivo_476"], "objectClass": ["person"]},
+        }
+    )
     def_476_result = validator.validate_entries([def_476_entry])
 
     # Verification DEFINITIVO ABSOLUTE
     assert definitivo_parse_all.is_success or definitivo_parse_all.is_failure
     assert definitivo_validate_empty.is_success or definitivo_validate_empty.is_failure
-    assert definitivo_validate_content_empty.is_success or definitivo_validate_content_empty.is_failure
-    assert definitivo_writer_absolute.is_success or definitivo_writer_absolute.is_failure
+    assert (
+        definitivo_validate_content_empty.is_success
+        or definitivo_validate_content_empty.is_failure
+    )
+    assert (
+        definitivo_writer_absolute.is_success or definitivo_writer_absolute.is_failure
+    )
     assert def_476_result.is_success or def_476_result.is_failure
 
     assert True, "🎯 DEFINITIVO ZERO BRANCHES - 100% COVERAGE ABSOLUTE!"

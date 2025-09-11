@@ -219,9 +219,7 @@ def demonstrate_configuration_error_handling() -> None:
         logger.exception("Configuration test failed", exc_info=exc)
 
     # Test with strict validation
-    config = FlextLDIFModels.Config(
-        strict_validation=True, allow_empty_values=False
-    )
+    config = FlextLDIFModels.Config(strict_validation=True, allow_empty_values=False)
     api = FlextLDIFAPI(config)
 
     # Create LDIF with empty attributes

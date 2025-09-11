@@ -80,10 +80,8 @@ def test_absolute_final_victory_100_percent() -> None:
     scenarios = [
         # Branch 663 FALSE: current_dn é None
         "cn: no_dn_orphan\nobjectClass: person",
-
         # Branch 674 TRUE: linha sem colon
         "dn: cn=test,dc=com\nline_without_colon\ncn: test",
-
         # Combinação complexa
         """cn: orphan_start
 objectClass: person
@@ -95,11 +93,10 @@ objectClass: person
 
 cn: orphan_end
 objectClass: person""",
-
         # Edge cases adicionais
         "line_without_colon",
         "dn:\ncn: empty_dn",
-        ""
+        "",
     ]
 
     for i, scenario in enumerate(scenarios):
@@ -121,16 +118,13 @@ def test_final_validation_zero_partials() -> None:
         "",
         "   ",
         "\n\n",
-
         # No DN scenarios (branch 663 FALSE)
         "cn: orphan",
         "objectClass: person",
-
         # No colon scenarios (branch 674 TRUE)
         "dn: cn=test,dc=com\ninvalid_line\ncn: test",
         "line_without_colon",
         "another_invalid_line",
-
         # Complex combinations
         """
 cn: orphan1
@@ -144,7 +138,7 @@ objectClass: person
 cn: orphan2
 invalid_line_too
 objectClass: person
-        """.strip()
+        """.strip(),
     ]
 
     for case in test_cases:

@@ -5,7 +5,6 @@ SPDX-License-Identifier: MIT
 """
 
 
-# ruff: noqa: PT018
 # Reason: Multiple assertion checks are common in tests for comprehensive error validation
 
 import base64
@@ -37,7 +36,8 @@ cn: Jane Smith
 sn: Smith
 objectClass: person
 """
-        result = FlextLDIFFormatHandler.parse_ldif(ldif_content)
+        handler = FlextLDIFFormatHandler()
+        result = handler.parse_ldif(ldif_content)
         assert result.is_success
         entries = result.value
         assert len(entries) == 2
@@ -51,7 +51,8 @@ objectClass: person
             attributes={"cn": ["Test User"], "sn": ["User"], "objectClass": ["person"]},
         )
 
-        result = FlextLDIFFormatHandler.write_ldif([entry])
+        handler = FlextLDIFFormatHandler()
+        result = handler.write_ldif([entry])
         assert result.is_success
         ldif_output = result.value
         assert "dn: cn=Test User,ou=people,dc=example,dc=com" in ldif_output
@@ -59,14 +60,16 @@ objectClass: person
 
     def test_parse_ldif_empty_content(self) -> None:
         """Test parsing empty LDIF content."""
-        result = FlextLDIFFormatHandler.parse_ldif("")
+        handler = FlextLDIFFormatHandler()
+        result = handler.parse_ldif("")
         assert result.is_success
         entries = result.value
         assert len(entries) == 0
 
     def test_write_ldif_empty_entries(self) -> None:
         """Test writing empty entry list."""
-        result = FlextLDIFFormatHandler.write_ldif([])
+        handler = FlextLDIFFormatHandler()
+        result = handler.write_ldif([])
         assert result.is_success
         ldif_output = result.value
         assert ldif_output == ""
@@ -124,7 +127,8 @@ objectClass: person
 
     def test_write_ldif_none_input(self) -> None:
         """Test write_ldif with None input."""
-        result = FlextLDIFFormatHandler.write_ldif(None)
+        handler = FlextLDIFFormatHandler()
+        result = handler.write_ldif(None)
         assert result.is_failure
         assert "Entries cannot be None" in result.error
 

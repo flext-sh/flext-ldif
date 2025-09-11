@@ -19,7 +19,7 @@ src/flext_ldif/
 ├── cli.py                      # Interface Layer - Command-line interface
 ├── exceptions.py               # Domain Layer - Domain-specific exceptions
 ├── modernized_ldif.py          # Infrastructure Layer - Extended LDIF support
-├── py.typed                    # Type information marker
+├── py.typed
 └── utils/                      # Cross-cutting utilities and helpers
     ├── __init__.py
     ├── validation.py           # Validation utilities

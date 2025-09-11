@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from flext_ldif import (
     FlextLDIFAPI,
-    FlextLDIFCore,
     FlextLDIFFormatHandler,
     FlextLDIFFormatValidators,
     FlextLDIFModels,
@@ -51,7 +50,8 @@ class TestModuleImports:
 
     def test_class_based_interface_imports(self) -> None:
         """Test class-based interface imports."""
-        assert FlextLDIFCore is not None
+        # FlextLDIFCore eliminated - was wrapper violating SOLID
+        assert FlextLDIFServices is not None
         assert FlextLDIFFormatHandler is not None
         assert FlextLDIFFormatValidators is not None
         assert FlextLDIFUtilities is not None

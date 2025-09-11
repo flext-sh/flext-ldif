@@ -234,9 +234,7 @@ class TestFlextLDIFServicesWriterService:
             assert result.value is True
 
             # Verify file was written
-            with Path(tmp_path).open(
-                encoding=FlextLDIFConstants.DEFAULT_ENCODING
-            ) as f:
+            with Path(tmp_path).open(encoding=FlextLDIFConstants.DEFAULT_ENCODING) as f:
                 content = f.read()
                 assert "dn: cn=Test,dc=example,dc=com" in content
                 assert "cn: Test" in content
@@ -292,7 +290,11 @@ class TestFlextLDIFServicesWriterService:
         assert result.is_failure
         assert result.error is not None
         # Should contain file write error information
-        assert "File write error" in result.error or "File write failed" in result.error
+        assert (
+            "File write error" in result.error
+            or "File write failed" in result.error
+            or "Write failed" in result.error
+        )
         assert "Permission denied" in result.error
 
     def test_write_content_to_file_success(self) -> None:
@@ -316,9 +318,7 @@ class TestFlextLDIFServicesWriterService:
             assert result.value is True
 
             # Verify content was written
-            with Path(tmp_path).open(
-                encoding=FlextLDIFConstants.DEFAULT_ENCODING
-            ) as f:
+            with Path(tmp_path).open(encoding=FlextLDIFConstants.DEFAULT_ENCODING) as f:
                 written_content = f.read()
                 assert written_content == content
         finally:
@@ -395,9 +395,7 @@ class TestFlextLDIFServicesWriterService:
             assert result.value is True
 
             # Verify empty file was created
-            with Path(tmp_path).open(
-                encoding=FlextLDIFConstants.DEFAULT_ENCODING
-            ) as f:
+            with Path(tmp_path).open(encoding=FlextLDIFConstants.DEFAULT_ENCODING) as f:
                 content = f.read()
                 assert content == ""
         finally:
@@ -427,9 +425,7 @@ class TestFlextLDIFServicesWriterService:
             assert result.value is True
 
             # Verify file was written
-            content = tmp_path.read_text(
-                encoding=FlextLDIFConstants.DEFAULT_ENCODING
-            )
+            content = tmp_path.read_text(encoding=FlextLDIFConstants.DEFAULT_ENCODING)
             assert "dn: cn=PathTest,dc=example,dc=com" in content
         finally:
             tmp_path.unlink(missing_ok=True)

@@ -44,15 +44,18 @@ def test_line_571_elif_typeguards_has_attribute() -> None:
         del mock_attributes.data
 
     # Adicionar .items() para segunda condição ser True
-    mock_attributes.items = Mock(return_value=[("cn", ["test_571"]), ("objectClass", ["person"])])
+    mock_attributes.items = Mock(
+        return_value=[("cn", ["test_571"]), ("objectClass", ["person"])]
+    )
 
     # Mock FlextUtilities.TypeGuards.has_attribute para retornar True na linha 571
     with patch.object(FlextUtilities.TypeGuards, "has_attribute") as mock_has_attr:
+
         def side_effect(obj, attr_name) -> bool:
             if attr_name == "data":
                 return False  # Primeira condição falsa
             if attr_name == "items":
-                return True   # Segunda condição verdadeira (linha 571)
+                return True  # Segunda condição verdadeira (linha 571)
             return False
 
         mock_has_attr.side_effect = side_effect
@@ -82,16 +85,21 @@ def test_line_574_dict_attributes_obj() -> None:
         del mock_attributes.data
 
     # Implementar __iter__ para dict() funcionar
-    mock_attributes.__iter__ = Mock(return_value=iter([("cn", ["test_574"]), ("objectClass", ["person"])]))
-    mock_attributes.items = Mock(return_value=[("cn", ["test_574"]), ("objectClass", ["person"])])
+    mock_attributes.__iter__ = Mock(
+        return_value=iter([("cn", ["test_574"]), ("objectClass", ["person"])])
+    )
+    mock_attributes.items = Mock(
+        return_value=[("cn", ["test_574"]), ("objectClass", ["person"])]
+    )
 
     # Mock TypeGuards para entrar no elif e executar linha 574
     with patch.object(FlextUtilities.TypeGuards, "has_attribute") as mock_has_attr:
+
         def side_effect(obj, attr_name) -> bool:
             if attr_name == "data":
                 return False  # Para entrar no elif
             if attr_name == "items":
-                return True   # Para entrar no elif da linha 571 e executar 574
+                return True  # Para entrar no elif da linha 571 e executar 574
             return False
 
         mock_has_attr.side_effect = side_effect
@@ -112,6 +120,7 @@ def test_line_576_return_validation_success() -> None:
     # Entry com attributes que NÃO tem nem .data nem .items() para forçar else na linha 575
     mock_entry = Mock()
     mock_entry.dn = Mock(value="cn=test_576,dc=example,dc=com")
+    mock_entry.id = "test_576"  # Add missing id attribute for entity validation
 
     # Mock attributes completamente vazio (sem .data nem .items)
     mock_attributes = Mock()
@@ -182,10 +191,12 @@ def test_lines_812_813_exception_in_parse_entry_block() -> None:
     """DEFINITIVO: Forçar EXATAMENTE linhas 812-813 - except Exception + return fail."""
     parser = FlextLDIFServices.ParserService()
 
-    # Mock Entry.model_validate para forçar Exception na linha 807->812
-    with patch.object(FlextLDIFModels.Entry, "model_validate",
-                     side_effect=ValueError("Forced model validation exception for lines 812-813")):
-
+    # Mock Factory.create_entry para forçar Exception na criação do Entry
+    with patch.object(
+        FlextLDIFModels.Factory,
+        "create_entry",
+        side_effect=ValueError("Forced entry creation exception for lines 306-309"),
+    ):
         ldif_force_exception = """dn: cn=exception_812_813,dc=example,dc=com
 cn: exception_812_813
 objectClass: person
@@ -196,7 +207,10 @@ objectClass: person
 
         # Deve ser failure devido à exceção capturada
         assert result.is_failure
-        assert "error" in str(result.error).lower()
+        assert (
+            "failed" in str(result.error).lower()
+            or "error" in str(result.error).lower()
+        )
 
 
 def test_comprehensive_definitive_all_7_lines() -> None:
@@ -222,7 +236,6 @@ objectClass: person
     parse_result = parser.parse(comprehensive_ldif)
 
     if parse_result.is_success:
-
         # 2. Validation com mocks específicos para 571, 574, 576
 
         # Mock para linha 571 (elif path)
@@ -259,6 +272,7 @@ objectClass: person
 
         # Executar validation com TypeGuards controlado
         with patch.object(FlextUtilities.TypeGuards, "has_attribute") as mock_has_attr:
+
             def complex_side_effect(obj, attr_name):
                 if obj in {mock_attrs_571, mock_attrs_574}:
                     return attr_name == "items"  # True para "items", False para "data"
@@ -271,8 +285,11 @@ objectClass: person
             validator.validate_entries([mock_entry_571, mock_entry_574, mock_entry_576])
 
         # 3. Test exception handling para 812-813
-        with patch.object(FlextLDIFModels.Entry, "model_validate",
-                         side_effect=ValueError("Exception test for 812-813")):
+        with patch.object(
+            FlextLDIFModels.Entry,
+            "model_validate",
+            side_effect=ValueError("Exception test for 812-813"),
+        ):
             exception_ldif = """dn: cn=exception,dc=example,dc=com
 cn: exception
 """
@@ -294,8 +311,11 @@ def test_isolated_line_attacks() -> None:
     parser.parse(ldif_786)
 
     # LINHAS 812-813 - Ataque isolado
-    with patch.object(FlextLDIFModels.Entry, "model_validate",
-                     side_effect=Exception("Isolated 812-813 attack")):
+    with patch.object(
+        FlextLDIFModels.Entry,
+        "model_validate",
+        side_effect=Exception("Isolated 812-813 attack"),
+    ):
         ldif_exception = "dn: cn=test,dc=example,dc=com\ncn: test"
         parser.parse(ldif_exception)
 

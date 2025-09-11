@@ -19,7 +19,9 @@ def test_force_branch_663_current_dn_none_with_mocking() -> None:
     mock_content = "dn: cn=test,dc=example,dc=com\ncn: test\n\nobjectClass: person"
 
     # Use a more direct approach - patch the internal processing
-    with patch.object(FlextUtilities.TextProcessor, "clean_text", side_effect=lambda x: x.strip()):
+    with patch.object(
+        FlextUtilities.TextProcessor, "clean_text", side_effect=lambda x: x.strip()
+    ):
         result = parser.parse_ldif_content(mock_content)
         assert result is not None
 
@@ -45,7 +47,9 @@ objectClass: person"""
             return "line_without_colon_symbol"  # No colon
         return line.strip()
 
-    with patch.object(FlextUtilities.TextProcessor, "clean_text", side_effect=mock_clean_text):
+    with patch.object(
+        FlextUtilities.TextProcessor, "clean_text", side_effect=mock_clean_text
+    ):
         result = parser.parse_ldif_content(mock_content)
         assert result is not None
 
@@ -86,12 +90,10 @@ def test_extreme_edge_cases_for_branches() -> None:
         "\n",  # Only newline
         "\n\n",  # Multiple newlines
         "   \n  \n  ",  # Whitespace and newlines
-
         # For branch 674 TRUE (no colon)
-        "no_colon_line",  # Simple no colon
+        "no_colon_line",
         "dn: cn=test,dc=com\nNO_COLON_HERE\ncn: test",  # No colon in middle
         "INVALID START\ndn: cn=test,dc=com",  # No colon at start
-
         # Combinations
         "\nINVALID_NO_COLON\n\ndn: cn=combo,dc=com",
     ]
@@ -175,7 +177,9 @@ def test_comprehensive_forcing_strategy() -> None:
         assert result is not None
 
     # Strategy 3: Combined forcing
-    combined = "\ninvalid_no_colon\n\ndn: cn=combined,dc=com\nanother_invalid\ncn: combined"
+    combined = (
+        "\ninvalid_no_colon\n\ndn: cn=combined,dc=com\nanother_invalid\ncn: combined"
+    )
     result_combined = parser.parse_ldif_content(combined)
     assert result_combined is not None
 

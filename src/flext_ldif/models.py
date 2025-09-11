@@ -65,20 +65,22 @@ class FlextLDIFModels(FlextModels.Config):
 
             # Use flext-core validation system
             validation_result = FlextValidations.Rules.StringRules.validate_non_empty(
-                v.strip()
+                v.strip(),
             )
             if validation_result.is_failure:
                 msg = FlextLDIFConstants.VALIDATION_MESSAGES["INVALID_DN"]
-                raise FlextLDIFExceptions.validation_error(msg, dn=v)
+                raise FlextLDIFExceptions.validation_error(msg)
 
             # Basic DN format validation
             dn_pattern = FlextLDIFConstants.DN_PATTERN
             pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
-                v.strip(), dn_pattern, "DN format"
+                v.strip(),
+                dn_pattern,
+                "DN format",
             )
             if pattern_result.is_failure:
                 msg = FlextLDIFConstants.VALIDATION_MESSAGES["INVALID_DN"]
-                raise FlextLDIFExceptions.validation_error(msg, dn=v)
+                raise FlextLDIFExceptions.validation_error(msg)
 
             return v.strip()
 
@@ -92,15 +94,13 @@ class FlextLDIFModels(FlextModels.Config):
             """
             if not self.value:
                 return FlextResult[None].fail(
-                    FlextLDIFConstants.VALIDATION_MESSAGES["MISSING_DN"]
+                    FlextLDIFConstants.VALIDATION_MESSAGES["MISSING_DN"],
                 )
 
             # Check minimum DN components using flext-core utilities
             components = [c.strip() for c in self.value.split(",") if c.strip()]
             if len(components) < FlextLDIFConstants.MIN_DN_COMPONENTS:
-                error_msg = (
-                    f"DN has too few components: {len(components)}, minimum required: {FlextLDIFConstants.MIN_DN_COMPONENTS}"
-                )
+                error_msg = f"DN has too few components: {len(components)}, minimum required: {FlextLDIFConstants.MIN_DN_COMPONENTS}"
                 return FlextResult[None].fail(error_msg)
 
             return FlextResult[None].ok(None)
@@ -151,7 +151,7 @@ class FlextLDIFModels(FlextModels.Config):
 
         data: dict[str, FlextTypes.Core.StringList] = Field(
             default_factory=dict,
-            description="Attribute name-value pairs"
+            description="Attribute name-value pairs",
         )
 
         def get_attribute(self, name: str) -> FlextTypes.Core.StringList | None:
@@ -171,7 +171,9 @@ class FlextLDIFModels(FlextModels.Config):
             # Case-insensitive fallback
             name_normalized = FlextUtilities.TextProcessor.clean_text(name).lower()
             for attr_name, values in self.data.items():
-                attr_normalized = FlextUtilities.TextProcessor.clean_text(attr_name).lower()
+                attr_normalized = FlextUtilities.TextProcessor.clean_text(
+                    attr_name
+                ).lower()
                 if attr_normalized == name_normalized:
                     return values
 
@@ -188,6 +190,19 @@ class FlextLDIFModels(FlextModels.Config):
 
             """
             return self.get_attribute(name) is not None
+
+        def has_object_class(self, object_class: str) -> bool:
+            """Check if entry has specific objectClass value.
+
+            Args:
+                object_class: ObjectClass value to check for
+
+            Returns:
+                True if entry has the objectClass, False otherwise
+
+            """
+            object_classes = self.get_attribute("objectClass") or []
+            return object_class.lower() in [oc.lower() for oc in object_classes]
 
         def get_single_attribute(self, name: str) -> str | None:
             """Get first value of attribute.
@@ -237,7 +252,9 @@ class FlextLDIFModels(FlextModels.Config):
 
             """
             object_classes = {oc.lower() for oc in self.get_object_classes()}
-            person_classes = {oc.lower() for oc in FlextLDIFConstants.LDAP_PERSON_CLASSES}
+            person_classes = {
+                oc.lower() for oc in FlextLDIFConstants.LDAP_PERSON_CLASSES
+            }
             return bool(object_classes.intersection(person_classes))
 
         def is_group(self) -> bool:
@@ -265,24 +282,35 @@ class FlextLDIFModels(FlextModels.Config):
             for attr_name, attr_values in self.data.items():
                 # Validate attribute name using flext-core string validation
                 name_validation = FlextValidations.Rules.StringRules.validate_non_empty(
-                    attr_name
+                    attr_name,
                 )
                 if name_validation.is_failure:
-                    error_msg = FlextLDIFConstants.VALIDATION_MESSAGES["INVALID_ATTRIBUTE_NAME"]
+                    error_msg = FlextLDIFConstants.VALIDATION_MESSAGES[
+                        "INVALID_ATTRIBUTE_NAME"
+                    ]
                     return FlextResult[None].fail(error_msg)
 
                 # Validate attribute name pattern (LDAP attribute names)
                 attr_pattern = r"^[a-zA-Z][a-zA-Z0-9-]*$"
-                pattern_validation = FlextValidations.Rules.StringRules.validate_pattern(
-                    attr_name, attr_pattern, "attribute name"
+                pattern_validation = (
+                    FlextValidations.Rules.StringRules.validate_pattern(
+                        attr_name,
+                        attr_pattern,
+                        "attribute name",
+                    )
                 )
                 if pattern_validation.is_failure:
-                    error_msg = FlextLDIFConstants.VALIDATION_MESSAGES["INVALID_ATTRIBUTE_NAME"]
+                    error_msg = FlextLDIFConstants.VALIDATION_MESSAGES[
+                        "INVALID_ATTRIBUTE_NAME"
+                    ]
                     return FlextResult[None].fail(error_msg)
 
                 # Validate values are not empty using collection rules
-                list_validation = FlextValidations.Rules.CollectionRules.validate_list_size(
-                    attr_values, min_size=1
+                list_validation = (
+                    FlextValidations.Rules.CollectionRules.validate_list_size(
+                        attr_values,
+                        min_size=1,
+                    )
                 )
                 if list_validation.is_failure:
                     error_msg = f"Empty attribute values not allowed for: {attr_name}"
@@ -291,7 +319,9 @@ class FlextLDIFModels(FlextModels.Config):
                 # Validate individual values are not empty or whitespace-only
                 for value in attr_values:
                     if not value or not value.strip():
-                        error_msg = f"Empty attribute values not allowed for: {attr_name}"
+                        error_msg = (
+                            f"Empty attribute values not allowed for: {attr_name}"
+                        )
                         return FlextResult[None].fail(error_msg)
 
             return FlextResult[None].ok(None)
@@ -337,10 +367,12 @@ class FlextLDIFModels(FlextModels.Config):
         """
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="allow"  # LDIF entries can have dynamic attributes
+            extra="allow",  # LDIF entries can have dynamic attributes
         )
 
-        dn: FlextLDIFModels.DistinguishedName = Field(..., description="Distinguished Name")
+        dn: FlextLDIFModels.DistinguishedName = Field(
+            ..., description="Distinguished Name"
+        )
         attributes: FlextLDIFModels.LdifAttributes = Field(
             default_factory=lambda: FlextLDIFModels.LdifAttributes(data={}),
             description="LDIF attributes",
@@ -366,7 +398,7 @@ class FlextLDIFModels(FlextModels.Config):
                 # Handle raw attributes dictionary
                 if "attributes" in values and isinstance(values["attributes"], dict):
                     values["attributes"] = FlextLDIFModels.LdifAttributes(
-                        data=values["attributes"]
+                        data=values["attributes"],
                     )
                 elif "attributes" not in values:
                     values["attributes"] = FlextLDIFModels.LdifAttributes(data={})
@@ -384,6 +416,17 @@ class FlextLDIFModels(FlextModels.Config):
 
             """
             return self.attributes.get_attribute(name)
+
+        def set_attribute(self, name: str, values: FlextTypes.Core.StringList) -> None:
+            """Set attribute values in entry - simple alias for test compatibility.
+
+            Args:
+                name: Attribute name to set
+                values: List of values to set
+
+            """
+            # Update the attributes data directly for Pydantic compatibility
+            self.attributes.data[name] = values
 
         def has_attribute(self, name: str) -> bool:
             """Check if entry has attribute.
@@ -464,6 +507,28 @@ class FlextLDIFModels(FlextModels.Config):
             # If we have a list, check if it's not empty
             return not (isinstance(object_classes, list) and not object_classes)
 
+        def has_object_class(self, object_class: str) -> bool:
+            """Check if entry has specific objectClass value.
+
+            Args:
+                object_class: ObjectClass value to check for
+
+            Returns:
+                True if entry has the objectClass, False otherwise
+
+            """
+            object_classes = self.attributes.data.get("objectClass", [])
+            return object_class.lower() in [oc.lower() for oc in object_classes]
+
+        def get_object_classes(self) -> FlextTypes.Core.StringList:
+            """Get objectClass values from entry - simple alias for test compatibility.
+
+            Returns:
+                List of objectClass values
+
+            """
+            return self.attributes.data.get("objectClass", [])
+
         def is_add_operation(self) -> bool:
             """Check if entry represents an add operation.
 
@@ -526,7 +591,7 @@ class FlextLDIFModels(FlextModels.Config):
                     clean_value = FlextUtilities.TextProcessor.clean_text(str(value))
                     lines.append(f"{attr_name}: {clean_value}")
 
-            return "\n".join(lines)
+            return "\n".join(lines) + "\n"
 
         @override
         def validate_business_rules(self) -> FlextResult[None]:
@@ -548,7 +613,9 @@ class FlextLDIFModels(FlextModels.Config):
 
             # Validate objectClass presence (required for LDAP entries)
             if not self.has_attribute("objectClass"):
-                error_msg = FlextLDIFConstants.VALIDATION_MESSAGES["MISSING_OBJECTCLASS"]
+                error_msg = FlextLDIFConstants.VALIDATION_MESSAGES[
+                    "MISSING_OBJECTCLASS"
+                ]
                 return FlextResult[None].fail(error_msg)
 
             return FlextResult[None].ok(None)
@@ -588,12 +655,12 @@ class FlextLDIFModels(FlextModels.Config):
                     attributes[key].append(value)
 
             if dn is None:
-                missing_dn_msg = "LDIF block must contain a DN"
-                raise ValueError(missing_dn_msg)
+                error_msg = "Missing DN in LDIF block"
+                raise FlextLDIFExceptions.error(error_msg)
 
             return cls(
                 dn=FlextLDIFModels.DistinguishedName(value=dn),
-                attributes=FlextLDIFModels.LdifAttributes(data=attributes)
+                attributes=FlextLDIFModels.LdifAttributes(data=attributes),
             )
 
     class Config(FlextModels.Config):
@@ -604,58 +671,58 @@ class FlextLDIFModels(FlextModels.Config):
         """
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="allow"  # Allow extra fields for test compatibility
+            extra="allow",  # Allow extra fields for test compatibility
         )
 
         # Processing options
         strict_validation: bool = Field(
             default=True,
-            description="Enable strict validation mode"
+            description="Enable strict validation mode",
         )
         max_entries: int = Field(
             default=10000,
             gt=0,
-            description="Maximum number of entries to process"
+            description="Maximum number of entries to process",
         )
         buffer_size: int = Field(
             default=8192,
             gt=0,
-            description="Buffer size for file operations"
+            description="Buffer size for file operations",
         )
 
         # Encoding options
         default_encoding: str = Field(
             default="utf-8",
-            description="Default file encoding"
+            description="Default file encoding",
         )
 
         # Validation options
         validate_dn_format: bool = Field(
             default=True,
-            description="Validate DN format compliance"
+            description="Validate DN format compliance",
         )
         validate_attribute_names: bool = Field(
             default=True,
-            description="Validate attribute name patterns"
+            description="Validate attribute name patterns",
         )
         allow_empty_values: bool = Field(
             default=False,
-            description="Allow empty attribute values"
+            description="Allow empty attribute values",
         )
         sort_attributes: bool = Field(
             default=False,
-            description="Sort attribute names in output"
+            description="Sort attribute names in output",
         )
 
         # Performance options
         use_caching: bool = Field(
             default=True,
-            description="Enable result caching"
+            description="Enable result caching",
         )
         cache_size: int = Field(
             default=1000,
             gt=0,
-            description="Maximum cache entries"
+            description="Maximum cache entries",
         )
 
         @override
@@ -677,6 +744,70 @@ class FlextLDIFModels(FlextModels.Config):
                 return FlextResult[None].fail("cache_size cannot exceed 10,000")
 
             return FlextResult[None].ok(None)
+
+        def __init__(self, **data: object) -> None:
+            """Initialize config with test compatibility aliases."""
+            # Extract test compatibility values before calling super()
+            max_line_length_value = data.pop("max_line_length", None)
+            fold_lines_value = data.pop("fold_lines", None)
+            validate_dn_value = data.pop("validate_dn", None)
+            strict_parsing_value = data.pop("strict_parsing", None)
+
+            # Handle encoding parameter as alias for default_encoding
+            if "encoding" in data:
+                data["default_encoding"] = data.pop("encoding")
+
+            # Initialize the parent model first - type-safe approach
+            # Use type: ignore for Pydantic dynamic initialization
+            super().__init__(**data)
+
+            # Set custom attributes after initialization (frozen model requires object.__setattr__)
+            if max_line_length_value is not None:
+                object.__setattr__(self, "_max_line_length", max_line_length_value)
+            if fold_lines_value is not None:
+                object.__setattr__(self, "_fold_lines", fold_lines_value)
+            if validate_dn_value is not None:
+                object.__setattr__(self, "_validate_dn", validate_dn_value)
+            if strict_parsing_value is not None:
+                object.__setattr__(self, "_strict_parsing", strict_parsing_value)
+
+        @property
+        def encoding(self) -> str:
+            """Simple alias for default_encoding - test compatibility."""
+            return self.default_encoding
+
+        @property
+        def max_line_length(self) -> int:
+            """Get max line length - supports custom values."""
+            # Return custom value if set and not None, otherwise LDIF standard
+            stored_value = getattr(self, "_max_line_length", None)
+            return stored_value if stored_value is not None else 76
+
+        @property
+        def fold_lines(self) -> bool:
+            """Get line folding setting - supports custom values."""
+            # Return custom value if set and not None, otherwise True
+            stored_value = getattr(self, "_fold_lines", None)
+            return stored_value if stored_value is not None else True
+
+        @property
+        def validate_dn(self) -> bool:
+            """Get DN validation setting - supports custom values."""
+            # Return custom value if set and not None, otherwise validate_dn_format
+            stored_value = getattr(self, "_validate_dn", None)
+            return stored_value if stored_value is not None else self.validate_dn_format
+
+        @property
+        def validate_attributes(self) -> bool:
+            """Simple alias for validate_attribute_names - test compatibility."""
+            return self.validate_attribute_names
+
+        @property
+        def strict_parsing(self) -> bool:
+            """Get strict parsing setting - supports custom values."""
+            # Return custom value if set and not None, otherwise False
+            stored_value = getattr(self, "_strict_parsing", None)
+            return stored_value if stored_value is not None else False
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate LDIF models business rules.
@@ -714,18 +845,22 @@ class FlextLDIFModels(FlextModels.Config):
         def create_config(**kwargs: object) -> FlextLDIFModels.Config:
             """Alias simples para Config."""
             # Handle optional config_path parameter if available
+            # Config only accepts kwargs - no positional arguments
             if "config_path" in kwargs:
                 config_path = kwargs.pop("config_path")
                 if config_path is not None:
-                    return FlextLDIFModels.Config(str(config_path), **kwargs)  # type: ignore[arg-type]
-            # Create config without required positional argument
-            return FlextLDIFModels.Config("", **kwargs)  # type: ignore[arg-type]
+                    kwargs["config_source"] = str(
+                        config_path
+                    )  # Convert path to config_source
+            return FlextLDIFModels.Config(**kwargs)
 
         # Acesso direto aos métodos do FlextModels como SOURCE OF TRUTH
         @staticmethod
-        def create_optimized_model(*args: object, **kwargs: object) -> object:
-            """Use FlextModels factory method directly."""
-            return FlextModels.create_optimized_model(*args, **kwargs)
+        def create_optimized_model(
+            model_name: str, fields: dict[str, tuple[type, object]]
+        ) -> object:
+            """Use FlextModels factory method directly - correct signature."""
+            return FlextModels.create_optimized_model(model_name, fields)
 
 
 __all__ = ["FlextLDIFModels"]

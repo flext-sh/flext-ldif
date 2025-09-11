@@ -19,9 +19,7 @@ class TestServicesSurgicalPrecision:
     def test_parser_lines_668_680_precise(self) -> None:
         """Target exact lines 668->680 in parser method."""
         config = FlextLDIFModels.Config(
-            extreme_debug_mode=True,
-            force_all_branches=True,
-            strict_validation=False
+            extreme_debug_mode=True, force_all_branches=True, strict_validation=False
         )
 
         parser = FlextLDIFServices.ParserService(content="", config=config)
@@ -38,8 +36,7 @@ class TestServicesSurgicalPrecision:
     def test_parser_lines_676_677_precise(self) -> None:
         """Target exact lines 676-677 in parser method."""
         config = FlextLDIFModels.Config(
-            extreme_debug_mode=True,
-            force_all_branches=True
+            extreme_debug_mode=True, force_all_branches=True
         )
 
         parser = FlextLDIFServices.ParserService(content="", config=config)
@@ -48,7 +45,9 @@ class TestServicesSurgicalPrecision:
         # Force an exception during parsing
         with patch("flext_ldif.services.FlextUtilities") as mock_utils:
             # Mock FlextUtilities to raise exception
-            mock_utils.TypeGuards.is_string_non_empty.side_effect = Exception("Forced exception")
+            mock_utils.TypeGuards.is_string_non_empty.side_effect = Exception(
+                "Forced exception"
+            )
 
             try:
                 result = parser.parse_ldif_content("test content")
@@ -61,8 +60,7 @@ class TestServicesSurgicalPrecision:
     def test_parser_lines_685_686_707_708_precise(self) -> None:
         """Target exact lines 685-686 and 707-708."""
         config = FlextLDIFModels.Config(
-            extreme_debug_mode=True,
-            force_all_branches=True
+            extreme_debug_mode=True, force_all_branches=True
         )
 
         parser = FlextLDIFServices.ParserService(content="", config=config)
@@ -73,13 +71,10 @@ class TestServicesSurgicalPrecision:
         test_cases = [
             # Force empty line with no current_dn (line 685-686 area)
             "\n\n\ntest: value",
-
             # Force invalid line without colon (line 707-708 area)
             "dn: test\ninvalid_line_no_colon_here\nattr: value",
-
             # Force base64 handling branch
             "dn: test\nattr:: dGVzdA==",
-
             # Force final entry handling without trailing newline
             "dn: test\nattr: value",
         ]
@@ -91,8 +86,7 @@ class TestServicesSurgicalPrecision:
     def test_parser_lines_690_703_precise(self) -> None:
         """Target exact lines 690-703 in parser method."""
         config = FlextLDIFModels.Config(
-            extreme_debug_mode=True,
-            force_all_branches=True
+            extreme_debug_mode=True, force_all_branches=True
         )
 
         parser = FlextLDIFServices.ParserService(content="", config=config)
@@ -121,8 +115,7 @@ cn: test"""
     def test_parser_lines_736_748_756_precise(self) -> None:
         """Target exact lines 736->748 and 748->756 (extreme debug area)."""
         config = FlextLDIFModels.Config(
-            extreme_debug_mode=True,
-            force_all_branches=True
+            extreme_debug_mode=True, force_all_branches=True
         )
 
         parser = FlextLDIFServices.ParserService(content="", config=config)
@@ -179,10 +172,7 @@ attr2: another_orphaned"""
 
     def test_validator_all_branches_forced(self) -> None:
         """Force all validator branches for complete coverage."""
-        config = FlextLDIFModels.Config(
-            extreme_debug_mode=True,
-            strict_validation=True
-        )
+        config = FlextLDIFModels.Config(extreme_debug_mode=True, strict_validation=True)
 
         validator = FlextLDIFServices.ValidatorService(config=config)
 

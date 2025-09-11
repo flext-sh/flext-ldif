@@ -28,10 +28,7 @@ def test_branch_70_self_entries_false_path_ultimate() -> None:
     # Criar entries não-vazias para forçar linha 70 FALSE path
     entry_data = {
         "dn": "cn=ult70,dc=example,dc=com",
-        "attributes": {
-            "cn": ["ult70"],
-            "objectClass": ["person"]
-        }
+        "attributes": {"cn": ["ult70"], "objectClass": ["person"]},
     }
     entries = [FlextLDIFModels.Factory.create_entry(entry_data)]
 
@@ -50,8 +47,8 @@ def test_branch_326_empty_object_class_true_path_ultimate() -> None:
         "dn": "cn=ult326,dc=example,dc=com",
         "attributes": {
             "cn": ["ult326"],
-            "objectClass": [""]  # Empty objectClass para TRUE path
-        }
+            "objectClass": [""],  # Empty objectClass para TRUE path
+        },
     }
     entry = FlextLDIFModels.Factory.create_entry(entry_data)
 
@@ -125,16 +122,16 @@ def test_branch_731_empty_content_true_path_ultimate() -> None:
 
     # Multiple empty content variations para forçar linha 731 TRUE path
     ultimate_empty_variations = [
-        "",                    # Completely empty
-        "   ",                 # Only spaces
-        "\n",                  # Only newline
-        "\t",                  # Only tab
-        "   \n   \t   ",       # Mixed whitespace
-        "\n\n\n",              # Multiple newlines
-        " \t \n \t \n ",       # Complex whitespace
-        "      ",              # Multiple spaces
-        "\t\t\t",              # Multiple tabs
-        "\r\n\r\n",            # Windows line endings
+        "",  # Completely empty
+        "   ",  # Only spaces
+        "\n",  # Only newline
+        "\t",  # Only tab
+        "   \n   \t   ",  # Mixed whitespace
+        "\n\n\n",  # Multiple newlines
+        " \t \n \t \n ",  # Complex whitespace
+        "      ",  # Multiple spaces
+        "\t\t\t",  # Multiple tabs
+        "\r\n\r\n",  # Windows line endings
     ]
 
     for empty_content in ultimate_empty_variations:
@@ -149,18 +146,22 @@ def test_ultimate_final_comprehensive_7_branches_total_elimination() -> None:
     writer = FlextLDIFServices.WriterService()
 
     # 1. Branch 70 - self.entries not empty (FALSE path)
-    entry_70 = FlextLDIFModels.Factory.create_entry({
-        "dn": "cn=ult70,dc=example,dc=com",
-        "attributes": {"cn": ["ult70"], "objectClass": ["person"]}
-    })
+    entry_70 = FlextLDIFModels.Factory.create_entry(
+        {
+            "dn": "cn=ult70,dc=example,dc=com",
+            "attributes": {"cn": ["ult70"], "objectClass": ["person"]},
+        }
+    )
     analytics = FlextLDIFServices.AnalyticsService(entries=[entry_70])
     analytics.execute()
 
     # 2. Branch 326 - empty object_class (TRUE path)
-    entry_326 = FlextLDIFModels.Factory.create_entry({
-        "dn": "cn=ult326,dc=example,dc=com",
-        "attributes": {"cn": ["ult326"], "objectClass": [""]}
-    })
+    entry_326 = FlextLDIFModels.Factory.create_entry(
+        {
+            "dn": "cn=ult326,dc=example,dc=com",
+            "attributes": {"cn": ["ult326"], "objectClass": [""]},
+        }
+    )
     validator.validate_entries([entry_326])
 
     # 3. Branch 412 - empty entries (TRUE path)
@@ -175,7 +176,9 @@ def test_ultimate_final_comprehensive_7_branches_total_elimination() -> None:
     parser.parse(ldif_674)
 
     # 6. Branch 698 - current_dn FALSE (FALSE path)
-    ldif_698 = "dn: cn=ult698,dc=example,dc=com\ncn: ult698\nobjectClass: person\n\n\n\n"
+    ldif_698 = (
+        "dn: cn=ult698,dc=example,dc=com\ncn: ult698\nobjectClass: person\n\n\n\n"
+    )
     parser.parse(ldif_698)
 
     # 7. Branch 731 - empty content (TRUE path)
@@ -215,16 +218,16 @@ objectClass: person
 
     # Ultimate comprehensive empty variations para branch 731, 412, etc.
     ultimate_empty_variations = [
-        "",                    # Branch 731, 412
-        "   ",                 # Branch 731 whitespace
-        "\n",                  # Branch 731 newline
-        "\t",                  # Branch 731 tab
-        "  \n  \t  ",          # Branch 731 mixed
-        "\n\n\n\n",            # Branch 731 multiple newlines
-        " \t \n \t \n \t ",    # Branch 731 ultimate whitespace
-        "      ",              # Branch 731 spaces only
-        "\t\t\t\t",            # Branch 731 tabs only
-        "\r\n\r\n\r\n",        # Branch 731 Windows endings
+        "",  # Branch 731, 412
+        "   ",  # Branch 731 whitespace
+        "\n",  # Branch 731 newline
+        "\t",  # Branch 731 tab
+        "  \n  \t  ",  # Branch 731 mixed
+        "\n\n\n\n",  # Branch 731 multiple newlines
+        " \t \n \t \n \t ",  # Branch 731 ultimate whitespace
+        "      ",  # Branch 731 spaces only
+        "\t\t\t\t",  # Branch 731 tabs only
+        "\r\n\r\n\r\n",  # Branch 731 Windows endings
     ]
 
     for i, empty_var in enumerate(ultimate_empty_variations):
@@ -236,10 +239,15 @@ objectClass: person
     # Ultimate comprehensive analytics variations para branch 70
     analytics_variations = [
         [],  # Empty entries - TRUE path (not our target for 70)
-        [FlextLDIFModels.Factory.create_entry({  # Non-empty - FALSE path (our target for 70)
-            "dn": f"cn=analytics_{i},dc=example,dc=com",
-            "attributes": {"cn": [f"analytics_{i}"], "objectClass": ["person"]}
-        }) for i in range(3)],
+        [
+            FlextLDIFModels.Factory.create_entry(
+                {  # Non-empty - FALSE path (our target for 70)
+                    "dn": f"cn=analytics_{i},dc=example,dc=com",
+                    "attributes": {"cn": [f"analytics_{i}"], "objectClass": ["person"]},
+                }
+            )
+            for i in range(3)
+        ],
     ]
 
     for i, entries_var in enumerate(analytics_variations[1:], 1):  # Skip empty for 70
@@ -266,22 +274,22 @@ objectClass: person
 
     # Ultimate comprehensive object class variations para branch 326
     ultimate_objectclass_variations = [
-        "",           # Empty - our target for TRUE path
-        "   ",        # Whitespace only
-        "\t",         # Tab only
-        "\n",         # Newline only
-        "  \t  ",     # Mixed whitespace
-        " ",          # Single space
-        "\r",         # Carriage return
-        "\t\t",       # Double tab
-        "    ",       # Multiple spaces
-        "\n\n",       # Multiple newlines
+        "",  # Empty - our target for TRUE path
+        "   ",  # Whitespace only
+        "\t",  # Tab only
+        "\n",  # Newline only
+        "  \t  ",  # Mixed whitespace
+        " ",  # Single space
+        "\r",  # Carriage return
+        "\t\t",  # Double tab
+        "    ",  # Multiple spaces
+        "\n\n",  # Multiple newlines
     ]
 
     for i, oc_var in enumerate(ultimate_objectclass_variations):
         entry_data = {
             "dn": f"cn=ultoc{i},dc=example,dc=com",
-            "attributes": {"cn": [f"ultoc{i}"], "objectClass": [oc_var]}
+            "attributes": {"cn": [f"ultoc{i}"], "objectClass": [oc_var]},
         }
         entry = FlextLDIFModels.Factory.create_entry(entry_data)
         validator.validate_entries([entry])
@@ -328,10 +336,12 @@ objectClass: person
     assert writer_empty.is_success or writer_empty.is_failure
 
     # Test analytics with non-empty entries uma final vez
-    ultimate_entry = FlextLDIFModels.Factory.create_entry({
-        "dn": "cn=ultimate_analytics,dc=example,dc=com",
-        "attributes": {"cn": ["ultimate_analytics"], "objectClass": ["person"]}
-    })
+    ultimate_entry = FlextLDIFModels.Factory.create_entry(
+        {
+            "dn": "cn=ultimate_analytics,dc=example,dc=com",
+            "attributes": {"cn": ["ultimate_analytics"], "objectClass": ["person"]},
+        }
+    )
     analytics = FlextLDIFServices.AnalyticsService(entries=[ultimate_entry])
     analytics_result = analytics.execute()
     assert analytics_result.is_success or analytics_result.is_failure
@@ -375,11 +385,18 @@ objectClass: organizationalPerson
     ultimate_writer_empty = writer.write_entries_to_string([])
 
     # Test analytics scenarios uma final vez
-    ultimate_analytics_entry = FlextLDIFModels.Factory.create_entry({
-        "dn": "cn=ultimate_analytics_final,dc=example,dc=com",
-        "attributes": {"cn": ["ultimate_analytics_final"], "objectClass": ["person"]}
-    })
-    ultimate_analytics = FlextLDIFServices.AnalyticsService(entries=[ultimate_analytics_entry])
+    ultimate_analytics_entry = FlextLDIFModels.Factory.create_entry(
+        {
+            "dn": "cn=ultimate_analytics_final,dc=example,dc=com",
+            "attributes": {
+                "cn": ["ultimate_analytics_final"],
+                "objectClass": ["person"],
+            },
+        }
+    )
+    ultimate_analytics = FlextLDIFServices.AnalyticsService(
+        entries=[ultimate_analytics_entry]
+    )
     ultimate_analytics_result = ultimate_analytics.execute()
 
     # Final comprehensive entries uma final vez
@@ -388,16 +405,21 @@ objectClass: organizationalPerson
         "attributes": {
             "cn": ["ultimate_final_verification"],
             "objectClass": ["person"],
-            "description": ["Ultimate final verification test"]
-        }
+            "description": ["Ultimate final verification test"],
+        },
     }
-    ultimate_final_entries = [FlextLDIFModels.Factory.create_entry(ultimate_final_entry)]
+    ultimate_final_entries = [
+        FlextLDIFModels.Factory.create_entry(ultimate_final_entry)
+    ]
     ultimate_writer_final = writer.write_entries_to_string(ultimate_final_entries)
 
     # Verification ULTIMATE TOTAL FINAL
     assert ultimate_parse_all.is_success or ultimate_parse_all.is_failure
     assert ultimate_validate_empty.is_success or ultimate_validate_empty.is_failure
-    assert ultimate_validate_content_empty.is_success or ultimate_validate_content_empty.is_failure
+    assert (
+        ultimate_validate_content_empty.is_success
+        or ultimate_validate_content_empty.is_failure
+    )
     assert ultimate_writer_empty.is_success or ultimate_writer_empty.is_failure
     assert ultimate_writer_final.is_success or ultimate_writer_final.is_failure
     assert ultimate_analytics_result.is_success or ultimate_analytics_result.is_failure

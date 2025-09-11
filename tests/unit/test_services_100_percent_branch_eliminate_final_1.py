@@ -143,7 +143,7 @@ def test_validator_additional_coverage() -> None:
     # Validator com entry válida
     entry_data = {
         "dn": "cn=validtest,dc=example,dc=com",
-        "attributes": {"cn": ["validtest"], "objectClass": ["person"]}
+        "attributes": {"cn": ["validtest"], "objectClass": ["person"]},
     }
     entry = FlextLDIFModels.Factory.create_entry(entry_data)
     result2 = validator.validate_entries([entry])
@@ -207,7 +207,7 @@ linha_final_ultimate_sem_colon
         "outra_linha_problematica",
         "linha_com_espacos_mas_sem_colon   ",
         "   linha_com_espacos_inicio",
-        "\tlinha_com_tab"
+        "\tlinha_com_tab",
     ]
 
     for problem_line in problematic_lines:

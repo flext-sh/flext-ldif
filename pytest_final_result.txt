@@ -1,0 +1,6 @@
+........................................................................ [  7%]
+...................F
+=========================== short test summary info ============================
+FAILED tests/unit/test_services_100_percent_absolute_definitive_victory.py::test_victory_line_574_dict_conversion_with_real_config
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 91 passed in 1.14s

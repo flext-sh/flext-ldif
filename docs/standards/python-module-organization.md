@@ -30,7 +30,7 @@ This document defines the **Python module organization standards** for the **FLE
 flext-ldif/
 ├── src/flext_ldif/              # Main package directory
 │   ├── __init__.py              # Public API exports
-│   ├── py.typed                 # Type information marker
+│   ├── py.typed
 │   └── version.py               # Version management
 ├── tests/                       # Comprehensive test suite
 ├── docs/                        # Documentation
@@ -46,7 +46,7 @@ flext-ldif/
 ```python
 src/flext_ldif/
 ├── __init__.py                  # Public API gateway
-├── py.typed                     # Type information
+├── py.typed
 ├── version.py                   # Version management
 
 # Application Layer (Mixed with Infrastructure)
@@ -81,7 +81,7 @@ src/flext_ldif/
 ```python
 src/flext_ldif/
 ├── __init__.py                  # Public API exports with FlextResult patterns
-├── py.typed                     # Type information marker
+├── py.typed
 ├── version.py                   # Version management
 
 # Domain Layer - Core Business Logic (No Dependencies)
@@ -2092,7 +2092,7 @@ def _entry_to_dict(entry: FlextLDIFEntry) -> Dict[str, object]:
 
 def _parse_filter_expression(filter_expr: str) -> Dict[str, object]:
     """Parse filter expression into criteria dictionary."""
-    # Simple parsing - enhance with proper LDAP filter parsing
+  
     criteria = {}
 
     if '=' in filter_expr:
@@ -2542,7 +2542,7 @@ make build                       # Build distribution packages
 
 ```bash
 # Automated quality checks (run before every commit)
-make lint                        # Ruff linting with ALL rules
+make lint
 make type-check                  # MyPy strict type checking
 make security                    # Security scanning (bandit + pip-audit)
 make test-quick                  # Fast test suite for immediate feedback

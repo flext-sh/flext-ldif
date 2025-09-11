@@ -30,7 +30,7 @@ def test_branch_476_entries_non_empty_false_path() -> None:
     # Criar entry não vazia para forçar is_list_non_empty(entries) = True (False path da condição)
     entry_data = {
         "dn": "cn=test476,dc=example,dc=com",
-        "attributes": {"cn": ["test476"], "objectClass": ["person"]}
+        "attributes": {"cn": ["test476"], "objectClass": ["person"]},
     }
     non_empty_entries = [FlextLDIFModels.Factory.create_entry(entry_data)]
 
@@ -121,7 +121,10 @@ def test_final_comprehensive_6_branches_elimination() -> None:
     writer = FlextLDIFServices.WriterService()
 
     # 1. Branch 476 - entries não vazio (False path)
-    entry_data = {"dn": "cn=test476,dc=example,dc=com", "attributes": {"cn": ["test476"]}}
+    entry_data = {
+        "dn": "cn=test476,dc=example,dc=com",
+        "attributes": {"cn": ["test476"]},
+    }
     non_empty_entries = [FlextLDIFModels.Factory.create_entry(entry_data)]
     writer.write_entries_to_string(non_empty_entries)
 
@@ -169,8 +172,8 @@ objectClass: person
         "attributes": {
             "cn": ["complex_writer"],
             "objectClass": ["person"],
-            "description": ["Complex entry for writer testing"]
-        }
+            "description": ["Complex entry for writer testing"],
+        },
     }
     complex_entry = FlextLDIFModels.Factory.create_entry(complex_entry_data)
     writer.write_entries_to_string([complex_entry])
@@ -184,11 +187,13 @@ objectClass: person
     problematic_lines = [
         "linha_sem_colon_1",
         "outra_linha_sem_colon_2",
-        "final_linha_sem_colon_3"
+        "final_linha_sem_colon_3",
     ]
 
     for prob_line in problematic_lines:
-        ldif_prob = f"dn: cn=prob,dc=example,dc=com\ncn: prob\n{prob_line}\nobjectClass: person"
+        ldif_prob = (
+            f"dn: cn=prob,dc=example,dc=com\ncn: prob\n{prob_line}\nobjectClass: person"
+        )
         parser.parse(ldif_prob)
 
 
@@ -260,7 +265,7 @@ description: Ultimate test for zero branches
     # Writer ultimate test
     entry_ultimate = {
         "dn": "cn=ultimate_writer,dc=example,dc=com",
-        "attributes": {"cn": ["ultimate_writer"], "objectClass": ["person"]}
+        "attributes": {"cn": ["ultimate_writer"], "objectClass": ["person"]},
     }
     ultimate_writer_entries = [FlextLDIFModels.Factory.create_entry(entry_ultimate)]
     ultimate_writer = writer.write_entries_to_string(ultimate_writer_entries)

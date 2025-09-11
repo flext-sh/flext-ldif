@@ -153,7 +153,9 @@ def test_final_comprehensive_7_branches_elimination() -> None:
     parser.parse(ldif_674)
 
     # 6. Branch 698 - current_dn False
-    ldif_698 = "dn: cn=final698,dc=example,dc=com\ncn: final698\nobjectClass: person\n\n"
+    ldif_698 = (
+        "dn: cn=final698,dc=example,dc=com\ncn: final698\nobjectClass: person\n\n"
+    )
     parser.parse(ldif_698)
 
     # 7. Branch 731 - empty content variants
@@ -193,8 +195,8 @@ objectClass: person
         "attributes": {
             "cn": ["final_writer"],
             "objectClass": ["person"],
-            "description": ["Final writer test"]
-        }
+            "description": ["Final writer test"],
+        },
     }
     writer_entries = [FlextLDIFModels.Factory.create_entry(final_entry)]
     writer.write_entries_to_string(writer_entries)
@@ -203,7 +205,7 @@ objectClass: person
     final_problematic = [
         "linha_sem_colon_final_1",
         "linha_sem_colon_final_2",
-        "linha_sem_colon_final_3"
+        "linha_sem_colon_final_3",
     ]
 
     for i, prob_line in enumerate(final_problematic):
@@ -214,7 +216,7 @@ objectClass: person
     base64_final = [
         "description:: RmluYWwgdGVzdA==",
         "userCertificate:: TUlJQ2RnRklOQUw=",
-        "jpegPhoto:: LzlqLzRBQVFGaW5hbA=="
+        "jpegPhoto:: LzlqLzRBQVFGaW5hbA==",
     ]
 
     for i, b64_line in enumerate(base64_final):
@@ -298,8 +300,8 @@ objectClass: organizationalPerson
         "attributes": {
             "cn": ["final_writer_absolute"],
             "objectClass": ["person"],
-            "description": ["Final absolute writer test"]
-        }
+            "description": ["Final absolute writer test"],
+        },
     }
     final_absolute_entries = [FlextLDIFModels.Factory.create_entry(final_writer_entry)]
     final_writer_absolute = writer.write_entries_to_string(final_absolute_entries)
@@ -307,7 +309,10 @@ objectClass: organizationalPerson
     # Verification FINAL ABSOLUTE
     assert final_parse_all.is_success or final_parse_all.is_failure
     assert final_validate_empty.is_success or final_validate_empty.is_failure
-    assert final_validate_content_empty.is_success or final_validate_content_empty.is_failure
+    assert (
+        final_validate_content_empty.is_success
+        or final_validate_content_empty.is_failure
+    )
     assert final_writer_absolute.is_success or final_writer_absolute.is_failure
 
     assert True, "🎯 FINAL ZERO BRANCHES - 100% COVERAGE ABSOLUTE!"

@@ -26,7 +26,9 @@ def test_absolute_surgical_coverage_lines_571_576() -> None:
     mock_attributes.data = {"cn": ["test"], "objectClass": ["person"]}
 
     # IMPORTANTE: Simular que tem método items() para triggerar linha 572-574
-    mock_attributes.items = Mock(return_value=[("cn", ["test"]), ("objectClass", ["person"])])
+    mock_attributes.items = Mock(
+        return_value=[("cn", ["test"]), ("objectClass", ["person"])]
+    )
 
     mock_entry.attributes = mock_attributes
     mock_entry.validate_business_rules = Mock(return_value=None)
@@ -87,7 +89,9 @@ def test_absolute_surgical_coverage_lines_724_725() -> None:
 
     # Mock Entry.model_validate para forçar exceção na linha 724-725
     with patch.object(FlextLDIFModels.Entry, "model_validate") as mock_validate:
-        mock_validate.side_effect = ValueError("Forced validation error for line 724-725")
+        mock_validate.side_effect = ValueError(
+            "Forced validation error for line 724-725"
+        )
 
         simple_ldif = """dn: cn=exception,dc=example,dc=com
 cn: exception
@@ -205,7 +209,9 @@ def test_absolute_surgical_coverage_lines_812_813() -> None:
 
     # Mock Factory para forçar exceção no parse_entry_block 812-813
     with patch.object(FlextLDIFModels, "Factory") as mock_factory:
-        mock_factory.create_entry = Mock(side_effect=RuntimeError("Factory error lines 812-813"))
+        mock_factory.create_entry = Mock(
+            side_effect=RuntimeError("Factory error lines 812-813")
+        )
 
         factory_ldif = """dn: cn=factory_error,dc=example,dc=com
 cn: factory_error
@@ -229,11 +235,12 @@ def test_absolute_surgical_coverage_lines_862_863() -> None:
     # Entry com DN problemático
     try:
         problematic_entry = FlextLDIFModels.Entry(
-            dn=FlextLDIFModels.DistinguishedName(value="cn=problematic,dc=example,dc=com"),
-            attributes=FlextLDIFModels.LdifAttributes(data={
-                "cn": ["problematic"],
-                "objectClass": ["person"]
-            })
+            dn=FlextLDIFModels.DistinguishedName(
+                value="cn=problematic,dc=example,dc=com"
+            ),
+            attributes=FlextLDIFModels.LdifAttributes(
+                data={"cn": ["problematic"], "objectClass": ["person"]}
+            ),
         )
         problematic_entries.append(problematic_entry)
     except:
@@ -243,7 +250,7 @@ def test_absolute_surgical_coverage_lines_862_863() -> None:
     try:
         empty_entry = FlextLDIFModels.Entry(
             dn=FlextLDIFModels.DistinguishedName(value="cn=empty,dc=example,dc=com"),
-            attributes=FlextLDIFModels.LdifAttributes(data={})
+            attributes=FlextLDIFModels.LdifAttributes(data={}),
         )
         problematic_entries.append(empty_entry)
     except:
@@ -271,7 +278,7 @@ def test_absolute_surgical_coverage_lines_868_869() -> None:
         extreme_dn = "cn=" + "x" * 1000 + ",dc=example,dc=com"  # DN muito longo
         extreme_entry = FlextLDIFModels.Entry(
             dn=FlextLDIFModels.DistinguishedName(value=extreme_dn),
-            attributes=FlextLDIFModels.LdifAttributes(data={"cn": ["extreme"]})
+            attributes=FlextLDIFModels.LdifAttributes(data={"cn": ["extreme"]}),
         )
         extreme_cases.append(extreme_entry)
     except:
@@ -283,14 +290,18 @@ def test_absolute_surgical_coverage_lines_868_869() -> None:
         many_attrs["objectClass"] = ["person"]
         many_entry = FlextLDIFModels.Entry(
             dn=FlextLDIFModels.DistinguishedName(value="cn=many,dc=example,dc=com"),
-            attributes=FlextLDIFModels.LdifAttributes(data=many_attrs)
+            attributes=FlextLDIFModels.LdifAttributes(data=many_attrs),
         )
         extreme_cases.append(many_entry)
     except:
         pass
 
     # Executar transformações com casos extremos
-    for entries_list in [extreme_cases, [], [extreme_cases[0]] if extreme_cases else []]:
+    for entries_list in [
+        extreme_cases,
+        [],
+        [extreme_cases[0]] if extreme_cases else [],
+    ]:
         try:
             result = transformer.transform_entries(entries_list)
             assert result.is_success or result.is_failure
