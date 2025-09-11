@@ -62,10 +62,8 @@ def test_surgical_empty_line_scenarios() -> None:
     scenarios = [
         # Linha vazia no início (current_dn = None)
         "\n\ncn: test",
-
         # Múltiplas linhas vazias
         "\n\n\ndn: cn=test,dc=com\ncn: test\n\n",
-
         # Linha vazia entre entries sem DN atual
         "cn: orphan1\n\ncn: orphan2",
     ]
@@ -82,10 +80,8 @@ def test_surgical_no_colon_scenarios() -> None:
     scenarios = [
         # Linha sem colon no meio
         "dn: cn=test,dc=com\nno_colon_here\ncn: test",
-
         # Múltiplas linhas sem colon
         "dn: cn=test,dc=com\nline1_no_colon\nline2_no_colon\ncn: test",
-
         # Linha sem colon no início
         "no_colon_start\ndn: cn=test,dc=com\ncn: test",
     ]
@@ -125,7 +121,9 @@ final_invalid_line"""
     assert result2 is not None
 
     # Test edge case: linha sem colon isolada
-    no_colon_isolated = "dn: cn=test,dc=com\nisolated_no_colon\ncn: test\nobjectClass: person"
+    no_colon_isolated = (
+        "dn: cn=test,dc=com\nisolated_no_colon\ncn: test\nobjectClass: person"
+    )
     result3 = parser.parse_ldif_content(no_colon_isolated)
     assert result3 is not None
 

@@ -1,4 +1,4 @@
-"""FLEXT-LDIF Format Handler - Class-based LDIF parsing and writing.
+"""FLEXT-LDIF Format Handler - Using flext-core BasicHandler as SOURCE OF TRUTH.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,19 +14,33 @@ from typing import ClassVar
 from urllib.parse import urlparse
 
 import urllib3
-from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_core import FlextHandlers, FlextLogger, FlextResult, FlextTypes
 
 from flext_ldif.models import FlextLDIFModels
 
 logger = FlextLogger(__name__)
 
 
-class FlextLDIFFormatHandler:
-    """LDIF format handling using FlextLDIF[Module] pattern.
+class FlextLDIFFormatHandler(FlextHandlers.Implementation.BasicHandler):
+    """LDIF format handling using flext-core BasicHandler as SOURCE OF TRUTH.
 
-    Centralized parsing and writing for all LDIF format operations.
-    No helper functions - all functionality through class methods.
+    Inherits from FlextHandlers.Implementation.BasicHandler for:
+    - Metrics collection and state tracking
+    - Configuration management
+    - Template method pattern for request processing
+    - Thread-safe operation handling
+
+    ZERO TOLERANCE: NO local handler implementations - use flext-core exclusively.
     """
+
+    def __init__(self, **kwargs: object) -> None:
+        """Initialize LDIF format handler with flext-core BasicHandler."""
+        config_dict = kwargs.get("config")
+        super().__init__(
+            name="FlextLDIFFormatHandler",
+            config=config_dict if isinstance(config_dict, dict) else {},
+        )
+        self._logger = FlextLogger(__name__)
 
     # LDIF Pattern Constants
     ATTRTYPE_PATTERN = r"[\w;.-]+(;[\w_-]+)*"
@@ -57,6 +71,47 @@ class FlextLDIFFormatHandler:
 
     # HTTP status codes
     HTTP_OK = 200
+
+    def _process_request(self, request: object) -> FlextResult[object]:
+        """Process LDIF requests using template method pattern from BasicHandler.
+
+        Args:
+            request: LDIF processing request (parse, write, validate, etc.)
+
+        Returns:
+            FlextResult containing processed result
+
+        """
+        if isinstance(request, dict):
+            operation = request.get("operation")
+            if operation == "parse":
+                content = request.get("content")
+                if content is not None:
+                    parse_result = self.parse_ldif(content)
+                    if parse_result.is_success:
+                        return FlextResult[object].ok(parse_result.unwrap())
+                    return FlextResult[object].fail(
+                        parse_result.error or "Parse failed"
+                    )
+            elif operation == "write":
+                entries = request.get("entries")
+                if entries is not None:
+                    write_result = self.write_ldif(entries)
+                    if write_result.is_success:
+                        return FlextResult[object].ok(write_result.unwrap())
+                    return FlextResult[object].fail(
+                        write_result.error or "Write failed"
+                    )
+            elif operation == "validate_url":
+                url = request.get("url")
+                if url is not None:
+                    try:
+                        self.validate_url_scheme(url)
+                        return FlextResult[object].ok(data=True)
+                    except ValueError as e:
+                        return FlextResult[object].fail(str(e))
+
+        return FlextResult[object].fail("Invalid LDIF request format")
 
     @classmethod
     def validate_url_scheme(cls, url: str) -> None:
@@ -141,8 +196,7 @@ class FlextLDIFFormatHandler:
         """
         return [item.lower() for item in items or []]
 
-    @classmethod
-    def parse_ldif(cls, content: str) -> FlextResult[list[FlextLDIFModels.Entry]]:
+    def parse_ldif(self, content: str) -> FlextResult[list[FlextLDIFModels.Entry]]:
         """Parse LDIF content using modernized parser.
 
         Args:
@@ -165,19 +219,19 @@ class FlextLDIFFormatHandler:
                 entry = FlextLDIFModels.Entry(dn=dn_obj, attributes=attrs_obj)
                 entries.append(entry)
 
-            logger.info(f"LDIF parsed successfully: {len(entries)} entries")
+            self._logger.info(f"LDIF parsed successfully: {len(entries)} entries")
             return FlextResult.ok(entries)
 
         except (ValueError, AttributeError, TypeError, UnicodeError) as e:
             error_msg: str = f"Modernized LDIF parse failed: {e}"
-            logger.exception(
-"LDIF parsing failed"
+            self._logger.exception(
+                "LDIF parsing failed",
             )
             return FlextResult.fail(error_msg)
 
-    @classmethod
     def write_ldif(
-        cls, entries: list[FlextLDIFModels.Entry] | None
+        self,
+        entries: list[FlextLDIFModels.Entry] | None,
     ) -> FlextResult[str]:
         """Write LDIF entries using modernized writer.
 
@@ -189,9 +243,9 @@ class FlextLDIFFormatHandler:
 
         """
         if entries is None:
-            logger.error("Cannot write None entries")
+            self._logger.error("Cannot write None entries")
             return FlextResult.fail(
-"Entries cannot be None"
+                "Entries cannot be None",
             )
 
         try:
@@ -200,13 +254,15 @@ class FlextLDIFFormatHandler:
                 writer.unparse(str(entry.dn), dict(entry.attributes))
 
             output = writer.get_output()
-            logger.info(f"LDIF written successfully: {writer.records_written} entries")
+            self._logger.info(
+                f"LDIF written successfully: {writer.records_written} entries"
+            )
             return FlextResult.ok(output)
 
         except (ValueError, AttributeError, TypeError, UnicodeError) as e:
             error_msg: str = f"Modernized LDIF write failed: {e}"
-            logger.exception(
-"LDIF writing failed"
+            self._logger.exception(
+                "LDIF writing failed",
             )
             return FlextResult.fail(error_msg)
 
@@ -285,7 +341,8 @@ class FlextLDIFWriter:
         self._fold_line(line)
 
     def _unparse_entry_record(
-        self, entry: dict[str, FlextTypes.Core.StringList]
+        self,
+        entry: dict[str, FlextTypes.Core.StringList],
     ) -> None:
         """Write entry record.
 
@@ -558,7 +615,8 @@ class FlextLDIFParser:
         return dn
 
     def _parse_entry_record(
-        self, lines: FlextTypes.Core.StringList
+        self,
+        lines: FlextTypes.Core.StringList,
     ) -> tuple[str, dict[str, FlextTypes.Core.StringList]]:
         """Parse a single entry record from lines.
 
@@ -600,14 +658,13 @@ class FlextLDIFParser:
             raise
 
 
-# All format handling functionality is now available through class methods:
-# - FlextLDIFFormatHandler.parse_ldif()
-# - FlextLDIFFormatHandler.write_ldif()
-# - FlextLDIFFormatHandler.is_dn()
-# - FlextLDIFFormatHandler.validate_url_scheme()
-# - FlextLDIFFormatHandler.safe_url_fetch()
-# - FlextLDIFFormatHandler.lower_list()
-# No helper functions - use class methods instead
+# LDIF format handling using flext-core BasicHandler as SOURCE OF TRUTH:
+# - FlextLDIFFormatHandler inherits from FlextHandlers.Implementation.BasicHandler
+# - Instance methods: handler.parse_ldif(), handler.write_ldif()
+# - Class methods: FlextLDIFFormatHandler.is_dn(), validate_url_scheme(), safe_url_fetch(), lower_list()
+# - Template method pattern: use handler.handle(request) for processing
+# - Metrics and state tracking: use handler.get_metrics(), handler.state
+# No helper functions - use handler instance or class methods instead
 
 __all__: FlextTypes.Core.StringList = [
     "FlextLDIFFormatHandler",

@@ -22,7 +22,9 @@ def test_ultra_deep_branch_663_debug() -> None:
     result1 = parser.parse_ldif_content(debug_content_1)
 
     # Cenário 2: Entrada órfã seguida de linha vazia
-    debug_content_2 = "cn: orphan\nobjectClass: person\n\ndn: cn=valid,dc=example,dc=com"
+    debug_content_2 = (
+        "cn: orphan\nobjectClass: person\n\ndn: cn=valid,dc=example,dc=com"
+    )
 
     result2 = parser.parse_ldif_content(debug_content_2)
 
@@ -108,7 +110,11 @@ def test_forced_scenarios_with_mocking() -> None:
             return "FORCE_NO_COLON"  # Sem colon!
         return text.strip()
 
-    with patch.object(FlextUtilities.TextProcessor, "clean_text", side_effect=mock_clean_text_branch_674):
+    with patch.object(
+        FlextUtilities.TextProcessor,
+        "clean_text",
+        side_effect=mock_clean_text_branch_674,
+    ):
         forced_content = "dn: cn=test,dc=com\nFORCE_NO_COLON\ncn: test"
         result = parser.parse_ldif_content(forced_content)
         assert result is not None
@@ -131,7 +137,6 @@ def test_comprehensive_edge_cases_ultra_specific() -> None:
         ("\n\n\n", "Triple newline"),
         ("   \n   \n   ", "Whitespace newlines"),
         ("cn: orphan\n\n", "Orphan then empty"),
-
         # Branch 674 TRUE cases (no colon)
         ("NO_COLON", "Simple no colon"),
         ("LINE WITHOUT COLON", "Spaced no colon"),
@@ -139,7 +144,6 @@ def test_comprehensive_edge_cases_ultra_specific() -> None:
         ("NO_COLON_START\ndn: cn=test,dc=com", "No colon before dn"),
         ("INVALID LINE", "Invalid line simple"),
         ("multiple words no colon here", "Multiple words no colon"),
-
         # Combined cases
         ("\nNO_COLON_AFTER_EMPTY", "Empty then no colon"),
         ("\n\nNO_COLON_AFTER_MULTI_EMPTY", "Multi empty then no colon"),
@@ -147,7 +151,6 @@ def test_comprehensive_edge_cases_ultra_specific() -> None:
     ]
 
     for content, description in ultra_specific_cases:
-
         result = parser.parse_ldif_content(content)
 
         assert result is not None, f"Failed case: {description}"

@@ -14,9 +14,9 @@ from flext_core import FlextResult
 
 from flext_ldif import (
     FlextLDIFAPI,
-    FlextLDIFCore,
     FlextLDIFFormatHandler,
 )
+from flext_ldif.services import FlextLDIFServices
 
 
 class TestCompleteWorkflows:
@@ -90,13 +90,13 @@ member: cn=John Doe,ou=people,dc=example,dc=com
         assert validate_result.is_success
 
         # Step 3: Filter specific entries
-        people_filter = api.filter_by_objectclass(entries, "inetOrgPerson")
+        people_filter = api._filters.by_object_class(entries, "inetOrgPerson")
         assert people_filter.is_success
         assert people_filter.value is not None
         assert len(people_filter.value) == 2
 
         # Step 4: Find specific entry
-        john_result = api.find_entry_by_dn(
+        john_result = api._services.repository.find_entry_by_dn(
             entries,
             "cn=John Doe,ou=people,dc=example,dc=com",
         )
@@ -105,7 +105,7 @@ member: cn=John Doe,ou=people,dc=example,dc=com
         assert john_result.value.get_attribute("givenName") == ["John"]
 
         # Step 5: Get statistics
-        stats_result = api.get_entry_statistics(entries)
+        stats_result = api._analytics.entry_statistics(entries)
         assert stats_result.is_success
         assert stats_result.value is not None
         assert "total_entries" in stats_result.value
@@ -122,22 +122,20 @@ member: cn=John Doe,ou=people,dc=example,dc=com
         complex_ldif_content: str,
     ) -> None:
         """Test complete workflow using convenience functions."""
-        # Step 1: Parse using convenience function
-        entries = FlextResult.unwrap_or_raise(
-            FlextLDIFFormatHandler.parse_ldif(complex_ldif_content)
-        )
+        # Step 1: Parse using convenience function (correct instance method)
+        handler = FlextLDIFFormatHandler()
+        entries = FlextResult.unwrap_or_raise(handler.parse_ldif(complex_ldif_content))
         assert len(entries) == 6
 
-        # Step 2: Validate using convenience function
+        # Step 2: Validate using services instead of core wrapper
+        validator_service = FlextLDIFServices.ValidatorService()
         is_valid = FlextResult.unwrap_or_raise(
-            FlextLDIFCore().validate_entries(entries)
+            validator_service.validate_entries(entries)
         )
         assert is_valid is True
 
         # Step 3: Write using convenience function
-        ldif_output = FlextResult.unwrap_or_raise(
-            FlextLDIFFormatHandler.write_ldif(entries)
-        )
+        ldif_output = FlextResult.unwrap_or_raise(handler.write_ldif(entries))
         assert isinstance(ldif_output, str)
         assert "cn=John Doe,ou=people,dc=example,dc=com" in ldif_output
 
@@ -156,19 +154,21 @@ member: cn=John Doe,ou=people,dc=example,dc=com
 
         try:
             # Step 1: Parse from file
-            parse_result = api.parse_file(input_path)
+            parse_result = api._operations.parse_file(input_path)
             assert parse_result.is_success
             assert parse_result.value is not None
             entries = parse_result.value
 
             # Step 2: Process entries (filter and modify)
-            people_result = api.filter_by_objectclass(entries, "inetOrgPerson")
+            people_result = api._filters.by_object_class(entries, "inetOrgPerson")
             assert people_result.is_success
             people_entries = people_result.value
 
             # Step 3: Write processed entries to new file
             output_path = input_path.with_suffix(".processed.ldif")
-            write_result = api.write_entries_to_file(people_entries, str(output_path))
+            write_result = api._operations.write_file(
+                people_entries, str(output_path)
+            )
             assert write_result.is_success
 
             # Step 4: Verify output file
@@ -199,7 +199,7 @@ missing dns"""
         assert parse_result.error is not None
 
         # Test with non-existent file
-        file_result = api.parse_file(Path("/non/existent/file.ldif"))
+        file_result = api._operations.parse_file(Path("/non/existent/file.ldif"))
         assert not file_result.is_success
 
     def test_performance_workflow(self) -> None:
@@ -228,7 +228,9 @@ mail: user{i:03d}@example.com
         assert len(parse_result.value) == 51  # 1 domain + 50 users
 
         # Test filtering performance
-        filter_result = api.filter_by_objectclass(parse_result.value, "inetOrgPerson")
+        filter_result = api._filters.by_object_class(
+            parse_result.value, "inetOrgPerson"
+        )
         assert filter_result.is_success
         assert filter_result.value is not None
         assert len(filter_result.value) == 50

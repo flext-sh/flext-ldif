@@ -91,7 +91,7 @@ objectClass: person"""
         "",  # Empty content
         "   ",  # Whitespace only
         "dn:",  # Empty DN
-        "invalid::"  # Double colon
+        "invalid::",  # Double colon
     ]
 
     for case in minimal_cases:
@@ -108,7 +108,9 @@ def test_final_victory_verification() -> None:
     assert result1 is not None
 
     # 2. Branch 674: no colon TRUE path
-    result2 = parser.parse_ldif_content("dn: cn=test,dc=com\nline_without_colon\ncn: test")
+    result2 = parser.parse_ldif_content(
+        "dn: cn=test,dc=com\nline_without_colon\ncn: test"
+    )
     assert result2 is not None
 
     # 3. Branch 698: current_dn FALSE path at end
@@ -128,15 +130,12 @@ def test_absolute_final_100_percent_coverage() -> None:
         # Branch 663: current_dn FALSE
         "cn: orphan1",
         "objectClass: person",
-
         # Branch 674: no colon TRUE
         "dn: cn=test,dc=com\nno_colon_line\ncn: test",
-
         # Branch 698: current_dn FALSE at end
         "dn: cn=test,dc=com\ncn: test\nobjectClass: person",
-
         # Combined scenarios
-        "dn: cn=combined,dc=com\ncn: combined\nno_colon\nobjectClass: person\n\ncn: orphan_final"
+        "dn: cn=combined,dc=com\ncn: combined\nno_colon\nobjectClass: person\n\ncn: orphan_final",
     ]
 
     for i, scenario in enumerate(scenarios):

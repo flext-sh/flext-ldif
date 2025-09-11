@@ -5,7 +5,6 @@ SPDX-License-Identifier: MIT
 """
 
 
-# ruff: noqa: PT018
 # Reason: Multiple assertion checks are common in tests for comprehensive error validation
 
 # pyright: reportArgumentType=false

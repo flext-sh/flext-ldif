@@ -136,7 +136,9 @@ def test_final_victory_comprehensive_7_branches_elimination() -> None:
     validator.validate_ldif_entries("")
 
     # 3. Branch 661 - empty line
-    ldif_661 = "dn: cn=victory661,dc=example,dc=com\ncn: victory661\n\nobjectClass: person"
+    ldif_661 = (
+        "dn: cn=victory661,dc=example,dc=com\ncn: victory661\n\nobjectClass: person"
+    )
     parser.parse(ldif_661)
 
     # 4. Branch 674 - no colon
@@ -148,7 +150,9 @@ def test_final_victory_comprehensive_7_branches_elimination() -> None:
     parser.parse(ldif_678)
 
     # 6. Branch 698 - current_dn False
-    ldif_698 = "dn: cn=victory698,dc=example,dc=com\ncn: victory698\nobjectClass: person\n\n"
+    ldif_698 = (
+        "dn: cn=victory698,dc=example,dc=com\ncn: victory698\nobjectClass: person\n\n"
+    )
     parser.parse(ldif_698)
 
     # 7. Branch 731 - empty content variants
@@ -191,8 +195,8 @@ objectClass: organizationalPerson
             "attributes": {
                 "cn": [f"victory_writer_{i}"],
                 "objectClass": ["person"],
-                "description": [f"Final Victory writer test {i}"]
-            }
+                "description": [f"Final Victory writer test {i}"],
+            },
         }
         writer_entries = [FlextLDIFModels.Factory.create_entry(victory_entry)]
         writer.write_entries_to_string(writer_entries)
@@ -201,7 +205,7 @@ objectClass: organizationalPerson
     victory_problematic = [
         "linha_sem_colon_victory_1",
         "linha_sem_colon_victory_2",
-        "linha_sem_colon_victory_3"
+        "linha_sem_colon_victory_3",
     ]
 
     for i, prob_line in enumerate(victory_problematic):
@@ -212,7 +216,7 @@ objectClass: organizationalPerson
     victory_base64 = [
         "description:: VmljdG9yeSBCYXNlNjQgVGVzdA==",
         "userCertificate:: TUlJQ2RnVmljdG9yeQ==",
-        "jpegPhoto:: LzlqLzRBQVFWaWN0b3J5"
+        "jpegPhoto:: LzlqLzRBQVFWaWN0b3J5",
     ]
 
     for i, b64_line in enumerate(victory_base64):
@@ -305,17 +309,19 @@ objectClass: organizationalPerson
         "attributes": {
             "cn": ["victory_writer_absolute"],
             "objectClass": ["person"],
-            "description": ["Final Victory absolute writer test"]
-        }
+            "description": ["Final Victory absolute writer test"],
+        },
     }
-    victory_absolute_entries = [FlextLDIFModels.Factory.create_entry(victory_writer_entry)]
+    victory_absolute_entries = [
+        FlextLDIFModels.Factory.create_entry(victory_writer_entry)
+    ]
     victory_writer_absolute = writer.write_entries_to_string(victory_absolute_entries)
 
     # Final Victory comprehensive base64 test para branch 678
     victory_b64_variants = [
         "description:: RmluYWwgVmljdG9yeSBCYXNlNjQ=",
         "userCertificate:: RmluYWxWaWN0b3J5",
-        "jpegPhoto:: VmljdG9yeUltYWdl"
+        "jpegPhoto:: VmljdG9yeUltYWdl",
     ]
 
     for i, b64_attr in enumerate(victory_b64_variants):
@@ -326,7 +332,10 @@ objectClass: organizationalPerson
     # Verification FINAL VICTORY ABSOLUTE
     assert victory_parse_all.is_success or victory_parse_all.is_failure
     assert victory_validate_empty.is_success or victory_validate_empty.is_failure
-    assert victory_validate_content_empty.is_success or victory_validate_content_empty.is_failure
+    assert (
+        victory_validate_content_empty.is_success
+        or victory_validate_content_empty.is_failure
+    )
     assert victory_writer_absolute.is_success or victory_writer_absolute.is_failure
 
     assert True, "🎯 FINAL VICTORY ZERO BRANCHES - 100% COVERAGE ABSOLUTE!"

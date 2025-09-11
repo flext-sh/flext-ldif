@@ -17,9 +17,9 @@ from flext_core import FlextResult
 
 from flext_ldif import (
     FlextLDIFAPI,
-    FlextLDIFCore,
     FlextLDIFFormatHandler,
 )
+from flext_ldif.services import FlextLDIFServices
 
 
 class TestRealLdifParsing:
@@ -37,8 +37,9 @@ mail: john.doe@example.com
 telephoneNumber: +1-555-123-4567
 """
 
-        # Test using class-based interface
-        parse_result = FlextLDIFFormatHandler.parse_ldif(ldif_content)
+        # Test using REAL instance-based interface (not class method)
+        handler = FlextLDIFFormatHandler()
+        parse_result = handler.parse_ldif(ldif_content)
         assert parse_result.is_success
         entries = parse_result.value
 
@@ -69,9 +70,8 @@ cn: User
 sn: Regular
 """
 
-        entries = FlextResult.unwrap_or_raise(
-            FlextLDIFFormatHandler.parse_ldif(ldif_content)
-        )
+        handler = FlextLDIFFormatHandler()
+        entries = FlextResult.unwrap_or_raise(handler.parse_ldif(ldif_content))
 
         assert len(entries) == 2
 
@@ -97,9 +97,8 @@ member: cn=John Doe,ou=people,dc=example,dc=com
 member: cn=Jane Smith,ou=people,dc=example,dc=com
 """
 
-        entries = FlextResult.unwrap_or_raise(
-            FlextLDIFFormatHandler.parse_ldif(ldif_content)
-        )
+        handler = FlextLDIFFormatHandler()
+        entries = FlextResult.unwrap_or_raise(handler.parse_ldif(ldif_content))
 
         assert len(entries) == 1
         group = entries[0]
@@ -122,9 +121,8 @@ ou: people
 description: All users in the organization
 """
 
-        entries = FlextResult.unwrap_or_raise(
-            FlextLDIFFormatHandler.parse_ldif(ldif_content)
-        )
+        handler = FlextLDIFFormatHandler()
+        entries = FlextResult.unwrap_or_raise(handler.parse_ldif(ldif_content))
 
         assert len(entries) == 1
         ou = entries[0]
@@ -142,13 +140,13 @@ cn: TestUser
 sn: User
 """
 
-        entries = FlextResult.unwrap_or_raise(
-            FlextLDIFFormatHandler.parse_ldif(ldif_content)
-        )
+        handler = FlextLDIFFormatHandler()
+        entries = FlextResult.unwrap_or_raise(handler.parse_ldif(ldif_content))
 
-        # Test validation using convenience function
+        # Test validation using services instead of core wrapper
+        validator_service = FlextLDIFServices.ValidatorService()
         is_valid = FlextResult.unwrap_or_raise(
-            FlextLDIFCore().validate_entries(entries)
+            validator_service.validate_entries(entries)
         )
         assert is_valid is True
 
@@ -161,14 +159,11 @@ sn: Test
 """
 
         # Parse original
-        entries = FlextResult.unwrap_or_raise(
-            FlextLDIFFormatHandler.parse_ldif(original_ldif)
-        )
+        handler = FlextLDIFFormatHandler()
+        entries = FlextResult.unwrap_or_raise(handler.parse_ldif(original_ldif))
 
         # Write back to LDIF
-        written_ldif = FlextResult.unwrap_or_raise(
-            FlextLDIFFormatHandler.write_ldif(entries)
-        )
+        written_ldif = FlextResult.unwrap_or_raise(handler.write_ldif(entries))
 
         # Should contain the essential data
         assert "dn: cn=WriteTest,dc=example,dc=com" in written_ldif
@@ -177,9 +172,7 @@ sn: Test
         assert "sn: Test" in written_ldif
 
         # Parse the written LDIF to verify it's valid
-        reparsed_entries = FlextResult.unwrap_or_raise(
-            FlextLDIFFormatHandler.parse_ldif(written_ldif)
-        )
+        reparsed_entries = FlextResult.unwrap_or_raise(handler.parse_ldif(written_ldif))
         assert len(reparsed_entries) == 1
         assert reparsed_entries[0].dn.value == entries[0].dn.value
 
@@ -247,9 +240,8 @@ description: System Administrators
 member: cn=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=example,dc=com
 """
 
-        entries = FlextResult.unwrap_or_raise(
-            FlextLDIFFormatHandler.parse_ldif(complex_ldif)
-        )
+        handler = FlextLDIFFormatHandler()
+        entries = FlextResult.unwrap_or_raise(handler.parse_ldif(complex_ldif))
 
         # Should have 5 entries
         assert len(entries) == 5
@@ -280,13 +272,12 @@ member: cn=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=example,dc=com
 
     def test_empty_ldif_content(self) -> None:
         """Test handling empty LDIF content."""
-        empty_entries = FlextResult.unwrap_or_raise(
-            FlextLDIFFormatHandler.parse_ldif("")
-        )
+        handler = FlextLDIFFormatHandler()
+        empty_entries = FlextResult.unwrap_or_raise(handler.parse_ldif(""))
         assert len(empty_entries) == 0
 
         whitespace_entries = FlextResult.unwrap_or_raise(
-            FlextLDIFFormatHandler.parse_ldif("   \n\n   ")
+            handler.parse_ldif("   \n\n   ")
         )
         assert len(whitespace_entries) == 0
 
@@ -297,7 +288,8 @@ objectClass: person
 """
 
         with pytest.raises(Exception):  # Should raise FlextLDIFParseError
-            FlextResult.unwrap_or_raise(FlextLDIFFormatHandler.parse_ldif(invalid_ldif))
+            handler = FlextLDIFFormatHandler()
+            FlextResult.unwrap_or_raise(handler.parse_ldif(invalid_ldif))
 
     def test_roundtrip_consistency(self) -> None:
         """Test that parse -> write -> parse maintains data consistency."""
@@ -314,19 +306,14 @@ telephoneNumber: +1-555-999-8888
 """
 
         # First parse
-        entries1 = FlextResult.unwrap_or_raise(
-            FlextLDIFFormatHandler.parse_ldif(original_ldif)
-        )
+        handler = FlextLDIFFormatHandler()
+        entries1 = FlextResult.unwrap_or_raise(handler.parse_ldif(original_ldif))
 
         # Write to LDIF
-        written_ldif = FlextResult.unwrap_or_raise(
-            FlextLDIFFormatHandler.write_ldif(entries1)
-        )
+        written_ldif = FlextResult.unwrap_or_raise(handler.write_ldif(entries1))
 
         # Parse again
-        entries2 = FlextResult.unwrap_or_raise(
-            FlextLDIFFormatHandler.parse_ldif(written_ldif)
-        )
+        entries2 = FlextResult.unwrap_or_raise(handler.parse_ldif(written_ldif))
 
         # Should have same number of entries
         assert len(entries1) == len(entries2) == 1

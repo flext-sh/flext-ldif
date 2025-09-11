@@ -32,9 +32,7 @@ def test_extreme_comprehensive_all_scenarios() -> None:
     """EXTREME COMPREHENSIVE: Every possible scenario with extreme_debug_mode."""
     # Extreme config
     config = FlextLDIFModels.Config(
-        extreme_debug_mode=True,
-        strict_validation=False,
-        max_entries=10000
+        extreme_debug_mode=True, strict_validation=False, max_entries=10000
     )
     parser = FlextLDIFServices.ParserService(config=config)
 
@@ -73,15 +71,12 @@ def test_extreme_debug_validation_both_branches() -> None:
     scenarios = [
         # Scenario A: Empty lines only (empty_no_dn branch)
         "\n\n\n",
-
         # Scenario B: No colon lines (no_colon branch)
         "no_colon_here\nanother_no_colon",
-
         # Scenario C: Combined with valid LDIF
         "\nno_colon\ndn: cn=test,dc=com\ncn: test\n\n",
-
         # Scenario D: Multiple invalid patterns
-        "invalid1\ninvalid2\n\n\ndn: cn=final,dc=com\ncn: final"
+        "invalid1\ninvalid2\n\n\ndn: cn=final,dc=com\ncn: final",
     ]
 
     for i, scenario_content in enumerate(scenarios):
@@ -97,7 +92,7 @@ def test_extreme_final_guarantee() -> None:
         strict_parsing=False,
         strict_validation=False,
         allow_empty_values=True,
-        max_entries=50000
+        max_entries=50000,
     )
     parser = FlextLDIFServices.ParserService(config=config)
 
@@ -105,19 +100,14 @@ def test_extreme_final_guarantee() -> None:
     test_cases = [
         # Case 1: Pure empty lines (empty_no_dn branch multiple times)
         "\n\n\n\n",
-
         # Case 2: Pure no-colon lines (no_colon branch multiple times)
         "line1\nline2\nline3",
-
         # Case 3: Mixed with valid LDIF entries
         "\ninvalid\ndn: cn=user,dc=com\ncn: user\n\ninvalid2\n",
-
         # Case 4: Force new attribute branch (711->713)
         "dn: cn=test,dc=com\n_force_new_attr: value1\n_force_new_attr: value2",
-
         # Case 5: Force final entry branch (716->721) - no trailing newline
         "dn: cn=final,dc=com\ncn: final",
-
         # Case 6: Complex realistic scenario
         """
 
@@ -137,12 +127,10 @@ mail: user@example.com
 
 final_invalid_line
         """,
-
         # Case 7: Edge case with extreme patterns + triggers
         "\n\ninvalid\n\ndn: cn=test,dc=com\ncn: test\n_force_new_attr: trigger\ninvalid_end\n\n",
-
         # Case 8: ULTRA-RADICAL: Attributes without final DN processing
-        "attr1: value1\nattr2: value2"  # This should trigger forced DN creation
+        "attr1: value1\nattr2: value2",  # This should trigger forced DN creation
     ]
 
     results = []

@@ -95,14 +95,16 @@ description: Special organizational unit
     complex_attributes.data = {
         "cn": ["complex_mock"],
         "objectClass": ["person", "inetOrgPerson"],
-        "mail": ["complex@example.com"]
+        "mail": ["complex@example.com"],
     }
     # CRÍTICO: Simular que attributes tem método items()
-    complex_attributes.items = Mock(return_value=[
-        ("cn", ["complex_mock"]),
-        ("objectClass", ["person", "inetOrgPerson"]),
-        ("mail", ["complex@example.com"])
-    ])
+    complex_attributes.items = Mock(
+        return_value=[
+            ("cn", ["complex_mock"]),
+            ("objectClass", ["person", "inetOrgPerson"]),
+            ("mail", ["complex@example.com"]),
+        ]
+    )
 
     complex_mock.attributes = complex_attributes
     complex_mock.validate_business_rules = Mock(return_value=None)
@@ -139,7 +141,13 @@ description: Special organizational unit
             assert filter_result.is_success
 
         # Filtro por objectClass diversos
-        for oc in ["person", "inetOrgPerson", "organizationalPerson", "groupOfNames", "organizationalUnit"]:
+        for oc in [
+            "person",
+            "inetOrgPerson",
+            "organizationalPerson",
+            "groupOfNames",
+            "organizationalUnit",
+        ]:
             oc_result = repository.filter_entries_by_object_class(entries, oc)
             assert oc_result.is_success
 
@@ -153,14 +161,11 @@ description: Special organizational unit
         """dn cn=broken,dc=example,dc=com
 cn broken
 objectClass person""",
-
         # LDIF com encoding estranho
-        "dn: cn=weird,dc=example,dc=com\nweird_attr: value_with_\xFF_bytes",
-
+        "dn: cn=weird,dc=example,dc=com\nweird_attr: value_with_\xff_bytes",
         # LDIF vazio/só espaços
         "",
         "   \n\n\t   \n   ",
-
         # LDIF só com comentários
         "# Just a comment\n# Another comment",
     ]
@@ -261,7 +266,7 @@ objectClass: organizationalUnit
     try:
         extreme_entry = FlextLDIFModels.Entry(
             dn=FlextLDIFModels.DistinguishedName(value="cn=extreme,dc=example,dc=com"),
-            attributes=FlextLDIFModels.LdifAttributes(data=extreme_attrs)
+            attributes=FlextLDIFModels.LdifAttributes(data=extreme_attrs),
         )
 
         # Operações com entry extremo
@@ -303,7 +308,9 @@ def test_final_assault_mock_scenarios() -> None:
     mock_b.dn.value = "cn=mock_b,dc=example,dc=com"
     mock_b.attributes = Mock()
     del mock_b.attributes.data  # Remove data attribute
-    mock_b.attributes.items = Mock(return_value=[("cn", ["mock_b"]), ("objectClass", ["person"])])
+    mock_b.attributes.items = Mock(
+        return_value=[("cn", ["mock_b"]), ("objectClass", ["person"])]
+    )
     mock_b.validate_business_rules = Mock(return_value=None)
     mock_scenarios.append(mock_b)
 
@@ -335,7 +342,9 @@ def test_final_assault_mock_scenarios() -> None:
 
     for error_type in error_types:
         with patch.object(FlextLDIFModels, "Factory") as mock_factory:
-            mock_factory.create_entry = Mock(side_effect=error_type(f"Factory error {error_type.__name__}"))
+            mock_factory.create_entry = Mock(
+                side_effect=error_type(f"Factory error {error_type.__name__}")
+            )
 
             test_ldif = """dn: cn=factory_error,dc=example,dc=com
 cn: factory_error
@@ -355,7 +364,9 @@ objectClass: person
 
     for error_type in validation_errors:
         with patch.object(FlextLDIFModels.Entry, "model_validate") as mock_validate:
-            mock_validate.side_effect = error_type(f"Validation error {error_type.__name__}")
+            mock_validate.side_effect = error_type(
+                f"Validation error {error_type.__name__}"
+            )
 
             test_ldif = """dn: cn=validation_error,dc=example,dc=com
 cn: validation_error
@@ -479,15 +490,31 @@ description: Development team group
             assert normalize_result.is_success or normalize_result.is_failure
 
             # Filter operations
-            common_attributes = ["cn", "objectClass", "mail", "description", "member", "memberUid"]
+            common_attributes = [
+                "cn",
+                "objectClass",
+                "mail",
+                "description",
+                "member",
+                "memberUid",
+            ]
             for attr in common_attributes:
                 try:
-                    filter_result = repository.filter_entries_by_attribute(entries, attr)
+                    filter_result = repository.filter_entries_by_attribute(
+                        entries, attr
+                    )
                     assert filter_result.is_success
                 except:
                     pass
 
-            common_object_classes = ["person", "inetOrgPerson", "user", "group", "posixAccount", "posixGroup"]
+            common_object_classes = [
+                "person",
+                "inetOrgPerson",
+                "user",
+                "group",
+                "posixAccount",
+                "posixGroup",
+            ]
             for oc in common_object_classes:
                 try:
                     oc_result = repository.filter_entries_by_object_class(entries, oc)

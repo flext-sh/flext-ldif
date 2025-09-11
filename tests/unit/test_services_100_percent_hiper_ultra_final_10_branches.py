@@ -14,7 +14,7 @@ def test_branch_54_config_is_none_false_path_ultra() -> None:
     # Create entry data
     entry_data = {
         "dn": "cn=ultra54,dc=example,dc=com",
-        "attributes": {"cn": ["ultra54"], "objectClass": ["person"]}
+        "attributes": {"cn": ["ultra54"], "objectClass": ["person"]},
     }
     entries = [FlextLDIFModels.Factory.create_entry(entry_data)]
 
@@ -131,7 +131,11 @@ objectClass: person"""
     if entries:
         entry = entries[0]
         # Should have multiple cn values - use dict access instead of .get()
-        attributes_dict = dict(entry.attributes) if hasattr(entry.attributes, "items") else entry.attributes
+        attributes_dict = (
+            dict(entry.attributes)
+            if hasattr(entry.attributes, "items")
+            else entry.attributes
+        )
         attributes_dict.get("cn", []) if hasattr(attributes_dict, "get") else []
         # Branch executed successfully regardless of attribute count
         assert len(entries) >= 1
@@ -141,7 +145,6 @@ def test_branch_698_current_dn_false_path_ultra() -> None:
     """BRANCH 698 ULTRA: Forçar current_dn para FALSE path - sem DN atual."""
     parser = FlextLDIFServices.ParserService()
 
-    # Simple LDIF content to execute the branch
     ldif_content = """dn: cn=test,dc=example,dc=com
 cn: test
 objectClass: person"""
@@ -162,7 +165,9 @@ def test_branch_731_empty_content_validation_true_path_ultra() -> None:
     result = parser.validate_ldif_syntax(empty_content)
 
     # Verify empty content validation (TRUE path executed)
-    assert result.is_success  # validate_ldif_syntax returns True for valid empty content
+    assert (
+        result.is_success
+    )  # validate_ldif_syntax returns True for valid empty content
     assert result.value is True  # Validation passes
 
 
@@ -208,7 +213,9 @@ objectClass: person"""
     # Test analytics with various configurations
     config = FlextLDIFModels.Config(max_entries=100)
     if result.is_success and result.value:
-        analytics = FlextLDIFServices.AnalyticsService(entries=result.value, config=config)
+        analytics = FlextLDIFServices.AnalyticsService(
+            entries=result.value, config=config
+        )
         analytics_result = analytics.execute()
         assert analytics_result is not None
 

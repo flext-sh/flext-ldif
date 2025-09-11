@@ -38,7 +38,7 @@ repos:
         require_serial: true
         args: [--check-only, --diff]
 
-      # Ruff linting (imports handled by isort; Ruff I001 ignored in pyproject)
+
       - id: ruff-lint
         name: "🔥 Ruff Lint (17 categories)"
         entry: poetry run ruff check

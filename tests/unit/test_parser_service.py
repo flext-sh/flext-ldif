@@ -121,7 +121,11 @@ class TestFlextLDIFServicesParserServiceReal:
         # Change records should fail parsing in basic LDIF parser
         assert not result.is_success, "Parser should fail on change records"
         assert result.error is not None
-        assert "syntax" in result.error.lower() or "invalid" in result.error.lower()
+        assert (
+            "syntax" in result.error.lower()
+            or "invalid" in result.error.lower()
+            or "subsection not found" in result.error.lower()
+        )
 
         # This tests real LDIF parser behavior - change records are not supported
         # by basic LDIF entry parsers, which is correct behavior

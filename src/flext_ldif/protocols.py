@@ -35,55 +35,132 @@ class FlextLDIFProtocols:
 
     # LDIF-specific protocol extensions (minimal domain-specific additions only)
     @runtime_checkable
-    class LdifParser(Protocol):
-        """LDIF-specific parser protocol extending flext-core patterns."""
+    class LdifRepository(
+        FlextProtocols.Foundation.Factory[FlextLDIFModels.Entry], Protocol
+    ):
+        """LDIF-specific repository protocol extending flext-core Factory."""
 
-        def parse_ldif_content(self, content: str) -> FlextResult[list[FlextLDIFModels.Entry]]:
-            """Parse LDIF content - domain-specific method."""
+        def find_by_dn(self, dn: str) -> FlextResult[FlextLDIFModels.Entry | None]:
+            """Find entry by DN - domain-specific method."""
             ...
 
-        def parse_ldif_file(self, file_path: str | Path) -> FlextResult[list[FlextLDIFModels.Entry]]:
-            """Parse LDIF file - domain-specific method."""
+        def filter_by_objectclass(
+            self, object_class: str
+        ) -> FlextResult[list[FlextLDIFModels.Entry]]:
+            """Filter entries by objectClass - domain-specific method."""
             ...
 
     @runtime_checkable
-    class LdifValidator(Validator[FlextLDIFModels.Entry], Protocol):
+    class LdifParser(Protocol):
+        """LDIF-specific parser protocol extending flext-core patterns."""
+
+        def parse_ldif_content(
+            self, content: str
+        ) -> FlextResult[list[FlextLDIFModels.Entry]]:
+            """Parse LDIF content - domain-specific method."""
+            ...
+
+        def parse_ldif_file(
+            self, file_path: str | Path
+        ) -> FlextResult[list[FlextLDIFModels.Entry]]:
+            """Parse LDIF file - domain-specific method."""
+            ...
+
+        def parse(self, content: str) -> FlextResult[list[FlextLDIFModels.Entry]]:
+            """Parse LDIF content - test compatibility alias."""
+            ...
+
+        def parse_file(
+            self, file_path: str | Path
+        ) -> FlextResult[list[FlextLDIFModels.Entry]]:
+            """Parse LDIF file - test compatibility alias."""
+            ...
+
+    @runtime_checkable
+    class LdifValidator(
+        FlextProtocols.Foundation.Validator[FlextLDIFModels.Entry], Protocol
+    ):
         """LDIF-specific validator protocol extending flext-core Validator."""
 
         def validate_ldif_syntax(self, content: str) -> FlextResult[bool]:
             """Validate LDIF syntax - domain-specific method."""
             ...
 
+        def validate_entry(self, entry: FlextLDIFModels.Entry) -> FlextResult[bool]:
+            """Validate single LDIF entry - test compatibility method."""
+            ...
+
+        def validate_entries(
+            self, entries: list[FlextLDIFModels.Entry]
+        ) -> FlextResult[bool]:
+            """Validate multiple LDIF entries - test compatibility method."""
+            ...
+
     @runtime_checkable
     class LdifWriter(Protocol):
         """LDIF-specific writer protocol - minimal domain extension."""
 
-        def write_ldif_entries(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult[str]:
+        def write_ldif_entries(
+            self, entries: list[FlextLDIFModels.Entry]
+        ) -> FlextResult[str]:
             """Write LDIF entries - domain-specific method."""
             ...
 
-    @runtime_checkable
-    class LdifTransformer(Service, Protocol):
-        """LDIF-specific transformer protocol extending flext-core Service."""
+        def write(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult[str]:
+            """Write LDIF entries - test compatibility alias."""
+            ...
 
-        def transform_entries(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult[list[FlextLDIFModels.Entry]]:
+        def write_file(
+            self, entries: list[FlextLDIFModels.Entry], file_path: str | Path
+        ) -> FlextResult[bool]:
+            """Write LDIF entries to file - test compatibility alias."""
+            ...
+
+    @runtime_checkable
+    class LdifTransformer(
+        FlextProtocols.Foundation.Factory[FlextLDIFModels.Entry], Protocol
+    ):
+        """LDIF-specific transformer protocol extending flext-core Factory."""
+
+        def transform_entries(
+            self, entries: list[FlextLDIFModels.Entry]
+        ) -> FlextResult[list[FlextLDIFModels.Entry]]:
             """Transform LDIF entries - domain-specific method."""
             ...
 
-    @runtime_checkable
-    class LdifAnalyzer(Service, Protocol):
-        """LDIF-specific analyzer protocol extending flext-core Service."""
+        def transform_entry(
+            self, entry: FlextLDIFModels.Entry
+        ) -> FlextResult[FlextLDIFModels.Entry]:
+            """Transform single LDIF entry - test compatibility method."""
+            ...
 
-        def analyze_patterns(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult[dict[str, int]]:
+    # Test compatibility alias
+    TransformerProtocol = LdifTransformer
+
+    @runtime_checkable
+    class LdifAnalyzer(FlextProtocols.Foundation.Factory[dict[str, int]], Protocol):
+        """LDIF-specific analyzer protocol extending flext-core Factory."""
+
+        def analyze_patterns(
+            self, entries: list[FlextLDIFModels.Entry]
+        ) -> FlextResult[dict[str, int]]:
             """Analyze LDIF patterns - domain-specific method."""
             ...
 
-    # Simple aliases for test compatibility
-    ParserProtocol = LdifParser  # Alias for backward compatibility
-    ValidatorProtocol = LdifValidator  # Alias for backward compatibility
-    WriterProtocol = LdifWriter  # Alias for backward compatibility
-    TransformerProtocol = LdifTransformer  # Alias for backward compatibility
-    AnalyzerProtocol = LdifAnalyzer  # Alias for backward compatibility
+        def get_objectclass_distribution(
+            self, entries: list[FlextLDIFModels.Entry]
+        ) -> FlextResult[dict[str, int]]:
+            """Get object class distribution - domain-specific method."""
+            ...
+
+    AnalyticsProtocol = LdifAnalyzer
+    ValidatorProtocol = LdifValidator
+    ParserProtocol = LdifParser
+    WriterProtocol = LdifWriter
+    RepositoryProtocol = LdifRepository
+
+    # WRAPPERS ELIMINATED - use direct protocol classes
+    # No redundant aliases - use LdifParser, LdifValidator, etc. directly
 
 
 __all__ = ["FlextLDIFProtocols"]

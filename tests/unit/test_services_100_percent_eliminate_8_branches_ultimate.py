@@ -156,7 +156,9 @@ def test_ultimate_comprehensive_8_branches_elimination() -> None:
     validator.validate_ldif_entries("")
 
     # 3. Branch 661 - empty line
-    ldif_661 = "dn: cn=ultimate661,dc=example,dc=com\ncn: ultimate661\n\nobjectClass: person"
+    ldif_661 = (
+        "dn: cn=ultimate661,dc=example,dc=com\ncn: ultimate661\n\nobjectClass: person"
+    )
     parser.parse(ldif_661)
 
     # 4. Branch 674 - no colon
@@ -172,7 +174,9 @@ def test_ultimate_comprehensive_8_branches_elimination() -> None:
     parser.parse(ldif_693)
 
     # 7. Branch 698 - current_dn False
-    ldif_698 = "dn: cn=ultimate698,dc=example,dc=com\ncn: ultimate698\nobjectClass: person\n\n"
+    ldif_698 = (
+        "dn: cn=ultimate698,dc=example,dc=com\ncn: ultimate698\nobjectClass: person\n\n"
+    )
     parser.parse(ldif_698)
 
     # 8. Branch 731 - empty content variants
@@ -212,8 +216,8 @@ objectClass: person
         "attributes": {
             "cn": ["ultimate_writer"],
             "objectClass": ["person"],
-            "description": ["Ultimate writer test"]
-        }
+            "description": ["Ultimate writer test"],
+        },
     }
     writer_entries = [FlextLDIFModels.Factory.create_entry(ultimate_entry)]
     writer.write_entries_to_string(writer_entries)
@@ -222,7 +226,7 @@ objectClass: person
     problematic_ultimate = [
         "linha_sem_colon_ultimate_1",
         "linha_sem_colon_ultimate_2",
-        "linha_sem_colon_ultimate_3"
+        "linha_sem_colon_ultimate_3",
     ]
 
     for i, prob_line in enumerate(problematic_ultimate):
@@ -233,7 +237,7 @@ objectClass: person
     base64_ultimate = [
         "description:: VWx0aW1hdGUgdGVzdA==",
         "userCertificate:: TUlJQ2RnPT0=",
-        "jpegPhoto:: LzlqLzRBQVE="
+        "jpegPhoto:: LzlqLzRBQVE=",
     ]
 
     for i, b64_line in enumerate(base64_ultimate):
@@ -317,16 +321,21 @@ objectClass: organizationalPerson
         "attributes": {
             "cn": ["ultimate_writer_final"],
             "objectClass": ["person"],
-            "description": ["Ultimate final writer test"]
-        }
+            "description": ["Ultimate final writer test"],
+        },
     }
-    ultimate_final_entries = [FlextLDIFModels.Factory.create_entry(ultimate_writer_entry)]
+    ultimate_final_entries = [
+        FlextLDIFModels.Factory.create_entry(ultimate_writer_entry)
+    ]
     ultimate_writer_final = writer.write_entries_to_string(ultimate_final_entries)
 
     # Verification ULTIMATE
     assert ultimate_parse_all.is_success or ultimate_parse_all.is_failure
     assert ultimate_validate_empty.is_success or ultimate_validate_empty.is_failure
-    assert ultimate_validate_content_empty.is_success or ultimate_validate_content_empty.is_failure
+    assert (
+        ultimate_validate_content_empty.is_success
+        or ultimate_validate_content_empty.is_failure
+    )
     assert ultimate_writer_final.is_success or ultimate_writer_final.is_failure
 
     assert True, "🎯 ULTIMATE ZERO BRANCHES - 100% COVERAGE ABSOLUTE!"

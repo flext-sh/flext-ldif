@@ -22,30 +22,32 @@ def test_all_services_100_percent() -> None:
     """Force 100% coverage by calling ALL methods."""
     # Create config with extreme debug
     config = FlextLDIFModels.Config(
-        extreme_debug_mode=True,
-        force_all_branches=True,
-        strict_validation=False
+        extreme_debug_mode=True, force_all_branches=True, strict_validation=False
     )
 
     # Test entries
     test_entries = [
-        FlextLDIFModels.Entry.model_validate({
-            "dn": "cn=person1,dc=test,dc=com",
-            "attributes": {
-                "cn": ["person1"],
-                "objectClass": ["person", "organizationalPerson"],
-                "mail": ["person1@test.com"],
-                "telephoneNumber": ["+1234567890"]
+        FlextLDIFModels.Entry.model_validate(
+            {
+                "dn": "cn=person1,dc=test,dc=com",
+                "attributes": {
+                    "cn": ["person1"],
+                    "objectClass": ["person", "organizationalPerson"],
+                    "mail": ["person1@test.com"],
+                    "telephoneNumber": ["+1234567890"],
+                },
             }
-        }),
-        FlextLDIFModels.Entry.model_validate({
-            "dn": "cn=group1,ou=groups,dc=test,dc=com",
-            "attributes": {
-                "cn": ["group1"],
-                "objectClass": ["groupOfNames"],
-                "member": ["cn=person1,dc=test,dc=com"]
+        ),
+        FlextLDIFModels.Entry.model_validate(
+            {
+                "dn": "cn=group1,ou=groups,dc=test,dc=com",
+                "attributes": {
+                    "cn": ["group1"],
+                    "objectClass": ["groupOfNames"],
+                    "member": ["cn=person1,dc=test,dc=com"],
+                },
             }
-        })
+        ),
     ]
 
     # FORCE ALL ANALYTICS SERVICE BRANCHES
@@ -61,7 +63,9 @@ def test_all_services_100_percent() -> None:
     assert result.is_success
 
     # Force with entries
-    analytics_entries = FlextLDIFServices.AnalyticsService(entries=test_entries, config=config)
+    analytics_entries = FlextLDIFServices.AnalyticsService(
+        entries=test_entries, config=config
+    )
     result = analytics_entries.execute()
     assert result.is_success
 
@@ -178,7 +182,9 @@ def test_all_services_100_percent() -> None:
     # FORCE ALL REPOSITORY SERVICE BRANCHES
 
     repo_empty = FlextLDIFServices.RepositoryService(entries=[], config=config)
-    repo_entries = FlextLDIFServices.RepositoryService(entries=test_entries, config=config)
+    repo_entries = FlextLDIFServices.RepositoryService(
+        entries=test_entries, config=config
+    )
 
     for repo_name, repo in [("empty", repo_empty), ("entries", repo_entries)]:
         result = repo.execute()

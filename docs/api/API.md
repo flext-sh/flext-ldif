@@ -942,9 +942,9 @@ export FLEXT_LDIF_ENABLE_SCHEMA_VALIDATION=true
 from flext_ldif.models import (
     LDIFContent,                 # Union[str, bytes] for LDIF content
     LDIFLines,                   # FlextTypes.Core.StringList for LDIF lines
-    FlextLDIFDNDict,             # TypedDict for DN structure
-    FlextLDIFAttributesDict,     # TypedDict for attributes
-    FlextLDIFEntryDict           # TypedDict for entry structure
+    FlextLDIFDNDict,
+    FlextLDIFAttributesDict,
+    FlextLDIFEntryDict
 )
 
 from flext_core import FlextResult

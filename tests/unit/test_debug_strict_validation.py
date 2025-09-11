@@ -35,7 +35,9 @@ def test_debug_strict_validation_flow() -> None:
             pass
         return result
 
-    with patch.object(FlextUtilities.TypeGuards, "has_attribute", side_effect=debug_has_attribute):
+    with patch.object(
+        FlextUtilities.TypeGuards, "has_attribute", side_effect=debug_has_attribute
+    ):
         validator.validate_entries([entry])
 
     assert True  # Só queremos ver o debug
@@ -55,8 +57,10 @@ def test_debug_manual_validation_call() -> None:
     entry.attributes = mock_attributes
 
     # Chamar método diretamente
-    with patch.object(FlextUtilities.TypeGuards, "has_attribute") as mock_has_attr, \
-         patch.object(FlextUtilities.TypeGuards, "is_list_non_empty", return_value=True):
+    with (
+        patch.object(FlextUtilities.TypeGuards, "has_attribute") as mock_has_attr,
+        patch.object(FlextUtilities.TypeGuards, "is_list_non_empty", return_value=True),
+    ):
 
         def debug_has_attribute(obj, attr):
             if obj is config and attr == "strict_validation":

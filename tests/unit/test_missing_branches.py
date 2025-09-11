@@ -99,7 +99,7 @@ objectClass: person
         # Create a proper entry
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
-            "attributes": {"cn": ["test"], "objectClass": ["person"]}
+            "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
         entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
@@ -151,7 +151,7 @@ cn: test
 objectClass: person
 
 """
-        result = parser.parse_entries_from_string(content)
+        result = parser.parse(content)
 
         utils = FlextTestsUtilities()
         assertion = utils.assertion()
@@ -165,7 +165,7 @@ objectClass: person
         # Create entry
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
-            "attributes": {"cn": ["test"], "objectClass": ["person"]}
+            "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
         entry = FlextLDIFModels.Entry.model_validate(entry_data)
 

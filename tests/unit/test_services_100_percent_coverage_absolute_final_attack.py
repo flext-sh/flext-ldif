@@ -31,7 +31,7 @@ def test_branch_54_config_none_false_path_absolute() -> None:
 
     analytics = FlextLDIFServices.AnalyticsService(
         entries=[],
-        config=config  # Config not None - forces FALSE path
+        config=config,  # Config not None - forces FALSE path
     )
 
     result = analytics.execute()
@@ -58,8 +58,8 @@ def test_branch_326_empty_object_class_true_path_absolute() -> None:
         "dn": "cn=abs326,dc=example,dc=com",
         "attributes": {
             "cn": ["abs326"],
-            "objectClass": [""]  # Empty object class
-        }
+            "objectClass": [""],  # Empty object class
+        },
     }
     entry = FlextLDIFModels.Factory.create_entry(entry_data)
 
@@ -153,10 +153,12 @@ def test_absolute_final_comprehensive_8_branches_total_elimination() -> None:
     validator.validate_entries([])
 
     # 3. Branch 326 - empty object_class (TRUE path)
-    entry_326 = FlextLDIFModels.Factory.create_entry({
-        "dn": "cn=abs326,dc=example,dc=com",
-        "attributes": {"cn": ["abs326"], "objectClass": [""]}
-    })
+    entry_326 = FlextLDIFModels.Factory.create_entry(
+        {
+            "dn": "cn=abs326,dc=example,dc=com",
+            "attributes": {"cn": ["abs326"], "objectClass": [""]},
+        }
+    )
     validator.validate_entries([entry_326])
 
     # 4. Branch 412 - empty entries (TRUE path)
@@ -208,12 +210,12 @@ objectClass: person
 
     # Ultra-comprehensive empty variations para múltiplos branches
     ultra_empty_variations = [
-        "",           # Branch 731, 194, 412, 642
-        "   ",        # Branch 731 whitespace
-        "\n",         # Branch 731 newline
-        "\t",         # Branch 731 tab
+        "",  # Branch 731, 194, 412, 642
+        "   ",  # Branch 731 whitespace
+        "\n",  # Branch 731 newline
+        "\t",  # Branch 731 tab
         "  \n  \t  ",  # Branch 731 mixed
-        "\n\n\n",     # Branch 731 multiple newlines
+        "\n\n\n",  # Branch 731 multiple newlines
         " \t \n \t ",  # Branch 731 ultimate whitespace
     ]
 
@@ -251,16 +253,16 @@ objectClass: person
 
     # Ultra-comprehensive object class variations para branch 326
     ultra_objectclass_variations = [
-        "",           # Empty - our target for TRUE path
-        "   ",        # Whitespace only
-        "\t",         # Tab only
-        "\n",         # Newline only
+        "",  # Empty - our target for TRUE path
+        "   ",  # Whitespace only
+        "\t",  # Tab only
+        "\n",  # Newline only
     ]
 
     for i, oc_var in enumerate(ultra_objectclass_variations):
         entry_data = {
             "dn": f"cn=ultraoc{i},dc=example,dc=com",
-            "attributes": {"cn": [f"ultraoc{i}"], "objectClass": [oc_var]}
+            "attributes": {"cn": [f"ultraoc{i}"], "objectClass": [oc_var]},
         }
         entry = FlextLDIFModels.Factory.create_entry(entry_data)
         validator.validate_entries([entry])
@@ -348,7 +350,9 @@ objectClass: organizationalPerson
 
     # Test config scenarios
     absolute_config = FlextLDIFModels.Config(max_entries=2000, strict_validation=True)
-    absolute_analytics = FlextLDIFServices.AnalyticsService(entries=[], config=absolute_config)
+    absolute_analytics = FlextLDIFServices.AnalyticsService(
+        entries=[], config=absolute_config
+    )
     absolute_analytics_result = absolute_analytics.execute()
 
     # Final comprehensive entries
@@ -357,16 +361,21 @@ objectClass: organizationalPerson
         "attributes": {
             "cn": ["absolute_final_verification"],
             "objectClass": ["person"],
-            "description": ["Absolute final verification test"]
-        }
+            "description": ["Absolute final verification test"],
+        },
     }
-    absolute_final_entries = [FlextLDIFModels.Factory.create_entry(absolute_final_entry)]
+    absolute_final_entries = [
+        FlextLDIFModels.Factory.create_entry(absolute_final_entry)
+    ]
     absolute_writer_final = writer.write_entries_to_string(absolute_final_entries)
 
     # Verification ABSOLUTE TOTAL
     assert absolute_parse_all.is_success or absolute_parse_all.is_failure
     assert absolute_validate_empty.is_success or absolute_validate_empty.is_failure
-    assert absolute_validate_content_empty.is_success or absolute_validate_content_empty.is_failure
+    assert (
+        absolute_validate_content_empty.is_success
+        or absolute_validate_content_empty.is_failure
+    )
     assert absolute_writer_empty.is_success or absolute_writer_empty.is_failure
     assert absolute_writer_final.is_success or absolute_writer_final.is_failure
     assert absolute_analytics_result.is_success or absolute_analytics_result.is_failure

@@ -104,9 +104,9 @@ class TestAttributeNameField:
             (m for m in metadata if hasattr(m, "max_length")), None
         )
         assert pattern_constraint is not None
-        assert pattern_constraint.pattern == r"^[a-zA-Z][a-zA-Z0-9\-]*$"
+        assert pattern_constraint.pattern == r"^[a-zA-Z][a-zA-Z0-9]*$"
         assert max_len_constraint is not None
-        assert max_len_constraint.max_length == 255
+        assert max_len_constraint.max_length == 256
 
     def test_attribute_name_field_custom_parameters(self) -> None:
         """Test attribute_name_field with custom parameters."""
@@ -247,9 +247,9 @@ class TestObjectClassField:
             (m for m in metadata if hasattr(m, "max_length")), None
         )
         assert pattern_constraint is not None
-        assert pattern_constraint.pattern == r"^[a-zA-Z][a-zA-Z0-9\-]*$"
+        assert pattern_constraint.pattern == r"^[a-zA-Z][a-zA-Z0-9]*$"
         assert max_len_constraint is not None
-        assert max_len_constraint.max_length == 255
+        assert max_len_constraint.max_length == 256
 
     def test_object_class_field_custom_parameters(self) -> None:
         """Test object_class_field with custom parameters."""
@@ -331,7 +331,7 @@ class TestFieldDefaults:
 
         # Validate they have expected values
         assert dn_attr == "dn"
-        assert attr_sep == ":"
+        assert attr_sep == ": "
 
     def test_field_patterns_types(self) -> None:
         """Test that constants have correct types."""

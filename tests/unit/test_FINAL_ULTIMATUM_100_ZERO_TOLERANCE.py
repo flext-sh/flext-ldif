@@ -10,7 +10,6 @@ This is the FINAL attempt with ZERO TOLERANCE.
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock
 
 import pytest
 
@@ -37,29 +36,38 @@ class TestFinalUltimatum100ZeroTolerance:
 
         # Create comprehensive test data
         test_entries = [
-            FlextLDIFModels.Entry.model_validate({
-                "dn": f"cn=test{i},ou=people,dc=test,dc=com",
-                "attributes": {
-                    "cn": [f"test{i}"],
-                    "sn": [f"user{i}"],
-                    "objectClass": ["person", "organizationalPerson"],
-                    "mail": [f"test{i}@test.com"],
-                    "telephoneNumber": [f"+123456789{i}"]
+            FlextLDIFModels.Entry.model_validate(
+                {
+                    "dn": f"cn=test{i},ou=people,dc=test,dc=com",
+                    "attributes": {
+                        "cn": [f"test{i}"],
+                        "sn": [f"user{i}"],
+                        "objectClass": ["person", "organizationalPerson"],
+                        "mail": [f"test{i}@test.com"],
+                        "telephoneNumber": [f"+123456789{i}"],
+                    },
                 }
-            }) for i in range(5)
+            )
+            for i in range(5)
         ]
 
         # FORCE EVERY SINGLE SERVICE AND METHOD
         services_matrix = [
             (FlextLDIFServices.AnalyticsService, {"entries": None, "config": None}),
             (FlextLDIFServices.AnalyticsService, {"entries": [], "config": config}),
-            (FlextLDIFServices.AnalyticsService, {"entries": test_entries, "config": config}),
+            (
+                FlextLDIFServices.AnalyticsService,
+                {"entries": test_entries, "config": config},
+            ),
             (FlextLDIFServices.ParserService, {"content": "", "config": config}),
             (FlextLDIFServices.ValidatorService, {"config": config}),
             (FlextLDIFServices.WriterService, {"config": config}),
             (FlextLDIFServices.TransformerService, {"config": config}),
             (FlextLDIFServices.RepositoryService, {"entries": [], "config": config}),
-            (FlextLDIFServices.RepositoryService, {"entries": test_entries, "config": config}),
+            (
+                FlextLDIFServices.RepositoryService,
+                {"entries": test_entries, "config": config},
+            ),
         ]
 
         for service_class, kwargs in services_matrix:
@@ -154,35 +162,44 @@ class TestFinalUltimatum100ZeroTolerance:
         except TypeError:
             # LdifDomainProcessors is now a proxy object, not callable
             processors = FlextLDIFUtilities.LdifDomainProcessors
-        
+
         converters = FlextLDIFUtilities.LdifConverters()
 
-        # Force utilities branches with comprehensive mocking
+        # Force utilities branches with real entries (no Mocks)
 
-        # Create mock entries to force ALL validation branches
-        mock_entries = []
+        # Create real entries to force ALL validation branches
+        real_entries = []
 
-        # Mock entry with empty DN (line 40->42)
-        mock_empty_dn = Mock()
-        mock_empty_dn.dn.value.strip.return_value = ""
-        mock_empty_dn.has_attribute.return_value = True  # Has objectClass
-        mock_entries.append(mock_empty_dn)
+        # Entry with valid DN but no objectClass - triggers validation path
+        entry_no_oc = FlextLDIFModels.Entry.model_validate(
+            {
+                "dn": "cn=valid,dc=com",
+                "attributes": {"cn": ["valid"]},  # Missing objectClass
+            }
+        )
+        real_entries.append(entry_no_oc)
 
-        # Mock entry with missing objectClass (line 42->39)
-        mock_no_oc = Mock()
-        mock_no_oc.dn.value.strip.return_value = "cn=valid,dc=com"
-        mock_no_oc.has_attribute.return_value = False  # Missing objectClass
-        mock_entries.append(mock_no_oc)
+        # Entry with minimal DN and has objectClass
+        entry_minimal = FlextLDIFModels.Entry.model_validate(
+            {
+                "dn": "cn=minimal",
+                "attributes": {"cn": ["minimal"], "objectClass": ["person"]},
+            }
+        )
+        real_entries.append(entry_minimal)
 
-        # Mock entry with both issues
-        mock_both_issues = Mock()
-        mock_both_issues.dn.value.strip.return_value = ""
-        mock_both_issues.has_attribute.return_value = False
-        mock_entries.append(mock_both_issues)
+        # Entry with another validation case
+        entry_another = FlextLDIFModels.Entry.model_validate(
+            {
+                "dn": "cn=another,dc=com",
+                "attributes": {"description": ["test"]},  # No objectClass
+            }
+        )
+        real_entries.append(entry_another)
 
         # Force ALL combinations
         for max_errors in [0, 1, 5, 10, 100]:
-            result = processors.validate_entries_or_warn(mock_entries, max_errors)
+            result = processors.validate_entries_or_warn(real_entries, max_errors)
             assert result is not None
 
         # Force empty entries statistics
@@ -190,11 +207,11 @@ class TestFinalUltimatum100ZeroTolerance:
         assert result is not None
 
         # Force filter methods
-        result = processors.filter_entries_by_object_class(mock_entries, "person")
+        result = processors.filter_entries_by_object_class(real_entries, "person")
         assert result is not None
 
         result = processors.find_entries_with_missing_required_attributes(
-            mock_entries, ["cn", "sn", "mail"]
+            real_entries, ["cn", "sn", "mail"]
         )
         assert result is not None
 
@@ -222,8 +239,8 @@ class TestFinalUltimatum100ZeroTolerance:
         ]
 
         for dn in dn_tests:
-            # Use available method or skip this test part if method doesn't exist  
-            if hasattr(converters, 'normalize_dn_components'):
+            # Use available method or skip this test part if method doesn't exist
+            if hasattr(converters, "normalize_dn_components"):
                 result = converters.normalize_dn_components(dn)
             else:
                 result = "test_result"  # Simplified for compatibility
@@ -239,7 +256,9 @@ class TestFinalUltimatum100ZeroTolerance:
         assert error1 is not None
         assert error1.code == "LDIF_PROCESSING_ERROR"
 
-        error2 = FlextLDIFExceptions.processing_error("Process failed", operation="parse")  # With operation
+        error2 = FlextLDIFExceptions.processing_error(
+            "Process failed", operation="parse"
+        )  # With operation
         assert error2 is not None
         assert "parse" in str(error2.context) if error2.context else True
 
@@ -248,18 +267,26 @@ class TestFinalUltimatum100ZeroTolerance:
         assert error3 is not None
         assert error3.code == "LDIF_TIMEOUT_ERROR"
 
-        error4 = FlextLDIFExceptions.timeout_error("Timeout occurred", operation="connect")  # With operation
+        error4 = FlextLDIFExceptions.timeout_error(
+            "Timeout occurred", timeout_duration=30.0
+        )  # With timeout_duration
         assert error4 is not None
-        assert "connect" in str(error4.context) if error4.context else True
+        assert "30.0" in str(error4.context) if error4.context else True
 
         # Force ALL other exception types to ensure complete coverage
         all_exceptions = [
             FlextLDIFExceptions.error("Generic error"),
             FlextLDIFExceptions.parse_error("Parse error", line=1, column=1),
-            FlextLDIFExceptions.entry_error("Entry error", dn="test", entry_index=0),
-            FlextLDIFExceptions.validation_error("Validation error", dn="test", rule="test"),
+            FlextLDIFExceptions.entry_error(
+                "Entry error", dn="test", entry_data={"cn": ["test"]}
+            ),
+            FlextLDIFExceptions.validation_error(
+                "Validation error", entry_dn="test", validation_rule="test"
+            ),
             FlextLDIFExceptions.connection_error("Connection error"),
-            FlextLDIFExceptions.file_error("File error", file_path="/test", operation="read"),
+            FlextLDIFExceptions.file_error(
+                "File error", file_path="/test", operation="read"
+            ),
             FlextLDIFExceptions.configuration_error("Config error"),
             FlextLDIFExceptions.authentication_error("Auth error"),
         ]
@@ -269,18 +296,19 @@ class TestFinalUltimatum100ZeroTolerance:
 
         # Force exception builder with ALL methods
         builder = FlextLDIFExceptions.builder()
-        complex_exception = (builder
-                            .message("Ultimate exception test")
-                            .code(FlextLDIFErrorCodes.LDIF_VALIDATION_ERROR)
-                            .context({"ultimate": True, "test": "value"})
-                            .location(line=999, column=999)
-                            .dn("cn=ultimate,dc=test,dc=com")
-                            .attribute("ultimateAttribute")
-                            .entry_index(999)
-                            .validation_rule("ultimate_rule")
-                            .file_path("/ultimate/test.ldif")
-                            .operation("ultimate_operation")
-                            .build())
+        complex_exception = (
+            builder.message("Ultimate exception test")
+            .code(FlextLDIFErrorCodes.LDIF_VALIDATION_ERROR)
+            .context({"ultimate": True, "test": "value"})
+            .location(line=999, column=999)
+            .dn("cn=ultimate,dc=test,dc=com")
+            .attribute("ultimateAttribute")
+            .entry_index(999)
+            .validation_rule("ultimate_rule")
+            .file_path("/ultimate/test.ldif")
+            .operation("ultimate_operation")
+            .build()
+        )
 
         assert complex_exception is not None
 
@@ -297,17 +325,18 @@ class TestFinalUltimatum100ZeroTolerance:
                 extreme_debug_mode=True,
                 force_all_branches=True,
                 strict_validation=False,
-                max_entries=1
-            )
+                max_entries=1,
+            ),
         ]
 
         entries_variations = [
             None,
             [],
-            [FlextLDIFModels.Entry.model_validate({
-                "dn": "cn=minimal,dc=com",
-                "attributes": {"cn": ["minimal"]}
-            })]
+            [
+                FlextLDIFModels.Entry.model_validate(
+                    {"dn": "cn=minimal,dc=com", "attributes": {"cn": ["minimal"]}}
+                )
+            ],
         ]
 
         # Test EVERY combination
@@ -315,7 +344,9 @@ class TestFinalUltimatum100ZeroTolerance:
             for entries in entries_variations:
                 try:
                     # Analytics
-                    analytics = FlextLDIFServices.AnalyticsService(entries=entries, config=config)
+                    analytics = FlextLDIFServices.AnalyticsService(
+                        entries=entries, config=config
+                    )
                     analytics.execute()
 
                     # Parser
@@ -338,7 +369,9 @@ class TestFinalUltimatum100ZeroTolerance:
                         transformer.transform_entries(entries)
 
                     # Repository
-                    repository = FlextLDIFServices.RepositoryService(entries=entries or [], config=config)
+                    repository = FlextLDIFServices.RepositoryService(
+                        entries=entries or [], config=config
+                    )
                     repository.execute()
 
                 except Exception:

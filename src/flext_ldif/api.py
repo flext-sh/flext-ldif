@@ -74,14 +74,15 @@ class FlextLDIFAPI:
         def parse_string(self, content: str) -> FlextResultEntries:
             """Parse LDIF content using railway-oriented programming."""
             if not content.strip():
-                return FlextResult[list[FlextLDIFModels.Entry]].fail(
-                    "LDIF content cannot be empty"
-                )
+                # Return empty list for empty content - valid LDIF case
+                return FlextResult[list[FlextLDIFModels.Entry]].ok([])
 
             return (
                 self._api._services.parser.parse(content)
                 .flat_map(self._validate_entry_count)
-                .tap(lambda entries: self._logger.debug(f"Parsed {len(entries)} entries"))
+                .tap(
+                    lambda entries: self._logger.debug(f"Parsed {len(entries)} entries")
+                )
             )
 
         def parse_file(self, file_path: str | Path) -> FlextResultEntries:
@@ -90,15 +91,17 @@ class FlextLDIFAPI:
 
             if not file_path_obj.exists():
                 return FlextResult[list[FlextLDIFModels.Entry]].fail(
-                    f"LDIF file not found: {file_path_obj}"
+                    f"LDIF file not found: {file_path_obj}",
                 )
 
             return (
                 self._api._services.parser.parse_ldif_file(str(file_path_obj))
                 .flat_map(self._validate_entry_count)
-                .tap(lambda entries: self._logger.debug(
-                    f"Parsed file {file_path_obj} with {len(entries)} entries"
-                ))
+                .tap(
+                    lambda entries: self._logger.debug(
+                        f"Parsed file {file_path_obj} with {len(entries)} entries",
+                    )
+                )
             )
 
         def write_string(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultStr:
@@ -106,41 +109,57 @@ class FlextLDIFAPI:
             if not entries:
                 return FlextResult[str].fail("Cannot write empty entry list")
 
-            return (
-                self._api._services.writer.write_entries_to_string(entries)
-                .tap(lambda content: self._logger.debug(f"Generated LDIF string: {len(content)} chars"))
+            return self._api._services.writer.write_entries_to_string(entries).tap(
+                lambda content: self._logger.debug(
+                    f"Generated LDIF string: {len(content)} chars"
+                )
             )
 
-        def write_file(self, entries: list[FlextLDIFModels.Entry], file_path: str | Path) -> FlextResultBool:
+        def write_file(
+            self, entries: list[FlextLDIFModels.Entry], file_path: str | Path
+        ) -> FlextResultBool:
             """Write entries to LDIF file with validation."""
             if not entries:
                 return FlextResult[bool].fail("Cannot write empty entry list")
 
-            write_result = self._api._services.writer.write_entries_to_file(entries, str(file_path))
+            write_result = self._api._services.writer.write_entries_to_file(
+                entries, str(file_path)
+            )
             if write_result.is_success:
                 self._logger.debug(f"Wrote {len(entries)} entries to {file_path}")
-                return FlextResult[bool].ok(True)
-            else:
-                return FlextResult[bool].fail(write_result.error)
+                return FlextResult[bool].ok(data=True)
+            # Handle possible None error with proper fallback message
+            error_msg = (
+                write_result.error or "Write operation failed with unknown error"
+            )
+            return FlextResult[bool].fail(error_msg)
 
-        def validate_entries(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultBool:
+        def validate_entries(
+            self, entries: list[FlextLDIFModels.Entry]
+        ) -> FlextResultBool:
             """Validate multiple LDIF entries."""
             if not entries:
                 return FlextResult[bool].fail("Cannot validate empty entry list")
 
             validation_result = (
-                FlextResult[list[FlextLDIFModels.Entry]].ok(entries)
+                FlextResult[list[FlextLDIFModels.Entry]]
+                .ok(entries)
                 .flat_map(self._validate_entry_count)
                 .flat_map(self._api._services.validator.validate_entries)
             )
-            
+
             if validation_result.is_success:
                 self._logger.debug(f"Validated {len(entries)} entries")
-                return FlextResult[bool].ok(True)
-            else:
-                return FlextResult[bool].fail(validation_result.error)
+                return FlextResult[bool].ok(data=True)
+            # Handle possible None error with proper fallback message
+            error_msg = (
+                validation_result.error or "Validation failed with unknown error"
+            )
+            return FlextResult[bool].fail(error_msg)
 
-        def _validate_entry_count(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultEntries:
+        def _validate_entry_count(
+            self, entries: list[FlextLDIFModels.Entry]
+        ) -> FlextResultEntries:
             """Validate entry count against configuration limits."""
             max_entries = self._config.max_entries
             if max_entries is not None and len(entries) > max_entries:
@@ -156,13 +175,21 @@ class FlextLDIFAPI:
             self._api = api_instance
             self._logger = api_instance._logger
 
-        def by_object_class(self, entries: list[FlextLDIFModels.Entry], object_class: str) -> FlextResultEntries:
+        def by_object_class(
+            self, entries: list[FlextLDIFModels.Entry], object_class: str
+        ) -> FlextResultEntries:
             """Filter entries by objectClass attribute."""
-            return self._api._services.repository.filter_entries_by_object_class(entries, object_class)
+            return self._api._services.repository.filter_entries_by_object_class(
+                entries, object_class
+            )
 
-        def by_attribute(self, entries: list[FlextLDIFModels.Entry], attribute: str, value: str) -> FlextResultEntries:
+        def by_attribute(
+            self, entries: list[FlextLDIFModels.Entry], attribute: str, value: str
+        ) -> FlextResultEntries:
             """Filter entries by specific attribute value."""
-            return self._api._services.repository.filter_entries_by_attribute(entries, attribute, value)
+            return self._api._services.repository.filter_entries_by_attribute(
+                entries, attribute, value
+            )
 
         def persons(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultEntries:
             """Filter person entries."""
@@ -174,19 +201,27 @@ class FlextLDIFAPI:
             filtered = [entry for entry in entries if entry.is_group()]
             return FlextResult[list[FlextLDIFModels.Entry]].ok(filtered)
 
-        def organizational_units(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultEntries:
+        def organizational_units(
+            self, entries: list[FlextLDIFModels.Entry]
+        ) -> FlextResultEntries:
             """Filter organizational unit entries."""
             filtered = [
-                entry for entry in entries
-                if "organizationalunit" in (oc.lower() for oc in (entry.get_attribute("objectClass") or []))
+                entry
+                for entry in entries
+                if "organizationalunit"
+                in (oc.lower() for oc in (entry.get_attribute("objectClass") or []))
             ]
             return FlextResult[list[FlextLDIFModels.Entry]].ok(filtered)
 
-        def valid_entries(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultEntries:
+        def valid_entries(
+            self, entries: list[FlextLDIFModels.Entry]
+        ) -> FlextResultEntries:
             """Filter only valid entries."""
             filtered = []
             for entry in entries:
-                validation_result = self._api._services.validator.validate_entry_structure(entry)
+                validation_result = (
+                    self._api._services.validator.validate_entry_structure(entry)
+                )
                 if validation_result.is_success and validation_result.unwrap():
                     filtered.append(entry)
             return FlextResult[list[FlextLDIFModels.Entry]].ok(filtered)
@@ -199,19 +234,27 @@ class FlextLDIFAPI:
             self._api = api_instance
             self._logger = api_instance._logger
 
-        def entry_patterns(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultDict:
+        def entry_patterns(
+            self, entries: list[FlextLDIFModels.Entry]
+        ) -> FlextResultDict:
             """Analyze patterns in LDIF entries."""
             return self._api._services.analytics.analyze_patterns(entries)
 
-        def object_class_distribution(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultDict:
+        def object_class_distribution(
+            self, entries: list[FlextLDIFModels.Entry]
+        ) -> FlextResultDict:
             """Get distribution of objectClass types."""
             return self._api._services.analytics.get_objectclass_distribution(entries)
 
-        def dn_depth_analysis(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultDict:
+        def dn_depth_analysis(
+            self, entries: list[FlextLDIFModels.Entry]
+        ) -> FlextResultDict:
             """Analyze DN depth distribution."""
             return self._api._services.analytics.get_dn_depth_analysis(entries)
 
-        def entry_statistics(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultDict:
+        def entry_statistics(
+            self, entries: list[FlextLDIFModels.Entry]
+        ) -> FlextResultDict:
             """Get comprehensive entry statistics."""
             return self._api._services.repository.get_statistics(entries)
 
@@ -239,7 +282,7 @@ class FlextLDIFAPI:
             validator=validator,
             writer=writer,
             repository=repository,
-            analytics=analytics
+            analytics=analytics,
         )
 
     class ServiceContainer:
@@ -251,7 +294,7 @@ class FlextLDIFAPI:
             validator: FlextLDIFServices.Validator,
             writer: FlextLDIFServices.Writer,
             repository: FlextLDIFServices.Repository,
-            analytics: FlextLDIFServices.Analytics
+            analytics: FlextLDIFServices.Analytics,
         ) -> None:
             self.parser = parser
             self.validator = validator
@@ -259,17 +302,9 @@ class FlextLDIFAPI:
             self.repository = repository
             self.analytics = analytics
 
-    def parse(self, content: str) -> FlextResultEntries:
-        """Parse LDIF content - delegates to operations handler."""
-        return self._operations.parse_string(content)
-
-    def parse_file(self, file_path: str | Path) -> FlextResultEntries:
-        """Parse LDIF file - delegates to operations handler."""
-        return self._operations.parse_file(file_path)
-
-    def parse_string(self, ldif_string: str) -> FlextResultEntries:
-        """Parse multiple entries from LDIF string - delegates to operations handler."""
-        return self._operations.parse_string(ldif_string)
+    # SOLID FIX: Eliminated wrapper methods that were violating DRY
+    # Use _operations.parse_string() and _operations.parse_file() directly
+    # These redundant wrappers were identified as code duplication
 
     def discover_ldif_files(
         self,
@@ -281,114 +316,72 @@ class FlextLDIFAPI:
         """Discover LDIF files using railway-oriented programming."""
         return (
             self._get_files_to_process(directory_path, file_pattern, file_path)
-            .flat_map(lambda files: self._process_and_filter_files(files, max_file_size_mb))
-            .tap(lambda files: self._logger.debug(f"Discovered {len(files)} LDIF files"))
+            .flat_map(
+                lambda files: self._process_and_filter_files(files, max_file_size_mb)
+            )
+            .tap(
+                lambda files: self._logger.debug(f"Discovered {len(files)} LDIF files")
+            )
         )
 
-    def _process_and_filter_files(self, files_to_process: list[Path], max_file_size_mb: int) -> FlextResult[list[Path]]:
+    def _process_and_filter_files(
+        self, files_to_process: list[Path], max_file_size_mb: int
+    ) -> FlextResult[list[Path]]:
         """Filter and sort discovered files."""
         filtered_files = self._filter_files_by_size(files_to_process, max_file_size_mb)
         sorted_files = sorted(filtered_files)
 
         self._logger.debug(
-            f"File discovery completed - found: {len(sorted_files)}, skipped: {len(files_to_process) - len(filtered_files)}"
+            f"File discovery completed - found: {len(sorted_files)}, skipped: {len(files_to_process) - len(filtered_files)}",
         )
         return FlextResult[list[Path]].ok(sorted_files)
 
-    def write_string(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultStr:
-        """Write entries to LDIF string - delegates to operations handler."""
-        return self._operations.write_string(entries)
+    # SOLID FIX: Eliminated duplicate wrapper methods
+    # - write_string() -> use _operations.write_string() directly
+    # - entries_to_ldif() -> duplicate of write_string()
 
-    def entries_to_ldif(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultStr:
-        """Convert entries to LDIF string format - alias for write_string."""
-        return self._operations.write_string(entries)
+    # SOLID FIX: Eliminated wrapper methods violating DRY - use _operations directly
+    # - write_file() -> use _operations.write_file()
+    # - write_entries_to_file() -> duplicate of write_file()
+    # - validate_entries() -> use _operations.validate_entries()
+    # - validate_entry() -> use _services.validator.validate_entry_structure()
+    # - validate_dn_format() -> use _services.validator.validate_dn_format()
 
-    def write_file(self, entries: list[FlextLDIFModels.Entry], file_path: str | Path) -> FlextResultBool:
-        """Write entries to LDIF file - delegates to operations handler."""
-        return self._operations.write_file(entries, file_path)
+    # SOLID FIX: Eliminated filter wrapper delegates - use _filters directly
+    # - filter_persons() -> use _filters.persons() directly
+    # - filter_groups() -> use _filters.groups() directly
+    # - filter_organizational_units() -> use _filters.organizational_units() directly
+    # - filter_valid_entries() -> use _filters.valid_entries() directly
 
-    def write_entries_to_file(self, entries: list[FlextLDIFModels.Entry], file_path: str | Path) -> FlextResultBool:
-        """Write entries to LDIF file - alias for write_file."""
-        return self._operations.write_file(entries, file_path)
+    # SOLID FIX: Eliminated remaining wrapper delegates
+    # - filter_by_objectclass() -> use _filters.by_object_class() directly
+    # - filter_by_attribute() -> use _filters.by_attribute() directly
+    # - find_entry_by_dn() -> use _services.repository.find_entry_by_dn() directly
+    # - get_entry_statistics() -> use _analytics.entry_statistics() directly
+    # - analyze_entry_patterns() -> use _analytics.entry_patterns() directly
 
-    def validate_entries(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultBool:
-        """Validate multiple LDIF entries - delegates to operations handler."""
-        return self._operations.validate_entries(entries)
+    # SOLID FIX: Eliminated analytics wrapper delegates
+    # - get_objectclass_distribution() -> use _analytics.object_class_distribution() directly
+    # - get_dn_depth_analysis() -> use _analytics.dn_depth_analysis() directly
 
-    def validate_entry(self, entry: FlextLDIFModels.Entry) -> FlextResultBool:
-        """Validate single LDIF entry."""
-        return self._services.validator.validate_entry_structure(entry)
-
-    def validate_dn_format(self, dn: str) -> FlextResultBool:
-        """Validate DN format compliance."""
-        return self._services.validator.validate_dn_format(dn)
-
-    def filter_persons(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultEntries:
-        """Filter person entries - delegates to filters handler."""
-        return self._filters.persons(entries)
-
-    def filter_groups(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultEntries:
-        """Filter group entries - delegates to filters handler."""
-        return self._filters.groups(entries)
-
-    def filter_organizational_units(self, entries: list[FlextLDIFModels.Entry] | None) -> FlextResultEntries:
-        """Filter organizational unit entries - delegates to filters handler."""
-        if entries is None:
-            return FlextResult[list[FlextLDIFModels.Entry]].fail(
-                "Entries cannot be None"
-            )
-        return self._filters.organizational_units(entries)
-
-    def filter_valid_entries(self, entries: list[FlextLDIFModels.Entry] | None) -> FlextResultEntries:
-        """Filter valid entries - delegates to filters handler."""
-        if entries is None:
-            return FlextResult[list[FlextLDIFModels.Entry]].fail(
-                "Entries cannot be None"
-            )
-        return self._filters.valid_entries(entries)
-
-    def filter_by_objectclass(self, entries: list[FlextLDIFModels.Entry], objectclass: str) -> FlextResultEntries:
-        """Filter entries by objectClass - delegates to filters handler."""
-        return self._filters.by_object_class(entries, objectclass)
-
-    def filter_by_attribute(self, entries: list[FlextLDIFModels.Entry], attribute: str, value: str) -> FlextResultEntries:
-        """Filter entries by attribute value - delegates to filters handler."""
-        return self._filters.by_attribute(entries, attribute, value)
-
-    def find_entry_by_dn(self, entries: list[FlextLDIFModels.Entry], dn: str) -> FlextResult[FlextLDIFModels.Entry | None]:
-        """Find entry by DN."""
-        return self._services.repository.find_entry_by_dn(entries, dn)
-
-    def get_entry_statistics(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultDict:
-        """Get entry statistics - delegates to analytics handler."""
-        return self._analytics.entry_statistics(entries)
-
-    def analyze_entry_patterns(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultDict:
-        """Analyze patterns in LDIF entries - delegates to analytics handler."""
-        return self._analytics.entry_patterns(entries)
-
-    def get_objectclass_distribution(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultDict:
-        """Get distribution of objectClass types - delegates to analytics handler."""
-        return self._analytics.object_class_distribution(entries)
-
-    def get_dn_depth_analysis(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultDict:
-        """Analyze DN depth distribution - delegates to analytics handler."""
-        return self._analytics.dn_depth_analysis(entries)
-
-    def filter_change_records(self, entries: list[FlextLDIFModels.Entry] | None) -> FlextResultEntries:
+    def filter_change_records(
+        self, entries: list[FlextLDIFModels.Entry] | None
+    ) -> FlextResultEntries:
         """Filter entries that represent change records."""
         if entries is None:
             return FlextResult[list[FlextLDIFModels.Entry]].fail(
-                "Entries cannot be None"
+                "Entries cannot be None",
             )
         filtered = [entry for entry in entries if entry.get_attribute("changetype")]
         return FlextResult[list[FlextLDIFModels.Entry]].ok(filtered)
 
-    def sort_hierarchically(self, entries: list[FlextLDIFModels.Entry] | None) -> FlextResultEntries:
+    def sort_hierarchically(
+        self, entries: list[FlextLDIFModels.Entry] | None
+    ) -> FlextResultEntries:
         """Sort entries hierarchically by DN depth."""
         if entries is None:
             return FlextResult[list[FlextLDIFModels.Entry]].fail(
-                "Entries cannot be None"
+                "Entries cannot be None",
             )
 
         def sort_by_dn_depth(entry: FlextLDIFModels.Entry) -> int:
@@ -400,17 +393,20 @@ class FlextLDIFAPI:
             return FlextResult[list[FlextLDIFModels.Entry]].ok(sorted_entries)
         except (ValueError, AttributeError, TypeError) as e:
             return FlextResult[list[FlextLDIFModels.Entry]].fail(
-f"Sort operation failed: {e!s}"
+                f"Sort operation failed: {e!s}",
             )
 
-    # Aliases simples para compatibilidade de testes
+    def parse(self, content: str) -> FlextResultEntries:
+        """Alias simples para operations.parse_string."""
+        return self._operations.parse_string(content)
+
     def validate(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultBool:
-        """Alias simples para validate_entries."""
-        return self.validate_entries(entries)
+        """Alias simples para operations.validate_entries."""
+        return self._operations.validate_entries(entries)
 
     def write(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultStr:
-        """Alias simples para write_string."""
-        return self.write_string(entries)
+        """Alias simples para operations.write_string."""
+        return self._operations.write_string(entries)
 
     def _get_files_to_process(
         self,
@@ -434,7 +430,7 @@ f"Sort operation failed: {e!s}"
         if file_path_obj.exists() and file_path_obj.is_file():
             return FlextResult.ok([file_path_obj])
         return FlextResult.fail(
-f"File not found: {file_path}",
+            f"File not found: {file_path}",
         )
 
     def _process_directory_path(
@@ -446,7 +442,7 @@ f"File not found: {file_path}",
         directory_obj = Path(directory_path)
         if not directory_obj.exists():
             return FlextResult.fail(
-f"Directory not found: {directory_path}",
+                f"Directory not found: {directory_path}",
             )
         if not directory_obj.is_dir():
             return FlextResult.fail(f"Path is not a directory: {directory_path}")
