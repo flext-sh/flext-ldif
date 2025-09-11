@@ -5,7 +5,6 @@ in enterprise scenarios with real-world LDIF processing tasks.
 """
 
 from __future__ import annotations
-from flext_core import FlextTypes
 
 import tempfile
 import time
@@ -15,7 +14,6 @@ from flext_core import FlextLogger
 
 from flext_ldif import (
     FlextLDIFAPI,
-    FlextLDIFModels,
     FlextLDIFCore,
     FlextLDIFFormatHandler,
 )

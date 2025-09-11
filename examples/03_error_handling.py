@@ -6,17 +6,16 @@ using Clean Architecture principles and flext-core integration.
 """
 
 from __future__ import annotations
-from flext_core import FlextTypes
 
 import contextlib
 from pathlib import Path
 
-from flext_core import FlextLogger
+from flext_core import FlextLogger, FlextTypes
 
 from flext_ldif import (
     FlextLDIFAPI,
-    FlextLDIFModels,
     FlextLDIFError,
+    FlextLDIFModels,
     FlextLDIFParseError,
     FlextLDIFValidationError,
 )

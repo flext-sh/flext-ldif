@@ -19,17 +19,17 @@ class TestServices:
 
     def test_parser_service_initialization(self) -> None:
         """Test parser service can be initialized."""
-        service = FlextLDIFServices.ParserService()
+        service = FlextLDIFServices().parser
         assert service is not None
 
     def test_writer_service_initialization(self) -> None:
         """Test writer service can be initialized."""
-        service = FlextLDIFServices.WriterService()
+        service = FlextLDIFServices().writer
         assert service is not None
 
     def test_validator_service_initialization(self) -> None:
         """Test validator service can be initialized."""
-        service = FlextLDIFServices.ValidatorService()
+        service = FlextLDIFServices().validator
         assert service is not None
 
 
@@ -50,13 +50,13 @@ class TestServiceFunctionality:
 
     def test_parser_service_with_valid_ldif(self) -> None:
         """Test parser service with valid LDIF content."""
-        service = FlextLDIFServices.ParserService()
+        service = FlextLDIFServices().parser
         ldif_content = """dn: cn=test,dc=example,dc=com
 cn: test
 objectClass: person
 """
         # Use unwrap_or() pattern for cleaner testing
-        entries = service.parse(ldif_content).unwrap_or([])
+        entries = service.parse_content(ldif_content).unwrap_or([])
         assert len(entries) == 1
 
     def test_validator_service_with_valid_entry(
@@ -64,7 +64,7 @@ objectClass: person
         sample_entry: FlextLDIFModels,
     ) -> None:
         """Test validator service with valid entry."""
-        service = FlextLDIFServices.ValidatorService()
+        service = FlextLDIFServices().validator
         # Use unwrap_or() for cleaner validation testing
         is_valid = service.validate_entries([sample_entry]).unwrap_or(False)
         assert is_valid
@@ -74,7 +74,7 @@ objectClass: person
         sample_entry: FlextLDIFModels,
     ) -> None:
         """Test writer service with valid entries."""
-        service = FlextLDIFServices.WriterService()
+        service = FlextLDIFServices().writer
         # Use unwrap_or() for cleaner writer testing
         output = service.write_entries_to_string([sample_entry]).unwrap_or("")
         assert "dn: cn=test,dc=example,dc=com" in output

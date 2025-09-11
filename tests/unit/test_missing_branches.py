@@ -21,11 +21,11 @@ class TestMissingBranches:
     """Tests for missing branch coverage."""
 
     def test_parser_create_environment_config(self) -> None:
-        """Test parser create_environment_domain_services_config with environment."""
-        parser = FlextLDIFServices.ParserService()
+        """Test parser functionality with environment context."""
+        parser = FlextLDIFServices().parser
 
-        # Call with environment parameter
-        result = parser.create_environment_domain_services_config("development")
+        # Test parsing empty content to verify service is functional
+        result = parser.parse_content("")
 
         utils = FlextTestsUtilities()
         assertion = utils.assertion()
@@ -33,11 +33,11 @@ class TestMissingBranches:
         assertion.assert_true(condition=result.is_success or result.is_failure)
 
     def test_writer_create_environment_config(self) -> None:
-        """Test writer create_environment_domain_services_config with environment."""
-        writer = FlextLDIFServices.WriterService()
+        """Test writer functionality with environment context."""
+        writer = FlextLDIFServices().writer
 
-        # Call with environment parameter
-        result = writer.create_environment_domain_services_config("production")
+        # Test writing empty entries to verify service is functional
+        result = writer.write_entries_to_string([])
 
         utils = FlextTestsUtilities()
         assertion = utils.assertion()
@@ -45,11 +45,11 @@ class TestMissingBranches:
         assertion.assert_true(condition=result.is_success or result.is_failure)
 
     def test_analytics_create_environment_config(self) -> None:
-        """Test analytics create_environment_domain_services_config with environment."""
-        analytics = FlextLDIFServices.AnalyticsService()
+        """Test analytics functionality with environment context."""
+        analytics = FlextLDIFServices().analytics
 
-        # Call with environment parameter
-        result = analytics.create_environment_domain_services_config("testing")
+        # Test analyzing empty entries to verify service is functional
+        result = analytics.analyze_patterns([])
 
         utils = FlextTestsUtilities()
         assertion = utils.assertion()
@@ -58,7 +58,7 @@ class TestMissingBranches:
 
     def test_parser_with_base64_content(self) -> None:
         """Test parser with base64 encoded attributes to hit line 675 and surrounding branches."""
-        parser = FlextLDIFServices.ParserService()
+        parser = FlextLDIFServices().parser
 
         # LDIF content with base64 encoded attribute (::)
         content = """dn: cn=test,dc=example,dc=com
@@ -66,7 +66,7 @@ cn:: dGVzdCB2YWx1ZQ==
 objectClass: person
 
 """
-        result = parser.parse_ldif_content(content)
+        result = parser.parse_content(content)
 
         utils = FlextTestsUtilities()
         assertion = utils.assertion()
@@ -75,7 +75,7 @@ objectClass: person
 
     def test_parser_with_malformed_lines(self) -> None:
         """Test parser with various malformed lines to hit specific branches."""
-        parser = FlextLDIFServices.ParserService()
+        parser = FlextLDIFServices().parser
 
         # Content with malformed lines
         content = """dn: cn=test,dc=example,dc=com
@@ -86,7 +86,7 @@ attribute_name:
 objectClass: person
 
 """
-        result = parser.parse_ldif_content(content)
+        result = parser.parse_content(content)
 
         utils = FlextTestsUtilities()
         assertion = utils.assertion()
@@ -95,7 +95,7 @@ objectClass: person
 
     def test_writer_format_entry_for_display(self) -> None:
         """Test writer format_entry_for_display method."""
-        writer = FlextLDIFServices.WriterService()
+        writer = FlextLDIFServices().writer
 
         # Create a proper entry
         entry_data = {
@@ -104,7 +104,7 @@ objectClass: person
         }
         entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
-        result = writer.format_entry_for_display(entry)
+        result = writer.write_entries_to_string([entry])
 
         utils = FlextTestsUtilities()
         assertion = utils.assertion()
@@ -113,7 +113,7 @@ objectClass: person
 
     def test_analytics_get_methods(self) -> None:
         """Test analytics get methods that might have uncovered branches."""
-        analytics = FlextLDIFServices.AnalyticsService()
+        analytics = FlextLDIFServices().analytics
 
         # Test various get methods
         result1 = analytics.get_dn_depth_analysis([])
@@ -127,7 +127,7 @@ objectClass: person
 
     def test_validator_with_none_attributes(self) -> None:
         """Test validator with entry that has None attributes."""
-        validator = FlextLDIFServices.ValidatorService()
+        validator = FlextLDIFServices().validator
 
         # Create mock entry with None attributes
         mock_entry = Mock()
@@ -145,14 +145,14 @@ objectClass: person
 
     def test_parser_parse_entries_from_string(self) -> None:
         """Test parser parse_entries_from_string method."""
-        parser = FlextLDIFServices.ParserService()
+        parser = FlextLDIFServices().parser
 
         content = """dn: cn=test,dc=example,dc=com
 cn: test
 objectClass: person
 
 """
-        result = parser.parse(content)
+        result = parser.parse_content(content)
 
         utils = FlextTestsUtilities()
         assertion = utils.assertion()
@@ -161,7 +161,7 @@ objectClass: person
 
     def test_writer_write_entries_to_file(self) -> None:
         """Test writer write_entries_to_file method."""
-        writer = FlextLDIFServices.WriterService()
+        writer = FlextLDIFServices().writer
 
         # Create entry
         entry_data = {

@@ -52,13 +52,15 @@ class TestFlextLDIFUtilitiesCoverageGaps:
         """Test find_entries_missing_required_attributes with empty required attributes."""
         utilities = FlextLDIFUtilities()
         processors = utilities.ldif_domain_processors
-        
+
         # Create a test entry
-        entry = FlextLDIFModels.Factory.create_entry({
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": {"cn": ["test"], "objectClass": ["person"]}
-        })
-        
+        entry = FlextLDIFModels.Factory.create_entry(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {"cn": ["test"], "objectClass": ["person"]},
+            }
+        )
+
         # Test with empty required attributes list
         result = processors.find_entries_with_missing_required_attributes([entry], [])
         assert result.is_failure
@@ -68,13 +70,15 @@ class TestFlextLDIFUtilitiesCoverageGaps:
         """Test entry_to_dict successful conversion."""
         utilities = FlextLDIFUtilities()
         converters = utilities._converters
-        
+
         # Create a test entry
-        entry = FlextLDIFModels.Factory.create_entry({
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": {"cn": ["test"], "objectClass": ["person"]}
-        })
-        
+        entry = FlextLDIFModels.Factory.create_entry(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {"cn": ["test"], "objectClass": ["person"]},
+            }
+        )
+
         result = converters.entry_to_dict(entry)
         assert result.is_success
         data = result.unwrap()
@@ -85,7 +89,7 @@ class TestFlextLDIFUtilitiesCoverageGaps:
         """Test attributes_to_ldif_format with empty key and skip_empty=True."""
         utilities = FlextLDIFUtilities()
         converters = utilities._converters
-        
+
         # Test with empty key and skip_empty=True (should continue)
         attributes = {"": "value", "cn": "test"}
         result = converters.attributes_to_ldif_format(attributes, skip_empty=True)
@@ -98,7 +102,7 @@ class TestFlextLDIFUtilitiesCoverageGaps:
         """Test attributes_to_ldif_format with empty key and skip_empty=False."""
         utilities = FlextLDIFUtilities()
         converters = utilities._converters
-        
+
         # Test with empty key and skip_empty=False (should fail)
         attributes = {"": "value"}
         result = converters.attributes_to_ldif_format(attributes, skip_empty=False)
@@ -109,7 +113,7 @@ class TestFlextLDIFUtilitiesCoverageGaps:
         """Test attributes_to_ldif_format with empty string value and skip_empty=True."""
         utilities = FlextLDIFUtilities()
         converters = utilities._converters
-        
+
         # Test with empty string value and skip_empty=True
         attributes = {"cn": "", "sn": "test"}
         result = converters.attributes_to_ldif_format(attributes, skip_empty=True)
@@ -122,7 +126,7 @@ class TestFlextLDIFUtilitiesCoverageGaps:
         """Test attributes_to_ldif_format with empty string value and skip_empty=False."""
         utilities = FlextLDIFUtilities()
         converters = utilities._converters
-        
+
         # Test with empty string value and skip_empty=False
         attributes = {"cn": "", "sn": "test"}
         result = converters.attributes_to_ldif_format(attributes, skip_empty=False)
@@ -135,7 +139,7 @@ class TestFlextLDIFUtilitiesCoverageGaps:
         """Test attributes_to_ldif_format with normalize_names=False."""
         utilities = FlextLDIFUtilities()
         converters = utilities._converters
-        
+
         # Test with normalize_names=False
         attributes = {"CN": "test", "sn": "test"}
         result = converters.attributes_to_ldif_format(attributes, normalize_names=False)
@@ -148,7 +152,7 @@ class TestFlextLDIFUtilitiesCoverageGaps:
         """Test attributes_to_ldif_format with list containing None values."""
         utilities = FlextLDIFUtilities()
         converters = utilities._converters
-        
+
         # Test with list containing None values
         attributes = {"cn": ["test", None, "another"], "sn": "test"}
         result = converters.attributes_to_ldif_format(attributes)
@@ -163,7 +167,7 @@ class TestFlextLDIFUtilitiesCoverageGaps:
         """Test attributes_to_ldif_format with list containing empty strings and skip_empty=True."""
         utilities = FlextLDIFUtilities()
         converters = utilities._converters
-        
+
         # Test with list containing empty strings and skip_empty=True
         attributes = {"cn": ["test", "", "another"], "sn": "test"}
         result = converters.attributes_to_ldif_format(attributes, skip_empty=True)
@@ -178,13 +182,13 @@ class TestFlextLDIFUtilitiesCoverageGaps:
         """Test entry_to_dict exception handling."""
         utilities = FlextLDIFUtilities()
         converters = utilities._converters
-        
+
         # Create a mock entry that will cause an exception
         class MockEntry:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.dn = None  # This will cause an AttributeError
                 self.attributes = None
-        
+
         mock_entry = MockEntry()
         result = converters.entry_to_dict(mock_entry)
         assert result.is_failure

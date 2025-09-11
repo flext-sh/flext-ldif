@@ -39,6 +39,17 @@ class FlextLDIFFormatValidators(FlextValidations.Domain.BaseValidator):
         """Initialize LDIF validators using flext-core BaseValidator."""
         super().__init__()
 
+    def validate_entry(self, entry: FlextLDIFModels.Entry) -> FlextResultBool:
+        """Validate complete LDIF entry using flext-core validation."""
+        try:
+            # Use entry's own validation method
+            validation_result = entry.validate_business_rules()
+            if validation_result.is_failure:
+                return FlextResult[bool].fail(validation_result.error or "Validation failed")
+            return FlextResult[bool].ok(data=True)
+        except Exception as e:
+            return FlextResult[bool].fail(f"Entry validation error: {e}")
+
     def validate_attribute_name_format(self, name: str) -> FlextResultBool:
         """Validate LDAP attribute name format using flext-core."""
         return (

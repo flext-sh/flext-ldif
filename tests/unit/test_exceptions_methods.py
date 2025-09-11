@@ -59,12 +59,16 @@ class TestFlextLDIFExceptionsMethods:
 
     def test_entry_error_with_dn(self) -> None:
         """Test entry_error with DN."""
-        error = FlextLDIFExceptions.entry_error("Entry failed", dn="cn=test,dc=example,dc=com")
+        error = FlextLDIFExceptions.entry_error(
+            "Entry failed", dn="cn=test,dc=example,dc=com"
+        )
         assert "DN: cn=test,dc=example,dc=com" in error.message
 
     def test_entry_error_with_entry_dn(self) -> None:
         """Test entry_error with entry_dn."""
-        error = FlextLDIFExceptions.entry_error("Entry failed", entry_dn="cn=test,dc=example,dc=com")
+        error = FlextLDIFExceptions.entry_error(
+            "Entry failed", entry_dn="cn=test,dc=example,dc=com"
+        )
         assert "DN: cn=test,dc=example,dc=com" in error.message
 
     def test_entry_error_with_entry_data(self) -> None:
@@ -94,17 +98,23 @@ class TestFlextLDIFExceptionsMethods:
 
     def test_validation_error_with_dn(self) -> None:
         """Test validation_error with DN."""
-        error = FlextLDIFExceptions.validation_error("Validation failed", entry_dn="cn=test,dc=example,dc=com")
+        error = FlextLDIFExceptions.validation_error(
+            "Validation failed", entry_dn="cn=test,dc=example,dc=com"
+        )
         assert "DN: cn=test,dc=example,dc=com" in error.message
 
     def test_validation_error_with_entry_dn(self) -> None:
         """Test validation_error with entry DN."""
-        error = FlextLDIFExceptions.validation_error("Validation failed", entry_dn="cn=test,dc=example,dc=com")
+        error = FlextLDIFExceptions.validation_error(
+            "Validation failed", entry_dn="cn=test,dc=example,dc=com"
+        )
         assert "DN: cn=test,dc=example,dc=com" in error.message
 
     def test_validation_error_with_validation_rule(self) -> None:
         """Test validation_error with validation rule."""
-        error = FlextLDIFExceptions.validation_error("Validation failed", validation_rule="required_dn")
+        error = FlextLDIFExceptions.validation_error(
+            "Validation failed", validation_rule="required_dn"
+        )
         assert error.message == "Validation failed"
         assert hasattr(error, "validation_details")
 
@@ -139,9 +149,7 @@ class TestFlextLDIFExceptionsMethods:
     def test_file_error_with_operation(self) -> None:
         """Test file_error with operation parameter."""
         error = FlextLDIFExceptions.file_error(
-            "File error",
-            file_path="test.ldif",
-            operation="read"
+            "File error", file_path="test.ldif", operation="read"
         )
         assert "File error" in error.message
         assert "file: test.ldif" in error.message

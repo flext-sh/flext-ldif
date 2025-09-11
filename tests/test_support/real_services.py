@@ -55,7 +55,7 @@ class RealServiceFactory:
             validate_dn=config.get("validate_dn", True),
         )
 
-        return FlextLDIFServices.ParserService(config=ldif_config)
+        return FlextLDIFServices(config=ldif_config)
 
     @staticmethod
     def create_validator(config: FlextTypes.Core.Dict | None = None) -> object:
@@ -70,7 +70,7 @@ class RealServiceFactory:
             strict_validation=config.get("strict_validation", True),
         )
 
-        return FlextLDIFServices.ValidatorService(config=ldif_config)
+        return FlextLDIFServices(config=ldif_config)
 
     @staticmethod
     def create_writer(config: FlextTypes.Core.Dict | None = None) -> object:
@@ -154,11 +154,12 @@ class RealServiceFactory:
         """Create all services configured for integration testing."""
         config = cls.create_test_config()
 
+        services = FlextLDIFServices(config=config)
         return {
             "api": FlextLDIFAPI(config=config),
-            "parser": FlextLDIFServices.ParserService(config=config),
-            "validator": FlextLDIFServices.ValidatorService(config=config),
-            "writer": FlextLDIFServices.WriterService(config=config),
+            "parser": services.parser,
+            "validator": services.validator,
+            "writer": services.writer,
             "config": config,
         }
 

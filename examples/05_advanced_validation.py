@@ -6,13 +6,12 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core import FlextTypes
 
 from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from flext_core import FlextLogger
+from flext_core import FlextLogger, FlextTypes
 
 from flext_ldif import FlextLDIFAPI, FlextLDIFModels
 

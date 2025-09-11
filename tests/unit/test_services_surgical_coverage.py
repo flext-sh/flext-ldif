@@ -17,7 +17,7 @@ class TestSurgicalCoverage:
 
     def test_comprehensive_ldif_parsing_coverage(self) -> None:
         """Teste abrangente para cobrir múltiplas linhas específicas."""
-        parser = FlextLDIFServices.ParserService()
+        parser = FlextLDIFServices().parser
 
         # LDIF complexo que deve exercitar várias linhas
         complex_ldif = """dn: cn=test1,dc=example,dc=com
@@ -45,12 +45,12 @@ objectClass: person
 """
 
         # Parse complex LDIF - should cover many lines
-        result = parser.parse(complex_ldif)
+        result = parser.parse_content(complex_ldif)
         assert result.is_success or result.is_failure
 
     def test_transformer_service_operations(self) -> None:
         """Teste para exercitar TransformerService."""
-        transformer = FlextLDIFServices.TransformerService()
+        transformer = FlextLDIFServices().transformer
 
         # Criar entries para transformação
         entries = [
@@ -69,7 +69,10 @@ objectClass: person
         ]
 
         # Testar transformação normal
-        result = transformer.transform_entries(entries)
+        def identity_transform(entry: FlextLDIFModels.Entry) -> FlextLDIFModels.Entry:
+            return entry
+
+        result = transformer.transform_entries(entries, identity_transform)
         assert result.is_success or result.is_failure
 
         # Testar normalização de DNs
@@ -78,7 +81,7 @@ objectClass: person
 
     def test_validator_service_operations(self) -> None:
         """Teste para exercitar ValidatorService."""
-        validator = FlextLDIFServices.ValidatorService()
+        validator = FlextLDIFServices().validator
 
         # Criar entries com diferentes características
         entries = [
@@ -112,7 +115,7 @@ objectClass: person
 
     def test_exception_handling_scenarios(self) -> None:
         """Teste para exercitar cenários de exceção."""
-        parser = FlextLDIFServices.ParserService()
+        parser = FlextLDIFServices().parser
 
         # Mock para gerar exceção no parsing
         with patch.object(FlextLDIFModels.Entry, "model_validate") as mock_validate:
@@ -123,19 +126,19 @@ cn: test
 objectClass: person
 """
 
-            result = parser.parse(ldif_content)
+            result = parser.parse_content(ldif_content)
             assert result.is_success or result.is_failure
 
         # Mock para gerar exceção no Factory
         with patch.object(FlextLDIFModels, "Factory") as mock_factory:
             mock_factory.create_entry.side_effect = Exception("Factory error")
 
-            result2 = parser.parse(ldif_content)
+            result2 = parser.parse_content(ldif_content)
             assert result2.is_success or result2.is_failure
 
     def test_transform_service_exception_scenarios(self) -> None:
         """Teste para exercitar cenários de exceção no transformer."""
-        transformer = FlextLDIFServices.TransformerService()
+        transformer = FlextLDIFServices().transformer
 
         # Create real entries to transform
         entries = [
@@ -148,33 +151,37 @@ objectClass: person
         ]
 
         # Test normal transformation
-        result1 = transformer.transform_entries(entries)
+        def identity_transform(entry: FlextLDIFModels.Entry) -> FlextLDIFModels.Entry:
+            """Transformação de identidade para teste."""
+            return entry
+
+        result1 = transformer.transform_entries(entries, identity_transform)
         assert result1.is_success or result1.is_failure
 
         # Test with empty entries
-        result2 = transformer.transform_entries([])
+        result2 = transformer.transform_entries([], identity_transform)
         assert result2.is_success or result2.is_failure
 
     def test_edge_cases_and_empty_content(self) -> None:
         """Teste para casos extremos e conteúdo vazio."""
-        parser = FlextLDIFServices.ParserService()
+        parser = FlextLDIFServices().parser
 
         # Teste com conteúdo vazio
-        empty_result = parser.parse("")
+        empty_result = parser.parse_content("")
         assert empty_result.is_success or empty_result.is_failure
 
         # Teste com conteúdo apenas com espaços
-        spaces_result = parser.parse("   \n\n   \t  ")
+        spaces_result = parser.parse_content("   \n\n   \t  ")
         assert spaces_result.is_success or spaces_result.is_failure
 
         # Teste com conteúdo malformado
         malformed = "this is not ldif content at all"
-        malformed_result = parser.parse(malformed)
+        malformed_result = parser.parse_content(malformed)
         assert malformed_result.is_success or malformed_result.is_failure
 
     def test_attribute_patterns_and_continuation_lines(self) -> None:
         """Teste para padrões de atributos e linhas de continuação."""
-        parser = FlextLDIFServices.ParserService()
+        parser = FlextLDIFServices().parser
 
         # LDIF com padrões diversos
         diverse_ldif = """dn: cn=diverse,dc=example,dc=com
@@ -198,7 +205,7 @@ objectClass: person
 
 """
 
-        result = parser.parse(diverse_ldif)
+        result = parser.parse_content(diverse_ldif)
         assert result.is_success or result.is_failure
 
         if result.is_success:
@@ -215,7 +222,7 @@ objectClass: person
 
     def test_mock_validation_scenarios(self) -> None:
         """Teste para exercitar cenários de validação com mocks."""
-        validator = FlextLDIFServices.ValidatorService()
+        validator = FlextLDIFServices().validator
 
         # Mock entry com diferentes condições
         mock_entry = Mock()
@@ -236,7 +243,7 @@ objectClass: person
     def test_services_integration_scenarios(self) -> None:
         """Teste integrado para exercitar múltiplos services."""
         # Parse
-        parser = FlextLDIFServices.ParserService()
+        parser = FlextLDIFServices().parser
         ldif_content = """dn: cn=integration,dc=example,dc=com
 cn: integration
 objectClass: person
@@ -250,18 +257,23 @@ cn: second
 objectClass: organizationalUnit
 """
 
-        parse_result = parser.parse(ldif_content)
+        parse_result = parser.parse_content(ldif_content)
 
         if parse_result.is_success:
             entries = parse_result.value
 
             # Validate
-            validator = FlextLDIFServices.ValidatorService()
+            validator = FlextLDIFServices().validator
             validate_result = validator.validate_entries(entries)
 
             # Transform
-            transformer = FlextLDIFServices.TransformerService()
-            transform_result = transformer.transform_entries(entries)
+            transformer = FlextLDIFServices().transformer
+
+            # Define a simple transform function
+            def simple_transform(entry: FlextLDIFModels.Entry) -> FlextLDIFModels.Entry:
+                return entry
+
+            transform_result = transformer.transform_entries(entries, simple_transform)
 
             # All operations should complete
             assert parse_result.is_success or parse_result.is_failure
@@ -270,7 +282,7 @@ objectClass: organizationalUnit
 
     def test_specific_line_coverage_scenarios(self) -> None:
         """Teste para cobrir linhas específicas não cobertas."""
-        parser = FlextLDIFServices.ParserService()
+        parser = FlextLDIFServices().parser
 
         # LDIF que deve exercitar parsing de múltiplos valores para mesmo atributo
         multi_attr_ldif = """dn: cn=multiattr,dc=example,dc=com
@@ -284,7 +296,7 @@ objectClass: inetOrgPerson
 objectClass: organizationalPerson
 """
 
-        result = parser.parse(multi_attr_ldif)
+        result = parser.parse_content(multi_attr_ldif)
         assert result.is_success or result.is_failure
 
         if result.is_success:
@@ -297,12 +309,12 @@ objectClass: organizationalPerson
         """Teste para exercitar vários métodos dos services."""
         # Test various services to ensure coverage
         services = [
-            FlextLDIFServices.ParserService(),
-            FlextLDIFServices.ValidatorService(),
-            FlextLDIFServices.TransformerService(),
-            FlextLDIFServices.WriterService(),
-            FlextLDIFServices.AnalyticsService(),
-            FlextLDIFServices.RepositoryService(),
+            FlextLDIFServices().parser,
+            FlextLDIFServices().validator,
+            FlextLDIFServices().transformer,
+            FlextLDIFServices().writer,
+            FlextLDIFServices().analytics,
+            FlextLDIFServices().repository,
         ]
 
         # Test basic operations on each service

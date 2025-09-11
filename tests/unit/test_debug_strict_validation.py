@@ -15,7 +15,7 @@ def test_debug_strict_validation_flow() -> None:
     # Configuração REAL
     config = FlextLDIFModels.Config(strict_validation=True)
 
-    validator = FlextLDIFServices.ValidatorService(config=config)
+    validator = FlextLDIFServices(config=config)
 
     # Entry simples
     entry = Mock()
@@ -44,9 +44,9 @@ def test_debug_strict_validation_flow() -> None:
 
 
 def test_debug_manual_validation_call() -> None:
-    """Debug: Chamar _validate_configuration_rules diretamente."""
+    """Debug: Chamar validate_entry_structure diretamente."""
     config = FlextLDIFModels.Config(strict_validation=True)
-    validator = FlextLDIFServices.ValidatorService(config=config)
+    validator = FlextLDIFServices(config=config).validator
 
     entry = Mock()
     entry.dn = Mock(value="cn=manual,dc=example,dc=com")
@@ -56,7 +56,7 @@ def test_debug_manual_validation_call() -> None:
     mock_attributes = {"cn": ["manual"]}  # Use dict real em vez de Mock
     entry.attributes = mock_attributes
 
-    # Chamar método diretamente
+    # Chamar método diretamente usando a nova API
     with (
         patch.object(FlextUtilities.TypeGuards, "has_attribute") as mock_has_attr,
         patch.object(FlextUtilities.TypeGuards, "is_list_non_empty", return_value=True),
@@ -76,6 +76,6 @@ def test_debug_manual_validation_call() -> None:
 
         mock_has_attr.side_effect = debug_has_attribute
 
-        validator._validate_configuration_rules(entry)
+        result = validator.validate_entry_structure(entry)
 
-    assert True
+    assert result.is_success or result.is_failure  # Test successful execution

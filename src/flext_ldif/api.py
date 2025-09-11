@@ -78,7 +78,7 @@ class FlextLDIFAPI:
                 return FlextResult[list[FlextLDIFModels.Entry]].ok([])
 
             return (
-                self._api._services.parser.parse(content)
+                self._api._services.parser.parse_content(content)
                 .flat_map(self._validate_entry_count)
                 .tap(
                     lambda entries: self._logger.debug(f"Parsed {len(entries)} entries")
@@ -262,27 +262,18 @@ class FlextLDIFAPI:
         """Initialize and configure all LDIF services."""
         self._container.register("ldif_config", self._config)
 
-        # Create service instances
-        parser = FlextLDIFServices.Parser(config=self._config)
-        # Validator and Writer need to be instantiated for proper method calls
-        validator = FlextLDIFServices.Validator(config=self._config)  # Instance
-        writer = FlextLDIFServices.Writer(config=self._config)  # Instance
-        repository = FlextLDIFServices.Repository(config=self._config)
-        analytics = FlextLDIFServices.Analytics(config=self._config)
+        # Create unified services instance
+        services = FlextLDIFServices(config=self._config)
 
         # Register in container for DI
-        self._container.register("ldif_parser", parser)
-        self._container.register("ldif_validator", validator)
-        self._container.register("ldif_writer", writer)
-        self._container.register("ldif_repository", repository)
-        self._container.register("ldif_analytics", analytics)
+        self._container.register("ldif_services", services)
 
         return self.ServiceContainer(
-            parser=parser,
-            validator=validator,
-            writer=writer,
-            repository=repository,
-            analytics=analytics,
+            parser=services.parser,
+            validator=services.validator,
+            writer=services.writer,
+            repository=services.repository,
+            analytics=services.analytics,
         )
 
     class ServiceContainer:

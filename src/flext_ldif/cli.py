@@ -14,13 +14,7 @@ import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from flext_cli import (
-        FlextCliApi,
-        FlextCliConfig,
-        FlextCliFormatters,
-        FlextCliMain,
-    )
+from flext_cli import FlextCliApi, FlextCliConfig, FlextCliFormatters, FlextCliMain
 from flext_core import (
     FlextContainer,
     FlextLogger,
@@ -29,7 +23,6 @@ from flext_core import (
 
 from flext_ldif.api import FlextLDIFAPI
 from flext_ldif.models import FlextLDIFModels
-from flext_ldif.services import FlextLDIFServices
 
 # Suppress Pydantic V2 warnings for clean CLI output
 warnings.filterwarnings(
@@ -62,18 +55,11 @@ class FlextLDIFCli:
         """Initialize CLI with flext-cli integration and dependency injection."""
         self._logger = FlextLogger(__name__)
         self._container = FlextContainer.get_global()
-        
-        # Import flext-cli classes dynamically to avoid circular imports
-        try:
-            from flext_cli import FlextCliApi, FlextCliFormatters, FlextCliConfig
-            self._cli_api = FlextCliApi()
-            self._formatters = FlextCliFormatters()
-            self._config = FlextCliConfig()
-        except ImportError:
-            # Fallback for when flext-cli is not available
-            self._cli_api = None
-            self._formatters = None
-            self._config = None
+
+        # Initialize flext-cli components
+        self._cli_api = FlextCliApi()
+        self._formatters = FlextCliFormatters()
+        self._config = FlextCliConfig()
 
         # Register LDIF API service
         self._ldif_api = FlextLDIFAPI()
@@ -183,11 +169,11 @@ class FlextLDIFCli:
 
             entries = parse_result.unwrap()
 
-            # Create analytics service
-            analytics = FlextLDIFServices.Analytics(entries=entries)
+            # Use analytics through services
+            analytics = self._ldif_api._services.analytics
 
             # Analyze patterns
-            analysis_result = analytics.analyze_patterns(entries)
+            analysis_result = analytics.analyze_entries(entries)
             if analysis_result.is_failure:
                 return self._display_error(f"Analysis failed: {analysis_result.error}")
 
@@ -228,8 +214,8 @@ class FlextLDIFCli:
                 FlextResult indicating validation success
 
             """
-            # Create validator service
-            validator = FlextLDIFServices.Validator()
+            # Use validator through services
+            validator = self._ldif_api._services.validator
 
             # Validate entries
             validation_result = validator.validate_entries(entries)
@@ -261,8 +247,8 @@ class FlextLDIFCli:
                 FlextResult indicating write success
 
             """
-            # Create writer service
-            writer = FlextLDIFServices.Writer()
+            # Use writer through services
+            writer = self._ldif_api._services.writer
 
             # Write to file
             write_result = writer.write_entries_to_file(entries, str(output_file))
@@ -394,34 +380,35 @@ class FlextLDIFCli:
             # Use provided args or sys.argv
             if args is None:
                 args = sys.argv[1:]  # Skip script name
-            
+
             # Handle basic commands
             if not args:
                 return 0  # No arguments, success
-            
+
             if args[0] == "parse" and len(args) > 1:
                 # Parse command with file argument
                 file_path = Path(args[1])
                 if not file_path.exists():
                     self._logger.error(f"File not found: {file_path}")
                     return 1
-                
+
                 # Parse the LDIF file
                 result = self._ldif_api.parse_file(file_path)
                 if result.is_success:
-                    self._logger.info(f"Successfully parsed {len(result.unwrap())} entries")
+                    self._logger.info(
+                        f"Successfully parsed {len(result.unwrap())} entries"
+                    )
                     return 0
-                else:
-                    self._logger.error(f"Parse failed: {result.error}")
-                    return 1
-            
+                self._logger.error(f"Parse failed: {result.error}")
+                return 1
+
             # For other commands, assume success for now
             return 0
 
         except KeyboardInterrupt:
             return 1
-        except Exception as e:
-            self._logger.exception(f"CLI execution failed: {e}")
+        except Exception:
+            self._logger.exception("CLI execution failed")
             return 1
 
 

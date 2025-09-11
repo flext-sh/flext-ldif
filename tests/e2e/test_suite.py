@@ -128,7 +128,7 @@ member: cn=John Doe,ou=people,dc=example,dc=com
         assert len(entries) == 6
 
         # Step 2: Validate using services instead of core wrapper
-        validator_service = FlextLDIFServices.ValidatorService()
+        validator_service = FlextLDIFServices().validator
         is_valid = FlextResult.unwrap_or_raise(
             validator_service.validate_entries(entries)
         )

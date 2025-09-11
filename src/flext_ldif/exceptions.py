@@ -336,7 +336,11 @@ class FlextLDIFValidationError(FlextLDIFError):
         super().__init__(message, context=context, **kwargs)
         self.message = message
         self.operation = "ldif_validation"
-        self.validation_details = context.get("validation_details", "ldif_validation") if context else "ldif_validation"
+        self.validation_details = (
+            context.get("validation_details", "ldif_validation")
+            if context
+            else "ldif_validation"
+        )
 
 
 class FlextLDIFConnectionError(FlextLDIFError):

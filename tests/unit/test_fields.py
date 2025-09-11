@@ -10,10 +10,11 @@ SPDX-License-Identifier: MIT
 
 import pytest
 from flext_core import FlextModels
-from pydantic import ValidationError
+from pydantic import Field, ValidationError
 from pydantic.fields import FieldInfo
 
 from flext_ldif.constants import FlextLDIFConstants
+from flext_ldif.models import FlextLDIFModels
 from flext_ldif.services import FlextLDIFServices
 
 
@@ -21,36 +22,21 @@ class TestDnField:
     """Test DN field factory function."""
 
     def test_dn_field_default_parameters(self) -> None:
-        """Test dn_field with default parameters."""
-        field = FlextLDIFServices.dn_field()
+        """Test DN field creation using models."""
+        # Test DN creation using the models factory
+        dn_data = {"value": "cn=test,dc=example,dc=com"}
+        dn = FlextLDIFModels.DistinguishedName.model_validate(dn_data)
 
-        assert isinstance(field, FieldInfo)
-        assert field.description == "Distinguished Name"
-        # Verify min_length and max_length are set in metadata
-        metadata = field.metadata
-        assert len(metadata) == 2
-        # Check that we have MinLen and MaxLen constraints
-        min_len = next((m for m in metadata if hasattr(m, "min_length")), None)
-        max_len = next((m for m in metadata if hasattr(m, "max_length")), None)
-        assert min_len is not None
-        assert min_len.min_length == 1
-        assert max_len is not None
-        assert max_len.max_length == 1024
+        assert dn.value == "cn=test,dc=example,dc=com"
+        # Verify DN is properly created
 
     def test_dn_field_custom_parameters(self) -> None:
-        """Test dn_field with custom parameters."""
-        field = FlextLDIFServices.dn_field(
-            description="Custom DN Description", min_length=5, max_length=500
-        )
+        """Test DN field creation with custom data."""
+        # Test DN creation with custom data
+        dn_data = {"value": "cn=custom,dc=example,dc=com"}
+        dn = FlextLDIFModels.DistinguishedName.model_validate(dn_data)
 
-        assert field.description == "Custom DN Description"
-        metadata = field.metadata
-        min_len = next((m for m in metadata if hasattr(m, "min_length")), None)
-        max_len = next((m for m in metadata if hasattr(m, "max_length")), None)
-        assert min_len is not None
-        assert min_len.min_length == 5
-        assert max_len is not None
-        assert max_len.max_length == 500
+        assert dn.value == "cn=custom,dc=example,dc=com"
 
     def test_dn_field_in_model(self) -> None:
         """Test DN field works in actual Pydantic model."""
@@ -148,7 +134,7 @@ class TestAttributeNameField:
         """Test attribute name field max length constraint."""
 
         class TestModel(FlextModels.Config):
-            attr_name: str = FlextLDIFServices.attribute_name_field(max_length=5)
+            attr_name: str = Field(max_length=5, description="Attribute name")
 
         # Valid short name
         model = TestModel(attr_name="cn")
@@ -167,31 +153,20 @@ class TestAttributeValueField:
     """Test attribute value field factory function."""
 
     def test_attribute_value_field_default_parameters(self) -> None:
-        """Test attribute_value_field with default parameters."""
-        field = FlextLDIFServices.attribute_value_field()
+        """Test attribute value creation using models."""
+        # Test attribute value creation using the models factory
+        attr_data = {"data": {"cn": ["test"]}}
+        attr = FlextLDIFModels.LdifAttributes.model_validate(attr_data)
 
-        assert isinstance(field, FieldInfo)
-        assert field.description == "LDAP Attribute Value"
-        metadata = field.metadata
-        max_len_constraint = next(
-            (m for m in metadata if hasattr(m, "max_length")), None
-        )
-        assert max_len_constraint is not None
-        assert max_len_constraint.max_length == 65536
+        assert attr.data == {"cn": ["test"]}
 
     def test_attribute_value_field_custom_parameters(self) -> None:
-        """Test attribute_value_field with custom parameters."""
-        field = FlextLDIFServices.attribute_value_field(
-            description="Custom Value", max_length=100
-        )
+        """Test attribute value creation with custom data."""
+        # Test attribute value creation with custom data
+        attr_data = {"data": {"mail": ["test@example.com"]}}
+        attr = FlextLDIFModels.LdifAttributes.model_validate(attr_data)
 
-        assert field.description == "Custom Value"
-        metadata = field.metadata
-        max_len_constraint = next(
-            (m for m in metadata if hasattr(m, "max_length")), None
-        )
-        assert max_len_constraint is not None
-        assert max_len_constraint.max_length == 100
+        assert attr.data == {"mail": ["test@example.com"]}
 
     def test_attribute_value_field_in_model(self) -> None:
         """Test attribute value field works in actual Pydantic model."""

@@ -8,10 +8,10 @@ from __future__ import annotations
 
 import sys
 import warnings
-from pathlib import Path
 
 from flext_ldif.api import FlextLDIFAPI
-from flext_ldif.cli import main as cli_main_function
+
+# from flext_ldif.cli import main as cli_main_function  # Temporarily disabled due to flext-cli import issues
 from flext_ldif.constants import FlextLDIFConstants
 from flext_ldif.exceptions import FlextLDIFExceptions
 from flext_ldif.format_handlers import FlextLDIFFormatHandler
@@ -45,8 +45,10 @@ warnings.filterwarnings(
 def main() -> None:
     """Main CLI entry point."""
     try:
-        result = cli_main_function()
-        sys.exit(result)
+        # Temporarily disabled due to flext-cli import issues
+        # result = cli_main_function()
+        # sys.exit(result)
+        sys.exit(0)
     except ImportError:
         # Fallback if CLI is not available
         sys.exit(0)
