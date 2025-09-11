@@ -287,8 +287,8 @@ member: cn=admin,ou=people,dc=example,dc=com
 objectClass: person
 """
 
+        handler = FlextLDIFFormatHandler()
         with pytest.raises(Exception):  # Should raise FlextLDIFParseError
-            handler = FlextLDIFFormatHandler()
             FlextResult.unwrap_or_raise(handler.parse_ldif(invalid_ldif))
 
     def test_roundtrip_consistency(self) -> None:

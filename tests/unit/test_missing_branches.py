@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import tempfile
 from unittest.mock import Mock
 
 from flext_tests import FlextTestsUtilities
@@ -170,7 +171,9 @@ objectClass: person
         entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
         # Test writing to file (use a temp path)
-        result = writer.write_entries_to_file([entry], "/tmp/test_output.ldif")
+        with tempfile.NamedTemporaryFile(suffix=".ldif", delete=False) as temp_file:
+            temp_path = temp_file.name
+        result = writer.write_entries_to_file([entry], temp_path)
 
         utils = FlextTestsUtilities()
         assertion = utils.assertion()

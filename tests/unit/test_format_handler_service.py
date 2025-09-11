@@ -629,6 +629,7 @@ objectClass: person
             def encode(
                 self, encoding: str | None = "utf-8", errors: str | None = "strict"
             ) -> Never:
+                _ = encoding, errors  # Mark parameters as used
                 msg = "Invalid UTF-8"
                 raise UnicodeError(msg)
 
@@ -648,6 +649,7 @@ objectClass: person
             def encode(
                 self, encoding: str | None = "utf-8", errors: str | None = "strict"
             ) -> Never:
+                _ = encoding, errors  # Mark parameters as used
                 msg = "Invalid UTF-8"
                 raise UnicodeError(msg)
 

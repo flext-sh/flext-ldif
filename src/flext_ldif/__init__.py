@@ -41,20 +41,14 @@ warnings.filterwarnings(
 # from flext_ldif.cli import main  # Temporário - circular import no flext-cli
 
 
-# Alias temporário para testes CLI
+# CLI interface - using flext-cli correctly
 def main() -> None:
-    """Função main temporária para testes - causa SystemExit para compatibilidade."""
+    """Main CLI entry point."""
     try:
-        # Check for non-existent file arguments for test compatibility
-        for arg in sys.argv[1:]:
-            if arg.endswith(".ldif") and not Path(arg).exists():
-                # Return error code for non-existent files as expected by tests
-                sys.exit(1)
-
         result = cli_main_function()
         sys.exit(result)
     except ImportError:
-        # Fallback simples se CLI não estiver disponível
+        # Fallback if CLI is not available
         sys.exit(0)
     except Exception:
         # Return error code for any CLI exception

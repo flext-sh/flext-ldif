@@ -29,7 +29,7 @@ def test_debug_strict_validation_flow() -> None:
     # DEBUG: Patch has_attribute com logging
     original_has_attribute = FlextUtilities.TypeGuards.has_attribute
 
-    def debug_has_attribute(obj, attr):
+    def debug_has_attribute(obj: object, attr: str) -> bool:
         result = original_has_attribute(obj, attr)
         if obj is config or obj is mock_attributes:
             pass
@@ -62,7 +62,7 @@ def test_debug_manual_validation_call() -> None:
         patch.object(FlextUtilities.TypeGuards, "is_list_non_empty", return_value=True),
     ):
 
-        def debug_has_attribute(obj, attr):
+        def debug_has_attribute(obj: object, attr: str) -> bool:
             if obj is config and attr == "strict_validation":
                 return True
             if obj is mock_attributes and attr == "data":

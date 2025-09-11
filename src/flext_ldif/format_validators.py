@@ -130,7 +130,7 @@ class FlextLDIFFormatValidators(FlextValidations.Domain.BaseValidator):
     def validate_required_objectclass(
         self, entry: FlextLDIFModels.Entry
     ) -> FlextResultBool:
-        """Validate objectClass using flext-core list validation - SOURCE OF TRUTH."""
+        """Validate objectClass using flext-core list validation."""
         object_class_values = entry.get_attribute("objectClass") or []
 
         # Use appropriate flext-core validation for list
@@ -165,7 +165,7 @@ class FlextLDIFFormatValidators(FlextValidations.Domain.BaseValidator):
         if not object_classes:
             return FlextResult[bool].fail("Entry must have objectClass attribute")
 
-        return FlextResult[bool].ok(value=True)
+        return FlextResult[bool].ok(data=True)
 
     def validate_entry_type(
         self, entry: FlextLDIFModels.Entry, expected_types: set[str]

@@ -86,7 +86,7 @@ class FlextLDIFExceptions(FlextExceptions):
         *,
         entry_dn: str | None = None,
         validation_rule: str | None = None,
-    ) -> FlextExceptions.BaseError:
+    ) -> FlextLDIFValidationError:
         """Create LDIF validation error using flext-core directly."""
         # Build enhanced message with DN context
         enhanced_message = message
@@ -96,11 +96,14 @@ class FlextLDIFExceptions(FlextExceptions):
         # Build validation details with rule context
         validation_details = validation_rule or "ldif_validation"
 
-        return cls.ValidationError(
-            enhanced_message,
-            field="ldif_entry",
-            validation_details=validation_details,
-        )
+        context: dict[str, object] = {
+            "field": "ldif_entry",
+            "validation_details": validation_details,
+        }
+        if entry_dn:
+            context["entry_dn"] = entry_dn
+
+        return FlextLDIFValidationError(enhanced_message, context=context)
 
     @classmethod
     def processing_error(
@@ -165,12 +168,20 @@ class FlextLDIFExceptions(FlextExceptions):
         cls, message: str, *, line: int | None = None, column: int | None = None
     ) -> FlextLDIFParseError:
         """Create parse error - simple alias for test compatibility."""
+        # Build enhanced error message with location context
+        enhanced_message = message
+        if line is not None:
+            enhanced_message += f" (line {line}"
+            if column is not None:
+                enhanced_message += f", column {column}"
+            enhanced_message += ")"
+
         context: dict[str, object] = {}
         if line is not None:
             context["line"] = line
         if column is not None:
             context["column"] = column
-        return FlextLDIFParseError(message, context=context)
+        return FlextLDIFParseError(enhanced_message, context=context)
 
 
 # Simple aliases for test compatibility - use flext-core SOURCE OF TRUTH directly
@@ -202,6 +213,7 @@ class FlextLDIFExceptionBuilder:
     """Fluent builder for LDIF exceptions."""
 
     def __init__(self) -> None:
+        """Initialize exception builder with empty state."""
         self._message = ""
         self._code: object | None = None
         self._context: dict[str, object] = {}
@@ -282,6 +294,7 @@ class FlextLDIFError(Exception):
         context: dict[str, object] | None = None,
         **kwargs: object,
     ) -> None:
+        """Initialize LDIF error with message and context."""
         super().__init__(message)
         self.context = context or {}
         for key, value in kwargs.items():
@@ -296,9 +309,34 @@ class FlextLDIFError(Exception):
 class FlextLDIFParseError(FlextLDIFError):
     """Parse error - simple alias."""
 
+    def __init__(
+        self,
+        message: str,
+        *,
+        context: dict[str, object] | None = None,
+        **kwargs: object,
+    ) -> None:
+        """Initialize parse error with message and context."""
+        super().__init__(message, context=context, **kwargs)
+        self.message = message
+        self.operation = "ldif_parsing"
+
 
 class FlextLDIFValidationError(FlextLDIFError):
     """Validation error - simple alias."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        context: dict[str, object] | None = None,
+        **kwargs: object,
+    ) -> None:
+        """Initialize validation error with message and context."""
+        super().__init__(message, context=context, **kwargs)
+        self.message = message
+        self.operation = "ldif_validation"
+        self.validation_details = context.get("validation_details", "ldif_validation") if context else "ldif_validation"
 
 
 class FlextLDIFConnectionError(FlextLDIFError):
@@ -312,6 +350,18 @@ class FlextLDIFFileError(FlextLDIFError):
 class FlextLDIFProcessingError(FlextLDIFError):
     """Processing error - simple alias."""
 
+    def __init__(
+        self,
+        message: str,
+        *,
+        context: dict[str, object] | None = None,
+        **kwargs: object,
+    ) -> None:
+        """Initialize processing error with message and context."""
+        super().__init__(message, context=context, **kwargs)
+        self.message = message
+        self.operation = "ldif_processing"
+
     @property
     def code(self) -> str:
         """Get processing error code."""
@@ -320,6 +370,18 @@ class FlextLDIFProcessingError(FlextLDIFError):
 
 class FlextLDIFTimeoutError(FlextLDIFError):
     """Timeout error - simple alias."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        context: dict[str, object] | None = None,
+        **kwargs: object,
+    ) -> None:
+        """Initialize timeout error with message and context."""
+        super().__init__(message, context=context, **kwargs)
+        self.message = message
+        self.operation = "ldif_timeout"
 
     @property
     def code(self) -> str:

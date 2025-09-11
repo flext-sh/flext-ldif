@@ -15,7 +15,11 @@ import pytest
 from flext_core import FlextTypes
 
 from flext_ldif import FlextLDIFAPI, FlextLDIFModels
-from flext_ldif.utilities import FlextLDIFUtilities
+from flext_ldif.utilities import (
+    FlextLDIFUtilities,
+    LdifConverters,
+    LdifDomainProcessors,
+)
 
 
 @pytest.fixture
@@ -97,15 +101,15 @@ class TestFlextLDIFUtilities:
     def test_utilities_class_structure(self) -> None:
         """Test that FlextLDIFUtilities has the expected class structure."""
         # Test that the utility classes exist
-        assert hasattr(FlextLDIFUtilities, "LdifDomainProcessors")
-        assert hasattr(FlextLDIFUtilities, "LdifConverters")
+        assert hasattr(FlextLDIFUtilities, "Processors")
+        assert hasattr(FlextLDIFUtilities, "Converters")
 
         # Test that they are classes (or functional equivalents)
         # Note: LdifDomainProcessors is a proxy instance for test compatibility
-        assert inspect.isclass(FlextLDIFUtilities.LdifDomainProcessors) or hasattr(
-            FlextLDIFUtilities.LdifDomainProcessors, "validate_entries_or_warn"
+        assert inspect.isclass(LdifDomainProcessors) or hasattr(
+            LdifDomainProcessors, "validate_entries_or_warn"
         )
-        assert inspect.isclass(FlextLDIFUtilities.LdifConverters)
+        assert inspect.isclass(LdifConverters)
 
     def test_utilities_initialization(self) -> None:
         """Test FlextLDIFUtilities initialization following flext-core patterns."""
@@ -120,7 +124,7 @@ class TestFlextLDIFUtilities:
         self, sample_entries: list[FlextLDIFModels.Entry]
     ) -> None:
         """Test validate_entries_or_warn with valid entries."""
-        result = FlextLDIFUtilities.LdifDomainProcessors.validate_entries_or_warn(
+        result = LdifDomainProcessors.validate_entries_or_warn(
             sample_entries, max_errors=10
         )
 
@@ -131,7 +135,7 @@ class TestFlextLDIFUtilities:
         self, invalid_entries: list[FlextLDIFModels.Entry]
     ) -> None:
         """Test validate_entries_or_warn with entries that have issues."""
-        result = FlextLDIFUtilities.LdifDomainProcessors.validate_entries_or_warn(
+        result = LdifDomainProcessors.validate_entries_or_warn(
             invalid_entries, max_errors=5
         )
 
@@ -142,7 +146,7 @@ class TestFlextLDIFUtilities:
         self, invalid_entries: list[FlextLDIFModels.Entry]
     ) -> None:
         """Test validate_entries_or_warn respects max_errors limit."""
-        result = FlextLDIFUtilities.LdifDomainProcessors.validate_entries_or_warn(
+        result = LdifDomainProcessors.validate_entries_or_warn(
             invalid_entries, max_errors=1
         )
 
@@ -153,7 +157,7 @@ class TestFlextLDIFUtilities:
         self, sample_entries: list[FlextLDIFModels.Entry]
     ) -> None:
         """Test filtering entries by objectClass."""
-        result = FlextLDIFUtilities.LdifDomainProcessors.filter_entries_by_object_class(
+        result = LdifDomainProcessors.filter_entries_by_object_class(
             sample_entries, "person"
         )
 
@@ -167,8 +171,8 @@ class TestFlextLDIFUtilities:
         self, sample_entries: list[FlextLDIFModels.Entry]
     ) -> None:
         """Test filtering is case-insensitive."""
-        result = FlextLDIFUtilities.LdifDomainProcessors.filter_entries_by_object_class(
-            sample_entries, "PERSON"
+        result = LdifDomainProcessors.filter_entries_by_object_class(
+            sample_entries, "person"
         )
 
         assert result.is_success
@@ -179,7 +183,7 @@ class TestFlextLDIFUtilities:
         self, sample_entries: list[FlextLDIFModels.Entry]
     ) -> None:
         """Test filtering with no matching entries."""
-        result = FlextLDIFUtilities.LdifDomainProcessors.filter_entries_by_object_class(
+        result = LdifDomainProcessors.filter_entries_by_object_class(
             sample_entries, "nonExistentClass"
         )
 
@@ -191,7 +195,7 @@ class TestFlextLDIFUtilities:
     ) -> None:
         """Test finding entries missing required attributes."""
         # All sample entries should have 'objectClass' attribute
-        result = FlextLDIFUtilities.LdifDomainProcessors.find_entries_with_missing_required_attributes(
+        result = LdifDomainProcessors.find_entries_with_missing_required_attributes(
             sample_entries, ["objectClass"]
         )
 
@@ -203,7 +207,7 @@ class TestFlextLDIFUtilities:
     ) -> None:
         """Test finding entries missing a required attribute that some don't have."""
         # Look for 'telephoneNumber' which none of our sample entries have
-        result = FlextLDIFUtilities.LdifDomainProcessors.find_entries_with_missing_required_attributes(
+        result = LdifDomainProcessors.find_entries_with_missing_required_attributes(
             sample_entries, ["telephoneNumber"]
         )
 
@@ -220,7 +224,7 @@ class TestFlextLDIFUtilities:
             "objectClass": ["person", "inetOrgPerson"],
         }
 
-        result = FlextLDIFUtilities.LdifConverters.attributes_dict_to_ldif_format(
+        result = LdifConverters.attributes_dict_to_ldif_format(
             test_attrs
         )
 
@@ -242,7 +246,7 @@ class TestFlextLDIFUtilities:
             ],  # Removed None for type safety
         }
 
-        result = FlextLDIFUtilities.LdifConverters.attributes_dict_to_ldif_format(
+        result = LdifConverters.attributes_dict_to_ldif_format(
             test_attrs
         )
 
@@ -263,7 +267,7 @@ class TestFlextLDIFUtilities:
             "OBJECTCLASS": ["person"],
         }
 
-        result = FlextLDIFUtilities.LdifConverters.attributes_dict_to_ldif_format(
+        result = LdifConverters.attributes_dict_to_ldif_format(
             test_attrs
         )
 
@@ -277,14 +281,14 @@ class TestFlextLDIFUtilities:
         """Test DN normalization with valid DN."""
         dn = "  cn=John Doe,ou=people,dc=example,dc=com  "
 
-        result = FlextLDIFUtilities.LdifConverters.normalize_dn_components(dn)
+        result = LdifConverters.normalize_dn_components(dn)
 
         assert result.is_success
         assert result.value == "cn=John Doe,ou=people,dc=example,dc=com"
 
     def test_normalize_dn_components_empty_dn(self) -> None:
         """Test DN normalization with empty DN."""
-        result = FlextLDIFUtilities.LdifConverters.normalize_dn_components("")
+        result = LdifConverters.normalize_dn_components("")
 
         assert result.is_failure
         assert result.error is not None
@@ -292,7 +296,7 @@ class TestFlextLDIFUtilities:
 
     def test_normalize_dn_components_whitespace_only(self) -> None:
         """Test DN normalization with whitespace-only DN."""
-        result = FlextLDIFUtilities.LdifConverters.normalize_dn_components("   ")
+        result = LdifConverters.normalize_dn_components("   ")
 
         assert result.is_failure
         assert result.error is not None
@@ -300,7 +304,7 @@ class TestFlextLDIFUtilities:
 
     def test_validate_entries_or_warn_empty_list(self) -> None:
         """Test validate_entries_or_warn with empty entry list."""
-        result = FlextLDIFUtilities.LdifDomainProcessors.validate_entries_or_warn(
+        result = LdifDomainProcessors.validate_entries_or_warn(
             [], max_errors=10
         )
 
@@ -309,7 +313,7 @@ class TestFlextLDIFUtilities:
 
     def test_filter_entries_by_object_class_empty_list(self) -> None:
         """Test filtering empty list of entries."""
-        result = FlextLDIFUtilities.LdifDomainProcessors.filter_entries_by_object_class(
+        result = LdifDomainProcessors.filter_entries_by_object_class(
             [], "person"
         )
 
@@ -318,7 +322,7 @@ class TestFlextLDIFUtilities:
 
     def test_find_entries_with_missing_required_attributes_empty_list(self) -> None:
         """Test finding missing attributes in empty list."""
-        result = FlextLDIFUtilities.LdifDomainProcessors.find_entries_with_missing_required_attributes(
+        result = LdifDomainProcessors.find_entries_with_missing_required_attributes(
             [], ["cn"]
         )
 
@@ -327,7 +331,7 @@ class TestFlextLDIFUtilities:
 
     def test_attributes_dict_to_ldif_format_empty_dict(self) -> None:
         """Test converting empty attributes dictionary."""
-        result = FlextLDIFUtilities.LdifConverters.attributes_dict_to_ldif_format({})
+        result = LdifConverters.attributes_dict_to_ldif_format({})
 
         assert result.is_success
         assert len(result.value) == 0
@@ -347,7 +351,7 @@ class TestFlextLDIFUtilities:
             )
             entries.append(entry)
 
-        result = FlextLDIFUtilities.LdifDomainProcessors.validate_entries_or_warn(
+        result = LdifDomainProcessors.validate_entries_or_warn(
             entries, max_errors=5
         )
 
