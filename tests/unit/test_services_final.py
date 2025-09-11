@@ -1,4 +1,4 @@
-"""100% COVERAGE ABSOLUTO - VITÓRIA FINAL!
+"""100% COVERAGE ABSOLUTO - VITÓRIA FINAL.
 
 IMPLEMENTAÇÃO CORRETA DO PROTOCOLO DICT PARA LINHA 574!
 Mock estava falhando em dict() conversion - criando classe personalizada.
@@ -24,21 +24,22 @@ class MockAttributesDict:
     """Mock que implementa protocolo dict corretamente para linha 574."""
 
     def __init__(self, data: list[tuple[str, list[str]]]) -> None:
+        """Initialize mock attributes with data."""
         self._data = data
 
-    def items(self):
+    def items(self) -> list[tuple[str, list[str]]]:
         """Implementa .items() para mock attributes."""
         return self._data
 
-    def keys(self):
+    def keys(self) -> list[str]:
         """Implementa .keys() para dict() conversion."""
         return [item[0] for item in self._data]
 
-    def __iter__(self):
+    def __iter__(self) -> iter:
         """Implementa __iter__ para dict() conversion."""
         return iter(self._data)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> list[str]:
         """Implementa __getitem__ para dict behavior."""
         for k, v in self._data:
             if k == key:
@@ -68,14 +69,12 @@ def test_final_line_571_elif_has_attribute_items() -> None:
         patch.object(FlextUtilities.TypeGuards, "is_list_non_empty", return_value=True),
     ):
 
-        def final_has_attribute(obj, attr) -> bool:
+        def final_has_attribute(obj: object, attr: str) -> bool:
             if obj is config and attr == "strict_validation":
                 return True
             if obj is mock_attributes and attr == "data":
                 return False  # Primeira condição False
-            if obj is mock_attributes and attr == "items":
-                return True  # Segunda condição True - LINHA 571!
-            return False
+            return obj is mock_attributes and attr == "items"  # Segunda condição True - LINHA 571!
 
         mock_has_attr.side_effect = final_has_attribute
 
@@ -112,14 +111,12 @@ def test_final_line_574_dict_attributes_obj() -> None:
         patch.object(FlextUtilities.TypeGuards, "is_list_non_empty", return_value=True),
     ):
 
-        def final_has_attribute(obj, attr) -> bool:
+        def final_has_attribute(obj: object, attr: str) -> bool:
             if obj is config and attr == "strict_validation":
                 return True
             if obj is mock_attributes and attr == "data":
                 return False  # Para entrar no elif
-            if obj is mock_attributes and attr == "items":
-                return True  # Para executar dict() na LINHA 574!
-            return False
+            return obj is mock_attributes and attr == "items"  # Para executar dict() na LINHA 574!
 
         mock_has_attr.side_effect = final_has_attribute
 
@@ -147,10 +144,8 @@ def test_final_line_576_else_return_validation_success() -> None:
 
     with patch.object(FlextUtilities.TypeGuards, "has_attribute") as mock_has_attr:
 
-        def final_has_attribute(obj, attr) -> bool:
-            if obj is config and attr == "strict_validation":
-                return True
-            return False  # Força else na linha 575
+        def final_has_attribute(obj: object, attr: str) -> bool:
+            return obj is config and attr == "strict_validation"  # Força else na linha 575
 
         mock_has_attr.side_effect = final_has_attribute
 
@@ -247,15 +242,13 @@ def test_final_comprehensive_all_7_lines_absolute_victory() -> None:
         patch.object(FlextUtilities.TypeGuards, "is_list_non_empty", return_value=True),
     ):
 
-        def comprehensive_has_attribute(obj, attr) -> bool:
+        def comprehensive_has_attribute(obj: object, attr: str) -> bool:
             if obj is config and attr == "strict_validation":
                 return True
             if obj is attrs_571:
                 if attr == "data":
                     return False
-                if attr == "items":
-                    return True  # LINHAS 571-574
-                return False
+                return attr == "items"  # LINHAS 571-574
             if obj is attrs_576:
                 return False  # LINHA 576
             return False
@@ -315,14 +308,12 @@ def test_final_precision_verification_each_line() -> None:
         patch.object(FlextUtilities.TypeGuards, "is_list_non_empty", return_value=True),
     ):
 
-        def precision_571_has_attr(obj, attr) -> bool:
+        def precision_571_has_attr(obj: object, attr: str) -> bool:
             if obj is config and attr == "strict_validation":
                 return True
             if obj is attrs and attr == "data":
                 return False
-            if obj is attrs and attr == "items":
-                return True  # PRECISÃO LINHA 571
-            return False
+            return obj is attrs and attr == "items"  # PRECISÃO LINHA 571
 
         mock_ha.side_effect = precision_571_has_attr
         results["571"] = validator._validate_configuration_rules(entry)
@@ -341,10 +332,8 @@ def test_final_precision_verification_each_line() -> None:
 
     with patch.object(FlextUtilities.TypeGuards, "has_attribute") as mock_ha:
 
-        def precision_576_has_attr(obj, attr) -> bool:
-            if obj is config and attr == "strict_validation":
-                return True
-            return False  # PRECISÃO LINHA 576
+        def precision_576_has_attr(obj: object, attr: str) -> bool:
+            return obj is config and attr == "strict_validation"  # PRECISÃO LINHA 576
 
         mock_ha.side_effect = precision_576_has_attr
         results["576"] = validator._validate_configuration_rules(entry_576)

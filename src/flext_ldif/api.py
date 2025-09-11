@@ -296,6 +296,7 @@ class FlextLDIFAPI:
             repository: FlextLDIFServices.Repository,
             analytics: FlextLDIFServices.Analytics,
         ) -> None:
+            """Initialize service container with parser, validator, writer, repository, and analytics."""
             self.parser = parser
             self.validator = validator
             self.writer = writer
@@ -400,6 +401,10 @@ class FlextLDIFAPI:
         """Alias simples para operations.parse_string."""
         return self._operations.parse_string(content)
 
+    def parse_file(self, file_path: str | Path) -> FlextResultEntries:
+        """Alias simples para operations.parse_file."""
+        return self._operations.parse_file(file_path)
+
     def validate(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultBool:
         """Alias simples para operations.validate_entries."""
         return self._operations.validate_entries(entries)
@@ -407,6 +412,12 @@ class FlextLDIFAPI:
     def write(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultStr:
         """Alias simples para operations.write_string."""
         return self._operations.write_string(entries)
+
+    def write_entries_to_file(
+        self, entries: list[FlextLDIFModels.Entry], file_path: str | Path
+    ) -> FlextResultBool:
+        """Alias simples para operations.write_file."""
+        return self._operations.write_file(entries, file_path)
 
     def _get_files_to_process(
         self,

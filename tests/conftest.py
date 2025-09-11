@@ -6,7 +6,6 @@ comprehensive test data, real service integration, and functional test support.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -29,8 +28,6 @@ from tests.test_support import (
     TestFileManager,
     TestValidators,
 )
-
-DOCKER_AVAILABLE = True
 
 
 # Test environment setup
@@ -121,25 +118,6 @@ def sample_ldif_with_changes(ldif_test_data: LdifTestData) -> str:
 def sample_ldif_with_binary(ldif_test_data: LdifTestData) -> str:
     """Sample LDIF with binary data for testing."""
     return ldif_test_data.with_binary_data().content
-
-
-@pytest.fixture
-def sample_ldif_with_binary_old() -> str:
-    """Sample LDIF with binary data for testing - old version."""
-    return """dn: uid=user.photo,ou=people,dc=example,dc=com
-objectClass: inetOrgPerson
-objectClass: organizationalPerson
-objectClass: person
-objectClass: top
-uid: user.photo
-cn: User Photo
-sn: Photo
-givenName: User
-mail: user.photo@example.com
-jpegPhoto:: /9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEB
- AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAf/2wBDAQEBAQEB
- AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAf/wAARC
- AAEAAQADAREAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/8QAFQEBAQAAAAAAAAAAAAAAAAAAv//aAAwDAQACEQMRAD8Av"""
 
 
 # LDIF file fixtures

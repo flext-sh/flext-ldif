@@ -2543,7 +2543,7 @@ make build                       # Build distribution packages
 ```bash
 # Automated quality checks (run before every commit)
 make lint
-make type-check                  # MyPy strict type checking
+make type-check                
 make security                    # Security scanning (bandit + pip-audit)
 make test-quick                  # Fast test suite for immediate feedback
 make docstring-validate          # Validate docstring completeness

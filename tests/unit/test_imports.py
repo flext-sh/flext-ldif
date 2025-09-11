@@ -15,6 +15,7 @@ from flext_ldif import (
     FlextLDIFUtilities,
     __version__,
 )
+from flext_ldif.utilities import LdifDomainProcessors
 
 # CLI availability flag for testing
 CLI_AVAILABLE = False
@@ -83,5 +84,5 @@ class TestModuleImports:
         assert callable(FlextLDIFFormatHandler.write_ldif)
         assert callable(FlextLDIFFormatValidators.get_ldap_validators)
         assert callable(
-            FlextLDIFUtilities.LdifDomainProcessors.validate_entries_or_warn
+            LdifDomainProcessors.validate_entries_or_warn
         )

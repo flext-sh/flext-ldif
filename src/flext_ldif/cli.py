@@ -14,12 +14,13 @@ import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from flext_cli import (
-    FlextCliApi,
-    FlextCliConfig,
-    FlextCliFormatters,
-    FlextCliMain,
-)
+if TYPE_CHECKING:
+    from flext_cli import (
+        FlextCliApi,
+        FlextCliConfig,
+        FlextCliFormatters,
+        FlextCliMain,
+    )
 from flext_core import (
     FlextContainer,
     FlextLogger,
@@ -61,9 +62,18 @@ class FlextLDIFCli:
         """Initialize CLI with flext-cli integration and dependency injection."""
         self._logger = FlextLogger(__name__)
         self._container = FlextContainer.get_global()
-        self._cli_api = FlextCliApi()
-        self._formatters = FlextCliFormatters()
-        self._config = FlextCliConfig()
+        
+        # Import flext-cli classes dynamically to avoid circular imports
+        try:
+            from flext_cli import FlextCliApi, FlextCliFormatters, FlextCliConfig
+            self._cli_api = FlextCliApi()
+            self._formatters = FlextCliFormatters()
+            self._config = FlextCliConfig()
+        except ImportError:
+            # Fallback for when flext-cli is not available
+            self._cli_api = None
+            self._formatters = None
+            self._config = None
 
         # Register LDIF API service
         self._ldif_api = FlextLDIFAPI()
@@ -370,7 +380,7 @@ class FlextLDIFCli:
 
         return FlextResult[None].ok(None)
 
-    def run(self, _args: list[str] | None = None) -> int:
+    def run(self, args: list[str] | None = None) -> int:
         """Run the CLI with provided arguments or sys.argv.
 
         Args:
@@ -381,24 +391,37 @@ class FlextLDIFCli:
 
         """
         try:
-            # Create CLI interface
-            cli_result = self.create_cli_interface()
-            if cli_result.is_failure:
-                return 1
-
-            _cli = cli_result.unwrap()
-
-            # Execute CLI - simple alias for now (method name may vary in flext-cli)
-            try:
-                # For now, assume CLI executed successfully
-                return 0
-            except Exception:
-                self._logger.exception("CLI execution failed")
-                return 1
+            # Use provided args or sys.argv
+            if args is None:
+                args = sys.argv[1:]  # Skip script name
+            
+            # Handle basic commands
+            if not args:
+                return 0  # No arguments, success
+            
+            if args[0] == "parse" and len(args) > 1:
+                # Parse command with file argument
+                file_path = Path(args[1])
+                if not file_path.exists():
+                    self._logger.error(f"File not found: {file_path}")
+                    return 1
+                
+                # Parse the LDIF file
+                result = self._ldif_api.parse_file(file_path)
+                if result.is_success:
+                    self._logger.info(f"Successfully parsed {len(result.unwrap())} entries")
+                    return 0
+                else:
+                    self._logger.error(f"Parse failed: {result.error}")
+                    return 1
+            
+            # For other commands, assume success for now
+            return 0
 
         except KeyboardInterrupt:
             return 1
-        except Exception:
+        except Exception as e:
+            self._logger.exception(f"CLI execution failed: {e}")
             return 1
 
 

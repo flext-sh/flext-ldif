@@ -16,7 +16,7 @@ import pytest
 
 from flext_ldif.models import FlextLDIFModels
 from flext_ldif.services import FlextLDIFServices
-from flext_ldif.utilities import FlextLDIFUtilities
+from flext_ldif.utilities import LdifDomainProcessors
 
 
 class TestCoverageImprovement:
@@ -50,7 +50,7 @@ class TestCoverageImprovement:
         # Create valid entries for utilities testing
         entries = [entry2]
 
-        result = FlextLDIFUtilities.LdifDomainProcessors.validate_entries_or_warn(
+        result = LdifDomainProcessors.validate_entries_or_warn(
             entries, max_errors=5
         )
 
@@ -70,7 +70,7 @@ class TestCoverageImprovement:
         entries = [mock_entry]
 
         # This should trigger line 32: Empty DN warning
-        result = FlextLDIFUtilities.LdifDomainProcessors.validate_entries_or_warn(
+        result = LdifDomainProcessors.validate_entries_or_warn(
             entries, max_errors=5
         )
 

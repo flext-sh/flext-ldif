@@ -725,7 +725,6 @@ class FlextLDIFModels(FlextModels.Config):
             description="Maximum cache entries",
         )
 
-        @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate configuration business rules.
 
@@ -757,9 +756,8 @@ class FlextLDIFModels(FlextModels.Config):
             if "encoding" in data:
                 data["default_encoding"] = data.pop("encoding")
 
-            # Initialize the parent model first - type-safe approach
-            # Use type: ignore for Pydantic dynamic initialization
-            super().__init__(**data)
+            # Call parent constructor first with filtered data
+            super().__init__(**data)  # type: ignore[arg-type]
 
             # Set custom attributes after initialization (frozen model requires object.__setattr__)
             if max_line_length_value is not None:

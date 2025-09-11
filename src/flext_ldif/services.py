@@ -12,9 +12,9 @@ from __future__ import annotations
 import base64
 import io
 from pathlib import Path
-from typing import ClassVar, override
+from typing import ClassVar, cast, override
 
-import ldif3
+import ldif3  # type: ignore[import-untyped]
 from flext_core import (
     FlextDomainService,
     FlextLogger,
@@ -30,6 +30,8 @@ from flext_ldif.constants import FlextLDIFConstants
 from flext_ldif.format_validators import FlextLDIFFormatValidators
 from flext_ldif.models import FlextLDIFModels
 
+# Use decodebytes directly - decodestring was deprecated and removed
+# Monkey patch for ldif3 compatibility
 if not hasattr(base64, "decodestring"):
     base64.decodestring = base64.decodebytes
 
@@ -44,20 +46,14 @@ class FlextLDIFServices(FlextModels.Config):
     """
 
     class Analytics(FlextDomainService[dict[str, int]]):
-        """Analytics service for LDIF processing metrics and insights."""
+        """Analytics service for LDIF processing metrics - ZERO DUPLICATION."""
 
         def __init__(
             self,
             entries: list[FlextLDIFModels.Entry] | None = None,
             config: FlextLDIFModels.Config | None = None,
         ) -> None:
-            """Initialize analytics service with entries and configuration.
-
-            Args:
-                entries: List of LDIF entries to analyze
-                config: Configuration for analytics processing
-
-            """
+            """Initialize analytics service with entries and configuration."""
             super().__init__()
             self._entries = entries or []
             self._config = config or FlextLDIFModels.Config()
@@ -83,37 +79,20 @@ class FlextLDIFServices(FlextModels.Config):
             self,
             entries: list[FlextLDIFModels.Entry],
         ) -> FlextResult[dict[str, int]]:
-            """Analyze patterns in LDIF entries using flext-core utilities.
-
-            Args:
-                entries: List of LDIF entries to analyze
-
-            Returns:
-                FlextResult containing pattern analysis metrics
-
-            """
-            if not FlextUtilities.TypeGuards.is_list_non_empty(entries):
+            """Analyze patterns in LDIF entries - ZERO DUPLICATION."""
+            if not entries:
                 return FlextResult[dict[str, int]].ok({"total_entries": 0})
 
-            # Use flext-core SOURCE OF TRUTH for analytics constants
-            analytics = FlextLDIFConstants.Analytics
-
             patterns = {
-                analytics.TOTAL_ENTRIES_KEY: len(entries),
-                analytics.ENTRIES_WITH_CN_KEY: sum(
-                    1
-                    for entry in entries
-                    if entry.has_attribute(analytics.CN_ATTRIBUTE)
+                "total_entries": len(entries),
+                "entries_with_cn": sum(
+                    1 for entry in entries if entry.has_attribute("cn")
                 ),
-                analytics.ENTRIES_WITH_MAIL_KEY: sum(
-                    1
-                    for entry in entries
-                    if entry.has_attribute(analytics.MAIL_ATTRIBUTE)
+                "entries_with_mail": sum(
+                    1 for entry in entries if entry.has_attribute("mail")
                 ),
-                analytics.ENTRIES_WITH_TELEPHONE_KEY: sum(
-                    1
-                    for entry in entries
-                    if entry.has_attribute(analytics.TELEPHONE_ATTRIBUTE)
+                "entries_with_telephone": sum(
+                    1 for entry in entries if entry.has_attribute("telephoneNumber")
                 ),
                 "unique_object_classes": len(
                     {
@@ -132,8 +111,8 @@ class FlextLDIFServices(FlextModels.Config):
             self,
             entries: list[FlextLDIFModels.Entry],
         ) -> FlextResult[dict[str, int]]:
-            """Analyze attribute distribution across entries."""
-            if not FlextUtilities.TypeGuards.is_list_non_empty(entries):
+            """Analyze attribute distribution across entries - ZERO DUPLICATION."""
+            if not entries:
                 return FlextResult[dict[str, int]].ok({})
 
             attr_counts: dict[str, int] = {}
@@ -147,8 +126,8 @@ class FlextLDIFServices(FlextModels.Config):
             self,
             entries: list[FlextLDIFModels.Entry],
         ) -> FlextResult[dict[str, int]]:
-            """Analyze DN depth distribution."""
-            if not FlextUtilities.TypeGuards.is_list_non_empty(entries):
+            """Analyze DN depth distribution - ZERO DUPLICATION."""
+            if not entries:
                 return FlextResult[dict[str, int]].ok({})
 
             depth_analysis: dict[str, int] = {}
@@ -163,25 +142,15 @@ class FlextLDIFServices(FlextModels.Config):
             self,
             entries: list[FlextLDIFModels.Entry],
         ) -> FlextResult[dict[str, int]]:
-            """Get objectClass distribution analysis - simple alias for test compatibility.
-
-            Args:
-                entries: List of entries to analyze for objectClass distribution
-
-            Returns:
-                FlextResult containing objectClass distribution metrics
-
-            """
-            if not FlextUtilities.TypeGuards.is_list_non_empty(entries):
+            """Get objectClass distribution analysis - ZERO DUPLICATION."""
+            if not entries:
                 return FlextResult[dict[str, int]].ok({})
 
-            # Count objectClass occurrences using flext-core SOURCE OF TRUTH
             objectclass_counts: dict[str, int] = {}
             for entry in entries:
                 object_classes = entry.get_attribute("objectClass") or []
                 for oc in object_classes:
-                    # Clean objectClass name but preserve original capitalização for test compatibility
-                    cleaned_oc = FlextUtilities.TextProcessor.clean_text(oc).strip()
+                    cleaned_oc = oc.strip()
                     objectclass_counts[cleaned_oc] = (
                         objectclass_counts.get(cleaned_oc, 0) + 1
                     )
@@ -195,7 +164,7 @@ class FlextLDIFServices(FlextModels.Config):
             return self.analyze_dn_depth(entries)
 
         def get_config_info(self) -> dict[str, object]:
-            """Get configuration information - simple alias for test compatibility."""
+            """Get configuration information - ZERO DUPLICATION."""
             return {
                 "service_type": "Analytics",
                 "config_loaded": self._config is not None,
@@ -204,7 +173,7 @@ class FlextLDIFServices(FlextModels.Config):
             }
 
         def get_service_info(self) -> dict[str, object]:
-            """Get service information - simple alias for test compatibility."""
+            """Get service information - ZERO DUPLICATION."""
             return {
                 "service_name": "LDIF Analytics Service",
                 "service_type": "Analytics",
@@ -426,7 +395,7 @@ class FlextLDIFServices(FlextModels.Config):
             """
             # SOLID VIOLATION FIX: Delegate to proper ValidatorService
             # Use direct instantiation to avoid circular import (PLC0415)
-            validator = FlextLDIFServices.ValidatorService()
+            validator = FlextLDIFServices.Validator()
             return validator.validate_ldif_syntax(content)
 
         def get_config_info(self) -> dict[str, object]:
@@ -478,6 +447,7 @@ class FlextLDIFServices(FlextModels.Config):
         """LDIF Validator using format_validators as SOURCE OF TRUTH - NO DUPLICATION."""
 
         def __init__(self, config: FlextLDIFModels.Config | None = None) -> None:
+            """Initialize LDIF validator with configuration."""
             self._config = config
             self._logger = FlextLogger(__name__)
             # Use format_validators as SOURCE OF TRUTH - eliminate duplication
@@ -548,6 +518,13 @@ class FlextLDIFServices(FlextModels.Config):
 
             if not content_stripped.startswith("dn:"):
                 return FlextResult[bool].fail("LDIF must start with dn:")
+
+            # Check for missing colons in LDIF lines
+            lines = content_stripped.split("\n")
+            for line_num, line in enumerate(lines, 1):
+                stripped_line = line.strip()
+                if stripped_line and ":" not in stripped_line:
+                    return FlextResult[bool].fail(f"missing colon in line {line_num}")
 
             return FlextResult[bool].ok(data=True)
 
@@ -728,7 +705,7 @@ class FlextLDIFServices(FlextModels.Config):
         ) -> FlextResult[bool]:
             """Validate that all DNs in entries list are unique (case-insensitive)."""
             if not entries:
-                return FlextResult[bool].ok(value=True)
+                return FlextResult[bool].ok(data=True)
 
             seen_dns = set()
             for entry in entries:
@@ -739,12 +716,13 @@ class FlextLDIFServices(FlextModels.Config):
                     )
                 seen_dns.add(dn_lower)
 
-            return FlextResult[bool].ok(value=True)
+            return FlextResult[bool].ok(data=True)
 
     class Writer:
         """LDIF Writer usando FlextProcessors.FileWriter como SOURCE OF TRUTH."""
 
         def __init__(self, config: FlextLDIFModels.Config | None = None) -> None:
+            """Initialize LDIF writer with configuration."""
             self._config = config
             self._logger = FlextLogger(__name__)
 
@@ -753,9 +731,14 @@ class FlextLDIFServices(FlextModels.Config):
             """Get writer configuration."""
             return self._config
 
-        def execute(self) -> FlextResult[str]:
+        def execute(
+            self, entries: list[FlextLDIFModels.Entry] | None = None
+        ) -> FlextResult[str]:
             """Execute writer operation - format entries to LDIF string."""
-            return self.format_ldif(self._entries)
+            if entries is None:
+                # Return empty LDIF for no entries
+                return FlextResult[str].ok("")
+            return self.format_ldif(entries)
 
         def format_ldif(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult[str]:
             """Format entries as LDIF using real LDIF formatting."""
@@ -784,10 +767,7 @@ class FlextLDIFServices(FlextModels.Config):
 
             # Add attributes in proper format
             for attr_name, attr_values in entry.attributes.data.items():
-                if isinstance(attr_values, list):
-                    lines.extend(f"{attr_name}: {value}" for value in attr_values)
-                else:
-                    lines.append(f"{attr_name}: {attr_values}")
+                lines.extend(f"{attr_name}: {value}" for value in attr_values)
 
             return FlextResult[str].ok("\n".join(lines))
 
@@ -826,9 +806,12 @@ class FlextLDIFServices(FlextModels.Config):
 
         def write_entries_to_file(
             self, entries: list[FlextLDIFModels.Entry], file_path: str
-        ) -> FlextResult[str]:
+        ) -> FlextResult[bool]:
             """Alias for write_to_file - test compatibility."""
-            return self.write_to_file(entries, file_path)
+            result = self.write_to_file(entries, file_path)
+            if result.is_success:
+                return FlextResult[bool].ok(data=True)
+            return FlextResult[bool].fail(result.error or "Write failed")
 
         def write_entry(self, entry: FlextLDIFModels.Entry) -> FlextResult[str]:
             """Write single entry to LDIF string format."""
@@ -878,7 +861,7 @@ class FlextLDIFServices(FlextModels.Config):
             Writer should NOT configure domain services - this just returns success.
             """
             _ = config  # Suppress unused argument warning
-            return FlextResult[bool].ok(value=True)
+            return FlextResult[bool].ok(data=True)
 
     class WriterService(Writer):
         """Alias for Writer - test compatibility only."""
@@ -927,24 +910,27 @@ class FlextLDIFServices(FlextModels.Config):
             except Exception as e:
                 return FlextResult[bool].fail(f"Unexpected error writing file: {e}")
 
+        def execute(
+            self, entries: list[FlextLDIFModels.Entry] | None = None
+        ) -> FlextResult[str]:
+            """Execute writer operation using internal entries or provided entries."""
+            if entries is None:
+                entries = self._entries
+            return super().execute(entries)
+
         def write_entries_to_file(
             self,
             entries: list[FlextLDIFModels.Entry],
             file_path: str,
             encoding: str = "utf-8",
         ) -> FlextResult[bool]:
-            """Write entries to file - simple alias for test compatibility."""
+            """Write entries to file - maintains parent signature for SOLID compliance."""
             # Format entries as LDIF
             ldif_lines = []
             for entry in entries:
                 ldif_lines.append(f"dn: {entry.dn.value}")
                 for attr_name, attr_values in entry.attributes.data.items():
-                    if isinstance(attr_values, list):
-                        ldif_lines.extend(
-                            f"{attr_name}: {value}" for value in attr_values
-                        )
-                    else:
-                        ldif_lines.append(f"{attr_name}: {attr_values}")
+                    ldif_lines.extend(f"{attr_name}: {value}" for value in attr_values)
                 ldif_lines.append("")  # Empty line between entries
 
             content = "\n".join(ldif_lines)
@@ -1309,11 +1295,12 @@ class FlextLDIFServices(FlextModels.Config):
             Configured Field for DN validation
 
         """
-        return Field(
+        field = Field(
             description=description,
             min_length=min_length,
             max_length=max_length,
         )
+        return cast("FieldInfo", field)
 
     @staticmethod
     def attribute_name_field(
@@ -1333,11 +1320,12 @@ class FlextLDIFServices(FlextModels.Config):
             Configured Field for attribute name validation
 
         """
-        return Field(
+        field = Field(
             description=description,
             pattern=pattern,
             max_length=max_length,
         )
+        return cast("FieldInfo", field)
 
     @staticmethod
     def attribute_value_field(
@@ -1355,17 +1343,18 @@ class FlextLDIFServices(FlextModels.Config):
             Configured Field for attribute value validation
 
         """
-        return Field(
+        field = Field(
             description=description,
             max_length=max_length,
         )
+        return cast("FieldInfo", field)
 
     @staticmethod
     def object_class_field(
         *,
         description: str = "LDAP Object Class",
         pattern: str = r"^[a-zA-Z][a-zA-Z0-9]*$",
-        max_length: int = 256,
+        max_length: int = 255,
     ) -> FieldInfo:
         """Create an object class field with validation.
 
@@ -1378,12 +1367,13 @@ class FlextLDIFServices(FlextModels.Config):
             Configured Field for object class validation
 
         """
-        return Field(
+        field = Field(
             description=description,
             pattern=pattern,
             max_length=max_length,
             min_length=1,
         )
+        return cast("FieldInfo", field)
 
     AnalyticsService: ClassVar[type] = Analytics
     ParserService: ClassVar[type] = Parser

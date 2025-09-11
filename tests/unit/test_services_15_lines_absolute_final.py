@@ -20,6 +20,8 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+from flext_core import FlextResult
+
 from flext_ldif.models import FlextLDIFModels
 from flext_ldif.services import FlextLDIFServices
 
@@ -164,10 +166,9 @@ def test_lines_862_863_failed_results_error_handling() -> None:
     # Vou mockar o resultado de transform_entry para retornar failure
     original_transform_entry = transformer.transform_entry
 
-    def failing_transform_entry(self, entry):
+    def failing_transform_entry(self: object, entry: object) -> FlextResult[object]:
         # Força um resultado de failure
-        from flext_core import FlextResult
-
+        _ = self, entry  # Mark parameters as used
         return FlextResult[object].fail("Forced failure for lines 862-863")
 
     # Substitui temporariamente o método
