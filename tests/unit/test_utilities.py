@@ -224,9 +224,7 @@ class TestFlextLDIFUtilities:
             "objectClass": ["person", "inetOrgPerson"],
         }
 
-        result = LdifConverters.attributes_dict_to_ldif_format(
-            test_attrs
-        )
+        result = LdifConverters.attributes_dict_to_ldif_format(test_attrs)
 
         assert result.is_success
         converted = result.value
@@ -246,9 +244,7 @@ class TestFlextLDIFUtilities:
             ],  # Removed None for type safety
         }
 
-        result = LdifConverters.attributes_dict_to_ldif_format(
-            test_attrs
-        )
+        result = LdifConverters.attributes_dict_to_ldif_format(test_attrs)
 
         assert result.is_success
         converted = result.value
@@ -267,9 +263,7 @@ class TestFlextLDIFUtilities:
             "OBJECTCLASS": ["person"],
         }
 
-        result = LdifConverters.attributes_dict_to_ldif_format(
-            test_attrs
-        )
+        result = LdifConverters.attributes_dict_to_ldif_format(test_attrs)
 
         assert result.is_success
         converted = result.value
@@ -304,18 +298,14 @@ class TestFlextLDIFUtilities:
 
     def test_validate_entries_or_warn_empty_list(self) -> None:
         """Test validate_entries_or_warn with empty entry list."""
-        result = LdifDomainProcessors.validate_entries_or_warn(
-            [], max_errors=10
-        )
+        result = LdifDomainProcessors.validate_entries_or_warn([], max_errors=10)
 
         assert result.is_success
         assert result.value is True  # Empty list should be considered valid
 
     def test_filter_entries_by_object_class_empty_list(self) -> None:
         """Test filtering empty list of entries."""
-        result = LdifDomainProcessors.filter_entries_by_object_class(
-            [], "person"
-        )
+        result = LdifDomainProcessors.filter_entries_by_object_class([], "person")
 
         assert result.is_success
         assert len(result.value) == 0
@@ -351,9 +341,7 @@ class TestFlextLDIFUtilities:
             )
             entries.append(entry)
 
-        result = LdifDomainProcessors.validate_entries_or_warn(
-            entries, max_errors=5
-        )
+        result = LdifDomainProcessors.validate_entries_or_warn(entries, max_errors=5)
 
         # Should return False due to missing objectClass
         assert result.is_success

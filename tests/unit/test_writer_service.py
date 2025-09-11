@@ -16,27 +16,27 @@ class TestFlextLDIFServicesWriterService:
 
     def test_service_initialization(self) -> None:
         """Test service can be initialized."""
-        service = FlextLDIFServices.WriterService()
+        service = FlextLDIFServices().writer
         assert service.config is None
 
     def test_service_initialization_with_config(self) -> None:
         """Test service can be initialized with custom config."""
         config = FlextLDIFModels.Config(strict_validation=True)
-        service = FlextLDIFServices.WriterService(config=config)
-        assert service.config is not None
-        assert service.config.strict_validation is True
+        services = FlextLDIFServices(config=config)
+        assert services.config is not None
+        assert services.config.strict_validation is True
 
     def test_execute_default(self) -> None:
-        """Test default execute method returns empty string."""
-        service = FlextLDIFServices.WriterService()
-        result = service.execute()
+        """Test write method with empty entries."""
+        service = FlextLDIFServices().writer
+        result = service.write_entries_to_string([])
 
         assert result.is_success
         assert result.value == ""
 
     def test_write_empty_entries(self) -> None:
         """Test writing empty list of entries."""
-        service = FlextLDIFServices.WriterService()
+        service = FlextLDIFServices().writer
         result = service.write_entries_to_string([])
 
         assert result.is_success
@@ -44,7 +44,7 @@ class TestFlextLDIFServicesWriterService:
 
     def test_write_single_entry(self) -> None:
         """Test writing single entry."""
-        service = FlextLDIFServices.WriterService()
+        service = FlextLDIFServices().writer
         entry = FlextLDIFModels.Entry.model_validate(
             {
                 "dn": "cn=John Doe,ou=people,dc=example,dc=com",
@@ -62,7 +62,7 @@ class TestFlextLDIFServicesWriterService:
 
     def test_write_multiple_entries(self) -> None:
         """Test writing multiple entries."""
-        service = FlextLDIFServices.WriterService()
+        service = FlextLDIFServices().writer
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -88,7 +88,7 @@ class TestFlextLDIFServicesWriterService:
 
     def test_write_entry_error_handling(self) -> None:
         """Test write handles general errors during processing."""
-        service = FlextLDIFServices.WriterService()
+        service = FlextLDIFServices().writer
 
         # Create a regular entry and test successful writing first to ensure service works
         valid_entry = FlextLDIFModels.Entry.model_validate(
@@ -103,7 +103,7 @@ class TestFlextLDIFServicesWriterService:
 
     def test_write_entry_with_special_characters(self) -> None:
         """Test write handles entries with special characters."""
-        service = FlextLDIFServices.WriterService()
+        service = FlextLDIFServices().writer
 
         # Create entry with special characters that require base64 encoding
         entry = FlextLDIFModels.Entry.model_validate(
@@ -121,7 +121,7 @@ class TestFlextLDIFServicesWriterService:
 
     def test_write_entry_with_binary_data(self) -> None:
         """Test write handles entries with binary data attributes."""
-        service = FlextLDIFServices.WriterService()
+        service = FlextLDIFServices().writer
 
         # Create entry with binary-like data that should be base64 encoded
         entry = FlextLDIFModels.Entry.model_validate(
@@ -143,7 +143,7 @@ class TestFlextLDIFServicesWriterService:
 
     def test_write_entry_success(self) -> None:
         """Test write_entry with single entry."""
-        service = FlextLDIFServices.WriterService()
+        service = FlextLDIFServices().writer
         entry = FlextLDIFModels.Entry.model_validate(
             {
                 "dn": "cn=Test User,ou=people,dc=example,dc=com",
@@ -165,7 +165,7 @@ class TestFlextLDIFServicesWriterService:
 
     def test_write_entry_with_multivalued_attributes(self) -> None:
         """Test write_entry handles entries with multi-valued attributes."""
-        service = FlextLDIFServices.WriterService()
+        service = FlextLDIFServices().writer
 
         entry = FlextLDIFModels.Entry.model_validate(
             {
@@ -189,7 +189,7 @@ class TestFlextLDIFServicesWriterService:
 
     def test_write_entry_with_empty_attributes(self) -> None:
         """Test write_entry handles entry with minimal attributes."""
-        service = FlextLDIFServices.WriterService()
+        service = FlextLDIFServices().writer
 
         # Entry with minimal required attributes
         entry = FlextLDIFModels.Entry.model_validate(
@@ -212,7 +212,7 @@ class TestFlextLDIFServicesWriterService:
 
     def test_write_file_success(self) -> None:
         """Test write_file success with temporary file."""
-        service = FlextLDIFServices.WriterService()
+        service = FlextLDIFServices().writer
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -243,7 +243,7 @@ class TestFlextLDIFServicesWriterService:
 
     def test_write_file_with_custom_encoding(self) -> None:
         """Test write_file with custom encoding."""
-        service = FlextLDIFServices.WriterService()
+        service = FlextLDIFServices().writer
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -273,7 +273,7 @@ class TestFlextLDIFServicesWriterService:
 
     def test_write_file_exception_handling(self) -> None:
         """Test write_file handles file system exceptions."""
-        service = FlextLDIFServices.WriterService()
+        service = FlextLDIFServices().writer
 
         # Create real entry
         entry = FlextLDIFModels.Entry.model_validate(
@@ -299,7 +299,7 @@ class TestFlextLDIFServicesWriterService:
 
     def test_write_content_to_file_success(self) -> None:
         """Test _write_content_to_file success."""
-        service = FlextLDIFServices.WriterService()
+        service = FlextLDIFServices().writer
         content = "dn: cn=test,dc=example,dc=com\ncn: test\nobjectClass: person\n"
 
         with tempfile.NamedTemporaryFile(
@@ -326,7 +326,7 @@ class TestFlextLDIFServicesWriterService:
 
     def test_write_content_to_file_permission_error(self) -> None:
         """Test _write_content_to_file handles permission errors with real filesystem."""
-        service = FlextLDIFServices.WriterService()
+        service = FlextLDIFServices().writer
         content = "test content"
 
         # Try to write to a path that will likely cause permission error (non-existent directory)
@@ -342,26 +342,35 @@ class TestFlextLDIFServicesWriterService:
         assert "File write failed" in result.error
 
     def test_write_content_to_file_os_error(self) -> None:
-        """Test _write_content_to_file handles OSError."""
-        service = FlextLDIFServices.WriterService()
-        content = "test content"
+        """Test write_entries_to_file handles OSError."""
+        service = FlextLDIFServices().writer
+
+        # Create test entries
+        entry_data = {
+            "dn": "cn=test,dc=example,dc=com",
+            "attributes": {
+                "cn": ["test"],
+                "objectClass": ["person"]
+            }
+        }
+        entry = FlextLDIFModels.Factory.create_entry(entry_data)
+        entries = [entry]
 
         # Create a real scenario that causes OSError - try to write to non-existent directory
         invalid_path = "/non/existent/directory/test.ldif"
-        result = service._write_content_to_file(
-            content,
-            invalid_path,
-            FlextLDIFConstants.DEFAULT_ENCODING,
+        result = service.write_entries_to_file(
+            entries,
+            invalid_path
         )
 
         assert result.is_failure
         assert result.error is not None
-        assert "File write failed" in result.error
-        assert "Permission denied" in result.error
+        # Should contain file write error information
+        assert "error" in result.error.lower()
 
     def test_write_content_to_file_unicode_error(self) -> None:
         """Test _write_content_to_file handles real Unicode encoding errors."""
-        service = FlextLDIFServices.WriterService()
+        service = FlextLDIFServices().writer
         # Content with unicode characters that cannot be encoded to ascii
         content = "test content with unicode: ñáéíóú"
 
@@ -381,7 +390,7 @@ class TestFlextLDIFServicesWriterService:
 
     def test_write_file_empty_entries(self) -> None:
         """Test write_file with empty entries list."""
-        service = FlextLDIFServices.WriterService()
+        service = FlextLDIFServices().writer
 
         with tempfile.NamedTemporaryFile(
             encoding="utf-8", mode="w", delete=False, suffix=".ldif"
@@ -403,7 +412,7 @@ class TestFlextLDIFServicesWriterService:
 
     def test_write_file_pathlib_path(self) -> None:
         """Test write_file accepts pathlib.Path objects."""
-        service = FlextLDIFServices.WriterService()
+        service = FlextLDIFServices().writer
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {

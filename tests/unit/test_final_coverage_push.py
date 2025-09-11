@@ -21,7 +21,7 @@ class TestFinalCoveragePush:
 
     def test_actual_line_502_503_exception(self) -> None:
         """Test actual exception handling in validate_entries at lines 502-503."""
-        validator = FlextLDIFServices.ValidatorService()
+        validator = FlextLDIFServices().validator
 
         # Create mock entry that raises Exception during validation
         mock_entry = Mock()
@@ -45,7 +45,7 @@ class TestFinalCoveragePush:
 
     def test_actual_lines_571_576_attribute_flow(self) -> None:
         """Test attribute validation flow at lines 571-576."""
-        validator = FlextLDIFServices.ValidatorService()
+        validator = FlextLDIFServices().validator
 
         # Create entry with specific attribute structure
         mock_entry = Mock()
@@ -67,10 +67,10 @@ class TestFinalCoveragePush:
 
     def test_actual_lines_724_725_parser_empty(self) -> None:
         """Test parser lines 724-725 with empty/edge case content."""
-        parser = FlextLDIFServices.ParserService()
+        parser = FlextLDIFServices().parser
 
         # Test with specific edge case content that triggers lines 724-725
-        result = parser.parse_ldif_content("")
+        result = parser.parse_content("")
 
         utils = FlextTestsUtilities()
         assertion = utils.assertion()
@@ -79,11 +79,11 @@ class TestFinalCoveragePush:
 
     def test_actual_line_732_parser_processing(self) -> None:
         """Test parser line 732 processing path."""
-        parser = FlextLDIFServices.ParserService()
+        parser = FlextLDIFServices().parser
 
         # Test with minimal content that triggers line 732
         content = "dn: cn=test,dc=example,dc=com\ncn: test\n"
-        result = parser.parse_ldif_content(content)
+        result = parser.parse_content(content)
 
         utils = FlextTestsUtilities()
         assertion = utils.assertion()
@@ -92,7 +92,7 @@ class TestFinalCoveragePush:
 
     def test_actual_lines_762_763_writer_config(self) -> None:
         """Test writer service lines 762-763 with configuration."""
-        writer = FlextLDIFServices.WriterService()
+        writer = FlextLDIFServices().writer
 
         # Test configuration path that might trigger lines 762-763
         result = writer.configure_domain_services_system({"test_config": "value"})
@@ -104,7 +104,7 @@ class TestFinalCoveragePush:
 
     def test_actual_line_786_writer_edge_case(self) -> None:
         """Test writer service line 786 edge case."""
-        writer = FlextLDIFServices.WriterService()
+        writer = FlextLDIFServices().writer
 
         # Create entry directly without Factory for this test
         entry_data = {
@@ -122,7 +122,7 @@ class TestFinalCoveragePush:
 
     def test_actual_lines_812_813_analytics_empty(self) -> None:
         """Test analytics service lines 812-813 with empty data."""
-        analytics = FlextLDIFServices.AnalyticsService()
+        analytics = FlextLDIFServices().analytics
 
         # Test with empty entries to trigger lines 812-813
         result = analytics.analyze_patterns([])
@@ -134,10 +134,10 @@ class TestFinalCoveragePush:
 
     def test_actual_lines_862_863_analytics_distribution(self) -> None:
         """Test analytics lines 862-863 attribute distribution."""
-        analytics = FlextLDIFServices.AnalyticsService()
+        analytics = FlextLDIFServices().analytics
 
-        # Test attribute distribution with empty entries
-        result = analytics.analyze_attribute_distribution([])
+        # Test object class distribution with empty entries
+        result = analytics.get_objectclass_distribution([])
 
         utils = FlextTestsUtilities()
         assertion = utils.assertion()
@@ -146,10 +146,10 @@ class TestFinalCoveragePush:
 
     def test_actual_lines_868_869_analytics_depth(self) -> None:
         """Test analytics lines 868-869 DN depth analysis."""
-        analytics = FlextLDIFServices.AnalyticsService()
+        analytics = FlextLDIFServices().analytics
 
         # Test DN depth analysis with empty entries
-        result = analytics.analyze_dn_depth([])
+        result = analytics.get_dn_depth_analysis([])
 
         utils = FlextTestsUtilities()
         assertion = utils.assertion()
@@ -158,10 +158,10 @@ class TestFinalCoveragePush:
 
     def test_actual_line_675_repository_config(self) -> None:
         """Test repository service line 675."""
-        repository = FlextLDIFServices.RepositoryService()
+        repository = FlextLDIFServices().repository
 
-        # Test configuration method
-        result = repository.configure_domain_services_system({"env": "test"})
+        # Test repository functionality
+        result = repository.get_statistics([])
 
         utils = FlextTestsUtilities()
         assertion = utils.assertion()
@@ -170,10 +170,10 @@ class TestFinalCoveragePush:
 
     def test_actual_lines_698_703_repository_flow(self) -> None:
         """Test repository lines 698->703 execution flow."""
-        repository = FlextLDIFServices.RepositoryService()
+        repository = FlextLDIFServices().repository
 
-        # Test execute method to trigger flow lines 698->703
-        result = repository.execute()
+        # Test get_statistics method to trigger flow lines 698->703
+        result = repository.get_statistics([])
 
         utils = FlextTestsUtilities()
         assertion = utils.assertion()
@@ -183,7 +183,7 @@ class TestFinalCoveragePush:
     def test_lines_532_543_config_none(self) -> None:
         """Test configuration validation with None config at lines 532, 543."""
         # Create validator with explicit None config
-        validator = FlextLDIFServices.ValidatorService(config=None)
+        validator = FlextLDIFServices(config=None)
 
         mock_entry = Mock()
         mock_entry.dn = Mock()
@@ -201,7 +201,7 @@ class TestFinalCoveragePush:
 
     def test_branches_369_368_795_797(self) -> None:
         """Test branch conditions at lines 369->368, 795->797."""
-        validator = FlextLDIFServices.ValidatorService()
+        validator = FlextLDIFServices().validator
 
         # Create specific conditions to trigger these branch lines
         mock_entry = Mock()

@@ -35,9 +35,7 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
             ),
         ]
 
-        result = LdifDomainProcessors.validate_entries_or_warn(
-            entries
-        )
+        result = LdifDomainProcessors.validate_entries_or_warn(entries)
 
         assert result.is_success is True
         assert result.value is True
@@ -56,9 +54,7 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
             )
         ]
 
-        result = LdifDomainProcessors.validate_entries_or_warn(
-            entries
-        )
+        result = LdifDomainProcessors.validate_entries_or_warn(entries)
 
         assert result.is_success is True
         assert result.value is False  # Has warnings/errors
@@ -79,9 +75,7 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
             for i in range(5)
         ]
 
-        result = LdifDomainProcessors.validate_entries_or_warn(
-            entries, max_errors=3
-        )
+        result = LdifDomainProcessors.validate_entries_or_warn(entries, max_errors=3)
 
         assert result.is_success is True
         assert result.value is False  # Has errors
@@ -112,9 +106,7 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
             ),
         ]
 
-        result = LdifDomainProcessors.filter_entries_by_object_class(
-            entries, "person"
-        )
+        result = LdifDomainProcessors.filter_entries_by_object_class(entries, "person")
 
         assert result.is_success is True
         filtered_entries = result.value
@@ -131,9 +123,7 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
             )
         ]
 
-        result = LdifDomainProcessors.filter_entries_by_object_class(
-            entries, "person"
-        )
+        result = LdifDomainProcessors.filter_entries_by_object_class(entries, "person")
 
         assert result.is_success is True
         assert len(result.value) == 0
@@ -151,9 +141,7 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
         ]
 
         # Test should handle any exceptions gracefully
-        result = LdifDomainProcessors.filter_entries_by_object_class(
-            entries, "person"
-        )
+        result = LdifDomainProcessors.filter_entries_by_object_class(entries, "person")
 
         assert result.is_success is True
 
@@ -309,9 +297,7 @@ class TestFlextLDIFUtilitiesLdifConverters:
             "mail": ["john@example.com"],
         }
 
-        result = LdifConverters.attributes_dict_to_ldif_format(
-            attributes
-        )
+        result = LdifConverters.attributes_dict_to_ldif_format(attributes)
 
         assert result.is_success is True
         ldif_attrs = result.value
@@ -327,9 +313,7 @@ class TestFlextLDIFUtilitiesLdifConverters:
             "sn": "Test",
         }
 
-        result = LdifConverters.attributes_dict_to_ldif_format(
-            attributes
-        )
+        result = LdifConverters.attributes_dict_to_ldif_format(attributes)
 
         assert result.is_success is True
         ldif_attrs = result.value
@@ -344,9 +328,7 @@ class TestFlextLDIFUtilitiesLdifConverters:
             "also_empty": [],  # Empty list should be excluded
         }
 
-        result = LdifConverters.attributes_dict_to_ldif_format(
-            attributes
-        )
+        result = LdifConverters.attributes_dict_to_ldif_format(attributes)
 
         assert result.is_success is True
         ldif_attrs = result.value
@@ -359,9 +341,7 @@ class TestFlextLDIFUtilitiesLdifConverters:
         # Pass something that might cause issues
         attributes = {"valid": ["value"]}
 
-        result = LdifConverters.attributes_dict_to_ldif_format(
-            attributes
-        )
+        result = LdifConverters.attributes_dict_to_ldif_format(attributes)
 
         # Should succeed
         assert result.is_success is True
@@ -405,9 +385,7 @@ class TestFlextLDIFUtilitiesAdditionalCoverage:
     def test_validate_entries_or_warn_edge_cases(self) -> None:
         """Test validate_entries_or_warn edge cases using flext_tests - NO mocks."""
         # Test with empty list - should return success with True (no errors)
-        empty_result = LdifDomainProcessors.validate_entries_or_warn(
-            []
-        )
+        empty_result = LdifDomainProcessors.validate_entries_or_warn([])
 
         # Current implementation returns failure for empty lists
         # This is the actual behavior - some validators reject empty input
@@ -437,9 +415,7 @@ class TestFlextLDIFUtilitiesAdditionalCoverage:
             entry = FlextLDIFModels.Entry.model_construct(**entry_data)
 
             # This should trigger empty DN check (line 32)
-            result = LdifDomainProcessors.validate_entries_or_warn(
-                [entry]
-            )
+            result = LdifDomainProcessors.validate_entries_or_warn([entry])
             assert result.is_success, (
                 f"Expected success, got failure: {result.error if hasattr(result, 'error') else result}"
             )

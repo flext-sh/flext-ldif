@@ -15,7 +15,7 @@ from flext_ldif.services import FlextLDIFServices
 def test_comprehensive_coverage_all_missing_lines() -> None:
     """Teste abrangente que deve cobrir TODAS as 16 linhas restantes."""
     # ==== COBERTURA LINHA 368-369 ====
-    parser = FlextLDIFServices.ParserService()
+    parser = FlextLDIFServices().parser
 
     # LDIF que deve exercitar find_entries_with_attribute
     ldif_for_search = """dn: cn=hasmail,dc=example,dc=com
@@ -28,7 +28,7 @@ cn: nomail
 objectClass: person
 """
 
-    result = parser.parse(ldif_for_search)
+    result = parser.parse_content(ldif_for_search)
     if result.is_success:
         entries = result.value
         # Isso deve exercitar as linhas 368-369
@@ -36,7 +36,7 @@ objectClass: person
         assert len(found_entries) >= 1
 
     # ==== COBERTURA LINHAS 571-576 ====
-    validator = FlextLDIFServices.ValidatorService()
+    validator = FlextLDIFServices().validator
 
     # Criar mock entry que deve exercitar TypeGuards
     mock_entry = Mock()
@@ -65,7 +65,7 @@ objectClass: person
 """
 
     # Isso deve exercitar a linha 675 (continue para pular linhas inválidas)
-    invalid_result = parser.parse(invalid_ldif)
+    invalid_result = parser.parse_content(invalid_ldif)
     assert invalid_result.is_success or invalid_result.is_failure
 
     # ==== COBERTURA LINHAS 698-703 ====
@@ -80,7 +80,7 @@ objectClass: person
 """
 
     # Isso deve exercitar as linhas 698-703
-    continuation_result = parser.parse(continuation_ldif)
+    continuation_result = parser.parse_content(continuation_ldif)
     assert continuation_result.is_success or continuation_result.is_failure
 
     # ==== COBERTURA LINHAS 724-725 ====
@@ -94,7 +94,7 @@ objectClass: person
 """
 
         # This should exercise parsing - result can be success or failure
-        error_result = parser.parse(simple_ldif)
+        error_result = parser.parse_content(simple_ldif)
         assert error_result.is_success or error_result.is_failure
 
     # ==== COBERTURA LINHA 732 ====
@@ -105,7 +105,7 @@ objectClass: person
 """
 
     # Isso deve exercitar linha 732 (return success)
-    success_result = parser.parse(success_ldif)
+    success_result = parser.parse_content(success_ldif)
     assert success_result.is_success
 
     # ==== COBERTURA LINHAS 762-763 ====
@@ -129,7 +129,7 @@ objectClass: person
 """
 
     # Isso deve exercitar linha 786
-    processing_result = parser.parse(processing_ldif)
+    processing_result = parser.parse_content(processing_ldif)
     assert processing_result.is_success or processing_result.is_failure
 
     # ==== COBERTURA LINHAS 795-797 ====
@@ -144,7 +144,7 @@ objectClass: inetOrgPerson
 """
 
     # Isso deve exercitar linhas 795-797 (if attr_name not in entry_data)
-    multi_result = parser.parse(multi_value_ldif)
+    multi_result = parser.parse_content(multi_value_ldif)
     if multi_result.is_success:
         entry = multi_result.value[0]
         mail_attrs = entry.get_attribute("mail")
@@ -161,11 +161,11 @@ objectClass: person
 """
 
         # Isso deve exercitar as linhas 812-813
-        factory_result = parser.parse(factory_ldif)
+        factory_result = parser.parse_content(factory_ldif)
         assert factory_result.is_success or factory_result.is_failure
 
     # ==== COBERTURA LINHAS 862-863 e 868-869 ====
-    transformer = FlextLDIFServices.TransformerService()
+    transformer = FlextLDIFServices().transformer
 
     # Testar transformação com entries reais
     real_entries = [
@@ -180,18 +180,22 @@ objectClass: person
     ]
 
     # Isso deve exercitar as linhas de transformação
-    transform_result = transformer.transform_entries(real_entries)
+    def identity_transform(entry: FlextLDIFModels.Entry) -> FlextLDIFModels.Entry:
+        """Transformação de identidade para teste."""
+        return entry
+
+    transform_result = transformer.transform_entries(real_entries, identity_transform)
     assert transform_result.is_success or transform_result.is_failure
 
     # Testar com entrada vazia
-    empty_transform_result = transformer.transform_entries([])
+    empty_transform_result = transformer.transform_entries([], identity_transform)
     assert empty_transform_result.is_success or empty_transform_result.is_failure
 
 
 def test_additional_edge_cases() -> None:
     """Testes adicionais para garantir cobertura completa."""
     # Mais cenários para garantir que todas as linhas sejam cobertas
-    parser = FlextLDIFServices.ParserService()
+    parser = FlextLDIFServices().parser
 
     # Teste com LDIF extremamente complexo
     complex_ldif = """dn: cn=complex,dc=example,dc=com
@@ -224,7 +228,7 @@ description: Outra entrada
 
 """
 
-    result = parser.parse(complex_ldif)
+    result = parser.parse_content(complex_ldif)
     assert result.is_success or result.is_failure
 
     if result.is_success:
@@ -242,8 +246,8 @@ description: Outra entrada
                 assert isinstance(desc_values, list)
 
     # Testes com diferentes services
-    validator = FlextLDIFServices.ValidatorService()
-    transformer = FlextLDIFServices.TransformerService()
+    validator = FlextLDIFServices().validator
+    transformer = FlextLDIFServices().transformer
 
     if result.is_success:
         entries = result.value
@@ -264,27 +268,27 @@ description: Outra entrada
 def test_mock_scenarios_for_complete_coverage() -> None:
     """Cenários com mocks para cobertura completa."""
     # Teste com diferentes tipos de exceções
-    parser = FlextLDIFServices.ParserService()
+    parser = FlextLDIFServices().parser
 
     test_ldif = """dn: cn=test,dc=example,dc=com
 cn: test
 objectClass: person
 """
 
-    # Teste 1: Exceção no model_validate
-    with patch.object(FlextLDIFModels.Entry, "model_validate") as mock1:
-        mock1.side_effect = ValueError("Model validation error")
-        result1 = parser.parse(test_ldif)
+    # Teste 1: Exceção no format handler
+    with patch.object(parser._format_handler, "parse_ldif") as mock1:
+        mock1.side_effect = ValueError("Format handler error")
+        result1 = parser.parse_content(test_ldif)
         assert result1.is_failure
 
     # Teste 2: Exceção no Factory
     with patch.object(FlextLDIFModels, "Factory") as mock2:
         mock2.create_entry = Mock(side_effect=TypeError("Factory type error"))
-        result2 = parser.parse(test_ldif)
+        result2 = parser.parse_content(test_ldif)
         assert result2.is_success or result2.is_failure
 
     # Teste 3: Validador com mocks específicos
-    validator = FlextLDIFServices.ValidatorService()
+    validator = FlextLDIFServices().validator
 
     mock_entry1 = Mock()
     mock_entry1.dn = Mock()
@@ -309,12 +313,12 @@ def test_direct_method_calls_for_coverage() -> None:
     """Chamadas diretas de métodos para cobertura."""
     # Testes diretos em services específicos
     services = [
-        FlextLDIFServices.ParserService(),
-        FlextLDIFServices.ValidatorService(),
-        FlextLDIFServices.TransformerService(),
-        FlextLDIFServices.WriterService(),
-        FlextLDIFServices.AnalyticsService(),
-        FlextLDIFServices.RepositoryService(),
+        FlextLDIFServices().parser,
+        FlextLDIFServices().validator,
+        FlextLDIFServices().transformer,
+        FlextLDIFServices().writer,
+        FlextLDIFServices().analytics,
+        FlextLDIFServices().repository,
     ]
 
     # Chamar métodos básicos em todos os services

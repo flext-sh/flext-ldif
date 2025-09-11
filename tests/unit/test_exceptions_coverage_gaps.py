@@ -68,9 +68,21 @@ class TestFlextLDIFExceptionsCoverageGaps:
         assert FlextLDIFErrorCodes.LDIF_PARSE_ERROR.value == "LDIF_PARSE_ERROR"
         assert FlextLDIFErrorCodes.LDIF_ENTRY_ERROR.value == "LDIF_ENTRY_ERROR"
         assert FlextLDIFErrorCodes.LDIF_ERROR.value == "LDIF_ERROR"
-        assert FlextLDIFErrorCodes.LDIF_VALIDATION_ERROR.value == "LDIF_VALIDATION_ERROR"
-        assert FlextLDIFErrorCodes.LDIF_CONFIGURATION_ERROR.value == "LDIF_CONFIGURATION_ERROR"
-        assert FlextLDIFErrorCodes.LDIF_PROCESSING_ERROR.value == "LDIF_PROCESSING_ERROR"
-        assert FlextLDIFErrorCodes.LDIF_CONNECTION_ERROR.value == "LDIF_CONNECTION_ERROR"
-        assert FlextLDIFErrorCodes.LDIF_AUTHENTICATION_ERROR.value == "LDIF_AUTHENTICATION_ERROR"
+        assert (
+            FlextLDIFErrorCodes.LDIF_VALIDATION_ERROR.value == "LDIF_VALIDATION_ERROR"
+        )
+        assert (
+            FlextLDIFErrorCodes.LDIF_CONFIGURATION_ERROR.value
+            == "LDIF_CONFIGURATION_ERROR"
+        )
+        assert (
+            FlextLDIFErrorCodes.LDIF_PROCESSING_ERROR.value == "LDIF_PROCESSING_ERROR"
+        )
+        assert (
+            FlextLDIFErrorCodes.LDIF_CONNECTION_ERROR.value == "LDIF_CONNECTION_ERROR"
+        )
+        assert (
+            FlextLDIFErrorCodes.LDIF_AUTHENTICATION_ERROR.value
+            == "LDIF_AUTHENTICATION_ERROR"
+        )
         assert FlextLDIFErrorCodes.LDIF_TIMEOUT_ERROR.value == "LDIF_TIMEOUT_ERROR"

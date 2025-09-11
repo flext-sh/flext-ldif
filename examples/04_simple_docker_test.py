@@ -6,7 +6,6 @@ for testing and development purposes.
 """
 
 from __future__ import annotations
-from flext_core import FlextTypes
 
 import sys
 

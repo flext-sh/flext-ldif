@@ -6,14 +6,13 @@ CLI usage for enterprise automation scenarios.
 """
 
 from __future__ import annotations
-from flext_core import FlextTypes
 
 from pathlib import Path
 
-from click.testing import CliRunner
 from flext_cli import FlextCliConfig
+from flext_core import FlextTypes
 
-from flext_ldif import FlextLDIFAPI, FlextLDIFModels, main as ldif_cli
+from flext_ldif import FlextLDIFAPI, FlextLDIFModels
 
 ALLOWED_COMMANDS: set[str] = {
     "parse",

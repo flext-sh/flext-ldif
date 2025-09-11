@@ -104,7 +104,11 @@ class FlextLDIFUtilities:
             return FlextResult[bool].ok(validation_errors == 0)
 
         def validate_entries_or_warn(
-            self, entries: list[FlextLDIFModels.Entry], max_errors: int = 10, *, fail_fast: bool = False
+            self,
+            entries: list[FlextLDIFModels.Entry],
+            max_errors: int = 10,
+            *,
+            fail_fast: bool = False,
         ) -> FlextResult[bool]:
             """Alias simples para validate_entries_batch."""
             return self.validate_entries_batch(entries, max_errors, fail_fast=fail_fast)
@@ -119,7 +123,7 @@ class FlextLDIFUtilities:
             filtered_entries = []
             for entry in entries:
                 obj_classes = entry.attributes.data.get("objectClass", [])
-                if object_class in obj_classes:
+                if any(oc.lower() == object_class.lower() for oc in obj_classes):
                     filtered_entries.append(entry)
 
             return FlextResult[list[FlextLDIFModels.Entry]].ok(filtered_entries)
@@ -176,9 +180,7 @@ class FlextLDIFUtilities:
                 obj_classes = entry.attributes.data.get("objectClass", [])
                 object_classes.update(obj_classes)
 
-            avg_attributes = (
-                total_attributes / len(entries) if entries else 0.0
-            )
+            avg_attributes = total_attributes / len(entries) if entries else 0.0
 
             return FlextResult[dict[str, int | float]].ok(
                 {
@@ -240,11 +242,6 @@ class FlextLDIFUtilities:
                             clean_val = str(val).strip()
                             if clean_val or not skip_empty:
                                 converted_values.append(clean_val)
-                elif values is not None:
-                    # Handle other types (int, float, etc.) - convert to string
-                    clean_val = str(values).strip()
-                    if clean_val or not skip_empty:
-                        converted_values = [clean_val]
 
                 if converted_values or not skip_empty:
                     ldif_attrs[attr_name] = converted_values
@@ -271,7 +268,9 @@ class FlextLDIFUtilities:
 
             return FlextResult[str].ok(normalized_dn)
 
-        def entry_to_dict(self, entry: FlextLDIFModels.Entry) -> FlextResult[dict[str, object]]:
+        def entry_to_dict(
+            self, entry: FlextLDIFModels.Entry
+        ) -> FlextResult[dict[str, object]]:
             """Convert entry to dictionary - ZERO DUPLICATION."""
             try:
                 result: dict[str, object] = {
@@ -280,7 +279,9 @@ class FlextLDIFUtilities:
                 }
                 return FlextResult[dict[str, object]].ok(result)
             except Exception as e:
-                return FlextResult[dict[str, object]].fail(f"Entry conversion failed: {e}")
+                return FlextResult[dict[str, object]].fail(
+                    f"Entry conversion failed: {e}"
+                )
 
 
 # Class-level access aliases for test compatibility
@@ -288,40 +289,66 @@ class LdifDomainProcessors:
     """Class-level access to Processors for test compatibility."""
 
     @classmethod
-    def validate_entries_or_warn(cls, entries: list[FlextLDIFModels.Entry], max_errors: int = 10, *, fail_fast: bool = False) -> FlextResult[bool]:
+    def validate_entries_or_warn(
+        cls,
+        entries: list[FlextLDIFModels.Entry],
+        max_errors: int = 10,
+        *,
+        fail_fast: bool = False,
+    ) -> FlextResult[bool]:
         """Class-level access to validate_entries_or_warn."""
-        return FlextLDIFUtilities._get_default_instance()._processors.validate_entries_or_warn(entries, max_errors, fail_fast=fail_fast)
+        return FlextLDIFUtilities._get_default_instance()._processors.validate_entries_or_warn(
+            entries, max_errors, fail_fast=fail_fast
+        )
 
     @classmethod
-    def filter_entries_by_object_class(cls, entries: list[FlextLDIFModels.Entry], object_class: str) -> FlextResult[list[FlextLDIFModels.Entry]]:
+    def filter_entries_by_object_class(
+        cls, entries: list[FlextLDIFModels.Entry], object_class: str
+    ) -> FlextResult[list[FlextLDIFModels.Entry]]:
         """Class-level access to filter_entries_by_object_class."""
-        return FlextLDIFUtilities._get_default_instance()._processors.filter_entries_by_object_class(entries, object_class)
+        return FlextLDIFUtilities._get_default_instance()._processors.filter_entries_by_object_class(
+            entries, object_class
+        )
 
     @classmethod
     def find_entries_with_missing_required_attributes(
         cls, entries: list[FlextLDIFModels.Entry], required_attrs: list[str]
     ) -> FlextResult[list[FlextLDIFModels.Entry]]:
         """Class-level access to find_entries_with_missing_required_attributes."""
-        return FlextLDIFUtilities._get_default_instance()._processors.find_entries_with_missing_required_attributes(entries, required_attrs)
+        return FlextLDIFUtilities._get_default_instance()._processors.find_entries_with_missing_required_attributes(
+            entries, required_attrs
+        )
 
     @classmethod
-    def get_entry_statistics(cls, entries: list[FlextLDIFModels.Entry]) -> FlextResult[dict[str, int | float]]:
+    def get_entry_statistics(
+        cls, entries: list[FlextLDIFModels.Entry]
+    ) -> FlextResult[dict[str, int | float]]:
         """Class-level access to get_entry_statistics."""
-        return FlextLDIFUtilities._get_default_instance()._processors.get_entry_statistics(entries)
+        return (
+            FlextLDIFUtilities._get_default_instance()._processors.get_entry_statistics(
+                entries
+            )
+        )
 
 
 class LdifConverters:
     """Class-level access to Converters for test compatibility."""
 
     @classmethod
-    def attributes_dict_to_ldif_format(cls, attributes: dict[str, str | list[str] | None]) -> FlextResult[LDIFAttributeDict]:
+    def attributes_dict_to_ldif_format(
+        cls, attributes: dict[str, str | list[str] | None]
+    ) -> FlextResult[LDIFAttributeDict]:
         """Class-level access to attributes_dict_to_ldif_format."""
-        return FlextLDIFUtilities._get_default_instance()._converters.attributes_dict_to_ldif_format(attributes)
+        return FlextLDIFUtilities._get_default_instance()._converters.attributes_dict_to_ldif_format(
+            attributes
+        )
 
     @classmethod
     def normalize_dn_components(cls, dn: str) -> FlextResult[str]:
         """Class-level access to normalize_dn_components."""
-        return FlextLDIFUtilities._get_default_instance()._converters.normalize_dn_components(dn)
+        return FlextLDIFUtilities._get_default_instance()._converters.normalize_dn_components(
+            dn
+        )
 
 
 # Export unified utilities

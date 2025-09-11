@@ -144,7 +144,7 @@ sn: User
         entries = FlextResult.unwrap_or_raise(handler.parse_ldif(ldif_content))
 
         # Test validation using services instead of core wrapper
-        validator_service = FlextLDIFServices.ValidatorService()
+        validator_service = FlextLDIFServices().validator
         is_valid = FlextResult.unwrap_or_raise(
             validator_service.validate_entries(entries)
         )

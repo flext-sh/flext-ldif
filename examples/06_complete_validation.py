@@ -14,7 +14,6 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 """
 
 from __future__ import annotations
-from flext_core import FlextTypes
 
 import contextlib
 import sys
@@ -22,7 +21,7 @@ import tempfile
 import traceback
 from pathlib import Path
 
-from flext_core import FlextContainer, FlextResult
+from flext_core import FlextContainer, FlextResult, FlextTypes
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 🎯 IMPORTS - Validando todos os prefixos corretos
@@ -38,13 +37,12 @@ from flext_core import FlextContainer, FlextResult
 # CORREÇÃO CRÍTICA: Imports verificados no __init__.py
 from flext_ldif import (
     FlextLDIFAPI,
-    FlextLDIFModels,
-    FlextLDIFServices,
-    FlextLDIFExceptions,
     FlextLDIFCore,
-    FlextLDIFFormatHandler,
     FlextLDIFError,
+    FlextLDIFFormatHandler,
+    FlextLDIFModels,
     FlextLDIFParseError,
+    FlextLDIFServices,
     FlextLDIFValidationError,
 )
 
