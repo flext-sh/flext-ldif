@@ -26,19 +26,8 @@ def test_debug_strict_validation_flow() -> None:
     mock_attributes = {"cn": ["debug"]}  # Use dict real em vez de Mock
     entry.attributes = mock_attributes
 
-    # DEBUG: Patch has_attribute com logging
-    original_has_attribute = FlextUtilities.TypeGuards.has_attribute
-
-    def debug_has_attribute(obj: object, attr: str) -> bool:
-        result = original_has_attribute(obj, attr)
-        if obj is config or obj is mock_attributes:
-            pass
-        return result
-
-    with patch.object(
-        FlextUtilities.TypeGuards, "has_attribute", side_effect=debug_has_attribute
-    ):
-        validator.validate_entries([entry])
+    # Test validation without patching non-existent methods
+    validator.validate_entries([entry])
 
     assert True  # Só queremos ver o debug
 
@@ -57,25 +46,7 @@ def test_debug_manual_validation_call() -> None:
     entry.attributes = mock_attributes
 
     # Chamar método diretamente usando a nova API
-    with (
-        patch.object(FlextUtilities.TypeGuards, "has_attribute") as mock_has_attr,
-        patch.object(FlextUtilities.TypeGuards, "is_list_non_empty", return_value=True),
-    ):
-
-        def debug_has_attribute(obj: object, attr: str) -> bool:
-            if obj is config and attr == "strict_validation":
-                return True
-            if obj is mock_attributes and attr == "data":
-                return False
-            if obj is mock_attributes and attr == "items":
-                return True
-            # Use default behavior for dict
-            if isinstance(obj, dict):
-                return hasattr(obj, attr)
-            return False
-
-        mock_has_attr.side_effect = debug_has_attribute
-
+    with patch.object(FlextUtilities.TypeGuards, "is_list_non_empty", return_value=True):
         result = validator.validate_entry_structure(entry)
 
     assert result.is_success or result.is_failure  # Test successful execution

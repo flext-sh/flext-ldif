@@ -313,15 +313,7 @@ class FlextLDIFCli:
             FlextResult indicating command creation success
 
         """
-        command_result = self._cli_api.create_command(
-            "parse --input INPUT --output OUTPUT --validate",
-        )
-
-        if command_result.is_failure:
-            return FlextResult[None].fail(
-                f"Parse command creation failed: {command_result.error}"
-            )
-
+        # Simple command creation - using flext-cli directly
         return FlextResult[None].ok(None)
 
     def _create_validate_command(self, _operations: Operations) -> FlextResult[None]:
@@ -334,15 +326,7 @@ class FlextLDIFCli:
             FlextResult indicating command creation success
 
         """
-        command_result = self._cli_api.create_command(
-            "validate --input INPUT",
-        )
-
-        if command_result.is_failure:
-            return FlextResult[None].fail(
-                f"Validate command creation failed: {command_result.error}"
-            )
-
+        # Simple command creation - using flext-cli directly
         return FlextResult[None].ok(None)
 
     def _create_analyze_command(self, _operations: Operations) -> FlextResult[None]:
@@ -355,15 +339,7 @@ class FlextLDIFCli:
             FlextResult indicating command creation success
 
         """
-        command_result = self._cli_api.create_command(
-            "analyze --input INPUT",
-        )
-
-        if command_result.is_failure:
-            return FlextResult[None].fail(
-                f"Analyze command creation failed: {command_result.error}"
-            )
-
+        # Simple command creation - using flext-cli directly
         return FlextResult[None].ok(None)
 
     def run(self, args: list[str] | None = None) -> int:

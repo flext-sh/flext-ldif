@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Generator
-from typing import ClassVar, override
+from typing import ClassVar
 
 from flext_core import (
     FlextModels,
@@ -19,13 +19,13 @@ from flext_core import (
     FlextUtilities,
     FlextValidations,
 )
-from pydantic import ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from flext_ldif.constants import FlextLDIFConstants
 from flext_ldif.exceptions import FlextLDIFExceptions
 
 
-class FlextLDIFModels(FlextModels.Config):
+class FlextLDIFModels(BaseModel):
     """Unified LDIF domain models with enterprise-grade architecture.
 
     Single consolidated class containing all LDIF model definitions
@@ -84,7 +84,6 @@ class FlextLDIFModels(FlextModels.Config):
 
             return v.strip()
 
-        @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate DN business rules using FlextResult patterns.
 
@@ -268,7 +267,6 @@ class FlextLDIFModels(FlextModels.Config):
             group_classes = {oc.lower() for oc in FlextLDIFConstants.LDAP_GROUP_CLASSES}
             return bool(object_classes.intersection(group_classes))
 
-        @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate attributes using flext-core validation rules.
 
@@ -593,7 +591,6 @@ class FlextLDIFModels(FlextModels.Config):
 
             return "\n".join(lines) + "\n"
 
-        @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate entry business rules.
 
@@ -663,7 +660,7 @@ class FlextLDIFModels(FlextModels.Config):
                 attributes=FlextLDIFModels.LdifAttributes(data=attributes),
             )
 
-    class Config(FlextModels.Config):
+    class Config(BaseModel):
         """LDIF processing configuration with enterprise defaults.
 
         Configuration object for LDIF processing operations with
@@ -757,7 +754,7 @@ class FlextLDIFModels(FlextModels.Config):
                 data["default_encoding"] = data.pop("encoding")
 
             # Call parent constructor first with filtered data
-            super().__init__(**data)  # type: ignore[arg-type]
+            super().__init__(**data)
 
             # Set custom attributes after initialization (frozen model requires object.__setattr__)
             if max_line_length_value is not None:
@@ -815,11 +812,6 @@ class FlextLDIFModels(FlextModels.Config):
 
         """
         try:
-            # Call parent validation first (FlextModels.Config validation)
-            parent_result = super().validate_business_rules()
-            if parent_result.is_failure:
-                return parent_result
-
             # LDIF-specific validation rules
             # For LDIF models, we validate that the constants and factory are properly configured
             if not hasattr(FlextLDIFConstants, "LDIF"):
@@ -835,9 +827,18 @@ class FlextLDIFModels(FlextModels.Config):
         """Factory usando FlextModels como SOURCE OF TRUTH com aliases simples."""
 
         @staticmethod
-        def create_entry(data: dict[str, object]) -> FlextLDIFModels.Entry:
-            """Alias simples para Entry.model_validate."""
-            return FlextLDIFModels.Entry.model_validate(data)
+        def create_entry(data: dict[str, object] | None = None, dn: str | None = None, attributes: dict[str, list[str]] | None = None) -> FlextLDIFModels.Entry:
+            """Create LDIF entry using factory pattern with flexible parameters."""
+            if data is not None:
+                return FlextLDIFModels.Entry.model_validate(data)
+            if dn is not None and attributes is not None:
+                entry_data = {
+                    "dn": dn,
+                    "attributes": attributes
+                }
+                return FlextLDIFModels.Entry.model_validate(entry_data)
+            msg = "Either data dict or dn+attributes must be provided"
+            raise ValueError(msg)
 
         @staticmethod
         def create_config(**kwargs: object) -> FlextLDIFModels.Config:
@@ -851,14 +852,6 @@ class FlextLDIFModels(FlextModels.Config):
                         config_path
                     )  # Convert path to config_source
             return FlextLDIFModels.Config(**kwargs)
-
-        # Acesso direto aos métodos do FlextModels como SOURCE OF TRUTH
-        @staticmethod
-        def create_optimized_model(
-            model_name: str, fields: dict[str, tuple[type, object]]
-        ) -> object:
-            """Use FlextModels factory method directly - correct signature."""
-            return FlextModels.create_optimized_model(model_name, fields)
 
 
 __all__ = ["FlextLDIFModels"]

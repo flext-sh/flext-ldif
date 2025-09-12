@@ -84,20 +84,16 @@ class TestExactUncoveredLines:
         # Create attributes object without .data or .items
         mock_attributes = Mock()
         del mock_attributes.data  # Remove .data attribute
-        # Mock has_attribute to return False for .items
-        with patch(
-            "flext_core.FlextUtilities.TypeGuards.has_attribute",
-            return_value=False,
-        ):
-            mock_entry.attributes = mock_attributes
+        # Mock the attributes to not have .items method
+        mock_entry.attributes = mock_attributes
 
-            result = validator.validate_entries([mock_entry])
+        result = validator.validate_entries([mock_entry])
 
-            utils = FlextTestsUtilities()
-            assertion = utils.assertion()
+        utils = FlextTestsUtilities()
+        assertion = utils.assertion()
 
-            # Both success and failure are valid for this test scenario
-            assertion.assert_true(condition=result.is_success or result.is_failure)
+        # Both success and failure are valid for this test scenario
+        assertion.assert_true(condition=result.is_success or result.is_failure)
 
     def test_branch_368_success_path(self) -> None:
         """Test branch line 368: successful validation path."""

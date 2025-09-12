@@ -80,7 +80,10 @@ class TestFlextLDIFServicesParserServiceReal:
             assert len(entries) == 1
         else:
             # Expected failure for invalid binary data
-            assert "Base64 decode error" in result.error or "invalid start byte" in result.error
+            assert (
+                "Base64 decode error" in result.error
+                or "invalid start byte" in result.error
+            )
 
         entry = entries[0]
         # Verify multi-valued attributes are properly parsed
@@ -108,7 +111,10 @@ class TestFlextLDIFServicesParserServiceReal:
             assert len(entries) == 1
         else:
             # Expected failure for invalid binary data
-            assert "Base64 decode error" in result.error or "invalid start byte" in result.error
+            assert (
+                "Base64 decode error" in result.error
+                or "invalid start byte" in result.error
+            )
 
     def test_parse_real_special_characters(self) -> None:
         """Test parsing LDIF with UTF-8 special characters."""
@@ -124,7 +130,10 @@ class TestFlextLDIFServicesParserServiceReal:
             assert len(entries) == 1
         else:
             # Expected failure for invalid binary data
-            assert "Base64 decode error" in result.error or "invalid start byte" in result.error
+            assert (
+                "Base64 decode error" in result.error
+                or "invalid start byte" in result.error
+            )
 
         entry = entries[0]
         cn_values = entry.get_attribute("cn")

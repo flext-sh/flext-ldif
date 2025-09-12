@@ -118,11 +118,11 @@ objectClass: person"""
 
         # Test with empty object class
         result = repo.filter_entries_by_object_class(entries, "")
-        assert result.is_success  # Should succeed but return empty list
-        assert result.value == []  # Should return empty list for empty objectClass
+        assert not result.is_success  # Should fail with empty object class
+        assert "Object class cannot be empty" in result.error
 
         # Test with empty attribute name
-        result = repo.filter_entries_by_attribute(entries, "")
+        result = repo.filter_entries_by_attribute(entries, "", "value")
         assert not result.is_success  # Should fail with empty attribute name
 
     def test_validator_service_configuration_edge_cases(self) -> None:

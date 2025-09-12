@@ -37,7 +37,9 @@ def test_direct_method_calls_for_missing_lines() -> None:
     repository = FlextLDIFServices().repository
 
     # Isso deve exercitar as linhas 368-369 especificamente
-    filter_result = repository.filter_entries_by_attribute(entries, "mail", "test1@example.com")
+    filter_result = repository.filter_entries_by_attribute(
+        entries, "mail", "test1@example.com"
+    )
     assert filter_result.is_success
     if filter_result.is_success:
         filtered = filter_result.value
@@ -50,7 +52,9 @@ def test_direct_method_calls_for_missing_lines() -> None:
     assert filter_with_value.is_success
 
     # Testar com atributo que não existe
-    no_attr_result = repository.filter_entries_by_attribute(entries, "telephoneNumber", "123456789")
+    no_attr_result = repository.filter_entries_by_attribute(
+        entries, "telephoneNumber", "123456789"
+    )
     assert no_attr_result.is_success
     if no_attr_result.is_success:
         assert len(no_attr_result.value) == 0
@@ -74,7 +78,10 @@ def test_direct_method_calls_for_missing_lines() -> None:
     transformer = FlextLDIFServices().transformer
 
     # Isso deve exercitar as linhas de transform (862-863, 868-869)
-    transform_result = transformer.transform_entries(entries)
+    def identity_transform(entry: dict[str, any]) -> dict[str, any]:
+        return entry
+
+    transform_result = transformer.transform_entries(entries, identity_transform)
     assert transform_result.is_success or transform_result.is_failure
 
     # Testar normalização de DNs
@@ -325,7 +332,9 @@ description: Organizational unit entry
         repository = FlextLDIFServices().repository
         for attr_name in ["mail", "telephoneNumber", "description", "objectClass"]:
             # Provide a sample value to search for
-            filter_result = repository.filter_entries_by_attribute(entries, attr_name, "test")
+            filter_result = repository.filter_entries_by_attribute(
+                entries, attr_name, "test"
+            )
             assert filter_result.is_success
 
         # Testar validator com essas entries
