@@ -12,6 +12,7 @@ import warnings
 from flext_ldif.api import FlextLDIFAPI
 
 # from flext_ldif.cli import main as cli_main_function  # Temporarily disabled due to flext-cli import issues
+from flext_ldif.config import FlextLDIFConfig, get_ldif_config, initialize_ldif_config
 from flext_ldif.constants import FlextLDIFConstants
 from flext_ldif.exceptions import FlextLDIFExceptions
 from flext_ldif.format_handlers import FlextLDIFFormatHandler
@@ -59,6 +60,7 @@ def main() -> None:
 
 __all__ = [
     "FlextLDIFAPI",
+    "FlextLDIFConfig",
     "FlextLDIFConstants",
     "FlextLDIFExceptions",
     "FlextLDIFFormatHandler",
@@ -71,6 +73,8 @@ __all__ = [
     "__email__",
     "__license__",
     "__version__",
+    "get_ldif_config",
+    "initialize_ldif_config",
     "main",
 ]
 

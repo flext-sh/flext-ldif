@@ -1,7 +1,7 @@
-"""FLEXT-LDIF Constants - Direct flext-core usage.
+"""FLEXT-LDIF Constants - LDIF-specific constants.
 
-Minimal LDIF-specific constants using flext-core SOURCE OF TRUTH directly.
-No duplication of existing functionality - only domain-specific additions.
+LDIF-specific constants for the flext-ldif domain.
+Uses flext-core patterns but defines LDIF-specific values.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,62 +9,65 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar
-
-from flext_core import FlextConstants
+from typing import ClassVar, Final
 
 
 class FlextLDIFConstants:
-    """LDIF Constants using flext-core SOURCE OF TRUTH directly.
+    """LDIF-specific constants for the flext-ldif domain."""
 
-    Provides direct access to FlextConstants.LDIF plus minimal LDIF-specific
-    additions. No duplication of base functionality - uses flext-core as SOURCE OF TRUTH.
-    """
+    # LDIF Format Constants
+    DEFAULT_ENCODING: Final[str] = "utf-8"
+    ATTRIBUTE_SEPARATOR: Final[str] = ": "
+    DN_ATTRIBUTE: Final[str] = "dn"
 
-    # Direct access to flext-core LDIF constants (SOURCE OF TRUTH)
-    LDIF = FlextConstants.LDIF
+    # LDIF Processing Limits
+    DEFAULT_MAX_ENTRIES: Final[int] = 1000000
+    DEFAULT_BUFFER_SIZE: Final[int] = 8192
+    MAX_LINE_LENGTH: Final[int] = 8192
+    MIN_DN_COMPONENTS: Final[int] = 1
 
-    # Use flext-core validation messages as SOURCE OF TRUTH
-    VALIDATION_MESSAGES = FlextConstants.LDIF.VALIDATION_MESSAGES
+    # LDAP DN Pattern - Validates proper DN format with attribute=value pairs (Unicode support)
+    DN_PATTERN: Final[str] = r"^[a-zA-Z0-9][a-zA-Z0-9\-\.]*=[\w][\w\-\.\s=,+@]*[\w]$"
 
-    # Use flext-core encoding constants as SOURCE OF TRUTH
-    DEFAULT_ENCODING = FlextConstants.LDIF.DEFAULT_ENCODING
-    ATTRIBUTE_SEPARATOR = FlextConstants.LDIF.ATTRIBUTE_SEPARATOR
-    DN_ATTRIBUTE = FlextConstants.LDIF.DN_ATTRIBUTE
+    # LDAP Object Classes
+    LDAP_PERSON_CLASSES: ClassVar[set[str]] = {
+        "person",
+        "inetOrgPerson",
+        "organizationalPerson",
+        "inetorgperson",
+        "organizationalperson",
+        "user",
+        "posixAccount"
+    }
 
-    # Use flext-core object classes as SOURCE OF TRUTH
-    PERSON_OBJECTCLASSES = FlextConstants.LDIF.LDAP_PERSON_CLASSES
-    ORGANIZATIONAL_OBJECTCLASSES = FlextConstants.LDIF.LDAP_ORGANIZATIONAL_CLASSES
-    GROUP_OBJECTCLASSES = FlextConstants.LDIF.LDAP_GROUP_CLASSES
+    LDAP_GROUP_CLASSES: ClassVar[set[str]] = {
+        "groupOfNames",
+        "groupOfUniqueNames",
+        "group",
+        "groupofnames",
+        "groupofuniquenames"
+    }
 
-    # Use flext-core processing limits as SOURCE OF TRUTH
-    DEFAULT_MAX_ENTRIES = FlextConstants.LDIF.DEFAULT_MAX_ENTRIES
-    DEFAULT_BUFFER_SIZE = FlextConstants.LDIF.DEFAULT_BUFFER_SIZE
-    MAX_LINE_LENGTH = FlextConstants.LDIF.MAX_LINE_LENGTH
+    LDAP_ORGANIZATIONAL_CLASSES: ClassVar[set[str]] = {
+        "organizationalUnit",
+        "organization",
+        "domain",
+        "organizationalunit"
+    }
 
-    # Use flext-core LDAP patterns as SOURCE OF TRUTH
-    DN_PATTERN = FlextConstants.LDAP.DN_PATTERN
-    MIN_DN_COMPONENTS = (
-        1  # LDIF-specific: minimum components (only if not in flext-core)
-    )
+    # Validation Messages
+    VALIDATION_MESSAGES: ClassVar[dict[str, str]] = {
+        "INVALID_DN": "Invalid DN",
+        "INVALID_DN_FORMAT": "Invalid DN format",
+        "MISSING_OBJECTCLASS": "Missing required objectClass",
+        "INVALID_ATTRIBUTE_VALUE": "Invalid attribute value",
+        "DUPLICATE_ATTRIBUTE": "Duplicate attribute found",
+        "EMPTY_ENTRY": "Entry cannot be empty"
+    }
 
-    # Use flext-core object classes with direct attribute access (convert frozenset to set for test compatibility)
-    _person_classes: ClassVar[set[str]] = set(FlextConstants.LDIF.LDAP_PERSON_CLASSES)
-    # Add lowercase aliases for test compatibility while keeping SOURCE OF TRUTH
-    _person_classes.add("inetorgperson")
-    _person_classes.add("organizationalperson")
-    _person_classes.add("user")
-    LDAP_PERSON_CLASSES: ClassVar[set[str]] = _person_classes
-
-    _group_classes: ClassVar[set[str]] = set(FlextConstants.LDIF.LDAP_GROUP_CLASSES)
-    _group_classes.add("groupofnames")
-    _group_classes.add("groupofuniquenames")
-    _group_classes.add("group")
-    LDAP_GROUP_CLASSES: ClassVar[set[str]] = _group_classes
-
-    LDAP_ORGANIZATIONAL_CLASSES: ClassVar[set[str]] = set(
-        FlextConstants.LDIF.LDAP_ORGANIZATIONAL_CLASSES
-    )
+    # Required Attributes for Schema Validation
+    REQUIRED_PERSON_ATTRIBUTES: ClassVar[set[str]] = {"cn", "sn"}
+    REQUIRED_ORGUNIT_ATTRIBUTES: ClassVar[set[str]] = {"ou"}
 
     # Minimal LDIF-specific analytics keys (only domain-specific additions)
     class Analytics:

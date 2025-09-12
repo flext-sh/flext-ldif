@@ -95,12 +95,12 @@ class TestFinalCoveragePush:
         writer = FlextLDIFServices().writer
 
         # Test configuration path that might trigger lines 762-763
-        result = writer.configure_domain_services_system({"test_config": "value"})
+        result = writer.get_config_info()
 
         utils = FlextTestsUtilities()
         assertion = utils.assertion()
 
-        assertion.assert_true(condition=result.is_success or result.is_failure)
+        assertion.assert_true(condition=isinstance(result, dict))
 
     def test_actual_line_786_writer_edge_case(self) -> None:
         """Test writer service line 786 edge case."""

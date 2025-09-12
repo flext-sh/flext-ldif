@@ -38,7 +38,7 @@ class TestFlextLDIFServicesValidatorService:
     def test_execute_valid_config(self) -> None:
         """Test execute method with valid config."""
         config = FlextLDIFModels.Config(strict_validation=True)
-        service = FlextLDIFServices(config=config)
+        service = FlextLDIFServices(config=config).validator
 
         result = service.execute()
 
@@ -117,7 +117,7 @@ class TestFlextLDIFServicesValidatorService:
             )
 
             # If creation succeeds (shouldn't), test service validation
-            result = service.validate_entry_structure(invalid_entry)
+            result = service.validator.validate_entry_structure(invalid_entry)
             assert result.is_success or result.is_failure
 
         except (FlextLDIFExceptions.ValidationError, ValueError, Exception):
@@ -135,7 +135,7 @@ class TestFlextLDIFServicesValidatorService:
             }
         )
 
-        result = service.validator.validate_entry_structure(entry)
+        result = service.validate_entry_structure(entry)
 
         assert result.is_success
         assert result.value is True

@@ -53,10 +53,7 @@ def test_final_line_571_elif_has_attribute_items() -> None:
     # Create real entry using factory
     entry_data = {
         "dn": "cn=final_571,dc=example,dc=com",
-        "attributes": {
-            "cn": ["final_571"],
-            "objectClass": ["person"]
-        }
+        "attributes": {"cn": ["final_571"], "objectClass": ["person"]},
     }
     entry = FlextLDIFModels.Factory.create_entry(entry_data)
 
@@ -77,8 +74,8 @@ def test_final_line_574_dict_attributes_obj() -> None:
         "attributes": {
             "cn": ["final_574"],
             "objectClass": ["person"],
-            "mail": ["test@example.com"]
-        }
+            "mail": ["test@example.com"],
+        },
     }
     entry = FlextLDIFModels.Factory.create_entry(entry_data)
 
@@ -96,10 +93,7 @@ def test_final_line_576_else_return_validation_success() -> None:
     # Create real entry using factory
     entry_data = {
         "dn": "cn=final_576,dc=example,dc=com",
-        "attributes": {
-            "cn": ["final_576"],
-            "objectClass": ["person"]
-        }
+        "attributes": {"cn": ["final_576"], "objectClass": ["person"]},
     }
     entry = FlextLDIFModels.Factory.create_entry(entry_data)
 
@@ -177,19 +171,13 @@ def test_final_comprehensive_all_7_lines_absolute_victory() -> None:
     # Test validation with real entries
     entry_data_571 = {
         "dn": "cn=final_comprehensive_571,dc=example,dc=com",
-        "attributes": {
-            "cn": ["final_comprehensive_571"],
-            "objectClass": ["person"]
-        }
+        "attributes": {"cn": ["final_comprehensive_571"], "objectClass": ["person"]},
     }
     entry_571 = FlextLDIFModels.Factory.create_entry(entry_data_571)
 
     entry_data_576 = {
         "dn": "cn=final_comprehensive_576,dc=example,dc=com",
-        "attributes": {
-            "cn": ["final_comprehensive_576"],
-            "objectClass": ["person"]
-        }
+        "attributes": {"cn": ["final_comprehensive_576"], "objectClass": ["person"]},
     }
     entry_576 = FlextLDIFModels.Factory.create_entry(entry_data_576)
 
@@ -213,7 +201,9 @@ objectClass: person
 """
 
     parse_result = parser.parse_content(comprehensive_ldif)
-    assert parse_result.is_success or parse_result.is_failure, f"Parsing failed: {parse_result}"
+    assert parse_result.is_success or parse_result.is_failure, (
+        f"Parsing failed: {parse_result}"
+    )
 
     # Test exception handling
     with patch.object(
@@ -241,10 +231,7 @@ def test_final_precision_verification_each_line() -> None:
     # Test validation with real entry
     entry_data = {
         "dn": "cn=precision_571,dc=example,dc=com",
-        "attributes": {
-            "precision": ["571"],
-            "objectClass": ["person"]
-        }
+        "attributes": {"precision": ["571"], "objectClass": ["person"]},
     }
     entry = FlextLDIFModels.Factory.create_entry(entry_data)
     results["571"] = validator.validator.validate_entry_structure(entry)
@@ -252,16 +239,15 @@ def test_final_precision_verification_each_line() -> None:
     # Test another validation
     entry_data_576 = {
         "dn": "cn=precision_576,dc=example,dc=com",
-        "attributes": {
-            "precision": ["576"],
-            "objectClass": ["person"]
-        }
+        "attributes": {"precision": ["576"], "objectClass": ["person"]},
     }
     entry_576 = FlextLDIFModels.Factory.create_entry(entry_data_576)
     results["576"] = validator.validator.validate_entry_structure(entry_576)
 
     # Test parsing
-    ldif_675 = "dn: cn=precision675,dc=example,dc=com\nlinha_sem_dois_pontos\ncn: precision675"
+    ldif_675 = (
+        "dn: cn=precision675,dc=example,dc=com\nlinha_sem_dois_pontos\ncn: precision675"
+    )
     results["675"] = parser.parse_content(ldif_675)
 
     ldif_786 = "dn: cn=precision786,dc=example,dc=com\n\nlinha_vazia\ncn: precision786"

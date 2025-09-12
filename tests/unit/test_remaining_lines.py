@@ -8,11 +8,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
+from flext_core import FlextResult
 from flext_tests import FlextTestsUtilities
 
-from flext_ldif.services import FlextLDIFServices
+from flext_ldif import FlextLDIFModels, FlextLDIFServices
 
 
 class TestRemainingLines:
@@ -61,7 +62,9 @@ objectClass: person"""  # No trailing newline
         mock_entry.dn = Mock()
         mock_entry.dn.value = "cn=test,dc=example,dc=com"
         mock_entry.id = "test"  # Add missing id attribute for entity validation
-        mock_entry.validate_business_rules = Mock(return_value=None)
+        mock_entry.validate_business_rules = Mock(
+            return_value=FlextResult[None].ok(None)
+        )
 
         # Create attributes object without .data attribute and mock has_attribute to return False
         mock_attributes = Mock()
@@ -108,12 +111,12 @@ objectClass: person"""  # No trailing newline
         writer = FlextLDIFServices().writer
 
         # Test configuration with specific parameters to trigger lines 762-763
-        result = writer.configure_domain_services_system({"config_key": "config_value"})
+        result = writer.get_config_info()
 
         utils = FlextTestsUtilities()
         assertion = utils.assertion()
 
-        assertion.assert_true(condition=result.is_success or result.is_failure)
+        assertion.assert_true(condition=isinstance(result, dict))
 
     def test_line_786_writer_specific_operation(self) -> None:
         """Test line 786: writer specific operation."""
@@ -154,16 +157,13 @@ objectClass: person
         validator = FlextLDIFServices().validator
 
         # Create entries with specific conditions to trigger branch 368
-        mock_entry = Mock()
-        mock_entry.dn = Mock()
-        mock_entry.dn.value = "cn=test,dc=example,dc=com"
-        mock_entry.id = "test"  # Add missing id for validation
-        mock_entry.validate_business_rules = Mock(return_value=None)
-        mock_entry.attributes = Mock()
-        mock_entry.attributes.data = {"cn": ["test"]}
+        entry = FlextLDIFModels.Entry.model_validate({
+            "dn": "cn=test,dc=example,dc=com",
+            "attributes": {"cn": ["test"], "objectClass": ["person"]}
+        })
 
         # Call validation with a single entry
-        result = validator.validate_entries([mock_entry])
+        result = validator.validate_entries([entry])
 
         utils = FlextTestsUtilities()
         assertion = utils.assertion()
@@ -201,7 +201,7 @@ objectClass: person
         analytics = FlextLDIFServices().analytics
 
         # Test DN depth analysis
-        result = analytics.analyze_dn_depth([])
+        result = analytics.get_dn_depth_analysis([])
 
         utils = FlextTestsUtilities()
         assertion = utils.assertion()

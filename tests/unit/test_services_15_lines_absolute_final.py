@@ -163,10 +163,7 @@ def test_lines_862_863_failed_results_error_handling() -> None:
     # Create test entry
     entry_data = {
         "dn": "cn=test,dc=example,dc=com",
-        "attributes": {
-            "cn": ["test"],
-            "objectClass": ["person"]
-        }
+        "attributes": {"cn": ["test"], "objectClass": ["person"]},
     }
     entry = FlextLDIFModels.Factory.create_entry(entry_data)
 
@@ -216,11 +213,16 @@ def test_lines_868_871_transform_entries_exception() -> None:
                     ),
                     attributes=FlextLDIFModels.LdifAttributes(data={"cn": ["simple"]}),
                 )
-                def identity_transform(entry: FlextLDIFModels.Entry) -> FlextLDIFModels.Entry:
+
+                def identity_transform(
+                    entry: FlextLDIFModels.Entry,
+                ) -> FlextLDIFModels.Entry:
                     """Transformação de identidade para teste."""
                     return entry
 
-                result = transformer.transform_entries([simple_entry], identity_transform)
+                result = transformer.transform_entries(
+                    [simple_entry], identity_transform
+                )
                 assert result.is_success or result.is_failure
             except Exception:
                 pass
@@ -289,7 +291,10 @@ objectClass: inetOrgPerson
                 "transform_entry",
                 side_effect=[Mock(is_success=False, error="Test error")] * len(entries),
             ):
-                def identity_transform(entry: FlextLDIFModels.Entry) -> FlextLDIFModels.Entry:
+
+                def identity_transform(
+                    entry: FlextLDIFModels.Entry,
+                ) -> FlextLDIFModels.Entry:
                     """Transformação de identidade para teste."""
                     return entry
 
