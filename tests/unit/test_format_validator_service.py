@@ -4,15 +4,7 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-
-# Reason: Multiple assertion checks are common in tests for comprehensive error validation
-
-# pyright: reportArgumentType=false
-# Reason: FlextLDIFModels.Entry accepts dict[str, FlextTypes.Core.StringList] via field validator mode="before" but pyright doesn't understand this
-
-from flext_ldif.format_validators import (
-    FlextLDIFFormatValidator,
-)
+from flext_ldif.format_validators import ( # Reason: Multiple assertion checks are common in tests for comprehensive error validation # pyright: reportArgumentType=false # Reason: FlextLDIFModels.Entry accepts dict[str, FlextTypes.Core.StringList] via field validator mode="before" but pyright doesn't understand this FlextLDIFFormatValidator, )
 
 
 class TestFlextLDIFFormatValidator:
@@ -20,6 +12,7 @@ class TestFlextLDIFFormatValidator:
 
     def test_validate_ldap_attribute_name_valid(self) -> None:
         """Test attribute name validation through FlextLDIFFormatValidator."""
+
         # Standard attributes
         assert FlextLDIFFormatValidator._validate_ldap_attribute_name("cn") is True
         assert FlextLDIFFormatValidator._validate_ldap_attribute_name("sn") is True
@@ -50,6 +43,7 @@ class TestFlextLDIFFormatValidator:
 
     def test_validate_ldap_attribute_name_invalid(self) -> None:
         """Test attribute name validation with invalid names."""
+
         # Invalid names
         assert FlextLDIFFormatValidator._validate_ldap_attribute_name("") is False
         assert (
@@ -64,6 +58,7 @@ class TestFlextLDIFFormatValidator:
 
     def test_validate_ldap_dn_valid(self) -> None:
         """Test DN validation through FlextLDIFFormatValidator."""
+
         # Valid DNs
         assert (
             FlextLDIFFormatValidator._validate_ldap_dn(
@@ -81,6 +76,7 @@ class TestFlextLDIFFormatValidator:
 
     def test_validate_ldap_dn_invalid(self) -> None:
         """Test DN validation with invalid DNs."""
+
         # Invalid DNs
         assert FlextLDIFFormatValidator._validate_ldap_dn("") is False
         assert FlextLDIFFormatValidator._validate_ldap_dn("not a dn") is False
@@ -88,6 +84,7 @@ class TestFlextLDIFFormatValidator:
 
     def test_get_ldap_validators(self) -> None:
         """Test getting LDAP validators through class method."""
+
         attr_validator, dn_validator = FlextLDIFFormatValidator.get_ldap_validators()
 
         # Test that validators work correctly

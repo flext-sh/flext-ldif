@@ -13,6 +13,7 @@
 **CRITICAL ROLE**: flext-ldif is the LDIF processing foundation for the entire FLEXT ecosystem. ALL LDIF operations across enterprise projects MUST flow through this library. ZERO TOLERANCE for custom LDIF parsing implementations.
 
 **LDIF AUTHORITY RESPONSIBILITIES**:
+
 - ✅ **Universal LDIF Processing**: ALL LDIF operations use flext-ldif exclusively
 - ✅ **Enterprise LDAP Integration**: Production-ready LDIF parsing, validation, transformation
 - ✅ **Zero Custom LDIF Code**: NO local LDIF implementations allowed in ecosystem
@@ -21,6 +22,7 @@
 - ✅ **Foundation Quality**: Set LDIF processing standards for entire ecosystem
 
 **ECOSYSTEM LDIF IMPACT** (ALL LDAP Projects Depend on This):
+
 - **ALGAR OUD Migration**: Critical LDIF processing for Oracle Unified Directory
 - **Enterprise LDAP Systems**: User directory synchronization and migration
 - **Data Integration**: LDIF-based ETL pipelines and transformations
@@ -28,6 +30,7 @@
 - **Directory Services**: LDAP backup, restore, and bulk operations
 
 **LDIF QUALITY IMPERATIVES** (ZERO TOLERANCE ENFORCEMENT):
+
 - 🔴 **ZERO custom LDIF parsing** in ANY ecosystem project
 - 🔴 **ZERO LDIF format violations** - strict RFC 2849 compliance
 - 🟢 **96%+ test coverage** with REAL LDIF processing tests (PROVEN ACHIEVED)
@@ -50,6 +53,7 @@
 ### Advanced LDIF Pattern Implementation (PROVEN QUALITY)
 
 **ACHIEVED QUALITY METRICS** (Evidence-based):
+
 - ✅ **Builder Pattern**: 127+ lines of exception duplication ELIMINATED
 - ✅ **Template Method Pattern**: 73 cyclomatic complexity points REDUCED
 - ✅ **Strategy Pattern**: All exception handling duplication ELIMINATED
@@ -77,7 +81,7 @@ src/flext_ldif/
 ### Core Domain Objects
 
 - **FlextLDIFModels**: Consolidated class containing all domain models
-- **FlextLDIFModels.Entry**: Main domain entity representing LDIF entries  
+- **FlextLDIFModels.Entry**: Main domain entity representing LDIF entries
 - **FlextLDIFModels.Factory**: Unified factory for all object creation
 - **FlextLDIFAPI**: Application service orchestrating operations
 - **FlextLDIFExceptions**: Zero-duplication exception system with Builder Pattern
@@ -199,20 +203,20 @@ def enterprise_ldif_processing(ldif_content: str) -> FlextResult[list]:
     # Input validation with early return
     if not ldif_content.strip():
         return FlextResult[list].fail(\"LDIF content cannot be empty\")
-        
+
     # Use flext-ldif API exclusively - NO custom LDIF parsing
     ldif_api = FlextLDIFAPI()
-    
+
     # Parse LDIF through flext-ldif foundation
     parse_result = ldif_api.parse_string(ldif_content)
     if parse_result.is_failure:
         return FlextResult[list].fail(f\"LDIF parsing failed: {parse_result.error}\")
-        
+
     # Validate LDIF entries through flext-ldif
     validation_result = ldif_api.validate_entries(parse_result.unwrap())
     if validation_result.is_failure:
         return FlextResult[list].fail(f\"LDIF validation failed: {validation_result.error}\")
-        
+
     return FlextResult[list].ok(validation_result.unwrap())
 
 # ❌ ABSOLUTELY FORBIDDEN - Custom LDIF parsing in ecosystem projects
@@ -229,7 +233,7 @@ from flext_core import FlextResult
 
 def validate_ldif_entry(entry_data: dict) -> FlextResult[None]:
     \"\"\"Validate LDIF entry using Builder Pattern - NO direct exceptions.\"\"\"
-    
+
     # Check required DN field
     if \"dn\" not in entry_data:
         # Use Builder Pattern for complex LDIF exceptions
@@ -241,16 +245,16 @@ def validate_ldif_entry(entry_data: dict) -> FlextResult[None]:
                 .validation_rule(\"required_dn\")
                 .build())
         return FlextResult[None].fail(error.message)
-        
+
     # Validate objectClass presence
     if \"objectClass\" not in entry_data:
         error = FlextLDIFExceptions.validation_error(
-            \"Missing objectClass attribute\", 
+            \"Missing objectClass attribute\",
             dn=entry_data.get(\"dn\"),
             entry_data=entry_data
         )
         return FlextResult[None].fail(error.message)
-        
+
     return FlextResult[None].ok(None)
 
 # ❌ ABSOLUTELY FORBIDDEN - Direct exception creation
@@ -267,27 +271,27 @@ from flext_ldif import FlextLDIFAPI, FlextLDIFModels
 
 class EnterpriseLdifProcessor:
     \"\"\"Enterprise LDIF processor using Template Method Pattern - NO custom parsing.\"\"\"
-    
+
     def __init__(self) -> None:
         self._ldif_api = FlextLDIFAPI()
-        
+
     def process_ldif_file(self, file_path: Path) -> FlextResult[dict]:
         \"\"\"Process LDIF file using Template Method Pattern - enterprise pipeline.\"\"\"
         # Template Method: standard processing pipeline
         return (
             self._validate_input_file(file_path)
             .flat_map(self._parse_ldif_content)
-            .flat_map(self._validate_ldif_entries) 
+            .flat_map(self._validate_ldif_entries)
             .flat_map(self._transform_entries)
             .map(self._generate_processing_report)
         )
-    
+
     def _validate_input_file(self, file_path: Path) -> FlextResult[Path]:
         \"\"\"Validate input file exists and is readable.\"\"\"
         if not file_path.exists():
             return FlextResult[Path].fail(f\"LDIF file not found: {file_path}\")
         return FlextResult[Path].ok(file_path)
-        
+
     def _parse_ldif_content(self, file_path: Path) -> FlextResult[list]:
         \"\"\"Parse LDIF content using flext-ldif foundation - NO custom parsing.\"\"\"
         # Always use flext-ldif API - NEVER custom parsing
@@ -295,7 +299,7 @@ class EnterpriseLdifProcessor:
         if parse_result.is_failure:
             return FlextResult[list].fail(f\"LDIF parsing failed: {parse_result.error}\")
         return FlextResult[list].ok(parse_result.unwrap())
-        
+
     def _validate_ldif_entries(self, entries: list) -> FlextResult[list]:
         \"\"\"Validate LDIF entries using flext-ldif validation.\"\"\"
         validation_result = self._ldif_api.validate_entries(entries)
@@ -303,7 +307,7 @@ class EnterpriseLdifProcessor:
             return FlextResult[list].fail(f\"LDIF validation failed: {validation_result.error}\")
         return FlextResult[list].ok(validation_result.unwrap())
 
-# ❌ ABSOLUTELY FORBIDDEN - Custom LDIF parsing implementations  
+# ❌ ABSOLUTELY FORBIDDEN - Custom LDIF parsing implementations
 # def parse_ldif_manually(content): ...  # ZERO TOLERANCE VIOLATION
 # class CustomLdifParser: ...            # FORBIDDEN - use flext-ldif foundation
 ```
@@ -317,14 +321,14 @@ from flext_core import FlextResult
 
 class LdifEntryProcessor:
     \"\"\"LDIF entry processor using Factory Pattern for object creation.\"\"\"
-    
+
     def create_ldif_entry(self, entry_data: dict) -> FlextResult[FlextLDIFModels.Entry]:
         \"\"\"Create LDIF entry using Factory Pattern - unified object creation.\"\"\"
-        
+
         # Input validation
         if not entry_data or not isinstance(entry_data, dict):
             return FlextResult[FlextLDIFModels.Entry].fail(\"Invalid entry data provided\")
-            
+
         # Use Factory Pattern for unified object creation
         try:
             entry = FlextLDIFModels.Factory.create_entry(entry_data)
@@ -335,7 +339,7 @@ class LdifEntryProcessor:
                 entry_data=entry_data
             )
             return FlextResult[FlextLDIFModels.Entry].fail(error.message)
-            
+
     def create_ldif_config(self, **config_params) -> FlextResult[FlextLDIFModels.Config]:
         \"\"\"Create LDIF configuration using Factory Pattern.\"\"\"
         try:
@@ -450,7 +454,7 @@ def complex_ldif_operation(content: str) -> FlextResult[str]:
     return (
         FlextResult.of(content)
         .bind(parse_ldif)
-        .bind(validate_entries) 
+        .bind(validate_entries)
         .bind(transform_entries)
         .bind(write_ldif)
         .map_error(lambda e: f"Operation failed: {e}")
@@ -466,7 +470,7 @@ class CustomProcessingTemplate(LdifProcessingTemplate):
     def _validate_inputs(self, context: dict[str, any]) -> FlextResult[dict[str, any]]:
         # Custom validation logic
         return FlextResult[dict[str, any]].ok(context)
-        
+
     def _execute_main_operation(self, context: dict[str, any]) -> FlextResult[dict[str, any]]:
         # Custom operation logic
         return FlextResult[dict[str, any]].ok(context)
@@ -484,7 +488,7 @@ result = strategy.handle_exceptions(
     operation=lambda: risky_operation(),
     exception_types=(ValueError, TypeError),
     exception_context_log="Operation failed",
-    exception_details_log="Detailed error info", 
+    exception_details_log="Detailed error info",
     exception_operation_log="Operation exception",
     error_message_template="Failed: {error}"
 )
@@ -530,7 +534,7 @@ result = strategy.handle_exceptions(
 ```bash
 # PHASE 1: LDIF Foundation Quality (ZERO TOLERANCE)
 make lint                    # Ruff: ZERO violations in src/
-make type-check              # MyPy strict: ZERO errors in src/  
+make type-check              # MyPy strict: ZERO errors in src/
 make security                # Bandit: ZERO critical vulnerabilities
 
 # PHASE 2: LDIF Abstraction Validation (ECOSYSTEM PROTECTION)
@@ -580,13 +584,15 @@ print('✅ Enterprise LDIF pipeline verified')
 ### LDIF Foundation Development Standards (ENTERPRISE LEADERSHIP)
 
 **ABSOLUTELY FORBIDDEN IN FLEXT-LDIF**:
+
 - ❌ **Exposing ldif3 directly** - all LDIF abstractions must be complete
 - ❌ **Incomplete LDIF abstraction layers** - every LDIF need must have wrapper
 - ❌ **Try/except fallbacks** - LDIF operations must use explicit FlextResult patterns
 - ❌ **Multiple classes per module** - single responsibility with unified classes
 - ❌ **Breaking LDIF ecosystem contracts** - maintain API compatibility
 
-**MANDATORY IN FLEXT-LDIF**:  
+**MANDATORY IN FLEXT-LDIF**:
+
 - ✅ **Complete LDIF abstraction** - no LDIF operation should require direct ldif3 import
 - ✅ **Comprehensive LDIF API** - FlextLDIFAPI covers all enterprise LDIF development needs
 - ✅ **Advanced pattern implementation** - Builder, Strategy, Template Method patterns
@@ -639,12 +645,14 @@ echo "✅ LDIF foundation boundary validation completed"
 **Common LDIF Foundation Issues**:
 
 1. **Incomplete LDIF Abstraction Coverage**
+
    ```bash
    # Check for missing LDIF wrapper coverage
    grep -r "TODO.*ldif3\|TODO.*LDIF" src/flext_ldif/
    ```
 
-2. **LDIF API Completeness Gaps** 
+2. **LDIF API Completeness Gaps**
+
    ```bash
    # Test LDIF API coverage
    python -c "
@@ -657,12 +665,14 @@ echo "✅ LDIF foundation boundary validation completed"
    ```
 
 3. **Ecosystem LDIF Compliance**
+
    ```bash
    # Run ecosystem LDIF compliance check
    ./scripts/validate_ecosystem_ldif_compliance.sh
    ```
 
 4. **LDIF Pattern Validation Issues**
+
    ```bash
    # Test advanced patterns
    python -c "from flext_ldif.exceptions import ExceptionBuilder; print('Builder Pattern: ✓')"
@@ -671,41 +681,42 @@ echo "✅ LDIF foundation boundary validation completed"
    ```
 
 5. **Enterprise LDIF Processing Pipeline**
+
    ```bash
    # Test complete enterprise LDIF pipeline
    python -c "
    import tempfile
    from pathlib import Path
    from flext_ldif import FlextLDIFAPI
-   
+
    # Create enterprise LDIF test data
    sample_ldif = '''dn: cn=enterprise,dc=test,dc=com
    cn: enterprise
    objectClass: organizationalUnit
    description: Enterprise LDIF processing test
-   
+
    dn: cn=user1,cn=enterprise,dc=test,dc=com
    cn: user1
    objectClass: person
    sn: TestUser
    '''
-   
+
    with tempfile.NamedTemporaryFile(mode='w', suffix='.ldif', delete=False) as f:
        f.write(sample_ldif)
        temp_path = Path(f.name)
-   
+
    try:
        api = FlextLDIFAPI()
-       
+
        # Test parsing
        parse_result = api.parse_file(temp_path)
        assert parse_result.is_success, f'Parsing failed: {parse_result.error}'
-       
+
        # Test validation
        entries = parse_result.unwrap()
        validate_result = api.validate_entries(entries)
        assert validate_result.is_success, f'Validation failed: {validate_result.error}'
-       
+
        print('✅ Enterprise LDIF processing pipeline working')
    finally:
        temp_path.unlink()
@@ -717,14 +728,16 @@ echo "✅ LDIF foundation boundary validation completed"
 ### Current LDIF Foundation Status (96% PROVEN ACHIEVEMENT)
 
 **WORKING LDIF INFRASTRUCTURE** (✅):
+
 - Complete LDIF processing foundation (parse, validate, transform, write)
-- Enterprise-grade RFC 2849 LDIF compliance 
+- Enterprise-grade RFC 2849 LDIF compliance
 - Advanced pattern implementation (Builder, Strategy, Template Method)
 - FlextResult LDIF error handling patterns
 - Zero custom LDIF parsing tolerance enforcement
 - 96% test coverage with REAL LDIF functionality tests
 
 **PROVEN LDIF FOUNDATION CAPABILITIES** (✅):
+
 - LDIF file processing with complete error handling
 - Enterprise LDAP directory migration support
 - Bulk LDIF operations with validation
@@ -733,6 +746,7 @@ echo "✅ LDIF foundation boundary validation completed"
 - Template Method CLI processing patterns
 
 **LDIF ECOSYSTEM ENFORCEMENT STATUS** (🔴 CRITICAL):
+
 - algar-oud-mig: PARTIALLY COMPLIANT - uses flext-ldif but may have legacy patterns
 - flext-ldap: NOT VALIDATED - unknown LDIF compliance status
 - Enterprise Identity projects: NOT VALIDATED - unknown LDIF foundation usage
@@ -798,6 +812,7 @@ echo "✅ LDIF Foundation quality validation completed"
 ### LDIF Foundation Ecosystem Impact Assessment
 
 **ENTERPRISE LDIF PROCESSING REQUIREMENTS**:
+
 1. **ALGAR OUD Migration**: Critical dependency for Oracle Unified Directory migration
 2. **Enterprise Directory Services**: Foundation for all LDAP backup/restore operations
 3. **Identity Management**: User provisioning and deprovisioning via LDIF formats
@@ -805,6 +820,7 @@ echo "✅ LDIF Foundation quality validation completed"
 5. **Directory Synchronization**: Cross-system LDAP data synchronization via LDIF
 
 **ECOSYSTEM DEPENDENCY MAP**:
+
 - **Direct Dependencies**: 5+ projects depend on flext-ldif for LDIF operations
 - **Indirect Impact**: 15+ projects benefit from LDIF processing capabilities
 - **Enterprise Critical**: ALGAR migration project absolutely requires flext-ldif foundation
@@ -818,6 +834,7 @@ echo "✅ LDIF Foundation quality validation completed"
 **FOUNDATION QUALITY**: Sets enterprise LDIF standards for all ecosystem projects with 96% proven coverage
 
 **DEVELOPMENT PRIORITIES**:
+
 1. **Ecosystem LDIF Compliance**: Fix ALL custom LDIF parsing in dependent projects
 2. **Enterprise Pattern Extension**: Expand Builder/Strategy/Template Method patterns for new use cases
 3. **LDIF API Completeness**: Ensure 100% coverage of enterprise LDIF processing needs
@@ -825,6 +842,7 @@ echo "✅ LDIF Foundation quality validation completed"
 5. **Quality Leadership**: Maintain zero-compromise enterprise LDIF infrastructure standards
 
 **PROVEN ACHIEVEMENTS** (Evidence-based validation):
+
 - ✅ **96% Test Coverage**: 495+ tests with REAL LDIF functionality
 - ✅ **Advanced Pattern Implementation**: Builder, Strategy, Template Method patterns working
 - ✅ **Zero Code Duplication**: 127+ lines of duplication eliminated systematically

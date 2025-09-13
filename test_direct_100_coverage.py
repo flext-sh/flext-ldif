@@ -5,17 +5,17 @@ This test directly calls ALL services methods to force 100% coverage.
 """
 
 import sys
-from pathlib import Path
-
-# Add src to path
-sys.path.insert(0, "src")
-
 import tempfile
+from pathlib import Path
+from unittest.mock import Mock
 
 from flext_ldif.exceptions import FlextLDIFExceptions
 from flext_ldif.models import FlextLDIFModels
 from flext_ldif.services import FlextLDIFServices
 from flext_ldif.utilities import FlextLDIFUtilities
+
+# Add src to path
+sys.path.insert(0, "src")
 
 
 def test_all_services_100_percent() -> None:
@@ -210,11 +210,12 @@ def test_all_services_100_percent() -> None:
     # Test utilities
 
     FlextLDIFUtilities()
-    processors = FlextLDIFUtilities.LdifDomainProcessors()
-    converters = FlextLDIFUtilities.LdifConverters()
+    # Using unified FlextLDIFUtilities directly - no wrapper classes needed
+    utilities = FlextLDIFUtilities()
+    processors = utilities.processors  # Access nested helper directly
+    converters = utilities.converters  # Access nested helper directly
 
     # Force utilities branches with mocking
-    from unittest.mock import Mock
 
     mock_entry = Mock()
     mock_entry.dn.value.strip.return_value = ""

@@ -1,8 +1,5 @@
-"""Test Validators for LDIF Testing.
 
-Provides validation utilities for testing real LDIF functionality
-and ensuring correct behavior without relying on mocks.
-
+"""Test validators for LDIF functionality.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

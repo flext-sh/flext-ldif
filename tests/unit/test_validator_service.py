@@ -4,11 +4,10 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+from flext_ldif import FlextLDIFModels, FlextLDIFServices
+from flext_ldif.exceptions import FlextLDIFExceptions, FlextLDIFValidationError
 
 # Reason: Multiple assertion checks are common in tests for comprehensive error validation
-
-from flext_ldif import FlextLDIFModels, FlextLDIFServices
-from flext_ldif.exceptions import FlextLDIFExceptions
 
 
 class TestFlextLDIFServicesValidatorService:
@@ -33,7 +32,8 @@ class TestFlextLDIFServicesValidatorService:
         result = service.execute()
 
         assert result.is_success
-        assert result.value is True
+        assert isinstance(result.value, list)
+        assert all(isinstance(entry, FlextLDIFModels.Entry) for entry in result.value)
 
     def test_execute_valid_config(self) -> None:
         """Test execute method with valid config."""
@@ -43,7 +43,8 @@ class TestFlextLDIFServicesValidatorService:
         result = service.execute()
 
         assert result.is_success
-        assert result.value is True
+        assert isinstance(result.value, list)
+        assert all(isinstance(entry, FlextLDIFModels.Entry) for entry in result.value)
 
     def test_execute_invalid_entries(self) -> None:
         """Test execute method with invalid entries."""
@@ -81,7 +82,9 @@ class TestFlextLDIFServicesValidatorService:
         result = service.validate_entries(entries)
 
         assert result.is_success
-        assert result.value is True
+        assert isinstance(result.value, list)
+        assert len(result.value) == 1
+        assert all(isinstance(entry, FlextLDIFModels.Entry) for entry in result.value)
 
     def test_validate_entry_success(self) -> None:
         """Test successful validation of single entry."""
@@ -99,7 +102,6 @@ class TestFlextLDIFServicesValidatorService:
 
         result = service.validate_entry_structure(entry)
 
-        assert result.is_success
         assert result.value is True
 
     def test_validate_entry_business_rules_failure(self) -> None:
@@ -120,7 +122,7 @@ class TestFlextLDIFServicesValidatorService:
             result = service.validator.validate_entry_structure(invalid_entry)
             assert result.is_success or result.is_failure
 
-        except (FlextLDIFExceptions.ValidationError, ValueError, Exception):
+        except (FlextLDIFValidationError, ValueError, Exception):
             # Expected behavior - DN validation fails during creation
             # This demonstrates the real validation is working
             pass
@@ -273,7 +275,9 @@ class TestFlextLDIFServicesValidatorService:
         result = service.validate_entries(entries)
 
         assert result.is_success
-        assert result.value is True
+        assert isinstance(result.value, list)
+        assert len(result.value) == 2
+        assert all(isinstance(entry, FlextLDIFModels.Entry) for entry in result.value)
 
     def test_validate_entries_empty_list(self) -> None:
         """Test validate_entries with empty list."""
@@ -300,7 +304,9 @@ class TestFlextLDIFServicesValidatorService:
         result = service.validate_entries(entries)
 
         assert result.is_success
-        assert result.value is True
+        assert isinstance(result.value, list)
+        assert len(result.value) == 1
+        assert all(isinstance(entry, FlextLDIFModels.Entry) for entry in result.value)
 
     def test_validate_entries_multiple_valid_entries(self) -> None:
         """Test validate_entries with multiple valid entries."""
@@ -332,7 +338,9 @@ class TestFlextLDIFServicesValidatorService:
         result = service.validate_entries(entries)
 
         assert result.is_success
-        assert result.value is True
+        assert isinstance(result.value, list)
+        assert len(result.value) == 3
+        assert all(isinstance(entry, FlextLDIFModels.Entry) for entry in result.value)
 
     def test_validate_entries_with_failure(self) -> None:
         """Test validate_entries with one failing entry."""

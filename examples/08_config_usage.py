@@ -97,7 +97,9 @@ sn: AdminUser
 """
 
     # Write to temporary file
-    with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+    with tempfile.NamedTemporaryFile(
+        encoding="utf-8", mode="w", suffix=".ldif", delete=False
+    ) as f:
         f.write(sample_ldif)
         temp_path = Path(f.name)
 

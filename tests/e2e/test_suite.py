@@ -79,14 +79,14 @@ member: cn=John Doe,ou=people,dc=example,dc=com
         api = FlextLDIFAPI()
 
         # Step 1: Parse LDIF content
-        parse_result = api.parse(complex_ldif_content)
+        parse_result = api._operations.parse_string(complex_ldif_content)
         assert parse_result.is_success
         assert parse_result.value is not None
         entries = parse_result.value
         assert len(entries) == 6
 
         # Step 2: Validate all entries
-        validate_result = api.validate(entries)
+        validate_result = api._operations.validate_entries(entries)
         assert validate_result.is_success
 
         # Step 3: Filter specific entries
@@ -112,7 +112,7 @@ member: cn=John Doe,ou=people,dc=example,dc=com
         assert stats_result.value["total_entries"] == 6
 
         # Step 6: Write back to LDIF
-        write_result = api.write(entries)
+        write_result = api._operations.write_string(entries)
         assert write_result.is_success
         assert write_result.value is not None
         assert "cn=John Doe,ou=people,dc=example,dc=com" in write_result.value
@@ -129,10 +129,10 @@ member: cn=John Doe,ou=people,dc=example,dc=com
 
         # Step 2: Validate using services instead of core wrapper
         validator_service = FlextLDIFServices().validator
-        is_valid = FlextResult.unwrap_or_raise(
+        validated_entries = FlextResult.unwrap_or_raise(
             validator_service.validate_entries(entries)
         )
-        assert is_valid is True
+        assert len(validated_entries) == 6
 
         # Step 3: Write using convenience function
         ldif_output = FlextResult.unwrap_or_raise(handler.write_ldif(entries))
@@ -192,7 +192,7 @@ member: cn=John Doe,ou=people,dc=example,dc=com
 without proper format
 missing dns"""
 
-        parse_result = api.parse(invalid_ldif)
+        parse_result = api._operations.parse_string(invalid_ldif)
         assert not parse_result.is_success
         assert parse_result.error is not None
 
@@ -215,12 +215,13 @@ cn: User{i:03d}
 sn: User{i:03d}
 mail: user{i:03d}@example.com
 """
+
             large_ldif_parts.append(entry)
 
         large_ldif_content = "\n".join(large_ldif_parts)
 
         # Test parsing performance
-        parse_result = api.parse(large_ldif_content)
+        parse_result = api._operations.parse_string(large_ldif_content)
         assert parse_result.is_success
         assert parse_result.value is not None
         assert len(parse_result.value) == 51  # 1 domain + 50 users
@@ -234,6 +235,6 @@ mail: user{i:03d}@example.com
         assert len(filter_result.value) == 50
 
         # Test writing performance
-        write_result = api.write(parse_result.value)
+        write_result = api._operations.write_string(parse_result.value)
         assert write_result.is_success
         assert write_result.value is not None

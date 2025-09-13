@@ -1,7 +1,4 @@
-"""FLEXT-LDIF Constants - LDIF-specific constants.
-
-LDIF-specific constants for the flext-ldif domain.
-Uses flext-core patterns but defines LDIF-specific values.
+"""FLEXT LDIF Constants - Uses flext-core patterns but defines LDIF-specific values.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -37,7 +34,7 @@ class FlextLDIFConstants:
         "inetorgperson",
         "organizationalperson",
         "user",
-        "posixAccount"
+        "posixAccount",
     }
 
     LDAP_GROUP_CLASSES: ClassVar[set[str]] = {
@@ -45,14 +42,14 @@ class FlextLDIFConstants:
         "groupOfUniqueNames",
         "group",
         "groupofnames",
-        "groupofuniquenames"
+        "groupofuniquenames",
     }
 
     LDAP_ORGANIZATIONAL_CLASSES: ClassVar[set[str]] = {
         "organizationalUnit",
         "organization",
         "domain",
-        "organizationalunit"
+        "organizationalunit",
     }
 
     # Validation Messages
@@ -62,7 +59,7 @@ class FlextLDIFConstants:
         "MISSING_OBJECTCLASS": "Missing required objectClass",
         "INVALID_ATTRIBUTE_VALUE": "Invalid attribute value",
         "DUPLICATE_ATTRIBUTE": "Duplicate attribute found",
-        "EMPTY_ENTRY": "Entry cannot be empty"
+        "EMPTY_ENTRY": "Entry cannot be empty",
     }
 
     # Required Attributes for Schema Validation

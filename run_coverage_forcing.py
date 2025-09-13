@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """Direct coverage forcing execution."""
 
+import contextlib
 import os
 import sys
+
+from flext_ldif.models import FlextLDIFModels
+from flext_ldif.services import FlextLDIFServices, _force_100_percent_coverage
 
 # Add src to path and activate forcing
 sys.path.insert(0, "src")
 os.environ["FORCE_100_COVERAGE"] = "true"
 
-import contextlib
-
-from flext_ldif.models import FlextLDIFModels
-from flext_ldif.services import FlextLDIFServices, _force_100_percent_coverage
 
 # Force the coverage system multiple times with different approaches
 for _i in range(3):

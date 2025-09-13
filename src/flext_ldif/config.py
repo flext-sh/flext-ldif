@@ -1,7 +1,4 @@
-"""FLEXT-LDIF Configuration Management - LDIF-specific configuration.
-
-Extends flext-core FlextConfig with LDIF-specific settings and validation.
-Uses flext-core SOURCE OF TRUTH exclusively.
+"""FLEXT LDIF Configuration - LDIF-specific configuration management.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,10 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar, Self
+from typing import Self
 
-from flext_core import FlextResult
-from pydantic import BaseModel, Field, field_validator, model_validator
+from flext_core import FlextConfig, FlextResult
+from pydantic import Field, field_validator, model_validator
 
 # Configuration validation constants
 MIN_WORKERS_FOR_PARALLEL = 2
@@ -23,16 +20,12 @@ MAX_WORKERS_LIMIT = 16
 MAX_ANALYTICS_CACHE_SIZE = 50000
 
 
-class FlextLDIFConfig(BaseModel):
-    """LDIF-specific configuration using Pydantic BaseModel.
+class FlextLDIFConfig(FlextConfig):
+    """LDIF-specific configuration extending flext-core FlextConfig.
 
     Provides LDIF-specific settings with proper validation.
-    Uses singleton pattern for global configuration access.
+    Uses flext-core SOURCE OF TRUTH for configuration management.
     """
-
-    # SINGLETON PATTERN - Global LDIF configuration instance
-    _global_instance: ClassVar[FlextLDIFConfig | None] = None
-    _sealed: bool = False
 
     # =============================================================================
     # LDIF-SPECIFIC CONFIGURATION FIELDS
@@ -155,7 +148,10 @@ class FlextLDIFConfig(BaseModel):
     def validate_ldif_configuration(self) -> Self:
         """Validate LDIF-specific configuration consistency."""
         # Validate worker configuration
-        if self.ldif_parallel_processing and self.ldif_max_workers < MIN_WORKERS_FOR_PARALLEL:
+        if (
+            self.ldif_parallel_processing
+            and self.ldif_max_workers < MIN_WORKERS_FOR_PARALLEL
+        ):
             msg = "Parallel processing requires at least 2 workers"
             raise ValueError(msg)
 
@@ -165,66 +161,14 @@ class FlextLDIFConfig(BaseModel):
             raise ValueError(msg)
 
         # Validate analytics cache size
-        if self.ldif_enable_analytics and self.ldif_analytics_cache_size < MIN_ANALYTICS_CACHE_SIZE:
+        if (
+            self.ldif_enable_analytics
+            and self.ldif_analytics_cache_size < MIN_ANALYTICS_CACHE_SIZE
+        ):
             msg = "Analytics cache size must be at least 100"
             raise ValueError(msg)
 
         return self
-
-    # =============================================================================
-    # SINGLETON PATTERN IMPLEMENTATION
-    # =============================================================================
-
-    @classmethod
-    def get_global_instance(cls) -> FlextLDIFConfig:
-        """Get global LDIF configuration instance (singleton pattern).
-
-        Returns:
-            Global FlextLDIFConfig instance
-
-        Raises:
-            RuntimeError: If configuration has not been initialized
-
-        """
-        if cls._global_instance is None:
-            msg = "FlextLDIFConfig not initialized. Call initialize_global_config() first."
-            raise RuntimeError(msg)
-        return cls._global_instance
-
-    @classmethod
-    def initialize_global_config(
-        cls, **config_params: object
-    ) -> FlextResult[FlextLDIFConfig]:
-        """Initialize global LDIF configuration instance.
-
-        Args:
-            **config_params: Configuration parameters to override defaults
-
-        Returns:
-            FlextResult containing initialized configuration
-
-        """
-        try:
-            if cls._global_instance is not None:
-                return FlextResult[FlextLDIFConfig].ok(cls._global_instance)
-
-            # Initialize with provided parameters
-            config = cls(**config_params)  # type: ignore[arg-type]
-            cls._global_instance = config
-
-            return FlextResult[FlextLDIFConfig].ok(config)
-        except ValueError as e:
-            return FlextResult[FlextLDIFConfig].fail(str(e))
-        except Exception as e:
-            return FlextResult[FlextLDIFConfig].fail(
-                f"Failed to initialize LDIF configuration: {e}",
-                error_code="LDIF_CONFIG_INIT_ERROR",
-            )
-
-    @classmethod
-    def reset_global_config(cls) -> None:
-        """Reset global configuration instance (for testing)."""
-        cls._global_instance = None
 
     # =============================================================================
     # LDIF-SPECIFIC CONFIGURATION METHODS
@@ -264,28 +208,6 @@ class FlextLDIFConfig(BaseModel):
             "skip_comments": self.ldif_skip_comments,
         }
 
-    def seal(self) -> None:
-        """Seal configuration to prevent further modifications."""
-        self._sealed = True
-
-    def apply_ldif_overrides(self, overrides: dict[str, object]) -> FlextResult[None]:
-        """Apply LDIF-specific configuration overrides."""
-        if self._sealed:
-            return FlextResult[None].fail("Cannot modify sealed configuration")
-
-        try:
-            for key, value in overrides.items():
-                if hasattr(self, key):
-                    setattr(self, key, value)
-
-            # Re-validate configuration after overrides
-            self.validate_ldif_configuration()
-            return FlextResult[None].ok(None)
-        except ValueError as e:
-            return FlextResult[None].fail(str(e))
-        except Exception as e:
-            return FlextResult[None].fail(f"Failed to apply overrides: {e}")
-
     def get_ldif_analytics_config(self) -> dict[str, object]:
         """Get LDIF analytics configuration as dictionary.
 
@@ -316,11 +238,17 @@ class FlextLDIFConfig(BaseModel):
                 errors.append("Buffer size too small for efficient processing")
 
             # Validate worker configuration
-            if self.ldif_parallel_processing and self.ldif_max_workers > MAX_WORKERS_LIMIT:
+            if (
+                self.ldif_parallel_processing
+                and self.ldif_max_workers > MAX_WORKERS_LIMIT
+            ):
                 errors.append("Too many workers may cause resource contention")
 
             # Validate analytics configuration
-            if self.ldif_enable_analytics and self.ldif_analytics_cache_size > MAX_ANALYTICS_CACHE_SIZE:
+            if (
+                self.ldif_enable_analytics
+                and self.ldif_analytics_cache_size > MAX_ANALYTICS_CACHE_SIZE
+            ):
                 errors.append("Analytics cache size too large for memory efficiency")
 
             if errors:
@@ -336,10 +264,34 @@ class FlextLDIFConfig(BaseModel):
                 error_code="LDIF_BUSINESS_RULE_ERROR",
             )
 
+    def apply_ldif_overrides(self, overrides: dict[str, object]) -> FlextResult[None]:
+        """Apply LDIF-specific configuration overrides."""
+        if self.is_sealed():
+            return FlextResult[None].fail("Cannot modify sealed configuration")
+
+        try:
+            for key, value in overrides.items():
+                if hasattr(self, key):
+                    setattr(self, key, value)
+
+            # Re-validate configuration after overrides
+            # Create a new instance to trigger validation
+            try:
+                self.__class__(**self.model_dump())
+            except ValueError as e:
+                return FlextResult[None].fail(str(e))
+
+            return FlextResult[None].ok(None)
+        except ValueError as e:
+            return FlextResult[None].fail(str(e))
+        except Exception as e:
+            return FlextResult[None].fail(f"Failed to apply overrides: {e}")
+
 
 # =============================================================================
 # CONVENIENCE FUNCTIONS FOR GLOBAL CONFIG ACCESS
 # =============================================================================
+
 
 def get_ldif_config() -> FlextLDIFConfig:
     """Get global LDIF configuration instance.
@@ -351,25 +303,64 @@ def get_ldif_config() -> FlextLDIFConfig:
         RuntimeError: If configuration has not been initialized
 
     """
-    return FlextLDIFConfig.get_global_instance()
+    # Use the parent's singleton pattern correctly
+    global_instance = FlextConfig.get_global_instance()
+
+    # If it's already a FlextLDIFConfig, return it
+    if isinstance(global_instance, FlextLDIFConfig):
+        return global_instance
+
+    # If it's a base FlextConfig, we need to initialize LDIF config
+    # This should not happen in normal operation, but handle gracefully
+    msg = "Global instance is not a FlextLDIFConfig instance. Call initialize_ldif_config() first."
+    raise RuntimeError(msg)
 
 
-def initialize_ldif_config(**config_params: object) -> FlextResult[FlextLDIFConfig]:
+def initialize_ldif_config(
+    **kwargs: str | int | bool | None,
+) -> FlextResult[FlextLDIFConfig]:
     """Initialize global LDIF configuration.
 
     Args:
-        **config_params: Configuration parameters to override defaults
+        **kwargs: Configuration parameters to override defaults
 
     Returns:
         FlextResult containing initialized configuration
 
     """
-    return FlextLDIFConfig.initialize_global_config(**config_params)
+    try:
+        # Check if already initialized
+        try:
+            existing = get_ldif_config()
+            return FlextResult[FlextLDIFConfig].ok(existing)
+        except RuntimeError:
+            # Not initialized yet, proceed with initialization
+            pass
+
+        # Create new LDIF config instance with default parameters
+        config = FlextLDIFConfig()
+
+        # Update with provided parameters if any
+        for key, value in kwargs.items():
+            if hasattr(config, key):
+                setattr(config, key, value)
+
+        # Set as global instance using parent's method
+        FlextConfig.set_global_instance(config)
+
+        return FlextResult[FlextLDIFConfig].ok(config)
+    except ValueError as e:
+        return FlextResult[FlextLDIFConfig].fail(str(e))
+    except Exception as e:
+        return FlextResult[FlextLDIFConfig].fail(
+            f"Failed to initialize LDIF configuration: {e}",
+            error_code="LDIF_CONFIG_INIT_ERROR",
+        )
 
 
 def reset_ldif_config() -> None:
     """Reset global LDIF configuration (for testing)."""
-    FlextLDIFConfig.reset_global_config()
+    FlextConfig.clear_global_instance()
 
 
 __all__ = [

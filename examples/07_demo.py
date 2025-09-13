@@ -17,6 +17,7 @@ from flext_ldif import (
     FlextLDIFCore,
     FlextLDIFFormatHandler,
 )
+from flext_ldif.models import FlextLDIFModels
 
 logger = FlextLogger(__name__)
 
@@ -101,7 +102,7 @@ member: cn=Alice Johnson,ou=people,dc=company,dc=com
 """
 
     # Initialize API with configuration
-    config = FlextLDIFConfig.model_validate(
+    config = FlextLDIFModels.Config.model_validate(
         {
             "strict_validation": True,
             "max_entries": 100,
@@ -226,7 +227,7 @@ sn: user{i:02d}
 
 """
 
-    strict_config = FlextLDIFConfig.model_validate(
+    strict_config = FlextLDIFModels.Config.model_validate(
         {
             "strict_validation": True,
             "max_entries": 10,
@@ -237,7 +238,7 @@ sn: user{i:02d}
     strict_api = FlextLDIFAPI(strict_config)
     strict_api.parse(large_ldif).tap(lambda _: None)
 
-    permissive_config = FlextLDIFConfig.model_validate(
+    permissive_config = FlextLDIFModels.Config.model_validate(
         {
             "strict_validation": False,
             "max_entries": 100,
@@ -334,8 +335,8 @@ member: cn=Mary Manager,ou=people,dc=advanced,dc=com
 
 def _demonstrate_basic_object_class_filtering(
     api: FlextLDIFAPI,
-    entries: list[FlextLDIFEntry],
-    person_entries: list[FlextLDIFEntry],
+    entries: list[FlextLDIFModels.Entry],
+    person_entries: list[FlextLDIFModels.Entry],
 ) -> None:
     """Demonstrate basic object class filtering operations."""
     # Touch parameter to demonstrate usage in examples and satisfy linters
@@ -351,10 +352,10 @@ def _demonstrate_basic_object_class_filtering(
 
 
 def _filter_by_title_containing(
-    entries: list[FlextLDIFEntry], keyword: str
-) -> list[FlextLDIFEntry]:
+    entries: list[FlextLDIFModels.Entry], keyword: str
+) -> list[FlextLDIFModels.Entry]:
     """Custom filter for entries with title containing keyword."""
-    result: list[FlextLDIFEntry] = []
+    result: list[FlextLDIFModels.Entry] = []
     for entry in entries:
         title_attr = entry.get_attribute("title")
         if title_attr and any(keyword.lower() in title.lower() for title in title_attr):
@@ -362,13 +363,15 @@ def _filter_by_title_containing(
     return result
 
 
-def _demonstrate_custom_title_filtering(person_entries: list[FlextLDIFEntry]) -> None:
+def _demonstrate_custom_title_filtering(
+    person_entries: list[FlextLDIFModels.Entry],
+) -> None:
     """Demonstrate custom filtering by title keywords."""
     _filter_by_title_containing(person_entries, "engineer")
     _filter_by_title_containing(person_entries, "manager")
 
 
-def _determine_entry_type(entry: FlextLDIFEntry) -> str:
+def _determine_entry_type(entry: FlextLDIFModels.Entry) -> str:
     """Determine the type of an LDAP entry based on object classes."""
     has_object_class = entry.has_object_class
     if has_object_class("domain"):
@@ -384,11 +387,11 @@ def _determine_entry_type(entry: FlextLDIFEntry) -> str:
 
 def _demonstrate_hierarchical_analysis(
     api: FlextLDIFAPI,
-    entries: list[FlextLDIFEntry],
+    entries: list[FlextLDIFModels.Entry],
 ) -> None:
     """Demonstrate hierarchical analysis and entry categorization."""
 
-    def print_hierarchy(sorted_entries: list[FlextLDIFEntry]) -> None:
+    def print_hierarchy(sorted_entries: list[FlextLDIFModels.Entry]) -> None:
         for entry in sorted_entries:
             "   " + "  " * str(entry.dn).count(",")
             _determine_entry_type(entry)
@@ -404,7 +407,7 @@ def example_advanced_filtering() -> None:
     parse_result = api.parse(complex_ldif)
 
     # Use railway programming with chaining
-    def demonstrate_all_filtering(entries: list[FlextLDIFEntry]) -> None:
+    def demonstrate_all_filtering(entries: list[FlextLDIFModels.Entry]) -> None:
         person_filter_result = api.filter_persons(entries)
         person_entries = person_filter_result.unwrap_or([])
         _demonstrate_basic_object_class_filtering(api, entries, person_entries)
@@ -440,7 +443,7 @@ description: Test user {i:03d} for performance monitoring
     start_time = time.time()
     api = FlextLDIFAPI()
 
-    def measure_performance(entries: list[FlextLDIFEntry]) -> None:
+    def measure_performance(entries: list[FlextLDIFModels.Entry]) -> None:
         time.time() - start_time
 
         filter_start = time.time()

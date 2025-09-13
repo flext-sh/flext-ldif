@@ -1,8 +1,4 @@
-"""Real LDIF Test Data Generator.
-
-Provides comprehensive LDIF test data for real functionality testing.
-All data follows RFC 2849 LDIF specifications and real-world patterns.
-
+"""Real LDIF test data provider for comprehensive testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -64,6 +60,7 @@ cn: Engineering
 description: Engineering Department Group
 member: uid=john.doe,ou=people,dc=example,dc=com
 """
+
         return LdifSample(
             content=content,
             description="Basic LDIF entries with people and groups",
@@ -91,6 +88,7 @@ givenName: Photo
 mail: photo.user@example.com
 jpegPhoto:: {encoded_data}
 """
+
         return LdifSample(
             content=content,
             description="LDIF with binary data (base64 encoded)",
@@ -125,6 +123,7 @@ mail: new.employee@example.com
 dn: uid=old.employee,ou=people,dc=example,dc=com
 changetype: delete
 """
+
         return LdifSample(
             content=content,
             description="LDIF with change records (modify, add, delete)",
@@ -151,6 +150,7 @@ telephoneNumber: +1-555-222-2222
 description: Primary description
 description: Secondary description
 """
+
         return LdifSample(
             content=content,
             description="LDIF with multi-valued attributes",
@@ -174,6 +174,7 @@ givenName: Long Lines
 mail: long.lines@example.com
 description: {long_description}
 """
+
         return LdifSample(
             content=content,
             description="LDIF with long lines requiring continuation",
@@ -196,6 +197,7 @@ mail: jose.maria@example.com
 description: User with special UTF-8 characters: áéíóú ÁÉÍÓÚ ñÑ ¿¡
 postalAddress: Calle de la Paz, 123$ Piso 2º$ Madrid, España
 """
+
         return LdifSample(
             content=content,
             description="LDIF with UTF-8 special characters",
@@ -218,6 +220,7 @@ mail: empty.values@example.com
 description:
 telephoneNumber:
 """
+
         return LdifSample(
             content=content,
             description="LDIF with empty attribute values",
@@ -240,6 +243,7 @@ dn: uid=malformed,dc=example,dc=com
 objectClass: person
 missing required attributes like cn, sn
 """
+
         return LdifSample(
             content=content,
             description="Invalid LDIF data for error testing",
@@ -264,6 +268,7 @@ mail: user{i:04d}@example.com
 employeeNumber: E{i:06d}
 
 """
+
             entries.append(entry)
 
         content = "".join(entries).rstrip()

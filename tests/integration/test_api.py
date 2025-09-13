@@ -49,7 +49,7 @@ class TestAdvancedAPIFeatures:
             entries.append(entry)
 
         # Test validation
-        validate_result = api_with_config.validate(entries)
+        validate_result = api_with_config._operations.validate_entries(entries)
         assert validate_result.is_success
 
         # Test statistics
@@ -61,7 +61,7 @@ class TestAdvancedAPIFeatures:
     def test_api_error_handling_edge_cases(self, api_with_config: FlextLDIFAPI) -> None:
         """Test API error handling with various edge cases."""
         # Test with empty content (returns empty list, which is valid)
-        result = api_with_config.parse("")
+        result = api_with_config._operations.parse_string("")
         assert result.is_success
         assert result.value == []
 
@@ -69,11 +69,14 @@ class TestAdvancedAPIFeatures:
         malformed_ldif = """dn cn=invalid,dc=example,dc=com
 objectClass person
 cn invalid"""
-        result = api_with_config.parse(malformed_ldif)
+
+        result = api_with_config._operations.parse_string(malformed_ldif)
         assert not result.is_success
 
         # Test with invalid file path
-        result = api_with_config.parse_file(Path("/totally/invalid/path/file.ldif"))
+        result = api_with_config._operations.parse_file(
+            Path("/totally/invalid/path/file.ldif")
+        )
         assert not result.is_success
 
     def test_api_filtering_capabilities(self, api_with_config: FlextLDIFAPI) -> None:
@@ -96,8 +99,9 @@ dn: cn=Developers,ou=groups,dc=example,dc=com
 cn: Developers
 objectClass: groupOfNames
 """
+
         # Parse entries
-        parse_result = api_with_config.parse(ldif_content)
+        parse_result = api_with_config._operations.parse_string(ldif_content)
         assert parse_result.is_success
         entries = parse_result.value
 
@@ -134,13 +138,13 @@ objectClass: person
 
         try:
             # Test parse file
-            parse_result = api_with_config.parse_file(temp_file)
+            parse_result = api_with_config._operations.parse_file(temp_file)
             assert parse_result.is_success
             assert len(parse_result.value) == 1
 
             # Test write file
             output_file = temp_file.with_suffix(".output.ldif")
-            write_result = api_with_config.write_entries_to_file(
+            write_result = api_with_config._operations.write_file(
                 parse_result.value,
                 str(output_file),
             )
@@ -172,15 +176,17 @@ mail: user{i:02d}@example.com
         large_content = "\n".join(content_parts)
 
         # Test parsing performance
-        parse_result = api_with_config.parse(large_content)
+        parse_result = api_with_config._operations.parse_string(large_content)
         assert parse_result.is_success
         assert len(parse_result.value) == 20
 
         # Test validation performance
-        validate_result = api_with_config.validate(parse_result.value)
+        validate_result = api_with_config._operations.validate_entries(
+            parse_result.value
+        )
         assert validate_result.is_success
 
         # Test writing performance
-        write_result = api_with_config.write(parse_result.value)
+        write_result = api_with_config._operations.write_string(parse_result.value)
         assert write_result.is_success
         assert write_result.value is not None

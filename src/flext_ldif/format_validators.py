@@ -1,7 +1,4 @@
-"""FLEXT-LDIF Format Validators - Direct flext-core usage.
-
-Minimal LDIF-specific validator extensions using flext-core directly.
-No duplication of existing functionality - only domain-specific additions.
+"""FLEXT LDIF Format Validators - LDIF validation functions.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -53,12 +50,13 @@ class FlextLDIFFormatValidators:
     def validate_attribute_name_format(self, name: str) -> FlextResultBool:
         """Validate LDAP attribute name format using flext-core."""
         return (
-            FlextValidations.Rules.StringRules.validate_non_empty(name)
+            FlextValidations.BusinessValidators.validate_string_field(
+                name, min_length=1
+            )
             .flat_map(
-                lambda _: FlextValidations.Rules.StringRules.validate_pattern(
+                lambda _: FlextValidations.BusinessValidators.validate_string_field(
                     name,
-                    r"^[a-zA-Z][a-zA-Z0-9-]*(?:;[a-zA-Z0-9-]+(?:[-_.][a-zA-Z0-9-]+)*)*$",
-                    "attribute name",
+                    pattern=r"^[a-zA-Z][a-zA-Z0-9-]*(?:;[a-zA-Z0-9-]+(?:[-_.][a-zA-Z0-9-]+)*)*$",
                 )
             )
             .map(lambda _: True)
@@ -70,8 +68,8 @@ class FlextLDIFFormatValidators:
             return FlextResult[bool].ok(data=True)
         if dn == "":
             return FlextResult[bool].fail("Empty DN is invalid in strict mode")
-        pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
-            dn, FlextLDIFConstants.DN_PATTERN, "DN format"
+        pattern_result = FlextValidations.BusinessValidators.validate_string_field(
+            dn, pattern=FlextLDIFConstants.DN_PATTERN
         )
         if pattern_result.is_failure:
             return FlextResult[bool].fail(
@@ -82,12 +80,13 @@ class FlextLDIFFormatValidators:
     def validate_object_class_format(self, object_class: str) -> FlextResultBool:
         """Validate objectClass value format using flext-core."""
         return (
-            FlextValidations.Rules.StringRules.validate_non_empty(object_class)
+            FlextValidations.BusinessValidators.validate_string_field(
+                object_class, min_length=1
+            )
             .flat_map(
-                lambda _: FlextValidations.Rules.StringRules.validate_pattern(
+                lambda _: FlextValidations.BusinessValidators.validate_string_field(
                     object_class.strip(),
-                    r"^[a-zA-Z][a-zA-Z0-9]*$",
-                    "object class",
+                    pattern=r"^[a-zA-Z][a-zA-Z0-9]*$",
                 )
             )
             .map(lambda _: True)
@@ -107,7 +106,7 @@ class FlextLDIFFormatValidators:
         # Convert both to lowercase for case-insensitive comparison
         object_classes_lower = {oc.lower() for oc in object_classes}
         person_classes_lower = {
-                oc.lower() for oc in FlextLDIFConstants.LDAP_PERSON_CLASSES
+            oc.lower() for oc in FlextLDIFConstants.LDAP_PERSON_CLASSES
         }
 
         return FlextResult[bool].ok(
@@ -120,7 +119,7 @@ class FlextLDIFFormatValidators:
         # Convert both to lowercase for case-insensitive comparison
         object_classes_lower = {oc.lower() for oc in object_classes}
         group_classes_lower = {
-                oc.lower() for oc in FlextLDIFConstants.LDAP_GROUP_CLASSES
+            oc.lower() for oc in FlextLDIFConstants.LDAP_GROUP_CLASSES
         }
 
         return FlextResult[bool].ok(
@@ -133,7 +132,7 @@ class FlextLDIFFormatValidators:
         # Convert both to lowercase for case-insensitive comparison
         object_classes_lower = {oc.lower() for oc in object_classes}
         organizational_classes_lower = {
-                oc.lower() for oc in FlextLDIFConstants.LDAP_ORGANIZATIONAL_CLASSES
+            oc.lower() for oc in FlextLDIFConstants.LDAP_ORGANIZATIONAL_CLASSES
         }
 
         return FlextResult[bool].ok(
@@ -147,7 +146,7 @@ class FlextLDIFFormatValidators:
         object_class_values = entry.get_attribute("objectClass") or []
 
         # Use appropriate flext-core validation for list
-        validation_result = FlextValidations.Rules.CollectionRules.validate_list_size(
+        validation_result = FlextValidations.TypeValidators.validate_list(
             object_class_values
         )
         if validation_result.is_failure:
@@ -187,11 +186,11 @@ class FlextLDIFFormatValidators:
         object_class_values = entry.get_attribute("objectClass") or []
 
         # First validate the list structure
-        list_validation = FlextValidations.Rules.CollectionRules.validate_list_size(
+        list_validation = FlextValidations.TypeValidators.validate_list(
             object_class_values
         )
         if list_validation.is_failure:
-            return list_validation.map(lambda _: False)
+            return FlextResult[bool].fail("Invalid objectClass list")
 
         # Check if there's intersection with expected types
         has_expected_type = bool(
@@ -275,11 +274,13 @@ class FlextLDIFFormatValidators:
             "id": "format_validators",
             "type": "ldif_validators",
         }
-        return (
-            FlextValidations.Domain.EntityValidator()
-            .validate_entity_constraints(entity_data)
-            .map(lambda _: None)
-        )
+        # Simple validation - check required fields
+        required_fields = ["dn"]
+        for field in required_fields:
+            if field not in entity_data:
+                return FlextResult[None].fail(f"Missing required field: {field}")
+
+        return FlextResult[None].ok(None)
 
     @classmethod
     def get_ldap_validators(cls) -> tuple[Callable[[str], bool], Callable[[str], bool]]:
@@ -287,13 +288,14 @@ class FlextLDIFFormatValidators:
         if cls._cached_validators is None:
 
             def attr_validator(name: str) -> bool:
-                result = FlextValidations.Rules.StringRules.validate_non_empty(name)
+                result = FlextValidations.BusinessValidators.validate_string_field(
+                    name, min_length=1
+                )
                 if result.is_failure:
                     return False
-                pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
+                pattern_result = FlextValidations.BusinessValidators.validate_string_field(
                     name,
-                    r"^[a-zA-Z][a-zA-Z0-9-]*(?:;[a-zA-Z0-9-]+(?:[-_.][a-zA-Z0-9-]+)*)*$",
-                    "attribute name",
+                    pattern=r"^[a-zA-Z][a-zA-Z0-9-]*(?:;[a-zA-Z0-9-]+(?:[-_.][a-zA-Z0-9-]+)*)*$",
                 )
                 return pattern_result.is_success
 
@@ -306,14 +308,15 @@ class FlextLDIFFormatValidators:
     @classmethod
     def _validate_ldap_attribute_name(cls, attr_name: str) -> bool:
         """Private validator for LDAP attribute names - simple alias for test compatibility."""
-        result = FlextValidations.Rules.StringRules.validate_non_empty(attr_name)
+        result = FlextValidations.BusinessValidators.validate_string_field(
+            attr_name, min_length=1
+        )
         if result.is_failure:
             return False
 
-        pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
+        pattern_result = FlextValidations.BusinessValidators.validate_string_field(
             attr_name,
-            r"^[a-zA-Z][a-zA-Z0-9-]*(?:;[a-zA-Z0-9-]+(?:[-_.][a-zA-Z0-9-]+)*)*$",
-            "attribute name",
+            pattern=r"^[a-zA-Z][a-zA-Z0-9-]*(?:;[a-zA-Z0-9-]+(?:[-_.][a-zA-Z0-9-]+)*)*$",
         )
         return pattern_result.is_success
 
@@ -322,8 +325,8 @@ class FlextLDIFFormatValidators:
         """Private validator for LDAP DN - simple alias for test compatibility."""
         if dn is None or dn == "":
             return False
-        pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
-            dn, FlextLDIFConstants.DN_PATTERN, "DN format"
+        pattern_result = FlextValidations.BusinessValidators.validate_string_field(
+            dn, pattern=FlextLDIFConstants.DN_PATTERN
         )
         return pattern_result.is_success
 

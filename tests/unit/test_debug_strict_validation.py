@@ -27,7 +27,7 @@ def test_debug_strict_validation_flow() -> None:
     entry.attributes = mock_attributes
 
     # Test validation without patching non-existent methods
-    validator.validate_entries([entry])
+    validator.validator.validate_entries([entry])
 
     assert True  # Só queremos ver o debug
 
@@ -46,7 +46,9 @@ def test_debug_manual_validation_call() -> None:
     entry.attributes = mock_attributes
 
     # Chamar método diretamente usando a nova API
-    with patch.object(FlextUtilities.TypeGuards, "is_list_non_empty", return_value=True):
+    with patch.object(
+        FlextUtilities.TypeGuards, "is_list_non_empty", return_value=True
+    ):
         result = validator.validate_entry_structure(entry)
 
     assert result.is_success or result.is_failure  # Test successful execution

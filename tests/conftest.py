@@ -1,13 +1,3 @@
-"""FLEXT-LDIF Test Configuration and Fixtures.
-
-This module provides comprehensive pytest configuration, fixtures, and test utilities
-for the FLEXT-LDIF test suite, implementing enterprise-grade testing patterns with
-comprehensive test data, real service integration, and functional test support.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 import os
@@ -40,6 +30,15 @@ def set_test_environment() -> Generator[None]:
     # Cleanup
     os.environ.pop("FLEXT_ENV", None)
     os.environ.pop("FLEXT_LOG_LEVEL", None)
+
+
+# Docker container initialization (session-scoped, started once)
+@pytest.fixture(scope="session", autouse=True)
+def ensure_docker_container(docker_openldap_container: object) -> Generator[None]:
+    """Ensure Docker container is started for the test session."""
+    # The docker_openldap_container fixture will be invoked automatically
+    # and will start/stop the container for the entire test session
+    return
 
 
 # LDIF processing fixtures - optimized with real services

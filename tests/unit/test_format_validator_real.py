@@ -7,11 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import FlextLDIFModels
-from flext_ldif.format_validators import (
-    FlextLDIFFormatValidator,
-    LdifSchemaValidator,
-    LdifValidator,
-)
+from flext_ldif.format_validators import ( from __future__ import annotations FlextLDIFFormatValidator, LdifSchemaValidator, LdifValidator, )
 
 
 class TestFlextLDIFFormatValidator:
@@ -19,6 +15,7 @@ class TestFlextLDIFFormatValidator:
 
     def test_validate_ldap_attribute_name_valid(self) -> None:
         """Test valid LDAP attribute names."""
+
         # Basic attributes
         assert FlextLDIFFormatValidator._validate_ldap_attribute_name("cn") is True
         assert FlextLDIFFormatValidator._validate_ldap_attribute_name("sn") is True
@@ -54,6 +51,7 @@ class TestFlextLDIFFormatValidator:
 
     def test_validate_ldap_attribute_name_invalid(self) -> None:
         """Test invalid LDAP attribute names."""
+
         # Empty/null
         assert FlextLDIFFormatValidator._validate_ldap_attribute_name("") is False
         assert FlextLDIFFormatValidator._validate_ldap_attribute_name(None) is False
@@ -76,6 +74,7 @@ class TestFlextLDIFFormatValidator:
 
     def test_validate_ldap_dn_valid(self) -> None:
         """Test valid LDAP DN formats."""
+
         # Basic DN
         assert FlextLDIFFormatValidator._validate_ldap_dn("cn=John Doe") is True
         assert FlextLDIFFormatValidator._validate_ldap_dn("uid=john.doe") is True
@@ -103,6 +102,7 @@ class TestFlextLDIFFormatValidator:
 
     def test_validate_ldap_dn_invalid(self) -> None:
         """Test invalid LDAP DN formats."""
+
         # Empty/null
         assert FlextLDIFFormatValidator._validate_ldap_dn("") is False
         assert FlextLDIFFormatValidator._validate_ldap_dn(None) is False
@@ -115,6 +115,7 @@ class TestFlextLDIFFormatValidator:
 
     def test_get_ldap_validators_cached(self) -> None:
         """Test that validators are cached properly."""
+
         validators1 = FlextLDIFFormatValidator.get_ldap_validators()
         validators2 = FlextLDIFFormatValidator.get_ldap_validators()
 
@@ -137,6 +138,7 @@ class TestLdifValidator:
 
     def test_validate_dn_success(self) -> None:
         """Test DN validation with valid DN."""
+
         result = LdifValidator.validate_dn("uid=john.doe,ou=people,dc=example,dc=com")
 
         assert result.is_success is True
@@ -145,6 +147,7 @@ class TestLdifValidator:
 
     def test_validate_dn_empty(self) -> None:
         """Test DN validation with empty DN."""
+
         result = LdifValidator.validate_dn("")
 
         assert result.is_success is False
@@ -157,6 +160,7 @@ class TestLdifValidator:
 
     def test_validate_dn_whitespace_only(self) -> None:
         """Test DN validation with whitespace-only DN."""
+
         result = LdifValidator.validate_dn("   ")
 
         assert result.is_success is False
@@ -164,6 +168,7 @@ class TestLdifValidator:
 
     def test_validate_dn_invalid_format(self) -> None:
         """Test DN validation with invalid format."""
+
         result = LdifValidator.validate_dn("invalid-dn-format")
 
         assert result.is_success is False
@@ -172,6 +177,7 @@ class TestLdifValidator:
 
     def test_validate_attribute_name_success(self) -> None:
         """Test attribute name validation with valid name."""
+
         result = LdifValidator.validate_attribute_name("cn")
 
         assert result.is_success is True
@@ -179,14 +185,16 @@ class TestLdifValidator:
 
     def test_validate_attribute_name_empty(self) -> None:
         """Test attribute name validation with empty name."""
+
         result = LdifValidator.validate_attribute_name("")
 
         assert result.is_success is False
         assert result.error is not None
-        assert "cannot be empty" in result.error.lower()
+        assert "too short" in result.error.lower()
 
     def test_validate_attribute_name_invalid(self) -> None:
         """Test attribute name validation with invalid name."""
+
         result = LdifValidator.validate_attribute_name("1invalid")
 
         assert result.is_success is False
@@ -194,6 +202,7 @@ class TestLdifValidator:
 
     def test_validate_required_objectclass_present(self) -> None:
         """Test objectClass validation when present."""
+
         entry_data = {
             "dn": "uid=test,ou=people,dc=example,dc=com",
             "attributes": {
@@ -211,6 +220,7 @@ class TestLdifValidator:
 
     def test_validate_required_objectclass_missing(self) -> None:
         """Test objectClass validation when missing."""
+
         entry_data = {
             "dn": "uid=test,ou=people,dc=example,dc=com",
             "attributes": {"cn": ["Test User"], "sn": ["User"]},
@@ -225,6 +235,7 @@ class TestLdifValidator:
 
     def test_validate_entry_completeness_valid(self) -> None:
         """Test entry completeness with valid entry."""
+
         entry_data = {
             "dn": "uid=test,ou=people,dc=example,dc=com",
             "attributes": {
@@ -242,6 +253,7 @@ class TestLdifValidator:
 
     def test_validate_entry_completeness_no_dn(self) -> None:
         """Test entry completeness with empty DN."""
+
         entry_data = {
             "dn": "",
             "attributes": {"objectClass": ["person"], "cn": ["Test User"]},
@@ -258,6 +270,7 @@ class TestLdifValidator:
 
     def test_validate_entry_type_person(self) -> None:
         """Test entry type validation for person."""
+
         entry_data = {
             "dn": "uid=test,ou=people,dc=example,dc=com",
             "attributes": {
@@ -275,6 +288,7 @@ class TestLdifValidator:
 
     def test_validate_entry_type_mismatch(self) -> None:
         """Test entry type validation with mismatch."""
+
         entry_data = {
             "dn": "uid=test,ou=people,dc=example,dc=com",
             "attributes": {
@@ -293,6 +307,7 @@ class TestLdifValidator:
 
     def test_validate_entry_type_no_objectclass(self) -> None:
         """Test entry type validation without objectClass."""
+
         entry_data = {
             "dn": "uid=test,ou=people,dc=example,dc=com",
             "attributes": {"cn": ["Test User"], "sn": ["User"]},
@@ -306,6 +321,7 @@ class TestLdifValidator:
 
     def test_is_person_entry_true(self) -> None:
         """Test person entry detection - positive case."""
+
         entry_data = {
             "dn": "uid=test,ou=people,dc=example,dc=com",
             "attributes": {
@@ -316,26 +332,26 @@ class TestLdifValidator:
         }
         entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
-        result = LdifValidator.is_person_entry(entry)
+        result = entry.is_person()
 
-        assert result.is_success is True
-        assert result.value is True
+        assert result is True
 
     def test_is_person_entry_false(self) -> None:
         """Test person entry detection - negative case."""
+
         entry_data = {
             "dn": "ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["organizationalUnit"], "ou": ["people"]},
         }
         entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
-        result = LdifValidator.is_person_entry(entry)
+        result = entry.is_person()
 
-        assert result.is_success is True
-        assert result.value is False
+        assert result is False
 
     def test_is_ou_entry_true(self) -> None:
         """Test OU entry detection - positive case."""
+
         entry_data = {
             "dn": "ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["organizationalUnit"], "ou": ["people"]},
@@ -349,6 +365,7 @@ class TestLdifValidator:
 
     def test_is_ou_entry_false(self) -> None:
         """Test OU entry detection - negative case."""
+
         entry_data = {
             "dn": "uid=test,ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["Test User"]},
@@ -362,6 +379,7 @@ class TestLdifValidator:
 
     def test_is_group_entry_true(self) -> None:
         """Test group entry detection - positive case."""
+
         entry_data = {
             "dn": "cn=admins,ou=groups,dc=example,dc=com",
             "attributes": {
@@ -372,23 +390,22 @@ class TestLdifValidator:
         }
         entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
-        result = LdifValidator.is_group_entry(entry)
+        result = entry.is_group()
 
-        assert result.is_success is True
-        assert result.value is True
+        assert result is True
 
     def test_is_group_entry_false(self) -> None:
         """Test group entry detection - negative case."""
+
         entry_data = {
             "dn": "uid=test,ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["Test User"]},
         }
         entry = FlextLDIFModels.Entry.model_validate(entry_data)
 
-        result = LdifValidator.is_group_entry(entry)
+        result = entry.is_group()
 
-        assert result.is_success is True
-        assert result.value is False
+        assert result is False
 
 
 class TestLdifSchemaValidator:
@@ -396,6 +413,7 @@ class TestLdifSchemaValidator:
 
     def test_validate_required_attributes_present(self) -> None:
         """Test required attributes validation when all present."""
+
         entry_data = {
             "dn": "uid=test,ou=people,dc=example,dc=com",
             "attributes": {
@@ -413,6 +431,7 @@ class TestLdifSchemaValidator:
 
     def test_validate_required_attributes_missing(self) -> None:
         """Test required attributes validation when some missing."""
+
         entry_data = {
             "dn": "uid=test,ou=people,dc=example,dc=com",
             "attributes": {
@@ -431,6 +450,7 @@ class TestLdifSchemaValidator:
 
     def test_validate_required_attributes_empty_list(self) -> None:
         """Test required attributes validation with empty requirements."""
+
         entry_data = {
             "dn": "uid=test,ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["Test User"]},
@@ -444,6 +464,7 @@ class TestLdifSchemaValidator:
 
     def test_validate_person_schema_valid(self) -> None:
         """Test person schema validation with valid entry."""
+
         entry_data = {
             "dn": "uid=test,ou=people,dc=example,dc=com",
             "attributes": {
@@ -467,6 +488,7 @@ class TestLdifSchemaValidator:
 
     def test_validate_person_schema_not_person(self) -> None:
         """Test person schema validation with non-person entry."""
+
         entry_data = {
             "dn": "ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["organizationalUnit"], "ou": ["people"]},
@@ -479,6 +501,7 @@ class TestLdifSchemaValidator:
 
     def test_validate_ou_schema_valid(self) -> None:
         """Test OU schema validation with valid entry."""
+
         entry_data = {
             "dn": "ou=people,dc=example,dc=com",
             "attributes": {
@@ -496,6 +519,7 @@ class TestLdifSchemaValidator:
 
     def test_validate_ou_schema_not_ou(self) -> None:
         """Test OU schema validation with non-OU entry."""
+
         entry_data = {
             "dn": "uid=test,ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["Test User"]},

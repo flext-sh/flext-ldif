@@ -1,7 +1,9 @@
-"""Tests for FlextLDIFServices.WriterService - Real functionality testing without mocks.
 
-Comprehensive tests using actual LDIF data and real writer functionality.
-No mocks, bypasses, or fake implementations - only real LDIF writing.
+from __future__ import annotations
+
+from flext_core import FlextTypes
+from flext_ldif import FlextLDIFModels, FlextLDIFServices
+from tests.test_support import TestFileManager, TestValidators
 
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -10,10 +12,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextTypes
 
-from flext_ldif import FlextLDIFModels, FlextLDIFServices
-from tests.test_support import TestFileManager, TestValidators
+from typing import Dict
 
 
 class TestFlextLDIFServicesWriterServiceReal:
@@ -21,6 +21,7 @@ class TestFlextLDIFServicesWriterServiceReal:
 
     def test_service_initialization_with_config(self) -> None:
         """Test writer service initializes with configuration."""
+
         config = FlextLDIFModels.Config(
             encoding="utf-8",
             max_line_length=76,
@@ -36,6 +37,7 @@ class TestFlextLDIFServicesWriterServiceReal:
 
     def test_service_initialization_default_config(self) -> None:
         """Test writer service works with default configuration."""
+
         service = FlextLDIFServices().writer
 
         # Service should work with defaults
@@ -45,6 +47,7 @@ class TestFlextLDIFServicesWriterServiceReal:
 
     def test_write_real_single_entry_to_string(self) -> None:
         """Test writing a single real LDIF entry to string."""
+
         service = FlextLDIFServices().writer
 
         # Create a real entry
@@ -81,6 +84,7 @@ class TestFlextLDIFServicesWriterServiceReal:
 
     def test_write_real_multiple_entries_to_string(self) -> None:
         """Test writing multiple real LDIF entries to string."""
+
         service = FlextLDIFServices().writer
 
         # Create multiple real entries
@@ -120,6 +124,7 @@ class TestFlextLDIFServicesWriterServiceReal:
 
     def test_write_real_entry_with_multi_valued_attributes(self) -> None:
         """Test writing entry with multi-valued attributes."""
+
         service = FlextLDIFServices().writer
 
         # Create entry with multi-valued attributes
@@ -155,6 +160,7 @@ class TestFlextLDIFServicesWriterServiceReal:
 
     def test_write_real_entry_with_binary_data(self) -> None:
         """Test writing entry with binary (base64) data."""
+
         service = FlextLDIFServices().writer
 
         # Create entry with binary data
@@ -187,6 +193,7 @@ class TestFlextLDIFServicesWriterServiceReal:
 
     def test_write_real_entry_with_special_characters(self) -> None:
         """Test writing entry with UTF-8 special characters."""
+
         service = FlextLDIFServices().writer
 
         # Create entry with special characters
@@ -223,6 +230,7 @@ class TestFlextLDIFServicesWriterServiceReal:
         self, test_file_manager: TestFileManager
     ) -> None:
         """Test writing real entries to actual file."""
+
         service = FlextLDIFServices().writer
 
         # Create real entries
@@ -265,6 +273,7 @@ class TestFlextLDIFServicesWriterServiceReal:
 
     def test_write_real_empty_entry_list(self) -> None:
         """Test writing empty list of entries."""
+
         service = FlextLDIFServices().writer
 
         # Write empty list
@@ -279,6 +288,7 @@ class TestFlextLDIFServicesWriterServiceReal:
 
     def test_write_with_custom_line_length(self) -> None:
         """Test writing with custom line length configuration."""
+
         config = FlextLDIFModels.Config(max_line_length=40)  # Shorter lines
         services = FlextLDIFServices(config=config)
         service = services.writer
@@ -317,6 +327,7 @@ class TestFlextLDIFServicesWriterServiceReal:
 
     def test_write_with_different_encodings(self) -> None:
         """Test writing with different character encodings."""
+
         config = FlextLDIFModels.Config(encoding="utf-8")
         services = FlextLDIFServices(config=config)
         service = services.writer
@@ -359,6 +370,7 @@ class TestWriterIntegrationReal:
         self, integration_services: FlextTypes.Core.Dict
     ) -> None:
         """Test writer → parser roundtrip with real services."""
+
         parser = integration_services["parser"]
         writer = integration_services["writer"]
 

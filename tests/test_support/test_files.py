@@ -1,13 +1,3 @@
-"""Test File Management for LDIF Testing.
-
-Provides utilities for creating, managing, and cleaning up test files
-with real LDIF content for comprehensive functionality testing.
-
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 import shutil
@@ -19,7 +9,7 @@ from typing import Self
 
 from flext_core import FlextTypes
 
-from .ldif_data import LdifSample, LdifTestData
+from flext_ldif.ldif_data import LdifSample, LdifTestData
 
 
 class TestFileManager:

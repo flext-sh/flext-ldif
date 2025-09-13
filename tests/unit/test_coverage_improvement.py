@@ -1,8 +1,5 @@
-"""Coverage Improvement Tests.
 
-These tests target specific lines and branches to achieve 100% coverage
-without using mocks - only real functionality testing.
-
+"""Tests to improve coverage on specific missing lines.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -16,7 +13,7 @@ import pytest
 
 from flext_ldif.models import FlextLDIFModels
 from flext_ldif.services import FlextLDIFServices
-from flext_ldif.utilities import LdifDomainProcessors
+from flext_ldif.utilities import FlextLDIFUtilities
 
 
 class TestCoverageImprovement:
@@ -48,9 +45,10 @@ class TestCoverageImprovement:
         )
 
         # Create valid entries for utilities testing
-        entries = [entry2]
 
-        result = LdifDomainProcessors.validate_entries_or_warn(entries, max_errors=5)
+        # Test utilities functionality
+        utilities = FlextLDIFUtilities()
+        result = utilities.processors.validate_entries_or_warn([entry2])
 
         # Should succeed but with warnings for missing objectClass
         assert result.is_success
@@ -68,7 +66,8 @@ class TestCoverageImprovement:
         entries = [mock_entry]
 
         # This should trigger line 32: Empty DN warning
-        result = LdifDomainProcessors.validate_entries_or_warn(entries, max_errors=5)
+        utilities = FlextLDIFUtilities()
+        result = utilities.processors.validate_entries_or_warn(entries)
 
         # The function should still succeed but log warning
         assert result.is_success
@@ -155,7 +154,7 @@ objectClass: person"""
 
         result = parser.parse_ldif_file("/nonexistent/file.ldif")
         assert not result.is_success
-        assert "File read error" in (result.error or "")
+        assert "File read failed" in (result.error or "")
 
     def test_analytics_service_edge_cases(self) -> None:
         """Test analytics service with edge cases."""

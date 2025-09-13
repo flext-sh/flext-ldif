@@ -1,19 +1,17 @@
-"""Test exception handling coverage for services.py.
-
-Coverage-focused tests for uncovered exception handling paths.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
 
 from __future__ import annotations
 
 from unittest.mock import Mock
-
 from flext_tests import FlextTestsUtilities
-
 from flext_ldif.models import FlextLDIFModels
 from flext_ldif.services import FlextLDIFServices
+
+"""
+
+from __future__ import annotations
+
+
+
 
 
 class TestServicesExceptionCoverage:
@@ -21,6 +19,7 @@ class TestServicesExceptionCoverage:
 
     def test_validator_service_exception_handling(self) -> None:
         """Test exception handling in ValidatorService.validate_entries."""
+
         # Create config with strict_validation enabled
         config = FlextLDIFModels.Config(strict_validation=True)
         validator = FlextLDIFServices(config=config)
@@ -36,7 +35,7 @@ class TestServicesExceptionCoverage:
         mock_entry.attributes = Mock()  # Add attributes to pass basic check
 
         # Test the exception handling path (strict mode validation)
-        result = validator.validate_entries([mock_entry])
+        result = validator.validator.validate_entries([mock_entry])
 
         utils = FlextTestsUtilities()
         assertion = utils.assertion()
@@ -49,6 +48,7 @@ class TestServicesExceptionCoverage:
 
     def test_validator_service_empty_entries_optimization(self) -> None:
         """Test empty entries optimization path."""
+
         services = FlextLDIFServices()
         validator = services.validator
 
@@ -63,6 +63,7 @@ class TestServicesExceptionCoverage:
 
     def test_validator_service_none_entries_handling(self) -> None:
         """Test None entries handling."""
+
         validator = FlextLDIFServices().validator
 
         # Test with None (should handle gracefully)

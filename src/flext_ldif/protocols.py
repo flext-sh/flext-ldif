@@ -1,7 +1,4 @@
-"""FLEXT-LDIF Protocols - Direct flext-core usage.
-
-Minimal LDIF-specific protocol extensions using flext-core directly.
-No duplication of existing functionality - only domain-specific additions.
+"""FLEXT LDIF Protocols - Type protocols for LDIF operations.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -153,14 +150,8 @@ class FlextLDIFProtocols:
             """Get object class distribution - domain-specific method."""
             ...
 
-    AnalyticsProtocol = LdifAnalyzer
-    ValidatorProtocol = LdifValidator
-    ParserProtocol = LdifParser
-    WriterProtocol = LdifWriter
-    RepositoryProtocol = LdifRepository
-
-    # WRAPPERS ELIMINATED - use direct protocol classes
-    # No redundant aliases - use LdifParser, LdifValidator, etc. directly
+    # SOLID FIX: Removed duplicate protocol aliases - use direct protocol classes
+    # Use LdifAnalyzer, LdifValidator, LdifParser, LdifWriter, LdifRepository directly
 
 
 __all__ = ["FlextLDIFProtocols"]

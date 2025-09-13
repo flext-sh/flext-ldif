@@ -55,6 +55,7 @@ class TestServiceFunctionality:
 cn: test
 objectClass: person
 """
+
         # Use unwrap_or() pattern for cleaner testing
         entries = service.parse_content(ldif_content).unwrap_or([])
         assert len(entries) == 1

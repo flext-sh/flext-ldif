@@ -1,11 +1,3 @@
-"""Tests for missing branch coverage in services.py.
-
-Targeting specific method calls and branches that haven't been covered.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 import tempfile
@@ -66,6 +58,7 @@ cn:: dGVzdCB2YWx1ZQ==
 objectClass: person
 
 """
+
         result = parser.parse_content(content)
 
         utils = FlextTestsUtilities()
@@ -86,6 +79,7 @@ attribute_name:
 objectClass: person
 
 """
+
         result = parser.parse_content(content)
 
         utils = FlextTestsUtilities()
@@ -152,6 +146,7 @@ cn: test
 objectClass: person
 
 """
+
         result = parser.parse_content(content)
 
         utils = FlextTestsUtilities()

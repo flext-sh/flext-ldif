@@ -16,23 +16,22 @@ class TestFlextLDIFUtilitiesCoverageGaps:
     def test_ldif_domain_processors_property(self) -> None:
         """Test ldif_domain_processors property access."""
         utilities = FlextLDIFUtilities()
-        processors = utilities.ldif_domain_processors
+        processors = utilities.processors
         assert processors is not None
-        assert isinstance(processors, FlextLDIFUtilities.Processors)
+        assert isinstance(processors, FlextLDIFUtilities._ProcessorHelper)
 
     def test_get_default_instance_class_method(self) -> None:
-        """Test _get_default_instance class method."""
-        # Reset default instance
-        FlextLDIFUtilities._default_instance = None
-
-        # Test getting default instance
-        instance1 = FlextLDIFUtilities._get_default_instance()
+        """Test utilities instance creation."""
+        # Test creating utilities instance
+        instance1 = FlextLDIFUtilities()
         assert instance1 is not None
         assert isinstance(instance1, FlextLDIFUtilities)
 
-        # Test that subsequent calls return the same instance
-        instance2 = FlextLDIFUtilities._get_default_instance()
-        assert instance1 is instance2
+        # Test that we can create multiple instances
+        instance2 = FlextLDIFUtilities()
+        assert isinstance(instance2, FlextLDIFUtilities)
+        # They should be different instances
+        assert instance1 is not instance2
 
     def test_class_level_access(self) -> None:
         """Test class-level access to utilities."""
@@ -41,17 +40,17 @@ class TestFlextLDIFUtilitiesCoverageGaps:
         assert utilities is not None
 
         # Test processors access
-        processors = utilities._processors
+        processors = utilities.processors
         assert processors is not None
 
         # Test converters access
-        converters = utilities._converters
+        converters = utilities.converters
         assert converters is not None
 
     def test_find_entries_missing_required_attributes_empty_required(self) -> None:
         """Test find_entries_missing_required_attributes with empty required attributes."""
         utilities = FlextLDIFUtilities()
-        processors = utilities.ldif_domain_processors
+        processors = utilities.processors
 
         # Create a test entry
         entry = FlextLDIFModels.Factory.create_entry(
@@ -69,7 +68,7 @@ class TestFlextLDIFUtilitiesCoverageGaps:
     def test_entry_to_dict_success(self) -> None:
         """Test entry_to_dict successful conversion."""
         utilities = FlextLDIFUtilities()
-        converters = utilities._converters
+        converters = utilities.converters
 
         # Create a test entry
         entry = FlextLDIFModels.Factory.create_entry(
@@ -88,7 +87,7 @@ class TestFlextLDIFUtilitiesCoverageGaps:
     def test_attributes_to_ldif_format_empty_key_skip_empty(self) -> None:
         """Test attributes_to_ldif_format with empty key and skip_empty=True."""
         utilities = FlextLDIFUtilities()
-        converters = utilities._converters
+        converters = utilities.converters
 
         # Test with empty key and skip_empty=True (should continue)
         attributes = {"": "value", "cn": "test"}
@@ -101,7 +100,7 @@ class TestFlextLDIFUtilitiesCoverageGaps:
     def test_attributes_to_ldif_format_empty_key_no_skip_empty(self) -> None:
         """Test attributes_to_ldif_format with empty key and skip_empty=False."""
         utilities = FlextLDIFUtilities()
-        converters = utilities._converters
+        converters = utilities.converters
 
         # Test with empty key and skip_empty=False (should fail)
         attributes = {"": "value"}
@@ -112,7 +111,7 @@ class TestFlextLDIFUtilitiesCoverageGaps:
     def test_attributes_to_ldif_format_empty_string_value_skip_empty(self) -> None:
         """Test attributes_to_ldif_format with empty string value and skip_empty=True."""
         utilities = FlextLDIFUtilities()
-        converters = utilities._converters
+        converters = utilities.converters
 
         # Test with empty string value and skip_empty=True
         attributes = {"cn": "", "sn": "test"}
@@ -125,7 +124,7 @@ class TestFlextLDIFUtilitiesCoverageGaps:
     def test_attributes_to_ldif_format_empty_string_value_no_skip_empty(self) -> None:
         """Test attributes_to_ldif_format with empty string value and skip_empty=False."""
         utilities = FlextLDIFUtilities()
-        converters = utilities._converters
+        converters = utilities.converters
 
         # Test with empty string value and skip_empty=False
         attributes = {"cn": "", "sn": "test"}
@@ -138,7 +137,7 @@ class TestFlextLDIFUtilitiesCoverageGaps:
     def test_attributes_to_ldif_format_normalize_names_false(self) -> None:
         """Test attributes_to_ldif_format with normalize_names=False."""
         utilities = FlextLDIFUtilities()
-        converters = utilities._converters
+        converters = utilities.converters
 
         # Test with normalize_names=False
         attributes = {"CN": "test", "sn": "test"}
@@ -151,7 +150,7 @@ class TestFlextLDIFUtilitiesCoverageGaps:
     def test_attributes_to_ldif_format_list_with_none_values(self) -> None:
         """Test attributes_to_ldif_format with list containing None values."""
         utilities = FlextLDIFUtilities()
-        converters = utilities._converters
+        converters = utilities.converters
 
         # Test with list containing None values
         attributes = {"cn": ["test", None, "another"], "sn": "test"}
@@ -166,7 +165,7 @@ class TestFlextLDIFUtilitiesCoverageGaps:
     def test_attributes_to_ldif_format_list_with_empty_strings_skip_empty(self) -> None:
         """Test attributes_to_ldif_format with list containing empty strings and skip_empty=True."""
         utilities = FlextLDIFUtilities()
-        converters = utilities._converters
+        converters = utilities.converters
 
         # Test with list containing empty strings and skip_empty=True
         attributes = {"cn": ["test", "", "another"], "sn": "test"}
@@ -181,13 +180,18 @@ class TestFlextLDIFUtilitiesCoverageGaps:
     def test_entry_to_dict_exception_handling(self) -> None:
         """Test entry_to_dict exception handling."""
         utilities = FlextLDIFUtilities()
-        converters = utilities._converters
+        converters = utilities.converters
 
-        # Create a mock entry that will cause an exception
+        # Create a mock entry that will cause an exception during attribute access
         class MockEntry:
-            def __init__(self) -> None:
-                self.dn = None  # This will cause an AttributeError
-                self.attributes = None
+            @property
+            def dn(self) -> str:
+                msg = "Simulated DN access error"
+                raise ValueError(msg)
+
+            @property
+            def attributes(self) -> dict[str, list[str]]:
+                return {}
 
         mock_entry = MockEntry()
         result = converters.entry_to_dict(mock_entry)

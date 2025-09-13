@@ -22,7 +22,7 @@ class TestUtilitiesMissingCoverage:
         # Test that aliases work correctly
         test_attrs: AttributeDict = {"cn": "test", "sn": ["Test", "User"], "mail": None}
 
-        result = utilities._converters.attributes_to_ldif_format(test_attrs)
+        result = utilities.converters.attributes_to_ldif_format(test_attrs)
         assert result.is_success
 
         ldif_attrs: LDIFAttributeDict = result.unwrap()

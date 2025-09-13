@@ -24,6 +24,7 @@ dependencies = [
     "pydantic-settings (>=2.10.1)",
     "ldif3 (>=3.2.2)",
     "click (>=8.1.0)",
+    "structlog (>=25.4.0,<26.0.0)",
 ]
 [[project.authors]]
 name = "FLEXT Team"
@@ -162,7 +163,7 @@ known_first_party = ["flext_ldif"]
 
 [tool.pytest.ini_options]
 minversion = "8.0"
-asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 addopts = [
     "-ra",
     "--strict-markers",
@@ -267,6 +268,9 @@ pyupgrade = ">=3.19.0"
 autoflake = ">=2.3.1"
 detect-secrets = ">=1.5.0"
 commitizen = ">=4.8.3"
+attrs = "^25.3.0"
+backoff = "^2.2.1"
+structlog = "^25.4.0"
 
 [tool.poetry.group.test.dependencies]
 pytest = ">=8.4.0"

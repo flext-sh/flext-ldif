@@ -1,7 +1,6 @@
-"""FLEXT-LDIF Unified Utilities Module.
+"""FLEXT LDIF Utilities - Utility functions and classes for LDIF operations.
 
-Enterprise-grade LDIF utility operations with unified class architecture,
-advanced Python 3.13 patterns, and comprehensive type safety.
+SOURCE OF TRUTH: Uses flext-core exclusively for generic operations.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,349 +10,263 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextUtilities
 
 from flext_ldif.models import FlextLDIFModels
 
-# Type aliases for Python 3.13+ generic syntax
+# Constants to avoid magic numbers and booleans
+MIN_BASE_DN_COMPONENTS = 2
+ENTRY_IS_COMPLETE = True
+
 if TYPE_CHECKING:
-    type FlextResultEntries = FlextResult[list[FlextLDIFModels.Entry]]
-    type FlextResultBool = FlextResult[bool]
-    type AttributeDict = dict[str, str | list[str] | None]
-    type LDIFAttributeDict = dict[str, list[str]]
-else:
-    FlextResultEntries = FlextResult
-    FlextResultBool = FlextResult
-    AttributeDict = dict
-    LDIFAttributeDict = dict
+    from pathlib import Path
 
 
 class FlextLDIFUtilities:
-    """Unified LDIF Utilities.
+    """LDIF-specific utilities extending flext-core FlextUtilities.
 
-    Enterprise-grade utility operations organized as nested classes
-    following unified architecture. Provides comprehensive LDIF
-    processing, validation, and transformation utilities.
+    Provides LDIF domain-specific utility functions while leveraging
+    flext-core SOURCE OF TRUTH for common operations.
     """
 
-    # Class-level instance for test compatibility
-    _default_instance: FlextLDIFUtilities | None = None
-
-    def __init__(self, **data: object) -> None:
-        """Initialize unified utilities with dependency injection."""
-        self._id = str(data.get("id", "flext-ldif-utilities"))
-        self._name = str(data.get("name", "LDIF Utilities"))
-        self._description = str(data.get("description", "LDIF processing utilities"))
+    def __init__(self) -> None:
+        """Initialize LDIF utilities with dependency on flext-core."""
+        self._core_utilities = FlextUtilities()
         self._logger = FlextLogger(__name__)
 
-        # Initialize nested utility handlers
-        self._processors = self.Processors(self)
-        self._converters = self.Converters(self)
-
     @property
-    def ldif_domain_processors(self) -> Processors:
-        """Simple alias for Processors - test compatibility."""
-        return self._processors
+    def core(self) -> FlextUtilities:
+        """Access flext-core utilities directly."""
+        return self._core_utilities
 
-    @classmethod
-    def _get_default_instance(cls) -> FlextLDIFUtilities:
-        """Get or create default instance for class-level access."""
-        if cls._default_instance is None:
-            cls._default_instance = cls()
-        return cls._default_instance
+    def validate_ldif_file_extension(self, file_path: str | Path) -> FlextResult[bool]:
+        """Validate if file has proper LDIF extension.
 
-    class Processors:
-        """Direct access to flext-core Processors - ZERO DUPLICATION.
+        Args:
+            file_path: Path to validate
 
-        This class provides direct access to FlextProcessors from flext-core
-        without any duplication or wrapping. All operations use flext-core directly.
+        Returns:
+            FlextResult indicating if file has valid LDIF extension
+
         """
+        try:
+            # Use flext-core file utilities
+            path_str = str(file_path)
+            valid_extensions = [".ldif", ".ldap", ".ldi"]
 
-        def __init__(self, utilities_instance: FlextLDIFUtilities) -> None:
-            """Initialize with direct flext-core access."""
-            self._utilities = utilities_instance
-            self._logger = utilities_instance._logger
-
-        def validate_entries_batch(
-            self,
-            entries: list[FlextLDIFModels.Entry],
-            max_errors: int = 10,
-            *,
-            fail_fast: bool = False,
-        ) -> FlextResultBool:
-            """Validate entries using flext-core EntryValidator - ZERO DUPLICATION."""
-            if not entries:
-                return FlextResult[bool].ok(data=True)
-
-            validation_errors = 0
-            for entry in entries:
-                # LDIF-specific validation - check required objectClass
-                has_objectclass = (
-                    hasattr(entry, "attributes")
-                    and hasattr(entry.attributes, "data")
-                    and isinstance(entry.attributes.data, dict)
-                    and "objectClass" in entry.attributes.data
-                    and entry.attributes.data["objectClass"]
-                )
-
-                if not has_objectclass:
-                    validation_errors += 1
-                    if fail_fast or validation_errors >= max_errors:
-                        return FlextResult[bool].ok(data=False)
-
-            return FlextResult[bool].ok(validation_errors == 0)
-
-        def validate_entries_or_warn(
-            self,
-            entries: list[FlextLDIFModels.Entry],
-            max_errors: int = 10,
-            *,
-            fail_fast: bool = False,
-        ) -> FlextResult[bool]:
-            """Alias simples para validate_entries_batch."""
-            return self.validate_entries_batch(entries, max_errors, fail_fast=fail_fast)
-
-        def filter_entries_by_object_class(
-            self, entries: list[FlextLDIFModels.Entry], object_class: str
-        ) -> FlextResult[list[FlextLDIFModels.Entry]]:
-            """Filter entries by object class - ZERO DUPLICATION."""
-            if not entries:
-                return FlextResult[list[FlextLDIFModels.Entry]].ok([])
-
-            filtered_entries = []
-            for entry in entries:
-                obj_classes = entry.attributes.data.get("objectClass", [])
-                if any(oc.lower() == object_class.lower() for oc in obj_classes):
-                    filtered_entries.append(entry)
-
-            return FlextResult[list[FlextLDIFModels.Entry]].ok(filtered_entries)
-
-        def find_entries_with_missing_required_attributes(
-            self, entries: list[FlextLDIFModels.Entry], required_attrs: list[str]
-        ) -> FlextResult[list[FlextLDIFModels.Entry]]:
-            """Find entries missing required attributes - ZERO DUPLICATION."""
-            if not entries:
-                return FlextResult[list[FlextLDIFModels.Entry]].ok([])
-
-            if not required_attrs:
-                return FlextResult[list[FlextLDIFModels.Entry]].fail(
-                    "Required attributes list cannot be empty"
-                )
-
-            missing_entries = []
-            for entry in entries:
-                missing_attrs = [
-                    attr
-                    for attr in required_attrs
-                    if attr not in entry.attributes.data
-                    or not entry.attributes.data[attr]
-                ]
-                if missing_attrs:
-                    missing_entries.append(entry)
-
-            return FlextResult[list[FlextLDIFModels.Entry]].ok(missing_entries)
-
-        def get_entry_statistics(
-            self, entries: list[FlextLDIFModels.Entry]
-        ) -> FlextResult[dict[str, int | float]]:
-            """Get entry statistics - ZERO DUPLICATION."""
-            if not entries:
-                return FlextResult[dict[str, int | float]].ok(
-                    {
-                        "total_entries": 0,
-                        "total_attributes": 0,
-                        "unique_object_classes": 0,
-                        "unique_attributes": 0,
-                        "average_attributes_per_entry": 0.0,
-                    }
-                )
-
-            total_attributes = 0
-            object_classes: set[str] = set()
-            all_attributes: set[str] = set()
-
-            for entry in entries:
-                total_attributes += len(entry.attributes.data)
-                all_attributes.update(entry.attributes.data.keys())
-
-                # Extract object classes
-                obj_classes = entry.attributes.data.get("objectClass", [])
-                object_classes.update(obj_classes)
-
-            avg_attributes = total_attributes / len(entries) if entries else 0.0
-
-            return FlextResult[dict[str, int | float]].ok(
-                {
-                    "total_entries": len(entries),
-                    "total_attributes": total_attributes,
-                    "unique_object_classes": len(object_classes),
-                    "unique_attributes": len(all_attributes),
-                    "average_attributes_per_entry": avg_attributes,
-                }
+            has_valid_extension = any(
+                path_str.lower().endswith(ext) for ext in valid_extensions
             )
 
-    class Converters:
-        """Direct access to flext-core Converters - ZERO DUPLICATION.
+            return FlextResult[bool].ok(has_valid_extension)
+        except Exception as e:
+            return FlextResult[bool].fail(f"Extension validation failed: {e}")
 
-        This class provides direct access to FlextUtilities from flext-core
-        without any duplication or wrapping. All operations use flext-core directly.
+    def normalize_dn_format(self, dn: str) -> FlextResult[str]:
+        """Normalize DN format according to LDAP standards.
+
+        Args:
+            dn: Distinguished Name to normalize
+
+        Returns:
+            FlextResult containing normalized DN
+
         """
-
-        def __init__(self, utilities_instance: FlextLDIFUtilities) -> None:
-            """Initialize with direct flext-core access."""
-            self._utilities = utilities_instance
-            self._logger = utilities_instance._logger
-
-        def attributes_to_ldif_format(
-            self,
-            attributes: AttributeDict,
-            *,
-            normalize_names: bool = True,
-            skip_empty: bool = True,
-        ) -> FlextResult[LDIFAttributeDict]:
-            """Convert attributes - ZERO DUPLICATION."""
-            ldif_attrs: LDIFAttributeDict = {}
-
-            for key, values in attributes.items():
-                if not key or (isinstance(key, str) and not key.strip()):
-                    if skip_empty:
-                        continue
-                    return FlextResult[LDIFAttributeDict].fail(
-                        "Empty attribute name found",
-                    )
-
-                # Normalize attribute name
-                key_str = str(key) if not isinstance(key, str) else key
-                if normalize_names:
-                    attr_name = key_str.lower().strip()
-                else:
-                    attr_name = key_str.strip()
-
-                # Convert values to list format
-                converted_values: list[str] = []
-
-                if isinstance(values, str):
-                    clean_val = values.strip()
-                    if clean_val or not skip_empty:
-                        converted_values = [clean_val]
-                elif isinstance(values, list):
-                    for val in values:
-                        if val is not None:
-                            clean_val = str(val).strip()
-                            if clean_val or not skip_empty:
-                                converted_values.append(clean_val)
-
-                if converted_values or not skip_empty:
-                    ldif_attrs[attr_name] = converted_values
-
-            return FlextResult[LDIFAttributeDict].ok(ldif_attrs)
-
-        def attributes_dict_to_ldif_format(
-            self, attributes: dict[str, str | list[str] | None]
-        ) -> FlextResult[LDIFAttributeDict]:
-            """Convert attributes dict to LDIF format - ZERO DUPLICATION."""
-            return self.attributes_to_ldif_format(attributes)
-
-        def normalize_dn_components(self, dn: str) -> FlextResult[str]:
-            """Normalize DN components - ZERO DUPLICATION."""
-            if not dn or not dn.strip():
-                return FlextResult[str].fail("DN cannot be empty")
+        try:
+            if not dn or not isinstance(dn, str):
+                return FlextResult[str].fail("DN must be a non-empty string")
 
             # Basic DN normalization
-            normalized_dn = dn.strip()
+            # Remove extra spaces, normalize case for RDN types
+            components = []
+            for raw_component in dn.split(","):
+                component = raw_component.strip()
+                if "=" in component:
+                    key, value = component.split("=", 1)
+                    key = key.strip().lower()
+                    value = value.strip()
+                    components.append(f"{key}={value}")
+                else:
+                    components.append(component)
 
-            # Remove extra spaces around commas
-            components = [comp.strip() for comp in normalized_dn.split(",")]
             normalized_dn = ",".join(components)
-
             return FlextResult[str].ok(normalized_dn)
+        except Exception as e:
+            return FlextResult[str].fail(f"DN normalization failed: {e}")
 
-        def entry_to_dict(
-            self, entry: FlextLDIFModels.Entry
-        ) -> FlextResult[dict[str, object]]:
-            """Convert entry to dictionary - ZERO DUPLICATION."""
-            try:
-                result: dict[str, object] = {
-                    "dn": entry.dn.value,
-                    "attributes": entry.attributes.data,
-                }
-                return FlextResult[dict[str, object]].ok(result)
-            except Exception as e:
-                return FlextResult[dict[str, object]].fail(
-                    f"Entry conversion failed: {e}"
+    def extract_base_dn(self, dn: str) -> FlextResult[str]:
+        """Extract base DN from a complete DN.
+
+        Args:
+            dn: Complete Distinguished Name
+
+        Returns:
+            FlextResult containing base DN
+
+        """
+        try:
+            if not dn:
+                return FlextResult[str].fail("DN cannot be empty")
+
+            # Split by comma and take the last two components as base DN
+            components = [comp.strip() for comp in dn.split(",")]
+            if len(components) >= MIN_BASE_DN_COMPONENTS:
+                base_dn = ",".join(components[-2:])
+                return FlextResult[str].ok(base_dn)
+
+            # If less than 2 components, return the DN itself
+            return FlextResult[str].ok(dn)
+        except Exception as e:
+            return FlextResult[str].fail(f"Base DN extraction failed: {e}")
+
+    def validate_ldif_entry_completeness(
+        self, entry: FlextLDIFModels.Entry
+    ) -> FlextResult[bool]:
+        """Validate if LDIF entry has all required components.
+
+        Args:
+            entry: LDIF entry to validate
+
+        Returns:
+            FlextResult indicating if entry is complete
+
+        """
+        try:
+            # Check for required DN
+            if not entry.dn or not entry.dn.value:
+                return FlextResult[bool].fail("Entry missing required DN")
+
+            # Check for attributes
+            if not entry.attributes:
+                return FlextResult[bool].fail("Entry missing attributes")
+
+            # Check for objectClass
+            object_classes = entry.get_attribute("objectClass")
+            if not object_classes:
+                return FlextResult[bool].fail("Entry missing objectClass attribute")
+
+            return FlextResult[bool].ok(ENTRY_IS_COMPLETE)
+        except Exception as e:
+            return FlextResult[bool].fail(f"Entry completeness validation failed: {e}")
+
+    def convert_entry_to_dict(
+        self, entry: FlextLDIFModels.Entry
+    ) -> FlextResult[dict[str, object]]:
+        """Convert LDIF entry to dictionary format.
+
+        Args:
+            entry: LDIF entry to convert
+
+        Returns:
+            FlextResult containing entry as dictionary
+
+        """
+        try:
+            entry_dict: dict[str, object] = {
+                "dn": entry.dn.value,
+                "attributes": dict(entry.attributes) if entry.attributes else {},
+            }
+
+            return FlextResult[dict[str, object]].ok(entry_dict)
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(f"Entry conversion failed: {e}")
+
+    def calculate_entry_size(self, entry: FlextLDIFModels.Entry) -> FlextResult[int]:
+        """Calculate approximate size of LDIF entry in bytes.
+
+        Args:
+            entry: LDIF entry to measure
+
+        Returns:
+            FlextResult containing entry size in bytes
+
+        """
+        try:
+            total_size = 0
+
+            # Add DN size
+            total_size += len(entry.dn.value.encode("utf-8"))
+
+            # Add attributes size
+            if entry.attributes and hasattr(entry.attributes, "data"):
+                for attr_name, attr_values in entry.attributes.data.items():
+                    total_size += len(attr_name.encode("utf-8"))
+                    # attr_values is always a list (StringList = list[str])
+                    for value in attr_values:
+                        total_size += len(str(value).encode("utf-8"))
+
+            return FlextResult[int].ok(total_size)
+        except Exception as e:
+            return FlextResult[int].fail(f"Entry size calculation failed: {e}")
+
+    def merge_ldif_entries(
+        self, entry1: FlextLDIFModels.Entry, entry2: FlextLDIFModels.Entry
+    ) -> FlextResult[FlextLDIFModels.Entry]:
+        """Merge two LDIF entries with same DN.
+
+        Args:
+            entry1: First entry
+            entry2: Second entry to merge into first
+
+        Returns:
+            FlextResult containing merged entry
+
+        """
+        try:
+            if entry1.dn.value != entry2.dn.value:
+                return FlextResult[FlextLDIFModels.Entry].fail(
+                    "Cannot merge entries with different DNs"
                 )
 
-
-# Class-level access aliases for test compatibility
-class LdifDomainProcessors:
-    """Class-level access to Processors for test compatibility."""
-
-    @classmethod
-    def validate_entries_or_warn(
-        cls,
-        entries: list[FlextLDIFModels.Entry],
-        max_errors: int = 10,
-        *,
-        fail_fast: bool = False,
-    ) -> FlextResult[bool]:
-        """Class-level access to validate_entries_or_warn."""
-        return FlextLDIFUtilities._get_default_instance()._processors.validate_entries_or_warn(
-            entries, max_errors, fail_fast=fail_fast
-        )
-
-    @classmethod
-    def filter_entries_by_object_class(
-        cls, entries: list[FlextLDIFModels.Entry], object_class: str
-    ) -> FlextResult[list[FlextLDIFModels.Entry]]:
-        """Class-level access to filter_entries_by_object_class."""
-        return FlextLDIFUtilities._get_default_instance()._processors.filter_entries_by_object_class(
-            entries, object_class
-        )
-
-    @classmethod
-    def find_entries_with_missing_required_attributes(
-        cls, entries: list[FlextLDIFModels.Entry], required_attrs: list[str]
-    ) -> FlextResult[list[FlextLDIFModels.Entry]]:
-        """Class-level access to find_entries_with_missing_required_attributes."""
-        return FlextLDIFUtilities._get_default_instance()._processors.find_entries_with_missing_required_attributes(
-            entries, required_attrs
-        )
-
-    @classmethod
-    def get_entry_statistics(
-        cls, entries: list[FlextLDIFModels.Entry]
-    ) -> FlextResult[dict[str, int | float]]:
-        """Class-level access to get_entry_statistics."""
-        return (
-            FlextLDIFUtilities._get_default_instance()._processors.get_entry_statistics(
-                entries
+            # Create merged attributes dictionary
+            merged_attributes = (
+                dict(entry1.attributes.data)
+                if entry1.attributes and hasattr(entry1.attributes, "data")
+                else {}
             )
-        )
+
+            if entry2.attributes and hasattr(entry2.attributes, "data"):
+                for attr_name, attr_values in entry2.attributes.data.items():
+                    if attr_name in merged_attributes:
+                        # Merge values if attribute exists
+                        existing_values = merged_attributes[attr_name]
+                        # Both values are StringList (list[str]), so always merge lists
+                        # Combine lists and remove duplicates
+                        combined_values = list(set(existing_values + attr_values))
+                        merged_attributes[attr_name] = combined_values
+                    else:
+                        # Add new attribute
+                        merged_attributes[attr_name] = attr_values
+
+            # Create merged entry
+            merged_entry_data: dict[str, object] = {
+                "dn": entry1.dn.value,
+                "attributes": merged_attributes,
+            }
+
+            merged_entry = FlextLDIFModels.Factory.create_entry(merged_entry_data)
+            return FlextResult[FlextLDIFModels.Entry].ok(merged_entry)
+        except Exception as e:
+            return FlextResult[FlextLDIFModels.Entry].fail(f"Entry merge failed: {e}")
+
+    def get_utility_info(self) -> dict[str, object]:
+        """Get LDIF utilities information.
+
+        Returns:
+            Dictionary containing utility information
+
+        """
+        return {
+            "service": "FlextLDIFUtilities",
+            "capabilities": [
+                "ldif_file_validation",
+                "dn_normalization",
+                "entry_validation",
+                "entry_conversion",
+                "entry_merging",
+            ],
+            "flext_core_integration": True,
+        }
 
 
-class LdifConverters:
-    """Class-level access to Converters for test compatibility."""
-
-    @classmethod
-    def attributes_dict_to_ldif_format(
-        cls, attributes: dict[str, str | list[str] | None]
-    ) -> FlextResult[LDIFAttributeDict]:
-        """Class-level access to attributes_dict_to_ldif_format."""
-        return FlextLDIFUtilities._get_default_instance()._converters.attributes_dict_to_ldif_format(
-            attributes
-        )
-
-    @classmethod
-    def normalize_dn_components(cls, dn: str) -> FlextResult[str]:
-        """Class-level access to normalize_dn_components."""
-        return FlextLDIFUtilities._get_default_instance()._converters.normalize_dn_components(
-            dn
-        )
-
-
-# Export unified utilities
-__all__ = [
-    "FlextLDIFUtilities",
-    "LdifConverters",
-    "LdifDomainProcessors",
-]
+__all__ = ["FlextLDIFUtilities"]

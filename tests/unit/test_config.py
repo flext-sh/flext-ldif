@@ -72,7 +72,9 @@ class TestFlextLDIFConfig:
     def test_get_global_instance(self) -> None:
         """Test getting global configuration instance."""
         # Should fail if not initialized
-        with pytest.raises(RuntimeError, match="FlextLDIFConfig not initialized"):
+        with pytest.raises(
+            RuntimeError, match="Global instance is not a FlextLDIFConfig instance"
+        ):
             get_ldif_config()
 
         # Initialize and get instance
@@ -114,7 +116,7 @@ class TestFlextLDIFConfig:
         # Test with invalid configuration (too low max entries)
         # Create a new config with invalid values instead of modifying existing one
         reset_ldif_config()
-        result = initialize_ldif_config(ldif_max_entries=100)
+        result = initialize_ldif_config(ldif_max_entries=500)
         if result.is_success:
             config = result.unwrap()
             validation_result = config.validate_ldif_business_rules()
@@ -187,6 +189,8 @@ class TestFlextLDIFConfig:
         reset_ldif_config()
 
         # Test invalid configuration (parallel processing with 1 worker)
+        # Need to reset config first to ensure clean state
+        reset_ldif_config()
         result = initialize_ldif_config(
             ldif_parallel_processing=True,
             ldif_max_workers=1,
@@ -253,8 +257,7 @@ class TestFlextLDIFConfig:
         """Test configuration parameter support."""
         # Initialize configuration with specific parameters
         result = initialize_ldif_config(
-            ldif_max_entries=75000,
-            ldif_strict_validation=False
+            ldif_max_entries=75000, ldif_strict_validation=False
         )
         assert result.is_success
         config = result.unwrap()

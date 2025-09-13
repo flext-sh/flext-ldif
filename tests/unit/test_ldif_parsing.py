@@ -1,10 +1,4 @@
-"""Test Real LDIF Parsing Functionality.
-
-Tests that validate actual LDIF parsing without mocks, using real data and
-ensuring end-to-end functionality works correctly.
-
-No mocks - only real code exercising real functionality.
-
+"""Unit tests for LDIF parsing functionality.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -145,10 +139,10 @@ sn: User
 
         # Test validation using services instead of core wrapper
         validator_service = FlextLDIFServices().validator
-        is_valid = FlextResult.unwrap_or_raise(
+        validated_entries = FlextResult.unwrap_or_raise(
             validator_service.validate_entries(entries)
         )
-        assert is_valid is True
+        assert len(validated_entries) == 1
 
     def test_write_real_entries(self) -> None:
         """Test writing real entries back to LDIF format."""
@@ -187,7 +181,7 @@ sn: Direct
 """
 
         # Test parsing
-        parse_result = api.parse(ldif_content)
+        parse_result = api._operations.parse_string(ldif_content)
         assert parse_result.is_success
         assert parse_result.value is not None
         assert len(parse_result.value) == 1
@@ -195,12 +189,12 @@ sn: Direct
         entries = parse_result.value
 
         # Test validation
-        validate_result = api.validate(entries)
+        validate_result = api._operations.validate_entries(entries)
         assert validate_result.is_success
         assert validate_result.value is True
 
         # Test writing
-        write_result = api.write(entries)
+        write_result = api._operations.write_string(entries)
         assert write_result.is_success
         assert write_result.value is not None
         assert "cn=APITest" in write_result.value

@@ -38,7 +38,6 @@ repos:
         require_serial: true
         args: [--check-only, --diff]
 
-
       - id: ruff-lint
         name: "🔥 Ruff Lint (17 categories)"
         entry: poetry run ruff check
@@ -47,7 +46,6 @@ repos:
         require_serial: true
         args: [--fix, --exit-non-zero-on-fix, --ignore, I001, --ignore, INP001]
 
-    
       - id: mypy
         name: "🛡️ MyPy Strict"
         entry: poetry run mypy

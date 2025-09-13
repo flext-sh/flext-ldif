@@ -1,7 +1,9 @@
-"""Tests for FlextLDIF models - Real functionality testing without mocks.
 
-Comprehensive tests for LDIF models using real data and validation.
-No mocks, bypasses, or fake implementations - only real model functionality.
+from __future__ import annotations
+
+from typing import cast
+from flext_core import FlextTypes
+from flext_ldif.models import FlextLDIFModels
 
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -10,11 +12,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
 
-from flext_core import FlextTypes
 
-from flext_ldif.models import FlextLDIFModels
+from typing import Dict
 
 
 class TestFlextLDIFModelsConfigReal:
@@ -22,6 +22,7 @@ class TestFlextLDIFModelsConfigReal:
 
     def test_config_creation_with_defaults(self) -> None:
         """Test config creation with default values."""
+
         config = FlextLDIFModels.Config()
 
         # Verify default values are set correctly
@@ -35,6 +36,7 @@ class TestFlextLDIFModelsConfigReal:
 
     def test_config_creation_with_custom_values(self) -> None:
         """Test config creation with custom values."""
+
         config = FlextLDIFModels.Config(
             encoding="iso-8859-1",
             max_line_length=120,
@@ -54,6 +56,7 @@ class TestFlextLDIFModelsConfigReal:
 
     def test_config_model_validation(self) -> None:
         """Test config model validation rules."""
+
         # Test valid configuration
         config = FlextLDIFModels.Config(max_entries=1000)
         assert config.max_entries == 1000
@@ -64,6 +67,7 @@ class TestFlextLDIFModelsConfigReal:
 
     def test_config_serialization(self) -> None:
         """Test config serialization to dict."""
+
         config = FlextLDIFModels.Config(
             encoding="utf-8",
             max_line_length=100,
@@ -85,6 +89,7 @@ class TestFlextLDIFModelsEntryReal:
 
     def test_entry_creation_basic(self) -> None:
         """Test basic entry creation."""
+
         entry_data = {
             "dn": "uid=test.user,ou=people,dc=example,dc=com",
             "attributes": {
@@ -108,6 +113,7 @@ class TestFlextLDIFModelsEntryReal:
 
     def test_entry_creation_with_multi_valued_attributes(self) -> None:
         """Test entry creation with multi-valued attributes."""
+
         entry_data = {
             "dn": "uid=multi.user,ou=people,dc=example,dc=com",
             "attributes": {
@@ -141,6 +147,7 @@ class TestFlextLDIFModelsEntryReal:
 
     def test_entry_creation_with_binary_data(self) -> None:
         """Test entry creation with binary (base64) data."""
+
         entry_data = {
             "dn": "uid=photo.user,ou=people,dc=example,dc=com",
             "attributes": {
@@ -168,6 +175,7 @@ class TestFlextLDIFModelsEntryReal:
 
     def test_entry_creation_with_special_characters(self) -> None:
         """Test entry creation with UTF-8 special characters."""
+
         entry_data = {
             "dn": "uid=special.chars,ou=people,dc=example,dc=com",
             "attributes": {
@@ -199,6 +207,7 @@ class TestFlextLDIFModelsEntryReal:
 
     def test_entry_attribute_operations(self) -> None:
         """Test entry attribute operations."""
+
         entry_data = {
             "dn": "uid=ops.user,ou=people,dc=example,dc=com",
             "attributes": {
@@ -228,6 +237,7 @@ class TestFlextLDIFModelsEntryReal:
 
     def test_entry_dn_operations(self) -> None:
         """Test entry DN operations."""
+
         entry_data = {
             "dn": "uid=dn.user,ou=people,dc=example,dc=com",
             "attributes": {
@@ -250,6 +260,7 @@ class TestFlextLDIFModelsEntryReal:
 
     def test_entry_validation_rules(self) -> None:
         """Test entry business rule validation."""
+
         entry_data = {
             "dn": "uid=valid.user,ou=people,dc=example,dc=com",
             "attributes": {
@@ -283,6 +294,7 @@ class TestFlextLDIFModelsEntryReal:
 
     def test_entry_serialization(self) -> None:
         """Test entry serialization to dict."""
+
         entry_data = {
             "dn": "uid=serial.user,ou=people,dc=example,dc=com",
             "attributes": {
@@ -308,6 +320,7 @@ class TestFlextLDIFDistinguishedNameReal:
 
     def test_dn_creation_simple(self) -> None:
         """Test DN creation with simple format."""
+
         dn_str = "uid=test,ou=people,dc=example,dc=com"
         dn = FlextLDIFModels.DistinguishedName(value=dn_str)
 
@@ -317,6 +330,7 @@ class TestFlextLDIFDistinguishedNameReal:
 
     def test_dn_creation_complex(self) -> None:
         """Test DN creation with complex format."""
+
         dn_str = "cn=John Doe+mail=john@example.com,ou=people,dc=example,dc=com"
         dn = FlextLDIFModels.DistinguishedName(value=dn_str)
 
@@ -326,6 +340,7 @@ class TestFlextLDIFDistinguishedNameReal:
 
     def test_dn_creation_with_spaces(self) -> None:
         """Test DN creation with spaces in values."""
+
         dn_str = "cn=John Doe,ou=Human Resources,dc=example,dc=com"
         dn = FlextLDIFModels.DistinguishedName(value=dn_str)
 
@@ -335,6 +350,7 @@ class TestFlextLDIFDistinguishedNameReal:
 
     def test_dn_creation_with_special_characters(self) -> None:
         """Test DN creation with special characters."""
+
         dn_str = "cn=José María,ou=people,dc=example,dc=com"
         dn = FlextLDIFModels.DistinguishedName(value=dn_str)
 
@@ -344,6 +360,7 @@ class TestFlextLDIFDistinguishedNameReal:
 
     def test_dn_equality(self) -> None:
         """Test DN equality comparison."""
+
         dn1 = FlextLDIFModels.DistinguishedName(
             value="uid=test,ou=people,dc=example,dc=com"
         )
@@ -360,6 +377,7 @@ class TestFlextLDIFDistinguishedNameReal:
 
     def test_dn_validation(self) -> None:
         """Test DN validation rules."""
+
         # Valid DN formats
         valid_dns = [
             "uid=test,ou=people,dc=example,dc=com",
@@ -378,6 +396,7 @@ class TestFlextLDIFAttributesReal:
 
     def test_attributes_creation_basic(self) -> None:
         """Test basic attributes creation."""
+
         attrs_data = {
             "objectClass": ["person", "top"],
             "uid": ["test.user"],
@@ -394,6 +413,7 @@ class TestFlextLDIFAttributesReal:
 
     def test_attributes_creation_multi_valued(self) -> None:
         """Test attributes creation with multi-valued attributes."""
+
         attrs_data = {
             "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
             "mail": ["user@example.com", "user.alt@example.com"],
@@ -409,6 +429,7 @@ class TestFlextLDIFAttributesReal:
 
     def test_attributes_operations(self) -> None:
         """Test attributes operations."""
+
         attrs_data = {
             "objectClass": ["person", "top"],
             "uid": ["ops.user"],
@@ -430,6 +451,7 @@ class TestFlextLDIFAttributesReal:
 
     def test_attributes_iteration(self) -> None:
         """Test attributes iteration."""
+
         attrs_data = {
             "objectClass": ["person", "top"],
             "uid": ["iter.user"],
@@ -458,6 +480,7 @@ class TestModelIntegrationReal:
 
     def test_entry_with_all_model_components(self) -> None:
         """Test entry creation using all model components."""
+
         # Create entry with all components
         entry_data = {
             "dn": "uid=integration.user,ou=people,dc=example,dc=com",
