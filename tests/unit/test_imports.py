@@ -6,8 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_ldif import (
     FlextLDIFAPI,
     FlextLDIFFormatHandler,
@@ -17,13 +15,13 @@ from flext_ldif import (
     FlextLDIFUtilities,
     __version__,
 )
-from flext_ldif.utilities import LdifDomainProcessors
+from flext_ldif.cli import FlextLDIFCli, main
+
+# LdifDomainProcessors was removed as it was not implemented
 
 # CLI availability flag for testing
 CLI_AVAILABLE = False
 try:
-    # from flext_ldif.cli import main as cli_main  # Temporarily disabled due to flext-cli import issues
-
     CLI_AVAILABLE = True
 except ImportError:
     pass
@@ -43,13 +41,14 @@ class TestModuleImports:
 
     def test_service_imports(self) -> None:
         """Test service imports work correctly."""
-        # Test service classes are accessible through FlextLDIFServices nested classes
-        assert hasattr(FlextLDIFServices, "Parser")
-        assert hasattr(FlextLDIFServices, "Validator")
-        assert hasattr(FlextLDIFServices, "Writer")
-        assert FlextLDIFServices.Parser is not None
-        assert FlextLDIFServices.Validator is not None
-        assert FlextLDIFServices.Writer is not None
+        # Test service classes are accessible through FlextLDIFServices attributes
+        services = FlextLDIFServices()
+        assert services.parser is not None
+        assert services.validator is not None
+        assert services.writer is not None
+        assert services.analytics is not None
+        assert services.transformer is not None
+        assert services.repository is not None
 
     def test_class_based_interface_imports(self) -> None:
         """Test class-based interface imports."""
@@ -59,13 +58,20 @@ class TestModuleImports:
         assert FlextLDIFFormatValidators is not None
         assert FlextLDIFUtilities is not None
 
-    @pytest.mark.skip(reason="CLI temporarily disabled due to flext-cli import issues")
     def test_cli_import(self) -> None:
         """Test CLI import functionality."""
         # Test that CLI import works and function is callable
         if CLI_AVAILABLE:
-            # CLI temporarily disabled - skip test
-            pass
+            # Test CLI class instantiation
+            cli = FlextLDIFCli()
+            assert cli is not None
+
+            # Test CLI interface creation
+            cli_result = cli.create_cli_interface()
+            assert cli_result.is_success
+
+            # Test main function is callable
+            assert callable(main)
         else:
             # If import fails, it means dependencies are missing, which is acceptable in test environment
             pass
@@ -87,4 +93,4 @@ class TestModuleImports:
         assert callable(FlextLDIFFormatHandler.parse_ldif)
         assert callable(FlextLDIFFormatHandler.write_ldif)
         assert callable(FlextLDIFFormatValidators.get_ldap_validators)
-        assert callable(LdifDomainProcessors.validate_entries_or_warn)
+        # LdifDomainProcessors was removed as it was not implemented

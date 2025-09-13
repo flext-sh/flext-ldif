@@ -42,6 +42,7 @@ objectClass: person
 objectClass: inetOrgPerson
 mail: test@example.com
 """
+
         with tempfile.NamedTemporaryFile(
             encoding="utf-8",
             mode="w",
@@ -58,6 +59,7 @@ mail: test@example.com
 cn: test
 objectClass: person
 """
+
         with tempfile.NamedTemporaryFile(
             encoding="utf-8",
             mode="w",

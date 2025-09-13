@@ -179,8 +179,8 @@ License: MIT
 
 from typing import List, Dict, Optional, Set
 from flext_core import FlextModels.Entity, FlextResult
-from .value_objects import FlextLDIFDistinguishedName, FlextLDIFAttributes
-from .events import LdifEntryCreated, LdifEntryModified
+from flext_ldif.value_objects import FlextLDIFDistinguishedName, FlextLDIFAttributes
+from flext_ldif.events import LdifEntryCreated, LdifEntryModified
 
 class FlextLDIFEntry(FlextModels.Entity):
     """
@@ -381,7 +381,7 @@ from typing import Dict, List, Set, Optional, Tuple
 from dataclasses import dataclass
 from flext_core import FlextModels.Value
 import re
-from .exceptions import FlextLDIFDomainError
+from flext_ldif.exceptions import FlextLDIFDomainError
 
 @dataclass(frozen=True)
 class FlextLDIFDistinguishedName(FlextModels.Value):
@@ -795,13 +795,13 @@ Version: 0.9.0
 License: MIT
 """
 
-from typing import List, Optional, Dict, object
+from typing import List, Optional, Dict
 from pathlib import Path
 from flext_core import FlextResult, FlextLogger
-from ..domain import FlextLDIFEntry, FlextLDIFDistinguishedName, FlextLDIFAttributes
-from ..infrastructure import FlextLDIFSettings, FlextLDIFServices.ParserService, FlextLDIFServices.ValidatorService, FlextLDIFServices.WriterService
-from .commands import ParseLdifCommand, ValidateLdifCommand, WriteLdifCommand
-from .queries import GetEntriesQuery, SearchEntriesQuery
+from flext_ldif..domain import FlextLDIFEntry, FlextLDIFDistinguishedName, FlextLDIFAttributes
+from flext_ldif..infrastructure import FlextLDIFSettings, FlextLDIFServices.ParserService, FlextLDIFServices.ValidatorService, FlextLDIFServices.WriterService
+from flext_ldif.commands import ParseLdifCommand, ValidateLdifCommand, WriteLdifCommand
+from flext_ldif.queries import GetEntriesQuery, SearchEntriesQuery
 
 logger = FlextLogger(__name__)
 
@@ -1543,9 +1543,9 @@ import json
 import sys
 
 from flext_core import FlextLogger, FlextResult
-from ..application import FlextLDIFAPI
-from ..infrastructure import FlextLDIFSettings
-from ..domain import FlextLDIFEntry
+from flext_ldif..application import FlextLDIFAPI
+from flext_ldif..infrastructure import FlextLDIFSettings
+from flext_ldif..domain import FlextLDIFEntry
 
 logger = FlextLogger(__name__)
 console = Console()
@@ -2092,7 +2092,7 @@ def _entry_to_dict(entry: FlextLDIFEntry) -> Dict[str, object]:
 
 def _parse_filter_expression(filter_expr: str) -> Dict[str, object]:
     """Parse filter expression into criteria dictionary."""
-  
+
     criteria = {}
 
     if '=' in filter_expr:
@@ -2312,7 +2312,7 @@ utils/
 
 ```python
 # Standard library imports first
-from typing import List, Dict, Optional, object
+from typing import List, Dict, Optional
 from pathlib import Path
 import re
 
@@ -2324,8 +2324,8 @@ import click
 from flext_core import FlextResult, FlextModels.Entity, FlextLogger
 
 # Local imports last (relative imports within same layer)
-from .value_objects import FlextLDIFDistinguishedName
-from ..infrastructure import FlextLDIFSettings
+from flext_ldif.value_objects import FlextLDIFDistinguishedName
+from flext_ldif..infrastructure import FlextLDIFSettings
 ```
 
 ### **3. Documentation Standards**
@@ -2543,7 +2543,7 @@ make build                       # Build distribution packages
 ```bash
 # Automated quality checks (run before every commit)
 make lint
-make type-check                
+make type-check
 make security                    # Security scanning (bandit + pip-audit)
 make test-quick                  # Fast test suite for immediate feedback
 make docstring-validate          # Validate docstring completeness

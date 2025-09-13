@@ -1,7 +1,4 @@
-"""FLEXT-LDIF Unified API Module.
-
-Enterprise-grade LDIF processing API with unified class architecture,
-advanced Python 3.13 patterns, and comprehensive FlextResult integration.
+"""FLEXT LDIF API - Unified LDIF processing API.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -18,8 +15,13 @@ from flext_core import (
     FlextResult,
 )
 
+from flext_ldif.analytics_service import FlextLDIFAnalyticsService
 from flext_ldif.models import FlextLDIFModels
+from flext_ldif.parser_service import FlextLDIFParserService
+from flext_ldif.repository_service import FlextLDIFRepositoryService
 from flext_ldif.services import FlextLDIFServices
+from flext_ldif.validator_service import FlextLDIFValidatorService
+from flext_ldif.writer_service import FlextLDIFWriterService
 
 # Type aliases for Python 3.13+ generic syntax
 if TYPE_CHECKING:
@@ -77,13 +79,10 @@ class FlextLDIFAPI:
                 # Return empty list for empty content - valid LDIF case
                 return FlextResult[list[FlextLDIFModels.Entry]].ok([])
 
-            return (
-                self._api._services.parser.parse_content(content)
-                .flat_map(self._validate_entry_count)
-                .tap(
-                    lambda entries: self._logger.debug(f"Parsed {len(entries)} entries")
-                )
-            )
+            result = self._api._services.parser.parse_content(content)
+            if result.is_failure:
+                return result
+            return result.flat_map(self._validate_entry_count)
 
         def parse_file(self, file_path: str | Path) -> FlextResultEntries:
             """Parse LDIF file with comprehensive validation."""
@@ -94,26 +93,17 @@ class FlextLDIFAPI:
                     f"LDIF file not found: {file_path_obj}",
                 )
 
-            return (
-                self._api._services.parser.parse_ldif_file(str(file_path_obj))
-                .flat_map(self._validate_entry_count)
-                .tap(
-                    lambda entries: self._logger.debug(
-                        f"Parsed file {file_path_obj} with {len(entries)} entries",
-                    )
-                )
-            )
+            result = self._api._services.parser.parse_ldif_file(str(file_path_obj))
+            if result.is_failure:
+                return result
+            return result.flat_map(self._validate_entry_count)
 
         def write_string(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultStr:
             """Write entries to LDIF string format."""
             if not entries:
                 return FlextResult[str].fail("Cannot write empty entry list")
 
-            return self._api._services.writer.write_entries_to_string(entries).tap(
-                lambda content: self._logger.debug(
-                    f"Generated LDIF string: {len(content)} chars"
-                )
-            )
+            return self._api._services.writer.write_entries_to_string(entries)
 
         def write_file(
             self, entries: list[FlextLDIFModels.Entry], file_path: str | Path
@@ -258,7 +248,7 @@ class FlextLDIFAPI:
             """Get comprehensive entry statistics."""
             return self._api._services.repository.get_statistics(entries)
 
-    def _initialize_services(self) -> ServiceContainer:
+    def _initialize_services(self) -> FlextLDIFAPI.ServiceContainer:
         """Initialize and configure all LDIF services."""
         self._container.register("ldif_config", self._config)
 
@@ -267,6 +257,21 @@ class FlextLDIFAPI:
 
         # Register in container for DI
         self._container.register("ldif_services", services)
+
+        # Services are always initialized in FlextLDIFServices.__init__
+        # No need to check for None values
+
+        # Services are always initialized in FlextLDIFServices.__init__
+        # Check services are properly initialized instead of using assert
+        services_not_initialized_msg = "Services not properly initialized"
+        if (
+            services.parser is None
+            or services.validator is None
+            or services.writer is None
+            or services.repository is None
+            or services.analytics is None
+        ):
+            raise ValueError(services_not_initialized_msg)
 
         return self.ServiceContainer(
             parser=services.parser,
@@ -281,11 +286,11 @@ class FlextLDIFAPI:
 
         def __init__(
             self,
-            parser: FlextLDIFServices.Parser,
-            validator: FlextLDIFServices.Validator,
-            writer: FlextLDIFServices.Writer,
-            repository: FlextLDIFServices.Repository,
-            analytics: FlextLDIFServices.Analytics,
+            parser: FlextLDIFParserService,
+            validator: FlextLDIFValidatorService,
+            writer: FlextLDIFWriterService,
+            repository: FlextLDIFRepositoryService,
+            analytics: FlextLDIFAnalyticsService,
         ) -> None:
             """Initialize service container with parser, validator, writer, repository, and analytics."""
             self.parser = parser
@@ -293,10 +298,6 @@ class FlextLDIFAPI:
             self.writer = writer
             self.repository = repository
             self.analytics = analytics
-
-    # SOLID FIX: Eliminated wrapper methods that were violating DRY
-    # Use _operations.parse_string() and _operations.parse_file() directly
-    # These redundant wrappers were identified as code duplication
 
     def discover_ldif_files(
         self,
@@ -327,34 +328,6 @@ class FlextLDIFAPI:
             f"File discovery completed - found: {len(sorted_files)}, skipped: {len(files_to_process) - len(filtered_files)}",
         )
         return FlextResult[list[Path]].ok(sorted_files)
-
-    # SOLID FIX: Eliminated duplicate wrapper methods
-    # - write_string() -> use _operations.write_string() directly
-    # - entries_to_ldif() -> duplicate of write_string()
-
-    # SOLID FIX: Eliminated wrapper methods violating DRY - use _operations directly
-    # - write_file() -> use _operations.write_file()
-    # - write_entries_to_file() -> duplicate of write_file()
-    # - validate_entries() -> use _operations.validate_entries()
-    # - validate_entry() -> use _services.validator.validate_entry_structure()
-    # - validate_dn_format() -> use _services.validator.validate_dn_format()
-
-    # SOLID FIX: Eliminated filter wrapper delegates - use _filters directly
-    # - filter_persons() -> use _filters.persons() directly
-    # - filter_groups() -> use _filters.groups() directly
-    # - filter_organizational_units() -> use _filters.organizational_units() directly
-    # - filter_valid_entries() -> use _filters.valid_entries() directly
-
-    # SOLID FIX: Eliminated remaining wrapper delegates
-    # - filter_by_objectclass() -> use _filters.by_object_class() directly
-    # - filter_by_attribute() -> use _filters.by_attribute() directly
-    # - find_entry_by_dn() -> use _services.repository.find_entry_by_dn() directly
-    # - get_entry_statistics() -> use _analytics.entry_statistics() directly
-    # - analyze_entry_patterns() -> use _analytics.entry_patterns() directly
-
-    # SOLID FIX: Eliminated analytics wrapper delegates
-    # - get_objectclass_distribution() -> use _analytics.object_class_distribution() directly
-    # - get_dn_depth_analysis() -> use _analytics.dn_depth_analysis() directly
 
     def filter_change_records(
         self, entries: list[FlextLDIFModels.Entry] | None
@@ -387,28 +360,6 @@ class FlextLDIFAPI:
             return FlextResult[list[FlextLDIFModels.Entry]].fail(
                 f"Sort operation failed: {e!s}",
             )
-
-    def parse(self, content: str) -> FlextResultEntries:
-        """Alias simples para operations.parse_string."""
-        return self._operations.parse_string(content)
-
-    def parse_file(self, file_path: str | Path) -> FlextResultEntries:
-        """Alias simples para operations.parse_file."""
-        return self._operations.parse_file(file_path)
-
-    def validate(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultBool:
-        """Alias simples para operations.validate_entries."""
-        return self._operations.validate_entries(entries)
-
-    def write(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultStr:
-        """Alias simples para operations.write_string."""
-        return self._operations.write_string(entries)
-
-    def write_entries_to_file(
-        self, entries: list[FlextLDIFModels.Entry], file_path: str | Path
-    ) -> FlextResultBool:
-        """Alias simples para operations.write_file."""
-        return self._operations.write_file(entries, file_path)
 
     def _get_files_to_process(
         self,

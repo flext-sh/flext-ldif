@@ -1,8 +1,11 @@
-"""FLEXT-LDIF Domain Specifications Test Suite.
 
-Test suite for domain specifications implementing business rules and validation
-logic for LDIF entries, following Domain-Driven Design specification patterns
-integrated via composition in the main domain entities.
+"""Domain specification tests for LDIF entries.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
+This module tests domain specification patterns and business rule logic for LDIF entries, 
+following Domain-Driven Design specification patterns integrated via composition in the main domain entities.
 
 The specification patterns were consolidated into FlextLDIFModels.Entry methods to
 reduce complexity while maintaining clean business rule enforcement and
@@ -21,12 +24,6 @@ Architecture:
     clean separation of concerns and enterprise testing standards.
 
 Author: FLEXT Development Team
-Version: 0.9.0
-License: MIT
-
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -95,7 +92,7 @@ objectClass: person
 objectClass: inetOrgPerson""",
         )
 
-        assert entry.is_person_entry()
+        assert entry.is_person()
 
     def test_organizational_person_entry(self) -> None:
         """Test organizational person entry."""
@@ -106,7 +103,7 @@ cn: Jane Smith
 objectClass: organizationalPerson""",
         )
 
-        assert entry.is_person_entry()
+        assert entry.is_person()
 
     def test_inet_org_person_entry(self) -> None:
         """Test inetOrgPerson entry."""
@@ -117,7 +114,7 @@ cn: Bob Wilson
 objectClass: inetOrgPerson""",
         )
 
-        assert entry.is_person_entry()
+        assert entry.is_person()
 
     def test_user_entry(self) -> None:
         """Test user entry."""
@@ -128,7 +125,7 @@ cn: Alice Brown
 objectClass: user""",
         )
 
-        assert entry.is_person_entry()
+        assert entry.is_person()
 
     def test_posix_account_entry(self) -> None:
         """Test posixAccount entry."""
@@ -139,7 +136,7 @@ cn: Charlie Green
 objectClass: posixAccount""",
         )
 
-        assert entry.is_person_entry()
+        assert entry.is_person()
 
     def test_non_person_entry(self) -> None:
         """Test non-person entry."""
@@ -149,7 +146,7 @@ cn: groups
 objectClass: organizationalUnit""",
         )
 
-        assert not entry.is_person_entry()
+        assert not entry.is_person()
 
     def test_entry_no_objectclass(self) -> None:
         """Test entry without objectClass."""
@@ -159,4 +156,4 @@ uid: test
 cn: Test User""",
         )
 
-        assert not entry.is_person_entry()
+        assert not entry.is_person()

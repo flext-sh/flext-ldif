@@ -1,13 +1,3 @@
-"""Enterprise tests for FlextLDIFModels.Entry and related models.
-
-Comprehensive test suite covering all model functionality with enterprise-grade
-validation, edge cases, and domain rule enforcement.
-
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 import sys
@@ -19,7 +9,7 @@ from flext_core import FlextTypes
 from pydantic import ValidationError
 
 from flext_ldif import FlextLDIFModels
-from flext_ldif.exceptions import FlextLDIFExceptions
+from flext_ldif.exceptions import FlextLDIFError
 
 
 class TestFlextLDIFModelsEntryEnterprise:
@@ -391,7 +381,7 @@ mail: test@example.com"""
 
     def test_from_ldif_block_empty_fails(self) -> None:
         """Test creating entry from empty LDIF block fails."""
-        with pytest.raises(FlextLDIFExceptions.BaseError) as exc_info:
+        with pytest.raises(FlextLDIFError) as exc_info:
             FlextLDIFModels.Entry.from_ldif_block("")
         assert "Missing DN" in str(exc_info.value)
 
@@ -400,7 +390,7 @@ mail: test@example.com"""
         ldif_block = """cn: test
 objectClass: person"""
 
-        with pytest.raises(FlextLDIFExceptions.BaseError) as exc_info:
+        with pytest.raises(FlextLDIFError) as exc_info:
             FlextLDIFModels.Entry.from_ldif_block(ldif_block)
         assert "Missing DN" in str(exc_info.value)
 

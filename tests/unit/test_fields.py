@@ -4,10 +4,6 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-
-# pyright: reportAssignmentType=false
-# Reason: Pydantic field assignment pattern is not understood by pyright but is valid
-
 import pytest
 from flext_core import FlextModels
 from pydantic import Field, ValidationError
@@ -16,6 +12,8 @@ from pydantic.fields import FieldInfo
 from flext_ldif.constants import FlextLDIFConstants
 from flext_ldif.models import FlextLDIFModels
 from flext_ldif.services import FlextLDIFServices
+
+# Reason: Pydantic field assignment pattern is not understood by pyright but is valid
 
 
 class TestDnField:
@@ -80,7 +78,9 @@ class TestAttributeNameField:
 
     def test_attribute_name_field_default_parameters(self) -> None:
         """Test attribute_name_field with default parameters."""
-        field = Field(..., min_length=1, max_length=255, description="LDAP Attribute Name")
+        field = Field(
+            ..., min_length=1, max_length=255, description="LDAP Attribute Name"
+        )
 
         assert isinstance(field, FieldInfo)
         assert field.description == "LDAP Attribute Name"
@@ -204,7 +204,9 @@ class TestObjectClassField:
 
     def test_object_class_field_default_parameters(self) -> None:
         """Test object_class_field with default parameters."""
-        field = Field(..., min_length=1, max_length=255, description="LDAP Object Class")
+        field = Field(
+            ..., min_length=1, max_length=255, description="LDAP Object Class"
+        )
 
         assert isinstance(field, FieldInfo)
         assert field.description == "LDAP Object Class"
@@ -255,7 +257,13 @@ class TestObjectClassField:
             assert model.object_class == class_name
 
         # Invalid object class names
-        invalid_classes = ["123person", "class$", "class.name", "class with space", "lowercase"]
+        invalid_classes = [
+            "123person",
+            "class$",
+            "class.name",
+            "class with space",
+            "lowercase",
+        ]
         for class_name in invalid_classes:
             with pytest.raises(ValidationError):
                 TestModel(object_class=class_name)

@@ -1,6 +1,5 @@
-"""Exact tests for uncovered lines in services.py.
 
-Targeting the specific lines that are still uncovered with precise scenarios.
+"""Tests targeting exact uncovered lines.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -124,6 +123,7 @@ cn: test
 objectClass: person
 
 """
+
         result = parser.parse_content(ldif_content)
 
         utils = FlextTestsUtilities()

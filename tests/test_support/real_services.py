@@ -1,8 +1,4 @@
-"""Real Service Factory for Testing.
-
-Creates real service instances for functional testing without mocks.
-All services are properly configured and use real implementations.
-
+"""Real service factory for testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -12,7 +8,6 @@ from __future__ import annotations
 
 from flext_core import FlextTypes
 
-# object is built-in, no need to import
 from flext_ldif import (
     FlextLDIFAPI,
     FlextLDIFModels,

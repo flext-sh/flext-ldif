@@ -6,12 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import sys
 import warnings
 
 from flext_ldif.api import FlextLDIFAPI
-
-# from flext_ldif.cli import main as cli_main_function  # Temporarily disabled due to flext-cli import issues
+from flext_ldif.cli import main
 from flext_ldif.config import FlextLDIFConfig, get_ldif_config, initialize_ldif_config
 from flext_ldif.constants import FlextLDIFConstants
 from flext_ldif.exceptions import FlextLDIFExceptions
@@ -22,7 +20,7 @@ from flext_ldif.protocols import FlextLDIFProtocols
 from flext_ldif.services import FlextLDIFServices
 from flext_ldif.utilities import FlextLDIFUtilities
 
-# Suprimir warnings do Pydantic V2 para uma CLI limpa
+# Suppress Pydantic V2 warnings for clean CLI experience
 warnings.filterwarnings(
     "ignore", category=UserWarning, module="pydantic._internal._config"
 )
@@ -38,26 +36,6 @@ warnings.filterwarnings(
     "ignore", message=".*class-based.*config.*deprecated.*", category=DeprecationWarning
 )
 
-# CLI interface - usando flext-cli corretamente
-# from flext_ldif.cli import main  # Temporário - circular import no flext-cli
-
-
-# CLI interface - using flext-cli correctly
-def main() -> None:
-    """Main CLI entry point."""
-    try:
-        # Temporarily disabled due to flext-cli import issues
-        # result = cli_main_function()
-        # sys.exit(result)
-        sys.exit(0)
-    except ImportError:
-        # Fallback if CLI is not available
-        sys.exit(0)
-    except Exception:
-        # Return error code for any CLI exception
-        sys.exit(1)
-
-
 __all__ = [
     "FlextLDIFAPI",
     "FlextLDIFConfig",
@@ -69,10 +47,6 @@ __all__ = [
     "FlextLDIFProtocols",
     "FlextLDIFServices",
     "FlextLDIFUtilities",
-    "__author__",
-    "__email__",
-    "__license__",
-    "__version__",
     "get_ldif_config",
     "initialize_ldif_config",
     "main",

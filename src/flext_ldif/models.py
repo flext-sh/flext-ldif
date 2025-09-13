@@ -1,7 +1,4 @@
-"""FLEXT-LDIF Domain Models - Using flext-core SOURCE OF TRUTH.
-
-Minimal LDIF-specific domain models using flext-core foundation directly.
-No duplication of existing functionality - only domain-specific additions.
+"""FLEXT LDIF Models - Domain models for LDIF processing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -64,8 +61,11 @@ class FlextLDIFModels(BaseModel):
                 raise FlextLDIFExceptions.validation_error(msg)
 
             # Use flext-core validation system
-            validation_result = FlextValidations.Rules.StringRules.validate_non_empty(
-                v.strip(),
+            validation_result = (
+                FlextValidations.BusinessValidators.validate_string_field(
+                    v.strip(),
+                    min_length=1,
+                )
             )
             if validation_result.is_failure:
                 msg = FlextLDIFConstants.VALIDATION_MESSAGES["INVALID_DN"]
@@ -73,10 +73,9 @@ class FlextLDIFModels(BaseModel):
 
             # Basic DN format validation
             dn_pattern = FlextLDIFConstants.DN_PATTERN
-            pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
+            pattern_result = FlextValidations.BusinessValidators.validate_string_field(
                 v.strip(),
-                dn_pattern,
-                "DN format",
+                pattern=dn_pattern,
             )
             if pattern_result.is_failure:
                 msg = FlextLDIFConstants.VALIDATION_MESSAGES["INVALID_DN"]
@@ -279,8 +278,11 @@ class FlextLDIFModels(BaseModel):
 
             for attr_name, attr_values in self.data.items():
                 # Validate attribute name using flext-core string validation
-                name_validation = FlextValidations.Rules.StringRules.validate_non_empty(
-                    attr_name,
+                name_validation = (
+                    FlextValidations.BusinessValidators.validate_string_field(
+                        attr_name,
+                        min_length=1,
+                    )
                 )
                 if name_validation.is_failure:
                     error_msg = FlextLDIFConstants.VALIDATION_MESSAGES[
@@ -291,10 +293,9 @@ class FlextLDIFModels(BaseModel):
                 # Validate attribute name pattern (LDAP attribute names)
                 attr_pattern = r"^[a-zA-Z][a-zA-Z0-9-]*$"
                 pattern_validation = (
-                    FlextValidations.Rules.StringRules.validate_pattern(
+                    FlextValidations.BusinessValidators.validate_string_field(
                         attr_name,
-                        attr_pattern,
-                        "attribute name",
+                        pattern=attr_pattern,
                     )
                 )
                 if pattern_validation.is_failure:
@@ -304,13 +305,15 @@ class FlextLDIFModels(BaseModel):
                     return FlextResult[None].fail(error_msg)
 
                 # Validate values are not empty using collection rules
-                list_validation = (
-                    FlextValidations.Rules.CollectionRules.validate_list_size(
-                        attr_values,
-                        min_size=1,
-                    )
+                list_validation = FlextValidations.TypeValidators.validate_list(
+                    attr_values
                 )
                 if list_validation.is_failure:
+                    error_msg = f"Invalid attribute values for: {attr_name}"
+                    return FlextResult[None].fail(error_msg)
+
+                # Check if list is not empty
+                if not attr_values:
                     error_msg = f"Empty attribute values not allowed for: {attr_name}"
                     return FlextResult[None].fail(error_msg)
 
@@ -468,23 +471,9 @@ class FlextLDIFModels(BaseModel):
             """
             return self.attributes.is_group()
 
-        def is_person_entry(self) -> bool:
-            """Alias for is_person() for compatibility.
-
-            Returns:
-                True if entry represents a person
-
-            """
-            return self.is_person()
-
-        def is_group_entry(self) -> bool:
-            """Alias for is_group() for compatibility.
-
-            Returns:
-                True if entry represents a group
-
-            """
-            return self.is_group()
+        # SOLID FIX: Removed duplicate alias methods - use is_person() and is_group() directly
+        # - is_person_entry() -> use is_person() directly
+        # - is_group_entry() -> use is_group() directly
 
         def is_valid_entry(self) -> bool:
             """Check if entry is valid (has required DN and objectClass).
@@ -653,7 +642,7 @@ class FlextLDIFModels(BaseModel):
 
             if dn is None:
                 error_msg = "Missing DN in LDIF block"
-                raise FlextLDIFExceptions.error(error_msg)
+                raise FlextLDIFExceptions.ProcessingError(error_msg)
 
             return cls(
                 dn=FlextLDIFModels.DistinguishedName(value=dn),
@@ -827,15 +816,16 @@ class FlextLDIFModels(BaseModel):
         """Factory usando FlextModels como SOURCE OF TRUTH com aliases simples."""
 
         @staticmethod
-        def create_entry(data: dict[str, object] | None = None, dn: str | None = None, attributes: dict[str, list[str]] | None = None) -> FlextLDIFModels.Entry:
+        def create_entry(
+            data: dict[str, object] | None = None,
+            dn: str | None = None,
+            attributes: dict[str, list[str]] | None = None,
+        ) -> FlextLDIFModels.Entry:
             """Create LDIF entry using factory pattern with flexible parameters."""
             if data is not None:
                 return FlextLDIFModels.Entry.model_validate(data)
             if dn is not None and attributes is not None:
-                entry_data = {
-                    "dn": dn,
-                    "attributes": attributes
-                }
+                entry_data = {"dn": dn, "attributes": attributes}
                 return FlextLDIFModels.Entry.model_validate(entry_data)
             msg = "Either data dict or dn+attributes must be provided"
             raise ValueError(msg)

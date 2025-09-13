@@ -1,20 +1,18 @@
-"""Specific line coverage tests for services.py - ABSOLUTE 100% TARGET.
 
-Tests targeting specific uncovered lines to achieve 100% coverage.
-Lines: 369->368, 502-503, 532, 543, 571-576, 675, 698->703, 724-725, 732, 762-763, 786, 795->797, 812-813, 862-863, 868-869
+from __future__ import annotations
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+from unittest.mock import Mock
+from flext_tests import FlextTestsUtilities
+from flext_ldif.models import FlextLDIFModels
+from flext_ldif.services import FlextLDIFServices
+
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-from unittest.mock import Mock
 
-from flext_tests import FlextTestsUtilities
 
-from flext_ldif.models import FlextLDIFModels
-from flext_ldif.services import FlextLDIFServices
 
 
 class TestServicesSpecificLines:
@@ -22,6 +20,7 @@ class TestServicesSpecificLines:
 
     def test_line_502_503_exception_handling(self) -> None:
         """Target lines 502-503: general exception handling in validate_entries."""
+
         validator = FlextLDIFServices().validator
 
         # Create entry that will cause exception during validation
@@ -41,6 +40,7 @@ class TestServicesSpecificLines:
 
     def test_line_762_763_syntax_exception_handling(self) -> None:
         """Target lines 762-763: syntax validation exception handling."""
+
         # This targets the specific exception handling in syntax validation
         parser = FlextLDIFServices().parser
 
@@ -57,6 +57,7 @@ class TestServicesSpecificLines:
 
     def test_lines_571_576_attribute_edge_cases(self) -> None:
         """Target lines 571-576: attribute validation edge cases."""
+
         validator = FlextLDIFServices().validator
 
         # Create mock entry with edge case attributes to trigger lines 571-576
@@ -84,6 +85,7 @@ class TestServicesSpecificLines:
 
     def test_lines_532_543_config_validation(self) -> None:
         """Target lines 532, 543: configuration validation paths."""
+
         # Test with None config to trigger specific validation paths
         validator = FlextLDIFServices(config=None)
 
@@ -95,7 +97,7 @@ class TestServicesSpecificLines:
         mock_entry.attributes = Mock()
         mock_entry.attributes.data = {"cn": ["test"]}
 
-        result = validator.validate_entries([mock_entry])
+        result = validator.validator.validate_entries([mock_entry])
 
         utils = FlextTestsUtilities()
         assertion = utils.assertion()
@@ -105,6 +107,7 @@ class TestServicesSpecificLines:
 
     def test_branch_lines_369_368_795_797(self) -> None:
         """Target branch lines 369->368, 795->797: specific branch conditions."""
+
         validator = FlextLDIFServices().validator
 
         # Create specific conditions to trigger these branch lines
@@ -126,6 +129,7 @@ class TestServicesSpecificLines:
 
     def test_lines_812_813_862_863_868_869_analytics(self) -> None:
         """Target analytics service lines: 812-813, 862-863, 868-869."""
+
         analytics = FlextLDIFServices().analytics
 
         # Test with specific edge cases to trigger these lines
@@ -146,6 +150,7 @@ class TestServicesSpecificLines:
 
     def test_lines_675_698_703_repository(self) -> None:
         """Target repository service lines: 675, 698->703."""
+
         repository = FlextLDIFServices().repository
 
         # Test repository methods with real data
@@ -175,6 +180,7 @@ class TestServicesSpecificLines:
 
     def test_lines_724_725_732_786_parser_writer(self) -> None:
         """Target parser/writer lines: 724-725, 732, 786."""
+
         parser = FlextLDIFServices().parser
         writer = FlextLDIFServices().writer
 

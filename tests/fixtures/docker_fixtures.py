@@ -1,13 +1,3 @@
-"""Docker fixtures for OpenLDAP container management in flext-ldif tests.
-
-This module provides Docker container management for running LDIF tests against
-a real OpenLDAP server, enabling full integration testing.
-
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 import contextlib
@@ -174,6 +164,7 @@ class OpenLDAPContainerManager:
 
         # LDIF data to populate
         test_ldif = f"""
+
 # Create organizational units
 dn: ou=people,{OPENLDAP_BASE_DN}
 objectClass: organizationalUnit

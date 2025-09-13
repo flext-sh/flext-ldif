@@ -331,7 +331,9 @@ class TestFlextLDIFServicesWriterService:
         # Try to write to a path that will likely cause permission error (non-existent directory)
         invalid_path = "/non/existent/directory/test.ldif"
         try:
-            with Path(invalid_path).open("w", encoding=FlextLDIFConstants.DEFAULT_ENCODING) as f:
+            with Path(invalid_path).open(
+                "w", encoding=FlextLDIFConstants.DEFAULT_ENCODING
+            ) as f:
                 f.write(content)
             result = FlextResult[bool].ok(True)
         except Exception as e:
@@ -360,7 +362,7 @@ class TestFlextLDIFServicesWriterService:
         assert result.is_failure
         assert result.error is not None
         # Should contain file write error information
-        assert "error" in result.error.lower()
+        assert "failed" in result.error.lower()
 
     def test_write_content_to_file_unicode_error(self) -> None:
         """Test _write_content_to_file handles real Unicode encoding errors."""

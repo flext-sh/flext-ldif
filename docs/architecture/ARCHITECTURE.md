@@ -197,8 +197,8 @@ FLEXT-LDIF implements **Clean Architecture** with **Domain-Driven Design** princ
 ```python
 # domain/entities/ldif_entry.py
 from flext_core import FlextModels.Entity, FlextResult
-from ..values.distinguished_name import FlextLDIFDistinguishedName
-from ..values.attributes import FlextLDIFAttributes
+from flext_ldif..values.distinguished_name import FlextLDIFDistinguishedName
+from flext_ldif..values.attributes import FlextLDIFAttributes
 
 class FlextLDIFEntry(FlextModels.Entity):
     """
@@ -332,8 +332,8 @@ class FlextLDIFEntry(FlextModels.Entity):
 ```python
 # domain/aggregates/ldif_processing_aggregate.py
 from flext_core import FlextModels.AggregateRoot, FlextDomainEvent
-from ..entities.ldif_entry import
-from ..events.processing_completed import FlextLDIFProcessingCompleted
+from flext_ldif..entities.ldif_entry import
+from flext_ldif..events.processing_completed import FlextLDIFProcessingCompleted
 
 class FlextLDIFDocument(FlextModels.AggregateRoot):
     """
@@ -779,7 +779,7 @@ class FlextLDIFProcessingCompleted(FlextDomainEvent):
 ```python
 # domain/specifications/person_spec.py
 from flext_core import FlextSpecification
-from ..entities.ldif_entry import FlextLDIFEntry
+from flext_ldif..entities.ldif_entry import FlextLDIFEntry
 
 class FlextLDIFPersonSpecification(FlextSpecification[FlextLDIFEntry]):
     """
@@ -833,7 +833,7 @@ class FlextLDIFPersonSpecification(FlextSpecification[FlextLDIFEntry]):
 
 # domain/specifications/valid_entry_spec.py
 from flext_core import FlextSpecification
-from ..entities.ldif_entry import FlextLDIFEntry
+from flext_ldif..entities.ldif_entry import FlextLDIFEntry
 
 class FlextLDIFValidSpecification(FlextSpecification[FlextLDIFEntry]):
     """
@@ -878,10 +878,10 @@ class FlextLDIFValidSpecification(FlextSpecification[FlextLDIFEntry]):
 ```python
 # application/handlers/parse_handler.py
 from flext_core import FlextResult
-from ..dto.request_dto import ParseLdifRequest
-from ..dto.entry_dto import FlextLDIFEntryDTO
-from ...domain.aggregates.ldif_processing_aggregate import FlextLDIFDocument
-from ...infrastructure.parsers.ldif_parser import LdifParserService
+from flext_ldif..dto.request_dto import ParseLdifRequest
+from flext_ldif..dto.entry_dto import FlextLDIFEntryDTO
+from flext_ldif...domain.aggregates.ldif_processing_aggregate import FlextLDIFDocument
+from flext_ldif...infrastructure.parsers.ldif_parser import LdifParserService
 
 class ParseLdifHandler:
     """
@@ -930,11 +930,11 @@ class ParseLdifHandler:
 # application/api.py
 from flext_core import FlextResult, FlextLogger
 from flext_observability import flext_monitor_function, flext_create_trace
-from .handlers.parse_handler import ParseLdifHandler
-from .handlers.validate_handler import ValidateHandler
-from .handlers.write_handler import WriteHandler
-from .dto.request_dto import ParseLdifRequest, ValidateRequest, WriteRequest
-from .dto.entry_dto import FlextLDIFEntryDTO
+from flext_ldif.handlers.parse_handler import ParseLdifHandler
+from flext_ldif.handlers.validate_handler import ValidateHandler
+from flext_ldif.handlers.write_handler import WriteHandler
+from flext_ldif.dto.request_dto import ParseLdifRequest, ValidateRequest, WriteRequest
+from flext_ldif.dto.entry_dto import FlextLDIFEntryDTO
 
 class FlextLDIFAPI:
     """
@@ -1037,10 +1037,10 @@ class FlextLDIFAPI:
 ```python
 # infrastructure/parsers/ldif_parser.py
 from flext_core import FlextResult, FlextLogger
-from ...domain.entities.ldif_entry import FlextLDIFEntry
-from ...domain.values.distinguished_name import FlextLDIFDistinguishedName
-from ...domain.values.attributes import FlextLDIFAttributes
-from ...domain.interfaces.parser_interface import ILdifParser
+from flext_ldif...domain.entities.ldif_entry import FlextLDIFEntry
+from flext_ldif...domain.values.distinguished_name import FlextLDIFDistinguishedName
+from flext_ldif...domain.values.attributes import FlextLDIFAttributes
+from flext_ldif...domain.interfaces.parser_interface import ILdifParser
 
 class LdifParserService(ILdifParser):
     """
@@ -1174,8 +1174,8 @@ class LdifParserService(ILdifParser):
 # infrastructure/persistence/file_repository.py
 from flext_core import FlextResult, FlextLogger
 from pathlib import Path
-from ...domain.entities.ldif_entry import FlextLDIFEntry
-from ...domain.interfaces.repository_interface import ILdifRepository
+from flext_ldif...domain.entities.ldif_entry import FlextLDIFEntry
+from flext_ldif...domain.interfaces.repository_interface import ILdifRepository
 
 class FileLdifRepository(ILdifRepository):
     """
@@ -1233,7 +1233,7 @@ class FileLdifRepository(ILdifRepository):
                 content = f.read()
 
             # Use parser to load entries
-            from ..parsers.ldif_parser import LdifParserService
+            from flext_ldif..parsers.ldif_parser import LdifParserService
             parser = LdifParserService(self._get_default_config())
 
             return parser.parse_content(content)
@@ -1274,11 +1274,11 @@ class FileLdifRepository(ILdifRepository):
 ```python
 # infrastructure/di/container.py
 from flext_core import get_flext_container, FlextContainer
-from ..parsers.ldif_parser import LdifParserService
-from ..validators.format_validator import FormatValidatorService
-from ..persistence.file_repository import FileLdifRepository
-from ...application.handlers.parse_handler import ParseLdifHandler
-from ...application.api import FlextLDIFAPI
+from flext_ldif..parsers.ldif_parser import LdifParserService
+from flext_ldif..validators.format_validator import FormatValidatorService
+from flext_ldif..persistence.file_repository import FileLdifRepository
+from flext_ldif...application.handlers.parse_handler import ParseLdifHandler
+from flext_ldif...application.api import FlextLDIFAPI
 
 def register_ldif_services(container: FlextContainer) -> None:
     """Register FLEXT-LDIF services in DI container."""
@@ -1319,7 +1319,7 @@ def get_ldif_api() -> FlextLDIFAPI:
 ```python
 # infrastructure/observability/metrics.py
 from flext_observability import FlextObservabilityMonitor, MetricType
-from ...domain.events.processing_completed import FlextLDIFProcessingCompleted
+from flext_ldif...domain.events.processing_completed import FlextLDIFProcessingCompleted
 
 class LdifMetricsCollector:
     """
@@ -1491,7 +1491,7 @@ class TestDomainRules:
 # infrastructure/streaming/ldif_stream_processor.py
 from typing import Iterator, Generator
 from flext_core import FlextResult
-from ...domain.entities.ldif_entry import FlextLDIFEntry
+from flext_ldif...domain.entities.ldif_entry import FlextLDIFEntry
 
 class LdifStreamProcessor:
     """
@@ -1544,7 +1544,7 @@ class LdifStreamProcessor:
 ```python
 # infrastructure/caching/entry_cache.py
 from typing import Dict, Optional, LRU
-from ...domain.entities.ldif_entry import FlextLDIFEntry
+from flext_ldif...domain.entities.ldif_entry import FlextLDIFEntry
 
 class LdifEntryCache:
     """
