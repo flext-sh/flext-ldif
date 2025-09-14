@@ -35,12 +35,12 @@ class FlextLDIFServices(FlextDomainService[dict[str, object]]):
     )  # Override validation
 
     # Specialized services following SOLID principles
-    parser: FlextLDIFParserService | None = None
-    validator: FlextLDIFValidatorService | None = None
-    writer: FlextLDIFWriterService | None = None
-    analytics: FlextLDIFAnalyticsService | None = None
-    transformer: FlextLDIFTransformerService | None = None
-    repository: FlextLDIFRepositoryService | None = None
+    parser: FlextLDIFParserService
+    validator: FlextLDIFValidatorService
+    writer: FlextLDIFWriterService
+    analytics: FlextLDIFAnalyticsService
+    transformer: FlextLDIFTransformerService
+    repository: FlextLDIFRepositoryService
 
     # Private attributes for internal state
     _config: FlextLDIFModels.Config | None = None

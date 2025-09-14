@@ -116,12 +116,14 @@ class TestFlextLDIFConfig:
         # Test with invalid configuration (too low max entries)
         # Create a new config with invalid values instead of modifying existing one
         reset_ldif_config()
-        result = initialize_ldif_config(ldif_max_entries=500)
-        if result.is_success:
-            config = result.unwrap()
+        init_result = initialize_ldif_config(ldif_max_entries=500)
+        if init_result.is_success:
+            config = init_result.unwrap()
             validation_result = config.validate_ldif_business_rules()
             assert validation_result.is_failure
-            assert "Maximum entries too low" in validation_result.error
+            error_message = validation_result.error
+            assert error_message is not None
+            assert "Maximum entries too low" in error_message
 
     def test_configuration_overrides(self) -> None:
         """Test applying configuration overrides."""
@@ -129,7 +131,7 @@ class TestFlextLDIFConfig:
         config = get_ldif_config()
 
         # Apply valid overrides
-        overrides = {
+        overrides: dict[str, object] = {
             "ldif_max_entries": 200000,
             "ldif_chunk_size": 5000,
             "ldif_analytics_cache_size": 15000,
@@ -149,14 +151,16 @@ class TestFlextLDIFConfig:
         config = get_ldif_config()
 
         # Apply invalid overrides (chunk size > max entries)
-        overrides = {
+        overrides: dict[str, object] = {
             "ldif_chunk_size": 2000,
             "ldif_max_entries": 1000,
         }
 
         result = config.apply_ldif_overrides(overrides)
         assert result.is_failure
-        assert "Chunk size cannot exceed maximum entries" in result.error
+        error_message = result.error
+        assert error_message is not None
+        assert "Chunk size cannot exceed maximum entries" in error_message
 
     def test_encoding_validation(self) -> None:
         """Test encoding validation."""
@@ -173,7 +177,9 @@ class TestFlextLDIFConfig:
         # Test invalid encoding
         result = initialize_ldif_config(ldif_encoding="invalid-encoding")
         assert result.is_failure
-        assert "Unsupported encoding" in result.error
+        error_message = result.error
+        assert error_message is not None
+        assert "Unsupported encoding" in error_message
 
     def test_model_validator(self) -> None:
         """Test model validator for configuration consistency."""
@@ -196,7 +202,9 @@ class TestFlextLDIFConfig:
             ldif_max_workers=1,
         )
         assert result.is_failure
-        assert "Parallel processing requires at least 2 workers" in result.error
+        error_message = result.error
+        assert error_message is not None
+        assert "Parallel processing requires at least 2 workers" in error_message
 
         # Test invalid configuration (chunk size > max entries)
         result = initialize_ldif_config(
@@ -204,7 +212,9 @@ class TestFlextLDIFConfig:
             ldif_max_entries=1000,
         )
         assert result.is_failure
-        assert "Chunk size cannot exceed maximum entries" in result.error
+        error_message = result.error
+        assert error_message is not None
+        assert "Chunk size cannot exceed maximum entries" in error_message
 
     def test_flext_core_inheritance(self) -> None:
         """Test LDIF-specific configuration properties."""
@@ -248,10 +258,12 @@ class TestFlextLDIFConfig:
         config.seal()
 
         # Try to apply overrides (should fail)
-        overrides = {"ldif_max_entries": 50000}
+        overrides: dict[str, object] = {"ldif_max_entries": 50000}
         result = config.apply_ldif_overrides(overrides)
         assert result.is_failure
-        assert "sealed configuration" in result.error
+        error_message = result.error
+        assert error_message is not None
+        assert "sealed configuration" in error_message
 
     def test_environment_variable_support(self) -> None:
         """Test configuration parameter support."""
