@@ -1,16 +1,10 @@
+"""Test services missing coverage final."""
 
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
+
 from flext_ldif import FlextLDIFServices
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
-from __future__ import annotations
-
-
 
 
 class TestServicesMissingCoverageFinal:
@@ -18,7 +12,6 @@ class TestServicesMissingCoverageFinal:
 
     def test_parser_validate_ldif_syntax_invalid_start(self) -> None:
         """Test parser validation with invalid LDIF start."""
-
         services = FlextLDIFServices()
         parser = services.parser
 
@@ -31,7 +24,6 @@ class TestServicesMissingCoverageFinal:
 
     def test_parser_validate_ldif_syntax_exception_handling(self) -> None:
         """Test parser validation exception handling."""
-
         services = FlextLDIFServices()
         parser = services.parser
 
@@ -42,7 +34,6 @@ class TestServicesMissingCoverageFinal:
 
     def test_validator_validate_entries_exception_handling(self) -> None:
         """Test validator exception handling."""
-
         services = FlextLDIFServices()
         validator = services.validator
 
@@ -63,7 +54,6 @@ class TestServicesMissingCoverageFinal:
 
     def test_validator_validate_entry_structure_exception_handling(self) -> None:
         """Test validator entry structure exception handling."""
-
         services = FlextLDIFServices()
         validator = services.validator
 
@@ -83,7 +73,6 @@ class TestServicesMissingCoverageFinal:
 
     def test_validator_validate_dn_format_exception_handling(self) -> None:
         """Test validator DN format exception handling."""
-
         services = FlextLDIFServices()
         validator = services.validator
 
@@ -100,7 +89,6 @@ class TestServicesMissingCoverageFinal:
 
     def test_writer_write_entries_to_string_exception_handling(self) -> None:
         """Test writer string output exception handling."""
-
         services = FlextLDIFServices()
         writer = services.writer
 
@@ -120,7 +108,6 @@ class TestServicesMissingCoverageFinal:
 
     def test_writer_write_entries_to_file_exception_handling(self) -> None:
         """Test writer file output exception handling."""
-
         services = FlextLDIFServices()
         writer = services.writer
 
@@ -140,7 +127,6 @@ class TestServicesMissingCoverageFinal:
 
     def test_analytics_analyze_entries_exception_handling(self) -> None:
         """Test analytics exception handling."""
-
         services = FlextLDIFServices()
         analytics = services.analytics
 
@@ -151,7 +137,6 @@ class TestServicesMissingCoverageFinal:
 
     def test_analytics_get_objectclass_distribution_exception_handling(self) -> None:
         """Test analytics objectclass distribution exception handling."""
-
         services = FlextLDIFServices()
         analytics = services.analytics
 
@@ -162,7 +147,6 @@ class TestServicesMissingCoverageFinal:
 
     def test_analytics_get_dn_depth_analysis_exception_handling(self) -> None:
         """Test analytics DN depth analysis exception handling."""
-
         services = FlextLDIFServices()
         analytics = services.analytics
 
@@ -173,7 +157,6 @@ class TestServicesMissingCoverageFinal:
 
     def test_transformer_transform_entries_exception_handling(self) -> None:
         """Test transformer exception handling."""
-
         services = FlextLDIFServices()
         transformer = services.transformer
 
@@ -192,7 +175,6 @@ class TestServicesMissingCoverageFinal:
 
     def test_transformer_normalize_dns_exception_handling(self) -> None:
         """Test transformer DN normalization exception handling."""
-
         services = FlextLDIFServices()
         transformer = services.transformer
 
@@ -203,7 +185,6 @@ class TestServicesMissingCoverageFinal:
 
     def test_repository_find_entry_by_dn_exception_handling(self) -> None:
         """Test repository find entry exception handling."""
-
         services = FlextLDIFServices()
         repository = services.repository
 
@@ -219,7 +200,6 @@ class TestServicesMissingCoverageFinal:
 
     def test_repository_filter_entries_by_attribute_exception_handling(self) -> None:
         """Test repository filter by attribute exception handling."""
-
         services = FlextLDIFServices()
         repository = services.repository
 
@@ -237,7 +217,6 @@ class TestServicesMissingCoverageFinal:
 
     def test_repository_filter_entries_by_object_class_exception_handling(self) -> None:
         """Test repository filter by object class exception handling."""
-
         services = FlextLDIFServices()
         repository = services.repository
 
@@ -253,7 +232,6 @@ class TestServicesMissingCoverageFinal:
 
     def test_repository_get_statistics_exception_handling(self) -> None:
         """Test repository statistics exception handling."""
-
         services = FlextLDIFServices()
         repository = services.repository
 
@@ -272,7 +250,6 @@ class TestServicesMissingCoverageFinal:
 
     def test_services_convenience_methods_none_parser(self) -> None:
         """Test services convenience methods with None parser."""
-
         services = FlextLDIFServices()
         services.parser = None
 
@@ -281,7 +258,6 @@ class TestServicesMissingCoverageFinal:
 
     def test_services_convenience_methods_none_validator(self) -> None:
         """Test services convenience methods with None validator."""
-
         services = FlextLDIFServices()
         services.validator = None
 
@@ -290,7 +266,6 @@ class TestServicesMissingCoverageFinal:
 
     def test_services_convenience_methods_none_writer(self) -> None:
         """Test services convenience methods with None writer."""
-
         services = FlextLDIFServices()
         services.writer = None
 
@@ -299,7 +274,6 @@ class TestServicesMissingCoverageFinal:
 
     def test_services_convenience_methods_none_analytics(self) -> None:
         """Test services convenience methods with None analytics."""
-
         services = FlextLDIFServices()
         services.analytics = None
 
@@ -308,7 +282,6 @@ class TestServicesMissingCoverageFinal:
 
     def test_services_convenience_methods_none_transformer(self) -> None:
         """Test services convenience methods with None transformer."""
-
         services = FlextLDIFServices()
         services.transformer = None
 

@@ -1,19 +1,12 @@
+"""Test LDIF parser service functionality."""
 
 from __future__ import annotations
 
 from flext_core import FlextResult, FlextTypes
+
 from flext_ldif import FlextLDIFModels, FlextLDIFServices
 from tests.test_support import LdifTestData, TestValidators
 from tests.test_support.test_files import TestFileManager
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
-from __future__ import annotations
-
-
-from typing import Dict
 
 
 class TestFlextLDIFServicesParserServiceReal:
@@ -21,7 +14,6 @@ class TestFlextLDIFServicesParserServiceReal:
 
     def test_service_initialization_real_config(self) -> None:
         """Test service initializes with real configuration."""
-
         config = FlextLDIFModels.Config(
             encoding="utf-8",
             strict_parsing=True,
@@ -39,7 +31,6 @@ class TestFlextLDIFServicesParserServiceReal:
 
     def test_service_initialization_default_config(self) -> None:
         """Test service works with default configuration."""
-
         service = FlextLDIFServices().parser
 
         # Test parsing with empty content
@@ -49,7 +40,6 @@ class TestFlextLDIFServicesParserServiceReal:
 
     def test_parse_real_basic_ldif_entries(self) -> None:
         """Test parsing real LDIF entries with actual data."""
-
         service = FlextLDIFServices().parser
         ldif_sample = LdifTestData.basic_entries()
 
@@ -70,7 +60,6 @@ class TestFlextLDIFServicesParserServiceReal:
 
     def test_parse_real_multi_valued_attributes(self) -> None:
         """Test parsing LDIF with multi-valued attributes."""
-
         service = FlextLDIFServices().parser
         ldif_sample = LdifTestData.multi_valued_attributes()
 
@@ -102,7 +91,6 @@ class TestFlextLDIFServicesParserServiceReal:
 
     def test_parse_real_binary_data(self) -> None:
         """Test parsing LDIF with binary (base64) data."""
-
         service = FlextLDIFServices().parser
         ldif_sample = LdifTestData.with_binary_data()
 
@@ -129,7 +117,6 @@ class TestFlextLDIFServicesParserServiceReal:
 
     def test_parse_real_change_records(self) -> None:
         """Test parsing LDIF with change records - should fail gracefully for unsupported format."""
-
         service = FlextLDIFServices().parser
         ldif_sample = LdifTestData.with_changes()
 
@@ -151,7 +138,6 @@ class TestFlextLDIFServicesParserServiceReal:
 
     def test_parse_real_special_characters(self) -> None:
         """Test parsing LDIF with UTF-8 special characters."""
-
         service = FlextLDIFServices().parser
         ldif_sample = LdifTestData.special_characters()
 
@@ -180,7 +166,6 @@ class TestFlextLDIFServicesParserServiceReal:
 
     def test_parse_real_long_lines(self) -> None:
         """Test parsing LDIF with long lines requiring continuation."""
-
         service = FlextLDIFServices().parser
         ldif_sample = LdifTestData.long_lines()
 
@@ -206,7 +191,6 @@ class TestFlextLDIFServicesParserServiceReal:
 
     def test_parse_real_error_invalid_ldif(self) -> None:
         """Test parser handles invalid LDIF data correctly."""
-
         service = FlextLDIFServices().parser
         ldif_sample = LdifTestData.invalid_data()
 
@@ -226,7 +210,6 @@ class TestFlextLDIFServicesParserServiceReal:
 
     def test_parse_real_empty_content(self) -> None:
         """Test parser handles empty content correctly."""
-
         service = FlextLDIFServices().parser
 
         # Parse empty content
@@ -240,7 +223,6 @@ class TestFlextLDIFServicesParserServiceReal:
         self, test_file_manager: TestFileManager
     ) -> None:
         """Test parsing from actual file path."""
-
         service = FlextLDIFServices().parser
         ldif_sample = LdifTestData.basic_entries()
 
@@ -260,7 +242,6 @@ class TestFlextLDIFServicesParserServiceReal:
 
     def test_parse_real_large_dataset(self, test_file_manager: TestFileManager) -> None:
         """Test parsing performance with larger dataset."""
-
         service = FlextLDIFServices().parser
 
         # Create larger dataset for performance testing
@@ -289,7 +270,6 @@ class TestParserIntegrationReal:
         self, integration_services: FlextTypes.Core.Dict
     ) -> None:
         """Test parser integrated with real validator service."""
-
         parser = integration_services["parser"]
         validator = integration_services["validator"]
 
@@ -309,7 +289,6 @@ class TestParserIntegrationReal:
         self, integration_services: FlextTypes.Core.Dict
     ) -> None:
         """Test parser → writer → parser roundtrip with real services."""
-
         parser = integration_services["parser"]
         writer = integration_services["writer"]
 

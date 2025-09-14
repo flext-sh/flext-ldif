@@ -1,34 +1,11 @@
+"""Test LDIF models functionality."""
 
 from __future__ import annotations
 
 import pytest
 from flext_core import FlextExceptions
+
 from flext_ldif import FlextLDIFModels
-
-
-Test Coverage:
-    - Domain entity validation and business rules
-    - Value object immutability and validation
-    - Distinguished Name parsing and hierarchy operations
-    - Attribute collection management and operations
-    - Model serialization and deserialization patterns
-
-Architecture:
-    Tests the Domain Layer components in isolation, ensuring business logic
-    correctness without external dependencies, following enterprise testing
-    standards with comprehensive edge case coverage.
-
-Author: FLEXT Development Team
-Version: 0.9.0
-License: MIT
-
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
-from __future__ import annotations
-
 
 # Use proper import from root level
 
@@ -38,7 +15,6 @@ class TestFlextLDIFModelsEntry:
 
     def test_ldif_entry_creation(self) -> None:
         """Test basic LDIF entry creation."""
-
         dn = "cn=test,dc=example,dc=com"
         attributes = {
             "cn": ["test"],
@@ -59,7 +35,6 @@ class TestFlextLDIFModelsEntry:
 
     def test_ldif_entry_default_attributes(self) -> None:
         """Test LDIF entry creation with default attributes."""
-
         dn = "cn=test,dc=example,dc=com"
         entry = FlextLDIFModels.Entry.model_validate({"dn": dn})
 
@@ -70,7 +45,6 @@ class TestFlextLDIFModelsEntry:
 
     def test_get_attribute_exists(self) -> None:
         """Test getting an existing attribute."""
-
         entry = FlextLDIFModels.Entry.model_validate(
             {
                 "dn": "cn=test,dc=example,dc=com",
@@ -90,7 +64,6 @@ class TestFlextLDIFModelsEntry:
 
     def test_get_attribute_not_exists(self) -> None:
         """Test getting a non-existing attribute."""
-
         entry = FlextLDIFModels.Entry.model_validate(
             {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}},
         )
@@ -99,7 +72,6 @@ class TestFlextLDIFModelsEntry:
 
     def test_set_attribute(self) -> None:
         """Test setting an attribute."""
-
         entry = FlextLDIFModels.Entry.model_validate(
             {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}},
         )
@@ -117,7 +89,6 @@ class TestFlextLDIFModelsEntry:
 
     def test_set_attribute_overwrites(self) -> None:
         """Test setting an attribute overwrites existing values."""
-
         entry = FlextLDIFModels.Entry.model_validate(
             {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}},
         )
@@ -132,7 +103,6 @@ class TestFlextLDIFModelsEntry:
 
     def test_has_attribute_true(self) -> None:
         """Test has_attribute returns True for existing attribute."""
-
         entry = FlextLDIFModels.Entry.model_validate(
             {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}},
         )
@@ -143,7 +113,6 @@ class TestFlextLDIFModelsEntry:
 
     def test_has_attribute_false(self) -> None:
         """Test has_attribute returns False for non-existing attribute."""
-
         entry = FlextLDIFModels.Entry.model_validate(
             {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}},
         )
@@ -156,7 +125,6 @@ class TestFlextLDIFModelsEntry:
 
     def test_get_single_attribute_exists(self) -> None:
         """Test getting single attribute value when it exists."""
-
         entry = FlextLDIFModels.Entry.model_validate(
             {
                 "dn": "cn=test,dc=example,dc=com",
@@ -176,7 +144,6 @@ class TestFlextLDIFModelsEntry:
 
     def test_get_single_attribute_not_exists(self) -> None:
         """Test getting single attribute value when it doesn't exist."""
-
         entry = FlextLDIFModels.Entry.model_validate(
             {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}},
         )
@@ -185,7 +152,6 @@ class TestFlextLDIFModelsEntry:
 
     def test_get_single_attribute_empty_list(self) -> None:
         """Test getting single attribute value from empty list."""
-
         entry = FlextLDIFModels.Entry.model_validate(
             {"dn": "cn=test,dc=example,dc=com", "attributes": {"empty": []}},
         )
@@ -194,7 +160,6 @@ class TestFlextLDIFModelsEntry:
 
     def test_to_ldif(self) -> None:
         """Test converting entry to LDIF string."""
-
         entry = FlextLDIFModels.Entry.model_validate(
             {
                 "dn": "cn=test,dc=example,dc=com",
@@ -225,7 +190,6 @@ class TestFlextLDIFModelsEntry:
 
     def test_from_ldif_block_valid(self) -> None:
         """Test creating entry from valid LDIF block."""
-
         ldif_block = """dn: cn=test,dc=example,dc=com
 cn: test
 objectClass: person
@@ -250,19 +214,16 @@ mail: test@example.com"""
 
     def test_from_ldif_block_empty(self) -> None:
         """Test creating entry from empty LDIF block."""
-
         with pytest.raises(FlextExceptions.BaseError, match="Missing DN"):
             FlextLDIFModels.Entry.from_ldif_block("")
 
     def test_from_ldif_block_whitespace_only(self) -> None:
         """Test creating entry from whitespace-only LDIF block."""
-
         with pytest.raises(FlextExceptions.BaseError, match="Missing DN"):
             FlextLDIFModels.Entry.from_ldif_block("   \n   \n   ")
 
     def test_from_ldif_block_no_dn(self) -> None:
         """Test creating entry from LDIF block without DN."""
-
         ldif_block = """cn: test
 objectClass: person"""
 
@@ -271,7 +232,6 @@ objectClass: person"""
 
     def test_from_ldif_block_dn_only(self) -> None:
         """Test creating entry from LDIF block with DN only."""
-
         ldif_block = "dn: cn=test,dc=example,dc=com"
 
         entry = FlextLDIFModels.Entry.from_ldif_block(ldif_block)
@@ -285,7 +245,6 @@ objectClass: person"""
 
     def test_from_ldif_block_with_whitespace(self) -> None:
         """Test creating entry from LDIF block with extra whitespace."""
-
         ldif_block = """
 
       dn: cn=test,dc=example,dc=com
@@ -312,7 +271,6 @@ objectClass: person"""
 
     def test_from_ldif_block_multiple_values(self) -> None:
         """Test creating entry with multiple values for same attribute."""
-
         ldif_block = """dn: cn=test,dc=example,dc=com
 objectClass: person
 objectClass: inetOrgPerson
@@ -330,7 +288,6 @@ mail: test2@example.com"""
 
     def test_from_ldif_block_colon_in_value(self) -> None:
         """Test creating entry with colon in attribute value."""
-
         ldif_block = """dn: cn=test,dc=example,dc=com
 description: This is a test: with colon
 url: http://example.com:8080/path"""
@@ -346,7 +303,6 @@ url: http://example.com:8080/path"""
 
     def test_from_ldif_block_invalid_line_no_colon(self) -> None:
         """Test creating entry from LDIF block with line without colon."""
-
         ldif_block = """dn: cn=test,dc=example,dc=com
 cn: test
 invalid line without colon"""

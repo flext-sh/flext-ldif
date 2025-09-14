@@ -1,4 +1,3 @@
-
 """Tests to improve coverage on specific missing lines.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.

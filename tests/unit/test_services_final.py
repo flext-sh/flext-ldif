@@ -1,20 +1,11 @@
+"""Test final LDIF services functionality."""
 
 from __future__ import annotations
 
 from unittest.mock import patch
+
 from flext_ldif.models import FlextLDIFModels
 from flext_ldif.services import FlextLDIFServices
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-LINHAS TARGET: 571, 574, 576, 675, 786, 812, 813
-ESTRATÉGIA: Classe real que implementa protocolo dict + métodos corretos
-"""
-
-from __future__ import annotations
-
-
 
 
 class MockAttributesDict:
@@ -22,27 +13,22 @@ class MockAttributesDict:
 
     def __init__(self, data: list[tuple[str, list[str]]]) -> None:
         """Initialize mock attributes with data."""
-
         self._data = data
 
     def items(self) -> list[tuple[str, list[str]]]:
         """Implementa .items() para mock attributes."""
-
         return self._data
 
     def keys(self) -> list[str]:
         """Implementa .keys() para dict() conversion."""
-
         return [item[0] for item in self._data]
 
     def __iter__(self) -> iter:
         """Implementa __iter__ para dict() conversion."""
-
         return iter(self._data)
 
     def __getitem__(self, key: str) -> list[str]:
         """Implementa __getitem__ para dict behavior."""
-
         for k, v in self._data:
             if k == key:
                 return v
@@ -51,7 +37,6 @@ class MockAttributesDict:
 
 def test_final_line_571_elif_has_attribute_items() -> None:
     """FINAL: Test validation with real entry data."""
-
     config = FlextLDIFModels.Config(strict_validation=True)
     validator = FlextLDIFServices(config=config)
 
@@ -70,7 +55,6 @@ def test_final_line_571_elif_has_attribute_items() -> None:
 
 def test_final_line_574_dict_attributes_obj() -> None:
     """FINAL: Test validation with real entry data."""
-
     config = FlextLDIFModels.Config(strict_validation=True)
     validator = FlextLDIFServices(config=config)
 
@@ -93,7 +77,6 @@ def test_final_line_574_dict_attributes_obj() -> None:
 
 def test_final_line_576_else_return_validation_success() -> None:
     """FINAL: Test validation with real entry data."""
-
     config = FlextLDIFModels.Config(strict_validation=True)
     validator = FlextLDIFServices(config=config)
 
@@ -112,7 +95,6 @@ def test_final_line_576_else_return_validation_success() -> None:
 
 def test_final_line_675_continue_skip_invalid() -> None:
     """FINAL: Linha 675 - continue # Skip invalid lines."""
-
     parser = FlextLDIFServices().parser
 
     ldif_675 = """dn: cn=final_675,dc=example,dc=com
@@ -132,7 +114,6 @@ objectClass: person
 
 def test_final_line_786_continue_empty_or_no_colon() -> None:
     """FINAL: Linha 786 - continue."""
-
     parser = FlextLDIFServices().parser
 
     ldif_786 = """dn: cn=final_786,dc=example,dc=com
@@ -152,7 +133,6 @@ objectClass: person
 
 def test_final_lines_812_813_exception_handling() -> None:
     """FINAL: Linhas 812-813 - except Exception + return fail."""
-
     parser = FlextLDIFServices().parser
 
     with patch.object(
@@ -174,7 +154,6 @@ objectClass: person
 
 def test_final_comprehensive_all_7_lines_absolute_victory() -> None:
     """Test comprehensive validation and parsing functionality."""
-
     config = FlextLDIFModels.Config(strict_validation=True)
     validator = FlextLDIFServices(config=config)
     parser = FlextLDIFServices().parser
@@ -234,7 +213,6 @@ cn: final_exception
 
 def test_final_precision_verification_each_line() -> None:
     """Test precision verification with real data."""
-
     config = FlextLDIFModels.Config(strict_validation=True)
     validator = FlextLDIFServices(config=config)
     parser = FlextLDIFServices().parser

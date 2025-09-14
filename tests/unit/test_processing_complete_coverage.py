@@ -163,7 +163,7 @@ class TestFlextProcessingCompleteCoverage:
 
         # Test that a class can implement the protocol
         class TestChainableHandler:
-            def handle(self, __request: object) -> FlextResult[object]:
+            def handle(self, /, __request: object) -> FlextResult[object]:
                 return FlextResult[object].ok("handled")
 
             def set_next(

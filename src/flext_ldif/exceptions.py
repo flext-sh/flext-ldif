@@ -1,6 +1,4 @@
-"""FLEXT LDIF Exceptions - LDIF-specific exception handling.
-
-Eliminates 127+ lines of duplicated error formatting and context building.
+"""FLEXT LDIF Exceptions - LDIF-specific exception handling using flext-core.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,45 +8,81 @@ from __future__ import annotations
 
 from flext_core import FlextExceptions
 
-# Create LDIF-specific exception classes using flext-core's factory
-_LDIF_EXCEPTIONS = FlextExceptions.create_module_exception_classes("flext_ldif")
-
 # Constants for magic numbers (ZERO TOLERANCE - no magic values)
 _CONTENT_PREVIEW_LENGTH = 50
 _DN_PREVIEW_LENGTH = 80
 
 
-class FlextLDIFExceptions:
-    """LDIF-specific exceptions using flext-core SOURCE OF TRUTH.
-
-    All exception types automatically include:
-    - Context tracking (service/operation/DN)
-    - Error codes (LDIF_PARSE_ERROR, LDIF_VALIDATION_ERROR, etc.)
-    - Structured logging integration
-    - Chain-friendly error handling
-    """
-
-    # Direct access to flext-core exception classes via dictionary
-    BaseError = _LDIF_EXCEPTIONS["FLEXT_LDIFBaseError"]
-    ValidationError = _LDIF_EXCEPTIONS["FLEXT_LDIFValidationError"]
-    ProcessingError = _LDIF_EXCEPTIONS["FLEXT_LDIFProcessingError"]
-    ConfigurationError = _LDIF_EXCEPTIONS["FLEXT_LDIFConfigurationError"]
-    ConnectionError = _LDIF_EXCEPTIONS["FLEXT_LDIFConnectionError"]
-
-    # Reference to LDIF-specific exception classes
-    LdifParseError: type[Exception] = None
-    LdifValidationError: type[Exception] = None
-    LdifProcessingError: type[Exception] = None
-    LdifFileError: type[Exception] = None
-    LdifConfigurationError: type[Exception] = None
+class FlextLDIFExceptions(FlextExceptions):
+    """LDIF-specific exceptions inheriting from flext-core FlextExceptions."""
 
     @classmethod
     def validation_error(cls, message: str, **_kwargs: object) -> Exception:
         """Create a validation error."""
         return cls.ValidationError(message)
 
+    @classmethod
+    def parse_error(cls, message: str, **_kwargs: object) -> Exception:
+        """Create a parse error."""
+        line_number = _kwargs.get("line_number")
+        content_preview = _kwargs.get("content_preview")
+        return LdifParseError(message, line_number=line_number, content_preview=content_preview)
 
-# Define classes outside the FlextLDIFExceptions class to avoid MyPy issues
+    @classmethod
+    def processing_error(cls, message: str, **_kwargs: object) -> Exception:
+        """Create a processing error."""
+        operation = _kwargs.get("operation")
+        entry_count = _kwargs.get("entry_count")
+        return LdifProcessingError(message, operation=operation, entry_count=entry_count)
+
+    @classmethod
+    def file_error(cls, message: str, **_kwargs: object) -> Exception:
+        """Create a file error."""
+        file_path = _kwargs.get("file_path")
+        return LdifFileError(message, file_path=file_path)
+
+    @classmethod
+    def configuration_error(cls, message: str, **_kwargs: object) -> Exception:
+        """Create a configuration error."""
+        config_key = _kwargs.get("config_key")
+        return LdifConfigurationError(message, config_key=config_key)
+
+    @classmethod
+    def connection_error(cls, message: str, **_kwargs: object) -> Exception:
+        """Create a connection error."""
+        return cls.ConnectionError(message)
+
+    @classmethod
+    def timeout_error(cls, message: str, **_kwargs: object) -> Exception:
+        """Create a timeout error."""
+        return cls.TimeoutError(message)
+
+    @classmethod
+    def authentication_error(cls, message: str, **_kwargs: object) -> Exception:
+        """Create an authentication error."""
+        return cls.AuthenticationError(message)
+
+    @classmethod
+    def error(cls, message: str, **_kwargs: object) -> Exception:
+        """Create a generic error."""
+        return cls.BaseError(message)
+
+    @classmethod
+    def entry_error(cls, message: str, **_kwargs: object) -> Exception:
+        """Create an entry error."""
+        dn = _kwargs.get("dn")
+        attribute_name = _kwargs.get("attribute_name")
+        return LdifValidationError(message, dn=dn, attribute_name=attribute_name)
+
+    @classmethod
+    def parse_error_alias(cls, message: str, **_kwargs: object) -> Exception:
+        """Create a parse error alias."""
+        line_number = _kwargs.get("line_number")
+        content_preview = _kwargs.get("content_preview")
+        return LdifParseError(message, line_number=line_number, content_preview=content_preview)
+
+
+# Legacy exception classes for backward compatibility
 class LdifParseError(Exception):
     """LDIF parsing errors with content context."""
 
@@ -149,50 +183,77 @@ class LdifConfigurationError(Exception):
         super().__init__(enriched_message)
 
 
-# Set the class references in FlextLDIFExceptions after class definitions
-FlextLDIFExceptions.LdifParseError = LdifParseError
-FlextLDIFExceptions.LdifValidationError = LdifValidationError
-FlextLDIFExceptions.LdifProcessingError = LdifProcessingError
-FlextLDIFExceptions.LdifFileError = LdifFileError
-FlextLDIFExceptions.LdifConfigurationError = LdifConfigurationError
+# Additional exception classes for test compatibility
+class FlextLDIFError(LdifProcessingError):
+    """Base LDIF error for test compatibility."""
 
 
-# Add this to the FlextLDIFExceptions class methods
-class FlextLDIFExceptionsMethods:
-    """Additional methods for FlextLDIFExceptions class."""
 
-    @classmethod
-    def get_exception_info(cls) -> dict[str, object]:
-        """Get LDIF exception class information."""
-        return {
-            "module": "flext_ldif.exceptions",
-            "base_exceptions": [
-                "BaseError",
-                "ValidationError",
-                "ProcessingError",
-                "ConfigurationError",
-                "ExternalServiceError",
-            ],
-            "ldif_specific": [
-                "LdifParseError",
-                "LdifValidationError",
-                "LdifProcessingError",
-                "LdifFileError",
-                "LdifConfigurationError",
-            ],
-            "flext_core_integration": True,
-        }
+class FlextLDIFParseError(LdifParseError):
+    """LDIF parse error for test compatibility."""
 
 
-# Convenience aliases for common usage patterns - these reference the module-level classes
-# LdifParseError = LdifParseError (already defined above)
-# LdifValidationError = LdifValidationError (already defined above)
-# LdifProcessingError = LdifProcessingError (already defined above)
-# LdifFileError = LdifFileError (already defined above)
-# LdifConfigurationError = LdifConfigurationError (already defined above)
+
+class FlextLDIFValidationError(LdifValidationError):
+    """LDIF validation error for test compatibility."""
+
+
+
+class FlextLDIFProcessingError(LdifProcessingError):
+    """LDIF processing error for test compatibility."""
+
+
+
+class FlextLDIFFileError(LdifFileError):
+    """LDIF file error for test compatibility."""
+
+
+
+class FlextLDIFConfigurationError(LdifConfigurationError):
+    """LDIF configuration error for test compatibility."""
+
+
+
+class FlextLDIFConnectionError(Exception):
+    """LDIF connection error for test compatibility."""
+
+
+
+class FlextLDIFTimeoutError(Exception):
+    """LDIF timeout error for test compatibility."""
+
+
+
+class FlextLDIFAuthenticationError(Exception):
+    """LDIF authentication error for test compatibility."""
+
+
+
+class FlextLDIFErrorCodes:
+    """LDIF error codes for test compatibility."""
+
+    PARSE_ERROR = "LDIF_PARSE_ERROR"
+    VALIDATION_ERROR = "LDIF_VALIDATION_ERROR"
+    PROCESSING_ERROR = "LDIF_PROCESSING_ERROR"
+    FILE_ERROR = "LDIF_FILE_ERROR"
+    CONFIGURATION_ERROR = "LDIF_CONFIGURATION_ERROR"
+    CONNECTION_ERROR = "LDIF_CONNECTION_ERROR"
+    TIMEOUT_ERROR = "LDIF_TIMEOUT_ERROR"
+    AUTHENTICATION_ERROR = "LDIF_AUTHENTICATION_ERROR"
+
 
 __all__ = [
+    "FlextLDIFAuthenticationError",
+    "FlextLDIFConfigurationError",
+    "FlextLDIFConnectionError",
+    "FlextLDIFError",
+    "FlextLDIFErrorCodes",
     "FlextLDIFExceptions",
+    "FlextLDIFFileError",
+    "FlextLDIFParseError",
+    "FlextLDIFProcessingError",
+    "FlextLDIFTimeoutError",
+    "FlextLDIFValidationError",
     "LdifConfigurationError",
     "LdifFileError",
     "LdifParseError",

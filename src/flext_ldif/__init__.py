@@ -12,7 +12,12 @@ from flext_ldif.api import FlextLDIFAPI
 from flext_ldif.cli import main
 from flext_ldif.config import FlextLDIFConfig, get_ldif_config, initialize_ldif_config
 from flext_ldif.constants import FlextLDIFConstants
-from flext_ldif.exceptions import FlextLDIFExceptions
+from flext_ldif.exceptions import (
+    FlextLDIFExceptions,
+    LdifParseError as FlextLDIFParseError,
+    LdifProcessingError as FlextLDIFError,
+    LdifValidationError as FlextLDIFValidationError,
+)
 from flext_ldif.format_handlers import FlextLDIFFormatHandler
 from flext_ldif.format_validators import FlextLDIFFormatValidators
 from flext_ldif.models import FlextLDIFModels
@@ -40,13 +45,16 @@ __all__ = [
     "FlextLDIFAPI",
     "FlextLDIFConfig",
     "FlextLDIFConstants",
+    "FlextLDIFError",
     "FlextLDIFExceptions",
     "FlextLDIFFormatHandler",
     "FlextLDIFFormatValidators",
     "FlextLDIFModels",
+    "FlextLDIFParseError",
     "FlextLDIFProtocols",
     "FlextLDIFServices",
     "FlextLDIFUtilities",
+    "FlextLDIFValidationError",
     "get_ldif_config",
     "initialize_ldif_config",
     "main",

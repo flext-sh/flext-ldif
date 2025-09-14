@@ -1,10 +1,9 @@
-
 """Domain specification tests for LDIF entries.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
-This module tests domain specification patterns and business rule logic for LDIF entries, 
+This module tests domain specification patterns and business rule logic for LDIF entries,
 following Domain-Driven Design specification patterns integrated via composition in the main domain entities.
 
 The specification patterns were consolidated into FlextLDIFModels.Entry methods to

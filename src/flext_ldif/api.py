@@ -447,6 +447,37 @@ class FlextLDIFAPI:
 
         return filtered_files
 
+    # Delegation methods for backward compatibility and ease of use
+    def parse_file(self, file_path: str | Path) -> FlextResultEntries:
+        """Parse LDIF file - delegates to Operations.parse_file."""
+        return self._operations.parse_file(file_path)
+
+    def parse_string(self, content: str) -> FlextResultEntries:
+        """Parse LDIF string - delegates to Operations.parse_string."""
+        return self._operations.parse_string(content)
+
+    def validate_entries(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultBool:
+        """Validate entries - delegates to Operations.validate_entries."""
+        return self._operations.validate_entries(entries)
+
+    def write_file(
+        self,
+        entries: list[FlextLDIFModels.Entry],
+        file_path: str | Path,
+        *,
+        _encoding: str = "utf-8"
+    ) -> FlextResultBool:
+        """Write LDIF file - delegates to Operations.write_file."""
+        return self._operations.write_file(entries, file_path)
+
+    def get_entry_statistics(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultDict:
+        """Get entry statistics - delegates to Analytics.entry_statistics."""
+        return self._analytics.entry_statistics(entries)
+
+    def filter_persons(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultEntries:
+        """Filter person entries - delegates to Filters.persons."""
+        return self._filters.persons(entries)
+
 
 __all__ = [
     "FlextLDIFAPI",
