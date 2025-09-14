@@ -465,18 +465,68 @@ class FlextLDIFAPI:
         entries: list[FlextLDIFModels.Entry],
         file_path: str | Path,
         *,
-        _encoding: str = "utf-8"
+        _encoding: str = "utf-8",
     ) -> FlextResultBool:
         """Write LDIF file - delegates to Operations.write_file."""
         return self._operations.write_file(entries, file_path)
 
-    def get_entry_statistics(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultDict:
+    def get_entry_statistics(
+        self, entries: list[FlextLDIFModels.Entry]
+    ) -> FlextResultDict:
         """Get entry statistics - delegates to Analytics.entry_statistics."""
         return self._analytics.entry_statistics(entries)
 
-    def filter_persons(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultEntries:
+    def filter_persons(
+        self, entries: list[FlextLDIFModels.Entry]
+    ) -> FlextResultEntries:
         """Filter person entries - delegates to Filters.persons."""
         return self._filters.persons(entries)
+
+    # Delegation methods for backward compatibility and ease of use
+    def parse(self, content: str) -> FlextResultEntries:
+        """Parse LDIF content - alias for parse_string."""
+        return self.parse_string(content)
+
+    def validate(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultBool:
+        """Validate entries - alias for validate_entries."""
+        return self.validate_entries(entries)
+
+    def write(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultStr:
+        """Write entries to string - alias for write_string."""
+        return self._operations.write_string(entries)
+
+    def filter_by_objectclass(
+        self, entries: list[FlextLDIFModels.Entry], object_class: str
+    ) -> FlextResultEntries:
+        """Filter entries by object class - delegates to Filters.by_object_class."""
+        return self._filters.by_object_class(entries, object_class)
+
+    def filter_groups(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultEntries:
+        """Filter group entries - delegates to Filters.groups."""
+        return self._filters.groups(entries)
+
+    def filter_organizational_units(
+        self, entries: list[FlextLDIFModels.Entry]
+    ) -> FlextResultEntries:
+        """Filter organizational unit entries - delegates to Filters.organizational_units."""
+        return self._filters.organizational_units(entries)
+
+    def filter_valid(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultEntries:
+        """Filter valid entries - delegates to Filters.valid_entries."""
+        return self._filters.valid_entries(entries)
+
+    def analyze(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultDict:
+        """Analyze entries - alias for get_entry_statistics."""
+        return self.get_entry_statistics(entries)
+
+    def find_entry_by_dn(
+        self, entries: list[FlextLDIFModels.Entry], dn: str
+    ) -> FlextResult[FlextLDIFModels.Entry | None]:
+        """Find entry by DN."""
+        for entry in entries:
+            if entry.dn.value == dn:
+                return FlextResult[FlextLDIFModels.Entry | None].ok(entry)
+        return FlextResult[FlextLDIFModels.Entry | None].ok(None)
 
 
 __all__ = [

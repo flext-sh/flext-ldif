@@ -18,8 +18,8 @@ from flext_ldif.models import FlextLDIFModels
 class FlextLDIFParserService(FlextLDIFBaseService[list[FlextLDIFModels.Entry]]):
     """LDIF Parser Service - Single Responsibility.
 
-    Handles all LDIF parsing operations with enterprise-grade error handling.
-    Uses flext-core SOURCE OF TRUTH exclusively.
+    Handles LDIF parsing operations with error handling.
+    Uses flext-core patterns exclusively.
     """
 
     def __init__(self, format_handler: FlextLDIFFormatHandler | None = None) -> None:

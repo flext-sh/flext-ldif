@@ -21,6 +21,10 @@ ENTRY_IS_COMPLETE = True
 if TYPE_CHECKING:
     from pathlib import Path
 
+# Type aliases for test compatibility
+AttributeDict = dict[str, list[str]]
+LDIFAttributeDict = dict[str, list[str]]
+
 
 class FlextLDIFUtilities:
     """LDIF-specific utilities extending flext-core FlextUtilities.

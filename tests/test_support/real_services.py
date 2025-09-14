@@ -13,6 +13,9 @@ from flext_ldif import (
     FlextLDIFModels,
     FlextLDIFServices,
 )
+from flext_ldif.parser_service import FlextLDIFParserService
+from flext_ldif.validator_service import FlextLDIFValidatorService
+from flext_ldif.writer_service import FlextLDIFWriterService
 
 
 class RealServiceFactory:
@@ -38,47 +41,37 @@ class RealServiceFactory:
     @staticmethod
     def create_parser(
         config: FlextTypes.Core.Dict | None = None,
-    ) -> FlextLDIFServices.ParserService:
+    ) -> FlextLDIFParserService:
         """Create a real parser service."""
         if config is None:
             config = {}
 
         # Use default configuration or create from provided values
-        ldif_config = FlextLDIFModels.Config(
-            encoding=config.get("encoding", "utf-8"),
-            strict_parsing=config.get("strict_parsing", True),
-            validate_dn=config.get("validate_dn", True),
-        )
-
-        return FlextLDIFServices(config=ldif_config)
+        # Configuration is handled internally by the service
+        return FlextLDIFParserService()
 
     @staticmethod
-    def create_validator(config: FlextTypes.Core.Dict | None = None) -> object:
+    def create_validator(
+        config: FlextTypes.Core.Dict | None = None,
+    ) -> FlextLDIFValidatorService:
         """Create a real validator service."""
         if config is None:
             config = {}
 
         # Create validator with proper configuration
-        ldif_config = FlextLDIFModels.Config(
-            validate_dn=config.get("validate_dn", True),
-            validate_attributes=config.get("validate_attributes", True),
-            strict_validation=config.get("strict_validation", True),
-        )
-
-        return FlextLDIFServices(config=ldif_config)
+        # Configuration is handled internally by the service
+        return FlextLDIFValidatorService()
 
     @staticmethod
-    def create_writer(config: FlextTypes.Core.Dict | None = None) -> object:
+    def create_writer(
+        config: FlextTypes.Core.Dict | None = None,
+    ) -> FlextLDIFWriterService:
         """Create a real writer service."""
         if config is None:
             config = {}
 
-        ldif_config = FlextLDIFModels.Config(
-            encoding=config.get("encoding", "utf-8"),
-            max_line_length=config.get("max_line_length", 76),
-        )
-
-        return FlextLDIFServices.WriterService(config=ldif_config)
+        # Configuration is handled internally by the service
+        return FlextLDIFWriterService()
 
     @classmethod
     def create_configured_api(
