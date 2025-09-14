@@ -11,7 +11,7 @@ from typing import Self
 
 from flext_core import FlextTypes
 
-from flext_ldif.ldif_data import LdifSample, LdifTestData
+from tests.test_support.ldif_data import LdifSample, LdifTestData
 
 
 class TestFileManager:

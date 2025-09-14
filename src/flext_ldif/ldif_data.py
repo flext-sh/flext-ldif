@@ -41,6 +41,16 @@ objectClass: person
 sn: TestUser
 """
 
+    @property
+    def description(self) -> str:
+        """Sample description for test compatibility."""
+        return "Basic LDIF sample"
+
+    @property
+    def content(self) -> str:
+        """Sample content for test compatibility."""
+        return self.BASIC_LDIF
+
 
 class LdifTestData:
     """LDIF test data utilities."""
@@ -82,6 +92,34 @@ class LdifTestData:
                 "member": ["cn=complex,dc=example,dc=com"],
             },
         ]
+
+    @staticmethod
+    def all_samples() -> dict[str, LdifSample]:
+        """Get all samples for test compatibility."""
+        sample = LdifSample()
+        return {
+            "basic": sample,
+            "complex": sample,
+            "invalid": sample,
+        }
+
+    @staticmethod
+    def large_dataset(num_entries: int) -> str:
+        """Generate large dataset for test compatibility."""
+        entries = [
+            f"""dn: cn=user{i},dc=example,dc=com
+cn: user{i}
+objectClass: person
+sn: User{i}
+"""
+            for i in range(num_entries)
+        ]
+        return "\n".join(entries)
+
+    @staticmethod
+    def invalid_data() -> str:
+        """Get invalid data for test compatibility."""
+        return LdifSample.INVALID_LDIF
 
 
 __all__ = ["LdifSample", "LdifTestData"]

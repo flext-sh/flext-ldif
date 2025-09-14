@@ -23,9 +23,9 @@ from flext_ldif.exceptions import FlextLDIFExceptions
 
 
 class FlextLDIFModels(BaseModel):
-    """Unified LDIF domain models with enterprise-grade architecture.
+    """LDIF domain models with service architecture.
 
-    Single consolidated class containing all LDIF model definitions
+    Single consolidated class containing LDIF model definitions
     following SOLID principles, Python 3.13 patterns, and FLEXT ecosystem integration.
 
     Nested models provide organized functionality while maintaining
