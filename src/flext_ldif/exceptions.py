@@ -24,11 +24,18 @@ class FlextLDIFExceptions(FlextExceptions):
         dn = _kwargs.get("entry_dn") or _kwargs.get("dn")
         attribute_name = _kwargs.get("attribute_name")
 
-        return LdifValidationError(
+        error = LdifValidationError(
             message,
             dn=dn if isinstance(dn, str) else None,
             attribute_name=attribute_name if isinstance(attribute_name, str) else None,
         )
+
+        # Add validation_details if validation_rule is provided
+        validation_rule = _kwargs.get("validation_rule")
+        if validation_rule:
+            error.validation_details = {"rule": validation_rule}
+
+        return error
 
     @classmethod
     def parse_error(cls, message: str, **_kwargs: object) -> LdifParseError:
@@ -193,6 +200,7 @@ class LdifValidationError(Exception):
     ) -> None:
         """Initialize with validation context."""
         self.operation = "ldif_entry_processing"
+        self.validation_details: dict[str, object] = {}  # Add validation_details attribute
         enriched_message = message
         if dn:
             dn_preview = dn[:_DN_PREVIEW_LENGTH] if len(dn) > _DN_PREVIEW_LENGTH else dn

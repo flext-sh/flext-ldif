@@ -21,7 +21,9 @@ class TestServicesSpecificUncoveredLines:
         # Let's test with empty content to verify the behavior
         result = parser.validate_ldif_syntax("")
         assert result.is_failure
-        assert "Empty LDIF content" in result.error
+        error_message = result.error
+        assert error_message is not None
+        assert "Empty LDIF content" in error_message
 
     def test_parser_validate_ldif_syntax_exception_handling(self) -> None:
         """Test parser validate_ldif_syntax exception handling."""
@@ -42,7 +44,9 @@ class TestServicesSpecificUncoveredLines:
         # Test content that doesn't start with dn:
         result = parser.validate_ldif_syntax("cn: test\nobjectClass: person")
         assert result.is_failure
-        assert "LDIF must start with dn:" in result.error
+        error_message = result.error
+        assert error_message is not None
+        assert "LDIF must start with dn:" in error_message
 
     def test_parser_validate_ldif_syntax_valid_content(self) -> None:
         """Test parser validate_ldif_syntax with valid content."""
@@ -62,7 +66,9 @@ class TestServicesSpecificUncoveredLines:
 
         result = validator.validate_entries([])
         assert result.is_failure
-        assert "Cannot validate empty entry list" in result.error
+        error_message = result.error
+        assert error_message is not None
+        assert "Cannot validate empty entry list" in error_message
 
     def test_validator_validate_entry_structure_exception(self) -> None:
         """Test validator validate_entry_structure exception handling."""
