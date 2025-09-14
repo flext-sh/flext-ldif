@@ -7,13 +7,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TypeVar
 
-from flext_core import FlextDomainService, FlextResult
+from flext_core import FlextDomainService, FlextResult, T
 
 from flext_ldif.models import FlextLDIFModels
-
-T = TypeVar("T")
 
 
 class FlextLDIFBaseService(FlextDomainService[T], ABC):

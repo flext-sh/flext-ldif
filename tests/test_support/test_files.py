@@ -1,3 +1,5 @@
+"""Test file utilities for flext-ldif tests."""
+
 from __future__ import annotations
 
 import shutil

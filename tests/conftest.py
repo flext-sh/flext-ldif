@@ -1,3 +1,5 @@
+"""Test configuration and fixtures for flext-ldif tests."""
+
 from __future__ import annotations
 
 import os
@@ -34,11 +36,12 @@ def set_test_environment() -> Generator[None]:
 
 # Docker container initialization (session-scoped, started once)
 @pytest.fixture(scope="session", autouse=True)
-def ensure_docker_container(docker_openldap_container: object) -> Generator[None]:
+def ensure_docker_container(docker_openldap_container: object) -> None:
     """Ensure Docker container is started for the test session."""
+    # Suppress unused parameter warning - fixture is used for side effects
+    _ = docker_openldap_container
     # The docker_openldap_container fixture will be invoked automatically
     # and will start/stop the container for the entire test session
-    return
 
 
 # LDIF processing fixtures - optimized with real services

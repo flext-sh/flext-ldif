@@ -1,4 +1,3 @@
-
 """Tests targeting exact uncovered lines.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.

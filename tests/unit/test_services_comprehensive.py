@@ -1,18 +1,12 @@
+"""Test comprehensive LDIF services functionality."""
 
 from __future__ import annotations
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
+
 from flext_ldif import FlextLDIFModels
 from flext_ldif.services import FlextLDIFServices
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
-from __future__ import annotations
-
-
 
 
 class TestRepositoryServiceComprehensive:
@@ -20,7 +14,6 @@ class TestRepositoryServiceComprehensive:
 
     def test_filter_entries_by_object_class_success(self) -> None:
         """Test filter_entries_by_object_class with various object classes."""
-
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -62,7 +55,6 @@ class TestRepositoryServiceComprehensive:
 
     def test_filter_entries_by_object_class_empty_input(self) -> None:
         """Test filter_entries_by_object_class with empty object class."""
-
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -86,7 +78,6 @@ class TestRepositoryServiceComprehensive:
 
     def test_filter_entries_by_attribute_with_value(self) -> None:
         """Test filter_entries_by_attribute with specific value matching."""
-
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -131,7 +122,6 @@ class TestRepositoryServiceComprehensive:
 
     def test_filter_entries_by_attribute_empty_input(self) -> None:
         """Test filter_entries_by_attribute with empty attribute name."""
-
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -155,7 +145,6 @@ class TestRepositoryServiceComprehensive:
 
     def test_find_by_dn_error_cases(self) -> None:
         """Test find_by_dn with error conditions."""
-
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -178,7 +167,6 @@ class TestRepositoryServiceComprehensive:
 
     def test_find_by_dn_not_found(self) -> None:
         """Test find_by_dn when DN is not found - covers line 424."""
-
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -204,7 +192,6 @@ class TestRepositoryServiceComprehensive:
 
     def test_get_statistics_empty_entries(self) -> None:
         """Test get_statistics with empty entries list."""
-
         service = FlextLDIFServices().repository
 
         result = service.get_statistics([])
@@ -216,7 +203,6 @@ class TestRepositoryServiceComprehensive:
 
     def test_get_statistics_mixed_entries(self) -> None:
         """Test get_statistics with mixed entry types."""
-
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -259,7 +245,6 @@ class TestValidatorServiceComprehensive:
 
     def test_validate_unique_dns_duplicate_found(self) -> None:
         """Test validate_unique_dns with duplicate DNs."""
-
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -291,7 +276,6 @@ class TestValidatorServiceComprehensive:
 
     def test_validate_unique_dns_case_insensitive(self) -> None:
         """Test validate_unique_dns is case-insensitive."""
-
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -315,7 +299,6 @@ class TestValidatorServiceComprehensive:
 
     def test_validate_dn_format_empty(self) -> None:
         """Test validate_dn_format with empty DN."""
-
         service = FlextLDIFServices().validator
 
         result = service.validate_dn_format("")
@@ -323,7 +306,6 @@ class TestValidatorServiceComprehensive:
 
     def test_validate_entry_structure_success(self) -> None:
         """Test validate_entry_structure with valid entry."""
-
         entry = FlextLDIFModels.Entry.model_validate(
             {
                 "dn": "uid=valid,ou=people,dc=example,dc=com",
@@ -338,7 +320,6 @@ class TestValidatorServiceComprehensive:
 
     def test_validate_dn_format_success(self) -> None:
         """Test validate_dn_format with valid DN."""
-
         service = FlextLDIFServices().validator
 
         result = service.validate_dn_format("uid=test,ou=people,dc=example,dc=com")
@@ -346,7 +327,6 @@ class TestValidatorServiceComprehensive:
 
     def test_validate_entries_failure(self) -> None:
         """Test validate_entries with invalid entry that fails validation."""
-
         # Create a mock entry that will fail validation
         service = FlextLDIFServices().validator
 
@@ -361,7 +341,6 @@ class TestParserServiceComprehensive:
 
     def test_parse_ldif_content_empty_content(self) -> None:
         """Test parse_ldif_content with empty content."""
-
         service = FlextLDIFServices().parser
 
         # Test empty string
@@ -376,7 +355,6 @@ class TestParserServiceComprehensive:
 
     def test_validate_ldif_syntax_success(self) -> None:
         """Test validate_ldif_syntax with valid LDIF."""
-
         service = FlextLDIFServices().parser
 
         valid_ldif = """dn: uid=test,ou=people,dc=example,dc=com
@@ -390,7 +368,6 @@ objectClass: person
 
     def test_validate_ldif_syntax_missing_colon(self) -> None:
         """Test validate_ldif_syntax with missing colon."""
-
         service = FlextLDIFServices().parser
 
         invalid_ldif = """dn: uid=test,ou=people,dc=example,dc=com
@@ -404,7 +381,6 @@ objectClass: person
 
     def test_validate_ldif_syntax_attribute_before_dn(self) -> None:
         """Test validate_ldif_syntax with attribute before DN."""
-
         service = FlextLDIFServices().parser
 
         invalid_ldif = """cn: Test User
@@ -418,7 +394,6 @@ objectClass: person
 
     def test_parse_ldif_file_not_found(self) -> None:
         """Test parse_ldif_file with non-existent file."""
-
         service = FlextLDIFServices().parser
 
         result = service.parse_ldif_file("/nonexistent/path/file.ldif")
@@ -427,7 +402,6 @@ objectClass: person
 
     def test_parse_ldif_file_success(self) -> None:
         """Test parse_ldif_file with real file."""
-
         service = FlextLDIFServices().parser
 
         ldif_content = """dn: uid=filetest,ou=people,dc=example,dc=com
@@ -448,7 +422,6 @@ objectClass: person
 
     def test_parse_entry_block_empty(self) -> None:
         """Test _parse_entry_block with empty block."""
-
         service = FlextLDIFServices().parser
 
         result = service._parse_entry_block("")
@@ -457,7 +430,6 @@ objectClass: person
 
     def test_parse_entry_block_missing_dn(self) -> None:
         """Test _parse_entry_block with missing DN."""
-
         service = FlextLDIFServices().parser
 
         block_without_dn = """cn: Test User
@@ -471,7 +443,6 @@ objectClass: person
 
     def test_parse_entry_block_success(self) -> None:
         """Test _parse_entry_block with valid block."""
-
         service = FlextLDIFServices().parser
 
         valid_block = """dn: uid=blocktest,ou=people,dc=example,dc=com
@@ -493,7 +464,6 @@ class TestTransformerServiceComprehensive:
 
     def test_transformer_service_initialization(self) -> None:
         """Test TransformerService initialization."""
-
         service = FlextLDIFServices().transformer
         assert service.get_config_info() is not None
 
@@ -505,7 +475,6 @@ class TestTransformerServiceComprehensive:
 
     def test_transformer_service_execute(self) -> None:
         """Test TransformerService execute method."""
-
         service = FlextLDIFServices().transformer
 
         result = service.execute()
@@ -514,7 +483,6 @@ class TestTransformerServiceComprehensive:
 
     def test_transform_entry_default(self) -> None:
         """Test transform_entry default implementation."""
-
         entry = FlextLDIFModels.Entry.model_validate(
             {
                 "dn": "uid=transform,ou=people,dc=example,dc=com",
@@ -533,7 +501,6 @@ class TestTransformerServiceComprehensive:
 
     def test_transform_entries_empty(self) -> None:
         """Test transform_entries with empty list."""
-
         service = FlextLDIFServices().transformer
 
         def identity_transform(entry: FlextLDIFModels.Entry) -> FlextLDIFModels.Entry:
@@ -545,7 +512,6 @@ class TestTransformerServiceComprehensive:
 
     def test_transform_entries_success(self) -> None:
         """Test transform_entries with real entries."""
-
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -575,7 +541,6 @@ class TestTransformerServiceComprehensive:
 
     def test_normalize_dns_default(self) -> None:
         """Test normalize_dns default implementation."""
-
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -597,7 +562,6 @@ class TestAnalyticsServiceComprehensive:
 
     def test_analyze_attribute_distribution(self) -> None:
         """Test analyze_attribute_distribution method."""
-
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -631,7 +595,6 @@ class TestAnalyticsServiceComprehensive:
 
     def test_analyze_dn_depth(self) -> None:
         """Test analyze_dn_depth method."""
-
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -664,7 +627,6 @@ class TestAnalyticsServiceComprehensive:
 
     def test_get_objectclass_distribution(self) -> None:
         """Test get_objectclass_distribution method."""
-
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -697,7 +659,6 @@ class TestAnalyticsServiceComprehensive:
 
     def test_get_dn_depth_analysis_alias(self) -> None:
         """Test get_dn_depth_analysis as alias for analyze_dn_depth."""
-
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -715,7 +676,6 @@ class TestAnalyticsServiceComprehensive:
 
     def test_analyze_patterns_alias(self) -> None:
         """Test analyze_patterns as alias for analyze_patterns."""
-
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -739,7 +699,6 @@ class TestServiceAliases:
 
     def test_repository_service_aliases(self) -> None:
         """Test RepositoryService method aliases."""
-
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -763,7 +722,6 @@ class TestServiceAliases:
 
     def test_validator_service_aliases(self) -> None:
         """Test ValidatorService method aliases."""
-
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -789,7 +747,6 @@ class TestServiceAliases:
 
     def test_writer_service_aliases(self) -> None:
         """Test WriterService method aliases."""
-
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -808,7 +765,6 @@ class TestServiceAliases:
 
     def test_parser_service_aliases(self) -> None:
         """Test ParserService method aliases."""
-
         service = FlextLDIFServices().parser
 
         ldif_content = """dn: uid=test,ou=people,dc=example,dc=com

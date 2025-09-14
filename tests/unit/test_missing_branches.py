@@ -1,3 +1,5 @@
+"""Test missing branches coverage for flext-ldif."""
+
 from __future__ import annotations
 
 import tempfile

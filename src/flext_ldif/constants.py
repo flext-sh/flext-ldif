@@ -1,4 +1,4 @@
-"""FLEXT LDIF Constants - Uses flext-core patterns but defines LDIF-specific values.
+"""FLEXT LDIF Constants - Inherits from flext-core FlextConstants.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -8,8 +8,10 @@ from __future__ import annotations
 
 from typing import ClassVar, Final
 
+from flext_core import FlextConstants
 
-class FlextLDIFConstants:
+
+class FlextLDIFConstants(FlextConstants):
     """LDIF-specific constants for the flext-ldif domain."""
 
     # LDIF Format Constants

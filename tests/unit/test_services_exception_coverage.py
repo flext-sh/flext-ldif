@@ -1,17 +1,13 @@
+"""Test services exception coverage."""
 
 from __future__ import annotations
 
 from unittest.mock import Mock
+
 from flext_tests import FlextTestsUtilities
+
 from flext_ldif.models import FlextLDIFModels
 from flext_ldif.services import FlextLDIFServices
-
-"""
-
-from __future__ import annotations
-
-
-
 
 
 class TestServicesExceptionCoverage:
@@ -19,7 +15,6 @@ class TestServicesExceptionCoverage:
 
     def test_validator_service_exception_handling(self) -> None:
         """Test exception handling in ValidatorService.validate_entries."""
-
         # Create config with strict_validation enabled
         config = FlextLDIFModels.Config(strict_validation=True)
         validator = FlextLDIFServices(config=config)
@@ -48,7 +43,6 @@ class TestServicesExceptionCoverage:
 
     def test_validator_service_empty_entries_optimization(self) -> None:
         """Test empty entries optimization path."""
-
         services = FlextLDIFServices()
         validator = services.validator
 
@@ -63,7 +57,6 @@ class TestServicesExceptionCoverage:
 
     def test_validator_service_none_entries_handling(self) -> None:
         """Test None entries handling."""
-
         validator = FlextLDIFServices().validator
 
         # Test with None (should handle gracefully)

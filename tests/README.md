@@ -1,10 +1,10 @@
 # FLEXT-LDIF Test Suite
 
-This directory contains the comprehensive test suite for FLEXT-LDIF, implementing enterprise-grade testing standards with multiple test categories, fixtures, and quality validation patterns.
+This directory contains the test suite for FLEXT-LDIF, implementing testing standards with multiple test categories, fixtures, and quality validation patterns.
 
 ## Overview
 
-The test suite provides comprehensive coverage across all architectural layers, test categories, and integration scenarios while maintaining high-quality standards and performance benchmarks for enterprise LDIF processing operations.
+The test suite provides coverage across all architectural layers, test categories, and integration scenarios while maintaining high-quality standards and performance benchmarks for enterprise LDIF processing operations.
 
 ## Test Organization
 

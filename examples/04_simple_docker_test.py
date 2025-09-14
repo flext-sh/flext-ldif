@@ -15,7 +15,7 @@ from tests.fixtures.docker_fixtures import (
     check_docker_available,
 )
 
-from flext_ldif import FlextLDIFCore, FlextLDIFFormatHandler
+from flext_ldif import FlextLDIFAPI, FlextLDIFFormatHandler
 
 
 def test_with_docker_container() -> bool | None:
@@ -42,7 +42,8 @@ def test_with_docker_container() -> bool | None:
             return False
 
         # Test parsing
-        parse_result = FlextLDIFFormatHandler.parse_ldif(ldif_data)
+        handler = FlextLDIFFormatHandler()
+        parse_result = handler.parse_ldif(ldif_data)
         entries = FlextResult.unwrap_or_raise(parse_result)
 
         # Constants for testing
@@ -57,9 +58,10 @@ def test_with_docker_container() -> bool | None:
             pass
 
         # Test validation - parse first, then validate
-        parse_result2 = FlextLDIFFormatHandler.parse_ldif(ldif_data)
+        parse_result2 = handler.parse_ldif(ldif_data)
         entries2 = FlextResult.unwrap_or_raise(parse_result2)
-        validate_result = FlextLDIFCore().validate_entries(entries2)
+        api = FlextLDIFAPI()
+        validate_result = api.validate_entries(entries2)
         FlextResult.unwrap_or_raise(validate_result)
 
         # Usar API real para filtrar pessoas e grupos

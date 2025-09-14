@@ -4,10 +4,10 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from flext_ldif.ldif_data import LdifSample, LdifTestData
-from flext_ldif.real_services import RealServiceFactory
-from flext_ldif.test_files import TestFileManager
-from flext_ldif.validators import TestValidators
+from tests.test_support.ldif_data import LdifSample, LdifTestData
+from tests.test_support.real_services import RealServiceFactory
+from tests.test_support.test_files import TestFileManager
+from tests.test_support.validators import TestValidators
 
 __all__ = [
     "LdifSample",

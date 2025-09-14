@@ -1,30 +1,16 @@
+"""Test services 15 lines absolute final coverage."""
 
 from __future__ import annotations
 
 from pathlib import Path
 from unittest.mock import Mock, patch
+
 from flext_ldif.models import FlextLDIFModels
 from flext_ldif.services import FlextLDIFServices
-
-LINHAS TARGET:
-- 571-578: TypeGuards has_attribute path alternativo
-- 675: continue para skip invalid lines
-- 724-727: Exception handling em file reading
-- 762-763: Syntax validation exception
-- 786: continue em parsing loop
-- 812-815: Parse entry block exception
-- 862-863: failed_results error handling
-- 868-871: Transform entries exception
-"""
-
-from __future__ import annotations
-
-
 
 
 def test_lines_571_578_typeguards_alternative_path() -> None:
     """CIRÚRGICO: Forçar path das linhas 571-578 - TypeGuards alternativo."""
-
     validator = FlextLDIFServices().validator
 
     # Criar entry com attributes que NÃO tem método items() para forçar linha 571-578
@@ -49,7 +35,6 @@ def test_lines_571_578_typeguards_alternative_path() -> None:
 
 def test_line_675_continue_invalid_lines() -> None:
     """CIRÚRGICO: Forçar linha 675 - continue para skip invalid lines."""
-
     parser = FlextLDIFServices().parser
 
     # LDIF com linha SEM dois pontos para forçar continue na linha 675
@@ -72,7 +57,6 @@ objectClass: person
 
 def test_lines_724_727_file_reading_exception() -> None:
     """CIRÚRGICO: Forçar linhas 724-727 - Exception handling em file reading."""
-
     parser = FlextLDIFServices().parser
 
     # Mock Path methods para passar no exists() mas falhar no read_text()
@@ -94,7 +78,6 @@ def test_lines_724_727_file_reading_exception() -> None:
 
 def test_lines_762_763_syntax_validation_exception() -> None:
     """CIRÚRGICO: Forçar linhas 762-763 - Syntax validation exception."""
-
     parser = FlextLDIFServices().parser
 
     # Mock interno para forçar exceção na validação de sintaxe
@@ -116,7 +99,6 @@ def test_lines_762_763_syntax_validation_exception() -> None:
 
 def test_line_786_continue_in_parsing_loop() -> None:
     """CIRÚRGICO: Forçar linha 786 - continue em parsing loop."""
-
     parser = FlextLDIFServices().parser
 
     # LDIF com linha VAZIA ou sem dois pontos para forçar continue 786
@@ -139,7 +121,6 @@ objectClass: person
 
 def test_lines_812_815_parse_entry_block_exception() -> None:
     """CIRÚRGICO: Forçar linhas 812-815 - Parse entry block exception."""
-
     parser = FlextLDIFServices().parser
 
     # Mock Factory.create_entry para forçar exceção 812-815
@@ -162,7 +143,6 @@ objectClass: person
 
 def test_lines_862_863_failed_results_error_handling() -> None:
     """Test error handling in transformer."""
-
     transformer = FlextLDIFServices().transformer
 
     # Create test entry
@@ -175,7 +155,6 @@ def test_lines_862_863_failed_results_error_handling() -> None:
     # Test with identity transform function
     def identity_transform(entry: FlextLDIFModels.Entry) -> FlextLDIFModels.Entry:
         """Identity transformation for testing."""
-
         return entry
 
     result = transformer.transform_entries([entry], identity_transform)
@@ -186,7 +165,6 @@ def test_lines_862_863_failed_results_error_handling() -> None:
 
 def test_lines_868_871_transform_entries_exception() -> None:
     """CIRÚRGICO: Forçar linhas 868-871 - Transform entries exception."""
-
     transformer = FlextLDIFServices().transformer
 
     # Usar entry extremo que pode causar exception internamente
@@ -225,7 +203,6 @@ def test_lines_868_871_transform_entries_exception() -> None:
                     entry: FlextLDIFModels.Entry,
                 ) -> FlextLDIFModels.Entry:
                     """Transformação de identidade para teste."""
-
                     return entry
 
                 result = transformer.transform_entries(
@@ -238,7 +215,6 @@ def test_lines_868_871_transform_entries_exception() -> None:
         # Tentar transform com entry extremo
         def identity_transform(entry: FlextLDIFModels.Entry) -> FlextLDIFModels.Entry:
             """Transformação de identidade para teste."""
-
             return entry
 
         result = transformer.transform_entries(extreme_entries, identity_transform)
@@ -247,7 +223,6 @@ def test_lines_868_871_transform_entries_exception() -> None:
 
 def test_comprehensive_all_missing_lines() -> None:
     """TESTE ABRANGENTE: Tentar exercitar TODAS as 15 linhas missing."""
-
     # Instanciar todos os services
     parser = FlextLDIFServices().parser
     validator = FlextLDIFServices().validator
@@ -306,7 +281,6 @@ objectClass: inetOrgPerson
                     entry: FlextLDIFModels.Entry,
                 ) -> FlextLDIFModels.Entry:
                     """Transformação de identidade para teste."""
-
                     return entry
 
                 transformer.transform_entries(

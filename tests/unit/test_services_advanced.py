@@ -1,18 +1,13 @@
+"""Test advanced LDIF services functionality."""
 
 from __future__ import annotations
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
+
 from flext_ldif import FlextLDIFModels
 from flext_ldif.constants import FlextLDIFConstants
 from flext_ldif.services import FlextLDIFServices
-
-SPDX-License-Identifier: MIT
-"""
-
-from __future__ import annotations
-
-
 
 
 class TestFlextLDIFServicesAdvanced:
@@ -20,7 +15,6 @@ class TestFlextLDIFServicesAdvanced:
 
     def test_repository_service_initialization_and_execution(self) -> None:
         """Test RepositoryService initialization and execute method."""
-
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -54,7 +48,6 @@ class TestFlextLDIFServicesAdvanced:
 
     def test_repository_service_find_entry_by_dn(self) -> None:
         """Test find_entry_by_dn method with real entries."""
-
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -98,7 +91,6 @@ class TestFlextLDIFServicesAdvanced:
 
     def test_writer_service_format_entry_for_display(self) -> None:
         """Test format_entry_for_display method with real entry."""
-
         entry = FlextLDIFModels.Entry.model_validate(
             {
                 "dn": "cn=John Doe,ou=people,dc=example,dc=com",
@@ -125,7 +117,6 @@ class TestFlextLDIFServicesAdvanced:
 
     def test_writer_service_write_entries_to_file_real_file(self) -> None:
         """Test write_entries_to_file with real file operations."""
-
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
@@ -162,7 +153,6 @@ class TestFlextLDIFServicesAdvanced:
 
     def test_writer_service_write_entry_single(self) -> None:
         """Test write_entry method for single entry."""
-
         entry = FlextLDIFModels.Entry.model_validate(
             {
                 "dn": "cn=Single Entry,ou=test,dc=example,dc=com",
@@ -185,7 +175,6 @@ class TestFlextLDIFServicesAdvanced:
 
     def test_writer_service_write_empty_entries(self) -> None:
         """Test write_entries_to_string with empty list."""
-
         service = FlextLDIFServices().writer
         result = service.write_entries_to_string([])
 
@@ -194,7 +183,6 @@ class TestFlextLDIFServicesAdvanced:
 
     def test_field_defaults_constants(self) -> None:
         """Test field defaults constants are properly defined in FlextLDIFConstants."""
-
         constants = FlextLDIFConstants
 
         # Test all required constants exist
