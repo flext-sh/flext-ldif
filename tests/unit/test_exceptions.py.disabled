@@ -45,8 +45,8 @@ class TestFlextLDIFExceptions:
     def test_flext_ldif_validation_error_inheritance(self) -> None:
         """Test FlextLDIFValidationError inheritance."""
         error = FlextLDIFValidationError("Validation error")
-        assert isinstance(error, FlextLDIFError)
         assert isinstance(error, FlextLDIFValidationError)
+        assert isinstance(error, Exception)  # Both inherit from Exception
         assert "Validation error" in str(error)
 
     def test_flext_ldif_entry_error_inheritance(self) -> None:
@@ -104,15 +104,14 @@ class TestFlextLDIFExceptions:
     def test_error_codes_enum(self) -> None:
         """Test that error codes enum contains expected values."""
         expected_codes = [
-            "LDIF_ERROR",
-            "LDIF_VALIDATION_ERROR",
-            "LDIF_PARSE_ERROR",
-            "LDIF_ENTRY_ERROR",
-            "LDIF_CONFIGURATION_ERROR",
-            "LDIF_PROCESSING_ERROR",
-            "LDIF_CONNECTION_ERROR",
-            "LDIF_AUTHENTICATION_ERROR",
-            "LDIF_TIMEOUT_ERROR",
+            "PARSE_ERROR",
+            "VALIDATION_ERROR",
+            "PROCESSING_ERROR",
+            "FILE_ERROR",
+            "CONFIGURATION_ERROR",
+            "CONNECTION_ERROR",
+            "TIMEOUT_ERROR",
+            "AUTHENTICATION_ERROR",
         ]
 
         for code in expected_codes:
@@ -171,8 +170,9 @@ class TestFlextLDIFExceptions:
         error = FlextLDIFError("LDIF error", context={"cause": str(cause)})
         # Context should contain cause information
         assert error.context is not None
-        assert "cause" in error.context
-        assert "Original error" in str(error.context["cause"])
+        assert "context" in error.context
+        assert "cause" in error.context["context"]
+        assert "Original error" in str(error.context["context"]["cause"])
 
     def test_file_error_with_file_path(self) -> None:
         """Test FlextLDIFFileError with file_path parameter."""

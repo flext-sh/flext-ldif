@@ -77,7 +77,7 @@ class FlextLDIFUtilities:
 
         """
         try:
-            if not dn or not isinstance(dn, str):
+            if not dn or not isinstance(dn, str) or not dn.strip():
                 return FlextResult[str].fail("DN must be a non-empty string")
 
             # Basic DN normalization

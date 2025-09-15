@@ -14,7 +14,6 @@ from flext_core import FlextLogger
 
 from flext_ldif import (
     FlextLDIFAPI,
-    FlextLDIFCore,
     FlextLDIFFormatHandler,
 )
 from flext_ldif.models import FlextLDIFModels
@@ -203,13 +202,28 @@ mail: convenience@example.com
 """
 
     # Parse using convenience function
-    entries = FlextLDIFFormatHandler.parse_ldif(ldif_content).unwrap_or_raise()
+    format_handler = FlextLDIFFormatHandler()
+    entries_result = format_handler.parse_ldif(ldif_content)
+    if entries_result.is_failure:
+        error_msg = f"Parse failed: {entries_result.error}"
+        print(f"Error: {error_msg}")
+        return
+    entries = entries_result.unwrap()
 
-    # Validate using convenience function - parse first, then validate
-    FlextLDIFCore().validate_entries(entries).unwrap_or_raise()
+    # Validate using API
+    api = FlextLDIFAPI()
+    validation_result = api.validate_entries(entries)
+    if validation_result.is_failure:
+        error_msg = f"Validation failed: {validation_result.error}"
+        print(f"Error: {error_msg}")
+        return
 
     # Write using convenience function
-    FlextLDIFFormatHandler.write_ldif(entries).unwrap_or_raise()
+    write_result = format_handler.write_ldif(entries)
+    if write_result.is_failure:
+        error_msg = f"Write failed: {write_result.error}"
+        print(f"Error: {error_msg}")
+        return
 
     # Global API instance with railway programming
     FlextLDIFAPI().parse(ldif_content).tap(lambda _: None)

@@ -78,7 +78,7 @@ def test_direct_method_calls_for_missing_lines() -> None:
     transformer = FlextLDIFServices().transformer
 
     # Isso deve exercitar as linhas de transform (862-863, 868-869)
-    def identity_transform(entry: dict[str, any]) -> dict[str, any]:
+    def identity_transform(entry: FlextLDIFModels.Entry) -> FlextLDIFModels.Entry:
         return entry
 
     transform_result = transformer.transform_entries(entries, identity_transform)

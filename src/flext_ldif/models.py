@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Generator
+from collections.abc import Collection, Generator
 from typing import ClassVar
 
 from flext_core import (
@@ -819,7 +819,7 @@ class FlextLDIFModels(BaseModel):
 
         @staticmethod
         def create_entry(
-            data: dict[str, object] | None = None,
+            data: dict[str, object] | dict[str, Collection[str]] | None = None,
             dn: str | None = None,
             attributes: dict[str, list[str]] | None = None,
         ) -> FlextLDIFModels.Entry:

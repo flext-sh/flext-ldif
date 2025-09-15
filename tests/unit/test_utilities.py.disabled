@@ -324,11 +324,8 @@ class TestFlextLDIFUtilities:
         # Create a test entry with empty attributes
         entry = FlextLDIFModels.Entry(dn="cn=test,dc=example,dc=com", attributes={})
 
-        result = utilities.validate_ldif_entry_completeness(entry, ["cn"])
-        assert result.is_success
-        assert (
-            result.unwrap() is False
-        )  # Entry is not complete due to missing required attribute
+        result = utilities.validate_ldif_entry_completeness(entry)
+        assert result.is_failure  # Entry is not complete due to missing attributes
 
     def test_entry_with_empty_attributes_dict(self) -> None:
         """Test creating entry with minimal attributes."""

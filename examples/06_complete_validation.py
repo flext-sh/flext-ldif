@@ -37,7 +37,6 @@ from flext_core import FlextContainer, FlextResult, FlextTypes
 # CORREÇÃO CRÍTICA: Imports verificados no __init__.py
 from flext_ldif import (
     FlextLDIFAPI,
-    FlextLDIFCore,
     FlextLDIFError,
     FlextLDIFFormatHandler,
     FlextLDIFModels,
@@ -320,7 +319,7 @@ cn: Simple User"""
     with contextlib.suppress(Exception):
         # flext_ldif_validate expects list of entries, not LDIF string
         test_entries = FlextLDIFFormatHandler.parse_ldif(test_ldif).unwrap_or_raise()
-        is_valid = FlextLDIFCore().validate_entries(test_entries).unwrap_or_raise()
+        is_valid = FlextLDIFAPI().validate_entries(test_entries).unwrap_or_raise()
 
     # Test flext_ldif_write function - EXISTE
     try:
@@ -427,7 +426,7 @@ member: uid=user1,ou=people,dc=comprehensive,dc=test"""
         # ✅ CORREÇÃO: Usar funções que realmente existem
         entries = FlextLDIFFormatHandler.parse_ldif(complex_ldif).unwrap_or_raise()
 
-        FlextLDIFCore().validate_entries(entries).unwrap_or_raise()
+        FlextLDIFAPI().validate_entries(entries).unwrap_or_raise()
 
         if entries:
             for entry in entries:
