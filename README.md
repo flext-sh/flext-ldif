@@ -30,12 +30,12 @@ FLEXT-LDIF provides LDIF (LDAP Data Interchange Format) processing capabilities 
 
 ### **FLEXT-Core Integration Status**
 
-| Pattern             | Status         | Description             |
-| ------------------- | -------------- | ----------------------- |
-| **FlextResult[T]**  | 🟢 Complete      | Operations return FlextResult for error handling |
-| **FlextService**    | 🟢 Complete      | Service-oriented architecture with LDIF services |
-| **FlextContainer**  | 🟢 Complete      | Dependency injection for service orchestration |
-| **Domain Patterns** | 🟢 Complete      | LDIF Entry, DN, and Attribute domain models |
+| Pattern             | Status      | Description                                      |
+| ------------------- | ----------- | ------------------------------------------------ |
+| **FlextResult[T]**  | 🟢 Complete | Operations return FlextResult for error handling |
+| **FlextService**    | 🟢 Complete | Service-oriented architecture with LDIF services |
+| **FlextContainer**  | 🟢 Complete | Dependency injection for service orchestration   |
+| **Domain Patterns** | 🟢 Complete | LDIF Entry, DN, and Attribute domain models      |
 
 > **Integration**: Uses flext-core patterns with memory-bound processing
 

@@ -108,18 +108,21 @@ make validate       # Complete validation pipeline
 ## 🗺️ DEVELOPMENT PRIORITIES
 
 ### Phase 1: Quality and Stability
+
 - Fix any remaining type issues
 - Enhance test coverage for edge cases
 - Improve error messages and recovery strategies
 - Document memory limitations clearly
 
 ### Phase 2: Performance Optimization
+
 - Implement memory usage monitoring
 - Develop streaming parser for large files
 - Add configurable chunk sizes for memory management
 - Establish performance baselines and tests
 
 ### Phase 3: Feature Enhancement
+
 - More sophisticated entry filtering capabilities
 - Enhanced transformation and manipulation tools
 - Better integration with LDAP servers and directories
@@ -130,11 +133,13 @@ make validate       # Complete validation pipeline
 ## 🚨 KNOWN ISSUES
 
 ### Memory Constraints
+
 - Files larger than available RAM will cause failures
 - No graceful degradation for memory pressure
 - Limited monitoring of resource usage during processing
 
 ### Error Handling
+
 - Some error messages lack actionable information
 - Recovery from partial failures needs improvement
 - Validation errors could be more specific
@@ -144,18 +149,21 @@ make validate       # Complete validation pipeline
 ## 🔬 RESEARCH AREAS
 
 ### Memory Optimization
+
 - Investigate line-by-line parsing approaches using streaming techniques
 - Research memory-mapped file processing for large datasets
 - Study garbage collection optimization patterns
 - Evaluate chunk-based processing algorithms
 
 ### Performance Enhancement
+
 - Research parallel processing patterns for LDIF data
 - Investigate async/await patterns for I/O operations
 - Study caching strategies for repeated operations
 - Benchmark against other LDIF processing libraries
 
 ### Integration Opportunities
+
 - Enhanced integration with ldap3 library for direct server operations
 - Integration with enterprise directory services
 - Connection to FLEXT data pipeline components

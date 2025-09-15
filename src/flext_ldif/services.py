@@ -42,11 +42,19 @@ class FlextLDIFServices(FlextDomainService[dict[str, object]]):
 
     # Specialized services following SOLID principles - initialized in __init__
     parser: FlextLDIFParserService | None = PydanticField(default=None, init=False)
-    validator: FlextLDIFValidatorService | None = PydanticField(default=None, init=False)
+    validator: FlextLDIFValidatorService | None = PydanticField(
+        default=None, init=False
+    )
     writer: FlextLDIFWriterService | None = PydanticField(default=None, init=False)
-    analytics: FlextLDIFAnalyticsService | None = PydanticField(default=None, init=False)
-    transformer: FlextLDIFTransformerService | None = PydanticField(default=None, init=False)
-    repository: FlextLDIFRepositoryService | None = PydanticField(default=None, init=False)
+    analytics: FlextLDIFAnalyticsService | None = PydanticField(
+        default=None, init=False
+    )
+    transformer: FlextLDIFTransformerService | None = PydanticField(
+        default=None, init=False
+    )
+    repository: FlextLDIFRepositoryService | None = PydanticField(
+        default=None, init=False
+    )
 
     # Private attributes for internal state
     _config: FlextLDIFModels.Config | None = None

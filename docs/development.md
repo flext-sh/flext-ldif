@@ -68,6 +68,7 @@ class _ParserHelper:
 ```
 
 **Memory Characteristics**:
+
 - Loads entire LDIF file into memory during processing
 - Memory usage scales linearly with file size
 - Suitable for files under 100MB
@@ -285,6 +286,7 @@ For FLEXT ecosystem integration patterns, see [flext-core documentation](../../f
 - Type safety with Pydantic v2
 
 Focus on LDIF-specific concerns:
+
 - LDIF format validation
 - Memory-efficient processing
 - RFC 2849 compliance
