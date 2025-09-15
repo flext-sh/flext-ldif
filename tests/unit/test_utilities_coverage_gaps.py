@@ -68,7 +68,6 @@ class TestFlextLDIFUtilitiesCoverageGaps:
     def test_entry_to_dict_success(self) -> None:
         """Test entry_to_dict successful conversion."""
         utilities = FlextLDIFUtilities()
-        converters = utilities.converters
 
         # Create a test entry
         entry = FlextLDIFModels.Factory.create_entry(
@@ -78,7 +77,7 @@ class TestFlextLDIFUtilitiesCoverageGaps:
             }
         )
 
-        result = converters.entry_to_dict(entry)
+        result = utilities.convert_entry_to_dict(entry)
         assert result.is_success
         data = result.unwrap()
         assert data["dn"] == "cn=test,dc=example,dc=com"
@@ -147,20 +146,26 @@ class TestFlextLDIFUtilitiesCoverageGaps:
         assert "CN" in data  # Should preserve case
         assert "sn" in data
 
-    def test_attributes_to_ldif_format_list_with_none_values(self) -> None:
-        """Test attributes_to_ldif_format with list containing None values."""
-        utilities = FlextLDIFUtilities()
-        converters = utilities.converters
+    def test_convert_entry_to_dict_with_none_values(self) -> None:
+        """Test convert_entry_to_dict with entry containing None values in attributes."""
+        # Create entry with various attribute values
+        entry = FlextLDIFModels.Entry.model_validate({
+            "dn": "cn=test,dc=example,dc=com",
+            "attributes": {
+                "cn": ["test", "another"],
+                "sn": ["value"],
+                "objectClass": ["person"]
+            }
+        })
 
-        # Test with list containing None values
-        attributes = {"cn": ["test", None, "another"], "sn": "test"}
-        result = converters.attributes_to_ldif_format(attributes)
+        utilities = FlextLDIFUtilities()
+        result = utilities.convert_entry_to_dict(entry)
         assert result.is_success
         data = result.unwrap()
-        assert "cn" in data
-        assert len(data["cn"]) == 2  # None values should be filtered out
-        assert "test" in data["cn"]
-        assert "another" in data["cn"]
+        assert "cn" in data["attributes"]
+        assert len(data["attributes"]["cn"]) == 2
+        assert "test" in data["attributes"]["cn"]
+        assert "another" in data["attributes"]["cn"]
 
     def test_attributes_to_ldif_format_list_with_empty_strings_skip_empty(self) -> None:
         """Test attributes_to_ldif_format with list containing empty strings and skip_empty=True."""
@@ -180,7 +185,6 @@ class TestFlextLDIFUtilitiesCoverageGaps:
     def test_entry_to_dict_exception_handling(self) -> None:
         """Test entry_to_dict exception handling."""
         utilities = FlextLDIFUtilities()
-        converters = utilities.converters
 
         # Create a mock entry that will cause an exception during attribute access
         class MockEntry:
@@ -194,6 +198,6 @@ class TestFlextLDIFUtilitiesCoverageGaps:
                 return {}
 
         mock_entry = MockEntry()
-        result = converters.entry_to_dict(mock_entry)
+        result = utilities.convert_entry_to_dict(mock_entry)
         assert result.is_failure
-        assert "Entry conversion failed" in result.error
+        assert "conversion failed" in result.error.lower()

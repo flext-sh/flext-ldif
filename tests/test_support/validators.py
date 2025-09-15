@@ -8,10 +8,13 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import TypeVar
 
 from flext_core import FlextResult, FlextTypes
 
 from flext_ldif import FlextLDIFModels
+
+T = TypeVar("T")
 
 
 class TestValidators:
@@ -219,7 +222,7 @@ class TestValidators:
         assert validation["dn_format_valid"], f"Invalid DN format: {entry.dn}"
 
     @staticmethod
-    def assert_successful_result(result: FlextResult[object]) -> None:
+    def assert_successful_result(result: FlextResult[T]) -> None:
         """Assert that a FlextResult is successful (for use in tests)."""
         validation = TestValidators.validate_result_success(result)
 

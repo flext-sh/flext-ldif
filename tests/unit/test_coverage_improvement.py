@@ -6,13 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from unittest.mock import Mock
-
 import pytest
 
+from flext_ldif import FlextLDIFAPI
 from flext_ldif.models import FlextLDIFModels
 from flext_ldif.services import FlextLDIFServices
-from flext_ldif.utilities import FlextLDIFUtilities
 
 
 class TestCoverageImprovement:
@@ -45,31 +43,30 @@ class TestCoverageImprovement:
 
         # Create valid entries for utilities testing
 
-        # Test utilities functionality
-        utilities = FlextLDIFUtilities()
-        result = utilities.processors.validate_entries_or_warn([entry2])
+        # Test validation functionality
+        api = FlextLDIFAPI()
+        result = api.validate_entries([entry2])
 
-        # Should succeed but with warnings for missing objectClass
-        assert result.is_success
+        # Should fail for missing objectClass
+        assert result.is_failure
+        assert "objectClass" in result.error
         # This should trigger the missing coverage lines for missing objectClass
 
     def test_utilities_empty_dn_coverage(self) -> None:
-        """Test to cover line 32 - Empty DN after strip."""
-        # Create a mock entry with DN that has empty value after strip
-        mock_entry = Mock()
-        mock_entry.dn = Mock()
-        mock_entry.dn.value = "    "  # Whitespace only, will be empty after strip
-        mock_entry.has_attribute = Mock(return_value=True)
+        """Test to cover DN validation edge cases."""
+        # Test with empty DN - should fail validation at model level
+        with pytest.raises(Exception):
+            FlextLDIFModels.Entry.model_validate({
+                "dn": "",  # Empty DN should fail model validation
+                "attributes": {"objectClass": ["person"], "cn": ["test"]}
+            })
 
-        # Test the validation with this edge case
-        entries = [mock_entry]
-
-        # This should trigger line 32: Empty DN warning
-        utilities = FlextLDIFUtilities()
-        result = utilities.processors.validate_entries_or_warn(entries)
-
-        # The function should still succeed but log warning
-        assert result.is_success
+        # Test with whitespace-only DN - should also fail validation
+        with pytest.raises(Exception):
+            FlextLDIFModels.Entry.model_validate({
+                "dn": "   ",  # Whitespace-only DN should fail model validation
+                "attributes": {"objectClass": ["person"], "cn": ["test"]}
+            })
 
     def test_validator_service_edge_cases(self) -> None:
         """Test validator service edge cases to improve coverage."""

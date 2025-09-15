@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from unittest.mock import patch
 
 from flext_ldif.models import FlextLDIFModels
@@ -23,7 +24,7 @@ class MockAttributesDict:
         """Implementa .keys() para dict() conversion."""
         return [item[0] for item in self._data]
 
-    def __iter__(self) -> iter:
+    def __iter__(self) -> Iterator[tuple[str, list[str]]]:
         """Implementa __iter__ para dict() conversion."""
         return iter(self._data)
 
@@ -217,7 +218,7 @@ def test_final_precision_verification_each_line() -> None:
     validator = FlextLDIFServices(config=config)
     parser = FlextLDIFServices().parser
 
-    results = {}
+    results: dict[str, object] = {}
 
     # Test validation with real entry
     entry_data = {

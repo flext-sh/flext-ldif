@@ -19,7 +19,9 @@ from flext_core import (
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from flext_ldif.constants import FlextLDIFConstants
-from flext_ldif.exceptions import FlextLDIFExceptions
+
+# Import for exception handling
+from flext_ldif.exceptions import FlextLDIFError, FlextLDIFExceptions
 
 
 class FlextLDIFModels(BaseModel):
@@ -642,7 +644,7 @@ class FlextLDIFModels(BaseModel):
 
             if dn is None:
                 error_msg = "Missing DN in LDIF block"
-                raise FlextLDIFExceptions.ProcessingError(error_msg)
+                raise FlextLDIFError(error_msg)
 
             return cls(
                 dn=FlextLDIFModels.DistinguishedName(value=dn),

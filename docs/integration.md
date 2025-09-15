@@ -1,166 +1,201 @@
-# FLEXT Ecosystem Integration
+# FLEXT-LDIF Ecosystem Integration
 
 **Version**: 0.9.0 | **Updated**: September 17, 2025
 
-This document explains how FLEXT-LDIF integrates with the broader FLEXT ecosystem, including patterns for using FLEXT-LDIF within other FLEXT projects and services.
+LDIF-specific integration patterns for using FLEXT-LDIF within the FLEXT ecosystem. For general FLEXT patterns, see [flext-core documentation](../../flext-core/README.md).
 
-## FLEXT Ecosystem Overview
+## LDIF Processing Integration
 
-FLEXT-LDIF is designed as a specialized component within the FLEXT data integration platform, providing LDIF processing capabilities across the ecosystem's 33+ interconnected projects.
-
-### FLEXT-LDIF's Role
-
-```mermaid
-graph TB
-    subgraph "FLEXT Ecosystem"
-        Core[flext-core<br/>Foundation Patterns]
-
-        subgraph "Infrastructure Libraries"
-            LDIF[flext-ldif<br/>LDIF Processing]
-            LDAP[flext-ldap<br/>LDAP Operations]
-            Oracle[flext-db-oracle<br/>Oracle Integration]
-        end
-
-        subgraph "Application Services"
-            API[flext-api<br/>REST Services]
-            CLI[flext-cli<br/>Command Interface]
-            Web[flext-web<br/>Web Interface]
-        end
-
-        subgraph "Migration Projects"
-            ALGAR[algar-oud-mig<br/>Oracle UD Migration]
-            Enterprise[Enterprise Projects<br/>LDAP Migrations]
-        end
-    end
-
-    Core --> LDIF
-    Core --> LDAP
-    Core --> Oracle
-
-    LDIF --> API
-    LDIF --> CLI
-    LDIF --> ALGAR
-    LDIF --> Enterprise
-
-    LDAP --> ALGAR
-    Oracle --> ALGAR
-```
-
-## Core Pattern Integration
-
-### FlextResult Railway Programming
-
-FLEXT-LDIF fully implements railway-oriented programming using FlextResult from flext-core:
+### Core LDIF Operations with FlextResult
 
 ```python
 from flext_core import FlextResult
 from flext_ldif import FlextLDIFAPI
 
 def process_directory_export(file_path: str) -> FlextResult[dict]:
-    """Process directory export using FLEXT patterns."""
+    """Process LDIF directory export with railway programming."""
     api = FlextLDIFAPI()
 
     return (
-        # Parse LDIF file
+        # Parse LDIF file (memory-bound operation)
         api.parse_file(file_path)
 
-        # Validate entries (continue with entries on success)
+        # Validate entries and continue with entries on success
         .flat_map(lambda entries:
             api.validate_entries(entries).map(lambda _: entries))
 
-        # Filter person entries
+        # Filter person entries for directory processing
         .flat_map(api.filter_persons)
 
-        # Generate statistics
+        # Generate LDIF-specific statistics
         .flat_map(lambda persons:
             api.get_entry_statistics(persons)
             .map(lambda stats: {'persons': persons, 'stats': stats}))
 
-        # Handle errors with context
-        .map_error(lambda error: f"Directory processing failed: {error}")
+        # Add LDIF-specific error context
+        .map_error(lambda error: f"LDIF directory processing failed: {error}")
     )
 ```
 
-### FlextContainer Dependency Injection
-
-Integration with FLEXT's global dependency injection container:
+### Memory-Aware LDIF Processing
 
 ```python
-from flext_core import FlextContainer
+import os
+from pathlib import Path
+
+def process_ldif_with_memory_check(file_path: Path) -> FlextResult[dict]:
+    """Process LDIF with memory size validation."""
+    api = FlextLDIFAPI()
+
+    # Check file size before processing (custom parser loads into memory)
+    file_size = file_path.stat().st_size
+    max_size = 100 * 1024 * 1024  # 100MB limit for memory-bound parser
+
+    if file_size > max_size:
+        return FlextResult[dict].fail(
+            f"File too large ({file_size} bytes). "
+            f"Current implementation limited to {max_size} bytes."
+        )
+
+    return api.parse_file(file_path)
+```
+
+## Enterprise Directory Migration Integration
+
+### ALGAR Oracle Unified Directory Migration
+
+```python
 from flext_ldif import FlextLDIFAPI, FlextLDIFModels
+from flext_core import FlextResult, FlextLogger
+from pathlib import Path
 
-def register_ldif_services() -> FlextResult[None]:
-    """Register LDIF services in global container."""
-    container = FlextContainer.get_global()
-
-    # Register configuration
-    config = FlextLDIFModels.Config(
-        max_entries=100000,
-        strict_validation=True
-    )
-    config_result = container.register("ldif_config", config)
-    if config_result.is_failure:
-        return FlextResult[None].fail(f"Config registration failed: {config_result.error}")
-
-    # Register API instance
-    api = FlextLDIFAPI(config=config)
-    api_result = container.register("ldif_api", api)
-    if api_result.is_failure:
-        return FlextResult[None].fail(f"API registration failed: {api_result.error}")
-
-    return FlextResult[None].ok(None)
-
-def get_ldif_api() -> FlextResult[FlextLDIFAPI]:
-    """Retrieve LDIF API from container."""
-    container = FlextContainer.get_global()
-    return container.get("ldif_api")
-```
-
-### FlextLogger Integration
-
-Structured logging with FLEXT ecosystem patterns:
-
-```python
-from flext_core import FlextLogger
-from flext_ldif import FlextLDIFAPI
-
-class LdifProcessingService:
-    """Service class demonstrating FLEXT logging integration."""
+class ALGAROUDMigrationService:
+    """ALGAR Oracle Unified Directory LDIF processing."""
 
     def __init__(self) -> None:
         self._logger = FlextLogger(__name__)
-        self._ldif_api = FlextLDIFAPI()
 
-    def process_ldif_with_logging(self, file_path: str) -> FlextResult[int]:
-        """Process LDIF with comprehensive logging."""
-        self._logger.info("Starting LDIF processing", extra={
-            'file_path': file_path,
-            'service': 'ldif_processing'
+        # Configure for enterprise migration with legacy data accommodation
+        migration_config = FlextLDIFModels.Config(
+            max_entries=None,  # No entry limits for enterprise data
+            strict_validation=False,  # Accommodate legacy LDIF variations
+            ignore_unknown_attributes=True,  # Handle custom schema attributes
+            encoding='utf-8'
+        )
+
+        self._ldif_api = FlextLDIFAPI(config=migration_config)
+
+    def process_oud_export(self, export_file: Path) -> FlextResult[dict]:
+        """Process Oracle Unified Directory LDIF export."""
+        self._logger.info("Starting OUD LDIF processing", extra={
+            'export_file': str(export_file),
+            'migration_phase': 'ldif_processing'
         })
 
-        result = self._ldif_api.parse_file(file_path)
-        if result.is_success:
-            entries = result.unwrap()
-            self._logger.info("LDIF processing successful", extra={
-                'file_path': file_path,
-                'entries_count': len(entries),
-                'processing_status': 'success'
+        return (
+            # Parse enterprise LDIF export
+            self._ldif_api.parse_file(export_file)
+
+            # Categorize entries for migration-specific processing
+            .flat_map(self._categorize_ldif_entries)
+
+            # Apply ALGAR-specific directory transformations
+            .flat_map(self._apply_migration_transformations)
+
+            # Generate migration-specific report
+            .map(self._generate_migration_report)
+
+            # Log LDIF processing completion
+            .map(self._log_ldif_completion)
+        )
+
+    def _categorize_ldif_entries(self, entries) -> FlextResult[dict]:
+        """Categorize LDIF entries for migration processing."""
+        try:
+            users = []
+            groups = []
+            organizational_units = []
+            other = []
+
+            for entry in entries:
+                if entry.is_person():
+                    users.append(entry)
+                elif entry.is_group():
+                    groups.append(entry)
+                elif entry.has_object_class('organizationalUnit'):
+                    organizational_units.append(entry)
+                else:
+                    other.append(entry)
+
+            return FlextResult[dict].ok({
+                'users': users,
+                'groups': groups,
+                'organizational_units': organizational_units,
+                'other': other,
+                'total': len(entries)
             })
-            return FlextResult[int].ok(len(entries))
-        else:
-            self._logger.error("LDIF processing failed", extra={
-                'file_path': file_path,
-                'error': result.error,
-                'processing_status': 'failed'
-            })
-            return FlextResult[int].fail(f"Processing failed: {result.error}")
+        except Exception as e:
+            return FlextResult[dict].fail(f"LDIF entry categorization failed: {e}")
+
+    def _apply_migration_transformations(self, categorized: dict) -> FlextResult[dict]:
+        """Apply ALGAR-specific LDIF entry transformations."""
+        # LDIF-specific transformations for OUD migration
+
+        self._logger.info("Applying LDIF migration transformations", extra={
+            'user_count': len(categorized['users']),
+            'group_count': len(categorized['groups']),
+            'ou_count': len(categorized['organizational_units']),
+            'other_count': len(categorized['other'])
+        })
+
+        # Apply ALGAR business rules to LDIF entries
+        transformed_users = self._transform_user_entries(categorized['users'])
+        transformed_groups = self._transform_group_entries(categorized['groups'])
+
+        return FlextResult[dict].ok({
+            'users': transformed_users,
+            'groups': transformed_groups,
+            'organizational_units': categorized['organizational_units'],
+            'other': categorized['other'],
+            'total': categorized['total']
+        })
+
+    def _transform_user_entries(self, user_entries):
+        """Transform user LDIF entries for ALGAR migration."""
+        # LDIF-specific user entry transformations
+        return user_entries
+
+    def _transform_group_entries(self, group_entries):
+        """Transform group LDIF entries for ALGAR migration."""
+        # LDIF-specific group entry transformations
+        return group_entries
+
+    def _generate_migration_report(self, processed_data: dict) -> dict:
+        """Generate LDIF migration processing report."""
+        return {
+            'ldif_migration_summary': {
+                'total_entries_processed': processed_data['total'],
+                'users_processed': len(processed_data['users']),
+                'groups_processed': len(processed_data['groups']),
+                'organizational_units': len(processed_data['organizational_units']),
+                'other_entries': len(processed_data['other'])
+            },
+            'ldif_processing_status': 'completed',
+            'processed_data': processed_data
+        }
+
+    def _log_ldif_completion(self, report: dict) -> dict:
+        """Log LDIF migration processing completion."""
+        self._logger.info("OUD LDIF processing completed", extra={
+            'ldif_summary': report['ldif_migration_summary'],
+            'migration_phase': 'ldif_processing_complete'
+        })
+        return report
 ```
 
-## Integration with FLEXT Services
+## LDIF-Specific Service Integration
 
-### flext-api Integration
-
-Using FLEXT-LDIF within REST API services:
+### LDIF API Service Integration
 
 ```python
 from flext_api import FlextAPIService
@@ -168,39 +203,52 @@ from flext_core import FlextResult
 from flext_ldif import FlextLDIFAPI
 
 class LdifAPIService(FlextAPIService):
-    """REST API service for LDIF processing."""
+    """REST API service for LDIF processing operations."""
 
     def __init__(self) -> None:
         super().__init__()
         self._ldif_api = FlextLDIFAPI()
 
     def parse_ldif_endpoint(self, file_content: str) -> FlextResult[dict]:
-        """API endpoint for LDIF parsing."""
+        """API endpoint for LDIF parsing with memory awareness."""
+        # Check content size before processing
+        content_size = len(file_content.encode('utf-8'))
+        max_size = 50 * 1024 * 1024  # 50MB for API operations
+
+        if content_size > max_size:
+            return FlextResult[dict].fail({
+                'status': 'error',
+                'message': f'LDIF content too large ({content_size} bytes). Maximum: {max_size} bytes.',
+                'error_type': 'memory_limit_exceeded'
+            })
+
         return (
             self._ldif_api.parse_string(file_content)
             .map(lambda entries: {
                 'status': 'success',
                 'entry_count': len(entries),
-                'entries': [self._serialize_entry(entry) for entry in entries]
+                'memory_usage': f'{content_size} bytes processed',
+                'entries': [self._serialize_ldif_entry(entry) for entry in entries[:100]]  # Limit response size
             })
             .map_error(lambda error: {
                 'status': 'error',
-                'message': str(error)
+                'message': f'LDIF parsing failed: {error}',
+                'error_type': 'ldif_parse_error'
             })
         )
 
-    def _serialize_entry(self, entry) -> dict:
+    def _serialize_ldif_entry(self, entry) -> dict:
         """Serialize LDIF entry for API response."""
         return {
             'dn': entry.dn,
-            'attributes': entry.attributes,
-            'object_classes': entry.get_object_classes()
+            'object_classes': entry.get_object_classes(),
+            'is_person': entry.is_person(),
+            'is_group': entry.is_group(),
+            'attribute_count': len(entry.attributes)
         }
 ```
 
-### flext-cli Integration
-
-Command-line interface integration patterns:
+### LDIF CLI Service Integration
 
 ```python
 from flext_cli import FlextCLIService
@@ -209,406 +257,218 @@ from flext_ldif import FlextLDIFAPI
 from pathlib import Path
 
 class LdifCLIService(FlextCLIService):
-    """CLI service for LDIF operations."""
+    """CLI service for LDIF operations with memory monitoring."""
 
     def __init__(self) -> None:
         super().__init__()
         self._ldif_api = FlextLDIFAPI()
 
-    def parse_command(self, input_file: str, output_format: str = 'json') -> FlextResult[None]:
-        """CLI command for parsing LDIF files."""
+    def parse_command(self, input_file: str, output_format: str = 'summary') -> FlextResult[None]:
+        """CLI command for parsing LDIF files with size checking."""
         file_path = Path(input_file)
+
+        # Check file size before processing
+        if not file_path.exists():
+            return FlextResult[None].fail(f"LDIF file not found: {input_file}")
+
+        file_size = file_path.stat().st_size
+        if file_size > 100 * 1024 * 1024:  # 100MB limit
+            return FlextResult[None].fail(
+                f"LDIF file too large ({file_size} bytes). "
+                f"Current implementation limited to 100MB."
+            )
 
         return (
             self._ldif_api.parse_file(file_path)
-            .flat_map(lambda entries: self._output_results(entries, output_format))
-            .map_error(lambda error: f"CLI parse command failed: {error}")
+            .flat_map(lambda entries: self._output_ldif_results(entries, output_format))
+            .map_error(lambda error: f"LDIF CLI parse failed: {error}")
         )
 
-    def _output_results(self, entries, format_type: str) -> FlextResult[None]:
-        """Output parsing results in specified format."""
-        if format_type == 'json':
+    def _output_ldif_results(self, entries, format_type: str) -> FlextResult[None]:
+        """Output LDIF parsing results in specified format."""
+        if format_type == 'summary':
+            print(f"LDIF Processing Summary:")
+            print(f"  Total entries: {len(entries)}")
+
+            # Get LDIF-specific statistics
+            stats_result = self._ldif_api.get_entry_statistics(entries)
+            if stats_result.is_success:
+                stats = stats_result.unwrap()
+                print(f"  Object class distribution: {stats}")
+
+            # Count person and group entries
+            persons = [e for e in entries if e.is_person()]
+            groups = [e for e in entries if e.is_group()]
+            print(f"  Person entries: {len(persons)}")
+            print(f"  Group entries: {len(groups)}")
+
+            return FlextResult[None].ok(None)
+        elif format_type == 'json':
             import json
             output = json.dumps([
-                {'dn': entry.dn, 'attributes': entry.attributes}
+                {
+                    'dn': entry.dn,
+                    'object_classes': entry.get_object_classes(),
+                    'is_person': entry.is_person(),
+                    'is_group': entry.is_group()
+                }
                 for entry in entries
             ], indent=2)
             print(output)
             return FlextResult[None].ok(None)
-        elif format_type == 'summary':
-            print(f"Parsed {len(entries)} LDIF entries")
-            stats_result = self._ldif_api.get_entry_statistics(entries)
-            if stats_result.is_success:
-                stats = stats_result.unwrap()
-                print(f"Object class distribution: {stats}")
-            return FlextResult[None].ok(None)
         else:
-            return FlextResult[None].fail(f"Unsupported output format: {format_type}")
+            return FlextResult[None].fail(f"Unsupported LDIF output format: {format_type}")
 ```
 
-## Migration Project Integration
+## LDIF Data Pipeline Integration
 
-### ALGAR Oracle Unified Directory Migration
-
-Integration pattern for enterprise migration projects:
+### Batch LDIF Processing
 
 ```python
-from flext_ldif import FlextLDIFAPI, FlextLDIFModels
-from flext_core import FlextResult, FlextLogger
+from flext_core import FlextResult
+from flext_ldif import FlextLDIFAPI
 from pathlib import Path
+import psutil
+import os
 
-class ALGAROUDMigrationService:
-    """ALGAR Oracle Unified Directory migration service."""
+def process_multiple_ldif_files(file_paths: list[Path]) -> FlextResult[dict]:
+    """Process multiple LDIF files with memory monitoring."""
+    api = FlextLDIFAPI()
+    all_entries = []
+    processing_stats = {}
+    process = psutil.Process(os.getpid())
 
-    def __init__(self) -> None:
-        self._logger = FlextLogger(__name__)
+    initial_memory = process.memory_info().rss
 
-        # Configure for enterprise migration
-        migration_config = FlextLDIFModels.Config(
-            max_entries=None,  # No limits for enterprise data
-            strict_validation=False,  # Accommodate legacy data
-            ignore_unknown_attributes=True,  # Handle custom schemas
-            encoding='utf-8'
-        )
+    for file_path in file_paths:
+        # Memory check before each file
+        current_memory = process.memory_info().rss
+        memory_increase = current_memory - initial_memory
 
-        self._ldif_api = FlextLDIFAPI(config=migration_config)
-
-    def process_oud_export(self, export_file: Path) -> FlextResult[dict]:
-        """Process Oracle Unified Directory export."""
-        self._logger.info("Starting OUD export processing", extra={
-            'export_file': str(export_file),
-            'migration_phase': 'ldif_processing'
-        })
-
-        return (
-            # Parse large enterprise export
-            self._ldif_api.parse_file(export_file)
-
-            # Separate users and groups for different processing
-            .flat_map(self._categorize_entries)
-
-            # Apply migration-specific transformations
-            .flat_map(self._apply_migration_transformations)
-
-            # Generate migration report
-            .map(self._generate_migration_report)
-
-            # Log completion
-            .map(self._log_migration_completion)
-        )
-
-    def _categorize_entries(self, entries) -> FlextResult[dict]:
-        """Categorize entries for migration processing."""
-        try:
-            users = []
-            groups = []
-            other = []
-
-            for entry in entries:
-                if entry.is_person():
-                    users.append(entry)
-                elif entry.is_group():
-                    groups.append(entry)
-                else:
-                    other.append(entry)
-
-            return FlextResult[dict].ok({
-                'users': users,
-                'groups': groups,
-                'other': other,
-                'total': len(entries)
-            })
-        except Exception as e:
-            return FlextResult[dict].fail(f"Entry categorization failed: {e}")
-
-    def _apply_migration_transformations(self, categorized: dict) -> FlextResult[dict]:
-        """Apply ALGAR-specific migration transformations."""
-        # Implementation would include ALGAR-specific business logic
-        # for transforming OUD entries for target system
-
-        self._logger.info("Applying migration transformations", extra={
-            'user_count': len(categorized['users']),
-            'group_count': len(categorized['groups']),
-            'other_count': len(categorized['other'])
-        })
-
-        # Return transformed data
-        return FlextResult[dict].ok(categorized)
-
-    def _generate_migration_report(self, processed_data: dict) -> dict:
-        """Generate comprehensive migration report."""
-        return {
-            'migration_summary': {
-                'total_entries': processed_data['total'],
-                'users_processed': len(processed_data['users']),
-                'groups_processed': len(processed_data['groups']),
-                'other_entries': len(processed_data['other'])
-            },
-            'processing_status': 'completed',
-            'data': processed_data
-        }
-
-    def _log_migration_completion(self, report: dict) -> dict:
-        """Log migration completion."""
-        self._logger.info("OUD migration processing completed", extra={
-            'migration_summary': report['migration_summary'],
-            'migration_phase': 'ldif_processing_complete'
-        })
-        return report
-```
-
-## Database Integration
-
-### Oracle Database Integration (via flext-db-oracle)
-
-```python
-from flext_db_oracle import FlextOracleService
-from flext_ldif import FlextLDIFAPI
-from flext_core import FlextResult
-
-class LdifOracleIntegrationService:
-    """Service integrating LDIF processing with Oracle database."""
-
-    def __init__(self) -> None:
-        self._ldif_api = FlextLDIFAPI()
-        self._oracle_service = FlextOracleService()
-
-    def import_ldif_to_oracle(self, ldif_file: str, table_name: str) -> FlextResult[int]:
-        """Import LDIF entries to Oracle database."""
-        return (
-            # Parse LDIF entries
-            self._ldif_api.parse_file(ldif_file)
-
-            # Transform entries to database records
-            .map(self._transform_entries_for_db)
-
-            # Insert into Oracle database
-            .flat_map(lambda records:
-                self._oracle_service.bulk_insert(table_name, records))
-
-            # Return count of inserted records
-            .map(lambda result: result['inserted_count'])
-        )
-
-    def _transform_entries_for_db(self, entries) -> list[dict]:
-        """Transform LDIF entries to database records."""
-        records = []
-        for entry in entries:
-            record = {
-                'dn': entry.dn,
-                'object_classes': ','.join(entry.get_object_classes()),
-                'attributes': json.dumps(entry.attributes),
-                'is_person': entry.is_person(),
-                'is_group': entry.is_group()
-            }
-            records.append(record)
-        return records
-```
-
-## Web Interface Integration
-
-### flext-web Integration
-
-```python
-from flext_web import FlextWebService
-from flext_ldif import FlextLDIFAPI
-from flext_core import FlextResult
-
-class LdifWebService(FlextWebService):
-    """Web service for LDIF processing interface."""
-
-    def __init__(self) -> None:
-        super().__init__()
-        self._ldif_api = FlextLDIFAPI()
-
-    def upload_and_process_ldif(self, uploaded_file) -> FlextResult[dict]:
-        """Handle LDIF file upload and processing."""
-        try:
-            # Read uploaded file content
-            file_content = uploaded_file.read().decode('utf-8')
-
-            return (
-                # Parse uploaded LDIF
-                self._ldif_api.parse_string(file_content)
-
-                # Generate web-friendly response
-                .map(self._create_web_response)
-
-                # Handle errors for web display
-                .map_error(lambda error: {
-                    'status': 'error',
-                    'message': f"LDIF processing failed: {error}",
-                    'entries': [],
-                    'statistics': {}
-                })
+        if memory_increase > 500 * 1024 * 1024:  # 500MB increase limit
+            return FlextResult[dict].fail(
+                f"Memory usage too high ({memory_increase} bytes). "
+                f"Processed {len(processing_stats)} files before limit."
             )
-        except Exception as e:
-            return FlextResult[dict].fail(f"File upload processing failed: {e}")
 
-    def _create_web_response(self, entries) -> dict:
-        """Create web-friendly response from LDIF entries."""
-        # Generate statistics
-        stats_result = self._ldif_api.get_entry_statistics(entries)
-        statistics = stats_result.unwrap() if stats_result.is_success else {}
+        result = api.parse_file(file_path)
+        if result.is_success:
+            entries = result.unwrap()
+            all_entries.extend(entries)
+            processing_stats[str(file_path)] = {
+                'entries': len(entries),
+                'memory_after': current_memory
+            }
+        else:
+            return FlextResult[dict].fail(f"Failed to process {file_path}: {result.error}")
 
-        return {
-            'status': 'success',
-            'entry_count': len(entries),
-            'statistics': statistics,
-            'entries': [
-                {
-                    'dn': entry.dn,
-                    'object_classes': entry.get_object_classes(),
-                    'attribute_count': len(entry.attributes)
-                }
-                for entry in entries[:100]  # Limit for web display
-            ],
-            'has_more': len(entries) > 100
-        }
+    final_memory = process.memory_info().rss
+    total_memory_used = final_memory - initial_memory
+
+    return FlextResult[dict].ok({
+        'total_entries': len(all_entries),
+        'files_processed': len(processing_stats),
+        'file_stats': processing_stats,
+        'memory_usage': {
+            'initial_memory': initial_memory,
+            'final_memory': final_memory,
+            'total_increase': total_memory_used
+        },
+        'entries': all_entries
+    })
 ```
 
-## Testing Integration
+## LDIF Integration Best Practices
 
-### FLEXT Test Patterns
+### 1. Memory-Aware Processing
 
-Integration with FLEXT ecosystem testing patterns:
+Always check file sizes before processing with current implementation:
 
 ```python
-from flext_tests import FlextTestBase, FlextFixtures
-from flext_ldif import FlextLDIFAPI
-from flext_core import FlextResult
+def safe_ldif_processing(file_path: Path) -> FlextResult[list]:
+    """Process LDIF with memory safety checks."""
+    file_size = file_path.stat().st_size
+    max_size = 100 * 1024 * 1024  # 100MB limit
 
-class TestLdifIntegration(FlextTestBase):
-    """Test LDIF integration with FLEXT patterns."""
-
-    def setup_method(self) -> None:
-        """Setup test environment."""
-        super().setup_method()
-        self.ldif_api = FlextLDIFAPI()
-        self.test_ldif = FlextFixtures.get_sample_ldif()
-
-    def test_ldif_with_container_integration(self) -> None:
-        """Test LDIF API integration with FlextContainer."""
-        # Register API in container
-        registration_result = self.container.register("ldif_api", self.ldif_api)
-        assert registration_result.is_success
-
-        # Retrieve and use API from container
-        api_result = self.container.get("ldif_api")
-        assert api_result.is_success
-
-        api = api_result.unwrap()
-        parse_result = api.parse_string(self.test_ldif)
-        assert parse_result.is_success
-
-    def test_ldif_railway_programming(self) -> None:
-        """Test LDIF operations with railway programming patterns."""
-        result = (
-            self.ldif_api.parse_string(self.test_ldif)
-            .flat_map(self.ldif_api.validate_entries)
-            .flat_map(lambda entries: self.ldif_api.filter_persons(entries))
-            .flat_map(lambda persons: self.ldif_api.get_entry_statistics(persons))
+    if file_size > max_size:
+        return FlextResult[list].fail(
+            f"File too large for current implementation: {file_size} bytes"
         )
 
-        assert result.is_success
-        stats = result.unwrap()
-        assert isinstance(stats, dict)
+    api = FlextLDIFAPI()
+    return api.parse_file(file_path)
 ```
 
-## Best Practices for Integration
+### 2. LDIF-Specific Error Handling
 
-### 1. Use FLEXT Patterns Consistently
-
-Always use FlextResult for error handling and FlextContainer for dependency injection:
+Handle LDIF format errors specifically:
 
 ```python
-# ✅ Good: Consistent FLEXT patterns
-def integrate_ldif_service() -> FlextResult[FlextLDIFAPI]:
-    container = FlextContainer.get_global()
-    config_result = container.get("ldif_config")
+def robust_ldif_processing(content: str) -> FlextResult[dict]:
+    """Process LDIF with format-specific error handling."""
+    api = FlextLDIFAPI()
 
-    if config_result.is_success:
-        config = config_result.unwrap()
-        api = FlextLDIFAPI(config=config)
-        return FlextResult[FlextLDIFAPI].ok(api)
-    else:
-        return FlextResult[FlextLDIFAPI].fail("Configuration not available")
+    result = api.parse_string(content)
+    if result.is_failure:
+        error_msg = result.error
+        if "LDIF" in error_msg or "parse" in error_msg.lower():
+            return FlextResult[dict].fail(f"LDIF format error: {error_msg}")
+        else:
+            return FlextResult[dict].fail(f"Processing error: {error_msg}")
 
-# ❌ Avoid: Mixing error handling patterns
-def bad_integration():
-    try:
-        container = FlextContainer.get_global()
-        config = container.get("ldif_config").unwrap()  # Could raise exception
-        return FlextLDIFAPI(config=config)
-    except Exception as e:
-        print(f"Error: {e}")  # Inconsistent with FLEXT patterns
-        return None
+    return FlextResult[dict].ok({'entries': result.unwrap()})
 ```
 
-### 2. Register Services in Container
+### 3. LDIF Entry Type Processing
 
-Register LDIF services in the global container for ecosystem-wide access:
+Use LDIF-specific entry type methods:
 
 ```python
-def bootstrap_application() -> FlextResult[None]:
-    """Bootstrap application with LDIF services."""
-    container = FlextContainer.get_global()
+def categorize_ldif_entries(entries) -> dict:
+    """Categorize LDIF entries by type."""
+    categories = {
+        'persons': [e for e in entries if e.is_person()],
+        'groups': [e for e in entries if e.is_group()],
+        'organizational_units': [e for e in entries if e.has_object_class('organizationalUnit')],
+        'other': []
+    }
 
-    # Register configuration
-    config = FlextLDIFModels.Config(max_entries=100000)
-    config_registration = container.register("ldif_config", config)
+    # Find entries that don't fit standard categories
+    categorized = set(categories['persons'] + categories['groups'] + categories['organizational_units'])
+    categories['other'] = [e for e in entries if e not in categorized]
 
-    # Register API
-    api = FlextLDIFAPI(config=config)
-    api_registration = container.register("ldif_api", api)
-
-    # Verify all registrations succeeded
-    if config_registration.is_success and api_registration.is_success:
-        return FlextResult[None].ok(None)
-    else:
-        return FlextResult[None].fail("Service registration failed")
+    return categories
 ```
 
-### 3. Use Structured Logging
+## Performance Considerations
 
-Integrate with FLEXT logging patterns for observability:
+### Current Implementation Limitations
+
+- **Memory Usage**: Entire LDIF file loaded into memory during processing
+- **Single-threaded**: No parallel processing support
+- **No Streaming**: Cannot process files larger than available memory
+- **No Progress Reporting**: Long operations provide no feedback
+
+### Recommended Usage Patterns
 
 ```python
-def process_with_observability(file_path: str) -> FlextResult[dict]:
-    """Process LDIF with comprehensive observability."""
-    logger = FlextLogger(__name__)
-    ldif_api = FlextLDIFAPI()
+# ✅ Good: Small to medium LDIF files
+def process_small_ldif(file_path: Path) -> FlextResult[dict]:
+    """Process LDIF files under 100MB."""
+    if file_path.stat().st_size > 100 * 1024 * 1024:
+        return FlextResult[dict].fail("File too large for current implementation")
 
-    # Log operation start
-    logger.info("LDIF processing started", extra={
-        'operation': 'ldif_processing',
-        'file_path': file_path,
-        'component': 'flext-ldif'
-    })
+    api = FlextLDIFAPI()
+    return api.parse_file(file_path)
 
-    result = ldif_api.parse_file(file_path)
-
-    if result.is_success:
-        entries = result.unwrap()
-        logger.info("LDIF processing completed", extra={
-            'operation': 'ldif_processing',
-            'file_path': file_path,
-            'entries_processed': len(entries),
-            'status': 'success',
-            'component': 'flext-ldif'
-        })
-        return FlextResult[dict].ok({'entries': len(entries)})
-    else:
-        logger.error("LDIF processing failed", extra={
-            'operation': 'ldif_processing',
-            'file_path': file_path,
-            'error': result.error,
-            'status': 'failed',
-            'component': 'flext-ldif'
-        })
-        return FlextResult[dict].fail(result.error)
+# ⚠️ Consider: External tools for large files
+def process_large_ldif(file_path: Path) -> FlextResult[str]:
+    """For large LDIF files, use external tools first."""
+    # Use grep, awk, or other streaming tools to pre-process
+    # Then use FLEXT-LDIF for final processing of smaller chunks
+    return FlextResult[str].fail("Large file processing not yet implemented")
 ```
 
 ---
 
-This integration guide demonstrates how FLEXT-LDIF seamlessly integrates with the broader FLEXT ecosystem while maintaining consistent patterns and professional software architecture principles.
+This integration guide focuses on LDIF-specific patterns within the FLEXT ecosystem. For general FLEXT patterns, see [flext-core documentation](../../flext-core/README.md).
