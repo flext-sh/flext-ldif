@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_cli import FlextCliConfig
+from flext_cli.config import FlextCliConfig
 from flext_core import FlextTypes
 
 from flext_ldif import FlextLDIFAPI, FlextLDIFModels

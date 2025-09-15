@@ -3,8 +3,13 @@
 import tempfile
 from pathlib import Path
 
+import pytest
+
+from flext_ldif.analytics_service import FlextLDIFAnalyticsService
+from flext_ldif.exceptions import FlextLDIFConfigurationError
 from flext_ldif.models import FlextLDIFModels
 from flext_ldif.services import FlextLDIFServices
+from flext_ldif.transformer_service import FlextLDIFTransformerService
 
 
 class TestServicesCoverage100Final:
@@ -268,16 +273,17 @@ class TestServicesCoverage100Final:
     def test_services_convenience_methods_none_parser(self) -> None:
         """Test services convenience methods with None parser."""
         services = FlextLDIFServices()
-        # Set parser to None to test error handling
-        object.__setattr__(services, "parser", None)
+        # Set _parser to None to test error handling
+        object.__setattr__(services, "_parser", None)
 
         with tempfile.NamedTemporaryFile(
             encoding="utf-8", mode="w", suffix=".ldif", delete=False
         ) as f:
             temp_path = f.name
         try:
-            # Test that parser is None
-            assert services.parser is None
+            # Test that accessing parser raises an error when _parser is None
+            with pytest.raises(FlextLDIFConfigurationError, match="Parser service not initialized"):
+                _ = services.parser
         finally:
             Path(temp_path).unlink(missing_ok=True)
 
@@ -285,7 +291,7 @@ class TestServicesCoverage100Final:
         """Test services convenience methods with None validator."""
         services = FlextLDIFServices()
         # Set validator to None to test error handling
-        object.__setattr__(services, "validator", None)
+        object.__setattr__(services, "_validator", None)
 
         FlextLDIFModels.Factory.create_entry(
             {
@@ -294,14 +300,15 @@ class TestServicesCoverage100Final:
             }
         )
 
-        # Test that validator is None
-        assert services.validator is None
+        # Test that accessing validator raises an exception when _validator is None
+        with pytest.raises(FlextLDIFConfigurationError):
+            _ = services.validator
 
     def test_services_convenience_methods_none_writer(self) -> None:
         """Test services convenience methods with None writer."""
         services = FlextLDIFServices()
-        # Set writer to None to test error handling
-        object.__setattr__(services, "writer", None)
+        # Set _writer to None to test error handling
+        object.__setattr__(services, "_writer", None)
 
         FlextLDIFModels.Factory.create_entry(
             {
@@ -315,16 +322,15 @@ class TestServicesCoverage100Final:
         ) as f:
             temp_path = f.name
         try:
-            # Test that writer is None
-            assert services.writer is None
+            # Test that accessing writer raises an error when _writer is None
+            with pytest.raises(FlextLDIFConfigurationError, match="Writer service not initialized"):
+                _ = services.writer
         finally:
             Path(temp_path).unlink(missing_ok=True)
 
-    def test_services_convenience_methods_none_analytics(self) -> None:
-        """Test services convenience methods with None analytics."""
+    def test_services_convenience_methods_analytics_initialized(self) -> None:
+        """Test services convenience methods with properly initialized analytics."""
         services = FlextLDIFServices()
-        # Set analytics to None to test error handling
-        object.__setattr__(services, "analytics", None)
 
         FlextLDIFModels.Factory.create_entry(
             {
@@ -333,14 +339,13 @@ class TestServicesCoverage100Final:
             }
         )
 
-        # Test that analytics is None
-        assert services.analytics is None
+        # Test that analytics is properly initialized and not None
+        assert services.analytics is not None
+        assert isinstance(services.analytics, FlextLDIFAnalyticsService)
 
-    def test_services_convenience_methods_none_transformer(self) -> None:
-        """Test services convenience methods with None transformer."""
+    def test_services_convenience_methods_transformer_initialized(self) -> None:
+        """Test services convenience methods with properly initialized transformer."""
         services = FlextLDIFServices()
-        # Set transformer to None to test error handling
-        object.__setattr__(services, "transformer", None)
 
         FlextLDIFModels.Factory.create_entry(
             {
@@ -352,5 +357,6 @@ class TestServicesCoverage100Final:
         def transform_func(e: FlextLDIFModels.Entry) -> FlextLDIFModels.Entry:
             return e
 
-        # Test that transformer is None
-        assert services.transformer is None
+        # Test that transformer is properly initialized and not None
+        assert services.transformer is not None
+        assert isinstance(services.transformer, FlextLDIFTransformerService)

@@ -3,6 +3,9 @@
 import tempfile
 from pathlib import Path
 
+import pytest
+
+from flext_ldif.exceptions import FlextLDIFConfigurationError
 from flext_ldif.models import FlextLDIFModels
 from flext_ldif.services import FlextLDIFServices
 
@@ -272,7 +275,7 @@ class TestServicesFinalCoveragePush:
         """Test services convenience methods with None parser."""
         services = FlextLDIFServices()
         # Set parser to None to test error handling
-        object.__setattr__(services, "parser", None)
+        object.__setattr__(services, "_parser", None)
 
         with tempfile.NamedTemporaryFile(
             encoding="utf-8", mode="w", suffix=".ldif", delete=False
@@ -280,7 +283,8 @@ class TestServicesFinalCoveragePush:
             temp_path = f.name
         try:
             # Test that parser is None
-            assert services.parser is None
+            with pytest.raises(FlextLDIFConfigurationError):
+                _ = services.parser
         finally:
             Path(temp_path).unlink(missing_ok=True)
 
@@ -288,7 +292,7 @@ class TestServicesFinalCoveragePush:
         """Test services convenience methods with None validator."""
         services = FlextLDIFServices()
         # Set validator to None to test error handling
-        object.__setattr__(services, "validator", None)
+        object.__setattr__(services, "_validator", None)
 
         FlextLDIFModels.Factory.create_entry(
             {
@@ -298,13 +302,14 @@ class TestServicesFinalCoveragePush:
         )
 
         # Test that validator is None
-        assert services.validator is None
+        with pytest.raises(FlextLDIFConfigurationError):
+            _ = services.validator
 
     def test_services_convenience_methods_none_writer(self) -> None:
         """Test services convenience methods with None writer."""
         services = FlextLDIFServices()
         # Set writer to None to test error handling
-        object.__setattr__(services, "writer", None)
+        object.__setattr__(services, "_writer", None)
 
         FlextLDIFModels.Factory.create_entry(
             {
@@ -319,7 +324,8 @@ class TestServicesFinalCoveragePush:
             temp_path = f.name
         try:
             # Test that writer is None
-            assert services.writer is None
+            with pytest.raises(FlextLDIFConfigurationError):
+                _ = services.writer
         finally:
             Path(temp_path).unlink(missing_ok=True)
 
@@ -327,7 +333,7 @@ class TestServicesFinalCoveragePush:
         """Test services convenience methods with None analytics."""
         services = FlextLDIFServices()
         # Set analytics to None to test error handling
-        object.__setattr__(services, "analytics", None)
+        object.__setattr__(services, "_analytics", None)
 
         FlextLDIFModels.Factory.create_entry(
             {
@@ -337,13 +343,14 @@ class TestServicesFinalCoveragePush:
         )
 
         # Test that analytics is None
-        assert services.analytics is None
+        with pytest.raises(FlextLDIFConfigurationError):
+            _ = services.analytics
 
     def test_services_convenience_methods_none_transformer(self) -> None:
         """Test services convenience methods with None transformer."""
         services = FlextLDIFServices()
         # Set transformer to None to test error handling
-        object.__setattr__(services, "transformer", None)
+        object.__setattr__(services, "_transformer", None)
 
         FlextLDIFModels.Factory.create_entry(
             {
@@ -356,4 +363,5 @@ class TestServicesFinalCoveragePush:
             return e
 
         # Test that transformer is None
-        assert services.transformer is None
+        with pytest.raises(FlextLDIFConfigurationError):
+            _ = services.transformer

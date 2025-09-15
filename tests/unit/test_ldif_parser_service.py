@@ -76,9 +76,9 @@ class TestFlextLDIFServicesParserServiceReal:
             assert len(entries) == 1
         else:
             # Expected failure for invalid binary data
+            error_msg = result.error or ""
             assert (
-                "Base64 decode error" in result.error
-                or "invalid start byte" in result.error
+                "Base64 decode error" in error_msg or "invalid start byte" in error_msg
             )
 
         entry = entries[0]
@@ -107,9 +107,9 @@ class TestFlextLDIFServicesParserServiceReal:
             assert len(entries) == 1
         else:
             # Expected failure for invalid binary data
+            error_msg = result.error or ""
             assert (
-                "Base64 decode error" in result.error
-                or "invalid start byte" in result.error
+                "Base64 decode error" in error_msg or "invalid start byte" in error_msg
             )
 
     def test_parse_real_special_characters(self) -> None:
@@ -126,9 +126,9 @@ class TestFlextLDIFServicesParserServiceReal:
             assert len(entries) == 1
         else:
             # Expected failure for invalid binary data
+            error_msg = result.error or ""
             assert (
-                "Base64 decode error" in result.error
-                or "invalid start byte" in result.error
+                "Base64 decode error" in error_msg or "invalid start byte" in error_msg
             )
 
         entry = entries[0]
@@ -204,6 +204,9 @@ class TestParserIntegrationReal:
         """Test parser integrated with real validator service."""
         parser = integration_services["parser"]
         validator = integration_services["validator"]
+        # Type assertions for MyPy
+        assert hasattr(parser, "parse_content")
+        assert hasattr(validator, "validate_entry_structure")
 
         # Parse real data
         ldif_sample = LdifTestData.basic_entries()
@@ -223,6 +226,9 @@ class TestParserIntegrationReal:
         """Test parser → writer → parser roundtrip with real services."""
         parser = integration_services["parser"]
         writer = integration_services["writer"]
+        # Type assertions for MyPy
+        assert hasattr(parser, "parse_content")
+        assert hasattr(writer, "write_entries_to_string")
 
         # Parse original data
         ldif_sample = LdifTestData.basic_entries()

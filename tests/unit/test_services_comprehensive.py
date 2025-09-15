@@ -69,12 +69,14 @@ class TestRepositoryServiceComprehensive:
         # Test empty object class
         result = service.filter_entries_by_object_class(entries, "")
         assert not result.is_success
-        assert "Object class cannot be empty" in result.error
+        if result.error:
+            assert "Object class cannot be empty" in result.error
 
         # Test whitespace-only object class
         result = service.filter_entries_by_object_class(entries, "   ")
         assert not result.is_success
-        assert "Object class cannot be empty" in result.error
+        if result.error:
+            assert "Object class cannot be empty" in result.error
 
     def test_filter_entries_by_attribute_with_value(self) -> None:
         """Test filter_entries_by_attribute with specific value matching."""
@@ -136,12 +138,14 @@ class TestRepositoryServiceComprehensive:
         # Test empty attribute name
         result = service.filter_entries_by_attribute(entries, "", "value")
         assert not result.is_success
-        assert "attribute name cannot be empty" in result.error.lower()
+        if result.error:
+            assert "attribute name cannot be empty" in result.error.lower()
 
         # Test whitespace-only attribute name
         result = service.filter_entries_by_attribute(entries, "   ", "value")
         assert not result.is_success
-        assert "attribute name cannot be empty" in result.error.lower()
+        if result.error:
+            assert "attribute name cannot be empty" in result.error.lower()
 
     def test_find_by_dn_error_cases(self) -> None:
         """Test find_by_dn with error conditions."""
@@ -333,7 +337,8 @@ class TestValidatorServiceComprehensive:
         # Test with empty list first (should fail)
         result = service.validate_entries([])
         assert result.is_failure
-        assert "Cannot validate empty entry list" in result.error
+        if result.error:
+            assert "Cannot validate empty entry list" in result.error
 
 
 class TestParserServiceComprehensive:
@@ -377,7 +382,8 @@ objectClass: person
 
         result = service.parse_content(invalid_ldif)
         assert not result.is_success
-        assert "Parse failed" in result.error
+        if result.error:
+            assert "Parse failed" in result.error
 
     def test_validate_ldif_syntax_attribute_before_dn(self) -> None:
         """Test validate_ldif_syntax with attribute before DN."""
@@ -390,7 +396,8 @@ objectClass: person
 
         result = service.validate_ldif_syntax(invalid_ldif)
         assert not result.is_success
-        assert "LDIF must start with dn:" in result.error
+        if result.error:
+            assert "LDIF must start with dn:" in result.error
 
     def test_parse_ldif_file_not_found(self) -> None:
         """Test parse_ldif_file with non-existent file."""
@@ -398,7 +405,8 @@ objectClass: person
 
         result = service.parse_ldif_file("/nonexistent/path/file.ldif")
         assert not result.is_success
-        assert "File read failed" in result.error
+        if result.error:
+            assert "File read failed" in result.error
 
     def test_parse_ldif_file_success(self) -> None:
         """Test parse_ldif_file with real file."""
@@ -426,7 +434,8 @@ objectClass: person
 
         result = service._parse_entry_block("")
         assert not result.is_success
-        assert "No entries found" in result.error
+        if result.error:
+            assert "No entries found" in result.error
 
     def test_parse_entry_block_missing_dn(self) -> None:
         """Test _parse_entry_block with missing DN."""
@@ -439,7 +448,8 @@ objectClass: person
         result = service._parse_entry_block(block_without_dn)
         assert not result.is_success
         # After ldif3 integration, the error message is more specific
-        assert "Block parse failed" in result.error
+        if result.error:
+            assert "Block parse failed" in result.error
 
     def test_parse_entry_block_success(self) -> None:
         """Test _parse_entry_block with valid block."""

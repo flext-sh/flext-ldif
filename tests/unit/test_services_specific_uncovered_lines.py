@@ -3,6 +3,9 @@
 import tempfile
 from pathlib import Path
 
+import pytest
+
+from flext_ldif.exceptions import FlextLDIFConfigurationError
 from flext_ldif.models import FlextLDIFModels
 from flext_ldif.services import FlextLDIFServices
 
@@ -278,89 +281,49 @@ class TestServicesSpecificUncoveredLines:
     def test_services_convenience_methods_none_parser(self) -> None:
         """Test services convenience methods with None parser."""
         services = FlextLDIFServices()
-        # Set parser to None to test error handling
-        object.__setattr__(services, "parser", None)
+        # Set internal _parser to None to test error handling
+        object.__setattr__(services, "_parser", None)
 
-        with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".ldif", delete=False
-        ) as f:
-            temp_path = f.name
-        try:
-            # Test that parser is None
-            assert services.parser is None
-        finally:
-            Path(temp_path).unlink(missing_ok=True)
+        # Test that accessing parser raises ConfigurationError
+        with pytest.raises(FlextLDIFConfigurationError, match="Parser service not initialized"):
+            _ = services.parser
 
     def test_services_convenience_methods_none_validator(self) -> None:
         """Test services convenience methods with None validator."""
         services = FlextLDIFServices()
-        # Set validator to None to test error handling
-        object.__setattr__(services, "validator", None)
+        # Set internal _validator to None to test error handling
+        object.__setattr__(services, "_validator", None)
 
-        FlextLDIFModels.Factory.create_entry(
-            {
-                "dn": "cn=test,dc=example,dc=com",
-                "attributes": {"cn": ["test"], "objectClass": ["person"]},
-            }
-        )
-
-        # Test that validator is None
-        assert services.validator is None
+        # Test that accessing validator raises ConfigurationError
+        with pytest.raises(FlextLDIFConfigurationError, match="Validator service not initialized"):
+            _ = services.validator
 
     def test_services_convenience_methods_none_writer(self) -> None:
         """Test services convenience methods with None writer."""
         services = FlextLDIFServices()
-        # Set writer to None to test error handling
-        object.__setattr__(services, "writer", None)
+        # Set internal _writer to None to test error handling
+        object.__setattr__(services, "_writer", None)
 
-        FlextLDIFModels.Factory.create_entry(
-            {
-                "dn": "cn=test,dc=example,dc=com",
-                "attributes": {"cn": ["test"], "objectClass": ["person"]},
-            }
-        )
-
-        with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".ldif", delete=False
-        ) as f:
-            temp_path = f.name
-        try:
-            # Test that writer is None
-            assert services.writer is None
-        finally:
-            Path(temp_path).unlink(missing_ok=True)
+        # Test that accessing writer raises ConfigurationError
+        with pytest.raises(FlextLDIFConfigurationError, match="Writer service not initialized"):
+            _ = services.writer
 
     def test_services_convenience_methods_none_analytics(self) -> None:
         """Test services convenience methods with None analytics."""
         services = FlextLDIFServices()
-        # Set analytics to None to test error handling
-        object.__setattr__(services, "analytics", None)
+        # Set internal _analytics to None to test error handling
+        object.__setattr__(services, "_analytics", None)
 
-        FlextLDIFModels.Factory.create_entry(
-            {
-                "dn": "cn=test,dc=example,dc=com",
-                "attributes": {"cn": ["test"], "objectClass": ["person"]},
-            }
-        )
-
-        # Test that analytics is None
-        assert services.analytics is None
+        # Test that accessing analytics raises ConfigurationError
+        with pytest.raises(FlextLDIFConfigurationError, match="Analytics service not initialized"):
+            _ = services.analytics
 
     def test_services_convenience_methods_none_transformer(self) -> None:
         """Test services convenience methods with None transformer."""
         services = FlextLDIFServices()
-        # Set transformer to None to test error handling
-        object.__setattr__(services, "transformer", None)
+        # Set internal _transformer to None to test error handling
+        object.__setattr__(services, "_transformer", None)
 
-        FlextLDIFModels.Factory.create_entry(
-            {
-                "dn": "cn=test,dc=example,dc=com",
-                "attributes": {"cn": ["test"], "objectClass": ["person"]},
-            }
-        )
-
-        def transform_func(e: FlextLDIFModels.Entry) -> FlextLDIFModels.Entry:
-            return e
-
-        # Test that transformer is None
-        assert services.transformer is None
+        # Test that accessing transformer raises ConfigurationError
+        with pytest.raises(FlextLDIFConfigurationError, match="Transformer service not initialized"):
+            _ = services.transformer

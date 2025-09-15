@@ -2,7 +2,7 @@
 
 **LDIF processing library** for the FLEXT ecosystem, providing LDAP data parsing and validation using service-oriented architecture and type-safe error handling.
 
-> **STATUS**: Version 0.9.0 - Functional LDIF processing with memory-bound operations
+> **STATUS**: Version 0.9.0 - Functional LDIF processing with memory-bound operations ⚠️ **Files >100MB may fail due to memory constraints**
 
 ---
 
@@ -62,6 +62,8 @@ graph TB
 
 ## 🚀 Quick Start
 
+⚠️ **CRITICAL MEMORY WARNING**: This implementation loads entire LDIF files into memory during processing. **Files larger than 100MB may cause processing failures** due to memory constraints. Check file size before processing large files to avoid out-of-memory errors.
+
 ### **Installation**
 
 ```bash
@@ -81,8 +83,15 @@ from pathlib import Path
 # Initialize API
 api = FlextLDIFAPI()
 
+# ⚠️ MEMORY CHECK: Verify file size before processing
+ldif_file = Path("directory.ldif")
+file_size_mb = ldif_file.stat().st_size / (1024 * 1024)
+if file_size_mb > 100:
+    print(f"WARNING: File size ({file_size_mb:.1f}MB) exceeds recommended 100MB limit")
+    print("Processing may fail due to memory-bound architecture - see Known Limitations")
+
 # Parse LDIF file
-result = api.parse_file(Path("directory.ldif"))
+result = api.parse_file(ldif_file)
 if result.is_success:
     entries = result.unwrap()
     print(f"Parsed {len(entries)} LDIF entries")
@@ -155,10 +164,17 @@ pytest --cov=src/flext_ldif             # Coverage report
 
 ### **Known Limitations**
 
-- **Memory Usage**: Loads entire files into memory during processing
-- **Performance**: Single-threaded processing suitable for small files
-- **Scale**: Recommended for files under 100MB due to memory constraints
-- **Features**: Basic functionality with room for enhancement
+⚠️ **CRITICAL MEMORY ARCHITECTURE CONSTRAINTS**:
+
+- **Memory Usage**: **Loads entire LDIF files into memory** during processing via `content.splitlines()` in `format_handlers.py:206`
+- **File Size Limit**: **Files larger than available RAM will cause failures** - recommended maximum 100MB
+- **Memory Scaling**: **Memory usage scales linearly with file size** - no streaming or chunked processing
+- **No Graceful Degradation**: **No memory pressure detection or recovery mechanisms**
+- **Performance**: Single-threaded processing, memory-bound architecture unsuitable for large datasets
+- **Architecture**: Custom parser implementation contradicts 2025 industry best practices for LDIF processing
+- **Features**: Basic functionality focused on small to medium file processing
+
+**Technical Details**: The current implementation uses a custom `_ParserHelper` class that calls `content.splitlines()`, loading the entire file content into memory before processing begins. This design choice makes the library suitable only for files that fit comfortably in available system memory.
 
 ### **Ecosystem Integration**
 

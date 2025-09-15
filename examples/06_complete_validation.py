@@ -60,9 +60,10 @@ def test_1_flext_ldif_prefixes_validation() -> FlextTypes.Core.Dict:
     attrs = FlextLDIFModels.LdifAttributes(data={"objectClass": ["person"]})
 
     # ✅ Testando services com prefixos FlextLDIF* (os que realmente existem)
-    parser_service = FlextLDIFServices.ParserService()
-    validator_service = FlextLDIFServices.ValidatorService()
-    writer_service = FlextLDIFServices.WriterService()
+    services = FlextLDIFServices()
+    parser_service = services.parser
+    validator_service = services.validator
+    writer_service = services.writer
 
     return {
         "config": config,
@@ -313,19 +314,30 @@ cn: Simple User"""
 
     # Test flext_ldif_parse function - EXISTE
     with contextlib.suppress(Exception):
-        entries = FlextLDIFFormatHandler.parse_ldif(test_ldif).unwrap_or_raise()
+        format_handler = FlextLDIFFormatHandler()
+        entries_result = format_handler.parse_ldif(test_ldif)
+        entries = entries_result.unwrap() if entries_result.is_success else []
 
     # Test flext_ldif_validate function - EXISTE
     with contextlib.suppress(Exception):
         # flext_ldif_validate expects list of entries, not LDIF string
-        test_entries = FlextLDIFFormatHandler.parse_ldif(test_ldif).unwrap_or_raise()
-        is_valid = FlextLDIFAPI().validate_entries(test_entries).unwrap_or_raise()
+        format_handler = FlextLDIFFormatHandler()
+        parse_result = format_handler.parse_ldif(test_ldif)
+        if parse_result.is_success:
+            test_entries = parse_result.unwrap()
+            api = FlextLDIFAPI()
+            validation_result = api.validate_entries(test_entries)
+            is_valid = validation_result.is_success
 
     # Test flext_ldif_write function - EXISTE
     try:
-        # Create a test entry for writing
+        # Create a test entry for writing - initialize entries variable
+        entries = []
         if "entries" in locals() and entries:
-            ldif_output = FlextLDIFFormatHandler.write_ldif(entries).unwrap_or_raise()
+            format_handler = FlextLDIFFormatHandler()
+            write_result = format_handler.write_ldif(entries)
+            if write_result.is_success:
+                ldif_output = write_result.unwrap()
     except (RuntimeError, ValueError, TypeError):
         pass
 
@@ -424,9 +436,18 @@ member: uid=user1,ou=people,dc=comprehensive,dc=test"""
 
     try:
         # ✅ CORREÇÃO: Usar funções que realmente existem
-        entries = FlextLDIFFormatHandler.parse_ldif(complex_ldif).unwrap_or_raise()
+        format_handler = FlextLDIFFormatHandler()
+        parse_result = format_handler.parse_ldif(complex_ldif)
+        if parse_result.is_failure:
+            msg = f"Parse failed: {parse_result.error}"
+            raise ValueError(msg)
+        entries = parse_result.unwrap()
 
-        FlextLDIFAPI().validate_entries(entries).unwrap_or_raise()
+        api = FlextLDIFAPI()
+        validation_result = api.validate_entries(entries)
+        if validation_result.is_failure:
+            msg = f"Validation failed: {validation_result.error}"
+            raise ValueError(msg)
 
         if entries:
             for entry in entries:
@@ -456,13 +477,21 @@ member: uid=user1,ou=people,dc=comprehensive,dc=test"""
 
         try:
             # Test writing to string and then to file
-            ldif_content = FlextLDIFFormatHandler.write_ldif(entries).unwrap_or_raise()
+            format_handler = FlextLDIFFormatHandler()
+            write_result = format_handler.write_ldif(entries)
+            if write_result.is_failure:
+                msg = f"Write failed: {write_result.error}"
+                raise ValueError(msg)
+            ldif_content = write_result.unwrap()
             temp_file.write_text(ldif_content, encoding="utf-8")
 
             # Test reading from file
             if temp_file.exists():
                 file_content = temp_file.read_text(encoding="utf-8")
-                FlextLDIFFormatHandler.parse_ldif(file_content).unwrap_or_raise()
+                parse_result = format_handler.parse_ldif(file_content)
+                if parse_result.is_failure:
+                    msg = f"Parse failed: {parse_result.error}"
+                    raise ValueError(msg)
 
         finally:
             # Cleanup

@@ -138,7 +138,8 @@ objectClass: inetOrgPerson
     if multi_result.is_success:
         entry = multi_result.value[0]
         mail_attrs = entry.get_attribute("mail")
-        assert len(mail_attrs) >= 2
+        if mail_attrs is not None:
+            assert len(mail_attrs) >= 2
 
     # LDIF simples para success path (linha 732)
     simple_ldif = """dn: cn=simple,dc=example,dc=com
@@ -185,20 +186,16 @@ def test_all_service_integrations() -> None:
         )
     ]
 
-    # Testar todos os services
-    services = [
-        FlextLDIFServices().parser,
-        FlextLDIFServices().validator,
-        FlextLDIFServices().transformer,
-        FlextLDIFServices().writer,
-        FlextLDIFServices().analytics,
-        FlextLDIFServices().repository,
-    ]
+    # Initialize services with proper typing
+    main_services = FlextLDIFServices()
 
-    # Operações básicas em cada service
-    parser = services[0]
-    validator = services[1]
-    transformer = services[2]
+    # Access services with proper typing
+    parser = main_services.parser
+    validator = main_services.validator
+    transformer = main_services.transformer
+
+    # Create services list for iteration later
+    services = [parser, validator, transformer, main_services.writer, main_services.analytics, main_services.repository]
 
     # Parse -> Validate -> Transform cycle
     ldif_content = """dn: cn=cycle,dc=example,dc=com

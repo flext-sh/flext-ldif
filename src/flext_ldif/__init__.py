@@ -6,8 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import warnings
-
 from flext_ldif.api import FlextLDIFAPI
 from flext_ldif.cli import main
 from flext_ldif.config import FlextLDIFConfig, get_ldif_config, initialize_ldif_config
@@ -25,22 +23,22 @@ from flext_ldif.protocols import FlextLDIFProtocols
 from flext_ldif.services import FlextLDIFServices
 from flext_ldif.utilities import FlextLDIFUtilities
 
-# Suppress Pydantic V2 warnings for clean CLI experience
-warnings.filterwarnings(
-    "ignore", category=UserWarning, module="pydantic._internal._config"
-)
-warnings.filterwarnings(
-    "ignore", category=DeprecationWarning, module="pydantic._internal._config"
-)
-warnings.filterwarnings(
-    "ignore",
-    message=".*validate_all.*renamed.*validate_default.*",
-    category=UserWarning,
-)
-warnings.filterwarnings(
-    "ignore", message=".*class-based.*config.*deprecated.*", category=DeprecationWarning
-)
-
+# # Suppress Pydantic V2 warnings for clean CLI experience
+# warnings.filterwarnings(
+#     "ignore", category=UserWarning, module="pydantic._internal._config"
+# )
+# warnings.filterwarnings(
+#     "ignore", category=DeprecationWarning, module="pydantic._internal._config"
+# )
+# warnings.filterwarnings(
+#     "ignore",
+#     message=".*validate_all.*renamed.*validate_default.*",
+#     category=UserWarning,
+# )
+# warnings.filterwarnings(
+#     "ignore", message=".*class-based.*config.*deprecated.*", category=DeprecationWarning
+# )
+#
 __all__ = [
     "FlextLDIFAPI",
     "FlextLDIFConfig",
