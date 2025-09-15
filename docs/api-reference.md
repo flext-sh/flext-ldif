@@ -117,12 +117,12 @@ def write_file(
     """
 ```
 
-##### write_string(entries)
+##### write(entries)
 
 Convert entries to LDIF string format.
 
 ```python
-def write_string(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult[str]:
+def write(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult[str]:
     """Convert entries to LDIF string.
 
     Args:
@@ -132,7 +132,7 @@ def write_string(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult[str]
         FlextResult containing LDIF string or error
 
     Example:
-        >>> result = api.write_string(entries)
+        >>> result = api.write(entries)
         >>> if result.is_success:
         ...     ldif_content = result.unwrap()
         ...     print(ldif_content)

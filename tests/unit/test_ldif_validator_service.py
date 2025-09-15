@@ -349,6 +349,9 @@ class TestValidatorIntegrationReal:
         """Test validator integrated with real parser service."""
         parser = integration_services["parser"]
         validator = integration_services["validator"]
+        # Type assertions for MyPy
+        assert hasattr(parser, "parse_content")
+        assert hasattr(validator, "validate_entry_structure")
 
         # Parse real LDIF data
         ldif_sample = LdifTestData.basic_entries()

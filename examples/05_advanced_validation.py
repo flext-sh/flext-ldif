@@ -44,7 +44,7 @@ def validate_business_rules(
     errors: FlextTypes.Core.StringList = []
 
     # Rule 1: Person entries must have email
-    if entry.is_person_entry():
+    if entry.is_person():
         mail = entry.attributes.get_single_attribute("mail")
         if not mail or not mail[0]:
             errors.append("Person entries must have email address")

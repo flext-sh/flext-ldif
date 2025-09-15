@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import pytest
+
 from flext_ldif import FlextLDIFModels
 from flext_ldif.format_validators import (
     FlextLDIFFormatValidator,
@@ -247,14 +249,13 @@ class TestLdifValidator:
             "attributes": {"objectClass": ["person"], "cn": ["Test User"]},
         }
 
-        # Should fail during model validation or create entry with empty DN
-        try:
-            entry = FlextLDIFModels.Entry.model_validate(entry_data)
-            result = LdifValidator.validate_entry_completeness(entry)
-            assert result.is_success is False
-        except Exception:
-            # Model validation failed - acceptable
-            pass
+        # Should fail during model validation - empty DN is invalid
+        with pytest.raises(Exception) as exc_info:
+            FlextLDIFModels.Entry.model_validate(entry_data)
+
+        # Verify the exception contains relevant error information
+        error_msg = str(exc_info.value).lower()
+        assert "dn" in error_msg or "validation" in error_msg
 
     def test_validate_entry_type_person(self) -> None:
         """Test entry type validation for person."""

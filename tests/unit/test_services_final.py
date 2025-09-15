@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections.abc import Iterator
 from unittest.mock import patch
 
+from flext_core import FlextResult
+
 from flext_ldif.models import FlextLDIFModels
 from flext_ldif.services import FlextLDIFServices
 
@@ -218,7 +220,7 @@ def test_final_precision_verification_each_line() -> None:
     validator = FlextLDIFServices(config=config)
     parser = FlextLDIFServices().parser
 
-    results: dict[str, object] = {}
+    results: dict[str, FlextResult[bool] | FlextResult[list[FlextLDIFModels.Entry]]] = {}
 
     # Test validation with real entry
     entry_data = {

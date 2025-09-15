@@ -162,15 +162,15 @@ class TestFlextLDIFModelsEntryEnterprise:
 
         mail_values = entry.get_attribute("mail")
         if mail_values != ["john.doe@example.com"]:
-            msg: str = f"Expected {['john.doe@example.com']}, got {mail_values}"
-            raise AssertionError(msg)
+            mail_msg: str = f"Expected {['john.doe@example.com']}, got {mail_values}"
+            raise AssertionError(mail_msg)
 
         objectclass_values = entry.get_attribute("objectClass")
         if objectclass_values != ["person", "inetOrgPerson"]:
-            msg: str = (
+            objectclass_msg: str = (
                 f"Expected {['person', 'inetOrgPerson']}, got {objectclass_values}"
             )
-            raise AssertionError(msg)
+            raise AssertionError(objectclass_msg)
 
     def test_get_attribute_nonexistent(
         self, sample_entry_data: FlextTypes.Core.Dict
@@ -190,14 +190,14 @@ class TestFlextLDIFModelsEntryEnterprise:
         # Set new attribute
         entry.set_attribute("telephoneNumber", ["+1-555-0123"])
         if entry.get_attribute("telephoneNumber") != ["+1-555-0123"]:
-            msg: str = f"Expected {['+1-555-0123']}, got {entry.get_attribute('telephoneNumber')}"
-            raise AssertionError(msg)
+            phone_msg: str = f"Expected {['+1-555-0123']}, got {entry.get_attribute('telephoneNumber')}"
+            raise AssertionError(phone_msg)
 
         # Modify existing attribute
         entry.set_attribute("mail", ["newemail@example.com"])
         if entry.get_attribute("mail") != ["newemail@example.com"]:
-            msg: str = f"Expected {['newemail@example.com']}, got {entry.get_attribute('mail')}"
-            raise AssertionError(msg)
+            mail_msg: str = f"Expected {['newemail@example.com']}, got {entry.get_attribute('mail')}"
+            raise AssertionError(mail_msg)
 
     def test_has_attribute_success(
         self, sample_entry_data: FlextTypes.Core.Dict
@@ -206,15 +206,15 @@ class TestFlextLDIFModelsEntryEnterprise:
         entry = FlextLDIFModels.Entry.model_validate(sample_entry_data)
 
         if not (entry.has_attribute("cn")):
-            msg: str = f"Expected True, got {entry.has_attribute('cn')}"
-            raise AssertionError(msg)
+            cn_msg: str = f"Expected True, got {entry.has_attribute('cn')}"
+            raise AssertionError(cn_msg)
         assert entry.has_attribute("mail") is True
         if not (entry.has_attribute("objectClass")):
-            msg: str = f"Expected True, got {entry.has_attribute('objectClass')}"
-            raise AssertionError(msg)
+            objectclass_msg: str = f"Expected True, got {entry.has_attribute('objectClass')}"
+            raise AssertionError(objectclass_msg)
         if entry.has_attribute("nonexistent"):
-            msg: str = f"Expected False, got {entry.has_attribute('nonexistent')}"
-            raise AssertionError(msg)
+            nonexistent_msg: str = f"Expected False, got {entry.has_attribute('nonexistent')}"
+            raise AssertionError(nonexistent_msg)
 
     def test_get_object_classes_success(
         self, sample_entry_data: FlextTypes.Core.Dict
@@ -274,13 +274,13 @@ class TestFlextLDIFModelsEntryEnterprise:
 
         cn_value = entry.get_single_attribute("cn")
         if cn_value != "John Doe":
-            msg: str = f"Expected {'John Doe'}, got {cn_value}"
-            raise AssertionError(msg)
+            cn_msg: str = f"Expected {'John Doe'}, got {cn_value}"
+            raise AssertionError(cn_msg)
 
         uid_value = entry.get_single_attribute("uid")
         if uid_value != "johndoe":
-            msg: str = f"Expected {'johndoe'}, got {uid_value}"
-            raise AssertionError(msg)
+            uid_msg: str = f"Expected {'johndoe'}, got {uid_value}"
+            raise AssertionError(uid_msg)
 
     def test_get_single_attribute_nonexistent(
         self, sample_entry_data: FlextTypes.Core.Dict
@@ -369,14 +369,14 @@ mail: test@example.com"""
         entry = FlextLDIFModels.Entry.from_ldif_block(ldif_block)
 
         if str(entry.dn) != "cn=test,ou=people,dc=example,dc=com":
-            msg: str = (
+            dn_msg: str = (
                 f"Expected {'cn=test,ou=people,dc=example,dc=com'}, got {entry.dn!s}"
             )
-            raise AssertionError(msg)
+            raise AssertionError(dn_msg)
         assert entry.get_attribute("cn") == ["test"]
         if entry.get_attribute("sn") != ["user"]:
-            msg: str = f"Expected {['user']}, got {entry.get_attribute('sn')}"
-            raise AssertionError(msg)
+            sn_msg: str = f"Expected {['user']}, got {entry.get_attribute('sn')}"
+            raise AssertionError(sn_msg)
         assert entry.get_attribute("mail") == ["test@example.com"]
         assert entry.has_object_class("person")
         assert entry.has_object_class("inetOrgPerson")
@@ -427,15 +427,19 @@ description: With multiple descriptions"""
             "mail": ["test@example.com"],
         }
 
-        entry = FlextLDIFModels.Entry(dn=dn, attributes=attributes)
+        # Use the model validator to handle type conversion
+        entry = FlextLDIFModels.Entry.model_validate({
+            "dn": dn,
+            "attributes": attributes
+        })
 
         if str(entry.dn) != dn:
-            msg: str = f"Expected {dn}, got {entry.dn!s}"
-            raise AssertionError(msg)
+            dn_msg: str = f"Expected {dn}, got {entry.dn!s}"
+            raise AssertionError(dn_msg)
         assert entry.attributes.data == attributes
         if entry.get_attribute("cn") != ["test"]:
-            msg: str = f"Expected {['test']}, got {entry.get_attribute('cn')}"
-            raise AssertionError(msg)
+            cn_msg: str = f"Expected {['test']}, got {entry.get_attribute('cn')}"
+            raise AssertionError(cn_msg)
         assert entry.has_object_class("person")
 
     def test_entry_immutability_via_pydantic(
@@ -451,13 +455,13 @@ description: With multiple descriptions"""
         # Test that we can use set_attribute (which creates new objects)
         entry.set_attribute("newAttr", ["newValue"])
         if entry.get_attribute("newAttr") != ["newValue"]:
-            msg: str = f"Expected {['newValue']}, got {entry.get_attribute('newAttr')}"
-            raise AssertionError(msg)
+            attr_msg: str = f"Expected {['newValue']}, got {entry.get_attribute('newAttr')}"
+            raise AssertionError(attr_msg)
 
         # DN should remain unchanged
         if str(entry.dn) != original_dn:
-            msg: str = f"Expected {original_dn}, got {entry.dn!s}"
-            raise AssertionError(msg)
+            dn_msg: str = f"Expected {original_dn}, got {entry.dn!s}"
+            raise AssertionError(dn_msg)
 
     def test_entry_equality_and_hashing(
         self, sample_entry_data: FlextTypes.Core.Dict
@@ -471,8 +475,8 @@ description: With multiple descriptions"""
 
         # Should be equal with same data
         if entry1 != entry2:
-            msg: str = f"Expected {entry2}, got {entry1}"
-            raise AssertionError(msg)
+            equality_msg: str = f"Expected {entry2}, got {entry1}"
+            raise AssertionError(equality_msg)
 
         # Note: Hashing is currently not supported due to unhashable dict in attributes
         # This is a known limitation that should be addressed in future refactoring
@@ -481,8 +485,8 @@ description: With multiple descriptions"""
             hash(entry2)
             # If hashing works, test hash equality
             if hash(entry1) != hash(entry2):
-                msg: str = f"Expected {hash(entry2)}, got {hash(entry1)}"
-                raise AssertionError(msg)
+                hash_msg: str = f"Expected {hash(entry2)}, got {hash(entry1)}"
+                raise AssertionError(hash_msg)
         except TypeError:
             # Hash not supported - skip hash-related tests
             pass
@@ -497,7 +501,7 @@ description: With multiple descriptions"""
         assert "dn=" in str1 or "Entry(" in str1
         assert "attributes=" in str1 or len(str1) > 10  # Has some content
         assert "dn=" in str2 or "Entry(" in str2
-        assert "attributes=" in str2 or len(str2) > 10  # Has some content
+        assert "attributes=" in str2 or len(str2) > 10  # Has some content  # Has some content
 
     def test_entry_serialization_deserialization(
         self, sample_entry_data: FlextTypes.Core.Dict

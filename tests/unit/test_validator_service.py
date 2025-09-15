@@ -4,6 +4,8 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+import pytest
+
 from flext_ldif import FlextLDIFModels, FlextLDIFServices
 from flext_ldif.exceptions import FlextLDIFExceptions, FlextLDIFValidationError
 
@@ -106,26 +108,18 @@ class TestFlextLDIFServicesValidatorService:
 
     def test_validate_entry_business_rules_failure(self) -> None:
         """Test validate_entry when DN validation fails (business rule failure)."""
-        service = FlextLDIFServices().validator
-
         # Test that service handles validation errors properly
         # Try to create an entry that will cause business rule validation issues
 
-        try:
-            # Try to create entry with empty DN - this should fail during creation
-            invalid_entry = FlextLDIFModels.Entry(
+        # Try to create entry with empty DN - this should fail during creation
+        with pytest.raises((FlextLDIFValidationError, ValueError, Exception)):
+            FlextLDIFModels.Entry(
                 dn=FlextLDIFModels.DistinguishedName(value=""),  # Empty DN should fail
                 attributes=FlextLDIFModels.LdifAttributes(data={"cn": ["test"]}),
             )
 
-            # If creation succeeds (shouldn't), test service validation
-            result = service.validator.validate_entry_structure(invalid_entry)
-            assert result.is_success or result.is_failure
-
-        except (FlextLDIFValidationError, ValueError, Exception):
-            # Expected behavior - DN validation fails during creation
-            # This demonstrates the real validation is working
-            pass
+        # If we reach here, the exception was properly raised
+        # This demonstrates the real validation is working
 
     def test_validate_configuration_rules_no_config(self) -> None:
         """Test configuration rules validation with no config."""
@@ -287,7 +281,8 @@ class TestFlextLDIFServicesValidatorService:
 
         # Empty list validation should fail
         assert result.is_failure
-        assert "Cannot validate empty entry list" in result.error
+        error_msg = result.error or ""
+        assert "Cannot validate empty entry list" in error_msg
 
     def test_validate_entries_single_valid_entry(self) -> None:
         """Test validate_entries with single valid entry."""

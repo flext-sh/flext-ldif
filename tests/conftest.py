@@ -14,7 +14,6 @@ from flext_ldif import (
     FlextLDIFAPI,
 )
 from flext_ldif.parser_service import FlextLDIFParserService
-from flext_ldif.validator_service import FlextLDIFValidatorService
 from flext_ldif.writer_service import FlextLDIFWriterService
 from tests.test_support import (
     LdifTestData,
@@ -156,11 +155,6 @@ def real_parser_service() -> FlextLDIFParserService:
     """Real parser service for functional testing."""
     return RealServiceFactory.create_parser()
 
-
-@pytest.fixture
-def real_validator_service() -> FlextLDIFValidatorService:
-    """Real validator service for functional testing."""
-    return RealServiceFactory.create_validator()
 
 
 @pytest.fixture
