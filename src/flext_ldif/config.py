@@ -6,7 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Mapping, Self
+from collections.abc import Mapping
+from typing import Self
 
 from flext_core import FlextConfig, FlextResult
 from pydantic import Field, field_validator, model_validator
