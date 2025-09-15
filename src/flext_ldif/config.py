@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Self
+from typing import Mapping, Self
 
 from flext_core import FlextConfig, FlextResult
 from pydantic import Field, field_validator, model_validator
@@ -264,7 +264,7 @@ class FlextLDIFConfig(FlextConfig):
                 error_code="LDIF_BUSINESS_RULE_ERROR",
             )
 
-    def apply_ldif_overrides(self, overrides: dict[str, object]) -> FlextResult[None]:
+    def apply_ldif_overrides(self, overrides: Mapping[str, object]) -> FlextResult[None]:
         """Apply LDIF-specific configuration overrides."""
         if self.is_sealed():
             return FlextResult[None].fail("Cannot modify sealed configuration")

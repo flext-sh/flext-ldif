@@ -6,10 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from flext_core import FlextConfig, FlextDomainService, FlextResult
 from pydantic import ConfigDict, Field as PydanticField
+from pydantic.fields import FieldInfo
 
 from flext_ldif.analytics_service import FlextLDIFAnalyticsService
 from flext_ldif.config import FlextLDIFConfig, initialize_ldif_config
@@ -31,16 +32,20 @@ class FlextLDIFServices(FlextDomainService[dict[str, object]]):
     """
 
     model_config: ClassVar[ConfigDict] = ConfigDict(
-        frozen=False, validate_assignment=False, arbitrary_types_allowed=True
+        frozen=False,
+        validate_assignment=False,
+        arbitrary_types_allowed=True,
+        validate_default=False,
+        extra="allow",
     )  # Override validation
 
     # Specialized services following SOLID principles
-    parser: FlextLDIFParserService
-    validator: FlextLDIFValidatorService
-    writer: FlextLDIFWriterService
-    analytics: FlextLDIFAnalyticsService
-    transformer: FlextLDIFTransformerService
-    repository: FlextLDIFRepositoryService
+    parser: FlextLDIFParserService = None
+    validator: FlextLDIFValidatorService = None
+    writer: FlextLDIFWriterService = None
+    analytics: FlextLDIFAnalyticsService = None
+    transformer: FlextLDIFTransformerService = None
+    repository: FlextLDIFRepositoryService = None
 
     # Private attributes for internal state
     _config: FlextLDIFModels.Config | None = None
@@ -124,18 +129,27 @@ class FlextLDIFServices(FlextDomainService[dict[str, object]]):
         pattern: str | None = r"^[A-Z][a-zA-Z0-9]*$",
         max_length: int = 255,
         min_length: int = 1,
-    ) -> object:
+    ) -> FieldInfo:
         """Create a Pydantic field for LDAP object class validation."""
         if pattern:
-            return PydanticField(
+            return cast(
+                "FieldInfo",
+                PydanticField(
+                    ...,
+                    description=description,
+                    min_length=min_length,
+                    max_length=max_length,
+                    pattern=pattern,
+                ),
+            )
+        return cast(
+            "FieldInfo",
+            PydanticField(
                 ...,
                 description=description,
                 min_length=min_length,
                 max_length=max_length,
-                pattern=pattern,
-            )
-        return PydanticField(
-            ..., description=description, min_length=min_length, max_length=max_length
+            ),
         )
 
     @staticmethod
@@ -143,10 +157,16 @@ class FlextLDIFServices(FlextDomainService[dict[str, object]]):
         description: str = "LDAP Distinguished Name",
         max_length: int = 1024,
         min_length: int = 1,
-    ) -> object:
+    ) -> FieldInfo:
         """Create a Pydantic field for LDAP DN validation."""
-        return PydanticField(
-            ..., description=description, min_length=min_length, max_length=max_length
+        return cast(
+            "FieldInfo",
+            PydanticField(
+                ...,
+                description=description,
+                min_length=min_length,
+                max_length=max_length,
+            ),
         )
 
     @staticmethod
@@ -155,18 +175,27 @@ class FlextLDIFServices(FlextDomainService[dict[str, object]]):
         pattern: str | None = r"^[a-zA-Z][a-zA-Z0-9-]*$",
         max_length: int = 255,
         min_length: int = 1,
-    ) -> object:
+    ) -> FieldInfo:
         """Create a Pydantic field for LDAP attribute name validation."""
         if pattern:
-            return PydanticField(
+            return cast(
+                "FieldInfo",
+                PydanticField(
+                    ...,
+                    description=description,
+                    min_length=min_length,
+                    max_length=max_length,
+                    pattern=pattern,
+                ),
+            )
+        return cast(
+            "FieldInfo",
+            PydanticField(
                 ...,
                 description=description,
                 min_length=min_length,
                 max_length=max_length,
-                pattern=pattern,
-            )
-        return PydanticField(
-            ..., description=description, min_length=min_length, max_length=max_length
+            ),
         )
 
     @staticmethod
@@ -174,10 +203,16 @@ class FlextLDIFServices(FlextDomainService[dict[str, object]]):
         description: str = "LDAP Attribute Value",
         max_length: int = 4096,
         min_length: int = 0,
-    ) -> object:
+    ) -> FieldInfo:
         """Create a Pydantic field for LDAP attribute value validation."""
-        return PydanticField(
-            ..., description=description, min_length=min_length, max_length=max_length
+        return cast(
+            "FieldInfo",
+            PydanticField(
+                ...,
+                description=description,
+                min_length=min_length,
+                max_length=max_length,
+            ),
         )
 
 

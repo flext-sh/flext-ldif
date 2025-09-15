@@ -139,9 +139,9 @@ sn: AdminUser
     print(f"   Log level: {config.log_level}")
     print(f"   Max workers: {config.max_workers}")
 
-    # Show feature flags
-    feature_flags = config.get_feature_flags()
-    print(f"   Feature flags: {feature_flags}")
+    # Show validation config
+    validation_config = config.get_ldif_validation_config()
+    print(f"   Validation config: {validation_config}")
 
     print("\n=== Configuration Example Complete ===")
 

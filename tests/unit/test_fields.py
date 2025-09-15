@@ -238,9 +238,10 @@ class TestObjectClassField:
 
     def test_object_class_field_in_model(self) -> None:
         """Test object class field works in actual Pydantic model."""
+        from typing import Annotated
 
         class TestModel(FlextModels.Config):
-            object_class: str = FlextLDIFServices.object_class_field()
+            object_class: Annotated[str, FlextLDIFServices.object_class_field()]
 
         # Valid object class names (following the pattern ^[A-Z][a-zA-Z]*$)
         valid_classes = [
