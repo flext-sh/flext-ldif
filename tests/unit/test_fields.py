@@ -4,6 +4,8 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+from typing import Annotated
+
 import pytest
 from flext_core import FlextModels
 from pydantic import Field, ValidationError
@@ -238,7 +240,6 @@ class TestObjectClassField:
 
     def test_object_class_field_in_model(self) -> None:
         """Test object class field works in actual Pydantic model."""
-        from typing import Annotated
 
         class TestModel(FlextModels.Config):
             object_class: Annotated[str, FlextLDIFServices.object_class_field()]

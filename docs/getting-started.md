@@ -26,8 +26,7 @@ FLEXT-LDIF integrates with the broader FLEXT ecosystem:
 ### Development Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/flext-sh/flext-ldif.git
+# Navigate to the FLEXT-LDIF directory
 cd flext-ldif
 
 # Set up development environment
