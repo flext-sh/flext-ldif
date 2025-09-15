@@ -249,16 +249,19 @@ if result.is_success:
 ### Common Issues
 
 **Memory Issues with Large Files**:
+
 - Current version loads entire LDIF into memory
 - For files >100MB, consider processing in smaller chunks
 - Monitor memory usage during processing
 
 **Parse Errors**:
+
 - Verify LDIF format compliance (RFC 2849)
 - Check character encoding (UTF-8 recommended)
 - Enable debug logging for detailed error information
 
 **Type Checking Issues**:
+
 - Ensure Python 3.13+ is being used
 - Verify all dependencies are properly installed
 - Run `make type-check` to identify issues

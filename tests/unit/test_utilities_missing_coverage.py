@@ -22,10 +22,9 @@ class TestUtilitiesMissingCoverage:
         test_attrs: AttributeDict = {"cn": ["test"], "sn": ["Test", "User"]}
 
         # Create a test entry to validate type aliases work
-        entry = FlextLDIFModels.Entry.model_validate({
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": test_attrs
-        })
+        entry = FlextLDIFModels.Entry.model_validate(
+            {"dn": "cn=test,dc=example,dc=com", "attributes": test_attrs}
+        )
 
         result = utilities.convert_entry_to_dict(entry)
         assert result.is_success

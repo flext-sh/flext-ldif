@@ -149,14 +149,16 @@ class TestFlextLDIFUtilitiesCoverageGaps:
     def test_convert_entry_to_dict_with_none_values(self) -> None:
         """Test convert_entry_to_dict with entry containing None values in attributes."""
         # Create entry with various attribute values
-        entry = FlextLDIFModels.Entry.model_validate({
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": {
-                "cn": ["test", "another"],
-                "sn": ["value"],
-                "objectClass": ["person"]
+        entry = FlextLDIFModels.Entry.model_validate(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {
+                    "cn": ["test", "another"],
+                    "sn": ["value"],
+                    "objectClass": ["person"],
+                },
             }
-        })
+        )
 
         utilities = FlextLDIFUtilities()
         result = utilities.convert_entry_to_dict(entry)

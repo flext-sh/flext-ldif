@@ -56,17 +56,21 @@ class TestCoverageImprovement:
         """Test to cover DN validation edge cases."""
         # Test with empty DN - should fail validation at model level
         with pytest.raises(Exception):
-            FlextLDIFModels.Entry.model_validate({
-                "dn": "",  # Empty DN should fail model validation
-                "attributes": {"objectClass": ["person"], "cn": ["test"]}
-            })
+            FlextLDIFModels.Entry.model_validate(
+                {
+                    "dn": "",  # Empty DN should fail model validation
+                    "attributes": {"objectClass": ["person"], "cn": ["test"]},
+                }
+            )
 
         # Test with whitespace-only DN - should also fail validation
         with pytest.raises(Exception):
-            FlextLDIFModels.Entry.model_validate({
-                "dn": "   ",  # Whitespace-only DN should fail model validation
-                "attributes": {"objectClass": ["person"], "cn": ["test"]}
-            })
+            FlextLDIFModels.Entry.model_validate(
+                {
+                    "dn": "   ",  # Whitespace-only DN should fail model validation
+                    "attributes": {"objectClass": ["person"], "cn": ["test"]},
+                }
+            )
 
     def test_validator_service_edge_cases(self) -> None:
         """Test validator service edge cases to improve coverage."""

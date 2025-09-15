@@ -117,9 +117,7 @@ class TestFlextLDIFUtilities:
         self, sample_entries: list[FlextLDIFModels.Entry]
     ) -> None:
         """Test validate_entries_or_warn with valid entries."""
-        result = FlextLDIFAPI().validate_entries(
-            sample_entries
-        )
+        result = FlextLDIFAPI().validate_entries(sample_entries)
 
         assert result.is_success
         assert result.value is True  # All sample entries should be valid
@@ -128,9 +126,7 @@ class TestFlextLDIFUtilities:
         self, invalid_entries: list[FlextLDIFModels.Entry]
     ) -> None:
         """Test validate_entries_or_warn with entries that have issues."""
-        result = FlextLDIFAPI().validate_entries(
-            invalid_entries
-        )
+        result = FlextLDIFAPI().validate_entries(invalid_entries)
 
         assert result.is_success
         assert (
@@ -141,9 +137,7 @@ class TestFlextLDIFUtilities:
         self, invalid_entries: list[FlextLDIFModels.Entry]
     ) -> None:
         """Test validate_entries_or_warn respects max_errors limit."""
-        result = FlextLDIFAPI().validate_entries(
-            invalid_entries
-        )
+        result = FlextLDIFAPI().validate_entries(invalid_entries)
 
         assert result.is_success
         assert (
@@ -216,14 +210,16 @@ class TestFlextLDIFUtilities:
 
     def test_convert_entry_to_dict_success(self) -> None:
         """Test converting entry to dictionary format."""
-        entry = FlextLDIFModels.Entry.model_validate({
-            "dn": "cn=John Doe,dc=example,dc=com",
-            "attributes": {
-                "cn": ["John Doe"],
-                "mail": ["john@example.com", "john.doe@example.com"],
-                "objectClass": ["person", "inetOrgPerson"],
+        entry = FlextLDIFModels.Entry.model_validate(
+            {
+                "dn": "cn=John Doe,dc=example,dc=com",
+                "attributes": {
+                    "cn": ["John Doe"],
+                    "mail": ["john@example.com", "john.doe@example.com"],
+                    "objectClass": ["person", "inetOrgPerson"],
+                },
             }
-        })
+        )
 
         result = FlextLDIFUtilities().convert_entry_to_dict(entry)
 
@@ -238,14 +234,16 @@ class TestFlextLDIFUtilities:
 
     def test_convert_entry_to_dict_with_empty_attributes(self) -> None:
         """Test converting entry with empty attributes."""
-        entry = FlextLDIFModels.Entry.model_validate({
-            "dn": "cn=John Doe,dc=example,dc=com",
-            "attributes": {
-                "cn": ["John Doe"],
-                "mail": ["john@example.com", "john.doe@example.com"],
-                "objectClass": ["person"]
+        entry = FlextLDIFModels.Entry.model_validate(
+            {
+                "dn": "cn=John Doe,dc=example,dc=com",
+                "attributes": {
+                    "cn": ["John Doe"],
+                    "mail": ["john@example.com", "john.doe@example.com"],
+                    "objectClass": ["person"],
+                },
             }
-        })
+        )
 
         result = FlextLDIFUtilities().convert_entry_to_dict(entry)
 
@@ -257,14 +255,16 @@ class TestFlextLDIFUtilities:
 
     def test_entry_case_handling(self) -> None:
         """Test that entry creation handles various case formats."""
-        entry = FlextLDIFModels.Entry.model_validate({
-            "dn": "cn=John Doe,dc=example,dc=com",
-            "attributes": {
-                "CN": ["John Doe"],
-                "Mail": ["john@example.com"],
-                "OBJECTCLASS": ["person"],
+        entry = FlextLDIFModels.Entry.model_validate(
+            {
+                "dn": "cn=John Doe,dc=example,dc=com",
+                "attributes": {
+                    "CN": ["John Doe"],
+                    "Mail": ["john@example.com"],
+                    "OBJECTCLASS": ["person"],
+                },
             }
-        })
+        )
 
         result = FlextLDIFUtilities().convert_entry_to_dict(entry)
 
@@ -322,21 +322,22 @@ class TestFlextLDIFUtilities:
         utilities = FlextLDIFUtilities()
 
         # Create a test entry with empty attributes
-        entry = FlextLDIFModels.Entry(
-            dn="cn=test,dc=example,dc=com",
-            attributes={}
-        )
+        entry = FlextLDIFModels.Entry(dn="cn=test,dc=example,dc=com", attributes={})
 
         result = utilities.validate_ldif_entry_completeness(entry, ["cn"])
         assert result.is_success
-        assert result.unwrap() is False  # Entry is not complete due to missing required attribute
+        assert (
+            result.unwrap() is False
+        )  # Entry is not complete due to missing required attribute
 
     def test_entry_with_empty_attributes_dict(self) -> None:
         """Test creating entry with minimal attributes."""
-        entry = FlextLDIFModels.Entry.model_validate({
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": {"objectClass": ["person"]}
-        })
+        entry = FlextLDIFModels.Entry.model_validate(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {"objectClass": ["person"]},
+            }
+        )
 
         result = FlextLDIFUtilities().convert_entry_to_dict(entry)
 

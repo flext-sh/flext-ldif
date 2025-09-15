@@ -100,6 +100,7 @@ class FlextLDIFAPI:
 ```
 
 **Key Features**:
+
 - Unified interface hiding service complexity
 - Nested operation handlers for logical organization
 - Dependency injection through FlextContainer
@@ -122,6 +123,7 @@ class FlextLDIFParserService:
 ```
 
 **Responsibilities**:
+
 - Parse LDIF strings and files into structured entries
 - Handle line folding, base64 decoding, and comments
 - Validate LDIF format during parsing
@@ -142,6 +144,7 @@ class FlextLDIFValidatorService:
 ```
 
 **Responsibilities**:
+
 - Validate DN structure and syntax
 - Check attribute value formats and constraints
 - Verify object class requirements
@@ -162,6 +165,7 @@ class FlextLDIFWriterService:
 ```
 
 **Responsibilities**:
+
 - Convert structured entries back to LDIF format
 - Handle line folding for long attribute values
 - Apply base64 encoding when required by RFC 2849
@@ -324,24 +328,28 @@ api = FlextLDIFAPI(config=config)
 ### What's Implemented (v0.9.0)
 
 **✅ Core Architecture**:
+
 - Service-oriented design with clear separation
 - FlextLDIFAPI unified interface with nested handlers
 - Complete FlextResult integration
 - Dependency injection through FlextContainer
 
 **✅ Service Layer**:
+
 - All five services implemented and functional
 - RFC 2849 compliant parsing and writing
 - Basic validation and filtering capabilities
 - Statistics and analytics generation
 
 **✅ Domain Layer**:
+
 - Pydantic v2 models with complete type annotations
 - Entry and DN models working properly
 - Factory pattern for model creation
 - Configuration management system
 
 **✅ Integration Layer**:
+
 - FlextContainer dependency injection
 - FlextLogger structured logging
 - Complete type safety with MyPy compliance
@@ -349,41 +357,45 @@ api = FlextLDIFAPI(config=config)
 ### Known Limitations
 
 **Memory Architecture**:
+
 - Loads entire LDIF files into memory
 - No streaming architecture for large files (>100MB)
 - Single-threaded processing
 
 **Performance Characteristics**:
+
 - Suitable for files up to 100MB
 - Processing speed depends on entry complexity
 - No async/await support for concurrent operations
 
 **Feature Completeness**:
+
 - Basic LDIF operations implemented
 - Advanced enterprise features are planned
 - Limited to standard LDIF operations
 
 ## Design Decisions
 
-### Why Service-Oriented Architecture?
+### Why Service-Oriented Architecture
 
 1. **Clear Separation**: Each service has well-defined responsibilities
 2. **Testability**: Services can be tested independently
 3. **FLEXT Integration**: Aligns with ecosystem patterns
 4. **Maintainability**: Easy to understand and modify components
 
-### Why Railway-Oriented Programming?
+### Why Railway-Oriented Programming
 
 1. **Explicit Error Handling**: No hidden exceptions in business logic
 2. **Composability**: Operations chain naturally with clear error propagation
 3. **FLEXT Consistency**: Matches patterns used across ecosystem
 4. **Type Safety**: Errors and success values are explicitly typed
 
-### Why Memory-Bound Processing?
+### Why Memory-Bound Processing
 
 **Current Decision**: Prioritize correctness and integration over performance
 
 **Rationale**:
+
 - Simpler implementation and testing
 - Adequate for current use cases (<100MB files)
 - Provides stable foundation for future streaming enhancements

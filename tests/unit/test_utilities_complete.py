@@ -109,9 +109,7 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
         ]
 
         services = FlextLDIFServices()
-        result = services.repository.filter_entries_by_object_class(
-            entries, "person"
-        )
+        result = services.repository.filter_entries_by_object_class(entries, "person")
 
         assert result.is_success is True
         filtered_entries = result.value
@@ -129,9 +127,7 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
         ]
 
         services = FlextLDIFServices()
-        result = services.repository.filter_entries_by_object_class(
-            entries, "person"
-        )
+        result = services.repository.filter_entries_by_object_class(entries, "person")
 
         assert result.is_success is True
         assert len(result.value) == 0
@@ -150,9 +146,7 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
 
         # Test should handle any exceptions gracefully
         services = FlextLDIFServices()
-        result = services.repository.filter_entries_by_object_class(
-            entries, "person"
-        )
+        result = services.repository.filter_entries_by_object_class(entries, "person")
 
         assert result.is_success is True
 
@@ -187,12 +181,16 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
 
         # Find entries that have sn attribute
         entries_with_sn = services.repository.filter_entries_by_attribute(
-            entries, "sn", ""  # Empty value to find any entries with sn
+            entries,
+            "sn",
+            "",  # Empty value to find any entries with sn
         )
 
         # Find entries that have mail attribute
         entries_with_mail = services.repository.filter_entries_by_attribute(
-            entries, "mail", ""  # Empty value to find any entries with mail
+            entries,
+            "mail",
+            "",  # Empty value to find any entries with mail
         )
 
         assert entries_with_sn.is_success is True
@@ -329,10 +327,9 @@ class TestFlextLDIFUtilitiesLdifConverters:
         }
 
         # Test attributes work through entry creation and conversion
-        entry = FlextLDIFModels.Entry.model_validate({
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": attributes
-        })
+        entry = FlextLDIFModels.Entry.model_validate(
+            {"dn": "cn=test,dc=example,dc=com", "attributes": attributes}
+        )
         result = FlextLDIFUtilities().convert_entry_to_dict(entry)
 
         assert result.is_success is True
@@ -353,10 +350,9 @@ class TestFlextLDIFUtilitiesLdifConverters:
         }
 
         # Test that values work correctly in entry creation and conversion
-        entry = FlextLDIFModels.Entry.model_validate({
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": attributes
-        })
+        entry = FlextLDIFModels.Entry.model_validate(
+            {"dn": "cn=test,dc=example,dc=com", "attributes": attributes}
+        )
 
         utilities = FlextLDIFUtilities()
         result = utilities.convert_entry_to_dict(entry)
@@ -380,10 +376,9 @@ class TestFlextLDIFUtilitiesLdifConverters:
         attributes = {k: v for k, v in raw_attributes.items() if v is not None}
 
         # Test attributes work through entry creation and conversion
-        entry = FlextLDIFModels.Entry.model_validate({
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": attributes
-        })
+        entry = FlextLDIFModels.Entry.model_validate(
+            {"dn": "cn=test,dc=example,dc=com", "attributes": attributes}
+        )
         result = FlextLDIFUtilities().convert_entry_to_dict(entry)
 
         assert result.is_success is True
@@ -399,10 +394,9 @@ class TestFlextLDIFUtilitiesLdifConverters:
         attributes = {"valid": ["value"]}
 
         # Test attributes work through entry creation and conversion
-        entry = FlextLDIFModels.Entry.model_validate({
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": attributes
-        })
+        entry = FlextLDIFModels.Entry.model_validate(
+            {"dn": "cn=test,dc=example,dc=com", "attributes": attributes}
+        )
         result = FlextLDIFUtilities().convert_entry_to_dict(entry)
 
         # Should succeed

@@ -265,7 +265,9 @@ class FlextLDIFConfig(FlextConfig):
                 error_code="LDIF_BUSINESS_RULE_ERROR",
             )
 
-    def apply_ldif_overrides(self, overrides: Mapping[str, object]) -> FlextResult[None]:
+    def apply_ldif_overrides(
+        self, overrides: Mapping[str, object]
+    ) -> FlextResult[None]:
         """Apply LDIF-specific configuration overrides."""
         if self.is_sealed():
             return FlextResult[None].fail("Cannot modify sealed configuration")
