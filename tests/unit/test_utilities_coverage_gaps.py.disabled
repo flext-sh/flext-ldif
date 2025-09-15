@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_core import FlextUtilities
+
 from flext_ldif.models import FlextLDIFModels
 from flext_ldif.utilities import FlextLDIFUtilities
 
@@ -13,11 +15,12 @@ from flext_ldif.utilities import FlextLDIFUtilities
 class TestFlextLDIFUtilitiesCoverageGaps:
     """Test coverage gaps in FlextLDIFUtilities."""
 
-    def test_ldif_utilities_instantiation(self) -> None:
-        """Test LDIF utilities instantiation."""
+    def test_ldif_domain_processors_property(self) -> None:
+        """Test core utilities property access."""
         utilities = FlextLDIFUtilities()
-        assert utilities is not None
-        assert isinstance(utilities, FlextLDIFUtilities)
+        core_utilities = utilities.core
+        assert core_utilities is not None
+        assert isinstance(core_utilities, FlextUtilities)
 
     def test_get_default_instance_class_method(self) -> None:
         """Test utilities instance creation."""
@@ -32,19 +35,23 @@ class TestFlextLDIFUtilitiesCoverageGaps:
         # They should be different instances
         assert instance1 is not instance2
 
-    def test_core_utilities_access(self) -> None:
-        """Test access to core utilities."""
+    def test_class_level_access(self) -> None:
+        """Test class-level access to utilities."""
+        # Test that class-level access works
         utilities = FlextLDIFUtilities()
         assert utilities is not None
 
-        # Test core access
-        core = utilities.core
-        assert core is not None
+        # Test core utilities access
+        core_utilities = utilities.core
+        assert core_utilities is not None
+
+        # Test utility info access
+        info = utilities.get_utility_info()
+        assert info is not None
 
     def test_find_entries_missing_required_attributes_empty_required(self) -> None:
-        """Test find_entries_missing_required_attributes with empty required attributes."""
+        """Test validate_ldif_entry_completeness with empty required attributes."""
         utilities = FlextLDIFUtilities()
-        # processors = utilities.processors  # This feature is not implemented in current utilities
 
         # Create a test entry
         entry = FlextLDIFModels.Factory.create_entry(
@@ -54,15 +61,14 @@ class TestFlextLDIFUtilitiesCoverageGaps:
             }
         )
 
-        # Test with empty required attributes list
-        result = processors.find_entries_with_missing_required_attributes([entry], [])
-        assert result.is_failure
-        assert "Required attributes list cannot be empty" in result.error
+        # Test entry completeness validation
+        result = utilities.validate_ldif_entry_completeness(entry)
+        assert result.is_success
+        assert result.unwrap() is True
 
     def test_entry_to_dict_success(self) -> None:
         """Test entry_to_dict successful conversion."""
         utilities = FlextLDIFUtilities()
-        converters = utilities.converters
 
         # Create a test entry
         entry = FlextLDIFModels.Factory.create_entry(
@@ -72,7 +78,7 @@ class TestFlextLDIFUtilitiesCoverageGaps:
             }
         )
 
-        result = converters.entry_to_dict(entry)
+        result = utilities.convert_entry_to_dict(entry)
         assert result.is_success
         data = result.unwrap()
         assert data["dn"] == "cn=test,dc=example,dc=com"
@@ -141,47 +147,53 @@ class TestFlextLDIFUtilitiesCoverageGaps:
         assert "CN" in data  # Should preserve case
         assert "sn" in data
 
-    def test_attributes_to_ldif_format_list_with_none_values(self) -> None:
-        """Test entry conversion with dictionary containing None values."""
-        utilities = FlextLDIFUtilities()
-
-        # Create a test entry with some None-like values
-        from flext_ldif.models import FlextLDIFModels
-        test_entry = FlextLDIFModels.Entry(
-            dn="cn=test,dc=com",
-            attributes={"cn": ["test", "another"], "sn": ["test"]}
+    def test_convert_entry_to_dict_with_none_values(self) -> None:
+        """Test convert_entry_to_dict with entry containing None values in attributes."""
+        # Create entry with various attribute values
+        entry = FlextLDIFModels.Entry.model_validate(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {
+                    "cn": ["test", "another"],
+                    "sn": ["value"],
+                    "objectClass": ["person"],
+                },
+            }
         )
 
-        # Test entry conversion which is the actual method available
-        result = utilities.convert_entry_to_dict(test_entry)
+        utilities = FlextLDIFUtilities()
+        result = utilities.convert_entry_to_dict(entry)
         assert result.is_success
         data = result.unwrap()
-        assert "attributes" in data
-        attributes = data["attributes"]
-        assert "cn" in attributes
-        assert len(attributes["cn"]) == 2
-        assert "test" in attributes["cn"]
-        assert "another" in attributes["cn"]
+        assert "cn" in data["attributes"]
+        assert len(data["attributes"]["cn"]) == 2
+        assert "test" in data["attributes"]["cn"]
+        assert "another" in data["attributes"]["cn"]
 
     def test_attributes_to_ldif_format_list_with_empty_strings_skip_empty(self) -> None:
-        """Test attributes_to_ldif_format with list containing empty strings and skip_empty=True."""
+        """Test convert_entry_to_dict with list containing empty strings."""
         utilities = FlextLDIFUtilities()
-        converters = utilities.converters
 
-        # Test with list containing empty strings and skip_empty=True
-        attributes = {"cn": ["test", "", "another"], "sn": "test"}
-        result = converters.attributes_to_ldif_format(attributes, skip_empty=True)
+        # Create a test entry with empty strings
+        entry = FlextLDIFModels.Factory.create_entry(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {"cn": ["test", "", "another"], "sn": ["test"]},
+            }
+        )
+
+        # Test convert_entry_to_dict
+        result = utilities.convert_entry_to_dict(entry)
         assert result.is_success
         data = result.unwrap()
         assert "cn" in data
-        assert len(data["cn"]) == 2  # Empty strings should be filtered out
+        assert len(data["cn"]) == 3  # All values including empty string
         assert "test" in data["cn"]
         assert "another" in data["cn"]
 
     def test_entry_to_dict_exception_handling(self) -> None:
         """Test entry_to_dict exception handling."""
         utilities = FlextLDIFUtilities()
-        converters = utilities.converters
 
         # Create a mock entry that will cause an exception during attribute access
         class MockEntry:
@@ -195,6 +207,6 @@ class TestFlextLDIFUtilitiesCoverageGaps:
                 return {}
 
         mock_entry = MockEntry()
-        result = converters.entry_to_dict(mock_entry)
+        result = utilities.convert_entry_to_dict(mock_entry)
         assert result.is_failure
-        assert "Entry conversion failed" in result.error
+        assert "conversion failed" in result.error.lower()

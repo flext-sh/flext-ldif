@@ -41,20 +41,13 @@ class FlextLDIFServices(FlextDomainService[dict[str, object]]):
     )  # Override validation
 
     # Specialized services following SOLID principles - initialized in __init__
-    parser: FlextLDIFParserService | None = PydanticField(default=None, init=False)
-    validator: FlextLDIFValidatorService | None = PydanticField(
-        default=None, init=False
-    )
-    writer: FlextLDIFWriterService | None = PydanticField(default=None, init=False)
-    analytics: FlextLDIFAnalyticsService | None = PydanticField(
-        default=None, init=False
-    )
-    transformer: FlextLDIFTransformerService | None = PydanticField(
-        default=None, init=False
-    )
-    repository: FlextLDIFRepositoryService | None = PydanticField(
-        default=None, init=False
-    )
+    # These are guaranteed to be set to actual instances in __init__, never None at runtime
+    parser: FlextLDIFParserService | None = None
+    validator: FlextLDIFValidatorService | None = None
+    writer: FlextLDIFWriterService | None = None
+    analytics: FlextLDIFAnalyticsService | None = None
+    transformer: FlextLDIFTransformerService | None = None
+    repository: FlextLDIFRepositoryService | None = None
 
     # Private attributes for internal state
     _config: FlextLDIFModels.Config | None = None
@@ -136,6 +129,14 @@ class FlextLDIFServices(FlextDomainService[dict[str, object]]):
         if self.repository is None:
             raise FlextLDIFConfigurationError(repository_error)
 
+        # Type checker assertions - services are guaranteed non-None after validation
+        assert self.parser is not None
+        assert self.validator is not None
+        assert self.writer is not None
+        assert self.analytics is not None
+        assert self.transformer is not None
+        assert self.repository is not None
+
     @property
     def config(self) -> FlextLDIFModels.Config:
         """Get services configuration."""
@@ -148,6 +149,37 @@ class FlextLDIFServices(FlextDomainService[dict[str, object]]):
     def ldif_config(self) -> object:
         """Get LDIF-specific configuration."""
         return self._ldif_config
+
+    # Type-safe property accessors for services (guaranteed non-None after __init__)
+    @property
+    def safe_parser(self) -> FlextLDIFParserService:
+        """Get parser service (guaranteed non-None)."""
+        return cast("FlextLDIFParserService", self.parser)
+
+    @property
+    def safe_validator(self) -> FlextLDIFValidatorService:
+        """Get validator service (guaranteed non-None)."""
+        return cast("FlextLDIFValidatorService", self.validator)
+
+    @property
+    def safe_writer(self) -> FlextLDIFWriterService:
+        """Get writer service (guaranteed non-None)."""
+        return cast("FlextLDIFWriterService", self.writer)
+
+    @property
+    def safe_analytics(self) -> FlextLDIFAnalyticsService:
+        """Get analytics service (guaranteed non-None)."""
+        return cast("FlextLDIFAnalyticsService", self.analytics)
+
+    @property
+    def safe_transformer(self) -> FlextLDIFTransformerService:
+        """Get transformer service (guaranteed non-None)."""
+        return cast("FlextLDIFTransformerService", self.transformer)
+
+    @property
+    def safe_repository(self) -> FlextLDIFRepositoryService:
+        """Get repository service (guaranteed non-None)."""
+        return cast("FlextLDIFRepositoryService", self.repository)
 
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute services operation."""

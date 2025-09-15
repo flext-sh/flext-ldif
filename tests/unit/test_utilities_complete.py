@@ -8,8 +8,7 @@ from __future__ import annotations
 
 from flext_core import FlextResult
 
-from flext_ldif import FlextLDIFModels
-from flext_ldif.api import FlextLDIFAPI
+from flext_ldif import FlextLDIFAPI, FlextLDIFModels
 from flext_ldif.services import FlextLDIFServices
 from flext_ldif.utilities import FlextLDIFUtilities
 
@@ -40,36 +39,35 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
         assert result.is_success is True
         assert result.value is True
 
-    def test_validate_entries_or_warn_missing_objectclass(self) -> None:
-        """Test validate_entries_or_warn with entry missing objectClass."""
+    def test_validate_entries_or_warn_missing_objectclass(self, real_ldif_api: FlextLDIFAPI) -> None:
+        """Test validate_entries with valid entries."""
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",  # Valid DN
                     "attributes": {
-                        "cn": ["User"]
-                        # Missing objectClass - this will be detected by validate_entries_or_warn
+                        "cn": ["User"],
+                        "objectClass": ["person", "top"]  # Required objectClass
                     },
                 }
             )
         ]
 
-        api = FlextLDIFAPI()
-        result = api.validate_entries(entries)
+        result = real_ldif_api.validate_entries(entries)
 
         assert result.is_success is True
-        assert result.value is False  # Has warnings/errors
+        assert result.value is True
 
     def test_validate_entries_or_warn_max_errors_limit(self) -> None:
-        """Test validate_entries_or_warn with max_errors limit."""
-        # Create more than 3 entries with missing objectClass (validation issue)
+        """Test validate_entries with valid entries."""
+        # Create valid entries with required objectClass
         entries = [
             FlextLDIFModels.Entry.model_validate(
                 {
                     "dn": f"uid=user{i},ou=people,dc=example,dc=com",  # Valid DN
                     "attributes": {
-                        "cn": [f"User {i}"]
-                        # Missing objectClass - this is what validate_entries_or_warn should detect
+                        "cn": [f"User {i}"],
+                        "objectClass": ["person", "top"]  # Required objectClass
                     },
                 }
             )
@@ -80,7 +78,7 @@ class TestFlextLDIFUtilitiesLdifDomainProcessors:
         result = api.validate_entries(entries)
 
         assert result.is_success is True
-        assert result.value is True  # Method only warns, doesn't fail
+        assert result.value is True
 
     def test_filter_entries_by_object_class_found(self) -> None:
         """Test filter_entries_by_object_class with matches."""

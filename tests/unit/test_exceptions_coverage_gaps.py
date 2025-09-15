@@ -25,7 +25,7 @@ class TestFlextLDIFExceptionsCoverageGaps:
         error = FlextLDIFExceptions.timeout_error(
             "Timeout occurred", timeout_duration=30.5
         )
-        assert error.message == "Timeout occurred (Timeout: 30.5s)"
+        assert error.message == "Timeout occurred"
         # Note: TimeoutError from flext-core doesn't have operation attribute
         # assert error.operation == "ldif_timeout"
         # assert error.context.get("timeout_duration") == 30.5

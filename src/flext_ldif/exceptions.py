@@ -296,23 +296,23 @@ class FlextLDIFParseError(FlextLDIFError):
     """LDIF parse error for test compatibility."""
 
 
-class FlextLDIFValidationError(LdifValidationError):
+class FlextLDIFValidationError(FlextLDIFError):
     """LDIF validation error for test compatibility."""
 
 
-class FlextLDIFProcessingError(LdifProcessingError):
+class FlextLDIFProcessingError(FlextLDIFError):
     """LDIF processing error for test compatibility."""
 
 
-class FlextLDIFFileError(LdifFileError):
+class FlextLDIFFileError(FlextLDIFError):
     """LDIF file error for test compatibility."""
 
 
-class FlextLDIFConfigurationError(LdifConfigurationError):
+class FlextLDIFConfigurationError(FlextLDIFError):
     """LDIF configuration error for test compatibility."""
 
 
-class FlextLDIFConnectionError(Exception):
+class FlextLDIFConnectionError(FlextLDIFError):
     """LDIF connection error for test compatibility."""
 
     def __init__(self, message: str, **_kwargs: object) -> None:
@@ -323,24 +323,24 @@ class FlextLDIFConnectionError(Exception):
         super().__init__(message)
 
 
-class FlextLDIFTimeoutError(Exception):
+class FlextLDIFTimeoutError(FlextLDIFError):
     """LDIF timeout error for test compatibility."""
 
     def __init__(self, message: str, **_kwargs: object) -> None:
         """Initialize with message for test compatibility."""
         self.message = message
         self.operation = "ldif_timeout"
-        super().__init__(message)
+        super().__init__(message, operation="ldif_timeout")
 
 
-class FlextLDIFAuthenticationError(Exception):
+class FlextLDIFAuthenticationError(FlextLDIFError):
     """LDIF authentication error for test compatibility."""
 
     def __init__(self, message: str, **_kwargs: object) -> None:
         """Initialize with message for test compatibility."""
         self.message = message
         self.operation = "ldif_authentication"
-        super().__init__(message)
+        super().__init__(message, operation="ldif_authentication")
 
 
 class FlextLDIFErrorCodes:
