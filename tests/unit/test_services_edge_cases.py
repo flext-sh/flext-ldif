@@ -18,7 +18,9 @@ class TestServicesEdgeCases:
         # Test empty content
         result = parser.validate_ldif_syntax("")
         assert result.is_failure
-        assert "Empty LDIF content" in result.error
+        error_message = result.error
+        assert error_message is not None
+        assert "Empty LDIF content" in error_message
 
     def test_parser_validate_syntax_whitespace_only(self) -> None:
         """Test parser validate_syntax with whitespace only."""
@@ -28,7 +30,9 @@ class TestServicesEdgeCases:
         # Test whitespace only content
         result = parser.validate_ldif_syntax("   \n  \t  \n  ")
         assert result.is_failure
-        assert "Empty LDIF content" in result.error
+        error_message = result.error
+        assert error_message is not None
+        assert "Empty LDIF content" in error_message
 
     def test_parser_validate_syntax_no_lines(self) -> None:
         """Test parser validate_syntax with no lines."""
@@ -38,7 +42,9 @@ class TestServicesEdgeCases:
         # Test content that results in no lines after split
         result = parser.validate_ldif_syntax("\n\n\n")
         assert result.is_failure
-        assert "Empty LDIF content" in result.error
+        error_message = result.error
+        assert error_message is not None
+        assert "Empty LDIF content" in error_message
 
     def test_parser_validate_syntax_invalid_start(self) -> None:
         """Test parser validate_syntax with invalid start."""
@@ -48,7 +54,9 @@ class TestServicesEdgeCases:
         # Test content that doesn't start with dn:
         result = parser.validate_ldif_syntax("cn: test\nobjectClass: person")
         assert result.is_failure
-        assert "LDIF must start with dn:" in result.error
+        error_message = result.error
+        assert error_message is not None
+        assert "LDIF must start with dn:" in error_message
 
     def test_parser_validate_syntax_valid_content(self) -> None:
         """Test parser validate_syntax with valid content."""
