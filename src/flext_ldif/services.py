@@ -14,6 +14,7 @@ from pydantic.fields import FieldInfo
 
 from flext_ldif.analytics_service import FlextLDIFAnalyticsService
 from flext_ldif.config import FlextLDIFConfig, initialize_ldif_config
+from flext_ldif.exceptions import FlextLDIFConfigurationError
 from flext_ldif.format_handlers import FlextLDIFFormatHandler
 from flext_ldif.format_validators import FlextLDIFFormatValidators
 from flext_ldif.models import FlextLDIFModels
@@ -39,13 +40,13 @@ class FlextLDIFServices(FlextDomainService[dict[str, object]]):
         extra="allow",
     )  # Override validation
 
-    # Specialized services following SOLID principles
-    parser: FlextLDIFParserService = None
-    validator: FlextLDIFValidatorService = None
-    writer: FlextLDIFWriterService = None
-    analytics: FlextLDIFAnalyticsService = None
-    transformer: FlextLDIFTransformerService = None
-    repository: FlextLDIFRepositoryService = None
+    # Specialized services following SOLID principles - initialized in __init__
+    parser: FlextLDIFParserService | None = PydanticField(default=None, init=False)
+    validator: FlextLDIFValidatorService | None = PydanticField(default=None, init=False)
+    writer: FlextLDIFWriterService | None = PydanticField(default=None, init=False)
+    analytics: FlextLDIFAnalyticsService | None = PydanticField(default=None, init=False)
+    transformer: FlextLDIFTransformerService | None = PydanticField(default=None, init=False)
+    repository: FlextLDIFRepositoryService | None = PydanticField(default=None, init=False)
 
     # Private attributes for internal state
     _config: FlextLDIFModels.Config | None = None
@@ -105,6 +106,27 @@ class FlextLDIFServices(FlextDomainService[dict[str, object]]):
         object.__setattr__(self, "analytics", analytics)
         object.__setattr__(self, "transformer", transformer)
         object.__setattr__(self, "repository", repository)
+
+        # Validate all services are properly initialized
+        parser_error = "Parser service not initialized"
+        validator_error = "Validator service not initialized"
+        writer_error = "Writer service not initialized"
+        analytics_error = "Analytics service not initialized"
+        transformer_error = "Transformer service not initialized"
+        repository_error = "Repository service not initialized"
+
+        if self.parser is None:
+            raise FlextLDIFConfigurationError(parser_error)
+        if self.validator is None:
+            raise FlextLDIFConfigurationError(validator_error)
+        if self.writer is None:
+            raise FlextLDIFConfigurationError(writer_error)
+        if self.analytics is None:
+            raise FlextLDIFConfigurationError(analytics_error)
+        if self.transformer is None:
+            raise FlextLDIFConfigurationError(transformer_error)
+        if self.repository is None:
+            raise FlextLDIFConfigurationError(repository_error)
 
     @property
     def config(self) -> FlextLDIFModels.Config:

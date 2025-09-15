@@ -7,7 +7,6 @@ This test directly calls ALL services methods to force 100% coverage.
 import sys
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock
 
 from flext_ldif.exceptions import FlextLDIFExceptions
 from flext_ldif.models import FlextLDIFModels
@@ -24,6 +23,7 @@ def test_all_services_100_percent() -> None:
     config = FlextLDIFModels.Config(
         extreme_debug_mode=True, force_all_branches=True, strict_validation=False
     )
+    assert config.extreme_debug_mode is True
 
     # Test entries
     test_entries = [
@@ -52,57 +52,54 @@ def test_all_services_100_percent() -> None:
 
     # FORCE ALL ANALYTICS SERVICE BRANCHES
 
-    # Force None config branch
-    analytics_none = FlextLDIFServices.AnalyticsService(entries=None, config=None)
-    result = analytics_none.execute()
+    # Force None config branch using real service instance
+    services = FlextLDIFServices()
+    result = services.analytics.analyze_entries([])
     assert result.is_success
 
-    # Force config branch
-    analytics_config = FlextLDIFServices.AnalyticsService(entries=[], config=config)
-    result = analytics_config.execute()
+    # Force config branch - test another analytics method
+    result = services.analytics.get_objectclass_distribution([])
     assert result.is_success
 
-    # Force with entries
-    analytics_entries = FlextLDIFServices.AnalyticsService(
-        entries=test_entries, config=config
-    )
-    result = analytics_entries.execute()
+    # Force with entries - analytics service works with entries from main services
+    result = services.analytics.get_dn_depth_analysis([])
     assert result.is_success
 
     # Force ALL analyze methods
-    result = analytics_entries.analyze_patterns(test_entries)
+    result = services.analytics.analyze_entries(test_entries)
     assert result.is_success
 
-    result = analytics_entries.analyze_patterns([])
+    result = services.analytics.analyze_entries([])
     assert result.is_success
 
-    result = analytics_entries.analyze_attribute_distribution(test_entries)
+    result = services.analytics.get_objectclass_distribution(test_entries)
     assert result.is_success
 
-    result = analytics_entries.analyze_attribute_distribution([])
+    result = services.analytics.get_objectclass_distribution([])
     assert result.is_success
 
-    result = analytics_entries.analyze_dn_depth(test_entries)
+    result = services.analytics.get_dn_depth_analysis(test_entries)
     assert result.is_success
 
-    result = analytics_entries.analyze_dn_depth([])
+    result = services.analytics.get_dn_depth_analysis([])
     assert result.is_success
 
-    result = analytics_entries.get_objectclass_distribution(test_entries)
+    result = services.analytics.get_objectclass_distribution(test_entries)
     assert result.is_success
 
-    result = analytics_entries.get_objectclass_distribution([])
+    result = services.analytics.get_objectclass_distribution([])
     assert result.is_success
 
-    result = analytics_entries.get_dn_depth_analysis(test_entries)
+    result = services.analytics.get_dn_depth_analysis(test_entries)
     assert result.is_success
 
-    result = analytics_entries.get_dn_depth_analysis([])
+    result = services.analytics.get_dn_depth_analysis([])
     assert result.is_success
 
     # FORCE ALL PARSER SERVICE BRANCHES
 
-    parser = FlextLDIFServices.ParserService(content="", config=config)
+    # Test parser service through main services instance
+    parser = services.parser
 
     # Test all parsing scenarios
     test_cases = [
@@ -116,12 +113,12 @@ def test_all_services_100_percent() -> None:
     ]
 
     for content in test_cases:
-        result = parser.parse_ldif_content(content)
+        result = parser.parse_content(content)
         assert result is not None
 
     # FORCE ALL VALIDATOR SERVICE BRANCHES
 
-    validator = FlextLDIFServices.ValidatorService(config=config)
+    validator = services.validator
 
     result = validator.validate_entries(test_entries)
     assert result is not None
@@ -129,27 +126,28 @@ def test_all_services_100_percent() -> None:
     result = validator.validate_entries([])
     assert result is not None
 
-    result = validator.validate_ldif_syntax("dn: test")
-    assert result is not None
+    # Test individual entry validation
+    if test_entries:
+        result = validator.validate_entry(test_entries[0])
+        assert result is not None
 
-    result = validator.validate_ldif_syntax("")
-    assert result is not None
-
-    result = validator.validate_schema(test_entries)
+    # Test DN format validation
+    result = validator.validate_dn_format("cn=test,dc=com")
     assert result is not None
 
     # FORCE ALL WRITER SERVICE BRANCHES
 
-    writer = FlextLDIFServices.WriterService(config=config)
+    writer = services.writer
 
-    result = writer.format_ldif(test_entries)
+    result = writer.write_entries_to_string(test_entries)
     assert result is not None
 
-    result = writer.format_ldif([])
+    result = writer.write_entries_to_string([])
     assert result is not None
 
+    # Test individual entry writing
     if test_entries:
-        result = writer.format_entry_for_display(test_entries[0])
+        result = writer.write_entry(test_entries[0])
         assert result is not None
 
     # File operations
@@ -157,7 +155,7 @@ def test_all_services_100_percent() -> None:
         temp_path = Path(f.name)
 
     try:
-        result = writer.write_to_file(test_entries, temp_path)
+        result = writer.write_entries_to_file(test_entries, temp_path)
         assert result is not None
     finally:
         if temp_path.exists():
@@ -165,79 +163,71 @@ def test_all_services_100_percent() -> None:
 
     # FORCE ALL TRANSFORMER SERVICE BRANCHES
 
-    transformer = FlextLDIFServices.TransformerService(config=config)
+    transformer = services.transformer
 
-    result = transformer.transform_entries(test_entries)
+    # Create a simple identity transform function
+    def identity_transform(entry: FlextLDIFModels.Entry) -> FlextLDIFModels.Entry:
+        return entry
+
+    result = transformer.transform_entries(test_entries, identity_transform)
     assert result is not None
 
-    result = transformer.transform_entries([])
+    result = transformer.transform_entries([], identity_transform)
     assert result is not None
 
-    result = transformer.normalize_entries(test_entries)
-    assert result is not None
-
-    result = transformer.normalize_entries([])
+    # Test DN normalization
+    result = transformer.normalize_dns(test_entries)
     assert result is not None
 
     # FORCE ALL REPOSITORY SERVICE BRANCHES
 
-    repo_empty = FlextLDIFServices.RepositoryService(entries=[], config=config)
-    repo_entries = FlextLDIFServices.RepositoryService(
-        entries=test_entries, config=config
-    )
+    # Use analytics service for statistics instead
+    analytics = services.analytics
 
-    for repo_name, repo in [("empty", repo_empty), ("entries", repo_entries)]:
-        result = repo.execute()
-        assert result is not None
+    # Test analytics functionality
+    result = analytics.analyze_entries(test_entries)
+    assert result.is_success
 
-        entries = repo.entries if repo_name == "entries" else []
+    result = analytics.analyze_entries([])
+    assert result.is_success
 
-        result = repo.analyze_patterns(entries)
-        assert result is not None
+    result = analytics.get_objectclass_distribution(test_entries)
+    assert result.is_success
 
-        result = repo.analyze_attribute_distribution(entries)
-        assert result is not None
-
-        result = repo.analyze_dn_depth(entries)
-        assert result is not None
-
-        result = repo.get_objectclass_distribution(entries)
-        assert result is not None
-
-        result = repo.get_dn_depth_analysis(entries)
-        assert result is not None
+    result = analytics.get_dn_depth_analysis(test_entries)
+    assert result.is_success
 
     # Test utilities
 
-    FlextLDIFUtilities()
-    # Using unified FlextLDIFUtilities directly - no wrapper classes needed
     utilities = FlextLDIFUtilities()
-    processors = utilities.processors  # Access nested helper directly
-    converters = utilities.converters  # Access nested helper directly
 
-    # Force utilities branches with mocking
+    # Test file extension validation
+    result = utilities.validate_ldif_file_extension("test.ldif")
+    assert result.is_success
+    assert result.unwrap() is True
 
-    mock_entry = Mock()
-    mock_entry.dn.value.strip.return_value = ""
-    mock_entry.has_attribute.return_value = False
+    result = utilities.validate_ldif_file_extension("test.txt")
+    assert result.is_success
+    assert result.unwrap() is False
 
-    result = processors.validate_entries_or_warn([mock_entry])
-    assert result is not None
-
-    result = processors.get_entry_statistics([])
-    assert result is not None
-
-    result = processors.get_entry_statistics(test_entries)
-    assert result is not None
-
-    result = converters.normalize_dn_components("")
-    assert result.is_failure
-
-    result = converters.normalize_dn_components("cn=test,dc=com")
+    # Test DN formatting
+    result = utilities.normalize_dn_format("cn=test,dc=com")
     assert result.is_success
 
-    result = converters.attributes_dict_to_ldif_format({})
-    assert result is not None
+    result = utilities.normalize_dn_format("")
+    assert result.is_failure
+
+    # Test entry conversion
+    if test_entries:
+        result = utilities.convert_entry_to_dict(test_entries[0])
+        assert result.is_success
+
+        result = utilities.calculate_entry_size(test_entries[0])
+        assert result.is_success
+
+    # Test utility info
+    info = utilities.get_utility_info()
+    assert info is not None
 
     # Test exceptions
 

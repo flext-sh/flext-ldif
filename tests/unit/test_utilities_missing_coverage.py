@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_ldif import FlextLDIFModels
 from flext_ldif.utilities import AttributeDict, FlextLDIFUtilities, LDIFAttributeDict
 
 
@@ -14,18 +15,22 @@ class TestUtilitiesMissingCoverage:
 
     def test_type_aliases_coverage(self) -> None:
         """Test type aliases coverage - covers lines 20-23."""
-        # Test that type aliases are properly defined
+        # Test that type aliases are properly defined and work correctly
         utilities = FlextLDIFUtilities()
 
-        # Test AttributeDict type alias
+        # Test AttributeDict type alias with real conversion method
+        test_attrs: AttributeDict = {"cn": ["test"], "sn": ["Test", "User"]}
 
-        # Test that aliases work correctly
-        test_attrs: AttributeDict = {"cn": "test", "sn": ["Test", "User"], "mail": None}
+        # Create a test entry to validate type aliases work
+        entry = FlextLDIFModels.Entry.model_validate({
+            "dn": "cn=test,dc=example,dc=com",
+            "attributes": test_attrs
+        })
 
-        result = utilities.converters.attributes_to_ldif_format(test_attrs)
+        result = utilities.convert_entry_to_dict(entry)
         assert result.is_success
 
-        ldif_attrs: LDIFAttributeDict = result.unwrap()
+        ldif_attrs: LDIFAttributeDict = result.unwrap()["attributes"]
         assert isinstance(ldif_attrs, dict)
         assert "cn" in ldif_attrs
         assert "sn" in ldif_attrs

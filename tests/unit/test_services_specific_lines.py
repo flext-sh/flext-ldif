@@ -122,7 +122,7 @@ class TestServicesSpecificLines:
         analytics = FlextLDIFServices().analytics
 
         # Test with specific edge cases to trigger these lines
-        empty_entries = []
+        empty_entries: list[FlextLDIFModels.Entry] = []
 
         # Test multiple analytics methods to hit different lines
         result1 = analytics.analyze_patterns(empty_entries)

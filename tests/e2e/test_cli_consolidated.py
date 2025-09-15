@@ -98,9 +98,8 @@ objectClass: person
         """Test CLI validate command with real LDIF file."""
         try:
             with argv_context(["flext-ldif", "validate", str(sample_ldif_file)]):
-                with pytest.raises(SystemExit) as exc_info:
-                    cli_main()
-                assert exc_info.value.code == 0
+                exit_code = cli_main()
+                assert exit_code == 0  # Successful validation
         finally:
             sample_ldif_file.unlink(missing_ok=True)
 
@@ -121,10 +120,9 @@ objectClass: person
         """Test CLI with invalid LDIF content."""
         try:
             with argv_context(["flext-ldif", "parse", str(invalid_ldif_file)]):
-                with pytest.raises(SystemExit) as exc_info:
-                    cli_main()
-                # Should handle invalid LDIF gracefully
-                assert exc_info.value.code in {0, 1, 2}  # Allow various error codes
+                exit_code = cli_main()
+                # Should handle invalid LDIF gracefully with non-zero exit code
+                assert exit_code in {1, 2}  # Error codes for failures
         finally:
             invalid_ldif_file.unlink(missing_ok=True)
 

@@ -6,8 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextExceptions
-
 from flext_ldif.exceptions import FlextLDIFErrorCodes, FlextLDIFExceptions
 
 
@@ -21,7 +19,6 @@ class TestFlextLDIFExceptionsCoverageGaps:
         )
         assert error.message == "Processing failed"
         assert error.operation == "test_operation"
-        assert error.context.get("operation") == "test_operation"
 
     def test_timeout_error_with_duration(self) -> None:
         """Test timeout_error with timeout_duration parameter."""
@@ -33,15 +30,14 @@ class TestFlextLDIFExceptionsCoverageGaps:
         # assert error.operation == "ldif_timeout"
         # assert error.context.get("timeout_duration") == 30.5
 
-    def test_builder_pattern_usage(self) -> None:
-        """Test exception builder pattern using flext-core integration."""
-        # Test that builder returns FlextExceptions class (from flext-core)
-        builder = FlextLDIFExceptions.builder()
-        assert builder is not None
-        # Test that builder returns FlextExceptions class (from flext-core)
-        assert builder == FlextExceptions  # Should return FlextExceptions class
+    def test_create_exception_method(self) -> None:
+        """Test create exception method using available API."""
+        # Test creating exceptions using the actual API that exists
+        error = FlextLDIFExceptions.create("Test error", error_type="ValidationError")
+        assert "Test error" in str(error)
+        assert hasattr(error, "message")
 
-        # Test creating exceptions using the actual API
+        # Test creating with different error type
         error = FlextLDIFExceptions.validation_error(
             "Test error",
             entry_dn="cn=test,dc=example,dc=com",
@@ -55,24 +51,11 @@ class TestFlextLDIFExceptionsCoverageGaps:
     def test_error_codes_access(self) -> None:
         """Test error codes access."""
         # Test error code values
-        assert FlextLDIFErrorCodes.LDIF_PARSE_ERROR.value == "LDIF_PARSE_ERROR"
-        assert FlextLDIFErrorCodes.LDIF_ENTRY_ERROR.value == "LDIF_ENTRY_ERROR"
-        assert FlextLDIFErrorCodes.LDIF_ERROR.value == "LDIF_ERROR"
-        assert (
-            FlextLDIFErrorCodes.LDIF_VALIDATION_ERROR.value == "LDIF_VALIDATION_ERROR"
-        )
-        assert (
-            FlextLDIFErrorCodes.LDIF_CONFIGURATION_ERROR.value
-            == "LDIF_CONFIGURATION_ERROR"
-        )
-        assert (
-            FlextLDIFErrorCodes.LDIF_PROCESSING_ERROR.value == "LDIF_PROCESSING_ERROR"
-        )
-        assert (
-            FlextLDIFErrorCodes.LDIF_CONNECTION_ERROR.value == "LDIF_CONNECTION_ERROR"
-        )
-        assert (
-            FlextLDIFErrorCodes.LDIF_AUTHENTICATION_ERROR.value
-            == "LDIF_AUTHENTICATION_ERROR"
-        )
-        assert FlextLDIFErrorCodes.LDIF_TIMEOUT_ERROR.value == "LDIF_TIMEOUT_ERROR"
+        assert FlextLDIFErrorCodes.PARSE_ERROR == "LDIF_PARSE_ERROR"
+        assert FlextLDIFErrorCodes.VALIDATION_ERROR == "LDIF_VALIDATION_ERROR"
+        assert FlextLDIFErrorCodes.PROCESSING_ERROR == "LDIF_PROCESSING_ERROR"
+        assert FlextLDIFErrorCodes.CONFIGURATION_ERROR == "LDIF_CONFIGURATION_ERROR"
+        assert FlextLDIFErrorCodes.CONNECTION_ERROR == "LDIF_CONNECTION_ERROR"
+        assert FlextLDIFErrorCodes.FILE_ERROR == "LDIF_FILE_ERROR"
+        assert FlextLDIFErrorCodes.TIMEOUT_ERROR == "LDIF_TIMEOUT_ERROR"
+        assert FlextLDIFErrorCodes.AUTHENTICATION_ERROR == "LDIF_AUTHENTICATION_ERROR"

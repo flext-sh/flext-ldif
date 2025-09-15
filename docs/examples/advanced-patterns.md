@@ -600,7 +600,7 @@ class MemoryEfficientProcessor:
         self._ldif_api = FlextLDIFAPI()
 
     def process_large_file_chunked(self, file_path: str) -> FlextResult[dict]:
-        """Process large LDIF file in memory-efficient chunks."""
+        """Process large LDIF file with memory constraints (conceptual - not yet implemented)."""
         return (
             self._check_memory_constraints(file_path)
             .flat_map(lambda _: self._process_in_chunks(file_path))
@@ -624,7 +624,7 @@ class MemoryEfficientProcessor:
         return FlextResult[None].ok(None)
 
     def _process_in_chunks(self, file_path: str) -> FlextResult[list[dict]]:
-        """Process file in memory-efficient chunks."""
+        """Process file in chunks (conceptual - requires streaming implementation)."""
         chunk_results = []
         chunk_size = 1000  # entries per chunk
 
@@ -805,7 +805,7 @@ class StreamingProcessor:
 
 # Example usage of advanced patterns
 def example_enterprise_processing():
-    """Example of enterprise-grade LDIF processing."""
+    """Example of business LDIF processing with FlextResult patterns."""
     processor = DirectoryProcessor()
 
     # Configure for enterprise processing
@@ -821,7 +821,7 @@ def example_enterprise_processing():
     # result = processor.process_enterprise_export(Path("enterprise_export.ldif"))
 
 def example_memory_efficient_processing():
-    """Example of memory-efficient processing."""
+    """Example of memory-constrained processing (current limitation)."""
     processor = MemoryEfficientProcessor(memory_limit_mb=256)
 
     # Process large file with memory constraints
@@ -845,4 +845,4 @@ def example_streaming_processing():
     # result = processor.process_streaming("very_large_file.ldif", extract_user_info)
 ```
 
-These advanced patterns demonstrate enterprise-grade LDIF processing capabilities while maintaining integration with FLEXT ecosystem patterns and providing scalable, memory-efficient solutions for complex use cases.
+These patterns demonstrate FLEXT-LDIF processing capabilities while maintaining integration with FLEXT ecosystem patterns. Note: The library currently uses memory-bound processing suitable for files under 100MB. Streaming and chunked processing patterns shown are conceptual designs for future implementation.

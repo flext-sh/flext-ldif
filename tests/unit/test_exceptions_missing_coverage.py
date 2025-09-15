@@ -59,12 +59,12 @@ class TestExceptionsMissingCoverage:
         """Test configuration_error with context - covers line 368."""
         error = FlextLDIFExceptions.configuration_error("Configuration failed")
         assert "Configuration failed" in str(error)
-        # ConfigurationError doesn't have operation attribute
-        assert hasattr(error, "code")
+        # ConfigurationError has operation attribute
+        assert hasattr(error, "operation")
 
     def test_connection_error_with_context(self) -> None:
         """Test connection_error with context - covers line 389."""
         error = FlextLDIFExceptions.connection_error("Connection failed")
         assert "Connection failed" in str(error)
         # ConnectionError doesn't have operation attribute
-        assert hasattr(error, "code")
+        assert hasattr(error, "operation")

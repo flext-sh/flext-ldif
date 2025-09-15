@@ -292,7 +292,7 @@ class FlextLDIFError(LdifProcessingError):
         self.context = _kwargs
 
 
-class FlextLDIFParseError(LdifParseError):
+class FlextLDIFParseError(FlextLDIFError):
     """LDIF parse error for test compatibility."""
 
 

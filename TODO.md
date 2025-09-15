@@ -2,6 +2,44 @@
 
 **Version**: 0.9.0 | **Updated**: September 17, 2025
 
+## 🔍 Critical Investigation Results (September 17, 2025)
+
+### ✅ Source Code Analysis Findings (3,746 lines reviewed)
+
+**VERIFIED IMPLEMENTATION**:
+- ✅ Complete RFC 2849 LDIF parsing via `_ParserHelper` class
+- ✅ Base64 encoding/decoding support for binary attributes
+- ✅ Folded line handling and continuation line processing
+- ✅ Comprehensive validation via `_ValidationHelper` class
+- ✅ Service-oriented architecture with proper separation
+- ✅ FlextResult error handling throughout codebase
+- ✅ Type-safe operations with Pydantic v2 models
+
+**CRITICAL MEMORY LIMITATION CONFIRMED**:
+Memory-bound processing verified in `format_handlers.py:206` where `_ParserHelper.__init__()` calls `content.splitlines()`, loading entire file into memory.
+
+### 🌐 Industry Research Results
+
+**Modern LDIF Processing Best Practices (2025)**:
+- Python-ldap authors state current parsers are "too slow" for large files
+- Industry standard: Line-by-line processing, not file-loading
+- ldap3 library provides streaming LDIF support via file object streaming
+- Best practice: Memory usage should NOT be proportional to file size
+
+**Performance Reality Check**:
+- Our implementation contradicts 2025 best practices
+- Suitable for <100MB files only due to memory architecture
+- Larger files require streaming implementation for production use
+
+### 📋 Documentation Accuracy Audit
+
+**CORRECTED INFLATED CLAIMS**:
+- ❌ Removed "enterprise-grade" and "scalable" language
+- ❌ Corrected "memory-efficient" claims that contradicted reality
+- ❌ Backed up contradictory documentation as `.bak` files
+- ✅ Updated to reflect actual memory-bound limitations
+- ✅ Distinguished current vs. future capabilities clearly
+
 ## 🎯 Current Status
 
 ### What Actually Works (v0.9.0)
@@ -22,10 +60,13 @@
 
 ### Architecture Status
 
+**CRITICAL FINDING**: Custom LDIF parser implementation loads entire files into memory.
+
 ```
 src/flext_ldif/
 ├── api.py                    # Main API interface - WORKING
 ├── models.py                 # Domain models with Pydantic v2 - WORKING
+├── format_handlers.py        # Custom LDIF parser (_ParserHelper) - MEMORY BOUND
 ├── parser_service.py         # LDIF parsing operations - WORKING
 ├── validator_service.py      # Entry validation - WORKING
 ├── writer_service.py         # LDIF output generation - WORKING
@@ -36,6 +77,12 @@ src/flext_ldif/
 ├── exceptions.py            # Error handling - WORKING
 └── utilities.py             # Helper functions - WORKING
 ```
+
+**Implementation Details**:
+- Uses custom `_ParserHelper` class that reads all lines into memory
+- No streaming support - processes `content.splitlines()` entirely
+- No external LDIF library dependency (ldif3, python-ldap)
+- Memory usage scales linearly with file size
 
 ## 🔧 Technical Debt and Quality Issues
 
@@ -106,23 +153,42 @@ src/flext_ldif/
 
 ## 🔬 Research Areas
 
-### Memory Optimization
-- Investigate line-by-line parsing approaches
-- Research streaming techniques from other LDIF libraries
-- Evaluate memory-mapped file processing
-- Study garbage collection optimization for large datasets
+### Memory Optimization (PRIORITY: HIGH)
+
+**Based on 2025 LDIF processing research**:
+
+- **ldap3 library**: Modern choice with streaming LDIF support - can stream LDIF-CONTENT directly to file objects
+- **python-ldap limitations**: Author confirms it's "too slow and would consume too much memory for large data"
+- **Line-by-line processing**: Efficient approach that doesn't require memory proportional to file size
+- **Memory-mapped files**: Consider for very large LDIF files (>1GB)
+
+**Recommended Approach**:
+1. Replace custom `_ParserHelper` with ldap3 streaming parser
+2. Implement generator-based parsing that yields entries one at a time
+3. Add memory monitoring with configurable thresholds
+4. Provide both streaming and batch processing options
 
 ### Performance Enhancement
-- Research parallel processing patterns for LDIF data
-- Investigate async/await patterns for I/O operations
-- Study chunk-based processing algorithms
-- Evaluate caching strategies for repeated operations
+
+**Current Bottlenecks**:
+- `content.splitlines()` loads entire file into memory
+- Single-threaded entry processing
+- No progress reporting for large operations
+- No memory pressure detection
+
+**Improvement Opportunities**:
+- Streaming parser with configurable buffer sizes
+- Optional parallel processing for independent entry operations
+- Progress callbacks for long-running operations
+- Memory usage monitoring and warnings
 
 ### Integration Opportunities
-- ldap3 library integration for direct server operations
-- Integration with enterprise directory services
-- Connection to FLEXT data pipeline components
-- Enhanced CLI tools for directory management
+
+**LDIF Ecosystem Integration**:
+- **ldap3**: Primary target for modern LDIF processing
+- **Enterprise LDAP**: Direct server integration beyond file processing
+- **FLEXT pipelines**: Better integration with data pipeline components
+- **CLI tools**: Enhanced command-line operations for large files
 
 ## 🚨 Known Issues
 
