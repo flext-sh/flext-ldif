@@ -15,6 +15,7 @@ from flext_ldif import (
     FlextLDIFAPI,
     FlextLDIFModels,
 )
+from flext_ldif.config import FlextLDIFConfig
 
 
 class TestAdvancedAPIFeatures:
@@ -23,10 +24,10 @@ class TestAdvancedAPIFeatures:
     @pytest.fixture
     def api_with_config(self) -> FlextLDIFAPI:
         """Create API with custom configuration."""
-        config = FlextLDIFModels.Config(
-            max_entries=100,
-            strict_validation=True,
-            sort_attributes=True,
+        config = FlextLDIFConfig(
+            ldif_max_entries=100,
+            ldif_strict_validation=True,
+            ldif_sort_attributes=True,
         )
         return FlextLDIFAPI(config)
 

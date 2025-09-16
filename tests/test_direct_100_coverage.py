@@ -20,10 +20,8 @@ sys.path.insert(0, "src")
 def test_all_services_100_percent() -> None:
     """Force 100% coverage by calling ALL methods."""
     # Create config with extreme debug
-    config = FlextLDIFModels.Config(
-        extreme_debug_mode=True, force_all_branches=True, strict_validation=False
-    )
-    assert config.extreme_debug_mode is True
+    config = FlextLDIFModels.Config(strict_validation=False, max_entries=1000)
+    assert config.strict_validation is False
 
     # Test entries
     test_entries = [
@@ -243,7 +241,7 @@ def test_all_services_100_percent() -> None:
         FlextLDIFExceptions.processing_error("test", operation="test"),
         FlextLDIFExceptions.processing_error("test"),  # No operation
         FlextLDIFExceptions.authentication_error("test"),
-        FlextLDIFExceptions.timeout_error("test", operation="test"),
+        FlextLDIFExceptions.timeout_error("test"),
         FlextLDIFExceptions.timeout_error("test"),  # No operation
     ]
 

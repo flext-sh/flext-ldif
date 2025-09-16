@@ -8,65 +8,91 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_core import FlextResult
+from flext_core import FlextDomainService, FlextLogger, FlextResult
 
-from flext_ldif.base_service import FlextLDIFBaseService
+from flext_ldif.config import FlextLDIFConfig, get_ldif_config
 from flext_ldif.format_handlers import FlextLDIFFormatHandler
 from flext_ldif.models import FlextLDIFModels
 
 
-class FlextLDIFWriterService(FlextLDIFBaseService[str]):
-    """LDIF Writer Service - Single Responsibility.
+class FlextLDIFWriterService(FlextDomainService[str]):
+    """LDIF Writer Service - Simplified with direct flext-core usage.
 
-    Handles all LDIF writing operations with enterprise-grade error handling.
-    Uses flext-core SOURCE OF TRUTH exclusively.
+    Handles all LDIF writing operations with minimal complexity.
+    Uses flext-core patterns directly without unnecessary abstractions.
     """
 
     def __init__(
         self, format_handler: FlextLDIFFormatHandler | None = None, cols: int = 76
     ) -> None:
-        """Initialize writer service with format handler."""
-        super().__init__("FlextLDIFWriterService", "writer")
+        """Initialize writer service."""
+        super().__init__()
+        self._logger = FlextLogger(__name__)
         self._format_handler = format_handler or FlextLDIFFormatHandler()
         self._output_buffer: list[str] = []
         self._cols = cols
 
-        # Register capabilities
-        self._add_capability("write_entries_to_string")
-        self._add_capability("write_entries_to_file")
-        self._add_capability("write_entry")
+    def get_config_info(self) -> dict[str, object]:
+        """Get service configuration information."""
+        return {
+            "service": "FlextLDIFWriterService",
+            "config": {
+                "service_type": "writer",
+                "status": "ready",
+                "capabilities": [
+                    "write_entries_to_string",
+                    "write_entries_to_file",
+                    "write_entry",
+                ],
+            },
+        }
+
+    def get_service_info(self) -> dict[str, object]:
+        """Get service information."""
+        return {
+            "service_name": "FlextLDIFWriterService",
+            "service_type": "writer",
+            "capabilities": [
+                "write_entries_to_string",
+                "write_entries_to_file",
+                "write_entry",
+            ],
+            "status": "ready",
+        }
 
     def write_entries_to_string(
         self, entries: list[FlextLDIFModels.Entry]
     ) -> FlextResult[str]:
-        """Write LDIF entries to string."""
-        try:
-            result = self._format_handler.write_ldif(entries)
-            if result.is_success:
-                return result
-            return self._handle_error_str(
-                "String write", result.error or "Unknown error"
-            )
-        except Exception as e:
-            return self._handle_error_str("String write", e)
+        """Write LDIF entries to string using format handler."""
+        result = self._format_handler.write_ldif(entries)
+        if result.is_success:
+            return result
+        return FlextResult[str].fail(
+            f"String write failed: {result.error or 'Unknown error'}"
+        )
 
     def write_entries_to_file(
         self, entries: list[FlextLDIFModels.Entry], file_path: str | Path
     ) -> FlextResult[bool]:
         """Write LDIF entries to file."""
+        content_result = self.write_entries_to_string(entries)
+        if content_result.is_failure:
+            return FlextResult[bool].fail(
+                content_result.error or "Content generation failed"
+            )
+
         try:
-            content_result = self.write_entries_to_string(entries)
-            if content_result.is_failure:
-                return FlextResult[bool].fail(
-                    content_result.error or "Content generation failed"
-                )
-
-            with Path(file_path).open("w", encoding="utf-8") as f:
+            try:
+                config = get_ldif_config()
+            except RuntimeError:
+                # Global config not initialized, create default one
+                config = FlextLDIFConfig()
+            encoding = config.ldif_encoding
+            with Path(file_path).open("w", encoding=encoding) as f:
                 f.write(content_result.value)
-
             return FlextResult[bool].ok(data=True)
         except Exception as e:
-            return self._handle_error_bool("File write", e)
+            return FlextResult[bool].fail(f"File write failed: {e}")
 
     def execute(self) -> FlextResult[str]:
         """Execute writer service operation."""

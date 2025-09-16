@@ -113,11 +113,12 @@ class LdifValidationDemonstrator:
 
         for i, entry in enumerate(entries):
             # Use railway programming for validation
-            entry.validate_business_rules().tap_error(
-                lambda error, idx=i, ent=entry: domain_errors.append(
-                    f"Entry {idx + 1} ({ent.dn}): {error}"
-                )
-            )
+            def add_domain_error(
+                error: str, idx: int = i, ent: FlextLDIFModels.Entry = entry
+            ) -> None:
+                domain_errors.append(f"Entry {idx + 1} ({ent.dn}): {error}")
+
+            entry.validate_business_rules().tap_error(add_domain_error)
 
         self._log_validation_errors(domain_errors, "Domain validation")
 

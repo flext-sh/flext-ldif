@@ -7,9 +7,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Collection, Generator
-from typing import ClassVar
+from typing import ClassVar, Self
 
+# Use flext-core exceptions directly
 from flext_core import (
+    FlextExceptions,
     FlextModels,
     FlextResult,
     FlextTypes,
@@ -19,9 +21,6 @@ from flext_core import (
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from flext_ldif.constants import FlextLDIFConstants
-
-# Import for exception handling
-from flext_ldif.exceptions import FlextLDIFError, FlextLDIFExceptions
 
 
 class FlextLDIFModels(BaseModel):
@@ -60,7 +59,8 @@ class FlextLDIFModels(BaseModel):
             """
             if not v or not v.strip():
                 msg = FlextLDIFConstants.VALIDATION_MESSAGES["MISSING_DN"]
-                raise FlextLDIFExceptions.validation_error(msg)
+                error_msg = f"LDIF DN Validation: {msg}"
+                raise FlextExceptions.ValidationError(error_msg)
 
             # Use flext-core validation system
             validation_result = (
@@ -71,7 +71,8 @@ class FlextLDIFModels(BaseModel):
             )
             if validation_result.is_failure:
                 msg = FlextLDIFConstants.VALIDATION_MESSAGES["INVALID_DN"]
-                raise FlextLDIFExceptions.validation_error(msg)
+                error_msg = f"LDIF DN Validation: {msg}"
+                raise FlextExceptions.ValidationError(error_msg)
 
             # Basic DN format validation
             dn_pattern = FlextLDIFConstants.DN_PATTERN
@@ -81,7 +82,8 @@ class FlextLDIFModels(BaseModel):
             )
             if pattern_result.is_failure:
                 msg = FlextLDIFConstants.VALIDATION_MESSAGES["INVALID_DN"]
-                raise FlextLDIFExceptions.validation_error(msg)
+                error_msg = f"LDIF DN Validation: {msg}"
+                raise FlextExceptions.ValidationError(error_msg)
 
             return v.strip()
 
@@ -328,6 +330,56 @@ class FlextLDIFModels(BaseModel):
                         return FlextResult[None].fail(error_msg)
 
             return FlextResult[None].ok(None)
+
+        def remove_value(self, attribute_name: str, value: str) -> Self:
+            """Remove a specific value from an attribute.
+
+            Args:
+                attribute_name: Name of the attribute
+                value: Value to remove
+
+            Returns:
+                New LdifAttributes instance with value removed
+
+            """
+            new_data = dict(self.data)
+            if attribute_name in new_data:
+                new_values = [v for v in new_data[attribute_name] if v != value]
+                if new_values:
+                    new_data[attribute_name] = new_values
+                else:
+                    del new_data[attribute_name]
+            return self.__class__(data=new_data)
+
+        def get_values(self, attribute_name: str) -> FlextTypes.Core.StringList:
+            """Get all values for a specific attribute.
+
+            Args:
+                attribute_name: Name of the attribute
+
+            Returns:
+                List of values for the attribute (empty list if not found)
+
+            """
+            return self.get_attribute(attribute_name) or []
+
+        def get_total_values(self) -> int:
+            """Get total number of values across all attributes.
+
+            Returns:
+                Total count of all attribute values
+
+            """
+            return self.get_value_count()
+
+        def is_empty(self) -> bool:
+            """Check if the attributes collection is empty.
+
+            Returns:
+                True if no attributes are present, False otherwise
+
+            """
+            return len(self.data) == 0
 
         # Dictionary-like interface for compatibility
         def __getitem__(self, key: str) -> FlextTypes.Core.StringList:
@@ -644,174 +696,12 @@ class FlextLDIFModels(BaseModel):
 
             if dn is None:
                 error_msg = "Missing DN in LDIF block"
-                raise FlextLDIFError(error_msg)
+                raise ValueError(error_msg)
 
             return cls(
                 dn=FlextLDIFModels.DistinguishedName(value=dn),
                 attributes=FlextLDIFModels.LdifAttributes(data=attributes),
             )
-
-    class Config(BaseModel):
-        """LDIF processing configuration with enterprise defaults.
-
-        Configuration object for LDIF processing operations with
-        comprehensive validation and enterprise-grade defaults.
-        """
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="allow",  # Allow extra fields for test compatibility
-        )
-
-        # Processing options
-        strict_validation: bool = Field(
-            default=True,
-            description="Enable strict validation mode",
-        )
-        max_entries: int = Field(
-            default=10000,
-            gt=0,
-            description="Maximum number of entries to process",
-        )
-        buffer_size: int = Field(
-            default=8192,
-            gt=0,
-            description="Buffer size for file operations",
-        )
-
-        # Encoding options
-        default_encoding: str = Field(
-            default="utf-8",
-            description="Default file encoding",
-        )
-
-        # Validation options
-        validate_dn_format: bool = Field(
-            default=True,
-            description="Validate DN format compliance",
-        )
-        validate_attribute_names: bool = Field(
-            default=True,
-            description="Validate attribute name patterns",
-        )
-        allow_empty_values: bool = Field(
-            default=False,
-            description="Allow empty attribute values",
-        )
-        sort_attributes: bool = Field(
-            default=False,
-            description="Sort attribute names in output",
-        )
-
-        # Performance options
-        use_caching: bool = Field(
-            default=True,
-            description="Enable result caching",
-        )
-        cache_size: int = Field(
-            default=1000,
-            gt=0,
-            description="Maximum cache entries",
-        )
-
-        def validate_business_rules(self) -> FlextResult[None]:
-            """Validate configuration business rules.
-
-            Returns:
-                FlextResult indicating validation success or failure
-
-            """
-            # Validate reasonable limits
-            if self.max_entries > FlextLDIFConstants.Analytics.MAX_ENTRIES_LIMIT:
-                return FlextResult[None].fail("max_entries cannot exceed 1,000,000")
-
-            if self.buffer_size > 1024 * 1024:  # 1MB buffer max
-                return FlextResult[None].fail("buffer_size cannot exceed 1MB")
-
-            if self.cache_size > FlextLDIFConstants.Analytics.MAX_CACHE_SIZE:
-                return FlextResult[None].fail("cache_size cannot exceed 10,000")
-
-            return FlextResult[None].ok(None)
-
-        def __init__(self, **data: object) -> None:
-            """Initialize config with test compatibility aliases."""
-            # Extract test compatibility values before calling super()
-            max_line_length_value = data.pop("max_line_length", None)
-            fold_lines_value = data.pop("fold_lines", None)
-            validate_dn_value = data.pop("validate_dn", None)
-            strict_parsing_value = data.pop("strict_parsing", None)
-
-            # Handle encoding parameter as alias for default_encoding
-            if "encoding" in data:
-                data["default_encoding"] = data.pop("encoding")
-
-            # Call parent constructor first with filtered data
-            super().__init__(**data)
-
-            # Set custom attributes after initialization (frozen model requires object.__setattr__)
-            if max_line_length_value is not None:
-                object.__setattr__(self, "_max_line_length", max_line_length_value)
-            if fold_lines_value is not None:
-                object.__setattr__(self, "_fold_lines", fold_lines_value)
-            if validate_dn_value is not None:
-                object.__setattr__(self, "_validate_dn", validate_dn_value)
-            if strict_parsing_value is not None:
-                object.__setattr__(self, "_strict_parsing", strict_parsing_value)
-
-        @property
-        def encoding(self) -> str:
-            """Simple alias for default_encoding - test compatibility."""
-            return self.default_encoding
-
-        @property
-        def max_line_length(self) -> int:
-            """Get max line length - supports custom values."""
-            # Return custom value if set and not None, otherwise LDIF standard
-            stored_value = getattr(self, "_max_line_length", None)
-            return stored_value if stored_value is not None else 76
-
-        @property
-        def fold_lines(self) -> bool:
-            """Get line folding setting - supports custom values."""
-            # Return custom value if set and not None, otherwise True
-            stored_value = getattr(self, "_fold_lines", None)
-            return stored_value if stored_value is not None else True
-
-        @property
-        def validate_dn(self) -> bool:
-            """Get DN validation setting - supports custom values."""
-            # Return custom value if set and not None, otherwise validate_dn_format
-            stored_value = getattr(self, "_validate_dn", None)
-            return stored_value if stored_value is not None else self.validate_dn_format
-
-        @property
-        def validate_attributes(self) -> bool:
-            """Simple alias for validate_attribute_names - test compatibility."""
-            return self.validate_attribute_names
-
-        @property
-        def strict_parsing(self) -> bool:
-            """Get strict parsing setting - supports custom values."""
-            # Return custom value if set and not None, otherwise False
-            stored_value = getattr(self, "_strict_parsing", None)
-            return stored_value if stored_value is not None else False
-
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate LDIF models business rules.
-
-        Returns:
-            FlextResult[None]: Validation result
-
-        """
-        try:
-            # LDIF-specific validation rules
-            # For LDIF models, we validate that the constants and factory are properly configured
-            if not hasattr(FlextLDIFConstants, "LDIF"):
-                return FlextResult[None].fail("LDIF constants not properly configured")
-
-            # All LDIF business rules passed
-            return FlextResult[None].ok(None)
-        except Exception as e:
-            return FlextResult[None].fail(f"LDIF models validation failed: {e}")
 
     # Factory com aliases simples para compatibilidade de testes
     class Factory:
@@ -832,18 +722,6 @@ class FlextLDIFModels(BaseModel):
             msg = "Either data dict or dn+attributes must be provided"
             raise ValueError(msg)
 
-        @staticmethod
-        def create_config(**kwargs: object) -> FlextLDIFModels.Config:
-            """Alias simples para Config."""
-            # Handle optional config_path parameter if available
-            # Config only accepts kwargs - no positional arguments
-            if "config_path" in kwargs:
-                config_path = kwargs.pop("config_path")
-                if config_path is not None:
-                    kwargs["config_source"] = str(
-                        config_path
-                    )  # Convert path to config_source
-            return FlextLDIFModels.Config(**kwargs)
 
 
 __all__ = ["FlextLDIFModels"]

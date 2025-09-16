@@ -124,9 +124,16 @@ class FlextLDIFConfig(FlextConfig):
 
     ldif_chunk_size: int = Field(
         default=1000,
-        description="Chunk size for processing large LDIF files",
-        ge=100,
+        description="Chunk size for LDIF file processing",
+        ge=1,
         le=10000,
+    )
+
+    ldif_max_file_size_mb: int = Field(
+        default=100,
+        description="Maximum file size in MB for LDIF file processing",
+        ge=1,
+        le=1024,
     )
 
     # =============================================================================
@@ -190,6 +197,7 @@ class FlextLDIFConfig(FlextConfig):
             "parallel_processing": self.ldif_parallel_processing,
             "max_workers": self.ldif_max_workers,
             "chunk_size": self.ldif_chunk_size,
+            "max_file_size_mb": self.ldif_max_file_size_mb,
         }
 
     def get_ldif_validation_config(self) -> dict[str, object]:

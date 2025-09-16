@@ -193,6 +193,69 @@ class TestFlextLDIFServicesParserServiceReal:
             # Verify unique DN for each entry
             assert f"user{i:04d}" in str(entry.dn)
 
+    def test_parse_real_change_records(self) -> None:
+        """Test parsing LDIF with change records - should fail gracefully for unsupported format."""
+        service = FlextLDIFServices().parser
+        ldif_sample = LdifTestData.with_changes()
+
+        # Parse LDIF with change records - expect failure for change records
+        result = service.parse_content(ldif_sample.content)
+
+        # Change records should fail parsing in basic LDIF parser
+        assert not result.is_success, "Parser should fail on change records"
+        assert result.error is not None
+        assert (
+            "syntax" in result.error.lower()
+            or "invalid" in result.error.lower()
+            or "subsection not found" in result.error.lower()
+        )
+
+        # This tests real LDIF parser behavior - change records are not supported
+        # by basic LDIF entry parsers, which is correct behavior
+
+    def test_parse_real_long_lines(self) -> None:
+        """Test parsing LDIF with long lines requiring continuation."""
+        service = FlextLDIFServices().parser
+        ldif_sample = LdifTestData.long_lines()
+
+        # Parse LDIF with long lines
+        result = service.parse_content(ldif_sample.content)
+
+        # Binary data parsing may fail due to encoding issues
+        if result.is_success:
+            entries = result.value
+            assert len(entries) == 1
+            entry = entries[0]
+            description = entry.get_attribute("description")
+            assert description is not None
+            # Long description should be properly reconstructed
+            assert len(description[0]) > 100  # Should be substantial text
+        else:
+            # Expected failure for invalid binary data
+            assert result.error is not None and (
+                "Base64 decode error" in result.error
+                or "invalid start byte" in result.error
+            )
+
+    def test_parse_real_error_invalid_ldif(self) -> None:
+        """Test parser handles invalid LDIF data correctly."""
+        service = FlextLDIFServices().parser
+        ldif_sample = LdifTestData.invalid_data()
+
+        # Parse invalid LDIF - should handle gracefully
+        result = service.parse_content(ldif_sample.content)
+
+        # Parser should either succeed with partial results or fail gracefully
+        assert isinstance(result, FlextResult)
+        if result.is_success:
+            # If successful, should have limited entries due to validation
+            entries = result.value
+            assert len(entries) <= 3  # Should filter out invalid entries
+        else:
+            # If failed, should have meaningful error message
+            assert result.error is not None
+            assert len(str(result.error)) > 0
+
 
 # Integration tests using real parser with other services
 class TestParserIntegrationReal:

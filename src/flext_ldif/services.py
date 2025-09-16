@@ -6,15 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar, cast
+from flext_core import FlextDomainService, FlextResult
 
-from flext_core import FlextConfig, FlextDomainService, FlextResult
-from pydantic import ConfigDict, Field as PydanticField
-from pydantic.fields import FieldInfo
-
-from flext_ldif.analytics_service import FlextLDIFAnalyticsService
-from flext_ldif.config import FlextLDIFConfig, initialize_ldif_config
-from flext_ldif.exceptions import FlextLDIFConfigurationError
+from flext_ldif.config import FlextLDIFConfig, get_ldif_config
 from flext_ldif.format_handlers import FlextLDIFFormatHandler
 from flext_ldif.format_validators import FlextLDIFFormatValidators
 from flext_ldif.models import FlextLDIFModels
@@ -25,297 +19,150 @@ from flext_ldif.validator_service import FlextLDIFValidatorService
 from flext_ldif.writer_service import FlextLDIFWriterService
 
 
-class FlextLDIFServices(FlextDomainService[dict[str, object]]):
-    """Unified LDIF Services - SOLID Principles Implementation.
+class FlextLDIFAnalyticsService:
+    """LDIF Analytics Service - Simplified with direct flext-core usage.
 
-    Orchestrates specialized services following Single Responsibility Principle.
-    Uses flext-core SOURCE OF TRUTH exclusively.
+    Handles all LDIF analytics operations with minimal complexity.
+    Uses flext-core patterns directly without unnecessary abstractions.
     """
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        frozen=False,
-        validate_assignment=False,
-        arbitrary_types_allowed=True,
-        validate_default=False,
-        extra="allow",
-    )  # Override validation
+    def analyze_entries(
+        self, entries: list[FlextLDIFModels.Entry]
+    ) -> FlextResult[dict[str, int]]:
+        """Analyze LDIF entries and return statistics."""
+        stats = {
+            "total_entries": len(entries),
+            "person_entries": sum(1 for e in entries if e.is_person()),
+            "group_entries": sum(1 for e in entries if e.is_group()),
+            "organizational_unit_entries": sum(
+                1
+                for e in entries
+                if "organizationalunit"
+                in (oc.lower() for oc in (e.get_attribute("objectClass") or []))
+            ),
+        }
+        return FlextResult[dict[str, int]].ok(stats)
 
-    # Private service attributes - initialized in __init__
-    _parser: FlextLDIFParserService | None = None
-    _validator: FlextLDIFValidatorService | None = None
-    _writer: FlextLDIFWriterService | None = None
-    _analytics: FlextLDIFAnalyticsService | None = None
-    _transformer: FlextLDIFTransformerService | None = None
-    _repository: FlextLDIFRepositoryService | None = None
+    def get_objectclass_distribution(
+        self, entries: list[FlextLDIFModels.Entry]
+    ) -> FlextResult[dict[str, int]]:
+        """Get object class distribution."""
+        distribution: dict[str, int] = {}
+        for entry in entries:
+            object_classes = entry.get_attribute("objectClass") or []
+            for oc in object_classes:
+                oc_lower = oc.lower()
+                distribution[oc_lower] = distribution.get(oc_lower, 0) + 1
+        return FlextResult[dict[str, int]].ok(distribution)
 
-    # Private attributes for internal state
-    _config: FlextLDIFModels.Config | None = None
-    _ldif_config: object | None = None
-    _format_handler: FlextLDIFFormatHandler | None = None
-    _format_validator: FlextLDIFFormatValidators | None = None
+    def get_dn_depth_analysis(
+        self, entries: list[FlextLDIFModels.Entry]
+    ) -> FlextResult[dict[str, int]]:
+        """Analyze DN depth distribution."""
+        depth_distribution: dict[str, int] = {}
+        for entry in entries:
+            dn_parts = entry.dn.value.split(",")
+            depth = len(dn_parts)
+            depth_key = f"depth_{depth}"
+            depth_distribution[depth_key] = depth_distribution.get(depth_key, 0) + 1
+        return FlextResult[dict[str, int]].ok(depth_distribution)
+
+    def analyze_patterns(
+        self, entries: list[FlextLDIFModels.Entry]
+    ) -> FlextResult[dict[str, int]]:
+        """Analyze patterns in LDIF entries - alias for analyze_entries."""
+        return self.analyze_entries(entries)
+
+    def get_config_info(self) -> dict[str, object]:
+        """Get analytics service configuration information."""
+        return {
+            "service": "FlextLDIFAnalyticsService",
+            "config": {
+                "analytics_enabled": True,
+                "supported_metrics": [
+                    "entry_count",
+                    "attribute_count",
+                    "dn_depth_analysis",
+                ],
+            },
+        }
+
+
+class FlextLDIFServices(FlextDomainService[dict[str, object]]):
+    """Unified LDIF Services - Simplified with direct flext-core usage.
+
+    Orchestrates specialized services following Single Responsibility Principle.
+    Uses flext-core patterns directly without unnecessary abstractions.
+    """
 
     def __init__(
-        self, config: FlextLDIFModels.Config | None = None, **_: object
+        self, config: FlextLDIFConfig | None = None, **_: object
     ) -> None:
-        """Initialize unified LDIF services with dependency injection."""
-        # Initialize parent class first
+        """Initialize unified LDIF services with simplified dependency injection."""
         super().__init__()
-
-        # Set private attributes using object.__setattr__ to bypass Pydantic
-        object.__setattr__(self, "_config", config or FlextLDIFModels.Config())
-
-        # Initialize global config - use a simpler approach
-        try:
-            # Try to get existing global config
-            global_config = FlextConfig.get_global_instance()
-            if isinstance(global_config, FlextLDIFConfig):
-                ldif_config = global_config
-            else:
-                # Initialize with default LDIF config
-                init_result = initialize_ldif_config()
-                if init_result.is_failure:
-                    # Fallback to creating a local config
-                    ldif_config = FlextLDIFConfig()
-                else:
-                    ldif_config = init_result.value
-        except Exception:
-            # Fallback to creating a local config
-            ldif_config = FlextLDIFConfig()
-
-        object.__setattr__(self, "_ldif_config", ldif_config)
+        if config is None:
+            try:
+                self._config = get_ldif_config()
+            except RuntimeError:
+                # Global config not initialized, create default one
+                self._config = FlextLDIFConfig()
+        else:
+            self._config = config
 
         # Initialize shared dependencies
         format_handler = FlextLDIFFormatHandler()
         format_validator = FlextLDIFFormatValidators()
 
-        object.__setattr__(self, "_format_handler", format_handler)
-        object.__setattr__(self, "_format_validator", format_validator)
-
-        # Initialize specialized services with dependency injection
-        parser = FlextLDIFParserService(format_handler)
-        validator = FlextLDIFValidatorService(format_validator)
-        writer = FlextLDIFWriterService(format_handler)
-        analytics = FlextLDIFAnalyticsService()
-        transformer = FlextLDIFTransformerService()
-        repository = FlextLDIFRepositoryService()
-
-        # Set service attributes using private fields
-        object.__setattr__(self, "_parser", parser)
-        object.__setattr__(self, "_validator", validator)
-        object.__setattr__(self, "_writer", writer)
-        object.__setattr__(self, "_analytics", analytics)
-        object.__setattr__(self, "_transformer", transformer)
-        object.__setattr__(self, "_repository", repository)
-
-        # Validate all services are properly initialized
-        parser_error = "Parser service not initialized"
-        validator_error = "Validator service not initialized"
-        writer_error = "Writer service not initialized"
-        analytics_error = "Analytics service not initialized"
-        transformer_error = "Transformer service not initialized"
-        repository_error = "Repository service not initialized"
-
-        if self._parser is None:
-            raise FlextLDIFConfigurationError(parser_error)
-        if self._validator is None:
-            raise FlextLDIFConfigurationError(validator_error)
-        if self._writer is None:
-            raise FlextLDIFConfigurationError(writer_error)
-        if self._analytics is None:
-            raise FlextLDIFConfigurationError(analytics_error)
-        if self._transformer is None:
-            raise FlextLDIFConfigurationError(transformer_error)
-        if self._repository is None:
-            raise FlextLDIFConfigurationError(repository_error)
+        # Initialize specialized services with direct instantiation
+        self._parser = FlextLDIFParserService(format_handler)
+        self._validator = FlextLDIFValidatorService(format_validator)
+        self._writer = FlextLDIFWriterService(format_handler)
+        self._analytics = FlextLDIFAnalyticsService()
+        self._transformer = FlextLDIFTransformerService()
+        self._repository = FlextLDIFRepositoryService()
 
     @property
-    def config(self) -> FlextLDIFModels.Config:
+    def config(self) -> FlextLDIFConfig:
         """Get services configuration."""
-        if self._config is None:
-            error_msg = "Configuration not initialized"
-            raise RuntimeError(error_msg)
         return self._config
 
     @property
-    def ldif_config(self) -> object:
-        """Get LDIF-specific configuration."""
-        return self._ldif_config
-
-    # Type-safe property accessors for services (guaranteed non-None after __init__)
-    @property
     def parser(self) -> FlextLDIFParserService:
-        """Get parser service (guaranteed non-None)."""
-        if self._parser is None:
-            error_msg = "Parser service not initialized"
-            raise FlextLDIFConfigurationError(error_msg)
+        """Get parser service."""
         return self._parser
 
     @property
     def validator(self) -> FlextLDIFValidatorService:
-        """Get validator service (guaranteed non-None)."""
-        if self._validator is None:
-            error_msg = "Validator service not initialized"
-            raise FlextLDIFConfigurationError(error_msg)
+        """Get validator service."""
         return self._validator
 
     @property
     def writer(self) -> FlextLDIFWriterService:
-        """Get writer service (guaranteed non-None)."""
-        if self._writer is None:
-            error_msg = "Writer service not initialized"
-            raise FlextLDIFConfigurationError(error_msg)
+        """Get writer service."""
         return self._writer
 
     @property
     def analytics(self) -> FlextLDIFAnalyticsService:
-        """Get analytics service (guaranteed non-None)."""
-        if self._analytics is None:
-            error_msg = "Analytics service not initialized"
-            raise FlextLDIFConfigurationError(error_msg)
+        """Get analytics service."""
         return self._analytics
 
     @property
     def transformer(self) -> FlextLDIFTransformerService:
-        """Get transformer service (guaranteed non-None)."""
-        if self._transformer is None:
-            error_msg = "Transformer service not initialized"
-            raise FlextLDIFConfigurationError(error_msg)
+        """Get transformer service."""
         return self._transformer
 
     @property
     def repository(self) -> FlextLDIFRepositoryService:
-        """Get repository service (guaranteed non-None)."""
-        if self._repository is None:
-            error_msg = "Repository service not initialized"
-            raise FlextLDIFConfigurationError(error_msg)
+        """Get repository service."""
         return self._repository
-
-    # Type-safe property accessors for services (backward compatibility)
-    @property
-    def safe_parser(self) -> FlextLDIFParserService:
-        """Get parser service (guaranteed non-None)."""
-        return self.parser
-
-    @property
-    def safe_validator(self) -> FlextLDIFValidatorService:
-        """Get validator service (guaranteed non-None)."""
-        return self.validator
-
-    @property
-    def safe_writer(self) -> FlextLDIFWriterService:
-        """Get writer service (guaranteed non-None)."""
-        return self.writer
-
-    @property
-    def safe_analytics(self) -> FlextLDIFAnalyticsService:
-        """Get analytics service (guaranteed non-None)."""
-        return self.analytics
-
-    @property
-    def safe_transformer(self) -> FlextLDIFTransformerService:
-        """Get transformer service (guaranteed non-None)."""
-        return self.transformer
-
-    @property
-    def safe_repository(self) -> FlextLDIFRepositoryService:
-        """Get repository service (guaranteed non-None)."""
-        return self.repository
 
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute services operation."""
         return FlextResult[dict[str, object]].ok({"status": "ready"})
 
-    @staticmethod
-    def object_class_field(
-        description: str = "LDAP Object Class",
-        pattern: str | None = r"^[A-Z][a-zA-Z0-9]*$",
-        max_length: int = 255,
-        min_length: int = 1,
-    ) -> FieldInfo:
-        """Create a Pydantic field for LDAP object class validation."""
-        if pattern:
-            return cast(
-                "FieldInfo",
-                PydanticField(
-                    ...,
-                    description=description,
-                    min_length=min_length,
-                    max_length=max_length,
-                    pattern=pattern,
-                ),
-            )
-        return cast(
-            "FieldInfo",
-            PydanticField(
-                ...,
-                description=description,
-                min_length=min_length,
-                max_length=max_length,
-            ),
-        )
 
-    @staticmethod
-    def dn_field(
-        description: str = "LDAP Distinguished Name",
-        max_length: int = 1024,
-        min_length: int = 1,
-    ) -> FieldInfo:
-        """Create a Pydantic field for LDAP DN validation."""
-        return cast(
-            "FieldInfo",
-            PydanticField(
-                ...,
-                description=description,
-                min_length=min_length,
-                max_length=max_length,
-            ),
-        )
-
-    @staticmethod
-    def attribute_name_field(
-        description: str = "LDAP Attribute Name",
-        pattern: str | None = r"^[a-zA-Z][a-zA-Z0-9-]*$",
-        max_length: int = 255,
-        min_length: int = 1,
-    ) -> FieldInfo:
-        """Create a Pydantic field for LDAP attribute name validation."""
-        if pattern:
-            return cast(
-                "FieldInfo",
-                PydanticField(
-                    ...,
-                    description=description,
-                    min_length=min_length,
-                    max_length=max_length,
-                    pattern=pattern,
-                ),
-            )
-        return cast(
-            "FieldInfo",
-            PydanticField(
-                ...,
-                description=description,
-                min_length=min_length,
-                max_length=max_length,
-            ),
-        )
-
-    @staticmethod
-    def attribute_value_field(
-        description: str = "LDAP Attribute Value",
-        max_length: int = 4096,
-        min_length: int = 0,
-    ) -> FieldInfo:
-        """Create a Pydantic field for LDAP attribute value validation."""
-        return cast(
-            "FieldInfo",
-            PydanticField(
-                ...,
-                description=description,
-                min_length=min_length,
-                max_length=max_length,
-            ),
-        )
+# Backward compatibility alias
+# FlextLDIFAnalyticsService is now defined as a standalone class above
 
 
-__all__ = ["FlextLDIFServices"]
+__all__ = ["FlextLDIFAnalyticsService", "FlextLDIFServices"]

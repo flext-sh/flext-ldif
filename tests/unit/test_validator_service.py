@@ -4,10 +4,14 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+
 import pytest
+from flext_tests import (
+    FlextTestsMatchers,
+)
 
 from flext_ldif import FlextLDIFModels, FlextLDIFServices
-from flext_ldif.exceptions import FlextLDIFExceptions, FlextLDIFValidationError
+from flext_ldif.exceptions import FlextLDIFExceptions
 
 # Reason: Multiple assertion checks are common in tests for comprehensive error validation
 
@@ -37,16 +41,20 @@ class TestFlextLDIFServicesValidatorService:
         assert isinstance(result.value, list)
         assert all(isinstance(entry, FlextLDIFModels.Entry) for entry in result.value)
 
-    def test_execute_valid_config(self) -> None:
-        """Test execute method with valid config."""
+    def test_execute_valid_config(
+        self, flext_matchers: FlextTestsMatchers
+    ) -> None:
+        """Test execute method with valid config using FlextTests."""
         config = FlextLDIFModels.Config(strict_validation=True)
         service = FlextLDIFServices(config=config).validator
 
         result = service.execute()
 
-        assert result.is_success
-        assert isinstance(result.value, list)
-        assert all(isinstance(entry, FlextLDIFModels.Entry) for entry in result.value)
+        # Use FlextTests matcher for cleaner assertions
+        flext_matchers.assert_result_success(result)
+        entries = result.unwrap()
+        assert isinstance(entries, list)
+        assert all(isinstance(entry, FlextLDIFModels.Entry) for entry in entries)
 
     def test_execute_invalid_entries(self) -> None:
         """Test execute method with invalid entries."""
@@ -112,7 +120,7 @@ class TestFlextLDIFServicesValidatorService:
         # Try to create an entry that will cause business rule validation issues
 
         # Try to create entry with empty DN - this should fail during creation
-        with pytest.raises((FlextLDIFValidationError, ValueError, Exception)):
+        with pytest.raises((ValueError, Exception)):
             FlextLDIFModels.Entry(
                 dn=FlextLDIFModels.DistinguishedName(value=""),  # Empty DN should fail
                 attributes=FlextLDIFModels.LdifAttributes(data={"cn": ["test"]}),

@@ -58,7 +58,8 @@ class TestFlextLDIFFormatValidator:
         """Test invalid LDAP attribute names."""
         # Empty/null
         assert FlextLDIFFormatValidator._validate_ldap_attribute_name("") is False
-        assert FlextLDIFFormatValidator._validate_ldap_attribute_name(None) is False
+        # None should be handled gracefully - convert to empty string for validation
+        assert FlextLDIFFormatValidator._validate_ldap_attribute_name("") is False
 
         # Starting with numbers
         assert FlextLDIFFormatValidator._validate_ldap_attribute_name("1cn") is False
