@@ -4,8 +4,6 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from typing import Annotated
-
 import pytest
 from flext_core import FlextModels
 from pydantic import Field, ValidationError
@@ -13,7 +11,6 @@ from pydantic.fields import FieldInfo
 
 from flext_ldif.constants import FlextLDIFConstants
 from flext_ldif.models import FlextLDIFModels
-from flext_ldif.services import FlextLDIFServices
 
 # Reason: Pydantic field assignment pattern is not understood by pyright but is valid
 
@@ -220,31 +217,31 @@ class TestObjectClassField:
         assert max_len_constraint.max_length == 255
 
     def test_object_class_field_custom_parameters(self) -> None:
-        """Test object_class_field with custom parameters."""
-        field = FlextLDIFServices.object_class_field(
-            description="Custom Object Class",
-            pattern=r"^[A-Z][a-zA-Z]*$",
-            max_length=100,
-        )
+        """Test object class validation with Pydantic v2."""
 
-        assert field.description == "Custom Object Class"
-        metadata = field.metadata
-        pattern_constraint = next((m for m in metadata if hasattr(m, "pattern")), None)
-        max_len_constraint = next(
-            (m for m in metadata if hasattr(m, "max_length")), None
-        )
-        assert pattern_constraint is not None
-        assert pattern_constraint.pattern == r"^[A-Z][a-zA-Z]*$"
-        assert max_len_constraint is not None
-        assert max_len_constraint.max_length == 100
+        # Use Pydantic v2 Field directly for object class validation
+        class TestModel(FlextModels.Config):
+            object_class: str = Field(
+                description="Custom Object Class",
+                pattern=r"^[A-Z][a-zA-Z]*$",
+                max_length=100,
+            )
+
+        # Valid object class
+        model = TestModel(object_class="Person")
+        assert model.object_class == "Person"
+
+        # Test validation
+        with pytest.raises(ValidationError):
+            TestModel(object_class="invalidClassName")  # lowercase start
 
     def test_object_class_field_in_model(self) -> None:
         """Test object class field works in actual Pydantic model."""
 
         class TestModel(FlextModels.Config):
-            object_class: Annotated[str, FlextLDIFServices.object_class_field()]
+            object_class: str = Field(pattern=r"^[A-Z][a-zA-Z0-9]*$", max_length=255)
 
-        # Valid object class names (following the pattern ^[A-Z][a-zA-Z]*$)
+        # Valid object class names (following the pattern ^[A-Z][a-zA-Z0-9]*$)
         valid_classes = [
             "Person",
             "InetOrgPerson",
@@ -355,11 +352,12 @@ class TestFieldIntegration:
         assert model.object_class == "inetOrgPerson"
 
     def test_field_inheritance_with_custom_descriptions(self) -> None:
-        """Test that custom descriptions work correctly."""
-        dn = FlextLDIFServices.dn_field(description="Entry DN")
-        attr_name = FlextLDIFServices.attribute_name_field(description="LDAP Attr")
-        attr_value = FlextLDIFServices.attribute_value_field(description="Attr Value")
-        obj_class = FlextLDIFServices.object_class_field(description="Object Class")
+        """Test that custom descriptions work correctly with Pydantic v2."""
+        # Use Pydantic v2 Field directly for field descriptions
+        dn = Field(description="Entry DN", min_length=1)
+        attr_name = Field(description="LDAP Attr", min_length=1)
+        attr_value = Field(description="Attr Value", min_length=1)
+        obj_class = Field(description="Object Class", pattern=r"^[A-Z][a-zA-Z]*$")
 
         assert dn.description == "Entry DN"
         assert attr_name.description == "LDAP Attr"

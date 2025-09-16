@@ -10,9 +10,9 @@ from flext_core import FlextTypes
 
 from flext_ldif import (
     FlextLDIFAPI,
-    FlextLDIFModels,
     FlextLDIFServices,
 )
+from flext_ldif.config import FlextLDIFConfig
 from flext_ldif.parser_service import FlextLDIFParserService
 from flext_ldif.validator_service import FlextLDIFValidatorService
 from flext_ldif.writer_service import FlextLDIFWriterService
@@ -28,12 +28,12 @@ class RealServiceFactory:
             config = {}
 
         # Create proper config object
-        ldif_config = FlextLDIFModels.Config(
-            encoding=config.get("encoding", "utf-8"),
-            strict_parsing=config.get("strict_parsing", True),
-            validate_dn=config.get("validate_dn", True),
-            max_entries=config.get("max_entries", 10000),
-            max_line_length=config.get("max_line_length", 76),
+        ldif_config = FlextLDIFConfig(
+            ldif_encoding=config.get("encoding", "utf-8"),
+            ldif_strict_validation=config.get("strict_parsing", True),
+            ldif_validate_dn_format=config.get("validate_dn", True),
+            ldif_max_entries=config.get("max_entries", 10000),
+            ldif_max_line_length=config.get("max_line_length", 76),
         )
 
         return FlextLDIFAPI(config=ldif_config)
@@ -125,16 +125,15 @@ class RealServiceFactory:
         validate_dn: bool = True,
         max_entries: int = 10000,
         max_line_length: int = 76,
-        **kwargs: object,
-    ) -> FlextLDIFModels.Config:
+    ) -> FlextLDIFConfig:
         """Create a test configuration object."""
-        return FlextLDIFModels.Config(
-            encoding=encoding,
-            strict_parsing=strict_parsing,
-            validate_dn=validate_dn,
-            max_entries=max_entries,
-            max_line_length=max_line_length,
-            **kwargs,
+        # Map old parameter names to new FlextLDIFConfig parameter names
+        return FlextLDIFConfig(
+            ldif_encoding=encoding,
+            ldif_strict_validation=strict_parsing,
+            ldif_validate_dn_format=validate_dn,
+            ldif_max_entries=max_entries,
+            ldif_max_line_length=max_line_length,
         )
 
     @classmethod

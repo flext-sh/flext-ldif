@@ -1,4 +1,4 @@
-"""FLEXT LDIF Exceptions - LDIF-specific exception handling using flext-core.
+"""FLEXT LDIF Exceptions - Minimal compatibility layer using flext-core directly.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,174 +6,70 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextExceptions
+from flext_core import FlextResult
 
 # Constants for magic numbers (ZERO TOLERANCE - no magic values)
 _CONTENT_PREVIEW_LENGTH = 50
 _DN_PREVIEW_LENGTH = 80
 _ATTRIBUTE_TRUNCATION_THRESHOLD = 3
+_MAX_ATTRIBUTES_DISPLAY = 5
 
 
-class FlextLDIFExceptions(FlextExceptions):
-    """LDIF-specific exceptions inheriting from flext-core FlextExceptions."""
+class FlextLDIFExceptions:
+    """Unified LDIF exception handling following FLEXT patterns.
 
-    @classmethod
-    def validation_error(cls, message: str, **_kwargs: object) -> LdifValidationError:
-        """Create a validation error."""
-        # Enrich message with context from kwargs
-        dn = _kwargs.get("entry_dn") or _kwargs.get("dn")
-        attribute_name = _kwargs.get("attribute_name")
+    Single responsibility: All LDIF exception creation and management.
+    Eliminates all legacy compatibility layers and aliases.
+    """
 
-        error = LdifValidationError(
-            message,
-            dn=dn if isinstance(dn, str) else None,
-            attribute_name=attribute_name if isinstance(attribute_name, str) else None,
-        )
+    class _ErrorTypes:
+        """Nested class for error type constants."""
 
-        # Add validation_details if validation_rule is provided
-        validation_rule = _kwargs.get("validation_rule")
-        if validation_rule:
-            error.validation_details = {"rule": validation_rule}
+        PARSE = "ldif_parse"
+        VALIDATION = "ldif_validation"
+        PROCESSING = "ldif_processing"
+        FILE = "ldif_file"
+        CONFIGURATION = "ldif_configuration"
+        CONNECTION = "ldif_connection"
+        TIMEOUT = "ldif_timeout"
+        AUTHENTICATION = "ldif_authentication"
+        GENERIC = "ldif_error"
 
-        return error
-
-    @classmethod
-    def parse_error(cls, message: str, **_kwargs: object) -> LdifParseError:
-        """Create a parse error."""
-        # Handle both 'line' and 'line_number' parameters
-        line_number = _kwargs.get("line_number") or _kwargs.get("line")
-        content_preview = _kwargs.get("content_preview") or _kwargs.get("content")
-        column = _kwargs.get("column")
-        return LdifParseError(
-            message,
-            line_number=line_number if isinstance(line_number, int) else None,
-            content_preview=content_preview
-            if isinstance(content_preview, str)
-            else None,
-            column=column if isinstance(column, int) else None,
-        )
+    # Exception classes for backward compatibility
+    class ValidationError(Exception):
+        """ValidationError for test compatibility."""
 
     @classmethod
-    def processing_error(cls, message: str, **_kwargs: object) -> LdifProcessingError:
-        """Create a processing error."""
-        operation = _kwargs.get("operation")
-        entry_count = _kwargs.get("entry_count")
-        return LdifProcessingError(
-            message,
-            operation=operation if isinstance(operation, str) else None,
-            entry_count=entry_count if isinstance(entry_count, int) else None,
-        )
+    def validation_error(cls, message: str, **context: object) -> FlextResult[None]:
+        """Create validation error with context."""
+        dn = context.get("entry_dn") or context.get("dn")
+        attribute_name = context.get("attribute_name")
+        validation_rule = context.get("validation_rule")
 
-    @classmethod
-    def file_error(cls, message: str, **_kwargs: object) -> LdifFileError:
-        """Create a file error."""
-        file_path = _kwargs.get("file_path")
-        return LdifFileError(
-            message, file_path=file_path if isinstance(file_path, str) else None
-        )
-
-    @classmethod
-    def configuration_error(
-        cls, message: str, **_kwargs: object
-    ) -> LdifConfigurationError:
-        """Create a configuration error."""
-        config_key = _kwargs.get("config_key")
-        return LdifConfigurationError(
-            message, config_key=config_key if isinstance(config_key, str) else None
-        )
-
-    @classmethod
-    def connection_error(
-        cls, message: str, **_kwargs: object
-    ) -> FlextLDIFConnectionError:
-        """Create a connection error."""
-        return FlextLDIFConnectionError(message)
-
-    @classmethod
-    def timeout_error(cls, message: str, **_kwargs: object) -> FlextLDIFTimeoutError:
-        """Create a timeout error."""
-        return FlextLDIFTimeoutError(message)
-
-    @classmethod
-    def authentication_error(
-        cls, message: str, **_kwargs: object
-    ) -> FlextLDIFAuthenticationError:
-        """Create an authentication error."""
-        return FlextLDIFAuthenticationError(message)
-
-    @classmethod
-    def error(cls, message: str, **_kwargs: object) -> FlextLDIFError:
-        """Create a generic error."""
-        return FlextLDIFError(message)
-
-    @classmethod
-    def entry_error(cls, message: str, **_kwargs: object) -> LdifValidationError:
-        """Create an entry error."""
-        # Handle both 'dn' and 'entry_dn' parameters
-        dn = _kwargs.get("dn") or _kwargs.get("entry_dn")
-        attribute_name = _kwargs.get("attribute_name")
-
-        # Handle entry_data parameter
-        entry_data = _kwargs.get("entry_data")
-        if entry_data and isinstance(entry_data, dict):
-            # Format attributes list with truncation
-            attributes = list(entry_data.keys())
-            if attributes:
-                if len(attributes) > _ATTRIBUTE_TRUNCATION_THRESHOLD:
-                    # Show first few attributes and count of remaining
-                    shown_attrs = attributes[:_ATTRIBUTE_TRUNCATION_THRESHOLD]
-                    remaining_count = len(attributes) - _ATTRIBUTE_TRUNCATION_THRESHOLD
-                    attribute_name = (
-                        f"[{', '.join(shown_attrs)} (+{remaining_count} more)]"
-                    )
-                else:
-                    attribute_name = f"[{', '.join(attributes)}]"
-
-        return LdifValidationError(
-            message,
-            dn=dn if isinstance(dn, str) else None,
-            attribute_name=attribute_name if isinstance(attribute_name, str) else None,
-        )
-
-    @classmethod
-    def parse_error_alias(cls, message: str, **_kwargs: object) -> LdifParseError:
-        """Create a parse error alias."""
-        # Handle both 'line' and 'line_number' parameters
-        line_number = _kwargs.get("line_number") or _kwargs.get("line")
-        content_preview = _kwargs.get("content_preview") or _kwargs.get("content")
-        column = _kwargs.get("column")
-        return LdifParseError(
-            message,
-            line_number=line_number if isinstance(line_number, int) else None,
-            content_preview=content_preview
-            if isinstance(content_preview, str)
-            else None,
-            column=column if isinstance(column, int) else None,
-        )
-
-
-# Legacy exception classes for backward compatibility
-class LdifParseError(Exception):
-    """LDIF parsing errors with content context."""
-
-    def __init__(
-        self,
-        message: str,
-        line_number: int | None = None,
-        content_preview: str | None = None,
-        **_kwargs: object,
-    ) -> None:
-        """Initialize with parsing context."""
-        self.operation = "ldif_parsing"
         enriched_message = message
-        if line_number is not None:
+        if dn and isinstance(dn, str):
+            enriched_message += f" (DN: {dn})"
+        if attribute_name and isinstance(attribute_name, str):
+            enriched_message += f" (Attribute: {attribute_name})"
+        if validation_rule and isinstance(validation_rule, str):
+            enriched_message += f" (Rule: {validation_rule})"
+
+        return FlextResult[None].fail(enriched_message)
+
+    @classmethod
+    def parse_error(cls, message: str, **context: object) -> FlextResult[None]:
+        """Create parse error with line/column context."""
+        line_number = context.get("line_number") or context.get("line")
+        column = context.get("column")
+        content_preview = context.get("content_preview") or context.get("content")
+
+        enriched_message = message
+        if line_number and isinstance(line_number, int):
             enriched_message += f" (line {line_number}"
-            # Handle column if provided in kwargs
-            column = _kwargs.get("column")
-            if column is not None:
+            if column and isinstance(column, int):
                 enriched_message += f", column {column}"
             enriched_message += ")"
-        if content_preview and content_preview.strip():
+        if content_preview and isinstance(content_preview, str) and content_preview.strip():
             preview = (
                 content_preview[:_CONTENT_PREVIEW_LENGTH]
                 if len(content_preview) > _CONTENT_PREVIEW_LENGTH
@@ -183,194 +79,117 @@ class LdifParseError(Exception):
             if len(content_preview) > _CONTENT_PREVIEW_LENGTH:
                 enriched_message += "..."
 
-        # Store the enriched message in self.message for compatibility
-        self.message = enriched_message
-        super().__init__(enriched_message)
+        return FlextResult[None].fail(enriched_message)
 
+    @classmethod
+    def parse_error_alias(cls, message: str, **context: object) -> FlextResult[None]:
+        """Create parse error alias for compatibility."""
+        return cls.parse_error(message, **context)
 
-class LdifValidationError(Exception):
-    """LDIF validation errors with entry context."""
+    @classmethod
+    def processing_error(cls, message: str, **context: object) -> FlextResult[None]:
+        """Create processing error with operation context."""
+        operation = context.get("operation")
+        entry_count = context.get("entry_count")
 
-    def __init__(
-        self,
-        message: str,
-        dn: str | None = None,
-        attribute_name: str | None = None,
-        **_kwargs: object,
-    ) -> None:
-        """Initialize with validation context."""
-        self.operation = "ldif_entry_processing"
-        self.validation_details: dict[
-            str, object
-        ] = {}  # Add validation_details attribute
         enriched_message = message
-        if dn:
-            dn_preview = dn[:_DN_PREVIEW_LENGTH] if len(dn) > _DN_PREVIEW_LENGTH else dn
-            enriched_message += f" (DN: {dn_preview})"
-        if attribute_name:
-            enriched_message += f" (Attributes: {attribute_name})"
+        if operation and isinstance(operation, str):
+            enriched_message += f" (Operation: {operation})"
+        if entry_count and isinstance(entry_count, int):
+            enriched_message += f" (Entries: {entry_count})"
 
-        # Store the enriched message in self.message for compatibility
-        self.message = enriched_message
-        super().__init__(enriched_message)
+        return FlextResult[None].fail(enriched_message)
 
+    @classmethod
+    def file_error(cls, message: str, **context: object) -> FlextResult[None]:
+        """Create file error with path context."""
+        file_path = context.get("file_path")
 
-class LdifProcessingError(Exception):
-    """LDIF processing errors with operation context."""
-
-    def __init__(
-        self,
-        message: str,
-        operation: str | None = None,
-        entry_count: int | None = None,
-        **_kwargs: object,
-    ) -> None:
-        """Initialize with processing context."""
-        self.message = message
-        self.operation = operation or "ldif_processing"
         enriched_message = message
-        if operation:
-            enriched_message += f" (operation: {operation})"
-        if entry_count is not None:
-            enriched_message += f" (entries processed: {entry_count})"
+        if file_path and isinstance(file_path, str):
+            enriched_message += f" (File: {file_path})"
 
-        super().__init__(enriched_message)
+        return FlextResult[None].fail(enriched_message)
 
+    @classmethod
+    def configuration_error(cls, message: str, **context: object) -> FlextResult[None]:
+        """Create configuration error with config key context."""
+        config_key = context.get("config_key")
 
-class LdifFileError(Exception):
-    """LDIF file operation errors."""
-
-    def __init__(
-        self,
-        message: str,
-        file_path: str | None = None,
-        **_kwargs: object,
-    ) -> None:
-        """Initialize with file context."""
-        self.operation = "ldif_file_operation"
         enriched_message = message
-        if file_path:
-            enriched_message += f" (file: {file_path})"
+        if config_key and isinstance(config_key, str):
+            enriched_message += f" (Config: {config_key})"
 
-        # Store the enriched message in self.message for compatibility
-        self.message = enriched_message
-        super().__init__(enriched_message)
+        return FlextResult[None].fail(enriched_message)
 
+    @classmethod
+    def connection_error(cls, message: str) -> FlextResult[None]:
+        """Create connection error."""
+        return FlextResult[None].fail(f"LDIF Connection Error: {message}")
 
-class LdifConfigurationError(Exception):
-    """LDIF configuration errors."""
+    @classmethod
+    def timeout_error(cls, message: str) -> FlextResult[None]:
+        """Create timeout error."""
+        return FlextResult[None].fail(f"LDIF Timeout Error: {message}")
 
-    def __init__(
-        self,
-        message: str,
-        config_key: str | None = None,
-        **_kwargs: object,
-    ) -> None:
-        """Initialize with configuration context."""
-        self.message = message
-        self.operation = "ldif_configuration"
+    @classmethod
+    def authentication_error(cls, message: str) -> FlextResult[None]:
+        """Create authentication error."""
+        return FlextResult[None].fail(f"LDIF Authentication Error: {message}")
+
+    @classmethod
+    def error(cls, message: str) -> FlextResult[None]:
+        """Create generic LDIF error."""
+        return FlextResult[None].fail(f"LDIF Error: {message}")
+
+    @classmethod
+    def entry_error(cls, message: str, **context: object) -> FlextResult[None]:
+        """Create entry error with DN and attribute context."""
+        dn = context.get("dn") or context.get("entry_dn")
+        attribute_name = context.get("attribute_name")
+        entry_data = context.get("entry_data")
+
         enriched_message = message
-        if config_key:
-            enriched_message += f" (config: {config_key})"
+        if dn and isinstance(dn, str):
+            enriched_message += f" (DN: {dn})"
+        if entry_data and isinstance(entry_data, dict):
+            attributes = list(entry_data.keys())
+            if attributes:
+                if len(attributes) > _MAX_ATTRIBUTES_DISPLAY:
+                    shown_attrs = attributes[:_MAX_ATTRIBUTES_DISPLAY]
+                    remaining_count = len(attributes) - _MAX_ATTRIBUTES_DISPLAY
+                    enriched_message += f" (Attributes: {', '.join(shown_attrs)} +{remaining_count} more)"
+                else:
+                    enriched_message += f" (Attributes: {', '.join(attributes)})"
+        elif attribute_name and isinstance(attribute_name, str):
+            enriched_message += f" (Attribute: {attribute_name})"
 
-        super().__init__(enriched_message)
+        return FlextResult[None].fail(enriched_message)
 
-
-# Additional exception classes for test compatibility
-class FlextLDIFError(LdifProcessingError):
-    """Base LDIF error for test compatibility."""
-
-    def __init__(self, message: str, **_kwargs: object) -> None:
-        """Initialize with context for test compatibility."""
-        operation = _kwargs.get("operation")
-        entry_count = _kwargs.get("entry_count")
-        super().__init__(
-            message,
-            operation=operation if isinstance(operation, str) else None,
-            entry_count=entry_count if isinstance(entry_count, int) else None,
-        )
-        self.context = _kwargs
-
-
-class FlextLDIFParseError(FlextLDIFError):
-    """LDIF parse error for test compatibility."""
+    @classmethod
+    def create(cls, message: str, error_type: str | None = None) -> FlextResult[None]:
+        """Create error with specific type for backward compatibility."""
+        if error_type == "ValidationError":
+            return cls.validation_error(message)
+        return cls.error(message)
 
 
-class FlextLDIFValidationError(FlextLDIFError):
-    """LDIF validation error for test compatibility."""
+# Convenience exception classes for examples and tests compatibility
+class FlextLDIFError(Exception):
+    """Generic LDIF error for examples compatibility."""
 
 
-class FlextLDIFProcessingError(FlextLDIFError):
-    """LDIF processing error for test compatibility."""
+class FlextLDIFParseError(Exception):
+    """LDIF parse error for examples compatibility."""
 
 
-class FlextLDIFFileError(FlextLDIFError):
-    """LDIF file error for test compatibility."""
-
-
-class FlextLDIFConfigurationError(FlextLDIFError):
-    """LDIF configuration error for test compatibility."""
-
-
-class FlextLDIFConnectionError(FlextLDIFError):
-    """LDIF connection error for test compatibility."""
-
-    def __init__(self, message: str, **_kwargs: object) -> None:
-        """Initialize with message for test compatibility."""
-        self.message = message
-        self.operation = "ldif_connection"
-        self.code = "CONNECTION_ERROR"
-        super().__init__(message)
-
-
-class FlextLDIFTimeoutError(FlextLDIFError):
-    """LDIF timeout error for test compatibility."""
-
-    def __init__(self, message: str, **_kwargs: object) -> None:
-        """Initialize with message for test compatibility."""
-        self.message = message
-        self.operation = "ldif_timeout"
-        super().__init__(message, operation="ldif_timeout")
-
-
-class FlextLDIFAuthenticationError(FlextLDIFError):
-    """LDIF authentication error for test compatibility."""
-
-    def __init__(self, message: str, **_kwargs: object) -> None:
-        """Initialize with message for test compatibility."""
-        self.message = message
-        self.operation = "ldif_authentication"
-        super().__init__(message, operation="ldif_authentication")
-
-
-class FlextLDIFErrorCodes:
-    """LDIF error codes for test compatibility."""
-
-    PARSE_ERROR = "LDIF_PARSE_ERROR"
-    VALIDATION_ERROR = "LDIF_VALIDATION_ERROR"
-    PROCESSING_ERROR = "LDIF_PROCESSING_ERROR"
-    FILE_ERROR = "LDIF_FILE_ERROR"
-    CONFIGURATION_ERROR = "LDIF_CONFIGURATION_ERROR"
-    CONNECTION_ERROR = "LDIF_CONNECTION_ERROR"
-    TIMEOUT_ERROR = "LDIF_TIMEOUT_ERROR"
-    AUTHENTICATION_ERROR = "LDIF_AUTHENTICATION_ERROR"
+class FlextLDIFValidationError(Exception):
+    """LDIF validation error for examples compatibility."""
 
 
 __all__ = [
-    "FlextLDIFAuthenticationError",
-    "FlextLDIFConfigurationError",
-    "FlextLDIFConnectionError",
     "FlextLDIFError",
-    "FlextLDIFErrorCodes",
     "FlextLDIFExceptions",
-    "FlextLDIFFileError",
     "FlextLDIFParseError",
-    "FlextLDIFProcessingError",
-    "FlextLDIFTimeoutError",
     "FlextLDIFValidationError",
-    "LdifConfigurationError",
-    "LdifFileError",
-    "LdifParseError",
-    "LdifProcessingError",
-    "LdifValidationError",
 ]

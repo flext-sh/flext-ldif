@@ -15,11 +15,11 @@ from flext_core import (
     FlextResult,
 )
 
-from flext_ldif.analytics_service import FlextLDIFAnalyticsService
+from flext_ldif.config import FlextLDIFConfig
 from flext_ldif.models import FlextLDIFModels
 from flext_ldif.parser_service import FlextLDIFParserService
 from flext_ldif.repository_service import FlextLDIFRepositoryService
-from flext_ldif.services import FlextLDIFServices
+from flext_ldif.services import FlextLDIFAnalyticsService, FlextLDIFServices
 from flext_ldif.validator_service import FlextLDIFValidatorService
 from flext_ldif.writer_service import FlextLDIFWriterService
 
@@ -44,7 +44,7 @@ class FlextLDIFAPI:
     class architecture with nested operation handlers.
     """
 
-    def __init__(self, config: FlextLDIFModels.Config | None = None) -> None:
+    def __init__(self, config: FlextLDIFConfig | None = None) -> None:
         """Initialize unified LDIF API with dependency injection.
 
         Args:
@@ -54,7 +54,7 @@ class FlextLDIFAPI:
         # Initialize as simple class without abstract inheritance
         self._logger = FlextLogger(__name__)
         self._container = FlextContainer.get_global()
-        self._config = config or FlextLDIFModels.Config()
+        self._config = config or FlextLDIFConfig()
 
         # Initialize nested operation handlers
         self._operations = self.Operations(self)
@@ -151,7 +151,7 @@ class FlextLDIFAPI:
             self, entries: list[FlextLDIFModels.Entry]
         ) -> FlextResultEntries:
             """Validate entry count against configuration limits."""
-            max_entries = self._config.max_entries
+            max_entries = self._config.ldif_max_entries
             if max_entries is not None and len(entries) > max_entries:
                 error_msg = f"Entry count exceeded: {len(entries)} entries, limit is {max_entries}"
                 return FlextResult[list[FlextLDIFModels.Entry]].fail(error_msg)
@@ -304,9 +304,13 @@ class FlextLDIFAPI:
         directory_path: str | Path | None = None,
         file_pattern: str = "*.ldif",
         file_path: str | Path | None = None,
-        max_file_size_mb: int = 100,
+        max_file_size_mb: int | None = None,
     ) -> FlextResult[list[Path]]:
         """Discover LDIF files using railway-oriented programming."""
+        # Use config default if not provided
+        if max_file_size_mb is None:
+            max_file_size_mb = self._config.ldif_max_file_size_mb
+
         return (
             self._get_files_to_process(directory_path, file_pattern, file_path)
             .flat_map(
@@ -447,17 +451,17 @@ class FlextLDIFAPI:
 
         return filtered_files
 
-    # Delegation methods for backward compatibility and ease of use
+    # Core API methods - direct access to operations
     def parse_file(self, file_path: str | Path) -> FlextResultEntries:
-        """Parse LDIF file - delegates to Operations.parse_file."""
+        """Parse LDIF file."""
         return self._operations.parse_file(file_path)
 
     def parse_string(self, content: str) -> FlextResultEntries:
-        """Parse LDIF string - delegates to Operations.parse_string."""
+        """Parse LDIF string."""
         return self._operations.parse_string(content)
 
     def validate_entries(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultBool:
-        """Validate entries - delegates to Operations.validate_entries."""
+        """Validate entries."""
         return self._operations.validate_entries(entries)
 
     def write_file(
@@ -467,57 +471,20 @@ class FlextLDIFAPI:
         *,
         _encoding: str = "utf-8",
     ) -> FlextResultBool:
-        """Write LDIF file - delegates to Operations.write_file."""
+        """Write LDIF file."""
         return self._operations.write_file(entries, file_path)
 
     def get_entry_statistics(
         self, entries: list[FlextLDIFModels.Entry]
     ) -> FlextResultDict:
-        """Get entry statistics - delegates to Analytics.entry_statistics."""
+        """Get entry statistics."""
         return self._analytics.entry_statistics(entries)
 
     def filter_persons(
         self, entries: list[FlextLDIFModels.Entry]
     ) -> FlextResultEntries:
-        """Filter person entries - delegates to Filters.persons."""
+        """Filter person entries."""
         return self._filters.persons(entries)
-
-    # Delegation methods for backward compatibility and ease of use
-    def parse(self, content: str) -> FlextResultEntries:
-        """Parse LDIF content - alias for parse_string."""
-        return self.parse_string(content)
-
-    def validate(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultBool:
-        """Validate entries - alias for validate_entries."""
-        return self.validate_entries(entries)
-
-    def write(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultStr:
-        """Write entries to string - alias for write_string."""
-        return self._operations.write_string(entries)
-
-    def filter_by_objectclass(
-        self, entries: list[FlextLDIFModels.Entry], object_class: str
-    ) -> FlextResultEntries:
-        """Filter entries by object class - delegates to Filters.by_object_class."""
-        return self._filters.by_object_class(entries, object_class)
-
-    def filter_groups(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultEntries:
-        """Filter group entries - delegates to Filters.groups."""
-        return self._filters.groups(entries)
-
-    def filter_organizational_units(
-        self, entries: list[FlextLDIFModels.Entry]
-    ) -> FlextResultEntries:
-        """Filter organizational unit entries - delegates to Filters.organizational_units."""
-        return self._filters.organizational_units(entries)
-
-    def filter_valid(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultEntries:
-        """Filter valid entries - delegates to Filters.valid_entries."""
-        return self._filters.valid_entries(entries)
-
-    def analyze(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultDict:
-        """Analyze entries - alias for get_entry_statistics."""
-        return self.get_entry_statistics(entries)
 
     def find_entry_by_dn(
         self, entries: list[FlextLDIFModels.Entry], dn: str
@@ -527,6 +494,43 @@ class FlextLDIFAPI:
             if entry.dn.value == dn:
                 return FlextResult[FlextLDIFModels.Entry | None].ok(entry)
         return FlextResult[FlextLDIFModels.Entry | None].ok(None)
+
+    # Convenience methods for direct API access (examples and tests compatibility)
+    def parse(self, content: str) -> FlextResultEntries:
+        """Parse LDIF content - convenience method."""
+        return self.parse_string(content)
+
+    def validate(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultBool:
+        """Validate entries - convenience method."""
+        return self.validate_entries(entries)
+
+    def write(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultStr:
+        """Write entries to string - convenience method."""
+        return self._operations.write_string(entries)
+
+    def analyze(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultDict:
+        """Analyze entries - convenience method."""
+        return self._analytics.entry_statistics(entries)
+
+    def filter_by_objectclass(
+        self, entries: list[FlextLDIFModels.Entry], object_class: str
+    ) -> FlextResultEntries:
+        """Filter by objectClass - convenience method."""
+        return self._filters.by_object_class(entries, object_class)
+
+    def filter_groups(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultEntries:
+        """Filter groups - convenience method."""
+        return self._filters.groups(entries)
+
+    def filter_organizational_units(
+        self, entries: list[FlextLDIFModels.Entry]
+    ) -> FlextResultEntries:
+        """Filter organizational units - convenience method."""
+        return self._filters.organizational_units(entries)
+
+    def filter_valid(self, entries: list[FlextLDIFModels.Entry]) -> FlextResultEntries:
+        """Filter valid entries - convenience method."""
+        return self._filters.valid_entries(entries)
 
 
 __all__ = [

@@ -42,8 +42,12 @@ objectClass: person
     def test_write_ldif_basic(self) -> None:
         """Test basic LDIF writing through class method."""
         entry = FlextLDIFModels.Entry(
-            dn="cn=Test User,ou=people,dc=example,dc=com",
-            attributes={"cn": ["Test User"], "sn": ["User"], "objectClass": ["person"]},
+            dn=FlextLDIFModels.DistinguishedName(
+                value="cn=Test User,ou=people,dc=example,dc=com"
+            ),
+            attributes=FlextLDIFModels.LdifAttributes(
+                data={"cn": ["Test User"], "sn": ["User"], "objectClass": ["person"]}
+            ),
         )
 
         handler = FlextLDIFFormatHandler()
@@ -131,6 +135,7 @@ objectClass: person
         handler = FlextLDIFFormatHandler()
         result = handler.write_ldif(None)
         assert result.is_failure
+        assert result.error is not None
         assert "Entries cannot be None" in result.error
 
 
@@ -421,6 +426,7 @@ objectClass: person
 
         # Should return failure result
         assert result.is_failure
+        assert result.error is not None
         assert "Expected DN line" in result.error
 
     def test_parse_validation_unified(self) -> None:

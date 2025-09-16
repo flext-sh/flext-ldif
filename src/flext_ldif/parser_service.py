@@ -8,41 +8,71 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_core import FlextResult
+from flext_core import FlextDomainService, FlextLogger, FlextResult
 
-from flext_ldif.base_service import FlextLDIFBaseService
+from flext_ldif.config import FlextLDIFConfig, get_ldif_config
 from flext_ldif.format_handlers import FlextLDIFFormatHandler
 from flext_ldif.models import FlextLDIFModels
 
 
-class FlextLDIFParserService(FlextLDIFBaseService[list[FlextLDIFModels.Entry]]):
-    """LDIF Parser Service - Single Responsibility.
+class FlextLDIFParserService(FlextDomainService[list[FlextLDIFModels.Entry]]):
+    """LDIF Parser Service - Simplified with direct flext-core usage.
 
-    Handles LDIF parsing operations with error handling.
-    Uses flext-core patterns exclusively.
+    Handles LDIF parsing operations with minimal complexity.
+    Uses flext-core patterns directly without unnecessary abstractions.
     """
 
     def __init__(self, format_handler: FlextLDIFFormatHandler | None = None) -> None:
         """Initialize parser service."""
-        super().__init__("FlextLDIFParserService", "parser")
+        super().__init__()
+        self._logger = FlextLogger(__name__)
         self._format_handler = format_handler or FlextLDIFFormatHandler()
 
-        # Register capabilities
-        self._add_capability("parse_ldif_file")
-        self._add_capability("parse_content")
-        self._add_capability("validate_ldif_syntax")
-        self._add_capability("_parse_entry_block")
+    def get_config_info(self) -> dict[str, object]:
+        """Get service configuration information."""
+        return {
+            "service": "FlextLDIFParserService",
+            "config": {
+                "service_type": "parser",
+                "status": "ready",
+                "capabilities": [
+                    "parse_ldif_file",
+                    "parse_content",
+                    "validate_ldif_syntax",
+                ],
+            },
+        }
+
+    def get_service_info(self) -> dict[str, object]:
+        """Get service information."""
+        return {
+            "service_name": "FlextLDIFParserService",
+            "service_type": "parser",
+            "capabilities": [
+                "parse_ldif_file",
+                "parse_content",
+                "validate_ldif_syntax",
+            ],
+            "status": "ready",
+        }
 
     def parse_ldif_file(
         self, file_path: str | Path
     ) -> FlextResult[list[FlextLDIFModels.Entry]]:
         """Parse LDIF file using format handler."""
         try:
-            with Path(file_path).open(encoding="utf-8") as f:
-                content = f.read()
+            try:
+                config = get_ldif_config()
+            except RuntimeError:
+                # Global config not initialized, create default one
+                config = FlextLDIFConfig()
+            encoding = config.ldif_encoding
+            content = Path(file_path).read_text(encoding=encoding)
             return self.parse_content(content)
         except Exception as e:
-            return self._handle_error("File read", e)
+            return FlextResult[list[FlextLDIFModels.Entry]].fail(
+                f"File read failed: {e}"
+            )
 
     def parse_content(self, content: str) -> FlextResult[list[FlextLDIFModels.Entry]]:
         """Parse LDIF content using format handler."""
@@ -50,50 +80,34 @@ class FlextLDIFParserService(FlextLDIFBaseService[list[FlextLDIFModels.Entry]]):
             return FlextResult[list[FlextLDIFModels.Entry]].ok([])
 
         try:
-            result = self._format_handler.parse_ldif(content)
-            if result.is_success:
-                return result
-            return self._handle_error("Parse", result.error or "Unknown error")
+            # Delegate to format handler directly
+            return self._format_handler.parse_ldif(content)
         except Exception as e:
-            return self._handle_error("Parse", e)
+            return FlextResult[list[FlextLDIFModels.Entry]].fail(f"Parse error: {e}")
 
     def validate_ldif_syntax(self, content: str) -> FlextResult[bool]:
         """Validate LDIF syntax without parsing entries."""
-        try:
-            if not content.strip():
-                return FlextResult[bool].fail("Empty LDIF content")
+        if not content.strip():
+            return FlextResult[bool].fail("Empty LDIF content")
 
-            lines = content.strip().split("\n")
+        # Find first non-empty line and check if it starts with dn:
+        for line in content.strip().split("\n"):
+            if line.strip():
+                if not line.strip().startswith("dn:"):
+                    return FlextResult[bool].fail("LDIF must start with dn:")
+                break
 
-            # Check if first non-empty line starts with dn:
-            for line in lines:
-                stripped_line = line.strip()
-                if stripped_line:
-                    if not stripped_line.startswith("dn:"):
-                        return FlextResult[bool].fail("LDIF must start with dn:")
-                    break
-
-            return FlextResult[bool].ok(data=True)
-        except Exception as e:
-            return self._handle_error_bool("Syntax validation", e)
+        return FlextResult[bool].ok(data=True)
 
     def _parse_entry_block(
         self, block: str
     ) -> FlextResult[list[FlextLDIFModels.Entry]]:
         """Parse a single LDIF entry block."""
-        try:
-            if not block.strip():
-                return FlextResult[list[FlextLDIFModels.Entry]].fail("No entries found")
+        if not block.strip():
+            return FlextResult[list[FlextLDIFModels.Entry]].fail("No entries found")
 
-            # Use the format handler to parse the block
-            result = self._format_handler.parse_ldif(block)
-            if result.is_success:
-                return result
-            return self._handle_error_list(
-                "Block parse", result.error or "Unknown error"
-            )
-        except Exception as e:
-            return self._handle_error_list("Block parse", e)
+        # Use format handler directly - no extra exception handling needed
+        return self._format_handler.parse_ldif(block)
 
     def execute(self) -> FlextResult[list[FlextLDIFModels.Entry]]:
         """Execute parser service operation."""

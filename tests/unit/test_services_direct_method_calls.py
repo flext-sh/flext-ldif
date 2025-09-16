@@ -195,7 +195,14 @@ def test_all_service_integrations() -> None:
     transformer = main_services.transformer
 
     # Create services list for iteration later
-    services = [parser, validator, transformer, main_services.writer, main_services.analytics, main_services.repository]
+    services = [
+        parser,
+        validator,
+        transformer,
+        main_services.writer,
+        main_services.analytics,
+        main_services.repository,
+    ]
 
     # Parse -> Validate -> Transform cycle
     ldif_content = """dn: cn=cycle,dc=example,dc=com

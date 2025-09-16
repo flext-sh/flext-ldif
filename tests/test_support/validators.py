@@ -37,8 +37,7 @@ class TestValidators:
         # Check for required attributes based on objectClass
         if validations["has_object_class"] and entry.attributes:
             object_classes = entry.get_attribute("objectClass") or []
-            if isinstance(object_classes, str):
-                object_classes = [object_classes]
+            # object_classes is already a list from get_attribute
 
             # Basic validation for common object classes
             object_classes_list = (
@@ -79,7 +78,7 @@ class TestValidators:
         return bool(re.match(attr_pattern, attr_name))
 
     @staticmethod
-    def validate_result_success(result: FlextResult[object]) -> FlextTypes.Core.Dict:
+    def validate_result_success(result: FlextResult[T]) -> FlextTypes.Core.Dict:
         """Validate FlextResult success characteristics."""
         has_value = False
         value_type_name = None
@@ -195,11 +194,13 @@ class TestValidators:
             "all_entries_valid": True,
             "entry_validations": [],
         }
+        entry_validations_list = entries_validation["entry_validations"]
+        assert isinstance(entry_validations_list, list)
 
         # Validate each entry
         for i, entry in enumerate(entries):
             entry_validation = cls.validate_ldif_entry(entry)
-            entries_validation["entry_validations"].append(
+            entry_validations_list.append(
                 {
                     "index": i,
                     "dn": str(entry.dn) if entry.dn else None,

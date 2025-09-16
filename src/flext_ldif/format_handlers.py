@@ -18,6 +18,7 @@ from urllib.parse import urlparse
 import urllib3
 from flext_core import FlextResult, FlextTypes, FlextUtilities
 
+from flext_ldif.config import FlextLDIFConfig, get_ldif_config
 from flext_ldif.models import FlextLDIFModels
 
 
@@ -64,9 +65,16 @@ class FlextLDIFFormatHandler:
     # HTTP status codes
     HTTP_OK = 200
 
-    def __init__(self, **kwargs: object) -> None:
+    def __init__(self, config: FlextLDIFConfig | None = None) -> None:
         """Initialize LDIF format handler."""
-        self._config = kwargs.get("config", {})
+        if config is None:
+            try:
+                self._config = get_ldif_config()
+            except RuntimeError:
+                # Global config not initialized, create default one
+                self._config = FlextLDIFConfig()
+        else:
+            self._config = config
         self._name = "FlextLDIFFormatHandler"
 
     class _UrlHelper:
@@ -85,7 +93,7 @@ class FlextLDIFFormatHandler:
                 raise ValueError(msg)
 
         @staticmethod
-        def safe_url_fetch(url: str, encoding: str = "utf-8") -> str:
+        def safe_url_fetch(url: str, encoding: str) -> str:
             """Safely fetch URL content using urllib3."""
             FlextLDIFFormatHandler._UrlHelper.validate_url_scheme(url)
 
@@ -402,8 +410,10 @@ class FlextLDIFFormatHandler:
         """Validate URL scheme for security."""
         self._UrlHelper.validate_url_scheme(url)
 
-    def safe_url_fetch(self, url: str, encoding: str = "utf-8") -> str:
+    def safe_url_fetch(self, url: str, encoding: str | None = None) -> str:
         """Safely fetch URL content."""
+        if encoding is None:
+            encoding = self._config.ldif_encoding
         return self._UrlHelper.safe_url_fetch(url, encoding)
 
 
