@@ -10,11 +10,10 @@ from pathlib import Path
 from typing import Self
 
 from flext_core import FlextTypes
-
 from tests.test_support.ldif_data import LdifSample, LdifTestData
 
 
-class TestFileManager:
+class FileManager:
     """Manages test files for LDIF testing."""
 
     def __init__(self, base_dir: Path | None = None) -> None:

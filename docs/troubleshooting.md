@@ -83,7 +83,7 @@ def parse_with_encoding_detection(file_path: str) -> FlextResult[list]:
     if content_result.is_failure:
         return FlextResult[list].fail(content_result.error)
 
-    api = FlextLDIFAPI()
+    api = FlextLdifAPI()
     return api.parse_string(content_result.unwrap())
 ```
 
@@ -120,12 +120,12 @@ def process_large_file_safely(file_path: str) -> FlextResult[dict]:
         )
 
     # Configure for large files
-    config = FlextLDIFModels.Config(
+    config = FlextLdifModels.Config(
         max_entries=50000,  # Limit entries
         buffer_size=16384   # Smaller buffer
     )
 
-    api = FlextLDIFAPI(config=config)
+    api = FlextLdifAPI(config=config)
     return api.parse_file(file_path)
 
 def chunk_process_file(file_path: str, chunk_size: int = 10000) -> FlextResult[dict]:
@@ -167,7 +167,7 @@ def chunk_process_file(file_path: str, chunk_size: int = 10000) -> FlextResult[d
 def process_chunk(chunk_entries: list[str]) -> FlextResult[None]:
     """Process a chunk of LDIF entries."""
     chunk_content = '\n\n'.join(chunk_entries)
-    api = FlextLDIFAPI()
+    api = FlextLdifAPI()
     result = api.parse_string(chunk_content)
     return result.map(lambda _: None)
 ```
@@ -189,8 +189,8 @@ result = api.validate_entries(entries)
 def handle_validation_errors(entries: list) -> FlextResult[list]:
     """Handle validation errors with detailed reporting."""
     # Try with strict validation first
-    strict_config = FlextLDIFModels.Config(strict_validation=True)
-    strict_api = FlextLDIFAPI(config=strict_config)
+    strict_config = FlextLdifModels.Config(strict_validation=True)
+    strict_api = FlextLdifAPI(config=strict_config)
 
     strict_result = strict_api.validate_entries(entries)
     if strict_result.is_success:
@@ -200,11 +200,11 @@ def handle_validation_errors(entries: list) -> FlextResult[list]:
     print(f"✗ Strict validation failed: {strict_result.error}")
 
     # Try with permissive validation
-    permissive_config = FlextLDIFModels.Config(
+    permissive_config = FlextLdifModels.Config(
         strict_validation=False,
         ignore_unknown_attributes=True
     )
-    permissive_api = FlextLDIFAPI(config=permissive_config)
+    permissive_api = FlextLdifAPI(config=permissive_config)
 
     permissive_result = permissive_api.validate_entries(entries)
     if permissive_result.is_success:
@@ -258,7 +258,7 @@ def benchmark_processing(file_path: str) -> None:
     file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
     print(f"File size: {file_size_mb:.2f} MB")
 
-    api = FlextLDIFAPI()
+    api = FlextLdifAPI()
 
     # Benchmark parsing
     start_time = time.time()
@@ -287,9 +287,9 @@ def benchmark_processing(file_path: str) -> None:
 **Optimization**:
 
 ```python
-def optimize_processing_config() -> FlextLDIFModels.Config:
+def optimize_processing_config() -> FlextLdifModels.Config:
     """Create optimized configuration for performance."""
-    return FlextLDIFModels.Config(
+    return FlextLdifModels.Config(
         max_entries=None,           # No artificial limits
         strict_validation=False,    # Faster processing
         ignore_unknown_attributes=True,  # Skip unknown attributes
@@ -299,7 +299,7 @@ def optimize_processing_config() -> FlextLDIFModels.Config:
 def process_with_optimization(file_path: str) -> FlextResult[dict]:
     """Process LDIF with performance optimizations."""
     config = optimize_processing_config()
-    api = FlextLDIFAPI(config=config)
+    api = FlextLdifAPI(config=config)
 
     return (
         api.parse_file(file_path)
@@ -329,7 +329,7 @@ result = container.register("ldif_api", api)
 def debug_container_issues() -> None:
     """Debug FlextContainer registration issues."""
     from flext_core import FlextContainer
-    from flext_ldif import FlextLDIFAPI
+    from flext_ldif import FlextLdifAPI
 
     container = FlextContainer.get_global()
 
@@ -337,7 +337,7 @@ def debug_container_issues() -> None:
     print(f"Container type: {type(container)}")
 
     # Try registration with error handling
-    api = FlextLDIFAPI()
+    api = FlextLdifAPI()
     registration_result = container.register("ldif_api", api)
 
     if registration_result.is_success:
@@ -353,28 +353,28 @@ def debug_container_issues() -> None:
     else:
         print(f"✗ Registration failed: {registration_result.error}")
 
-def safe_service_registration() -> FlextResult[FlextLDIFAPI]:
+def safe_service_registration() -> FlextResult[FlextLdifAPI]:
     """Safely register LDIF service with error handling."""
     container = FlextContainer.get_global()
 
     # Create API instance
-    api = FlextLDIFAPI()
+    api = FlextLdifAPI()
 
     # Attempt registration
     registration_result = container.register("ldif_api", api)
     if registration_result.is_failure:
-        return FlextResult[FlextLDIFAPI].fail(
+        return FlextResult[FlextLdifAPI].fail(
             f"Failed to register LDIF API: {registration_result.error}"
         )
 
     # Verify registration by retrieving
     retrieval_result = container.get("ldif_api")
     if retrieval_result.is_failure:
-        return FlextResult[FlextLDIFAPI].fail(
+        return FlextResult[FlextLdifAPI].fail(
             f"Failed to retrieve LDIF API: {retrieval_result.error}"
         )
 
-    return FlextResult[FlextLDIFAPI].ok(retrieval_result.unwrap())
+    return FlextResult[FlextLdifAPI].ok(retrieval_result.unwrap())
 ```
 
 #### FlextResult Chain Errors
@@ -395,7 +395,7 @@ result = (
 ```python
 def correct_railway_chaining(file_path: str) -> FlextResult[list]:
     """Demonstrate correct FlextResult chaining."""
-    api = FlextLDIFAPI()
+    api = FlextLdifAPI()
 
     return (
         # Parse file
@@ -415,7 +415,7 @@ def correct_railway_chaining(file_path: str) -> FlextResult[list]:
 
 def debug_railway_chain(file_path: str) -> FlextResult[list]:
     """Debug railway-oriented programming chains."""
-    api = FlextLDIFAPI()
+    api = FlextLdifAPI()
 
     # Step 1: Parse
     print("Step 1: Parsing file...")
@@ -465,7 +465,7 @@ def run_health_check() -> dict:
 
     # Check imports
     try:
-        from flext_ldif import FlextLDIFAPI, FlextLDIFModels
+        from flext_ldif import FlextLdifAPI, FlextLdifModels
         from flext_core import FlextResult, FlextContainer
         results['checks']['imports'] = '✓ All imports successful'
     except ImportError as e:
@@ -475,7 +475,7 @@ def run_health_check() -> dict:
 
     # Check API initialization
     try:
-        api = FlextLDIFAPI()
+        api = FlextLdifAPI()
         results['checks']['api_init'] = '✓ API initializes successfully'
     except Exception as e:
         results['checks']['api_init'] = f'❌ API initialization failed: {e}'
@@ -542,7 +542,7 @@ def print_health_check_report() -> None:
 ### Debug Mode Configuration
 
 ```python
-def enable_debug_mode() -> FlextLDIFAPI:
+def enable_debug_mode() -> FlextLdifAPI:
     """Enable comprehensive debug mode."""
     from flext_core import FlextLogger
 
@@ -551,13 +551,13 @@ def enable_debug_mode() -> FlextLDIFAPI:
     logger.set_level('DEBUG')
 
     # Create debug configuration
-    debug_config = FlextLDIFModels.Config(
+    debug_config = FlextLdifModels.Config(
         strict_validation=True,
         ignore_unknown_attributes=False,
         log_level='DEBUG'
     )
 
-    api = FlextLDIFAPI(config=debug_config)
+    api = FlextLdifAPI(config=debug_config)
 
     print("🐛 Debug mode enabled:")
     print("  - Strict validation active")

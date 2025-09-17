@@ -29,7 +29,7 @@
 
 ## Naming Conventions
 
-- **Classes**: PascalCase (FlextLDIFAPI, FlextLDIFModels)
+- **Classes**: PascalCase (FlextLdifAPI, FlextLdifModels)
 - **Methods**: snake_case (parse_file, validate_entries)
 - **Constants**: UPPER_SNAKE_CASE (LDIF_PARSE_ERROR)
 - **Private**: Leading underscore (\_container, \_logger)

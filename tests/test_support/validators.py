@@ -11,8 +11,7 @@ from pathlib import Path
 from typing import TypeVar
 
 from flext_core import FlextResult, FlextTypes
-
-from flext_ldif import FlextLDIFModels
+from flext_ldif import FlextLdifModels
 
 T = TypeVar("T")
 
@@ -21,7 +20,7 @@ class TestValidators:
     """Validators for testing LDIF functionality."""
 
     @staticmethod
-    def validate_ldif_entry(entry: FlextLDIFModels.Entry) -> dict[str, bool]:
+    def validate_ldif_entry(entry: FlextLdifModels.Entry) -> dict[str, bool]:
         """Validate a real LDIF entry object."""
         validations = {
             "has_dn": bool(entry.dn and str(entry.dn).strip()),
@@ -178,7 +177,7 @@ class TestValidators:
 
     @classmethod
     def validate_parsing_result(
-        cls, result: FlextResult[list[FlextLDIFModels.Entry]], expected_count: int
+        cls, result: FlextResult[list[FlextLdifModels.Entry]], expected_count: int
     ) -> FlextTypes.Core.Dict:
         """Validate parsing result comprehensively."""
         base_validation = cls.validate_result_success(result)
@@ -214,7 +213,7 @@ class TestValidators:
         return {**base_validation, **entries_validation}
 
     @staticmethod
-    def assert_valid_ldif_entry(entry: FlextLDIFModels.Entry) -> None:
+    def assert_valid_ldif_entry(entry: FlextLdifModels.Entry) -> None:
         """Assert that an LDIF entry is valid (for use in tests)."""
         validation = TestValidators.validate_ldif_entry(entry)
 

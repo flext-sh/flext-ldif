@@ -10,13 +10,13 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from flext_core import FlextResult
 
+from flext_core import FlextResult
 from flext_ldif import (
-    FlextLDIFAPI,
-    FlextLDIFFormatHandler,
+    FlextLdifAPI,
+    FlextLdifFormatHandler,
 )
-from flext_ldif.services import FlextLDIFServices
+from flext_ldif.services import FlextLdifServices
 
 
 class TestCompleteWorkflows:
@@ -75,8 +75,8 @@ member: cn=John Doe,ou=people,dc=example,dc=com
 """
 
     def test_complete_api_workflow(self, complex_ldif_content: str) -> None:
-        """Test complete workflow using FlextLDIFAPI."""
-        api = FlextLDIFAPI()
+        """Test complete workflow using FlextLdifAPI."""
+        api = FlextLdifAPI()
 
         # Step 1: Parse LDIF content
         parse_result = api._operations.parse_string(complex_ldif_content)
@@ -123,12 +123,12 @@ member: cn=John Doe,ou=people,dc=example,dc=com
     ) -> None:
         """Test complete workflow using convenience functions."""
         # Step 1: Parse using convenience function (correct instance method)
-        handler = FlextLDIFFormatHandler()
+        handler = FlextLdifFormatHandler()
         entries = FlextResult.unwrap_or_raise(handler.parse_ldif(complex_ldif_content))
         assert len(entries) == 6
 
         # Step 2: Validate using services instead of core wrapper
-        validator_service = FlextLDIFServices().validator
+        validator_service = FlextLdifServices().validator
         validated_entries = FlextResult.unwrap_or_raise(
             validator_service.validate_entries(entries)
         )
@@ -141,7 +141,7 @@ member: cn=John Doe,ou=people,dc=example,dc=com
 
     def test_file_processing_workflow(self, complex_ldif_content: str) -> None:
         """Test complete file processing workflow."""
-        api = FlextLDIFAPI()
+        api = FlextLdifAPI()
 
         with tempfile.NamedTemporaryFile(
             encoding="utf-8",
@@ -185,7 +185,7 @@ member: cn=John Doe,ou=people,dc=example,dc=com
 
     def test_error_recovery_workflow(self) -> None:
         """Test error handling and recovery in workflows."""
-        api = FlextLDIFAPI()
+        api = FlextLdifAPI()
 
         # Test with invalid LDIF
         invalid_ldif = """invalid ldif
@@ -202,7 +202,7 @@ missing dns"""
 
     def test_performance_workflow(self) -> None:
         """Test workflow performance with larger dataset."""
-        api = FlextLDIFAPI()
+        api = FlextLdifAPI()
 
         # Generate larger LDIF content
         large_ldif_parts = ["dn: dc=example,dc=com\nobjectClass: domain\ndc: example\n"]

@@ -79,7 +79,7 @@ def process_ldif_file(file_path: Path) -> FlextResult[list]:
 ### LDIF Processing Pipeline
 
 ```python
-from flext_ldif import FlextLDIFAPI, FlextLDIFModels
+from flext_ldif import FlextLdifAPI, FlextLdifModels
 
 def enterprise_ldif_processing(ldif_content: str) -> FlextResult[list]:
     """Enterprise LDIF processing with proper error handling."""
@@ -88,7 +88,7 @@ def enterprise_ldif_processing(ldif_content: str) -> FlextResult[list]:
         return FlextResult[list].fail("LDIF content cannot be empty")
 
     # Use flext-ldif API exclusively - NO custom LDIF parsing
-    ldif_api = FlextLDIFAPI()
+    ldif_api = FlextLdifAPI()
 
     # Parse LDIF through flext-ldif foundation
     parse_result = ldif_api.parse_string(ldif_content)
@@ -106,7 +106,7 @@ def enterprise_ldif_processing(ldif_content: str) -> FlextResult[list]:
 ### Builder Pattern for Exceptions
 
 ```python
-from flext_ldif.exceptions import FlextLDIFExceptions
+from flext_ldif.exceptions import FlextLdifExceptions
 
 def validate_ldif_entry(entry_data: dict) -> FlextResult[None]:
     """Validate LDIF entry using Builder Pattern."""
@@ -114,7 +114,7 @@ def validate_ldif_entry(entry_data: dict) -> FlextResult[None]:
     # Check required DN field
     if "dn" not in entry_data:
         # Use Builder Pattern for complex LDIF exceptions
-        error = (FlextLDIFExceptions.builder()
+        error = (FlextLdifExceptions.builder()
                 .message("LDIF entry missing required DN field")
                 .code("LDIF_VALIDATION_ERROR")
                 .location(line=42, column=10)
@@ -129,25 +129,25 @@ def validate_ldif_entry(entry_data: dict) -> FlextResult[None]:
 ### Factory Pattern for Object Creation
 
 ```python
-from flext_ldif.models import FlextLDIFModels
+from flext_ldif.models import FlextLdifModels
 
-def create_ldif_entry(entry_data: dict) -> FlextResult[FlextLDIFModels.Entry]:
+def create_ldif_entry(entry_data: dict) -> FlextResult[FlextLdifModels.Entry]:
     """Create LDIF entry using Factory Pattern."""
 
     # Input validation
     if not entry_data or not isinstance(entry_data, dict):
-        return FlextResult[FlextLDIFModels.Entry].fail("Invalid entry data provided")
+        return FlextResult[FlextLdifModels.Entry].fail("Invalid entry data provided")
 
     # Use Factory Pattern for unified object creation
     try:
-        entry = FlextLDIFModels.Factory.create_entry(entry_data)
-        return FlextResult[FlextLDIFModels.Entry].ok(entry)
+        entry = FlextLdifModels.Factory.create_entry(entry_data)
+        return FlextResult[FlextLdifModels.Entry].ok(entry)
     except Exception as e:
-        error = FlextLDIFExceptions.validation_error(
+        error = FlextLdifExceptions.validation_error(
             f"Entry creation failed: {e}",
             entry_data=entry_data
         )
-        return FlextResult[FlextLDIFModels.Entry].fail(error.message)
+        return FlextResult[FlextLdifModels.Entry].fail(error.message)
 ```
 
 ## CLI Implementation Patterns
@@ -188,7 +188,7 @@ import click  # Direct CLI imports prohibited
 ```python
 def test_ldif_parsing_real_functionality():
     """Test real LDIF parsing functionality."""
-    api = FlextLDIFAPI()
+    api = FlextLdifAPI()
     sample_ldif = """dn: cn=test,dc=example,dc=com
 cn: test
 objectClass: person

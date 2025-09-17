@@ -6,12 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import os
 from typing import ClassVar, Final
 
 from flext_core import FlextConstants
 
 
-class FlextLDIFConstants(FlextConstants):
+class FlextLdifConstants(FlextConstants):
     """LDIF-specific constants for the flext-ldif domain."""
 
     # LDIF Format Constants
@@ -19,14 +20,30 @@ class FlextLDIFConstants(FlextConstants):
     ATTRIBUTE_SEPARATOR: Final[str] = ": "
     DN_ATTRIBUTE: Final[str] = "dn"
 
+    # DN Pattern for validation (RFC 4514 compliant, supports multi-valued RDNs with +)
+    DN_PATTERN: Final[str] = (
+        r"^([A-Za-z][A-Za-z0-9-]*|\d+(?:\.\d+)*)\s*=\s*[^,=+]+(?:\s*\+\s*([A-Za-z][A-Za-z0-9-]*|\d+(?:\.\d+)*)\s*=\s*[^,=+]+)*(?:\s*,\s*([A-Za-z][A-Za-z0-9-]*|\d+(?:\.\d+)*)\s*=\s*[^,=+]+(?:\s*\+\s*([A-Za-z][A-Za-z0-9-]*|\d+(?:\.\d+)*)\s*=\s*[^,=+]+)*)*$"
+    )
+
+    # Standard LDAP Attributes
+    OBJECTCLASS_ATTRIBUTE: Final[str] = "objectClass"
+    CN_ATTRIBUTE: Final[str] = "cn"
+    SN_ATTRIBUTE: Final[str] = "sn"
+    UID_ATTRIBUTE: Final[str] = "uid"
+    MAIL_ATTRIBUTE: Final[str] = "mail"
+    GIVENNAME_ATTRIBUTE: Final[str] = "givenName"
+    OU_ATTRIBUTE: Final[str] = "ou"
+    DC_ATTRIBUTE: Final[str] = "dc"
+    TELEPHONENUMBER_ATTRIBUTE: Final[str] = "telephoneNumber"
+    DESCRIPTION_ATTRIBUTE: Final[str] = "description"
+
     # LDIF Processing Limits
     DEFAULT_MAX_ENTRIES: Final[int] = 1000000
     DEFAULT_BUFFER_SIZE: Final[int] = 8192
     MAX_LINE_LENGTH: Final[int] = 8192
     MIN_DN_COMPONENTS: Final[int] = 1
 
-    # LDAP DN Pattern - Validates proper DN format with attribute=value pairs (Unicode support)
-    DN_PATTERN: Final[str] = r"^[a-zA-Z0-9][a-zA-Z0-9\-\.]*=[\w][\w\-\.\s=,+@]*[\w]$"
+    # Note: DN validation handled by FlextLdifModels.DistinguishedName
 
     # LDAP Object Classes
     LDAP_PERSON_CLASSES: ClassVar[set[str]] = {
@@ -62,39 +79,48 @@ class FlextLDIFConstants(FlextConstants):
         "INVALID_ATTRIBUTE_VALUE": "Invalid attribute value",
         "DUPLICATE_ATTRIBUTE": "Duplicate attribute found",
         "EMPTY_ENTRY": "Entry cannot be empty",
+        "MISSING_DN": "Missing DN",
+        "INVALID_ATTRIBUTE_NAME": "Invalid attribute name",
     }
 
     # Required Attributes for Schema Validation
     REQUIRED_PERSON_ATTRIBUTES: ClassVar[set[str]] = {"cn", "sn"}
     REQUIRED_ORGUNIT_ATTRIBUTES: ClassVar[set[str]] = {"ou"}
 
-    # Minimal LDIF-specific analytics keys (only domain-specific additions)
-    class Analytics:
-        """LDIF-specific analytics constants (minimal additions only)."""
+    # LDIF-specific analytics constants (moved from nested Analytics class)
+    # Statistics keys specific to LDIF analytics (not in flext-core)
+    ANALYTICS_TOTAL_ENTRIES_KEY: Final[str] = "total_entries"
+    ANALYTICS_ENTRIES_WITH_CN_KEY: Final[str] = "entries_with_cn"
+    ANALYTICS_ENTRIES_WITH_MAIL_KEY: Final[str] = "entries_with_mail"
+    ANALYTICS_ENTRIES_WITH_TELEPHONE_KEY: Final[str] = "entries_with_telephone"
+    ANALYTICS_PERSON_ENTRIES_KEY: Final[str] = "person_entries"
+    ANALYTICS_GROUP_ENTRIES_KEY: Final[str] = "group_entries"
+    ANALYTICS_OU_ENTRIES_KEY: Final[str] = "ou_entries"
+    ANALYTICS_OBJECTCLASS_DISTRIBUTION_KEY: Final[str] = "objectclass_distribution"
+    ANALYTICS_DN_DEPTH_DISTRIBUTION_KEY: Final[str] = "dn_depth_distribution"
 
-        # Statistics keys specific to LDIF analytics (not in flext-core)
-        TOTAL_ENTRIES_KEY = "total_entries"
-        ENTRIES_WITH_CN_KEY = "entries_with_cn"
-        ENTRIES_WITH_MAIL_KEY = "entries_with_mail"
-        ENTRIES_WITH_TELEPHONE_KEY = "entries_with_telephone"
-        PERSON_ENTRIES_KEY = "person_entries"
-        GROUP_ENTRIES_KEY = "group_entries"
-        OU_ENTRIES_KEY = "ou_entries"
-        OBJECTCLASS_DISTRIBUTION_KEY = "objectclass_distribution"
-        DN_DEPTH_DISTRIBUTION_KEY = "dn_depth_distribution"
+    # Analytics configuration limits
+    ANALYTICS_MAX_ENTRIES_LIMIT: Final[int] = 1000000  # 1M entries max
+    ANALYTICS_MAX_CACHE_SIZE: Final[int] = 10000  # 10K cache entries max
+    ANALYTICS_MIN_DN_DEPTH_FOR_BASE: Final[int] = (
+        2  # Minimum depth for base DN extraction  # Minimum depth for base DN extraction
+    )
+    # Constants moved from utilities.py for centralization
+    MIN_BASE_DN_COMPONENTS: Final[int] = 2  # Minimum components for base DN extraction
+    ENTRY_IS_COMPLETE: Final[bool] = True  # Constant for entry completeness validation
 
-        # Use flext-core attribute names as SOURCE OF TRUTH
-        CN_ATTRIBUTE = "cn"
-        MAIL_ATTRIBUTE = "mail"
-        TELEPHONE_ATTRIBUTE = "telephonenumber"
-        UID_ATTRIBUTE = "uid"
-        SN_ATTRIBUTE = "sn"
-        GIVEN_NAME_ATTRIBUTE = "givenname"
+    class FeatureFlags:
+        """Feature toggles for dispatcher integration."""
 
-        # Configuration limits
-        MAX_ENTRIES_LIMIT = 1000000  # 1M entries max
-        MAX_CACHE_SIZE = 10000  # 10K cache entries max
-        MIN_DN_DEPTH_FOR_BASE = 2  # Minimum depth for base DN extraction
+        @staticmethod
+        def _env_enabled(flag_name: str, default: str = "0") -> bool:
+            value = os.environ.get(flag_name, default)
+            return value.lower() not in {"0", "false", "no"}
+
+        @classmethod
+        def dispatcher_enabled(cls) -> bool:
+            """Return True when dispatcher path should be used."""
+            return cls._env_enabled("FLEXT_LDIF_ENABLE_DISPATCHER")
 
 
-__all__ = ["FlextLDIFConstants"]
+__all__ = ["FlextLdifConstants"]

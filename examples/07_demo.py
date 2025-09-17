@@ -11,12 +11,12 @@ import time
 from pathlib import Path
 
 from flext_core import FlextLogger
-
 from flext_ldif import (
-    FlextLDIFAPI,
-    FlextLDIFFormatHandler,
+    FlextLdifAPI,
+    FlextLdifFormatHandler,
 )
-from flext_ldif.models import FlextLDIFModels
+from flext_ldif.config import FlextLdifConfig
+from flext_ldif.models import FlextLdifModels
 
 logger = FlextLogger(__name__)
 
@@ -44,8 +44,8 @@ uid: janesmith
 
 """
 
-    # Using modern FlextLDIFAPI functionality
-    api = FlextLDIFAPI()
+    # Using modern FlextLdifAPI functionality
+    api = FlextLdifAPI()
     parse_result = api.parse(ldif_content)
 
     # Use railway programming for cleaner flow - modern FlextResult pattern
@@ -67,7 +67,7 @@ uid: janesmith
 
 
 def example_api_usage() -> None:
-    """Demonstrate using ``FlextLDIFAPI`` for advanced processing."""
+    """Demonstrate using ``FlextLdifAPI`` for advanced processing."""
     ldif_content = """dn: ou=people,dc=company,dc=com
 objectClass: organizationalUnit
 ou: people
@@ -101,13 +101,11 @@ member: cn=Alice Johnson,ou=people,dc=company,dc=com
 """
 
     # Initialize API with configuration
-    config = FlextLDIFModels.Config.model_validate(
-        {
-            "strict_validation": True,
-            "max_entries": 100,
-        },
+    config = FlextLdifConfig(
+        ldif_strict_validation=True,
+        ldif_max_entries=100,
     )
-    api = FlextLDIFAPI(config)
+    api = FlextLdifAPI(config)
 
     # Railway programming chain for parsing and filtering - modern pattern
     parse_result = api.parse(ldif_content)
@@ -176,8 +174,8 @@ mail: test.user@filetest.com
         output_path = Path(output_file.name)
 
     try:
-        # Using modern FlextLDIFAPI for file operations with railway programming
-        api = FlextLDIFAPI()
+        # Using modern FlextLdifAPI for file operations with railway programming
+        api = FlextLdifAPI()
         api.parse_file(input_path).flat_map(api.filter_persons).flat_map(
             lambda person_entries: api.write_file(person_entries, output_path)
         ).tap(lambda _: logger.info(f"Wrote filtered entries to {output_path}"))
@@ -202,7 +200,7 @@ mail: convenience@example.com
 """
 
     # Parse using convenience function
-    format_handler = FlextLDIFFormatHandler()
+    format_handler = FlextLdifFormatHandler()
     entries_result = format_handler.parse_ldif(ldif_content)
     if entries_result.is_failure:
         error_msg = f"Parse failed: {entries_result.error}"
@@ -211,7 +209,7 @@ mail: convenience@example.com
     entries = entries_result.unwrap()
 
     # Validate using API
-    api = FlextLDIFAPI()
+    api = FlextLdifAPI()
     validation_result = api.validate_entries(entries)
     if validation_result.is_failure:
         error_msg = f"Validation failed: {validation_result.error}"
@@ -226,7 +224,7 @@ mail: convenience@example.com
         return
 
     # Global API instance with railway programming
-    FlextLDIFAPI().parse(ldif_content).tap(lambda _: None)
+    FlextLdifAPI().parse(ldif_content).tap(lambda _: None)
 
 
 def example_configuration_scenarios() -> None:
@@ -241,26 +239,22 @@ sn: user{i:02d}
 
 """
 
-    strict_config = FlextLDIFModels.Config.model_validate(
-        {
-            "strict_validation": True,
-            "max_entries": 10,
-            "max_entry_size": 1024,
-        },
+    strict_config = FlextLdifConfig(
+        ldif_strict_validation=True,
+        ldif_max_entries=10,
+        ldif_max_file_size_mb=1,
     )
 
-    strict_api = FlextLDIFAPI(strict_config)
+    strict_api = FlextLdifAPI(strict_config)
     strict_api.parse(large_ldif).tap(lambda _: None)
 
-    permissive_config = FlextLDIFModels.Config.model_validate(
-        {
-            "strict_validation": False,
-            "max_entries": 100,
-            "max_entry_size": 10240,
-        },
+    permissive_config = FlextLdifConfig(
+        ldif_strict_validation=False,
+        ldif_max_entries=100,
+        ldif_max_file_size_mb=10,
     )
 
-    permissive_api = FlextLDIFAPI(permissive_config)
+    permissive_api = FlextLdifAPI(permissive_config)
     permissive_api.parse(large_ldif).tap(lambda _: None)
 
 
@@ -272,7 +266,7 @@ It has no proper structure
 And should fail parsing"""
 
     # Use railway programming for error handling
-    api = FlextLDIFAPI()
+    api = FlextLdifAPI()
     api.parse(invalid_ldif).tap_error(lambda _: None)
 
     # File not found error
@@ -284,7 +278,7 @@ And should fail parsing"""
 cn: incomplete
 # Missing objectClass"""
 
-    api = FlextLDIFAPI()
+    api = FlextLdifAPI()
     # Railway programming for validation chain
     api.parse(incomplete_ldif).flat_map(api.validate).tap_error(lambda _: None)
 
@@ -348,9 +342,9 @@ member: cn=Mary Manager,ou=people,dc=advanced,dc=com
 
 
 def _demonstrate_basic_object_class_filtering(
-    api: FlextLDIFAPI,
-    entries: list[FlextLDIFModels.Entry],
-    person_entries: list[FlextLDIFModels.Entry],
+    api: FlextLdifAPI,
+    entries: list[FlextLdifModels.Entry],
+    person_entries: list[FlextLdifModels.Entry],
 ) -> None:
     """Demonstrate basic object class filtering operations."""
     # Touch parameter to demonstrate usage in examples and satisfy linters
@@ -366,10 +360,10 @@ def _demonstrate_basic_object_class_filtering(
 
 
 def _filter_by_title_containing(
-    entries: list[FlextLDIFModels.Entry], keyword: str
-) -> list[FlextLDIFModels.Entry]:
+    entries: list[FlextLdifModels.Entry], keyword: str
+) -> list[FlextLdifModels.Entry]:
     """Custom filter for entries with title containing keyword."""
-    result: list[FlextLDIFModels.Entry] = []
+    result: list[FlextLdifModels.Entry] = []
     for entry in entries:
         title_attr = entry.get_attribute("title")
         if title_attr and any(keyword.lower() in title.lower() for title in title_attr):
@@ -378,14 +372,14 @@ def _filter_by_title_containing(
 
 
 def _demonstrate_custom_title_filtering(
-    person_entries: list[FlextLDIFModels.Entry],
+    person_entries: list[FlextLdifModels.Entry],
 ) -> None:
     """Demonstrate custom filtering by title keywords."""
     _filter_by_title_containing(person_entries, "engineer")
     _filter_by_title_containing(person_entries, "manager")
 
 
-def _determine_entry_type(entry: FlextLDIFModels.Entry) -> str:
+def _determine_entry_type(entry: FlextLdifModels.Entry) -> str:
     """Determine the type of an LDAP entry based on object classes."""
     has_object_class = entry.has_object_class
     if has_object_class("domain"):
@@ -400,15 +394,16 @@ def _determine_entry_type(entry: FlextLDIFModels.Entry) -> str:
 
 
 def _demonstrate_hierarchical_analysis(
-    api: FlextLDIFAPI,
-    entries: list[FlextLDIFModels.Entry],
+    api: FlextLdifAPI,
+    entries: list[FlextLdifModels.Entry],
 ) -> None:
     """Demonstrate hierarchical analysis and entry categorization."""
 
-    def print_hierarchy(sorted_entries: list[FlextLDIFModels.Entry]) -> None:
+    def print_hierarchy(sorted_entries: list[FlextLdifModels.Entry]) -> None:
         for entry in sorted_entries:
-            "   " + "  " * str(entry.dn).count(",")
-            _determine_entry_type(entry)
+            indent = "   " + "  " * str(entry.dn).count(",")
+            entry_type = _determine_entry_type(entry)
+            print(f"{indent}{entry_type}: {entry.dn}")
 
     api.sort_hierarchically(entries).tap(print_hierarchy)
 
@@ -417,11 +412,11 @@ def example_advanced_filtering() -> None:
     """Demonstrate advanced filtering and processing."""
     complex_ldif = _parse_sample_ldif_data()
 
-    api = FlextLDIFAPI()
+    api = FlextLdifAPI()
     parse_result = api.parse(complex_ldif)
 
     # Use railway programming with chaining
-    def demonstrate_all_filtering(entries: list[FlextLDIFModels.Entry]) -> None:
+    def demonstrate_all_filtering(entries: list[FlextLdifModels.Entry]) -> None:
         person_filter_result = api.filter_persons(entries)
         person_entries = person_filter_result.unwrap_or([])
         _demonstrate_basic_object_class_filtering(api, entries, person_entries)
@@ -455,19 +450,22 @@ description: Test user {i:03d} for performance monitoring
 
     # Measure parsing performance with railway programming
     start_time = time.time()
-    api = FlextLDIFAPI()
+    api = FlextLdifAPI()
 
-    def measure_performance(entries: list[FlextLDIFModels.Entry]) -> None:
-        time.time() - start_time
+    def measure_performance(entries: list[FlextLdifModels.Entry]) -> None:
+        parse_time = time.time() - start_time
+        print(f"Parsing took {parse_time:.3f} seconds")
 
         filter_start = time.time()
         person_filter_result = api.filter_persons(entries)
         person_entries = person_filter_result.unwrap_or([])
-        time.time() - filter_start
+        filter_time = time.time() - filter_start
+        print(f"Filtering took {filter_time:.3f} seconds")
 
         write_start = time.time()
         api.write(person_entries)
-        time.time() - write_start
+        write_time = time.time() - write_start
+        print(f"Writing took {write_time:.3f} seconds")
 
     api.parse(large_ldif).tap(measure_performance)
 

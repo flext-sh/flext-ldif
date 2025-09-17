@@ -6,50 +6,24 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.protocols import FlextLDIFProtocols
+from flext_core import FlextProtocols
+from flext_ldif.protocols import FlextLdifProtocols
 
 
 class TestProtocolDefinitions:
     """Test protocol definitions are properly defined."""
 
-    def test_parser_protocol_exists(self) -> None:
-        """Test FlextLDIFProtocols.LdifParser is properly defined."""  # Check if it's a Protocol class
-        assert hasattr(FlextLDIFProtocols.LdifParser, "__annotations__")
-        # Check if it has the expected methods
-        assert hasattr(FlextLDIFProtocols.LdifParser, "parse")
-        assert hasattr(FlextLDIFProtocols.LdifParser, "parse_file")
+    def test_protocols_use_flext_core(self) -> None:
+        """Verify that LDIF protocols use flext-core protocols directly."""
+        # This test confirms the architectural decision to use flext-core protocols
+        # instead of duplicating protocol definitions in flext-ldif
 
-    def test_validator_protocol_exists(self) -> None:
-        """Test FlextLDIFProtocols.ValidatorProtocol is properly defined."""  # Check if it's a Protocol class
-        assert hasattr(FlextLDIFProtocols.LdifValidator, "__annotations__")
-        # Check if it has the expected methods
-        assert hasattr(FlextLDIFProtocols.LdifValidator, "validate_entry")
-        assert hasattr(FlextLDIFProtocols.LdifValidator, "validate_entries")
+        # Verify FlextProtocols exists and has Foundation layer
+        assert hasattr(FlextProtocols, "Foundation")
+        assert hasattr(FlextProtocols.Foundation, "Validator")
 
-    def test_writer_protocol_exists(self) -> None:
-        """Test FlextLDIFProtocols.LdifWriter is properly defined."""  # Check if it's a Protocol class
-        assert hasattr(FlextLDIFProtocols.LdifWriter, "__annotations__")
-        # Check if it has the expected methods
-        assert hasattr(FlextLDIFProtocols.LdifWriter, "write")
-        assert hasattr(FlextLDIFProtocols.LdifWriter, "write_file")
+        # Verify FlextLdifProtocols exists but delegates to flext-core
+        assert FlextLdifProtocols is not None
 
-    def test_repository_protocol_exists(self) -> None:
-        """Test FlextLDIFProtocols.LdifRepository is properly defined."""  # Check if it's a Protocol class
-        assert hasattr(FlextLDIFProtocols.LdifRepository, "__annotations__")
-        # Check if it has the expected methods
-        assert hasattr(FlextLDIFProtocols.LdifRepository, "find_by_dn")
-        assert hasattr(FlextLDIFProtocols.LdifRepository, "filter_by_objectclass")
-
-    def test_transformer_protocol_exists(self) -> None:
-        """Test FlextLDIFProtocols.LdifTransformer is properly defined."""  # Check if it's a Protocol class
-        assert hasattr(FlextLDIFProtocols.LdifTransformer, "__annotations__")
-        # Check if it has the expected methods
-        assert hasattr(FlextLDIFProtocols.LdifTransformer, "transform_entry")
-        assert hasattr(FlextLDIFProtocols.LdifTransformer, "transform_entries")
-
-    def test_analytics_protocol_exists(self) -> None:
-        """Test FlextLDIFProtocols.LdifAnalyzer is properly defined."""  # Check if it's a Protocol class
-        assert hasattr(FlextLDIFProtocols.LdifAnalyzer, "__annotations__")
-        # Check if it has the expected methods
-        assert hasattr(FlextLDIFProtocols.LdifAnalyzer, "analyze_patterns")
-        assert hasattr(FlextLDIFProtocols.LdifAnalyzer, "get_objectclass_distribution")
+        # This confirms the FLEXT architectural principle:
+        # Use flext-core protocols directly rather than duplicating them

@@ -29,7 +29,7 @@ The library integrates deeply with FLEXT ecosystem patterns:
 ```mermaid
 graph TB
     subgraph "Application Layer"
-        API[FlextLDIFAPI<br/>Unified Interface]
+        API[FlextLdifAPI<br/>Unified Interface]
     end
 
     subgraph "Service Layer"
@@ -41,7 +41,7 @@ graph TB
     end
 
     subgraph "Domain Layer"
-        Models[FlextLDIFModels<br/>Domain Entities]
+        Models[FlextLdifModels<br/>Domain Entities]
         Entry[Entry Model]
         DN[Distinguished Name]
         Config[Configuration]
@@ -80,18 +80,18 @@ graph TB
 
 ## Core Components
 
-### FlextLDIFAPI - Application Service
+### FlextLdifAPI - Application Service
 
 The main entry point providing a unified interface to all LDIF operations:
 
 ```python
-class FlextLDIFAPI:
+class FlextLdifAPI:
     """Unified LDIF Processing API with nested operation handlers."""
 
-    def __init__(self, config: FlextLDIFModels.Config | None = None) -> None:
+    def __init__(self, config: FlextLdifModels.Config | None = None) -> None:
         self._logger = FlextLogger(__name__)
         self._container = FlextContainer.get_global()
-        self._config = config or FlextLDIFModels.Config()
+        self._config = config or FlextLdifModels.Config()
 
         # Nested operation handlers
         self._operations = self.Operations(self)
@@ -113,10 +113,10 @@ class FlextLDIFAPI:
 Handles RFC 2849 compliant LDIF parsing:
 
 ```python
-class FlextLDIFParserService:
+class FlextLdifParserService:
     """RFC 2849 compliant LDIF parser."""
 
-    def parse_string(self, content: str) -> FlextResult[list[FlextLDIFModels.Entry]]:
+    def parse_string(self, content: str) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Parse LDIF string content into structured entries."""
         # Implementation uses ldif3 library internally
         # Returns FlextResult for composable error handling
@@ -134,10 +134,10 @@ class FlextLDIFParserService:
 Provides comprehensive LDIF entry validation:
 
 ```python
-class FlextLDIFValidatorService:
+class FlextLdifValidatorService:
     """LDIF entry validation service."""
 
-    def validate_entries(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult[bool]:
+    def validate_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[bool]:
         """Validate LDIF entries against business rules."""
         # Validates DN structure, attribute formats, object classes
         # Configurable validation rules
@@ -155,10 +155,10 @@ class FlextLDIFValidatorService:
 Generates RFC 2849 compliant LDIF output:
 
 ```python
-class FlextLDIFWriterService:
+class FlextLdifWriterService:
     """LDIF writer service for generating compliant output."""
 
-    def write_entries(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult[str]:
+    def write_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
         """Generate LDIF string from structured entries."""
         # Handles line folding, base64 encoding when necessary
         # Ensures RFC 2849 compliance
@@ -178,7 +178,7 @@ class FlextLDIFWriterService:
 ```mermaid
 sequenceDiagram
     participant Client
-    participant API as FlextLDIFAPI
+    participant API as FlextLdifAPI
     participant Parser as ParserService
     participant Validator as ValidatorService
     participant Repository as RepositoryService
@@ -214,7 +214,7 @@ All operations use FlextResult for composable error handling:
 ```python
 def process_ldif_pipeline(file_path: Path) -> FlextResult[dict]:
     """Complete LDIF processing pipeline using railway patterns."""
-    api = FlextLDIFAPI()
+    api = FlextLdifAPI()
 
     return (
         # Parse the LDIF file
@@ -240,12 +240,12 @@ def process_ldif_pipeline(file_path: Path) -> FlextResult[dict]:
 
 ## Domain Model Architecture
 
-### FlextLDIFModels - Domain Entities
+### FlextLdifModels - Domain Entities
 
 Centralized domain models following DDD patterns:
 
 ```python
-class FlextLDIFModels:
+class FlextLdifModels:
     """Consolidated LDIF domain models."""
 
     class Entry(BaseModel):
@@ -273,7 +273,7 @@ class FlextLDIFModels:
         @staticmethod
         def create_entry(dn: str, attributes: dict[str, list[str]]) -> Entry:
             """Create LDIF entry with validation."""
-            return FlextLDIFModels.Entry(dn=dn, attributes=attributes)
+            return FlextLdifModels.Entry(dn=dn, attributes=attributes)
 ```
 
 ### Type Safety Implementation
@@ -283,7 +283,7 @@ Complete type annotations using Python 3.13+ features:
 ```python
 # Type aliases for Python 3.13+ generic syntax
 if TYPE_CHECKING:
-    type FlextResultEntries = FlextResult[list[FlextLDIFModels.Entry]]
+    type FlextResultEntries = FlextResult[list[FlextLdifModels.Entry]]
     type FlextResultStr = FlextResult[str]
     type FlextResultBool = FlextResult[bool]
 else:
@@ -298,8 +298,8 @@ else:
 
 Configuration follows a hierarchical pattern:
 
-1. **Default Configuration**: Built-in defaults in FlextLDIFModels.Config
-2. **Global Configuration**: Managed through FlextLDIFConfig
+1. **Default Configuration**: Built-in defaults in FlextLdifModels.Config
+2. **Global Configuration**: Managed through FlextLdifConfig
 3. **Instance Configuration**: Per-API instance configuration
 4. **Operation Configuration**: Per-operation overrides
 
@@ -315,12 +315,12 @@ initialize_ldif_config({
 })
 
 # Instance configuration
-config = FlextLDIFModels.Config(
+config = FlextLdifModels.Config(
     max_entries=10000,  # Override global setting
     encoding='utf-8'
 )
 
-api = FlextLDIFAPI(config=config)
+api = FlextLdifAPI(config=config)
 ```
 
 ## Current Implementation Status
@@ -330,7 +330,7 @@ api = FlextLDIFAPI(config=config)
 **✅ Core Architecture**:
 
 - Service-oriented design with clear separation
-- FlextLDIFAPI unified interface with nested handlers
+- FlextLdifAPI unified interface with nested handlers
 - Complete FlextResult integration
 - Dependency injection through FlextContainer
 
@@ -410,7 +410,7 @@ Each service is tested independently with clear boundaries:
 ```python
 def test_parser_service_rfc_compliance():
     """Test RFC 2849 compliance in parser service."""
-    parser = FlextLDIFParserService()
+    parser = FlextLdifParserService()
 
     # Test various RFC 2849 scenarios
     result = parser.parse_string(sample_ldif)
@@ -428,7 +428,7 @@ Tests complete workflows through the unified API:
 ```python
 def test_complete_ldif_workflow():
     """Test end-to-end LDIF processing workflow."""
-    api = FlextLDIFAPI()
+    api = FlextLdifAPI()
 
     # Test complete pipeline with real LDIF data
     result = (

@@ -6,25 +6,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import flext_ldif
 from flext_ldif import (
-    FlextLDIFAPI,
-    FlextLDIFFormatHandler,
-    FlextLDIFFormatValidators,
-    FlextLDIFModels,
-    FlextLDIFServices,
-    FlextLDIFUtilities,
+    FlextLdifAPI,
+    FlextLdifFormatHandler,
+    FlextLdifModels,
+    FlextLdifServices,
+    FlextLdifUtilities,
     __version__,
 )
-from flext_ldif.cli import FlextLDIFCli, main
 
+# CLI components removed - library should not include CLI
 # LdifDomainProcessors was removed as it was not implemented
-
-# CLI availability flag for testing
-CLI_AVAILABLE = False
-try:
-    CLI_AVAILABLE = True
-except ImportError:
-    pass
 
 
 class TestModuleImports:
@@ -32,17 +25,16 @@ class TestModuleImports:
 
     def test_main_imports(self) -> None:
         """Test main module imports work correctly."""
-        assert FlextLDIFAPI is not None
-        assert FlextLDIFModels.Config is not None
-        assert FlextLDIFModels.Entry is not None
-        assert FlextLDIFModels.DistinguishedName is not None
-        assert FlextLDIFModels.LdifAttributes is not None
-        assert FlextLDIFModels.Factory is not None
+        assert FlextLdifAPI is not None
+        assert FlextLdifModels.Entry is not None
+        assert FlextLdifModels.DistinguishedName is not None
+        assert FlextLdifModels.LdifAttributes is not None
+        # Factory methods are now available directly on FlextLdifModels class
 
     def test_service_imports(self) -> None:
         """Test service imports work correctly."""
-        # Test service classes are accessible through FlextLDIFServices attributes
-        services = FlextLDIFServices()
+        # Test service classes are accessible through FlextLdifServices attributes
+        services = FlextLdifServices()
         assert services.parser is not None
         assert services.validator is not None
         assert services.writer is not None
@@ -52,29 +44,16 @@ class TestModuleImports:
 
     def test_class_based_interface_imports(self) -> None:
         """Test class-based interface imports."""
-        # FlextLDIFCore eliminated - was wrapper violating SOLID
-        assert FlextLDIFServices is not None
-        assert FlextLDIFFormatHandler is not None
-        assert FlextLDIFFormatValidators is not None
-        assert FlextLDIFUtilities is not None
+        # FlextLdifCore eliminated - was wrapper violating SOLID
+        assert FlextLdifServices is not None
+        assert FlextLdifFormatHandler is not None
+        assert FlextLdifUtilities is not None
 
-    def test_cli_import(self) -> None:
-        """Test CLI import functionality."""
-        # Test that CLI import works and function is callable
-        if CLI_AVAILABLE:
-            # Test CLI class instantiation
-            cli = FlextLDIFCli()
-            assert cli is not None
-
-            # Test CLI interface creation
-            cli_result = cli.create_cli_interface()
-            assert cli_result.is_success
-
-            # Test main function is callable
-            assert callable(main)
-        else:
-            # If import fails, it means dependencies are missing, which is acceptable in test environment
-            pass
+    def test_library_has_no_cli(self) -> None:
+        """Test that library correctly excludes CLI components."""
+        # Libraries should not include CLI - this ensures clean separation
+        assert not hasattr(flext_ldif, "main")
+        assert "main" not in flext_ldif.__all__
 
     def test_version_import(self) -> None:
         """Test version information import."""
@@ -85,12 +64,12 @@ class TestModuleImports:
     def test_public_api_functionality(self) -> None:
         """Test that public API functions work correctly."""
         # Test that API creation works
-        api = FlextLDIFAPI()  # Use direct constructor instead
+        api = FlextLdifAPI()  # Use direct constructor instead
         assert api is not None
-        assert isinstance(api, FlextLDIFAPI)
+        assert isinstance(api, FlextLdifAPI)
 
         # Test that class methods exist and are callable
-        assert callable(FlextLDIFFormatHandler.parse_ldif)
-        assert callable(FlextLDIFFormatHandler.write_ldif)
-        assert callable(FlextLDIFFormatValidators.get_ldap_validators)
+        assert callable(FlextLdifFormatHandler.parse_ldif)
+        assert callable(FlextLdifFormatHandler.write_ldif)
+        # FlextLdifFormatValidators removed - validation now in FlextLdifModels
         # LdifDomainProcessors was removed as it was not implemented

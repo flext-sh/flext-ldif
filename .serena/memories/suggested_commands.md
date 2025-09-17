@@ -54,7 +54,7 @@ make ldif-operations         # Run all LDIF validations
 
 # CLI testing
 poetry run flext-ldif --help
-PYTHONPATH=src poetry run python -c "from flext_ldif.cli import FlextLDIFCli; cli = FlextLDIFCli(); print('CLI ready')"
+PYTHONPATH=src poetry run python -c "from flext_ldif.cli import FlextLdifCli; cli = FlextLdifCli(); print('CLI ready')"
 ```
 
 ### Build & Distribution

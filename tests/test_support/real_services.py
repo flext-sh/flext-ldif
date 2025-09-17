@@ -7,71 +7,75 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextTypes
-
 from flext_ldif import (
-    FlextLDIFAPI,
-    FlextLDIFServices,
+    FlextLdifAPI,
+    FlextLdifServices,
 )
-from flext_ldif.config import FlextLDIFConfig
-from flext_ldif.parser_service import FlextLDIFParserService
-from flext_ldif.validator_service import FlextLDIFValidatorService
-from flext_ldif.writer_service import FlextLDIFWriterService
+from flext_ldif.config import FlextLdifConfig
+from flext_ldif.parser_service import FlextLdifParserService
+from flext_ldif.validator_service import FlextLdifValidatorService
+from flext_ldif.writer_service import FlextLdifWriterService
 
 
 class RealServiceFactory:
     """Factory for creating real service instances for testing."""
 
     @staticmethod
-    def create_api(config: FlextTypes.Core.Dict | None = None) -> FlextLDIFAPI:
+    def create_api(config: FlextTypes.Core.Dict | None = None) -> FlextLdifAPI:
         """Create a real LDIF API instance."""
         if config is None:
             config = {}
 
-        # Create proper config object
-        ldif_config = FlextLDIFConfig(
-            ldif_encoding=config.get("encoding", "utf-8"),
-            ldif_strict_validation=config.get("strict_parsing", True),
-            ldif_validate_dn_format=config.get("validate_dn", True),
-            ldif_max_entries=config.get("max_entries", 10000),
-            ldif_max_line_length=config.get("max_line_length", 76),
+        # Create proper config object with type casts
+        max_entries = config.get("max_entries")
+        max_line_length = config.get("max_line_length")
+
+        ldif_config = FlextLdifConfig(
+            ldif_encoding=str(config.get("encoding", "utf-8")),
+            ldif_strict_validation=bool(config.get("strict_parsing", True)),
+            ldif_validate_dn_format=bool(config.get("validate_dn", True)),
+            ldif_max_entries=max_entries if isinstance(max_entries, int) else 10000,
+            ldif_max_line_length=max_line_length
+            if isinstance(max_line_length, int)
+            else 76,
         )
 
-        return FlextLDIFAPI(config=ldif_config)
+        return FlextLdifAPI(config=ldif_config)
 
     @staticmethod
     def create_parser(
         config: FlextTypes.Core.Dict | None = None,
-    ) -> FlextLDIFParserService:
+    ) -> FlextLdifParserService:
         """Create a real parser service."""
         if config is None:
             config = {}
 
         # Use default configuration or create from provided values
         # Configuration is handled internally by the service
-        return FlextLDIFParserService()
+        return FlextLdifParserService()
 
     @staticmethod
     def create_validator(
         config: FlextTypes.Core.Dict | None = None,
-    ) -> FlextLDIFValidatorService:
+    ) -> FlextLdifValidatorService:
         """Create a real validator service."""
         if config is None:
             config = {}
 
         # Create validator with proper configuration
         # Configuration is handled internally by the service
-        return FlextLDIFValidatorService()
+        return FlextLdifValidatorService()
 
     @staticmethod
     def create_writer(
         config: FlextTypes.Core.Dict | None = None,
-    ) -> FlextLDIFWriterService:
+    ) -> FlextLdifWriterService:
         """Create a real writer service."""
         if config is None:
             config = {}
 
         # Configuration is handled internally by the service
-        return FlextLDIFWriterService()
+        return FlextLdifWriterService()
 
     @classmethod
     def create_configured_api(
@@ -82,7 +86,7 @@ class RealServiceFactory:
         max_entries: int = 10000,
         encoding: str = "utf-8",
         max_line_length: int = 76,
-    ) -> FlextLDIFAPI:
+    ) -> FlextLdifAPI:
         """Create API with specific configuration."""
         config = {
             "strict_parsing": strict_parsing,
@@ -94,7 +98,7 @@ class RealServiceFactory:
         return cls.create_api(config)
 
     @classmethod
-    def create_lenient_api(cls) -> FlextLDIFAPI:
+    def create_lenient_api(cls) -> FlextLdifAPI:
         """Create API with lenient parsing for error testing."""
         return cls.create_configured_api(
             strict_parsing=False,
@@ -102,7 +106,7 @@ class RealServiceFactory:
         )
 
     @classmethod
-    def create_strict_api(cls) -> FlextLDIFAPI:
+    def create_strict_api(cls) -> FlextLdifAPI:
         """Create API with strict parsing and validation."""
         return cls.create_configured_api(
             strict_parsing=True,
@@ -110,7 +114,7 @@ class RealServiceFactory:
         )
 
     @classmethod
-    def create_performance_api(cls, max_entries: int = 100000) -> FlextLDIFAPI:
+    def create_performance_api(cls, max_entries: int = 100000) -> FlextLdifAPI:
         """Create API optimized for performance testing."""
         return cls.create_configured_api(
             max_entries=max_entries,
@@ -125,10 +129,10 @@ class RealServiceFactory:
         validate_dn: bool = True,
         max_entries: int = 10000,
         max_line_length: int = 76,
-    ) -> FlextLDIFConfig:
+    ) -> FlextLdifConfig:
         """Create a test configuration object."""
-        # Map old parameter names to new FlextLDIFConfig parameter names
-        return FlextLDIFConfig(
+        # Map old parameter names to new FlextLdifConfig parameter names
+        return FlextLdifConfig(
             ldif_encoding=encoding,
             ldif_strict_validation=strict_parsing,
             ldif_validate_dn_format=validate_dn,
@@ -141,9 +145,9 @@ class RealServiceFactory:
         """Create all services configured for integration testing."""
         config = cls.create_test_config()
 
-        services = FlextLDIFServices(config=config)
+        services = FlextLdifServices(config=config)
         return {
-            "api": FlextLDIFAPI(config=config),
+            "api": FlextLdifAPI(config=config),
             "parser": services.parser,
             "validator": services.validator,
             "writer": services.writer,

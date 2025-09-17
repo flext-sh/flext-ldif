@@ -11,22 +11,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import FlextLogger, FlextResult, FlextUtilities
+from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import FlextLdifModels
 
-from flext_ldif.models import FlextLDIFModels
-
-# Constants to avoid magic numbers and booleans
-MIN_BASE_DN_COMPONENTS = 2
-ENTRY_IS_COMPLETE = True
+# Direct flext-core usage without aliases
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-# Type aliases for test compatibility
-AttributeDict = dict[str, list[str]]
-LDIFAttributeDict = dict[str, list[str]]
 
-
-class FlextLDIFUtilities:
+class FlextLdifUtilities:
     """LDIF-specific utilities extending flext-core FlextUtilities.
 
     Provides LDIF domain-specific utility functions while leveraging
@@ -44,7 +38,7 @@ class FlextLDIFUtilities:
         return self._core_utilities
 
     def validate_ldif_file_extension(self, file_path: str | Path) -> FlextResult[bool]:
-        """Validate if file has proper LDIF extension.
+        """Validate if file has proper LDIF extension using centralized FlextModels.
 
         Args:
             file_path: Path to validate
@@ -54,17 +48,13 @@ class FlextLDIFUtilities:
 
         """
         try:
-            # Use flext-core file utilities
-            path_str = str(file_path)
-            valid_extensions = [".ldif", ".ldap", ".ldi"]
-
-            has_valid_extension = any(
-                path_str.lower().endswith(ext) for ext in valid_extensions
-            )
-
-            return FlextResult[bool].ok(has_valid_extension)
-        except Exception as e:
-            return FlextResult[bool].fail(f"Extension validation failed: {e}")
+            # Use centralized FlextLdifModels.LdifFilePath for validation
+            FlextLdifModels.LdifFilePath(path=str(file_path))
+            # If validation passes, file has valid extension
+            return FlextResult[bool].ok(data=True)
+        except Exception:
+            # If validation fails, file doesn't have valid extension or other error
+            return FlextResult[bool].ok(data=False)
 
     def normalize_dn_format(self, dn: str) -> FlextResult[str]:
         """Normalize DN format according to LDAP standards.
@@ -77,10 +67,7 @@ class FlextLDIFUtilities:
 
         """
         try:
-            if not dn or not isinstance(dn, str) or not dn.strip():
-                return FlextResult[str].fail("DN must be a non-empty string")
-
-            # Basic DN normalization
+            # First normalize the DN format
             # Remove extra spaces, normalize case for RDN types
             components = []
             for raw_component in dn.split(","):
@@ -94,6 +81,15 @@ class FlextLDIFUtilities:
                     components.append(component)
 
             normalized_dn = ",".join(components)
+
+            # Then validate the normalized DN using domain model
+            dn_model = FlextLdifModels.DistinguishedName(value=normalized_dn)
+            validation_result = dn_model.validate_business_rules()
+            if validation_result.is_failure:
+                return FlextResult[str].fail(
+                    validation_result.error or "Invalid DN format"
+                )
+
             return FlextResult[str].ok(normalized_dn)
         except Exception as e:
             return FlextResult[str].fail(f"DN normalization failed: {e}")
@@ -109,12 +105,17 @@ class FlextLDIFUtilities:
 
         """
         try:
-            if not dn:
-                return FlextResult[str].fail("DN cannot be empty")
+            # Use existing FlextLdifModels.DistinguishedName validation
+            dn_model = FlextLdifModels.DistinguishedName(value=dn)
+            validation_result = dn_model.validate_business_rules()
+            if validation_result.is_failure:
+                return FlextResult[str].fail(
+                    validation_result.error or "Invalid DN format"
+                )
 
             # Split by comma and take the last two components as base DN
             components = [comp.strip() for comp in dn.split(",")]
-            if len(components) >= MIN_BASE_DN_COMPONENTS:
+            if len(components) >= FlextLdifConstants.MIN_BASE_DN_COMPONENTS:
                 base_dn = ",".join(components[-2:])
                 return FlextResult[str].ok(base_dn)
 
@@ -124,9 +125,9 @@ class FlextLDIFUtilities:
             return FlextResult[str].fail(f"Base DN extraction failed: {e}")
 
     def validate_ldif_entry_completeness(
-        self, entry: FlextLDIFModels.Entry
+        self, entry: FlextLdifModels.Entry
     ) -> FlextResult[bool]:
-        """Validate if LDIF entry has all required components.
+        """Validate if LDIF entry has all required components using FlextModels.
 
         Args:
             entry: LDIF entry to validate
@@ -136,25 +137,19 @@ class FlextLDIFUtilities:
 
         """
         try:
-            # Check for required DN
-            if not entry.dn or not entry.dn.value:
-                return FlextResult[bool].fail("Entry missing required DN")
+            # Use centralized FlextLdifModels.Entry validation directly
+            validation_result = entry.validate_business_rules()
+            if validation_result.is_failure:
+                return FlextResult[bool].fail(
+                    validation_result.error or "Entry validation failed"
+                )
 
-            # Check for attributes
-            if not entry.attributes:
-                return FlextResult[bool].fail("Entry missing attributes")
-
-            # Check for objectClass
-            object_classes = entry.get_attribute("objectClass")
-            if not object_classes:
-                return FlextResult[bool].fail("Entry missing objectClass attribute")
-
-            return FlextResult[bool].ok(ENTRY_IS_COMPLETE)
+            return FlextResult[bool].ok(FlextLdifConstants.ENTRY_IS_COMPLETE)
         except Exception as e:
             return FlextResult[bool].fail(f"Entry completeness validation failed: {e}")
 
     def convert_entry_to_dict(
-        self, entry: FlextLDIFModels.Entry
+        self, entry: FlextLdifModels.Entry
     ) -> FlextResult[dict[str, object]]:
         """Convert LDIF entry to dictionary format.
 
@@ -175,7 +170,7 @@ class FlextLDIFUtilities:
         except Exception as e:
             return FlextResult[dict[str, object]].fail(f"Entry conversion failed: {e}")
 
-    def calculate_entry_size(self, entry: FlextLDIFModels.Entry) -> FlextResult[int]:
+    def calculate_entry_size(self, entry: FlextLdifModels.Entry) -> FlextResult[int]:
         """Calculate approximate size of LDIF entry in bytes.
 
         Args:
@@ -204,8 +199,8 @@ class FlextLDIFUtilities:
             return FlextResult[int].fail(f"Entry size calculation failed: {e}")
 
     def merge_ldif_entries(
-        self, entry1: FlextLDIFModels.Entry, entry2: FlextLDIFModels.Entry
-    ) -> FlextResult[FlextLDIFModels.Entry]:
+        self, entry1: FlextLdifModels.Entry, entry2: FlextLdifModels.Entry
+    ) -> FlextResult[FlextLdifModels.Entry]:
         """Merge two LDIF entries with same DN.
 
         Args:
@@ -218,7 +213,7 @@ class FlextLDIFUtilities:
         """
         try:
             if entry1.dn.value != entry2.dn.value:
-                return FlextResult[FlextLDIFModels.Entry].fail(
+                return FlextResult[FlextLdifModels.Entry].fail(
                     "Cannot merge entries with different DNs"
                 )
 
@@ -242,16 +237,16 @@ class FlextLDIFUtilities:
                         # Add new attribute
                         merged_attributes[attr_name] = attr_values
 
-            # Create merged entry
+            # Create merged entry using new factory method
             merged_entry_data: dict[str, object] = {
                 "dn": entry1.dn.value,
                 "attributes": merged_attributes,
             }
 
-            merged_entry = FlextLDIFModels.Factory.create_entry(merged_entry_data)
-            return FlextResult[FlextLDIFModels.Entry].ok(merged_entry)
+            merged_entry = FlextLdifModels.create_entry(merged_entry_data)
+            return FlextResult[FlextLdifModels.Entry].ok(merged_entry)
         except Exception as e:
-            return FlextResult[FlextLDIFModels.Entry].fail(f"Entry merge failed: {e}")
+            return FlextResult[FlextLdifModels.Entry].fail(f"Entry merge failed: {e}")
 
     def get_utility_info(self) -> dict[str, object]:
         """Get LDIF utilities information.
@@ -261,7 +256,7 @@ class FlextLDIFUtilities:
 
         """
         return {
-            "service": "FlextLDIFUtilities",
+            "service": "FlextLdifUtilities",
             "capabilities": [
                 "ldif_file_validation",
                 "dn_normalization",
@@ -273,4 +268,4 @@ class FlextLDIFUtilities:
         }
 
 
-__all__ = ["FlextLDIFUtilities"]
+__all__ = ["FlextLdifUtilities"]

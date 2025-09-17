@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import os
 import tempfile
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Collection, Generator
 from pathlib import Path
 from typing import ClassVar
 
 import pytest
-from flext_core import FlextResult, FlextTypes
 from flext_tests import (
     FlextTestsBuilders,
     FlextTestsDomains,
@@ -18,15 +17,16 @@ from flext_tests import (
     FlextTestsUtilities,
 )
 
+from flext_core import FlextResult, FlextTypes
 from flext_ldif import (
-    FlextLDIFAPI,
+    FlextLdifAPI,
 )
-from flext_ldif.parser_service import FlextLDIFParserService
-from flext_ldif.writer_service import FlextLDIFWriterService
+from flext_ldif.parser_service import FlextLdifParserService
+from flext_ldif.writer_service import FlextLdifWriterService
 from tests.test_support import (
+    FileManager,
     LdifTestData,
     RealServiceFactory,
-    TestFileManager,
     TestValidators,
 )
 
@@ -68,19 +68,19 @@ def ldif_processor_config() -> FlextTypes.Core.Dict:
 
 
 @pytest.fixture
-def real_ldif_api() -> FlextLDIFAPI:
+def real_ldif_api() -> FlextLdifAPI:
     """Real LDIF API instance for functional testing."""
     return RealServiceFactory.create_api()
 
 
 @pytest.fixture
-def strict_ldif_api() -> FlextLDIFAPI:
+def strict_ldif_api() -> FlextLdifAPI:
     """Strict LDIF API for validation testing."""
     return RealServiceFactory.create_strict_api()
 
 
 @pytest.fixture
-def lenient_ldif_api() -> FlextLDIFAPI:
+def lenient_ldif_api() -> FlextLdifAPI:
     """Lenient LDIF API for error recovery testing."""
     return RealServiceFactory.create_lenient_api()
 
@@ -92,9 +92,9 @@ def ldif_test_data() -> LdifTestData:
 
 
 @pytest.fixture
-def test_file_manager() -> Generator[TestFileManager]:
+def test_file_manager() -> Generator[FileManager]:
     """Test file manager with automatic cleanup."""
-    with TestFileManager() as manager:
+    with FileManager() as manager:
         yield manager
 
 
@@ -159,13 +159,13 @@ def ldif_binary_file(test_ldif_dir: Path, sample_ldif_with_binary: str) -> Path:
 
 # Real service fixtures for functional testing
 @pytest.fixture
-def real_parser_service() -> FlextLDIFParserService:
+def real_parser_service() -> FlextLdifParserService:
     """Real parser service for functional testing."""
     return RealServiceFactory.create_parser()
 
 
 @pytest.fixture
-def real_writer_service() -> FlextLDIFWriterService:
+def real_writer_service() -> FlextLdifWriterService:
     """Real writer service for functional testing."""
     return RealServiceFactory.create_writer()
 
@@ -178,20 +178,24 @@ def integration_services() -> FlextTypes.Core.Dict:
 
 # Legacy fixture for backward compatibility
 @pytest.fixture
-def ldif_api(real_ldif_api: FlextLDIFAPI) -> FlextLDIFAPI:
+def ldif_api(real_ldif_api: FlextLdifAPI) -> FlextLdifAPI:
     """Backward compatibility fixture."""
     return real_ldif_api
 
 
 # FlextTests integration for result validation
 @pytest.fixture
-def assert_result_success(flext_matchers: FlextTestsMatchers) -> Callable[[FlextResult], None]:
+def assert_result_success(
+    flext_matchers: FlextTestsMatchers,
+) -> Callable[[FlextResult[object]], None]:
     """Fixture providing FlextTests result success assertion."""
     return flext_matchers.assert_result_success
 
 
 @pytest.fixture
-def assert_result_failure(flext_matchers: FlextTestsMatchers) -> Callable[[FlextResult], None]:
+def assert_result_failure(
+    flext_matchers: FlextTestsMatchers,
+) -> Callable[[FlextResult[object]], None]:
     """Fixture providing FlextTests result failure assertion."""
     return flext_matchers.assert_result_failure
 
@@ -344,7 +348,7 @@ def flext_utilities() -> FlextTestsUtilities:
 
 # LDIF-specific test data using FlextTests patterns
 @pytest.fixture
-def ldif_test_entries() -> list[dict[str, object]]:
+def ldif_test_entries() -> list[dict[str, Collection[str] | str]]:
     """Generate LDIF test entries using FlextTests domain patterns."""
     # Create realistic LDIF entries using domain patterns
     # Create test users using FlextTestsDomains patterns

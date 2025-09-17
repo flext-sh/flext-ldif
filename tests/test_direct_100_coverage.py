@@ -8,10 +8,11 @@ import sys
 import tempfile
 from pathlib import Path
 
-from flext_ldif.exceptions import FlextLDIFExceptions
-from flext_ldif.models import FlextLDIFModels
-from flext_ldif.services import FlextLDIFServices
-from flext_ldif.utilities import FlextLDIFUtilities
+from flext_ldif.config import FlextLdifConfig
+from flext_ldif.exceptions import FlextLdifExceptions
+from flext_ldif.models import FlextLdifModels
+from flext_ldif.services import FlextLdifServices
+from flext_ldif.utilities import FlextLdifUtilities
 
 # Add src to path
 sys.path.insert(0, "src")
@@ -20,12 +21,12 @@ sys.path.insert(0, "src")
 def test_all_services_100_percent() -> None:
     """Force 100% coverage by calling ALL methods."""
     # Create config with extreme debug
-    config = FlextLDIFModels.Config(strict_validation=False, max_entries=1000)
-    assert config.strict_validation is False
+    config = FlextLdifConfig(ldif_strict_validation=False, ldif_max_entries=1000)
+    assert config.ldif_strict_validation is False
 
     # Test entries
     test_entries = [
-        FlextLDIFModels.Entry.model_validate(
+        FlextLdifModels.create_entry(
             {
                 "dn": "cn=person1,dc=test,dc=com",
                 "attributes": {
@@ -36,7 +37,7 @@ def test_all_services_100_percent() -> None:
                 },
             }
         ),
-        FlextLDIFModels.Entry.model_validate(
+        FlextLdifModels.create_entry(
             {
                 "dn": "cn=group1,ou=groups,dc=test,dc=com",
                 "attributes": {
@@ -51,7 +52,7 @@ def test_all_services_100_percent() -> None:
     # FORCE ALL ANALYTICS SERVICE BRANCHES
 
     # Force None config branch using real service instance
-    services = FlextLDIFServices()
+    services = FlextLdifServices()
     result = services.analytics.analyze_entries([])
     assert result.is_success
 
@@ -164,7 +165,7 @@ def test_all_services_100_percent() -> None:
     transformer = services.transformer
 
     # Create a simple identity transform function
-    def identity_transform(entry: FlextLDIFModels.Entry) -> FlextLDIFModels.Entry:
+    def identity_transform(entry: FlextLdifModels.Entry) -> FlextLdifModels.Entry:
         return entry
 
     result = transformer.transform_entries(test_entries, identity_transform)
@@ -197,7 +198,7 @@ def test_all_services_100_percent() -> None:
 
     # Test utilities
 
-    utilities = FlextLDIFUtilities()
+    utilities = FlextLdifUtilities()
 
     # Test file extension validation
     result = utilities.validate_ldif_file_extension("test.ldif")
@@ -231,18 +232,18 @@ def test_all_services_100_percent() -> None:
 
     # Force all exception types
     exceptions_to_test = [
-        FlextLDIFExceptions.error("test"),
-        FlextLDIFExceptions.parse_error("test"),
-        FlextLDIFExceptions.entry_error("test"),
-        FlextLDIFExceptions.validation_error("test"),
-        FlextLDIFExceptions.connection_error("test"),
-        FlextLDIFExceptions.file_error("test"),
-        FlextLDIFExceptions.configuration_error("test"),
-        FlextLDIFExceptions.processing_error("test", operation="test"),
-        FlextLDIFExceptions.processing_error("test"),  # No operation
-        FlextLDIFExceptions.authentication_error("test"),
-        FlextLDIFExceptions.timeout_error("test"),
-        FlextLDIFExceptions.timeout_error("test"),  # No operation
+        FlextLdifExceptions.error("test"),
+        FlextLdifExceptions.parse_error("test"),
+        FlextLdifExceptions.entry_error("test"),
+        FlextLdifExceptions.validation_error("test"),
+        FlextLdifExceptions.connection_error("test"),
+        FlextLdifExceptions.file_error("test"),
+        FlextLdifExceptions.configuration_error("test"),
+        FlextLdifExceptions.processing_error("test", operation="test"),
+        FlextLdifExceptions.processing_error("test"),  # No operation
+        FlextLdifExceptions.authentication_error("test"),
+        FlextLdifExceptions.timeout_error("test"),
+        FlextLdifExceptions.timeout_error("test"),  # No operation
     ]
 
     for exc in exceptions_to_test:

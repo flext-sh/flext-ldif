@@ -9,13 +9,13 @@ from __future__ import annotations
 
 import sys
 
-from flext_core import FlextResult
 from tests.fixtures.docker_fixtures import (
     OpenLDAPContainerManager,
     check_docker_available,
 )
 
-from flext_ldif import FlextLDIFAPI, FlextLDIFFormatHandler
+from flext_core import FlextResult
+from flext_ldif import FlextLdifAPI, FlextLdifFormatHandler
 
 
 def test_with_docker_container() -> bool | None:
@@ -42,7 +42,7 @@ def test_with_docker_container() -> bool | None:
             return False
 
         # Test parsing
-        handler = FlextLDIFFormatHandler()
+        handler = FlextLdifFormatHandler()
         parse_result = handler.parse_ldif(ldif_data)
         entries = FlextResult.unwrap_or_raise(parse_result)
 
@@ -60,12 +60,12 @@ def test_with_docker_container() -> bool | None:
         # Test validation - parse first, then validate
         parse_result2 = handler.parse_ldif(ldif_data)
         entries2 = FlextResult.unwrap_or_raise(parse_result2)
-        api = FlextLDIFAPI()
+        api = FlextLdifAPI()
         validate_result = api.validate_entries(entries2)
         FlextResult.unwrap_or_raise(validate_result)
 
         # Usar API real para filtrar pessoas e grupos
-        api = __import__("flext_ldif").flext_ldif.FlextLDIFAPI
+        api = __import__("flext_ldif").flext_ldif.FlextLdifAPI
         api = api()
 
         # Filter pessoas usando API real com modern FlextResult pattern
@@ -74,8 +74,8 @@ def test_with_docker_container() -> bool | None:
         len(person_entries)
 
         # Contar entries por objectClass usando API real
-        sum(1 for entry in entries if entry.has_object_class("groupOfNames"))
-        sum(1 for entry in entries if entry.has_object_class("organizationalUnit"))
+        sum(1 for entry in entries if entry.is_group_entry())
+        sum(1 for entry in entries if entry.is_organizational_unit())
 
         return True
 

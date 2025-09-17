@@ -33,7 +33,7 @@ cd flext-ldif
 make setup
 
 # Verify installation
-python -c "from flext_ldif import FlextLDIFAPI; print('FLEXT-LDIF installed successfully')"
+python -c "from flext_ldif import FlextLdifAPI; print('FLEXT-LDIF installed successfully')"
 ```
 
 ### Development Commands
@@ -58,11 +58,11 @@ pytest --cov=src/flext_ldif     # Coverage report
 Create your first LDIF processing script:
 
 ```python
-from flext_ldif import FlextLDIFAPI
+from flext_ldif import FlextLdifAPI
 from pathlib import Path
 
 # Initialize the LDIF API
-api = FlextLDIFAPI()
+api = FlextLdifAPI()
 
 # Sample LDIF content
 sample_ldif = """dn: cn=John Doe,ou=People,dc=example,dc=com
@@ -98,10 +98,10 @@ else:
 Process LDIF files with error handling:
 
 ```python
-from flext_ldif import FlextLDIFAPI
+from flext_ldif import FlextLdifAPI
 from pathlib import Path
 
-api = FlextLDIFAPI()
+api = FlextLdifAPI()
 
 # Parse LDIF file
 ldif_path = Path("directory.ldif")
@@ -133,10 +133,10 @@ else:
 Configure LDIF processing behavior:
 
 ```python
-from flext_ldif import FlextLDIFAPI, FlextLDIFModels
+from flext_ldif import FlextLdifAPI, FlextLdifModels
 
 # Create configuration
-config = FlextLDIFModels.Config(
+config = FlextLdifModels.Config(
     max_entries=10000,              # Limit number of entries processed
     strict_validation=True,         # Enable strict RFC 2849 validation
     ignore_unknown_attributes=False, # Process all attributes
@@ -144,7 +144,7 @@ config = FlextLDIFModels.Config(
 )
 
 # Initialize API with configuration
-api = FlextLDIFAPI(config=config)
+api = FlextLdifAPI(config=config)
 ```
 
 ### Advanced Configuration
@@ -152,7 +152,7 @@ api = FlextLDIFAPI(config=config)
 Access additional configuration options:
 
 ```python
-from flext_ldif import FlextLDIFConfig, get_ldif_config
+from flext_ldif import FlextLdifConfig, get_ldif_config
 
 # Get global configuration
 config = get_ldif_config()
@@ -196,10 +196,10 @@ python -m flext_ldif parse --help
 Process large directory exports:
 
 ```python
-from flext_ldif import FlextLDIFAPI
+from flext_ldif import FlextLdifAPI
 from pathlib import Path
 
-api = FlextLDIFAPI()
+api = FlextLdifAPI()
 
 # Process enterprise directory export
 export_file = Path("enterprise_directory.ldif")
@@ -227,7 +227,7 @@ if result.is_success:
 Validate and clean LDIF data:
 
 ```python
-api = FlextLDIFAPI(FlextLDIFModels.Config(strict_validation=True))
+api = FlextLdifAPI(FlextLdifModels.Config(strict_validation=True))
 
 # Parse with strict validation
 result = api.parse_string(ldif_content)

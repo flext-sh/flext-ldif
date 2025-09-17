@@ -39,8 +39,8 @@ src/flext_ldif/
 
 ### Domain-Driven Design
 
-- **Entities**: `FlextLDIFEntry` with identity and business logic
-- **Value Objects**: `FlextLDIFDistinguishedName`, `FlextLDIFAttributes` (immutable)
+- **Entities**: `FlextLdifModels.Entry` with identity and business logic
+- **Value Objects**: `FlextLdifModels.DistinguishedName`, `FlextLdifModels.LdifAttributes` (immutable)
 - **Domain Services**: Complex business operations in `services.py`
 - **Domain Events**: Planned for future implementation
 
@@ -102,13 +102,13 @@ src/flext_ldif/
 
 ```python
 # Domain model usage
-from flext_ldif.models import FlextLDIFEntry, FlextLDIFDistinguishedName
+from flext_ldif.models import FlextLdifModels
 
 # Application service usage
-from flext_ldif.api import FlextLDIFAPI
+from flext_ldif.api import FlextLdifAPI
 
 # Configuration management
-from flext_ldif.config import FlextLDIFConfig
+from flext_ldif.config import FlextLdifConfig
 
 # Core processing (advanced usage)
 from flext_ldif.core import TLdif
@@ -119,10 +119,9 @@ from flext_ldif.core import TLdif
 ```python
 # Simplified public interface
 from flext_ldif import (
-    FlextLDIFAPI,           # Main application service
-    FlextLDIFConfig,        # Configuration management
-    FlextLDIFEntry,         # Domain entity
-    FlextLDIFDistinguishedName,  # Value object
+    FlextLdifAPI,           # Main application service
+    FlextLdifConfig,        # Configuration management
+    FlextLdifModels,        # Unified domain models
 )
 ```
 

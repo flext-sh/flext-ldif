@@ -6,9 +6,9 @@ garantindo que todos os prefixos estão corretos e que a biblioteca
 suplementa (não substitui) o flext-core.
 
 Prefixos obrigatórios:
-- FlextLDIF* (classes principais)
+- FlextLdif* (classes principais)
 - flext_ldif_* (funções utilitárias)
-- TFlextLDIF* (types/aliases)
+- TFlextLdif* (types/aliases)
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 """
@@ -26,41 +26,40 @@ from flext_core import FlextContainer, FlextResult, FlextTypes
 # ═══════════════════════════════════════════════════════════════════════════════
 # 🎯 IMPORTS - Validando todos os prefixos corretos
 # ═══════════════════════════════════════════════════════════════════════════════
-# Core entities com prefixos FlextLDIF*
-# Value objects com prefixos FlextLDIF*
-# Exceptions com prefixos FlextLDIF*
-# Domain events com prefixos FlextLDIF*
-# Domain specifications com prefixos FlextLDIF*
-# Utilities com prefixos FlextLDIF* e flext_ldif_*
+# Core entities com prefixos FlextLdif*
+# Value objects com prefixos FlextLdif*
+# Exceptions com prefixos FlextLdif*
+# Domain events com prefixos FlextLdif*
+# Domain specifications com prefixos FlextLdif*
+# Utilities com prefixos FlextLdif* e flext_ldif_*
 # Types com prefixes corretos
 # Simple API aliases (validated)
 # CORREÇÃO CRÍTICA: Imports verificados no __init__.py
 from flext_ldif import (
-    FlextLDIFAPI,
-    FlextLDIFError,
-    FlextLDIFFormatHandler,
-    FlextLDIFModels,
-    FlextLDIFParseError,
-    FlextLDIFServices,
-    FlextLDIFValidationError,
+    FlextLdifAPI,
+    FlextLdifExceptions,
+    FlextLdifFormatHandler,
+    FlextLdifModels,
+    FlextLdifServices,
 )
+from flext_ldif.config import FlextLdifConfig
 
 
 def test_1_flext_ldif_prefixes_validation() -> FlextTypes.Core.Dict:
-    """Teste 1: Validação de todos os prefixos FlextLDIF* que REALMENTE EXISTEM."""
-    # ✅ Testando classes principais com prefixo FlextLDIF* (APENAS as que existem)
-    config = FlextLDIFModels.Config()
+    """Teste 1: Validação de todos os prefixos FlextLdif* que REALMENTE EXISTEM."""
+    # ✅ Testando classes principais com prefixo FlextLdif* (APENAS as que existem)
+    config = FlextLdifConfig()
 
     # ✅ API unificada que realmente existe
-    api = FlextLDIFAPI()
+    api = FlextLdifAPI()
 
-    # ✅ Testando value objects com prefixo FlextLDIF* (APENAS os que existem)
-    dn = FlextLDIFModels.DistinguishedName(value="uid=test,dc=example,dc=com")
+    # ✅ Testando value objects com prefixo FlextLdif* (APENAS os que existem)
+    dn = FlextLdifModels.DistinguishedName(value="uid=test,dc=example,dc=com")
 
-    attrs = FlextLDIFModels.LdifAttributes(data={"objectClass": ["person"]})
+    attrs = FlextLdifModels.LdifAttributes(data={"objectClass": ["person"]})
 
-    # ✅ Testando services com prefixos FlextLDIF* (os que realmente existem)
-    services = FlextLDIFServices()
+    # ✅ Testando services com prefixos FlextLdif* (os que realmente existem)
+    services = FlextLdifServices()
     parser_service = services.parser
     validator_service = services.validator
     writer_service = services.writer
@@ -77,8 +76,8 @@ def test_1_flext_ldif_prefixes_validation() -> FlextTypes.Core.Dict:
 
 
 def test_2_domain_specifications_validation() -> FlextTypes.Core.Dict:
-    """Teste 2: Validação usando FlextLDIFEntry (specifications integradas via composição)."""
-    # ✅ CORREÇÃO: Specifications estão integradas no FlextLDIFEntry via composição
+    """Teste 2: Validação usando FlextLdifEntry (specifications integradas via composição)."""
+    # ✅ CORREÇÃO: Specifications estão integradas no FlextLdifEntry via composição
     # Testando funcionalidade através da API que realmente existe
 
     test_entry_data: dict[str, str | FlextTypes.Core.StringList] = {
@@ -90,7 +89,7 @@ def test_2_domain_specifications_validation() -> FlextTypes.Core.Dict:
     }
 
     # ✅ Usar API real para validar entry
-    api = FlextLDIFAPI()
+    api = FlextLdifAPI()
 
     # Criar LDIF válido para teste
     ldif_content = """dn: uid=jdoe,ou=people,dc=example,dc=com
@@ -124,7 +123,7 @@ def test_3_domain_events_validation() -> None:
     # Testando funcionalidade real existente ao invés de events inexistentes
 
     # Testar funcionalidade real que geraria "eventos" via logging
-    api = FlextLDIFAPI()
+    api = FlextLdifAPI()
 
     sample_ldif = """dn: uid=test,dc=example,dc=com
 objectClass: person
@@ -150,36 +149,46 @@ sn: User
 
 
 def test_4_exceptions_validation() -> None:
-    """Teste 4: Validação das Exceptions com prefixos FlextLDIF*."""
-    # ✅ Testando exceptions com prefixo FlextLDIF*
+    """Teste 4: Validação das Exceptions com prefixos FlextLdif* usando FlextResult."""
+    # ✅ Testando FlextResult patterns com FlextLdifExceptions
 
-    def _test_base_error() -> None:
+    def _test_base_error() -> FlextResult[None]:
         msg = "Test base error"
-        raise FlextLDIFError(msg)
+        return FlextLdifExceptions.error(msg)
 
-    def _test_parse_error() -> None:
+    def _test_parse_error() -> FlextResult[None]:
         msg = "Test parse error"
-        raise FlextLDIFParseError(msg)
+        return FlextLdifExceptions.parse_error(msg, line_number=1)
 
-    with contextlib.suppress(FlextLDIFError):
-        _test_base_error()
+    # Use FlextResult pattern instead of contextlib.suppress
+    base_result = _test_base_error()
+    if base_result.is_failure:
+        # Silently handle error for demonstration
+        pass
 
-    with contextlib.suppress(FlextLDIFParseError):
-        _test_parse_error()
+    parse_result = _test_parse_error()
+    if parse_result.is_failure:
+        # Silently handle error for demonstration
+        pass
 
-    def _test_validation_error() -> None:
+    def _test_validation_error() -> FlextResult[None]:
         msg = "Test validation error"
-        raise FlextLDIFValidationError(msg)
+        return FlextLdifExceptions.validation_error(msg, dn="cn=test,dc=example,dc=com")
 
-    def _test_entry_error() -> None:
+    def _test_entry_error() -> FlextResult[None]:
         msg = "Test entry error"
-        raise FlextLDIFValidationError(msg)
+        return FlextLdifExceptions.entry_error(msg, dn="cn=test,dc=example,dc=com")
 
-    with contextlib.suppress(FlextLDIFValidationError):
-        _test_validation_error()
+    # Use FlextResult pattern instead of contextlib.suppress
+    validation_result = _test_validation_error()
+    if validation_result.is_failure:
+        # Silently handle error for demonstration
+        pass
 
-    with contextlib.suppress(FlextLDIFValidationError):
-        _test_entry_error()
+    entry_result = _test_entry_error()
+    if entry_result.is_failure:
+        # Silently handle error for demonstration
+        pass
 
 
 # SOLID REFACTORING: Template Method Pattern to reduce complexity from 11 to 4
@@ -227,8 +236,8 @@ member: uid=jdoe,ou=people,dc=example,dc=com"""
             pass
 
     def _test_parsing_stage(self) -> None:
-        """Test parsing stage with FlextLDIFAPI (unified API)."""
-        api = FlextLDIFAPI()
+        """Test parsing stage with FlextLdifAPI (unified API)."""
+        api = FlextLdifAPI()
 
         # Test parsing capabilities usando API real
         with contextlib.suppress(Exception):
@@ -237,8 +246,8 @@ member: uid=jdoe,ou=people,dc=example,dc=com"""
                 pass
 
     def _test_processing_stage(self) -> None:
-        """Test processing stage with FlextLDIFAPI (unified processing)."""
-        api = FlextLDIFAPI()
+        """Test processing stage with FlextLdifAPI (unified processing)."""
+        api = FlextLdifAPI()
 
         with contextlib.suppress(Exception):
             result = api.parse(self.ldif_content)
@@ -249,8 +258,8 @@ member: uid=jdoe,ou=people,dc=example,dc=com"""
                 api.filter_valid(entries)
 
     def _test_validation_stage(self) -> None:
-        """Test validation stage with FlextLDIFAPI."""
-        api = FlextLDIFAPI()
+        """Test validation stage with FlextLdifAPI."""
+        api = FlextLdifAPI()
 
         with contextlib.suppress(Exception):
             parse_result = api.parse(self.ldif_content)
@@ -259,8 +268,8 @@ member: uid=jdoe,ou=people,dc=example,dc=com"""
                 api.validate(entries)
 
     def _test_writing_stage(self) -> None:
-        """Test writing stage with FlextLDIFAPI."""
-        api = FlextLDIFAPI()
+        """Test writing stage with FlextLdifAPI."""
+        api = FlextLdifAPI()
 
         with contextlib.suppress(Exception):
             parse_result = api.parse(self.ldif_content)
@@ -269,8 +278,8 @@ member: uid=jdoe,ou=people,dc=example,dc=com"""
                 api.write(entries)
 
     def _test_utilities_stage(self) -> None:
-        """Test utilities stage with FlextLDIFAPI."""
-        api = FlextLDIFAPI()
+        """Test utilities stage with FlextLdifAPI."""
+        api = FlextLdifAPI()
 
         # Test hierarchical sorting using API real
         test_entries_ldif = """dn: dc=example,dc=com
@@ -314,18 +323,18 @@ cn: Simple User"""
 
     # Test flext_ldif_parse function - EXISTE
     with contextlib.suppress(Exception):
-        format_handler = FlextLDIFFormatHandler()
+        format_handler = FlextLdifFormatHandler()
         entries_result = format_handler.parse_ldif(test_ldif)
         entries = entries_result.unwrap() if entries_result.is_success else []
 
     # Test flext_ldif_validate function - EXISTE
     with contextlib.suppress(Exception):
         # flext_ldif_validate expects list of entries, not LDIF string
-        format_handler = FlextLDIFFormatHandler()
+        format_handler = FlextLdifFormatHandler()
         parse_result = format_handler.parse_ldif(test_ldif)
         if parse_result.is_success:
             test_entries = parse_result.unwrap()
-            api = FlextLDIFAPI()
+            api = FlextLdifAPI()
             validation_result = api.validate_entries(test_entries)
             is_valid = validation_result.is_success
 
@@ -334,7 +343,7 @@ cn: Simple User"""
         # Create a test entry for writing - initialize entries variable
         entries = []
         if "entries" in locals() and entries:
-            format_handler = FlextLDIFFormatHandler()
+            format_handler = FlextLdifFormatHandler()
             write_result = format_handler.write_ldif(entries)
             if write_result.is_success:
                 ldif_output = write_result.unwrap()
@@ -343,7 +352,7 @@ cn: Simple User"""
 
     # Test flext_ldif_get_api function - EXISTE
     with contextlib.suppress(Exception):
-        api = FlextLDIFAPI()
+        api = FlextLdifAPI()
 
 
 def test_7_flext_core_integration_validation() -> None:
@@ -359,8 +368,8 @@ def test_7_flext_core_integration_validation() -> None:
 
         # ✅ Verificar que flext-ldif usa flext-core (não substitui)
 
-        # FlextLDIF API usa FlextResult internally
-        api = FlextLDIFAPI()
+        # FlextLdif API usa FlextResult internally
+        api = FlextLdifAPI()
 
         # Check if methods return FlextResult (good integration)
         test_ldif = """dn: uid=test,dc=example,dc=com
@@ -436,14 +445,14 @@ member: uid=user1,ou=people,dc=comprehensive,dc=test"""
 
     try:
         # ✅ CORREÇÃO: Usar funções que realmente existem
-        format_handler = FlextLDIFFormatHandler()
+        format_handler = FlextLdifFormatHandler()
         parse_result = format_handler.parse_ldif(complex_ldif)
         if parse_result.is_failure:
             msg = f"Parse failed: {parse_result.error}"
             raise ValueError(msg)
         entries = parse_result.unwrap()
 
-        api = FlextLDIFAPI()
+        api = FlextLdifAPI()
         validation_result = api.validate_entries(entries)
         if validation_result.is_failure:
             msg = f"Validation failed: {validation_result.error}"
@@ -463,7 +472,7 @@ member: uid=user1,ou=people,dc=comprehensive,dc=test"""
 
         # ✅ CORREÇÃO: Usar API para sorting ao invés de função inexistente
         if entries:
-            api = FlextLDIFAPI()
+            api = FlextLdifAPI()
             with contextlib.suppress(Exception):
                 api.sort_hierarchically(entries)
 
@@ -477,7 +486,7 @@ member: uid=user1,ou=people,dc=comprehensive,dc=test"""
 
         try:
             # Test writing to string and then to file
-            format_handler = FlextLDIFFormatHandler()
+            format_handler = FlextLdifFormatHandler()
             write_result = format_handler.write_ldif(entries)
             if write_result.is_failure:
                 msg = f"Write failed: {write_result.error}"

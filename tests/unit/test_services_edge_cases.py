@@ -4,7 +4,7 @@ This test file targets specific uncovered lines in services.py
 to achieve the required 90% coverage threshold.
 """
 
-from flext_ldif.services import FlextLDIFServices
+from flext_ldif.services import FlextLdifServices
 
 
 class TestServicesEdgeCases:
@@ -12,7 +12,7 @@ class TestServicesEdgeCases:
 
     def test_parser_validate_syntax_empty_content(self) -> None:
         """Test parser validate_syntax with empty content."""
-        services = FlextLDIFServices()
+        services = FlextLdifServices()
         parser = services.parser
 
         # Test empty content
@@ -20,11 +20,11 @@ class TestServicesEdgeCases:
         assert result.is_failure
         error_message = result.error
         assert error_message is not None
-        assert "Empty LDIF content" in error_message
+        assert "LDIF content cannot be empty" in error_message
 
     def test_parser_validate_syntax_whitespace_only(self) -> None:
         """Test parser validate_syntax with whitespace only."""
-        services = FlextLDIFServices()
+        services = FlextLdifServices()
         parser = services.parser
 
         # Test whitespace only content
@@ -32,11 +32,11 @@ class TestServicesEdgeCases:
         assert result.is_failure
         error_message = result.error
         assert error_message is not None
-        assert "Empty LDIF content" in error_message
+        assert "LDIF content cannot be empty" in error_message
 
     def test_parser_validate_syntax_no_lines(self) -> None:
         """Test parser validate_syntax with no lines."""
-        services = FlextLDIFServices()
+        services = FlextLdifServices()
         parser = services.parser
 
         # Test content that results in no lines after split
@@ -44,11 +44,11 @@ class TestServicesEdgeCases:
         assert result.is_failure
         error_message = result.error
         assert error_message is not None
-        assert "Empty LDIF content" in error_message
+        assert "LDIF content cannot be empty" in error_message
 
     def test_parser_validate_syntax_invalid_start(self) -> None:
         """Test parser validate_syntax with invalid start."""
-        services = FlextLDIFServices()
+        services = FlextLdifServices()
         parser = services.parser
 
         # Test content that doesn't start with dn:
@@ -60,7 +60,7 @@ class TestServicesEdgeCases:
 
     def test_parser_validate_syntax_valid_content(self) -> None:
         """Test parser validate_syntax with valid content."""
-        services = FlextLDIFServices()
+        services = FlextLdifServices()
         parser = services.parser
 
         # Test valid LDIF content
@@ -71,7 +71,7 @@ class TestServicesEdgeCases:
 
     def test_parser_validate_syntax_exception_handling(self) -> None:
         """Test parser validate_syntax exception handling."""
-        services = FlextLDIFServices()
+        services = FlextLdifServices()
         parser = services.parser
 
         # Test with content that might cause issues
@@ -82,7 +82,7 @@ class TestServicesEdgeCases:
 
     def test_validator_get_config_info(self) -> None:
         """Test validator get_config_info method."""
-        services = FlextLDIFServices()
+        services = FlextLdifServices()
         validator = services.validator
 
         config_info = validator.get_config_info()
@@ -92,7 +92,7 @@ class TestServicesEdgeCases:
 
     def test_writer_get_config_info(self) -> None:
         """Test writer get_config_info method."""
-        services = FlextLDIFServices()
+        services = FlextLdifServices()
         writer = services.writer
 
         config_info = writer.get_config_info()
@@ -102,7 +102,7 @@ class TestServicesEdgeCases:
 
     def test_analytics_get_config_info(self) -> None:
         """Test analytics get_config_info method."""
-        services = FlextLDIFServices()
+        services = FlextLdifServices()
         analytics = services.analytics
 
         config_info = analytics.get_config_info()
@@ -112,7 +112,7 @@ class TestServicesEdgeCases:
 
     def test_transformer_get_config_info(self) -> None:
         """Test transformer get_config_info method."""
-        services = FlextLDIFServices()
+        services = FlextLdifServices()
         transformer = services.transformer
 
         config_info = transformer.get_config_info()
@@ -122,7 +122,7 @@ class TestServicesEdgeCases:
 
     def test_repository_get_config_info(self) -> None:
         """Test repository get_config_info method."""
-        services = FlextLDIFServices()
+        services = FlextLdifServices()
         repository = services.repository
 
         config_info = repository.get_config_info()
@@ -132,7 +132,7 @@ class TestServicesEdgeCases:
 
     def test_services_nested_classes_initialization(self) -> None:
         """Test nested classes initialization."""
-        services = FlextLDIFServices()
+        services = FlextLdifServices()
 
         # Test all nested classes are properly initialized
         assert services.parser is not None
@@ -144,7 +144,7 @@ class TestServicesEdgeCases:
 
     def test_services_nested_classes_config_access(self) -> None:
         """Test nested classes config access."""
-        services = FlextLDIFServices()
+        services = FlextLdifServices()
 
         # Test config access from nested classes
         parser_config = services.parser.get_config_info()
@@ -163,7 +163,7 @@ class TestServicesEdgeCases:
 
     def test_services_comprehensive_workflow(self) -> None:
         """Test comprehensive services workflow."""
-        services = FlextLDIFServices()
+        services = FlextLdifServices()
 
         # Test complete workflow
         # 1. Validate syntax
@@ -200,7 +200,7 @@ class TestServicesEdgeCases:
 
     def test_services_error_scenarios(self) -> None:
         """Test various error scenarios."""
-        services = FlextLDIFServices()
+        services = FlextLdifServices()
 
         # Test various invalid inputs
         invalid_inputs = [
@@ -218,7 +218,7 @@ class TestServicesEdgeCases:
 
     def test_services_config_consistency(self) -> None:
         """Test configuration consistency across services."""
-        services = FlextLDIFServices()
+        services = FlextLdifServices()
 
         # All nested services should have consistent config access
         configs = [
