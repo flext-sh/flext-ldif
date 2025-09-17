@@ -6,50 +6,51 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.ldif_data import LdifSample, LdifTestData
+from flext_ldif.test_data import FlextLdifTestData
+from flext_ldif.test_samples import FlextLdifTestSamples
 
 
-class TestLdifSample:
+class TestFlextLdifTestSamples:
     """Test LDIF sample data functionality."""
 
     def test_basic_ldif_content(self) -> None:
         """Test basic LDIF content."""
-        assert "cn=test,dc=example,dc=com" in LdifSample.BASIC_LDIF
-        assert "cn: test" in LdifSample.BASIC_LDIF
-        assert "objectClass: person" in LdifSample.BASIC_LDIF
-        assert "sn: TestUser" in LdifSample.BASIC_LDIF
+        assert "cn=test,dc=example,dc=com" in FlextLdifTestSamples.BASIC_LDIF
+        assert "cn: test" in FlextLdifTestSamples.BASIC_LDIF
+        assert "objectClass: person" in FlextLdifTestSamples.BASIC_LDIF
+        assert "sn: TestUser" in FlextLdifTestSamples.BASIC_LDIF
 
     def test_complex_ldif_content(self) -> None:
         """Test complex LDIF content."""
-        assert "cn=complex,dc=example,dc=com" in LdifSample.COMPLEX_LDIF
-        assert "mail: complex@example.com" in LdifSample.COMPLEX_LDIF
-        assert "telephoneNumber: +1-555-123-4567" in LdifSample.COMPLEX_LDIF
-        assert "objectClass: groupOfNames" in LdifSample.COMPLEX_LDIF
+        assert "cn=complex,dc=example,dc=com" in FlextLdifTestSamples.COMPLEX_LDIF
+        assert "mail: complex@example.com" in FlextLdifTestSamples.COMPLEX_LDIF
+        assert "telephoneNumber: +1-555-123-4567" in FlextLdifTestSamples.COMPLEX_LDIF
+        assert "objectClass: groupOfNames" in FlextLdifTestSamples.COMPLEX_LDIF
 
     def test_invalid_ldif_content(self) -> None:
         """Test invalid LDIF content."""
-        assert "cn: test" in LdifSample.INVALID_LDIF
-        assert "objectClass: person" in LdifSample.INVALID_LDIF
-        assert "sn: TestUser" in LdifSample.INVALID_LDIF
+        assert "cn: test" in FlextLdifTestSamples.INVALID_LDIF
+        assert "objectClass: person" in FlextLdifTestSamples.INVALID_LDIF
+        assert "sn: TestUser" in FlextLdifTestSamples.INVALID_LDIF
         # Should not have dn: line
-        assert "dn:" not in LdifSample.INVALID_LDIF
+        assert "dn:" not in FlextLdifTestSamples.INVALID_LDIF
 
     def test_sample_instance_properties(self) -> None:
         """Test sample instance properties."""
-        sample = LdifSample()
+        sample = FlextLdifTestSamples()
 
         assert sample.description == "Basic LDIF sample"
-        assert sample.content == LdifSample.BASIC_LDIF
+        assert sample.content == FlextLdifTestSamples.BASIC_LDIF
         assert isinstance(sample.description, str)
         assert isinstance(sample.content, str)
 
 
-class TestLdifTestData:
+class TestFlextLdifTestData:
     """Test LDIF test data utilities."""
 
     def test_get_sample_entries(self) -> None:
         """Test getting sample entries."""
-        entries = LdifTestData.get_sample_entries()
+        entries = FlextLdifTestData.get_sample_entries()
 
         assert isinstance(entries, list)
         assert len(entries) == 2
@@ -70,7 +71,7 @@ class TestLdifTestData:
 
     def test_get_complex_entries(self) -> None:
         """Test getting complex entries."""
-        entries = LdifTestData.get_complex_entries()
+        entries = FlextLdifTestData.get_complex_entries()
 
         assert isinstance(entries, list)
         assert len(entries) == 2
@@ -93,21 +94,21 @@ class TestLdifTestData:
 
     def test_all_samples(self) -> None:
         """Test getting all samples."""
-        samples = LdifTestData.all_samples()
+        samples = FlextLdifTestData.all_samples()
 
         assert isinstance(samples, dict)
         assert "basic" in samples
         assert "complex" in samples
         assert "invalid" in samples
 
-        # All should be LdifSample instances
+        # All should be FlextLdifTestSamples instances
         for sample in samples.values():
-            assert isinstance(sample, LdifSample)
+            assert isinstance(sample, FlextLdifTestSamples)
 
     def test_large_dataset_generation(self) -> None:
         """Test large dataset generation."""
         # Test with small number
-        dataset = LdifTestData.large_dataset(3)
+        dataset = FlextLdifTestData.large_dataset(3)
 
         assert isinstance(dataset, str)
         assert "cn=user0,dc=example,dc=com" in dataset
@@ -115,7 +116,7 @@ class TestLdifTestData:
         assert "cn=user2,dc=example,dc=com" in dataset
 
         # Test with larger number
-        large_dataset = LdifTestData.large_dataset(10)
+        large_dataset = FlextLdifTestData.large_dataset(10)
         assert isinstance(large_dataset, str)
         assert "cn=user9,dc=example,dc=com" in large_dataset
 
@@ -125,24 +126,24 @@ class TestLdifTestData:
 
     def test_large_dataset_zero_entries(self) -> None:
         """Test large dataset with zero entries."""
-        dataset = LdifTestData.large_dataset(0)
+        dataset = FlextLdifTestData.large_dataset(0)
 
         assert isinstance(dataset, str)
         assert dataset == ""
 
     def test_invalid_data(self) -> None:
         """Test getting invalid data."""
-        invalid_data = LdifTestData.invalid_data()
+        invalid_data = FlextLdifTestData.invalid_data()
 
         assert isinstance(invalid_data, str)
-        assert invalid_data == LdifSample.INVALID_LDIF
+        assert invalid_data == FlextLdifTestSamples.INVALID_LDIF
         assert "cn: test" in invalid_data
         assert "dn:" not in invalid_data
 
     def test_entry_structure_consistency(self) -> None:
         """Test that all entries have consistent structure."""
-        sample_entries = LdifTestData.get_sample_entries()
-        complex_entries = LdifTestData.get_complex_entries()
+        sample_entries = FlextLdifTestData.get_sample_entries()
+        complex_entries = FlextLdifTestData.get_complex_entries()
 
         # All entries should have dn field
         for entry in sample_entries + complex_entries:

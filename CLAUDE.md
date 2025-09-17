@@ -176,10 +176,10 @@ make validate       # Complete validation pipeline
 ### FlextResult Pattern
 
 ```python
-from flext_ldif import FlextLDIFAPI
+from flext_ldif import FlextLdifAPI
 from pathlib import Path
 
-api = FlextLDIFAPI()
+api = FlextLdifAPI()
 
 # All operations return FlextResult for composable error handling
 result = api.parse_file(Path("directory.ldif"))
@@ -187,7 +187,7 @@ if result.is_success:
     entries = result.unwrap()
 
     # Chain operations with FlextResult
-    validation_result = api.validate_entries(entries)
+    validation_result = api.validate(entries)
     if validation_result.is_success:
         print("LDIF processing successful")
     else:
@@ -199,10 +199,10 @@ else:
 ### Service Usage
 
 ```python
-from flext_ldif.services import FlextLDIFServices
+from flext_ldif.services import FlextLdifServices
 
 # Initialize services with dependency injection
-services = FlextLDIFServices()
+services = FlextLdifServices()
 
 # Use individual services
 parser_result = services.parser.parse_content(ldif_content)
@@ -213,17 +213,18 @@ write_result = services.writer.write_entries_to_string(entries)
 ### Domain Model Usage
 
 ```python
-from flext_ldif.models import FlextLDIFModels
+from flext_ldif.models import FlextLdifModels
 
 # Use Factory pattern for object creation
 entry_data = {
     "dn": "cn=test,dc=example,dc=com",
     "attributes": {"cn": ["test"], "objectClass": ["person"]}
 }
-entry = FlextLDIFModels.Factory.create_entry(entry_data)
+entry = FlextLdifModels.create_entry(entry_data)
 
-# Access consolidated models
-config = FlextLDIFModels.Config()
+# Access consolidated models - use flext-ldif config directly
+from flext_ldif.config import FlextLdifConfig
+config = FlextLdifConfig()
 ```
 
 ---

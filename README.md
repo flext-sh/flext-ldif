@@ -43,13 +43,13 @@ FLEXT-LDIF provides LDIF (LDAP Data Interchange Format) processing capabilities 
 
 ```mermaid
 graph TB
-    API[FlextLDIFAPI] --> Parser[ParserService]
+    API[FlextLdifAPI] --> Parser[ParserService]
     API --> Validator[ValidatorService]
     API --> Writer[WriterService]
     API --> Repository[RepositoryService]
     API --> Analytics[AnalyticsService]
 
-    Parser --> Models[FlextLDIFModels]
+    Parser --> Models[FlextLdifModels]
     Validator --> Models
     Writer --> Models
 
@@ -71,17 +71,17 @@ cd flext-ldif
 make setup
 
 # Verify installation
-python -c "from flext_ldif import FlextLDIFAPI; print('FLEXT-LDIF ready')"
+python -c "from flext_ldif import FlextLdifAPI; print('FLEXT-LDIF ready')"
 ```
 
 ### **Basic Usage**
 
 ```python
-from flext_ldif import FlextLDIFAPI
+from flext_ldif import FlextLdifAPI
 from pathlib import Path
 
 # Initialize API
-api = FlextLDIFAPI()
+api = FlextLdifAPI()
 
 # ⚠️ MEMORY CHECK: Verify file size before processing
 ldif_file = Path("directory.ldif")

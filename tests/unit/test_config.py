@@ -1,31 +1,26 @@
-"""Tests for FlextLDIFConfig - LDIF-specific configuration management."""
+"""Tests for FlextLdifConfig - LDIF-specific configuration management."""
 
 from __future__ import annotations
 
 import pytest
 
-from flext_ldif.config import (
-    FlextLDIFConfig,
-    get_ldif_config,
-    initialize_ldif_config,
-    reset_ldif_config,
-)
+from flext_ldif.config import FlextLdifConfig
 
 
-class TestFlextLDIFConfig:
-    """Test FlextLDIFConfig functionality."""
+class TestFlextLdifConfig:
+    """Test FlextLdifConfig functionality."""
 
     def setup_method(self) -> None:
         """Set up test environment."""
-        reset_ldif_config()
+        FlextLdifConfig.reset_global_ldif_config()
 
     def teardown_method(self) -> None:
         """Clean up test environment."""
-        reset_ldif_config()
+        FlextLdifConfig.reset_global_ldif_config()
 
     def test_config_initialization_default(self) -> None:
         """Test default configuration initialization."""
-        result = initialize_ldif_config()
+        result = FlextLdifConfig.initialize_global_ldif_config()
         assert result.is_success
         config = result.unwrap()
 
@@ -38,7 +33,7 @@ class TestFlextLDIFConfig:
 
     def test_config_initialization_custom(self) -> None:
         """Test configuration initialization with custom parameters."""
-        result = initialize_ldif_config(
+        result = FlextLdifConfig.initialize_global_ldif_config(
             ldif_max_entries=50000,
             ldif_strict_validation=False,
             ldif_parallel_processing=True,
@@ -56,12 +51,12 @@ class TestFlextLDIFConfig:
     def test_config_singleton_pattern(self) -> None:
         """Test singleton pattern implementation."""
         # Initialize first time
-        result1 = initialize_ldif_config(ldif_max_entries=1000)
+        result1 = FlextLdifConfig.initialize_global_ldif_config(ldif_max_entries=1000)
         assert result1.is_success
         config1 = result1.unwrap()
 
         # Initialize second time (should return same instance)
-        result2 = initialize_ldif_config(ldif_max_entries=2000)
+        result2 = FlextLdifConfig.initialize_global_ldif_config(ldif_max_entries=2000)
         assert result2.is_success
         config2 = result2.unwrap()
 
@@ -73,19 +68,19 @@ class TestFlextLDIFConfig:
         """Test getting global configuration instance."""
         # Should fail if not initialized
         with pytest.raises(
-            RuntimeError, match="Global instance is not a FlextLDIFConfig instance"
+            RuntimeError, match="Global instance is not a FlextLdifConfig instance"
         ):
-            get_ldif_config()
+            FlextLdifConfig.get_global_ldif_config()
 
         # Initialize and get instance
-        initialize_ldif_config()
-        config = get_ldif_config()
-        assert isinstance(config, FlextLDIFConfig)
+        FlextLdifConfig.initialize_global_ldif_config()
+        config = FlextLdifConfig.get_global_ldif_config()
+        assert isinstance(config, FlextLdifConfig)
 
     def test_configuration_dictionaries(self) -> None:
         """Test getting configuration dictionaries."""
-        initialize_ldif_config()
-        config = get_ldif_config()
+        FlextLdifConfig.initialize_global_ldif_config()
+        config = FlextLdifConfig.get_global_ldif_config()
 
         # Test processing config
         processing_config = config.get_ldif_processing_config()
@@ -106,8 +101,8 @@ class TestFlextLDIFConfig:
 
     def test_business_rules_validation(self) -> None:
         """Test business rules validation."""
-        initialize_ldif_config()
-        config = get_ldif_config()
+        FlextLdifConfig.initialize_global_ldif_config()
+        config = FlextLdifConfig.get_global_ldif_config()
 
         # Test with valid configuration
         result = config.validate_ldif_business_rules()
@@ -115,8 +110,10 @@ class TestFlextLDIFConfig:
 
         # Test with invalid configuration (too low max entries)
         # Create a new config with invalid values instead of modifying existing one
-        reset_ldif_config()
-        init_result = initialize_ldif_config(ldif_max_entries=500)
+        FlextLdifConfig.reset_global_ldif_config()
+        init_result = FlextLdifConfig.initialize_global_ldif_config(
+            ldif_max_entries=500
+        )
         if init_result.is_success:
             config = init_result.unwrap()
             validation_result = config.validate_ldif_business_rules()
@@ -127,8 +124,8 @@ class TestFlextLDIFConfig:
 
     def test_configuration_overrides(self) -> None:
         """Test applying configuration overrides."""
-        initialize_ldif_config()
-        config = get_ldif_config()
+        FlextLdifConfig.initialize_global_ldif_config()
+        config = FlextLdifConfig.get_global_ldif_config()
 
         # Apply valid overrides
         overrides: dict[str, object] = {
@@ -147,8 +144,8 @@ class TestFlextLDIFConfig:
 
     def test_configuration_overrides_invalid(self) -> None:
         """Test applying invalid configuration overrides."""
-        initialize_ldif_config()
-        config = get_ldif_config()
+        FlextLdifConfig.initialize_global_ldif_config()
+        config = FlextLdifConfig.get_global_ldif_config()
 
         # Apply invalid overrides (chunk size > max entries)
         overrides: dict[str, object] = {
@@ -165,17 +162,19 @@ class TestFlextLDIFConfig:
     def test_encoding_validation(self) -> None:
         """Test encoding validation."""
         # Reset configuration first
-        reset_ldif_config()
+        FlextLdifConfig.reset_global_ldif_config()
 
         # Test valid encoding
-        result = initialize_ldif_config(ldif_encoding="utf-8")
+        result = FlextLdifConfig.initialize_global_ldif_config(ldif_encoding="utf-8")
         assert result.is_success
 
         # Reset configuration again
-        reset_ldif_config()
+        FlextLdifConfig.reset_global_ldif_config()
 
         # Test invalid encoding
-        result = initialize_ldif_config(ldif_encoding="invalid-encoding")
+        result = FlextLdifConfig.initialize_global_ldif_config(
+            ldif_encoding="invalid-encoding"
+        )
         assert result.is_failure
         error_message = result.error
         assert error_message is not None
@@ -184,7 +183,7 @@ class TestFlextLDIFConfig:
     def test_model_validator(self) -> None:
         """Test model validator for configuration consistency."""
         # Test valid configuration
-        result = initialize_ldif_config(
+        result = FlextLdifConfig.initialize_global_ldif_config(
             ldif_parallel_processing=True,
             ldif_max_workers=4,
             ldif_chunk_size=1000,
@@ -192,12 +191,12 @@ class TestFlextLDIFConfig:
         assert result.is_success
 
         # Reset config first to ensure clean state
-        reset_ldif_config()
+        FlextLdifConfig.reset_global_ldif_config()
 
         # Test invalid configuration (parallel processing with 1 worker)
         # Need to reset config first to ensure clean state
-        reset_ldif_config()
-        result = initialize_ldif_config(
+        FlextLdifConfig.reset_global_ldif_config()
+        result = FlextLdifConfig.initialize_global_ldif_config(
             ldif_parallel_processing=True,
             ldif_max_workers=1,
         )
@@ -207,7 +206,7 @@ class TestFlextLDIFConfig:
         assert "Parallel processing requires at least 2 workers" in error_message
 
         # Test invalid configuration (chunk size > max entries)
-        result = initialize_ldif_config(
+        result = FlextLdifConfig.initialize_global_ldif_config(
             ldif_chunk_size=5000,
             ldif_max_entries=1000,
         )
@@ -218,8 +217,8 @@ class TestFlextLDIFConfig:
 
     def test_flext_core_inheritance(self) -> None:
         """Test LDIF-specific configuration properties."""
-        initialize_ldif_config()
-        config = get_ldif_config()
+        FlextLdifConfig.initialize_global_ldif_config()
+        config = FlextLdifConfig.get_global_ldif_config()
 
         # Test LDIF-specific properties
         assert hasattr(config, "ldif_max_entries")
@@ -236,23 +235,23 @@ class TestFlextLDIFConfig:
     def test_reset_global_config(self) -> None:
         """Test resetting global configuration."""
         # Initialize configuration
-        initialize_ldif_config()
-        config1 = get_ldif_config()
+        FlextLdifConfig.initialize_global_ldif_config()
+        config1 = FlextLdifConfig.get_global_ldif_config()
 
         # Reset configuration
-        reset_ldif_config()
+        FlextLdifConfig.reset_global_ldif_config()
 
         # Initialize again
-        initialize_ldif_config()
-        config2 = get_ldif_config()
+        FlextLdifConfig.initialize_global_ldif_config()
+        config2 = FlextLdifConfig.get_global_ldif_config()
 
         # Should be different instances
         assert config1 is not config2
 
     def test_configuration_sealing(self) -> None:
         """Test configuration sealing behavior."""
-        initialize_ldif_config()
-        config = get_ldif_config()
+        FlextLdifConfig.initialize_global_ldif_config()
+        config = FlextLdifConfig.get_global_ldif_config()
 
         # Seal configuration
         config.seal()
@@ -268,7 +267,7 @@ class TestFlextLDIFConfig:
     def test_environment_variable_support(self) -> None:
         """Test configuration parameter support."""
         # Initialize configuration with specific parameters
-        result = initialize_ldif_config(
+        result = FlextLdifConfig.initialize_global_ldif_config(
             ldif_max_entries=75000, ldif_strict_validation=False
         )
         assert result.is_success

@@ -8,15 +8,15 @@ import base64
 
 import pytest
 
-from flext_ldif import FlextLDIFModels
-from flext_ldif.format_handlers import FlextLDIFFormatHandler
-from flext_ldif.writer_service import FlextLDIFWriterService
+from flext_ldif import FlextLdifModels
+from flext_ldif.format_handlers import FlextLdifFormatHandler
+from flext_ldif.writer_service import FlextLdifWriterService
 
 # Reason: Multiple assertion checks are common in tests for comprehensive error validation
 
 
-class TestFlextLDIFFormatHandler:
-    """Test FlextLDIFFormatHandler class methods."""
+class TestFlextLdifFormatHandler:
+    """Test FlextLdifFormatHandler class methods."""
 
     def test_parse_ldif_basic(self) -> None:
         """Test basic LDIF parsing through class method."""
@@ -31,26 +31,26 @@ sn: Smith
 objectClass: person
 """
 
-        handler = FlextLDIFFormatHandler()
+        handler = FlextLdifFormatHandler()
         result = handler.parse_ldif(ldif_content)
         assert result.is_success
         entries = result.value
         assert len(entries) == 2
-        assert isinstance(entries[0], FlextLDIFModels.Entry)
-        assert str(entries[0].dn) == "cn=John Doe,ou=people,dc=example,dc=com"
+        assert isinstance(entries[0], FlextLdifModels.Entry)
+        assert entries[0].dn.value == "cn=John Doe,ou=people,dc=example,dc=com"
 
     def test_write_ldif_basic(self) -> None:
         """Test basic LDIF writing through class method."""
-        entry = FlextLDIFModels.Entry(
-            dn=FlextLDIFModels.DistinguishedName(
+        entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(
                 value="cn=Test User,ou=people,dc=example,dc=com"
             ),
-            attributes=FlextLDIFModels.LdifAttributes(
+            attributes=FlextLdifModels.LdifAttributes(
                 data={"cn": ["Test User"], "sn": ["User"], "objectClass": ["person"]}
             ),
         )
 
-        handler = FlextLDIFFormatHandler()
+        handler = FlextLdifFormatHandler()
         result = handler.write_ldif([entry])
         assert result.is_success
         ldif_output = result.value
@@ -59,7 +59,7 @@ objectClass: person
 
     def test_parse_ldif_empty_content(self) -> None:
         """Test parsing empty LDIF content."""
-        handler = FlextLDIFFormatHandler()
+        handler = FlextLdifFormatHandler()
         result = handler.parse_ldif("")
         assert result.is_success
         entries = result.value
@@ -67,7 +67,7 @@ objectClass: person
 
     def test_write_ldif_empty_entries(self) -> None:
         """Test writing empty entry list."""
-        handler = FlextLDIFFormatHandler()
+        handler = FlextLdifFormatHandler()
         result = handler.write_ldif([])
         assert result.is_success
         ldif_output = result.value
@@ -76,13 +76,13 @@ objectClass: person
     def test_validate_url_scheme_valid(self) -> None:
         """Test URL scheme validation with valid schemes."""
         # These should not raise an exception
-        handler = FlextLDIFFormatHandler()
+        handler = FlextLdifFormatHandler()
         handler.validate_url_scheme("http://example.com")
         handler.validate_url_scheme("https://example.com/path")
 
     def test_validate_url_scheme_invalid(self) -> None:
         """Test URL scheme validation with invalid schemes."""
-        handler = FlextLDIFFormatHandler()
+        handler = FlextLdifFormatHandler()
         with pytest.raises(ValueError, match="URL scheme 'ftp' not allowed"):
             handler.validate_url_scheme("ftp://example.com")
 
@@ -91,7 +91,7 @@ objectClass: person
 
     def test_is_dn_valid(self) -> None:
         """Test is_dn method with valid DNs."""
-        handler = FlextLDIFFormatHandler()
+        handler = FlextLdifFormatHandler()
         valid_dns = [
             "cn=John Doe,ou=people,dc=example,dc=com",
             "uid=user,ou=users,dc=company,dc=org",
@@ -103,7 +103,7 @@ objectClass: person
 
     def test_is_dn_invalid(self) -> None:
         """Test is_dn method with invalid DNs."""
-        handler = FlextLDIFFormatHandler()
+        handler = FlextLdifFormatHandler()
         invalid_dns = [
             "invalid dn format",
             "no equals sign",
@@ -115,37 +115,37 @@ objectClass: person
 
     def test_is_dn_empty_string(self) -> None:
         """Test is_dn method with empty string (valid according to regex)."""
-        handler = FlextLDIFFormatHandler()
+        handler = FlextLdifFormatHandler()
         # Empty string is considered valid DN by the regex
         assert handler.is_dn("")
 
     def test_lower_list_utility(self) -> None:
         """Test lower_list utility method."""
-        handler = FlextLDIFFormatHandler()
+        handler = FlextLdifFormatHandler()
         # Test with valid list
-        result = handler._ValidationHelper.lower_list(["UPPER", "MixedCase"])
+        result = handler.lower_list(["UPPER", "MixedCase"])
         assert result == ["upper", "mixedcase"]
 
         # Test with None
-        result = handler._ValidationHelper.lower_list(None)
+        result = handler.lower_list(None)
         assert result == []
 
     def test_write_ldif_none_input(self) -> None:
         """Test write_ldif with None input."""
-        handler = FlextLDIFFormatHandler()
+        handler = FlextLdifFormatHandler()
         result = handler.write_ldif(None)
         assert result.is_failure
         assert result.error is not None
         assert "Entries cannot be None" in result.error
 
 
-class TestFlextLDIFWriter:
+class TestFlextLdifWriter:
     """Test LDIF writer functionality."""
 
     def test_writer_initialization_default(self) -> None:
         """Test writer initialization with defaults."""
-        writer = FlextLDIFWriterService()
-        # Note: FlextLDIFWriterService doesn't have these attributes
+        writer = FlextLdifWriterService()
+        # Note: FlextLdifWriterService doesn't have these attributes
         # assert writer._cols == 76
         # assert writer._line_sep == "\n"
         # assert writer._encoding == "utf-8"
@@ -154,28 +154,28 @@ class TestFlextLDIFWriter:
 
     def test_writer_initialization_custom(self) -> None:
         """Test writer with custom parameters."""
-        writer = FlextLDIFWriterService()
-        # Note: FlextLDIFWriterService doesn't have these attributes
+        writer = FlextLdifWriterService()
+        # Note: FlextLdifWriterService doesn't have these attributes
         # assert writer._cols == 80
         # assert writer._line_sep == "\r\n"
         assert writer._format_handler is not None
-        # Note: FlextLDIFWriterService doesn't have these attributes
+        # Note: FlextLdifWriterService doesn't have these attributes
         # assert "usercertificate" in writer._base64_attrs  # Should be lowercased
         # assert writer._encoding == "utf-8"
 
     def test_needs_base64_encoding_safe_string(self) -> None:
         """Test base64 encoding detection with safe string."""
-        writer = FlextLDIFWriterService()
-        # Note: FlextLDIFWriterService doesn't have this method
+        writer = FlextLdifWriterService()
+        # Note: FlextLdifWriterService doesn't have this method
         # assert writer._needs_base64_encoding("cn", "John Doe") is False
         assert writer._format_handler is not None
-        # Note: FlextLDIFWriterService doesn't have this method
+        # Note: FlextLdifWriterService doesn't have this method
         # assert writer._needs_base64_encoding("mail", "john@example.com") is False
 
     def test_needs_base64_encoding_unsafe_string(self) -> None:
         """Test base64 encoding detection with unsafe string."""
-        writer = FlextLDIFWriterService()
-        # Note: FlextLDIFWriterService doesn't have this method
+        writer = FlextLdifWriterService()
+        # Note: FlextLdifWriterService doesn't have this method
         # String starting with space
         # assert (
         #     writer._needs_base64_encoding("description", " starts with space") is True
@@ -186,29 +186,29 @@ class TestFlextLDIFWriter:
 
     def test_needs_base64_encoding_forced_attrs(self) -> None:
         """Test base64 encoding for forced attributes."""
-        writer = FlextLDIFWriterService()
-        # Note: FlextLDIFWriterService doesn't have this method
+        writer = FlextLdifWriterService()
+        # Note: FlextLdifWriterService doesn't have this method
         # assert writer._needs_base64_encoding("userCertificate", "safe value") is True
         assert writer._format_handler is not None
-        # Note: FlextLDIFWriterService doesn't have this method
+        # Note: FlextLdifWriterService doesn't have this method
         # assert writer._needs_base64_encoding("cn", "safe value") is False
 
     def test_get_output_empty(self) -> None:
         """Test getting output from empty writer."""
-        writer = FlextLDIFWriterService()
-        # Note: FlextLDIFWriterService doesn't have this method
+        writer = FlextLdifWriterService()
+        # Note: FlextLdifWriterService doesn't have this method
         # output = writer.get_output()
         assert writer._format_handler is not None
-        # Note: FlextLDIFWriterService doesn't have this method
+        # Note: FlextLdifWriterService doesn't have this method
         # assert output == ""
 
     def test_unparse_simple_entry(self) -> None:
         """Test unparsing a simple entry."""
-        writer = FlextLDIFWriterService()
-        # Note: FlextLDIFWriterService doesn't have this method
+        writer = FlextLdifWriterService()
+        # Note: FlextLdifWriterService doesn't have this method
         # dn = "cn=John Doe,ou=people,dc=example,dc=com"
         assert writer._format_handler is not None
-        # Note: FlextLDIFWriterService doesn't have this method
+        # Note: FlextLdifWriterService doesn't have this method
         # record = {"cn": ["John Doe"], "objectClass": ["person"]}
         # writer.unparse(dn, record)
         # output = writer.get_output()
@@ -219,11 +219,11 @@ class TestFlextLDIFWriter:
 
     def test_unparse_entry_with_base64(self) -> None:
         """Test unparsing entry with base64 encoded values."""
-        writer = FlextLDIFWriterService()
-        # Note: FlextLDIFWriterService doesn't have this method
+        writer = FlextLdifWriterService()
+        # Note: FlextLdifWriterService doesn't have this method
         # dn = "cn=José María,ou=people,dc=example,dc=com"
         assert writer._format_handler is not None
-        # Note: FlextLDIFWriterService doesn't have this method
+        # Note: FlextLdifWriterService doesn't have this method
         # record = {"cn": ["José María"], "description": [" starts with space"]}
         # writer.unparse(dn, record)
         # output = writer.get_output()
@@ -233,10 +233,10 @@ class TestFlextLDIFWriter:
 
     def test_unparse_multiple_entries(self) -> None:
         """Test unparsing multiple entries."""
-        writer = FlextLDIFWriterService()
-        # Note: FlextLDIFWriterService doesn't have this method
+        writer = FlextLdifWriterService()
+        # Note: FlextLdifWriterService doesn't have this method
         assert writer._format_handler is not None
-        # Note: FlextLDIFWriterService doesn't have this method
+        # Note: FlextLdifWriterService doesn't have this method
         # writer.unparse(
         #     "dc=example,dc=com", {"objectClass": ["dcObject"], "dc": ["example"]}
         # )
@@ -252,11 +252,11 @@ class TestFlextLDIFWriter:
 
     def test_unparse_with_line_wrapping(self) -> None:
         """Test unparsing entries with long lines that require wrapping."""
-        writer = FlextLDIFWriterService()
-        # Note: FlextLDIFWriterService doesn't have this method
-        # writer = FlextLDIFWriter(cols=40)  # Short line length to force wrapping
+        writer = FlextLdifWriterService()
+        # Note: FlextLdifWriterService doesn't have this method
+        # writer = FlextLdifWriter(cols=40)  # Short line length to force wrapping
         assert writer._format_handler is not None
-        # Note: FlextLDIFWriterService doesn't have this method
+        # Note: FlextLdifWriterService doesn't have this method
         # Create entry with very long description to trigger line wrapping
         # long_description = "A" * 100  # 100 character description
         # dn = "cn=test,dc=example,dc=com"
@@ -280,11 +280,11 @@ class TestFlextLDIFWriter:
 
     def test_unparse_with_line_wrapping_exact_boundary(self) -> None:
         """Test line wrapping at exact column boundary."""
-        writer = FlextLDIFWriterService()
-        # Note: FlextLDIFWriterService doesn't have this method
-        # writer = FlextLDIFWriter(cols=76)  # Standard LDIF line length
+        writer = FlextLdifWriterService()
+        # Note: FlextLdifWriterService doesn't have this method
+        # writer = FlextLdifWriter(cols=76)  # Standard LDIF line length
         assert writer._format_handler is not None
-        # Note: FlextLDIFWriterService doesn't have this method
+        # Note: FlextLdifWriterService doesn't have this method
         # Create an attribute value that exactly fills the line
         # exact_length_value = "A" * (76 - len("description: "))  # Exact fit
         # dn = "cn=test,dc=example,dc=com"
@@ -302,8 +302,8 @@ class TestFlextLDIFWriter:
 
     def test_unparse_with_line_wrapping_over_boundary(self) -> None:
         """Test line wrapping when exceeding column boundary."""
-        writer = FlextLDIFWriterService(cols=30)  # Short to force wrapping
-        # Note: FlextLDIFWriterService now supports cols parameter
+        writer = FlextLdifWriterService(cols=30)  # Short to force wrapping
+        # Note: FlextLdifWriterService now supports cols parameter
         assert writer._format_handler is not None
 
         # Create an attribute value that exceeds the line length
@@ -328,28 +328,28 @@ class TestFlextLDIFWriter:
         )
 
 
-class TestFlextLDIFParserUnified:
-    """Test LDIF parser functionality using unified FlextLDIFFormatHandler."""
+class TestFlextLdifParserUnified:
+    """Test LDIF parser functionality using unified FlextLdifFormatHandler."""
 
     def test_parser_initialization_simple(self) -> None:
-        """Test parser initialization using unified FlextLDIFFormatHandler."""
-        handler = FlextLDIFFormatHandler()
-        # Test that handler can be initialized and has the proper nested helpers
-        assert hasattr(handler, "_ParserHelper")
-        assert hasattr(handler, "_WriterHelper")
-        assert hasattr(handler, "_ValidationHelper")
-        assert hasattr(handler, "_UrlHelper")
+        """Test parser initialization using unified FlextLdifFormatHandler."""
+        handler = FlextLdifFormatHandler()
+        # Test that handler can be initialized and has the proper methods
+        assert hasattr(handler, "parse_ldif")
+        assert hasattr(handler, "write_ldif")
+        assert hasattr(handler, "lower_list")
+        assert hasattr(handler, "safe_url_fetch")
 
     def test_parser_with_content_parsing(self) -> None:
         """Test parser with content parsing using unified handler."""
         ldif_content = "dn: dc=example,dc=com\nobjectClass: dcObject\n\n"
-        handler = FlextLDIFFormatHandler()
+        handler = FlextLdifFormatHandler()
         result = handler.parse_ldif(ldif_content)
 
         assert result.is_success
         entries = result.unwrap()
         assert len(entries) == 1
-        assert str(entries[0].dn) == "dc=example,dc=com"
+        assert entries[0].dn.value == "dc=example,dc=com"
 
     def test_parse_simple_entry_unified(self) -> None:
         """Test parsing simple entry using unified handler."""
@@ -359,13 +359,13 @@ dc: example
 
 """
 
-        handler = FlextLDIFFormatHandler()
+        handler = FlextLdifFormatHandler()
         result = handler.parse_ldif(ldif_content)
 
         assert result.is_success
         entries = result.unwrap()
         assert len(entries) == 1
-        assert str(entries[0].dn) == "dc=example,dc=com"
+        assert entries[0].dn.value == "dc=example,dc=com"
         assert entries[0].attributes.data["objectClass"] == ["dcObject"]
         assert entries[0].attributes.data["dc"] == ["example"]
 
@@ -381,17 +381,17 @@ ou: people
 
 """
 
-        handler = FlextLDIFFormatHandler()
+        handler = FlextLdifFormatHandler()
         result = handler.parse_ldif(ldif_content)
 
         assert result.is_success
         entries = result.unwrap()
         assert len(entries) == 2
 
-        assert str(entries[0].dn) == "dc=example,dc=com"
+        assert entries[0].dn.value == "dc=example,dc=com"
         assert entries[0].attributes.data["objectClass"] == ["dcObject"]
 
-        assert str(entries[1].dn) == "ou=people,dc=example,dc=com"
+        assert entries[1].dn.value == "ou=people,dc=example,dc=com"
         assert entries[1].attributes.data["objectClass"] == ["organizationalUnit"]
 
     def test_parse_with_base64_unified(self) -> None:
@@ -405,7 +405,7 @@ objectClass: person
 
 """
 
-        handler = FlextLDIFFormatHandler()
+        handler = FlextLdifFormatHandler()
         result = handler.parse_ldif(ldif_content)
 
         assert result.is_success
@@ -421,7 +421,7 @@ objectClass: person
 
 """
 
-        handler = FlextLDIFFormatHandler()
+        handler = FlextLdifFormatHandler()
         result = handler.parse_ldif(ldif_content)
 
         # Should return failure result
@@ -432,12 +432,11 @@ objectClass: person
     def test_parse_validation_unified(self) -> None:
         """Test validation using unified handler."""
         # Test that the unified handler properly validates content
-        handler = FlextLDIFFormatHandler()
+        handler = FlextLdifFormatHandler()
 
         # Test DN validation
         assert handler.is_dn("cn=test,dc=example,dc=com")
         assert not handler.is_dn("invalid dn format")
 
-        # Test validation helper access
-        validation_helper = handler._ValidationHelper
-        assert validation_helper.lower_list(["UPPER", "Mixed"]) == ["upper", "mixed"]
+        # Test validation method access
+        assert handler.lower_list(["UPPER", "Mixed"]) == ["upper", "mixed"]

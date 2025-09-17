@@ -48,10 +48,10 @@ find ../flext-* -name "*.py" -exec grep -l "import ldif3\|from ldif3" {} \; 2>/d
 
 # Verify flext-ldif APIs are available
 PYTHONPATH=src python -c "
-from flext_ldif import FlextLDIFAPI, FlextLDIFModels, FlextLDIFExceptions
-api = FlextLDIFAPI()
-models = FlextLDIFModels.Factory
-exceptions = FlextLDIFExceptions.builder()
+from flext_ldif import FlextLdifAPI, FlextLdifModels, FlextLdifExceptions
+api = FlextLdifAPI()
+models = FlextLdifModels.Factory
+exceptions = FlextLdifExceptions.builder()
 print('✅ LDIF Foundation APIs available')
 "
 ```
@@ -67,10 +67,10 @@ pytest tests/ --cov=src/flext_ldif --cov-report=term-missing --cov-fail-under=90
 PYTHONPATH=src python -c "
 import tempfile
 from pathlib import Path
-from flext_ldif import FlextLDIFAPI
+from flext_ldif import FlextLdifAPI
 
 # Test enterprise LDIF processing pipeline
-api = FlextLDIFAPI()
+api = FlextLdifAPI()
 sample_ldif = '''dn: cn=test,dc=example,dc=com
 cn: test
 objectClass: person
@@ -94,7 +94,7 @@ finally:
 ```bash
 # Validate advanced patterns
 PYTHONPATH=src python -c "from flext_ldif.exceptions import ExceptionBuilder; print('✅ Builder Pattern implemented')"
-PYTHONPATH=src python -c "from flext_ldif.cli import FlextLDIFCli; print('✅ Template Method Pattern implemented')"
+PYTHONPATH=src python -c "from flext_ldif.cli import FlextLdifCli; print('✅ Template Method Pattern implemented')"
 PYTHONPATH=src python -c "from flext_ldif.core import ExceptionHandlingStrategy; print('✅ Strategy Pattern implemented')"
 ```
 

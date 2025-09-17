@@ -7,30 +7,25 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextDomainService, FlextLogger, FlextResult
-
-from flext_ldif.format_validators import FlextLDIFFormatValidators
-from flext_ldif.models import FlextLDIFModels
+from flext_ldif.models import FlextLdifModels
 
 
-class FlextLDIFValidatorService(FlextDomainService[list[FlextLDIFModels.Entry]]):
-    """LDIF Validator Service - Simplified with direct flext-core usage.
+class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]]):
+    """LDIF Validator Service - Using FlextLdifModels Pydantic v2 validation directly.
 
-    Handles all LDIF validation operations with minimal complexity.
-    Uses flext-core patterns directly without unnecessary abstractions.
+    Handles all LDIF validation operations using existing Pydantic v2 field validators
+    in FlextLdifModels. No duplicate validation classes needed.
     """
 
-    def __init__(
-        self, format_validator: FlextLDIFFormatValidators | None = None
-    ) -> None:
+    def __init__(self) -> None:
         """Initialize validator service."""
         super().__init__()
         self._logger = FlextLogger(__name__)
-        self._format_validator = format_validator or FlextLDIFFormatValidators()
 
     def get_config_info(self) -> dict[str, object]:
         """Get service configuration information."""
         return {
-            "service": "FlextLDIFValidatorService",
+            "service": "FlextLdifValidatorService",
             "config": {
                 "service_type": "validator",
                 "status": "ready",
@@ -46,7 +41,7 @@ class FlextLDIFValidatorService(FlextDomainService[list[FlextLDIFModels.Entry]])
     def get_service_info(self) -> dict[str, object]:
         """Get service information."""
         return {
-            "service_name": "FlextLDIFValidatorService",
+            "service_name": "FlextLdifValidatorService",
             "service_type": "validator",
             "capabilities": [
                 "validate_entries",
@@ -58,29 +53,31 @@ class FlextLDIFValidatorService(FlextDomainService[list[FlextLDIFModels.Entry]])
         }
 
     def validate_entries(
-        self, entries: list[FlextLDIFModels.Entry]
-    ) -> FlextResult[list[FlextLDIFModels.Entry]]:
-        """Validate multiple LDIF entries."""
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Validate multiple LDIF entries using FlextLdifModels validation."""
         if not entries:
-            return FlextResult[list[FlextLDIFModels.Entry]].fail(
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
                 "Cannot validate empty entry list"
             )
 
-        validated_entries: list[FlextLDIFModels.Entry] = []
+        validated_entries: list[FlextLdifModels.Entry] = []
 
         for entry in entries:
-            validation_result = self._format_validator.validate_entry(entry)
+            # Use FlextLdifModels Entry business rules validation
+            validation_result = entry.validate_business_rules()
             if validation_result.is_failure:
-                return FlextResult[list[FlextLDIFModels.Entry]].fail(
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
                     f"Entry validation failed: {validation_result.error}"
                 )
             validated_entries.append(entry)
 
-        return FlextResult[list[FlextLDIFModels.Entry]].ok(validated_entries)
+        return FlextResult[list[FlextLdifModels.Entry]].ok(validated_entries)
 
-    def validate_entry(self, entry: FlextLDIFModels.Entry) -> FlextResult[bool]:
-        """Validate single LDIF entry."""
-        validation_result = self._format_validator.validate_entry(entry)
+    def validate_entry(self, entry: FlextLdifModels.Entry) -> FlextResult[bool]:
+        """Validate single LDIF entry using FlextLdifModels validation."""
+        # Use FlextLdifModels Entry business rules validation
+        validation_result = entry.validate_business_rules()
         if validation_result.is_failure:
             return FlextResult[bool].fail(
                 validation_result.error or "Validation failed"
@@ -88,53 +85,56 @@ class FlextLDIFValidatorService(FlextDomainService[list[FlextLDIFModels.Entry]])
         return FlextResult[bool].ok(data=True)
 
     def validate_entry_structure(
-        self, entry: FlextLDIFModels.Entry
+        self, entry: FlextLdifModels.Entry
     ) -> FlextResult[bool]:
-        """Validate entry structure - alias for validate_entry."""
+        """Validate entry structure using FlextLdifModels validation."""
         return self.validate_entry(entry)
 
     def validate_dn_format(self, dn: str) -> FlextResult[bool]:
-        """Validate DN format."""
-        if not dn or not dn.strip():
-            return FlextResult[bool].fail("DN cannot be empty or whitespace only")
+        """Validate DN format using FlextLdifModels DistinguishedName validation."""
+        try:
+            # Use FlextLdifModels DistinguishedName Pydantic v2 validation
+            dn_obj = FlextLdifModels.DistinguishedName(value=dn)
+            validation_result = dn_obj.validate_business_rules()
+            if validation_result.is_failure:
+                return FlextResult[bool].fail(
+                    validation_result.error or "DN validation failed"
+                )
+            return FlextResult[bool].ok(data=True)
+        except Exception as e:
+            return FlextResult[bool].fail(f"DN validation failed: {e}")
 
-        # Check for basic DN structure (contains = and ,)
-        if "=" not in dn or "," not in dn:
-            return FlextResult[bool].fail("Invalid DN format")
-
-        return FlextResult[bool].ok(data=True)
-
-    def execute(self) -> FlextResult[list[FlextLDIFModels.Entry]]:
+    def execute(self) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Execute validator operation - returns sample validated entries."""
         # Create sample entries for testing
         sample_entries = [
-            FlextLDIFModels.Entry(
-                dn=FlextLDIFModels.DistinguishedName(
+            FlextLdifModels.Entry(
+                dn=FlextLdifModels.DistinguishedName(
                     value="cn=test1,dc=example,dc=com"
                 ),
-                attributes=FlextLDIFModels.LdifAttributes(
+                attributes=FlextLdifModels.LdifAttributes(
                     data={"cn": ["test1"], "objectClass": ["person"]}
                 ),
             ),
-            FlextLDIFModels.Entry(
-                dn=FlextLDIFModels.DistinguishedName(
+            FlextLdifModels.Entry(
+                dn=FlextLdifModels.DistinguishedName(
                     value="cn=test2,dc=example,dc=com"
                 ),
-                attributes=FlextLDIFModels.LdifAttributes(
+                attributes=FlextLdifModels.LdifAttributes(
                     data={"cn": ["test2"], "objectClass": ["person"]}
                 ),
             ),
-            FlextLDIFModels.Entry(
-                dn=FlextLDIFModels.DistinguishedName(
+            FlextLdifModels.Entry(
+                dn=FlextLdifModels.DistinguishedName(
                     value="cn=test3,dc=example,dc=com"
                 ),
-                attributes=FlextLDIFModels.LdifAttributes(
+                attributes=FlextLdifModels.LdifAttributes(
                     data={"cn": ["test3"], "objectClass": ["person"]}
                 ),
             ),
         ]
 
-        return FlextResult[list[FlextLDIFModels.Entry]].ok(sample_entries)
+        return FlextResult[list[FlextLdifModels.Entry]].ok(sample_entries)
 
 
-__all__ = ["FlextLDIFValidatorService"]
+__all__ = ["FlextLdifValidatorService"]

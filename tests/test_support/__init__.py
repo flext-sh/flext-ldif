@@ -6,13 +6,13 @@ SPDX-License-Identifier: MIT
 
 from tests.test_support.ldif_data import LdifSample, LdifTestData
 from tests.test_support.real_services import RealServiceFactory
-from tests.test_support.test_files import TestFileManager
+from tests.test_support.test_files import FileManager
 from tests.test_support.validators import TestValidators
 
 __all__ = [
+    "FileManager",
     "LdifSample",
     "LdifTestData",
     "RealServiceFactory",
-    "TestFileManager",
     "TestValidators",
 ]

@@ -5,12 +5,12 @@ SPDX-License-Identifier: MIT
 """
 
 import pytest
-from flext_core import FlextModels
 from pydantic import Field, ValidationError
 from pydantic.fields import FieldInfo
 
-from flext_ldif.constants import FlextLDIFConstants
-from flext_ldif.models import FlextLDIFModels
+from flext_core import FlextModels
+from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import FlextLdifModels
 
 # Reason: Pydantic field assignment pattern is not understood by pyright but is valid
 
@@ -22,7 +22,7 @@ class TestDnField:
         """Test DN field creation using models."""
         # Test DN creation using the models factory
         dn_data = {"value": "cn=test,dc=example,dc=com"}
-        dn = FlextLDIFModels.DistinguishedName.model_validate(dn_data)
+        dn = FlextLdifModels.DistinguishedName.model_validate(dn_data)
 
         assert dn.value == "cn=test,dc=example,dc=com"
         # Verify DN is properly created
@@ -31,7 +31,7 @@ class TestDnField:
         """Test DN field creation with custom data."""
         # Test DN creation with custom data
         dn_data = {"value": "cn=custom,dc=example,dc=com"}
-        dn = FlextLDIFModels.DistinguishedName.model_validate(dn_data)
+        dn = FlextLdifModels.DistinguishedName.model_validate(dn_data)
 
         assert dn.value == "cn=custom,dc=example,dc=com"
 
@@ -147,7 +147,7 @@ class TestAttributeValueField:
         """Test attribute value creation using models."""
         # Test attribute value creation using the models factory
         attr_data = {"data": {"cn": ["test"]}}
-        attr = FlextLDIFModels.LdifAttributes.model_validate(attr_data)
+        attr = FlextLdifModels.LdifAttributes.model_validate(attr_data)
 
         assert attr.data == {"cn": ["test"]}
 
@@ -155,7 +155,7 @@ class TestAttributeValueField:
         """Test attribute value creation with custom data."""
         # Test attribute value creation with custom data
         attr_data = {"data": {"mail": ["test@example.com"]}}
-        attr = FlextLDIFModels.LdifAttributes.model_validate(attr_data)
+        attr = FlextLdifModels.LdifAttributes.model_validate(attr_data)
 
         assert attr.data == {"mail": ["test@example.com"]}
 
@@ -291,13 +291,13 @@ class TestFieldDefaults:
 
     def test_field_patterns_exist(self) -> None:
         """Test that basic constants exist."""
-        assert hasattr(FlextLDIFConstants, "DN_ATTRIBUTE")
-        assert hasattr(FlextLDIFConstants, "ATTRIBUTE_SEPARATOR")
+        assert hasattr(FlextLdifConstants, "DN_ATTRIBUTE")
+        assert hasattr(FlextLdifConstants, "ATTRIBUTE_SEPARATOR")
 
     def test_field_patterns_values(self) -> None:
         """Test that constants have expected values."""
-        dn_attr = FlextLDIFConstants.DN_ATTRIBUTE
-        attr_sep = FlextLDIFConstants.ATTRIBUTE_SEPARATOR
+        dn_attr = FlextLdifConstants.DN_ATTRIBUTE
+        attr_sep = FlextLdifConstants.ATTRIBUTE_SEPARATOR
 
         # Validate they have expected values
         assert dn_attr == "dn"
@@ -305,8 +305,8 @@ class TestFieldDefaults:
 
     def test_field_patterns_types(self) -> None:
         """Test that constants have correct types."""
-        assert isinstance(FlextLDIFConstants.DN_ATTRIBUTE, str)
-        assert isinstance(FlextLDIFConstants.ATTRIBUTE_SEPARATOR, str)
+        assert isinstance(FlextLdifConstants.DN_ATTRIBUTE, str)
+        assert isinstance(FlextLdifConstants.ATTRIBUTE_SEPARATOR, str)
 
     def test_field_defaults_can_be_used_in_fields(self) -> None:
         """Test that field functions work with reasonable defaults."""

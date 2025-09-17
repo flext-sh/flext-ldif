@@ -12,8 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from flext_core import FlextLogger, FlextTypes
-
-from flext_ldif import FlextLDIFAPI, FlextLDIFModels
+from flext_ldif import FlextLdifAPI, FlextLdifConfig, FlextLdifModels
 
 """Advanced LDIF validation example.
 
@@ -30,7 +29,7 @@ logger = FlextLogger(__name__)
 
 
 def validate_business_rules(
-    entry: FlextLDIFModels.Entry,
+    entry: FlextLdifModels.Entry,
 ) -> tuple[bool, FlextTypes.Core.StringList]:
     """Apply custom business validation rules.
 
@@ -84,8 +83,8 @@ class LdifValidationDemonstrator:
 
     def __init__(self) -> None:
         """Initialize demonstrator with strict validation config."""
-        config = FlextLDIFModels.Config(strict_validation=True, max_entries=50)
-        self.api = FlextLDIFAPI(config)
+        config = FlextLdifConfig(ldif_strict_validation=True, ldif_max_entries=50)
+        self.api = FlextLdifAPI(config)
 
     def demonstrate(self) -> None:
         """Template method: demonstrate validation workflow."""
@@ -98,7 +97,7 @@ class LdifValidationDemonstrator:
         self._analyze_entry_types(entries)
         self._test_invalid_ldif()
 
-    def _parse_sample_file(self) -> list[FlextLDIFModels.Entry] | None:
+    def _parse_sample_file(self) -> list[FlextLdifModels.Entry] | None:
         """Parse sample LDIF file and return entries."""
         sample_file = Path(__file__).parent / "sample_complex.ldif"
         parse_result = self.api.parse_file(sample_file)
@@ -107,14 +106,14 @@ class LdifValidationDemonstrator:
         entries = parse_result.value
         return entries or None
 
-    def _perform_domain_validation(self, entries: list[FlextLDIFModels.Entry]) -> None:
+    def _perform_domain_validation(self, entries: list[FlextLdifModels.Entry]) -> None:
         """Perform domain validation on entries."""
         domain_errors: FlextTypes.Core.StringList = []
 
         for i, entry in enumerate(entries):
             # Use railway programming for validation
             def add_domain_error(
-                error: str, idx: int = i, ent: FlextLDIFModels.Entry = entry
+                error: str, idx: int = i, ent: FlextLdifModels.Entry = entry
             ) -> None:
                 domain_errors.append(f"Entry {idx + 1} ({ent.dn}): {error}")
 
@@ -123,7 +122,7 @@ class LdifValidationDemonstrator:
         self._log_validation_errors(domain_errors, "Domain validation")
 
     def _perform_business_validation(
-        self, entries: list[FlextLDIFModels.Entry]
+        self, entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Perform business rule validation on entries."""
         business_errors: FlextTypes.Core.StringList = []
@@ -137,12 +136,12 @@ class LdifValidationDemonstrator:
 
         self._log_validation_errors(business_errors, "Business validation")
 
-    def _analyze_entry_types(self, entries: list[FlextLDIFModels.Entry]) -> None:
+    def _analyze_entry_types(self, entries: list[FlextLdifModels.Entry]) -> None:
         """Analyze entry types using API filters."""
         # Use railway programming for filtering results
         filter_functions: list[
             Callable[
-                [list[FlextLDIFModels.Entry]], FlextResult[list[FlextLDIFModels.Entry]]
+                [list[FlextLdifModels.Entry]], FlextResult[list[FlextLdifModels.Entry]]
             ]
         ] = [
             self.api.filter_persons,
@@ -168,7 +167,7 @@ class LdifValidationDemonstrator:
         # Use railway programming for invalid file processing
         self.api.parse_file(invalid_file).tap(self._validate_invalid_entries)
 
-    def _validate_invalid_entries(self, entries: list[FlextLDIFModels.Entry]) -> None:
+    def _validate_invalid_entries(self, entries: list[FlextLdifModels.Entry]) -> None:
         """Validate entries from invalid LDIF file."""
         for entry in entries:
             # Use railway programming for validation

@@ -20,7 +20,7 @@
 - **Builder Pattern**: Exception handling system (127+ lines duplication eliminated)
 - **Strategy Pattern**: Exception handling strategies (all duplication eliminated)
 - **Template Method Pattern**: CLI processing (73 complexity points reduced)
-- **Factory Pattern**: Unified object creation through FlextLDIFModels.Factory
+- **Factory Pattern**: Unified object creation through FlextLdifModels.Factory
 
 ## Quality Tools
 

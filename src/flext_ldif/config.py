@@ -9,8 +9,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Self
 
-from flext_core import FlextConfig, FlextResult
 from pydantic import Field, field_validator, model_validator
+
+from flext_core import FlextConfig, FlextResult
 
 # Configuration validation constants
 MIN_WORKERS_FOR_PARALLEL = 2
@@ -21,7 +22,7 @@ MAX_WORKERS_LIMIT = 16
 MAX_ANALYTICS_CACHE_SIZE = 50000
 
 
-class FlextLDIFConfig(FlextConfig):
+class FlextLdifConfig(FlextConfig):
     """LDIF-specific configuration extending flext-core FlextConfig.
 
     Provides LDIF-specific settings with proper validation.
@@ -298,85 +299,76 @@ class FlextLDIFConfig(FlextConfig):
         except Exception as e:
             return FlextResult[None].fail(f"Failed to apply overrides: {e}")
 
+    @classmethod
+    def get_global_ldif_config(cls) -> FlextLdifConfig:
+        """Get global LDIF configuration instance.
 
-# =============================================================================
-# CONVENIENCE FUNCTIONS FOR GLOBAL CONFIG ACCESS
-# =============================================================================
+        Returns:
+            Global FlextLdifConfig instance
 
+        Raises:
+            RuntimeError: If configuration has not been initialized
 
-def get_ldif_config() -> FlextLDIFConfig:
-    """Get global LDIF configuration instance.
+        """
+        # Use the parent's singleton pattern correctly
+        global_instance = FlextConfig.get_global_instance()
 
-    Returns:
-        Global FlextLDIFConfig instance
+        # If it's already a FlextLdifConfig, return it
+        if isinstance(global_instance, cls):
+            return global_instance
 
-    Raises:
-        RuntimeError: If configuration has not been initialized
+        # If it's a base FlextConfig, we need to initialize LDIF config
+        # This should not happen in normal operation, but handle gracefully
+        msg = "Global instance is not a FlextLdifConfig instance. Call initialize_global_ldif_config() first."
+        raise RuntimeError(msg)
 
-    """
-    # Use the parent's singleton pattern correctly
-    global_instance = FlextConfig.get_global_instance()
+    @classmethod
+    def initialize_global_ldif_config(
+        cls,
+        **kwargs: str | int | bool | None,
+    ) -> FlextResult[FlextLdifConfig]:
+        """Initialize global LDIF configuration.
 
-    # If it's already a FlextLDIFConfig, return it
-    if isinstance(global_instance, FlextLDIFConfig):
-        return global_instance
+        Args:
+            **kwargs: Configuration parameters to override defaults
 
-    # If it's a base FlextConfig, we need to initialize LDIF config
-    # This should not happen in normal operation, but handle gracefully
-    msg = "Global instance is not a FlextLDIFConfig instance. Call initialize_ldif_config() first."
-    raise RuntimeError(msg)
+        Returns:
+            FlextResult containing initialized configuration
 
-
-def initialize_ldif_config(
-    **kwargs: str | int | bool | None,
-) -> FlextResult[FlextLDIFConfig]:
-    """Initialize global LDIF configuration.
-
-    Args:
-        **kwargs: Configuration parameters to override defaults
-
-    Returns:
-        FlextResult containing initialized configuration
-
-    """
-    try:
-        # Check if already initialized
+        """
         try:
-            existing = get_ldif_config()
-            return FlextResult[FlextLDIFConfig].ok(existing)
-        except RuntimeError:
-            # Not initialized yet, proceed with initialization
-            pass
+            # Check if already initialized
+            try:
+                existing = cls.get_global_ldif_config()
+                return FlextResult[FlextLdifConfig].ok(existing)
+            except RuntimeError:
+                # Not initialized yet, proceed with initialization
+                pass
 
-        # Create new LDIF config instance with default parameters
-        config = FlextLDIFConfig()
+            # Create new LDIF config instance with default parameters
+            config = cls()
 
-        # Update with provided parameters if any
-        for key, value in kwargs.items():
-            if hasattr(config, key):
-                setattr(config, key, value)
+            # Update with provided parameters if any
+            for key, value in kwargs.items():
+                if hasattr(config, key):
+                    setattr(config, key, value)
 
-        # Set as global instance using parent's method
-        FlextConfig.set_global_instance(config)
+            # Set as global instance using parent's method
+            FlextConfig.set_global_instance(config)
 
-        return FlextResult[FlextLDIFConfig].ok(config)
-    except ValueError as e:
-        return FlextResult[FlextLDIFConfig].fail(str(e))
-    except Exception as e:
-        return FlextResult[FlextLDIFConfig].fail(
-            f"Failed to initialize LDIF configuration: {e}",
-            error_code="LDIF_CONFIG_INIT_ERROR",
-        )
+            return FlextResult[FlextLdifConfig].ok(config)
+        except ValueError as e:
+            return FlextResult[FlextLdifConfig].fail(str(e))
+        except Exception as e:
+            return FlextResult[FlextLdifConfig].fail(
+                f"Failed to initialize LDIF configuration: {e}",
+                error_code="LDIF_CONFIG_INIT_ERROR",
+            )
+
+    @classmethod
+    def reset_global_ldif_config(cls) -> None:
+        """Reset global LDIF configuration (for testing)."""
+        FlextConfig.clear_global_instance()
 
 
-def reset_ldif_config() -> None:
-    """Reset global LDIF configuration (for testing)."""
-    FlextConfig.clear_global_instance()
-
-
-__all__ = [
-    "FlextLDIFConfig",
-    "get_ldif_config",
-    "initialize_ldif_config",
-    "reset_ldif_config",
-]
+__all__ = ["FlextLdifConfig"]

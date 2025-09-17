@@ -23,7 +23,7 @@ cd flext-ldif
 make setup
 
 # Verify LDIF functionality
-python -c "from flext_ldif import FlextLDIFAPI; print('LDIF development environment ready')"
+python -c "from flext_ldif import FlextLdifAPI; print('LDIF development environment ready')"
 ```
 
 ### Development Commands
@@ -79,7 +79,7 @@ class _ParserHelper:
 #### Working with LDIF Entries
 
 ```python
-from flext_ldif import FlextLDIFAPI, FlextLDIFModels
+from flext_ldif import FlextLdifAPI, FlextLdifModels
 
 # LDIF entry creation using Factory pattern
 entry_data = {
@@ -90,10 +90,10 @@ entry_data = {
         "mail": ["user@example.com"]
     }
 }
-entry = FlextLDIFModels.Factory.create_entry(entry_data)
+entry = FlextLdifModels.Factory.create_entry(entry_data)
 
 # LDIF processing with memory awareness
-api = FlextLDIFAPI()
+api = FlextLdifAPI()
 
 # For small files (< 100MB)
 result = api.parse_file("small_directory.ldif")
@@ -106,7 +106,7 @@ result = api.parse_file("small_directory.ldif")
 
 ```python
 # LDIF-specific validation
-def validate_ldif_structure(entries: list[FlextLDIFModels.Entry]) -> FlextResult[None]:
+def validate_ldif_structure(entries: list[FlextLdifModels.Entry]) -> FlextResult[None]:
     """Validate LDIF entries for common issues."""
     for entry in entries:
         # Check DN format
@@ -159,7 +159,7 @@ description: Administrator account
 
 # Test parsing with various LDIF formats
 def test_ldif_parsing():
-    api = FlextLDIFAPI()
+    api = FlextLdifAPI()
     result = api.parse_string(create_test_ldif())
     assert result.is_success
     entries = result.unwrap()
@@ -177,7 +177,7 @@ def test_memory_usage():
     process = psutil.Process(os.getpid())
     initial_memory = process.memory_info().rss
 
-    api = FlextLDIFAPI()
+    api = FlextLdifAPI()
     result = api.parse_file("test_data.ldif")
 
     final_memory = process.memory_info().rss
@@ -203,7 +203,7 @@ def test_memory_usage():
 # Good: Process small files directly
 def process_small_ldif(file_path: str) -> FlextResult[dict]:
     """Process LDIF files under 100MB."""
-    api = FlextLDIFAPI()
+    api = FlextLdifAPI()
     return api.parse_file(file_path)
 
 # Consider: External tools for large files

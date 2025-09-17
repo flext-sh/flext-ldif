@@ -7,11 +7,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextResult
+from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import FlextLdifModels
 
-from flext_ldif.models import FlextLDIFModels
 
-
-class FlextLDIFRepositoryService:
+class FlextLdifRepositoryService:
     """LDIF Repository Service - Single Responsibility.
 
     Handles all LDIF repository operations with enterprise-grade error handling.
@@ -19,31 +19,31 @@ class FlextLDIFRepositoryService:
     """
 
     def find_entry_by_dn(
-        self, entries: list[FlextLDIFModels.Entry], dn: str
-    ) -> FlextResult[FlextLDIFModels.Entry | None]:
+        self, entries: list[FlextLdifModels.Entry], dn: str
+    ) -> FlextResult[FlextLdifModels.Entry | None]:
         """Find entry by DN."""
         try:
             for entry in entries:
                 if entry.dn.value.lower() == dn.lower():
-                    return FlextResult[FlextLDIFModels.Entry | None].ok(entry)
-            return FlextResult[FlextLDIFModels.Entry | None].ok(None)
+                    return FlextResult[FlextLdifModels.Entry | None].ok(entry)
+            return FlextResult[FlextLdifModels.Entry | None].ok(None)
         except Exception as e:
-            return FlextResult[FlextLDIFModels.Entry | None].fail(f"Find error: {e}")
+            return FlextResult[FlextLdifModels.Entry | None].fail(f"Find error: {e}")
 
     def filter_entries_by_attribute(
         self,
-        entries: list[FlextLDIFModels.Entry],
+        entries: list[FlextLdifModels.Entry],
         attribute_name: str,
         attribute_value: str | None,
-    ) -> FlextResult[list[FlextLDIFModels.Entry]]:
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries by attribute value."""
         try:
             if not attribute_name or not attribute_name.strip():
-                return FlextResult[list[FlextLDIFModels.Entry]].fail(
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
                     "Attribute name cannot be empty"
                 )
 
-            filtered_entries: list[FlextLDIFModels.Entry] = []
+            filtered_entries: list[FlextLdifModels.Entry] = []
             for entry in entries:
                 values = entry.get_attribute(attribute_name) or []
                 if attribute_value is None:
@@ -53,39 +53,41 @@ class FlextLDIFRepositoryService:
                 # Filter by specific attribute value
                 elif attribute_value in values:
                     filtered_entries.append(entry)
-            return FlextResult[list[FlextLDIFModels.Entry]].ok(filtered_entries)
+            return FlextResult[list[FlextLdifModels.Entry]].ok(filtered_entries)
         except Exception as e:
-            return FlextResult[list[FlextLDIFModels.Entry]].fail(f"Filter error: {e}")
+            return FlextResult[list[FlextLdifModels.Entry]].fail(f"Filter error: {e}")
 
     def filter_entries_by_objectclass(
-        self, entries: list[FlextLDIFModels.Entry], object_class: str
-    ) -> FlextResult[list[FlextLDIFModels.Entry]]:
+        self, entries: list[FlextLdifModels.Entry], object_class: str
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries by object class."""
         try:
             if not object_class or not object_class.strip():
-                return FlextResult[list[FlextLDIFModels.Entry]].fail(
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
                     "Object class cannot be empty"
                 )
 
-            filtered_entries: list[FlextLDIFModels.Entry] = []
+            filtered_entries: list[FlextLdifModels.Entry] = []
             for entry in entries:
-                object_classes = entry.get_attribute("objectClass") or []
+                object_classes = (
+                    entry.get_attribute(FlextLdifConstants.OBJECTCLASS_ATTRIBUTE) or []
+                )
                 if object_class.lower() in (oc.lower() for oc in object_classes):
                     filtered_entries.append(entry)
-            return FlextResult[list[FlextLDIFModels.Entry]].ok(filtered_entries)
+            return FlextResult[list[FlextLdifModels.Entry]].ok(filtered_entries)
         except Exception as e:
-            return FlextResult[list[FlextLDIFModels.Entry]].fail(
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"ObjectClass filter error: {e}"
             )
 
     def filter_entries_by_object_class(
-        self, entries: list[FlextLDIFModels.Entry], object_class: str
-    ) -> FlextResult[list[FlextLDIFModels.Entry]]:
-        """Filter entries by object class - alias for filter_entries_by_objectclass."""
+        self, entries: list[FlextLdifModels.Entry], object_class: str
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Filter entries by object class."""
         return self.filter_entries_by_objectclass(entries, object_class)
 
     def get_statistics(
-        self, entries: list[FlextLDIFModels.Entry]
+        self, entries: list[FlextLdifModels.Entry]
     ) -> FlextResult[dict[str, int]]:
         """Get comprehensive entry statistics."""
         try:
@@ -96,13 +98,19 @@ class FlextLDIFRepositoryService:
                 "total_entries": len(entries),
                 "unique_dns": unique_dns,
                 "total_attributes": total_attributes,
-                "person_entries": sum(1 for e in entries if e.is_person()),
-                "group_entries": sum(1 for e in entries if e.is_group()),
+                "person_entries": sum(1 for e in entries if e.is_person_entry()),
+                "group_entries": sum(1 for e in entries if e.is_group_entry()),
                 "organizational_unit_entries": sum(
                     1
                     for e in entries
                     if "organizationalunit"
-                    in (oc.lower() for oc in (e.get_attribute("objectClass") or []))
+                    in (
+                        oc.lower()
+                        for oc in (
+                            e.get_attribute(FlextLdifConstants.OBJECTCLASS_ATTRIBUTE)
+                            or []
+                        )
+                    )
                 ),
             }
             return FlextResult[dict[str, int]].ok(stats)
@@ -112,7 +120,7 @@ class FlextLDIFRepositoryService:
     def get_config_info(self) -> dict[str, object]:
         """Get repository service configuration information."""
         return {
-            "service": "FlextLDIFRepositoryService",
+            "service": "FlextLdifRepositoryService",
             "config": {
                 "repository_enabled": True,
                 "supported_operations": [
@@ -125,4 +133,4 @@ class FlextLDIFRepositoryService:
         }
 
 
-__all__ = ["FlextLDIFRepositoryService"]
+__all__ = ["FlextLdifRepositoryService"]

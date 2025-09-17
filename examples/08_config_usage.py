@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Example: Using FlextLDIFConfig for LDIF-specific configuration.
+"""Example: Using FlextLdifConfig for LDIF-specific configuration.
 
-This example demonstrates how to use FlextLDIFConfig as a singleton
+This example demonstrates how to use FlextLdifConfig as a singleton
 for LDIF-specific configuration management, extending flext-core FlextConfig.
 """
 
@@ -10,8 +10,8 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from flext_ldif import FlextLDIFAPI, initialize_ldif_config
-from flext_ldif.config import get_ldif_config
+from flext_ldif import FlextLdifAPI
+from flext_ldif.config import FlextLdifConfig
 
 
 def main() -> None:
@@ -20,7 +20,7 @@ def main() -> None:
 
     # Initialize LDIF configuration with custom parameters
     print("1. Initializing LDIF configuration...")
-    config_result = initialize_ldif_config(
+    config_result = FlextLdifConfig.initialize_global_ldif_config(
         ldif_max_entries=50000,
         ldif_strict_validation=True,
         ldif_parallel_processing=True,
@@ -36,7 +36,7 @@ def main() -> None:
 
     # Get global configuration instance
     print("\n2. Accessing global configuration...")
-    config = get_ldif_config()
+    config = FlextLdifConfig.get_global_ldif_config()
 
     # Display configuration values
     print(f"   Max entries: {config.ldif_max_entries}")
@@ -82,7 +82,7 @@ def main() -> None:
 
     # Use configuration in LDIF operations
     print("\n6. Using configuration in LDIF operations...")
-    api = FlextLDIFAPI()
+    api = FlextLdifAPI()
 
     # Create sample LDIF content
     sample_ldif = """dn: cn=test,dc=example,dc=com

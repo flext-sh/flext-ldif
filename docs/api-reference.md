@@ -6,15 +6,15 @@ Complete API documentation for FLEXT-LDIF, including all public classes, methods
 
 ## Core API Classes
 
-### FlextLDIFAPI
+### FlextLdifAPI
 
 Main unified interface for all LDIF processing operations.
 
 ```python
-class FlextLDIFAPI:
+class FlextLdifAPI:
     """Unified LDIF Processing API."""
 
-    def __init__(self, config: FlextLDIFModels.Config | None = None) -> None:
+    def __init__(self, config: FlextLdifModels.Config | None = None) -> None:
         """Initialize LDIF API with optional configuration."""
 ```
 
@@ -25,7 +25,7 @@ class FlextLDIFAPI:
 Parse LDIF file into structured entries.
 
 ```python
-def parse_file(self, file_path: Path | str) -> FlextResult[list[FlextLDIFModels.Entry]]:
+def parse_file(self, file_path: Path | str) -> FlextResult[list[FlextLdifModels.Entry]]:
     """Parse LDIF file using railway-oriented programming.
 
     Args:
@@ -35,7 +35,7 @@ def parse_file(self, file_path: Path | str) -> FlextResult[list[FlextLDIFModels.
         FlextResult containing list of parsed entries or error
 
     Example:
-        >>> api = FlextLDIFAPI()
+        >>> api = FlextLdifAPI()
         >>> result = api.parse_file("directory.ldif")
         >>> if result.is_success:
         ...     entries = result.unwrap()
@@ -48,7 +48,7 @@ def parse_file(self, file_path: Path | str) -> FlextResult[list[FlextLDIFModels.
 Parse LDIF string content into structured entries.
 
 ```python
-def parse_string(self, content: str) -> FlextResult[list[FlextLDIFModels.Entry]]:
+def parse_string(self, content: str) -> FlextResult[list[FlextLdifModels.Entry]]:
     """Parse LDIF string content.
 
     Args:
@@ -73,7 +73,7 @@ def parse_string(self, content: str) -> FlextResult[list[FlextLDIFModels.Entry]]
 Validate LDIF entries against RFC 2849 and business rules.
 
 ```python
-def validate_entries(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult[bool]:
+def validate_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[bool]:
     """Validate LDIF entries.
 
     Args:
@@ -97,7 +97,7 @@ Write LDIF entries to file.
 ```python
 def write_file(
     self,
-    entries: list[FlextLDIFModels.Entry],
+    entries: list[FlextLdifModels.Entry],
     file_path: Path | str
 ) -> FlextResult[bool]:
     """Write LDIF entries to file.
@@ -122,7 +122,7 @@ def write_file(
 Convert entries to LDIF string format.
 
 ```python
-def write(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult[str]:
+def write(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
     """Convert entries to LDIF string.
 
     Args:
@@ -146,7 +146,7 @@ def write(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult[str]:
 Filter entries with person object class.
 
 ```python
-def filter_persons(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult[list[FlextLDIFModels.Entry]]:
+def filter_persons(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[list[FlextLdifModels.Entry]]:
     """Filter person entries from entry list.
 
     Args:
@@ -168,7 +168,7 @@ def filter_persons(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult[li
 Filter entries with group object classes.
 
 ```python
-def filter_groups(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult[list[FlextLDIFModels.Entry]]:
+def filter_groups(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[list[FlextLdifModels.Entry]]:
     """Filter group entries from entry list.
 
     Args:
@@ -190,9 +190,9 @@ Filter entries by specific object class.
 ```python
 def filter_by_objectclass(
     self,
-    entries: list[FlextLDIFModels.Entry],
+    entries: list[FlextLdifModels.Entry],
     object_class: str
-) -> FlextResult[list[FlextLDIFModels.Entry]]:
+) -> FlextResult[list[FlextLdifModels.Entry]]:
     """Filter entries by object class.
 
     Args:
@@ -215,7 +215,7 @@ def filter_by_objectclass(
 Generate statistics about LDIF entries.
 
 ```python
-def get_entry_statistics(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult[dict[str, int]]:
+def get_entry_statistics(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[dict[str, int]]:
     """Get statistics about LDIF entries.
 
     Args:
@@ -237,7 +237,7 @@ def get_entry_statistics(self, entries: list[FlextLDIFModels.Entry]) -> FlextRes
 Perform comprehensive analysis of LDIF entries.
 
 ```python
-def analyze_entries(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult[dict]:
+def analyze_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[dict]:
     """Perform comprehensive entry analysis.
 
     Args:
@@ -256,7 +256,7 @@ def analyze_entries(self, entries: list[FlextLDIFModels.Entry]) -> FlextResult[d
 
 ## Domain Models
 
-### FlextLDIFModels.Entry
+### FlextLdifModels.Entry
 
 Represents an LDIF entry with structured data.
 
@@ -303,7 +303,7 @@ if entry.is_person():
         print(f"Email: {email[0]}")
 ```
 
-### FlextLDIFModels.Config
+### FlextLdifModels.Config
 
 Configuration settings for LDIF processing.
 
@@ -337,7 +337,7 @@ class Config(BaseModel):
 
 ```python
 # Create custom configuration
-config = FlextLDIFModels.Config(
+config = FlextLdifModels.Config(
     max_entries=50000,
     strict_validation=True,
     ignore_unknown_attributes=False,
@@ -345,10 +345,10 @@ config = FlextLDIFModels.Config(
 )
 
 # Use configuration with API
-api = FlextLDIFAPI(config=config)
+api = FlextLdifAPI(config=config)
 ```
 
-### FlextLDIFModels.Factory
+### FlextLdifModels.Factory
 
 Factory methods for creating domain objects.
 
@@ -387,14 +387,14 @@ class Factory:
 
 ```python
 # Create entries using factory
-person = FlextLDIFModels.Factory.create_person_entry(
+person = FlextLdifModels.Factory.create_person_entry(
     dn="cn=John Doe,ou=People,dc=example,dc=com",
     cn="John Doe",
     sn="Doe",
     mail=["john.doe@example.com"]
 )
 
-group = FlextLDIFModels.Factory.create_group_entry(
+group = FlextLdifModels.Factory.create_group_entry(
     dn="cn=Admins,ou=Groups,dc=example,dc=com",
     cn="Administrators",
     members=["cn=John Doe,ou=People,dc=example,dc=com"]
@@ -406,7 +406,7 @@ group = FlextLDIFModels.Factory.create_group_entry(
 ### Global Configuration
 
 ```python
-from flext_ldif import FlextLDIFConfig, initialize_ldif_config, get_ldif_config
+from flext_ldif import FlextLdifConfig, initialize_ldif_config, get_ldif_config
 
 # Initialize global configuration
 initialize_ldif_config({
@@ -424,13 +424,13 @@ print(f"Max entries: {config.max_entries}")
 
 ```python
 # Create instance-specific configuration
-instance_config = FlextLDIFModels.Config(
+instance_config = FlextLdifModels.Config(
     max_entries=10000,  # Override global setting
     strict_validation=False
 )
 
 # Use with API instance
-api = FlextLDIFAPI(config=instance_config)
+api = FlextLdifAPI(config=instance_config)
 ```
 
 ## Error Handling
@@ -467,19 +467,19 @@ final_result = (
 
 ```python
 from flext_ldif import (
-    FlextLDIFError,           # Base LDIF error
-    FlextLDIFParseError,      # LDIF parsing errors
-    FlextLDIFValidationError, # Validation errors
-    FlextLDIFExceptions       # Exception builder
+    FlextLdifError,           # Base LDIF error
+    FlextLdifParseError,      # LDIF parsing errors
+    FlextLdifValidationError, # Validation errors
+    FlextLdifExceptions       # Exception builder
 )
 
 # Exception builder pattern
 try:
     # Operations that might raise exceptions
     pass
-except FlextLDIFParseError as e:
+except FlextLdifParseError as e:
     print(f"Parse error: {e}")
-except FlextLDIFValidationError as e:
+except FlextLdifValidationError as e:
     print(f"Validation error: {e}")
 ```
 
@@ -517,7 +517,7 @@ from flext_ldif import main
 ```python
 def process_enterprise_directory(input_file: Path, output_file: Path) -> FlextResult[dict]:
     """Process enterprise directory with complete pipeline."""
-    api = FlextLDIFAPI(FlextLDIFModels.Config(strict_validation=True))
+    api = FlextLdifAPI(FlextLdifModels.Config(strict_validation=True))
 
     return (
         # Parse directory export
@@ -551,7 +551,7 @@ def process_enterprise_directory(input_file: Path, output_file: Path) -> FlextRe
 ```python
 def process_multiple_files(file_paths: list[Path]) -> FlextResult[dict]:
     """Process multiple LDIF files in batch."""
-    api = FlextLDIFAPI()
+    api = FlextLdifAPI()
     all_entries = []
     processing_stats = {}
 
@@ -575,12 +575,12 @@ def process_multiple_files(file_paths: list[Path]) -> FlextResult[dict]:
 
 ```python
 def filter_by_custom_criteria(
-    api: FlextLDIFAPI,
-    entries: list[FlextLDIFModels.Entry]
-) -> FlextResult[list[FlextLDIFModels.Entry]]:
+    api: FlextLdifAPI,
+    entries: list[FlextLdifModels.Entry]
+) -> FlextResult[list[FlextLdifModels.Entry]]:
     """Apply custom filtering logic."""
 
-    def matches_criteria(entry: FlextLDIFModels.Entry) -> bool:
+    def matches_criteria(entry: FlextLdifModels.Entry) -> bool:
         # Custom business logic
         return (
             entry.has_object_class('person') and
@@ -590,9 +590,9 @@ def filter_by_custom_criteria(
 
     try:
         filtered = [entry for entry in entries if matches_criteria(entry)]
-        return FlextResult[list[FlextLDIFModels.Entry]].ok(filtered)
+        return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
     except Exception as e:
-        return FlextResult[list[FlextLDIFModels.Entry]].fail(f"Filtering failed: {e}")
+        return FlextResult[list[FlextLdifModels.Entry]].fail(f"Filtering failed: {e}")
 ```
 
 ## Integration with FLEXT Ecosystem
@@ -606,7 +606,7 @@ from flext_core import FlextContainer
 container = FlextContainer.get_global()
 
 # Register LDIF API as service
-api = FlextLDIFAPI()
+api = FlextLdifAPI()
 register_result = container.register("ldif_api", api)
 
 # Retrieve from container in other services

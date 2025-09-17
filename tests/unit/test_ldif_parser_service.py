@@ -6,35 +6,40 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_core import FlextResult, FlextTypes
+from flext_ldif import FlextLdifModels, FlextLdifServices
+from flext_ldif.config import FlextLdifConfig
+from flext_ldif.parser_service import FlextLdifParserService
+from flext_ldif.validator_service import FlextLdifValidatorService
+from flext_ldif.writer_service import FlextLdifWriterService
+from tests.test_support import FileManager, LdifTestData, TestValidators
 
-from flext_ldif import FlextLDIFModels, FlextLDIFServices
-from tests.test_support import LdifTestData, TestFileManager, TestValidators
 
-
-class TestFlextLDIFServicesParserServiceReal:
-    """Test FlextLDIFServices.ParserService with real functionality - no mocks."""
+class TestFlextLdifServicesParserServiceReal:
+    """Test FlextLdifServices.ParserService with real functionality - no mocks."""
 
     def test_service_initialization_real_config(self) -> None:
         """Test service initializes with real configuration."""
-        config = FlextLDIFModels.Config(
-            encoding="utf-8",
-            strict_parsing=True,
-            validate_dn=True,
-            max_entries=1000,
+        config = FlextLdifConfig(
+            ldif_encoding="utf-8",
+            ldif_strict_validation=True,
+            ldif_validate_dn_format=True,
+            ldif_max_entries=1000,
         )
-        service = FlextLDIFServices(config=config)
+        service = FlextLdifServices(config=config)
 
         # Validate service has real configuration
         assert service.config is not None
-        assert service.config.encoding == "utf-8"
-        assert service.config.strict_parsing is True
-        assert service.config.validate_dn is True
-        assert service.config.max_entries == 1000
+        assert service.config.ldif_encoding == "utf-8"
+        assert service.config.ldif_strict_validation is True
+        assert service.config.ldif_validate_dn_format is True
+        assert service.config.ldif_max_entries == 1000
 
     def test_service_initialization_default_config(self) -> None:
         """Test service works with default configuration."""
-        service = FlextLDIFServices().parser
+        service = FlextLdifServices().parser
 
         # Even without explicit config, service should work
         # Test parsing empty content to verify service is functional
@@ -44,7 +49,7 @@ class TestFlextLDIFServicesParserServiceReal:
 
     def test_parse_real_basic_ldif_entries(self) -> None:
         """Test parsing real LDIF entries with actual data."""
-        service = FlextLDIFServices().parser
+        service = FlextLdifServices().parser
         ldif_sample = LdifTestData.basic_entries()
 
         # Parse real LDIF content
@@ -58,13 +63,13 @@ class TestFlextLDIFServicesParserServiceReal:
         # Validate each entry is real and complete
         for entry in entries:
             TestValidators.assert_valid_ldif_entry(entry)
-            assert isinstance(entry, FlextLDIFModels.Entry)
+            assert isinstance(entry, FlextLdifModels.Entry)
             assert entry.dn is not None
             assert len(entry.attributes) > 0
 
     def test_parse_real_multi_valued_attributes(self) -> None:
         """Test parsing LDIF with multi-valued attributes."""
-        service = FlextLDIFServices().parser
+        service = FlextLdifServices().parser
         ldif_sample = LdifTestData.multi_valued_attributes()
 
         # Parse LDIF with multi-valued attributes
@@ -74,6 +79,18 @@ class TestFlextLDIFServicesParserServiceReal:
         if result.is_success:
             entries = result.value
             assert len(entries) == 1
+
+            entry = entries[0]
+            # Verify multi-valued attributes are properly parsed
+            mail_values = entry.get_attribute("mail")
+            assert mail_values is not None
+            assert len(mail_values) == 2
+            assert "multi.user@example.com" in mail_values
+            assert "multi.user.alt@example.com" in mail_values
+
+            phone_values = entry.get_attribute("telephoneNumber")
+            assert phone_values is not None
+            assert len(phone_values) == 2
         else:
             # Expected failure for invalid binary data
             error_msg = result.error or ""
@@ -81,21 +98,9 @@ class TestFlextLDIFServicesParserServiceReal:
                 "Base64 decode error" in error_msg or "invalid start byte" in error_msg
             )
 
-        entry = entries[0]
-        # Verify multi-valued attributes are properly parsed
-        mail_values = entry.get_attribute("mail")
-        assert mail_values is not None
-        assert len(mail_values) == 2
-        assert "multi.user@example.com" in mail_values
-        assert "multi.user.alt@example.com" in mail_values
-
-        phone_values = entry.get_attribute("telephoneNumber")
-        assert phone_values is not None
-        assert len(phone_values) == 2
-
     def test_parse_real_binary_data(self) -> None:
         """Test parsing LDIF with binary (base64) data."""
-        service = FlextLDIFServices().parser
+        service = FlextLdifServices().parser
         ldif_sample = LdifTestData.with_binary_data()
 
         # Parse LDIF with binary data
@@ -114,7 +119,7 @@ class TestFlextLDIFServicesParserServiceReal:
 
     def test_parse_real_special_characters(self) -> None:
         """Test parsing LDIF with UTF-8 special characters."""
-        service = FlextLDIFServices().parser
+        service = FlextLdifServices().parser
         ldif_sample = LdifTestData.special_characters()
 
         # Parse LDIF with special characters
@@ -124,6 +129,15 @@ class TestFlextLDIFServicesParserServiceReal:
         if result.is_success:
             entries = result.value
             assert len(entries) == 1
+
+            entry = entries[0]
+            cn_values = entry.get_attribute("cn")
+            assert cn_values is not None
+            assert "José María Ñuñez" in cn_values[0]
+
+            description = entry.get_attribute("description")
+            assert description is not None
+            assert "áéíóú ÁÉÍÓÚ ñÑ" in description[0]
         else:
             # Expected failure for invalid binary data
             error_msg = result.error or ""
@@ -131,18 +145,9 @@ class TestFlextLDIFServicesParserServiceReal:
                 "Base64 decode error" in error_msg or "invalid start byte" in error_msg
             )
 
-        entry = entries[0]
-        cn_values = entry.get_attribute("cn")
-        assert cn_values is not None
-        assert "José María Ñuñez" in cn_values[0]
-
-        description = entry.get_attribute("description")
-        assert description is not None
-        assert "áéíóú ÁÉÍÓÚ ñÑ" in description[0]
-
     def test_parse_real_empty_content(self) -> None:
         """Test parser handles empty content correctly."""
-        service = FlextLDIFServices().parser
+        service = FlextLdifServices().parser
 
         # Parse empty content
         result = service.parse_content("")
@@ -151,11 +156,9 @@ class TestFlextLDIFServicesParserServiceReal:
         entries = result.value
         assert len(entries) == 0
 
-    def test_parse_real_from_file_path(
-        self, test_file_manager: TestFileManager
-    ) -> None:
+    def test_parse_real_from_file_path(self, test_file_manager: FileManager) -> None:
         """Test parsing from actual file path."""
-        service = FlextLDIFServices().parser
+        service = FlextLdifServices().parser
         ldif_sample = LdifTestData.basic_entries()
 
         # Create real file with LDIF content
@@ -172,9 +175,9 @@ class TestFlextLDIFServicesParserServiceReal:
         content_result = service.parse_content(ldif_sample.content)
         assert len(entries) == len(content_result.value)
 
-    def test_parse_real_large_dataset(self, test_file_manager: TestFileManager) -> None:
+    def test_parse_real_large_dataset(self, test_file_manager: FileManager) -> None:
         """Test parsing performance with larger dataset."""
-        service = FlextLDIFServices().parser
+        service = FlextLdifServices().parser
 
         # Create larger dataset for performance testing
         ldif_sample = LdifTestData.large_dataset(50)  # 50 entries
@@ -195,7 +198,7 @@ class TestFlextLDIFServicesParserServiceReal:
 
     def test_parse_real_change_records(self) -> None:
         """Test parsing LDIF with change records - should fail gracefully for unsupported format."""
-        service = FlextLDIFServices().parser
+        service = FlextLdifServices().parser
         ldif_sample = LdifTestData.with_changes()
 
         # Parse LDIF with change records - expect failure for change records
@@ -215,7 +218,7 @@ class TestFlextLDIFServicesParserServiceReal:
 
     def test_parse_real_long_lines(self) -> None:
         """Test parsing LDIF with long lines requiring continuation."""
-        service = FlextLDIFServices().parser
+        service = FlextLdifServices().parser
         ldif_sample = LdifTestData.long_lines()
 
         # Parse LDIF with long lines
@@ -239,7 +242,7 @@ class TestFlextLDIFServicesParserServiceReal:
 
     def test_parse_real_error_invalid_ldif(self) -> None:
         """Test parser handles invalid LDIF data correctly."""
-        service = FlextLDIFServices().parser
+        service = FlextLdifServices().parser
         ldif_sample = LdifTestData.invalid_data()
 
         # Parse invalid LDIF - should handle gracefully
@@ -267,20 +270,25 @@ class TestParserIntegrationReal:
         """Test parser integrated with real validator service."""
         parser = integration_services["parser"]
         validator = integration_services["validator"]
-        # Type assertions for MyPy
+
+        # Type assertions for Pyright
         assert hasattr(parser, "parse_content")
         assert hasattr(validator, "validate_entry_structure")
 
+        # Cast to proper types for Pyright
+        parser_service = cast("FlextLdifParserService", parser)
+        validator_service = cast("FlextLdifValidatorService", validator)
+
         # Parse real data
         ldif_sample = LdifTestData.basic_entries()
-        parse_result = parser.parse_content(ldif_sample.content)
+        parse_result = parser_service.parse_content(ldif_sample.content)
 
         TestValidators.assert_successful_result(parse_result)
         entries = parse_result.value
 
         # Validate each parsed entry with real validator
         for entry in entries:
-            validation_result = validator.validate_entry_structure(entry)
+            validation_result = validator_service.validate_entry_structure(entry)
             TestValidators.assert_successful_result(validation_result)
 
     def test_parser_with_real_writer_roundtrip(
@@ -289,23 +297,28 @@ class TestParserIntegrationReal:
         """Test parser → writer → parser roundtrip with real services."""
         parser = integration_services["parser"]
         writer = integration_services["writer"]
-        # Type assertions for MyPy
+
+        # Type assertions for Pyright
         assert hasattr(parser, "parse_content")
         assert hasattr(writer, "write_entries_to_string")
 
+        # Cast to proper types for Pyright
+        parser_service = cast("FlextLdifParserService", parser)
+        writer_service = cast("FlextLdifWriterService", writer)
+
         # Parse original data
         ldif_sample = LdifTestData.basic_entries()
-        original_result = parser.parse_content(ldif_sample.content)
+        original_result = parser_service.parse_content(ldif_sample.content)
         TestValidators.assert_successful_result(original_result)
         original_entries = original_result.value
 
         # Write entries back to LDIF
-        write_result = writer.write_entries_to_string(original_entries)
+        write_result = writer_service.write_entries_to_string(original_entries)
         TestValidators.assert_successful_result(write_result)
         written_content = write_result.value
 
         # Parse the written content again
-        reparse_result = parser.parse_content(written_content)
+        reparse_result = parser_service.parse_content(written_content)
         TestValidators.assert_successful_result(reparse_result)
         reparsed_entries = reparse_result.value
 

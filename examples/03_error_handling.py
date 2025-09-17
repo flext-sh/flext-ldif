@@ -7,18 +7,15 @@ using Clean Architecture principles and flext-core integration.
 
 from __future__ import annotations
 
-import contextlib
 from pathlib import Path
 
-from flext_core import FlextLogger, FlextTypes
-
+from flext_core import FlextLogger, FlextResult, FlextTypes
 from flext_ldif import (
-    FlextLDIFAPI,
-    FlextLDIFError,
-    FlextLDIFModels,
-    FlextLDIFParseError,
-    FlextLDIFValidationError,
+    FlextLdifAPI,
+    FlextLdifExceptions,
+    FlextLdifModels,
 )
+from flext_ldif.config import FlextLdifConfig
 
 
 # SOLID REFACTORING: Strategy Pattern to reduce complexity from 11 to 4
@@ -31,7 +28,7 @@ class ResultPatternDemonstrator:
 
     def __init__(self) -> None:
         """Initialize result pattern demonstrator."""
-        self.api = FlextLDIFAPI()
+        self.api = FlextLdifAPI()
         self.valid_ldif = """dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
@@ -94,17 +91,16 @@ without proper structure
         return f"Successfully processed {len(filtered_entries)} person entries"
 
     def _validate_entries(
-        self, entries: list[FlextLDIFModels.Entry]
+        self, entries: list[FlextLdifModels.Entry]
     ) -> FlextTypes.Core.StringList:
         """Validate entries and return errors."""
         validation_errors: FlextTypes.Core.StringList = []
         for entry in entries:
-            # CORREÇÃO: Usar método correto que existe na API
-            try:
-                if hasattr(entry, "validate_business_rules"):
-                    entry.validate_business_rules()
-            except FlextLDIFValidationError as e:
-                validation_errors.append(str(e))
+            # Use FlextResult pattern instead of exceptions
+            if hasattr(entry, "validate_business_rules"):
+                validation_result = entry.validate_business_rules()
+                if validation_result.is_failure:
+                    validation_errors.append(validation_result.error or "Validation failed")
         return validation_errors
 
 
@@ -121,40 +117,35 @@ def demonstrate_exception_handling() -> None:
     """Demonstrate proper exception handling patterns."""
     logger = FlextLogger(__name__)
 
-    # Test different exception types
-    def _test_parse_error() -> None:
+    # Test different error types using FlextResult patterns
+    def _test_parse_error() -> FlextResult[None]:
         msg = "Test parse error"
-        parse_error_msg = f"{msg} (line 42)"
-        raise FlextLDIFParseError(parse_error_msg)
+        return FlextLdifExceptions.parse_error(msg, line_number=42)
 
-    try:
-        _test_parse_error()
-    except FlextLDIFParseError:
-        logger.exception("Parse error occurred")
+    parse_result = _test_parse_error()
+    if parse_result.is_failure:
+        logger.error(f"Parse error occurred: {parse_result.error}")
 
-    def _test_validation_error() -> None:
+    def _test_validation_error() -> FlextResult[None]:
         msg = "Test validation error"
-        validation_error_msg = f"{msg} - field: dn, issue: empty"
-        raise FlextLDIFValidationError(validation_error_msg)
+        return FlextLdifExceptions.validation_error(msg, dn="cn=test,dc=example,dc=com", validation_rule="empty field")
 
-    try:
-        _test_validation_error()
-    except FlextLDIFValidationError:
-        logger.exception("Validation error occurred")
+    validation_result = _test_validation_error()
+    if validation_result.is_failure:
+        logger.error(f"Validation error occurred: {validation_result.error}")
 
-    def _test_base_error() -> None:
+    def _test_base_error() -> FlextResult[None]:
         msg = "Test base error"
-        raise FlextLDIFError(msg)
+        return FlextLdifExceptions.error(msg)
 
-    try:
-        _test_base_error()
-    except FlextLDIFError:
-        logger.exception("LDIF error occurred")
+    base_result = _test_base_error()
+    if base_result.is_failure:
+        logger.error(f"LDIF error occurred: {base_result.error}")
 
 
 def demonstrate_file_error_handling() -> None:
     """Demonstrate file operation error handling."""
-    api = FlextLDIFAPI()
+    api = FlextLdifAPI()
 
     # Test with non-existent file
     nonexistent_file = Path("/nonexistent/path/file.ldif")
@@ -204,8 +195,8 @@ def demonstrate_configuration_error_handling() -> None:
     # Test with extreme configurations
     try:
         # Very low max_entries
-        config = FlextLDIFModels.Config(max_entries=0)
-        api = FlextLDIFAPI(config)
+        config = FlextLdifConfig(ldif_max_entries=0)
+        api = FlextLdifAPI(config)
 
         sample_file = Path(__file__).parent / "sample_basic.ldif"
         if sample_file.exists():
@@ -218,8 +209,8 @@ def demonstrate_configuration_error_handling() -> None:
         logger.exception("Configuration test failed", exc_info=exc)
 
     # Test with strict validation
-    config = FlextLDIFModels.Config(strict_validation=True, allow_empty_values=False)
-    api = FlextLDIFAPI(config)
+    config = FlextLdifConfig(ldif_strict_validation=True, ldif_allow_empty_values=False)
+    api = FlextLdifAPI(config)
 
     # Create LDIF with empty attributes
     empty_attr_ldif = """dn: cn=test,dc=example,dc=com
@@ -231,10 +222,13 @@ description:
     result = api.parse(empty_attr_ldif)
     entries = result.unwrap_or([])
     if entries:
-        # Test validation
+        # Test validation using FlextResult pattern
         for entry in entries:
-            with contextlib.suppress(FlextLDIFValidationError):
-                entry.validate_business_rules()
+            if hasattr(entry, "validate_business_rules"):
+                validation_result = entry.validate_business_rules()
+                if validation_result.is_failure:
+                    # Silently skip validation failures for demonstration
+                    pass
 
 
 def main() -> None:

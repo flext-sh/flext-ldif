@@ -50,7 +50,7 @@ docs/
 
 **[api-reference.md](api-reference.md)** - Complete API documentation:
 
-- **FlextLDIFAPI**: Unified interface for all LDIF operations
+- **FlextLdifAPI**: Unified interface for all LDIF operations
 - **Service Classes**: Parser, validator, writer, repository, analytics services
 - **Models**: Entry, DN, Config, and other domain models
 - **Error Handling**: Exception hierarchy and FlextResult patterns
@@ -59,7 +59,7 @@ docs/
 
 **[configuration.md](configuration.md)** - Settings and environment:
 
-- **Configuration Management**: FlextLDIFConfig and settings
+- **Configuration Management**: FlextLdifConfig and settings
 - **Environment Variables**: Runtime configuration options
 - **Validation Rules**: Input validation and processing limits
 - **Performance Tuning**: Memory and processing optimization

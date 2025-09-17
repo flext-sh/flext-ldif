@@ -147,7 +147,7 @@ build-clean: clean build ## Clean and build
 
 .PHONY: ldif-parse
 ldif-parse: ## Test LDIF parsing
-	$(POETRY) run python -c "from flext_ldif import FlextLDIFAPI; api = FlextLDIFAPI(); print('LDIF parser test passed')"
+	$(POETRY) run python -c "from flext_ldif import FlextLdifAPI; api = FlextLdifAPI(); print('LDIF parser test passed')"
 
 .PHONY: ldif-validate
 ldif-validate: ## Validate LDIF files
@@ -155,7 +155,7 @@ ldif-validate: ## Validate LDIF files
 
 .PHONY: ldif-config
 ldif-config: ## Test LDIF configuration
-	$(POETRY) run python -c "from flext_ldif.config import FlextLDIFConfig; print('LDIF config valid')"
+	$(POETRY) run python -c "from flext_ldif.config import FlextLdifConfig; print('LDIF config valid')"
 
 .PHONY: ldif-operations
 ldif-operations: ldif-config ldif-parse ldif-validate ## Run all LDIF validations

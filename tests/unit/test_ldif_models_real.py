@@ -9,75 +9,73 @@ from __future__ import annotations
 from typing import cast
 
 from flext_core import FlextTypes
+from flext_ldif.config import FlextLdifConfig
+from flext_ldif.models import FlextLdifModels
 
-from flext_ldif.models import FlextLDIFModels
 
-
-class TestFlextLDIFModelsConfigReal:
-    """Test FlextLDIFModels.Config with real functionality."""
+class TestFlextLdifModelsConfigReal:
+    """Test FlextLdifModels.Config with real functionality."""
 
     def test_config_creation_with_defaults(self) -> None:
         """Test config creation with default values."""
-        config = FlextLDIFModels.Config()
+        config = FlextLdifConfig()
 
         # Verify default values are set correctly
-        assert config.encoding == "utf-8"
-        assert config.max_line_length == 76
-        assert config.fold_lines is True
-        assert config.validate_dn is True
-        assert config.validate_attributes is True
-        assert config.strict_parsing is False
-        assert config.max_entries == 10000
+        assert config.ldif_encoding == "utf-8"
+        assert config.ldif_max_line_length == 8192
+        assert config.ldif_skip_comments is True
+        assert config.ldif_validate_dn_format is True
+        assert config.ldif_validate_object_class is True
+        assert config.ldif_strict_validation is True
+        assert config.ldif_max_entries == 1000000
 
     def test_config_creation_with_custom_values(self) -> None:
         """Test config creation with custom values."""
-        config = FlextLDIFModels.Config(
-            encoding="iso-8859-1",
-            max_line_length=120,
-            fold_lines=False,
-            validate_dn=False,
-            strict_parsing=True,
-            max_entries=5000,
+        config = FlextLdifConfig(
+            ldif_encoding="iso-8859-1",
+            ldif_max_line_length=120,
+            ldif_skip_comments=False,
+            ldif_validate_dn_format=False,
+            ldif_strict_validation=True,
+            ldif_max_entries=5000,
         )
 
         # Verify custom values are set correctly
-        assert config.encoding == "iso-8859-1"
-        assert config.max_line_length == 120
-        assert config.fold_lines is False
-        assert config.validate_dn is False
-        assert config.strict_parsing is True
-        assert config.max_entries == 5000
+        assert config.ldif_encoding == "iso-8859-1"
+        assert config.ldif_max_line_length == 120
+        assert config.ldif_skip_comments is False
+        assert config.ldif_validate_dn_format is False
+        assert config.ldif_strict_validation is True
+        assert config.ldif_max_entries == 5000
 
     def test_config_model_validation(self) -> None:
         """Test config model validation rules."""
         # Test valid configuration
-        config = FlextLDIFModels.Config(max_entries=1000)
-        assert config.max_entries == 1000
+        config = FlextLdifConfig(ldif_max_entries=1000)
+        assert config.ldif_max_entries == 1000
 
         # Config should handle edge cases gracefully
-        config_small = FlextLDIFModels.Config(max_entries=1)
-        assert config_small.max_entries == 1
+        config_small = FlextLdifConfig(ldif_max_entries=10, ldif_chunk_size=1)
+        assert config_small.ldif_max_entries == 10
 
     def test_config_serialization(self) -> None:
         """Test config serialization to dict."""
-        config = FlextLDIFModels.Config(
-            encoding="utf-8",
-            max_line_length=100,
-            strict_parsing=True,
+        config = FlextLdifConfig(
+            ldif_encoding="utf-8",
+            ldif_max_line_length=100,
+            ldif_strict_validation=True,
         )
 
         # Should be able to convert to dict
         config_dict = config.model_dump()
         assert isinstance(config_dict, dict)
-        assert config_dict["default_encoding"] == "utf-8"
-        # max_line_length and strict_parsing are handled as custom attributes
-        # and not included in model_dump - this is expected behavior
-        assert hasattr(config, "_max_line_length")
-        assert hasattr(config, "_strict_parsing")
+        assert config_dict["ldif_encoding"] == "utf-8"
+        assert config_dict["ldif_max_line_length"] == 100
+        assert config_dict["ldif_strict_validation"] is True
 
 
-class TestFlextLDIFModelsEntryReal:
-    """Test FlextLDIFModels.Entry with real functionality."""
+class TestFlextLdifModelsEntryReal:
+    """Test FlextLdifModels.Entry with real functionality."""
 
     def test_entry_creation_basic(self) -> None:
         """Test basic entry creation."""
@@ -90,13 +88,11 @@ class TestFlextLDIFModelsEntryReal:
                 "sn": ["User"],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(
-            cast("FlextTypes.Core.Dict", entry_data)
-        )
+        entry = FlextLdifModels.create_entry(cast("FlextTypes.Core.Dict", entry_data))
 
         # Verify entry properties
         assert entry.dn is not None
-        assert str(entry.dn) == "uid=test.user,ou=people,dc=example,dc=com"
+        assert entry.dn.value == "uid=test.user,ou=people,dc=example,dc=com"
         assert "objectClass" in entry.attributes
         assert "uid" in entry.attributes
         assert "cn" in entry.attributes
@@ -120,9 +116,7 @@ class TestFlextLDIFModelsEntryReal:
                 "telephoneNumber": ["+1-555-0123", "+1-555-0124", "+1-555-0125"],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(
-            cast("FlextTypes.Core.Dict", entry_data)
-        )
+        entry = FlextLdifModels.create_entry(cast("FlextTypes.Core.Dict", entry_data))
 
         # Verify multi-valued attributes
         mail_values = entry.get_attribute("mail")
@@ -152,9 +146,7 @@ class TestFlextLDIFModelsEntryReal:
                 "jpegPhoto": ["/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQ=="],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(
-            cast("FlextTypes.Core.Dict", entry_data)
-        )
+        entry = FlextLdifModels.create_entry(cast("FlextTypes.Core.Dict", entry_data))
 
         # Verify binary attribute
         jpeg_photo = entry.get_attribute("jpegPhoto")
@@ -180,9 +172,7 @@ class TestFlextLDIFModelsEntryReal:
                 "description": ["Contains special characters: áéíóú ÁÉÍÓÚ ñÑ çÇ"],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(
-            cast("FlextTypes.Core.Dict", entry_data)
-        )
+        entry = FlextLdifModels.create_entry(cast("FlextTypes.Core.Dict", entry_data))
 
         # Verify special characters are preserved
         cn_values = entry.get_attribute("cn")
@@ -205,9 +195,7 @@ class TestFlextLDIFModelsEntryReal:
                 "description": ["Original description"],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(
-            cast("FlextTypes.Core.Dict", entry_data)
-        )
+        entry = FlextLdifModels.create_entry(cast("FlextTypes.Core.Dict", entry_data))
 
         # Test getting attributes
         uid_values = entry.get_attribute("uid")
@@ -233,12 +221,10 @@ class TestFlextLDIFModelsEntryReal:
                 "sn": ["User"],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(
-            cast("FlextTypes.Core.Dict", entry_data)
-        )
+        entry = FlextLdifModels.create_entry(cast("FlextTypes.Core.Dict", entry_data))
 
         # Test DN string representation
-        dn_str = str(entry.dn)
+        dn_str = entry.dn.value
         assert dn_str == "uid=dn.user,ou=people,dc=example,dc=com"
 
         # Test DN components (if DN model supports it)
@@ -261,9 +247,7 @@ class TestFlextLDIFModelsEntryReal:
                 "mail": ["valid.user@example.com"],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(
-            cast("FlextTypes.Core.Dict", entry_data)
-        )
+        entry = FlextLdifModels.create_entry(cast("FlextTypes.Core.Dict", entry_data))
 
         # Should be able to validate business rules (if implemented)
         try:
@@ -288,9 +272,7 @@ class TestFlextLDIFModelsEntryReal:
                 "sn": ["User"],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(
-            cast("FlextTypes.Core.Dict", entry_data)
-        )
+        entry = FlextLdifModels.create_entry(cast("FlextTypes.Core.Dict", entry_data))
 
         # Should be able to convert to dict
         entry_dict = entry.model_dump()
@@ -299,54 +281,54 @@ class TestFlextLDIFModelsEntryReal:
         assert "attributes" in entry_dict
 
 
-class TestFlextLDIFDistinguishedNameReal:
-    """Test FlextLDIFModels.DistinguishedName with real functionality."""
+class TestFlextLdifModelsDistinguishedNameReal:
+    """Test FlextLdifModels.DistinguishedName with real functionality."""
 
     def test_dn_creation_simple(self) -> None:
         """Test DN creation with simple format."""
         dn_str = "uid=test,ou=people,dc=example,dc=com"
-        dn = FlextLDIFModels.DistinguishedName(value=dn_str)
+        dn = FlextLdifModels.DistinguishedName(value=dn_str)
 
         # Verify DN properties
-        assert str(dn) == dn_str
+        assert dn.value == dn_str
         assert dn.value == dn_str
 
     def test_dn_creation_complex(self) -> None:
         """Test DN creation with complex format."""
         dn_str = "cn=John Doe+mail=john@example.com,ou=people,dc=example,dc=com"
-        dn = FlextLDIFModels.DistinguishedName(value=dn_str)
+        dn = FlextLdifModels.DistinguishedName(value=dn_str)
 
         # Verify complex DN
-        assert str(dn) == dn_str
+        assert dn.value == dn_str
         assert dn.value == dn_str
 
     def test_dn_creation_with_spaces(self) -> None:
         """Test DN creation with spaces in values."""
         dn_str = "cn=John Doe,ou=Human Resources,dc=example,dc=com"
-        dn = FlextLDIFModels.DistinguishedName(value=dn_str)
+        dn = FlextLdifModels.DistinguishedName(value=dn_str)
 
         # Verify DN with spaces
-        assert str(dn) == dn_str
+        assert dn.value == dn_str
         assert "Human Resources" in str(dn)
 
     def test_dn_creation_with_special_characters(self) -> None:
         """Test DN creation with special characters."""
         dn_str = "cn=José María,ou=people,dc=example,dc=com"
-        dn = FlextLDIFModels.DistinguishedName(value=dn_str)
+        dn = FlextLdifModels.DistinguishedName(value=dn_str)
 
         # Verify DN with special characters
-        assert str(dn) == dn_str
+        assert dn.value == dn_str
         assert "José María" in str(dn)
 
     def test_dn_equality(self) -> None:
         """Test DN equality comparison."""
-        dn1 = FlextLDIFModels.DistinguishedName(
+        dn1 = FlextLdifModels.DistinguishedName(
             value="uid=test,ou=people,dc=example,dc=com"
         )
-        dn2 = FlextLDIFModels.DistinguishedName(
+        dn2 = FlextLdifModels.DistinguishedName(
             value="uid=test,ou=people,dc=example,dc=com"
         )
-        dn3 = FlextLDIFModels.DistinguishedName(
+        dn3 = FlextLdifModels.DistinguishedName(
             value="uid=other,ou=people,dc=example,dc=com"
         )
 
@@ -365,12 +347,12 @@ class TestFlextLDIFDistinguishedNameReal:
         ]
 
         for dn_str in valid_dns:
-            dn = FlextLDIFModels.DistinguishedName(value=dn_str)
-            assert str(dn) == dn_str
+            dn = FlextLdifModels.DistinguishedName(value=dn_str)
+            assert dn.value == dn_str
 
 
-class TestFlextLDIFAttributesReal:
-    """Test FlextLDIFModels.LdifAttributes with real functionality."""
+class TestFlextLdifAttributesReal:
+    """Test FlextLdifModels.LdifAttributes with real functionality."""
 
     def test_attributes_creation_basic(self) -> None:
         """Test basic attributes creation."""
@@ -380,7 +362,7 @@ class TestFlextLDIFAttributesReal:
             "cn": ["Test User"],
             "sn": ["User"],
         }
-        attrs = FlextLDIFModels.LdifAttributes(data=attrs_data)
+        attrs = FlextLdifModels.LdifAttributes(data=attrs_data)
 
         # Verify attributes (keys preserved as-is)
         assert len(attrs.data) == 4
@@ -395,7 +377,7 @@ class TestFlextLDIFAttributesReal:
             "mail": ["user@example.com", "user.alt@example.com"],
             "telephoneNumber": ["+1-555-0123", "+1-555-0124"],
         }
-        attrs = FlextLDIFModels.LdifAttributes(data=attrs_data)
+        attrs = FlextLdifModels.LdifAttributes(data=attrs_data)
 
         # Verify multi-valued attributes (keys preserved as-is)
         assert len(attrs.data["mail"]) == 2
@@ -410,7 +392,7 @@ class TestFlextLDIFAttributesReal:
             "uid": ["ops.user"],
             "cn": ["Operations User"],
         }
-        attrs = FlextLDIFModels.LdifAttributes(data=attrs_data)
+        attrs = FlextLdifModels.LdifAttributes(data=attrs_data)
 
         # Test getting values through data field
         uid_values = attrs.data.get("uid")
@@ -432,7 +414,7 @@ class TestFlextLDIFAttributesReal:
             "cn": ["Iteration User"],
             "sn": ["User"],
         }
-        attrs = FlextLDIFModels.LdifAttributes(data=attrs_data)
+        attrs = FlextLdifModels.LdifAttributes(data=attrs_data)
 
         # Test iteration over keys (keys preserved as-is)
         keys = list(attrs.data.keys())
@@ -472,18 +454,16 @@ class TestModelIntegrationReal:
                 "description": ["User for testing model integration"],
             },
         }
-        entry = FlextLDIFModels.Factory.create_entry(
-            cast("FlextTypes.Core.Dict", entry_data)
-        )
+        entry = FlextLdifModels.create_entry(cast("FlextTypes.Core.Dict", entry_data))
 
         # Verify all components work together
         assert entry.dn is not None
         # AttributesDict is a UserDict which behaves like dict but isn't a dict instance
-        assert hasattr(entry.attributes, "__getitem__")  # Acts like dict
+        assert hasattr(entry.attributes.data, "__getitem__")  # Acts like dict via .data
         assert len(entry.attributes) == 7
 
         # Verify DN component
-        dn_str = str(entry.dn)
+        dn_str = entry.dn.value
         assert "integration.user" in dn_str
 
         # Verify attributes component

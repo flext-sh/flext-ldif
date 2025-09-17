@@ -4,23 +4,22 @@ from __future__ import annotations
 
 from unittest.mock import Mock, patch
 
-from flext_core import FlextUtilities
-
-from flext_ldif.models import FlextLDIFModels
-from flext_ldif.services import FlextLDIFServices
+from flext_core import FlextResult, FlextUtilities
+from flext_ldif.config import FlextLdifConfig
+from flext_ldif.services import FlextLdifServices
 
 
 def test_debug_strict_validation_flow() -> None:
     """Debug: Rastrear exatamente o que acontece com strict_validation."""
-    # Configuração REAL
-    config = FlextLDIFModels.Config(strict_validation=True)
+    # Use proper FlextLdifConfig
+    config = FlextLdifConfig()
 
-    validator = FlextLDIFServices(config=config)
+    validator = FlextLdifServices(config=config)
 
     # Entry simples
     entry = Mock()
     entry.dn = Mock(value="cn=debug,dc=example,dc=com")
-    entry.validate_business_rules = Mock(return_value=None)
+    entry.validate_business_rules = Mock(return_value=FlextResult[None].ok(None))
 
     # Attributes mock corretamente - deve ser dict-like
     mock_attributes = {"cn": ["debug"]}  # Use dict real em vez de Mock
@@ -34,12 +33,12 @@ def test_debug_strict_validation_flow() -> None:
 
 def test_debug_manual_validation_call() -> None:
     """Debug: Chamar validate_entry_structure diretamente."""
-    config = FlextLDIFModels.Config(strict_validation=True)
-    validator = FlextLDIFServices(config=config).validator
+    config = FlextLdifConfig()
+    validator = FlextLdifServices(config=config).validator
 
     entry = Mock()
     entry.dn = Mock(value="cn=manual,dc=example,dc=com")
-    entry.validate_business_rules = Mock(return_value=None)
+    entry.validate_business_rules = Mock(return_value=FlextResult[None].ok(None))
 
     # Mock attributes corretamente - deve ser dict-like
     mock_attributes = {"cn": ["manual"]}  # Use dict real em vez de Mock

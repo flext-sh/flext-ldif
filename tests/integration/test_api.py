@@ -11,32 +11,56 @@ from pathlib import Path
 
 import pytest
 
+from flext_core import FlextResult
 from flext_ldif import (
-    FlextLDIFAPI,
-    FlextLDIFModels,
+    FlextLdifAPI,
+    FlextLdifModels,
 )
-from flext_ldif.config import FlextLDIFConfig
+
+# Conditional imports for dispatcher testing
+try:
+    from flext_ldif.dispatcher import FlextLdifDispatcher
+
+    # Extract nested classes for testing
+    ParseFileCommand = FlextLdifDispatcher.ParseFileCommand
+    ParseStringCommand = FlextLdifDispatcher.ParseStringCommand
+    ValidateEntriesCommand = FlextLdifDispatcher.ValidateEntriesCommand
+    WriteFileCommand = FlextLdifDispatcher.WriteFileCommand
+    WriteStringCommand = FlextLdifDispatcher.WriteStringCommand
+except ImportError:
+    # Dispatcher not available - type-safe fallback
+    from typing import TYPE_CHECKING
+    if TYPE_CHECKING:
+        from flext_ldif.dispatcher import FlextLdifDispatcher
+    else:
+        FlextLdifDispatcher = None
+        ParseFileCommand = None
+        ParseStringCommand = None
+        ValidateEntriesCommand = None
+        WriteFileCommand = None
+        WriteStringCommand = None
+from flext_ldif.config import FlextLdifConfig
 
 
 class TestAdvancedAPIFeatures:
     """Test advanced API features and edge cases."""
 
     @pytest.fixture
-    def api_with_config(self) -> FlextLDIFAPI:
+    def api_with_config(self) -> FlextLdifAPI:
         """Create API with custom configuration."""
-        config = FlextLDIFConfig(
-            ldif_max_entries=100,
+        config = FlextLdifConfig(
+            ldif_max_entries=10000,
+            ldif_chunk_size=100,
             ldif_strict_validation=True,
-            ldif_sort_attributes=True,
         )
-        return FlextLDIFAPI(config)
+        return FlextLdifAPI(config)
 
-    def test_api_with_large_entries(self, api_with_config: FlextLDIFAPI) -> None:
+    def test_api_with_large_entries(self, api_with_config: FlextLdifAPI) -> None:
         """Test API with large number of entries."""
         # Generate large LDIF content
-        entries: list[FlextLDIFModels.Entry] = []
+        entries: list[FlextLdifModels.Entry] = []
         for i in range(50):
-            entry = FlextLDIFModels.Entry.model_validate(
+            entry = FlextLdifModels.create_entry(
                 {
                     "id": f"user-{i:03d}",
                     "dn": f"cn=user{i:03d},ou=people,dc=example,dc=com",
@@ -59,7 +83,7 @@ class TestAdvancedAPIFeatures:
         assert stats_result.value is not None
         assert stats_result.value["total_entries"] == 50
 
-    def test_api_error_handling_edge_cases(self, api_with_config: FlextLDIFAPI) -> None:
+    def test_api_error_handling_edge_cases(self, api_with_config: FlextLdifAPI) -> None:
         """Test API error handling with various edge cases."""
         # Test with empty content (returns empty list, which is valid)
         result = api_with_config._operations.parse_string("")
@@ -80,7 +104,7 @@ cn invalid"""
         )
         assert not result.is_success
 
-    def test_api_filtering_capabilities(self, api_with_config: FlextLDIFAPI) -> None:
+    def test_api_filtering_capabilities(self, api_with_config: FlextLdifAPI) -> None:
         """Test advanced filtering capabilities."""
         ldif_content = """dn: cn=John Doe,ou=people,dc=example,dc=com
 cn: John Doe
@@ -121,7 +145,7 @@ objectClass: groupOfNames
         assert ou_result.is_success
         assert len(ou_result.value) == 1
 
-    def test_api_file_operations_advanced(self, api_with_config: FlextLDIFAPI) -> None:
+    def test_api_file_operations_advanced(self, api_with_config: FlextLdifAPI) -> None:
         """Test advanced file operations."""
         content = """dn: cn=test,dc=example,dc=com
 cn: test
@@ -161,7 +185,109 @@ objectClass: person
         finally:
             temp_file.unlink()
 
-    def test_api_performance_monitoring(self, api_with_config: FlextLDIFAPI) -> None:
+    def test_dispatcher_feature_flag_routes_operations(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Ensure dispatcher handles operations when the feature flag is enabled."""
+        monkeypatch.setenv("FLEXT_LDIF_ENABLE_DISPATCHER", "1")
+
+        api = FlextLdifAPI()
+
+        sample_entry = FlextLdifModels.create_entry(
+            {
+                "id": "user-000",
+                "dn": "cn=user000,ou=people,dc=example,dc=com",
+                "attributes": {
+                    "cn": ["user000"],
+                    "objectClass": ["person"],
+                },
+            }
+        )
+
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_file_path = Path(temp_file.name)
+
+        def fake_dispatch(command: object) -> FlextResult[object]:
+            if isinstance(command, ParseStringCommand):
+                return FlextResult[list[FlextLdifModels.Entry]].ok([sample_entry])
+            if isinstance(command, ParseFileCommand):
+                return FlextResult[list[FlextLdifModels.Entry]].ok([sample_entry])
+            if isinstance(command, WriteStringCommand):
+                return FlextResult[str].ok("ldif-content")
+            if isinstance(command, WriteFileCommand):
+                return FlextResult[bool].ok(True)
+            if isinstance(command, ValidateEntriesCommand):
+                return FlextResult[bool].ok(True)
+            return FlextResult[object].fail("Unsupported command")
+
+        assert api._dispatcher is not None
+
+        monkeypatch.setattr(
+            api._dispatcher,
+            "dispatch",
+            fake_dispatch,
+            raising=False,
+        )
+        monkeypatch.setattr(
+            api._services.parser,
+            "parse_content",
+            lambda _: (_ for _ in ()).throw(AssertionError("fallback parse")),
+            raising=False,
+        )
+        monkeypatch.setattr(
+            api._services.parser,
+            "parse_ldif_file",
+            lambda _: (_ for _ in ()).throw(AssertionError("fallback parse file")),
+            raising=False,
+        )
+        monkeypatch.setattr(
+            api._services.writer,
+            "write_entries_to_string",
+            lambda _: (_ for _ in ()).throw(AssertionError("fallback write string")),
+            raising=False,
+        )
+        monkeypatch.setattr(
+            api._services.writer,
+            "write_entries_to_file",
+            lambda *_: (_ for _ in ()).throw(AssertionError("fallback write file")),
+            raising=False,
+        )
+        monkeypatch.setattr(
+            api._services.validator,
+            "validate_entries",
+            lambda _: (_ for _ in ()).throw(AssertionError("fallback validate")),
+            raising=False,
+        )
+
+        parse_string_result = api._operations.parse_string("dn: cn=user000")
+        assert parse_string_result.is_success
+        assert parse_string_result.value[0].dn == sample_entry.dn
+
+        parse_file_result = api._operations.parse_file(temp_file_path)
+        assert parse_file_result.is_success
+
+        write_string_result = api._operations.write_string([sample_entry])
+        assert write_string_result.is_success
+        assert write_string_result.value == "ldif-content"
+
+        with tempfile.NamedTemporaryFile(suffix=".ldif", delete=False) as output_file:
+            output_path = Path(output_file.name)
+
+        write_file_result = api._operations.write_file(
+            [sample_entry],
+            output_path,
+        )
+        assert write_file_result.is_success
+
+        validate_result = api._operations.validate_entries([sample_entry])
+        assert validate_result.is_success
+
+        # Cleanup temporary files
+        temp_file_path.unlink(missing_ok=True)
+        output_path.unlink(missing_ok=True)
+
+    def test_api_performance_monitoring(self, api_with_config: FlextLdifAPI) -> None:
         """Test API performance monitoring capabilities."""
         # Generate moderately large content
         content_parts = [

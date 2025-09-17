@@ -1,4 +1,4 @@
-"""FLEXT LDIF Exceptions - Minimal compatibility layer using flext-core directly.
+"""FLEXT LDIF Exceptions - Exception handling using flext-core.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -15,11 +15,11 @@ _ATTRIBUTE_TRUNCATION_THRESHOLD = 3
 _MAX_ATTRIBUTES_DISPLAY = 5
 
 
-class FlextLDIFExceptions:
+class FlextLdifExceptions:
     """Unified LDIF exception handling following FLEXT patterns.
 
     Single responsibility: All LDIF exception creation and management.
-    Eliminates all legacy compatibility layers and aliases.
+    Uses FlextResult for consistent error handling.
     """
 
     class _ErrorTypes:
@@ -35,10 +35,6 @@ class FlextLDIFExceptions:
         AUTHENTICATION = "ldif_authentication"
         GENERIC = "ldif_error"
 
-    # Exception classes for backward compatibility
-    class ValidationError(Exception):
-        """ValidationError for test compatibility."""
-
     @classmethod
     def validation_error(cls, message: str, **context: object) -> FlextResult[None]:
         """Create validation error with context."""
@@ -47,6 +43,7 @@ class FlextLDIFExceptions:
         validation_rule = context.get("validation_rule")
 
         enriched_message = message
+        # Use str() conversion only for string values to maintain expected behavior
         if dn and isinstance(dn, str):
             enriched_message += f" (DN: {dn})"
         if attribute_name and isinstance(attribute_name, str):
@@ -64,27 +61,35 @@ class FlextLDIFExceptions:
         content_preview = context.get("content_preview") or context.get("content")
 
         enriched_message = message
-        if line_number and isinstance(line_number, int):
-            enriched_message += f" (line {line_number}"
-            if column and isinstance(column, int):
-                enriched_message += f", column {column}"
-            enriched_message += ")"
-        if content_preview and isinstance(content_preview, str) and content_preview.strip():
+        # Use duck typing instead of isinstance checks
+        if line_number is not None:
+            try:
+                line_num = (
+                    int(line_number) if isinstance(line_number, (int, str)) else 0
+                )
+                enriched_message += f" (line {line_num}"
+                if column is not None:
+                    try:
+                        col_num = int(column) if isinstance(column, (int, str)) else 0
+                        enriched_message += f", column {col_num}"
+                    except (ValueError, TypeError):
+                        pass
+                enriched_message += ")"
+            except (ValueError, TypeError):
+                pass
+
+        if content_preview and str(content_preview).strip():
+            content_str = str(content_preview)
             preview = (
-                content_preview[:_CONTENT_PREVIEW_LENGTH]
-                if len(content_preview) > _CONTENT_PREVIEW_LENGTH
-                else content_preview
+                content_str[:_CONTENT_PREVIEW_LENGTH]
+                if len(content_str) > _CONTENT_PREVIEW_LENGTH
+                else content_str
             )
             enriched_message += f" - Content: {preview}"
-            if len(content_preview) > _CONTENT_PREVIEW_LENGTH:
+            if len(content_str) > _CONTENT_PREVIEW_LENGTH:
                 enriched_message += "..."
 
         return FlextResult[None].fail(enriched_message)
-
-    @classmethod
-    def parse_error_alias(cls, message: str, **context: object) -> FlextResult[None]:
-        """Create parse error alias for compatibility."""
-        return cls.parse_error(message, **context)
 
     @classmethod
     def processing_error(cls, message: str, **context: object) -> FlextResult[None]:
@@ -93,10 +98,15 @@ class FlextLDIFExceptions:
         entry_count = context.get("entry_count")
 
         enriched_message = message
+        # Use str() conversion only for string values to maintain expected behavior
         if operation and isinstance(operation, str):
             enriched_message += f" (Operation: {operation})"
-        if entry_count and isinstance(entry_count, int):
-            enriched_message += f" (Entries: {entry_count})"
+        if entry_count is not None:
+            try:
+                count = int(entry_count) if isinstance(entry_count, (int, str)) else 0
+                enriched_message += f" (Entries: {count})"
+            except (ValueError, TypeError):
+                pass
 
         return FlextResult[None].fail(enriched_message)
 
@@ -106,8 +116,9 @@ class FlextLDIFExceptions:
         file_path = context.get("file_path")
 
         enriched_message = message
-        if file_path and isinstance(file_path, str):
-            enriched_message += f" (File: {file_path})"
+        # Use str() conversion instead of isinstance check
+        if file_path:
+            enriched_message += f" (File: {file_path!s})"
 
         return FlextResult[None].fail(enriched_message)
 
@@ -117,8 +128,9 @@ class FlextLDIFExceptions:
         config_key = context.get("config_key")
 
         enriched_message = message
-        if config_key and isinstance(config_key, str):
-            enriched_message += f" (Config: {config_key})"
+        # Use str() conversion instead of isinstance check
+        if config_key:
+            enriched_message += f" (Config: {config_key!s})"
 
         return FlextResult[None].fail(enriched_message)
 
@@ -150,46 +162,42 @@ class FlextLDIFExceptions:
         entry_data = context.get("entry_data")
 
         enriched_message = message
-        if dn and isinstance(dn, str):
-            enriched_message += f" (DN: {dn})"
-        if entry_data and isinstance(entry_data, dict):
-            attributes = list(entry_data.keys())
-            if attributes:
-                if len(attributes) > _MAX_ATTRIBUTES_DISPLAY:
-                    shown_attrs = attributes[:_MAX_ATTRIBUTES_DISPLAY]
-                    remaining_count = len(attributes) - _MAX_ATTRIBUTES_DISPLAY
-                    enriched_message += f" (Attributes: {', '.join(shown_attrs)} +{remaining_count} more)"
+        # Use str() conversion instead of isinstance check
+        if dn:
+            enriched_message += f" (DN: {dn!s})"
+        if entry_data:
+            # Use duck typing to check if it has keys() method
+            try:
+                if hasattr(entry_data, "keys") and callable(
+                    getattr(entry_data, "keys")
+                ):
+                    # Type guard: if it has callable keys method, treat as mapping
+                    mapping_data = entry_data
+                    attributes = list(mapping_data.keys())
                 else:
-                    enriched_message += f" (Attributes: {', '.join(attributes)})"
-        elif attribute_name and isinstance(attribute_name, str):
-            enriched_message += f" (Attribute: {attribute_name})"
+                    attributes = []
+                if attributes:
+                    if len(attributes) > _MAX_ATTRIBUTES_DISPLAY:
+                        shown_attrs = attributes[:_MAX_ATTRIBUTES_DISPLAY]
+                        remaining_count = len(attributes) - _MAX_ATTRIBUTES_DISPLAY
+                        enriched_message += f" (Attributes: {', '.join(shown_attrs)} +{remaining_count} more)"
+                    else:
+                        enriched_message += f" (Attributes: {', '.join(attributes)})"
+            except AttributeError:
+                pass
+        elif attribute_name:
+            enriched_message += f" (Attribute: {attribute_name!s})"
 
         return FlextResult[None].fail(enriched_message)
 
     @classmethod
     def create(cls, message: str, error_type: str | None = None) -> FlextResult[None]:
-        """Create error with specific type for backward compatibility."""
+        """Create error with specific type."""
         if error_type == "ValidationError":
             return cls.validation_error(message)
         return cls.error(message)
 
 
-# Convenience exception classes for examples and tests compatibility
-class FlextLDIFError(Exception):
-    """Generic LDIF error for examples compatibility."""
-
-
-class FlextLDIFParseError(Exception):
-    """LDIF parse error for examples compatibility."""
-
-
-class FlextLDIFValidationError(Exception):
-    """LDIF validation error for examples compatibility."""
-
-
 __all__ = [
-    "FlextLDIFError",
-    "FlextLDIFExceptions",
-    "FlextLDIFParseError",
-    "FlextLDIFValidationError",
+    "FlextLdifExceptions",
 ]
