@@ -39,6 +39,7 @@ try:
 except ImportError:
     # Dispatcher module not available - graceful degradation
     from typing import TYPE_CHECKING
+
     if TYPE_CHECKING:
         from flext_ldif.dispatcher import FlextLdifDispatcher
     else:

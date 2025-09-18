@@ -291,7 +291,9 @@ class FlextLdifModels(FlextModels):
                 True if no attributes or all attributes are empty
 
             """
-            return len(self.data) == 0 or all(len(values) == 0 for values in self.data.values())
+            return len(self.data) == 0 or all(
+                len(values) == 0 for values in self.data.values()
+            )
 
         def get_all_attribute_names(self) -> FlextTypes.Core.StringList:
             """Get all attribute names.
@@ -468,7 +470,7 @@ class FlextLdifModels(FlextModels):
             """
             object_classes = {oc.lower() for oc in self.get_object_classes()}
             org_classes = {
-            oc.lower() for oc in FlextLdifConstants.LDAP_ORGANIZATIONAL_CLASSES
+                oc.lower() for oc in FlextLdifConstants.LDAP_ORGANIZATIONAL_CLASSES
             }
             return bool(object_classes.intersection(org_classes))
 
@@ -479,14 +481,14 @@ class FlextLdifModels(FlextModels):
             FlextResult indicating validation success or failure
 
             """
-        # Validate DN using embedded validation
+            # Validate DN using embedded validation
             dn_validation = self.dn.validate_business_rules()
             if dn_validation.is_failure:
                 return FlextResult[None].fail(
                     f"DN validation failed: {dn_validation.error}"
                 )
 
-        # Validate attributes using embedded validation
+            # Validate attributes using embedded validation
             attr_validation = self.attributes.validate_business_rules()
             if attr_validation.is_failure:
                 return FlextResult[None].fail(
@@ -629,7 +631,7 @@ class FlextLdifModels(FlextModels):
                     attributes[key] = []
                 attributes[key].append(value)
 
-        # Create entry using existing factory method
+            # Create entry using existing factory method
             return FlextLdifModels.create_entry({"dn": dn, "attributes": attributes})
 
     # =============================================================================

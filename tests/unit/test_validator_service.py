@@ -441,9 +441,9 @@ class TestFlextLdifServicesValidatorService:
             # Check that error is meaningful for validation failure
             assert len(result.error) > 0
 
-        # Expected behavior - validation fails during creation
-        # This demonstrates that real validation is working
-        # Let's test with a valid entry instead to test the service behavior
+            # Expected behavior - validation fails during creation
+            # This demonstrates that real validation is working
+            # Let's test with a valid entry instead to test the service behavior
             valid_entry = FlextLdifModels.create_entry(
                 {
                     "dn": "cn=test,dc=example,dc=com",
