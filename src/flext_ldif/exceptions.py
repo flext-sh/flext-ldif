@@ -6,6 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from typing import cast
+
 from flext_core import FlextResult
 
 # Constants for magic numbers (ZERO TOLERANCE - no magic values)
@@ -166,16 +169,9 @@ class FlextLdifExceptions:
         if dn:
             enriched_message += f" (DN: {dn!s})"
         if entry_data:
-            # Use duck typing to check if it has keys() method
-            try:
-                if hasattr(entry_data, "keys") and callable(
-                    getattr(entry_data, "keys")
-                ):
-                    # Type guard: if it has callable keys method, treat as mapping
-                    mapping_data = entry_data
-                    attributes = list(mapping_data.keys())
-                else:
-                    attributes = []
+            # Prefer explicit Mapping check for static typing safety
+            if isinstance(entry_data, Mapping):
+                attributes = list(entry_data.keys())
                 if attributes:
                     if len(attributes) > _MAX_ATTRIBUTES_DISPLAY:
                         shown_attrs = attributes[:_MAX_ATTRIBUTES_DISPLAY]
@@ -183,8 +179,29 @@ class FlextLdifExceptions:
                         enriched_message += f" (Attributes: {', '.join(shown_attrs)} +{remaining_count} more)"
                     else:
                         enriched_message += f" (Attributes: {', '.join(attributes)})"
-            except AttributeError:
-                pass
+            else:
+                # Fallback: try duck-typing but swallow attribute errors
+                try:
+                    if hasattr(entry_data, "keys") and callable(
+                        getattr(entry_data, "keys")
+                    ):
+                        # Cast to dict-like type after validation for type safety
+                        dict_like_data = cast("dict[str, object]", entry_data)
+                        attributes = list(dict_like_data.keys())
+                        if attributes:
+                            if len(attributes) > _MAX_ATTRIBUTES_DISPLAY:
+                                shown_attrs = attributes[:_MAX_ATTRIBUTES_DISPLAY]
+                                remaining_count = (
+                                    len(attributes) - _MAX_ATTRIBUTES_DISPLAY
+                                )
+                                enriched_message += f" (Attributes: {', '.join(shown_attrs)} +{remaining_count} more)"
+                            else:
+                                enriched_message += (
+                                    f" (Attributes: {', '.join(attributes)})"
+                                )
+                except AttributeError:
+                    # Not a mapping and no keys callable — ignore
+                    pass
         elif attribute_name:
             enriched_message += f" (Attribute: {attribute_name!s})"
 

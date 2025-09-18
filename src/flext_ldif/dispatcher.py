@@ -101,21 +101,19 @@ class FlextLdifDispatcher:
                 )
             return FlextResult[bool].ok(data=True)
 
-        # Note: Complex generics in FlextDispatcherRegistry require careful handling
-        # Using the working pattern from client-a-oud-mig for consistency
-
-        # Build handler mapping for registration
-        # This pattern avoids complex generic type issues while maintaining functionality
-        handler_mapping = {
-            FlextLdifDispatcher.ParseStringCommand: (_parse_string, None),
-            FlextLdifDispatcher.ParseFileCommand: (_parse_file, None),
-            FlextLdifDispatcher.WriteStringCommand: (_write_string, None),
-            FlextLdifDispatcher.WriteFileCommand: (_write_file, None),
-            FlextLdifDispatcher.ValidateEntriesCommand: (_validate_entries, None),
-        }
-
-        # Register using the same pattern as other FLEXT projects
-        registration = registry.register_function_map(handler_mapping)
+        # Register handlers mapping
+        registration = registry.register_function_map(
+            {
+                FlextLdifDispatcher.ParseStringCommand: (_parse_string, {}),
+                FlextLdifDispatcher.ParseFileCommand: (_parse_file, {}),
+                FlextLdifDispatcher.WriteStringCommand: (_write_string, {}),
+                FlextLdifDispatcher.WriteFileCommand: (_write_file, {}),
+                FlextLdifDispatcher.ValidateEntriesCommand: (
+                    _validate_entries,
+                    {},
+                ),
+            }
+        )
         if registration.is_failure:
             raise RuntimeError(registration.error or "Failed to register LDIF handlers")
 

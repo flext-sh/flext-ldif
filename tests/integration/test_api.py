@@ -30,6 +30,7 @@ try:
 except ImportError:
     # Dispatcher not available - type-safe fallback
     from typing import TYPE_CHECKING
+
     if TYPE_CHECKING:
         from flext_ldif.dispatcher import FlextLdifDispatcher
     else:
@@ -230,33 +231,33 @@ objectClass: person
             raising=False,
         )
         monkeypatch.setattr(
-            api._services.parser,
+            type(api._services.parser),
             "parse_content",
-            lambda _: (_ for _ in ()).throw(AssertionError("fallback parse")),
+            lambda *_: (_ for _ in ()).throw(AssertionError("fallback parse")),
             raising=False,
         )
         monkeypatch.setattr(
-            api._services.parser,
+            type(api._services.parser),
             "parse_ldif_file",
-            lambda _: (_ for _ in ()).throw(AssertionError("fallback parse file")),
+            lambda *_: (_ for _ in ()).throw(AssertionError("fallback parse file")),
             raising=False,
         )
         monkeypatch.setattr(
-            api._services.writer,
+            type(api._services.writer),
             "write_entries_to_string",
-            lambda _: (_ for _ in ()).throw(AssertionError("fallback write string")),
+            lambda *_: (_ for _ in ()).throw(AssertionError("fallback write string")),
             raising=False,
         )
         monkeypatch.setattr(
-            api._services.writer,
+            type(api._services.writer),
             "write_entries_to_file",
             lambda *_: (_ for _ in ()).throw(AssertionError("fallback write file")),
             raising=False,
         )
         monkeypatch.setattr(
-            api._services.validator,
+            type(api._services.validator),
             "validate_entries",
-            lambda _: (_ for _ in ()).throw(AssertionError("fallback validate")),
+            lambda *_: (_ for _ in ()).throw(AssertionError("fallback validate")),
             raising=False,
         )
 

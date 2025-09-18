@@ -6,6 +6,18 @@
 
 **References**: See [../CLAUDE.md](../CLAUDE.md) for FLEXT ecosystem standards and [README.md](README.md) for project overview.
 
+**Hierarchy**: This document provides project-specific standards based on workspace-level patterns defined in [../CLAUDE.md](../CLAUDE.md). For architectural principles, quality gates, and MCP server usage, reference the main workspace standards.
+
+## 🔗 MCP SERVER INTEGRATION
+
+| MCP Server | Purpose | Status |
+|------------|---------|--------|
+| **serena** | LDIF processing codebase analysis and file parsing patterns | **ACTIVE** |
+| **sequential-thinking** | LDIF architecture and data processing problem solving | **ACTIVE** |
+| **github** | LDIF ecosystem integration and processing PRs | **ACTIVE** |
+
+**Usage**: `claude mcp list` for available servers, leverage for LDIF-specific development patterns and data processing analysis.
+
 ---
 
 ## 🎯 FLEXT-LDIF PURPOSE

@@ -100,7 +100,9 @@ without proper structure
             if hasattr(entry, "validate_business_rules"):
                 validation_result = entry.validate_business_rules()
                 if validation_result.is_failure:
-                    validation_errors.append(validation_result.error or "Validation failed")
+                    validation_errors.append(
+                        validation_result.error or "Validation failed"
+                    )
         return validation_errors
 
 
@@ -128,7 +130,9 @@ def demonstrate_exception_handling() -> None:
 
     def _test_validation_error() -> FlextResult[None]:
         msg = "Test validation error"
-        return FlextLdifExceptions.validation_error(msg, dn="cn=test,dc=example,dc=com", validation_rule="empty field")
+        return FlextLdifExceptions.validation_error(
+            msg, dn="cn=test,dc=example,dc=com", validation_rule="empty field"
+        )
 
     validation_result = _test_validation_error()
     if validation_result.is_failure:

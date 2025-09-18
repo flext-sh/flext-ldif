@@ -18,9 +18,7 @@ from flext_tests import (
 )
 
 from flext_core import FlextResult, FlextTypes
-from flext_ldif import (
-    FlextLdifAPI,
-)
+from flext_ldif import FlextLdifAPI
 from flext_ldif.parser_service import FlextLdifParserService
 from flext_ldif.writer_service import FlextLdifWriterService
 from tests.test_support import (
