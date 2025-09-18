@@ -1,6 +1,6 @@
 # FLEXT-LDIF Documentation
 
-**Version**: 0.9.0 | **Updated**: September 17, 2025 | **Status**: LDIF Processing Library
+**Version**: 0.9.9 RC | **Updated**: September 17, 2025 | **Status**: LDIF Processing Library · 1.0.0 Release Preparation
 
 This directory contains documentation for FLEXT-LDIF, a Python library for processing LDAP Data Interchange Format (LDIF) files within the FLEXT ecosystem.
 
@@ -101,7 +101,7 @@ Working code examples organized by complexity:
 
 ## 🌟 Key Features Documented
 
-### Current Implementation (v0.9.0)
+### Current Implementation (v0.9.9)
 
 - **RFC 2849 Compliance**: Standard-compliant LDIF processing
 - **Type Safety**: Type annotations with Pydantic v2
@@ -216,7 +216,7 @@ These represent development goals rather than current capabilities.
 
 - **Code Accuracy**: All examples tested and functional
 - **Complete Coverage**: All public APIs documented
-- **Current Information**: Version 0.9.0 alignment throughout documentation
+- **Current Information**: Version 0.9.9 alignment throughout documentation
 - **Professional Standards**: Clear, technical, and accurate language
 
 ## 🤝 Contributing to Documentation
@@ -231,6 +231,6 @@ When contributing to FLEXT-LDIF documentation:
 
 ---
 
-**FLEXT-LDIF Documentation**: Your guide to practical LDIF processing within the FLEXT ecosystem. This documentation reflects the current v0.9.0 implementation and provides accurate, tested examples for real-world usage.
+**FLEXT-LDIF Documentation**: Your guide to practical LDIF processing within the FLEXT ecosystem. This documentation reflects the current v0.9.9 implementation and provides accurate, tested examples for real-world usage.
 
 This documentation represents our commitment to providing accurate, useful guidance for FLEXT-LDIF users and contributors, clearly distinguishing between current capabilities and future development goals.

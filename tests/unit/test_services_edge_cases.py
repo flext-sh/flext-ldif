@@ -2,7 +2,12 @@
 
 This test file targets specific uncovered lines in services.py
 to achieve the required 90% coverage threshold.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
+
+from __future__ import annotations
 
 from flext_ldif.services import FlextLdifServices
 
@@ -20,7 +25,7 @@ class TestServicesEdgeCases:
         assert result.is_failure
         error_message = result.error
         assert error_message is not None
-        assert "LDIF content cannot be empty" in error_message
+        assert "Empty LDIF content" in error_message
 
     def test_parser_validate_syntax_whitespace_only(self) -> None:
         """Test parser validate_syntax with whitespace only."""
@@ -32,7 +37,7 @@ class TestServicesEdgeCases:
         assert result.is_failure
         error_message = result.error
         assert error_message is not None
-        assert "LDIF content cannot be empty" in error_message
+        assert "Empty LDIF content" in error_message
 
     def test_parser_validate_syntax_no_lines(self) -> None:
         """Test parser validate_syntax with no lines."""
@@ -44,7 +49,7 @@ class TestServicesEdgeCases:
         assert result.is_failure
         error_message = result.error
         assert error_message is not None
-        assert "LDIF content cannot be empty" in error_message
+        assert "Empty LDIF content" in error_message
 
     def test_parser_validate_syntax_invalid_start(self) -> None:
         """Test parser validate_syntax with invalid start."""

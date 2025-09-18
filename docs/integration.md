@@ -1,6 +1,6 @@
 # FLEXT-LDIF Ecosystem Integration
 
-**Version**: 0.9.0 | **Updated**: September 17, 2025
+**Version**: 0.9.9 RC | **Updated**: September 17, 2025
 
 LDIF-specific integration patterns for using FLEXT-LDIF within the FLEXT ecosystem. For general FLEXT patterns, see [flext-core documentation](../../flext-core/README.md).
 

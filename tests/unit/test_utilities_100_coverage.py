@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import patch
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
@@ -487,3 +488,61 @@ class TestFlextLdifUtilitiesComplete:
         assert "entry_validation" in capabilities
         assert "entry_conversion" in capabilities
         assert "entry_merging" in capabilities
+
+    def test_validate_ldif_file_extension_str_conversion_error(self) -> None:
+        """Test validate_ldif_file_extension with str conversion error."""
+        utilities = FlextLdifUtilities()
+
+        # Test with a mock object that raises exception when str() is called on it
+        class MockPathObject:
+            def __str__(self) -> str:
+                msg = "Path conversion error"
+                raise RuntimeError(msg)
+
+            def lower(self) -> str:
+                msg = "Path conversion error"
+                raise RuntimeError(msg)
+
+        mock_path = MockPathObject()
+        result = utilities.validate_ldif_file_extension(mock_path)
+        assert result.is_failure
+        assert "Extension validation failed: Path conversion error" in result.error
+
+    def test_validate_ldif_file_extension_validation_exception(self) -> None:
+        """Test validate_ldif_file_extension with validation exception."""
+        utilities = FlextLdifUtilities()
+
+        # Test exception handling in LdifFilePath validation
+
+        with patch("flext_ldif.models.FlextLdifModels.LdifFilePath") as mock_validation:
+            mock_validation.side_effect = Exception("Validation error")
+
+            result = utilities.validate_ldif_file_extension("test.ldif")
+            assert result.is_success
+            assert result.value is False  # Should return False when validation fails
+
+    def test_validate_ldif_content_exception_handling(self) -> None:
+        """Test validate_ldif_content exception handling."""
+        utilities = FlextLdifUtilities()
+
+        # Test exception handling in content validation
+
+        with patch("flext_ldif.models.FlextLdifModels.LdifContent") as mock_validation:
+            mock_validation.side_effect = Exception("Content validation error")
+
+            result = utilities.validate_ldif_content("valid content")
+            assert result.is_failure
+            assert "Content validation failed: Content validation error" in result.error
+
+    def test_validate_dn_format_exception_handling(self) -> None:
+        """Test validate_dn_format exception handling."""
+        utilities = FlextLdifUtilities()
+
+        # Test exception handling in DN validation
+
+        with patch("flext_ldif.models.FlextLdifModels.DistinguishedName") as mock_validation:
+            mock_validation.side_effect = Exception("DN validation error")
+
+            result = utilities.validate_dn_format("cn=test")
+            assert result.is_failure
+            assert "DN validation failed: DN validation error" in result.error

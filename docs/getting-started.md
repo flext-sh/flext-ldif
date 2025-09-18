@@ -1,6 +1,6 @@
 # Getting Started with FLEXT-LDIF
 
-**Version**: 0.9.0 | **Updated**: September 17, 2025
+**Version**: 0.9.9 RC | **Updated**: September 17, 2025
 
 This guide provides step-by-step instructions for installing and using FLEXT-LDIF, a Python library for processing LDAP Data Interchange Format (LDIF) files within the FLEXT ecosystem.
 

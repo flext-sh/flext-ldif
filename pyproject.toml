@@ -25,6 +25,7 @@ dependencies = [
     "ldif3 (>=3.2.2)",
     "click (>=8.1.0)",
     "structlog (>=25.4.0,<26.0.0)",
+    "flext-core @ file:///home/marlonsc/flext/flext-core",
 ]
 [[project.authors]]
 name = "FLEXT Team"
@@ -247,7 +248,7 @@ ldif3 = ">=3.2.2"
 click = ">=8.1.0"
 
 # Local ecosystem deps in editable mode for workspace development
-flext-core = { path = "../flext-core", develop = true }
+flext-core = {develop = true}
 flext-cli = { path = "../flext-cli", develop = true }
 flext-ldap = { path = "../flext-ldap", develop = true }
 flext-observability = { path = "../flext-observability", develop = true }

@@ -1,6 +1,6 @@
 # FLEXT-LDIF Configuration
 
-**Version**: 0.9.0 | **Updated**: September 17, 2025
+**Version**: 0.9.9 RC | **Updated**: September 17, 2025
 
 This document covers configuration options for FLEXT-LDIF, including settings management, environment configuration, and integration with FLEXT ecosystem configuration patterns.
 
@@ -421,7 +421,7 @@ Keep configuration changes documented and version controlled:
 ```python
 # Configuration changelog
 CONFIGURATION_CHANGELOG = {
-    "0.9.0": {
+    "0.9.9": {
         "added": ["buffer_size", "log_level"],
         "changed": ["max_entries default from 10000 to None"],
         "deprecated": []
@@ -430,7 +430,7 @@ CONFIGURATION_CHANGELOG = {
 
 def get_config_version() -> str:
     """Get current configuration version."""
-    return "0.9.0"
+    return "0.9.9"
 ```
 
 ## Configuration Reference

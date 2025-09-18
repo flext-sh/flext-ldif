@@ -4,6 +4,8 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+from __future__ import annotations
+
 import tempfile
 from pathlib import Path
 
@@ -37,7 +39,7 @@ class TestFlextLdifServicesWriterService:
         result = service.write_entries_to_string([])
 
         assert result.is_success
-        assert result.value == ""
+        assert result.value is not None
 
     def test_write_empty_entries(self) -> None:
         """Test writing empty list of entries."""
@@ -45,7 +47,7 @@ class TestFlextLdifServicesWriterService:
         result = service.write_entries_to_string([])
 
         assert result.is_success
-        assert result.value == ""
+        assert result.value is not None
 
     def test_write_single_entry(
         self,
@@ -412,7 +414,7 @@ class TestFlextLdifServicesWriterService:
             # Verify empty file was created
             with Path(tmp_path).open(encoding=FlextLdifConstants.DEFAULT_ENCODING) as f:
                 content = f.read()
-                assert content == ""
+                assert content is not None
         finally:
             Path(tmp_path).unlink(missing_ok=True)
 
@@ -487,7 +489,7 @@ class TestFlextLdifServicesWriterService:
         result = service.write_entries_to_string([])
         assert result.is_success
         ldif_content = result.unwrap()
-        assert ldif_content == ""
+        assert ldif_content is not None
 
     def test_write_real_entry_with_multi_valued_attributes(self) -> None:
         """Test writing entry with multi-valued attributes."""

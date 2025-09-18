@@ -1,6 +1,6 @@
 # FLEXT-LDIF Development Roadmap
 
-**Version**: 0.9.0 | **Updated**: September 17, 2025
+**Version**: 0.9.9 RC | **Updated**: September 17, 2025
 
 ## 🔍 Critical Investigation Results (September 17, 2025)
 
@@ -46,7 +46,7 @@ Memory-bound processing verified in `format_handlers.py:206` where `_ParserHelpe
 
 ## 🎯 Current Status
 
-### What Actually Works (v0.9.0)
+### What Actually Works (v0.9.9)
 
 - **LDIF Processing**: Basic RFC 2849 compliant parsing and writing
 - **Service Architecture**: Five services (parser, validator, writer, repository, analytics) with unified API

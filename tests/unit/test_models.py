@@ -1,4 +1,8 @@
-"""Test LDIF models functionality using FlextTests patterns."""
+"""Test LDIF models functionality using FlextTests patterns.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

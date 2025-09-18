@@ -1,6 +1,4 @@
-"""FLEXT LDIF Utilities - Utility functions and classes for LDIF operations.
-
-SOURCE OF TRUTH: Uses flext-core exclusively for generic operations.
+"""FLEXT LDIF Utilities - LDIF-specific utility functions.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -8,16 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 from flext_core import FlextLogger, FlextResult, FlextUtilities
-from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-
-# Direct flext-core usage without aliases
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 class FlextLdifUtilities:
@@ -28,14 +20,37 @@ class FlextLdifUtilities:
     """
 
     def __init__(self) -> None:
-        """Initialize LDIF utilities with dependency on flext-core."""
-        self._core_utilities = FlextUtilities()
+        """Initialize LDIF utilities."""
         self._logger = FlextLogger(__name__)
+        self._core_utilities = FlextUtilities()
 
     @property
     def core(self) -> FlextUtilities:
         """Access flext-core utilities directly."""
         return self._core_utilities
+
+    def validate_ldif_file_path(self, file_path: str | Path) -> FlextResult[Path]:
+        """Validate LDIF file path using flext-core patterns.
+
+        Args:
+            file_path: Path to validate
+
+        Returns:
+            FlextResult containing validated Path object
+
+        """
+        path_obj = Path(file_path)
+
+        # Use flext-core validation for file existence
+        if not path_obj.exists():
+            return FlextResult[Path].fail(f"File does not exist: {path_obj}")
+
+        if not path_obj.is_file():
+            return FlextResult[Path].fail(f"Path is not a file: {path_obj}")
+
+        # Use centralized validation model
+        validated_path = FlextLdifModels.LdifFilePath(path=str(path_obj))
+        return FlextResult[Path].ok(Path(validated_path.path))
 
     def validate_ldif_file_extension(self, file_path: str | Path) -> FlextResult[bool]:
         """Validate if file has proper LDIF extension using centralized FlextModels.
@@ -47,14 +62,65 @@ class FlextLdifUtilities:
             FlextResult indicating if file has valid LDIF extension
 
         """
+        # Handle path conversion exceptions
         try:
-            # Use centralized FlextLdifModels.LdifFilePath for validation
-            FlextLdifModels.LdifFilePath(path=str(file_path))
-            # If validation passes, file has valid extension
-            return FlextResult[bool].ok(data=True)
-        except Exception:
-            # If validation fails, file doesn't have valid extension or other error
+            path_str = str(file_path).lower()
+        except Exception as e:
+            return FlextResult[bool].fail(f"Extension validation failed: {e}")
+
+        valid_extensions = [".ldif", ".ldap", ".ldi"]
+        has_valid_extension = any(path_str.endswith(ext) for ext in valid_extensions)
+
+        if has_valid_extension:
+            # Double-check with the centralized validation model
+            try:
+                FlextLdifModels.LdifFilePath(path=str(file_path))
+                return FlextResult[bool].ok(data=True)
+            except Exception:
+                # If validation fails for other reasons, still return False
+                return FlextResult[bool].ok(data=False)
+        else:
             return FlextResult[bool].ok(data=False)
+
+    def validate_ldif_content(self, content: str) -> FlextResult[str]:
+        """Validate LDIF content using flext-core patterns.
+
+        Args:
+            content: LDIF content to validate
+
+        Returns:
+            FlextResult containing validated content
+
+        """
+        try:
+            # Use flext-core validation for non-empty string
+            if not FlextUtilities.Validation.is_non_empty_string(content):
+                return FlextResult[str].fail("Content cannot be empty")
+
+            # Use centralized validation model
+            validated_content = FlextLdifModels.LdifContent(content=content)
+            return FlextResult[str].ok(validated_content.content)
+
+        except Exception as e:
+            return FlextResult[str].fail(f"Content validation failed: {e}")
+
+    def validate_dn_format(self, dn: str) -> FlextResult[str]:
+        """Validate DN format using flext-core patterns.
+
+        Args:
+            dn: DN string to validate
+
+        Returns:
+            FlextResult containing validated DN
+
+        """
+        try:
+            # Use centralized validation model
+            validated_dn = FlextLdifModels.DistinguishedName(value=dn)
+            return FlextResult[str].ok(validated_dn.value)
+
+        except Exception as e:
+            return FlextResult[str].fail(f"DN validation failed: {e}")
 
     def normalize_dn_format(self, dn: str) -> FlextResult[str]:
         """Normalize DN format according to LDAP standards.
@@ -94,59 +160,198 @@ class FlextLdifUtilities:
         except Exception as e:
             return FlextResult[str].fail(f"DN normalization failed: {e}")
 
-    def extract_base_dn(self, dn: str) -> FlextResult[str]:
-        """Extract base DN from a complete DN.
+    def validate_attribute_name(self, attr_name: str) -> FlextResult[str]:
+        """Validate attribute name using flext-core patterns.
 
         Args:
-            dn: Complete Distinguished Name
+            attr_name: Attribute name to validate
 
         Returns:
-            FlextResult containing base DN
+            FlextResult containing validated attribute name
 
         """
         try:
-            # Use existing FlextLdifModels.DistinguishedName validation
-            dn_model = FlextLdifModels.DistinguishedName(value=dn)
-            validation_result = dn_model.validate_business_rules()
-            if validation_result.is_failure:
-                return FlextResult[str].fail(
-                    validation_result.error or "Invalid DN format"
-                )
+            # Use centralized validation model
+            validated_attr = FlextLdifModels.LdifAttributeName(name=attr_name)
+            return FlextResult[str].ok(validated_attr.name)
 
-            # Split by comma and take the last two components as base DN
-            components = [comp.strip() for comp in dn.split(",")]
-            if len(components) >= FlextLdifConstants.MIN_BASE_DN_COMPONENTS:
-                base_dn = ",".join(components[-2:])
-                return FlextResult[str].ok(base_dn)
-
-            # If less than 2 components, return the DN itself
-            return FlextResult[str].ok(dn)
         except Exception as e:
-            return FlextResult[str].fail(f"Base DN extraction failed: {e}")
+            return FlextResult[str].fail(f"Attribute name validation failed: {e}")
 
-    def validate_ldif_entry_completeness(
-        self, entry: FlextLdifModels.Entry
+    def normalize_ldif_content(self, content: str) -> FlextResult[str]:
+        """Normalize LDIF content using flext-core patterns.
+
+        Args:
+            content: Raw LDIF content
+
+        Returns:
+            FlextResult containing normalized content
+
+        """
+        try:
+            # Use flext-core string utilities
+            normalized = content.strip()
+
+            # Ensure proper line endings
+            lines = normalized.split("\n")
+            normalized_lines = [line.rstrip() for line in lines]
+
+            # Join with proper newlines and ensure ending newline
+            result = "\n".join(normalized_lines)
+            if result and not result.endswith("\n"):
+                result += "\n"
+
+            return FlextResult[str].ok(result)
+
+        except Exception as e:
+            return FlextResult[str].fail(f"Content normalization failed: {e}")
+
+    def extract_dn_from_content(self, content: str) -> FlextResult[str]:
+        """Extract DN from LDIF content using flext-core patterns.
+
+        Args:
+            content: LDIF content to parse
+
+        Returns:
+            FlextResult containing extracted DN
+
+        """
+        try:
+            # Use flext-core validation first
+            validation_result = self.validate_ldif_content(content)
+            if validation_result.is_failure:
+                error_msg = validation_result.error or "Content validation failed"
+                return FlextResult[str].fail(error_msg)
+
+            validated_content = validation_result.unwrap()
+
+            # Find first non-empty line and extract DN
+            for line in validated_content.split("\n"):
+                stripped_line = line.strip()
+                if stripped_line and stripped_line.startswith("dn:"):
+                    dn_value = stripped_line[3:].strip()
+                    if dn_value:
+                        return FlextResult[str].ok(dn_value)
+
+            return FlextResult[str].fail("No DN found in content")
+
+        except Exception as e:
+            return FlextResult[str].fail(f"DN extraction failed: {e}")
+
+    def count_entries_in_content(self, content: str) -> FlextResult[int]:
+        """Count entries in LDIF content using flext-core patterns.
+
+        Args:
+            content: LDIF content to analyze
+
+        Returns:
+            FlextResult containing entry count
+
+        """
+        try:
+            # Use flext-core validation first
+            validation_result = self.validate_ldif_content(content)
+            if validation_result.is_failure:
+                error_msg = validation_result.error or "Content validation failed"
+                return FlextResult[int].fail(error_msg)
+
+            validated_content = validation_result.unwrap()
+
+            # Count DN lines (each represents an entry)
+            dn_count = 0
+            for line in validated_content.split("\n"):
+                stripped_line = line.strip()
+                if stripped_line.startswith("dn:"):
+                    dn_count += 1
+
+            return FlextResult[int].ok(dn_count)
+
+        except Exception as e:
+            return FlextResult[int].fail(f"Entry counting failed: {e}")
+
+    def get_file_size_mb(self, file_path: str | Path) -> FlextResult[float]:
+        """Get file size in MB using flext-core patterns.
+
+        Args:
+            file_path: Path to file
+
+        Returns:
+            FlextResult containing file size in MB
+
+        """
+        try:
+            path_obj = Path(file_path)
+
+            if not path_obj.exists():
+                return FlextResult[float].fail(f"File does not exist: {path_obj}")
+
+            size_bytes = path_obj.stat().st_size
+            size_mb = size_bytes / (1024 * 1024)
+
+            return FlextResult[float].ok(size_mb)
+
+        except Exception as e:
+            return FlextResult[float].fail(f"File size calculation failed: {e}")
+
+    def is_file_too_large(
+        self, file_path: str | Path, max_size_mb: int
     ) -> FlextResult[bool]:
-        """Validate if LDIF entry has all required components using FlextModels.
+        """Check if file exceeds size limit using flext-core patterns.
 
         Args:
-            entry: LDIF entry to validate
+            file_path: Path to file
+            max_size_mb: Maximum size in MB
 
         Returns:
-            FlextResult indicating if entry is complete
+            FlextResult containing True if file is too large
 
         """
         try:
-            # Use centralized FlextLdifModels.Entry validation directly
-            validation_result = entry.validate_business_rules()
-            if validation_result.is_failure:
-                return FlextResult[bool].fail(
-                    validation_result.error or "Entry validation failed"
-                )
+            size_result = self.get_file_size_mb(file_path)
+            if size_result.is_failure:
+                error_msg = size_result.error or "File size calculation failed"
+                return FlextResult[bool].fail(error_msg)
 
-            return FlextResult[bool].ok(FlextLdifConstants.ENTRY_IS_COMPLETE)
+            file_size_mb = size_result.unwrap()
+            is_too_large = file_size_mb > max_size_mb
+
+            return FlextResult[bool].ok(is_too_large)
+
         except Exception as e:
-            return FlextResult[bool].fail(f"Entry completeness validation failed: {e}")
+            return FlextResult[bool].fail(f"File size check failed: {e}")
+
+    def create_entry_summary(
+        self, entry: FlextLdifModels.Entry
+    ) -> FlextResult[dict[str, str]]:
+        """Create entry summary using flext-core patterns.
+
+        Args:
+            entry: LDIF entry to summarize
+
+        Returns:
+            FlextResult containing entry summary
+
+        """
+        try:
+            summary = {
+                "dn": entry.dn.value,
+                "rdn": entry.get_rdn(),
+                "parent_dn": entry.get_parent_dn() or "N/A",
+                "depth": str(entry.get_dn_depth()),
+                "attribute_count": str(len(entry.attributes.data)),
+                "total_values": str(entry.attributes.get_total_values()),
+                "object_classes": ", ".join(entry.get_object_classes()),
+                "is_person": str(entry.is_person_entry()),
+                "is_group": str(entry.is_group_entry()),
+                "is_organizational_unit": str(entry.is_organizational_unit()),
+            }
+
+            return FlextResult[dict[str, str]].ok(summary)
+
+        except Exception as e:
+            return FlextResult[dict[str, str]].fail(
+                f"Entry summary creation failed: {e}"
+            )
 
     def convert_entry_to_dict(
         self, entry: FlextLdifModels.Entry
@@ -163,7 +368,7 @@ class FlextLdifUtilities:
         try:
             entry_dict: dict[str, object] = {
                 "dn": entry.dn.value,
-                "attributes": dict(entry.attributes) if entry.attributes else {},
+                "attributes": dict(entry.attributes.data) if entry.attributes else {},
             }
 
             return FlextResult[dict[str, object]].ok(entry_dict)
@@ -197,6 +402,61 @@ class FlextLdifUtilities:
             return FlextResult[int].ok(total_size)
         except Exception as e:
             return FlextResult[int].fail(f"Entry size calculation failed: {e}")
+
+    def extract_base_dn(self, dn: str) -> FlextResult[str]:
+        """Extract base DN from a complete DN.
+
+        Args:
+            dn: Complete Distinguished Name
+
+        Returns:
+            FlextResult containing base DN
+
+        """
+        try:
+            # Use existing FlextLdifModels.DistinguishedName validation
+            dn_model = FlextLdifModels.DistinguishedName(value=dn)
+            validation_result = dn_model.validate_business_rules()
+            if validation_result.is_failure:
+                return FlextResult[str].fail(
+                    validation_result.error or "Invalid DN format"
+                )
+
+            # Split by comma and take the last two components as base DN
+            components = [comp.strip() for comp in dn.split(",")]
+            min_base_dn_components = 2
+            if len(components) >= min_base_dn_components:
+                base_dn = ",".join(components[-2:])
+                return FlextResult[str].ok(base_dn)
+
+            # If less than 2 components, return the DN itself
+            return FlextResult[str].ok(dn)
+        except Exception as e:
+            return FlextResult[str].fail(f"Base DN extraction failed: {e}")
+
+    def validate_ldif_entry_completeness(
+        self, entry: FlextLdifModels.Entry
+    ) -> FlextResult[bool]:
+        """Validate if LDIF entry has all required components using FlextModels.
+
+        Args:
+            entry: LDIF entry to validate
+
+        Returns:
+            FlextResult indicating if entry is complete
+
+        """
+        try:
+            # Use centralized FlextLdifModels.Entry validation directly
+            validation_result = entry.validate_business_rules()
+            if validation_result.is_failure:
+                return FlextResult[bool].fail(
+                    validation_result.error or "Entry validation failed"
+                )
+
+            return FlextResult[bool].ok(data=True)
+        except Exception as e:
+            return FlextResult[bool].fail(f"Entry completeness validation failed: {e}")
 
     def merge_ldif_entries(
         self, entry1: FlextLdifModels.Entry, entry2: FlextLdifModels.Entry

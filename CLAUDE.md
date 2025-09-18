@@ -1,8 +1,8 @@
 # FLEXT-LDIF CLAUDE.MD
 
 **LDIF Processing Library for FLEXT Ecosystem**
-**Version**: 0.9.0 | **Updated**: 2025-09-17
-**Status**: Functional LDIF processing with memory-bound operations
+**Version**: 0.9.9 RC | **Updated**: 2025-09-17
+**Status**: Functional LDIF processing with memory-bound operations · 1.0.0 Release Preparation
 
 **References**: See [../CLAUDE.md](../CLAUDE.md) for FLEXT ecosystem standards and [README.md](README.md) for project overview.
 
@@ -10,11 +10,11 @@
 
 ## 🔗 MCP SERVER INTEGRATION
 
-| MCP Server | Purpose | Status |
-|------------|---------|--------|
-| **serena** | LDIF processing codebase analysis and file parsing patterns | **ACTIVE** |
-| **sequential-thinking** | LDIF architecture and data processing problem solving | **ACTIVE** |
-| **github** | LDIF ecosystem integration and processing PRs | **ACTIVE** |
+| MCP Server              | Purpose                                                     | Status     |
+| ----------------------- | ----------------------------------------------------------- | ---------- |
+| **serena**              | LDIF processing codebase analysis and file parsing patterns | **ACTIVE** |
+| **sequential-thinking** | LDIF architecture and data processing problem solving       | **ACTIVE** |
+| **github**              | LDIF ecosystem integration and processing PRs               | **ACTIVE** |
 
 **Usage**: `claude mcp list` for available servers, leverage for LDIF-specific development patterns and data processing analysis.
 
@@ -97,7 +97,7 @@ make validate       # Complete validation pipeline
 
 ---
 
-## 📊 CURRENT STATUS (v0.9.0)
+## 📊 CURRENT STATUS (v0.9.9)
 
 ### What Works
 
@@ -260,6 +260,6 @@ config = FlextLdifConfig()
 
 ---
 
-**FLEXT-LDIF v0.9.0** - LDIF processing library for LDAP data operations within the FLEXT ecosystem.
+**FLEXT-LDIF v0.9.9** - LDIF processing library for LDAP data operations within the FLEXT ecosystem.
 
 **Purpose**: Provide type-safe LDIF processing capabilities for FLEXT projects requiring directory data handling.

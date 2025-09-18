@@ -1,6 +1,6 @@
 # FLEXT-LDIF Architecture
 
-**Version**: 0.9.0 | **Updated**: September 17, 2025
+**Version**: 0.9.9 RC | **Updated**: September 17, 2025
 
 This document describes the architectural patterns and design decisions of FLEXT-LDIF, focusing on its service-oriented architecture and integration with FLEXT ecosystem patterns.
 
@@ -325,7 +325,7 @@ api = FlextLdifAPI(config=config)
 
 ## Current Implementation Status
 
-### What's Implemented (v0.9.0)
+### What's Implemented (v0.9.9)
 
 **✅ Core Architecture**:
 

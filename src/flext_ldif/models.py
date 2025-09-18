@@ -672,7 +672,6 @@ class FlextLdifModels(FlextModels):
 
         url: str = Field(
             ...,
-            pattern=r"^https?://[^\s/$.?#].[^\s]*$",
             description="URL with allowed scheme",
         )
 
@@ -731,16 +730,14 @@ class FlextLdifModels(FlextModels):
         Replaces manual LDIF syntax validation in parser_service.py
         """
 
-        content: str = Field(
-            ..., min_length=1, description="LDIF content that starts with dn:"
-        )
+        content: str = Field(..., description="LDIF content that starts with dn:")
 
         @field_validator("content")
         @classmethod
         def validate_ldif_syntax(cls, v: str) -> str:
             """Validate LDIF syntax using Pydantic v2 patterns."""
             if not v or not v.strip():
-                msg = "LDIF content cannot be empty"
+                msg = "Empty LDIF content"
                 raise FlextExceptions.ValidationError(msg)
 
             # Find first non-empty line and check if it starts with dn:

@@ -1,6 +1,6 @@
 # FLEXT-LDIF Troubleshooting
 
-**Version**: 0.9.0 | **Updated**: September 17, 2025
+**Version**: 0.9.9 RC | **Updated**: September 17, 2025
 
 This document provides solutions to common issues encountered when using FLEXT-LDIF, including error diagnosis, performance problems, and integration issues.
 

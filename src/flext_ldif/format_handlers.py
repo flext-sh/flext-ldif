@@ -14,8 +14,6 @@ import re
 from collections.abc import Iterator, Sequence
 from typing import ClassVar
 
-import urllib3
-
 from flext_core import FlextResult, FlextTypes, FlextUtilities
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.models import FlextLdifModels
@@ -27,7 +25,7 @@ class FlextLdifFormatHandler:
     Single responsibility class for all LDIF format operations.
     Provides comprehensive LDIF format handling for:
     - LDIF parsing and writing
-    - URL validation and fetching
+    - URL validation
     - Format validation and encoding
 
     Follows FLEXT single-class-per-module principle with all functionality
@@ -168,7 +166,7 @@ class FlextLdifFormatHandler:
 
     def is_dn(self, s: str) -> bool:
         """Return True if s is a valid LDAP DN."""
-        if s == "":
+        if not s:
             return True
         try:
             # Use existing FlextLdifModels.DistinguishedName validation
@@ -185,25 +183,6 @@ class FlextLdifFormatHandler:
             FlextLdifModels.LdifUrl(url=url)
         except Exception as e:
             raise ValueError(str(e)) from e
-
-    def safe_url_fetch(self, url: str, encoding: str | None = None) -> str:
-        """Safely fetch URL content."""
-        if encoding is None:
-            encoding = self._config.ldif_encoding
-
-        self.validate_url_scheme(url)
-
-        http = urllib3.PoolManager()
-
-        try:
-            response = http.request("GET", url)
-            if response.status != self.HTTP_OK:
-                msg: str = f"HTTP {response.status}: Failed to fetch {url}"
-                raise ValueError(msg)
-            return response.data.decode(encoding)
-        except (ValueError, TypeError, OSError) as e:
-            error_msg: str = f"urllib3 fetch error for {url}: {e}"
-            raise ValueError(error_msg) from e
 
     def lower_list(self, items: Sequence[str] | None) -> FlextTypes.Core.StringList:
         """Return a list with the lowercased items using FlextUtilities."""

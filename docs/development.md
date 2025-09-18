@@ -1,6 +1,6 @@
 # FLEXT-LDIF Development Guide
 
-**Version**: 0.9.0 | **Updated**: September 17, 2025
+**Version**: 0.9.9 RC | **Updated**: September 17, 2025
 
 This guide covers LDIF-specific development workflows and technical considerations for contributing to FLEXT-LDIF.
 
@@ -48,7 +48,7 @@ make reset          # Full reset of environment
 
 ## LDIF Processing Architecture
 
-### Current Implementation (v0.9.0)
+### Current Implementation (v0.9.9)
 
 FLEXT-LDIF uses a custom LDIF parser implementation with the following characteristics:
 

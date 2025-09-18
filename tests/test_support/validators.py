@@ -8,12 +8,9 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import TypeVar
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextResult, FlextTypes, T
 from flext_ldif import FlextLdifModels
-
-T = TypeVar("T")
 
 
 class TestValidators:

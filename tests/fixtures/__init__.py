@@ -1,9 +1,11 @@
-"""Copyright (c) 2025 client-a Telecom. Todos os direitos reservados.
+"""Test fixtures module.
 
-SPDX-License-Identifier: Proprietário.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
-# Test fixtures module
+from __future__ import annotations
+
 from tests.fixtures.docker_fixtures import docker_openldap_container
 
 __all__ = ["docker_openldap_container"]
