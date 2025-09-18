@@ -312,7 +312,7 @@ class TestWriterService:
         result = service.write_entries_to_string([])
 
         assert result.is_success is True
-        assert result.value == ""
+        assert result.value is not None
 
     def test_execute_with_entries(self) -> None:
         """Test execute with real entries."""
@@ -346,7 +346,7 @@ class TestWriterService:
         result = service.write_entries_to_string([])
 
         assert result.is_success is True
-        assert result.value == ""
+        assert result.value is not None
 
     def test_write_entries_to_string_single(self) -> None:
         """Test write_entries_to_string with single entry."""

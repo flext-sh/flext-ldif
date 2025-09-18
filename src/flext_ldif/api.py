@@ -11,13 +11,13 @@ from typing import cast
 
 from flext_core import (
     FlextContainer,
-    FlextDispatcher,
     FlextLogger,
     FlextResult,
 )
 from flext_ldif.analytics_service import FlextLdifAnalyticsService
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.dispatcher import FlextLdifDispatcher
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.parser_service import FlextLdifParserService
 from flext_ldif.repository_service import FlextLdifRepositoryService
@@ -25,33 +25,13 @@ from flext_ldif.services import FlextLdifServices
 from flext_ldif.validator_service import FlextLdifValidatorService
 from flext_ldif.writer_service import FlextLdifWriterService
 
-# Conditional imports for dispatcher functionality
-try:
-    from flext_ldif.dispatcher import FlextLdifDispatcher
-
-    # Extract nested classes for backward compatibility
-    ParseFileCommand = FlextLdifDispatcher.ParseFileCommand
-    ParseStringCommand = FlextLdifDispatcher.ParseStringCommand
-    ValidateEntriesCommand = FlextLdifDispatcher.ValidateEntriesCommand
-    WriteFileCommand = FlextLdifDispatcher.WriteFileCommand
-    WriteStringCommand = FlextLdifDispatcher.WriteStringCommand
-    build_dispatcher = FlextLdifDispatcher.build_dispatcher
-except ImportError:
-    # Dispatcher module not available - graceful degradation
-    from typing import TYPE_CHECKING
-
-    if TYPE_CHECKING:
-        from flext_ldif.dispatcher import FlextLdifDispatcher
-    else:
-        FlextLdifDispatcher = None
-        ParseFileCommand = None
-        ParseStringCommand = None
-        ValidateEntriesCommand = None
-        WriteFileCommand = None
-        WriteStringCommand = None
-        build_dispatcher = None
-
-# Direct FlextResult usage - no aliases
+# Extract nested classes for backward compatibility
+ParseFileCommand = FlextLdifDispatcher.ParseFileCommand
+ParseStringCommand = FlextLdifDispatcher.ParseStringCommand
+ValidateEntriesCommand = FlextLdifDispatcher.ValidateEntriesCommand
+WriteFileCommand = FlextLdifDispatcher.WriteFileCommand
+WriteStringCommand = FlextLdifDispatcher.WriteStringCommand
+build_dispatcher = FlextLdifDispatcher.build_dispatcher
 
 
 class FlextLdifAPI:
@@ -81,11 +61,8 @@ class FlextLdifAPI:
 
         # Initialize services with proper dependency injection
         self._services = self._initialize_services()
-        self._dispatcher: FlextDispatcher | None = None
-        if (
-            FlextLdifConstants.FeatureFlags.dispatcher_enabled()
-            and build_dispatcher is not None
-        ):
+        self._dispatcher: FlextLdifDispatcher.SimpleDispatcher | None = None
+        if FlextLdifConstants.FeatureFlags.dispatcher_enabled():
             try:
                 self._dispatcher = build_dispatcher(self._services)
                 self._logger.debug(
@@ -132,7 +109,7 @@ class FlextLdifAPI:
                 # Return empty list for empty content - valid LDIF case
                 return FlextResult[list[FlextLdifModels.Entry]].ok([])
 
-            if self._api._dispatcher is not None and ParseStringCommand is not None:
+            if self._api._dispatcher is not None:
                 dispatch_result = self._api._dispatch_command(
                     ParseStringCommand(content=content),
                 )
@@ -164,7 +141,7 @@ class FlextLdifAPI:
                     f"LDIF file not found: {file_path_obj}",
                 )
 
-            if self._api._dispatcher is not None and ParseFileCommand is not None:
+            if self._api._dispatcher is not None:
                 dispatch_result = self._api._dispatch_command(
                     ParseFileCommand(file_path=str(file_path_obj)),
                 )
@@ -193,7 +170,7 @@ class FlextLdifAPI:
             if not entries:
                 return FlextResult[str].fail("Cannot write empty entry list")
 
-            if self._api._dispatcher is not None and WriteStringCommand is not None:
+            if self._api._dispatcher is not None:
                 dispatch_result = self._api._dispatch_command(
                     WriteStringCommand(entries=entries),
                 )
@@ -214,7 +191,7 @@ class FlextLdifAPI:
             if not entries:
                 return FlextResult[bool].fail("Cannot write empty entry list")
 
-            if self._api._dispatcher is not None and WriteFileCommand is not None:
+            if self._api._dispatcher is not None:
                 dispatch_result = self._api._dispatch_command(
                     WriteFileCommand(entries=entries, file_path=Path(file_path)),
                 )
@@ -246,7 +223,7 @@ class FlextLdifAPI:
             if not entries:
                 return FlextResult[bool].fail("Cannot validate empty entry list")
 
-            if self._api._dispatcher is not None and ValidateEntriesCommand is not None:
+            if self._api._dispatcher is not None:
                 dispatch_result = self._api._dispatch_command(
                     ValidateEntriesCommand(entries=entries),
                 )

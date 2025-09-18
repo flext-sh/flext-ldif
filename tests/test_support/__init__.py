@@ -4,6 +4,8 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+from __future__ import annotations
+
 from tests.test_support.ldif_data import LdifSample, LdifTestData
 from tests.test_support.real_services import RealServiceFactory
 from tests.test_support.test_files import FileManager

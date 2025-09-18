@@ -22,9 +22,9 @@ FLEXT-LDIF is an enterprise-grade LDIF (LDAP Data Interchange Format) processing
 
 ## Version & Status
 
-- **Version**: 0.9.0
+- **Version**: 0.9.9 RC
 - **Python**: 3.13+ (strict typing)
-- **Status**: Production-ready with 96% test coverage
+- **Status**: Production-ready with 96% test coverage · 1.0.0 Release Preparation
 - **Architecture**: Clean Architecture + DDD + LDIF3
 
 ## Dependencies

@@ -1,6 +1,6 @@
 # FLEXT-LDIF API Reference
 
-**Version**: 0.9.0 | **Updated**: September 17, 2025
+**Version**: 0.9.9 RC | **Updated**: September 17, 2025
 
 Complete API documentation for FLEXT-LDIF, including all public classes, methods, and integration patterns with the FLEXT ecosystem.
 

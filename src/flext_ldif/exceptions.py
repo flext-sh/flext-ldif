@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import cast
 
 from flext_core import FlextResult
 
@@ -58,29 +57,41 @@ class FlextLdifExceptions:
 
     @classmethod
     def parse_error(cls, message: str, **context: object) -> FlextResult[None]:
-        """Create parse error with line/column context."""
+        """Create parse error with line/column context.
+
+        Args:
+            message: Base error message
+            **context: Additional context including line_number, column, content_preview
+
+        Returns:
+            FlextResult containing enriched error message
+
+        """
         line_number = context.get("line_number") or context.get("line")
         column = context.get("column")
         content_preview = context.get("content_preview") or context.get("content")
 
         enriched_message = message
-        # Use duck typing instead of isinstance checks
-        if line_number is not None:
-            try:
-                line_num = (
-                    int(line_number) if isinstance(line_number, (int, str)) else 0
-                )
-                enriched_message += f" (line {line_num}"
-                if column is not None:
-                    try:
-                        col_num = int(column) if isinstance(column, (int, str)) else 0
-                        enriched_message += f", column {col_num}"
-                    except (ValueError, TypeError):
-                        pass
-                enriched_message += ")"
-            except (ValueError, TypeError):
-                pass
 
+        # Handle line number with explicit validation
+        if line_number is not None:
+            if isinstance(line_number, int) and line_number > 0:
+                enriched_message += f" (line {line_number}"
+            elif isinstance(line_number, str) and line_number.isdigit():
+                enriched_message += f" (line {int(line_number)}"
+            else:
+                enriched_message += " (line unknown"
+
+            # Handle column with explicit validation
+            if column is not None:
+                if isinstance(column, int) and column > 0:
+                    enriched_message += f", column {column}"
+                elif isinstance(column, str) and column.isdigit():
+                    enriched_message += f", column {int(column)}"
+
+            enriched_message += ")"
+
+        # Handle content preview with explicit validation
         if content_preview and str(content_preview).strip():
             content_str = str(content_preview)
             preview = (
@@ -96,20 +107,31 @@ class FlextLdifExceptions:
 
     @classmethod
     def processing_error(cls, message: str, **context: object) -> FlextResult[None]:
-        """Create processing error with operation context."""
+        """Create processing error with operation context.
+
+        Args:
+            message: Base error message
+            **context: Additional context including operation, entry_count
+
+        Returns:
+            FlextResult containing enriched error message
+
+        """
         operation = context.get("operation")
         entry_count = context.get("entry_count")
 
         enriched_message = message
-        # Use str() conversion only for string values to maintain expected behavior
+
+        # Handle operation with explicit validation
         if operation and isinstance(operation, str):
             enriched_message += f" (Operation: {operation})"
+
+        # Handle entry count with explicit validation
         if entry_count is not None:
-            try:
-                count = int(entry_count) if isinstance(entry_count, (int, str)) else 0
-                enriched_message += f" (Entries: {count})"
-            except (ValueError, TypeError):
-                pass
+            if isinstance(entry_count, int) and entry_count >= 0:
+                enriched_message += f" (Entries: {entry_count})"
+            elif isinstance(entry_count, str) and entry_count.isdigit():
+                enriched_message += f" (Entries: {int(entry_count)})"
 
         return FlextResult[None].fail(enriched_message)
 
@@ -180,28 +202,8 @@ class FlextLdifExceptions:
                     else:
                         enriched_message += f" (Attributes: {', '.join(attributes)})"
             else:
-                # Fallback: try duck-typing but swallow attribute errors
-                try:
-                    if hasattr(entry_data, "keys") and callable(
-                        getattr(entry_data, "keys")
-                    ):
-                        # Cast to dict-like type after validation for type safety
-                        dict_like_data = cast("dict[str, object]", entry_data)
-                        attributes = list(dict_like_data.keys())
-                        if attributes:
-                            if len(attributes) > _MAX_ATTRIBUTES_DISPLAY:
-                                shown_attrs = attributes[:_MAX_ATTRIBUTES_DISPLAY]
-                                remaining_count = (
-                                    len(attributes) - _MAX_ATTRIBUTES_DISPLAY
-                                )
-                                enriched_message += f" (Attributes: {', '.join(shown_attrs)} +{remaining_count} more)"
-                            else:
-                                enriched_message += (
-                                    f" (Attributes: {', '.join(attributes)})"
-                                )
-                except AttributeError:
-                    # Not a mapping and no keys callable — ignore
-                    pass
+                # Use explicit type checking - no fallback mechanisms
+                enriched_message += " (Entry data: non-mapping type)"
         elif attribute_name:
             enriched_message += f" (Attribute: {attribute_name!s})"
 

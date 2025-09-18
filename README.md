@@ -2,7 +2,7 @@
 
 **LDIF processing library** for the FLEXT ecosystem, providing LDAP data parsing and validation using service-oriented architecture and type-safe error handling.
 
-> **STATUS**: Version 0.9.0 - Functional LDIF processing with memory-bound operations ⚠️ **Files >100MB may fail due to memory constraints**
+> **STATUS**: Version 0.9.9 - Functional LDIF processing with memory-bound operations ⚠️ **Files >100MB may fail due to memory constraints**
 
 ---
 
@@ -154,7 +154,7 @@ pytest --cov=src/flext_ldif             # Coverage report
 
 ## 📊 Status and Metrics
 
-### **Current Capabilities (v0.9.0)**
+### **Current Capabilities (v0.9.9)**
 
 - **LDIF Processing**: Basic parsing and validation of LDIF files
 - **Service Architecture**: Five services (parser, validator, writer, repository, analytics)
@@ -186,7 +186,7 @@ pytest --cov=src/flext_ldif             # Coverage report
 
 ## 🗺️ Roadmap
 
-### **Current Version (v0.9.0)**
+### **Current Version (v0.9.9)**
 
 Functional LDIF processing with service-oriented architecture. Suitable for development and small-scale use cases.
 
@@ -247,6 +247,6 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-**FLEXT-LDIF v0.9.0** - LDIF processing library for LDAP data operations within the FLEXT ecosystem.
+**FLEXT-LDIF v0.9.9** - LDIF processing library for LDAP data operations within the FLEXT ecosystem.
 
 **Purpose**: Provide type-safe LDIF processing capabilities for FLEXT projects requiring directory data handling.

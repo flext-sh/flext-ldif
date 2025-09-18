@@ -16,31 +16,15 @@ from flext_ldif import (
     FlextLdifAPI,
     FlextLdifModels,
 )
-
-# Conditional imports for dispatcher testing
-try:
-    from flext_ldif.dispatcher import FlextLdifDispatcher
-
-    # Extract nested classes for testing
-    ParseFileCommand = FlextLdifDispatcher.ParseFileCommand
-    ParseStringCommand = FlextLdifDispatcher.ParseStringCommand
-    ValidateEntriesCommand = FlextLdifDispatcher.ValidateEntriesCommand
-    WriteFileCommand = FlextLdifDispatcher.WriteFileCommand
-    WriteStringCommand = FlextLdifDispatcher.WriteStringCommand
-except ImportError:
-    # Dispatcher not available - type-safe fallback
-    from typing import TYPE_CHECKING
-
-    if TYPE_CHECKING:
-        from flext_ldif.dispatcher import FlextLdifDispatcher
-    else:
-        FlextLdifDispatcher = None
-        ParseFileCommand = None
-        ParseStringCommand = None
-        ValidateEntriesCommand = None
-        WriteFileCommand = None
-        WriteStringCommand = None
 from flext_ldif.config import FlextLdifConfig
+from flext_ldif.dispatcher import FlextLdifDispatcher
+
+# Extract nested classes for testing
+ParseFileCommand = FlextLdifDispatcher.ParseFileCommand
+ParseStringCommand = FlextLdifDispatcher.ParseStringCommand
+ValidateEntriesCommand = FlextLdifDispatcher.ValidateEntriesCommand
+WriteFileCommand = FlextLdifDispatcher.WriteFileCommand
+WriteStringCommand = FlextLdifDispatcher.WriteStringCommand
 
 
 class TestAdvancedAPIFeatures:
@@ -211,15 +195,15 @@ objectClass: person
 
         def fake_dispatch(command: object) -> FlextResult[object]:
             if isinstance(command, ParseStringCommand):
-                return FlextResult[list[FlextLdifModels.Entry]].ok([sample_entry])
+                return FlextResult[object](data=[sample_entry])
             if isinstance(command, ParseFileCommand):
-                return FlextResult[list[FlextLdifModels.Entry]].ok([sample_entry])
+                return FlextResult[object](data=[sample_entry])
             if isinstance(command, WriteStringCommand):
-                return FlextResult[str].ok("ldif-content")
+                return FlextResult[object](data="ldif-content")
             if isinstance(command, WriteFileCommand):
-                return FlextResult[bool].ok(True)
+                return FlextResult[object](data=True)
             if isinstance(command, ValidateEntriesCommand):
-                return FlextResult[bool].ok(True)
+                return FlextResult[object](data=True)
             return FlextResult[object].fail("Unsupported command")
 
         assert api._dispatcher is not None

@@ -2,7 +2,12 @@
 """Direct 100% Coverage Test - No pytest dependencies.
 
 This test directly calls ALL services methods to force 100% coverage.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
+
+from __future__ import annotations
 
 import sys
 import tempfile

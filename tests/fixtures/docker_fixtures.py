@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import os
 import shutil
@@ -429,6 +430,7 @@ async def temporary_ldif_data(
     ldif_content: str,
 ) -> AsyncGenerator[str]:
     """Context manager for temporary LDIF data that is auto-cleaned."""
+    await asyncio.sleep(0)  # Make it truly async
     if container is None:
         msg = "Container is required but not provided"
         raise RuntimeError(msg)

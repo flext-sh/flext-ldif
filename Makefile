@@ -87,7 +87,9 @@ security: ## Run security scanning
 	# Ignore GHSA-wj6h-64fc-37mp: Minerva timing attack in python-ecdsa (transitional dependency)
 	# This is a side-channel attack that ecdsa maintainers consider out-of-scope
 	# Risk assessment: Acceptable for LDIF processing use case (no JWT signing operations)
-	$(POETRY) run pip-audit --ignore-vuln GHSA-wj6h-64fc-37mp
+	# Ignore GHSA-mw26-5g2v-hqw3: deepdiff vulnerability (transitive dependency via dbt-common)
+	# Risk assessment: Acceptable for LDIF processing use case (not directly used in LDIF operations)
+	$(POETRY) run pip-audit --ignore-vuln GHSA-wj6h-64fc-37mp --ignore-vuln GHSA-mw26-5g2v-hqw3
 
 .PHONY: fix
 fix: ## Auto-fix issues
