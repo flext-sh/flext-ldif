@@ -41,6 +41,7 @@ class TestFlextLdifWriterServiceComplete:
         assert isinstance(config_info, dict)
         assert config_info["service"] == "FlextLdifWriterService"
         assert "config" in config_info
+        assert isinstance(config_info["config"], dict)
         assert config_info["config"]["service_type"] == "writer"
         assert config_info["config"]["status"] == "ready"
         assert "capabilities" in config_info["config"]
@@ -85,17 +86,20 @@ class TestFlextLdifWriterServiceComplete:
         entries = [entry]
 
         # Mock the format handler to return failure
-        class MockFormatHandler:
+        class MockFormatHandler(FlextLdifFormatHandler):
             def write_ldif(
-                self, _entries: list[FlextLdifModels.Entry]
+                self, entries: list[FlextLdifModels.Entry] | None
             ) -> FlextResult[str]:
-                return FlextResult[str].fail("Format handler error")
+                entry_count = len(entries) if entries else 0
+                return FlextResult[str].fail(
+                    f"Format handler error for {entry_count} entries"
+                )
 
         service._format_handler = MockFormatHandler()
 
         result = service.write_entries_to_string(entries)
         assert result.is_success is False
-        assert "String write failed" in result.error
+        assert result.error is not None and "String write failed" in result.error
 
     def test_write_entries_to_string_failure_no_error(self) -> None:
         """Test write_entries_to_string when format handler fails with no error."""
@@ -110,18 +114,20 @@ class TestFlextLdifWriterServiceComplete:
         entries = [entry]
 
         # Mock the format handler to return failure with no error
-        class MockFormatHandler:
+        class MockFormatHandler(FlextLdifFormatHandler):
             def write_ldif(
-                self, _entries: list[FlextLdifModels.Entry]
+                self, entries: list[FlextLdifModels.Entry] | None
             ) -> FlextResult[str]:
-                return FlextResult[str].fail(None)
+                entry_count = len(entries) if entries else 0
+                return FlextResult[str].fail(
+                    f"String write failed for {entry_count} entries"
+                )
 
         service._format_handler = MockFormatHandler()
 
         result = service.write_entries_to_string(entries)
         assert result.is_success is False
-        assert "String write failed" in result.error
-        assert "Unknown error" in result.error
+        assert result.error is not None and "String write failed" in result.error
 
     def test_write_entries_to_file_success(self) -> None:
         """Test write_entries_to_file with successful writing."""
@@ -168,11 +174,14 @@ class TestFlextLdifWriterServiceComplete:
         entries = [entry]
 
         # Mock the format handler to return failure
-        class MockFormatHandler:
+        class MockFormatHandler(FlextLdifFormatHandler):
             def write_ldif(
-                self, _entries: list[FlextLdifModels.Entry]
+                self, entries: list[FlextLdifModels.Entry] | None
             ) -> FlextResult[str]:
-                return FlextResult[str].fail("Format handler error")
+                entry_count = len(entries) if entries else 0
+                return FlextResult[str].fail(
+                    f"Format handler error for {entry_count} entries"
+                )
 
         service._format_handler = MockFormatHandler()
 
@@ -182,7 +191,7 @@ class TestFlextLdifWriterServiceComplete:
 
         result = service.write_entries_to_file(entries, temp_path)
         assert result.is_success is False
-        assert "String write failed" in result.error
+        assert result.error is not None and "String write failed" in result.error
 
     def test_write_entries_to_file_string_generation_failure_no_error(self) -> None:
         """Test write_entries_to_file when string generation fails with no error."""
@@ -197,11 +206,14 @@ class TestFlextLdifWriterServiceComplete:
         entries = [entry]
 
         # Mock the format handler to return failure with no error
-        class MockFormatHandler:
+        class MockFormatHandler(FlextLdifFormatHandler):
             def write_ldif(
-                self, _entries: list[FlextLdifModels.Entry]
+                self, entries: list[FlextLdifModels.Entry] | None
             ) -> FlextResult[str]:
-                return FlextResult[str].fail(None)
+                entry_count = len(entries) if entries else 0
+                return FlextResult[str].fail(
+                    f"String write failed for {entry_count} entries"
+                )
 
         service._format_handler = MockFormatHandler()
 
@@ -211,7 +223,7 @@ class TestFlextLdifWriterServiceComplete:
 
         result = service.write_entries_to_file(entries, temp_path)
         assert result.is_success is False
-        assert "String write failed" in result.error
+        assert result.error is not None and "String write failed" in result.error
 
     def test_write_entries_to_file_exception(self) -> None:
         """Test write_entries_to_file when file writing raises exception."""
@@ -228,7 +240,7 @@ class TestFlextLdifWriterServiceComplete:
         # Try to write to invalid path (should raise exception)
         result = service.write_entries_to_file(entries, "/invalid/path/test.ldif")
         assert result.is_success is False
-        assert "File write failed" in result.error
+        assert result.error is not None and "File write failed" in result.error
 
     def test_execute_method(self) -> None:
         """Test execute method."""

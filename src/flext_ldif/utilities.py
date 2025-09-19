@@ -527,5 +527,48 @@ class FlextLdifUtilities:
             "flext_core_integration": True,
         }
 
+    @staticmethod
+    def is_ldif_entry_dict(obj: object) -> bool:
+        """Type guard for LDIF entry dictionary."""
+        return (
+            isinstance(obj, dict)
+            and "dn" in obj
+            and isinstance(obj["dn"], str)
+            and "attributes" in obj
+            and isinstance(obj["attributes"], dict)
+        )
+
+    @staticmethod
+    def is_ldif_attribute_dict(obj: object) -> bool:
+        """Type guard for LDIF attribute dictionary."""
+        return isinstance(obj, dict) and all(
+            isinstance(key, str)
+            and isinstance(value, list)
+            and all(isinstance(item, str) for item in value)
+            for key, value in obj.items()
+        )
+
+    @staticmethod
+    def is_ldif_statistics(obj: object) -> bool:
+        """Type guard for LDIF statistics."""
+        return isinstance(obj, dict) and all(
+            isinstance(key, str) and isinstance(value, (int, float, str, list))
+            for key, value in obj.items()
+        )
+
+    @staticmethod
+    def is_distinguished_name(obj: object) -> bool:
+        """Type guard for distinguished name string."""
+        return isinstance(obj, str) and len(obj.strip()) > 0 and "=" in obj
+
+    @staticmethod
+    def is_ldif_content(obj: object) -> bool:
+        """Type guard for LDIF content string."""
+        return (
+            isinstance(obj, str)
+            and len(obj.strip()) > 0
+            and obj.strip().startswith("dn:")
+        )
+
 
 __all__ = ["FlextLdifUtilities"]

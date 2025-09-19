@@ -17,14 +17,13 @@ from flext_ldif import (
     FlextLdifModels,
 )
 from flext_ldif.config import FlextLdifConfig
-from flext_ldif.dispatcher import FlextLdifDispatcher
 
 # Extract nested classes for testing
-ParseFileCommand = FlextLdifDispatcher.ParseFileCommand
-ParseStringCommand = FlextLdifDispatcher.ParseStringCommand
-ValidateEntriesCommand = FlextLdifDispatcher.ValidateEntriesCommand
-WriteFileCommand = FlextLdifDispatcher.WriteFileCommand
-WriteStringCommand = FlextLdifDispatcher.WriteStringCommand
+ParseFileCommand = FlextLdifModels.ParseFileCommand
+ParseStringCommand = FlextLdifModels.ParseStringCommand
+ValidateEntriesCommand = FlextLdifModels.ValidateEntriesCommand
+WriteFileCommand = FlextLdifModels.WriteFileCommand
+WriteStringCommand = FlextLdifModels.WriteStringCommand
 
 
 class TestAdvancedAPIFeatures:

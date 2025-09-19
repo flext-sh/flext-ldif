@@ -262,7 +262,6 @@ class TestFlextLdifModelsEntryEnterprise:
         if cn_values != ["John Doe"]:
             raise AssertionError(f"Expected correct DN, got {entry.dn.value}")
 
-    @pytest.mark.skip(reason="Operation methods not implemented in Entry model")
     def test_operation_methods_correct_behavior(
         self, sample_entry_data: FlextTypes.Core.Dict
     ) -> None:
@@ -780,7 +779,7 @@ description: With multiple descriptions"""
         assert hash(dn1) == hash(dn2)
 
         # Test usage in set
-        dn_set = {dn1, dn2}
+        dn_set = {dn1, dn2}  # type: ignore[misc]
         assert len(dn_set) == 1
 
     def test_attributes_add_value(self) -> None:
@@ -914,7 +913,7 @@ description: With multiple descriptions"""
             assert hash1 == hash2
 
             # Test usage in set if hashing works
-            attrs_set = {attrs1, attrs2}
+            attrs_set = {attrs1, attrs2}  # type: ignore[misc]
             assert len(attrs_set) == 1
         except TypeError:
             # If attributes are not hashable due to dict content, that's acceptable

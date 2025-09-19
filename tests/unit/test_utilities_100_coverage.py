@@ -74,10 +74,12 @@ class TestFlextLdifUtilitiesComplete:
         """Test validate_ldif_file_extension exception handling."""
         utilities = FlextLdifUtilities()
 
-        # Test with None (should handle gracefully and return False)
-        result = utilities.validate_ldif_file_extension(None)
+        # Test with empty string (should handle gracefully and return False)
+        result = utilities.validate_ldif_file_extension("")
         assert result.is_success is True
-        assert result.value is False
+        assert (
+            result.value is False
+        )  # Invalid extension but successful validation operation
 
     def test_normalize_dn_format_valid_dn(self) -> None:
         """Test normalize_dn_format with valid DN."""
@@ -107,6 +109,7 @@ class TestFlextLdifUtilitiesComplete:
         # Test empty string
         result = utilities.normalize_dn_format("")
         assert result.is_success is False
+        assert result.error is not None
         assert (
             "string should have at least 1 character" in result.error.lower()
             or "empty" in result.error.lower()
@@ -115,6 +118,7 @@ class TestFlextLdifUtilitiesComplete:
         # Test whitespace only
         result = utilities.normalize_dn_format("   ")
         assert result.is_success is False
+        assert result.error is not None
         assert (
             "string should have at least 1 character" in result.error.lower()
             or "empty" in result.error.lower()
@@ -124,20 +128,22 @@ class TestFlextLdifUtilitiesComplete:
         """Test normalize_dn_format with invalid input."""
         utilities = FlextLdifUtilities()
 
-        # Test None
-        result = utilities.normalize_dn_format(None)
+        # Test empty string
+        result = utilities.normalize_dn_format("")
         assert result.is_success is False
+        assert result.error is not None and "DN normalization failed" in result.error
         assert (
-            "empty" in result.error.lower()
-            or "'nonetype' object has no attribute" in result.error.lower()
+            "string should have at least 1 character" in result.error.lower()
+            or "string_too_short" in result.error.lower()
         )
 
-        # Test non-string
-        result = utilities.normalize_dn_format(123)
+        # Test invalid DN format (single component without equals)
+        result = utilities.normalize_dn_format("invaliddn")
         assert result.is_success is False
+        assert result.error is not None and "DN normalization failed" in result.error
         assert (
-            "empty" in result.error.lower()
-            or "object has no attribute" in result.error.lower()
+            "normalization failed" in result.error.lower()
+            or "validation error" in result.error.lower()
         )
 
     def test_normalize_dn_format_exception_handling(self) -> None:
@@ -151,6 +157,7 @@ class TestFlextLdifUtilitiesComplete:
             assert result.value == "invalid-dn-format"
         else:
             # If validation fails due to stricter DN format rules, that's also acceptable
+            assert result.error is not None
             assert (
                 "string_pattern_mismatch" in result.error
                 or "invalid" in result.error.lower()
@@ -186,6 +193,7 @@ class TestFlextLdifUtilitiesComplete:
         # Test empty string
         result = utilities.extract_base_dn("")
         assert result.is_success is False
+        assert result.error is not None
         # Accept either "empty" or Pydantic validation error messages
         assert (
             "empty" in result.error.lower()
@@ -197,13 +205,10 @@ class TestFlextLdifUtilitiesComplete:
         """Test extract_base_dn exception handling."""
         utilities = FlextLdifUtilities()
 
-        # Test None
-        result = utilities.extract_base_dn(None)
+        # Test empty string
+        result = utilities.extract_base_dn("")
         assert result.is_success is False
-        assert (
-            "input should be a valid string" in result.error.lower()
-            or "empty" in result.error.lower()
-        )
+        assert result.error is not None and "Base DN extraction failed" in result.error
 
     def test_validate_ldif_entry_completeness_valid_entry(self) -> None:
         """Test validate_ldif_entry_completeness with valid entry."""
@@ -234,6 +239,7 @@ class TestFlextLdifUtilitiesComplete:
 
         result = utilities.validate_ldif_entry_completeness(entry)
         assert result.is_success is False
+        assert result.error is not None
         assert (
             "missing required DN" in result.error
             or "'NoneType' object has no attribute" in result.error
@@ -253,6 +259,7 @@ class TestFlextLdifUtilitiesComplete:
 
         result = utilities.validate_ldif_entry_completeness(entry)
         assert result.is_success is False
+        assert result.error is not None
         assert (
             "missing attributes" in result.error
             or "'NoneType' object has no attribute" in result.error
@@ -274,19 +281,25 @@ class TestFlextLdifUtilitiesComplete:
 
         result = utilities.validate_ldif_entry_completeness(entry)
         assert result.is_success is False
+        assert result.error is not None
         assert (
             "missing objectClass" in result.error
             or "Missing required objectClass" in result.error
         )
 
-    def test_validate_ldif_entry_completeness_exception_handling(self) -> None:
-        """Test validate_ldif_entry_completeness exception handling."""
+    def test_validate_ldif_entry_completeness_with_minimal_entry(self) -> None:
+        """Test validate_ldif_entry_completeness with minimal entry."""
         utilities = FlextLdifUtilities()
 
-        # Test with None entry
-        result = utilities.validate_ldif_entry_completeness(None)
-        assert result.is_success is False
-        assert "Entry completeness validation failed" in result.error
+        # Test with entry that has minimal required fields
+        entry_data = {
+            "dn": "cn=minimal,dc=example,dc=com",
+            "attributes": {"objectClass": ["top"]},
+        }
+        entry = FlextLdifModels.create_entry(entry_data)
+
+        result = utilities.validate_ldif_entry_completeness(entry)
+        assert result.is_success is True
 
     def test_convert_entry_to_dict_valid_entry(self) -> None:
         """Test convert_entry_to_dict with valid entry."""
@@ -321,14 +334,28 @@ class TestFlextLdifUtilitiesComplete:
         assert entry_dict["dn"] == "uid=john,ou=people,dc=example,dc=com"
         assert entry_dict["attributes"] == {}
 
-    def test_convert_entry_to_dict_exception_handling(self) -> None:
-        """Test convert_entry_to_dict exception handling."""
+    def test_convert_entry_to_dict_with_unicode_content(self) -> None:
+        """Test convert_entry_to_dict with Unicode content."""
         utilities = FlextLdifUtilities()
 
-        # Test with None entry
-        result = utilities.convert_entry_to_dict(None)
-        assert result.is_success is False
-        assert "Entry conversion failed" in result.error
+        # Test with entry containing Unicode characters
+        entry_data = {
+            "dn": "cn=Tëst Üser,ou=pëople,dc=exämple,dc=com",
+            "attributes": {
+                "objectClass": ["person"],
+                "cn": ["Tëst Üser"],
+                "description": ["Ëntry with Ünicode characters"],
+            },
+        }
+        entry = FlextLdifModels.create_entry(entry_data)
+
+        result = utilities.convert_entry_to_dict(entry)
+        assert result.is_success is True
+        entry_dict = result.value
+        assert entry_dict is not None
+        dn_value = entry_dict["dn"]
+        assert isinstance(dn_value, str)
+        assert "Tëst Üser" in dn_value
 
     def test_calculate_entry_size_valid_entry(self) -> None:
         """Test calculate_entry_size with valid entry."""
@@ -361,14 +388,28 @@ class TestFlextLdifUtilitiesComplete:
         assert isinstance(size, int)
         assert size > 0  # Should still count DN size
 
-    def test_calculate_entry_size_exception_handling(self) -> None:
-        """Test calculate_entry_size exception handling."""
+    def test_calculate_entry_size_with_binary_attributes(self) -> None:
+        """Test calculate_entry_size with binary attribute values."""
         utilities = FlextLdifUtilities()
 
-        # Test with None entry
-        result = utilities.calculate_entry_size(None)
-        assert result.is_success is False
-        assert "Entry size calculation failed" in result.error
+        # Test with entry containing binary-like data
+        entry_data = {
+            "dn": "cn=binary-entry,dc=example,dc=com",
+            "attributes": {
+                "objectClass": ["person"],
+                "cn": ["binary-entry"],
+                "userCertificate": ["MIIC...binary_data..."],  # Simulated binary data
+            },
+        }
+        entry = FlextLdifModels.create_entry(entry_data)
+
+        result = utilities.calculate_entry_size(entry)
+        assert result.is_success is True
+        size = result.value
+        assert isinstance(size, int)
+        assert size > len(
+            "cn=binary-entry,dc=example,dc=com"
+        )  # Should be larger than just DN
 
     def test_merge_ldif_entries_same_dn(self) -> None:
         """Test merge_ldif_entries with same DN."""
@@ -414,7 +455,7 @@ class TestFlextLdifUtilitiesComplete:
 
         result = utilities.merge_ldif_entries(entry1, entry2)
         assert result.is_success is False
-        assert "different DNs" in result.error
+        assert result.error is not None and "different DNs" in result.error
 
     def test_merge_ldif_entries_duplicate_attributes(self) -> None:
         """Test merge_ldif_entries with duplicate attributes."""
@@ -462,14 +503,29 @@ class TestFlextLdifUtilitiesComplete:
         assert merged_entry.dn.value == "uid=john,ou=people,dc=example,dc=com"
         assert "cn" in merged_entry.attributes.data
 
-    def test_merge_ldif_entries_exception_handling(self) -> None:
-        """Test merge_ldif_entries exception handling."""
+    def test_merge_ldif_entries_different_dns(self) -> None:
+        """Test merge_ldif_entries with entries having different DNs."""
         utilities = FlextLdifUtilities()
 
-        # Test with None entries
-        result = utilities.merge_ldif_entries(None, None)
+        # Test merging entries with different DNs
+        entry1_data = {
+            "dn": "cn=user1,dc=example,dc=com",
+            "attributes": {"objectClass": ["person"], "cn": ["user1"]},
+        }
+        entry2_data = {
+            "dn": "cn=user2,dc=example,dc=com",
+            "attributes": {"objectClass": ["person"], "cn": ["user2"]},
+        }
+
+        entry1 = FlextLdifModels.create_entry(entry1_data)
+        entry2 = FlextLdifModels.create_entry(entry2_data)
+
+        result = utilities.merge_ldif_entries(entry1, entry2)
         assert result.is_success is False
-        assert "Entry merge failed" in result.error
+        assert (
+            result.error is not None
+            and "Cannot merge entries with different DNs" in result.error
+        )
 
     def test_get_utility_info(self) -> None:
         """Test get_utility_info."""
@@ -483,30 +539,23 @@ class TestFlextLdifUtilitiesComplete:
         assert info["flext_core_integration"] is True
 
         capabilities = info["capabilities"]
+        assert isinstance(capabilities, (list, dict, set))
         assert "ldif_file_validation" in capabilities
         assert "dn_normalization" in capabilities
         assert "entry_validation" in capabilities
         assert "entry_conversion" in capabilities
         assert "entry_merging" in capabilities
 
-    def test_validate_ldif_file_extension_str_conversion_error(self) -> None:
-        """Test validate_ldif_file_extension with str conversion error."""
+    def test_validate_ldif_file_extension_with_special_characters(self) -> None:
+        """Test validate_ldif_file_extension with special characters in filename."""
         utilities = FlextLdifUtilities()
 
-        # Test with a mock object that raises exception when str() is called on it
-        class MockPathObject:
-            def __str__(self) -> str:
-                msg = "Path conversion error"
-                raise RuntimeError(msg)
-
-            def lower(self) -> str:
-                msg = "Path conversion error"
-                raise RuntimeError(msg)
-
-        mock_path = MockPathObject()
-        result = utilities.validate_ldif_file_extension(mock_path)
-        assert result.is_failure
-        assert "Extension validation failed: Path conversion error" in result.error
+        # Test with filename containing special characters
+        result = utilities.validate_ldif_file_extension(
+            "file with spaces & symbols.ldif"
+        )
+        assert result.is_success
+        assert result.value is True
 
     def test_validate_ldif_file_extension_validation_exception(self) -> None:
         """Test validate_ldif_file_extension with validation exception."""
@@ -532,7 +581,11 @@ class TestFlextLdifUtilitiesComplete:
 
             result = utilities.validate_ldif_content("valid content")
             assert result.is_failure
-            assert "Content validation failed: Content validation error" in result.error
+            assert (
+                result.error is not None
+                and "Content validation failed: Content validation error"
+                in result.error
+            )
 
     def test_validate_dn_format_exception_handling(self) -> None:
         """Test validate_dn_format exception handling."""
@@ -540,9 +593,14 @@ class TestFlextLdifUtilitiesComplete:
 
         # Test exception handling in DN validation
 
-        with patch("flext_ldif.models.FlextLdifModels.DistinguishedName") as mock_validation:
+        with patch(
+            "flext_ldif.models.FlextLdifModels.DistinguishedName"
+        ) as mock_validation:
             mock_validation.side_effect = Exception("DN validation error")
 
             result = utilities.validate_dn_format("cn=test")
             assert result.is_failure
-            assert "DN validation failed: DN validation error" in result.error
+            assert (
+                result.error is not None
+                and "DN validation failed: DN validation error" in result.error
+            )

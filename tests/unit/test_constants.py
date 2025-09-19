@@ -21,7 +21,7 @@ class TestConstants:
 
     def test_ldap_group_classes_defined(self) -> None:
         """Test LDAP group classes are properly defined."""
-        assert isinstance(FlextLdifConstants.LDAP_GROUP_CLASSES, set)
+        assert isinstance(FlextLdifConstants.LDAP_GROUP_CLASSES, frozenset)
         assert len(FlextLdifConstants.LDAP_GROUP_CLASSES) > 0
         # Verify standard group classes are present
         assert "groupofnames" in FlextLdifConstants.LDAP_GROUP_CLASSES

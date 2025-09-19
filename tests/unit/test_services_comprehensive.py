@@ -73,13 +73,19 @@ class TestRepositoryServiceComprehensive:
         result = service.filter_entries_by_object_class(entries, "")
         flext_matchers.assert_result_failure(result)
         if result.error:
-            assert "Object class cannot be empty" in result.error
+            assert (
+                result.error is not None
+                and "Object class cannot be empty" in result.error
+            )
 
         # Test whitespace-only object class using FlextTests matcher
         result = service.filter_entries_by_object_class(entries, "   ")
         flext_matchers.assert_result_failure(result)
         if result.error:
-            assert "Object class cannot be empty" in result.error
+            assert (
+                result.error is not None
+                and "Object class cannot be empty" in result.error
+            )
 
     def test_filter_entries_by_attribute_with_value(
         self,
@@ -129,13 +135,19 @@ class TestRepositoryServiceComprehensive:
         result = service.filter_entries_by_attribute(entries, "", "value")
         assert not result.is_success
         if result.error:
-            assert "attribute name cannot be empty" in result.error.lower()
+            assert (
+                result.error is not None
+                and "attribute name cannot be empty" in result.error.lower()
+            )
 
         # Test whitespace-only attribute name
         result = service.filter_entries_by_attribute(entries, "   ", "value")
         assert not result.is_success
         if result.error:
-            assert "attribute name cannot be empty" in result.error.lower()
+            assert (
+                result.error is not None
+                and "attribute name cannot be empty" in result.error.lower()
+            )
 
     def test_find_by_dn_error_cases(self) -> None:
         """Test find_by_dn with error conditions."""
@@ -328,7 +340,10 @@ class TestValidatorServiceComprehensive:
         result = service.validate_entries([])
         assert result.is_failure
         if result.error:
-            assert "Cannot validate empty entry list" in result.error
+            assert (
+                result.error is not None
+                and "Cannot validate empty entry list" in result.error
+            )
 
 
 class TestParserServiceComprehensive:
@@ -373,7 +388,7 @@ objectClass: person
         result = service.parse_content(invalid_ldif)
         assert not result.is_success
         if result.error:
-            assert "Invalid attribute line" in result.error
+            assert result.error is not None and "Invalid attribute line" in result.error
 
     def test_validate_ldif_syntax_attribute_before_dn(self) -> None:
         """Test validate_ldif_syntax with attribute before DN."""
@@ -387,7 +402,9 @@ objectClass: person
         result = service.validate_ldif_syntax(invalid_ldif)
         assert not result.is_success
         if result.error:
-            assert "LDIF must start with dn:" in result.error
+            assert (
+                result.error is not None and "LDIF must start with dn:" in result.error
+            )
 
     def test_parse_ldif_file_not_found(self) -> None:
         """Test parse_ldif_file with non-existent file."""
@@ -396,7 +413,7 @@ objectClass: person
         result = service.parse_ldif_file("/nonexistent/path/file.ldif")
         assert not result.is_success
         if result.error:
-            assert "File read failed" in result.error
+            assert result.error is not None and "File read failed" in result.error
 
     def test_parse_ldif_file_success(self) -> None:
         """Test parse_ldif_file with real file."""
@@ -425,7 +442,7 @@ objectClass: person
         result = service._parse_entry_block("")
         assert not result.is_success
         if result.error:
-            assert "No entries found" in result.error
+            assert result.error is not None and "No entries found" in result.error
 
     def test_parse_entry_block_missing_dn(self) -> None:
         """Test _parse_entry_block with missing DN."""
@@ -439,7 +456,7 @@ objectClass: person
         assert not result.is_success
         # After ldif3 integration, the error message is more specific
         if result.error:
-            assert "Expected DN line" in result.error
+            assert result.error is not None and "Expected DN line" in result.error
 
     def test_parse_entry_block_success(self) -> None:
         """Test _parse_entry_block with valid block."""

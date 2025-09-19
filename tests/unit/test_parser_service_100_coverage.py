@@ -42,6 +42,7 @@ class TestFlextLdifParserServiceComplete:
         assert isinstance(config_info, dict)
         assert config_info["service"] == "FlextLdifParserService"
         assert "config" in config_info
+        assert isinstance(config_info["config"], dict)
         assert config_info["config"]["service_type"] == "parser"
         assert config_info["config"]["status"] == "ready"
         assert "capabilities" in config_info["config"]
@@ -92,7 +93,7 @@ cn: Jane
         # Try to parse non-existent file
         result = service.parse_ldif_file("/nonexistent/file.ldif")
         assert result.is_success is False
-        assert "File read failed" in result.error
+        assert result.error is not None and "File read failed" in result.error
 
     def test_parse_content_success(self) -> None:
         """Test parse_content with successful parsing."""
@@ -123,16 +124,16 @@ cn: John
         service = FlextLdifParserService()
 
         # Mock the format handler to raise exception
-        class MockFormatHandler:
-            def parse_ldif(self, _content: str) -> Never:
-                msg = "Format handler error"
+        class MockFormatHandler(FlextLdifFormatHandler):
+            def parse_ldif(self, content: str) -> Never:
+                msg = f"Format handler error processing content: {content[:20]}..."
                 raise FormatHandlerError(msg)
 
         service._format_handler = MockFormatHandler()
 
         result = service.parse_content("dn: test")
         assert result.is_success is False
-        assert "Parse error" in result.error
+        assert result.error is not None and "Parse error" in result.error
 
     def test_validate_ldif_syntax_success(self) -> None:
         """Test validate_ldif_syntax with valid LDIF."""
@@ -152,11 +153,11 @@ cn: John
 
         result = service.validate_ldif_syntax("")
         assert result.is_success is False
-        assert "Empty LDIF content" in result.error
+        assert result.error is not None and "Empty LDIF content" in result.error
 
         result = service.validate_ldif_syntax("   ")
         assert result.is_success is False
-        assert "Empty LDIF content" in result.error
+        assert result.error is not None and "Empty LDIF content" in result.error
 
     def test_validate_ldif_syntax_invalid_start(self) -> None:
         """Test validate_ldif_syntax with invalid start."""
@@ -168,7 +169,7 @@ dn: uid=john,ou=people,dc=example,dc=com
 """
         result = service.validate_ldif_syntax(ldif_content)
         assert result.is_success is False
-        assert "LDIF must start with dn:" in result.error
+        assert result.error is not None and "LDIF must start with dn:" in result.error
 
     def test_validate_ldif_syntax_whitespace_only_lines(self) -> None:
         """Test validate_ldif_syntax with whitespace-only lines before dn."""
@@ -202,11 +203,11 @@ cn: John
 
         result = service._parse_entry_block("")
         assert result.is_success is False
-        assert "No entries found" in result.error
+        assert result.error is not None and "No entries found" in result.error
 
         result = service._parse_entry_block("   ")
         assert result.is_success is False
-        assert "No entries found" in result.error
+        assert result.error is not None and "No entries found" in result.error
 
     def test_execute_method(self) -> None:
         """Test execute method."""

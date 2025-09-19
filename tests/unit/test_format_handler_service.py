@@ -136,7 +136,7 @@ objectClass: person
         result = handler.write_ldif(None)
         assert result.is_failure
         assert result.error is not None
-        assert "Entries cannot be None" in result.error
+        assert result.error is not None and "Entries cannot be None" in result.error
 
 
 class TestFlextLdifWriter:
@@ -426,7 +426,7 @@ objectClass: person
         # Should return failure result
         assert result.is_failure
         assert result.error is not None
-        assert "Expected DN line" in result.error
+        assert result.error is not None and "Expected DN line" in result.error
 
     def test_parse_validation_unified(self) -> None:
         """Test validation using unified handler."""

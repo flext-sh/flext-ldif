@@ -15,9 +15,9 @@ from flext_ldif.format_handlers import FlextLdifFormatHandler
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.services import FlextLdifServices
+from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
-# Warning filtering is handled by flext-core logging system
 __all__ = [
     "FlextLdifAPI",
     "FlextLdifAnalyticsService",
@@ -28,6 +28,7 @@ __all__ = [
     "FlextLdifModels",
     "FlextLdifProtocols",
     "FlextLdifServices",
+    "FlextLdifTypes",
     "FlextLdifUtilities",
 ]
 

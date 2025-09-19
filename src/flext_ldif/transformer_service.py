@@ -6,10 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
-
 from flext_core import FlextResult
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifTransformerService:
@@ -22,7 +21,7 @@ class FlextLdifTransformerService:
     def transform_entries(
         self,
         entries: list[FlextLdifModels.Entry],
-        transform_func: Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry],
+        transform_func: FlextLdifTypes.Processing.EntryTransformer[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Transform LDIF entries using provided function.
 

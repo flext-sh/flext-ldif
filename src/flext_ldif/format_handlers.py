@@ -11,11 +11,10 @@ from __future__ import annotations
 
 import base64
 import re
-from collections.abc import Iterator, Sequence
-from typing import ClassVar
 
 from flext_core import FlextResult, FlextTypes, FlextUtilities
 from flext_ldif.config import FlextLdifConfig
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
 
@@ -31,32 +30,6 @@ class FlextLdifFormatHandler:
     Follows FLEXT single-class-per-module principle with all functionality
     integrated directly into the main class.
     """
-
-    # Note: LDIF validation handled by FlextLdifModels
-
-    MOD_OPS: ClassVar[FlextTypes.Core.StringList] = ["add", "delete", "replace"]
-    CHANGE_TYPES: ClassVar[FlextTypes.Core.StringList] = [
-        "add",
-        "delete",
-        "modify",
-        "modrdn",
-    ]
-
-    UNSAFE_STRING_PATTERN = (
-        r"(^[^\x01-\x09\x0b-\x0c\x0e-\x1f\x21-\x39\x3b\x3d-\x7f]"
-        r"|[^\x01-\x09\x0b-\x0c\x0e-\x7f])"
-    )
-    UNSAFE_STRING_RE = re.compile(UNSAFE_STRING_PATTERN)
-
-    # Allowed URL schemes for LDIF URL references
-    ALLOWED_URL_SCHEMES: ClassVar[set[str]] = {"http", "https"}
-
-    # HTTP status codes
-    HTTP_OK = 200
-
-    # ASCII printable character range constants
-    ASCII_PRINTABLE_MIN = 32
-    ASCII_PRINTABLE_MAX = 126
 
     def __init__(self, config: FlextLdifConfig | None = None) -> None:
         """Initialize LDIF format handler."""
@@ -76,6 +49,9 @@ class FlextLdifFormatHandler:
         self._line_sep = "\n"
         self._encoding = "utf-8"
         self._output_lines: FlextTypes.Core.StringList = []
+
+        # Compile regex pattern from constants for performance
+        self.UNSAFE_STRING_RE = re.compile(FlextLdifConstants.UNSAFE_STRING_PATTERN)
         self.records_written = 0
 
         # Parser state
@@ -184,7 +160,7 @@ class FlextLdifFormatHandler:
         except Exception as e:
             raise ValueError(str(e)) from e
 
-    def lower_list(self, items: Sequence[str] | None) -> FlextTypes.Core.StringList:
+    def lower_list(self, items: list[str] | None) -> FlextTypes.Core.StringList:
         """Return a list with the lowercased items using FlextUtilities."""
         if not items:
             return []

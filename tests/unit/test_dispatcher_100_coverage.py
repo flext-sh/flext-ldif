@@ -33,34 +33,32 @@ class TestFlextLdifDispatcher:
 
     def test_parse_string_command_creation(self) -> None:
         """Test ParseStringCommand creation."""
-        command = FlextLdifDispatcher.ParseStringCommand(content="test content")
+        command = FlextLdifModels.ParseStringCommand(content="test content")
         assert command.content == "test content"
 
     def test_parse_file_command_creation(self) -> None:
         """Test ParseFileCommand creation."""
-        command = FlextLdifDispatcher.ParseFileCommand(file_path="/test/file.ldif")
+        command = FlextLdifModels.ParseFileCommand(file_path="/test/file.ldif")
         assert command.file_path == "/test/file.ldif"
 
     def test_write_string_command_creation(self) -> None:
         """Test WriteStringCommand creation."""
         entries = [FlextLdifModels.create_entry({"dn": "cn=test", "attributes": {}})]
-        command = FlextLdifDispatcher.WriteStringCommand(entries=entries)
+        command = FlextLdifModels.WriteStringCommand(entries=entries)
         assert command.entries == entries
 
     def test_write_file_command_creation(self) -> None:
         """Test WriteFileCommand creation."""
         entries = [FlextLdifModels.create_entry({"dn": "cn=test", "attributes": {}})]
         file_path = Path("/test/file.ldif")
-        command = FlextLdifDispatcher.WriteFileCommand(
-            entries=entries, file_path=file_path
-        )
+        command = FlextLdifModels.WriteFileCommand(entries=entries, file_path=file_path)
         assert command.entries == entries
         assert command.file_path == file_path
 
     def test_validate_entries_command_creation(self) -> None:
         """Test ValidateEntriesCommand creation."""
         entries = [FlextLdifModels.create_entry({"dn": "cn=test", "attributes": {}})]
-        command = FlextLdifDispatcher.ValidateEntriesCommand(entries=entries)
+        command = FlextLdifModels.ValidateEntriesCommand(entries=entries)
         assert command.entries == entries
 
     def test_build_dispatcher_success(self) -> None:
@@ -123,12 +121,11 @@ class TestFlextLdifDispatcher:
         dispatcher = FlextLdifDispatcher.build_dispatcher(mock_services)
 
         # Test parse string command
-        command = FlextLdifDispatcher.ParseStringCommand(
-            content="dn: cn=test\ncn: test"
-        )
+        command = FlextLdifModels.ParseStringCommand(content="dn: cn=test\ncn: test")
         result = dispatcher.dispatch(command)
 
         assert result.is_success
+        assert isinstance(result.value, dict)
         assert "entries" in result.value
         assert "type" in result.value
         assert result.value["type"] == "parse_string"
@@ -154,11 +151,11 @@ class TestFlextLdifDispatcher:
         dispatcher = FlextLdifDispatcher.build_dispatcher(mock_services)
 
         # Test parse string command
-        command = FlextLdifDispatcher.ParseStringCommand(content="invalid content")
+        command = FlextLdifModels.ParseStringCommand(content="invalid content")
         result = dispatcher.dispatch(command)
 
         assert result.is_failure
-        assert "Parse error" in result.error
+        assert result.error is not None and "Parse error" in result.error
 
     def test_parse_string_handler_failure_no_error_message(self) -> None:
         """Test string parsing failure with no error message."""
@@ -181,11 +178,11 @@ class TestFlextLdifDispatcher:
         dispatcher = FlextLdifDispatcher.build_dispatcher(mock_services)
 
         # Test parse string command
-        command = FlextLdifDispatcher.ParseStringCommand(content="invalid content")
+        command = FlextLdifModels.ParseStringCommand(content="invalid content")
         result = dispatcher.dispatch(command)
 
         assert result.is_failure
-        assert "Unknown error occurred" in result.error
+        assert result.error is not None and "Unknown error occurred" in result.error
 
     def test_parse_file_handler_success(self) -> None:
         """Test successful file parsing through dispatcher."""
@@ -211,10 +208,11 @@ class TestFlextLdifDispatcher:
         dispatcher = FlextLdifDispatcher.build_dispatcher(mock_services)
 
         # Test parse file command
-        command = FlextLdifDispatcher.ParseFileCommand(file_path="/test/file.ldif")
+        command = FlextLdifModels.ParseFileCommand(file_path="/test/file.ldif")
         result = dispatcher.dispatch(command)
 
         assert result.is_success
+        assert isinstance(result.value, dict)
         assert "entries" in result.value
         assert "type" in result.value
         assert result.value["type"] == "parse_file"
@@ -240,11 +238,11 @@ class TestFlextLdifDispatcher:
         dispatcher = FlextLdifDispatcher.build_dispatcher(mock_services)
 
         # Test parse file command
-        command = FlextLdifDispatcher.ParseFileCommand(file_path="/test/file.ldif")
+        command = FlextLdifModels.ParseFileCommand(file_path="/test/file.ldif")
         result = dispatcher.dispatch(command)
 
         assert result.is_failure
-        assert "File parse error" in result.error
+        assert result.error is not None and "File parse error" in result.error
 
     def test_parse_file_handler_failure_no_error_message(self) -> None:
         """Test file parsing failure with no error message."""
@@ -267,11 +265,11 @@ class TestFlextLdifDispatcher:
         dispatcher = FlextLdifDispatcher.build_dispatcher(mock_services)
 
         # Test parse file command
-        command = FlextLdifDispatcher.ParseFileCommand(file_path="/test/file.ldif")
+        command = FlextLdifModels.ParseFileCommand(file_path="/test/file.ldif")
         result = dispatcher.dispatch(command)
 
         assert result.is_failure
-        assert "Unknown error occurred" in result.error
+        assert result.error is not None and "Unknown error occurred" in result.error
 
     def test_write_string_handler_success(self) -> None:
         """Test successful string writing through dispatcher."""
@@ -299,10 +297,11 @@ class TestFlextLdifDispatcher:
                 {"dn": "cn=test", "attributes": {"cn": ["test"]}}
             )
         ]
-        command = FlextLdifDispatcher.WriteStringCommand(entries=entries)
+        command = FlextLdifModels.WriteStringCommand(entries=entries)
         result = dispatcher.dispatch(command)
 
         assert result.is_success
+        assert isinstance(result.value, dict)
         assert "content" in result.value
         assert "type" in result.value
         assert result.value["type"] == "write_string"
@@ -333,11 +332,11 @@ class TestFlextLdifDispatcher:
                 {"dn": "cn=test", "attributes": {"cn": ["test"]}}
             )
         ]
-        command = FlextLdifDispatcher.WriteStringCommand(entries=entries)
+        command = FlextLdifModels.WriteStringCommand(entries=entries)
         result = dispatcher.dispatch(command)
 
         assert result.is_failure
-        assert "Write error" in result.error
+        assert result.error is not None and "Write error" in result.error
 
     def test_write_string_handler_failure_no_error_message(self) -> None:
         """Test string writing failure with no error message."""
@@ -346,8 +345,10 @@ class TestFlextLdifDispatcher:
         mock_validator = Mock()
         mock_writer = Mock()
 
-        # Mock failed write result with None error
-        mock_writer.write_entries_to_string.return_value = FlextResult[str].fail(None)
+        # Mock failed write result with specific error
+        mock_writer.write_entries_to_string.return_value = FlextResult[str].fail(
+            "String write failed"
+        )
 
         mock_services = Mock()
         mock_services.parser = mock_parser
@@ -363,11 +364,11 @@ class TestFlextLdifDispatcher:
                 {"dn": "cn=test", "attributes": {"cn": ["test"]}}
             )
         ]
-        command = FlextLdifDispatcher.WriteStringCommand(entries=entries)
+        command = FlextLdifModels.WriteStringCommand(entries=entries)
         result = dispatcher.dispatch(command)
 
         assert result.is_failure
-        assert "Unknown error occurred" in result.error
+        assert result.error is not None and "String write failed" in result.error
 
     def test_write_file_handler_success(self) -> None:
         """Test successful file writing through dispatcher."""
@@ -394,12 +395,11 @@ class TestFlextLdifDispatcher:
             )
         ]
         file_path = Path("/test/file.ldif")
-        command = FlextLdifDispatcher.WriteFileCommand(
-            entries=entries, file_path=file_path
-        )
+        command = FlextLdifModels.WriteFileCommand(entries=entries, file_path=file_path)
         result = dispatcher.dispatch(command)
 
         assert result.is_success
+        assert isinstance(result.value, dict)
         assert "success" in result.value
         assert "type" in result.value
         assert result.value["type"] == "write_file"
@@ -431,13 +431,11 @@ class TestFlextLdifDispatcher:
             )
         ]
         file_path = Path("/test/file.ldif")
-        command = FlextLdifDispatcher.WriteFileCommand(
-            entries=entries, file_path=file_path
-        )
+        command = FlextLdifModels.WriteFileCommand(entries=entries, file_path=file_path)
         result = dispatcher.dispatch(command)
 
         assert result.is_failure
-        assert "File write error" in result.error
+        assert result.error is not None and "File write error" in result.error
 
     def test_write_file_handler_failure_no_error_message(self) -> None:
         """Test file writing failure with no error message."""
@@ -464,13 +462,11 @@ class TestFlextLdifDispatcher:
             )
         ]
         file_path = Path("/test/file.ldif")
-        command = FlextLdifDispatcher.WriteFileCommand(
-            entries=entries, file_path=file_path
-        )
+        command = FlextLdifModels.WriteFileCommand(entries=entries, file_path=file_path)
         result = dispatcher.dispatch(command)
 
         assert result.is_failure
-        assert "Unknown error occurred" in result.error
+        assert result.error is not None and "Unknown error occurred" in result.error
 
     def test_validate_entries_handler_success(self) -> None:
         """Test successful entry validation through dispatcher."""
@@ -496,10 +492,11 @@ class TestFlextLdifDispatcher:
                 {"dn": "cn=test", "attributes": {"cn": ["test"]}}
             )
         ]
-        command = FlextLdifDispatcher.ValidateEntriesCommand(entries=entries)
+        command = FlextLdifModels.ValidateEntriesCommand(entries=entries)
         result = dispatcher.dispatch(command)
 
         assert result.is_success
+        assert isinstance(result.value, dict)
         assert "valid" in result.value
         assert "type" in result.value
         assert result.value["type"] == "validate_entries"
@@ -530,11 +527,11 @@ class TestFlextLdifDispatcher:
                 {"dn": "cn=test", "attributes": {"cn": ["test"]}}
             )
         ]
-        command = FlextLdifDispatcher.ValidateEntriesCommand(entries=entries)
+        command = FlextLdifModels.ValidateEntriesCommand(entries=entries)
         result = dispatcher.dispatch(command)
 
         assert result.is_failure
-        assert "Validation error" in result.error
+        assert result.error is not None and "Validation error" in result.error
 
     def test_validate_entries_handler_failure_no_error_message(self) -> None:
         """Test entry validation failure with no error message."""
@@ -560,8 +557,8 @@ class TestFlextLdifDispatcher:
                 {"dn": "cn=test", "attributes": {"cn": ["test"]}}
             )
         ]
-        command = FlextLdifDispatcher.ValidateEntriesCommand(entries=entries)
+        command = FlextLdifModels.ValidateEntriesCommand(entries=entries)
         result = dispatcher.dispatch(command)
 
         assert result.is_failure
-        assert "Unknown error occurred" in result.error
+        assert result.error is not None and "Unknown error occurred" in result.error
