@@ -63,7 +63,10 @@ class TestFlextLdifParserServiceComplete:
 
         # Create temporary LDIF file using secure tempfile
         with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+            encoding="utf-8",
         ) as temp_f:
             ldif_content = """dn: uid=john,ou=people,dc=example,dc=com
 objectClass: person
@@ -130,7 +133,7 @@ cn: John
         result = service.parse_content(malformed_content)
 
         assert result.is_failure
-        assert "LDIF parse failed" in result.error
+        assert result.error is not None and "LDIF parse failed" in result.error
 
     def test_validate_ldif_syntax_success(self) -> None:
         """Test validate_ldif_syntax with valid LDIF."""
@@ -212,7 +215,7 @@ cn: John
         result = service.parse_content(malformed_content)
 
         assert result.is_failure
-        assert "LDIF parse failed" in result.error
+        assert result.error is not None and "LDIF parse failed" in result.error
 
     def test_execute_method(self) -> None:
         """Test execute method."""

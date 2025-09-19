@@ -135,7 +135,11 @@ class TestAnalyticsService:
         assert isinstance(patterns, dict)
         assert len(patterns) > 0
         # Test that analysis found some patterns - flexible assertions
-        assert any(key for key in patterns if "entries" in key or "patterns" in key or "distribution" in key)
+        assert any(
+            key
+            for key in patterns
+            if "entries" in key or "patterns" in key or "distribution" in key
+        )
 
     def test_analyze_attribute_distribution(self) -> None:
         """Test analyze_attribute_distribution method."""
@@ -441,7 +445,10 @@ class TestWriterService:
         ]
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", delete=False, suffix=".ldif",
+            encoding="utf-8",
+            mode="w",
+            delete=False,
+            suffix=".ldif",
         ) as tmp_file:
             tmp_path = tmp_file.name
 
@@ -475,7 +482,10 @@ class TestWriterService:
         ]
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", delete=False, suffix=".ldif",
+            encoding="utf-8",
+            mode="w",
+            delete=False,
+            suffix=".ldif",
         ) as tmp_file:
             tmp_path = tmp_file.name
 
@@ -500,7 +510,10 @@ class TestWriterService:
         ]
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", delete=False, suffix=".ldif",
+            encoding="utf-8",
+            mode="w",
+            delete=False,
+            suffix=".ldif",
         ) as tmp_file:
             tmp_path = tmp_file.name
 
@@ -517,7 +530,10 @@ class TestWriterService:
         content = "dn: uid=test,ou=people,dc=example,dc=com\nobjectClass: person\ncn: Test User\n"
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", delete=False, suffix=".ldif",
+            encoding="utf-8",
+            mode="w",
+            delete=False,
+            suffix=".ldif",
         ) as tmp_file:
             tmp_path = tmp_file.name
 
@@ -573,12 +589,9 @@ class TestWriterService:
             # Should fail because directory doesn't exist
             assert result.is_failure
             if result.error:
-                assert (
-                    result.error is not None
-                    and (
-                        "No such file or directory" in result.error
-                        or "Parent directory does not exist" in result.error
-                    )
+                assert result.error is not None and (
+                    "No such file or directory" in result.error
+                    or "Parent directory does not exist" in result.error
                 )
 
     def test_format_entry_for_display(self) -> None:

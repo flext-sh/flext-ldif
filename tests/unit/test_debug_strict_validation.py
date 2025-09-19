@@ -50,7 +50,9 @@ def test_debug_manual_validation_call() -> None:
 
     # Chamar método diretamente usando a nova API
     with patch.object(
-        FlextUtilities.TypeGuards, "is_list_non_empty", return_value=True,
+        FlextUtilities.TypeGuards,
+        "is_list_non_empty",
+        return_value=True,
     ):
         result = validator.validate_entry_structure(entry)
 

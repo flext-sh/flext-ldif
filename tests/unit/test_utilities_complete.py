@@ -21,13 +21,21 @@ class TestFlextLdifUtilitiesLdifDomainProcessors:
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=user1,ou=people,dc=example,dc=com",
-                    "attributes": {"objectClass": ["person"], "cn": ["User 1"], "sn": ["User1"]},
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["User 1"],
+                        "sn": ["User1"],
+                    },
                 },
             ),
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=user2,ou=people,dc=example,dc=com",
-                    "attributes": {"objectClass": ["person"], "cn": ["User 2"], "sn": ["User2"]},
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["User 2"],
+                        "sn": ["User2"],
+                    },
                 },
             ),
         ]
@@ -39,7 +47,8 @@ class TestFlextLdifUtilitiesLdifDomainProcessors:
         assert result.value is True
 
     def test_validate_entries_or_warn_missing_objectclass(
-        self, real_ldif_api: FlextLdifAPI,
+        self,
+        real_ldif_api: FlextLdifAPI,
     ) -> None:
         """Test validate_entries with valid entries."""
         entries = [
@@ -48,6 +57,7 @@ class TestFlextLdifUtilitiesLdifDomainProcessors:
                     "dn": "uid=test,ou=people,dc=example,dc=com",  # Valid DN
                     "attributes": {
                         "cn": ["User"],
+                        "sn": ["User"],  # Required surname for person objectClass
                         "objectClass": ["person", "top"],  # Required objectClass
                     },
                 },
@@ -68,7 +78,9 @@ class TestFlextLdifUtilitiesLdifDomainProcessors:
                     "dn": f"uid=user{i},ou=people,dc=example,dc=com",  # Valid DN
                     "attributes": {
                         "cn": [f"User {i}"],
-                        "sn": [f"User{i}"],  # Add required sn attribute for person objectClass
+                        "sn": [
+                            f"User{i}",
+                        ],  # Add required sn attribute for person objectClass
                         "objectClass": ["person", "top"],  # Required objectClass
                     },
                 },
@@ -82,8 +94,8 @@ class TestFlextLdifUtilitiesLdifDomainProcessors:
         assert result.is_success is True
         assert result.value is True
 
-    def test_filter_entries_by_object_class_found(self) -> None:
-        """Test filter_entries_by_object_class with matches."""
+    def test_filter_entries_by_objectclass_found(self) -> None:
+        """Test filter_entries_by_objectclass with matches."""
         entries = [
             FlextLdifModels.create_entry(
                 {
@@ -109,14 +121,14 @@ class TestFlextLdifUtilitiesLdifDomainProcessors:
         ]
 
         services = FlextLdifServices()
-        result = services.repository.filter_entries_by_object_class(entries, "person")
+        result = services.repository.filter_entries_by_objectclass(entries, "person")
 
         assert result.is_success is True
         filtered_entries = result.value
         assert len(filtered_entries) == 2  # Two entries with 'person' objectClass
 
-    def test_filter_entries_by_object_class_none_found(self) -> None:
-        """Test filter_entries_by_object_class with no matches."""
+    def test_filter_entries_by_objectclass_none_found(self) -> None:
+        """Test filter_entries_by_objectclass with no matches."""
         entries = [
             FlextLdifModels.create_entry(
                 {
@@ -127,13 +139,13 @@ class TestFlextLdifUtilitiesLdifDomainProcessors:
         ]
 
         services = FlextLdifServices()
-        result = services.repository.filter_entries_by_object_class(entries, "person")
+        result = services.repository.filter_entries_by_objectclass(entries, "person")
 
         assert result.is_success is True
         assert len(result.value) == 0
 
-    def test_filter_entries_by_object_class_exception_handling(self) -> None:
-        """Test filter_entries_by_object_class with exception in has_object_class."""
+    def test_filter_entries_by_objectclass_exception_handling(self) -> None:
+        """Test filter_entries_by_objectclass with exception in has_object_class."""
         # Create entry that might cause exception
         entries = [
             FlextLdifModels.create_entry(
@@ -146,7 +158,7 @@ class TestFlextLdifUtilitiesLdifDomainProcessors:
 
         # Test should handle any exceptions gracefully
         services = FlextLdifServices()
-        result = services.repository.filter_entries_by_object_class(entries, "person")
+        result = services.repository.filter_entries_by_objectclass(entries, "person")
 
         assert result.is_success is True
 
@@ -238,7 +250,9 @@ class TestFlextLdifUtilitiesLdifDomainProcessors:
 
         services = FlextLdifServices()
         result = services.repository.filter_entries_by_attribute(
-            entries, "cn", "User 1",
+            entries,
+            "cn",
+            "User 1",
         )
 
         assert result.is_success is True
@@ -253,7 +267,11 @@ class TestFlextLdifUtilitiesLdifDomainProcessors:
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",
-                    "attributes": {"objectClass": ["person"], "cn": ["Test"]},
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["Test"],
+                        "sn": ["Test"]  # Required for person objectClass
+                    },
                 },
             ),
         ]

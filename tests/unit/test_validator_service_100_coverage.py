@@ -216,5 +216,9 @@ class TestFlextLdifValidatorServiceComplete:
         sample_entries = result.value
         assert len(sample_entries) == 3
         assert sample_entries[0].dn.value == "cn=john.doe,ou=people,dc=example,dc=com"
-        assert sample_entries[1].dn.value == "ou=people,dc=example,dc=com"  # Fix: correct DN from execute method
-        assert sample_entries[2].dn.value == "cn=admins,ou=groups,dc=example,dc=com"  # Fix: correct DN from execute method
+        assert (
+            sample_entries[1].dn.value == "ou=people,dc=example,dc=com"
+        )  # Fix: correct DN from execute method
+        assert (
+            sample_entries[2].dn.value == "cn=admins,ou=groups,dc=example,dc=com"
+        )  # Fix: correct DN from execute method

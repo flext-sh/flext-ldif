@@ -38,7 +38,9 @@ def test_direct_method_calls_for_missing_lines() -> None:
 
     # Isso deve exercitar as linhas 368-369 especificamente
     filter_result = repository.filter_entries_by_attribute(
-        entries, "mail", "test1@example.com",
+        entries,
+        "mail",
+        "test1@example.com",
     )
     assert filter_result.is_success
     if filter_result.is_success:
@@ -47,20 +49,24 @@ def test_direct_method_calls_for_missing_lines() -> None:
 
     # Testar com attribute_value específico
     filter_with_value = repository.filter_entries_by_attribute(
-        entries, "mail", "test1@example.com",
+        entries,
+        "mail",
+        "test1@example.com",
     )
     assert filter_with_value.is_success
 
     # Testar com atributo que não existe
     no_attr_result = repository.filter_entries_by_attribute(
-        entries, "telephoneNumber", "123456789",
+        entries,
+        "telephoneNumber",
+        "123456789",
     )
     assert no_attr_result.is_success
     if no_attr_result.is_success:
         assert len(no_attr_result.value) == 0
 
     # Testar filter por objectClass também
-    oc_filter_result = repository.filter_entries_by_object_class(entries, "person")
+    oc_filter_result = repository.filter_entries_by_objectclass(entries, "person")
     assert oc_filter_result.is_success
 
     # Testar ValidatorService com diferentes cenários
@@ -320,7 +326,9 @@ description: Organizational unit entry
         for attr_name in ["mail", "telephoneNumber", "description", "objectClass"]:
             # Provide a sample value to search for
             filter_result = repository.filter_entries_by_attribute(
-                entries, attr_name, "test",
+                entries,
+                attr_name,
+                "test",
             )
             assert filter_result.is_success
 

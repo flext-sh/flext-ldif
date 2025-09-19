@@ -21,7 +21,9 @@ class FlextLdifTransformerService:
     def transform_entries(
         self,
         entries: list[FlextLdifModels.Entry],
-        transform_func: FlextLdifTypes.Processing.EntryTransformer[FlextLdifModels.Entry],
+        transform_func: FlextLdifTypes.Processing.EntryTransformer[
+            FlextLdifModels.Entry
+        ],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Transform LDIF entries using provided function.
 
@@ -72,7 +74,8 @@ class FlextLdifTransformerService:
             )
 
     def normalize_dns(
-        self, entries: list[FlextLdifModels.Entry],
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Normalize DN formats in entries.
 

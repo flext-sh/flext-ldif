@@ -20,7 +20,8 @@ class FlextLdifDispatcher:
         """Simple dispatcher implementation using available flext-core functionality."""
 
         def __init__(
-            self, services: FlextLdifProtocols.ServiceContainerProtocol,
+            self,
+            services: FlextLdifProtocols.ServiceContainerProtocol,
         ) -> None:
             """Initialize dispatcher with services.
 
@@ -53,7 +54,8 @@ class FlextLdifDispatcher:
             return FlextResult[object].fail(f"Unknown command type: {type(command)}")
 
         def _handle_parse_string(
-            self, command: FlextLdifModels.ParseStringCommand,
+            self,
+            command: FlextLdifModels.ParseStringCommand,
         ) -> FlextResult[object]:
             """Handle parse string command.
 
@@ -72,7 +74,8 @@ class FlextLdifDispatcher:
             )
 
         def _handle_parse_file(
-            self, command: FlextLdifModels.ParseFileCommand,
+            self,
+            command: FlextLdifModels.ParseFileCommand,
         ) -> FlextResult[object]:
             """Handle parse file command.
 
@@ -85,13 +88,15 @@ class FlextLdifDispatcher:
             """
             result = self._services.parser.parse_ldif_file(command.file_path)
             if result.is_failure:
-                return FlextResult[object].fail(result.error or "Parse failed")
+                error_msg = result.error or "Unknown error occurred"
+                return FlextResult[object].fail(error_msg)
             return FlextResult[object].ok(
                 {"entries": result.value, "type": "parse_file"},
             )
 
         def _handle_write_string(
-            self, command: FlextLdifModels.WriteStringCommand,
+            self,
+            command: FlextLdifModels.WriteStringCommand,
         ) -> FlextResult[object]:
             """Handle write string command.
 
@@ -112,7 +117,8 @@ class FlextLdifDispatcher:
             )
 
         def _handle_write_file(
-            self, command: FlextLdifModels.WriteFileCommand,
+            self,
+            command: FlextLdifModels.WriteFileCommand,
         ) -> FlextResult[object]:
             """Handle write file command.
 
@@ -134,7 +140,8 @@ class FlextLdifDispatcher:
             )
 
         def _handle_validate_entries(
-            self, command: FlextLdifModels.ValidateEntriesCommand,
+            self,
+            command: FlextLdifModels.ValidateEntriesCommand,
         ) -> FlextResult[object]:
             """Handle validate entries command.
 

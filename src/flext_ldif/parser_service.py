@@ -9,8 +9,6 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
-import psutil
-
 from flext_core import FlextDomainService, FlextLogger, FlextResult
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
@@ -544,10 +542,11 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifModels.Entry]]):
     def _get_current_memory_usage(self) -> int:
         """Get current memory usage in bytes."""
         try:
+            import psutil  # noqa: PLC0415
             process = psutil.Process()
             return int(process.memory_info().rss)
-        except ImportError:
-            # Fallback if psutil not available
+        except (ImportError, Exception):
+            # Fallback if psutil not available or fails
             return 0
 
     def _parse_entry_block(

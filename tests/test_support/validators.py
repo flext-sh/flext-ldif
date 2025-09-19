@@ -147,7 +147,8 @@ class TestValidators:
 
     @staticmethod
     def validate_file_operations(
-        file_path: Path, expected_content: str,
+        file_path: Path,
+        expected_content: str,
     ) -> dict[str, bool]:
         """Validate file operations for LDIF files."""
         validations = {
@@ -174,7 +175,9 @@ class TestValidators:
 
     @classmethod
     def validate_parsing_result(
-        cls, result: FlextResult[list[FlextLdifModels.Entry]], expected_count: int,
+        cls,
+        result: FlextResult[list[FlextLdifModels.Entry]],
+        expected_count: int,
     ) -> FlextTypes.Core.Dict:
         """Validate parsing result comprehensively."""
         base_validation = cls.validate_result_success(result)

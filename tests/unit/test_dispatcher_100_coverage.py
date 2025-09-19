@@ -8,11 +8,13 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
+from typing import cast
 from unittest.mock import Mock
 
 from flext_core import FlextResult
 from flext_ldif.dispatcher import FlextLdifDispatcher
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.services import FlextLdifServices
 
 
@@ -28,7 +30,7 @@ class TestFlextLdifDispatcher:
         mock_services.writer = Mock()
 
         # This should not raise any type errors
-        services: FlextLdifDispatcher.ServiceContainer = mock_services
+        services: FlextLdifProtocols.ServiceContainerProtocol = mock_services
         assert services.parser is not None
         assert services.validator is not None
         assert services.writer is not None
@@ -53,7 +55,10 @@ class TestFlextLdifDispatcher:
         """Test WriteFileCommand creation."""
         entries = [FlextLdifModels.create_entry({"dn": "cn=test", "attributes": {}})]
         file_path = Path("/test/file.ldif")
-        command = FlextLdifModels.WriteFileCommand(entries=entries, file_path=str(file_path))  # Convert Path to string
+        command = FlextLdifModels.WriteFileCommand(
+            entries=entries,
+            file_path=str(file_path),
+        )  # Convert Path to string
         assert command.entries == entries
         assert command.file_path == str(file_path)  # Compare with string version
 
@@ -193,7 +198,10 @@ class TestFlextLdifDispatcher:
 
         # Create temporary LDIF file with test content
         with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+            encoding="utf-8",
         ) as temp_f:
             ldif_content = """dn: cn=test,dc=example,dc=com
 objectClass: person
@@ -206,7 +214,9 @@ sn: Test
 
         try:
             # Create dispatcher with real services
-            dispatcher = FlextLdifDispatcher.build_dispatcher(services)
+            dispatcher = FlextLdifDispatcher.build_dispatcher(
+                cast("FlextLdifProtocols.ServiceContainerProtocol", services)
+            )
 
             # Test parse file command with real file
             command = FlextLdifModels.ParseFileCommand(file_path=str(temp_file))
@@ -402,7 +412,10 @@ sn: Test
             ),
         ]
         file_path = Path("/test/file.ldif")
-        command = FlextLdifModels.WriteFileCommand(entries=entries, file_path=str(file_path))  # Convert Path to string
+        command = FlextLdifModels.WriteFileCommand(
+            entries=entries,
+            file_path=str(file_path),
+        )  # Convert Path to string
         result = dispatcher.dispatch(command)
 
         assert result.is_success
@@ -438,7 +451,10 @@ sn: Test
             ),
         ]
         file_path = Path("/test/file.ldif")
-        command = FlextLdifModels.WriteFileCommand(entries=entries, file_path=str(file_path))  # Convert Path to string
+        command = FlextLdifModels.WriteFileCommand(
+            entries=entries,
+            file_path=str(file_path),
+        )  # Convert Path to string
         result = dispatcher.dispatch(command)
 
         assert result.is_failure
@@ -469,7 +485,10 @@ sn: Test
             ),
         ]
         file_path = Path("/test/file.ldif")
-        command = FlextLdifModels.WriteFileCommand(entries=entries, file_path=str(file_path))  # Convert Path to string
+        command = FlextLdifModels.WriteFileCommand(
+            entries=entries,
+            file_path=str(file_path),
+        )  # Convert Path to string
         result = dispatcher.dispatch(command)
 
         assert result.is_failure
