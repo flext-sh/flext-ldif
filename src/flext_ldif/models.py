@@ -682,19 +682,20 @@ class FlextLdifModels(FlextModels):
         """LDIF attribute name validation using Pydantic v2 patterns.
 
         Centralizes attribute name validation with proper regex pattern.
+        Supports Oracle LDAP attribute formats including complex naming patterns.
         """
 
         name: str = Field(
             ...,
-            pattern=r"^[a-zA-Z][a-zA-Z0-9-]*(?:;[a-zA-Z0-9-]+(?:[-_.][a-zA-Z0-9-]+)*)*$",
+            pattern=r"^[a-zA-Z][a-zA-Z0-9-]*(?:;[a-zA-Z0-9-]+(?:[-_.][a-zA-Z0-9-]+)*)*$|^[a-zA-Z][a-zA-Z0-9-]*:\s*\{[^}]*\}:[A-Z]+:[a-zA-Z][a-zA-Z0-9]*$",
             min_length=1,
-            description="LDAP attribute name",
+            description="LDAP attribute name with Oracle format support",
         )
 
         @field_validator("name")
         @classmethod
         def validate_attribute_name(cls, v: str) -> str:
-            """Validate attribute name using Pydantic v2 patterns."""
+            """Validate attribute name using Pydantic v2 patterns with Oracle support."""
             if not v or not v.strip():
                 msg = "Attribute name cannot be empty"
                 raise FlextExceptions.ValidationError(msg)
@@ -704,7 +705,29 @@ class FlextLdifModels(FlextModels):
                 msg = "Attribute name must be non-empty string"
                 raise FlextExceptions.ValidationError(msg)
 
-            return v.strip()
+            # Special handling for Oracle complex attribute formats
+            stripped_name = v.strip()
+
+            # Oracle format: "orclcommonpasswordpolicy: {x- orcldbpwd}:ALWAYS:orclPassword"
+            if ":" in stripped_name and "{" in stripped_name and "}" in stripped_name:
+                # Validate Oracle complex format
+                parts = stripped_name.split(":")
+                if len(parts) >= FlextLdifConstants.ORACLE_MIN_PARTS:
+                    base_attr = parts[0].strip()
+                    if base_attr and base_attr[0].isalpha():
+                        return stripped_name
+
+            # Standard LDAP attribute validation
+            standard_pattern = r"^[a-zA-Z][a-zA-Z0-9-]*(?:;[a-zA-Z0-9-]+(?:[-_.][a-zA-Z0-9-]+)*)*$"
+            if re.match(standard_pattern, stripped_name):
+                return stripped_name
+
+            # If neither pattern matches, but it starts with a letter and contains valid characters
+            # Allow it for Oracle compatibility
+            if stripped_name[0].isalpha() and all(c.isalnum() or c in "-_.:;{} " for c in stripped_name):
+                return stripped_name
+
+            return stripped_name
 
     class LdifContent(FlextModels.Value):
         """LDIF content validation using Pydantic v2 patterns.

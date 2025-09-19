@@ -303,3 +303,216 @@ class TestFlextLdifWriterServiceComplete:
         assert "objectClass: person" in output
         assert "objectClass: inetOrgPerson" in output
         assert "mail: testuser@example.com" in output
+
+    def test_write_entries_to_string_format_handler_exception(self) -> None:
+        """Test write_entries_to_string with format handler exception."""
+        service = FlextLdifWriterService()
+
+        # Create test entry
+        entry_data: dict[str, object] = {
+            "dn": "uid=test,ou=people,dc=example,dc=com",
+            "attributes": {"objectClass": ["person"], "cn": ["test"]},
+        }
+        entry = FlextLdifModels.create_entry(entry_data)
+
+        # Mock format handler to raise exception
+        def broken_write_ldif(*_args: object) -> str:
+            msg = "Format handler error"
+            raise RuntimeError(msg)
+
+        service._format_handler.write_ldif = broken_write_ldif  # type: ignore[assignment]
+
+        result = service.write_entries_to_string([entry])
+        assert result.is_failure
+        assert "Format handler error" in str(result.error)
+
+    def test_write_entries_to_string_unexpected_exception(self) -> None:
+        """Test write_entries_to_string with unexpected exception."""
+        service = FlextLdifWriterService()
+
+        # Create test entry
+        entry_data: dict[str, object] = {
+            "dn": "uid=test,ou=people,dc=example,dc=com",
+            "attributes": {"objectClass": ["person"], "cn": ["test"]},
+        }
+        entry = FlextLdifModels.create_entry(entry_data)
+
+        # Corrupt service state to cause exception
+        service._large_batch_threshold = None  # type: ignore[assignment]
+
+        result = service.write_entries_to_string([entry])
+        assert result.is_failure
+        assert "String write error" in str(result.error)
+
+    def test_write_entries_to_file_with_exceptions(self) -> None:
+        """Test write_entries_to_file with various exception scenarios."""
+        service = FlextLdifWriterService()
+
+        # Create test entry
+        entry_data: dict[str, object] = {
+            "dn": "uid=test,ou=people,dc=example,dc=com",
+            "attributes": {"objectClass": ["person"], "cn": ["test"]},
+        }
+        entry = FlextLdifModels.create_entry(entry_data)
+
+        # Test with invalid file path
+        invalid_path = Path("/invalid/nonexistent/path/test.ldif")
+        result = service.write_entries_to_file([entry], invalid_path)
+        assert result.is_failure
+        assert "Parent directory does not exist" in str(result.error)
+
+    def test_write_entries_streaming_with_exceptions(self) -> None:
+        """Test write_entries_streaming with various exception scenarios."""
+        service = FlextLdifWriterService()
+
+        # Create test entries
+        entries = []
+        for i in range(3):
+            entry_data: dict[str, object] = {
+                "dn": f"uid=test{i},ou=people,dc=example,dc=com",
+                "attributes": {"objectClass": ["person"], "cn": [f"test{i}"]},
+            }
+            entries.append(FlextLdifModels.create_entry(entry_data))
+
+        # Test with invalid file path (directory doesn't exist)
+        invalid_path = Path("/invalid/nonexistent/path/stream.ldif")
+        result = service.write_entries_streaming(entries, invalid_path)
+        assert result.is_failure
+        assert "Parent directory does not exist" in str(result.error)
+
+    def test_health_check_degraded_conditions(self) -> None:
+        """Test health_check under degraded conditions."""
+        service = FlextLdifWriterService()
+
+        # Mock the format handler to return empty output (test fails but no exception)
+        original_write_ldif = service._format_handler.write_ldif
+        def empty_write_ldif(*_args: object, **_kwargs: object) -> str:
+            return ""  # Returns empty string which will fail the test
+
+        service._format_handler.write_ldif = empty_write_ldif
+
+        try:
+            result = service.health_check()
+            assert result.is_success
+
+            health_data = result.unwrap()
+            assert health_data["status"] == "degraded"
+            assert health_data["checks"]["write_functionality"]["status"] == "failed"
+        finally:
+            # Restore original handler
+            service._format_handler.write_ldif = original_write_ldif
+
+    def test_health_check_unhealthy_conditions(self) -> None:
+        """Test health_check under unhealthy conditions."""
+        service = FlextLdifWriterService()
+
+        # Mock FlextLdifModels.Entry to raise an exception during health check
+        original_entry = FlextLdifModels.Entry
+        def broken_entry(*_args: object, **_kwargs: object) -> None:
+            msg = "Health check entry creation failure"
+            raise RuntimeError(msg)
+
+        # Replace Entry class temporarily
+        FlextLdifModels.Entry = broken_entry
+
+        try:
+            result = service.health_check()
+            assert result.is_success
+
+            health_data = result.unwrap()
+            assert health_data["status"] == "unhealthy"
+            assert health_data["checks"]["write_functionality"]["status"] == "error"
+        finally:
+            # Restore original Entry class
+            FlextLdifModels.Entry = original_entry
+
+    def test_health_check_with_exception(self) -> None:
+        """Test health_check with internal exception."""
+        service = FlextLdifWriterService()
+
+        # Corrupt internal state to cause exception
+        service._total_writes = None  # type: ignore[assignment]
+
+        result = service.health_check()
+        assert result.is_failure
+        assert "Health check error" in str(result.error)
+
+    def test_large_batch_processing(self) -> None:
+        """Test processing of large batches."""
+        service = FlextLdifWriterService()
+
+        # Set low threshold to trigger large batch handling
+        service._large_batch_threshold = 2
+
+        # Create large batch of entries
+        entries = []
+        for i in range(5):
+            entry_data: dict[str, object] = {
+                "dn": f"uid=large{i},ou=people,dc=example,dc=com",
+                "attributes": {"objectClass": ["person"], "cn": [f"large{i}"]},
+            }
+            entries.append(FlextLdifModels.create_entry(entry_data))
+
+        result = service.write_entries_to_string(entries)
+        assert result.is_success
+
+    def test_streaming_write_success(self) -> None:
+        """Test successful streaming write operations."""
+        service = FlextLdifWriterService()
+
+        entries = []
+        for i in range(3):
+            entry_data: dict[str, object] = {
+                "dn": f"uid=stream{i},ou=people,dc=example,dc=com",
+                "attributes": {"objectClass": ["person"], "cn": [f"stream{i}"]},
+            }
+            entries.append(FlextLdifModels.create_entry(entry_data))
+
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".ldif") as temp_file:
+            temp_path = Path(temp_file.name)
+
+        try:
+            result = service.write_entries_streaming(entries, temp_path)
+            assert result.is_success
+
+            # Verify file was created and has content
+            assert temp_path.exists()
+            assert temp_path.stat().st_size > 0
+        finally:
+            temp_path.unlink()  # Clean up
+
+    def test_statistics_and_metrics_comprehensive(self) -> None:
+        """Test comprehensive statistics and metrics tracking."""
+        service = FlextLdifWriterService()
+
+        # Perform various operations to generate statistics
+        entry_data: dict[str, object] = {
+            "dn": "uid=stats,ou=people,dc=example,dc=com",
+            "attributes": {"objectClass": ["person"], "cn": ["stats"]},
+        }
+        entry = FlextLdifModels.create_entry(entry_data)
+
+        # String write
+        service.write_entries_to_string([entry])
+
+        # File write
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".ldif") as temp_file:
+            temp_path = Path(temp_file.name)
+
+        try:
+            service.write_entries_to_file([entry], temp_path)
+
+            # Get comprehensive statistics
+            stats = service.get_write_statistics()
+            assert stats["totals"]["writes"] >= 2
+            assert stats["totals"]["string_writes"] >= 1
+            assert stats["totals"]["file_writes"] >= 1
+            assert "success_metrics" in stats
+            assert "performance" in stats
+
+            # Test reset statistics
+            service.reset_statistics()
+            reset_stats = service.get_write_statistics()
+            assert reset_stats["totals"]["writes"] == 0
+        finally:
+            temp_path.unlink()  # Clean up

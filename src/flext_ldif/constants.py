@@ -155,6 +155,7 @@ class FlextLdifConstants(FlextConstants):
     # Constants moved from utilities.py for centralization
     MIN_BASE_DN_COMPONENTS: Final[int] = 2  # Minimum components for base DN extraction
     ENTRY_IS_COMPLETE: Final[bool] = True  # Constant for entry completeness validation
+    ORACLE_MIN_PARTS: Final[int] = 3  # Minimum parts for Oracle complex format validation
 
     # Format handler constants (moved from format_handlers.py for centralization)
     MOD_OPS: ClassVar[tuple[str, ...]] = ("add", "delete", "replace")
