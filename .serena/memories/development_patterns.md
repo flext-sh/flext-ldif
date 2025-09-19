@@ -155,7 +155,7 @@ def create_ldif_entry(entry_data: dict) -> FlextResult[FlextLdifModels.Entry]:
 ### flext-cli Integration
 
 ```python
-from flext_cli import FlextCliApi, FlextCliMain, FlextCliConfig
+from flext_cli import FlextCliApi, FlextCliMain, FlextCliConfigs
 
 class ProjectCliService:
     def __init__(self) -> None:

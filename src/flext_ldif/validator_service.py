@@ -146,7 +146,8 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
         }
 
     def validate_entries(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Validate multiple LDIF entries with enhanced batch processing and monitoring."""
         start_time = time.time()
@@ -155,7 +156,7 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
         if not entries:
             self._record_validation_failure("empty_entry_list")
             return FlextResult[list[FlextLdifModels.Entry]].fail(
-                "Cannot validate empty entry list"
+                "Cannot validate empty entry list",
             )
 
         self._logger.info(
@@ -181,7 +182,7 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
                     and i % progress_interval == 0
                 ):
                     self._logger.debug(
-                        f"Validation progress: {i}/{entry_count} entries processed"
+                        f"Validation progress: {i}/{entry_count} entries processed",
                     )
 
                 # Validate individual entry with detailed error tracking
@@ -206,7 +207,7 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
                         )
 
                         return FlextResult[list[FlextLdifModels.Entry]].fail(
-                            f"Strict validation failed at entry {i}: {validation_result.error}"
+                            f"Strict validation failed at entry {i}: {validation_result.error}",
                         )
                 else:
                     validated_entries.append(entry)
@@ -220,7 +221,7 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
                 if self._strict_mode:
                     # Should not reach here in strict mode
                     return FlextResult[list[FlextLdifModels.Entry]].fail(
-                        f"Validation errors found: {'; '.join(validation_errors[:5])}"
+                        f"Validation errors found: {'; '.join(validation_errors[:5])}",
                     )
                 # Non-strict mode: log warnings but continue
                 self._logger.warning(
@@ -263,7 +264,7 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
             )
 
             return FlextResult[list[FlextLdifModels.Entry]].fail(
-                f"Batch validation error: {e}"
+                f"Batch validation error: {e}",
             )
 
     def validate_entry(self, entry: FlextLdifModels.Entry) -> FlextResult[bool]:
@@ -278,7 +279,9 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
                 self._record_validation_success(1, validation_time)
                 return FlextResult[bool].ok(data=True)
             self._record_validation_failure("single_entry_validation")
-            return FlextResult[bool].fail(validation_result.error or "Validation failed")
+            return FlextResult[bool].fail(
+                validation_result.error or "Validation failed",
+            )
 
         except Exception as e:
             validation_time = time.time() - start_time
@@ -296,7 +299,8 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
             return FlextResult[bool].fail(f"Entry validation error: {e}")
 
     def validate_entry_structure(
-        self, entry: FlextLdifModels.Entry
+        self,
+        entry: FlextLdifModels.Entry,
     ) -> FlextResult[bool]:
         """Validate entry structure with detailed structural analysis."""
         try:
@@ -312,13 +316,13 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
                 if "objectClass" not in attributes:
                     self._validation_stats["missing_objectclass_errors"] += 1
                     return FlextResult[bool].fail(
-                        "Missing required objectClass attribute"
+                        "Missing required objectClass attribute",
                     )
 
                 if not attributes["objectClass"]:
                     self._validation_stats["missing_objectclass_errors"] += 1
                     return FlextResult[bool].fail(
-                        "objectClass attribute cannot be empty"
+                        "objectClass attribute cannot be empty",
                     )
 
             # Check for empty values if not allowed
@@ -329,7 +333,7 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
                     ):
                         self._validation_stats["invalid_attribute_values"] += 1
                         return FlextResult[bool].fail(
-                            f"Empty values not allowed for attribute: {attr_name}"
+                            f"Empty values not allowed for attribute: {attr_name}",
                         )
 
             return FlextResult[bool].ok(data=True)
@@ -367,7 +371,7 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
                 )
 
                 return FlextResult[bool].fail(
-                    f"DN format validation failed: {validation_result.error}"
+                    f"DN format validation failed: {validation_result.error}",
                 )
 
             self._logger.debug(
@@ -396,7 +400,8 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
             return FlextResult[bool].fail(f"DN validation failed: {e}")
 
     def validate_schema_compliance(
-        self, entry: FlextLdifModels.Entry
+        self,
+        entry: FlextLdifModels.Entry,
     ) -> FlextResult[bool]:
         """Validate entry against LDAP schema rules."""
         try:
@@ -408,7 +413,7 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
             if not object_classes:
                 self._validation_stats["schema_violations"] += 1
                 return FlextResult[bool].fail(
-                    "Missing objectClass for schema validation"
+                    "Missing objectClass for schema validation",
                 )
 
             # Check for required attributes based on objectClass
@@ -421,7 +426,7 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
                         if required_attr not in attributes:
                             self._validation_stats["missing_required_attributes"] += 1
                             return FlextResult[bool].fail(
-                                f"Missing required attribute '{required_attr}' for objectClass '{obj_class}'"
+                                f"Missing required attribute '{required_attr}' for objectClass '{obj_class}'",
                             )
 
                 # Organizational Unit validation
@@ -430,7 +435,15 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
                         if required_attr not in attributes:
                             self._validation_stats["missing_required_attributes"] += 1
                             return FlextResult[bool].fail(
-                                f"Missing required attribute '{required_attr}' for objectClass '{obj_class}'"
+                                f"Missing required attribute '{required_attr}' for objectClass '{obj_class}'",
+                            )
+                # Domain validation
+                elif obj_class_lower in FlextLdifConstants.LDAP_DOMAIN_CLASSES:
+                    for required_attr in FlextLdifConstants.REQUIRED_DOMAIN_ATTRIBUTES:
+                        if required_attr not in attributes:
+                            self._validation_stats["missing_required_attributes"] += 1
+                            return FlextResult[bool].fail(
+                                f"Missing required attribute '{required_attr}' for objectClass '{obj_class}'",
                             )
 
             return FlextResult[bool].ok(data=True)
@@ -524,7 +537,9 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
             # Performance check
             success_rate = self._calculate_success_rate()
             performance_status = "healthy"
-            if success_rate < FlextLdifConstants.VALIDATOR_DEGRADED_THRESHOLD:  # 90% success rate threshold
+            if (
+                success_rate < FlextLdifConstants.VALIDATOR_DEGRADED_THRESHOLD
+            ):  # 90% success rate threshold
                 performance_status = "degraded"
             elif success_rate < FlextLdifConstants.VALIDATOR_UNHEALTHY_THRESHOLD:
                 performance_status = "unhealthy"
@@ -539,17 +554,17 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
             try:
                 test_entry = FlextLdifModels.Entry(
                     dn=FlextLdifModels.DistinguishedName(
-                        value="cn=test,dc=example,dc=com"
+                        value="cn=test,dc=example,dc=com",
                     ),
                     attributes=FlextLdifModels.LdifAttributes(
-                        data={"cn": ["test"], "objectClass": ["person", "top"]}
+                        data={"cn": ["test"], "objectClass": ["person", "top"]},
                     ),
                 )
                 test_result = self.validate_entry(test_entry)
 
                 if test_result.is_success:
                     checks["validation_functionality"] = {
-                        "status": "healthy"
+                        "status": "healthy",
                     }
                 else:
                     health_status["status"] = "degraded"
@@ -573,14 +588,18 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
     # Private helper methods
 
     def _validate_single_entry_with_context(
-        self, entry: FlextLdifModels.Entry, index: int
+        self,
+        entry: FlextLdifModels.Entry,
+        index: int,
     ) -> FlextResult[bool]:
         """Validate single entry with enhanced context and error reporting."""
         try:
             # Use FlextLdifModels Entry business rules validation
             validation_result = entry.validate_business_rules()
             if validation_result.is_failure:
-                return FlextResult[bool].fail(validation_result.error or "Entry validation failed")
+                return FlextResult[bool].fail(
+                    validation_result.error or "Entry validation failed",
+                )
 
             # Additional structure validation
             structure_result = self.validate_entry_structure(entry)
@@ -607,7 +626,9 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
             return FlextResult[bool].fail(f"Entry validation error: {e}")
 
     def _record_validation_success(
-        self, entry_count: int, validation_time: float
+        self,
+        entry_count: int,
+        validation_time: float,
     ) -> None:
         """Record successful validation metrics."""
         self._total_validations += 1
@@ -616,7 +637,9 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
 
         # Keep validation times list manageable
         if len(self._validation_times) > FlextLdifConstants.MAX_CACHE_ENTRIES:
-            self._validation_times = self._validation_times[-FlextLdifConstants.MANAGEABLE_CACHE_SIZE:]
+            self._validation_times = self._validation_times[
+                -FlextLdifConstants.MANAGEABLE_CACHE_SIZE :
+            ]
 
     def _record_validation_failure(self, failure_type: str) -> None:
         """Record validation failure with categorization."""
@@ -624,7 +647,8 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
         self._total_validations += 1
 
         self._logger.warning(
-            "Validation failure recorded", extra={"failure_type": failure_type}
+            "Validation failure recorded",
+            extra={"failure_type": failure_type},
         )
 
     def _calculate_success_rate(self) -> float:
@@ -646,7 +670,7 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
             sample_entries = [
                 FlextLdifModels.Entry(
                     dn=FlextLdifModels.DistinguishedName(
-                        value="cn=john.doe,ou=people,dc=example,dc=com"
+                        value="cn=john.doe,ou=people,dc=example,dc=com",
                     ),
                     attributes=FlextLdifModels.LdifAttributes(
                         data={
@@ -655,24 +679,24 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
                             "givenName": ["John"],
                             "objectClass": ["person", "inetOrgPerson", "top"],
                             "mail": ["john.doe@example.com"],
-                        }
+                        },
                     ),
                 ),
                 FlextLdifModels.Entry(
                     dn=FlextLdifModels.DistinguishedName(
-                        value="ou=people,dc=example,dc=com"
+                        value="ou=people,dc=example,dc=com",
                     ),
                     attributes=FlextLdifModels.LdifAttributes(
                         data={
                             "ou": ["people"],
                             "objectClass": ["organizationalUnit", "top"],
                             "description": ["People container"],
-                        }
+                        },
                     ),
                 ),
                 FlextLdifModels.Entry(
                     dn=FlextLdifModels.DistinguishedName(
-                        value="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com"
+                        value="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com",
                     ),
                     attributes=FlextLdifModels.LdifAttributes(
                         data={
@@ -680,7 +704,7 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
                             "objectClass": ["groupOfNames", "top"],
                             "member": ["cn=john.doe,ou=people,dc=example,dc=com"],
                             "description": ["System REDACTED_LDAP_BIND_PASSWORDistrators"],
-                        }
+                        },
                     ),
                 ),
             ]
@@ -690,13 +714,15 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
             if validation_result.is_success:
                 return validation_result
             self._logger.warning(
-                "Sample validation failed", extra={"error": validation_result.error}
+                "Sample validation failed",
+                extra={"error": validation_result.error},
             )
             return FlextResult[list[FlextLdifModels.Entry]].ok([])
 
         except Exception as e:
             self._logger.exception(
-                "Execute operation failed", extra={"error": str(e)}
+                "Execute operation failed",
+                extra={"error": str(e)},
             )
             return FlextResult[list[FlextLdifModels.Entry]].ok([])
 

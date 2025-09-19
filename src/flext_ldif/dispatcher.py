@@ -20,7 +20,7 @@ class FlextLdifDispatcher:
         """Simple dispatcher implementation using available flext-core functionality."""
 
         def __init__(
-            self, services: FlextLdifProtocols.ServiceContainerProtocol
+            self, services: FlextLdifProtocols.ServiceContainerProtocol,
         ) -> None:
             """Initialize dispatcher with services.
 
@@ -53,7 +53,7 @@ class FlextLdifDispatcher:
             return FlextResult[object].fail(f"Unknown command type: {type(command)}")
 
         def _handle_parse_string(
-            self, command: FlextLdifModels.ParseStringCommand
+            self, command: FlextLdifModels.ParseStringCommand,
         ) -> FlextResult[object]:
             """Handle parse string command.
 
@@ -68,11 +68,11 @@ class FlextLdifDispatcher:
             if result.is_failure:
                 return FlextResult[object].fail(result.error or "Parse failed")
             return FlextResult[object].ok(
-                {"entries": result.value, "type": "parse_string"}
+                {"entries": result.value, "type": "parse_string"},
             )
 
         def _handle_parse_file(
-            self, command: FlextLdifModels.ParseFileCommand
+            self, command: FlextLdifModels.ParseFileCommand,
         ) -> FlextResult[object]:
             """Handle parse file command.
 
@@ -83,15 +83,15 @@ class FlextLdifDispatcher:
                 FlextResult containing parsed entries or error.
 
             """
-            result = self._services.parser.parse_file(command.file_path)
+            result = self._services.parser.parse_ldif_file(command.file_path)
             if result.is_failure:
                 return FlextResult[object].fail(result.error or "Parse failed")
             return FlextResult[object].ok(
-                {"entries": result.value, "type": "parse_file"}
+                {"entries": result.value, "type": "parse_file"},
             )
 
         def _handle_write_string(
-            self, command: FlextLdifModels.WriteStringCommand
+            self, command: FlextLdifModels.WriteStringCommand,
         ) -> FlextResult[object]:
             """Handle write string command.
 
@@ -103,16 +103,16 @@ class FlextLdifDispatcher:
 
             """
             result = self._services.writer.write_entries_to_string(
-                cast("list[object]", command.entries)
+                cast("list[object]", command.entries),
             )
             if result.is_failure:
                 return FlextResult[object].fail(result.error or "Write failed")
             return FlextResult[object].ok(
-                {"content": result.value, "type": "write_string"}
+                {"content": result.value, "type": "write_string"},
             )
 
         def _handle_write_file(
-            self, command: FlextLdifModels.WriteFileCommand
+            self, command: FlextLdifModels.WriteFileCommand,
         ) -> FlextResult[object]:
             """Handle write file command.
 
@@ -130,11 +130,11 @@ class FlextLdifDispatcher:
             if result.is_failure:
                 return FlextResult[object].fail(result.error or "Write failed")
             return FlextResult[object].ok(
-                {"success": result.value, "type": "write_file"}
+                {"success": result.value, "type": "write_file"},
             )
 
         def _handle_validate_entries(
-            self, command: FlextLdifModels.ValidateEntriesCommand
+            self, command: FlextLdifModels.ValidateEntriesCommand,
         ) -> FlextResult[object]:
             """Handle validate entries command.
 
@@ -146,11 +146,11 @@ class FlextLdifDispatcher:
 
             """
             validation_result = self._services.validator.validate_entries(
-                cast("list[object]", command.entries)
+                cast("list[object]", command.entries),
             )
             if validation_result.is_failure:
                 return FlextResult[object].fail(
-                    validation_result.error or "Validation failed"
+                    validation_result.error or "Validation failed",
                 )
             return FlextResult[object].ok({"valid": True, "type": "validate_entries"})
 

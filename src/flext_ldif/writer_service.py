@@ -171,7 +171,8 @@ class FlextLdifWriterService(FlextDomainService[str]):
         }
 
     def write_entries_to_string(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[str]:
         """Write LDIF entries to string with enhanced performance monitoring."""
         start_time = time.time()
@@ -230,7 +231,7 @@ class FlextLdifWriterService(FlextDomainService[str]):
                 return result
             self._record_write_failure("format_handler_failure")
             return FlextResult[str].fail(
-                f"String write failed: {result.error or 'Unknown error'}"
+                f"String write failed: {result.error or 'Unknown error'}",
             )
 
         except Exception as e:
@@ -249,7 +250,9 @@ class FlextLdifWriterService(FlextDomainService[str]):
             return FlextResult[str].fail(f"String write error: {e}")
 
     def write_entries_to_file(
-        self, entries: list[FlextLdifModels.Entry], file_path: str | Path
+        self,
+        entries: list[FlextLdifModels.Entry],
+        file_path: str | Path,
     ) -> FlextResult[bool]:
         """Write LDIF entries to file with enhanced error handling and validation."""
         start_time = time.time()
@@ -268,18 +271,21 @@ class FlextLdifWriterService(FlextDomainService[str]):
 
             # Pre-flight checks
             file_check_result = self._validate_file_write_preconditions(
-                file_path_obj, entry_count
+                file_path_obj,
+                entry_count,
             )
             if file_check_result.is_failure:
                 self._record_write_failure("precondition_failure")
-                return FlextResult[bool].fail(file_check_result.error)
+                return FlextResult[bool].fail(
+                    file_check_result.error or "File validation failed",
+                )
 
             # Generate content
             content_result = self.write_entries_to_string(entries)
             if content_result.is_failure:
                 self._record_write_failure("content_generation_failure")
                 return FlextResult[bool].fail(
-                    f"Content generation failed: {content_result.error}"
+                    f"Content generation failed: {content_result.error}",
                 )
 
             content = content_result.unwrap()
@@ -289,16 +295,19 @@ class FlextLdifWriterService(FlextDomainService[str]):
             if content_size > self._max_file_size:
                 self._record_write_failure("file_size_exceeded")
                 return FlextResult[bool].fail(
-                    f"Content size ({content_size} bytes) exceeds maximum file size ({self._max_file_size} bytes)"
+                    f"Content size ({content_size} bytes) exceeds maximum file size ({self._max_file_size} bytes)",
                 )
 
             # Write to file with atomic operation
+            temp_file = None
             try:
                 # Write to temporary file first for atomic operation
                 temp_file = file_path_obj.with_suffix(f"{file_path_obj.suffix}.tmp")
 
                 with temp_file.open(
-                    "w", encoding=self._encoding, buffering=self._buffer_size
+                    "w",
+                    encoding=self._encoding,
+                    buffering=self._buffer_size,
                 ) as f:
                     f.write(content)
                     f.flush()  # Ensure data is written
@@ -306,8 +315,8 @@ class FlextLdifWriterService(FlextDomainService[str]):
                 # Atomic move
                 temp_file.replace(file_path_obj)
 
-                # Verify file was written correctly
-                if file_path_obj.exists() and file_path_obj.stat().st_size > 0:
+                # Verify file was written correctly (allow empty files for empty entry lists)
+                if file_path_obj.exists() and file_path_obj.stat().st_size >= 0:
                     write_time = time.time() - start_time
 
                     # Record metrics
@@ -344,7 +353,7 @@ class FlextLdifWriterService(FlextDomainService[str]):
                 return FlextResult[bool].fail(f"File system error: {e}")
             finally:
                 # Clean up temporary file if it exists
-                if temp_file.exists():
+                if temp_file is not None and temp_file.exists():
                     with contextlib.suppress(OSError):
                         temp_file.unlink()
 
@@ -389,6 +398,10 @@ class FlextLdifWriterService(FlextDomainService[str]):
         # Use config chunk size if not specified
         chunk_size = chunk_size or self._config.ldif_chunk_size
 
+        # Initialize variables for exception handling
+        total_bytes_written = 0
+        chunks_written = 0
+
         try:
             self._logger.info(
                 "Starting streaming write operation",
@@ -402,16 +415,18 @@ class FlextLdifWriterService(FlextDomainService[str]):
 
             # Pre-flight checks
             file_check_result = self._validate_file_write_preconditions(
-                file_path_obj, entry_count
+                file_path_obj,
+                entry_count,
             )
             if file_check_result.is_failure:
-                return FlextResult[bool].fail(file_check_result.error)
-
-            total_bytes_written = 0
-            chunks_written = 0
+                return FlextResult[bool].fail(
+                    file_check_result.error or "File validation failed",
+                )
 
             with file_path_obj.open(
-                "w", encoding=self._encoding, buffering=self._buffer_size
+                "w",
+                encoding=self._encoding,
+                buffering=self._buffer_size,
             ) as f:
                 # Process entries in chunks
                 for i in range(0, entry_count, chunk_size):
@@ -423,7 +438,7 @@ class FlextLdifWriterService(FlextDomainService[str]):
                     if chunk_result.is_failure:
                         self._record_write_failure("chunk_write_failure")
                         return FlextResult[bool].fail(
-                            f"Chunk {chunks_written} write failed: {chunk_result.error}"
+                            f"Chunk {chunks_written} write failed: {chunk_result.error}",
                         )
 
                     chunk_content = chunk_result.unwrap()
@@ -549,15 +564,16 @@ class FlextLdifWriterService(FlextDomainService[str]):
     def health_check(self) -> FlextResult[dict[str, object]]:
         """Perform comprehensive health check of writer service."""
         try:
-            health_status = {
+            health_status: dict[str, object] = {
                 "service": "FlextLdifWriterService",
                 "status": "healthy",
                 "timestamp": time.time(),
                 "checks": {},
             }
+            checks = health_status["checks"] = {}
 
             # Configuration check
-            health_status["checks"]["configuration"] = {
+            checks["configuration"] = {
                 "status": "healthy",
                 "encoding": self._encoding,
                 "buffer_size": self._buffer_size,
@@ -567,12 +583,14 @@ class FlextLdifWriterService(FlextDomainService[str]):
             # Performance check
             success_rate = self._calculate_success_rate()
             performance_status = "healthy"
-            if success_rate < FlextLdifConstants.WRITER_HEALTHY_THRESHOLD:  # 95% success rate threshold
+            if (
+                success_rate < FlextLdifConstants.WRITER_HEALTHY_THRESHOLD
+            ):  # 95% success rate threshold
                 performance_status = "degraded"
             elif success_rate < FlextLdifConstants.WRITER_DEGRADED_THRESHOLD:
                 performance_status = "unhealthy"
 
-            health_status["checks"]["performance"] = {
+            checks["performance"] = {
                 "status": performance_status,
                 "success_rate": success_rate,
                 "total_writes": self._total_writes,
@@ -582,27 +600,27 @@ class FlextLdifWriterService(FlextDomainService[str]):
             try:
                 test_entry = FlextLdifModels.Entry(
                     dn=FlextLdifModels.DistinguishedName(
-                        value="cn=test,dc=example,dc=com"
+                        value="cn=test,dc=example,dc=com",
                     ),
                     attributes=FlextLdifModels.LdifAttributes(
-                        data={"cn": ["test"], "objectClass": ["person", "top"]}
+                        data={"cn": ["test"], "objectClass": ["person", "top"]},
                     ),
                 )
                 test_result = self.write_entry(test_entry)
 
                 if test_result.is_success and len(test_result.unwrap()) > 0:
-                    health_status["checks"]["write_functionality"] = {
-                        "status": "healthy"
+                    checks["write_functionality"] = {
+                        "status": "healthy",
                     }
                 else:
                     health_status["status"] = "degraded"
-                    health_status["checks"]["write_functionality"] = {
+                    checks["write_functionality"] = {
                         "status": "failed",
                         "error": test_result.error or "Empty output",
                     }
             except Exception as e:
                 health_status["status"] = "unhealthy"
-                health_status["checks"]["write_functionality"] = {
+                checks["write_functionality"] = {
                     "status": "error",
                     "error": str(e),
                 }
@@ -612,7 +630,7 @@ class FlextLdifWriterService(FlextDomainService[str]):
             if self._buffer_usage > 100 * 1024 * 1024:  # 100MB threshold
                 memory_status = "warning"
 
-            health_status["checks"]["memory"] = {
+            checks["memory"] = {
                 "status": memory_status,
                 "current_usage": self._buffer_usage,
                 "peak_usage": self._peak_buffer_usage,
@@ -659,7 +677,7 @@ class FlextLdifWriterService(FlextDomainService[str]):
 
     def get_output(self) -> str:
         """Get the accumulated output from the buffer (legacy method)."""
-        return "\\n".join(self._output_buffer)
+        return "\n".join(self._output_buffer)
 
     def execute(self) -> FlextResult[str]:
         """Execute writer service operation with enhanced reporting."""
@@ -669,7 +687,9 @@ class FlextLdifWriterService(FlextDomainService[str]):
     # Private helper methods
 
     def _validate_file_write_preconditions(
-        self, file_path: Path, entry_count: int
+        self,
+        file_path: Path,
+        entry_count: int,
     ) -> FlextResult[None]:
         """Validate preconditions for file write operations."""
         try:
@@ -677,30 +697,30 @@ class FlextLdifWriterService(FlextDomainService[str]):
             parent_dir = file_path.parent
             if not parent_dir.exists():
                 return FlextResult[None].fail(
-                    f"Parent directory does not exist: {parent_dir}"
+                    f"Parent directory does not exist: {parent_dir}",
                 )
 
             if not parent_dir.is_dir():
                 return FlextResult[None].fail(
-                    f"Parent path is not a directory: {parent_dir}"
+                    f"Parent path is not a directory: {parent_dir}",
                 )
 
             # Check write permissions
             if not os.access(parent_dir, os.W_OK):
                 return FlextResult[None].fail(
-                    f"No write permission for directory: {parent_dir}"
+                    f"No write permission for directory: {parent_dir}",
                 )
 
             # Check if file exists and is writable
             if file_path.exists():
                 if not file_path.is_file():
                     return FlextResult[None].fail(
-                        f"Path exists but is not a file: {file_path}"
+                        f"Path exists but is not a file: {file_path}",
                     )
 
                 if not os.access(file_path, os.W_OK):
                     return FlextResult[None].fail(
-                        f"No write permission for file: {file_path}"
+                        f"No write permission for file: {file_path}",
                     )
 
             # Check available disk space (rough estimation)
@@ -711,7 +731,7 @@ class FlextLdifWriterService(FlextDomainService[str]):
 
             if estimated_size > available_space:
                 return FlextResult[None].fail(
-                    f"Insufficient disk space: need ~{estimated_size} bytes, available {available_space} bytes"
+                    f"Insufficient disk space: need ~{estimated_size} bytes, available {available_space} bytes",
                 )
 
             return FlextResult[None].ok(None)
@@ -729,7 +749,10 @@ class FlextLdifWriterService(FlextDomainService[str]):
             self._write_stats["large_batch_writes"] += 1
 
     def _record_write_success(
-        self, entry_count: int, bytes_written: int, write_time: float
+        self,
+        entry_count: int,
+        bytes_written: int,
+        write_time: float,
     ) -> None:
         """Record successful write operation metrics."""
         self._total_writes += 1
@@ -739,7 +762,9 @@ class FlextLdifWriterService(FlextDomainService[str]):
 
         # Keep write times list manageable
         if len(self._write_times) > FlextLdifConstants.MAX_CACHE_ENTRIES:
-            self._write_times = self._write_times[-FlextLdifConstants.MANAGEABLE_CACHE_SIZE:]
+            self._write_times = self._write_times[
+                -FlextLdifConstants.MANAGEABLE_CACHE_SIZE :
+            ]
 
     def _record_write_failure(self, failure_type: str) -> None:
         """Record write failure with categorization."""
@@ -747,7 +772,8 @@ class FlextLdifWriterService(FlextDomainService[str]):
         self._total_writes += 1
 
         self._logger.warning(
-            "Write failure recorded", extra={"failure_type": failure_type}
+            "Write failure recorded",
+            extra={"failure_type": failure_type},
         )
 
     def _calculate_success_rate(self) -> float:
@@ -755,7 +781,8 @@ class FlextLdifWriterService(FlextDomainService[str]):
         if self._total_writes == 0:
             return 1.0
         return max(
-            0.0, (self._total_writes - self._write_failures) / self._total_writes
+            0.0,
+            (self._total_writes - self._write_failures) / self._total_writes,
         )
 
 

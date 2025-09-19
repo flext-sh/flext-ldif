@@ -31,12 +31,15 @@ class FlextLdifProtocols(FlextProtocols):
 
         def parse_content(self, content: str) -> FlextResult[list[object]]:
             """Parse LDIF content string into entries."""
+            ...
 
         def parse_file(self, file_path: str) -> FlextResult[list[object]]:
             """Parse LDIF file into entries."""
+            ...
 
         def parse_stream(self, stream: IO[str]) -> FlextResult[list[object]]:
             """Parse LDIF stream into entries."""
+            ...
 
     @runtime_checkable
     class LdifValidatorProtocol(Protocol):
@@ -44,12 +47,15 @@ class FlextLdifProtocols(FlextProtocols):
 
         def validate_entry(self, entry: object) -> FlextResult[None]:
             """Validate single LDIF entry."""
+            ...
 
         def validate_entries(self, entries: list[object]) -> FlextResult[None]:
             """Validate multiple LDIF entries."""
+            ...
 
         def validate_syntax(self, content: str) -> FlextResult[None]:
             """Validate LDIF syntax."""
+            ...
 
     @runtime_checkable
     class LdifWriterProtocol(Protocol):
@@ -57,16 +63,19 @@ class FlextLdifProtocols(FlextProtocols):
 
         def write_entries_to_string(self, entries: list[object]) -> FlextResult[str]:
             """Write entries to LDIF string."""
+            ...
 
         def write_entries_to_file(
-            self, entries: list[object], file_path: str
+            self, entries: list[object], file_path: str,
         ) -> FlextResult[None]:
             """Write entries to LDIF file."""
+            ...
 
         def write_entries_to_stream(
-            self, entries: list[object], stream: IO[str]
+            self, entries: list[object], stream: IO[str],
         ) -> FlextResult[None]:
             """Write entries to LDIF stream."""
+            ...
 
     @runtime_checkable
     class LdifRepositoryProtocol(Protocol):
@@ -74,33 +83,39 @@ class FlextLdifProtocols(FlextProtocols):
 
         def store_entries(self, entries: list[object]) -> FlextResult[None]:
             """Store LDIF entries."""
+            ...
 
         def retrieve_entries(
-            self, filter_criteria: dict[str, object]
+            self, filter_criteria: dict[str, object],
         ) -> FlextResult[list[object]]:
             """Retrieve LDIF entries by criteria."""
+            ...
 
         def count_entries(
-            self, filter_criteria: dict[str, object] | None = None
+            self, filter_criteria: dict[str, object] | None = None,
         ) -> FlextResult[int]:
             """Count LDIF entries."""
+            ...
 
     @runtime_checkable
     class LdifAnalyticsProtocol(Protocol):
         """Protocol for LDIF analytics implementations."""
 
         def calculate_statistics(
-            self, entries: list[object]
+            self, entries: list[object],
         ) -> FlextResult[dict[str, object]]:
             """Calculate LDIF statistics."""
+            ...
 
         def generate_report(self, statistics: dict[str, object]) -> FlextResult[str]:
             """Generate analytics report."""
+            ...
 
         def get_entry_distribution(
-            self, entries: list[object]
+            self, entries: list[object],
         ) -> FlextResult[dict[str, int]]:
             """Get entry type distribution."""
+            ...
 
     @runtime_checkable
     class LdifTransformerProtocol(Protocol):
@@ -108,14 +123,17 @@ class FlextLdifProtocols(FlextProtocols):
 
         def transform_entries(self, entries: list[object]) -> FlextResult[list[object]]:
             """Transform LDIF entries."""
+            ...
 
         def apply_transformations(
-            self, transformations: list[object]
+            self, transformations: list[object],
         ) -> FlextResult[None]:
             """Apply transformation rules."""
+            ...
 
         def normalize_entries(self, entries: list[object]) -> FlextResult[list[object]]:
             """Normalize LDIF entries."""
+            ...
 
     @runtime_checkable
     class LdifFormatHandlerProtocol(Protocol):
@@ -123,24 +141,29 @@ class FlextLdifProtocols(FlextProtocols):
 
         def can_handle(self, source: str) -> bool:
             """Check if handler can process source."""
+            ...
 
         def read_content(self, source: str) -> FlextResult[str]:
             """Read content from source."""
+            ...
 
         def validate_source(self, source: str) -> FlextResult[None]:
             """Validate source format."""
+            ...
 
     @runtime_checkable
     class LdifDispatcherProtocol(Protocol):
         """Protocol for LDIF service dispatchers."""
 
         def dispatch_operation(
-            self, operation: str, **kwargs: object
+            self, operation: str, **kwargs: object,
         ) -> FlextResult[object]:
             """Dispatch LDIF operation."""
+            ...
 
         def supports_operation(self, operation: str) -> bool:
             """Check if operation is supported."""
+            ...
 
     @runtime_checkable
     class LdifServiceProtocol(Protocol):
@@ -148,12 +171,15 @@ class FlextLdifProtocols(FlextProtocols):
 
         def initialize(self) -> FlextResult[None]:
             """Initialize the service."""
+            ...
 
         def is_healthy(self) -> bool:
             """Check service health."""
+            ...
 
         def cleanup(self) -> FlextResult[None]:
             """Cleanup service resources."""
+            ...
 
     @runtime_checkable
     class ServiceContainerProtocol(Protocol):

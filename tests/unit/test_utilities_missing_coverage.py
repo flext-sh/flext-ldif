@@ -59,7 +59,7 @@ class TestFlextLdifUtilitiesMissingCoverage:
         # Create entry2 with None attributes using model_construct
         entry2 = FlextLdifModels.Entry.model_construct(
             dn=FlextLdifModels.DistinguishedName(
-                value="uid=john,ou=people,dc=example,dc=com"
+                value="uid=john,ou=people,dc=example,dc=com",
             ),
             attributes=None,  # None attributes
         )
@@ -79,7 +79,7 @@ class TestFlextLdifUtilitiesMissingCoverage:
         # Create entry1 with None attributes using model_construct
         entry1 = FlextLdifModels.Entry.model_construct(
             dn=FlextLdifModels.DistinguishedName(
-                value="uid=john,ou=people,dc=example,dc=com"
+                value="uid=john,ou=people,dc=example,dc=com",
             ),
             attributes=None,  # None attributes
         )
@@ -113,7 +113,7 @@ class TestFlextLdifUtilitiesMissingCoverage:
         # Create entry2 with attributes but no data attribute
         entry2 = FlextLdifModels.Entry.model_construct(
             dn=FlextLdifModels.DistinguishedName(
-                value="uid=john,ou=people,dc=example,dc=com"
+                value="uid=john,ou=people,dc=example,dc=com",
             ),
             attributes=object(),  # Object without data attribute
         )
@@ -133,7 +133,7 @@ class TestFlextLdifUtilitiesMissingCoverage:
         # Create entry1 with attributes but no data attribute
         entry1 = FlextLdifModels.Entry.model_construct(
             dn=FlextLdifModels.DistinguishedName(
-                value="uid=john,ou=people,dc=example,dc=com"
+                value="uid=john,ou=people,dc=example,dc=com",
             ),
             attributes=object(),  # Object without data attribute
         )
@@ -258,7 +258,7 @@ objectClass: person"""
         utilities = FlextLdifUtilities()
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False,
         ) as temp_file:
             temp_file.write("dn: cn=test,dc=example,dc=com\ncn: test")
             temp_path = Path(temp_file.name)
@@ -290,7 +290,7 @@ objectClass: person"""
         utilities = FlextLdifUtilities()
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False,
         ) as temp_file:
             temp_file.write("dn: cn=test,dc=example,dc=com\ncn: test")
             temp_path = Path(temp_file.name)

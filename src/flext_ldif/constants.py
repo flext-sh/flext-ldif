@@ -88,7 +88,7 @@ class FlextLdifConstants(FlextConstants):
             "organizationalperson",
             "user",
             "posixAccount",
-        }
+        },
     )
 
     LDAP_GROUP_CLASSES: ClassVar[frozenset[str]] = frozenset(
@@ -98,16 +98,21 @@ class FlextLdifConstants(FlextConstants):
             "group",
             "groupofnames",
             "groupofuniquenames",
-        }
+        },
     )
 
     LDAP_ORGANIZATIONAL_CLASSES: ClassVar[frozenset[str]] = frozenset(
         {
             "organizationalUnit",
             "organization",
-            "domain",
             "organizationalunit",
-        }
+        },
+    )
+    LDAP_DOMAIN_CLASSES: ClassVar[frozenset[str]] = frozenset(
+        {
+            "domain",
+            "dcobject",
+        },
     )
 
     # Validation Messages
@@ -121,12 +126,13 @@ class FlextLdifConstants(FlextConstants):
             "EMPTY_ENTRY": "Entry cannot be empty",
             "MISSING_DN": "Missing DN",
             "INVALID_ATTRIBUTE_NAME": "Invalid attribute name",
-        }
+        },
     )
 
     # Required Attributes for Schema Validation
     REQUIRED_PERSON_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset({"cn", "sn"})
     REQUIRED_ORGUNIT_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset({"ou"})
+    REQUIRED_DOMAIN_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset({"dc"})
 
     # LDIF-specific analytics constants (moved from nested Analytics class)
     # Statistics keys specific to LDIF analytics (not in flext-core)

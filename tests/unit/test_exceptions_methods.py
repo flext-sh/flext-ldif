@@ -67,14 +67,14 @@ class TestFlextLdifExceptionsMethods:
     def test_entry_error_with_dn(self) -> None:
         """Test entry_error with DN."""
         error = FlextLdifExceptions.entry_error(
-            "Entry failed", dn="cn=test,dc=example,dc=com"
+            "Entry failed", dn="cn=test,dc=example,dc=com",
         )
         assert "DN: cn=test,dc=example,dc=com" in (error.error or "")
 
     def test_entry_error_with_entry_dn(self) -> None:
         """Test entry_error with entry_dn."""
         error = FlextLdifExceptions.entry_error(
-            "Entry failed", entry_dn="cn=test,dc=example,dc=com"
+            "Entry failed", entry_dn="cn=test,dc=example,dc=com",
         )
         assert "DN: cn=test,dc=example,dc=com" in (error.error or "")
 
@@ -109,21 +109,21 @@ class TestFlextLdifExceptionsMethods:
     def test_validation_error_with_dn(self) -> None:
         """Test validation_error with DN."""
         error = FlextLdifExceptions.validation_error(
-            "Validation failed", entry_dn="cn=test,dc=example,dc=com"
+            "Validation failed", entry_dn="cn=test,dc=example,dc=com",
         )
         assert "DN: cn=test,dc=example,dc=com" in (error.error or "")
 
     def test_validation_error_with_entry_dn(self) -> None:
         """Test validation_error with entry DN."""
         error = FlextLdifExceptions.validation_error(
-            "Validation failed", entry_dn="cn=test,dc=example,dc=com"
+            "Validation failed", entry_dn="cn=test,dc=example,dc=com",
         )
         assert "DN: cn=test,dc=example,dc=com" in (error.error or "")
 
     def test_validation_error_with_validation_rule(self) -> None:
         """Test validation_error with validation rule."""
         error = FlextLdifExceptions.validation_error(
-            "Validation failed", validation_rule="required_dn"
+            "Validation failed", validation_rule="required_dn",
         )
         assert error.is_failure
         assert error.error == "Validation failed (Rule: required_dn)"
@@ -162,7 +162,7 @@ class TestFlextLdifExceptionsMethods:
     def test_file_error_with_operation(self) -> None:
         """Test file_error with operation parameter."""
         error = FlextLdifExceptions.file_error(
-            "File error", file_path="test.ldif", operation="read"
+            "File error", file_path="test.ldif", operation="read",
         )
         assert error.error is not None
         assert "File error" in error.error

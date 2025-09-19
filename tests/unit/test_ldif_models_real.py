@@ -323,13 +323,13 @@ class TestFlextLdifModelsDistinguishedNameReal:
     def test_dn_equality(self) -> None:
         """Test DN equality comparison."""
         dn1 = FlextLdifModels.DistinguishedName(
-            value="uid=test,ou=people,dc=example,dc=com"
+            value="uid=test,ou=people,dc=example,dc=com",
         )
         dn2 = FlextLdifModels.DistinguishedName(
-            value="uid=test,ou=people,dc=example,dc=com"
+            value="uid=test,ou=people,dc=example,dc=com",
         )
         dn3 = FlextLdifModels.DistinguishedName(
-            value="uid=other,ou=people,dc=example,dc=com"
+            value="uid=other,ou=people,dc=example,dc=com",
         )
 
         # Test equality

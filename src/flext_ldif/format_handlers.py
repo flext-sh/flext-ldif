@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import base64
 import re
+from collections.abc import Iterator
 
 from flext_core import FlextResult, FlextTypes, FlextUtilities
 from flext_ldif.config import FlextLdifConfig
@@ -81,7 +82,7 @@ class FlextLdifFormatHandler:
                         FlextResult[object].ok(write_result.value)
                         if write_result.is_success
                         else FlextResult[object].fail(
-                            write_result.error or "Write failed"
+                            write_result.error or "Write failed",
                         )
                     )
             elif operation == "validate_url":
@@ -306,7 +307,7 @@ class FlextLdifFormatHandler:
         """Write a single attribute line."""
         if self._needs_base64_encoding(attr_type, attr_value):
             encoded_value = base64.b64encode(attr_value.encode(self._encoding)).decode(
-                "ascii"
+                "ascii",
             )
             line = f"{attr_type}:: {encoded_value}"
         else:

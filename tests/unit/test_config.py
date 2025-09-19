@@ -72,7 +72,7 @@ class TestFlextLdifConfig:
         """Test getting global configuration instance."""
         # Should fail if not initialized
         with pytest.raises(
-            RuntimeError, match="Global instance is not a FlextLdifConfig instance"
+            RuntimeError, match="Global instance is not a FlextLdifConfig instance",
         ):
             FlextLdifConfig.get_global_ldif_config()
 
@@ -116,7 +116,7 @@ class TestFlextLdifConfig:
         # Create a new config with invalid values instead of modifying existing one
         FlextLdifConfig.reset_global_ldif_config()
         init_result = FlextLdifConfig.initialize_global_ldif_config(
-            ldif_max_entries=500
+            ldif_max_entries=500,
         )
         if init_result.is_success:
             config = init_result.unwrap()
@@ -177,7 +177,7 @@ class TestFlextLdifConfig:
 
         # Test invalid encoding
         result = FlextLdifConfig.initialize_global_ldif_config(
-            ldif_encoding="invalid-encoding"
+            ldif_encoding="invalid-encoding",
         )
         assert result.is_failure
         error_message = result.error
@@ -272,7 +272,7 @@ class TestFlextLdifConfig:
         """Test configuration parameter support."""
         # Initialize configuration with specific parameters
         result = FlextLdifConfig.initialize_global_ldif_config(
-            ldif_max_entries=75000, ldif_strict_validation=False
+            ldif_max_entries=75000, ldif_strict_validation=False,
         )
         assert result.is_success
         config = result.unwrap()

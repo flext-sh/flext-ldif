@@ -92,7 +92,7 @@ class TestFlextLdifUtilitiesComplete:
 
         # Test DN with extra spaces
         result = utilities.normalize_dn_format(
-            "  uid=john , ou=people , dc=example, dc=com  "
+            "  uid=john , ou=people , dc=example, dc=com  ",
         )
         assert result.is_success is True
         assert result.value == "uid=john,ou=people,dc=example,dc=com"
@@ -233,7 +233,7 @@ class TestFlextLdifUtilitiesComplete:
         entry = FlextLdifModels.Entry.model_construct(
             dn=None,  # None DN
             attributes=FlextLdifModels.LdifAttributes(
-                data={"objectClass": ["person"], "cn": ["John"]}
+                data={"objectClass": ["person"], "cn": ["John"]},
             ),
         )
 
@@ -252,7 +252,7 @@ class TestFlextLdifUtilitiesComplete:
         # Create entry with None attributes using model_construct
         entry = FlextLdifModels.Entry.model_construct(
             dn=FlextLdifModels.DistinguishedName(
-                value="uid=john,ou=people,dc=example,dc=com"
+                value="uid=john,ou=people,dc=example,dc=com",
             ),
             attributes=None,  # None attributes
         )
@@ -272,10 +272,10 @@ class TestFlextLdifUtilitiesComplete:
         # Create entry without objectClass using model_construct
         entry = FlextLdifModels.Entry.model_construct(
             dn=FlextLdifModels.DistinguishedName(
-                value="uid=john,ou=people,dc=example,dc=com"
+                value="uid=john,ou=people,dc=example,dc=com",
             ),
             attributes=FlextLdifModels.LdifAttributes(
-                data={"cn": ["John"]}
+                data={"cn": ["John"]},
             ),  # No objectClass
         )
 
@@ -408,7 +408,7 @@ class TestFlextLdifUtilitiesComplete:
         size = result.value
         assert isinstance(size, int)
         assert size > len(
-            "cn=binary-entry,dc=example,dc=com"
+            "cn=binary-entry,dc=example,dc=com",
         )  # Should be larger than just DN
 
     def test_merge_ldif_entries_same_dn(self) -> None:
@@ -552,7 +552,7 @@ class TestFlextLdifUtilitiesComplete:
 
         # Test with filename containing special characters
         result = utilities.validate_ldif_file_extension(
-            "file with spaces & symbols.ldif"
+            "file with spaces & symbols.ldif",
         )
         assert result.is_success
         assert result.value is True
@@ -594,7 +594,7 @@ class TestFlextLdifUtilitiesComplete:
         # Test exception handling in DN validation
 
         with patch(
-            "flext_ldif.models.FlextLdifModels.DistinguishedName"
+            "flext_ldif.models.FlextLdifModels.DistinguishedName",
         ) as mock_validation:
             mock_validation.side_effect = Exception("DN validation error")
 

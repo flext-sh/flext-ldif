@@ -40,7 +40,7 @@ def test_all_services_100_percent() -> None:
                     "mail": ["person1@test.com"],
                     "telephoneNumber": ["+1234567890"],
                 },
-            }
+            },
         ),
         FlextLdifModels.create_entry(
             {
@@ -50,7 +50,7 @@ def test_all_services_100_percent() -> None:
                     "objectClass": ["groupOfNames"],
                     "member": ["cn=person1,dc=test,dc=com"],
                 },
-            }
+            },
         ),
     ]
 

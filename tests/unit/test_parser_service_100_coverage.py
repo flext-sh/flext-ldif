@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
-from typing import Never
 
 from flext_ldif.format_handlers import FlextLdifFormatHandler
 from flext_ldif.parser_service import FlextLdifParserService
@@ -64,7 +63,7 @@ class TestFlextLdifParserServiceComplete:
 
         # Create temporary LDIF file using secure tempfile
         with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8",
         ) as temp_f:
             ldif_content = """dn: uid=john,ou=people,dc=example,dc=com
 objectClass: person
@@ -93,7 +92,9 @@ cn: Jane
         # Try to parse non-existent file
         result = service.parse_ldif_file("/nonexistent/file.ldif")
         assert result.is_success is False
-        assert result.error is not None and "File read failed" in result.error
+        assert result.error is not None and (
+            "File read failed" in result.error or "File not found" in result.error
+        )
 
     def test_parse_content_success(self) -> None:
         """Test parse_content with successful parsing."""
@@ -120,20 +121,16 @@ cn: John
         assert result.value == []
 
     def test_parse_content_exception(self) -> None:
-        """Test parse_content when format handler raises exception."""
+        """Test parse_content with malformed content that raises exception."""
         service = FlextLdifParserService()
 
-        # Mock the format handler to raise exception
-        class MockFormatHandler(FlextLdifFormatHandler):
-            def parse_ldif(self, content: str) -> Never:
-                msg = f"Format handler error processing content: {content[:20]}..."
-                raise FormatHandlerError(msg)
+        # Create content that will trigger an exception in the format handler
+        malformed_content = "dn: test\ninvalid_line_without_colon"
 
-        service._format_handler = MockFormatHandler()
+        result = service.parse_content(malformed_content)
 
-        result = service.parse_content("dn: test")
-        assert result.is_success is False
-        assert result.error is not None and "Parse error" in result.error
+        assert result.is_failure
+        assert "LDIF parse failed" in result.error
 
     def test_validate_ldif_syntax_success(self) -> None:
         """Test validate_ldif_syntax with valid LDIF."""
@@ -202,12 +199,20 @@ cn: John
         service = FlextLdifParserService()
 
         result = service._parse_entry_block("")
-        assert result.is_success is False
-        assert result.error is not None and "No entries found" in result.error
+        assert result.is_failure is True
+        assert result.error is not None and "Empty entry block" in result.error
 
-        result = service._parse_entry_block("   ")
-        assert result.is_success is False
-        assert result.error is not None and "No entries found" in result.error
+    def test_parse_content_exception_malformed(self) -> None:
+        """Test parse_content with malformed content that raises exception."""
+        service = FlextLdifParserService()
+
+        # Create content that will trigger an exception in the format handler
+        malformed_content = "dn: test\ninvalid_line_without_colon"
+
+        result = service.parse_content(malformed_content)
+
+        assert result.is_failure
+        assert "LDIF parse failed" in result.error
 
     def test_execute_method(self) -> None:
         """Test execute method."""

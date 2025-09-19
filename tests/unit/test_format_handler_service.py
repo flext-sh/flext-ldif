@@ -43,10 +43,10 @@ objectClass: person
         """Test basic LDIF writing through class method."""
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
-                value="cn=Test User,ou=people,dc=example,dc=com"
+                value="cn=Test User,ou=people,dc=example,dc=com",
             ),
             attributes=FlextLdifModels.LdifAttributes(
-                data={"cn": ["Test User"], "sn": ["User"], "objectClass": ["person"]}
+                data={"cn": ["Test User"], "sn": ["User"], "objectClass": ["person"]},
             ),
         )
 

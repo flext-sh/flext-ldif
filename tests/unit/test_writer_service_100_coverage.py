@@ -88,11 +88,11 @@ class TestFlextLdifWriterServiceComplete:
         # Mock the format handler to return failure
         class MockFormatHandler(FlextLdifFormatHandler):
             def write_ldif(
-                self, entries: list[FlextLdifModels.Entry] | None
+                self, entries: list[FlextLdifModels.Entry] | None,
             ) -> FlextResult[str]:
                 entry_count = len(entries) if entries else 0
                 return FlextResult[str].fail(
-                    f"Format handler error for {entry_count} entries"
+                    f"Format handler error for {entry_count} entries",
                 )
 
         service._format_handler = MockFormatHandler()
@@ -116,11 +116,11 @@ class TestFlextLdifWriterServiceComplete:
         # Mock the format handler to return failure with no error
         class MockFormatHandler(FlextLdifFormatHandler):
             def write_ldif(
-                self, entries: list[FlextLdifModels.Entry] | None
+                self, entries: list[FlextLdifModels.Entry] | None,
             ) -> FlextResult[str]:
                 entry_count = len(entries) if entries else 0
                 return FlextResult[str].fail(
-                    f"String write failed for {entry_count} entries"
+                    f"String write failed for {entry_count} entries",
                 )
 
         service._format_handler = MockFormatHandler()
@@ -143,7 +143,7 @@ class TestFlextLdifWriterServiceComplete:
 
         # Create temporary file using secure tempfile
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False,
         ) as temp_f:
             temp_file = Path(temp_f.name)
 
@@ -176,11 +176,11 @@ class TestFlextLdifWriterServiceComplete:
         # Mock the format handler to return failure
         class MockFormatHandler(FlextLdifFormatHandler):
             def write_ldif(
-                self, entries: list[FlextLdifModels.Entry] | None
+                self, entries: list[FlextLdifModels.Entry] | None,
             ) -> FlextResult[str]:
                 entry_count = len(entries) if entries else 0
                 return FlextResult[str].fail(
-                    f"Format handler error for {entry_count} entries"
+                    f"Format handler error for {entry_count} entries",
                 )
 
         service._format_handler = MockFormatHandler()
@@ -208,11 +208,11 @@ class TestFlextLdifWriterServiceComplete:
         # Mock the format handler to return failure with no error
         class MockFormatHandler(FlextLdifFormatHandler):
             def write_ldif(
-                self, entries: list[FlextLdifModels.Entry] | None
+                self, entries: list[FlextLdifModels.Entry] | None,
             ) -> FlextResult[str]:
                 entry_count = len(entries) if entries else 0
                 return FlextResult[str].fail(
-                    f"String write failed for {entry_count} entries"
+                    f"String write failed for {entry_count} entries",
                 )
 
         service._format_handler = MockFormatHandler()
@@ -240,7 +240,7 @@ class TestFlextLdifWriterServiceComplete:
         # Try to write to invalid path (should raise exception)
         result = service.write_entries_to_file(entries, "/invalid/path/test.ldif")
         assert result.is_success is False
-        assert result.error is not None and "File write failed" in result.error
+        assert result.error is not None and "Parent directory does not exist" in result.error
 
     def test_execute_method(self) -> None:
         """Test execute method."""
@@ -248,7 +248,7 @@ class TestFlextLdifWriterServiceComplete:
 
         result = service.execute()
         assert result.is_success is True
-        assert result.value == "Writer service ready"
+        assert result.value == "Writer service ready with advanced capabilities"
 
     def test_write_entry_single(self) -> None:
         """Test write_entry method."""
@@ -283,7 +283,7 @@ class TestFlextLdifWriterServiceComplete:
             {
                 "cn": ["verylongname"],
                 "description": [
-                    "This is a very long description that should be wrapped"
+                    "This is a very long description that should be wrapped",
                 ],
             },
         )
