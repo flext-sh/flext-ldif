@@ -15,7 +15,8 @@ class TestFlextLdifExceptions:
     def test_validation_error_with_dn_context(self) -> None:
         """Test validation error creation with DN context."""
         result = FlextLdifExceptions.validation_error(
-            "Test validation error", entry_dn="cn=test,dc=example,dc=com",
+            "Test validation error",
+            entry_dn="cn=test,dc=example,dc=com",
         )
 
         assert result.is_failure
@@ -28,7 +29,8 @@ class TestFlextLdifExceptions:
     def test_validation_error_with_attribute_context(self) -> None:
         """Test validation error creation with attribute context."""
         result = FlextLdifExceptions.validation_error(
-            "Test validation error", attribute_name="cn",
+            "Test validation error",
+            attribute_name="cn",
         )
 
         assert result.is_failure
@@ -38,7 +40,8 @@ class TestFlextLdifExceptions:
     def test_validation_error_with_rule_context(self) -> None:
         """Test validation error creation with validation rule context."""
         result = FlextLdifExceptions.validation_error(
-            "Test validation error", validation_rule="required_field",
+            "Test validation error",
+            validation_rule="required_field",
         )
 
         assert result.is_failure
@@ -98,7 +101,8 @@ class TestFlextLdifExceptions:
     def test_parse_error_with_invalid_line_number(self) -> None:
         """Test parse error creation with invalid line number."""
         result = FlextLdifExceptions.parse_error(
-            "Test parse error", line_number="invalid",
+            "Test parse error",
+            line_number="invalid",
         )
 
         assert result.is_failure
@@ -108,7 +112,9 @@ class TestFlextLdifExceptions:
     def test_parse_error_with_column_int(self) -> None:
         """Test parse error creation with integer column."""
         result = FlextLdifExceptions.parse_error(
-            "Test parse error", line_number=42, column=10,
+            "Test parse error",
+            line_number=42,
+            column=10,
         )
 
         assert result.is_failure
@@ -118,7 +124,9 @@ class TestFlextLdifExceptions:
     def test_parse_error_with_column_string(self) -> None:
         """Test parse error creation with string column."""
         result = FlextLdifExceptions.parse_error(
-            "Test parse error", line_number=42, column="10",
+            "Test parse error",
+            line_number=42,
+            column="10",
         )
 
         assert result.is_failure
@@ -128,7 +136,9 @@ class TestFlextLdifExceptions:
     def test_parse_error_with_invalid_column(self) -> None:
         """Test parse error creation with invalid column."""
         result = FlextLdifExceptions.parse_error(
-            "Test parse error", line_number=42, column="invalid",
+            "Test parse error",
+            line_number=42,
+            column="invalid",
         )
 
         assert result.is_failure
@@ -139,7 +149,8 @@ class TestFlextLdifExceptions:
     def test_parse_error_with_content_preview(self) -> None:
         """Test parse error creation with content preview."""
         result = FlextLdifExceptions.parse_error(
-            "Test parse error", content_preview="dn: cn=test",
+            "Test parse error",
+            content_preview="dn: cn=test",
         )
 
         assert result.is_failure
@@ -150,7 +161,8 @@ class TestFlextLdifExceptions:
         """Test parse error creation with long content preview."""
         long_content = "a" * 100  # Longer than _CONTENT_PREVIEW_LENGTH (50)
         result = FlextLdifExceptions.parse_error(
-            "Test parse error", content_preview=long_content,
+            "Test parse error",
+            content_preview=long_content,
         )
 
         assert result.is_failure
@@ -168,7 +180,8 @@ class TestFlextLdifExceptions:
     def test_parse_error_with_whitespace_content_preview(self) -> None:
         """Test parse error creation with whitespace-only content preview."""
         result = FlextLdifExceptions.parse_error(
-            "Test parse error", content_preview="   ",
+            "Test parse error",
+            content_preview="   ",
         )
 
         assert result.is_failure
@@ -178,7 +191,8 @@ class TestFlextLdifExceptions:
     def test_processing_error_with_operation(self) -> None:
         """Test processing error creation with operation context."""
         result = FlextLdifExceptions.processing_error(
-            "Test processing error", operation="parse",
+            "Test processing error",
+            operation="parse",
         )
 
         assert result.is_failure
@@ -188,7 +202,8 @@ class TestFlextLdifExceptions:
     def test_processing_error_with_entry_count_int(self) -> None:
         """Test processing error creation with integer entry count."""
         result = FlextLdifExceptions.processing_error(
-            "Test processing error", entry_count=100,
+            "Test processing error",
+            entry_count=100,
         )
 
         assert result.is_failure
@@ -198,7 +213,8 @@ class TestFlextLdifExceptions:
     def test_processing_error_with_entry_count_string(self) -> None:
         """Test processing error creation with string entry count."""
         result = FlextLdifExceptions.processing_error(
-            "Test processing error", entry_count="100",
+            "Test processing error",
+            entry_count="100",
         )
 
         assert result.is_failure
@@ -208,7 +224,8 @@ class TestFlextLdifExceptions:
     def test_processing_error_with_invalid_entry_count(self) -> None:
         """Test processing error creation with invalid entry count."""
         result = FlextLdifExceptions.processing_error(
-            "Test processing error", entry_count="invalid",
+            "Test processing error",
+            entry_count="invalid",
         )
 
         assert result.is_failure
@@ -218,7 +235,8 @@ class TestFlextLdifExceptions:
     def test_processing_error_with_negative_entry_count(self) -> None:
         """Test processing error creation with negative entry count."""
         result = FlextLdifExceptions.processing_error(
-            "Test processing error", entry_count=-1,
+            "Test processing error",
+            entry_count=-1,
         )
 
         assert result.is_failure
@@ -228,7 +246,8 @@ class TestFlextLdifExceptions:
     def test_file_error_with_path(self) -> None:
         """Test file error creation with file path."""
         result = FlextLdifExceptions.file_error(
-            "Test file error", file_path="/test/file.ldif",
+            "Test file error",
+            file_path="/test/file.ldif",
         )
 
         assert result.is_failure
@@ -246,7 +265,8 @@ class TestFlextLdifExceptions:
     def test_configuration_error_with_key(self) -> None:
         """Test configuration error creation with config key."""
         result = FlextLdifExceptions.configuration_error(
-            "Test config error", config_key="ldif_max_entries",
+            "Test config error",
+            config_key="ldif_max_entries",
         )
 
         assert result.is_failure
@@ -256,7 +276,8 @@ class TestFlextLdifExceptions:
     def test_configuration_error_with_non_string_key(self) -> None:
         """Test configuration error creation with non-string config key."""
         result = FlextLdifExceptions.configuration_error(
-            "Test config error", config_key=123,
+            "Test config error",
+            config_key=123,
         )
 
         assert result.is_failure
@@ -306,7 +327,8 @@ class TestFlextLdifExceptions:
     def test_entry_error_with_dn(self) -> None:
         """Test entry error creation with DN."""
         result = FlextLdifExceptions.entry_error(
-            "Test entry error", dn="cn=test,dc=example,dc=com",
+            "Test entry error",
+            dn="cn=test,dc=example,dc=com",
         )
 
         assert result.is_failure
@@ -319,7 +341,8 @@ class TestFlextLdifExceptions:
     def test_entry_error_with_entry_dn(self) -> None:
         """Test entry error creation with entry_dn."""
         result = FlextLdifExceptions.entry_error(
-            "Test entry error", entry_dn="cn=test,dc=example,dc=com",
+            "Test entry error",
+            entry_dn="cn=test,dc=example,dc=com",
         )
 
         assert result.is_failure
@@ -332,7 +355,8 @@ class TestFlextLdifExceptions:
     def test_entry_error_with_attribute_name(self) -> None:
         """Test entry error creation with attribute name."""
         result = FlextLdifExceptions.entry_error(
-            "Test entry error", attribute_name="cn",
+            "Test entry error",
+            attribute_name="cn",
         )
 
         assert result.is_failure
@@ -343,7 +367,8 @@ class TestFlextLdifExceptions:
         """Test entry error creation with mapping entry data."""
         entry_data = {"cn": ["test"], "sn": ["user"], "mail": ["test@example.com"]}
         result = FlextLdifExceptions.entry_error(
-            "Test entry error", entry_data=entry_data,
+            "Test entry error",
+            entry_data=entry_data,
         )
 
         assert result.is_failure
@@ -363,7 +388,8 @@ class TestFlextLdifExceptions:
             "title": ["Developer"],
         }
         result = FlextLdifExceptions.entry_error(
-            "Test entry error", entry_data=entry_data,
+            "Test entry error",
+            entry_data=entry_data,
         )
 
         assert result.is_failure
@@ -376,7 +402,8 @@ class TestFlextLdifExceptions:
         """Test entry error creation with empty mapping."""
         entry_data = {}
         result = FlextLdifExceptions.entry_error(
-            "Test entry error", entry_data=entry_data,
+            "Test entry error",
+            entry_data=entry_data,
         )
 
         assert result.is_failure
@@ -386,7 +413,8 @@ class TestFlextLdifExceptions:
     def test_entry_error_with_non_mapping_entry_data(self) -> None:
         """Test entry error creation with non-mapping entry data."""
         result = FlextLdifExceptions.entry_error(
-            "Test entry error", entry_data="not a mapping",
+            "Test entry error",
+            entry_data="not a mapping",
         )
 
         assert result.is_failure
@@ -400,7 +428,9 @@ class TestFlextLdifExceptions:
         """Test entry error creation with both DN and entry data."""
         entry_data = {"cn": ["test"], "sn": ["user"]}
         result = FlextLdifExceptions.entry_error(
-            "Test entry error", dn="cn=test,dc=example,dc=com", entry_data=entry_data,
+            "Test entry error",
+            dn="cn=test,dc=example,dc=com",
+            entry_data=entry_data,
         )
 
         assert result.is_failure

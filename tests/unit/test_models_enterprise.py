@@ -52,7 +52,8 @@ class TestFlextLdifModelsEntryEnterprise:
         }
 
     def test_entry_creation_success(
-        self, sample_entry_data: FlextTypes.Core.Dict,
+        self,
+        sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test successful FlextLdifModels.Entry creation."""
         # Store original values before Pydantic modifies them
@@ -81,7 +82,8 @@ class TestFlextLdifModelsEntryEnterprise:
         assert entry.attributes.data == expected_attributes
 
     def test_entry_creation_with_string_dn(
-        self, sample_entry_data: FlextTypes.Core.Dict,
+        self,
+        sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test entry creation with string DN (auto-conversion)."""
         # Store original DN value before Pydantic modifies it
@@ -102,7 +104,8 @@ class TestFlextLdifModelsEntryEnterprise:
             raise AssertionError(f"Expected correct DN, got {entry.dn.value}")
 
     def test_entry_creation_with_dict_attributes(
-        self, sample_entry_data: FlextTypes.Core.Dict,
+        self,
+        sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test entry creation with dict attributes (auto-conversion)."""
         # Store original attributes value before Pydantic modifies it
@@ -112,7 +115,8 @@ class TestFlextLdifModelsEntryEnterprise:
         # Test that attributes data is accessible and correct
         # The type might be AttributesDict which behaves like dict
         assert hasattr(
-            entry.attributes.data, "__getitem__",
+            entry.attributes.data,
+            "__getitem__",
         )  # Dict-like access via .data
 
         # Get expected attributes value (before Pydantic mutation)
@@ -154,7 +158,8 @@ class TestFlextLdifModelsEntryEnterprise:
         assert "Attributes must be dict" in str(exc_info.value)
 
     def test_get_attribute_success(
-        self, sample_entry_data: FlextTypes.Core.Dict,
+        self,
+        sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test getting attribute values succeeds."""
         entry = FlextLdifModels.create_entry(sample_entry_data)
@@ -177,7 +182,8 @@ class TestFlextLdifModelsEntryEnterprise:
             raise AssertionError(objectclass_msg)
 
     def test_get_attribute_nonexistent(
-        self, sample_entry_data: FlextTypes.Core.Dict,
+        self,
+        sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test getting nonexistent attribute returns None."""
         entry = FlextLdifModels.create_entry(sample_entry_data)
@@ -186,7 +192,8 @@ class TestFlextLdifModelsEntryEnterprise:
         assert result is None
 
     def test_set_attribute_success(
-        self, sample_entry_data: FlextTypes.Core.Dict,
+        self,
+        sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test setting attribute values succeeds."""
         entry = FlextLdifModels.create_entry(sample_entry_data)
@@ -204,7 +211,8 @@ class TestFlextLdifModelsEntryEnterprise:
             raise AssertionError(mail_msg)
 
     def test_has_attribute_success(
-        self, sample_entry_data: FlextTypes.Core.Dict,
+        self,
+        sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test checking attribute existence succeeds."""
         entry = FlextLdifModels.create_entry(sample_entry_data)
@@ -225,7 +233,8 @@ class TestFlextLdifModelsEntryEnterprise:
             raise AssertionError(nonexistent_msg)
 
     def test_get_object_classes_success(
-        self, sample_entry_data: FlextTypes.Core.Dict,
+        self,
+        sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test getting object classes succeeds."""
         entry = FlextLdifModels.create_entry(sample_entry_data)
@@ -238,7 +247,8 @@ class TestFlextLdifModelsEntryEnterprise:
             raise AssertionError(oc_list_msg)
 
     def test_has_object_class_success(
-        self, sample_entry_data: FlextTypes.Core.Dict,
+        self,
+        sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test checking object class existence succeeds."""
         entry = FlextLdifModels.create_entry(sample_entry_data)
@@ -252,7 +262,8 @@ class TestFlextLdifModelsEntryEnterprise:
             raise AssertionError(f"Expected correct DN, got {entry.dn.value}")
 
     def test_get_attribute_values_success(
-        self, sample_entry_data: FlextTypes.Core.Dict,
+        self,
+        sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test getting attribute values using real functionality."""
         entry = FlextLdifModels.create_entry(sample_entry_data)
@@ -263,7 +274,8 @@ class TestFlextLdifModelsEntryEnterprise:
             raise AssertionError(f"Expected correct DN, got {entry.dn.value}")
 
     def test_operation_methods_correct_behavior(
-        self, sample_entry_data: FlextTypes.Core.Dict,
+        self,
+        sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test operation check methods return correct LDIF behavior."""
         entry = FlextLdifModels.create_entry(sample_entry_data)
@@ -273,29 +285,31 @@ class TestFlextLdifModelsEntryEnterprise:
         assert entry.is_modify_operation() is False
         assert entry.is_delete_operation() is False
 
-    def test_get_single_attribute_success(
-        self, sample_entry_data: FlextTypes.Core.Dict,
+    def test_get_single_value_success(
+        self,
+        sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test getting single attribute value succeeds."""
         entry = FlextLdifModels.create_entry(sample_entry_data)
 
-        cn_value = entry.get_single_attribute("cn")
+        cn_value = entry.get_single_value("cn")
         if cn_value != "John Doe":
             cn_msg: str = f"Expected {'John Doe'}, got {cn_value}"
             raise AssertionError(cn_msg)
 
-        uid_value = entry.get_single_attribute("uid")
+        uid_value = entry.get_single_value("uid")
         if uid_value != "johndoe":
             uid_msg: str = f"Expected {'johndoe'}, got {uid_value}"
             raise AssertionError(uid_msg)
 
-    def test_get_single_attribute_nonexistent(
-        self, sample_entry_data: FlextTypes.Core.Dict,
+    def test_get_single_value_nonexistent(
+        self,
+        sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test getting single value from nonexistent attribute returns None."""
         entry = FlextLdifModels.create_entry(sample_entry_data)
 
-        result = entry.get_single_attribute("nonexistent")
+        result = entry.get_single_value("nonexistent")
         assert result is None
 
     def test_to_ldif_success(self, sample_entry_data: FlextTypes.Core.Dict) -> None:
@@ -324,7 +338,8 @@ class TestFlextLdifModelsEntryEnterprise:
         assert ldif_output.endswith("\n")
 
     def test_validate_domain_rules_success(
-        self, sample_entry_data: FlextTypes.Core.Dict,
+        self,
+        sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test domain rules validation succeeds for valid entry."""
         entry = FlextLdifModels.create_entry(sample_entry_data)
@@ -440,7 +455,8 @@ description: With multiple descriptions"""
         assert "person" in entry.get_object_classes()
 
     def test_entry_immutability_via_pydantic(
-        self, sample_entry_data: FlextTypes.Core.Dict,
+        self,
+        sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test entry immutability through Pydantic frozen behavior."""
         entry = FlextLdifModels.create_entry(sample_entry_data)
@@ -462,7 +478,8 @@ description: With multiple descriptions"""
             raise AssertionError(f"Expected correct DN, got {entry.dn.value}")
 
     def test_entry_equality_and_hashing(
-        self, sample_entry_data: FlextTypes.Core.Dict,
+        self,
+        sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test entry equality and hash behavior."""
         # Create fresh copy of data to avoid Pydantic mutation issues
@@ -505,7 +522,8 @@ description: With multiple descriptions"""
         )  # Has some content  # Has some content  # Has some content  # Has some content
 
     def test_entry_serialization_deserialization(
-        self, sample_entry_data: FlextTypes.Core.Dict,
+        self,
+        sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test entry serialization and deserialization."""
         # Store original values before Pydantic modifies them
@@ -541,7 +559,8 @@ description: With multiple descriptions"""
         assert entry.attributes.data == expected_attributes
 
     def test_entry_json_serialization(
-        self, sample_entry_data: FlextTypes.Core.Dict,
+        self,
+        sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test entry JSON serialization."""
         # Store original DN value before Pydantic modifies it
@@ -779,7 +798,7 @@ description: With multiple descriptions"""
         assert hash(dn1) == hash(dn2)
 
         # Test usage in set
-        dn_set = {dn1, dn2}  # type: ignore[misc]
+        dn_set = {dn1, dn2}
         assert len(dn_set) == 1
 
     def test_attributes_add_value(self) -> None:
@@ -807,9 +826,9 @@ description: With multiple descriptions"""
         # This tests the real model functionality without assuming non-existent methods
         try:
             new_attrs = attrs.remove_value("cn", "Johnny")
-            assert new_attrs.get_values("cn") == ["John"]
+            assert new_attrs.get_attribute("cn") == ["John"]
             # Original should be unchanged (immutable)
-            assert attrs.get_values("cn") == ["John", "Johnny"]
+            assert attrs.get_attribute("cn") == ["John", "Johnny"]
         except AttributeError:
             # Methods don't exist - test the real data structure
             # Create a new instance with the value removed to simulate the expected behavior
@@ -913,7 +932,7 @@ description: With multiple descriptions"""
             assert hash1 == hash2
 
             # Test usage in set if hashing works
-            attrs_set = {attrs1, attrs2}  # type: ignore[misc]
+            attrs_set = {attrs1, attrs2}
             assert len(attrs_set) == 1
         except TypeError:
             # If attributes are not hashable due to dict content, that's acceptable

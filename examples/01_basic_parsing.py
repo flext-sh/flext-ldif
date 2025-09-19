@@ -91,8 +91,8 @@ def main() -> None:
 
     def process_person_entries(person_entries: list[FlextLdifModels.Entry]) -> None:
         for entry in person_entries:
-            cn = entry.get_single_attribute("cn") or "Unknown"
-            mail = entry.get_single_attribute("mail") or "No email"
+            cn = entry.get_single_value("cn") or "Unknown"
+            mail = entry.get_single_value("mail") or "No email"
             print(f"Person: {cn}, Email: {mail}")
 
     api.filter_persons(entries).tap(process_person_entries).flat_map(

@@ -2485,6 +2485,22 @@ files = [
 types-setuptools = "*"
 
 [[package]]
+name = "types-docker"
+version = "7.1.0.20250916"
+description = "Typing stubs for docker"
+optional = false
+python-versions = ">=3.9"
+groups = ["dev"]
+files = [
+    {file = "types_docker-7.1.0.20250916-py3-none-any.whl", hash = "sha256:5573250eaf013f3b1df681af01eab20f3e95c3f24d90a753ba254e952b565323"},
+    {file = "types_docker-7.1.0.20250916.tar.gz", hash = "sha256:770d777d2aa0fc523a05c3daa7a922ef0db4370ff111481018e51793ad68d5d0"},
+]
+
+[package.dependencies]
+types-requests = "*"
+urllib3 = ">=2"
+
+[[package]]
 name = "types-psutil"
 version = "7.0.0.20250822"
 description = "Typing stubs for psutil"
@@ -2558,7 +2574,7 @@ version = "2.32.4.20250913"
 description = "Typing stubs for requests"
 optional = false
 python-versions = ">=3.9"
-groups = ["typings"]
+groups = ["dev", "typings"]
 files = [
     {file = "types_requests-2.32.4.20250913-py3-none-any.whl", hash = "sha256:78c9c1fffebbe0fa487a418e0fa5252017e9c60d1a2da394077f1780f655d7e1"},
     {file = "types_requests-2.32.4.20250913.tar.gz", hash = "sha256:abd6d4f9ce3a9383f269775a9835a4c24e5cd6b9f647d64f88aa4613c33def5d"},
@@ -2787,4 +2803,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<3.14"
-content-hash = "c68291a855f91e5d0f9725906eaf199551803a8aa0f12dd367564e95a7fab702"
+content-hash = "ea669198d8b281d582affc52b2dff62fb129c0266a458188fe23eb8024b391e4"

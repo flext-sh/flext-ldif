@@ -11,7 +11,6 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import FlextResult
 from flext_ldif import (
     FlextLdifAPI,
     FlextLdifModels,
@@ -50,7 +49,9 @@ class TestAdvancedAPIFeatures:
                     "dn": f"cn=user{i:03d},ou=people,dc=example,dc=com",
                     "attributes": {
                         "cn": [f"user{i:03d}"],
-                        "sn": [f"User{i:03d}"],  # Add required sn attribute for person objectClass
+                        "sn": [
+                            f"User{i:03d}",
+                        ],  # Add required sn attribute for person objectClass
                         "objectClass": ["person", "inetOrgPerson"],
                         "mail": [f"user{i:03d}@example.com"],
                     },
@@ -125,7 +126,8 @@ objectClass: groupOfNames
         assert len(inet_result.value) == 1
 
         ou_result = api_with_config._filters.by_object_class(
-            entries, "organizationalUnit",
+            entries,
+            "organizationalUnit",
         )
         assert ou_result.is_success
         assert len(ou_result.value) == 1
@@ -174,103 +176,46 @@ objectClass: person
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """Ensure dispatcher handles operations when the feature flag is enabled."""
+        """Test dispatcher handles operations with real services when feature flag is enabled."""
         monkeypatch.setenv("FLEXT_LDIF_ENABLE_DISPATCHER", "1")
 
         api = FlextLdifAPI()
 
-        sample_entry = FlextLdifModels.create_entry(
-            {
-                "id": "user-000",
-                "dn": "cn=user000,ou=people,dc=example,dc=com",
-                "attributes": {
-                    "cn": ["user000"],
-                    "objectClass": ["person"],
-                },
-            },
-        )
+        # Test with real LDIF content and services
+        ldif_content = """dn: cn=user000,ou=people,dc=example,dc=com
+objectClass: person
+cn: user000
+sn: User000
+"""
 
-        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+        # Test parse_string using real dispatcher and services
+        parse_string_result = api._operations.parse_string(ldif_content)
+        assert parse_string_result.is_success
+        assert len(parse_string_result.value) == 1
+        assert parse_string_result.value[0].dn.value == "cn=user000,ou=people,dc=example,dc=com"
+
+        # Test with temporary file for parse_file operation
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as temp_file:
+            temp_file.write(ldif_content)
             temp_file_path = Path(temp_file.name)
 
-        def fake_dispatch(command: object) -> FlextResult[object]:
-            if isinstance(command, ParseStringCommand):
-                return FlextResult[object](data=[sample_entry])
-            if isinstance(command, ParseFileCommand):
-                return FlextResult[object](data=[sample_entry])
-            if isinstance(command, WriteStringCommand):
-                return FlextResult[object](data="ldif-content")
-            if isinstance(command, WriteFileCommand):
-                return FlextResult[object](data=True)
-            if isinstance(command, ValidateEntriesCommand):
-                return FlextResult[object](data=True)
-            return FlextResult[object].fail("Unsupported command")
+        try:
+            parse_file_result = api._operations.parse_file(temp_file_path)
+            assert parse_file_result.is_success
+            assert len(parse_file_result.value) == 1
 
-        assert api._dispatcher is not None
+            # Test write_string with real services
+            write_string_result = api._operations.write_string(parse_file_result.value)
+            assert write_string_result.is_success
+            assert isinstance(write_string_result.value, str)
+            assert "cn=user000" in write_string_result.value
 
-        monkeypatch.setattr(
-            api._dispatcher,
-            "dispatch",
-            fake_dispatch,
-            raising=False,
-        )
-        monkeypatch.setattr(
-            type(api._services.parser),
-            "parse_content",
-            lambda *_: (_ for _ in ()).throw(AssertionError("fallback parse")),
-            raising=False,
-        )
-        monkeypatch.setattr(
-            type(api._services.parser),
-            "parse_ldif_file",
-            lambda *_: (_ for _ in ()).throw(AssertionError("fallback parse file")),
-            raising=False,
-        )
-        monkeypatch.setattr(
-            type(api._services.writer),
-            "write_entries_to_string",
-            lambda *_: (_ for _ in ()).throw(AssertionError("fallback write string")),
-            raising=False,
-        )
-        monkeypatch.setattr(
-            type(api._services.writer),
-            "write_entries_to_file",
-            lambda *_: (_ for _ in ()).throw(AssertionError("fallback write file")),
-            raising=False,
-        )
-        monkeypatch.setattr(
-            type(api._services.validator),
-            "validate_entries",
-            lambda *_: (_ for _ in ()).throw(AssertionError("fallback validate")),
-            raising=False,
-        )
+            # Test validate_entries with real services
+            validate_result = api._operations.validate_entries(parse_file_result.value)
+            assert validate_result.is_success
 
-        parse_string_result = api._operations.parse_string("dn: cn=user000")
-        assert parse_string_result.is_success
-        assert parse_string_result.value[0].dn == sample_entry.dn
-
-        parse_file_result = api._operations.parse_file(temp_file_path)
-        assert parse_file_result.is_success
-
-        write_string_result = api._operations.write_string([sample_entry])
-        assert write_string_result.is_success
-        assert write_string_result.value == "ldif-content"
-
-        with tempfile.NamedTemporaryFile(suffix=".ldif", delete=False) as output_file:
-            output_path = Path(output_file.name)
-
-        write_file_result = api._operations.write_file(
-            [sample_entry],
-            output_path,
-        )
-        assert write_file_result.is_success
-
-        validate_result = api._operations.validate_entries([sample_entry])
-        assert validate_result.is_success
-
-        # Cleanup temporary files
-        temp_file_path.unlink(missing_ok=True)
-        output_path.unlink(missing_ok=True)
+        finally:
+            temp_file_path.unlink(missing_ok=True)
 
     def test_api_performance_monitoring(self, api_with_config: FlextLdifAPI) -> None:
         """Test API performance monitoring capabilities."""

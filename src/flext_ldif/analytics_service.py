@@ -50,7 +50,8 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
 
         # Caching configuration
         self._analytics_cache: dict[
-            str, tuple[dict[str, int] | dict[str, object], float],
+            str,
+            tuple[dict[str, int] | dict[str, object], float],
         ] = {}
         self._cache_ttl = 600.0  # 10 minutes for analytics cache
         self._max_cache_size = self._config.ldif_analytics_cache_size
@@ -522,7 +523,8 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
                     ),
                     "analysis_time_seconds": analysis_time,
                     "pattern_confidence": cast(
-                        "dict[str, object]", patterns["analysis_metadata"],
+                        "dict[str, object]",
+                        patterns["analysis_metadata"],
                     )["pattern_confidence"],
                 },
             )
@@ -1060,7 +1062,8 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
         return quality_metrics.get("data_quality_score", 100)
 
     def _get_from_analytics_cache(
-        self, cache_key: str,
+        self,
+        cache_key: str,
     ) -> dict[str, int] | dict[str, object] | None:
         """Get result from analytics cache if not expired."""
         if cache_key in self._analytics_cache:
@@ -1071,7 +1074,9 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
         return None
 
     def _store_in_analytics_cache(
-        self, cache_key: str, result: dict[str, int] | dict[str, object],
+        self,
+        cache_key: str,
+        result: dict[str, int] | dict[str, object],
     ) -> None:
         """Store result in analytics cache with cleanup if needed."""
         if len(self._analytics_cache) >= self._max_cache_size:

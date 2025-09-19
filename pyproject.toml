@@ -272,6 +272,7 @@ commitizen = ">=4.8.3"
 attrs = "^25.3.0"
 backoff = "^2.2.1"
 structlog = "^25.4.0"
+types-docker = "^7.1.0.20250916"
 
 [tool.poetry.group.test.dependencies]
 pytest = ">=8.4.0"

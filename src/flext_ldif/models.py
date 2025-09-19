@@ -135,7 +135,11 @@ class FlextLdifModels(FlextModels):
                 return 0
             return len([c for c in self.value.split(",") if c.strip()])
 
-        # Note: __str__ and __hash__ inherited from FlextModels.Value (Pydantic BaseModel)
+        def __hash__(self) -> int:
+            """Hash DistinguishedName by value for use in sets and dicts."""
+            return hash(self.value)
+
+        # Note: __str__ inherited from FlextModels.Value (Pydantic BaseModel)
 
     class LdifAttributes(FlextModels.Value):
         """LDIF attributes collection with case-insensitive access.
@@ -152,7 +156,8 @@ class FlextLdifModels(FlextModels):
         @field_validator("data")
         @classmethod
         def validate_attribute_data(
-            cls, v: dict[str, FlextTypes.Core.StringList],
+            cls,
+            v: dict[str, FlextTypes.Core.StringList],
         ) -> dict[str, FlextTypes.Core.StringList]:
             """Validate attribute data using Pydantic v2 patterns.
 
@@ -229,29 +234,7 @@ class FlextLdifModels(FlextModels):
                 return values[0]
             return None
 
-        def get_single_attribute(self, name: str) -> str | None:
-            """Get single attribute value (alias for get_single_value).
 
-            Args:
-                name: Attribute name
-
-            Returns:
-                First attribute value or None if not found
-
-            """
-            return self.get_single_value(name)
-
-        def get_values(self, name: str) -> FlextTypes.Core.StringList:
-            """Get attribute values (alias for get_attribute with default empty list).
-
-            Args:
-                name: Attribute name
-
-            Returns:
-                List of attribute values or empty list if not found
-
-            """
-            return self.get_attribute(name) or []
 
         def remove_value(self, name: str, value: str) -> FlextLdifModels.LdifAttributes:
             """Remove specific value from attribute.
@@ -332,6 +315,11 @@ class FlextLdifModels(FlextModels):
             """Check if attribute exists (case-insensitive)."""
             return self.has_attribute(name)
 
+        def __hash__(self) -> int:
+            """Hash LdifAttributes by data for use in sets and dicts."""
+            # Convert dict to hashable tuple of sorted key-value pairs
+            return hash(tuple(sorted(self.data.items())))
+
     class Entry(FlextModels.Entity):
         """LDIF entry representing a complete directory entry.
 
@@ -340,10 +328,12 @@ class FlextLdifModels(FlextModels):
         """
 
         dn: FlextLdifModels.DistinguishedName = Field(
-            ..., description="Distinguished Name of the entry",
+            ...,
+            description="Distinguished Name of the entry",
         )
         attributes: FlextLdifModels.LdifAttributes = Field(
-            ..., description="Attributes collection for the entry",
+            ...,
+            description="Attributes collection for the entry",
         )
 
         def get_attribute(self, name: str) -> FlextTypes.Core.StringList | None:
@@ -358,7 +348,7 @@ class FlextLdifModels(FlextModels):
             """
             return self.attributes.get_attribute(name)
 
-        def get_single_attribute(self, name: str) -> str | None:
+        def get_single_value(self, name: str) -> str | None:
             """Get single attribute value from entry.
 
             Args:
@@ -530,14 +520,6 @@ class FlextLdifModels(FlextModels):
             """
             return self.dn.get_depth()
 
-        def is_person(self) -> bool:
-            """Check if entry is a person entry (alias for is_person_entry).
-
-            Returns:
-                True if entry has person object classes
-
-            """
-            return self.is_person_entry()
 
         def is_add_operation(self) -> bool:
             """Check if this entry represents an add operation.
@@ -790,7 +772,8 @@ class FlextLdifModels(FlextModels):
             for attr_name, attr_values in attributes_data.items():
                 # Use Pydantic v2 field validation to convert to StringList
                 if hasattr(attr_values, "__iter__") and not isinstance(
-                    attr_values, str,
+                    attr_values,
+                    str,
                 ):
                     # It's a list-like object
                     normalized_attrs[attr_name] = [str(v) for v in attr_values]
@@ -808,7 +791,8 @@ class FlextLdifModels(FlextModels):
 
     @classmethod
     def create_distinguished_name(
-        cls, dn_value: str,
+        cls,
+        dn_value: str,
     ) -> FlextLdifModels.DistinguishedName:
         """Create distinguished name value object.
 
@@ -823,7 +807,8 @@ class FlextLdifModels(FlextModels):
 
     @classmethod
     def create_attributes(
-        cls, attributes_data: dict[str, FlextTypes.Core.StringList],
+        cls,
+        attributes_data: dict[str, FlextTypes.Core.StringList],
     ) -> FlextLdifModels.LdifAttributes:
         """Create attributes collection value object.
 
@@ -838,7 +823,11 @@ class FlextLdifModels(FlextModels):
 
     @classmethod
     def create_person_entry(
-        cls, dn: str, cn: str, sn: str, **additional_attrs: str | list[str],
+        cls,
+        dn: str,
+        cn: str,
+        sn: str,
+        **additional_attrs: str | list[str],
     ) -> FlextLdifModels.Entry:
         """Create person entry with required attributes.
 
@@ -871,7 +860,10 @@ class FlextLdifModels(FlextModels):
 
     @classmethod
     def create_organizational_unit(
-        cls, dn: str, ou: str, **additional_attrs: str | list[str],
+        cls,
+        dn: str,
+        ou: str,
+        **additional_attrs: str | list[str],
     ) -> FlextLdifModels.Entry:
         """Create organizational unit entry.
 
@@ -927,7 +919,8 @@ class FlextLdifModels(FlextModels):
         """
 
         entries: list[FlextLdifModels.Entry] = Field(
-            ..., description="List of LDIF entries to write",
+            ...,
+            description="List of LDIF entries to write",
         )
 
     class WriteFileCommand(FlextModels.Value):
@@ -937,7 +930,8 @@ class FlextLdifModels(FlextModels):
         """
 
         entries: list[FlextLdifModels.Entry] = Field(
-            ..., description="List of LDIF entries to write",
+            ...,
+            description="List of LDIF entries to write",
         )
         file_path: str = Field(..., description="Path where to write the LDIF file")
 
@@ -948,7 +942,8 @@ class FlextLdifModels(FlextModels):
         """
 
         entries: list[FlextLdifModels.Entry] = Field(
-            ..., description="List of LDIF entries to validate",
+            ...,
+            description="List of LDIF entries to validate",
         )
 
     # =============================================================================

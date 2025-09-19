@@ -23,7 +23,7 @@ class EntryProtocol(Protocol):
 
     def get_attribute(self, name: str) -> list[str] | None: ...
 
-    def get_single_attribute(self, name: str) -> str | None: ...
+    def get_single_value(self, name: str) -> str | None: ...
 
     def has_attribute(self, name: str) -> bool: ...
 
@@ -49,13 +49,13 @@ class TestFlextLdifRepositoryServiceComplete:
         service = FlextLdifRepositoryService()
 
         # Create test entries
-        entry1_data = {
+        entry1_data: dict[str, object] = {
             "dn": "uid=john,ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["John"]},
         }
         entry1 = FlextLdifModels.create_entry(entry1_data)
 
-        entry2_data = {
+        entry2_data: dict[str, object] = {
             "dn": "uid=jane,ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["Jane"]},
         }
@@ -64,7 +64,8 @@ class TestFlextLdifRepositoryServiceComplete:
         entries = [entry1, entry2]
 
         result = service.find_entry_by_dn(
-            entries, "uid=john,ou=people,dc=example,dc=com",
+            entries,
+            "uid=john,ou=people,dc=example,dc=com",
         )
         assert result.is_success is True
         assert result.value is not None
@@ -75,7 +76,7 @@ class TestFlextLdifRepositoryServiceComplete:
         service = FlextLdifRepositoryService()
 
         # Create test entry
-        entry_data = {
+        entry_data: dict[str, object] = {
             "dn": "uid=john,ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["John"]},
         }
@@ -83,7 +84,8 @@ class TestFlextLdifRepositoryServiceComplete:
         entries = [entry]
 
         result = service.find_entry_by_dn(
-            entries, "UID=JOHN,OU=PEOPLE,DC=EXAMPLE,DC=COM",
+            entries,
+            "UID=JOHN,OU=PEOPLE,DC=EXAMPLE,DC=COM",
         )
         assert result.is_success is True
         assert result.value is not None
@@ -94,7 +96,7 @@ class TestFlextLdifRepositoryServiceComplete:
         service = FlextLdifRepositoryService()
 
         # Create test entry
-        entry_data = {
+        entry_data: dict[str, object] = {
             "dn": "uid=john,ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["John"]},
         }
@@ -102,7 +104,8 @@ class TestFlextLdifRepositoryServiceComplete:
         entries = [entry]
 
         result = service.find_entry_by_dn(
-            entries, "uid=nonexistent,ou=people,dc=example,dc=com",
+            entries,
+            "uid=nonexistent,ou=people,dc=example,dc=com",
         )
         assert result.is_success is True
         assert result.value is None
@@ -132,7 +135,8 @@ class TestFlextLdifRepositoryServiceComplete:
 
         # Test case-insensitive matching with special characters
         result = service.find_entry_by_dn(
-            entries, "CN=TËST ÜSER,OU=PËOPLE,DC=EXÄMPLE,DC=COM",
+            entries,
+            "CN=TËST ÜSER,OU=PËOPLE,DC=EXÄMPLE,DC=COM",
         )
         assert result.is_success is True
         assert result.value is not None
@@ -145,13 +149,13 @@ class TestFlextLdifRepositoryServiceComplete:
         service = FlextLdifRepositoryService()
 
         # Create test entries
-        entry1_data = {
+        entry1_data: dict[str, object] = {
             "dn": "uid=john,ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["John"]},
         }
         entry1 = FlextLdifModels.create_entry(entry1_data)
 
-        entry2_data = {
+        entry2_data: dict[str, object] = {
             "dn": "uid=jane,ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["Jane"]},
         }
@@ -169,13 +173,13 @@ class TestFlextLdifRepositoryServiceComplete:
         service = FlextLdifRepositoryService()
 
         # Create test entries
-        entry1_data = {
+        entry1_data: dict[str, object] = {
             "dn": "uid=john,ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["John"]},
         }
         entry1 = FlextLdifModels.create_entry(entry1_data)
 
-        entry2_data = {
+        entry2_data: dict[str, object] = {
             "dn": "uid=jane,ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["person"]},  # No cn attribute
         }
@@ -193,7 +197,7 @@ class TestFlextLdifRepositoryServiceComplete:
         service = FlextLdifRepositoryService()
 
         # Create test entry
-        entry_data = {
+        entry_data: dict[str, object] = {
             "dn": "uid=john,ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["John"]},
         }
@@ -212,7 +216,7 @@ class TestFlextLdifRepositoryServiceComplete:
         service = FlextLdifRepositoryService()
 
         # Create test entry
-        entry_data = {
+        entry_data: dict[str, object] = {
             "dn": "uid=john,ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["John"]},
         }
@@ -231,7 +235,7 @@ class TestFlextLdifRepositoryServiceComplete:
         service = FlextLdifRepositoryService()
 
         # Create entry using the factory method to avoid validation issues
-        entry_data = {
+        entry_data: dict[str, object] = {
             "dn": "cn=null-test,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["null-test"]},
         }
@@ -253,13 +257,13 @@ class TestFlextLdifRepositoryServiceComplete:
         service = FlextLdifRepositoryService()
 
         # Create test entries
-        entry1_data = {
+        entry1_data: dict[str, object] = {
             "dn": "uid=john,ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["John"]},
         }
         entry1 = FlextLdifModels.create_entry(entry1_data)
 
-        entry2_data = {
+        entry2_data: dict[str, object] = {
             "dn": "cn=group1,ou=groups,dc=example,dc=com",
             "attributes": {"objectClass": ["groupOfNames"], "cn": ["Group 1"]},
         }
@@ -277,7 +281,7 @@ class TestFlextLdifRepositoryServiceComplete:
         service = FlextLdifRepositoryService()
 
         # Create test entry
-        entry_data = {
+        entry_data: dict[str, object] = {
             "dn": "uid=john,ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["John"]},
         }
@@ -293,7 +297,7 @@ class TestFlextLdifRepositoryServiceComplete:
         service = FlextLdifRepositoryService()
 
         # Create test entry
-        entry_data = {
+        entry_data: dict[str, object] = {
             "dn": "uid=john,ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["John"]},
         }
@@ -311,7 +315,7 @@ class TestFlextLdifRepositoryServiceComplete:
         service = FlextLdifRepositoryService()
 
         # Create test entry
-        entry_data = {
+        entry_data: dict[str, object] = {
             "dn": "uid=john,ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["John"]},
         }
@@ -346,19 +350,19 @@ class TestFlextLdifRepositoryServiceComplete:
         assert result.is_success is True
         assert len(result.value) == 0  # Should not match entries without objectClass
 
-    def test_filter_entries_by_object_class_alias(self) -> None:
-        """Test filter_entries_by_object_class alias method."""
+    def test_filter_entries_by_objectclass_alias(self) -> None:
+        """Test filter_entries_by_objectclass alias method."""
         service = FlextLdifRepositoryService()
 
         # Create test entry
-        entry_data = {
+        entry_data: dict[str, object] = {
             "dn": "uid=john,ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["John"]},
         }
         entry = FlextLdifModels.create_entry(entry_data)
         entries = [entry]
 
-        result = service.filter_entries_by_object_class(entries, "person")
+        result = service.filter_entries_by_objectclass(entries, "person")
         assert result.is_success is True
         assert len(result.value) == 1
 
@@ -367,13 +371,13 @@ class TestFlextLdifRepositoryServiceComplete:
         service = FlextLdifRepositoryService()
 
         # Create test entries
-        entry1_data = {
+        entry1_data: dict[str, object] = {
             "dn": "uid=john,ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["person"], "cn": ["John"]},
         }
         entry1 = FlextLdifModels.create_entry(entry1_data)
 
-        entry2_data = {
+        entry2_data: dict[str, object] = {
             "dn": "cn=group1,ou=groups,dc=example,dc=com",
             "attributes": {"objectClass": ["groupOfNames"], "cn": ["Group 1"]},
         }
@@ -410,7 +414,7 @@ class TestFlextLdifRepositoryServiceComplete:
         service = FlextLdifRepositoryService()
 
         # Create entries with various complex scenarios
-        entry1_data = {
+        entry1_data: dict[str, object] = {
             "dn": "cn=complex-user,ou=special chars,dc=example,dc=com",
             "attributes": {
                 "objectClass": ["person", "organizationalPerson", "inetOrgPerson"],
@@ -422,7 +426,7 @@ class TestFlextLdifRepositoryServiceComplete:
         entry1 = FlextLdifModels.create_entry(entry1_data)
 
         # Entry with minimal attributes
-        entry2_data = {
+        entry2_data: dict[str, object] = {
             "dn": "cn=minimal,dc=example,dc=com",
             "attributes": {"objectClass": ["organizationalUnit"]},
         }

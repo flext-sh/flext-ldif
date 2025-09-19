@@ -16,7 +16,8 @@ class TestFlextLdifModelsEntry:
     """Test FlextLdifModels.Entry functionality using FlextTests patterns."""
 
     def test_ldif_entry_creation(
-        self, ldif_test_entries: list[dict[str, object]],
+        self,
+        ldif_test_entries: list[dict[str, object]],
     ) -> None:
         """Test basic LDIF entry creation using FlextTests patterns."""
         # Use test data from fixtures
@@ -44,7 +45,8 @@ class TestFlextLdifModelsEntry:
         assert entry.attributes.data == {}
 
     def test_get_attribute_exists(
-        self, ldif_test_entries: list[dict[str, object]],
+        self,
+        ldif_test_entries: list[dict[str, object]],
     ) -> None:
         """Test getting an existing attribute using test data."""
         # Use realistic test data from fixtures
@@ -61,7 +63,8 @@ class TestFlextLdifModelsEntry:
         assert len(mail_values) > 0
 
     def test_get_attribute_not_exists(
-        self, ldif_test_entries: list[dict[str, object]],
+        self,
+        ldif_test_entries: list[dict[str, object]],
     ) -> None:
         """Test getting a non-existing attribute."""
         entry = FlextLdifModels.create_entry(ldif_test_entries[0])
@@ -79,7 +82,8 @@ class TestFlextLdifModelsEntry:
         assert entry.get_attribute("cn") == original_cn  # Original should remain
 
     def test_set_attribute_overwrites(
-        self, ldif_test_entries: list[dict[str, object]],
+        self,
+        ldif_test_entries: list[dict[str, object]],
     ) -> None:
         """Test setting an attribute overwrites existing values."""
         entry = FlextLdifModels.create_entry(ldif_test_entries[0])
@@ -89,7 +93,8 @@ class TestFlextLdifModelsEntry:
         assert entry.get_attribute("cn") == ["new_value"]
 
     def test_has_attribute_true(
-        self, ldif_test_entries: list[dict[str, object]],
+        self,
+        ldif_test_entries: list[dict[str, object]],
     ) -> None:
         """Test has_attribute returns True for existing attribute."""
         entry = FlextLdifModels.create_entry(ldif_test_entries[0])
@@ -98,7 +103,8 @@ class TestFlextLdifModelsEntry:
         assert entry.has_attribute("objectClass")  # Should exist in test data
 
     def test_has_attribute_false(
-        self, ldif_test_entries: list[dict[str, object]],
+        self,
+        ldif_test_entries: list[dict[str, object]],
     ) -> None:
         """Test has_attribute returns False for non-existing attribute."""
         entry = FlextLdifModels.create_entry(ldif_test_entries[0])
@@ -106,29 +112,31 @@ class TestFlextLdifModelsEntry:
         assert not entry.has_attribute("nonexistent")
         assert not entry.has_attribute("imaginaryAttribute")
 
-    def test_get_single_attribute_exists(
-        self, ldif_test_entries: list[dict[str, object]],
+    def test_get_single_value_exists(
+        self,
+        ldif_test_entries: list[dict[str, object]],
     ) -> None:
         """Test getting single attribute value when it exists."""
         entry = FlextLdifModels.create_entry(ldif_test_entries[0])
 
-        cn_value = entry.get_single_attribute("cn")
-        mail_value = entry.get_single_attribute("mail")
+        cn_value = entry.get_single_value("cn")
+        mail_value = entry.get_single_value("mail")
 
         assert cn_value is not None
         assert isinstance(cn_value, str)
         assert mail_value is not None
         assert isinstance(mail_value, str)  # Should return first value
 
-    def test_get_single_attribute_not_exists(
-        self, ldif_test_entries: list[dict[str, object]],
+    def test_get_single_value_not_exists(
+        self,
+        ldif_test_entries: list[dict[str, object]],
     ) -> None:
         """Test getting single attribute value when it doesn't exist."""
         entry = FlextLdifModels.create_entry(ldif_test_entries[0])
 
-        assert entry.get_single_attribute("nonexistent") is None
+        assert entry.get_single_value("nonexistent") is None
 
-    def test_get_single_attribute_empty_list(self) -> None:
+    def test_get_single_value_empty_list(self) -> None:
         """Test that creating entry with empty attribute list fails validation."""
         with pytest.raises(ValidationError, match="must be non-empty list"):
             FlextLdifModels.create_entry(

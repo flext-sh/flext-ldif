@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import cast
 
 from flext_tests import (
     FlextTestsMatchers,
@@ -21,12 +22,12 @@ from flext_ldif.services import FlextLdifServices
 class TestRepositoryServiceComprehensive:
     """Comprehensive tests for RepositoryService using FlextTests patterns."""
 
-    def test_filter_entries_by_object_class_success(
+    def test_filter_entries_by_objectclass_success(
         self,
         ldif_test_entries: list[dict[str, object]],
         flext_matchers: FlextTestsMatchers,
     ) -> None:
-        """Test filter_entries_by_object_class using FlextTests fixture data."""
+        """Test filter_entries_by_objectclass using FlextTests fixture data."""
         # Use realistic test data from fixtures instead of hardcoded data
         entries = [
             FlextLdifModels.create_entry(entry_data)
@@ -36,7 +37,7 @@ class TestRepositoryServiceComprehensive:
         service = FlextLdifServices().repository
 
         # Test filtering by person (should match inetOrgPerson entries)
-        result = service.filter_entries_by_object_class(entries, "person")
+        result = service.filter_entries_by_objectclass(entries, "person")
 
         # Use FlextTestsMatchers for proper assertion
         flext_matchers.assert_result_success(result)
@@ -49,18 +50,18 @@ class TestRepositoryServiceComprehensive:
             assert "person" in object_classes
 
         # Test filtering by groupOfNames (from test fixture)
-        result = service.filter_entries_by_object_class(entries, "groupOfNames")
+        result = service.filter_entries_by_objectclass(entries, "groupOfNames")
         flext_matchers.assert_result_success(result)
         group_entries = result.unwrap()
         # Should find at least one group entry from fixtures
         assert len(group_entries) >= 0  # May be 0 or more depending on fixture data
 
-    def test_filter_entries_by_object_class_empty_input(
+    def test_filter_entries_by_objectclass_empty_input(
         self,
         ldif_test_entries: list[dict[str, object]],
         flext_matchers: FlextTestsMatchers,
     ) -> None:
-        """Test filter_entries_by_object_class with empty object class."""
+        """Test filter_entries_by_objectclass with empty object class."""
         # Use FlextTests fixture data instead of hardcoded entries
         entries = [
             FlextLdifModels.create_entry(entry_data)
@@ -70,7 +71,7 @@ class TestRepositoryServiceComprehensive:
         service = FlextLdifServices().repository
 
         # Test empty object class using FlextTests matcher
-        result = service.filter_entries_by_object_class(entries, "")
+        result = service.filter_entries_by_objectclass(entries, "")
         flext_matchers.assert_result_failure(result)
         if result.error:
             assert (
@@ -79,7 +80,7 @@ class TestRepositoryServiceComprehensive:
             )
 
         # Test whitespace-only object class using FlextTests matcher
-        result = service.filter_entries_by_object_class(entries, "   ")
+        result = service.filter_entries_by_objectclass(entries, "   ")
         flext_matchers.assert_result_failure(result)
         if result.error:
             assert (
@@ -124,7 +125,11 @@ class TestRepositoryServiceComprehensive:
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",
-                    "attributes": {"objectClass": ["person"], "cn": ["Test"], "sn": ["Test"]},
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["Test"],
+                        "sn": ["Test"],
+                    },
                 },
             ),
         ]
@@ -155,7 +160,11 @@ class TestRepositoryServiceComprehensive:
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",
-                    "attributes": {"objectClass": ["person"], "cn": ["Test"], "sn": ["Test"]},
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["Test"],
+                        "sn": ["Test"],
+                    },
                 },
             ),
         ]
@@ -177,7 +186,11 @@ class TestRepositoryServiceComprehensive:
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",
-                    "attributes": {"objectClass": ["person"], "cn": ["Test"], "sn": ["Test"]},
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["Test"],
+                        "sn": ["Test"],
+                    },
                 },
             ),
         ]
@@ -186,7 +199,8 @@ class TestRepositoryServiceComprehensive:
 
         # Test with DN that doesn't exist - should return None
         result = service.find_entry_by_dn(
-            entries, "uid=notfound,ou=people,dc=example,dc=com",
+            entries,
+            "uid=notfound,ou=people,dc=example,dc=com",
         )
 
         # Use flext_tests for validation
@@ -255,19 +269,31 @@ class TestValidatorServiceComprehensive:
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=duplicate,ou=people,dc=example,dc=com",
-                    "attributes": {"objectClass": ["person"], "cn": ["User 1"], "sn": ["User1"]},
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["User 1"],
+                        "sn": ["User1"],
+                    },
                 },
             ),
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=unique,ou=people,dc=example,dc=com",
-                    "attributes": {"objectClass": ["person"], "cn": ["User 2"], "sn": ["User2"]},
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["User 2"],
+                        "sn": ["User2"],
+                    },
                 },
             ),
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=duplicate,ou=people,dc=example,dc=com",  # Duplicate
-                    "attributes": {"objectClass": ["person"], "cn": ["User 3"], "sn": ["User3"]},
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["User 3"],
+                        "sn": ["User3"],
+                    },
                 },
             ),
         ]
@@ -286,13 +312,21 @@ class TestValidatorServiceComprehensive:
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=Test,ou=people,dc=example,dc=com",
-                    "attributes": {"objectClass": ["person"], "cn": ["Test"], "sn": ["Test"]},
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["Test"],
+                        "sn": ["Test"],
+                    },
                 },
             ),
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",  # Same DN different case
-                    "attributes": {"objectClass": ["person"], "cn": ["Test"], "sn": ["Test"]},
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["Test"],
+                        "sn": ["Test"],
+                    },
                 },
             ),
         ]
@@ -444,7 +478,7 @@ objectClass: person
         result = service._parse_entry_block("")
         assert not result.is_success
         if result.error:
-            assert result.error is not None and "No entries found" in result.error
+            assert result.error is not None and "Empty entry block" in result.error
 
     def test_parse_entry_block_missing_dn(self) -> None:
         """Test _parse_entry_block with missing DN."""
@@ -535,13 +569,21 @@ class TestTransformerServiceComprehensive:
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=transform1,ou=people,dc=example,dc=com",
-                    "attributes": {"objectClass": ["person"], "cn": ["User 1"], "sn": ["User1"]},
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["User 1"],
+                        "sn": ["User1"],
+                    },
                 },
             ),
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=transform2,ou=people,dc=example,dc=com",
-                    "attributes": {"objectClass": ["person"], "cn": ["User 2"], "sn": ["User2"]},
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["User 2"],
+                        "sn": ["User2"],
+                    },
                 },
             ),
         ]
@@ -564,7 +606,11 @@ class TestTransformerServiceComprehensive:
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=normalize,ou=people,dc=example,dc=com",
-                    "attributes": {"objectClass": ["person"], "cn": ["Test"], "sn": ["Test"]},
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["Test"],
+                        "sn": ["Test"],
+                    },
                 },
             ),
         ]
@@ -620,19 +666,31 @@ class TestAnalyticsServiceComprehensive:
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=shallow,dc=example,dc=com",  # depth_3: uid, dc, dc
-                    "attributes": {"objectClass": ["person"], "cn": ["Test"], "sn": ["Test"]},
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["Test"],
+                        "sn": ["Test"],
+                    },
                 },
             ),
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=deep,ou=people,dc=example,dc=com",  # depth_4: uid, ou, dc, dc
-                    "attributes": {"objectClass": ["person"], "cn": ["Test"], "sn": ["Test"]},
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["Test"],
+                        "sn": ["Test"],
+                    },
                 },
             ),
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=deeper,ou=people,ou=corp,dc=example,dc=com",  # depth_5: uid, ou, ou, dc, dc
-                    "attributes": {"objectClass": ["person"], "cn": ["Test"], "sn": ["Test"]},
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["Test"],
+                        "sn": ["Test"],
+                    },
                 },
             ),
         ]
@@ -664,7 +722,11 @@ class TestAnalyticsServiceComprehensive:
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=person2,ou=people,dc=example,dc=com",
-                    "attributes": {"objectClass": ["person"], "cn": ["Test"], "sn": ["Test"]},
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["Test"],
+                        "sn": ["Test"],
+                    },
                 },
             ),
         ]
@@ -684,7 +746,11 @@ class TestAnalyticsServiceComprehensive:
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",  # depth_4: uid, ou, dc, dc
-                    "attributes": {"objectClass": ["person"], "cn": ["Test"], "sn": ["Test"]},
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["Test"],
+                        "sn": ["Test"],
+                    },
                 },
             ),
         ]
@@ -701,7 +767,11 @@ class TestAnalyticsServiceComprehensive:
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",
-                    "attributes": {"objectClass": ["person"], "cn": ["Test"], "sn": ["Test"]},
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["Test"],
+                        "sn": ["Test"],
+                    },
                 },
             ),
         ]
@@ -710,7 +780,7 @@ class TestAnalyticsServiceComprehensive:
 
         result = service.analyze_patterns(entries)
         assert result.is_success
-        patterns = result.value
+        patterns = cast("dict[str, dict[str, int]]", result.value)
         # Check the actual structure returned by analytics service
         assert "basic_stats" in patterns
         assert patterns["basic_stats"]["total_entries"] == 1
@@ -725,7 +795,11 @@ class TestServiceAliases:
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",
-                    "attributes": {"objectClass": ["person"], "cn": ["Test"], "sn": ["Test"]},
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["Test"],
+                        "sn": ["Test"],
+                    },
                 },
             ),
         ]
@@ -737,8 +811,8 @@ class TestServiceAliases:
         assert result.is_success
         assert len(result.value) == 1
 
-        # Test filter_entries_by_object_class (correct method name)
-        result = service.filter_entries_by_object_class(entries, "person")
+        # Test filter_entries_by_objectclass (correct method name)
+        result = service.filter_entries_by_objectclass(entries, "person")
         assert result.is_success
         assert len(result.value) == 1
 
@@ -748,7 +822,11 @@ class TestServiceAliases:
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",
-                    "attributes": {"objectClass": ["person"], "cn": ["Test"], "sn": ["Test"]},
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["Test"],
+                        "sn": ["Test"],
+                    },
                 },
             ),
         ]
@@ -774,7 +852,11 @@ class TestServiceAliases:
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",
-                    "attributes": {"objectClass": ["person"], "cn": ["Test"], "sn": ["Test"]},
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["Test"],
+                        "sn": ["Test"],
+                    },
                 },
             ),
         ]

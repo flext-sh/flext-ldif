@@ -88,7 +88,8 @@ class TestFlextLdifWriterServiceComplete:
         # Mock the format handler to return failure
         class MockFormatHandler(FlextLdifFormatHandler):
             def write_ldif(
-                self, entries: list[FlextLdifModels.Entry] | None,
+                self,
+                entries: list[FlextLdifModels.Entry] | None,
             ) -> FlextResult[str]:
                 entry_count = len(entries) if entries else 0
                 return FlextResult[str].fail(
@@ -116,7 +117,8 @@ class TestFlextLdifWriterServiceComplete:
         # Mock the format handler to return failure with no error
         class MockFormatHandler(FlextLdifFormatHandler):
             def write_ldif(
-                self, entries: list[FlextLdifModels.Entry] | None,
+                self,
+                entries: list[FlextLdifModels.Entry] | None,
             ) -> FlextResult[str]:
                 entry_count = len(entries) if entries else 0
                 return FlextResult[str].fail(
@@ -143,7 +145,10 @@ class TestFlextLdifWriterServiceComplete:
 
         # Create temporary file using secure tempfile
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".ldif", delete=False,
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
         ) as temp_f:
             temp_file = Path(temp_f.name)
 
@@ -176,7 +181,8 @@ class TestFlextLdifWriterServiceComplete:
         # Mock the format handler to return failure
         class MockFormatHandler(FlextLdifFormatHandler):
             def write_ldif(
-                self, entries: list[FlextLdifModels.Entry] | None,
+                self,
+                entries: list[FlextLdifModels.Entry] | None,
             ) -> FlextResult[str]:
                 entry_count = len(entries) if entries else 0
                 return FlextResult[str].fail(
@@ -208,7 +214,8 @@ class TestFlextLdifWriterServiceComplete:
         # Mock the format handler to return failure with no error
         class MockFormatHandler(FlextLdifFormatHandler):
             def write_ldif(
-                self, entries: list[FlextLdifModels.Entry] | None,
+                self,
+                entries: list[FlextLdifModels.Entry] | None,
             ) -> FlextResult[str]:
                 entry_count = len(entries) if entries else 0
                 return FlextResult[str].fail(
@@ -240,7 +247,10 @@ class TestFlextLdifWriterServiceComplete:
         # Try to write to invalid path (should raise exception)
         result = service.write_entries_to_file(entries, "/invalid/path/test.ldif")
         assert result.is_success is False
-        assert result.error is not None and "Parent directory does not exist" in result.error
+        assert (
+            result.error is not None
+            and "Parent directory does not exist" in result.error
+        )
 
     def test_execute_method(self) -> None:
         """Test execute method."""
@@ -265,45 +275,31 @@ class TestFlextLdifWriterServiceComplete:
         assert result.is_success is True
         assert isinstance(result.value, str)
 
-    def test_unparse_method(self) -> None:
-        """Test unparse method."""
-        service = FlextLdifWriterService(cols=20)  # Small column width for testing
+    def test_write_entry_functionality(self) -> None:
+        """Test write_entry method functionality."""
+        service = FlextLdifWriterService(cols=80)  # Standard column width
 
-        # Test with short lines
-        service.unparse("cn=test", {"cn": ["test"], "sn": ["user"]})
-        output = service.get_output()
-        assert "dn: cn=test" in output
-        assert "cn: test" in output
-        assert "sn: user" in output
-
-        # Test with long lines that need wrapping
-        service._output_buffer = []  # Clear buffer
-        service.unparse(
-            "cn=verylongname",
-            {
-                "cn": ["verylongname"],
-                "description": [
-                    "This is a very long description that should be wrapped",
-                ],
-            },
+        # Test with a complete entry
+        entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(value="cn=testuser,dc=example,dc=com"),
+            attributes=FlextLdifModels.LdifAttributes(data={
+                "cn": ["testuser"],
+                "sn": ["User"],
+                "givenName": ["Test"],
+                "objectClass": ["person", "inetOrgPerson"],
+                "mail": ["testuser@example.com"]
+            })
         )
-        output = service.get_output()
-        assert "dn: cn=verylongname" in output
-        assert "cn: verylongname" in output
-        # Check for wrapped lines (should have leading space)
-        lines = output.split("\n")
-        wrapped_lines = [line for line in lines if line.startswith(" ")]
-        assert len(wrapped_lines) > 0  # Should have wrapped lines
 
-    def test_get_output_method(self) -> None:
-        """Test get_output method."""
-        service = FlextLdifWriterService()
+        result = service.write_entry(entry)
+        assert result.is_success, f"Write failed: {result.error}"
+        output = result.unwrap()
 
-        # Initially should be empty
-        output = service.get_output()
-        assert output is not None
-
-        # Add some content
-        service._output_buffer = ["line1", "line2", "line3"]
-        output = service.get_output()
-        assert output == "line1\nline2\nline3"
+        # Verify all expected content is present
+        assert "dn: cn=testuser,dc=example,dc=com" in output
+        assert "cn: testuser" in output
+        assert "sn: User" in output
+        assert "givenName: Test" in output
+        assert "objectClass: person" in output
+        assert "objectClass: inetOrgPerson" in output
+        assert "mail: testuser@example.com" in output

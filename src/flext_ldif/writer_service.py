@@ -642,42 +642,6 @@ class FlextLdifWriterService(FlextDomainService[str]):
             self._logger.exception("Health check failed")
             return FlextResult[dict[str, object]].fail(f"Health check error: {e}")
 
-    # Legacy unparse methods for backward compatibility
-
-    def unparse(self, dn: str, record: dict[str, list[str]]) -> None:
-        """Add an entry to the output buffer with line wrapping (legacy method)."""
-        # Add DN line
-        self._output_buffer.append(f"dn: {dn}")
-
-        # Add attributes with line wrapping
-        for attr_name, attr_values in record.items():
-            for value in attr_values:
-                line = f"{attr_name}: {value}"
-                # If line is too long, wrap it
-                if len(line) > self._cols:
-                    self._output_buffer.append(line[: self._cols])
-                    remaining = line[self._cols :]
-                    while remaining:
-                        chunk = remaining[
-                            : self._cols - 1
-                        ]  # Leave space for leading space
-                        self._output_buffer.append(f" {chunk}")
-                        remaining = remaining[self._cols - 1 :]
-                else:
-                    self._output_buffer.append(line)
-
-        # Add empty line to separate entries
-        self._output_buffer.append("")
-
-        # Update buffer usage tracking
-        self._buffer_usage = sum(
-            len(line.encode(self._encoding)) for line in self._output_buffer
-        )
-        self._peak_buffer_usage = max(self._peak_buffer_usage, self._buffer_usage)
-
-    def get_output(self) -> str:
-        """Get the accumulated output from the buffer (legacy method)."""
-        return "\n".join(self._output_buffer)
 
     def execute(self) -> FlextResult[str]:
         """Execute writer service operation with enhanced reporting."""

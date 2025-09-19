@@ -233,7 +233,10 @@ class TestFlextLdifServicesWriterService:
         ]
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", delete=False, suffix=".ldif",
+            encoding="utf-8",
+            mode="w",
+            delete=False,
+            suffix=".ldif",
         ) as tmp_file:
             tmp_path = tmp_file.name
 
@@ -264,7 +267,10 @@ class TestFlextLdifServicesWriterService:
         ]
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", delete=False, suffix=".ldif",
+            encoding="utf-8",
+            mode="w",
+            delete=False,
+            suffix=".ldif",
         ) as tmp_file:
             tmp_path = tmp_file.name
 
@@ -316,7 +322,10 @@ class TestFlextLdifServicesWriterService:
         content = "dn: cn=test,dc=example,dc=com\ncn: test\nobjectClass: person\n"
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", delete=False, suffix=".ldif",
+            encoding="utf-8",
+            mode="w",
+            delete=False,
+            suffix=".ldif",
         ) as tmp_file:
             tmp_path = tmp_file.name
 
@@ -344,7 +353,8 @@ class TestFlextLdifServicesWriterService:
         invalid_path = "/non/existent/directory/test.ldif"
         try:
             with Path(invalid_path).open(
-                "w", encoding=FlextLdifConstants.DEFAULT_ENCODING,
+                "w",
+                encoding=FlextLdifConstants.DEFAULT_ENCODING,
             ) as f:
                 f.write(content)
             result = FlextResult[bool].ok(True)
@@ -409,7 +419,10 @@ class TestFlextLdifServicesWriterService:
         service = FlextLdifServices().writer
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", delete=False, suffix=".ldif",
+            encoding="utf-8",
+            mode="w",
+            delete=False,
+            suffix=".ldif",
         ) as tmp_file:
             tmp_path = tmp_file.name
 
@@ -439,7 +452,10 @@ class TestFlextLdifServicesWriterService:
         ]
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", delete=False, suffix=".ldif",
+            encoding="utf-8",
+            mode="w",
+            delete=False,
+            suffix=".ldif",
         ) as tmp_file:
             tmp_path = Path(tmp_file.name)
 

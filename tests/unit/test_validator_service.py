@@ -81,7 +81,11 @@ class TestFlextLdifServicesValidatorService:
             FlextLdifModels.create_entry(
                 {
                     "dn": "cn=test,dc=example,dc=com",
-                    "attributes": {"cn": ["test"], "sn": ["Test"], "objectClass": ["person"]},
+                    "attributes": {
+                        "cn": ["test"],
+                        "sn": ["Test"],
+                        "objectClass": ["person"],
+                    },
                 },
             ),
         ]
@@ -160,7 +164,8 @@ class TestFlextLdifServicesValidatorService:
     def test_validate_configuration_rules_strict_valid(self) -> None:
         """Test configuration rules validation with strict config and valid entry."""
         config = FlextLdifConfig(
-            ldif_strict_validation=True, ldif_allow_empty_values=False,
+            ldif_strict_validation=True,
+            ldif_allow_empty_values=False,
         )
         service = FlextLdifServices(config=config)
         entry = FlextLdifModels.create_entry(
@@ -182,7 +187,8 @@ class TestFlextLdifServicesValidatorService:
     def test_validate_configuration_rules_empty_attribute_list(self) -> None:
         """Test configuration rules validation with empty attribute list."""
         config = FlextLdifConfig(
-            ldif_strict_validation=True, ldif_allow_empty_values=False,
+            ldif_strict_validation=True,
+            ldif_allow_empty_values=False,
         )
         service = FlextLdifServices(config=config)
 
@@ -219,7 +225,8 @@ class TestFlextLdifServicesValidatorService:
     def test_validate_configuration_rules_empty_string_value(self) -> None:
         """Test configuration rules validation with empty string value."""
         config = FlextLdifConfig(
-            ldif_strict_validation=True, ldif_allow_empty_values=False,
+            ldif_strict_validation=True,
+            ldif_allow_empty_values=False,
         )
         service = FlextLdifServices(config=config)
 
@@ -245,7 +252,8 @@ class TestFlextLdifServicesValidatorService:
     def test_validate_configuration_rules_whitespace_only_value(self) -> None:
         """Test configuration rules validation with whitespace-only value."""
         config = FlextLdifConfig(
-            ldif_strict_validation=True, ldif_allow_empty_values=False,
+            ldif_strict_validation=True,
+            ldif_allow_empty_values=False,
         )
         service = FlextLdifServices(config=config)
 
@@ -276,13 +284,21 @@ class TestFlextLdifServicesValidatorService:
             FlextLdifModels.create_entry(
                 {
                     "dn": "cn=test1,dc=example,dc=com",
-                    "attributes": {"cn": ["test1"], "sn": ["Test1"], "objectClass": ["person"]},
+                    "attributes": {
+                        "cn": ["test1"],
+                        "sn": ["Test1"],
+                        "objectClass": ["person"],
+                    },
                 },
             ),
             FlextLdifModels.create_entry(
                 {
                     "dn": "cn=test2,dc=example,dc=com",
-                    "attributes": {"cn": ["test2"], "sn": ["Test2"], "objectClass": ["person"]},
+                    "attributes": {
+                        "cn": ["test2"],
+                        "sn": ["Test2"],
+                        "objectClass": ["person"],
+                    },
                 },
             ),
         ]
@@ -315,7 +331,9 @@ class TestFlextLdifServicesValidatorService:
                     "attributes": {
                         "cn": ["test"],
                         "objectClass": ["person"],
-                        "sn": ["Test"],  # Add required sn attribute for person objectClass
+                        "sn": [
+                            "Test",
+                        ],  # Add required sn attribute for person objectClass
                     },
                 },
             ),
@@ -335,13 +353,21 @@ class TestFlextLdifServicesValidatorService:
             FlextLdifModels.create_entry(
                 {
                     "dn": "cn=test1,dc=example,dc=com",
-                    "attributes": {"cn": ["test1"], "objectClass": ["person"]},
+                    "attributes": {
+                        "cn": ["test1"],
+                        "sn": ["Test1"],  # Required for person objectClass
+                        "objectClass": ["person"]
+                    },
                 },
             ),
             FlextLdifModels.create_entry(
                 {
                     "dn": "cn=test2,dc=example,dc=com",
-                    "attributes": {"cn": ["test2"], "objectClass": ["person"]},
+                    "attributes": {
+                        "cn": ["test2"],
+                        "sn": ["Test2"],  # Required for person objectClass
+                        "objectClass": ["person"]
+                    },
                 },
             ),
             FlextLdifModels.create_entry(
@@ -454,7 +480,9 @@ class TestFlextLdifServicesValidatorService:
                     "attributes": {
                         "cn": ["test"],
                         "objectClass": ["person"],
-                        "sn": ["Test"],  # Add required sn attribute for person objectClass
+                        "sn": [
+                            "Test",
+                        ],  # Add required sn attribute for person objectClass
                     },
                 },
             )
@@ -464,7 +492,8 @@ class TestFlextLdifServicesValidatorService:
     def test_configuration_rules_allow_empty_values_true(self) -> None:
         """Test configuration rules when allow_empty_values is True."""
         config = FlextLdifConfig(
-            ldif_strict_validation=True, ldif_allow_empty_values=True,
+            ldif_strict_validation=True,
+            ldif_allow_empty_values=True,
         )
         service = FlextLdifServices(config=config)
 

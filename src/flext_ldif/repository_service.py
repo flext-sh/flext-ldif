@@ -52,15 +52,18 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
         self._entries: list[FlextLdifModels.Entry] = []
         self._dn_index: dict[str, int] = {}  # DN -> entry index mapping
         self._attribute_index: dict[
-            str, dict[str, list[int]],
+            str,
+            dict[str, list[int]],
         ] = {}  # attr -> value -> entry indices
         self._objectclass_index: dict[
-            str, list[int],
+            str,
+            list[int],
         ] = {}  # objectClass -> entry indices
 
         # Caching
         self._query_cache: dict[
-            str, tuple[object, float],
+            str,
+            tuple[object, float],
         ] = {}  # query_key -> (result, timestamp)
         self._cache_ttl = 300.0  # 5 minutes cache TTL
         self._max_cache_size = self._config.ldif_analytics_cache_size
@@ -197,7 +200,9 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
             return FlextResult[bool].fail(f"Storage error: {e}")
 
     def find_entry_by_dn(
-        self, entries: list[FlextLdifModels.Entry], dn: str,
+        self,
+        entries: list[FlextLdifModels.Entry],
+        dn: str,
     ) -> FlextResult[FlextLdifModels.Entry | None]:
         """Find entry by DN with intelligent caching and indexing."""
         start_time = time.time()
@@ -212,11 +217,16 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
                 self._cache_hits += 1
                 self._logger.debug(f"Cache hit for DN lookup: {dn}")
                 # Validate cached result type at runtime
-                if isinstance(cached_result, FlextLdifModels.Entry) or cached_result is None:
+                if (
+                    isinstance(cached_result, FlextLdifModels.Entry)
+                    or cached_result is None
+                ):
                     return FlextResult[FlextLdifModels.Entry | None].ok(cached_result)
                 # Cache corruption - remove invalid entry
                 del self._query_cache[cache_key]
-                self._logger.warning(f"Invalid cached result type for DN lookup: {type(cached_result)}")
+                self._logger.warning(
+                    f"Invalid cached result type for DN lookup: {type(cached_result)}",
+                )
 
             self._cache_misses += 1
 
@@ -328,18 +338,23 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
                     f"Cache hit for attribute filter: {attribute_name}={attribute_value}",
                 )
                 # Validate cached result type at runtime
-                if isinstance(cached_result, list) and all(isinstance(entry, FlextLdifModels.Entry) for entry in cached_result):
+                if isinstance(cached_result, list) and all(
+                    isinstance(entry, FlextLdifModels.Entry) for entry in cached_result
+                ):
                     return FlextResult[list[FlextLdifModels.Entry]].ok(cached_result)
                 # Cache corruption - remove invalid entry
                 del self._query_cache[cache_key]
-                self._logger.warning(f"Invalid cached result type for attribute filter: {type(cached_result)}")
+                self._logger.warning(
+                    f"Invalid cached result type for attribute filter: {type(cached_result)}",
+                )
 
             self._cache_misses += 1
 
             # Use index if entries are from internal storage
             if entries is self._entries and attribute_name in self._attribute_index:
                 filtered_entries = self._filter_using_attribute_index(
-                    attribute_name, attribute_value,
+                    attribute_name,
+                    attribute_value,
                 )
 
                 # Cache the result
@@ -412,7 +427,9 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
             return FlextResult[list[FlextLdifModels.Entry]].fail(f"Filter error: {e}")
 
     def filter_entries_by_objectclass(
-        self, entries: list[FlextLdifModels.Entry], object_class: str,
+        self,
+        entries: list[FlextLdifModels.Entry],
+        object_class: str,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries by object class with optimized indexing."""
         start_time = time.time()
@@ -433,11 +450,15 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
                 self._cache_hits += 1
                 self._logger.debug(f"Cache hit for objectClass filter: {object_class}")
                 # Validate cached result type at runtime
-                if isinstance(cached_result, list) and all(isinstance(entry, FlextLdifModels.Entry) for entry in cached_result):
+                if isinstance(cached_result, list) and all(
+                    isinstance(entry, FlextLdifModels.Entry) for entry in cached_result
+                ):
                     return FlextResult[list[FlextLdifModels.Entry]].ok(cached_result)
                 # Cache corruption - remove invalid entry
                 del self._query_cache[cache_key]
-                self._logger.warning(f"Invalid cached result type for objectClass filter: {type(cached_result)}")
+                self._logger.warning(
+                    f"Invalid cached result type for objectClass filter: {type(cached_result)}",
+                )
 
             self._cache_misses += 1
 
@@ -514,14 +535,10 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
                 f"ObjectClass filter error: {e}",
             )
 
-    def filter_entries_by_object_class(
-        self, entries: list[FlextLdifModels.Entry], object_class: str,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Filter entries by object class (alias for compatibility)."""
-        return self.filter_entries_by_objectclass(entries, object_class)
 
     def get_statistics(
-        self, entries: list[FlextLdifModels.Entry],
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[dict[str, int]]:
         """Get comprehensive entry statistics with performance optimization."""
         start_time = time.time()
@@ -537,11 +554,16 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
                 self._cache_hits += 1
                 self._logger.debug("Cache hit for statistics calculation")
                 # Validate cached result type at runtime
-                if isinstance(cached_result, dict) and all(isinstance(k, str) and isinstance(v, int) for k, v in cached_result.items()):
+                if isinstance(cached_result, dict) and all(
+                    isinstance(k, str) and isinstance(v, int)
+                    for k, v in cached_result.items()
+                ):
                     return FlextResult[dict[str, int]].ok(cached_result)
                 # Cache corruption - remove invalid entry
                 del self._query_cache[cache_key]
-                self._logger.warning(f"Invalid cached result type for statistics: {type(cached_result)}")
+                self._logger.warning(
+                    f"Invalid cached result type for statistics: {type(cached_result)}",
+                )
 
             self._cache_misses += 1
 
@@ -703,7 +725,8 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
 
         try:
             self._logger.info(
-                "Starting index rebuild", extra={"entry_count": len(self._entries)},
+                "Starting index rebuild",
+                extra={"entry_count": len(self._entries)},
             )
 
             # Clear existing indices
@@ -856,7 +879,8 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
     # Private helper methods
 
     def _validate_entries_for_storage(
-        self, entries: list[FlextLdifModels.Entry],
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[None]:
         """Validate entries before storage."""
         try:
@@ -872,7 +896,9 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
             return FlextResult[None].fail(f"Validation error: {e}")
 
     def _build_indices_for_entry(
-        self, entry: FlextLdifModels.Entry, index: int,
+        self,
+        entry: FlextLdifModels.Entry,
+        index: int,
     ) -> None:
         """Build indices for a single entry."""
         # Build attribute indices
@@ -896,7 +922,9 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
             self._objectclass_index[oc_lower].append(index)
 
     def _update_indices_for_entry(
-        self, entry: FlextLdifModels.Entry, index: int,
+        self,
+        entry: FlextLdifModels.Entry,
+        index: int,
     ) -> None:
         """Update indices when an entry is modified."""
         # Remove old indices (simplified - in production, would track changes)
@@ -904,7 +932,9 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
         self._build_indices_for_entry(entry, index)
 
     def _filter_using_attribute_index(
-        self, attribute_name: str, attribute_value: str | None,
+        self,
+        attribute_name: str,
+        attribute_value: str | None,
     ) -> list[FlextLdifModels.Entry]:
         """Filter using attribute index for performance."""
         if attribute_value is None:
@@ -914,7 +944,10 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
                 entry_indices_set.update(value_indices)
             return [self._entries[i] for i in sorted(entry_indices_set)]
         # Return entries with specific attribute value
-        entry_indices_list = self._attribute_index[attribute_name].get(attribute_value, [])
+        entry_indices_list = self._attribute_index[attribute_name].get(
+            attribute_value,
+            [],
+        )
         return [self._entries[i] for i in entry_indices_list]
 
     def _get_from_cache(self, cache_key: str) -> object | None:
@@ -1001,7 +1034,9 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
         self._peak_memory_usage = max(self._peak_memory_usage, self._memory_usage)
 
     def _record_operation_success(
-        self, _result_count: int, operation_time: float,
+        self,
+        _result_count: int,
+        operation_time: float,
     ) -> None:
         """Record successful operation metrics."""
         self._total_operations += 1
@@ -1020,7 +1055,8 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
         self._total_operations += 1
 
         self._logger.warning(
-            "Repository operation failure", extra={"failure_type": failure_type},
+            "Repository operation failure",
+            extra={"failure_type": failure_type},
         )
 
     def _calculate_success_rate(self) -> float:

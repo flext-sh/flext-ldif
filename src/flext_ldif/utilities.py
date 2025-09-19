@@ -294,7 +294,9 @@ class FlextLdifUtilities:
             return FlextResult[float].fail(f"File size calculation failed: {e}")
 
     def is_file_too_large(
-        self, file_path: str | Path, max_size_mb: int,
+        self,
+        file_path: str | Path,
+        max_size_mb: int,
     ) -> FlextResult[bool]:
         """Check if file exceeds size limit using flext-core patterns.
 
@@ -321,7 +323,8 @@ class FlextLdifUtilities:
             return FlextResult[bool].fail(f"File size check failed: {e}")
 
     def create_entry_summary(
-        self, entry: FlextLdifModels.Entry,
+        self,
+        entry: FlextLdifModels.Entry,
     ) -> FlextResult[dict[str, str]]:
         """Create entry summary using flext-core patterns.
 
@@ -354,7 +357,8 @@ class FlextLdifUtilities:
             )
 
     def convert_entry_to_dict(
-        self, entry: FlextLdifModels.Entry,
+        self,
+        entry: FlextLdifModels.Entry,
     ) -> FlextResult[dict[str, object]]:
         """Convert LDIF entry to dictionary format.
 
@@ -435,7 +439,8 @@ class FlextLdifUtilities:
             return FlextResult[str].fail(f"Base DN extraction failed: {e}")
 
     def validate_ldif_entry_completeness(
-        self, entry: FlextLdifModels.Entry,
+        self,
+        entry: FlextLdifModels.Entry,
     ) -> FlextResult[bool]:
         """Validate if LDIF entry has all required components using FlextModels.
 
@@ -459,7 +464,9 @@ class FlextLdifUtilities:
             return FlextResult[bool].fail(f"Entry completeness validation failed: {e}")
 
     def merge_ldif_entries(
-        self, entry1: FlextLdifModels.Entry, entry2: FlextLdifModels.Entry,
+        self,
+        entry1: FlextLdifModels.Entry,
+        entry2: FlextLdifModels.Entry,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Merge two LDIF entries with same DN.
 

@@ -72,7 +72,8 @@ class TestFlextLdifConfig:
         """Test getting global configuration instance."""
         # Should fail if not initialized
         with pytest.raises(
-            RuntimeError, match="Global instance is not a FlextLdifConfig instance",
+            RuntimeError,
+            match="Global instance is not a FlextLdifConfig instance",
         ):
             FlextLdifConfig.get_global_ldif_config()
 
@@ -272,7 +273,8 @@ class TestFlextLdifConfig:
         """Test configuration parameter support."""
         # Initialize configuration with specific parameters
         result = FlextLdifConfig.initialize_global_ldif_config(
-            ldif_max_entries=75000, ldif_strict_validation=False,
+            ldif_max_entries=75000,
+            ldif_strict_validation=False,
         )
         assert result.is_success
         config = result.unwrap()

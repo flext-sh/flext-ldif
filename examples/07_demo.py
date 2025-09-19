@@ -360,7 +360,8 @@ def _demonstrate_basic_object_class_filtering(
 
 
 def _filter_by_title_containing(
-    entries: list[FlextLdifModels.Entry], keyword: str,
+    entries: list[FlextLdifModels.Entry],
+    keyword: str,
 ) -> list[FlextLdifModels.Entry]:
     """Custom filter for entries with title containing keyword."""
     result: list[FlextLdifModels.Entry] = []

@@ -65,7 +65,7 @@ def main() -> None:
 
     # Apply configuration overrides
     print("\n5. Applying configuration overrides...")
-    overrides = {
+    overrides: dict[str, object] = {
         "ldif_max_entries": 100000,
         "ldif_chunk_size": 2000,
         "ldif_analytics_cache_size": 20000,
@@ -98,7 +98,10 @@ sn: AdminUser
 
     # Write to temporary file
     with tempfile.NamedTemporaryFile(
-        encoding="utf-8", mode="w", suffix=".ldif", delete=False,
+        encoding="utf-8",
+        mode="w",
+        suffix=".ldif",
+        delete=False,
     ) as f:
         f.write(sample_ldif)
         temp_path = Path(f.name)

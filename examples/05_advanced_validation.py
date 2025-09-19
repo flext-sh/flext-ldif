@@ -43,13 +43,13 @@ def validate_business_rules(
     errors: FlextTypes.Core.StringList = []
 
     # Rule 1: Person entries must have email
-    if entry.is_person():
-        mail = entry.attributes.get_single_attribute("mail")
+    if entry.is_person_entry():
+        mail = entry.attributes.get_single_value("mail")
         if not mail or not mail[0]:
             errors.append("Person entries must have email address")
 
     # Rule 2: Employee numbers must be numeric
-    employee_num = entry.attributes.get_single_attribute("employeeNumber")
+    employee_num = entry.attributes.get_single_value("employeeNumber")
     if employee_num:
         try:
             int(employee_num[0])
@@ -57,14 +57,14 @@ def validate_business_rules(
             errors.append("Employee number must be numeric")
 
     # Rule 3: Phone numbers must follow format
-    phone = entry.attributes.get_single_attribute("telephoneNumber")
+    phone = entry.attributes.get_single_value("telephoneNumber")
     if phone and phone[0]:
         phone_num = phone[0]
         if not phone_num.startswith("+1-555-"):
             errors.append("Phone number must follow +1-555-XXXX format")
 
     # Rule 4: Manager must be a valid DN
-    manager = entry.attributes.get_single_attribute("manager")
+    manager = entry.attributes.get_single_value("manager")
     if manager and manager[0]:
         manager_dn = manager[0]
         if "ou=People" not in manager_dn:
@@ -113,7 +113,9 @@ class LdifValidationDemonstrator:
         for i, entry in enumerate(entries):
             # Use railway programming for validation
             def add_domain_error(
-                error: str, idx: int = i, ent: FlextLdifModels.Entry = entry,
+                error: str,
+                idx: int = i,
+                ent: FlextLdifModels.Entry = entry,
             ) -> None:
                 domain_errors.append(f"Entry {idx + 1} ({ent.dn}): {error}")
 
@@ -122,7 +124,8 @@ class LdifValidationDemonstrator:
         self._log_validation_errors(domain_errors, "Domain validation")
 
     def _perform_business_validation(
-        self, entries: list[FlextLdifModels.Entry],
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Perform business rule validation on entries."""
         business_errors: FlextTypes.Core.StringList = []
@@ -141,7 +144,8 @@ class LdifValidationDemonstrator:
         # Use railway programming for filtering results
         filter_functions: list[
             Callable[
-                [list[FlextLdifModels.Entry]], FlextResult[list[FlextLdifModels.Entry]],
+                [list[FlextLdifModels.Entry]],
+                FlextResult[list[FlextLdifModels.Entry]],
             ]
         ] = [
             self.api.filter_persons,
@@ -176,7 +180,9 @@ class LdifValidationDemonstrator:
             )
 
     def _log_validation_errors(
-        self, errors: FlextTypes.Core.StringList, validation_type: str,
+        self,
+        errors: FlextTypes.Core.StringList,
+        validation_type: str,
     ) -> None:
         """Log validation errors with type prefix."""
         if not errors:

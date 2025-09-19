@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
+from typing import cast
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
@@ -164,7 +165,8 @@ class TestFlextLdifUtilitiesMissingCoverage:
                 raise ValueError(error_msg)
 
         # This should trigger exception handling on lines 68-69
-        result = utilities.validate_ldif_file_extension(BadPath())
+        # Use proper typing by casting to the expected type for testing error conditions
+        result = utilities.validate_ldif_file_extension(cast("str", BadPath()))
         assert result.is_failure
         assert result.error and "Extension validation failed" in result.error
 
@@ -173,7 +175,7 @@ class TestFlextLdifUtilitiesMissingCoverage:
         utilities = FlextLdifUtilities()
 
         # Mock the LdifContent validation to fail by using None
-        result = utilities.validate_ldif_content(None)
+        result = utilities.validate_ldif_content("")
         assert result.is_failure
         # The validation fails at the initial content check
         assert (result.error and "Content cannot be empty" in result.error) or (
@@ -185,7 +187,7 @@ class TestFlextLdifUtilitiesMissingCoverage:
         utilities = FlextLdifUtilities()
 
         # Use None to trigger validation exception
-        result = utilities.validate_dn_format(None)
+        result = utilities.validate_dn_format("")
         assert result.is_failure
         assert result.error and "DN validation failed" in result.error
 
@@ -218,7 +220,7 @@ class TestFlextLdifUtilitiesMissingCoverage:
         utilities = FlextLdifUtilities()
 
         # Use None to trigger validation exception
-        result = utilities.extract_dn_from_content(None)
+        result = utilities.extract_dn_from_content("")
         assert result.is_failure
         # The validation fails at the content check level
         assert (result.error and "Content cannot be empty" in result.error) or (
@@ -246,7 +248,7 @@ objectClass: person"""
         utilities = FlextLdifUtilities()
 
         # Use None to trigger validation exception
-        result = utilities.count_entries_in_content(None)
+        result = utilities.count_entries_in_content("")
         assert result.is_failure
         # The validation fails before reaching the exception handler
         assert (result.error and "Content cannot be empty" in result.error) or (
@@ -258,7 +260,10 @@ objectClass: person"""
         utilities = FlextLdifUtilities()
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".ldif", delete=False,
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
         ) as temp_file:
             temp_file.write("dn: cn=test,dc=example,dc=com\ncn: test")
             temp_path = Path(temp_file.name)
@@ -290,7 +295,10 @@ objectClass: person"""
         utilities = FlextLdifUtilities()
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".ldif", delete=False,
+            encoding="utf-8",
+            mode="w",
+            suffix=".ldif",
+            delete=False,
         ) as temp_file:
             temp_file.write("dn: cn=test,dc=example,dc=com\ncn: test")
             temp_path = Path(temp_file.name)
@@ -337,8 +345,8 @@ objectClass: person"""
         """Test create_entry_summary when entry is None."""
         utilities = FlextLdifUtilities()
 
-        # Use None to trigger exception
-        result = utilities.create_entry_summary(None)
+        # Use proper typing by casting to the expected type for testing error conditions
+        result = utilities.create_entry_summary(cast("FlextLdifModels.Entry", None))
         assert result.is_failure
         assert result.error and "Entry summary creation failed" in result.error
 
@@ -346,8 +354,8 @@ objectClass: person"""
         """Test calculate_entry_size when entry is None."""
         utilities = FlextLdifUtilities()
 
-        # Use None to trigger exception
-        result = utilities.calculate_entry_size(None)
+        # Use proper typing by casting to the expected type for testing error conditions
+        result = utilities.calculate_entry_size(cast("FlextLdifModels.Entry", None))
         assert result.is_failure
         assert result.error and "Entry size calculation failed" in result.error
 
@@ -370,7 +378,7 @@ objectClass: person"""
         utilities = FlextLdifUtilities()
 
         # Use None to trigger exception
-        result = utilities.validate_ldif_entry_completeness(None)
+        result = utilities.validate_ldif_entry_completeness(cast("FlextLdifModels.Entry", None))
         assert result.is_failure
         assert result.error and "Entry completeness validation failed" in result.error
 

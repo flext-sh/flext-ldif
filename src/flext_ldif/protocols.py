@@ -33,7 +33,7 @@ class FlextLdifProtocols(FlextProtocols):
             """Parse LDIF content string into entries."""
             ...
 
-        def parse_file(self, file_path: str) -> FlextResult[list[object]]:
+        def parse_ldif_file(self, file_path: str) -> FlextResult[list[object]]:
             """Parse LDIF file into entries."""
             ...
 
@@ -66,13 +66,17 @@ class FlextLdifProtocols(FlextProtocols):
             ...
 
         def write_entries_to_file(
-            self, entries: list[object], file_path: str,
+            self,
+            entries: list[object],
+            file_path: str,
         ) -> FlextResult[None]:
             """Write entries to LDIF file."""
             ...
 
         def write_entries_to_stream(
-            self, entries: list[object], stream: IO[str],
+            self,
+            entries: list[object],
+            stream: IO[str],
         ) -> FlextResult[None]:
             """Write entries to LDIF stream."""
             ...
@@ -86,13 +90,15 @@ class FlextLdifProtocols(FlextProtocols):
             ...
 
         def retrieve_entries(
-            self, filter_criteria: dict[str, object],
+            self,
+            filter_criteria: dict[str, object],
         ) -> FlextResult[list[object]]:
             """Retrieve LDIF entries by criteria."""
             ...
 
         def count_entries(
-            self, filter_criteria: dict[str, object] | None = None,
+            self,
+            filter_criteria: dict[str, object] | None = None,
         ) -> FlextResult[int]:
             """Count LDIF entries."""
             ...
@@ -102,7 +108,8 @@ class FlextLdifProtocols(FlextProtocols):
         """Protocol for LDIF analytics implementations."""
 
         def calculate_statistics(
-            self, entries: list[object],
+            self,
+            entries: list[object],
         ) -> FlextResult[dict[str, object]]:
             """Calculate LDIF statistics."""
             ...
@@ -112,7 +119,8 @@ class FlextLdifProtocols(FlextProtocols):
             ...
 
         def get_entry_distribution(
-            self, entries: list[object],
+            self,
+            entries: list[object],
         ) -> FlextResult[dict[str, int]]:
             """Get entry type distribution."""
             ...
@@ -126,7 +134,8 @@ class FlextLdifProtocols(FlextProtocols):
             ...
 
         def apply_transformations(
-            self, transformations: list[object],
+            self,
+            transformations: list[object],
         ) -> FlextResult[None]:
             """Apply transformation rules."""
             ...
@@ -156,7 +165,9 @@ class FlextLdifProtocols(FlextProtocols):
         """Protocol for LDIF service dispatchers."""
 
         def dispatch_operation(
-            self, operation: str, **kwargs: object,
+            self,
+            operation: str,
+            **kwargs: object,
         ) -> FlextResult[object]:
             """Dispatch LDIF operation."""
             ...
