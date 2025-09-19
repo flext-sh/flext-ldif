@@ -66,7 +66,7 @@ class FlextLdifTypes(FlextTypes):
         # LDIF processor function types
         EntryProcessor = Callable[[T_Entry], T_Result]
         AttributeProcessor = Callable[
-            [str, FlextTypes.Core.StringList], FlextTypes.Core.StringList
+            [str, FlextTypes.Core.StringList], FlextTypes.Core.StringList,
         ]
         ValidationProcessor = Callable[[T_Entry], bool]
         StatisticsProcessor = Callable[[list[T_Entry]], T_Statistics]
@@ -76,7 +76,7 @@ class FlextLdifTypes(FlextTypes):
         EntryTransformer = Callable[[T_Entry], T_Entry]
         AttributeFilter = Callable[[str, FlextTypes.Core.StringList], bool]
         AttributeTransformer = Callable[
-            [str, FlextTypes.Core.StringList], FlextTypes.Core.StringList
+            [str, FlextTypes.Core.StringList], FlextTypes.Core.StringList,
         ]
 
         # LDIF analytics types
@@ -128,7 +128,7 @@ class FlextLdifTypes(FlextTypes):
         GroupingFunction = Callable[[object], str]
         FilterFunction = Callable[[object], bool]
 
-    class Validation:
+    class LdifValidation:
         """LDIF validation types."""
 
         # Validation rule types

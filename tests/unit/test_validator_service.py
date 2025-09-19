@@ -61,7 +61,7 @@ class TestFlextLdifServicesValidatorService:
         invalid_entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
-                data={}
+                data={},
             ),  # Empty attributes should fail
         )
 
@@ -81,9 +81,9 @@ class TestFlextLdifServicesValidatorService:
             FlextLdifModels.create_entry(
                 {
                     "dn": "cn=test,dc=example,dc=com",
-                    "attributes": {"cn": ["test"], "objectClass": ["person"]},
-                }
-            )
+                    "attributes": {"cn": ["test"], "sn": ["Test"], "objectClass": ["person"]},
+                },
+            ),
         ]
 
         result = service.validate_entries(entries)
@@ -104,7 +104,7 @@ class TestFlextLdifServicesValidatorService:
                     "sn": ["Doe"],
                     "objectClass": ["person", "inetOrgPerson"],
                 },
-            }
+            },
         )
 
         result = service.validate_entry_structure(entry)
@@ -133,7 +133,7 @@ class TestFlextLdifServicesValidatorService:
             {
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {"cn": ["test"], "objectClass": ["person"]},
-            }
+            },
         )
 
         result = service.validate_entry_structure(entry)
@@ -149,7 +149,7 @@ class TestFlextLdifServicesValidatorService:
             {
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {"cn": ["test"], "objectClass": ["person"]},
-            }
+            },
         )
 
         result = service.validator.validate_entry_structure(entry)
@@ -160,7 +160,7 @@ class TestFlextLdifServicesValidatorService:
     def test_validate_configuration_rules_strict_valid(self) -> None:
         """Test configuration rules validation with strict config and valid entry."""
         config = FlextLdifConfig(
-            ldif_strict_validation=True, ldif_allow_empty_values=False
+            ldif_strict_validation=True, ldif_allow_empty_values=False,
         )
         service = FlextLdifServices(config=config)
         entry = FlextLdifModels.create_entry(
@@ -171,7 +171,7 @@ class TestFlextLdifServicesValidatorService:
                     "sn": ["user"],
                     "objectClass": ["person"],
                 },
-            }
+            },
         )
 
         result = service.validator.validate_entry_structure(entry)
@@ -182,7 +182,7 @@ class TestFlextLdifServicesValidatorService:
     def test_validate_configuration_rules_empty_attribute_list(self) -> None:
         """Test configuration rules validation with empty attribute list."""
         config = FlextLdifConfig(
-            ldif_strict_validation=True, ldif_allow_empty_values=False
+            ldif_strict_validation=True, ldif_allow_empty_values=False,
         )
         service = FlextLdifServices(config=config)
 
@@ -195,7 +195,7 @@ class TestFlextLdifServicesValidatorService:
             entry = FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
                 attributes=FlextLdifModels.LdifAttributes(
-                    data={"cn": []}
+                    data={"cn": []},
                 ),  # Empty list - should fail
             )
             # If we get here, test the validation
@@ -219,7 +219,7 @@ class TestFlextLdifServicesValidatorService:
     def test_validate_configuration_rules_empty_string_value(self) -> None:
         """Test configuration rules validation with empty string value."""
         config = FlextLdifConfig(
-            ldif_strict_validation=True, ldif_allow_empty_values=False
+            ldif_strict_validation=True, ldif_allow_empty_values=False,
         )
         service = FlextLdifServices(config=config)
 
@@ -228,7 +228,7 @@ class TestFlextLdifServicesValidatorService:
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
-                data={"cn": ["", "valid"]}
+                data={"cn": ["", "valid"]},
             ),  # Contains empty string
         )
 
@@ -245,7 +245,7 @@ class TestFlextLdifServicesValidatorService:
     def test_validate_configuration_rules_whitespace_only_value(self) -> None:
         """Test configuration rules validation with whitespace-only value."""
         config = FlextLdifConfig(
-            ldif_strict_validation=True, ldif_allow_empty_values=False
+            ldif_strict_validation=True, ldif_allow_empty_values=False,
         )
         service = FlextLdifServices(config=config)
 
@@ -254,7 +254,7 @@ class TestFlextLdifServicesValidatorService:
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
-                data={"cn": ["   ", "valid"]}
+                data={"cn": ["   ", "valid"]},
             ),  # Contains whitespace-only
         )
 
@@ -276,14 +276,14 @@ class TestFlextLdifServicesValidatorService:
             FlextLdifModels.create_entry(
                 {
                     "dn": "cn=test1,dc=example,dc=com",
-                    "attributes": {"cn": ["test1"], "objectClass": ["person"]},
-                }
+                    "attributes": {"cn": ["test1"], "sn": ["Test1"], "objectClass": ["person"]},
+                },
             ),
             FlextLdifModels.create_entry(
                 {
                     "dn": "cn=test2,dc=example,dc=com",
-                    "attributes": {"cn": ["test2"], "objectClass": ["person"]},
-                }
+                    "attributes": {"cn": ["test2"], "sn": ["Test2"], "objectClass": ["person"]},
+                },
             ),
         ]
 
@@ -312,9 +312,13 @@ class TestFlextLdifServicesValidatorService:
             FlextLdifModels.create_entry(
                 {
                     "dn": "cn=test,dc=example,dc=com",
-                    "attributes": {"cn": ["test"], "objectClass": ["person"]},
-                }
-            )
+                    "attributes": {
+                        "cn": ["test"],
+                        "objectClass": ["person"],
+                        "sn": ["Test"],  # Add required sn attribute for person objectClass
+                    },
+                },
+            ),
         ]
 
         result = service.validate_entries(entries)
@@ -332,13 +336,13 @@ class TestFlextLdifServicesValidatorService:
                 {
                     "dn": "cn=test1,dc=example,dc=com",
                     "attributes": {"cn": ["test1"], "objectClass": ["person"]},
-                }
+                },
             ),
             FlextLdifModels.create_entry(
                 {
                     "dn": "cn=test2,dc=example,dc=com",
                     "attributes": {"cn": ["test2"], "objectClass": ["person"]},
-                }
+                },
             ),
             FlextLdifModels.create_entry(
                 {
@@ -347,7 +351,7 @@ class TestFlextLdifServicesValidatorService:
                         "ou": ["people"],
                         "objectClass": ["organizationalUnit"],
                     },
-                }
+                },
             ),
         ]
 
@@ -367,7 +371,7 @@ class TestFlextLdifServicesValidatorService:
             {
                 "dn": "cn=valid,dc=example,dc=com",
                 "attributes": {"cn": ["valid"], "objectClass": ["person"]},
-            }
+            },
         )
 
         # Create invalid entry using real models that will fail validation
@@ -375,7 +379,7 @@ class TestFlextLdifServicesValidatorService:
         invalid_entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=invalid,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
-                data={}
+                data={},
             ),  # Empty attributes should cause validation issues
         )
 
@@ -425,10 +429,10 @@ class TestFlextLdifServicesValidatorService:
         # due to pydantic validation, so we need to handle it
         invalid_entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
-                value="cn=invalid"
+                value="cn=invalid",
             ),  # Valid format but will fail business rules
             attributes=FlextLdifModels.LdifAttributes(
-                data={}
+                data={},
             ),  # Empty attributes will fail validation
         )
 
@@ -447,8 +451,12 @@ class TestFlextLdifServicesValidatorService:
             valid_entry = FlextLdifModels.create_entry(
                 {
                     "dn": "cn=test,dc=example,dc=com",
-                    "attributes": {"cn": ["test"], "objectClass": ["person"]},
-                }
+                    "attributes": {
+                        "cn": ["test"],
+                        "objectClass": ["person"],
+                        "sn": ["Test"],  # Add required sn attribute for person objectClass
+                    },
+                },
             )
             result = service.validate_entries([valid_entry])
             assert result.is_success
@@ -456,7 +464,7 @@ class TestFlextLdifServicesValidatorService:
     def test_configuration_rules_allow_empty_values_true(self) -> None:
         """Test configuration rules when allow_empty_values is True."""
         config = FlextLdifConfig(
-            ldif_strict_validation=True, ldif_allow_empty_values=True
+            ldif_strict_validation=True, ldif_allow_empty_values=True,
         )
         service = FlextLdifServices(config=config)
 
@@ -468,7 +476,7 @@ class TestFlextLdifServicesValidatorService:
             entry = FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
                 attributes=FlextLdifModels.LdifAttributes(
-                    data={"cn": []}
+                    data={"cn": []},
                 ),  # Empty list - should fail
             )
             # If we get here, test the validation

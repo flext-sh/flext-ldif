@@ -15,7 +15,7 @@ class TestFlextLdifExceptionsMissingCoverage:
     def test_validation_error_with_dn_context(self) -> None:
         """Test validation_error with DN context."""
         result = FlextLdifExceptions.validation_error(
-            "Test validation error", dn="uid=test,ou=people,dc=example,dc=com"
+            "Test validation error", dn="uid=test,ou=people,dc=example,dc=com",
         )
         assert result.is_success is False
         assert result.error is not None and "Test validation error" in result.error
@@ -27,7 +27,7 @@ class TestFlextLdifExceptionsMissingCoverage:
     def test_validation_error_with_attribute_context(self) -> None:
         """Test validation_error with attribute context."""
         result = FlextLdifExceptions.validation_error(
-            "Test validation error", attribute_name="objectClass"
+            "Test validation error", attribute_name="objectClass",
         )
         assert result.is_success is False
         assert result.error is not None and "Test validation error" in result.error
@@ -36,7 +36,7 @@ class TestFlextLdifExceptionsMissingCoverage:
     def test_validation_error_with_rule_context(self) -> None:
         """Test validation_error with validation rule context."""
         result = FlextLdifExceptions.validation_error(
-            "Test validation error", validation_rule="required_attribute"
+            "Test validation error", validation_rule="required_attribute",
         )
         assert result.is_success is False
         assert result.error is not None and "Test validation error" in result.error
@@ -62,7 +62,7 @@ class TestFlextLdifExceptionsMissingCoverage:
     def test_processing_error_with_operation_context(self) -> None:
         """Test processing_error with operation context."""
         result = FlextLdifExceptions.processing_error(
-            "Test processing error", operation="parse_ldif"
+            "Test processing error", operation="parse_ldif",
         )
         assert result.is_success is False
         assert result.error is not None and "Test processing error" in result.error
@@ -71,7 +71,7 @@ class TestFlextLdifExceptionsMissingCoverage:
     def test_processing_error_with_entry_count_context(self) -> None:
         """Test processing_error with entry count context."""
         result = FlextLdifExceptions.processing_error(
-            "Test processing error", entry_count=42
+            "Test processing error", entry_count=42,
         )
         assert result.is_success is False
         assert result.error is not None and "Test processing error" in result.error
@@ -80,7 +80,7 @@ class TestFlextLdifExceptionsMissingCoverage:
     def test_processing_error_with_all_context(self) -> None:
         """Test processing_error with all context parameters."""
         result = FlextLdifExceptions.processing_error(
-            "Test processing error", operation="parse_ldif", entry_count=42
+            "Test processing error", operation="parse_ldif", entry_count=42,
         )
         assert result.is_success is False
         assert result.error is not None and "Test processing error" in result.error
@@ -90,7 +90,7 @@ class TestFlextLdifExceptionsMissingCoverage:
     def test_configuration_error_with_config_key_context(self) -> None:
         """Test configuration_error with config key context."""
         result = FlextLdifExceptions.configuration_error(
-            "Test configuration error", config_key="ldif.parser.max_line_length"
+            "Test configuration error", config_key="ldif.parser.max_line_length",
         )
         assert result.is_success is False
         assert result.error is not None and "Test configuration error" in result.error
@@ -182,7 +182,7 @@ class TestFlextLdifExceptionsMissingCoverage:
             "description": ["Test user"],
         }
         result = FlextLdifExceptions.entry_error(
-            "Test entry error", entry_data=entry_data
+            "Test entry error", entry_data=entry_data,
         )
         assert result.is_success is False
         assert result.error is not None and "Test entry error" in result.error
@@ -195,7 +195,7 @@ class TestFlextLdifExceptionsMissingCoverage:
         """Test entry_error with entry_data context with few attributes."""
         entry_data = {"objectClass": ["person"], "cn": ["John Doe"]}
         result = FlextLdifExceptions.entry_error(
-            "Test entry error", entry_data=entry_data
+            "Test entry error", entry_data=entry_data,
         )
         assert result.is_success is False
         assert result.error is not None and "Test entry error" in result.error
@@ -231,7 +231,7 @@ class TestFlextLdifExceptionsMissingCoverage:
     def test_create_method_with_validation_error_type(self) -> None:
         """Test create method with ValidationError type."""
         result = FlextLdifExceptions.create(
-            "Test validation error", error_type="ValidationError"
+            "Test validation error", error_type="ValidationError",
         )
         assert result.is_success is False
         assert result.error is not None and "Test validation error" in result.error
@@ -239,7 +239,7 @@ class TestFlextLdifExceptionsMissingCoverage:
     def test_create_method_with_other_error_type(self) -> None:
         """Test create method with other error type."""
         result = FlextLdifExceptions.create(
-            "Test generic error", error_type="GenericError"
+            "Test generic error", error_type="GenericError",
         )
         assert result.is_success is False
         assert result.error is not None and "Test generic error" in result.error

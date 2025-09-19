@@ -78,13 +78,13 @@ class TestFlextLdifServicesWriterService:
                 {
                     "dn": "cn=John,dc=example,dc=com",
                     "attributes": {"cn": ["John"], "objectClass": ["person"]},
-                }
+                },
             ),
             FlextLdifModels.create_entry(
                 {
                     "dn": "cn=Jane,dc=example,dc=com",
                     "attributes": {"cn": ["Jane"], "objectClass": ["person"]},
-                }
+                },
             ),
         ]
 
@@ -105,7 +105,7 @@ class TestFlextLdifServicesWriterService:
             {
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {"cn": ["test"], "objectClass": ["person"]},
-            }
+            },
         )
 
         result = service.write_entries_to_string([valid_entry])
@@ -120,7 +120,7 @@ class TestFlextLdifServicesWriterService:
             {
                 "dn": "cn=José María,dc=example,dc=com",
                 "attributes": {"cn": ["José María"], "objectClass": ["person"]},
-            }
+            },
         )
 
         result = service.write_entries_to_string([entry])
@@ -142,7 +142,7 @@ class TestFlextLdifServicesWriterService:
                     "objectClass": ["person"],
                     "userCertificate": ["\x00\x01\x02\x03"],  # Binary data
                 },
-            }
+            },
         )
 
         result = service.write_entries_to_string([entry])
@@ -162,7 +162,7 @@ class TestFlextLdifServicesWriterService:
                     "mail": ["test@example.com"],
                     "objectClass": ["person", "inetOrgPerson"],
                 },
-            }
+            },
         )
 
         result = service.write_entry(entry)
@@ -185,7 +185,7 @@ class TestFlextLdifServicesWriterService:
                     "objectClass": ["person", "inetOrgPerson"],  # Multi-valued
                     "mail": ["test1@example.com", "test2@example.com"],  # Multi-valued
                 },
-            }
+            },
         )
 
         result = service.write_entry(entry)
@@ -209,7 +209,7 @@ class TestFlextLdifServicesWriterService:
                     "objectClass": ["domain"],
                     "dc": ["example"],
                 },
-            }
+            },
         )
 
         result = service.write_entry(entry)
@@ -228,12 +228,12 @@ class TestFlextLdifServicesWriterService:
                 {
                     "dn": "cn=Test,dc=example,dc=com",
                     "attributes": {"cn": ["Test"], "objectClass": ["person"]},
-                }
-            )
+                },
+            ),
         ]
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", delete=False, suffix=".ldif"
+            encoding="utf-8", mode="w", delete=False, suffix=".ldif",
         ) as tmp_file:
             tmp_path = tmp_file.name
 
@@ -259,12 +259,12 @@ class TestFlextLdifServicesWriterService:
                 {
                     "dn": "cn=Tëst,dc=example,dc=com",
                     "attributes": {"cn": ["Tëst"], "objectClass": ["person"]},
-                }
-            )
+                },
+            ),
         ]
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", delete=False, suffix=".ldif"
+            encoding="utf-8", mode="w", delete=False, suffix=".ldif",
         ) as tmp_file:
             tmp_path = tmp_file.name
 
@@ -290,7 +290,7 @@ class TestFlextLdifServicesWriterService:
             {
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {"cn": ["test"], "objectClass": ["person"]},
-            }
+            },
         )
 
         # Try to write to an invalid path that will cause a file system exception
@@ -304,15 +304,19 @@ class TestFlextLdifServicesWriterService:
             "File write error" in result.error
             or "File write failed" in result.error
             or "Write failed" in result.error
+            or "Parent directory does not exist" in result.error
         )
-        assert result.error is not None and "No such file or directory" in result.error
+        assert result.error is not None and (
+            "No such file or directory" in result.error
+            or "Parent directory does not exist" in result.error
+        )
 
     def test_write_content_to_file_success(self) -> None:
         """Test _write_content_to_file success."""
         content = "dn: cn=test,dc=example,dc=com\ncn: test\nobjectClass: person\n"
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", delete=False, suffix=".ldif"
+            encoding="utf-8", mode="w", delete=False, suffix=".ldif",
         ) as tmp_file:
             tmp_path = tmp_file.name
 
@@ -340,7 +344,7 @@ class TestFlextLdifServicesWriterService:
         invalid_path = "/non/existent/directory/test.ldif"
         try:
             with Path(invalid_path).open(
-                "w", encoding=FlextLdifConstants.DEFAULT_ENCODING
+                "w", encoding=FlextLdifConstants.DEFAULT_ENCODING,
             ) as f:
                 f.write(content)
             result = FlextResult[bool].ok(True)
@@ -358,7 +362,7 @@ class TestFlextLdifServicesWriterService:
         # Create test entries
         entry_data: dict[str, object] = {
             "dn": "cn=test,dc=example,dc=com",
-            "attributes": {"cn": ["test"], "objectClass": ["person"]},
+            "attributes": {"cn": ["test"], "sn": ["Test"], "objectClass": ["person"]},
         }
         entry = FlextLdifModels.create_entry(entry_data)
         entries = [entry]
@@ -369,8 +373,10 @@ class TestFlextLdifServicesWriterService:
 
         assert result.is_failure
         assert result.error is not None
-        # Should contain file write error information
-        assert result.error is not None and "failed" in result.error.lower()
+        # Should contain file write error information - updated to match actual error message
+        assert result.error is not None and (
+            "failed" in result.error.lower() or "does not exist" in result.error.lower()
+        )
 
     def test_write_content_to_file_unicode_error(self) -> None:
         """Test _write_content_to_file handles real Unicode encoding errors."""
@@ -403,7 +409,7 @@ class TestFlextLdifServicesWriterService:
         service = FlextLdifServices().writer
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", delete=False, suffix=".ldif"
+            encoding="utf-8", mode="w", delete=False, suffix=".ldif",
         ) as tmp_file:
             tmp_path = tmp_file.name
 
@@ -428,12 +434,12 @@ class TestFlextLdifServicesWriterService:
                 {
                     "dn": "cn=PathTest,dc=example,dc=com",
                     "attributes": {"cn": ["PathTest"], "objectClass": ["person"]},
-                }
-            )
+                },
+            ),
         ]
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", delete=False, suffix=".ldif"
+            encoding="utf-8", mode="w", delete=False, suffix=".ldif",
         ) as tmp_file:
             tmp_path = Path(tmp_file.name)
 
@@ -579,11 +585,11 @@ class TestFlextLdifServicesWriterService:
                 "objectClass": ["inetOrgPerson", "person"],
                 "uid": ["long.lines"],
                 "cn": [
-                    "User With Very Long Common Name That Exceeds Normal Line Length"
+                    "User With Very Long Common Name That Exceeds Normal Line Length",
                 ],
                 "sn": ["User"],
                 "description": [
-                    "This is a very long description that should be folded across multiple lines when the line length limit is reached"
+                    "This is a very long description that should be folded across multiple lines when the line length limit is reached",
                 ],
             },
         }

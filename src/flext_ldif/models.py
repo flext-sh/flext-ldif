@@ -152,7 +152,7 @@ class FlextLdifModels(FlextModels):
         @field_validator("data")
         @classmethod
         def validate_attribute_data(
-            cls, v: dict[str, FlextTypes.Core.StringList]
+            cls, v: dict[str, FlextTypes.Core.StringList],
         ) -> dict[str, FlextTypes.Core.StringList]:
             """Validate attribute data using Pydantic v2 patterns.
 
@@ -313,11 +313,11 @@ class FlextLdifModels(FlextModels):
             """
             # Check for objectClass (required in LDIF)
             object_classes = self.get_attribute(
-                FlextLdifConstants.OBJECTCLASS_ATTRIBUTE
+                FlextLdifConstants.OBJECTCLASS_ATTRIBUTE,
             )
             if not object_classes:
                 return FlextResult[None].fail(
-                    FlextLdifConstants.VALIDATION_MESSAGES["MISSING_OBJECTCLASS"]
+                    FlextLdifConstants.VALIDATION_MESSAGES["MISSING_OBJECTCLASS"],
                 )
 
             return FlextResult[None].ok(None)
@@ -340,10 +340,10 @@ class FlextLdifModels(FlextModels):
         """
 
         dn: FlextLdifModels.DistinguishedName = Field(
-            ..., description="Distinguished Name of the entry"
+            ..., description="Distinguished Name of the entry",
         )
         attributes: FlextLdifModels.LdifAttributes = Field(
-            ..., description="Attributes collection for the entry"
+            ..., description="Attributes collection for the entry",
         )
 
         def get_attribute(self, name: str) -> FlextTypes.Core.StringList | None:
@@ -485,20 +485,20 @@ class FlextLdifModels(FlextModels):
             dn_validation = self.dn.validate_business_rules()
             if dn_validation.is_failure:
                 return FlextResult[None].fail(
-                    f"DN validation failed: {dn_validation.error}"
+                    f"DN validation failed: {dn_validation.error}",
                 )
 
             # Validate attributes using embedded validation
             attr_validation = self.attributes.validate_business_rules()
             if attr_validation.is_failure:
                 return FlextResult[None].fail(
-                    f"Attributes validation failed: {attr_validation.error}"
+                    f"Attributes validation failed: {attr_validation.error}",
                 )
 
             # LDIF-specific validation: Entry must have objectClass
             if not self.get_object_classes():
                 return FlextResult[None].fail(
-                    FlextLdifConstants.VALIDATION_MESSAGES["MISSING_OBJECTCLASS"]
+                    FlextLdifConstants.VALIDATION_MESSAGES["MISSING_OBJECTCLASS"],
                 )
 
             return FlextResult[None].ok(None)
@@ -790,7 +790,7 @@ class FlextLdifModels(FlextModels):
             for attr_name, attr_values in attributes_data.items():
                 # Use Pydantic v2 field validation to convert to StringList
                 if hasattr(attr_values, "__iter__") and not isinstance(
-                    attr_values, str
+                    attr_values, str,
                 ):
                     # It's a list-like object
                     normalized_attrs[attr_name] = [str(v) for v in attr_values]
@@ -808,7 +808,7 @@ class FlextLdifModels(FlextModels):
 
     @classmethod
     def create_distinguished_name(
-        cls, dn_value: str
+        cls, dn_value: str,
     ) -> FlextLdifModels.DistinguishedName:
         """Create distinguished name value object.
 
@@ -823,7 +823,7 @@ class FlextLdifModels(FlextModels):
 
     @classmethod
     def create_attributes(
-        cls, attributes_data: dict[str, FlextTypes.Core.StringList]
+        cls, attributes_data: dict[str, FlextTypes.Core.StringList],
     ) -> FlextLdifModels.LdifAttributes:
         """Create attributes collection value object.
 
@@ -838,7 +838,7 @@ class FlextLdifModels(FlextModels):
 
     @classmethod
     def create_person_entry(
-        cls, dn: str, cn: str, sn: str, **additional_attrs: str | list[str]
+        cls, dn: str, cn: str, sn: str, **additional_attrs: str | list[str],
     ) -> FlextLdifModels.Entry:
         """Create person entry with required attributes.
 
@@ -871,7 +871,7 @@ class FlextLdifModels(FlextModels):
 
     @classmethod
     def create_organizational_unit(
-        cls, dn: str, ou: str, **additional_attrs: str | list[str]
+        cls, dn: str, ou: str, **additional_attrs: str | list[str],
     ) -> FlextLdifModels.Entry:
         """Create organizational unit entry.
 
@@ -927,7 +927,7 @@ class FlextLdifModels(FlextModels):
         """
 
         entries: list[FlextLdifModels.Entry] = Field(
-            ..., description="List of LDIF entries to write"
+            ..., description="List of LDIF entries to write",
         )
 
     class WriteFileCommand(FlextModels.Value):
@@ -937,7 +937,7 @@ class FlextLdifModels(FlextModels):
         """
 
         entries: list[FlextLdifModels.Entry] = Field(
-            ..., description="List of LDIF entries to write"
+            ..., description="List of LDIF entries to write",
         )
         file_path: str = Field(..., description="Path where to write the LDIF file")
 
@@ -948,7 +948,7 @@ class FlextLdifModels(FlextModels):
         """
 
         entries: list[FlextLdifModels.Entry] = Field(
-            ..., description="List of LDIF entries to validate"
+            ..., description="List of LDIF entries to validate",
         )
 
     # =============================================================================

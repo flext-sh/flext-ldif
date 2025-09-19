@@ -113,7 +113,7 @@ class LdifValidationDemonstrator:
         for i, entry in enumerate(entries):
             # Use railway programming for validation
             def add_domain_error(
-                error: str, idx: int = i, ent: FlextLdifModels.Entry = entry
+                error: str, idx: int = i, ent: FlextLdifModels.Entry = entry,
             ) -> None:
                 domain_errors.append(f"Entry {idx + 1} ({ent.dn}): {error}")
 
@@ -122,7 +122,7 @@ class LdifValidationDemonstrator:
         self._log_validation_errors(domain_errors, "Domain validation")
 
     def _perform_business_validation(
-        self, entries: list[FlextLdifModels.Entry]
+        self, entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Perform business rule validation on entries."""
         business_errors: FlextTypes.Core.StringList = []
@@ -141,7 +141,7 @@ class LdifValidationDemonstrator:
         # Use railway programming for filtering results
         filter_functions: list[
             Callable[
-                [list[FlextLdifModels.Entry]], FlextResult[list[FlextLdifModels.Entry]]
+                [list[FlextLdifModels.Entry]], FlextResult[list[FlextLdifModels.Entry]],
             ]
         ] = [
             self.api.filter_persons,
@@ -151,10 +151,10 @@ class LdifValidationDemonstrator:
         for filter_func in filter_functions:
             filter_func(entries).tap(
                 lambda filtered_entries: logger.info(
-                    f"Found {len(filtered_entries)} entries"
+                    f"Found {len(filtered_entries)} entries",
                 )
                 if filtered_entries
-                else logger.info("No entries found")
+                else logger.info("No entries found"),
             )
 
     def _test_invalid_ldif(self) -> None:
@@ -172,11 +172,11 @@ class LdifValidationDemonstrator:
         for entry in entries:
             # Use railway programming for validation
             entry.validate_business_rules().tap_error(
-                lambda _: None  # Log validation failure
+                lambda _: None,  # Log validation failure
             )
 
     def _log_validation_errors(
-        self, errors: FlextTypes.Core.StringList, validation_type: str
+        self, errors: FlextTypes.Core.StringList, validation_type: str,
     ) -> None:
         """Log validation errors with type prefix."""
         if not errors:

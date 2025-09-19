@@ -21,14 +21,14 @@ class TestFlextLdifUtilitiesLdifDomainProcessors:
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=user1,ou=people,dc=example,dc=com",
-                    "attributes": {"objectClass": ["person"], "cn": ["User 1"]},
-                }
+                    "attributes": {"objectClass": ["person"], "cn": ["User 1"], "sn": ["User1"]},
+                },
             ),
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=user2,ou=people,dc=example,dc=com",
-                    "attributes": {"objectClass": ["person"], "cn": ["User 2"]},
-                }
+                    "attributes": {"objectClass": ["person"], "cn": ["User 2"], "sn": ["User2"]},
+                },
             ),
         ]
 
@@ -39,7 +39,7 @@ class TestFlextLdifUtilitiesLdifDomainProcessors:
         assert result.value is True
 
     def test_validate_entries_or_warn_missing_objectclass(
-        self, real_ldif_api: FlextLdifAPI
+        self, real_ldif_api: FlextLdifAPI,
     ) -> None:
         """Test validate_entries with valid entries."""
         entries = [
@@ -50,8 +50,8 @@ class TestFlextLdifUtilitiesLdifDomainProcessors:
                         "cn": ["User"],
                         "objectClass": ["person", "top"],  # Required objectClass
                     },
-                }
-            )
+                },
+            ),
         ]
 
         result = real_ldif_api.validate_entries(entries)
@@ -68,9 +68,10 @@ class TestFlextLdifUtilitiesLdifDomainProcessors:
                     "dn": f"uid=user{i},ou=people,dc=example,dc=com",  # Valid DN
                     "attributes": {
                         "cn": [f"User {i}"],
+                        "sn": [f"User{i}"],  # Add required sn attribute for person objectClass
                         "objectClass": ["person", "top"],  # Required objectClass
                     },
-                }
+                },
             )
             for i in range(5)
         ]
@@ -91,19 +92,19 @@ class TestFlextLdifUtilitiesLdifDomainProcessors:
                         "objectClass": ["inetOrgPerson", "person"],
                         "cn": ["Person 1"],
                     },
-                }
+                },
             ),
             FlextLdifModels.create_entry(
                 {
                     "dn": "cn=group1,ou=groups,dc=example,dc=com",
                     "attributes": {"objectClass": ["groupOfNames"], "cn": ["Group 1"]},
-                }
+                },
             ),
             FlextLdifModels.create_entry(
                 {
                     "dn": "uid=person2,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["Person 2"]},
-                }
+                },
             ),
         ]
 
@@ -121,8 +122,8 @@ class TestFlextLdifUtilitiesLdifDomainProcessors:
                 {
                     "dn": "cn=group1,ou=groups,dc=example,dc=com",
                     "attributes": {"objectClass": ["groupOfNames"], "cn": ["Group 1"]},
-                }
-            )
+                },
+            ),
         ]
 
         services = FlextLdifServices()
@@ -139,8 +140,8 @@ class TestFlextLdifUtilitiesLdifDomainProcessors:
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["Test"]},
-                }
-            )
+                },
+            ),
         ]
 
         # Test should handle any exceptions gracefully
@@ -161,7 +162,7 @@ class TestFlextLdifUtilitiesLdifDomainProcessors:
                         "sn": ["User"],
                         "mail": ["complete@example.com"],
                     },
-                }
+                },
             ),
             FlextLdifModels.create_entry(
                 {
@@ -171,7 +172,7 @@ class TestFlextLdifUtilitiesLdifDomainProcessors:
                         "cn": ["Incomplete User"],
                         # Missing 'sn' and 'mail'
                     },
-                }
+                },
             ),
         ]
 
@@ -220,7 +221,7 @@ class TestFlextLdifUtilitiesLdifDomainProcessors:
                         "sn": ["User"],
                         "mail": ["user1@example.com"],
                     },
-                }
+                },
             ),
             FlextLdifModels.create_entry(
                 {
@@ -231,13 +232,13 @@ class TestFlextLdifUtilitiesLdifDomainProcessors:
                         "sn": ["User"],
                         "mail": ["user2@example.com"],
                     },
-                }
+                },
             ),
         ]
 
         services = FlextLdifServices()
         result = services.repository.filter_entries_by_attribute(
-            entries, "cn", "User 1"
+            entries, "cn", "User 1",
         )
 
         assert result.is_success is True
@@ -253,8 +254,8 @@ class TestFlextLdifUtilitiesLdifDomainProcessors:
                 {
                     "dn": "uid=test,ou=people,dc=example,dc=com",
                     "attributes": {"objectClass": ["person"], "cn": ["Test"]},
-                }
-            )
+                },
+            ),
         ]
 
         # Test should handle any exceptions gracefully
@@ -276,7 +277,7 @@ class TestFlextLdifUtilitiesLdifDomainProcessors:
                         "sn": ["Person"],
                         "mail": ["person1@example.com"],
                     },
-                }
+                },
             ),
             FlextLdifModels.create_entry(
                 {
@@ -286,7 +287,7 @@ class TestFlextLdifUtilitiesLdifDomainProcessors:
                         "cn": ["Group 1"],
                         "member": ["uid=person1,ou=people,dc=example,dc=com"],
                     },
-                }
+                },
             ),
         ]
 
@@ -327,7 +328,7 @@ class TestFlextLdifUtilitiesLdifConverters:
 
         # Test attributes work through entry creation and conversion
         entry = FlextLdifModels.create_entry(
-            {"dn": "cn=test,dc=example,dc=com", "attributes": attributes}
+            {"dn": "cn=test,dc=example,dc=com", "attributes": attributes},
         )
         result = FlextLdifUtilities().convert_entry_to_dict(entry)
 
@@ -356,7 +357,7 @@ class TestFlextLdifUtilitiesLdifConverters:
 
         # Test that values work correctly in entry creation and conversion
         entry = FlextLdifModels.create_entry(
-            {"dn": "cn=test,dc=example,dc=com", "attributes": attributes}
+            {"dn": "cn=test,dc=example,dc=com", "attributes": attributes},
         )
 
         utilities = FlextLdifUtilities()
@@ -388,7 +389,7 @@ class TestFlextLdifUtilitiesLdifConverters:
 
         # Test attributes work through entry creation and conversion
         entry = FlextLdifModels.create_entry(
-            {"dn": "cn=test,dc=example,dc=com", "attributes": attributes}
+            {"dn": "cn=test,dc=example,dc=com", "attributes": attributes},
         )
         result = FlextLdifUtilities().convert_entry_to_dict(entry)
 
@@ -410,7 +411,7 @@ class TestFlextLdifUtilitiesLdifConverters:
 
         # Test attributes work through entry creation and conversion
         entry = FlextLdifModels.create_entry(
-            {"dn": "cn=test,dc=example,dc=com", "attributes": attributes}
+            {"dn": "cn=test,dc=example,dc=com", "attributes": attributes},
         )
         result = FlextLdifUtilities().convert_entry_to_dict(entry)
 
@@ -492,7 +493,7 @@ class TestFlextLdifUtilitiesAdditionalCoverage:
             entry = FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(value="   "),  # Whitespace DN
                 attributes=FlextLdifModels.LdifAttributes(
-                    data={"objectClass": ["person"]}
+                    data={"objectClass": ["person"]},
                 ),
             )
 

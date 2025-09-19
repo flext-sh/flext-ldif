@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from typing import cast
 
 from flext_core import FlextDomainService, FlextLogger, FlextResult
 from flext_ldif.config import FlextLdifConfig
@@ -48,7 +49,9 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
         self._anomaly_detections = 0
 
         # Caching configuration
-        self._analytics_cache: dict[str, tuple[object, float]] = {}
+        self._analytics_cache: dict[
+            str, tuple[dict[str, int] | dict[str, object], float],
+        ] = {}
         self._cache_ttl = 600.0  # 10 minutes for analytics cache
         self._max_cache_size = self._config.ldif_analytics_cache_size
 
@@ -94,7 +97,8 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
         )
 
     def analyze_entries(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[dict[str, int]]:
         """Comprehensive entry analysis with intelligent insights."""
         start_time = time.time()
@@ -108,10 +112,12 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
 
             # Check cache first
             cached_result = self._get_from_analytics_cache(cache_key)
-            if cached_result is not None:
+            if cached_result is not None and isinstance(cached_result, dict):
                 self._analytics_stats["cached_results"] += 1
                 self._logger.debug("Cache hit for basic analysis")
-                return FlextResult[dict[str, int]].ok(cached_result)  # type: ignore[arg-type]
+                # Type cast for cache result
+                cached_dict = cast("dict[str, int]", cached_result)
+                return FlextResult[dict[str, int]].ok(cached_dict)
 
             self._logger.info(
                 "Starting comprehensive entry analysis",
@@ -207,7 +213,8 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
             return FlextResult[dict[str, int]].fail(f"Analysis error: {e}")
 
     def get_objectclass_distribution(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[dict[str, int]]:
         """Advanced object class distribution analysis with intelligence."""
         start_time = time.time()
@@ -220,9 +227,10 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
 
             # Check cache first
             cached_result = self._get_from_analytics_cache(cache_key)
-            if cached_result is not None:
+            if cached_result is not None and isinstance(cached_result, dict):
                 self._analytics_stats["cached_results"] += 1
-                return FlextResult[dict[str, int]].ok(cached_result)  # type: ignore[arg-type]
+                cached_dict = cast("dict[str, int]", cached_result)
+                return FlextResult[dict[str, int]].ok(cached_dict)
 
             self._logger.info(
                 "Starting objectClass distribution analysis",
@@ -246,7 +254,7 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
                 # Track objectClass combinations
                 if len(object_classes) > 1:
                     combination_key = "|".join(
-                        sorted(oc.lower() for oc in object_classes)
+                        sorted(oc.lower() for oc in object_classes),
                     )
                     combination_patterns[combination_key] = (
                         combination_patterns.get(combination_key, 0) + 1
@@ -316,7 +324,8 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
             return FlextResult[dict[str, int]].fail(f"ObjectClass analysis error: {e}")
 
     def get_dn_depth_analysis(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[dict[str, int]]:
         """Advanced DN depth analysis with pattern recognition."""
         start_time = time.time()
@@ -325,12 +334,14 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
             cache_key = f"dn_depth:{len(entries)}:{self._get_entries_hash(entries)}"
 
             cached_result = self._get_from_analytics_cache(cache_key)
-            if cached_result is not None:
+            if cached_result is not None and isinstance(cached_result, dict):
                 self._analytics_stats["cached_results"] += 1
-                return FlextResult[dict[str, int]].ok(cached_result)  # type: ignore[arg-type]
+                cached_dict = cast("dict[str, int]", cached_result)
+                return FlextResult[dict[str, int]].ok(cached_dict)
 
             self._logger.info(
-                "Starting DN depth analysis", extra={"entry_count": len(entries)}
+                "Starting DN depth analysis",
+                extra={"entry_count": len(entries)},
             )
 
             depth_distribution: dict[str, int] = {}
@@ -424,7 +435,8 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
             return FlextResult[dict[str, int]].fail(f"DN depth analysis error: {e}")
 
     def analyze_patterns(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[dict[str, object]]:
         """Advanced pattern analysis with machine learning-inspired insights."""
         start_time = time.time()
@@ -435,9 +447,10 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
             )
 
             cached_result = self._get_from_analytics_cache(cache_key)
-            if cached_result is not None:
+            if cached_result is not None and isinstance(cached_result, dict):
                 self._analytics_stats["cached_results"] += 1
-                return FlextResult[dict[str, object]].ok(cached_result)  # type: ignore[arg-type]
+                cached_dict = cast("dict[str, object]", cached_result)
+                return FlextResult[dict[str, object]].ok(cached_dict)
 
             self._logger.info(
                 "Starting advanced pattern analysis",
@@ -484,7 +497,7 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
                 "entry_count": len(entries),
                 "pattern_confidence": self._calculate_pattern_confidence(patterns),
                 "analysis_completeness": self._calculate_analysis_completeness(
-                    patterns
+                    patterns,
                 ),
             }
 
@@ -501,12 +514,16 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
                 extra={
                     "entry_count": len(entries),
                     "patterns_detected": len(patterns),
-                    "anomalies_found": len(patterns.get("anomalies", {})),
-                    "insights_generated": len(patterns.get("insights", {})),
+                    "anomalies_found": len(
+                        cast("dict[str, object]", patterns.get("anomalies", {})),
+                    ),
+                    "insights_generated": len(
+                        cast("dict[str, object]", patterns.get("insights", {})),
+                    ),
                     "analysis_time_seconds": analysis_time,
-                    "pattern_confidence": patterns["analysis_metadata"][
-                        "pattern_confidence"
-                    ],
+                    "pattern_confidence": cast(
+                        "dict[str, object]", patterns["analysis_metadata"],
+                    )["pattern_confidence"],
                 },
             )
 
@@ -528,7 +545,8 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
             return FlextResult[dict[str, object]].fail(f"Pattern analysis error: {e}")
 
     def get_analytics_insights(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[dict[str, object]]:
         """Generate comprehensive analytics insights and recommendations."""
         try:
@@ -538,7 +556,7 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
             dn_analysis = self.get_dn_depth_analysis(entries)
             pattern_analysis = self.analyze_patterns(entries)
 
-            insights = {
+            insights: dict[str, object] = {
                 "summary": {
                     "total_entries": len(entries),
                     "analysis_timestamp": time.time(),
@@ -566,7 +584,7 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
         except Exception as e:
             self._logger.exception("Analytics insights generation failed")
             return FlextResult[dict[str, object]].fail(
-                f"Insights generation error: {e}"
+                f"Insights generation error: {e}",
             )
 
     def get_analytics_metrics(self) -> dict[str, object]:
@@ -614,12 +632,13 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
     def health_check(self) -> FlextResult[dict[str, object]]:
         """Perform comprehensive health check of analytics service."""
         try:
-            health_status = {
+            health_status: dict[str, object] = {
                 "service": "FlextLdifAnalyticsService",
                 "status": "healthy",
                 "timestamp": time.time(),
                 "checks": {},
             }
+            checks = health_status["checks"] = {}
 
             # Performance check
             success_rate = self._calculate_success_rate()
@@ -629,7 +648,7 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
             elif success_rate < FlextLdifConstants.DEGRADED_SUCCESS_RATE_THRESHOLD:
                 performance_status = "unhealthy"
 
-            health_status["checks"]["performance"] = {
+            checks["performance"] = {
                 "status": performance_status,
                 "success_rate": success_rate,
                 "total_analyses": self._total_analyses,
@@ -640,14 +659,14 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
             if len(self._analytics_cache) > self._max_cache_size * 0.9:
                 cache_status = "warning"
 
-            health_status["checks"]["caching"] = {
+            checks["caching"] = {
                 "status": cache_status,
                 "cache_usage": len(self._analytics_cache),
                 "max_cache_size": self._max_cache_size,
             }
 
             # Intelligence features check
-            health_status["checks"]["intelligence"] = {
+            checks["intelligence"] = {
                 "status": "healthy",
                 "pattern_detections": self._pattern_detections,
                 "anomaly_detections": self._anomaly_detections,
@@ -689,7 +708,7 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
         """Execute analytics service operation."""
         self._logger.debug("Analytics service execute called")
         return FlextResult[dict[str, object]].ok(
-            {"service": "analytics", "status": "ready"}
+            {"service": "analytics", "status": "ready"},
         )
 
     # Private helper methods for advanced analytics
@@ -704,7 +723,8 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
         return str(hash(tuple(sample_dns)))
 
     def _classify_entry_types(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> dict[str, int]:
         """Classify entries into detailed types."""
         types = {
@@ -734,7 +754,7 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
                 else:
                     types["user_accounts"] += 1
             elif object_classes.intersection(
-                {"group", "groupofnames", "groupofuniquenames"}
+                {"group", "groupofnames", "groupofuniquenames"},
             ):
                 if "security" in entry.dn.value.lower():
                     types["security_groups"] += 1
@@ -750,7 +770,8 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
         return types
 
     def _calculate_data_quality_metrics(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> dict[str, int]:
         """Calculate data quality metrics."""
         if not entries:
@@ -783,12 +804,13 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
             "entries_with_empty_attributes": empty_attributes,
             "entries_missing_required_attributes": missing_required_attrs,
             "data_quality_score": int(
-                100 * (1 - (empty_attributes + missing_required_attrs) / len(entries))
+                100 * (1 - (empty_attributes + missing_required_attrs) / len(entries)),
             ),
         }
 
     def _detect_structural_patterns(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> dict[str, int]:
         """Detect structural patterns in entries."""
         patterns = {
@@ -797,7 +819,7 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
             "mixed_structure": 0,
         }
 
-        depth_counts = {}
+        depth_counts: dict[int, int] = {}
         for entry in entries:
             depth = len(entry.dn.value.split(","))
             depth_counts[depth] = depth_counts.get(depth, 0) + 1
@@ -816,7 +838,8 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
         return patterns
 
     def _analyze_naming_patterns(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> dict[str, int]:
         """Analyze naming patterns in DNs."""
         patterns = {
@@ -840,7 +863,8 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
         return patterns
 
     def _analyze_attribute_patterns(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> dict[str, int]:
         """Analyze attribute usage patterns."""
         attr_usage: dict[str, int] = {}
@@ -868,7 +892,8 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
         }
 
     def _analyze_structural_patterns(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> dict[str, int]:
         """Analyze structural hierarchy patterns."""
         base_patterns: dict[str, int] = {}
@@ -886,7 +911,8 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
         }
 
     def _perform_anomaly_detection(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> dict[str, list[str]]:
         """Perform anomaly detection on entries."""
         anomalies: dict[str, list[str]] = {
@@ -917,7 +943,9 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
         return anomalies
 
     def _generate_insights(
-        self, _entries: list[FlextLdifModels.Entry], patterns: dict[str, object]
+        self,
+        _entries: list[FlextLdifModels.Entry],
+        patterns: dict[str, object],
     ) -> dict[str, str]:
         """Generate intelligent insights from analysis patterns."""
         insights = {}
@@ -944,14 +972,15 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
         return insights
 
     def _generate_recommendations(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> list[str]:
         """Generate recommendations based on analysis."""
         recommendations = []
 
         if len(entries) > FlextLdifConstants.LARGE_DATASET_THRESHOLD:
             recommendations.append(
-                "Consider implementing data archiving for large dataset"
+                "Consider implementing data archiving for large dataset",
             )
 
         # Check for naming consistency
@@ -962,7 +991,9 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
         return recommendations
 
     def _detect_objectclass_anomalies(
-        self, distribution: dict[str, int], total_entries: int
+        self,
+        distribution: dict[str, int],
+        total_entries: int,
     ) -> list[str]:
         """Detect anomalies in objectClass distribution."""
         anomalies = []
@@ -1018,7 +1049,8 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
         return completed_sections / len(expected_sections)
 
     def _calculate_data_quality_score(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> int:
         """Calculate overall data quality score."""
         if not entries:
@@ -1027,7 +1059,9 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
         quality_metrics = self._calculate_data_quality_metrics(entries)
         return quality_metrics.get("data_quality_score", 100)
 
-    def _get_from_analytics_cache(self, cache_key: str) -> object | None:
+    def _get_from_analytics_cache(
+        self, cache_key: str,
+    ) -> dict[str, int] | dict[str, object] | None:
         """Get result from analytics cache if not expired."""
         if cache_key in self._analytics_cache:
             result, timestamp = self._analytics_cache[cache_key]
@@ -1036,7 +1070,9 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
             del self._analytics_cache[cache_key]
         return None
 
-    def _store_in_analytics_cache(self, cache_key: str, result: object) -> None:
+    def _store_in_analytics_cache(
+        self, cache_key: str, result: dict[str, int] | dict[str, object],
+    ) -> None:
         """Store result in analytics cache with cleanup if needed."""
         if len(self._analytics_cache) >= self._max_cache_size:
             self._cleanup_analytics_cache()
@@ -1078,7 +1114,8 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
         self._total_analyses += 1
 
         self._logger.warning(
-            "Analytics analysis failure", extra={"failure_type": failure_type}
+            "Analytics analysis failure",
+            extra={"failure_type": failure_type},
         )
 
     def _calculate_success_rate(self) -> float:
@@ -1086,7 +1123,8 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
         if self._total_analyses == 0:
             return 1.0
         return max(
-            0.0, (self._total_analyses - self._analysis_failures) / self._total_analyses
+            0.0,
+            (self._total_analyses - self._analysis_failures) / self._total_analyses,
         )
 
 

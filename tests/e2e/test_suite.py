@@ -130,7 +130,7 @@ member: cn=John Doe,ou=people,dc=example,dc=com
         # Step 2: Validate using services instead of core wrapper
         validator_service = FlextLdifServices().validator
         validated_entries = FlextResult.unwrap_or_raise(
-            validator_service.validate_entries(entries)
+            validator_service.validate_entries(entries),
         )
         assert len(validated_entries) == 6
 
@@ -228,7 +228,7 @@ mail: user{i:03d}@example.com
 
         # Test filtering performance
         filter_result = api._filters.by_object_class(
-            parse_result.value, "inetOrgPerson"
+            parse_result.value, "inetOrgPerson",
         )
         assert filter_result.is_success
         assert filter_result.value is not None

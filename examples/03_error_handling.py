@@ -91,7 +91,7 @@ without proper structure
         return f"Successfully processed {len(filtered_entries)} person entries"
 
     def _validate_entries(
-        self, entries: list[FlextLdifModels.Entry]
+        self, entries: list[FlextLdifModels.Entry],
     ) -> FlextTypes.Core.StringList:
         """Validate entries and return errors."""
         validation_errors: FlextTypes.Core.StringList = []
@@ -101,7 +101,7 @@ without proper structure
                 validation_result = entry.validate_business_rules()
                 if validation_result.is_failure:
                     validation_errors.append(
-                        validation_result.error or "Validation failed"
+                        validation_result.error or "Validation failed",
                     )
         return validation_errors
 
@@ -131,7 +131,7 @@ def demonstrate_exception_handling() -> None:
     def _test_validation_error() -> FlextResult[None]:
         msg = "Test validation error"
         return FlextLdifExceptions.validation_error(
-            msg, dn="cn=test,dc=example,dc=com", validation_rule="empty field"
+            msg, dn="cn=test,dc=example,dc=com", validation_rule="empty field",
         )
 
     validation_result = _test_validation_error()

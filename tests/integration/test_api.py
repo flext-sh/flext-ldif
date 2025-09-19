@@ -50,10 +50,11 @@ class TestAdvancedAPIFeatures:
                     "dn": f"cn=user{i:03d},ou=people,dc=example,dc=com",
                     "attributes": {
                         "cn": [f"user{i:03d}"],
+                        "sn": [f"User{i:03d}"],  # Add required sn attribute for person objectClass
                         "objectClass": ["person", "inetOrgPerson"],
                         "mail": [f"user{i:03d}@example.com"],
                     },
-                }
+                },
             )
             entries.append(entry)
 
@@ -84,7 +85,7 @@ cn invalid"""
 
         # Test with invalid file path
         result = api_with_config._operations.parse_file(
-            Path("/totally/invalid/path/file.ldif")
+            Path("/totally/invalid/path/file.ldif"),
         )
         assert not result.is_success
 
@@ -124,7 +125,7 @@ objectClass: groupOfNames
         assert len(inet_result.value) == 1
 
         ou_result = api_with_config._filters.by_object_class(
-            entries, "organizationalUnit"
+            entries, "organizationalUnit",
         )
         assert ou_result.is_success
         assert len(ou_result.value) == 1
@@ -186,7 +187,7 @@ objectClass: person
                     "cn": ["user000"],
                     "objectClass": ["person"],
                 },
-            }
+            },
         )
 
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
@@ -277,6 +278,7 @@ objectClass: person
         content_parts = [
             f"""dn: cn=user{i:02d},ou=people,dc=example,dc=com
 cn: user{i:02d}
+sn: User{i:02d}
 objectClass: person
 objectClass: inetOrgPerson
 mail: user{i:02d}@example.com
@@ -293,7 +295,7 @@ mail: user{i:02d}@example.com
 
         # Test validation performance
         validate_result = api_with_config._operations.validate_entries(
-            parse_result.value
+            parse_result.value,
         )
         assert validate_result.is_success
 

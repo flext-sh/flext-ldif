@@ -140,7 +140,7 @@ sn: User
         # Test validation using services instead of core wrapper
         validator_service = FlextLdifServices().validator
         validated_entries = FlextResult.unwrap_or_raise(
-            validator_service.validate_entries(entries)
+            validator_service.validate_entries(entries),
         )
         assert len(validated_entries) == 1
 
@@ -261,7 +261,7 @@ member: cn=admin,ou=people,dc=example,dc=com
 
         admin_group = next(e for e in entries if "cn=admins" in e.dn.value)
         assert admin_group.get_attribute("member") == [
-            "cn=admin,ou=people,dc=example,dc=com"
+            "cn=admin,ou=people,dc=example,dc=com",
         ]
 
     def test_empty_ldif_content(self) -> None:
@@ -271,7 +271,7 @@ member: cn=admin,ou=people,dc=example,dc=com
         assert len(empty_entries) == 0
 
         whitespace_entries = FlextResult.unwrap_or_raise(
-            handler.parse_ldif("   \n\n   ")
+            handler.parse_ldif("   \n\n   "),
         )
         assert len(whitespace_entries) == 0
 

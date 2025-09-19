@@ -178,7 +178,7 @@ class FileManager:
     @classmethod
     @contextmanager
     def temporary_files(
-        cls, samples: FlextTypes.Core.Headers
+        cls, samples: FlextTypes.Core.Headers,
     ) -> Generator[dict[str, Path]]:
         """Context manager for temporary files."""
         with cls() as manager:

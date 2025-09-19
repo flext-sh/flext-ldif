@@ -265,7 +265,7 @@ class TestParserIntegrationReal:
     """Integration tests with real parser and other services."""
 
     def test_parser_with_real_validator_integration(
-        self, integration_services: FlextTypes.Core.Dict
+        self, integration_services: FlextTypes.Core.Dict,
     ) -> None:
         """Test parser integrated with real validator service."""
         parser = integration_services["parser"]
@@ -292,7 +292,7 @@ class TestParserIntegrationReal:
             TestValidators.assert_successful_result(validation_result)
 
     def test_parser_with_real_writer_roundtrip(
-        self, integration_services: FlextTypes.Core.Dict
+        self, integration_services: FlextTypes.Core.Dict,
     ) -> None:
         """Test parser → writer → parser roundtrip with real services."""
         parser = integration_services["parser"]

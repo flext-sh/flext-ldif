@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
+from typing import cast
 
 from flext_core import FlextContainer, FlextLogger, FlextResult
 from flext_ldif.analytics_service import FlextLdifAnalyticsService
@@ -16,6 +17,7 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.dispatcher import FlextLdifDispatcher
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.parser_service import FlextLdifParserService
+from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.repository_service import FlextLdifRepositoryService
 from flext_ldif.services import FlextLdifServices
 from flext_ldif.validator_service import FlextLdifValidatorService
@@ -75,7 +77,13 @@ class FlextLdifAPI:
 
         if FlextLdifConstants.FeatureFlags.dispatcher_enabled():
             try:
-                self._dispatcher = FlextLdifDispatcher.build_dispatcher(self._services)
+                # Fix arg-type issue: cast services to protocol
+                dispatcher_services = cast(
+                    "FlextLdifProtocols.ServiceContainerProtocol", self._services,
+                )
+                self._dispatcher = FlextLdifDispatcher.build_dispatcher(
+                    dispatcher_services,
+                )
                 self._logger.info(
                     "dispatcher_enabled",
                     api=self.__class__.__name__,
@@ -102,7 +110,7 @@ class FlextLdifAPI:
                 max_failures=self._max_dispatcher_failures,
             )
             return FlextResult[object].fail(
-                f"Dispatcher circuit breaker open: {self._dispatcher_failures} failures"
+                f"Dispatcher circuit breaker open: {self._dispatcher_failures} failures",
             )
 
         try:
@@ -148,7 +156,8 @@ class FlextLdifAPI:
             self._config = api_instance._config
 
         def parse_string(
-            self, content: str
+            self,
+            content: str,
         ) -> FlextResult[list[FlextLdifModels.Entry]]:
             """Parse LDIF content using enhanced railway-oriented programming with performance tracking."""
             # Input validation with early return
@@ -181,7 +190,19 @@ class FlextLdifAPI:
                         elapsed_ms=elapsed,
                         operation_count=self._api._operation_count,
                     )
-                    return dispatch_result
+                    # Fix return-value issue: extract entries from dispatcher result
+                    dispatcher_output = dispatch_result.unwrap()
+                    if (
+                        isinstance(dispatcher_output, dict)
+                        and "entries" in dispatcher_output
+                    ):
+                        entries = cast(
+                            "list[FlextLdifModels.Entry]", dispatcher_output["entries"],
+                        )
+                        return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+                    return FlextResult[list[FlextLdifModels.Entry]].fail(
+                        "Invalid dispatcher response format",
+                    )
 
                 self._logger.warning(
                     "dispatcher_parse_string_failed",
@@ -230,11 +251,12 @@ class FlextLdifAPI:
                     elapsed_ms=elapsed,
                 )
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Parse operation failed: {exc}"
+                    f"Parse operation failed: {exc}",
                 )
 
         def parse_file(
-            self, file_path: str | Path
+            self,
+            file_path: str | Path,
         ) -> FlextResult[list[FlextLdifModels.Entry]]:
             """Parse LDIF file with enhanced validation and performance tracking."""
             file_path_obj = Path(file_path)
@@ -268,7 +290,7 @@ class FlextLdifAPI:
                         max_size_bytes=max_size_bytes,
                     )
                     return FlextResult[list[FlextLdifModels.Entry]].fail(
-                        f"File too large: {file_size} bytes, limit: {max_size_bytes} bytes"
+                        f"File too large: {file_size} bytes, limit: {max_size_bytes} bytes",
                     )
 
                 self._logger.info(
@@ -285,7 +307,7 @@ class FlextLdifAPI:
                     error=str(e),
                 )
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Cannot access file: {e}"
+                    f"Cannot access file: {e}",
                 )
 
             # Try dispatcher path first
@@ -303,7 +325,19 @@ class FlextLdifAPI:
                         elapsed_ms=elapsed,
                         operation_count=self._api._operation_count,
                     )
-                    return dispatch_result
+                    # Fix return-value issue: extract entries from dispatcher result
+                    dispatcher_output = dispatch_result.unwrap()
+                    if (
+                        isinstance(dispatcher_output, dict)
+                        and "entries" in dispatcher_output
+                    ):
+                        entries = cast(
+                            "list[FlextLdifModels.Entry]", dispatcher_output["entries"],
+                        )
+                        return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+                    return FlextResult[list[FlextLdifModels.Entry]].fail(
+                        "Invalid dispatcher response format",
+                    )
 
                 self._logger.warning(
                     "dispatcher_parse_file_failed",
@@ -314,7 +348,7 @@ class FlextLdifAPI:
 
             # Fallback to direct service
             try:
-                result = self._api._services.parser.parse_file(str(file_path_obj))
+                result = self._api._services.parser.parse_ldif_file(str(file_path_obj))
                 if result.is_failure:
                     elapsed = time.time() - start_time
                     self._logger.error(
@@ -326,23 +360,26 @@ class FlextLdifAPI:
                     return result
 
                 # Validate and track success
-                validated_result = result.flat_map(self._validate_entry_count)
-                if validated_result.is_success:
-                    entries = validated_result.unwrap()
-                    elapsed = time.time() - start_time
-                    self._api._operation_count += 1
-                    self._api._total_entries_processed += len(entries)
+                entries = result.unwrap()
+                validation_result = self._validate_entry_count(entries)
+                if validation_result.is_failure:
+                    return validation_result
 
-                    self._logger.info(
-                        "parse_file_success",
-                        file_path=str(file_path_obj),
-                        entries_count=len(entries),
-                        file_size=file_size,
-                        elapsed_ms=elapsed,
-                        total_entries_processed=self._api._total_entries_processed,
-                    )
+                validated_entries = validation_result.unwrap()
+                elapsed = time.time() - start_time
+                self._api._operation_count += 1
+                self._api._total_entries_processed += len(validated_entries)
 
-                return validated_result
+                self._logger.info(
+                    "parse_file_success",
+                    file_path=str(file_path_obj),
+                    entries_count=len(validated_entries),
+                    file_size=file_size,
+                    elapsed_ms=elapsed,
+                    total_entries_processed=self._api._total_entries_processed,
+                )
+
+                return FlextResult[list[FlextLdifModels.Entry]].ok(validated_entries)
 
             except Exception as exc:
                 elapsed = time.time() - start_time
@@ -354,11 +391,12 @@ class FlextLdifAPI:
                     elapsed_ms=elapsed,
                 )
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Parse file operation failed: {exc}"
+                    f"Parse file operation failed: {exc}",
                 )
 
         def write_string(
-            self, entries: list[FlextLdifModels.Entry]
+            self,
+            entries: list[FlextLdifModels.Entry],
         ) -> FlextResult[str]:
             """Write entries to LDIF string format."""
             if not entries:
@@ -369,7 +407,15 @@ class FlextLdifAPI:
                     FlextLdifModels.WriteStringCommand(entries=entries),
                 )
                 if dispatch_result.is_success:
-                    return dispatch_result
+                    # Fix return-value issue: extract content from dispatcher result
+                    dispatcher_output = dispatch_result.unwrap()
+                    if (
+                        isinstance(dispatcher_output, dict)
+                        and "content" in dispatcher_output
+                    ):
+                        content = cast("str", dispatcher_output["content"])
+                        return FlextResult[str].ok(content)
+                    return FlextResult[str].fail("Invalid dispatcher response format")
 
                 self._logger.warning(
                     "dispatcher_write_string_failed",
@@ -379,7 +425,9 @@ class FlextLdifAPI:
             return self._api._services.writer.write_entries_to_string(entries)
 
         def write_file(
-            self, entries: list[FlextLdifModels.Entry], file_path: str | Path
+            self,
+            entries: list[FlextLdifModels.Entry],
+            file_path: str | Path,
         ) -> FlextResult[bool]:
             """Write entries to LDIF file with validation."""
             if not entries:
@@ -388,11 +436,20 @@ class FlextLdifAPI:
             if self._api._dispatcher is not None:
                 dispatch_result = self._api._dispatch_command(
                     FlextLdifModels.WriteFileCommand(
-                        entries=entries, file_path=str(file_path)
+                        entries=entries,
+                        file_path=str(file_path),
                     ),
                 )
                 if dispatch_result.is_success:
-                    return dispatch_result
+                    # Fix return-value issue: extract success status from dispatcher result
+                    dispatcher_output = dispatch_result.unwrap()
+                    if (
+                        isinstance(dispatcher_output, dict)
+                        and "success" in dispatcher_output
+                    ):
+                        success = cast("bool", dispatcher_output["success"])
+                        return FlextResult[bool].ok(success)
+                    return FlextResult[bool].fail("Invalid dispatcher response format")
 
                 self._logger.warning(
                     "dispatcher_write_file_failed",
@@ -401,7 +458,8 @@ class FlextLdifAPI:
                 )
 
             write_result = self._api._services.writer.write_entries_to_file(
-                entries, str(file_path)
+                entries,
+                str(file_path),
             )
             if write_result.is_success:
                 self._logger.debug(f"Wrote {len(entries)} entries to {file_path}")
@@ -413,7 +471,8 @@ class FlextLdifAPI:
             return FlextResult[bool].fail(error_msg)
 
         def validate_entries(
-            self, entries: list[FlextLdifModels.Entry]
+            self,
+            entries: list[FlextLdifModels.Entry],
         ) -> FlextResult[bool]:
             """Validate multiple LDIF entries."""
             if not entries:
@@ -424,7 +483,15 @@ class FlextLdifAPI:
                     FlextLdifModels.ValidateEntriesCommand(entries=entries),
                 )
                 if dispatch_result.is_success:
-                    return dispatch_result
+                    # Fix return-value issue: extract validation status from dispatcher result
+                    dispatcher_output = dispatch_result.unwrap()
+                    if (
+                        isinstance(dispatcher_output, dict)
+                        and "valid" in dispatcher_output
+                    ):
+                        valid = cast("bool", dispatcher_output["valid"])
+                        return FlextResult[bool].ok(valid)
+                    return FlextResult[bool].fail("Invalid dispatcher response format")
 
                 self._logger.warning(
                     "dispatcher_validate_entries_failed",
@@ -448,7 +515,8 @@ class FlextLdifAPI:
             return FlextResult[bool].fail(error_msg)
 
         def _validate_entry_count(
-            self, entries: list[FlextLdifModels.Entry]
+            self,
+            entries: list[FlextLdifModels.Entry],
         ) -> FlextResult[list[FlextLdifModels.Entry]]:
             """Validate entry count against configuration limits."""
             max_entries = self._config.ldif_max_entries
@@ -466,37 +534,48 @@ class FlextLdifAPI:
             self._logger = api_instance._logger
 
         def by_object_class(
-            self, entries: list[FlextLdifModels.Entry], object_class: str
+            self,
+            entries: list[FlextLdifModels.Entry],
+            object_class: str,
         ) -> FlextResult[list[FlextLdifModels.Entry]]:
             """Filter entries by objectClass attribute."""
             return self._api._services.repository.filter_entries_by_object_class(
-                entries, object_class
+                entries,
+                object_class,
             )
 
         def by_attribute(
-            self, entries: list[FlextLdifModels.Entry], attribute: str, value: str
+            self,
+            entries: list[FlextLdifModels.Entry],
+            attribute: str,
+            value: str,
         ) -> FlextResult[list[FlextLdifModels.Entry]]:
             """Filter entries by specific attribute value."""
             return self._api._services.repository.filter_entries_by_attribute(
-                entries, attribute, value
+                entries,
+                attribute,
+                value,
             )
 
         def persons(
-            self, entries: list[FlextLdifModels.Entry]
+            self,
+            entries: list[FlextLdifModels.Entry],
         ) -> FlextResult[list[FlextLdifModels.Entry]]:
             """Filter person entries."""
             filtered = [entry for entry in entries if entry.is_person_entry()]
             return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
 
         def groups(
-            self, entries: list[FlextLdifModels.Entry]
+            self,
+            entries: list[FlextLdifModels.Entry],
         ) -> FlextResult[list[FlextLdifModels.Entry]]:
             """Filter group entries."""
             filtered = [entry for entry in entries if entry.is_group_entry()]
             return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
 
         def organizational_units(
-            self, entries: list[FlextLdifModels.Entry]
+            self,
+            entries: list[FlextLdifModels.Entry],
         ) -> FlextResult[list[FlextLdifModels.Entry]]:
             """Filter organizational unit entries."""
             filtered = [
@@ -514,7 +593,8 @@ class FlextLdifAPI:
             return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
 
         def valid_entries(
-            self, entries: list[FlextLdifModels.Entry]
+            self,
+            entries: list[FlextLdifModels.Entry],
         ) -> FlextResult[list[FlextLdifModels.Entry]]:
             """Filter only valid entries."""
             filtered = []
@@ -535,25 +615,36 @@ class FlextLdifAPI:
             self._logger = api_instance._logger
 
         def entry_patterns(
-            self, entries: list[FlextLdifModels.Entry]
+            self,
+            entries: list[FlextLdifModels.Entry],
         ) -> FlextResult[dict[str, int]]:
             """Analyze patterns in LDIF entries."""
-            return self._api._services.analytics.analyze_patterns(entries)
+            # Fix return-value issue: use cast to ensure proper type safety
+            result = self._api._services.analytics.analyze_patterns(entries)
+            if result.is_success:
+                patterns = cast("dict[str, int]", result.unwrap())
+                return FlextResult[dict[str, int]].ok(patterns)
+            return FlextResult[dict[str, int]].fail(
+                result.error or "Pattern analysis failed",
+            )
 
         def object_class_distribution(
-            self, entries: list[FlextLdifModels.Entry]
+            self,
+            entries: list[FlextLdifModels.Entry],
         ) -> FlextResult[dict[str, int]]:
             """Get distribution of objectClass types."""
             return self._api._services.analytics.get_objectclass_distribution(entries)
 
         def dn_depth_analysis(
-            self, entries: list[FlextLdifModels.Entry]
+            self,
+            entries: list[FlextLdifModels.Entry],
         ) -> FlextResult[dict[str, int]]:
             """Analyze DN depth distribution."""
             return self._api._services.analytics.get_dn_depth_analysis(entries)
 
         def entry_statistics(
-            self, entries: list[FlextLdifModels.Entry]
+            self,
+            entries: list[FlextLdifModels.Entry],
         ) -> FlextResult[dict[str, int]]:
             """Get comprehensive entry statistics."""
             return self._api._services.repository.get_statistics(entries)
@@ -785,7 +876,7 @@ class FlextLdifAPI:
         )
 
     class ServiceContainer:
-        """Nested container for service instances."""
+        """Nested container for service instances implementing ServiceContainerProtocol."""
 
         def __init__(
             self,
@@ -817,15 +908,17 @@ class FlextLdifAPI:
         return (
             self._get_files_to_process(directory_path, file_pattern, file_path)
             .flat_map(
-                lambda files: self._process_and_filter_files(files, max_file_size_mb)
+                lambda files: self._process_and_filter_files(files, max_file_size_mb),
             )
             .tap(
-                lambda files: self._logger.debug(f"Discovered {len(files)} LDIF files")
+                lambda files: self._logger.debug(f"Discovered {len(files)} LDIF files"),
             )
         )
 
     def _process_and_filter_files(
-        self, files_to_process: list[Path], max_file_size_mb: int
+        self,
+        files_to_process: list[Path],
+        max_file_size_mb: int,
     ) -> FlextResult[list[Path]]:
         """Filter and sort discovered files."""
         filtered_files = self._filter_files_by_size(files_to_process, max_file_size_mb)
@@ -837,7 +930,8 @@ class FlextLdifAPI:
         return FlextResult[list[Path]].ok(sorted_files)
 
     def filter_change_records(
-        self, entries: list[FlextLdifModels.Entry] | None
+        self,
+        entries: list[FlextLdifModels.Entry] | None,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries that represent change records."""
         if entries is None:
@@ -848,7 +942,8 @@ class FlextLdifAPI:
         return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
 
     def sort_hierarchically(
-        self, entries: list[FlextLdifModels.Entry] | None
+        self,
+        entries: list[FlextLdifModels.Entry] | None,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Sort entries hierarchically by DN depth."""
         if entries is None:
@@ -956,7 +1051,8 @@ class FlextLdifAPI:
 
     # Core API methods - direct access to operations
     def parse_file(
-        self, file_path: str | Path
+        self,
+        file_path: str | Path,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Parse LDIF file."""
         return self._operations.parse_file(file_path)
@@ -966,7 +1062,8 @@ class FlextLdifAPI:
         return self._operations.parse_string(content)
 
     def validate_entries(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[bool]:
         """Validate entries."""
         return self._operations.validate_entries(entries)
@@ -982,19 +1079,23 @@ class FlextLdifAPI:
         return self._operations.write_file(entries, file_path)
 
     def get_entry_statistics(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[dict[str, int]]:
         """Get entry statistics."""
         return self._analytics.entry_statistics(entries)
 
     def filter_persons(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter person entries."""
         return self._filters.persons(entries)
 
     def find_entry_by_dn(
-        self, entries: list[FlextLdifModels.Entry], dn: str
+        self,
+        entries: list[FlextLdifModels.Entry],
+        dn: str,
     ) -> FlextResult[FlextLdifModels.Entry | None]:
         """Find entry by DN."""
         for entry in entries:
@@ -1016,31 +1117,37 @@ class FlextLdifAPI:
         return self._operations.write_string(entries)
 
     def analyze(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[dict[str, int]]:
         """Analyze entries - convenience method."""
         return self._analytics.entry_statistics(entries)
 
     def filter_by_objectclass(
-        self, entries: list[FlextLdifModels.Entry], object_class: str
+        self,
+        entries: list[FlextLdifModels.Entry],
+        object_class: str,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter by objectClass - convenience method."""
         return self._filters.by_object_class(entries, object_class)
 
     def filter_groups(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter groups - convenience method."""
         return self._filters.groups(entries)
 
     def filter_organizational_units(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter organizational units - convenience method."""
         return self._filters.organizational_units(entries)
 
     def filter_valid(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter valid entries - convenience method."""
         return self._filters.valid_entries(entries)
@@ -1080,7 +1187,7 @@ class FlextLdifAPI:
         current_time = time.time()
         uptime = current_time - self._start_time
 
-        metrics = {
+        metrics: dict[str, object] = {
             "uptime_ms": uptime,
             "operation_count": self._operation_count,
             "total_entries_processed": self._total_entries_processed,
@@ -1159,7 +1266,7 @@ class FlextLdifAPI:
                 health_status.get("parser_healthy", False),
                 health_status.get("validator_healthy", False),
                 health_status.get("writer_healthy", False),
-            ]
+            ],
         )
 
         health_status["overall_healthy"] = overall_healthy
@@ -1173,8 +1280,13 @@ class FlextLdifAPI:
         if overall_healthy:
             return FlextResult[dict[str, object]].ok(health_status)
         return FlextResult[dict[str, object]].fail(
-            f"Health check failed: {health_status}"
+            f"Health check failed: {health_status}",
         )
+
+
+__all__ = [
+    "FlextLdifAPI",
+]
 
 
 __all__ = [

@@ -71,7 +71,7 @@ class TestFlextLdifTransformerService:
             {
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {"cn": ["test"], "objectClass": ["person"]},
-            }
+            },
         )
 
         def failing_transform(_entry: FlextLdifModels.Entry) -> FlextLdifModels.Entry:
@@ -242,7 +242,7 @@ class TestFlextLdifTransformerService:
             {
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {"cn": ["test"], "objectClass": ["person"]},
-            }
+            },
         )
 
         # Create an entry with DN that becomes empty after normalization (only whitespace/commas)
@@ -250,7 +250,7 @@ class TestFlextLdifTransformerService:
         problematic_entry = FlextLdifModels.Entry.model_construct(
             dn=FlextLdifModels.DistinguishedName.model_construct(value=" , , "),
             attributes=FlextLdifModels.LdifAttributes(
-                data={"cn": ["test"], "objectClass": ["person"]}
+                data={"cn": ["test"], "objectClass": ["person"]},
             ),
         )
 
@@ -324,7 +324,7 @@ class TestFlextLdifTransformerService:
         invalid_entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test"),  # Valid DN
             attributes=FlextLdifModels.LdifAttributes(
-                data={}
+                data={},
             ),  # Missing required objectClass will fail business rules validation
         )
 
@@ -348,7 +348,7 @@ class TestFlextLdifTransformerService:
             {
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {"cn": ["test"], "objectClass": ["person"]},
-            }
+            },
         )
 
         def invalid_transform(_entry: FlextLdifModels.Entry) -> FlextLdifModels.Entry:
@@ -356,7 +356,7 @@ class TestFlextLdifTransformerService:
             return FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(value="cn=test"),  # Valid DN
                 attributes=FlextLdifModels.LdifAttributes(
-                    data={}
+                    data={},
                 ),  # Missing required objectClass will fail business rules validation
             )
 
@@ -376,7 +376,7 @@ class TestFlextLdifTransformerService:
         invalid_entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test"),  # Valid DN
             attributes=FlextLdifModels.LdifAttributes(
-                data={}
+                data={},
             ),  # Missing required objectClass will fail business rules validation
         )
 
@@ -397,7 +397,7 @@ class TestFlextLdifTransformerService:
             {
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {"cn": ["test"], "objectClass": ["person"]},
-            }
+            },
         )
 
         # Mock the validate_business_rules method to fail on the second call
@@ -434,7 +434,7 @@ class TestFlextLdifTransformerService:
             {
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {"cn": ["test"], "objectClass": ["person"]},
-            }
+            },
         )
 
         def exception_transform(_entry: FlextLdifModels.Entry) -> FlextLdifModels.Entry:
@@ -459,7 +459,7 @@ class TestFlextLdifTransformerService:
             {
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {"cn": ["test"], "objectClass": ["person"]},
-            }
+            },
         )
 
         # Mock the validate_business_rules method to raise an exception

@@ -370,7 +370,7 @@ def ldif_test_entries() -> list[dict[str, Collection[str] | str]]:
                 "sn": [
                     user.get("name", "User").split()[-1]
                     if " " in user.get("name", "")
-                    else "User"
+                    else "User",
                 ],
                 "mail": [user.get("email", f"test{i}@example.com")],
                 "uid": [f"testuser{i}"],
@@ -388,7 +388,7 @@ def ldif_test_entries() -> list[dict[str, Collection[str] | str]]:
                 "description": ["Test group for LDIF processing"],
                 "member": [entry["dn"] for entry in entries],
             },
-        }
+        },
     )
 
     return entries

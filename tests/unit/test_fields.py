@@ -80,14 +80,14 @@ class TestAttributeNameField:
     def test_attribute_name_field_default_parameters(self) -> None:
         """Test attribute_name_field with default parameters."""
         field = Field(
-            ..., min_length=1, max_length=255, description="LDAP Attribute Name"
+            ..., min_length=1, max_length=255, description="LDAP Attribute Name",
         )
 
         assert isinstance(field, FieldInfo)
         assert field.description == "LDAP Attribute Name"
         metadata = field.metadata
         max_len_constraint = next(
-            (m for m in metadata if hasattr(m, "max_length")), None
+            (m for m in metadata if hasattr(m, "max_length")), None,
         )
         assert max_len_constraint is not None
         assert max_len_constraint.max_length == 255
@@ -99,7 +99,7 @@ class TestAttributeNameField:
         assert field.description == "Custom Attribute"
         metadata = field.metadata
         max_len_constraint = next(
-            (m for m in metadata if hasattr(m, "max_length")), None
+            (m for m in metadata if hasattr(m, "max_length")), None,
         )
         assert max_len_constraint is not None
         assert max_len_constraint.max_length == 50
@@ -206,14 +206,14 @@ class TestObjectClassField:
     def test_object_class_field_default_parameters(self) -> None:
         """Test object_class_field with default parameters."""
         field = Field(
-            ..., min_length=1, max_length=255, description="LDAP Object Class"
+            ..., min_length=1, max_length=255, description="LDAP Object Class",
         )
 
         assert isinstance(field, FieldInfo)
         assert field.description == "LDAP Object Class"
         metadata = field.metadata
         max_len_constraint = next(
-            (m for m in metadata if hasattr(m, "max_length")), None
+            (m for m in metadata if hasattr(m, "max_length")), None,
         )
         assert max_len_constraint is not None
         assert max_len_constraint.max_length == 255

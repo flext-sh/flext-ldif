@@ -45,7 +45,7 @@ class FlextLdifTransformerService:
                 entry_validation = entry.validate_business_rules()
                 if entry_validation.is_failure:
                     return FlextResult[list[FlextLdifModels.Entry]].fail(
-                        f"Entry validation failed before transformation: {entry_validation.error}"
+                        f"Entry validation failed before transformation: {entry_validation.error}",
                     )
 
                 # Apply transformation function - handle external function exceptions
@@ -53,14 +53,14 @@ class FlextLdifTransformerService:
                     transformed_entry = transform_func(entry)
                 except Exception as e:
                     return FlextResult[list[FlextLdifModels.Entry]].fail(
-                        f"Transform error: {e}"
+                        f"Transform error: {e}",
                     )
 
                 # Validate transformed entry
                 transformed_validation = transformed_entry.validate_business_rules()
                 if transformed_validation.is_failure:
                     return FlextResult[list[FlextLdifModels.Entry]].fail(
-                        f"Transformed entry validation failed: {transformed_validation.error}"
+                        f"Transformed entry validation failed: {transformed_validation.error}",
                     )
 
                 transformed_entries.append(transformed_entry)
@@ -68,11 +68,11 @@ class FlextLdifTransformerService:
             return FlextResult[list[FlextLdifModels.Entry]].ok(transformed_entries)
         except Exception as e:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
-                f"Transform error: {e}"
+                f"Transform error: {e}",
             )
 
     def normalize_dns(
-        self, entries: list[FlextLdifModels.Entry]
+        self, entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Normalize DN formats in entries.
 
@@ -94,11 +94,11 @@ class FlextLdifTransformerService:
                 entry_validation = entry.validate_business_rules()
                 if entry_validation.is_failure:
                     return FlextResult[list[FlextLdifModels.Entry]].fail(
-                        f"Entry validation failed before normalization: {entry_validation.error}"
+                        f"Entry validation failed before normalization: {entry_validation.error}",
                     )
             except Exception as e:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"DN normalization error: {e}"
+                    f"DN normalization error: {e}",
                 )
 
             # Normalize DN - remove extra spaces and validate
@@ -107,7 +107,7 @@ class FlextLdifTransformerService:
             ]
             if not dn_parts:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"DN normalization resulted in empty DN: {entry.dn.value}"
+                    f"DN normalization resulted in empty DN: {entry.dn.value}",
                 )
 
             normalized_dn = ",".join(dn_parts)
@@ -122,7 +122,7 @@ class FlextLdifTransformerService:
             normalized_validation = normalized_entry.validate_business_rules()
             if normalized_validation.is_failure:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Normalized entry validation failed: {normalized_validation.error}"
+                    f"Normalized entry validation failed: {normalized_validation.error}",
                 )
 
             normalized_entries.append(normalized_entry)

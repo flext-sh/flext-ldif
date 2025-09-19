@@ -153,7 +153,7 @@ class FlextLdifUtilities:
             validation_result = dn_model.validate_business_rules()
             if validation_result.is_failure:
                 return FlextResult[str].fail(
-                    validation_result.error or "Invalid DN format"
+                    validation_result.error or "Invalid DN format",
                 )
 
             return FlextResult[str].ok(normalized_dn)
@@ -294,7 +294,7 @@ class FlextLdifUtilities:
             return FlextResult[float].fail(f"File size calculation failed: {e}")
 
     def is_file_too_large(
-        self, file_path: str | Path, max_size_mb: int
+        self, file_path: str | Path, max_size_mb: int,
     ) -> FlextResult[bool]:
         """Check if file exceeds size limit using flext-core patterns.
 
@@ -321,7 +321,7 @@ class FlextLdifUtilities:
             return FlextResult[bool].fail(f"File size check failed: {e}")
 
     def create_entry_summary(
-        self, entry: FlextLdifModels.Entry
+        self, entry: FlextLdifModels.Entry,
     ) -> FlextResult[dict[str, str]]:
         """Create entry summary using flext-core patterns.
 
@@ -350,11 +350,11 @@ class FlextLdifUtilities:
 
         except Exception as e:
             return FlextResult[dict[str, str]].fail(
-                f"Entry summary creation failed: {e}"
+                f"Entry summary creation failed: {e}",
             )
 
     def convert_entry_to_dict(
-        self, entry: FlextLdifModels.Entry
+        self, entry: FlextLdifModels.Entry,
     ) -> FlextResult[dict[str, object]]:
         """Convert LDIF entry to dictionary format.
 
@@ -419,7 +419,7 @@ class FlextLdifUtilities:
             validation_result = dn_model.validate_business_rules()
             if validation_result.is_failure:
                 return FlextResult[str].fail(
-                    validation_result.error or "Invalid DN format"
+                    validation_result.error or "Invalid DN format",
                 )
 
             # Split by comma and take the last two components as base DN
@@ -435,7 +435,7 @@ class FlextLdifUtilities:
             return FlextResult[str].fail(f"Base DN extraction failed: {e}")
 
     def validate_ldif_entry_completeness(
-        self, entry: FlextLdifModels.Entry
+        self, entry: FlextLdifModels.Entry,
     ) -> FlextResult[bool]:
         """Validate if LDIF entry has all required components using FlextModels.
 
@@ -451,7 +451,7 @@ class FlextLdifUtilities:
             validation_result = entry.validate_business_rules()
             if validation_result.is_failure:
                 return FlextResult[bool].fail(
-                    validation_result.error or "Entry validation failed"
+                    validation_result.error or "Entry validation failed",
                 )
 
             return FlextResult[bool].ok(data=True)
@@ -459,7 +459,7 @@ class FlextLdifUtilities:
             return FlextResult[bool].fail(f"Entry completeness validation failed: {e}")
 
     def merge_ldif_entries(
-        self, entry1: FlextLdifModels.Entry, entry2: FlextLdifModels.Entry
+        self, entry1: FlextLdifModels.Entry, entry2: FlextLdifModels.Entry,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Merge two LDIF entries with same DN.
 
@@ -474,7 +474,7 @@ class FlextLdifUtilities:
         try:
             if entry1.dn.value != entry2.dn.value:
                 return FlextResult[FlextLdifModels.Entry].fail(
-                    "Cannot merge entries with different DNs"
+                    "Cannot merge entries with different DNs",
                 )
 
             # Create merged attributes dictionary

@@ -81,9 +81,9 @@ def main() -> None:
 
         # Validate domain rules with railway programming
         first_entry.validate_business_rules().tap(
-            lambda _: logger.info("   ✅ Domain validation passed")
+            lambda _: logger.info("   ✅ Domain validation passed"),
         ).tap_error(
-            lambda error: logger.error(f"   ❌ Domain validation failed: {error}")
+            lambda error: logger.error(f"   ❌ Domain validation failed: {error}"),
         )
 
     # Demonstrate filtering with railway programming
@@ -96,9 +96,9 @@ def main() -> None:
             print(f"Person: {cn}, Email: {mail}")
 
     api.filter_persons(entries).tap(process_person_entries).flat_map(
-        lambda person_entries: api.write_file(person_entries, str(output_file))
+        lambda person_entries: api.write_file(person_entries, str(output_file)),
     ).tap(
-        lambda _: logger.info("✅ Successfully wrote filtered entries to output file")
+        lambda _: logger.info("✅ Successfully wrote filtered entries to output file"),
     ).tap_error(lambda error: logger.error(f"❌ Operation failed: {error}"))
 
 

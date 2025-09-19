@@ -14,7 +14,7 @@ class TestConstants:
 
     def test_ldap_person_classes_defined(self) -> None:
         """Test LDAP person classes are properly defined."""
-        assert isinstance(FlextLdifConstants.LDAP_PERSON_CLASSES, set)
+        assert isinstance(FlextLdifConstants.LDAP_PERSON_CLASSES, frozenset)
         assert len(FlextLdifConstants.LDAP_PERSON_CLASSES) > 0
         assert "person" in FlextLdifConstants.LDAP_PERSON_CLASSES
         assert "inetorgperson" in FlextLdifConstants.LDAP_PERSON_CLASSES

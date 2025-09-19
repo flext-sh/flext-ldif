@@ -6,12 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import tempfile
 from pathlib import Path
 from unittest.mock import Mock
 
 from flext_core import FlextResult
 from flext_ldif.dispatcher import FlextLdifDispatcher
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.services import FlextLdifServices
 
 
 class TestFlextLdifDispatcher:
@@ -51,9 +53,9 @@ class TestFlextLdifDispatcher:
         """Test WriteFileCommand creation."""
         entries = [FlextLdifModels.create_entry({"dn": "cn=test", "attributes": {}})]
         file_path = Path("/test/file.ldif")
-        command = FlextLdifModels.WriteFileCommand(entries=entries, file_path=file_path)
+        command = FlextLdifModels.WriteFileCommand(entries=entries, file_path=str(file_path))  # Convert Path to string
         assert command.entries == entries
-        assert command.file_path == file_path
+        assert command.file_path == str(file_path)  # Compare with string version
 
     def test_validate_entries_command_creation(self) -> None:
         """Test ValidateEntriesCommand creation."""
@@ -106,7 +108,7 @@ class TestFlextLdifDispatcher:
 
         # Mock successful parse result
         test_entries = [
-            FlextLdifModels.create_entry({"dn": "cn=test", "attributes": {}})
+            FlextLdifModels.create_entry({"dn": "cn=test", "attributes": {}}),
         ]
         mock_parser.parse_content.return_value = FlextResult[
             list[FlextLdifModels.Entry]
@@ -186,36 +188,41 @@ class TestFlextLdifDispatcher:
 
     def test_parse_file_handler_success(self) -> None:
         """Test successful file parsing through dispatcher."""
-        # Create mock services with successful parse
-        mock_parser = Mock()
-        mock_validator = Mock()
-        mock_writer = Mock()
+        # Create real services instead of mocks - following FLEXT QA rules
+        services = FlextLdifServices()
 
-        # Mock successful parse result
-        test_entries = [
-            FlextLdifModels.create_entry({"dn": "cn=test", "attributes": {}})
-        ]
-        mock_parser.parse_ldif_file.return_value = FlextResult[
-            list[FlextLdifModels.Entry]
-        ].ok(test_entries)
+        # Create temporary LDIF file with test content
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8",
+        ) as temp_f:
+            ldif_content = """dn: cn=test,dc=example,dc=com
+objectClass: person
+cn: test
+sn: Test
 
-        mock_services = Mock()
-        mock_services.parser = mock_parser
-        mock_services.validator = mock_validator
-        mock_services.writer = mock_writer
+"""
+            temp_f.write(ldif_content)
+            temp_file = Path(temp_f.name)
 
-        # Create dispatcher
-        dispatcher = FlextLdifDispatcher.build_dispatcher(mock_services)
+        try:
+            # Create dispatcher with real services
+            dispatcher = FlextLdifDispatcher.build_dispatcher(services)
 
-        # Test parse file command
-        command = FlextLdifModels.ParseFileCommand(file_path="/test/file.ldif")
-        result = dispatcher.dispatch(command)
+            # Test parse file command with real file
+            command = FlextLdifModels.ParseFileCommand(file_path=str(temp_file))
+            result = dispatcher.dispatch(command)
 
-        assert result.is_success
-        assert isinstance(result.value, dict)
-        assert "entries" in result.value
-        assert "type" in result.value
-        assert result.value["type"] == "parse_file"
+            assert result.is_success
+            assert isinstance(result.value, dict)
+            assert "entries" in result.value
+            assert "type" in result.value
+            assert result.value["type"] == "parse_file"
+            assert len(result.value["entries"]) == 1
+
+        finally:
+            # Clean up
+            if temp_file.exists():
+                temp_file.unlink()
 
     def test_parse_file_handler_failure(self) -> None:
         """Test file parsing failure through dispatcher."""
@@ -280,7 +287,7 @@ class TestFlextLdifDispatcher:
 
         # Mock successful write result
         mock_writer.write_entries_to_string.return_value = FlextResult[str].ok(
-            "dn: cn=test\ncn: test\n"
+            "dn: cn=test\ncn: test\n",
         )
 
         mock_services = Mock()
@@ -294,8 +301,8 @@ class TestFlextLdifDispatcher:
         # Test write string command
         entries = [
             FlextLdifModels.create_entry(
-                {"dn": "cn=test", "attributes": {"cn": ["test"]}}
-            )
+                {"dn": "cn=test", "attributes": {"cn": ["test"]}},
+            ),
         ]
         command = FlextLdifModels.WriteStringCommand(entries=entries)
         result = dispatcher.dispatch(command)
@@ -315,7 +322,7 @@ class TestFlextLdifDispatcher:
 
         # Mock failed write result
         mock_writer.write_entries_to_string.return_value = FlextResult[str].fail(
-            "Write error"
+            "Write error",
         )
 
         mock_services = Mock()
@@ -329,8 +336,8 @@ class TestFlextLdifDispatcher:
         # Test write string command
         entries = [
             FlextLdifModels.create_entry(
-                {"dn": "cn=test", "attributes": {"cn": ["test"]}}
-            )
+                {"dn": "cn=test", "attributes": {"cn": ["test"]}},
+            ),
         ]
         command = FlextLdifModels.WriteStringCommand(entries=entries)
         result = dispatcher.dispatch(command)
@@ -347,7 +354,7 @@ class TestFlextLdifDispatcher:
 
         # Mock failed write result with specific error
         mock_writer.write_entries_to_string.return_value = FlextResult[str].fail(
-            "String write failed"
+            "String write failed",
         )
 
         mock_services = Mock()
@@ -361,8 +368,8 @@ class TestFlextLdifDispatcher:
         # Test write string command
         entries = [
             FlextLdifModels.create_entry(
-                {"dn": "cn=test", "attributes": {"cn": ["test"]}}
-            )
+                {"dn": "cn=test", "attributes": {"cn": ["test"]}},
+            ),
         ]
         command = FlextLdifModels.WriteStringCommand(entries=entries)
         result = dispatcher.dispatch(command)
@@ -391,11 +398,11 @@ class TestFlextLdifDispatcher:
         # Test write file command
         entries = [
             FlextLdifModels.create_entry(
-                {"dn": "cn=test", "attributes": {"cn": ["test"]}}
-            )
+                {"dn": "cn=test", "attributes": {"cn": ["test"]}},
+            ),
         ]
         file_path = Path("/test/file.ldif")
-        command = FlextLdifModels.WriteFileCommand(entries=entries, file_path=file_path)
+        command = FlextLdifModels.WriteFileCommand(entries=entries, file_path=str(file_path))  # Convert Path to string
         result = dispatcher.dispatch(command)
 
         assert result.is_success
@@ -413,7 +420,7 @@ class TestFlextLdifDispatcher:
 
         # Mock failed write result
         mock_writer.write_entries_to_file.return_value = FlextResult[bool].fail(
-            "File write error"
+            "File write error",
         )
 
         mock_services = Mock()
@@ -427,11 +434,11 @@ class TestFlextLdifDispatcher:
         # Test write file command
         entries = [
             FlextLdifModels.create_entry(
-                {"dn": "cn=test", "attributes": {"cn": ["test"]}}
-            )
+                {"dn": "cn=test", "attributes": {"cn": ["test"]}},
+            ),
         ]
         file_path = Path("/test/file.ldif")
-        command = FlextLdifModels.WriteFileCommand(entries=entries, file_path=file_path)
+        command = FlextLdifModels.WriteFileCommand(entries=entries, file_path=str(file_path))  # Convert Path to string
         result = dispatcher.dispatch(command)
 
         assert result.is_failure
@@ -458,11 +465,11 @@ class TestFlextLdifDispatcher:
         # Test write file command
         entries = [
             FlextLdifModels.create_entry(
-                {"dn": "cn=test", "attributes": {"cn": ["test"]}}
-            )
+                {"dn": "cn=test", "attributes": {"cn": ["test"]}},
+            ),
         ]
         file_path = Path("/test/file.ldif")
-        command = FlextLdifModels.WriteFileCommand(entries=entries, file_path=file_path)
+        command = FlextLdifModels.WriteFileCommand(entries=entries, file_path=str(file_path))  # Convert Path to string
         result = dispatcher.dispatch(command)
 
         assert result.is_failure
@@ -489,8 +496,8 @@ class TestFlextLdifDispatcher:
         # Test validate entries command
         entries = [
             FlextLdifModels.create_entry(
-                {"dn": "cn=test", "attributes": {"cn": ["test"]}}
-            )
+                {"dn": "cn=test", "attributes": {"cn": ["test"]}},
+            ),
         ]
         command = FlextLdifModels.ValidateEntriesCommand(entries=entries)
         result = dispatcher.dispatch(command)
@@ -510,7 +517,7 @@ class TestFlextLdifDispatcher:
 
         # Mock failed validation result
         mock_validator.validate_entries.return_value = FlextResult[bool].fail(
-            "Validation error"
+            "Validation error",
         )
 
         mock_services = Mock()
@@ -524,8 +531,8 @@ class TestFlextLdifDispatcher:
         # Test validate entries command
         entries = [
             FlextLdifModels.create_entry(
-                {"dn": "cn=test", "attributes": {"cn": ["test"]}}
-            )
+                {"dn": "cn=test", "attributes": {"cn": ["test"]}},
+            ),
         ]
         command = FlextLdifModels.ValidateEntriesCommand(entries=entries)
         result = dispatcher.dispatch(command)
@@ -554,8 +561,8 @@ class TestFlextLdifDispatcher:
         # Test validate entries command
         entries = [
             FlextLdifModels.create_entry(
-                {"dn": "cn=test", "attributes": {"cn": ["test"]}}
-            )
+                {"dn": "cn=test", "attributes": {"cn": ["test"]}},
+            ),
         ]
         command = FlextLdifModels.ValidateEntriesCommand(entries=entries)
         result = dispatcher.dispatch(command)

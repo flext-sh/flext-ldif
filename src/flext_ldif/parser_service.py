@@ -130,7 +130,8 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifModels.Entry]]):
         }
 
     def parse_ldif_file(
-        self, file_path: str | Path
+        self,
+        file_path: str | Path,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Parse LDIF file with enhanced performance tracking and error handling."""
         start_time = time.time()
@@ -138,7 +139,9 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifModels.Entry]]):
         # Check circuit breaker
         circuit_check = self._check_circuit_breaker()
         if circuit_check.is_failure:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(circuit_check.error)
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                circuit_check.error or "Circuit breaker check failed",
+            )
 
         try:
             file_path_obj = Path(file_path)
@@ -147,7 +150,7 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifModels.Entry]]):
             if not file_path_obj.exists():
                 self._record_failure("File not found")
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"File not found: {file_path}"
+                    f"File not found: {file_path}",
                 )
 
             # Get file size for monitoring
@@ -175,12 +178,12 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifModels.Entry]]):
             except UnicodeDecodeError as e:
                 self._record_failure("Encoding error")
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Encoding error reading file {file_path}: {e}"
+                    f"Encoding error reading file {file_path}: {e}",
                 )
             except OSError as e:
                 self._record_failure("File read error")
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Error reading file {file_path}: {e}"
+                    f"Error reading file {file_path}: {e}",
                 )
 
             # Parse content with tracking
@@ -227,7 +230,7 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifModels.Entry]]):
             )
 
             return FlextResult[list[FlextLdifModels.Entry]].fail(
-                f"File parse failed: {e}"
+                f"File parse failed: {e}",
             )
 
     def parse_content(self, content: str) -> FlextResult[list[FlextLdifModels.Entry]]:
@@ -238,7 +241,9 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifModels.Entry]]):
         # Check circuit breaker
         circuit_check = self._check_circuit_breaker()
         if circuit_check.is_failure:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(circuit_check.error)
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                circuit_check.error or "Circuit breaker check failed",
+            )
 
         # Empty content check
         if not content.strip():
@@ -263,7 +268,7 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifModels.Entry]]):
             except Exception as e:
                 self._record_failure(f"Format handler error: {e}")
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"LDIF format parsing failed: {e}"
+                    f"LDIF format parsing failed: {e}",
                 )
 
             # Monitor memory after parse
@@ -316,7 +321,7 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifModels.Entry]]):
             )
 
             return FlextResult[list[FlextLdifModels.Entry]].fail(
-                f"Content parse error: {e}"
+                f"Content parse error: {e}",
             )
 
     def validate_ldif_syntax(self, content: str) -> FlextResult[bool]:
@@ -325,7 +330,8 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifModels.Entry]]):
 
         try:
             self._logger.debug(
-                "Starting LDIF syntax validation", extra={"content_size": len(content)}
+                "Starting LDIF syntax validation",
+                extra={"content_size": len(content)},
             )
 
             # Use centralized FlextLdifModels.LdifContent for validation
@@ -352,7 +358,7 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifModels.Entry]]):
                 )
 
                 return FlextResult[bool].fail(
-                    f"LDIF syntax validation failed: {validation_error}"
+                    f"LDIF syntax validation failed: {validation_error}",
                 )
 
         except Exception as e:
@@ -416,38 +422,39 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifModels.Entry]]):
     def health_check(self) -> FlextResult[dict[str, object]]:
         """Perform comprehensive health check of parser service."""
         try:
-            health_status = {
+            health_status: dict[str, object] = {
                 "service": "FlextLdifParserService",
                 "status": "healthy",
                 "timestamp": time.time(),
                 "checks": {},
             }
+            checks = health_status["checks"] = {}
 
             # Circuit breaker check
             if self._circuit_breaker_open:
                 health_status["status"] = "degraded"
-                health_status["checks"]["circuit_breaker"] = {
+                checks["circuit_breaker"] = {
                     "status": "open",
                     "consecutive_failures": self._consecutive_failures,
                 }
             else:
-                health_status["checks"]["circuit_breaker"] = {"status": "closed"}
+                checks["circuit_breaker"] = {"status": "closed"}
 
             # Format handler check
             try:
                 test_content = "dn: cn=test,dc=example,dc=com\ncn: test\n"
                 test_result = self._format_handler.parse_ldif(test_content)
                 if test_result.is_success:
-                    health_status["checks"]["format_handler"] = {"status": "healthy"}
+                    checks["format_handler"] = {"status": "healthy"}
                 else:
                     health_status["status"] = "unhealthy"
-                    health_status["checks"]["format_handler"] = {
+                    checks["format_handler"] = {
                         "status": "failed",
                         "error": test_result.error,
                     }
             except Exception as e:
                 health_status["status"] = "unhealthy"
-                health_status["checks"]["format_handler"] = {
+                checks["format_handler"] = {
                     "status": "error",
                     "error": str(e),
                 }
@@ -458,7 +465,7 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifModels.Entry]]):
             if current_memory > 1024 * 1024 * 1024:  # 1GB threshold
                 memory_status = "warning"
 
-            health_status["checks"]["memory"] = {
+            checks["memory"] = {
                 "status": memory_status,
                 "current_usage_bytes": current_memory,
                 "peak_usage_bytes": self._peak_memory_usage,
@@ -467,10 +474,12 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifModels.Entry]]):
             # Performance check
             success_rate = self._calculate_success_rate()
             performance_status = "healthy"
-            if success_rate < FlextLdifConstants.PARSER_HEALTHY_THRESHOLD:  # 95% success rate threshold
+            if (
+                success_rate < FlextLdifConstants.PARSER_HEALTHY_THRESHOLD
+            ):  # 95% success rate threshold
                 performance_status = "degraded"
 
-            health_status["checks"]["performance"] = {
+            checks["performance"] = {
                 "status": performance_status,
                 "success_rate": success_rate,
                 "total_operations": self._total_files_parsed,
@@ -491,9 +500,7 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifModels.Entry]]):
 
         # Check if timeout has passed
         if self._last_failure_time is not None:
-            time_since_failure = (
-                time.time() - self._last_failure_time
-            )
+            time_since_failure = time.time() - self._last_failure_time
             if time_since_failure > self._circuit_breaker_timeout:
                 self._circuit_breaker_open = False
                 self._consecutive_failures = 0
@@ -501,7 +508,7 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifModels.Entry]]):
                 return FlextResult[None].ok(None)
 
         return FlextResult[None].fail(
-            f"Circuit breaker open due to {self._consecutive_failures} consecutive failures"
+            f"Circuit breaker open due to {self._consecutive_failures} consecutive failures",
         )
 
     def _record_success(self) -> None:
@@ -538,13 +545,14 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifModels.Entry]]):
         """Get current memory usage in bytes."""
         try:
             process = psutil.Process()
-            return process.memory_info().rss
+            return int(process.memory_info().rss)
         except ImportError:
             # Fallback if psutil not available
             return 0
 
     def _parse_entry_block(
-        self, block: str
+        self,
+        block: str,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Parse a single LDIF entry block with error context."""
         if not block.strip():
@@ -558,7 +566,7 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifModels.Entry]]):
                 extra={"block_size": len(block), "error": str(e)},
             )
             return FlextResult[list[FlextLdifModels.Entry]].fail(
-                f"Entry block parse error: {e}"
+                f"Entry block parse error: {e}",
             )
 
     def execute(self) -> FlextResult[list[FlextLdifModels.Entry]]:
