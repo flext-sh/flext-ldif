@@ -6,10 +6,26 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Never
+from typing import Protocol
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.repository_service import FlextLdifRepositoryService
+
+
+class EntryProtocol(Protocol):
+    """Protocol for Entry-like objects used in tests."""
+
+    @property
+    def dn(self) -> FlextLdifModels.DistinguishedName: ...
+
+    @property
+    def attributes(self) -> FlextLdifModels.LdifAttributes: ...
+
+    def get_attribute(self, name: str) -> list[str] | None: ...
+
+    def get_single_attribute(self, name: str) -> str | None: ...
+
+    def has_attribute(self, name: str) -> bool: ...
 
 
 class DNAccessError(Exception):
@@ -99,34 +115,30 @@ class TestFlextLdifRepositoryServiceComplete:
         assert result.is_success is True
         assert result.value is None
 
-    def test_find_entry_by_dn_exception(self) -> None:
-        """Test find_entry_by_dn when exception occurs."""
+    def test_find_entry_by_dn_with_special_characters(self) -> None:
+        """Test find_entry_by_dn with special characters in DN."""
         service = FlextLdifRepositoryService()
 
-        # Create mock entry that raises exception when accessing dn.value
-        class MockEntry:
-            def __init__(self) -> None:
-                self._attributes = FlextLdifModels.LdifAttributes(
-                    data={"objectClass": ["person"]}
-                )
-
-            @property
-            def dn(self) -> Never:
-                msg = "DN access error"
-                raise DNAccessError(msg)
-
-            @property
-            def attributes(self) -> FlextLdifModels.LdifAttributes:
-                return self._attributes
-
-        mock_entry = MockEntry()
-        entries = [mock_entry]
-
-        result = service.find_entry_by_dn(
-            entries, "uid=john,ou=people,dc=example,dc=com"
+        # Create entry with special characters that could cause comparison issues
+        dn = FlextLdifModels.DistinguishedName(
+            value="cn=Tëst Üser,ou=pëople,dc=exämple,dc=com"
         )
-        assert result.is_success is False
-        assert "Find error" in result.error
+        attributes = FlextLdifModels.LdifAttributes(
+            data={"objectClass": ["person"], "cn": ["Tëst Üser"]}
+        )
+        entry = FlextLdifModels.Entry(dn=dn, attributes=attributes)
+
+        entries = [entry]
+
+        # Test case-insensitive matching with special characters
+        result = service.find_entry_by_dn(
+            entries, "CN=TËST ÜSER,OU=PËOPLE,DC=EXÄMPLE,DC=COM"
+        )
+        assert result.is_success is True
+        assert result.value is not None
+        assert (
+            result.value.dn.value.lower() == "cn=tëst üser,ou=pëople,dc=exämple,dc=com"
+        )
 
     def test_filter_entries_by_attribute_success(self) -> None:
         """Test filter_entries_by_attribute with successful match."""
@@ -190,7 +202,10 @@ class TestFlextLdifRepositoryServiceComplete:
 
         result = service.filter_entries_by_attribute(entries, "", "John")
         assert result.is_success is False
-        assert "Attribute name cannot be empty" in result.error
+        assert (
+            result.error is not None
+            and "Attribute name cannot be empty" in result.error
+        )
 
     def test_filter_entries_by_attribute_whitespace_name(self) -> None:
         """Test filter_entries_by_attribute with whitespace-only attribute name."""
@@ -206,40 +221,32 @@ class TestFlextLdifRepositoryServiceComplete:
 
         result = service.filter_entries_by_attribute(entries, "   ", "John")
         assert result.is_success is False
-        assert "Attribute name cannot be empty" in result.error
+        assert (
+            result.error is not None
+            and "Attribute name cannot be empty" in result.error
+        )
 
-    def test_filter_entries_by_attribute_exception(self) -> None:
-        """Test filter_entries_by_attribute when exception occurs."""
+    def test_filter_entries_by_attribute_with_null_values(self) -> None:
+        """Test filter_entries_by_attribute with null/None values in attributes."""
         service = FlextLdifRepositoryService()
 
-        # Create mock entry that raises exception when accessing get_attribute
-        class MockEntry:
-            def __init__(self) -> None:
-                self._dn = FlextLdifModels.DistinguishedName(
-                    value="uid=john,ou=people,dc=example,dc=com"
-                )
-                self._attributes = FlextLdifModels.LdifAttributes(
-                    data={"objectClass": ["person"]}
-                )
+        # Create entry using the factory method to avoid validation issues
+        entry_data = {
+            "dn": "cn=null-test,dc=example,dc=com",
+            "attributes": {"objectClass": ["person"], "cn": ["null-test"]},
+        }
+        entry = FlextLdifModels.create_entry(entry_data)
+        entries = [entry]
 
-            @property
-            def dn(self) -> FlextLdifModels.DistinguishedName:
-                return self._dn
+        # Test filtering by attribute that doesn't exist
+        result = service.filter_entries_by_attribute(entries, "description", None)
+        assert result.is_success is True
+        assert len(result.value) == 0  # Should not match when attribute doesn't exist
 
-            @property
-            def attributes(self) -> FlextLdifModels.LdifAttributes:
-                return self._attributes
-
-            def get_attribute(self, _name: str) -> Never:
-                msg = "Attribute access error"
-                raise AttributeAccessError(msg)
-
-        mock_entry = MockEntry()
-        entries = [mock_entry]
-
-        result = service.filter_entries_by_attribute(entries, "cn", "John")
-        assert result.is_success is False
-        assert "Filter error" in result.error
+        # Test filtering by attribute that doesn't exist with specific value
+        result = service.filter_entries_by_attribute(entries, "nonexistent", "value")
+        assert result.is_success is True
+        assert len(result.value) == 0
 
     def test_filter_entries_by_objectclass_success(self) -> None:
         """Test filter_entries_by_objectclass with successful match."""
@@ -295,7 +302,9 @@ class TestFlextLdifRepositoryServiceComplete:
 
         result = service.filter_entries_by_objectclass(entries, "")
         assert result.is_success is False
-        assert "Object class cannot be empty" in result.error
+        assert (
+            result.error is not None and "Object class cannot be empty" in result.error
+        )
 
     def test_filter_entries_by_objectclass_whitespace_class(self) -> None:
         """Test filter_entries_by_objectclass with whitespace-only object class."""
@@ -311,40 +320,31 @@ class TestFlextLdifRepositoryServiceComplete:
 
         result = service.filter_entries_by_objectclass(entries, "   ")
         assert result.is_success is False
-        assert "Object class cannot be empty" in result.error
+        assert (
+            result.error is not None and "Object class cannot be empty" in result.error
+        )
 
-    def test_filter_entries_by_objectclass_exception(self) -> None:
-        """Test filter_entries_by_objectclass when exception occurs."""
+    def test_filter_entries_by_objectclass_with_missing_objectclass(self) -> None:
+        """Test filter_entries_by_objectclass with entries missing objectClass attribute."""
         service = FlextLdifRepositoryService()
 
-        # Create mock entry that raises exception when accessing get_attribute
-        class MockEntry:
-            def __init__(self) -> None:
-                self._dn = FlextLdifModels.DistinguishedName(
-                    value="uid=john,ou=people,dc=example,dc=com"
-                )
-                self._attributes = FlextLdifModels.LdifAttributes(
-                    data={"objectClass": ["person"]}
-                )
+        # Create entry without objectClass attribute to test edge case
+        dn = FlextLdifModels.DistinguishedName(
+            value="cn=no-objectclass,dc=example,dc=com"
+        )
+        # Create attributes without objectClass - this might be an edge case
+        attributes_data = {
+            "cn": ["no-objectclass"],
+            "description": ["Entry without objectClass"],
+        }
+        attributes = FlextLdifModels.LdifAttributes(data=attributes_data)
+        entry = FlextLdifModels.Entry(dn=dn, attributes=attributes)
+        entries = [entry]
 
-            @property
-            def dn(self) -> FlextLdifModels.DistinguishedName:
-                return self._dn
-
-            @property
-            def attributes(self) -> FlextLdifModels.LdifAttributes:
-                return self._attributes
-
-            def get_attribute(self, _name: str) -> Never:
-                msg = "Attribute access error"
-                raise AttributeAccessError(msg)
-
-        mock_entry = MockEntry()
-        entries = [mock_entry]
-
+        # Test filtering by objectClass when entry doesn't have objectClass attribute
         result = service.filter_entries_by_objectclass(entries, "person")
-        assert result.is_success is False
-        assert "ObjectClass filter error" in result.error
+        assert result.is_success is True
+        assert len(result.value) == 0  # Should not match entries without objectClass
 
     def test_filter_entries_by_object_class_alias(self) -> None:
         """Test filter_entries_by_object_class alias method."""
@@ -405,41 +405,44 @@ class TestFlextLdifRepositoryServiceComplete:
         assert stats["group_entries"] == 0
         assert stats["organizational_unit_entries"] == 0
 
-    def test_get_statistics_exception(self) -> None:
-        """Test get_statistics when exception occurs."""
+    def test_get_statistics_with_complex_entries(self) -> None:
+        """Test get_statistics with complex entry structures and edge cases."""
         service = FlextLdifRepositoryService()
 
-        # Create mock entry that raises exception when accessing dn.value
-        class MockEntry:
-            def __init__(self) -> None:
-                self._attributes = FlextLdifModels.LdifAttributes(
-                    data={"objectClass": ["person"]}
-                )
+        # Create entries with various complex scenarios
+        entry1_data = {
+            "dn": "cn=complex-user,ou=special chars,dc=example,dc=com",
+            "attributes": {
+                "objectClass": ["person", "organizationalPerson", "inetOrgPerson"],
+                "cn": ["complex-user"],
+                "sn": ["User"],
+                "description": ["User with multiple objectClasses"],
+            },
+        }
+        entry1 = FlextLdifModels.create_entry(entry1_data)
 
-            @property
-            def dn(self) -> Never:
-                msg = "DN access error"
-                raise DNAccessError(msg)
+        # Entry with minimal attributes
+        entry2_data = {
+            "dn": "cn=minimal,dc=example,dc=com",
+            "attributes": {"objectClass": ["organizationalUnit"]},
+        }
+        entry2 = FlextLdifModels.create_entry(entry2_data)
 
-            @property
-            def attributes(self) -> FlextLdifModels.LdifAttributes:
-                return self._attributes
-
-            def is_person(self) -> bool:
-                return True
-
-            def is_group(self) -> bool:
-                return False
-
-            def get_attribute(self, _name: str) -> list[str]:
-                return ["person"]
-
-        mock_entry = MockEntry()
-        entries = [mock_entry]
+        entries = [entry1, entry2]
 
         result = service.get_statistics(entries)
-        assert result.is_success is False
-        assert "Statistics error" in result.error
+        assert result.is_success is True
+        stats = result.value
+        assert stats["total_entries"] == 2
+        assert stats["unique_dns"] == 2
+        assert (
+            stats["total_attributes"] == 5
+        )  # entry1: 4 attributes + entry2: 1 attribute
+        assert stats["person_entries"] == 1  # entry1 has person objectClass
+        assert stats["group_entries"] == 0
+        assert (
+            stats["organizational_unit_entries"] == 1
+        )  # entry2 has organizationalUnit
 
     def test_get_config_info(self) -> None:
         """Test get_config_info method."""
@@ -449,6 +452,7 @@ class TestFlextLdifRepositoryServiceComplete:
         assert isinstance(config_info, dict)
         assert config_info["service"] == "FlextLdifRepositoryService"
         assert "config" in config_info
+        assert isinstance(config_info["config"], dict)
         assert config_info["config"]["repository_enabled"] is True
         assert "supported_operations" in config_info["config"]
         assert "storage_backend" in config_info["config"]

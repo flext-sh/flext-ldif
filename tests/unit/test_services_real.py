@@ -568,7 +568,10 @@ class TestWriterService:
             # Should fail because directory doesn't exist
             assert result.is_failure
             if result.error:
-                assert "No such file or directory" in result.error
+                assert (
+                    result.error is not None
+                    and "No such file or directory" in result.error
+                )
 
     def test_format_entry_for_display(self) -> None:
         """Test format_entry_for_display method."""

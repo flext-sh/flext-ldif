@@ -6,24 +6,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from typing import Self
 
 from pydantic import Field, field_validator, model_validator
 
 from flext_core import FlextConfig, FlextResult
-
-# Configuration validation constants
-MIN_WORKERS_FOR_PARALLEL = 2
-MIN_ANALYTICS_CACHE_SIZE = 100
-MIN_PRODUCTION_ENTRIES = 1000
-MIN_BUFFER_SIZE = 4096
-MAX_WORKERS_LIMIT = 16
-MAX_ANALYTICS_CACHE_SIZE = 50000
+from flext_ldif.constants import FlextLdifConstants
 
 
 class FlextLdifConfig(FlextConfig):
     """LDIF-specific configuration extending flext-core FlextConfig.
+
+    Single unified class containing all LDIF configuration definitions
+    following SOLID principles and FLEXT ecosystem patterns.
 
     Provides LDIF-specific settings with proper validation.
     Uses flext-core SOURCE OF TRUTH for configuration management.
@@ -159,7 +154,7 @@ class FlextLdifConfig(FlextConfig):
         # Validate worker configuration
         if (
             self.ldif_parallel_processing
-            and self.ldif_max_workers < MIN_WORKERS_FOR_PARALLEL
+            and self.ldif_max_workers < FlextLdifConstants.MIN_WORKERS_FOR_PARALLEL
         ):
             msg = "Parallel processing requires at least 2 workers"
             raise ValueError(msg)
@@ -172,7 +167,8 @@ class FlextLdifConfig(FlextConfig):
         # Validate analytics cache size
         if (
             self.ldif_enable_analytics
-            and self.ldif_analytics_cache_size < MIN_ANALYTICS_CACHE_SIZE
+            and self.ldif_analytics_cache_size
+            < FlextLdifConstants.MIN_ANALYTICS_CACHE_SIZE
         ):
             msg = "Analytics cache size must be at least 100"
             raise ValueError(msg)
@@ -241,23 +237,24 @@ class FlextLdifConfig(FlextConfig):
             errors = []
 
             # Validate processing limits
-            if self.ldif_max_entries < MIN_PRODUCTION_ENTRIES:
+            if self.ldif_max_entries < FlextLdifConstants.MIN_PRODUCTION_ENTRIES:
                 errors.append("Maximum entries too low for production use")
 
-            if self.ldif_buffer_size < MIN_BUFFER_SIZE:
+            if self.ldif_buffer_size < FlextLdifConstants.MIN_BUFFER_SIZE:
                 errors.append("Buffer size too small for efficient processing")
 
             # Validate worker configuration
             if (
                 self.ldif_parallel_processing
-                and self.ldif_max_workers > MAX_WORKERS_LIMIT
+                and self.ldif_max_workers > FlextLdifConstants.MAX_WORKERS_LIMIT
             ):
                 errors.append("Too many workers may cause resource contention")
 
             # Validate analytics configuration
             if (
                 self.ldif_enable_analytics
-                and self.ldif_analytics_cache_size > MAX_ANALYTICS_CACHE_SIZE
+                and self.ldif_analytics_cache_size
+                > FlextLdifConstants.MAX_ANALYTICS_CACHE_SIZE
             ):
                 errors.append("Analytics cache size too large for memory efficiency")
 
@@ -274,9 +271,7 @@ class FlextLdifConfig(FlextConfig):
                 error_code="LDIF_BUSINESS_RULE_ERROR",
             )
 
-    def apply_ldif_overrides(
-        self, overrides: Mapping[str, object]
-    ) -> FlextResult[None]:
+    def apply_ldif_overrides(self, overrides: dict[str, object]) -> FlextResult[None]:
         """Apply LDIF-specific configuration overrides."""
         if self.is_sealed():
             return FlextResult[None].fail("Cannot modify sealed configuration")

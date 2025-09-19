@@ -305,7 +305,7 @@ class TestFlextLdifServicesWriterService:
             or "File write failed" in result.error
             or "Write failed" in result.error
         )
-        assert "No such file or directory" in result.error
+        assert result.error is not None and "No such file or directory" in result.error
 
     def test_write_content_to_file_success(self) -> None:
         """Test _write_content_to_file success."""
@@ -349,7 +349,7 @@ class TestFlextLdifServicesWriterService:
 
         assert result.is_failure
         assert result.error is not None
-        assert "File write error" in result.error
+        assert result.error is not None and "File write error" in result.error
 
     def test_write_content_to_file_os_error(self) -> None:
         """Test write_entries_to_file handles OSError."""
@@ -370,7 +370,7 @@ class TestFlextLdifServicesWriterService:
         assert result.is_failure
         assert result.error is not None
         # Should contain file write error information
-        assert "failed" in result.error.lower()
+        assert result.error is not None and "failed" in result.error.lower()
 
     def test_write_content_to_file_unicode_error(self) -> None:
         """Test _write_content_to_file handles real Unicode encoding errors."""
@@ -391,7 +391,9 @@ class TestFlextLdifServicesWriterService:
 
             assert result.is_failure
             assert result.error is not None
-            assert "encode" in result.error.lower() or "ascii" in result.error.lower()
+            assert (
+                result.error is not None and "encode" in result.error.lower()
+            ) or "ascii" in result.error.lower()
         finally:
             # Clean up the temporary file
             Path(tmp_path).unlink(missing_ok=True)

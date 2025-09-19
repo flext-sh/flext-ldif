@@ -901,6 +901,57 @@ class FlextLdifModels(FlextModels):
         return cls.create_entry({"dn": dn, "attributes": attributes})
 
     # =============================================================================
+    # LDIF COMMAND MODELS (moved from dispatcher.py for unified architecture)
+    # =============================================================================
+
+    class ParseStringCommand(FlextModels.Value):
+        """Command representing LDIF string parsing.
+
+        Moved from dispatcher.py to maintain unified model definitions.
+        """
+
+        content: str = Field(..., description="LDIF content string to parse")
+
+    class ParseFileCommand(FlextModels.Value):
+        """Command representing LDIF file parsing.
+
+        Moved from dispatcher.py to maintain unified model definitions.
+        """
+
+        file_path: str = Field(..., description="Path to LDIF file to parse")
+
+    class WriteStringCommand(FlextModels.Value):
+        """Command representing writing entries to string.
+
+        Moved from dispatcher.py to maintain unified model definitions.
+        """
+
+        entries: list[FlextLdifModels.Entry] = Field(
+            ..., description="List of LDIF entries to write"
+        )
+
+    class WriteFileCommand(FlextModels.Value):
+        """Command representing writing entries to file.
+
+        Moved from dispatcher.py to maintain unified model definitions.
+        """
+
+        entries: list[FlextLdifModels.Entry] = Field(
+            ..., description="List of LDIF entries to write"
+        )
+        file_path: str = Field(..., description="Path where to write the LDIF file")
+
+    class ValidateEntriesCommand(FlextModels.Value):
+        """Command representing entry validation.
+
+        Moved from dispatcher.py to maintain unified model definitions.
+        """
+
+        entries: list[FlextLdifModels.Entry] = Field(
+            ..., description="List of LDIF entries to validate"
+        )
+
+    # =============================================================================
     # LDIF MODEL VALIDATION AND BUSINESS RULES
     # =============================================================================
 

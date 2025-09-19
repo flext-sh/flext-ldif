@@ -26,6 +26,7 @@ class TestFlextLdifValidatorServiceComplete:
         assert isinstance(config_info, dict)
         assert config_info["service"] == "FlextLdifValidatorService"
         assert "config" in config_info
+        assert isinstance(config_info["config"], dict)
         assert config_info["config"]["service_type"] == "validator"
         assert config_info["config"]["status"] == "ready"
         assert "capabilities" in config_info["config"]
@@ -71,7 +72,10 @@ class TestFlextLdifValidatorServiceComplete:
 
         result = service.validate_entries([])
         assert result.is_success is False
-        assert "Cannot validate empty entry list" in result.error
+        assert (
+            result.error is not None
+            and "Cannot validate empty entry list" in result.error
+        )
 
     def test_validate_entries_validation_failure(self) -> None:
         """Test validate_entries when validation fails."""
@@ -89,7 +93,9 @@ class TestFlextLdifValidatorServiceComplete:
             entries = [entry]
             result = service.validate_entries(entries)
             assert result.is_success is False
-            assert "Entry validation failed" in result.error
+            assert (
+                result.error is not None and "Entry validation failed" in result.error
+            )
         except Exception:
             # If Entry creation fails, create a valid entry but test business rules failure
             entry = FlextLdifModels.Entry(
@@ -101,7 +107,9 @@ class TestFlextLdifValidatorServiceComplete:
             entries = [entry]
             result = service.validate_entries(entries)
             assert result.is_success is False
-            assert "Entry validation failed" in result.error
+            assert (
+                result.error is not None and "Entry validation failed" in result.error
+            )
 
     def test_validate_entry_success(self) -> None:
         """Test validate_entry with successful validation."""
@@ -177,7 +185,7 @@ class TestFlextLdifValidatorServiceComplete:
 
         result = service.validate_dn_format("")
         assert result.is_success is False
-        assert "validation failed" in result.error.lower()
+        assert result.error is not None and "validation failed" in result.error.lower()
 
     def test_validate_dn_format_whitespace_only(self) -> None:
         """Test validate_dn_format with whitespace-only DN."""
@@ -185,7 +193,7 @@ class TestFlextLdifValidatorServiceComplete:
 
         result = service.validate_dn_format("   ")
         assert result.is_success is False
-        assert "validation failed" in result.error.lower()
+        assert result.error is not None and "validation failed" in result.error.lower()
 
     def test_validate_dn_format_invalid(self) -> None:
         """Test validate_dn_format with invalid DN format."""
@@ -193,7 +201,7 @@ class TestFlextLdifValidatorServiceComplete:
 
         result = service.validate_dn_format("invalid-dn")
         assert result.is_success is False
-        assert "validation failed" in result.error.lower()
+        assert result.error is not None and "validation failed" in result.error.lower()
 
     def test_execute_method(self) -> None:
         """Test execute method."""

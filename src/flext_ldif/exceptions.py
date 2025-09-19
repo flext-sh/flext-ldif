@@ -6,15 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-
 from flext_core import FlextResult
-
-# Constants for magic numbers (ZERO TOLERANCE - no magic values)
-_CONTENT_PREVIEW_LENGTH = 50
-_DN_PREVIEW_LENGTH = 80
-_ATTRIBUTE_TRUNCATION_THRESHOLD = 3
-_MAX_ATTRIBUTES_DISPLAY = 5
+from flext_ldif.constants import FlextLdifConstants
 
 
 class FlextLdifExceptions:
@@ -23,19 +16,6 @@ class FlextLdifExceptions:
     Single responsibility: All LDIF exception creation and management.
     Uses FlextResult for consistent error handling.
     """
-
-    class _ErrorTypes:
-        """Nested class for error type constants."""
-
-        PARSE = "ldif_parse"
-        VALIDATION = "ldif_validation"
-        PROCESSING = "ldif_processing"
-        FILE = "ldif_file"
-        CONFIGURATION = "ldif_configuration"
-        CONNECTION = "ldif_connection"
-        TIMEOUT = "ldif_timeout"
-        AUTHENTICATION = "ldif_authentication"
-        GENERIC = "ldif_error"
 
     @classmethod
     def validation_error(cls, message: str, **context: object) -> FlextResult[None]:
@@ -95,12 +75,12 @@ class FlextLdifExceptions:
         if content_preview and str(content_preview).strip():
             content_str = str(content_preview)
             preview = (
-                content_str[:_CONTENT_PREVIEW_LENGTH]
-                if len(content_str) > _CONTENT_PREVIEW_LENGTH
+                content_str[: FlextLdifConstants.CONTENT_PREVIEW_LENGTH]
+                if len(content_str) > FlextLdifConstants.CONTENT_PREVIEW_LENGTH
                 else content_str
             )
             enriched_message += f" - Content: {preview}"
-            if len(content_str) > _CONTENT_PREVIEW_LENGTH:
+            if len(content_str) > FlextLdifConstants.CONTENT_PREVIEW_LENGTH:
                 enriched_message += "..."
 
         return FlextResult[None].fail(enriched_message)
@@ -191,13 +171,17 @@ class FlextLdifExceptions:
         if dn:
             enriched_message += f" (DN: {dn!s})"
         if entry_data:
-            # Prefer explicit Mapping check for static typing safety
-            if isinstance(entry_data, Mapping):
+            # Use dict type check for mappings - no collections.abc import needed
+            if isinstance(entry_data, dict):
                 attributes = list(entry_data.keys())
                 if attributes:
-                    if len(attributes) > _MAX_ATTRIBUTES_DISPLAY:
-                        shown_attrs = attributes[:_MAX_ATTRIBUTES_DISPLAY]
-                        remaining_count = len(attributes) - _MAX_ATTRIBUTES_DISPLAY
+                    if len(attributes) > FlextLdifConstants.MAX_ATTRIBUTES_DISPLAY:
+                        shown_attrs = attributes[
+                            : FlextLdifConstants.MAX_ATTRIBUTES_DISPLAY
+                        ]
+                        remaining_count = (
+                            len(attributes) - FlextLdifConstants.MAX_ATTRIBUTES_DISPLAY
+                        )
                         enriched_message += f" (Attributes: {', '.join(shown_attrs)} +{remaining_count} more)"
                     else:
                         enriched_message += f" (Attributes: {', '.join(attributes)})"
