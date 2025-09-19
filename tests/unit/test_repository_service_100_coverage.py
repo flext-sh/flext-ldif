@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import time
 from typing import Protocol
 
 from flext_ldif.models import FlextLdifModels
@@ -43,6 +44,450 @@ class TestFlextLdifRepositoryServiceComplete:
         """Test repository service initialization."""
         service = FlextLdifRepositoryService()
         assert service is not None
+
+    def test_store_entries_empty_list(self) -> None:
+        """Test store_entries with empty entry list."""
+        service = FlextLdifRepositoryService()
+        result = service.store_entries([])
+        assert result.is_success is True
+        assert result.value is True
+
+    def test_store_entries_successful_storage(self) -> None:
+        """Test store_entries with successful storage."""
+        service = FlextLdifRepositoryService()
+
+        # Create test entry
+        entry_data: dict[str, object] = {
+            "dn": "uid=test,ou=people,dc=example,dc=com",
+            "attributes": {"objectClass": ["person"], "cn": ["test"], "uid": ["test"]},
+        }
+        entry = FlextLdifModels.create_entry(entry_data)
+        entries = [entry]
+
+        result = service.store_entries(entries)
+        assert result.is_success is True
+        assert result.value is True
+
+    def test_store_entries_with_duplicates(self) -> None:
+        """Test store_entries with duplicate entries."""
+        service = FlextLdifRepositoryService()
+
+        # Create test entry
+        entry_data: dict[str, object] = {
+            "dn": "uid=duplicate,ou=people,dc=example,dc=com",
+            "attributes": {"objectClass": ["person"], "cn": ["duplicate"], "uid": ["duplicate"]},
+        }
+        entry1 = FlextLdifModels.create_entry(entry_data)
+        entry2 = FlextLdifModels.create_entry(entry_data)  # Same DN
+        entries = [entry1, entry2]
+
+        result = service.store_entries(entries)
+        assert result.is_success is True
+        assert result.value is True
+
+    def test_store_entries_large_dataset(self) -> None:
+        """Test store_entries with large dataset triggering optimization."""
+        service = FlextLdifRepositoryService()
+
+        # Create many entries to trigger large dataset handling
+        entries = []
+        for i in range(50):  # Create enough entries to test large dataset path
+            entry_data: dict[str, object] = {
+                "dn": f"uid=user{i},ou=people,dc=example,dc=com",
+                "attributes": {"objectClass": ["person"], "cn": [f"User {i}"], "uid": [f"user{i}"]},
+            }
+            entry = FlextLdifModels.create_entry(entry_data)
+            entries.append(entry)
+
+        result = service.store_entries(entries)
+        assert result.is_success is True
+        assert result.value is True
+
+    def test_health_check_success(self) -> None:
+        """Test health_check with successful check."""
+        service = FlextLdifRepositoryService()
+
+        result = service.health_check()
+        assert result.is_success is True
+        health_data = result.unwrap()
+        assert "service" in health_data
+        assert "status" in health_data
+
+    def test_get_repository_metrics(self) -> None:
+        """Test get_repository_metrics functionality."""
+        service = FlextLdifRepositoryService()
+
+        metrics = service.get_repository_metrics()
+        assert isinstance(metrics, dict)
+        assert "uptime_seconds" in metrics
+        assert "storage" in metrics
+        assert "performance" in metrics
+        assert "caching" in metrics
+        assert "indexing" in metrics
+        assert "operation_breakdown" in metrics
+
+        # Check nested structure
+        assert "total_operations" in metrics["performance"]
+        assert "total_entries" in metrics["storage"]
+        assert "cache_hits" in metrics["caching"]
+
+    def test_clear_cache(self) -> None:
+        """Test clear_cache functionality."""
+        service = FlextLdifRepositoryService()
+
+        # Add some data first
+        entry_data: dict[str, object] = {
+            "dn": "uid=cache_test,ou=people,dc=example,dc=com",
+            "attributes": {"objectClass": ["person"], "cn": ["cache_test"]},
+        }
+        entry = FlextLdifModels.create_entry(entry_data)
+        service.store_entries([entry])
+
+        # Clear cache (returns None)
+        service.clear_cache()
+
+        # Verify cache was cleared by checking metrics
+        metrics = service.get_repository_metrics()
+        assert metrics["caching"]["cache_size"] == 0
+
+    def test_store_entries_validation_failure(self) -> None:
+        """Test store_entries with validation failures."""
+        service = FlextLdifRepositoryService()
+
+        # Create an entry with empty attributes to trigger validation failure
+        invalid_entry_data: dict[str, object] = {
+            "dn": "uid=test,ou=people,dc=example,dc=com",
+            "attributes": {},  # Empty attributes to trigger validation error
+        }
+        entry = FlextLdifModels.create_entry(invalid_entry_data)
+
+        result = service.store_entries([entry])
+        assert result.is_failure
+        assert "no attributes" in str(result.error)
+
+    def test_store_entries_with_exception(self) -> None:
+        """Test store_entries with internal exceptions."""
+        service = FlextLdifRepositoryService()
+
+        # Mock an exception during storage by corrupting internal state
+        service._entries = None  # type: ignore[assignment]
+
+        entry_data: dict[str, object] = {
+            "dn": "uid=test,ou=people,dc=example,dc=com",
+            "attributes": {"objectClass": ["person"], "cn": ["test"]},
+        }
+        entry = FlextLdifModels.create_entry(entry_data)
+
+        result = service.store_entries([entry])
+        assert result.is_failure
+        assert "Storage error" in str(result.error)
+
+    def test_find_entry_by_dn_with_exception(self) -> None:
+        """Test find_entry_by_dn when an exception occurs during entry processing."""
+        service = FlextLdifRepositoryService()
+
+        # Create a mock entry that will cause an exception when accessing dn.value
+        class BrokenEntry:
+            @property
+            def dn(self) -> object:
+                class BrokenDN:
+                    @property
+                    def value(self) -> str:
+                        msg = "DN access error"
+                        raise RuntimeError(msg)
+                return BrokenDN()
+
+        broken_entry = BrokenEntry()
+        entries = [broken_entry]  # type: ignore[list-item]
+
+        result = service.find_entry_by_dn(entries, "uid=test,ou=people,dc=example,dc=com")
+        assert result.is_failure
+        assert "Find error" in str(result.error)
+
+    def test_filter_entries_by_attribute_empty_name(self) -> None:
+        """Test filter_entries_by_attribute with empty attribute name."""
+        service = FlextLdifRepositoryService()
+
+        entry_data: dict[str, object] = {
+            "dn": "uid=test,ou=people,dc=example,dc=com",
+            "attributes": {"objectClass": ["person"], "cn": ["test"]},
+        }
+        entry = FlextLdifModels.create_entry(entry_data)
+
+        result = service.filter_entries_by_attribute([entry], "", "value")
+        assert result.is_failure
+        assert "Attribute name cannot be empty" in str(result.error)
+
+    def test_filter_entries_by_attribute_with_exception(self) -> None:
+        """Test filter_entries_by_attribute with internal exceptions."""
+        service = FlextLdifRepositoryService()
+
+        # Create a broken entry that will cause an exception when get_attribute is called
+        class BrokenEntry:
+            def get_attribute(self, _name: str) -> None:
+                msg = "Attribute access error"
+                raise RuntimeError(msg)
+
+        broken_entry = BrokenEntry()
+        entries = [broken_entry]  # type: ignore[list-item]
+
+        result = service.filter_entries_by_attribute(entries, "cn", "test")
+        assert result.is_failure
+        assert "Filter error" in str(result.error)
+
+    def test_filter_entries_by_objectclass_empty_class(self) -> None:
+        """Test filter_entries_by_objectclass with empty object class."""
+        service = FlextLdifRepositoryService()
+
+        entry_data: dict[str, object] = {
+            "dn": "uid=test,ou=people,dc=example,dc=com",
+            "attributes": {"objectClass": ["person"], "cn": ["test"]},
+        }
+        entry = FlextLdifModels.create_entry(entry_data)
+
+        result = service.filter_entries_by_objectclass([entry], "")
+        assert result.is_failure
+        assert "Object class cannot be empty" in str(result.error)
+
+    def test_filter_entries_by_objectclass_with_exception(self) -> None:
+        """Test filter_entries_by_objectclass with internal exceptions."""
+        service = FlextLdifRepositoryService()
+
+        # Create a broken entry that will cause an exception when get_attribute is called
+        class BrokenEntry:
+            def get_attribute(self, _name: str) -> None:
+                msg = "ObjectClass access error"
+                raise RuntimeError(msg)
+
+        broken_entry = BrokenEntry()
+        entries = [broken_entry]  # type: ignore[list-item]
+
+        result = service.filter_entries_by_objectclass(entries, "person")
+        assert result.is_failure
+        assert "ObjectClass filter error" in str(result.error)
+
+    def test_get_statistics_with_exception(self) -> None:
+        """Test get_statistics with internal exceptions."""
+        service = FlextLdifRepositoryService()
+
+        # Mock an exception during statistics calculation
+        service._large_dataset_threshold = None  # type: ignore[assignment]
+
+        entry_data: dict[str, object] = {
+            "dn": "uid=test,ou=people,dc=example,dc=com",
+            "attributes": {"objectClass": ["person"], "cn": ["test"]},
+        }
+        entry = FlextLdifModels.create_entry(entry_data)
+
+        result = service.get_statistics([entry])
+        assert result.is_failure
+        assert "Statistics error" in str(result.error)
+
+    def test_rebuild_indices_with_exception(self) -> None:
+        """Test rebuild_indices with internal exceptions."""
+        service = FlextLdifRepositoryService()
+
+        # Mock an exception during rebuild
+        service._entries = None  # type: ignore[assignment]
+
+        result = service.rebuild_indices()
+        assert result.is_failure
+        assert "Index rebuild error" in str(result.error)
+
+    def test_health_check_with_exception(self) -> None:
+        """Test health_check with internal exceptions."""
+        service = FlextLdifRepositoryService()
+
+        # Mock an exception during health check
+        service._total_operations = None  # type: ignore[assignment]
+
+        result = service.health_check()
+        assert result.is_failure
+        assert "Health check error" in str(result.error)
+
+    def test_cache_functionality_comprehensive(self) -> None:
+        """Test comprehensive caching functionality."""
+        service = FlextLdifRepositoryService()
+
+        # Add entries to build cache
+        entry_data: dict[str, object] = {
+            "dn": "uid=cache1,ou=people,dc=example,dc=com",
+            "attributes": {"objectClass": ["person"], "cn": ["cache1"]},
+        }
+        entry = FlextLdifModels.create_entry(entry_data)
+        service.store_entries([entry])
+
+        # Test cache hits with find operation
+        result1 = service.find_entry_by_dn(service._entries, "uid=cache1,ou=people,dc=example,dc=com")
+        assert result1.is_success
+
+        # Second call should hit cache
+        result2 = service.find_entry_by_dn(service._entries, "uid=cache1,ou=people,dc=example,dc=com")
+        assert result2.is_success
+
+        # Test cache hits with filter operations
+        filter_result1 = service.filter_entries_by_attribute(service._entries, "cn", "cache1")
+        assert filter_result1.is_success
+
+        filter_result2 = service.filter_entries_by_attribute(service._entries, "cn", "cache1")
+        assert filter_result2.is_success
+
+    def test_memory_optimization_functionality(self) -> None:
+        """Test memory optimization and garbage collection."""
+        service = FlextLdifRepositoryService()
+
+        # Set low GC threshold to trigger optimization
+        service._gc_threshold = 1
+
+        entry_data: dict[str, object] = {
+            "dn": "uid=memory_test,ou=people,dc=example,dc=com",
+            "attributes": {"objectClass": ["person"], "cn": ["memory_test"]},
+        }
+        entry = FlextLdifModels.create_entry(entry_data)
+
+        # This should trigger memory optimization due to low threshold
+        result = service.store_entries([entry])
+        assert result.is_success
+
+    def test_large_dataset_processing(self) -> None:
+        """Test processing of large datasets with indexing."""
+        service = FlextLdifRepositoryService()
+
+        # Set low threshold to simulate large dataset
+        service._large_dataset_threshold = 1
+
+        entries = []
+        for i in range(3):
+            entry_data: dict[str, object] = {
+                "dn": f"uid=large{i},ou=people,dc=example,dc=com",
+                "attributes": {"objectClass": ["person"], "cn": [f"large{i}"]},
+            }
+            entries.append(FlextLdifModels.create_entry(entry_data))
+
+        # Store entries (should trigger large dataset handling)
+        result = service.store_entries(entries)
+        assert result.is_success
+
+        # Test statistics with large dataset handling
+        stats_result = service.get_statistics(service._entries)
+        assert stats_result.is_success
+
+    def test_duplicate_entries_handling(self) -> None:
+        """Test handling of duplicate entries with DN updates."""
+        service = FlextLdifRepositoryService()
+
+        # Create original entry
+        original_data: dict[str, object] = {
+            "dn": "uid=duplicate,ou=people,dc=example,dc=com",
+            "attributes": {"objectClass": ["person"], "cn": ["original"]},
+        }
+        original_entry = FlextLdifModels.create_entry(original_data)
+
+        # Store original
+        result1 = service.store_entries([original_entry])
+        assert result1.is_success
+        assert len(service._entries) == 1
+
+        # Create duplicate with same DN but different attributes
+        duplicate_data: dict[str, object] = {
+            "dn": "uid=duplicate,ou=people,dc=example,dc=com",
+            "attributes": {"objectClass": ["person"], "cn": ["updated"]},
+        }
+        duplicate_entry = FlextLdifModels.create_entry(duplicate_data)
+
+        # Store duplicate (should update existing entry)
+        result2 = service.store_entries([duplicate_entry])
+        assert result2.is_success
+        assert len(service._entries) == 1  # Should still be 1, updated not added
+
+    def test_cache_expiration_and_cleanup(self) -> None:
+        """Test cache expiration and cleanup functionality."""
+        service = FlextLdifRepositoryService()
+
+        # Set very short cache TTL
+        service._cache_ttl = 0.001  # 1ms
+
+        # Add entry and trigger cache
+        entry_data: dict[str, object] = {
+            "dn": "uid=expire_test,ou=people,dc=example,dc=com",
+            "attributes": {"objectClass": ["person"], "cn": ["expire_test"]},
+        }
+        entry = FlextLdifModels.create_entry(entry_data)
+        service.store_entries([entry])
+
+        # Trigger cache with find
+        service.find_entry_by_dn(service._entries, "uid=expire_test,ou=people,dc=example,dc=com")
+
+        # Wait for cache expiration
+        time.sleep(0.002)
+
+        # Next call should be cache miss due to expiration
+        result = service.find_entry_by_dn(service._entries, "uid=expire_test,ou=people,dc=example,dc=com")
+        assert result.is_success
+
+    def test_health_check_with_degraded_conditions(self) -> None:
+        """Test health check under degraded conditions."""
+        service = FlextLdifRepositoryService()
+
+        # Simulate degraded conditions
+        service._operation_failures = 50
+        service._total_operations = 100  # 50% failure rate
+
+        # Add many entries to trigger storage warning
+        for _ in range(1000):  # Simulate many entries
+            service._entries.append(None)  # type: ignore[arg-type] # Just for count
+
+        result = service.health_check()
+        assert result.is_success
+
+        health_data = result.unwrap()
+        # With 50% failure rate and index corruption, should be unhealthy
+        assert health_data["status"] == "unhealthy"
+
+    def test_index_corruption_detection(self) -> None:
+        """Test detection of index corruption in health check."""
+        service = FlextLdifRepositoryService()
+
+        # Add entry normally
+        entry_data: dict[str, object] = {
+            "dn": "uid=index_test,ou=people,dc=example,dc=com",
+            "attributes": {"objectClass": ["person"], "cn": ["index_test"]},
+        }
+        entry = FlextLdifModels.create_entry(entry_data)
+        service.store_entries([entry])
+
+        # Corrupt the DN index to simulate corruption
+        service._dn_index.clear()  # Remove all indices while keeping entries
+
+        result = service.health_check()
+        assert result.is_success
+
+        health_data = result.unwrap()
+        # Should detect index corruption
+        assert health_data["status"] == "unhealthy"
+
+    def test_rebuild_indices(self) -> None:
+        """Test rebuild_indices functionality."""
+        service = FlextLdifRepositoryService()
+
+        # Add some data first
+        entry_data: dict[str, object] = {
+            "dn": "uid=index_test,ou=people,dc=example,dc=com",
+            "attributes": {"objectClass": ["person"], "cn": ["index_test"]},
+        }
+        entry = FlextLdifModels.create_entry(entry_data)
+        service.store_entries([entry])
+
+        # Rebuild indices
+        result = service.rebuild_indices()
+        assert result.is_success is True
+
+    def test_execute_method(self) -> None:
+        """Test execute method."""
+        service = FlextLdifRepositoryService()
+
+        result = service.execute()
+        assert result.is_success is True
 
     def test_find_entry_by_dn_success(self) -> None:
         """Test find_entry_by_dn with successful match."""
@@ -192,24 +637,6 @@ class TestFlextLdifRepositoryServiceComplete:
         assert len(result.value) == 1
         assert result.value[0].dn.value == "uid=john,ou=people,dc=example,dc=com"
 
-    def test_filter_entries_by_attribute_empty_name(self) -> None:
-        """Test filter_entries_by_attribute with empty attribute name."""
-        service = FlextLdifRepositoryService()
-
-        # Create test entry
-        entry_data: dict[str, object] = {
-            "dn": "uid=john,ou=people,dc=example,dc=com",
-            "attributes": {"objectClass": ["person"], "cn": ["John"]},
-        }
-        entry = FlextLdifModels.create_entry(entry_data)
-        entries = [entry]
-
-        result = service.filter_entries_by_attribute(entries, "", "John")
-        assert result.is_success is False
-        assert (
-            result.error is not None
-            and "Attribute name cannot be empty" in result.error
-        )
 
     def test_filter_entries_by_attribute_whitespace_name(self) -> None:
         """Test filter_entries_by_attribute with whitespace-only attribute name."""
@@ -292,23 +719,6 @@ class TestFlextLdifRepositoryServiceComplete:
         assert result.is_success is True
         assert len(result.value) == 1
 
-    def test_filter_entries_by_objectclass_empty_class(self) -> None:
-        """Test filter_entries_by_objectclass with empty object class."""
-        service = FlextLdifRepositoryService()
-
-        # Create test entry
-        entry_data: dict[str, object] = {
-            "dn": "uid=john,ou=people,dc=example,dc=com",
-            "attributes": {"objectClass": ["person"], "cn": ["John"]},
-        }
-        entry = FlextLdifModels.create_entry(entry_data)
-        entries = [entry]
-
-        result = service.filter_entries_by_objectclass(entries, "")
-        assert result.is_success is False
-        assert (
-            result.error is not None and "Object class cannot be empty" in result.error
-        )
 
     def test_filter_entries_by_objectclass_whitespace_class(self) -> None:
         """Test filter_entries_by_objectclass with whitespace-only object class."""
