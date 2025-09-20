@@ -17,12 +17,7 @@ from flext_ldif import (
 )
 from flext_ldif.config import FlextLdifConfig
 
-# Extract nested classes for testing
-ParseFileCommand = FlextLdifModels.ParseFileCommand
-ParseStringCommand = FlextLdifModels.ParseStringCommand
-ValidateEntriesCommand = FlextLdifModels.ValidateEntriesCommand
-WriteFileCommand = FlextLdifModels.WriteFileCommand
-WriteStringCommand = FlextLdifModels.WriteStringCommand
+# Integration tests using direct API calls (command pattern was removed)
 
 
 class TestAdvancedAPIFeatures:

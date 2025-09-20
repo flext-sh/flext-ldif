@@ -17,7 +17,6 @@ from flext_ldif.config import FlextLdifConfig
 from flext_ldif.exceptions import FlextLdifExceptions
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services import FlextLdifServices
-from flext_ldif.utilities import FlextLdifUtilities
 
 # Add src to path
 sys.path.insert(0, "src")

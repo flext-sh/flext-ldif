@@ -15,8 +15,8 @@ from flext_core import FlextResult
 from flext_ldif import (
     FlextLdifAPI,
     FlextLdifFormatHandler,
+    FlextLdifServices,
 )
-from flext_ldif.services import FlextLdifServices
 
 
 class TestCompleteWorkflows:

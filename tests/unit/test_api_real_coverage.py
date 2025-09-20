@@ -237,7 +237,10 @@ objectClass: person
             cn_value = cn_values[0] if cn_values else "test"
             new_attrs["mail"] = [f"{cn_value}@example.com"]
             return FlextLdifModels.create_entry(
-                {"dn": entry.dn.value, "attributes": new_attrs}
+                {
+                    "dn": entry.dn.value,
+                    "attributes": new_attrs,
+                }
             )
 
         result = api_default.transform(sample_entries, add_mail_attr)

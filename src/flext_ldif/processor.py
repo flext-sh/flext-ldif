@@ -149,7 +149,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
         return self._config
 
     class _ValidationHelper:
-        """Nested validation helper with advanced features."""
+        """Enhanced validation helper with monadic patterns and railway composition."""
 
         def __init__(self, processor: FlextLdifProcessor) -> None:
             self._processor = processor
@@ -161,218 +161,296 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             entry: FlextLdifModels.Entry,
             index: int,
         ) -> FlextResult[bool]:
-            """Validate single entry with enhanced context and error reporting."""
-            try:
-                # Use FlextLdifModels Entry business rules validation
-                validation_result = entry.validate_business_rules()
-                if validation_result.is_failure:
-                    return FlextResult[bool].fail(
-                        validation_result.error or "Entry validation failed",
-                    )
-
-                # Additional structure validation
-                structure_result = self.validate_entry_structure(entry)
-                if structure_result.is_failure:
-                    return structure_result
-
-                # Schema validation if enabled
-                if self._config.ldif_validate_object_class:
-                    schema_result = self.validate_schema_compliance(entry)
-                    if schema_result.is_failure:
-                        return schema_result
-
-                return FlextResult[bool].ok(data=True)
-
-            except Exception as e:
-                self._logger.exception(
-                    "Entry validation failed with exception",
-                    extra={
-                        "entry_index": index,
-                        "dn": entry.dn.value,
-                        "error": str(e),
-                    },
+            """Validate single entry with monadic composition and enhanced context."""
+            return (
+                self._validate_entry_business_rules(entry, index)
+                .flat_map(lambda _: self._validate_entry_structure_safe(entry, index))
+                .flat_map(lambda _: self._validate_schema_compliance_safe(entry, index))
+                .map(lambda _: True)
+                .tap_error(
+                    lambda error: self._log_validation_failure(entry, index, error)
                 )
-                return FlextResult[bool].fail(f"Entry validation error: {e}")
+            )
 
         def validate_entry_structure(
             self,
             entry: FlextLdifModels.Entry,
         ) -> FlextResult[bool]:
-            """Validate entry structure with detailed structural analysis."""
-            try:
-                # Check DN structure
-                dn_result = self.validate_dn_format(entry.dn.value)
-                if dn_result.is_failure:
-                    self._processor.increment_validation_stat("dn_format_errors")
-                    return dn_result
-
-                # Check required objectClass attribute
-                if self._config.ldif_validate_object_class:
-                    attributes = entry.attributes.data
-                    if "objectClass" not in attributes:
-                        self._processor.increment_validation_stat(
-                            "missing_objectclass_errors"
-                        )
-                        return FlextResult[bool].fail(
-                            "Missing required objectClass attribute",
-                        )
-
-                    if not attributes["objectClass"]:
-                        self._processor.increment_validation_stat(
-                            "missing_objectclass_errors"
-                        )
-                        return FlextResult[bool].fail(
-                            "objectClass attribute cannot be empty",
-                        )
-
-                # Check for empty values if not allowed
-                if not self._config.ldif_allow_empty_values:
-                    for attr_name, attr_values in entry.attributes.data.items():
-                        if not attr_values or any(
-                            not value.strip() for value in attr_values
-                        ):
-                            self._processor.increment_validation_stat(
-                                "invalid_attribute_values"
-                            )
-                            return FlextResult[bool].fail(
-                                f"Empty values not allowed for attribute: {attr_name}",
-                            )
-
-                return FlextResult[bool].ok(data=True)
-
-            except Exception as e:
-                self._logger.exception(
-                    "Entry structure validation failed",
-                    extra={"dn": entry.dn.value, "error": str(e)},
-                )
-                return FlextResult[bool].fail(f"Structure validation error: {e}")
+            """Validate entry structure with monadic composition."""
+            return (
+                self._validate_dn_structure(entry)
+                .flat_map(lambda _: self._validate_objectclass_presence(entry))
+                .flat_map(lambda _: self._validate_attribute_values(entry))
+                .map(lambda _: True)
+            )
 
         def validate_dn_format(self, dn: str) -> FlextResult[bool]:
-            """Validate DN format with enhanced pattern matching and error reporting."""
+            """Validate DN format with enhanced monadic error handling."""
             start_time = time.time()
+            self._processor.increment_dn_validations()
 
-            try:
-                self._processor.increment_dn_validations()
-
-                # Use FlextLdifModels DistinguishedName Pydantic v2 validation
-                dn_obj = FlextLdifModels.DistinguishedName(value=dn)
-                validation_result = dn_obj.validate_business_rules()
-
-                validation_time = time.time() - start_time
-
-                if validation_result.is_failure:
-                    self._processor.increment_validation_stat("dn_format_errors")
-
-                    self._logger.debug(
-                        "DN validation failed",
-                        extra={
-                            "dn": dn,
-                            "error": validation_result.error,
-                            "validation_time_seconds": validation_time,
-                        },
+            return (
+                FlextResult[str]
+                .safe_call(dn.strip)
+                .flat_map(self._create_dn_object)
+                .flat_map(self._validate_dn_business_rules)
+                .map(lambda _: True)
+                .tap_error(
+                    lambda error: self._record_dn_validation_failure(
+                        dn, error, start_time
                     )
-
-                    return FlextResult[bool].fail(
-                        f"DN format validation failed: {validation_result.error}",
-                    )
-
-                return FlextResult[bool].ok(data=True)
-
-            except Exception as e:
-                validation_time = time.time() - start_time
-                self._processor.increment_validation_stat("dn_format_errors")
-
-                self._logger.exception(
-                    "DN validation error",
-                    extra={
-                        "dn": dn,
-                        "error": str(e),
-                        "validation_time_seconds": validation_time,
-                    },
                 )
-
-                return FlextResult[bool].fail(f"DN validation failed: {e}")
+                .tap(lambda _: self._record_dn_validation_success(dn, start_time))
+            )
 
         def validate_schema_compliance(
             self,
             entry: FlextLdifModels.Entry,
         ) -> FlextResult[bool]:
-            """Validate entry against LDAP schema rules."""
-            try:
-                self._processor.increment_schema_validations()
+            """Validate entry against LDAP schema rules with monadic composition."""
+            self._processor.increment_schema_validations()
 
-                attributes = entry.attributes.data
-                object_classes = attributes.get("objectClass", [])
+            return (
+                self._extract_objectclasses(entry)
+                .flat_map(
+                    lambda ocs: self._validate_required_attributes_for_objectclasses(
+                        entry, ocs
+                    )
+                )
+                .map(lambda _: True)
+                .tap_error(
+                    lambda error: self._record_schema_validation_failure(entry, error)
+                )
+            )
 
-                if not object_classes:
-                    self._processor.increment_validation_stat("schema_violations")
+        # Private monadic helper methods
+        def _validate_entry_business_rules(
+            self, entry: FlextLdifModels.Entry, index: int
+        ) -> FlextResult[bool]:
+            """Validate entry business rules using FlextResult."""
+            return (
+                FlextResult[FlextLdifModels.Entry]
+                .safe_call(lambda: entry)
+                .flat_map(lambda e: e.validate_business_rules())
+                .map(lambda _: True)
+                .tap_error(
+                    lambda error: self._logger.error(
+                        f"Entry {index} business rules validation failed: {error}"
+                    )
+                )
+            )
+
+        def _validate_entry_structure_safe(
+            self, entry: FlextLdifModels.Entry, index: int
+        ) -> FlextResult[bool]:
+            """Safe entry structure validation wrapper."""
+            return self.validate_entry_structure(entry).tap_error(
+                lambda error: self._logger.error(
+                    f"Entry {index} structure validation failed: {error}"
+                )
+            )
+
+        def _validate_schema_compliance_safe(
+            self, entry: FlextLdifModels.Entry, index: int
+        ) -> FlextResult[bool]:
+            """Safe schema compliance validation wrapper."""
+            if not self._config.ldif_validate_object_class:
+                return FlextResult[bool].ok(True)
+
+            return self.validate_schema_compliance(entry).tap_error(
+                lambda error: self._logger.error(
+                    f"Entry {index} schema validation failed: {error}"
+                )
+            )
+
+        def _validate_dn_structure(
+            self, entry: FlextLdifModels.Entry
+        ) -> FlextResult[bool]:
+            """Validate DN structure with monadic composition."""
+            return self.validate_dn_format(entry.dn.value).tap_error(
+                lambda _: self._processor.increment_validation_stat("dn_format_errors")
+            )
+
+        def _validate_objectclass_presence(
+            self, entry: FlextLdifModels.Entry
+        ) -> FlextResult[bool]:
+            """Validate objectClass presence if required."""
+            if not self._config.ldif_validate_object_class:
+                return FlextResult[bool].ok(True)
+
+            attributes = entry.attributes.data
+
+            if "objectClass" not in attributes:
+                self._processor.increment_validation_stat("missing_objectclass_errors")
+                return FlextResult[bool].fail("Missing required objectClass attribute")
+
+            if not attributes["objectClass"]:
+                self._processor.increment_validation_stat("missing_objectclass_errors")
+                return FlextResult[bool].fail("objectClass attribute cannot be empty")
+
+            return FlextResult[bool].ok(True)
+
+        def _validate_attribute_values(
+            self, entry: FlextLdifModels.Entry
+        ) -> FlextResult[bool]:
+            """Validate attribute values if empty values are not allowed."""
+            if self._config.ldif_allow_empty_values:
+                return FlextResult[bool].ok(True)
+
+            for attr_name, attr_values in entry.attributes.data.items():
+                if not attr_values or any(not value.strip() for value in attr_values):
+                    self._processor.increment_validation_stat(
+                        "invalid_attribute_values"
+                    )
                     return FlextResult[bool].fail(
-                        "Missing objectClass for schema validation",
+                        f"Empty values not allowed for attribute: {attr_name}"
                     )
 
-                # Check for required attributes based on objectClass
-                for obj_class in object_classes:
-                    obj_class_lower = obj_class.lower()
+            return FlextResult[bool].ok(True)
 
-                    # Person object class validation
-                    if (
-                        obj_class_lower
-                        in FlextLdifConstants.ObjectClasses.LDAP_PERSON_CLASSES
-                    ):
-                        for (
-                            required_attr
-                        ) in FlextLdifConstants.Required.REQUIRED_PERSON_ATTRIBUTES:
-                            if required_attr not in attributes:
-                                self._processor.increment_validation_stat(
-                                    "missing_required_attributes"
-                                )
-                                return FlextResult[bool].fail(
-                                    f"Missing required attribute '{required_attr}' for objectClass '{obj_class}'",
-                                )
+        def _create_dn_object(
+            self, dn: str
+        ) -> FlextResult[FlextLdifModels.DistinguishedName]:
+            """Create DN object safely."""
+            return FlextResult[FlextLdifModels.DistinguishedName].safe_call(
+                lambda: FlextLdifModels.DistinguishedName(value=dn)
+            )
 
-                    # Organizational Unit validation
-                    elif (
-                        obj_class_lower
-                        in FlextLdifConstants.ObjectClasses.LDAP_ORGANIZATIONAL_CLASSES
-                    ):
-                        for (
-                            required_attr
-                        ) in FlextLdifConstants.Required.REQUIRED_ORGUNIT_ATTRIBUTES:
-                            if required_attr not in attributes:
-                                self._processor.increment_validation_stat(
-                                    "missing_required_attributes"
-                                )
-                                return FlextResult[bool].fail(
-                                    f"Missing required attribute '{required_attr}' for objectClass '{obj_class}'",
-                                )
-                    # Domain validation
-                    elif (
-                        obj_class_lower
-                        in FlextLdifConstants.ObjectClasses.LDAP_DOMAIN_CLASSES
-                    ):
-                        for (
-                            required_attr
-                        ) in FlextLdifConstants.Required.REQUIRED_DOMAIN_ATTRIBUTES:
-                            if required_attr not in attributes:
-                                self._processor.increment_validation_stat(
-                                    "missing_required_attributes"
-                                )
-                                return FlextResult[bool].fail(
-                                    f"Missing required attribute '{required_attr}' for objectClass '{obj_class}'",
-                                )
+        def _validate_dn_business_rules(
+            self, dn_obj: FlextLdifModels.DistinguishedName
+        ) -> FlextResult[bool]:
+            """Validate DN business rules."""
+            return dn_obj.validate_business_rules()
 
-                return FlextResult[bool].ok(data=True)
+        def _extract_objectclasses(
+            self, entry: FlextLdifModels.Entry
+        ) -> FlextResult[list[str]]:
+            """Extract objectClasses from entry."""
+            attributes = entry.attributes.data
+            object_classes = attributes.get("objectClass", [])
 
-            except Exception as e:
+            if not object_classes:
                 self._processor.increment_validation_stat("schema_violations")
-                self._logger.exception(
-                    "Schema validation error",
-                    extra={"dn": entry.dn.value, "error": str(e)},
+                return FlextResult[list[str]].fail(
+                    "Missing objectClass for schema validation"
                 )
-                return FlextResult[bool].fail(f"Schema validation error: {e}")
+
+            return FlextResult[list[str]].ok(object_classes)
+
+        def _validate_required_attributes_for_objectclasses(
+            self, entry: FlextLdifModels.Entry, object_classes: list[str]
+        ) -> FlextResult[bool]:
+            """Validate required attributes for all objectClasses."""
+            attributes = entry.attributes.data
+
+            for obj_class in object_classes:
+                obj_class_lower = obj_class.lower()
+
+                # Validate person class attributes
+                if (
+                    obj_class_lower
+                    in FlextLdifConstants.ObjectClasses.LDAP_PERSON_CLASSES
+                ):
+                    result = self._validate_required_attributes(
+                        attributes,
+                        FlextLdifConstants.Required.REQUIRED_PERSON_ATTRIBUTES,
+                        obj_class,
+                    )
+                    if result.is_failure:
+                        return result
+
+                # Validate organizational unit attributes
+                elif (
+                    obj_class_lower
+                    in FlextLdifConstants.ObjectClasses.LDAP_ORGANIZATIONAL_CLASSES
+                ):
+                    result = self._validate_required_attributes(
+                        attributes,
+                        FlextLdifConstants.Required.REQUIRED_ORGUNIT_ATTRIBUTES,
+                        obj_class,
+                    )
+                    if result.is_failure:
+                        return result
+
+                # Validate domain attributes
+                elif (
+                    obj_class_lower
+                    in FlextLdifConstants.ObjectClasses.LDAP_DOMAIN_CLASSES
+                ):
+                    result = self._validate_required_attributes(
+                        attributes,
+                        FlextLdifConstants.Required.REQUIRED_DOMAIN_ATTRIBUTES,
+                        obj_class,
+                    )
+                    if result.is_failure:
+                        return result
+
+            return FlextResult[bool].ok(True)
+
+        def _validate_required_attributes(
+            self,
+            attributes: dict[str, list[str]],
+            required_attrs: frozenset[str],
+            obj_class: str,
+        ) -> FlextResult[bool]:
+            """Validate required attributes for a specific objectClass."""
+            for required_attr in required_attrs:
+                if required_attr not in attributes:
+                    self._processor.increment_validation_stat(
+                        "missing_required_attributes"
+                    )
+                    return FlextResult[bool].fail(
+                        f"Missing required attribute '{required_attr}' for objectClass '{obj_class}'"
+                    )
+
+            return FlextResult[bool].ok(True)
+
+        # Logging and metrics helpers
+        def _log_validation_failure(
+            self, entry: FlextLdifModels.Entry, index: int, error: str
+        ) -> None:
+            """Log validation failure with context."""
+            self._logger.error(
+                "Entry validation failed",
+                entry_index=index,
+                dn=entry.dn.value,
+                error=error,
+            )
+
+        def _record_dn_validation_failure(
+            self, dn: str, error: str, start_time: float
+        ) -> None:
+            """Record DN validation failure metrics."""
+            validation_time = time.time() - start_time
+            self._processor.increment_validation_stat("dn_format_errors")
+
+            self._logger.debug(
+                "DN validation failed",
+                dn=dn,
+                error=error,
+                validation_time_seconds=validation_time,
+            )
+
+        def _record_dn_validation_success(self, dn: str, start_time: float) -> None:
+            """Record DN validation success metrics."""
+            validation_time = time.time() - start_time
+            self._logger.debug(
+                "DN validation succeeded",
+                dn=dn,
+                validation_time_seconds=validation_time,
+            )
+
+        def _record_schema_validation_failure(
+            self, entry: FlextLdifModels.Entry, error: str
+        ) -> None:
+            """Record schema validation failure metrics."""
+            self._processor.increment_validation_stat("schema_violations")
+            self._logger.error(
+                "Schema validation error", dn=entry.dn.value, error=error
+            )
 
     class _AnalyticsHelper:
-        """Nested analytics helper with advanced pattern recognition."""
+        """Enhanced analytics helper with sequence/traverse patterns and monadic composition."""
 
         def __init__(self, processor: FlextLdifProcessor) -> None:
             self._processor = processor
@@ -380,20 +458,24 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             self._config = processor._config
 
         def get_entries_hash(self, entries: list[FlextLdifModels.Entry]) -> str:
-            """Generate a hash for entries to use in cache keys."""
-            if not entries:
-                return "empty"
-
-            # Use a sample of DNs to create a reasonably unique hash
-            sample_dns = [e.dn.value for e in entries[: min(10, len(entries))]]
-            return str(hash(tuple(sample_dns)))
+            """Generate a hash for entries using monadic composition."""
+            return (
+                FlextResult[list[FlextLdifModels.Entry]]
+                .ok(entries)
+                .map(
+                    lambda entries: entries[: min(10, len(entries))] if entries else []
+                )
+                .map(lambda sample: [e.dn.value for e in sample])
+                .map(lambda dns: str(hash(tuple(dns))) if dns else "empty")
+                .unwrap_or("empty")
+            )
 
         def classify_entry_types(
             self,
             entries: list[FlextLdifModels.Entry],
         ) -> dict[str, int]:
-            """Classify entries into detailed types."""
-            types = {
+            """Classify entries using sequence patterns and monadic composition."""
+            initial_types = {
                 "user_accounts": 0,
                 "service_accounts": 0,
                 "security_groups": 0,
@@ -403,175 +485,296 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                 "unknown_types": 0,
             }
 
-            for entry in entries:
-                object_classes = {
-                    oc.lower()
-                    for oc in (
-                        entry.get_attribute(
-                            FlextLdifConstants.Format.OBJECTCLASS_ATTRIBUTE
-                        )
-                        or []
+            return (
+                FlextResult[list[FlextLdifModels.Entry]]
+                .ok(entries)
+                .map(
+                    lambda entries: self._sequence_classify_entries(
+                        entries, initial_types
                     )
-                }
-
-                if object_classes.intersection({"user", "inetorgperson", "person"}):
-                    if (
-                        "service" in entry.dn.value.lower()
-                        or "svc" in entry.dn.value.lower()
-                    ):
-                        types["service_accounts"] += 1
-                    else:
-                        types["user_accounts"] += 1
-                elif object_classes.intersection(
-                    {"group", "groupofnames", "groupofuniquenames"},
-                ):
-                    if "security" in entry.dn.value.lower():
-                        types["security_groups"] += 1
-                    else:
-                        types["distribution_groups"] += 1
-                elif object_classes.intersection({"container", "organizationalunit"}):
-                    types["containers"] += 1
-                elif object_classes.intersection({"computer"}):
-                    types["computers"] += 1
-                else:
-                    types["unknown_types"] += 1
-
-            return types
+                )
+                .unwrap_or(initial_types)
+            )
 
         def calculate_data_quality_metrics(
             self,
             entries: list[FlextLdifModels.Entry],
         ) -> dict[str, int]:
-            """Calculate data quality metrics."""
+            """Calculate data quality metrics using traverse patterns."""
             if not entries:
                 return {}
 
-            empty_attributes = 0
-            missing_required_attrs = 0
-
-            for entry in entries:
-                # Check for empty attribute values
-                for values in entry.attributes.data.values():
-                    if not values or any(not v.strip() for v in values):
-                        empty_attributes += 1
-                        break
-
-                # Check for missing required attributes based on objectClass
-                object_classes = {
-                    oc.lower()
-                    for oc in (
-                        entry.get_attribute(
-                            FlextLdifConstants.Format.OBJECTCLASS_ATTRIBUTE
-                        )
-                        or []
-                    )
-                }
-
-                if object_classes.intersection(
-                    FlextLdifConstants.ObjectClasses.LDAP_PERSON_CLASSES
-                ):
-                    required_attrs = (
-                        FlextLdifConstants.Required.REQUIRED_PERSON_ATTRIBUTES
-                    )
-                    if not all(
-                        attr in entry.attributes.data for attr in required_attrs
-                    ):
-                        missing_required_attrs += 1
-
-            return {
-                "entries_with_empty_attributes": empty_attributes,
-                "entries_missing_required_attributes": missing_required_attrs,
-                "data_quality_score": int(
-                    100
-                    * (1 - (empty_attributes + missing_required_attrs) / len(entries)),
-                ),
-            }
+            return (
+                FlextResult[list[FlextLdifModels.Entry]]
+                .ok(entries)
+                .flat_map(self._traverse_quality_analysis)
+                .map(lambda metrics: self._compute_quality_score(metrics, len(entries)))
+                .unwrap_or({})
+            )
 
         def detect_structural_patterns(
             self,
             entries: list[FlextLdifModels.Entry],
         ) -> dict[str, int]:
-            """Detect structural patterns in entries."""
-            patterns = {
+            """Detect structural patterns using monadic composition."""
+            initial_patterns = {
                 "hierarchical_entries": 0,
                 "flat_entries": 0,
                 "mixed_structure": 0,
             }
 
-            depth_counts: dict[int, int] = {}
-            for entry in entries:
-                depth = len(entry.dn.value.split(","))
-                depth_counts[depth] = depth_counts.get(depth, 0) + 1
-
-            if len(depth_counts) == 1:
-                if (
-                    next(iter(depth_counts.keys()))
-                    <= FlextLdifConstants.Analytics.MAX_FLAT_ENTRY_DEPTH
-                ):
-                    patterns["flat_entries"] = len(entries)
-                else:
-                    patterns["hierarchical_entries"] = len(entries)
-            else:
-                patterns["mixed_structure"] = len(entries)
-
-            return patterns
+            return (
+                FlextResult[list[FlextLdifModels.Entry]]
+                .ok(entries)
+                .map(self._analyze_entry_depths)
+                .map(
+                    lambda depths: self._classify_structural_patterns(
+                        depths, len(entries)
+                    )
+                )
+                .unwrap_or(initial_patterns)
+            )
 
         def detect_objectclass_anomalies(
             self,
             distribution: dict[str, int],
             total_entries: int,
         ) -> list[str]:
-            """Detect anomalies in objectClass distribution."""
-            anomalies: list[str] = []
+            """Detect anomalies using functional composition."""
+            if total_entries == 0:
+                return []
 
-            for oc, count in distribution.items():
-                ratio = count / total_entries
-                if (
-                    ratio
-                    < FlextLdifConstants.Analytics.RARE_OBJECTCLASS_RATIO_THRESHOLD
-                    and count
-                    < FlextLdifConstants.Analytics.RARE_OBJECTCLASS_COUNT_THRESHOLD
-                ):  # Very rare objectClasses
-                    anomalies.append(f"rare_objectclass_{oc}")
-
-            return anomalies
+            return (
+                FlextResult[dict[str, int]]
+                .ok(distribution)
+                .map(
+                    lambda dist: [
+                        self._detect_rare_objectclass_anomaly(oc, count, total_entries)
+                        for oc, count in dist.items()
+                    ]
+                )
+                .map(
+                    lambda anomaly_results: [
+                        anomaly for anomaly in anomaly_results if anomaly is not None
+                    ]
+                )
+                .unwrap_or([])
+            )
 
         def perform_anomaly_detection(
             self,
             entries: list[FlextLdifModels.Entry],
         ) -> dict[str, list[str]]:
-            """Perform anomaly detection on entries."""
-            anomalies: dict[str, list[str]] = {
+            """Perform comprehensive anomaly detection using traverse patterns."""
+            default_anomalies: dict[str, list[str]] = {
                 "unusual_attribute_counts": [],
                 "rare_objectclasses": [],
                 "suspicious_dns": [],
             }
 
             if not entries:
-                return anomalies
+                return default_anomalies
+
+            return (
+                FlextResult[list[FlextLdifModels.Entry]]
+                .ok(entries)
+                .flat_map(self._traverse_anomaly_detection)
+                .unwrap_or(default_anomalies)
+            )
+
+        # Private monadic helper methods using sequence/traverse patterns
+        def _sequence_classify_entries(
+            self, entries: list[FlextLdifModels.Entry], types: dict[str, int]
+        ) -> dict[str, int]:
+            """Classify entries using sequence operations."""
+            for entry in entries:
+                entry_type = self._classify_single_entry(entry)
+                types[entry_type] = types.get(entry_type, 0) + 1
+            return types
+
+        def _classify_single_entry(self, entry: FlextLdifModels.Entry) -> str:
+            """Classify a single entry type using monadic composition."""
+            return (
+                FlextResult[FlextLdifModels.Entry]
+                .ok(entry)
+                .map(self._extract_objectclasses_set)
+                .flat_map(lambda ocs: self._determine_entry_category(entry, ocs))
+                .unwrap_or("unknown_types")
+            )
+
+        def _extract_objectclasses_set(self, entry: FlextLdifModels.Entry) -> set[str]:
+            """Extract objectClasses as a set."""
+            object_classes = (
+                entry.get_attribute(FlextLdifConstants.Format.OBJECTCLASS_ATTRIBUTE)
+                or []
+            )
+            return {oc.lower() for oc in object_classes}
+
+        def _determine_entry_category(
+            self, entry: FlextLdifModels.Entry, object_classes: set[str]
+        ) -> FlextResult[str]:
+            """Determine entry category based on objectClasses."""
+            dn_lower = entry.dn.value.lower()
+
+            if object_classes.intersection({"user", "inetorgperson", "person"}):
+                if "service" in dn_lower or "svc" in dn_lower:
+                    return FlextResult[str].ok("service_accounts")
+                return FlextResult[str].ok("user_accounts")
+            if object_classes.intersection(
+                {"group", "groupofnames", "groupofuniquenames"}
+            ):
+                if "security" in dn_lower:
+                    return FlextResult[str].ok("security_groups")
+                return FlextResult[str].ok("distribution_groups")
+            if object_classes.intersection({"container", "organizationalunit"}):
+                return FlextResult[str].ok("containers")
+            if object_classes.intersection({"computer"}):
+                return FlextResult[str].ok("computers")
+            return FlextResult[str].ok("unknown_types")
+
+        def _traverse_quality_analysis(
+            self, entries: list[FlextLdifModels.Entry]
+        ) -> FlextResult[dict[str, int]]:
+            """Traverse entries for quality analysis using monadic patterns."""
+            empty_attributes = 0
+            missing_required_attrs = 0
+
+            for entry in entries:
+                # Check empty attributes
+                if self._has_empty_attributes(entry):
+                    empty_attributes += 1
+
+                # Check missing required attributes
+                if self._has_missing_required_attributes(entry):
+                    missing_required_attrs += 1
+
+            return FlextResult[dict[str, int]].ok(
+                {
+                    "entries_with_empty_attributes": empty_attributes,
+                    "entries_missing_required_attributes": missing_required_attrs,
+                }
+            )
+
+        def _has_empty_attributes(self, entry: FlextLdifModels.Entry) -> bool:
+            """Check if entry has empty attributes."""
+            for values in entry.attributes.data.values():
+                if not values or any(not v.strip() for v in values):
+                    return True
+            return False
+
+        def _has_missing_required_attributes(
+            self, entry: FlextLdifModels.Entry
+        ) -> bool:
+            """Check if entry has missing required attributes."""
+            object_classes = self._extract_objectclasses_set(entry)
+
+            if object_classes.intersection(
+                FlextLdifConstants.ObjectClasses.LDAP_PERSON_CLASSES
+            ):
+                required_attrs = FlextLdifConstants.Required.REQUIRED_PERSON_ATTRIBUTES
+                return not all(attr in entry.attributes.data for attr in required_attrs)
+
+            return False
+
+        def _compute_quality_score(
+            self, metrics: dict[str, int], total_entries: int
+        ) -> dict[str, int]:
+            """Compute quality score from metrics."""
+            empty_attrs = metrics.get("entries_with_empty_attributes", 0)
+            missing_attrs = metrics.get("entries_missing_required_attributes", 0)
+
+            quality_score = int(
+                100 * (1 - (empty_attrs + missing_attrs) / total_entries)
+            )
+
+            return {
+                **metrics,
+                "data_quality_score": quality_score,
+            }
+
+        def _analyze_entry_depths(
+            self, entries: list[FlextLdifModels.Entry]
+        ) -> dict[int, int]:
+            """Analyze entry depths using functional composition."""
+            depth_counts: dict[int, int] = {}
+
+            for entry in entries:
+                depth = len(entry.dn.value.split(","))
+                depth_counts[depth] = depth_counts.get(depth, 0) + 1
+
+            return depth_counts
+
+        def _classify_structural_patterns(
+            self, depth_counts: dict[int, int], total_entries: int
+        ) -> dict[str, int]:
+            """Classify structural patterns based on depth analysis."""
+            patterns = {
+                "hierarchical_entries": 0,
+                "flat_entries": 0,
+                "mixed_structure": 0,
+            }
+
+            if len(depth_counts) == 1:
+                single_depth = next(iter(depth_counts.keys()))
+                if single_depth <= FlextLdifConstants.Analytics.MAX_FLAT_ENTRY_DEPTH:
+                    patterns["flat_entries"] = total_entries
+                else:
+                    patterns["hierarchical_entries"] = total_entries
+            else:
+                patterns["mixed_structure"] = total_entries
+
+            return patterns
+
+        def _detect_rare_objectclass_anomaly(
+            self, oc: str, count: int, total_entries: int
+        ) -> str | None:
+            """Detect rare objectClass anomaly."""
+            ratio = count / total_entries
+            if (
+                ratio < FlextLdifConstants.Analytics.RARE_OBJECTCLASS_RATIO_THRESHOLD
+                and count
+                < FlextLdifConstants.Analytics.RARE_OBJECTCLASS_COUNT_THRESHOLD
+            ):
+                return f"rare_objectclass_{oc}"
+            return None
+
+        def _traverse_anomaly_detection(
+            self, entries: list[FlextLdifModels.Entry]
+        ) -> FlextResult[dict[str, list[str]]]:
+            """Traverse entries for anomaly detection using monadic patterns."""
+            anomalies: dict[str, list[str]] = {
+                "unusual_attribute_counts": [],
+                "rare_objectclasses": [],
+                "suspicious_dns": [],
+            }
 
             # Calculate thresholds
             attr_counts = [len(e.attributes.data) for e in entries]
-            avg_attrs = sum(attr_counts) / len(attr_counts)
-            threshold = avg_attrs * 2  # Entries with >2x average attributes
+            avg_attrs = sum(attr_counts) / len(attr_counts) if attr_counts else 0
+            threshold = avg_attrs * 2
 
+            # Analyze each entry
             for entry in entries:
-                # Unusual attribute counts
+                # Check unusual attribute counts
                 if len(entry.attributes.data) > threshold:
                     anomalies["unusual_attribute_counts"].append(entry.dn.value)
 
-                # Suspicious DNs (very long or unusual characters)
-                if len(
-                    entry.dn.value
-                ) > FlextLdifConstants.Validation.MAX_SUSPICIOUS_DN_LENGTH or any(
-                    c in entry.dn.value for c in "<>[]{}"
-                ):
+                # Check suspicious DNs
+                if self._is_suspicious_dn(entry.dn.value):
                     anomalies["suspicious_dns"].append(entry.dn.value)
 
-            return anomalies
+            return FlextResult[dict[str, list[str]]].ok(anomalies)
+
+        def _is_suspicious_dn(self, dn: str) -> bool:
+            """Check if DN is suspicious based on length and characters."""
+            return len(
+                dn
+            ) > FlextLdifConstants.Validation.MAX_SUSPICIOUS_DN_LENGTH or any(
+                c in dn for c in "<>[]{}"
+            )
 
     class _TransformationHelper:
-        """Nested transformation helper with advanced capabilities."""
+        """Enhanced transformation helper with railway composition and monadic patterns."""
 
         def __init__(self, processor: FlextLdifProcessor) -> None:
             self._processor = processor
@@ -582,357 +785,459 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             entries: list[FlextLdifModels.Entry],
             transformation: Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry],
         ) -> FlextResult[list[FlextLdifModels.Entry]]:
-            """Apply transformation to entries with error handling."""
-            try:
-                transformed_entries = []
-                for entry in entries:
-                    try:
-                        transformed_entry = transformation(entry)
-                        transformed_entries.append(transformed_entry)
-                    except Exception as e:
-                        self._logger.exception(
-                            "Transformation failed for entry %s", entry.dn.value
-                        )
-                        return FlextResult[list[FlextLdifModels.Entry]].fail(
-                            f"Transformation error: {e}"
-                        )
-
-                return FlextResult[list[FlextLdifModels.Entry]].ok(transformed_entries)
-            except Exception as e:
-                return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Transformation failed: {e}"
+            """Apply transformation using railway composition and error accumulation."""
+            return (
+                FlextResult[list[FlextLdifModels.Entry]]
+                .ok(entries)
+                .flat_map(
+                    lambda entries: self._validate_transformation_inputs(
+                        entries, transformation
+                    )
                 )
+                .flat_map(
+                    lambda inputs: self._apply_transformation_pipeline(
+                        inputs[0], inputs[1]
+                    )
+                )
+                .tap_error(self._log_transformation_failure)
+            )
+
+        def apply_safe_transformation(
+            self,
+            entries: list[FlextLdifModels.Entry],
+            transformation: Callable[
+                [FlextLdifModels.Entry], FlextResult[FlextLdifModels.Entry]
+            ],
+        ) -> FlextResult[list[FlextLdifModels.Entry]]:
+            """Apply safe transformation that returns FlextResult with error accumulation."""
+            return (
+                FlextResult[list[FlextLdifModels.Entry]]
+                .ok(entries)
+                .flat_map(
+                    lambda entries: self._validate_safe_transformation_inputs(
+                        entries, transformation
+                    )
+                )
+                .flat_map(
+                    lambda inputs: self._apply_safe_transformation_pipeline(
+                        inputs[0], inputs[1]
+                    )
+                )
+                .tap_error(self._log_transformation_failure)
+            )
+
+        def apply_batch_transformation(
+            self,
+            entries: list[FlextLdifModels.Entry],
+            transformations: list[
+                Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry]
+            ],
+        ) -> FlextResult[list[FlextLdifModels.Entry]]:
+            """Apply multiple transformations in sequence using railway composition."""
+            return (
+                FlextResult[list[FlextLdifModels.Entry]]
+                .ok(entries)
+                .flat_map(
+                    lambda entries: self._validate_batch_inputs(
+                        entries, transformations
+                    )
+                )
+                .flat_map(
+                    lambda inputs: self._apply_transformation_sequence(
+                        inputs[0], inputs[1]
+                    )
+                )
+                .tap_error(self._log_batch_transformation_failure)
+            )
+
+        def transform_with_validation(
+            self,
+            entries: list[FlextLdifModels.Entry],
+            transformation: Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry],
+            validator: Callable[[FlextLdifModels.Entry], FlextResult[bool]],
+        ) -> FlextResult[list[FlextLdifModels.Entry]]:
+            """Apply transformation with validation using railway composition."""
+            return (
+                FlextResult[list[FlextLdifModels.Entry]]
+                .ok(entries)
+                .flat_map(
+                    lambda entries: self._transform_and_validate_pipeline(
+                        entries, transformation, validator
+                    )
+                )
+                .tap_error(self._log_validation_transformation_failure)
+            )
+
+        def filter_and_transform(
+            self,
+            entries: list[FlextLdifModels.Entry],
+            filter_predicate: Callable[[FlextLdifModels.Entry], bool],
+            transformation: Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry],
+        ) -> FlextResult[list[FlextLdifModels.Entry]]:
+            """Filter entries and apply transformation using monadic composition."""
+            return (
+                FlextResult[list[FlextLdifModels.Entry]]
+                .ok(entries)
+                .map(
+                    lambda entries: [
+                        entry for entry in entries if filter_predicate(entry)
+                    ]
+                )
+                .flat_map(
+                    lambda filtered: self.apply_transformation(filtered, transformation)
+                )
+                .tap(
+                    lambda result: self._log_filter_transform_success(
+                        len(entries), len(result)
+                    )
+                )
+            )
+
+        # Private railway composition methods
+        def _validate_transformation_inputs(
+            self,
+            entries: list[FlextLdifModels.Entry],
+            transformation: Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry],
+        ) -> FlextResult[tuple[list[FlextLdifModels.Entry], Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry]]]:
+            """Validate inputs for transformation pipeline."""
+            if not entries:
+                return FlextResult.fail("Cannot apply transformation to empty entry list")
+
+            # Type annotation ensures callable, so no runtime check needed
+            return FlextResult.ok((entries, transformation))
+
+        def _apply_transformation_pipeline(
+            self,
+            entries: list[FlextLdifModels.Entry],
+            transformation: Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry],
+        ) -> FlextResult[list[FlextLdifModels.Entry]]:
+            """Apply transformation pipeline using monadic composition."""
+            transformed_entries: list[FlextLdifModels.Entry] = []
+
+            for i, entry in enumerate(entries):
+                result = self._transform_single_entry(entry, transformation, i)
+                if result.is_failure:
+                    return FlextResult[list[FlextLdifModels.Entry]].fail(
+                        result.error or "Transformation failed"
+                    )
+                if result.data is not None:
+                    transformed_entries.append(result.data)
+
+            return FlextResult[list[FlextLdifModels.Entry]].ok(transformed_entries)
+
+        def _transform_single_entry(
+            self,
+            entry: FlextLdifModels.Entry,
+            transformation: Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry],
+            index: int,
+        ) -> FlextResult[FlextLdifModels.Entry]:
+            """Transform single entry safely."""
+            return (
+                FlextResult[FlextLdifModels.Entry]
+                .safe_call(lambda: transformation(entry))
+                .tap_error(
+                    lambda error: self._log_single_entry_transformation_failure(
+                        entry, index, error
+                    )
+                )
+            )
+
+        def _validate_safe_transformation_inputs(
+            self,
+            entries: list[FlextLdifModels.Entry],
+            transformation: Callable[[FlextLdifModels.Entry], FlextResult[FlextLdifModels.Entry]],
+        ) -> FlextResult[tuple[list[FlextLdifModels.Entry], Callable[[FlextLdifModels.Entry], FlextResult[FlextLdifModels.Entry]]]]:
+            """Validate inputs for safe transformation pipeline."""
+            if not entries:
+                return FlextResult.fail("Cannot apply safe transformation to empty entry list")
+
+            # Type annotation ensures callable, so no runtime check needed
+            return FlextResult.ok((entries, transformation))
+
+        def _apply_safe_transformation_pipeline(
+            self,
+            entries: list[FlextLdifModels.Entry],
+            transformation: Callable[
+                [FlextLdifModels.Entry], FlextResult[FlextLdifModels.Entry]
+            ],
+        ) -> FlextResult[list[FlextLdifModels.Entry]]:
+            """Apply safe transformation pipeline with error accumulation."""
+            transformed_entries: list[FlextLdifModels.Entry] = []
+            errors: list[str] = []
+
+            for i, entry in enumerate(entries):
+                result = transformation(entry)
+                if result.is_failure:
+                    error_msg = f"Entry {i} (DN: {entry.dn.value}): {result.error or 'Unknown error'}"
+                    errors.append(error_msg)
+                    self._log_single_entry_transformation_failure(
+                        entry, i, result.error or "Unknown error"
+                    )
+                elif result.data is not None:
+                    transformed_entries.append(result.data)
+
+            if errors:
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                    f"Safe transformation failed for {len(errors)} entries: {'; '.join(errors[:3])}"
+                    + (f" (and {len(errors) - 3} more)" if len(errors) > 3 else "")
+                )
+
+            return FlextResult[list[FlextLdifModels.Entry]].ok(transformed_entries)
+
+        def _validate_batch_inputs(
+            self,
+            entries: list[FlextLdifModels.Entry],
+            transformations: list[
+                Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry]
+            ],
+        ) -> FlextResult[
+            tuple[
+                list[FlextLdifModels.Entry],
+                list[Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry]],
+            ]
+        ]:
+            """Validate inputs for batch transformation."""
+            if not entries:
+                return FlextResult[
+                    tuple[
+                        list[FlextLdifModels.Entry],
+                        list[Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry]],
+                    ]
+                ].fail("Cannot apply batch transformation to empty entry list")
+
+            if not transformations:
+                return FlextResult[
+                    tuple[
+                        list[FlextLdifModels.Entry],
+                        list[Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry]],
+                    ]
+                ].fail("Cannot apply empty transformation list")
+
+            if not all(callable(t) for t in transformations):
+                return FlextResult[
+                    tuple[
+                        list[FlextLdifModels.Entry],
+                        list[Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry]],
+                    ]
+                ].fail("All transformations must be callable")
+
+            return FlextResult[
+                tuple[
+                    list[FlextLdifModels.Entry],
+                    list[Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry]],
+                ]
+            ].ok((entries, transformations))
+
+        def _apply_transformation_sequence(
+            self,
+            entries: list[FlextLdifModels.Entry],
+            transformations: list[
+                Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry]
+            ],
+        ) -> FlextResult[list[FlextLdifModels.Entry]]:
+            """Apply transformation sequence using railway composition."""
+            current_entries = entries
+
+            for i, transformation in enumerate(transformations):
+                result = self.apply_transformation(current_entries, transformation)
+                if result.is_failure:
+                    return FlextResult[list[FlextLdifModels.Entry]].fail(
+                        f"Batch transformation failed at step {i + 1}: {result.error or 'Unknown error'}"
+                    )
+                if result.data is not None:
+                    current_entries = result.data
+
+            return FlextResult[list[FlextLdifModels.Entry]].ok(current_entries)
+
+        def _transform_and_validate_pipeline(
+            self,
+            entries: list[FlextLdifModels.Entry],
+            transformation: Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry],
+            validator: Callable[[FlextLdifModels.Entry], FlextResult[bool]],
+        ) -> FlextResult[list[FlextLdifModels.Entry]]:
+            """Transform and validate using railway composition."""
+            return self.apply_transformation(entries, transformation).flat_map(
+                lambda transformed: self._validate_transformed_entries(
+                    transformed, validator
+                )
+            )
+
+        def _validate_transformed_entries(
+            self,
+            entries: list[FlextLdifModels.Entry],
+            validator: Callable[[FlextLdifModels.Entry], FlextResult[bool]],
+        ) -> FlextResult[list[FlextLdifModels.Entry]]:
+            """Validate transformed entries."""
+            validation_errors: list[str] = []
+
+            for i, entry in enumerate(entries):
+                validation_result = validator(entry)
+                if validation_result.is_failure:
+                    validation_errors.append(
+                        f"Entry {i} validation failed: {validation_result.error}"
+                    )
+
+            if validation_errors:
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                    f"Validation failed for {len(validation_errors)} entries: {'; '.join(validation_errors[:3])}"
+                    + (
+                        f" (and {len(validation_errors) - 3} more)"
+                        if len(validation_errors) > 3
+                        else ""
+                    )
+                )
+
+            return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+
+        # Logging helpers
+        def _log_transformation_failure(self, error: str) -> None:
+            """Log transformation failure."""
+            self._logger.error("Transformation pipeline failed", error=error)
+
+        def _log_batch_transformation_failure(self, error: str) -> None:
+            """Log batch transformation failure."""
+            self._logger.error("Batch transformation pipeline failed", error=error)
+
+        def _log_validation_transformation_failure(self, error: str) -> None:
+            """Log validation transformation failure."""
+            self._logger.error("Transform and validate pipeline failed", error=error)
+
+        def _log_single_entry_transformation_failure(
+            self, entry: FlextLdifModels.Entry, index: int, error: str
+        ) -> None:
+            """Log single entry transformation failure."""
+            self._logger.error(
+                "Single entry transformation failed",
+                entry_index=index,
+                dn=entry.dn.value,
+                error=error,
+            )
+
+        def _log_filter_transform_success(
+            self, original_count: int, filtered_count: int
+        ) -> None:
+            """Log filter and transform success."""
+            self._logger.info(
+                "Filter and transform completed",
+                original_entries=original_count,
+                filtered_entries=filtered_count,
+                entries_processed=filtered_count,
+            )
 
     # Core Processing Operations
 
     def parse_ldif_file(
         self, file_path: str | Path
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Parse LDIF file with enhanced validation and performance tracking."""
+        """Parse LDIF file with enhanced validation and railway pattern composition."""
         file_path_obj = Path(file_path)
-        start_time = time.time()
 
-        # Enhanced file validation
-        validation_result = self._validate_file_path(file_path_obj)
-        if validation_result.is_failure:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
-                validation_result.error or "File validation failed"
+        return (
+            self._validate_file_path(file_path_obj)
+            .flat_map(self._read_file_content)
+            .flat_map(self._parse_content_with_metrics)
+            .map(self._log_parse_file_success(file_path_obj))
+            .tap_error(
+                lambda error: self._logger.error(
+                    "parse_file_failed", file_path=str(file_path_obj), error=error
+                )
             )
-
-        try:
-            # Use standard file reading
-            content = file_path_obj.read_text(encoding="utf-8")
-
-            # Parse content
-            result = self.parse_string(content)
-            if result.is_failure:
-                return result
-
-            entries = result.unwrap()
-            elapsed = time.time() - start_time
-            self._operation_count += 1
-            self._parse_operations += 1
-            self._total_entries_processed += len(entries)
-
-            self._logger.info(
-                "parse_file_success",
-                file_path=str(file_path_obj),
-                entries_count=len(entries),
-                elapsed_ms=elapsed * 1000,
-                total_operations=self._operation_count,
-            )
-
-            return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
-
-        except Exception as exc:
-            elapsed = time.time() - start_time
-            self._logger.exception(
-                "parse_file_unexpected_error",
-                file_path=str(file_path_obj),
-                error=str(exc),
-                elapsed_ms=elapsed * 1000,
-            )
-            return FlextResult[list[FlextLdifModels.Entry]].fail(f"Parse failed: {exc}")
+        )
 
     def parse_string(self, content: str) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Parse LDIF content string with validation and enhanced processing."""
-        # Input validation
+        """Parse LDIF content string with railway pattern composition."""
+        # Handle empty content as success case (not failure)
         if not content.strip():
             self._logger.debug("parse_string_empty_content")
             return FlextResult[list[FlextLdifModels.Entry]].ok([])
 
-        start_time = time.time()
-        content_size = len(content)
-
-        self._logger.info("parse_string_started", content_size=content_size)
-
-        try:
-            # Enhanced LDIF parsing using format handler
-            result = self._format_handler.parse_ldif_content(content)
-            if result.is_failure:
-                self._logger.error(
-                    "parse_string_failed",
-                    error=result.error,
-                    content_size=content_size,
-                    content_preview=content[:100] if content else "",
+        return (
+            FlextResult[str]
+            .ok(content)
+            .flat_map(self._parse_content_with_metrics)
+            .tap_error(
+                lambda error: self._logger.error(
+                    "parse_string_failed", error=error, content_size=len(content)
                 )
-                return result
-
-            entries = result.unwrap()
-            elapsed = time.time() - start_time
-            self._operation_count += 1
-            self._parse_operations += 1
-            self._total_entries_processed += len(entries)
-
-            self._logger.info(
-                "parse_string_success",
-                entries_count=len(entries),
-                content_size=content_size,
-                elapsed_ms=elapsed * 1000,
             )
-
-            return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
-
-        except Exception as exc:
-            elapsed = time.time() - start_time
-            self._logger.exception(
-                "parse_string_unexpected_error",
-                error=str(exc),
-                content_size=content_size,
-                elapsed_ms=elapsed * 1000,
-            )
-            return FlextResult[list[FlextLdifModels.Entry]].fail(f"Parse failed: {exc}")
+        )
 
     def write_file(
         self,
         entries: list[FlextLdifModels.Entry],
         file_path: str | Path,
     ) -> FlextResult[bool]:
-        """Write entries to LDIF file with validation."""
-        if not entries:
-            return FlextResult[bool].fail("Cannot write empty entry list")
-
-        start_time = time.time()
+        """Write entries to LDIF file with railway pattern composition."""
         file_path_obj = Path(file_path)
+        start_time = time.time()
 
-        try:
-            # Generate LDIF content
-            content_result = self.write_string(entries)
-            if content_result.is_failure:
-                return FlextResult[bool].fail(
-                    content_result.error or "Content generation failed"
+        return (
+            self._validate_entries_for_writing(entries)
+            .flat_map(self.write_string)
+            .flat_map(
+                lambda content: self._write_content_to_file(content, file_path_obj)
+            )
+            .map(lambda _: True)
+            .map(self._record_write_file_metrics(file_path_obj, entries, start_time))
+            .tap_error(
+                lambda error: self._logger.error(
+                    "write_file_failed", file_path=str(file_path_obj), error=error
                 )
-
-            content = content_result.unwrap()
-
-            # Use standard file writing
-            file_path_obj.write_text(content, encoding="utf-8")
-
-            elapsed = time.time() - start_time
-            self._operation_count += 1
-            self._write_operations += 1
-
-            self._logger.info(
-                "write_file_success",
-                file_path=str(file_path_obj),
-                entries_count=len(entries),
-                elapsed_ms=elapsed * 1000,
             )
-
-            return FlextResult[bool].ok(data=True)
-
-        except Exception as exc:
-            elapsed = time.time() - start_time
-            self._logger.exception(
-                "write_file_unexpected_error",
-                file_path=str(file_path_obj),
-                error=str(exc),
-                elapsed_ms=elapsed * 1000,
-            )
-            return FlextResult[bool].fail(f"Write failed: {exc}")
+        )
 
     def write_string(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
-        """Write entries to LDIF string format using format handler."""
-        if not entries:
-            return FlextResult[str].fail("Cannot write empty entry list")
-
-        try:
-            result = self._format_handler.write_entries_to_string(entries)
-            if result.is_success:
-                self._operation_count += 1
-                self._write_operations += 1
-                self._logger.debug(
-                    "write_string_success",
-                    entries_count=len(entries),
-                    content_length=len(result.unwrap()),
+        """Write entries to LDIF string format using railway pattern composition."""
+        return (
+            self._validate_entries_for_writing(entries)
+            .flat_map(self._format_handler.write_entries_to_string)
+            .map(self._record_write_metrics(entries))
+            .tap_error(
+                lambda error: self._logger.error(
+                    "write_string_failed", entries_count=len(entries), error=error
                 )
-            return result
-
-        except Exception as exc:
-            self._logger.exception("write_string_unexpected_error", error=str(exc))
-            return FlextResult[str].fail(f"Write string failed: {exc}")
+            )
+        )
 
     # Enhanced Validation Operations
 
     def validate_entries(
         self, entries: list[FlextLdifModels.Entry]
     ) -> FlextResult[bool]:
-        """Validate LDIF entries using comprehensive validation with performance tracking."""
+        """Validate LDIF entries using monadic sequence composition."""
         start_time = time.time()
-        entry_count = len(entries)
 
-        if not entries:
-            self._record_validation_failure("empty_entry_list")
-            return FlextResult[bool].fail("Cannot validate empty entry list")
-
-        # Check configuration limits
-        max_entries = self._config.ldif_max_entries
-        if len(entries) > max_entries:
-            return FlextResult[bool].fail(
-                f"Entry count exceeded: {len(entries)} entries, limit is {max_entries}"
+        return (
+            self._validate_batch_preconditions(entries)
+            .flat_map(
+                lambda validated_entries: self._execute_validation_sequence(
+                    validated_entries, start_time
+                )
             )
-
-        self._logger.info(
-            "Starting batch validation",
-            extra={
-                "entry_count": entry_count,
-                "large_batch": entry_count > self._batch_size_threshold,
-                "strict_mode": self._strict_mode,
-            },
+            .map(lambda _: True)
+            .tap_error(
+                lambda error: self._logger.error(
+                    "batch_validation_failed", entries_count=len(entries), error=error
+                )
+            )
         )
 
-        validated_entries: list[FlextLdifModels.Entry] = []
-        validation_errors: list[str] = []
-
-        # Track validation progress for large batches
-        progress_interval = max(100, entry_count // 10)
-
-        try:
-            validator = self._ValidationHelper(self)
-
-            for i, entry in enumerate(entries):
-                # Progress logging for large batches
-                if (
-                    entry_count > self._batch_size_threshold
-                    and i % progress_interval == 0
-                ):
-                    self._logger.debug(
-                        f"Validation progress: {i}/{entry_count} entries processed",
-                    )
-
-                # Validate individual entry with detailed error tracking
-                validation_result = validator.validate_single_entry_with_context(
-                    entry, i
-                )
-
-                if validation_result.is_failure:
-                    error_msg = f"Entry {i}: {validation_result.error}"
-                    validation_errors.append(error_msg)
-
-                    # In strict mode, fail on first error
-                    if self._strict_mode:
-                        self._record_validation_failure("strict_mode_violation")
-                        validation_time = time.time() - start_time
-
-                        self._logger.warning(
-                            "Batch validation failed in strict mode",
-                            extra={
-                                "failed_entry_index": i,
-                                "error": validation_result.error,
-                                "validation_time_seconds": validation_time,
-                            },
-                        )
-
-                        return FlextResult[bool].fail(
-                            f"Strict validation failed at entry {i}: {validation_result.error}",
-                        )
-                else:
-                    validated_entries.append(entry)
-
-            # Record metrics
-            validation_time = time.time() - start_time
-            self._record_validation_success(entry_count, validation_time)
-
-            # Handle validation results
-            if validation_errors:
-                if self._strict_mode:
-                    # Should not reach here in strict mode
-                    return FlextResult[bool].fail(
-                        f"Validation errors found: {'; '.join(validation_errors[:5])}",
-                    )
-                # Non-strict mode: log warnings but continue
-                self._logger.warning(
-                    "Validation completed with errors (non-strict mode)",
-                    extra={
-                        "total_errors": len(validation_errors),
-                        "validated_entries": len(validated_entries),
-                        "error_rate": len(validation_errors) / entry_count,
-                    },
-                )
-
-            self._logger.info(
-                "Batch validation completed",
-                extra={
-                    "entry_count": entry_count,
-                    "validated_count": len(validated_entries),
-                    "error_count": len(validation_errors),
-                    "validation_time_seconds": validation_time,
-                    "throughput_entries_per_sec": entry_count / validation_time
-                    if validation_time > 0
-                    else 0,
-                    "slow_validation": validation_time
-                    > self._slow_validation_threshold,
-                },
-            )
-
-            return FlextResult[bool].ok(data=True)
-
-        except Exception as e:
-            validation_time = time.time() - start_time
-            self._record_validation_failure("unexpected_error")
-
-            self._logger.exception(
-                "Batch validation failed with exception",
-                extra={
-                    "entry_count": entry_count,
-                    "error": str(e),
-                    "validation_time_seconds": validation_time,
-                },
-            )
-
-            return FlextResult[bool].fail(f"Batch validation error: {e}")
-
     def validate_entry(self, entry: FlextLdifModels.Entry) -> FlextResult[bool]:
-        """Validate single LDIF entry with comprehensive error reporting."""
+        """Validate single LDIF entry with railway pattern composition."""
         start_time = time.time()
 
-        try:
-            validator = self._ValidationHelper(self)
-            validation_result = validator.validate_single_entry_with_context(entry, 0)
-            validation_time = time.time() - start_time
-
-            if validation_result.is_success:
-                self._record_validation_success(1, validation_time)
-                return FlextResult[bool].ok(data=True)
-            self._record_validation_failure("single_entry_validation")
-            return FlextResult[bool].fail(
-                validation_result.error or "Validation failed",
+        return (
+            FlextResult[FlextLdifModels.Entry]
+            .ok(entry)
+            .flat_map(self._execute_single_validation)
+            .map(lambda _: True)
+            .map(self._record_single_validation_success(start_time))
+            .tap_error(
+                lambda error: self._logger.error(
+                    "single_validation_failed", dn=entry.dn.value, error=error
+                )
             )
-
-        except Exception as e:
-            validation_time = time.time() - start_time
-            self._record_validation_failure("single_entry_exception")
-
-            self._logger.exception(
-                "Single entry validation failed",
-                extra={
-                    "dn": entry.dn.value,
-                    "error": str(e),
-                    "validation_time_seconds": validation_time,
-                },
-            )
-
-            return FlextResult[bool].fail(f"Entry validation error: {e}")
+        )
 
     # Advanced Analytics Operations
 
@@ -940,236 +1245,45 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
         self,
         entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[dict[str, int]]:
-        """Comprehensive entry analysis with intelligent insights."""
+        """Comprehensive entry analysis with monadic composition."""
         start_time = time.time()
-        entry_count = len(entries)
 
-        try:
-            analytics = self._AnalyticsHelper(self)
-
-            # Generate cache key
-            cache_key = (
-                f"basic_analysis:{entry_count}:{analytics.get_entries_hash(entries)}"
-            )
-
-            # Check cache first
-            cached_result = self._get_from_analytics_cache(cache_key)
-            if cached_result is not None:
-                self._analytics_stats["cached_results"] += 1
-                self._logger.debug("Cache hit for basic analysis")
-                # Type cast for cache result
-                cached_dict = cast("dict[str, int]", cached_result)
-                return FlextResult[dict[str, int]].ok(cached_dict)
-
-            self._logger.info(
-                "Starting comprehensive entry analysis",
-                extra={
-                    "entry_count": entry_count,
-                    "large_dataset": entry_count > self._large_dataset_threshold,
-                    "analysis_type": "comprehensive",
-                },
-            )
-
-            # Basic statistics
-            person_entries = sum(1 for e in entries if e.is_person_entry())
-            group_entries = sum(1 for e in entries if e.is_group_entry())
-            ou_entries = sum(
-                1
-                for e in entries
-                if "organizationalunit"
-                in (
-                    oc.lower()
-                    for oc in (
-                        e.get_attribute(FlextLdifConstants.Format.OBJECTCLASS_ATTRIBUTE)
-                        or []
-                    )
+        return (
+            self._validate_analytics_input(entries)
+            .flat_map(
+                lambda validated_entries: self._execute_cached_analysis(
+                    validated_entries, start_time, "basic_analysis"
                 )
             )
-
-            # Advanced analytics
-            unique_dns = len({e.dn.value.lower() for e in entries})
-            total_attributes = sum(len(e.attributes.data) for e in entries)
-            avg_attributes = total_attributes / entry_count if entry_count > 0 else 0
-
-            # Identify entry types distribution
-            entry_types = analytics.classify_entry_types(entries)
-
-            # Calculate data quality metrics
-            quality_metrics = analytics.calculate_data_quality_metrics(entries)
-
-            # Detect structural patterns
-            structural_patterns = analytics.detect_structural_patterns(entries)
-
-            stats = {
-                "total_entries": entry_count,
-                "person_entries": person_entries,
-                "group_entries": group_entries,
-                "organizational_unit_entries": ou_entries,
-                "unique_dns": unique_dns,
-                "duplicate_dns": entry_count - unique_dns,
-                "total_attributes": total_attributes,
-                "avg_attributes_per_entry": int(avg_attributes),
-                "max_attributes_per_entry": max(len(e.attributes.data) for e in entries)
-                if entries
-                else 0,
-                "min_attributes_per_entry": min(len(e.attributes.data) for e in entries)
-                if entries
-                else 0,
-                **entry_types,
-                **quality_metrics,
-                **structural_patterns,
-            }
-
-            # Cache the result
-            self._store_in_analytics_cache(cache_key, stats)
-
-            # Record metrics
-            analysis_time = time.time() - start_time
-            self._record_analysis_success(entry_count, analysis_time)
-            self._analytics_stats["basic_analyses"] += 1
-
-            self._logger.info(
-                "Comprehensive analysis completed",
-                extra={
-                    "entry_count": entry_count,
-                    "analysis_time_seconds": analysis_time,
-                    "insights_generated": len(stats),
-                    "slow_analysis": analysis_time > self._slow_analysis_threshold,
-                },
+            .tap_error(
+                lambda error: self._logger.error(
+                    "analyze_entries_failed", entries_count=len(entries), error=error
+                )
             )
-
-            return FlextResult[dict[str, int]].ok(stats)
-
-        except Exception as e:
-            analysis_time = time.time() - start_time
-            self._record_analysis_failure("basic_analysis_error")
-
-            self._logger.exception(
-                "Comprehensive analysis failed",
-                extra={
-                    "entry_count": entry_count,
-                    "error": str(e),
-                    "analysis_time_seconds": analysis_time,
-                },
-            )
-
-            return FlextResult[dict[str, int]].fail(f"Analysis error: {e}")
+        )
 
     def get_objectclass_distribution(
         self,
         entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[dict[str, int]]:
-        """Advanced object class distribution analysis with intelligence."""
+        """Advanced object class distribution analysis with monadic composition."""
         start_time = time.time()
 
-        try:
-            analytics = self._AnalyticsHelper(self)
-
-            # Generate cache key
-            cache_key = (
-                f"objectclass_dist:{len(entries)}:{analytics.get_entries_hash(entries)}"
-            )
-
-            # Check cache first
-            cached_result = self._get_from_analytics_cache(cache_key)
-            if cached_result is not None:
-                self._analytics_stats["cached_results"] += 1
-                cached_dict = cast("dict[str, int]", cached_result)
-                return FlextResult[dict[str, int]].ok(cached_dict)
-
-            self._logger.info(
-                "Starting objectClass distribution analysis",
-                extra={"entry_count": len(entries)},
-            )
-
-            # Basic distribution
-            distribution: dict[str, int] = {}
-            combination_patterns: dict[str, int] = {}
-
-            for entry in entries:
-                object_classes = (
-                    entry.get_attribute(FlextLdifConstants.Format.OBJECTCLASS_ATTRIBUTE)
-                    or []
+        return (
+            self._validate_analytics_input(entries)
+            .flat_map(
+                lambda validated_entries: self._execute_cached_analysis(
+                    validated_entries, start_time, "objectclass_distribution"
                 )
-
-                # Track individual object classes
-                for oc in object_classes:
-                    oc_lower = oc.lower()
-                    distribution[oc_lower] = distribution.get(oc_lower, 0) + 1
-
-                # Track objectClass combinations
-                if len(object_classes) > 1:
-                    combination_key = "|".join(
-                        sorted(oc.lower() for oc in object_classes),
-                    )
-                    combination_patterns[combination_key] = (
-                        combination_patterns.get(combination_key, 0) + 1
-                    )
-
-            # Enhanced analysis
-            enhanced_distribution = {
-                **distribution,
-                # Add combination patterns with significant frequency
-                **{
-                    f"combination_{combo}": count
-                    for combo, count in combination_patterns.items()
-                    if count >= self._min_pattern_support
-                },
-                # Add statistical insights
-                "unique_objectclasses": len(distribution),
-                "most_common_objectclass_count": max(distribution.values())
-                if distribution
-                else 0,
-                "least_common_objectclass_count": min(distribution.values())
-                if distribution
-                else 0,
-                "objectclass_combinations": len(combination_patterns),
-            }
-
-            # Detect anomalous object class patterns
-            anomalies = analytics.detect_objectclass_anomalies(
-                distribution, len(entries)
             )
-            if anomalies:
-                enhanced_distribution["anomalous_patterns_detected"] = len(anomalies)
-                self._anomaly_detections += 1
-
-            # Cache the result
-            self._store_in_analytics_cache(cache_key, enhanced_distribution)
-
-            analysis_time = time.time() - start_time
-            self._record_analysis_success(len(entries), analysis_time)
-
-            self._logger.info(
-                "ObjectClass distribution analysis completed",
-                extra={
-                    "entry_count": len(entries),
-                    "unique_objectclasses": enhanced_distribution[
-                        "unique_objectclasses"
-                    ],
-                    "combinations_found": enhanced_distribution[
-                        "objectclass_combinations"
-                    ],
-                    "analysis_time_seconds": analysis_time,
-                },
+            .tap_error(
+                lambda error: self._logger.error(
+                    "objectclass_distribution_failed",
+                    entries_count=len(entries),
+                    error=error,
+                )
             )
-
-            return FlextResult[dict[str, int]].ok(enhanced_distribution)
-
-        except Exception as e:
-            analysis_time = time.time() - start_time
-            self._record_analysis_failure("objectclass_analysis_error")
-
-            self._logger.exception(
-                "ObjectClass distribution analysis failed",
-                extra={
-                    "entry_count": len(entries),
-                    "error": str(e),
-                    "analysis_time_seconds": analysis_time,
-                },
-            )
-
-            return FlextResult[dict[str, int]].fail(f"ObjectClass analysis error: {e}")
+        )
 
     def get_dn_depth_analysis(
         self,
@@ -1642,7 +1756,11 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute processor operation - domain service interface."""
         return FlextResult[dict[str, object]].ok(
-            {"status": "ready", "processor": "FlextLdifProcessor", "unified": True}
+            {
+                "status": "ready",
+                "processor": "FlextLdifProcessor",
+                "unified": True,
+            }
         )
 
     # Private Helper Methods
@@ -1671,6 +1789,470 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             return FlextResult[Path].fail(f"Cannot access file: {e}")
 
         return FlextResult[Path].ok(file_path)
+
+    def _read_file_content(self, file_path: Path) -> FlextResult[str]:
+        """Read file content with proper error handling via railway pattern."""
+        return FlextResult.safe_call(
+            lambda: file_path.read_text(encoding="utf-8")
+        ).tap_error(
+            lambda error: self._logger.error(
+                "file_read_failed", file_path=str(file_path), error=error
+            )
+        )
+
+    def _parse_content_with_metrics(
+        self, content: str
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Parse content string with performance tracking via railway pattern."""
+        start_time = time.time()
+        content_size = len(content)
+
+        return (
+            self._validate_content_input(content)
+            .flat_map(self._format_handler.parse_ldif_content)
+            .map(self._record_parse_metrics(start_time, content_size))
+            .tap_error(
+                lambda error: self._logger.error(
+                    "content_parsing_failed", content_size=content_size, error=error
+                )
+            )
+        )
+
+    def _validate_content_input(self, content: str) -> FlextResult[str]:
+        """Validate content input with early return for empty content."""
+        if not content.strip():
+            self._logger.debug("parse_string_empty_content")
+            return FlextResult[str].fail("Empty content provided")
+
+        return FlextResult[str].ok(content)
+
+    def _record_parse_metrics(
+        self, start_time: float, content_size: int
+    ) -> Callable[[list[FlextLdifModels.Entry]], list[FlextLdifModels.Entry]]:
+        """Create a metrics recording function for railway pattern mapping."""
+
+        def record_metrics(
+            entries: list[FlextLdifModels.Entry],
+        ) -> list[FlextLdifModels.Entry]:
+            elapsed = time.time() - start_time
+            self._operation_count += 1
+            self._parse_operations += 1
+            self._total_entries_processed += len(entries)
+
+            self._logger.info(
+                "parse_content_success",
+                entries_count=len(entries),
+                content_size=content_size,
+                elapsed_ms=elapsed * 1000,
+                total_operations=self._operation_count,
+            )
+            return entries
+
+        return record_metrics
+
+    def _log_parse_file_success(
+        self, file_path: Path
+    ) -> Callable[[list[FlextLdifModels.Entry]], list[FlextLdifModels.Entry]]:
+        """Create a file parse success logging function for railway pattern mapping."""
+
+        def log_success(
+            entries: list[FlextLdifModels.Entry],
+        ) -> list[FlextLdifModels.Entry]:
+            self._logger.info(
+                "parse_file_success",
+                file_path=str(file_path),
+                entries_count=len(entries),
+                total_operations=self._operation_count,
+            )
+            return entries
+
+        return log_success
+
+    def _validate_entries_for_writing(
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Validate entries before writing via railway pattern."""
+        if not entries:
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                "Cannot write empty entry list"
+            )
+
+        return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+
+    def _write_content_to_file(self, content: str, file_path: Path) -> FlextResult[str]:
+        """Write content to file with proper error handling via railway pattern."""
+
+        def write_operation() -> str:
+            file_path.write_text(content, encoding="utf-8")
+            return content
+
+        return FlextResult.safe_call(write_operation).tap_error(
+            lambda error: self._logger.error(
+                "file_write_failed", file_path=str(file_path), error=error
+            )
+        )
+
+    def _record_write_metrics(
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> Callable[[str], str]:
+        """Create a write metrics recording function for railway pattern mapping."""
+
+        def record_metrics(content: str) -> str:
+            self._operation_count += 1
+            self._write_operations += 1
+
+            self._logger.debug(
+                "write_string_success",
+                entries_count=len(entries),
+                content_length=len(content),
+                total_operations=self._operation_count,
+            )
+            return content
+
+        return record_metrics
+
+    def _record_write_file_metrics(
+        self, file_path: Path, entries: list[FlextLdifModels.Entry], start_time: float
+    ) -> Callable[[bool], bool]:
+        """Create a write file metrics recording function for railway pattern mapping."""
+
+        def record_file_metrics(success: bool) -> bool:
+            elapsed = time.time() - start_time
+
+            self._logger.info(
+                "write_file_success",
+                file_path=str(file_path),
+                entries_count=len(entries),
+                elapsed_ms=elapsed * 1000,
+                total_operations=self._operation_count,
+            )
+            return success
+
+        return record_file_metrics
+
+    def _validate_batch_preconditions(
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Validate batch preconditions using railway pattern."""
+        if not entries:
+            self._record_validation_failure("empty_entry_list")
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                "Cannot validate empty entry list"
+            )
+
+        max_entries = self._config.ldif_max_entries
+        if len(entries) > max_entries:
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                f"Entry count exceeded: {len(entries)} entries, limit is {max_entries}"
+            )
+
+        self._logger.info(
+            "Starting batch validation",
+            entry_count=len(entries),
+            large_batch=len(entries) > self._batch_size_threshold,
+            strict_mode=self._strict_mode,
+        )
+
+        return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+
+    def _execute_validation_sequence(
+        self, entries: list[FlextLdifModels.Entry], start_time: float
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Execute validation sequence using monadic patterns."""
+        validator = self._ValidationHelper(self)
+
+        if self._strict_mode:
+            # In strict mode, validate each entry and fail fast on first error
+            for i, entry in enumerate(entries):
+                validation_result = validator.validate_single_entry_with_context(
+                    entry, i
+                )
+                if validation_result.is_failure:
+                    self._record_validation_failure("strict_mode_violation")
+                    return FlextResult[list[FlextLdifModels.Entry]].fail(
+                        f"Strict validation failed at entry {i}: {validation_result.error}"
+                    )
+
+            return (
+                FlextResult[list[FlextLdifModels.Entry]]
+                .ok(entries)
+                .map(self._record_batch_validation_success(start_time))
+            )
+        # In non-strict mode, use traverse with error accumulation
+        return self._execute_non_strict_validation(entries, start_time)
+
+    def _execute_non_strict_validation(
+        self, entries: list[FlextLdifModels.Entry], start_time: float
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Execute non-strict validation with error accumulation."""
+        validator = self._ValidationHelper(self)
+
+        validated_entries = []
+        validation_errors = []
+
+        for i, entry in enumerate(entries):
+            result = validator.validate_single_entry_with_context(entry, i)
+            if result.is_success:
+                validated_entries.append(entry)
+            else:
+                validation_errors.append(f"Entry {i}: {result.error}")
+
+        # Log warnings for non-strict mode but continue
+        if validation_errors:
+            self._logger.warning(
+                "Validation completed with errors (non-strict mode)",
+                total_errors=len(validation_errors),
+                validated_entries=len(validated_entries),
+                error_rate=len(validation_errors) / len(entries),
+            )
+
+        return (
+            FlextResult[list[FlextLdifModels.Entry]]
+            .ok(validated_entries)
+            .map(self._record_batch_validation_success(start_time))
+        )
+
+    def _execute_single_validation(
+        self, entry: FlextLdifModels.Entry
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Execute single entry validation using ValidationHelper."""
+        validator = self._ValidationHelper(self)
+        return validator.validate_single_entry_with_context(entry, 0).map(
+            lambda _: entry
+        )
+
+    def _record_batch_validation_success(
+        self, start_time: float
+    ) -> Callable[[list[FlextLdifModels.Entry]], list[FlextLdifModels.Entry]]:
+        """Create batch validation success recording function for railway pattern."""
+
+        def record_success(
+            entries: list[FlextLdifModels.Entry],
+        ) -> list[FlextLdifModels.Entry]:
+            validation_time = time.time() - start_time
+            self._record_validation_success(len(entries), validation_time)
+
+            self._logger.info(
+                "Batch validation completed",
+                entry_count=len(entries),
+                validation_time_seconds=validation_time,
+                throughput_entries_per_sec=len(entries) / validation_time
+                if validation_time > 0
+                else 0,
+                slow_validation=validation_time > self._slow_validation_threshold,
+            )
+            return entries
+
+        return record_success
+
+    def _record_single_validation_success(
+        self, start_time: float
+    ) -> Callable[[bool], bool]:
+        """Create single validation success recording function for railway pattern."""
+
+        def record_success(result: bool) -> bool:
+            validation_time = time.time() - start_time
+            self._record_validation_success(1, validation_time)
+            return result
+
+        return record_success
+
+    def _validate_analytics_input(
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Validate analytics input using railway pattern."""
+        if not entries:
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                "Cannot analyze empty entry list"
+            )
+
+        return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+
+    def _execute_cached_analysis(
+        self,
+        entries: list[FlextLdifModels.Entry],
+        start_time: float,
+        analysis_type: str,
+    ) -> FlextResult[dict[str, int]]:
+        """Execute analysis with caching using monadic composition."""
+        analytics = self._AnalyticsHelper(self)
+        cache_key = (
+            f"{analysis_type}:{len(entries)}:{analytics.get_entries_hash(entries)}"
+        )
+
+        return (
+            self._check_analytics_cache(cache_key)
+            .or_else_get(
+                lambda: FlextResult[dict[str, int]].ok(
+                    self._perform_analysis(entries, analysis_type, analytics)
+                )
+            )
+            .map(self._record_analysis_metrics(entries, start_time, analysis_type))
+            .flat_map(lambda result: self._store_analysis_result(cache_key, result))
+        )
+
+    def _check_analytics_cache(self, cache_key: str) -> FlextResult[dict[str, int]]:
+        """Check analytics cache with railway pattern."""
+        cached_result = self._get_from_analytics_cache(cache_key)
+        if cached_result is not None:
+            self._analytics_stats["cached_results"] += 1
+            self._logger.debug("Cache hit for analysis", cache_key=cache_key)
+            return FlextResult[dict[str, int]].ok(cast("dict[str, int]", cached_result))
+
+        return FlextResult[dict[str, int]].fail("Cache miss")
+
+    def _perform_analysis(
+        self,
+        entries: list[FlextLdifModels.Entry],
+        analysis_type: str,
+        analytics: FlextLdifProcessor._AnalyticsHelper,
+    ) -> dict[str, int]:
+        """Perform the actual analysis based on type."""
+        self._logger.info(
+            f"Starting {analysis_type} analysis",
+            entry_count=len(entries),
+            large_dataset=len(entries) > self._large_dataset_threshold,
+        )
+
+        if analysis_type == "basic_analysis":
+            return self._compute_basic_analysis(entries, analytics)
+        if analysis_type == "objectclass_distribution":
+            return self._compute_objectclass_distribution(entries, analytics)
+        return {}
+
+    def _compute_basic_analysis(
+        self,
+        entries: list[FlextLdifModels.Entry],
+        analytics: FlextLdifProcessor._AnalyticsHelper,
+    ) -> dict[str, int]:
+        """Compute basic analysis metrics."""
+        person_entries = sum(1 for e in entries if e.is_person_entry())
+        group_entries = sum(1 for e in entries if e.is_group_entry())
+        ou_entries = sum(
+            1
+            for e in entries
+            if "organizationalunit"
+            in (
+                oc.lower()
+                for oc in (
+                    e.get_attribute(FlextLdifConstants.Format.OBJECTCLASS_ATTRIBUTE)
+                    or []
+                )
+            )
+        )
+
+        unique_dns = len({e.dn.value.lower() for e in entries})
+        total_attributes = sum(len(e.attributes.data) for e in entries)
+        avg_attributes = total_attributes / len(entries) if entries else 0
+
+        entry_types = analytics.classify_entry_types(entries)
+        quality_metrics = analytics.calculate_data_quality_metrics(entries)
+        structural_patterns = analytics.detect_structural_patterns(entries)
+
+        return {
+            "total_entries": len(entries),
+            "person_entries": person_entries,
+            "group_entries": group_entries,
+            "organizational_unit_entries": ou_entries,
+            "unique_dns": unique_dns,
+            "duplicate_dns": len(entries) - unique_dns,
+            "total_attributes": total_attributes,
+            "avg_attributes_per_entry": int(avg_attributes),
+            "max_attributes_per_entry": max(len(e.attributes.data) for e in entries)
+            if entries
+            else 0,
+            "min_attributes_per_entry": min(len(e.attributes.data) for e in entries)
+            if entries
+            else 0,
+            **entry_types,
+            **quality_metrics,
+            **structural_patterns,
+        }
+
+    def _compute_objectclass_distribution(
+        self,
+        entries: list[FlextLdifModels.Entry],
+        analytics: FlextLdifProcessor._AnalyticsHelper,
+    ) -> dict[str, int]:
+        """Compute objectclass distribution metrics."""
+        distribution: dict[str, int] = {}
+        combination_patterns: dict[str, int] = {}
+
+        for entry in entries:
+            object_classes = (
+                entry.get_attribute(FlextLdifConstants.Format.OBJECTCLASS_ATTRIBUTE)
+                or []
+            )
+
+            # Track individual object classes
+            for oc in object_classes:
+                oc_lower = oc.lower()
+                distribution[oc_lower] = distribution.get(oc_lower, 0) + 1
+
+            # Track objectClass combinations
+            if len(object_classes) > 1:
+                combination_key = "|".join(sorted(oc.lower() for oc in object_classes))
+                combination_patterns[combination_key] = (
+                    combination_patterns.get(combination_key, 0) + 1
+                )
+
+        enhanced_distribution = {
+            **distribution,
+            **{
+                f"combination_{combo}": count
+                for combo, count in combination_patterns.items()
+                if count >= self._min_pattern_support
+            },
+            "unique_objectclasses": len(distribution),
+            "most_common_objectclass_count": max(distribution.values())
+            if distribution
+            else 0,
+            "least_common_objectclass_count": min(distribution.values())
+            if distribution
+            else 0,
+            "objectclass_combinations": len(combination_patterns),
+        }
+
+        # Detect anomalies
+        anomalies = analytics.detect_objectclass_anomalies(distribution, len(entries))
+        if anomalies:
+            enhanced_distribution["anomalous_patterns_detected"] = len(anomalies)
+            self._anomaly_detections += 1
+
+        return enhanced_distribution
+
+    def _record_analysis_metrics(
+        self,
+        entries: list[FlextLdifModels.Entry],
+        start_time: float,
+        analysis_type: str,
+    ) -> Callable[[dict[str, int]], dict[str, int]]:
+        """Create analysis metrics recording function for railway pattern."""
+
+        def record_metrics(result: dict[str, int]) -> dict[str, int]:
+            analysis_time = time.time() - start_time
+            self._record_analysis_success(len(entries), analysis_time)
+            self._analytics_stats[f"{analysis_type}_analyses"] = (
+                self._analytics_stats.get(f"{analysis_type}_analyses", 0) + 1
+            )
+
+            self._logger.info(
+                f"{analysis_type} completed",
+                entry_count=len(entries),
+                analysis_time_seconds=analysis_time,
+                insights_generated=len(result),
+                slow_analysis=analysis_time > self._slow_analysis_threshold,
+            )
+            return result
+
+        return record_metrics
+
+    def _store_analysis_result(
+        self, cache_key: str, result: dict[str, int]
+    ) -> FlextResult[dict[str, int]]:
+        """Store analysis result in cache."""
+        self._store_in_analytics_cache(cache_key, result)
+        return FlextResult[dict[str, int]].ok(result)
 
     def _get_files_to_process(
         self, directory_path: str | Path | None, file_pattern: str
@@ -1906,15 +2488,15 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                 )
 
             # Combine all pattern analyses
-            from typing import cast
             combined_patterns = self._combine_pattern_analyses(
                 cast("dict[str, object]", basic_result.unwrap()),
                 cast("dict[str, object]", oc_result.unwrap()),
-                cast("dict[str, object]", depth_result.unwrap())
+                cast("dict[str, object]", depth_result.unwrap()),
             )
 
-            self._logger.info("pattern_analysis_completed",
-                            patterns_detected=len(combined_patterns))
+            self._logger.info(
+                "pattern_analysis_completed", patterns_detected=len(combined_patterns)
+            )
             return FlextResult[dict[str, object]].ok(combined_patterns)
 
         except Exception as exc:
@@ -1926,7 +2508,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
         self,
         basic: dict[str, object],
         objectclass: dict[str, object],
-        depth: dict[str, object]
+        depth: dict[str, object],
     ) -> dict[str, object]:
         """Combine multiple pattern analyses into unified result.
 
@@ -1949,15 +2531,15 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                 "analysis_scope": "comprehensive",
                 "data_quality_indicators": self._extract_quality_indicators(
                     basic, objectclass, depth
-                )
-            }
+                ),
+            },
         }
 
     def _extract_quality_indicators(
         self,
         basic: dict[str, object],
         objectclass: dict[str, object],
-        depth: dict[str, object]
+        depth: dict[str, object],
     ) -> dict[str, object]:
         """Extract data quality indicators from pattern analysis.
 
@@ -2010,10 +2592,15 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
 
         """
         if not entries:
-            return FlextResult[dict[str, object]].ok({
-                "summary": {"total_entries": 0, "insights": "No entries to analyze"},
-                "recommendations": ["Add LDIF entries to enable analysis"]
-            })
+            return FlextResult[dict[str, object]].ok(
+                {
+                    "summary": {
+                        "total_entries": 0,
+                        "insights": "No entries to analyze",
+                    },
+                    "recommendations": ["Add LDIF entries to enable analysis"],
+                }
+            )
 
         self._logger.info("analytics_insights_started", entry_count=len(entries))
 
@@ -2048,12 +2635,14 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                 "total_entries": entry_count,
                 "analysis_timestamp": time.time(),
                 "data_quality": "comprehensive_analysis",
-                "analysis_depth": "advanced_patterns"
+                "analysis_depth": "advanced_patterns",
             },
             "patterns": patterns,
             "recommendations": self._generate_recommendations(entry_count),
             "quality_assessment": self._assess_data_quality(patterns, entry_count),
-            "optimization_suggestions": self._generate_optimization_suggestions(entry_count)
+            "optimization_suggestions": self._generate_optimization_suggestions(
+                entry_count
+            ),
         }
 
     def _generate_recommendations(self, entry_count: int) -> list[str]:
@@ -2075,17 +2664,21 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             )
 
         if entry_count > FlextLdifConstants.Analytics.LARGE_DATASET_THRESHOLD:
-            recommendations.extend([
-                "Enable parallel processing for better performance",
-                "Consider implementing data partitioning strategies",
-                "Monitor memory usage during processing"
-            ])
+            recommendations.extend(
+                [
+                    "Enable parallel processing for better performance",
+                    "Consider implementing data partitioning strategies",
+                    "Monitor memory usage during processing",
+                ]
+            )
 
-        recommendations.extend([
-            "Implement regular data validation checks",
-            "Consider adding data quality monitoring",
-            "Enable analytics caching for repeated operations"
-        ])
+        recommendations.extend(
+            [
+                "Implement regular data validation checks",
+                "Consider adding data quality monitoring",
+                "Enable analytics caching for repeated operations",
+            ]
+        )
 
         return recommendations
 
@@ -2106,7 +2699,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             "overall_score": 0.0,
             "completeness": 0.0,
             "consistency": 0.0,
-            "structure": 0.0
+            "structure": 0.0,
         }
 
         # Calculate completeness score
@@ -2124,12 +2717,28 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             depth_data = patterns["depth_analysis"]
             if isinstance(depth_data, dict) and "average_depth" in depth_data:
                 avg_depth = depth_data.get("average_depth", 0)
-                assessment["structure"] = min(1.0, float(avg_depth) / 4) if isinstance(avg_depth, (int, float)) else 0.0
+                assessment["structure"] = (
+                    min(1.0, float(avg_depth) / 4)
+                    if isinstance(avg_depth, (int, float))
+                    else 0.0
+                )
 
         # Calculate overall score with proper type casting
-        completeness = float(assessment["completeness"]) if isinstance(assessment["completeness"], (int, float)) else 0.0
-        consistency = float(assessment["consistency"]) if isinstance(assessment["consistency"], (int, float)) else 0.0
-        structure = float(assessment["structure"]) if isinstance(assessment["structure"], (int, float)) else 0.0
+        completeness = (
+            float(assessment["completeness"])
+            if isinstance(assessment["completeness"], (int, float))
+            else 0.0
+        )
+        consistency = (
+            float(assessment["consistency"])
+            if isinstance(assessment["consistency"], (int, float))
+            else 0.0
+        )
+        structure = (
+            float(assessment["structure"])
+            if isinstance(assessment["structure"], (int, float))
+            else 0.0
+        )
         assessment["overall_score"] = (completeness + consistency + structure) / 3
 
         return assessment
@@ -2147,19 +2756,23 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
         suggestions = []
 
         if entry_count > FlextLdifConstants.Processing.MAX_CACHE_ENTRIES:
-            suggestions.extend([
-                "Enable result caching for improved performance",
-                "Consider batch processing for large datasets"
-            ])
+            suggestions.extend(
+                [
+                    "Enable result caching for improved performance",
+                    "Consider batch processing for large datasets",
+                ]
+            )
 
         if entry_count > FlextLdifConstants.Analytics.SMALL_BATCH_SIZE_THRESHOLD:
             suggestions.append("Enable parallel processing for faster analysis")
 
-        suggestions.extend([
-            "Monitor memory usage during processing",
-            "Consider implementing progress tracking for long operations",
-            "Enable analytics caching for repeated queries"
-        ])
+        suggestions.extend(
+            [
+                "Monitor memory usage during processing",
+                "Consider implementing progress tracking for long operations",
+                "Enable analytics caching for repeated queries",
+            ]
+        )
 
         return suggestions
 
@@ -2180,21 +2793,21 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                 "analytics": True,
                 "writing": True,
                 "caching": True,
-                "parallel_processing": self._config.ldif_parallel_processing
+                "parallel_processing": self._config.ldif_parallel_processing,
             },
             "configuration": {
                 "max_entries": self._config.ldif_max_entries,
                 "max_workers": self._config.ldif_max_workers,
                 "buffer_size": self._config.ldif_buffer_size,
                 "enable_analytics": self._config.ldif_enable_analytics,
-                "analytics_cache_size": self._config.ldif_analytics_cache_size
+                "analytics_cache_size": self._config.ldif_analytics_cache_size,
             },
             "performance_tracking": {
                 "total_operations": self._operation_count,
                 "total_entries_processed": self._total_entries_processed,
                 "validation_success_rate": self._calculate_validation_success_rate(),
-                "analytics_success_rate": self._calculate_analytics_success_rate()
-            }
+                "analytics_success_rate": self._calculate_analytics_success_rate(),
+            },
         }
 
     # =========================================================================
@@ -2214,11 +2827,13 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
 
         """
         if not entries:
-            return FlextResult[dict[str, object]].ok({
-                "stored_entries": 0,
-                "storage_time_ms": 0.0,
-                "validation_passed": True
-            })
+            return FlextResult[dict[str, object]].ok(
+                {
+                    "stored_entries": 0,
+                    "storage_time_ms": 0.0,
+                    "validation_passed": True,
+                }
+            )
 
         start_time = time.time()
         self._logger.info("entry_storage_started", entry_count=len(entries))
@@ -2238,7 +2853,9 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                     f"Storage failed: {storage_result.error}"
                 )
 
-            storage_time = (time.time() - start_time) * FlextLdifConstants.Processing.MILLISECONDS_MULTIPLIER
+            storage_time = (
+                time.time() - start_time
+            ) * FlextLdifConstants.Processing.MILLISECONDS_MULTIPLIER
 
             storage_stats = {
                 "stored_entries": len(entries),
@@ -2246,12 +2863,14 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                 "validation_passed": True,
                 "storage_timestamp": time.time(),
                 "entry_statistics": self._calculate_basic_stats(entries),
-                "type_statistics": self._calculate_type_stats(entries)
+                "type_statistics": self._calculate_type_stats(entries),
             }
 
-            self._logger.info("entry_storage_completed",
-                            stored_count=len(entries),
-                            storage_time_ms=storage_time)
+            self._logger.info(
+                "entry_storage_completed",
+                stored_count=len(entries),
+                storage_time_ms=storage_time,
+            )
 
             return FlextResult[dict[str, object]].ok(storage_stats)
 
@@ -2306,7 +2925,9 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                 # Validate object classes
                 object_classes = entry.get_attribute("objectClass")
                 if not object_classes:
-                    return FlextResult[bool].fail(f"Missing objectClass for DN: {entry.dn.value}")
+                    return FlextResult[bool].fail(
+                        f"Missing objectClass for DN: {entry.dn.value}"
+                    )
 
                 for oc in object_classes:
                     if not self._validate_object_class(oc):
@@ -2315,7 +2936,9 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                 # Validate attributes
                 for attr_name in entry.attributes.data:
                     if not self._validate_attribute_name(attr_name):
-                        return FlextResult[bool].fail(f"Invalid attribute name: {attr_name}")
+                        return FlextResult[bool].fail(
+                            f"Invalid attribute name: {attr_name}"
+                        )
 
             return FlextResult[bool].ok(True)
 
@@ -2360,10 +2983,10 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
 
         # Check against known object classes
         all_known_classes = (
-            FlextLdifConstants.ObjectClasses.LDAP_PERSON_CLASSES |
-            FlextLdifConstants.ObjectClasses.LDAP_GROUP_CLASSES |
-            FlextLdifConstants.ObjectClasses.LDAP_ORGANIZATIONAL_CLASSES |
-            FlextLdifConstants.ObjectClasses.LDAP_DOMAIN_CLASSES
+            FlextLdifConstants.ObjectClasses.LDAP_PERSON_CLASSES
+            | FlextLdifConstants.ObjectClasses.LDAP_GROUP_CLASSES
+            | FlextLdifConstants.ObjectClasses.LDAP_ORGANIZATIONAL_CLASSES
+            | FlextLdifConstants.ObjectClasses.LDAP_DOMAIN_CLASSES
         )
 
         return object_class.lower() in {oc.lower() for oc in all_known_classes}
@@ -2385,7 +3008,9 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             return False
 
         # Basic attribute name validation (letters, numbers, hyphens)
-        return bool(re.match(r"^[a-zA-Z][a-zA-Z0-9-]*$", attr_name.split(";", maxsplit=1)[0]))
+        return bool(
+            re.match(r"^[a-zA-Z][a-zA-Z0-9-]*$", attr_name.split(";", maxsplit=1)[0])
+        )
 
     def _calculate_basic_stats(
         self, entries: list[FlextLdifModels.Entry]
@@ -2404,7 +3029,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             "entries_with_cn": 0,
             "entries_with_mail": 0,
             "entries_with_telephone": 0,
-            "unique_dns": len({entry.dn.value for entry in entries})
+            "unique_dns": len({entry.dn.value for entry in entries}),
         }
 
         for entry in entries:
@@ -2434,19 +3059,32 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             "group_entries": 0,
             "organizational_entries": 0,
             "domain_entries": 0,
-            "other_entries": 0
+            "other_entries": 0,
         }
 
         for entry in entries:
-            object_classes = {oc.lower() for oc in entry.get_attribute("objectClass") or []}
+            object_classes = {
+                oc.lower() for oc in entry.get_attribute("objectClass") or []
+            }
 
-            if object_classes & {oc.lower() for oc in FlextLdifConstants.ObjectClasses.LDAP_PERSON_CLASSES}:
+            if object_classes & {
+                oc.lower()
+                for oc in FlextLdifConstants.ObjectClasses.LDAP_PERSON_CLASSES
+            }:
                 stats["person_entries"] += 1
-            elif object_classes & {oc.lower() for oc in FlextLdifConstants.ObjectClasses.LDAP_GROUP_CLASSES}:
+            elif object_classes & {
+                oc.lower() for oc in FlextLdifConstants.ObjectClasses.LDAP_GROUP_CLASSES
+            }:
                 stats["group_entries"] += 1
-            elif object_classes & {oc.lower() for oc in FlextLdifConstants.ObjectClasses.LDAP_ORGANIZATIONAL_CLASSES}:
+            elif object_classes & {
+                oc.lower()
+                for oc in FlextLdifConstants.ObjectClasses.LDAP_ORGANIZATIONAL_CLASSES
+            }:
                 stats["organizational_entries"] += 1
-            elif object_classes & {oc.lower() for oc in FlextLdifConstants.ObjectClasses.LDAP_DOMAIN_CLASSES}:
+            elif object_classes & {
+                oc.lower()
+                for oc in FlextLdifConstants.ObjectClasses.LDAP_DOMAIN_CLASSES
+            }:
                 stats["domain_entries"] += 1
             else:
                 stats["other_entries"] += 1
@@ -2467,14 +3105,14 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                 "parse_operations": self._parse_operations,
                 "write_operations": self._write_operations,
                 "validation_operations": self._total_validations,
-                "analysis_operations": self._total_analyses
+                "analysis_operations": self._total_analyses,
             },
             "success_rates": {
                 "validation_success_rate": self._calculate_validation_success_rate(),
-                "analytics_success_rate": self._calculate_analytics_success_rate()
+                "analytics_success_rate": self._calculate_analytics_success_rate(),
             },
             "performance_metrics": self.get_performance_metrics(),
-            "configuration": self.get_config_info()
+            "configuration": self.get_config_info(),
         }
 
     # Private accessor methods for helper classes to avoid SLF001 violations
@@ -2497,7 +3135,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
     def transform_entries(
         self,
         entries: list[FlextLdifModels.Entry],
-        transformation: Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry]
+        transformation: Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Transform entries using the provided transformation function."""
         return self.transform(entries, transformation)
@@ -2506,15 +3144,14 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
         self,
         entries: list[FlextLdifModels.Entry],
         attribute_name: str,
-        attribute_value: str | None = None
+        attribute_value: str | None = None,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries by attribute name and optional value."""
         if attribute_value is None:
             # Filter by attribute presence
             try:
                 filtered = [
-                    entry for entry in entries
-                    if entry.get_attribute(attribute_name)
+                    entry for entry in entries if entry.get_attribute(attribute_name)
                 ]
                 return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
             except Exception as exc:
@@ -2526,9 +3163,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             return self.filter_by_attribute(entries, attribute_name, attribute_value)
 
     def filter_entries_by_objectclass(
-        self,
-        entries: list[FlextLdifModels.Entry],
-        object_class: str
+        self, entries: list[FlextLdifModels.Entry], object_class: str
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries by objectClass."""
         return self.filter_by_objectclass(entries, object_class)
@@ -2537,18 +3172,22 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
         """Parse LDIF content string - compatibility alias."""
         return self.parse_string(content)
 
-    def write_entries_to_string(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
+    def write_entries_to_string(
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> FlextResult[str]:
         """Write entries to LDIF string - compatibility alias."""
         return self.write_string(entries)
 
-    def write_entries_to_file(self, entries: list[FlextLdifModels.Entry], file_path: str) -> FlextResult[bool]:
+    def write_entries_to_file(
+        self, entries: list[FlextLdifModels.Entry], file_path: str
+    ) -> FlextResult[bool]:
         """Write entries to LDIF file - compatibility alias."""
         result = self.write_string(entries)
         if result.is_failure:
             return FlextResult[bool].fail(result.error or "Write failed")
 
         try:
-            with open(file_path, "w", encoding="utf-8") as f:
+            with Path(file_path).open("w", encoding="utf-8") as f:
                 f.write(result.unwrap())
             return FlextResult[bool].ok(True)
         except Exception as e:

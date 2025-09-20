@@ -90,15 +90,21 @@ class FlextLdifTypes(FlextTypes):
         class LdifProcessorProtocol(Protocol):
             """Protocol for LDIF processors with standardized interface."""
 
-            def parse_content(self, content: str) -> FlextResult[list[FlextLdifTypes.Protocols.LdifEntryProtocol]]:
+            def parse_content(
+                self, content: str
+            ) -> FlextResult[list[FlextLdifTypes.Protocols.LdifEntryProtocol]]:
                 """Parse LDIF content string into entries."""
                 ...
 
-            def validate_entries(self, entries: list[FlextLdifTypes.Protocols.LdifEntryProtocol]) -> FlextResult[bool]:
+            def validate_entries(
+                self, entries: list[FlextLdifTypes.Protocols.LdifEntryProtocol]
+            ) -> FlextResult[bool]:
                 """Validate LDIF entries."""
                 ...
 
-            def analyze_entries(self, entries: list[FlextLdifTypes.Protocols.LdifEntryProtocol]) -> FlextResult[dict[str, object]]:
+            def analyze_entries(
+                self, entries: list[FlextLdifTypes.Protocols.LdifEntryProtocol]
+            ) -> FlextResult[dict[str, object]]:
                 """Analyze LDIF entries and provide statistics."""
                 ...
 
@@ -106,7 +112,9 @@ class FlextLdifTypes(FlextTypes):
         class LdifValidatorProtocol(Protocol):
             """Protocol for LDIF validators with comprehensive validation."""
 
-            def validate_entry(self, entry: FlextLdifTypes.Protocols.LdifEntryProtocol) -> FlextResult[bool]:
+            def validate_entry(
+                self, entry: FlextLdifTypes.Protocols.LdifEntryProtocol
+            ) -> FlextResult[bool]:
                 """Validate a single LDIF entry."""
                 ...
 
@@ -122,7 +130,9 @@ class FlextLdifTypes(FlextTypes):
         class LdifAnalyticsProtocol(Protocol):
             """Protocol for LDIF analytics with metrics collection."""
 
-            def analyze_entries(self, entries: list[FlextLdifTypes.Protocols.LdifEntryProtocol]) -> FlextResult[dict[str, object]]:
+            def analyze_entries(
+                self, entries: list[FlextLdifTypes.Protocols.LdifEntryProtocol]
+            ) -> FlextResult[dict[str, object]]:
                 """Analyze LDIF entries and generate analytics."""
                 ...
 
@@ -130,7 +140,9 @@ class FlextLdifTypes(FlextTypes):
                 """Get analytics statistics."""
                 ...
 
-            def detect_patterns(self, entries: list[FlextLdifTypes.Protocols.LdifEntryProtocol]) -> dict[str, object]:
+            def detect_patterns(
+                self, entries: list[FlextLdifTypes.Protocols.LdifEntryProtocol]
+            ) -> dict[str, object]:
                 """Detect patterns in LDIF entries."""
                 ...
 
@@ -158,7 +170,7 @@ class FlextLdifTypes(FlextTypes):
         EntryTransformer = Callable[[T_Entry], FlextResult[T_Entry]]
         AttributeFilter = Callable[
             ["FlextLdifTypes.Core.AttributeNameString", FlextTypes.Core.StringList],
-            bool
+            bool,
         ]
         AttributeTransformer = Callable[
             ["FlextLdifTypes.Core.AttributeNameString", FlextTypes.Core.StringList],
@@ -167,12 +179,16 @@ class FlextLdifTypes(FlextTypes):
 
         # Advanced LDIF analytics types with enhanced type safety
         AnalyticsCalculator = Callable[[list[T_Entry]], FlextResult[dict[str, object]]]
-        StatisticsAggregator = Callable[[dict[str, object]], FlextResult[dict[str, object]]]
+        StatisticsAggregator = Callable[
+            [dict[str, object]], FlextResult[dict[str, object]]
+        ]
         PatternDetector = Callable[[list[T_Entry]], FlextResult[dict[str, object]]]
 
         # Batch processing types for enhanced performance
         BatchProcessor = Callable[[list[T_Entry]], FlextResult[list[T_Entry]]]
-        ChunkProcessor = Callable[[list[T_Entry], int], FlextResult[list[list[T_Entry]]]]
+        ChunkProcessor = Callable[
+            [list[T_Entry], int], FlextResult[list[list[T_Entry]]]
+        ]
 
     class Services:
         """Enhanced LDIF service-specific types with configuration validation."""
@@ -273,6 +289,7 @@ class FlextLdifTypes(FlextTypes):
 
         # Advanced analytics calculation types
         StatisticsData = dict[str, int | float | dict[str, object]]
+
         class AnalyticsReport(TypedDict):
             """Comprehensive analytics report structure."""
 
@@ -300,6 +317,7 @@ class FlextLdifTypes(FlextTypes):
         # Enhanced validation rule types with detailed error context
         ValidationRule = Callable[[object], FlextResult[bool]]
         ValidationMessage = NewType("ValidationMessage", str)
+
         class ValidationError(TypedDict):
             """Structure for validation error information."""
 
@@ -360,31 +378,41 @@ class FlextLdifTypes(FlextTypes):
 
         # Enhanced configuration validation types
         ConfigurationValidator = Callable[[ConfigurationData], FlextResult[bool]]
-        ConfigurationProcessor = Callable[[ConfigurationData], FlextResult[ConfigurationData]]
+        ConfigurationProcessor = Callable[
+            [ConfigurationData], FlextResult[ConfigurationData]
+        ]
 
         # Configuration management types
         ConfigurationLoader = Callable[[str], FlextResult[ConfigurationData]]
         ConfigurationSaver = Callable[[ConfigurationData, str], FlextResult[bool]]
 
         # Environment-based configuration
-        EnvironmentConfigExtractor = Callable[[dict[str, str]], FlextResult[dict[str, object]]]
+        EnvironmentConfigExtractor = Callable[
+            [dict[str, str]], FlextResult[dict[str, object]]
+        ]
 
     class IO:
         """Enhanced I/O types for LDIF file operations with comprehensive error handling."""
 
         # File operation types with enhanced error handling
         FileReader = Callable[["FlextLdifTypes.Core.LdifFilePath"], FlextResult[str]]
-        FileWriter = Callable[["FlextLdifTypes.Core.LdifFilePath", str], FlextResult[bool]]
+        FileWriter = Callable[
+            ["FlextLdifTypes.Core.LdifFilePath", str], FlextResult[bool]
+        ]
 
         # Stream processing types for large files
         StreamReader = Callable[["FlextLdifTypes.Core.LdifFilePath"], Iterator[str]]
-        StreamWriter = Callable[["FlextLdifTypes.Core.LdifFilePath"], Callable[[str], FlextResult[bool]]]
+        StreamWriter = Callable[
+            ["FlextLdifTypes.Core.LdifFilePath"], Callable[[str], FlextResult[bool]]
+        ]
 
         # URL-based operations
         UrlFetcher = Callable[["FlextLdifTypes.Core.LdifUrl"], FlextResult[str]]
 
         # Batch I/O operations
-        BatchFileProcessor = Callable[[list["FlextLdifTypes.Core.LdifFilePath"]], FlextResult[dict[str, object]]]
+        BatchFileProcessor = Callable[
+            [list["FlextLdifTypes.Core.LdifFilePath"]], FlextResult[dict[str, object]]
+        ]
 
     class Performance:
         """Performance monitoring and optimization types for LDIF operations."""

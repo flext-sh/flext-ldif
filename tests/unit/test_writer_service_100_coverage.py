@@ -10,9 +10,9 @@ import tempfile
 from pathlib import Path
 
 from flext_core import FlextResult
+from flext_ldif import FlextLdifServices
 from flext_ldif.format_handlers import FlextLdifFormatHandler
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.writer_service import FlextLdifWriterService
 
 
 class TestFlextLdifWriterServiceComplete:
@@ -20,7 +20,7 @@ class TestFlextLdifWriterServiceComplete:
 
     def test_writer_service_initialization_default(self) -> None:
         """Test writer service initialization with default format handler."""
-        service = FlextLdifWriterService()
+        service = FlextLdifServices().writer
         assert service is not None
         assert service._format_handler is not None
         assert service._cols == 76
@@ -28,14 +28,14 @@ class TestFlextLdifWriterServiceComplete:
     def test_writer_service_initialization_custom(self) -> None:
         """Test writer service initialization with custom format handler."""
         custom_handler = FlextLdifFormatHandler()
-        service = FlextLdifWriterService(format_handler=custom_handler, cols=80)
+        service = FlextLdifServices().writer
         assert service is not None
         assert service._format_handler is custom_handler
         assert service._cols == 80
 
     def test_get_config_info(self) -> None:
         """Test get_config_info method."""
-        service = FlextLdifWriterService()
+        service = FlextLdifServices().writer
 
         config_info = service.get_config_info()
         assert isinstance(config_info, dict)
@@ -48,7 +48,7 @@ class TestFlextLdifWriterServiceComplete:
 
     def test_get_service_info(self) -> None:
         """Test get_service_info method."""
-        service = FlextLdifWriterService()
+        service = FlextLdifServices().writer
 
         service_info = service.get_service_info()
         assert isinstance(service_info, dict)
@@ -59,7 +59,7 @@ class TestFlextLdifWriterServiceComplete:
 
     def test_write_entries_to_string_success(self) -> None:
         """Test write_entries_to_string with successful writing."""
-        service = FlextLdifWriterService()
+        service = FlextLdifServices().writer
 
         # Create test entries
         entry_data = {
@@ -75,7 +75,7 @@ class TestFlextLdifWriterServiceComplete:
 
     def test_write_entries_to_string_failure(self) -> None:
         """Test write_entries_to_string when format handler fails."""
-        service = FlextLdifWriterService()
+        service = FlextLdifServices().writer
 
         # Create test entries
         entry_data = {
@@ -104,7 +104,7 @@ class TestFlextLdifWriterServiceComplete:
 
     def test_write_entries_to_string_failure_no_error(self) -> None:
         """Test write_entries_to_string when format handler fails with no error."""
-        service = FlextLdifWriterService()
+        service = FlextLdifServices().writer
 
         # Create test entries
         entry_data = {
@@ -133,7 +133,7 @@ class TestFlextLdifWriterServiceComplete:
 
     def test_write_entries_to_file_success(self) -> None:
         """Test write_entries_to_file with successful writing."""
-        service = FlextLdifWriterService()
+        service = FlextLdifServices().writer
 
         # Create test entries
         entry_data = {
@@ -168,7 +168,7 @@ class TestFlextLdifWriterServiceComplete:
 
     def test_write_entries_to_file_string_generation_failure(self) -> None:
         """Test write_entries_to_file when string generation fails."""
-        service = FlextLdifWriterService()
+        service = FlextLdifServices().writer
 
         # Create test entries
         entry_data = {
@@ -201,7 +201,7 @@ class TestFlextLdifWriterServiceComplete:
 
     def test_write_entries_to_file_string_generation_failure_no_error(self) -> None:
         """Test write_entries_to_file when string generation fails with no error."""
-        service = FlextLdifWriterService()
+        service = FlextLdifServices().writer
 
         # Create test entries
         entry_data = {
@@ -234,7 +234,7 @@ class TestFlextLdifWriterServiceComplete:
 
     def test_write_entries_to_file_exception(self) -> None:
         """Test write_entries_to_file when file writing raises exception."""
-        service = FlextLdifWriterService()
+        service = FlextLdifServices().writer
 
         # Create test entries
         entry_data = {
@@ -254,7 +254,7 @@ class TestFlextLdifWriterServiceComplete:
 
     def test_execute_method(self) -> None:
         """Test execute method."""
-        service = FlextLdifWriterService()
+        service = FlextLdifServices().writer
 
         result = service.execute()
         assert result.is_success is True
@@ -262,7 +262,7 @@ class TestFlextLdifWriterServiceComplete:
 
     def test_write_entry_single(self) -> None:
         """Test write_entry method."""
-        service = FlextLdifWriterService()
+        service = FlextLdifServices().writer
 
         # Create test entry
         entry_data = {
@@ -277,7 +277,7 @@ class TestFlextLdifWriterServiceComplete:
 
     def test_write_entry_functionality(self) -> None:
         """Test write_entry method functionality."""
-        service = FlextLdifWriterService(cols=80)  # Standard column width
+        service = FlextLdifServices().writer  # Standard writer service
 
         # Test with a complete entry
         entry = FlextLdifModels.Entry(
@@ -308,7 +308,7 @@ class TestFlextLdifWriterServiceComplete:
 
     def test_write_entries_to_string_format_handler_exception(self) -> None:
         """Test write_entries_to_string with format handler exception."""
-        service = FlextLdifWriterService()
+        service = FlextLdifServices().writer
 
         # Create test entry
         entry_data: dict[str, object] = {
@@ -330,7 +330,7 @@ class TestFlextLdifWriterServiceComplete:
 
     def test_write_entries_to_string_unexpected_exception(self) -> None:
         """Test write_entries_to_string with unexpected exception."""
-        service = FlextLdifWriterService()
+        service = FlextLdifServices().writer
 
         # Create test entry
         entry_data: dict[str, object] = {
@@ -348,7 +348,7 @@ class TestFlextLdifWriterServiceComplete:
 
     def test_write_entries_to_file_with_exceptions(self) -> None:
         """Test write_entries_to_file with various exception scenarios."""
-        service = FlextLdifWriterService()
+        service = FlextLdifServices().writer
 
         # Create test entry
         entry_data: dict[str, object] = {
@@ -365,7 +365,7 @@ class TestFlextLdifWriterServiceComplete:
 
     def test_write_entries_streaming_with_exceptions(self) -> None:
         """Test write_entries_streaming with various exception scenarios."""
-        service = FlextLdifWriterService()
+        service = FlextLdifServices().writer
 
         # Create test entries
         entries = []
@@ -384,7 +384,7 @@ class TestFlextLdifWriterServiceComplete:
 
     def test_health_check_degraded_conditions(self) -> None:
         """Test health_check under degraded conditions."""
-        service = FlextLdifWriterService()
+        service = FlextLdifServices().writer
 
         # Mock the format handler to return empty output (test fails but no exception)
         original_write_ldif = service._format_handler.write_ldif
@@ -407,7 +407,7 @@ class TestFlextLdifWriterServiceComplete:
 
     def test_health_check_unhealthy_conditions(self) -> None:
         """Test health_check under unhealthy conditions."""
-        service = FlextLdifWriterService()
+        service = FlextLdifServices().writer
 
         # Mock FlextLdifModels.Entry to raise an exception during health check
         original_entry = FlextLdifModels.Entry
@@ -432,7 +432,7 @@ class TestFlextLdifWriterServiceComplete:
 
     def test_health_check_with_exception(self) -> None:
         """Test health_check with internal exception."""
-        service = FlextLdifWriterService()
+        service = FlextLdifServices().writer
 
         # Corrupt internal state to cause exception
         service._total_writes = None
@@ -443,7 +443,7 @@ class TestFlextLdifWriterServiceComplete:
 
     def test_large_batch_processing(self) -> None:
         """Test processing of large batches."""
-        service = FlextLdifWriterService()
+        service = FlextLdifServices().writer
 
         # Set low threshold to trigger large batch handling
         service._large_batch_threshold = 2
@@ -462,7 +462,7 @@ class TestFlextLdifWriterServiceComplete:
 
     def test_streaming_write_success(self) -> None:
         """Test successful streaming write operations."""
-        service = FlextLdifWriterService()
+        service = FlextLdifServices().writer
 
         entries = []
         for i in range(3):
@@ -489,7 +489,7 @@ class TestFlextLdifWriterServiceComplete:
 
     def test_statistics_and_metrics_comprehensive(self) -> None:
         """Test comprehensive statistics and metrics tracking."""
-        service = FlextLdifWriterService()
+        service = FlextLdifServices().writer
 
         # Perform various operations to generate statistics
         entry_data: dict[str, object] = {
