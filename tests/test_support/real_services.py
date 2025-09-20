@@ -7,14 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextTypes
-from flext_ldif import (
-    FlextLdifAPI,
-    FlextLdifServices,
-)
+from flext_ldif import FlextLdifAPI
 from flext_ldif.config import FlextLdifConfig
-from flext_ldif.parser_service import FlextLdifParserService
-from flext_ldif.validator_service import FlextLdifValidatorService
-from flext_ldif.writer_service import FlextLdifWriterService
 
 
 class RealServiceFactory:
@@ -45,37 +39,23 @@ class RealServiceFactory:
     @staticmethod
     def create_parser(
         config: FlextTypes.Core.Dict | None = None,
-    ) -> FlextLdifParserService:
-        """Create a real parser service."""
-        if config is None:
-            config = {}
-
-        # Use default configuration or create from provided values
-        # Configuration is handled internally by the service
-        return FlextLdifParserService()
+    ) -> FlextLdifAPI:
+        """Create a real parser service - returns unified API."""
+        return RealServiceFactory.create_api(config)
 
     @staticmethod
     def create_validator(
         config: FlextTypes.Core.Dict | None = None,
-    ) -> FlextLdifValidatorService:
-        """Create a real validator service."""
-        if config is None:
-            config = {}
-
-        # Create validator with proper configuration
-        # Configuration is handled internally by the service
-        return FlextLdifValidatorService()
+    ) -> FlextLdifAPI:
+        """Create a real validator service - returns unified API."""
+        return RealServiceFactory.create_api(config)
 
     @staticmethod
     def create_writer(
         config: FlextTypes.Core.Dict | None = None,
-    ) -> FlextLdifWriterService:
-        """Create a real writer service."""
-        if config is None:
-            config = {}
-
-        # Configuration is handled internally by the service
-        return FlextLdifWriterService()
+    ) -> FlextLdifAPI:
+        """Create a real writer service - returns unified API."""
+        return RealServiceFactory.create_api(config)
 
     @classmethod
     def create_configured_api(
@@ -145,12 +125,12 @@ class RealServiceFactory:
         """Create all services configured for integration testing."""
         config = cls.create_test_config()
 
-        services = FlextLdifServices(config=config)
+        api = FlextLdifAPI(config=config)
         return {
-            "api": FlextLdifAPI(config=config),
-            "parser": services.parser,
-            "validator": services.validator,
-            "writer": services.writer,
+            "api": api,
+            "parser": api,
+            "validator": api,
+            "writer": api,
             "config": config,
         }
 

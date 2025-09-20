@@ -11,10 +11,7 @@ from typing import cast
 from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifModels
 from flext_ldif.config import FlextLdifConfig
-from flext_ldif.parser_service import FlextLdifParserService
 from flext_ldif.processor import FlextLdifProcessor
-from flext_ldif.validator_service import FlextLdifValidatorService
-from flext_ldif.writer_service import FlextLdifWriterService
 from tests.test_support import FileManager, LdifTestData, TestValidators
 
 
@@ -278,8 +275,8 @@ class TestParserIntegrationReal:
         assert hasattr(validator, "validate_entry_structure")
 
         # Cast to proper types for Pyright
-        parser_service = cast("FlextLdifParserService", parser)
-        validator_service = cast("FlextLdifValidatorService", validator)
+        parser_service = cast("object", parser)
+        validator_service = cast("object", validator)
 
         # Parse real data
         ldif_sample = LdifTestData.basic_entries()
@@ -306,8 +303,8 @@ class TestParserIntegrationReal:
         assert hasattr(writer, "write_entries_to_string")
 
         # Cast to proper types for Pyright
-        parser_service = cast("FlextLdifParserService", parser)
-        writer_service = cast("FlextLdifWriterService", writer)
+        parser_service = cast("object", parser)
+        writer_service = cast("object", writer)
 
         # Parse original data
         ldif_sample = LdifTestData.basic_entries()

@@ -346,11 +346,15 @@ class FlextLdifFormatHandler:
 
     # Compatibility aliases for processor integration
 
-    def parse_ldif_content(self, content: str) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def parse_ldif_content(
+        self, content: str
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Parse LDIF content string - alias for parse_ldif."""
         return self.parse_ldif(content)
 
-    def write_entries_to_string(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
+    def write_entries_to_string(
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> FlextResult[str]:
         """Write entries to LDIF string - alias for write_ldif."""
         return self.write_ldif(entries)
 

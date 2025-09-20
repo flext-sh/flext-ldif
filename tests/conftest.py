@@ -23,8 +23,6 @@ from flext_tests import (
 
 from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifAPI
-from flext_ldif.parser_service import FlextLdifParserService
-from flext_ldif.writer_service import FlextLdifWriterService
 from tests.test_support import (
     FileManager,
     LdifTestData,
@@ -161,14 +159,14 @@ def ldif_binary_file(test_ldif_dir: Path, sample_ldif_with_binary: str) -> Path:
 
 # Real service fixtures for functional testing
 @pytest.fixture
-def real_parser_service() -> FlextLdifParserService:
-    """Real parser service for functional testing."""
+def real_parser_service() -> FlextLdifAPI:
+    """Real parser service for functional testing - using unified API."""
     return RealServiceFactory.create_parser()
 
 
 @pytest.fixture
-def real_writer_service() -> FlextLdifWriterService:
-    """Real writer service for functional testing."""
+def real_writer_service() -> FlextLdifAPI:
+    """Real writer service for functional testing - using unified API."""
     return RealServiceFactory.create_writer()
 
 

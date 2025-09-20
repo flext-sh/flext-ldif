@@ -76,7 +76,30 @@ class FlextLdifModels:
                 raise ValueError(error_msg)
 
             # Check for valid characters (basic validation)
-            invalid_chars = {"@", "#", "$", "%", "&", "*", "|", "<", ">", ";", ":", "'", '"', "\\", "/", "?", "[", "]", "{", "}", "(", ")"}
+            invalid_chars = {
+                "@",
+                "#",
+                "$",
+                "%",
+                "&",
+                "*",
+                "|",
+                "<",
+                ">",
+                ";",
+                ":",
+                "'",
+                '"',
+                "\\",
+                "/",
+                "?",
+                "[",
+                "]",
+                "{",
+                "}",
+                "(",
+                ")",
+            }
             if any(char in normalized for char in invalid_chars):
                 error_msg = DN_INVALID_CHARS_ERROR
                 raise ValueError(error_msg)
@@ -132,7 +155,9 @@ class FlextLdifModels:
 
                 # Must contain attribute=value pairs
                 if "=" not in self.value:
-                    return FlextResult[bool].fail("DN must contain attribute=value pairs")
+                    return FlextResult[bool].fail(
+                        "DN must contain attribute=value pairs"
+                    )
 
                 return FlextResult[bool].ok(True)  # noqa: FBT003  # noqa: FBT003
             except Exception as e:
@@ -162,7 +187,9 @@ class FlextLdifModels:
 
         @field_validator("data")
         @classmethod
-        def validate_attribute_data(cls, v: dict[str, list[str]]) -> dict[str, list[str]]:
+        def validate_attribute_data(
+            cls, v: dict[str, list[str]]
+        ) -> dict[str, list[str]]:
             """Validate attribute data structure."""
             if not isinstance(v, dict):
                 raise TypeError(ATTRIBUTES_TYPE_ERROR)
@@ -172,11 +199,13 @@ class FlextLdifModels:
                     raise ValueError(ATTRIBUTE_NAME_ERROR)
 
                 if not isinstance(values, list):
-                    raise TypeError(f"Attribute '{key}' {ATTRIBUTE_VALUES_ERROR}")
+                    msg = f"Attribute '{key}' {ATTRIBUTE_VALUES_ERROR}"  # type: ignore[unreachable]
+                    raise TypeError(msg)
 
                 for value in values:
                     if not isinstance(value, str):
-                        raise TypeError(f"All values for attribute '{key}' {ATTRIBUTE_VALUE_TYPE_ERROR}")
+                        msg = f"All values for attribute '{key}' {ATTRIBUTE_VALUE_TYPE_ERROR}"  # type: ignore[unreachable]
+                        raise TypeError(msg)
 
             return v
 
@@ -197,7 +226,9 @@ class FlextLdifModels:
             return values[0] if values else None
 
         @classmethod
-        def create(cls, data: dict[str, list[str]]) -> FlextResult[FlextLdifModels.LdifAttributes]:
+        def create(
+            cls, data: dict[str, list[str]]
+        ) -> FlextResult[FlextLdifModels.LdifAttributes]:
             """Create attributes with validation returning FlextResult."""
             try:
                 return FlextResult[FlextLdifModels.LdifAttributes].ok(cls(data=data))
@@ -214,8 +245,12 @@ class FlextLdifModels:
         - FlextResult patterns for validation
         """
 
-        dn: FlextLdifModels.DistinguishedName = Field(..., description="Distinguished Name")
-        attributes: FlextLdifModels.LdifAttributes = Field(..., description="Entry attributes")
+        dn: FlextLdifModels.DistinguishedName = Field(
+            ..., description="Distinguished Name"
+        )
+        attributes: FlextLdifModels.LdifAttributes = Field(
+            ..., description="Entry attributes"
+        )
 
         def get_attribute(self, name: str) -> list[str] | None:
             """Get attribute values by name."""
@@ -232,14 +267,18 @@ class FlextLdifModels:
         def is_person_entry(self) -> bool:
             """Check if entry is a person."""
             object_classes = self.get_attribute("objectClass") or []
-            return any(oc.lower() in {"person", "inetorgperson", "organizationalperson"}
-                      for oc in object_classes)
+            return any(
+                oc.lower() in {"person", "inetorgperson", "organizationalperson"}
+                for oc in object_classes
+            )
 
         def is_group_entry(self) -> bool:
             """Check if entry is a group."""
             object_classes = self.get_attribute("objectClass") or []
-            return any(oc.lower() in {"group", "groupofnames", "groupofuniquenames"}
-                      for oc in object_classes)
+            return any(
+                oc.lower() in {"group", "groupofnames", "groupofuniquenames"}
+                for oc in object_classes
+            )
 
         def is_organizational_unit(self) -> bool:
             """Check if entry is an organizational unit."""
@@ -252,12 +291,16 @@ class FlextLdifModels:
                 # Validate DN
                 dn_validation = self.dn.validate_business_rules()
                 if dn_validation.is_failure:
-                    return FlextResult[bool].fail(f"DN validation failed: {dn_validation.error}")
+                    return FlextResult[bool].fail(
+                        f"DN validation failed: {dn_validation.error}"
+                    )
 
                 # Entry must have objectClass
                 object_classes = self.get_attribute("objectClass")
                 if not object_classes:
-                    return FlextResult[bool].fail("Entry must have objectClass attribute")
+                    return FlextResult[bool].fail(
+                        "Entry must have objectClass attribute"
+                    )
 
                 return FlextResult[bool].ok(True)  # noqa: FBT003
             except Exception as e:
@@ -265,18 +308,20 @@ class FlextLdifModels:
 
         @classmethod
         def create(
-            cls,
-            dn: str,
-            attributes: dict[str, list[str]]
+            cls, dn: str, attributes: dict[str, list[str]]
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Create entry with validation returning FlextResult."""
             dn_result = FlextLdifModels.DistinguishedName.create(dn)
             if dn_result.is_failure:
-                return FlextResult[FlextLdifModels.Entry].fail(f"Invalid DN: {dn_result.error}")
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    f"Invalid DN: {dn_result.error}"
+                )
 
             attr_result = FlextLdifModels.LdifAttributes.create(attributes)
             if attr_result.is_failure:
-                return FlextResult[FlextLdifModels.Entry].fail(f"Invalid attributes: {attr_result.error}")
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    f"Invalid attributes: {attr_result.error}"
+                )
 
             try:
                 entry = cls(dn=dn_result.unwrap(), attributes=attr_result.unwrap())
@@ -311,7 +356,9 @@ class FlextLdifModels:
 
             attributes = data.get("attributes", {})
             if not isinstance(attributes, dict):
-                return FlextResult[FlextLdifModels.Entry].fail("Attributes must be a dictionary")
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    "Attributes must be a dictionary"
+                )
 
             # Convert attributes to proper format
             normalized_attrs: dict[str, list[str]] = {}
@@ -326,7 +373,9 @@ class FlextLdifModels:
             return FlextLdifModels.Entry.create(dn, normalized_attrs)
 
         except Exception as e:
-            return FlextResult[FlextLdifModels.Entry].fail(f"Entry creation failed: {e}")
+            return FlextResult[FlextLdifModels.Entry].fail(
+                f"Entry creation failed: {e}"
+            )
 
     @staticmethod
     def create_dn(dn_value: str) -> FlextResult[DistinguishedName]:

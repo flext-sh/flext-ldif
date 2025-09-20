@@ -3,6 +3,9 @@
 
 This demonstrates how to manually use the Docker container functionality
 for testing and development purposes.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

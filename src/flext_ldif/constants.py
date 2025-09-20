@@ -194,12 +194,19 @@ class FlextLdifConstants:
 
         # Organizational object classes
         LDAP_ORGANIZATIONAL_CLASSES: ClassVar[frozenset[str]] = frozenset(
-            {"organizationalUnit", "organization", "organizationalunit"}
+            {
+                "organizationalUnit",
+                "organization",
+                "organizationalunit",
+            }
         )
 
         # Domain object classes
         LDAP_DOMAIN_CLASSES: ClassVar[frozenset[str]] = frozenset(
-            {"domain", "dcobject"}
+            {
+                "domain",
+                "dcobject",
+            }
         )
 
         # Default object class assignments for factory methods
@@ -251,12 +258,22 @@ class FlextLdifConstants:
         REQUIRED_DOMAIN_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset({"dc"})
 
         # Extended requirements for enterprise scenarios
-        RECOMMENDED_PERSON_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset({
-            "cn", "sn", "mail", "uid", "givenName"
-        })
-        RECOMMENDED_GROUP_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset({
-            "cn", "member", "description"
-        })
+        RECOMMENDED_PERSON_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
+            {
+                "cn",
+                "sn",
+                "mail",
+                "uid",
+                "givenName",
+            }
+        )
+        RECOMMENDED_GROUP_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
+            {
+                "cn",
+                "member",
+                "description",
+            }
+        )
 
     class Operations:
         """LDIF operation constants with enhanced modification support."""

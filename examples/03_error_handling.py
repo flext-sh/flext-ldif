@@ -3,6 +3,9 @@
 
 Demonstrates FlextResult patterns and comprehensive error handling
 using Clean Architecture principles and flext-core integration.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

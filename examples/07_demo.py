@@ -2,6 +2,9 @@
 
 This module provides comprehensive examples showing how to use flext-ldif
 in enterprise scenarios with real-world LDIF processing tasks.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
