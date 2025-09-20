@@ -75,7 +75,11 @@ class TestFlextLdifRepositoryServiceComplete:
         # Create test entry
         entry_data: dict[str, object] = {
             "dn": "uid=duplicate,ou=people,dc=example,dc=com",
-            "attributes": {"objectClass": ["person"], "cn": ["duplicate"], "uid": ["duplicate"]},
+            "attributes": {
+                "objectClass": ["person"],
+                "cn": ["duplicate"],
+                "uid": ["duplicate"],
+            },
         }
         entry1 = FlextLdifModels.create_entry(entry_data)
         entry2 = FlextLdifModels.create_entry(entry_data)  # Same DN
@@ -94,7 +98,11 @@ class TestFlextLdifRepositoryServiceComplete:
         for i in range(50):  # Create enough entries to test large dataset path
             entry_data: dict[str, object] = {
                 "dn": f"uid=user{i},ou=people,dc=example,dc=com",
-                "attributes": {"objectClass": ["person"], "cn": [f"User {i}"], "uid": [f"user{i}"]},
+                "attributes": {
+                    "objectClass": ["person"],
+                    "cn": [f"User {i}"],
+                    "uid": [f"user{i}"],
+                },
             }
             entry = FlextLdifModels.create_entry(entry_data)
             entries.append(entry)
@@ -195,12 +203,15 @@ class TestFlextLdifRepositoryServiceComplete:
                     def value(self) -> str:
                         msg = "DN access error"
                         raise RuntimeError(msg)
+
                 return BrokenDN()
 
         broken_entry = BrokenEntry()
         entries = [broken_entry]  # type: ignore[list-item]
 
-        result = service.find_entry_by_dn(entries, "uid=test,ou=people,dc=example,dc=com")
+        result = service.find_entry_by_dn(
+            entries, "uid=test,ou=people,dc=example,dc=com"
+        )
         assert result.is_failure
         assert "Find error" in str(result.error)
 
@@ -318,18 +329,26 @@ class TestFlextLdifRepositoryServiceComplete:
         service.store_entries([entry])
 
         # Test cache hits with find operation
-        result1 = service.find_entry_by_dn(service._entries, "uid=cache1,ou=people,dc=example,dc=com")
+        result1 = service.find_entry_by_dn(
+            service._entries, "uid=cache1,ou=people,dc=example,dc=com"
+        )
         assert result1.is_success
 
         # Second call should hit cache
-        result2 = service.find_entry_by_dn(service._entries, "uid=cache1,ou=people,dc=example,dc=com")
+        result2 = service.find_entry_by_dn(
+            service._entries, "uid=cache1,ou=people,dc=example,dc=com"
+        )
         assert result2.is_success
 
         # Test cache hits with filter operations
-        filter_result1 = service.filter_entries_by_attribute(service._entries, "cn", "cache1")
+        filter_result1 = service.filter_entries_by_attribute(
+            service._entries, "cn", "cache1"
+        )
         assert filter_result1.is_success
 
-        filter_result2 = service.filter_entries_by_attribute(service._entries, "cn", "cache1")
+        filter_result2 = service.filter_entries_by_attribute(
+            service._entries, "cn", "cache1"
+        )
         assert filter_result2.is_success
 
     def test_memory_optimization_functionality(self) -> None:
@@ -416,13 +435,17 @@ class TestFlextLdifRepositoryServiceComplete:
         service.store_entries([entry])
 
         # Trigger cache with find
-        service.find_entry_by_dn(service._entries, "uid=expire_test,ou=people,dc=example,dc=com")
+        service.find_entry_by_dn(
+            service._entries, "uid=expire_test,ou=people,dc=example,dc=com"
+        )
 
         # Wait for cache expiration
         time.sleep(0.002)
 
         # Next call should be cache miss due to expiration
-        result = service.find_entry_by_dn(service._entries, "uid=expire_test,ou=people,dc=example,dc=com")
+        result = service.find_entry_by_dn(
+            service._entries, "uid=expire_test,ou=people,dc=example,dc=com"
+        )
         assert result.is_success
 
     def test_health_check_with_degraded_conditions(self) -> None:
@@ -637,7 +660,6 @@ class TestFlextLdifRepositoryServiceComplete:
         assert len(result.value) == 1
         assert result.value[0].dn.value == "uid=john,ou=people,dc=example,dc=com"
 
-
     def test_filter_entries_by_attribute_whitespace_name(self) -> None:
         """Test filter_entries_by_attribute with whitespace-only attribute name."""
         service = FlextLdifRepositoryService()
@@ -718,7 +740,6 @@ class TestFlextLdifRepositoryServiceComplete:
         result = service.filter_entries_by_objectclass(entries, "PERSON")
         assert result.is_success is True
         assert len(result.value) == 1
-
 
     def test_filter_entries_by_objectclass_whitespace_class(self) -> None:
         """Test filter_entries_by_objectclass with whitespace-only object class."""

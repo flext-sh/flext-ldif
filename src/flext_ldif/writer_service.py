@@ -584,10 +584,10 @@ class FlextLdifWriterService(FlextDomainService[str]):
             success_rate = self._calculate_success_rate()
             performance_status = "healthy"
             if (
-                success_rate < FlextLdifConstants.WRITER_HEALTHY_THRESHOLD
+                success_rate < FlextLdifConstants.Processing.WRITER_HEALTHY_THRESHOLD
             ):  # 95% success rate threshold
                 performance_status = "degraded"
-            elif success_rate < FlextLdifConstants.WRITER_DEGRADED_THRESHOLD:
+            elif success_rate < FlextLdifConstants.Processing.WRITER_DEGRADED_THRESHOLD:
                 performance_status = "unhealthy"
 
             checks["performance"] = {
@@ -641,7 +641,6 @@ class FlextLdifWriterService(FlextDomainService[str]):
         except Exception as e:
             self._logger.exception("Health check failed")
             return FlextResult[dict[str, object]].fail(f"Health check error: {e}")
-
 
     def execute(self) -> FlextResult[str]:
         """Execute writer service operation with enhanced reporting."""
@@ -705,9 +704,9 @@ class FlextLdifWriterService(FlextDomainService[str]):
 
     def _categorize_batch_size(self, entry_count: int) -> None:
         """Categorize batch size for statistics tracking."""
-        if entry_count < FlextLdifConstants.SMALL_BATCH_SIZE_THRESHOLD:
+        if entry_count < FlextLdifConstants.Analytics.SMALL_BATCH_SIZE_THRESHOLD:
             self._write_stats["small_batch_writes"] += 1
-        elif entry_count < FlextLdifConstants.MEDIUM_BATCH_SIZE_THRESHOLD:
+        elif entry_count < FlextLdifConstants.Analytics.MEDIUM_BATCH_SIZE_THRESHOLD:
             self._write_stats["medium_batch_writes"] += 1
         else:
             self._write_stats["large_batch_writes"] += 1
@@ -725,9 +724,9 @@ class FlextLdifWriterService(FlextDomainService[str]):
         self._write_times.append(write_time)
 
         # Keep write times list manageable
-        if len(self._write_times) > FlextLdifConstants.MAX_CACHE_ENTRIES:
+        if len(self._write_times) > FlextLdifConstants.Processing.MAX_CACHE_ENTRIES:
             self._write_times = self._write_times[
-                -FlextLdifConstants.MANAGEABLE_CACHE_SIZE :
+                -FlextLdifConstants.Processing.MANAGEABLE_CACHE_SIZE :
             ]
 
     def _record_write_failure(self, failure_type: str) -> None:

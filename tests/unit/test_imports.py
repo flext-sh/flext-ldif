@@ -12,7 +12,6 @@ from flext_ldif import (
     FlextLdifFormatHandler,
     FlextLdifModels,
     FlextLdifServices,
-    FlextLdifUtilities,
     __version__,
 )
 
@@ -47,7 +46,7 @@ class TestModuleImports:
         # FlextLdifCore eliminated - was wrapper violating SOLID
         assert FlextLdifServices is not None
         assert FlextLdifFormatHandler is not None
-        assert FlextLdifUtilities is not None
+        # FlextLdifUtilities removed - was dead code
 
     def test_library_has_no_cli(self) -> None:
         """Test that library correctly excludes CLI components."""

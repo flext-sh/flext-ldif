@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from typing import cast
 
 from flext_core import FlextDomainService, FlextLogger, FlextResult
 from flext_ldif.config import FlextLdifConfig
@@ -341,7 +342,9 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
                 if isinstance(cached_result, list) and all(
                     isinstance(entry, FlextLdifModels.Entry) for entry in cached_result
                 ):
-                    return FlextResult[list[FlextLdifModels.Entry]].ok(cached_result)
+                    return FlextResult[list[FlextLdifModels.Entry]].ok(
+                        cast("list[FlextLdifModels.Entry]", cached_result)
+                    )
                 # Cache corruption - remove invalid entry
                 del self._query_cache[cache_key]
                 self._logger.warning(
@@ -352,16 +355,16 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
 
             # Use index if entries are from internal storage
             if entries is self._entries and attribute_name in self._attribute_index:
-                filtered_entries = self._filter_using_attribute_index(
+                indexed_results = self._filter_using_attribute_index(
                     attribute_name,
                     attribute_value,
                 )
 
                 # Cache the result
-                self._store_in_cache(cache_key, filtered_entries)
+                self._store_in_cache(cache_key, indexed_results)
 
                 operation_time = time.time() - start_time
-                self._record_operation_success(len(filtered_entries), operation_time)
+                self._record_operation_success(len(indexed_results), operation_time)
                 self._operation_stats["filter_operations"] += 1
 
                 self._logger.debug(
@@ -369,31 +372,31 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
                     extra={
                         "attribute_name": attribute_name,
                         "attribute_value": attribute_value,
-                        "results_count": len(filtered_entries),
+                        "results_count": len(indexed_results),
                         "operation_time_seconds": operation_time,
                         "used_index": True,
                     },
                 )
 
-                return FlextResult[list[FlextLdifModels.Entry]].ok(filtered_entries)
+                return FlextResult[list[FlextLdifModels.Entry]].ok(indexed_results)
 
             # Fallback to linear search
-            filtered_entries = []
+            linear_results: list[FlextLdifModels.Entry] = []
             for entry in entries:
                 values = entry.get_attribute(attribute_name) or []
                 if attribute_value is None:
                     # Filter by presence of attribute (any value)
                     if values:
-                        filtered_entries.append(entry)
+                        linear_results.append(entry)
                 # Filter by specific attribute value
                 elif attribute_value in values:
-                    filtered_entries.append(entry)
+                    linear_results.append(entry)
 
             # Cache the result
-            self._store_in_cache(cache_key, filtered_entries)
+            self._store_in_cache(cache_key, linear_results)
 
             operation_time = time.time() - start_time
-            self._record_operation_success(len(filtered_entries), operation_time)
+            self._record_operation_success(len(linear_results), operation_time)
             self._operation_stats["filter_operations"] += 1
 
             self._logger.debug(
@@ -401,14 +404,14 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
                 extra={
                     "attribute_name": attribute_name,
                     "attribute_value": attribute_value,
-                    "results_count": len(filtered_entries),
+                    "results_count": len(linear_results),
                     "operation_time_seconds": operation_time,
                     "used_index": False,
                     "entries_searched": len(entries),
                 },
             )
 
-            return FlextResult[list[FlextLdifModels.Entry]].ok(filtered_entries)
+            return FlextResult[list[FlextLdifModels.Entry]].ok(linear_results)
 
         except Exception as e:
             operation_time = time.time() - start_time
@@ -453,7 +456,9 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
                 if isinstance(cached_result, list) and all(
                     isinstance(entry, FlextLdifModels.Entry) for entry in cached_result
                 ):
-                    return FlextResult[list[FlextLdifModels.Entry]].ok(cached_result)
+                    return FlextResult[list[FlextLdifModels.Entry]].ok(
+                        cast("list[FlextLdifModels.Entry]", cached_result)
+                    )
                 # Cache corruption - remove invalid entry
                 del self._query_cache[cache_key]
                 self._logger.warning(
@@ -490,33 +495,34 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
                 return FlextResult[list[FlextLdifModels.Entry]].ok(filtered_entries)
 
             # Fallback to linear search
-            filtered_entries = []
+            objectclass_results: list[FlextLdifModels.Entry] = []
             for entry in entries:
                 object_classes = (
-                    entry.get_attribute(FlextLdifConstants.OBJECTCLASS_ATTRIBUTE) or []
+                    entry.get_attribute(FlextLdifConstants.Format.OBJECTCLASS_ATTRIBUTE)
+                    or []
                 )
                 if object_class.lower() in (oc.lower() for oc in object_classes):
-                    filtered_entries.append(entry)
+                    objectclass_results.append(entry)
 
             # Cache the result
-            self._store_in_cache(cache_key, filtered_entries)
+            self._store_in_cache(cache_key, objectclass_results)
 
             operation_time = time.time() - start_time
-            self._record_operation_success(len(filtered_entries), operation_time)
+            self._record_operation_success(len(objectclass_results), operation_time)
             self._operation_stats["filter_operations"] += 1
 
             self._logger.debug(
                 "ObjectClass filter completed (linear)",
                 extra={
                     "object_class": object_class,
-                    "results_count": len(filtered_entries),
+                    "results_count": len(objectclass_results),
                     "operation_time_seconds": operation_time,
                     "used_index": False,
                     "entries_searched": len(entries),
                 },
             )
 
-            return FlextResult[list[FlextLdifModels.Entry]].ok(filtered_entries)
+            return FlextResult[list[FlextLdifModels.Entry]].ok(objectclass_results)
 
         except Exception as e:
             operation_time = time.time() - start_time
@@ -534,7 +540,6 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"ObjectClass filter error: {e}",
             )
-
 
     def get_statistics(
         self,
@@ -588,17 +593,18 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
                 person_entries = sum(
                     len(indices)
                     for oc, indices in self._objectclass_index.items()
-                    if oc in FlextLdifConstants.LDAP_PERSON_CLASSES
+                    if oc in FlextLdifConstants.ObjectClasses.LDAP_PERSON_CLASSES
                 )
                 group_entries = sum(
                     len(indices)
                     for oc, indices in self._objectclass_index.items()
-                    if oc in FlextLdifConstants.LDAP_GROUP_CLASSES
+                    if oc in FlextLdifConstants.ObjectClasses.LDAP_GROUP_CLASSES
                 )
                 ou_entries = sum(
                     len(indices)
                     for oc, indices in self._objectclass_index.items()
-                    if oc in FlextLdifConstants.LDAP_ORGANIZATIONAL_CLASSES
+                    if oc
+                    in FlextLdifConstants.ObjectClasses.LDAP_ORGANIZATIONAL_CLASSES
                 )
             else:
                 # Linear calculation for smaller datasets or external entries
@@ -611,7 +617,9 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
                     in (
                         oc.lower()
                         for oc in (
-                            e.get_attribute(FlextLdifConstants.OBJECTCLASS_ATTRIBUTE)
+                            e.get_attribute(
+                                FlextLdifConstants.Format.OBJECTCLASS_ATTRIBUTE
+                            )
                             or []
                         )
                     )
@@ -783,7 +791,7 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
             storage_status = "healthy"
             if (
                 len(self._entries)
-                > FlextLdifConstants.REPOSITORY_STORAGE_WARNING_THRESHOLD
+                > FlextLdifConstants.Storage.REPOSITORY_STORAGE_WARNING_THRESHOLD
             ):  # 100k entries
                 storage_status = "warning"
 
@@ -796,9 +804,15 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
             # Performance check
             success_rate = self._calculate_success_rate()
             performance_status = "healthy"
-            if success_rate < FlextLdifConstants.REPOSITORY_HEALTHY_THRESHOLD:
+            if (
+                success_rate
+                < FlextLdifConstants.Processing.REPOSITORY_HEALTHY_THRESHOLD
+            ):
                 performance_status = "degraded"
-            elif success_rate < FlextLdifConstants.REPOSITORY_DEGRADED_THRESHOLD:
+            elif (
+                success_rate
+                < FlextLdifConstants.Processing.REPOSITORY_DEGRADED_THRESHOLD
+            ):
                 performance_status = "unhealthy"
 
             checks["performance"] = {
@@ -815,7 +829,7 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
             )
             cache_status = "healthy"
             if (
-                cache_hit_rate < FlextLdifConstants.CACHE_HIT_RATE_THRESHOLD
+                cache_hit_rate < FlextLdifConstants.Processing.CACHE_HIT_RATE_THRESHOLD
             ):  # 50% hit rate threshold
                 cache_status = "degraded"
 
@@ -913,7 +927,7 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
 
         # Build objectClass indices
         object_classes = (
-            entry.get_attribute(FlextLdifConstants.OBJECTCLASS_ATTRIBUTE) or []
+            entry.get_attribute(FlextLdifConstants.Format.OBJECTCLASS_ATTRIBUTE) or []
         )
         for oc in object_classes:
             oc_lower = oc.lower()
@@ -939,7 +953,7 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
         """Filter using attribute index for performance."""
         if attribute_value is None:
             # Return all entries that have this attribute
-            entry_indices_set = set()
+            entry_indices_set: set[int] = set()
             for value_indices in self._attribute_index[attribute_name].values():
                 entry_indices_set.update(value_indices)
             return [self._entries[i] for i in sorted(entry_indices_set)]
@@ -1044,9 +1058,9 @@ class FlextLdifRepositoryService(FlextDomainService[list[FlextLdifModels.Entry]]
         self._operation_times.append(operation_time)
 
         # Keep operation times list manageable
-        if len(self._operation_times) > FlextLdifConstants.MAX_CACHE_ENTRIES:
+        if len(self._operation_times) > FlextLdifConstants.Processing.MAX_CACHE_ENTRIES:
             self._operation_times = self._operation_times[
-                -FlextLdifConstants.MANAGEABLE_CACHE_SIZE :
+                -FlextLdifConstants.Processing.MANAGEABLE_CACHE_SIZE :
             ]
 
     def _record_operation_failure(self, failure_type: str) -> None:

@@ -29,7 +29,7 @@ class FlextLdifTypes(FlextTypes):
     class Core(FlextTypes.Core):
         """Core LDIF types extending flext-core types."""
 
-        # LDIF-specific type aliases building on FlextTypes.Core
+        # LDIF-specific type definitions extending FlextTypes.Core
         LdifEntryDict = dict[str, object]
         LdifAttributeDict = dict[str, FlextTypes.Core.StringList]
         LdifStatistics = dict[str, int | float | FlextTypes.Core.StringList]

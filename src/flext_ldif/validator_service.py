@@ -421,8 +421,13 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
                 obj_class_lower = obj_class.lower()
 
                 # Person object class validation
-                if obj_class_lower in FlextLdifConstants.LDAP_PERSON_CLASSES:
-                    for required_attr in FlextLdifConstants.REQUIRED_PERSON_ATTRIBUTES:
+                if (
+                    obj_class_lower
+                    in FlextLdifConstants.ObjectClasses.LDAP_PERSON_CLASSES
+                ):
+                    for (
+                        required_attr
+                    ) in FlextLdifConstants.Required.REQUIRED_PERSON_ATTRIBUTES:
                         if required_attr not in attributes:
                             self._validation_stats["missing_required_attributes"] += 1
                             return FlextResult[bool].fail(
@@ -430,16 +435,26 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
                             )
 
                 # Organizational Unit validation
-                elif obj_class_lower in FlextLdifConstants.LDAP_ORGANIZATIONAL_CLASSES:
-                    for required_attr in FlextLdifConstants.REQUIRED_ORGUNIT_ATTRIBUTES:
+                elif (
+                    obj_class_lower
+                    in FlextLdifConstants.ObjectClasses.LDAP_ORGANIZATIONAL_CLASSES
+                ):
+                    for (
+                        required_attr
+                    ) in FlextLdifConstants.Required.REQUIRED_ORGUNIT_ATTRIBUTES:
                         if required_attr not in attributes:
                             self._validation_stats["missing_required_attributes"] += 1
                             return FlextResult[bool].fail(
                                 f"Missing required attribute '{required_attr}' for objectClass '{obj_class}'",
                             )
                 # Domain validation
-                elif obj_class_lower in FlextLdifConstants.LDAP_DOMAIN_CLASSES:
-                    for required_attr in FlextLdifConstants.REQUIRED_DOMAIN_ATTRIBUTES:
+                elif (
+                    obj_class_lower
+                    in FlextLdifConstants.ObjectClasses.LDAP_DOMAIN_CLASSES
+                ):
+                    for (
+                        required_attr
+                    ) in FlextLdifConstants.Required.REQUIRED_DOMAIN_ATTRIBUTES:
                         if required_attr not in attributes:
                             self._validation_stats["missing_required_attributes"] += 1
                             return FlextResult[bool].fail(
@@ -538,10 +553,14 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
             success_rate = self._calculate_success_rate()
             performance_status = "healthy"
             if (
-                success_rate < FlextLdifConstants.VALIDATOR_DEGRADED_THRESHOLD
+                success_rate
+                < FlextLdifConstants.Processing.VALIDATOR_DEGRADED_THRESHOLD
             ):  # 90% success rate threshold
                 performance_status = "degraded"
-            elif success_rate < FlextLdifConstants.VALIDATOR_UNHEALTHY_THRESHOLD:
+            elif (
+                success_rate
+                < FlextLdifConstants.Processing.VALIDATOR_UNHEALTHY_THRESHOLD
+            ):
                 performance_status = "unhealthy"
 
             checks["performance"] = {
@@ -636,9 +655,12 @@ class FlextLdifValidatorService(FlextDomainService[list[FlextLdifModels.Entry]])
         self._validation_times.append(validation_time)
 
         # Keep validation times list manageable
-        if len(self._validation_times) > FlextLdifConstants.MAX_CACHE_ENTRIES:
+        if (
+            len(self._validation_times)
+            > FlextLdifConstants.Processing.MAX_CACHE_ENTRIES
+        ):
             self._validation_times = self._validation_times[
-                -FlextLdifConstants.MANAGEABLE_CACHE_SIZE :
+                -FlextLdifConstants.Processing.MANAGEABLE_CACHE_SIZE :
             ]
 
     def _record_validation_failure(self, failure_type: str) -> None:

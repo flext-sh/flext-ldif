@@ -113,7 +113,7 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
 
             # Check cache first
             cached_result = self._get_from_analytics_cache(cache_key)
-            if cached_result is not None and isinstance(cached_result, dict):
+            if cached_result is not None:
                 self._analytics_stats["cached_results"] += 1
                 self._logger.debug("Cache hit for basic analysis")
                 # Type cast for cache result
@@ -139,7 +139,8 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
                 in (
                     oc.lower()
                     for oc in (
-                        e.get_attribute(FlextLdifConstants.OBJECTCLASS_ATTRIBUTE) or []
+                        e.get_attribute(FlextLdifConstants.Format.OBJECTCLASS_ATTRIBUTE)
+                        or []
                     )
                 )
             )
@@ -228,7 +229,7 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
 
             # Check cache first
             cached_result = self._get_from_analytics_cache(cache_key)
-            if cached_result is not None and isinstance(cached_result, dict):
+            if cached_result is not None:
                 self._analytics_stats["cached_results"] += 1
                 cached_dict = cast("dict[str, int]", cached_result)
                 return FlextResult[dict[str, int]].ok(cached_dict)
@@ -244,7 +245,8 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
 
             for entry in entries:
                 object_classes = (
-                    entry.get_attribute(FlextLdifConstants.OBJECTCLASS_ATTRIBUTE) or []
+                    entry.get_attribute(FlextLdifConstants.Format.OBJECTCLASS_ATTRIBUTE)
+                    or []
                 )
 
                 # Track individual object classes
@@ -335,7 +337,7 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
             cache_key = f"dn_depth:{len(entries)}:{self._get_entries_hash(entries)}"
 
             cached_result = self._get_from_analytics_cache(cache_key)
-            if cached_result is not None and isinstance(cached_result, dict):
+            if cached_result is not None:
                 self._analytics_stats["cached_results"] += 1
                 cached_dict = cast("dict[str, int]", cached_result)
                 return FlextResult[dict[str, int]].ok(cached_dict)
@@ -359,7 +361,7 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
                 depth_distribution[depth_key] = depth_distribution.get(depth_key, 0) + 1
 
                 # Analyze base DN patterns (last 2-3 components)
-                if len(dn_parts) >= FlextLdifConstants.MIN_DN_PARTS_FOR_BASE:
+                if len(dn_parts) >= FlextLdifConstants.Validation.MIN_DN_PARTS_FOR_BASE:
                     base_components = dn_parts[-2:]  # Take last 2 components
                     base_dn = ",".join(base_components)
                     base_dn_patterns[base_dn] = base_dn_patterns.get(base_dn, 0) + 1
@@ -448,7 +450,7 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
             )
 
             cached_result = self._get_from_analytics_cache(cache_key)
-            if cached_result is not None and isinstance(cached_result, dict):
+            if cached_result is not None:
                 self._analytics_stats["cached_results"] += 1
                 cached_dict = cast("dict[str, object]", cached_result)
                 return FlextResult[dict[str, object]].ok(cached_dict)
@@ -645,9 +647,15 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
             # Performance check
             success_rate = self._calculate_success_rate()
             performance_status = "healthy"
-            if success_rate < FlextLdifConstants.HEALTHY_SUCCESS_RATE_THRESHOLD:
+            if (
+                success_rate
+                < FlextLdifConstants.Processing.HEALTHY_SUCCESS_RATE_THRESHOLD
+            ):
                 performance_status = "degraded"
-            elif success_rate < FlextLdifConstants.DEGRADED_SUCCESS_RATE_THRESHOLD:
+            elif (
+                success_rate
+                < FlextLdifConstants.Processing.DEGRADED_SUCCESS_RATE_THRESHOLD
+            ):
                 performance_status = "unhealthy"
 
             checks["performance"] = {
@@ -743,7 +751,8 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
             object_classes = {
                 oc.lower()
                 for oc in (
-                    entry.get_attribute(FlextLdifConstants.OBJECTCLASS_ATTRIBUTE) or []
+                    entry.get_attribute(FlextLdifConstants.Format.OBJECTCLASS_ATTRIBUTE)
+                    or []
                 )
             }
 
@@ -793,12 +802,15 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
             object_classes = {
                 oc.lower()
                 for oc in (
-                    entry.get_attribute(FlextLdifConstants.OBJECTCLASS_ATTRIBUTE) or []
+                    entry.get_attribute(FlextLdifConstants.Format.OBJECTCLASS_ATTRIBUTE)
+                    or []
                 )
             }
 
-            if object_classes.intersection(FlextLdifConstants.LDAP_PERSON_CLASSES):
-                required_attrs = FlextLdifConstants.REQUIRED_PERSON_ATTRIBUTES
+            if object_classes.intersection(
+                FlextLdifConstants.ObjectClasses.LDAP_PERSON_CLASSES
+            ):
+                required_attrs = FlextLdifConstants.Required.REQUIRED_PERSON_ATTRIBUTES
                 if not all(attr in entry.attributes.data for attr in required_attrs):
                     missing_required_attrs += 1
 
@@ -829,7 +841,7 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
         if len(depth_counts) == 1:
             if (
                 next(iter(depth_counts.keys()))
-                <= FlextLdifConstants.MAX_FLAT_ENTRY_DEPTH
+                <= FlextLdifConstants.Analytics.MAX_FLAT_ENTRY_DEPTH
             ):
                 patterns["flat_entries"] = len(entries)
             else:
@@ -902,7 +914,7 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
 
         for entry in entries:
             dn_parts = entry.dn.value.split(",")
-            if len(dn_parts) >= FlextLdifConstants.MIN_DN_PARTS_FOR_BASE:
+            if len(dn_parts) >= FlextLdifConstants.Validation.MIN_DN_PARTS_FOR_BASE:
                 base = ",".join(dn_parts[-2:]).strip()
                 base_patterns[base] = base_patterns.get(base, 0) + 1
 
@@ -937,7 +949,9 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
                 anomalies["unusual_attribute_counts"].append(entry.dn.value)
 
             # Suspicious DNs (very long or unusual characters)
-            if len(entry.dn.value) > FlextLdifConstants.MAX_SUSPICIOUS_DN_LENGTH or any(
+            if len(
+                entry.dn.value
+            ) > FlextLdifConstants.Validation.MAX_SUSPICIOUS_DN_LENGTH or any(
                 c in entry.dn.value for c in "<>[]{}"
             ):
                 anomalies["suspicious_dns"].append(entry.dn.value)
@@ -954,19 +968,28 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
 
         basic_stats = patterns.get("basic_stats", {})
         if isinstance(basic_stats, dict):
-            total = basic_stats.get("total_entries", 0)
+            total: int = basic_stats.get("total_entries", 0)
 
             if total > 0:
-                person_ratio = basic_stats.get("person_entries", 0) / total
-                if person_ratio > FlextLdifConstants.HIGH_PERSON_RATIO_THRESHOLD:
+                person_ratio: float = basic_stats.get("person_entries", 0) / total
+                if (
+                    person_ratio
+                    > FlextLdifConstants.Analytics.HIGH_PERSON_RATIO_THRESHOLD
+                ):
                     insights["primary_content"] = (
                         "Directory primarily contains user accounts"
                     )
-                elif person_ratio < FlextLdifConstants.LOW_PERSON_RATIO_THRESHOLD:
+                elif (
+                    person_ratio
+                    < FlextLdifConstants.Analytics.LOW_PERSON_RATIO_THRESHOLD
+                ):
                     insights["primary_content"] = "Directory contains minimal user data"
 
-                duplicate_ratio = basic_stats.get("duplicate_dns", 0) / total
-                if duplicate_ratio > FlextLdifConstants.HIGH_DUPLICATE_RATIO_THRESHOLD:
+                duplicate_ratio: float = basic_stats.get("duplicate_dns", 0) / total
+                if (
+                    duplicate_ratio
+                    > FlextLdifConstants.Analytics.HIGH_DUPLICATE_RATIO_THRESHOLD
+                ):
                     insights["data_quality"] = (
                         "Significant duplicate DNs detected - data cleanup recommended"
                     )
@@ -978,9 +1001,9 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
         entries: list[FlextLdifModels.Entry],
     ) -> list[str]:
         """Generate recommendations based on analysis."""
-        recommendations = []
+        recommendations: list[str] = []
 
-        if len(entries) > FlextLdifConstants.LARGE_DATASET_THRESHOLD:
+        if len(entries) > FlextLdifConstants.Analytics.LARGE_DATASET_THRESHOLD:
             recommendations.append(
                 "Consider implementing data archiving for large dataset",
             )
@@ -998,13 +1021,14 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
         total_entries: int,
     ) -> list[str]:
         """Detect anomalies in objectClass distribution."""
-        anomalies = []
+        anomalies: list[str] = []
 
         for oc, count in distribution.items():
             ratio = count / total_entries
             if (
-                ratio < FlextLdifConstants.RARE_OBJECTCLASS_RATIO_THRESHOLD
-                and count < FlextLdifConstants.RARE_OBJECTCLASS_COUNT_THRESHOLD
+                ratio < FlextLdifConstants.Analytics.RARE_OBJECTCLASS_RATIO_THRESHOLD
+                and count
+                < FlextLdifConstants.Analytics.RARE_OBJECTCLASS_COUNT_THRESHOLD
             ):  # Very rare objectClasses
                 anomalies.append(f"rare_objectclass_{oc}")
 
@@ -1018,16 +1042,17 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
         avg_depth = sum(depth_values) / len(depth_values)
 
         # More than 3 levels from average
-        return [
+        anomalies: list[str] = [
             f"unusual_depth_{depth}"
             for depth in set(depth_values)
-            if abs(depth - avg_depth) > FlextLdifConstants.MAX_DEPTH_DEVIATION
+            if abs(depth - avg_depth) > FlextLdifConstants.Analytics.MAX_DEPTH_DEVIATION
         ]
+        return anomalies
 
     def _calculate_pattern_confidence(self, patterns: dict[str, object]) -> float:
         """Calculate confidence score for detected patterns."""
         # Simplified confidence calculation
-        pattern_count = sum(
+        pattern_count: int = sum(
             len(section) if isinstance(section, dict) else 1
             for section in patterns.values()
             if isinstance(section, (dict, list))
@@ -1108,9 +1133,9 @@ class FlextLdifAnalyticsService(FlextDomainService[dict[str, object]]):
         self._total_entries_analyzed += entry_count
         self._analysis_times.append(analysis_time)
 
-        if len(self._analysis_times) > FlextLdifConstants.MAX_CACHE_ENTRIES:
+        if len(self._analysis_times) > FlextLdifConstants.Processing.MAX_CACHE_ENTRIES:
             self._analysis_times = self._analysis_times[
-                -FlextLdifConstants.MANAGEABLE_CACHE_SIZE :
+                -FlextLdifConstants.Processing.MANAGEABLE_CACHE_SIZE :
             ]
 
     def _record_analysis_failure(self, failure_type: str) -> None:

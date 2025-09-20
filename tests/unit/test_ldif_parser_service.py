@@ -9,9 +9,10 @@ from __future__ import annotations
 from typing import cast
 
 from flext_core import FlextResult, FlextTypes
-from flext_ldif import FlextLdifModels, FlextLdifServices
+from flext_ldif import FlextLdifModels
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.parser_service import FlextLdifParserService
+from flext_ldif.processor import FlextLdifProcessor
 from flext_ldif.validator_service import FlextLdifValidatorService
 from flext_ldif.writer_service import FlextLdifWriterService
 from tests.test_support import FileManager, LdifTestData, TestValidators
@@ -28,32 +29,32 @@ class TestFlextLdifServicesParserServiceReal:
             ldif_validate_dn_format=True,
             ldif_max_entries=1000,
         )
-        service = FlextLdifServices(config=config)
+        processor = FlextLdifProcessor(config=config)
 
         # Validate service has real configuration
-        assert service.config is not None
-        assert service.config.ldif_encoding == "utf-8"
-        assert service.config.ldif_strict_validation is True
-        assert service.config.ldif_validate_dn_format is True
-        assert service.config.ldif_max_entries == 1000
+        assert processor.config is not None
+        assert processor.config.ldif_encoding == "utf-8"
+        assert processor.config.ldif_strict_validation is True
+        assert processor.config.ldif_validate_dn_format is True
+        assert processor.config.ldif_max_entries == 1000
 
     def test_service_initialization_default_config(self) -> None:
         """Test service works with default configuration."""
-        service = FlextLdifServices().parser
+        processor = FlextLdifProcessor()
 
         # Even without explicit config, service should work
         # Test parsing empty content to verify service is functional
-        result = service.parse_content("")
+        result = processor.parse_string("")
         assert isinstance(result, FlextResult)
         assert result.is_success
 
     def test_parse_real_basic_ldif_entries(self) -> None:
         """Test parsing real LDIF entries with actual data."""
-        service = FlextLdifServices().parser
+        processor = FlextLdifProcessor()
         ldif_sample = LdifTestData.basic_entries()
 
         # Parse real LDIF content
-        result = service.parse_content(ldif_sample.content)
+        result = processor.parse_string(ldif_sample.content)
 
         # Validate real parsing results
         TestValidators.assert_successful_result(result)
@@ -69,11 +70,11 @@ class TestFlextLdifServicesParserServiceReal:
 
     def test_parse_real_multi_valued_attributes(self) -> None:
         """Test parsing LDIF with multi-valued attributes."""
-        service = FlextLdifServices().parser
+        processor = FlextLdifProcessor()
         ldif_sample = LdifTestData.multi_valued_attributes()
 
         # Parse LDIF with multi-valued attributes
-        result = service.parse_content(ldif_sample.content)
+        result = processor.parse_string(ldif_sample.content)
 
         # Binary data parsing may fail due to encoding issues
         if result.is_success:
@@ -100,11 +101,11 @@ class TestFlextLdifServicesParserServiceReal:
 
     def test_parse_real_binary_data(self) -> None:
         """Test parsing LDIF with binary (base64) data."""
-        service = FlextLdifServices().parser
+        processor = FlextLdifProcessor()
         ldif_sample = LdifTestData.with_binary_data()
 
         # Parse LDIF with binary data
-        result = service.parse_content(ldif_sample.content)
+        result = processor.parse_string(ldif_sample.content)
 
         # Binary data parsing may fail due to encoding issues
         if result.is_success:
@@ -119,11 +120,11 @@ class TestFlextLdifServicesParserServiceReal:
 
     def test_parse_real_special_characters(self) -> None:
         """Test parsing LDIF with UTF-8 special characters."""
-        service = FlextLdifServices().parser
+        processor = FlextLdifProcessor()
         ldif_sample = LdifTestData.special_characters()
 
         # Parse LDIF with special characters
-        result = service.parse_content(ldif_sample.content)
+        result = processor.parse_string(ldif_sample.content)
 
         # Binary data parsing may fail due to encoding issues
         if result.is_success:
@@ -147,10 +148,10 @@ class TestFlextLdifServicesParserServiceReal:
 
     def test_parse_real_empty_content(self) -> None:
         """Test parser handles empty content correctly."""
-        service = FlextLdifServices().parser
+        processor = FlextLdifProcessor()
 
         # Parse empty content
-        result = service.parse_content("")
+        result = processor.parse_string("")
 
         TestValidators.assert_successful_result(result)
         entries = result.value
@@ -158,33 +159,33 @@ class TestFlextLdifServicesParserServiceReal:
 
     def test_parse_real_from_file_path(self, test_file_manager: FileManager) -> None:
         """Test parsing from actual file path."""
-        service = FlextLdifServices().parser
+        processor = FlextLdifProcessor()
         ldif_sample = LdifTestData.basic_entries()
 
         # Create real file with LDIF content
         ldif_file = test_file_manager.create_sample_file(ldif_sample)
 
         # Parse from file path
-        result = service.parse_ldif_file(ldif_file)
+        result = processor.parse_ldif_file(ldif_file)
 
         TestValidators.assert_successful_result(result)
         entries = result.value
         assert len(entries) == ldif_sample.expected_entries
 
         # Verify file parsing produces same results as content parsing
-        content_result = service.parse_content(ldif_sample.content)
+        content_result = processor.parse_string(ldif_sample.content)
         assert len(entries) == len(content_result.value)
 
     def test_parse_real_large_dataset(self, test_file_manager: FileManager) -> None:
         """Test parsing performance with larger dataset."""
-        service = FlextLdifServices().parser
+        processor = FlextLdifProcessor()
 
         # Create larger dataset for performance testing
         ldif_sample = LdifTestData.large_dataset(50)  # 50 entries
         ldif_file = test_file_manager.create_sample_file(ldif_sample)
 
         # Parse large dataset
-        result = service.parse_ldif_file(ldif_file)
+        result = processor.parse_ldif_file(ldif_file)
 
         TestValidators.assert_successful_result(result)
         entries = result.value
@@ -198,11 +199,11 @@ class TestFlextLdifServicesParserServiceReal:
 
     def test_parse_real_change_records(self) -> None:
         """Test parsing LDIF with change records - should fail gracefully for unsupported format."""
-        service = FlextLdifServices().parser
+        processor = FlextLdifProcessor()
         ldif_sample = LdifTestData.with_changes()
 
         # Parse LDIF with change records - expect failure for change records
-        result = service.parse_content(ldif_sample.content)
+        result = processor.parse_string(ldif_sample.content)
 
         # Change records should fail parsing in basic LDIF parser
         assert not result.is_success, "Parser should fail on change records"
@@ -218,11 +219,11 @@ class TestFlextLdifServicesParserServiceReal:
 
     def test_parse_real_long_lines(self) -> None:
         """Test parsing LDIF with long lines requiring continuation."""
-        service = FlextLdifServices().parser
+        processor = FlextLdifProcessor()
         ldif_sample = LdifTestData.long_lines()
 
         # Parse LDIF with long lines
-        result = service.parse_content(ldif_sample.content)
+        result = processor.parse_string(ldif_sample.content)
 
         # Binary data parsing may fail due to encoding issues
         if result.is_success:
@@ -242,11 +243,11 @@ class TestFlextLdifServicesParserServiceReal:
 
     def test_parse_real_error_invalid_ldif(self) -> None:
         """Test parser handles invalid LDIF data correctly."""
-        service = FlextLdifServices().parser
+        processor = FlextLdifProcessor()
         ldif_sample = LdifTestData.invalid_data()
 
         # Parse invalid LDIF - should handle gracefully
-        result = service.parse_content(ldif_sample.content)
+        result = processor.parse_string(ldif_sample.content)
 
         # Parser should either succeed with partial results or fail gracefully
         assert isinstance(result, FlextResult)

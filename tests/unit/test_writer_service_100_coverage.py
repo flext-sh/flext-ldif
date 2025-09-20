@@ -282,13 +282,15 @@ class TestFlextLdifWriterServiceComplete:
         # Test with a complete entry
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=testuser,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes(data={
-                "cn": ["testuser"],
-                "sn": ["User"],
-                "givenName": ["Test"],
-                "objectClass": ["person", "inetOrgPerson"],
-                "mail": ["testuser@example.com"]
-            })
+            attributes=FlextLdifModels.LdifAttributes(
+                data={
+                    "cn": ["testuser"],
+                    "sn": ["User"],
+                    "givenName": ["Test"],
+                    "objectClass": ["person", "inetOrgPerson"],
+                    "mail": ["testuser@example.com"],
+                }
+            ),
         )
 
         result = service.write_entry(entry)
@@ -386,6 +388,7 @@ class TestFlextLdifWriterServiceComplete:
 
         # Mock the format handler to return empty output (test fails but no exception)
         original_write_ldif = service._format_handler.write_ldif
+
         def empty_write_ldif(*_args: object, **_kwargs: object) -> str:
             return ""  # Returns empty string which will fail the test
 
@@ -408,6 +411,7 @@ class TestFlextLdifWriterServiceComplete:
 
         # Mock FlextLdifModels.Entry to raise an exception during health check
         original_entry = FlextLdifModels.Entry
+
         def broken_entry(*_args: object, **_kwargs: object) -> None:
             msg = "Health check entry creation failure"
             raise RuntimeError(msg)
@@ -468,7 +472,9 @@ class TestFlextLdifWriterServiceComplete:
             }
             entries.append(FlextLdifModels.create_entry(entry_data))
 
-        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".ldif") as temp_file:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", delete=False, suffix=".ldif"
+        ) as temp_file:
             temp_path = Path(temp_file.name)
 
         try:
@@ -496,7 +502,9 @@ class TestFlextLdifWriterServiceComplete:
         service.write_entries_to_string([entry])
 
         # File write
-        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".ldif") as temp_file:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", delete=False, suffix=".ldif"
+        ) as temp_file:
             temp_path = Path(temp_file.name)
 
         try:

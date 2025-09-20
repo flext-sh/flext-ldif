@@ -154,7 +154,8 @@ class FlextLdifConfig(FlextConfig):
         # Validate worker configuration
         if (
             self.ldif_parallel_processing
-            and self.ldif_max_workers < FlextLdifConstants.MIN_WORKERS_FOR_PARALLEL
+            and self.ldif_max_workers
+            < FlextLdifConstants.Processing.MIN_WORKERS_FOR_PARALLEL
         ):
             msg = "Parallel processing requires at least 2 workers"
             raise ValueError(msg)
@@ -168,7 +169,7 @@ class FlextLdifConfig(FlextConfig):
         if (
             self.ldif_enable_analytics
             and self.ldif_analytics_cache_size
-            < FlextLdifConstants.MIN_ANALYTICS_CACHE_SIZE
+            < FlextLdifConstants.Processing.MIN_ANALYTICS_CACHE_SIZE
         ):
             msg = "Analytics cache size must be at least 100"
             raise ValueError(msg)
@@ -234,19 +235,23 @@ class FlextLdifConfig(FlextConfig):
 
         """
         try:
-            errors = []
+            errors: list[str] = []
 
             # Validate processing limits
-            if self.ldif_max_entries < FlextLdifConstants.MIN_PRODUCTION_ENTRIES:
+            if (
+                self.ldif_max_entries
+                < FlextLdifConstants.Processing.MIN_PRODUCTION_ENTRIES
+            ):
                 errors.append("Maximum entries too low for production use")
 
-            if self.ldif_buffer_size < FlextLdifConstants.MIN_BUFFER_SIZE:
+            if self.ldif_buffer_size < FlextLdifConstants.Format.MIN_BUFFER_SIZE:
                 errors.append("Buffer size too small for efficient processing")
 
             # Validate worker configuration
             if (
                 self.ldif_parallel_processing
-                and self.ldif_max_workers > FlextLdifConstants.MAX_WORKERS_LIMIT
+                and self.ldif_max_workers
+                > FlextLdifConstants.Processing.MAX_WORKERS_LIMIT
             ):
                 errors.append("Too many workers may cause resource contention")
 
@@ -254,7 +259,7 @@ class FlextLdifConfig(FlextConfig):
             if (
                 self.ldif_enable_analytics
                 and self.ldif_analytics_cache_size
-                > FlextLdifConstants.MAX_ANALYTICS_CACHE_SIZE
+                > FlextLdifConstants.Processing.MAX_ANALYTICS_CACHE_SIZE
             ):
                 errors.append("Analytics cache size too large for memory efficiency")
 

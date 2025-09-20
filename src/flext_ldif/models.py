@@ -64,19 +64,21 @@ class FlextLdifModels(FlextModels):
 
             """
             if not v or not v.strip():
-                msg = FlextLdifConstants.VALIDATION_MESSAGES["MISSING_DN"]
+                msg = FlextLdifConstants.Messages.VALIDATION_MESSAGES["MISSING_DN"]
                 error_msg = f"LDIF DN Validation: {msg}"
                 raise FlextExceptions.ValidationError(error_msg)
 
             # Use flext-core validation system
             if not FlextUtilities.Validation.is_non_empty_string(v.strip()):
-                msg = FlextLdifConstants.VALIDATION_MESSAGES["INVALID_DN"]
+                msg = FlextLdifConstants.Messages.VALIDATION_MESSAGES["INVALID_DN"]
                 error_msg = f"LDIF DN Validation: {msg}"
                 raise FlextExceptions.ValidationError(error_msg)
 
             # Validate DN format using pattern
-            if not re.match(FlextLdifConstants.DN_PATTERN, v.strip()):
-                msg = FlextLdifConstants.VALIDATION_MESSAGES["INVALID_DN_FORMAT"]
+            if not re.match(FlextLdifConstants.Validation.DN_PATTERN, v.strip()):
+                msg = FlextLdifConstants.Messages.VALIDATION_MESSAGES[
+                    "INVALID_DN_FORMAT"
+                ]
                 error_msg = f"LDIF DN Validation: {msg}"
                 raise FlextExceptions.ValidationError(error_msg)
 
@@ -91,13 +93,13 @@ class FlextLdifModels(FlextModels):
             """
             if not self.value:
                 return FlextResult[None].fail(
-                    FlextLdifConstants.VALIDATION_MESSAGES["MISSING_DN"],
+                    FlextLdifConstants.Messages.VALIDATION_MESSAGES["MISSING_DN"],
                 )
 
             # Check minimum DN components using flext-core utilities
             components = [c.strip() for c in self.value.split(",") if c.strip()]
-            if len(components) < FlextLdifConstants.MIN_DN_COMPONENTS:
-                error_msg = f"DN has too few components: {len(components)}, minimum required: {FlextLdifConstants.MIN_DN_COMPONENTS}"
+            if len(components) < FlextLdifConstants.Validation.MIN_DN_COMPONENTS:
+                error_msg = f"DN has too few components: {len(components)}, minimum required: {FlextLdifConstants.Validation.MIN_DN_COMPONENTS}"
                 return FlextResult[None].fail(error_msg)
 
             return FlextResult[None].ok(None)
@@ -234,8 +236,6 @@ class FlextLdifModels(FlextModels):
                 return values[0]
             return None
 
-
-
         def remove_value(self, name: str, value: str) -> FlextLdifModels.LdifAttributes:
             """Remove specific value from attribute.
 
@@ -296,11 +296,13 @@ class FlextLdifModels(FlextModels):
             """
             # Check for objectClass (required in LDIF)
             object_classes = self.get_attribute(
-                FlextLdifConstants.OBJECTCLASS_ATTRIBUTE,
+                FlextLdifConstants.Format.OBJECTCLASS_ATTRIBUTE,
             )
             if not object_classes:
                 return FlextResult[None].fail(
-                    FlextLdifConstants.VALIDATION_MESSAGES["MISSING_OBJECTCLASS"],
+                    FlextLdifConstants.Messages.VALIDATION_MESSAGES[
+                        "MISSING_OBJECTCLASS"
+                    ],
                 )
 
             return FlextResult[None].ok(None)
@@ -412,7 +414,10 @@ class FlextLdifModels(FlextModels):
                 List of object class values
 
             """
-            return self.get_attribute(FlextLdifConstants.OBJECTCLASS_ATTRIBUTE) or []
+            return (
+                self.get_attribute(FlextLdifConstants.Format.OBJECTCLASS_ATTRIBUTE)
+                or []
+            )
 
         def has_object_class(self, object_class: str) -> bool:
             """Check if entry has a specific object class.
@@ -436,7 +441,8 @@ class FlextLdifModels(FlextModels):
             """
             object_classes = {oc.lower() for oc in self.get_object_classes()}
             person_classes = {
-                oc.lower() for oc in FlextLdifConstants.LDAP_PERSON_CLASSES
+                oc.lower()
+                for oc in FlextLdifConstants.ObjectClasses.LDAP_PERSON_CLASSES
             }
             return bool(object_classes.intersection(person_classes))
 
@@ -448,7 +454,9 @@ class FlextLdifModels(FlextModels):
 
             """
             object_classes = {oc.lower() for oc in self.get_object_classes()}
-            group_classes = {oc.lower() for oc in FlextLdifConstants.LDAP_GROUP_CLASSES}
+            group_classes = {
+                oc.lower() for oc in FlextLdifConstants.ObjectClasses.LDAP_GROUP_CLASSES
+            }
             return bool(object_classes.intersection(group_classes))
 
         def is_organizational_unit(self) -> bool:
@@ -460,7 +468,8 @@ class FlextLdifModels(FlextModels):
             """
             object_classes = {oc.lower() for oc in self.get_object_classes()}
             org_classes = {
-                oc.lower() for oc in FlextLdifConstants.LDAP_ORGANIZATIONAL_CLASSES
+                oc.lower()
+                for oc in FlextLdifConstants.ObjectClasses.LDAP_ORGANIZATIONAL_CLASSES
             }
             return bool(object_classes.intersection(org_classes))
 
@@ -488,7 +497,9 @@ class FlextLdifModels(FlextModels):
             # LDIF-specific validation: Entry must have objectClass
             if not self.get_object_classes():
                 return FlextResult[None].fail(
-                    FlextLdifConstants.VALIDATION_MESSAGES["MISSING_OBJECTCLASS"],
+                    FlextLdifConstants.Messages.VALIDATION_MESSAGES[
+                        "MISSING_OBJECTCLASS"
+                    ],
                 )
 
             return FlextResult[None].ok(None)
@@ -519,7 +530,6 @@ class FlextLdifModels(FlextModels):
 
             """
             return self.dn.get_depth()
-
 
         def is_add_operation(self) -> bool:
             """Check if this entry represents an add operation.
@@ -712,19 +722,23 @@ class FlextLdifModels(FlextModels):
             if ":" in stripped_name and "{" in stripped_name and "}" in stripped_name:
                 # Validate Oracle complex format
                 parts = stripped_name.split(":")
-                if len(parts) >= FlextLdifConstants.ORACLE_MIN_PARTS:
+                if len(parts) >= FlextLdifConstants.Operations.ORACLE_MIN_PARTS:
                     base_attr = parts[0].strip()
                     if base_attr and base_attr[0].isalpha():
                         return stripped_name
 
             # Standard LDAP attribute validation
-            standard_pattern = r"^[a-zA-Z][a-zA-Z0-9-]*(?:;[a-zA-Z0-9-]+(?:[-_.][a-zA-Z0-9-]+)*)*$"
+            standard_pattern = (
+                r"^[a-zA-Z][a-zA-Z0-9-]*(?:;[a-zA-Z0-9-]+(?:[-_.][a-zA-Z0-9-]+)*)*$"
+            )
             if re.match(standard_pattern, stripped_name):
                 return stripped_name
 
             # If neither pattern matches, but it starts with a letter and contains valid characters
-            # Allow it for Oracle compatibility
-            if stripped_name[0].isalpha() and all(c.isalnum() or c in "-_.:;{} " for c in stripped_name):
+            # Allow extended naming conventions for enterprise directories
+            if stripped_name[0].isalpha() and all(
+                c.isalnum() or c in "-_.:;{} " for c in stripped_name
+            ):
                 return stripped_name
 
             return stripped_name
