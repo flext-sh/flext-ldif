@@ -13,7 +13,7 @@ import base64
 import re
 from collections.abc import Iterator
 
-from flext_core import FlextResult, FlextTypes, FlextUtilities
+from flext_core import FlextResult, FlextTypes
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -168,7 +168,7 @@ class FlextLdifFormatHandler:
         if not items:
             return []
         # Use FlextUtilities.TextProcessor for consistent text processing
-        return [FlextUtilities.TextProcessor.clean_text(item).lower() for item in items]
+        return [item.strip().lower() for item in items]
 
     # Private implementation methods (formerly in nested classes)
 
@@ -343,6 +343,16 @@ class FlextLdifFormatHandler:
     def _get_writer_output(self) -> str:
         """Get the complete LDIF output as string."""
         return self._line_sep.join(self._output_lines)
+
+    # Compatibility aliases for processor integration
+
+    def parse_ldif_content(self, content: str) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Parse LDIF content string - alias for parse_ldif."""
+        return self.parse_ldif(content)
+
+    def write_entries_to_string(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
+        """Write entries to LDIF string - alias for write_ldif."""
+        return self.write_ldif(entries)
 
 
 __all__ = ["FlextLdifFormatHandler"]
