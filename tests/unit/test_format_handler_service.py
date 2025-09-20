@@ -313,10 +313,9 @@ class TestFlextLdifWriter:
         # Create proper Entry object
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value=dn),
-            attributes=FlextLdifModels.LdifAttributes(data={
-                "description": [long_value],
-                "objectClass": ["person"]
-            })
+            attributes=FlextLdifModels.LdifAttributes(
+                data={"description": [long_value], "objectClass": ["person"]}
+            ),
         )
 
         # Use the proper write_entry method

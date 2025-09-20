@@ -52,7 +52,9 @@ class FlextLdifFormatHandler:
         self._output_lines: FlextTypes.Core.StringList = []
 
         # Compile regex pattern from constants for performance
-        self.UNSAFE_STRING_RE = re.compile(FlextLdifConstants.UNSAFE_STRING_PATTERN)
+        self.UNSAFE_STRING_RE = re.compile(
+            FlextLdifConstants.Validation.UNSAFE_STRING_PATTERN
+        )
         self.records_written = 0
 
         # Parser state
@@ -107,7 +109,7 @@ class FlextLdifFormatHandler:
             raw_entries = list(self._parse_entries())
 
             # Convert tuples to FlextLdifModels.Entry objects
-            entries = []
+            entries: list[FlextLdifModels.Entry] = []
             for dn, attributes in raw_entries:
                 # Create proper value objects
                 dn_obj = FlextLdifModels.DistinguishedName(value=dn)

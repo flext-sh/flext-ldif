@@ -24,7 +24,9 @@ class FlextLdifBaseService(FlextDomainService[object]):
     - Configuration management
     """
 
-    def __init__(self, service_name: str, config: FlextLdifConfig | None = None) -> None:
+    def __init__(
+        self, service_name: str, config: FlextLdifConfig | None = None
+    ) -> None:
         """Initialize base service with common attributes.
 
         Args:
@@ -62,7 +64,8 @@ class FlextLdifBaseService(FlextDomainService[object]):
             return 1.0
         return max(
             0.0,
-            (self._total_operations - self._operation_failures) / self._total_operations
+            (self._total_operations - self._operation_failures)
+            / self._total_operations,
         )
 
     def _record_operation_success(self, operation_time: float) -> None:
@@ -76,9 +79,9 @@ class FlextLdifBaseService(FlextDomainService[object]):
         self._operation_times.append(operation_time)
 
         # Keep operation times list manageable
-        if len(self._operation_times) > FlextLdifConstants.MAX_CACHE_ENTRIES:
+        if len(self._operation_times) > FlextLdifConstants.Processing.MAX_CACHE_ENTRIES:
             self._operation_times = self._operation_times[
-                -FlextLdifConstants.MANAGEABLE_CACHE_SIZE:
+                -FlextLdifConstants.Processing.MANAGEABLE_CACHE_SIZE :
             ]
 
     def _record_operation_failure(self, failure_type: str) -> None:
@@ -106,7 +109,9 @@ class FlextLdifBaseService(FlextDomainService[object]):
         return {
             "service": self._service_name,
             "config": {
-                "service_type": self._service_name.lower().replace("flextldif", "").replace("service", ""),
+                "service_type": self._service_name.lower()
+                .replace("flextldif", "")
+                .replace("service", ""),
                 "status": "ready",
             },
         }

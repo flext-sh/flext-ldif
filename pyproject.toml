@@ -66,7 +66,7 @@ strict = true
 check_untyped_defs = true
 disallow_any_decorated = false
 disallow_any_explicit = true
-disallow_any_expr = false          # Too restrictive for real-world usage
+disallow_any_expr = false           # Too restrictive for real-world usage
 disallow_any_generics = true
 disallow_any_unimported = true
 disallow_incomplete_defs = true
@@ -190,37 +190,12 @@ markers = [
     "timeout: Timeout tests",
     "asyncio: Async tests",
 ]
-# filterwarnings = ["error", "ignore::UserWarning", "ignore::DeprecationWarning"]
+filterwarnings = ["ignore::DeprecationWarning:pyasn1(.*|$)"]
 
 [tool.coverage.run]
 source = ["src"]
 branch = true
-omit = [
-    "*/tests/*",
-    "*/test_*",
-    "*/__pycache__/*",
-    "*/venv/*",
-    "*/.venv/*",
-    # Exclude large infrastructure/compatibility modules from coverage metrics.
-    # These are integration-heavy and exercised via higher-level APIs/E2E,
-    # but not unit-targeted; excluding them keeps the actionable unit surface >90%.
-    "src/flext_ldif/cli.py",
-    "src/flext_ldif/core.py",
-    "src/flext_ldif/format_handlers.py",
-    "src/flext_ldif/api.py",
-    "src/flext_ldif/format_validators.py",
-    "src/flext_ldif/entry_analytics.py",
-    "src/flext_ldif/typings.py",
-    "src/flext_ldif/entry_repository.py",
-    "src/flext_ldif/entry_transformer.py",
-    "src/flext_ldif/entry_validator.py",
-    "src/flext_ldif/ldif_writer.py",
-    "src/flext_ldif/ldif_parser.py",
-    "src/flext_ldif/__init__.py",
-    "src/flext_ldif/config.py",
-    "src/flext_ldif/protocols.py",
-    "src/flext_ldif/models.py",
-]
+omit = ["*/tests/*", "*/test_*", "*/__pycache__/*", "*/venv/*", "*/.venv/*"]
 
 [tool.coverage.report]
 exclude_lines = [
@@ -248,11 +223,10 @@ ldif3 = ">=3.2.2"
 click = ">=8.1.0"
 
 # Local ecosystem deps in editable mode for workspace development
-flext-core = {develop = true}
+flext-core = { path = "../flext-core", develop = true }
 flext-cli = { path = "../flext-cli", develop = true }
 flext-ldap = { path = "../flext-ldap", develop = true }
 flext-observability = { path = "../flext-observability", develop = true }
-
 
 
 [tool.poetry.group.dev.dependencies]

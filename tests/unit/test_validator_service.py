@@ -356,7 +356,7 @@ class TestFlextLdifServicesValidatorService:
                     "attributes": {
                         "cn": ["test1"],
                         "sn": ["Test1"],  # Required for person objectClass
-                        "objectClass": ["person"]
+                        "objectClass": ["person"],
                     },
                 },
             ),
@@ -366,7 +366,7 @@ class TestFlextLdifServicesValidatorService:
                     "attributes": {
                         "cn": ["test2"],
                         "sn": ["Test2"],  # Required for person objectClass
-                        "objectClass": ["person"]
+                        "objectClass": ["person"],
                     },
                 },
             ),

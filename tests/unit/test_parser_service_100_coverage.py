@@ -264,6 +264,7 @@ cn: John
 
         # Mock format handler to raise exception
         original_parse_ldif = service._format_handler.parse_ldif
+
         def broken_parse_ldif(*_args: object, **_kwargs: object) -> None:
             msg = "Format handler test failure"
             raise RuntimeError(msg)
@@ -277,7 +278,10 @@ cn: John
             health_data = result.unwrap()
             assert health_data["status"] == "unhealthy"
             assert health_data["checks"]["format_handler"]["status"] == "error"
-            assert "Format handler test failure" in health_data["checks"]["format_handler"]["error"]
+            assert (
+                "Format handler test failure"
+                in health_data["checks"]["format_handler"]["error"]
+            )
         finally:
             service._format_handler.parse_ldif = original_parse_ldif
 
@@ -287,6 +291,7 @@ cn: John
 
         # Mock the _calculate_success_rate method to raise an exception
         original_method = service._calculate_success_rate
+
         def broken_method() -> None:
             msg = "Success rate calculation error"
             raise RuntimeError(msg)
@@ -412,7 +417,9 @@ cn: John
         service._last_failure_time = time.time()
 
         # Create a temporary file
-        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".ldif") as temp_file:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", delete=False, suffix=".ldif"
+        ) as temp_file:
             temp_file.write("dn: cn=test,dc=example,dc=com\ncn: test\n")
             temp_path = Path(temp_file.name)
 

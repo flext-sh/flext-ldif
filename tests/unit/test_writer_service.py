@@ -247,7 +247,9 @@ class TestFlextLdifServicesWriterService:
             assert result.value is True
 
             # Verify file was written
-            with Path(tmp_path).open(encoding=FlextLdifConstants.DEFAULT_ENCODING) as f:
+            with Path(tmp_path).open(
+                encoding=FlextLdifConstants.Format.DEFAULT_ENCODING
+            ) as f:
                 content = f.read()
                 assert "dn: cn=Test,dc=example,dc=com" in content
                 assert "cn: Test" in content
@@ -339,7 +341,9 @@ class TestFlextLdifServicesWriterService:
             assert result.value is True
 
             # Verify content was written
-            with Path(tmp_path).open(encoding=FlextLdifConstants.DEFAULT_ENCODING) as f:
+            with Path(tmp_path).open(
+                encoding=FlextLdifConstants.Format.DEFAULT_ENCODING
+            ) as f:
                 written_content = f.read()
                 assert written_content == content
         finally:
@@ -354,7 +358,7 @@ class TestFlextLdifServicesWriterService:
         try:
             with Path(invalid_path).open(
                 "w",
-                encoding=FlextLdifConstants.DEFAULT_ENCODING,
+                encoding=FlextLdifConstants.Format.DEFAULT_ENCODING,
             ) as f:
                 f.write(content)
             result = FlextResult[bool].ok(True)
@@ -433,7 +437,9 @@ class TestFlextLdifServicesWriterService:
             assert result.value is True
 
             # Verify empty file was created
-            with Path(tmp_path).open(encoding=FlextLdifConstants.DEFAULT_ENCODING) as f:
+            with Path(tmp_path).open(
+                encoding=FlextLdifConstants.Format.DEFAULT_ENCODING
+            ) as f:
                 content = f.read()
                 assert content is not None
         finally:
@@ -466,7 +472,9 @@ class TestFlextLdifServicesWriterService:
             assert result.value is True
 
             # Verify file was written
-            content = tmp_path.read_text(encoding=FlextLdifConstants.DEFAULT_ENCODING)
+            content = tmp_path.read_text(
+                encoding=FlextLdifConstants.Format.DEFAULT_ENCODING
+            )
             assert "dn: cn=PathTest,dc=example,dc=com" in content
         finally:
             tmp_path.unlink(missing_ok=True)

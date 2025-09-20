@@ -181,23 +181,23 @@ sn: Direct
 """
 
         # Test parsing
-        parse_result = api._operations.parse_string(ldif_content)
+        parse_result = api.parse(ldif_content)
         assert parse_result.is_success
-        assert parse_result.value is not None
-        assert len(parse_result.value) == 1
+        assert parse_result.unwrap() is not None
+        assert len(parse_result.unwrap()) == 1
 
-        entries = parse_result.value
+        entries = parse_result.unwrap()
 
         # Test validation
-        validate_result = api._operations.validate_entries(entries)
+        validate_result = api.validate_entries(entries)
         assert validate_result.is_success
-        assert validate_result.value is True
+        assert validate_result.unwrap() is True
 
         # Test writing
-        write_result = api._operations.write_string(entries)
+        write_result = api.write(entries)
         assert write_result.is_success
-        assert write_result.value is not None
-        assert "cn=APITest" in write_result.value
+        assert write_result.unwrap() is not None
+        assert "cn=APITest" in write_result.unwrap()
 
     def test_complex_real_ldif(self) -> None:
         """Test parsing complex real-world LDIF with multiple entry types."""

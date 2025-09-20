@@ -192,10 +192,15 @@ sn: User000
         parse_string_result = api._operations.parse_string(ldif_content)
         assert parse_string_result.is_success
         assert len(parse_string_result.value) == 1
-        assert parse_string_result.value[0].dn.value == "cn=user000,ou=people,dc=example,dc=com"
+        assert (
+            parse_string_result.value[0].dn.value
+            == "cn=user000,ou=people,dc=example,dc=com"
+        )
 
         # Test with temporary file for parse_file operation
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as temp_file:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as temp_file:
             temp_file.write(ldif_content)
             temp_file_path = Path(temp_file.name)
 

@@ -473,7 +473,7 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifModels.Entry]]):
             success_rate = self._calculate_success_rate()
             performance_status = "healthy"
             if (
-                success_rate < FlextLdifConstants.PARSER_HEALTHY_THRESHOLD
+                success_rate < FlextLdifConstants.Processing.PARSER_HEALTHY_THRESHOLD
             ):  # 95% success rate threshold
                 performance_status = "degraded"
 
@@ -543,6 +543,7 @@ class FlextLdifParserService(FlextDomainService[list[FlextLdifModels.Entry]]):
         """Get current memory usage in bytes."""
         try:
             import psutil  # noqa: PLC0415
+
             process = psutil.Process()
             return int(process.memory_info().rss)
         except (ImportError, Exception):

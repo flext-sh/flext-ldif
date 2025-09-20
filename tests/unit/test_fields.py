@@ -302,13 +302,13 @@ class TestFieldDefaults:
 
     def test_field_patterns_exist(self) -> None:
         """Test that basic constants exist."""
-        assert hasattr(FlextLdifConstants, "DN_ATTRIBUTE")
-        assert hasattr(FlextLdifConstants, "ATTRIBUTE_SEPARATOR")
+        assert hasattr(FlextLdifConstants.Format, "DN_ATTRIBUTE")
+        assert hasattr(FlextLdifConstants.Format, "ATTRIBUTE_SEPARATOR")
 
     def test_field_patterns_values(self) -> None:
         """Test that constants have expected values."""
-        dn_attr = FlextLdifConstants.DN_ATTRIBUTE
-        attr_sep = FlextLdifConstants.ATTRIBUTE_SEPARATOR
+        dn_attr = FlextLdifConstants.Format.DN_ATTRIBUTE
+        attr_sep = FlextLdifConstants.Format.ATTRIBUTE_SEPARATOR
 
         # Validate they have expected values
         assert dn_attr == "dn"
@@ -316,8 +316,8 @@ class TestFieldDefaults:
 
     def test_field_patterns_types(self) -> None:
         """Test that constants have correct types."""
-        assert isinstance(FlextLdifConstants.DN_ATTRIBUTE, str)
-        assert isinstance(FlextLdifConstants.ATTRIBUTE_SEPARATOR, str)
+        assert isinstance(FlextLdifConstants.Format.DN_ATTRIBUTE, str)
+        assert isinstance(FlextLdifConstants.Format.ATTRIBUTE_SEPARATOR, str)
 
     def test_field_defaults_can_be_used_in_fields(self) -> None:
         """Test that field functions work with reasonable defaults."""
