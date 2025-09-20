@@ -178,7 +178,7 @@ class TestFlextLdifRepositoryServiceComplete:
         service = FlextLdifRepositoryService()
 
         # Mock an exception during storage by corrupting internal state
-        service._entries = None  # type: ignore[assignment]
+        service._entries = None
 
         entry_data: dict[str, object] = {
             "dn": "uid=test,ou=people,dc=example,dc=com",
@@ -207,7 +207,7 @@ class TestFlextLdifRepositoryServiceComplete:
                 return BrokenDN()
 
         broken_entry = BrokenEntry()
-        entries = [broken_entry]  # type: ignore[list-item]
+        entries = [broken_entry]
 
         result = service.find_entry_by_dn(
             entries, "uid=test,ou=people,dc=example,dc=com"
@@ -240,7 +240,7 @@ class TestFlextLdifRepositoryServiceComplete:
                 raise RuntimeError(msg)
 
         broken_entry = BrokenEntry()
-        entries = [broken_entry]  # type: ignore[list-item]
+        entries = [broken_entry]
 
         result = service.filter_entries_by_attribute(entries, "cn", "test")
         assert result.is_failure
@@ -271,7 +271,7 @@ class TestFlextLdifRepositoryServiceComplete:
                 raise RuntimeError(msg)
 
         broken_entry = BrokenEntry()
-        entries = [broken_entry]  # type: ignore[list-item]
+        entries = [broken_entry]
 
         result = service.filter_entries_by_objectclass(entries, "person")
         assert result.is_failure
@@ -282,7 +282,7 @@ class TestFlextLdifRepositoryServiceComplete:
         service = FlextLdifRepositoryService()
 
         # Mock an exception during statistics calculation
-        service._large_dataset_threshold = None  # type: ignore[assignment]
+        service._large_dataset_threshold = None
 
         entry_data: dict[str, object] = {
             "dn": "uid=test,ou=people,dc=example,dc=com",
@@ -299,7 +299,7 @@ class TestFlextLdifRepositoryServiceComplete:
         service = FlextLdifRepositoryService()
 
         # Mock an exception during rebuild
-        service._entries = None  # type: ignore[assignment]
+        service._entries = None
 
         result = service.rebuild_indices()
         assert result.is_failure
@@ -310,7 +310,7 @@ class TestFlextLdifRepositoryServiceComplete:
         service = FlextLdifRepositoryService()
 
         # Mock an exception during health check
-        service._total_operations = None  # type: ignore[assignment]
+        service._total_operations = None
 
         result = service.health_check()
         assert result.is_failure
@@ -458,7 +458,7 @@ class TestFlextLdifRepositoryServiceComplete:
 
         # Add many entries to trigger storage warning
         for _ in range(1000):  # Simulate many entries
-            service._entries.append(None)  # type: ignore[arg-type] # Just for count
+            service._entries.append(None)
 
         result = service.health_check()
         assert result.is_success

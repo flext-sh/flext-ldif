@@ -39,22 +39,26 @@ class TestFlextLdifAPIRealCoverage:
     def sample_entries(self) -> list[FlextLdifModels.Entry]:
         """Create sample entries for testing."""
         return [
-            FlextLdifModels.create_entry({
-                "dn": "cn=test1,dc=example,dc=com",
-                "attributes": {
-                    "cn": ["test1"],
-                    "sn": ["Test1"],
-                    "objectClass": ["person"],
+            FlextLdifModels.create_entry(
+                {
+                    "dn": "cn=test1,dc=example,dc=com",
+                    "attributes": {
+                        "cn": ["test1"],
+                        "sn": ["Test1"],
+                        "objectClass": ["person"],
+                    },
                 }
-            }),
-            FlextLdifModels.create_entry({
-                "dn": "cn=test2,dc=example,dc=com",
-                "attributes": {
-                    "cn": ["test2"],
-                    "sn": ["Test2"],
-                    "objectClass": ["person"],
+            ),
+            FlextLdifModels.create_entry(
+                {
+                    "dn": "cn=test2,dc=example,dc=com",
+                    "attributes": {
+                        "cn": ["test2"],
+                        "sn": ["Test2"],
+                        "objectClass": ["person"],
+                    },
                 }
-            })
+            ),
         ]
 
     def test_api_initialization_default(self) -> None:
@@ -65,7 +69,9 @@ class TestFlextLdifAPIRealCoverage:
         assert api._services is not None
         assert api._logger is not None
 
-    def test_api_initialization_with_config(self, api_with_config: FlextLdifAPI) -> None:
+    def test_api_initialization_with_config(
+        self, api_with_config: FlextLdifAPI
+    ) -> None:
         """Test API initialization with custom config."""
         assert api_with_config._config.ldif_max_entries == 1000
         assert api_with_config._config.ldif_chunk_size == 50
@@ -113,7 +119,9 @@ cn: test
 sn: Test
 objectClass: person
 """
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(content)
             temp_path = Path(f.name)
 
@@ -132,7 +140,9 @@ cn: test
 sn: Test
 objectClass: person
 """
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(content)
             temp_path = f.name
 
@@ -150,7 +160,9 @@ objectClass: person
         assert result.is_failure
         assert "File not found" in result.error or "File parse error:" in result.error
 
-    def test_validate_entries_success(self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]) -> None:
+    def test_validate_entries_success(
+        self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]
+    ) -> None:
         """Test successful entry validation."""
         result = api_default.validate_entries(sample_entries)
         assert result.is_success
@@ -163,7 +175,9 @@ objectClass: person
         assert result.is_failure
         assert "empty" in result.error.lower()
 
-    def test_write_success(self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]) -> None:
+    def test_write_success(
+        self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]
+    ) -> None:
         """Test successful LDIF writing."""
         result = api_default.write(sample_entries)
         assert result.is_success
@@ -171,7 +185,9 @@ objectClass: person
         assert isinstance(ldif_content, str)
         assert "cn=test1,dc=example,dc=com" in ldif_content
 
-    def test_write_file_success(self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]) -> None:
+    def test_write_file_success(
+        self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]
+    ) -> None:
         """Test successful file writing."""
         with tempfile.NamedTemporaryFile(suffix=".ldif", delete=False) as f:
             temp_path = Path(f.name)
@@ -184,7 +200,9 @@ objectClass: person
         finally:
             temp_path.unlink()
 
-    def test_write_file_string_path(self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]) -> None:
+    def test_write_file_string_path(
+        self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]
+    ) -> None:
         """Test file writing with string path."""
         with tempfile.NamedTemporaryFile(suffix=".ldif", delete=False) as f:
             temp_path = f.name
@@ -196,25 +214,31 @@ objectClass: person
         finally:
             Path(temp_path).unlink()
 
-    def test_transform_no_transformation(self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]) -> None:
+    def test_transform_no_transformation(
+        self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]
+    ) -> None:
         """Test transform with no transformation function."""
         result = api_default.transform(sample_entries)
         assert result.is_success
         transformed = result.unwrap()
         assert transformed == sample_entries
 
-    def test_transform_with_function(self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]) -> None:
+    def test_transform_with_function(
+        self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]
+    ) -> None:
         """Test transform with transformation function."""
+
         def add_mail_attr(entry: FlextLdifModels.Entry) -> FlextLdifModels.Entry:
             # Copy existing attributes and add mail
-            new_attrs = dict(entry.attributes.data)  # Use .data to access the underlying dict
+            new_attrs = dict(
+                entry.attributes.data
+            )  # Use .data to access the underlying dict
             cn_values = entry.attributes.get_attribute("cn")
             cn_value = cn_values[0] if cn_values else "test"
             new_attrs["mail"] = [f"{cn_value}@example.com"]
-            return FlextLdifModels.create_entry({
-                "dn": entry.dn.value,
-                "attributes": new_attrs
-            })
+            return FlextLdifModels.create_entry(
+                {"dn": entry.dn.value, "attributes": new_attrs}
+            )
 
         result = api_default.transform(sample_entries, add_mail_attr)
         assert result.is_success
@@ -222,7 +246,9 @@ objectClass: person
         assert len(transformed) == 2
         assert transformed[0].attributes.has_attribute("mail")
 
-    def test_analyze_success(self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]) -> None:
+    def test_analyze_success(
+        self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]
+    ) -> None:
         """Test successful analysis."""
         result = api_default.analyze(sample_entries)
         assert result.is_success
@@ -230,7 +256,9 @@ objectClass: person
         assert isinstance(analysis, dict)
         assert "total_entries" in analysis
 
-    def test_filter_entries_by_attribute(self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]) -> None:
+    def test_filter_entries_by_attribute(
+        self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]
+    ) -> None:
         """Test filtering by attribute."""
         criteria = {"attribute": "cn", "value": "test1"}
         result = api_default.filter_entries(sample_entries, criteria)
@@ -240,13 +268,17 @@ objectClass: person
         cn_values = filtered[0].attributes.get_attribute("cn")
         assert cn_values and cn_values[0] == "test1"
 
-    def test_filter_entries_by_attribute_none_value(self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]) -> None:
+    def test_filter_entries_by_attribute_none_value(
+        self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]
+    ) -> None:
         """Test filtering by attribute with None value."""
         criteria = {"attribute": "cn", "value": None}
         result = api_default.filter_entries(sample_entries, criteria)
         assert result.is_success
 
-    def test_filter_entries_by_objectclass(self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]) -> None:
+    def test_filter_entries_by_objectclass(
+        self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]
+    ) -> None:
         """Test filtering by objectClass."""
         criteria = {"objectClass": "person"}
         result = api_default.filter_entries(sample_entries, criteria)
@@ -254,7 +286,9 @@ objectClass: person
         filtered = result.unwrap()
         assert len(filtered) == 2
 
-    def test_filter_entries_no_criteria(self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]) -> None:
+    def test_filter_entries_no_criteria(
+        self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]
+    ) -> None:
         """Test filtering with no supported criteria."""
         criteria = {"unsupported": "value"}
         result = api_default.filter_entries(sample_entries, criteria)
@@ -278,8 +312,15 @@ objectClass: person
         assert info["api"] == "FlextLdifAPI"
         assert "capabilities" in info
         expected_capabilities = [
-            "parse", "parse_file", "validate", "write", "write_file",
-            "transform", "analyze", "filter_entries", "health_check"
+            "parse",
+            "parse_file",
+            "validate",
+            "write",
+            "write_file",
+            "transform",
+            "analyze",
+            "filter_entries",
+            "health_check",
         ]
         for capability in expected_capabilities:
             assert capability in info["capabilities"]
@@ -294,17 +335,26 @@ objectClass: person
 
     # Error condition tests with real service failures
 
-    def test_write_file_invalid_path(self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]) -> None:
+    def test_write_file_invalid_path(
+        self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]
+    ) -> None:
         """Test write_file with invalid path to trigger service failure."""
         # Try to write to a directory that doesn't exist
         invalid_path = "/nonexistent/directory/file.ldif"
         result = api_default.write_file(sample_entries, invalid_path)
         assert result.is_failure
         # The error should be from the service layer or caught by API exception handling
-        assert "directory does not exist" in result.error or "File write error:" in result.error or "write failed" in result.error.lower()
+        assert (
+            "directory does not exist" in result.error
+            or "File write error:" in result.error
+            or "write failed" in result.error.lower()
+        )
 
-    def test_transform_with_failing_function(self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]) -> None:
+    def test_transform_with_failing_function(
+        self, api_default: FlextLdifAPI, sample_entries: list[FlextLdifModels.Entry]
+    ) -> None:
         """Test transform with function that raises exception."""
+
         def failing_transform(_entry: FlextLdifModels.Entry) -> FlextLdifModels.Entry:
             error_message = "Transform failed"
             raise ValueError(error_message)
@@ -313,18 +363,22 @@ objectClass: person
         assert result.is_failure
         assert "Transform error:" in result.error
 
-    def test_filter_entries_invalid_repository_access(self, api_default: FlextLdifAPI, _sample_entries: list[FlextLdifModels.Entry]) -> None:
+    def test_filter_entries_invalid_repository_access(
+        self, api_default: FlextLdifAPI
+    ) -> None:
         """Test filter_entries with conditions that might fail."""
         # Create entries with extreme values that might cause issues using list comprehension
         large_entries = [
-            FlextLdifModels.create_entry({
-                "dn": f"cn=user{i},dc=example,dc=com",
-                "attributes": {
-                    "cn": [f"user{i}"],
-                    "sn": [f"User{i}"],
-                    "objectClass": ["person"],
+            FlextLdifModels.create_entry(
+                {
+                    "dn": f"cn=user{i},dc=example,dc=com",
+                    "attributes": {
+                        "cn": [f"user{i}"],
+                        "sn": [f"User{i}"],
+                        "objectClass": ["person"],
+                    },
                 }
-            })
+            )
             for i in range(1000)
         ]
 
@@ -342,14 +396,18 @@ objectClass: person
         assert analysis["total_entries"] == 0
 
         # Test with single entry
-        single_entry = [FlextLdifModels.create_entry({
-            "dn": "cn=single,dc=example,dc=com",
-            "attributes": {
-                "cn": ["single"],
-                "sn": ["Single"],
-                "objectClass": ["person"],
-            }
-        })]
+        single_entry = [
+            FlextLdifModels.create_entry(
+                {
+                    "dn": "cn=single,dc=example,dc=com",
+                    "attributes": {
+                        "cn": ["single"],
+                        "sn": ["Single"],
+                        "objectClass": ["person"],
+                    },
+                }
+            )
+        ]
 
         result = api_default.analyze(single_entry)
         assert result.is_success

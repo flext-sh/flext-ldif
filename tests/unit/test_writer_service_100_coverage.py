@@ -322,7 +322,7 @@ class TestFlextLdifWriterServiceComplete:
             msg = "Format handler error"
             raise RuntimeError(msg)
 
-        service._format_handler.write_ldif = broken_write_ldif  # type: ignore[assignment]
+        service._format_handler.write_ldif = broken_write_ldif
 
         result = service.write_entries_to_string([entry])
         assert result.is_failure
@@ -340,7 +340,7 @@ class TestFlextLdifWriterServiceComplete:
         entry = FlextLdifModels.create_entry(entry_data)
 
         # Corrupt service state to cause exception
-        service._large_batch_threshold = None  # type: ignore[assignment]
+        service._large_batch_threshold = None
 
         result = service.write_entries_to_string([entry])
         assert result.is_failure
@@ -435,7 +435,7 @@ class TestFlextLdifWriterServiceComplete:
         service = FlextLdifWriterService()
 
         # Corrupt internal state to cause exception
-        service._total_writes = None  # type: ignore[assignment]
+        service._total_writes = None
 
         result = service.health_check()
         assert result.is_failure
