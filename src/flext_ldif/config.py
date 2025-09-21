@@ -139,7 +139,15 @@ class FlextLdifConfig(FlextConfig):
     @field_validator("ldif_encoding")
     @classmethod
     def validate_encoding(cls, v: str) -> str:
-        """Validate encoding is supported."""
+        """Validate encoding is supported.
+
+        Returns:
+            str: The validated encoding string
+
+        Raises:
+            ValueError: If the encoding is not supported
+
+        """
         try:
             test_bytes = "test".encode(v)
             test_bytes.decode(v)
@@ -150,7 +158,15 @@ class FlextLdifConfig(FlextConfig):
 
     @model_validator(mode="after")
     def validate_ldif_configuration(self) -> Self:
-        """Validate LDIF-specific configuration consistency."""
+        """Validate LDIF-specific configuration consistency.
+
+        Returns:
+            Self: The validated configuration instance
+
+        Raises:
+            ValueError: If configuration validation fails
+
+        """
         # Validate worker configuration
         if (
             self.ldif_parallel_processing
@@ -277,7 +293,12 @@ class FlextLdifConfig(FlextConfig):
             )
 
     def apply_ldif_overrides(self, overrides: dict[str, object]) -> FlextResult[None]:
-        """Apply LDIF-specific configuration overrides."""
+        """Apply LDIF-specific configuration overrides.
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if self.is_sealed():
             return FlextResult[None].fail("Cannot modify sealed configuration")
 

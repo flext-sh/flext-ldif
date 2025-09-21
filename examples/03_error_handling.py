@@ -67,7 +67,12 @@ without proper structure
         self._process_ldif_chain(self.invalid_ldif)
 
     def _process_ldif_chain(self, ldif_content: str) -> str:
-        """Demonstrate result chaining pattern."""
+        """Demonstrate result chaining pattern.
+
+        Returns:
+            str: Processing result message
+
+        """
         # Parse
         parse_result = self.api.parse(ldif_content)
         if not parse_result.is_success:
@@ -97,7 +102,12 @@ without proper structure
         self,
         entries: list[FlextLdifModels.Entry],
     ) -> FlextTypes.Core.StringList:
-        """Validate entries and return errors."""
+        """Validate entries and return errors.
+
+        Returns:
+            FlextTypes.Core.StringList: List of validation error messages
+
+        """
         validation_errors: FlextTypes.Core.StringList = []
         for entry in entries:
             # Use FlextResult pattern instead of exceptions

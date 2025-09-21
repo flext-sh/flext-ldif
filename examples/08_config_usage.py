@@ -3,6 +3,9 @@
 
 This example demonstrates how to use FlextLdifConfig as a singleton
 for LDIF-specific configuration management, extending flext-core FlextConfig.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -14,11 +17,13 @@ from flext_ldif import FlextLdifAPI
 from flext_ldif.config import FlextLdifConfig
 
 
-def main() -> None:
-    """Demonstrate LDIF configuration usage."""
-    print("=== FLEXT-LDIF Configuration Example ===\n")
+def _initialize_config() -> FlextLdifConfig | None:
+    """Initialize LDIF configuration with custom parameters.
 
-    # Initialize LDIF configuration with custom parameters
+    Returns:
+        FlextLdifConfig | None: Configuration instance or None if initialization failed
+
+    """
     print("1. Initializing LDIF configuration...")
     config_result = FlextLdifConfig.initialize_global_ldif_config(
         ldif_max_entries=50000,
@@ -30,22 +35,21 @@ def main() -> None:
 
     if config_result.is_failure:
         print(f"❌ Configuration initialization failed: {config_result.error}")
-        return
+        return None
 
     print("✅ LDIF configuration initialized successfully")
+    return FlextLdifConfig.get_global_ldif_config()
 
-    # Get global configuration instance
+
+def _display_config_info(config: FlextLdifConfig) -> None:
+    """Display configuration values and dictionaries."""
     print("\n2. Accessing global configuration...")
-    config = FlextLdifConfig.get_global_ldif_config()
-
-    # Display configuration values
     print(f"   Max entries: {config.ldif_max_entries}")
     print(f"   Strict validation: {config.ldif_strict_validation}")
     print(f"   Parallel processing: {config.ldif_parallel_processing}")
     print(f"   Max workers: {config.ldif_max_workers}")
     print(f"   Analytics enabled: {config.ldif_enable_analytics}")
 
-    # Get configuration dictionaries
     print("\n3. Getting configuration dictionaries...")
     processing_config = config.get_ldif_processing_config()
     validation_config = config.get_ldif_validation_config()
@@ -55,7 +59,9 @@ def main() -> None:
     print("   Validation config:", validation_config)
     print("   Analytics config:", analytics_config)
 
-    # Validate business rules
+
+def _validate_and_override_config(config: FlextLdifConfig) -> None:
+    """Validate business rules and apply configuration overrides."""
     print("\n4. Validating business rules...")
     validation_result = config.validate_ldif_business_rules()
     if validation_result.is_success:
@@ -63,7 +69,6 @@ def main() -> None:
     else:
         print(f"❌ Business rules validation failed: {validation_result.error}")
 
-    # Apply configuration overrides
     print("\n5. Applying configuration overrides...")
     overrides: dict[str, object] = {
         "ldif_max_entries": 100000,
@@ -80,11 +85,12 @@ def main() -> None:
     else:
         print(f"❌ Configuration override failed: {override_result.error}")
 
-    # Use configuration in LDIF operations
+
+def _demonstrate_ldif_operations(config: FlextLdifConfig) -> None:
+    """Demonstrate LDIF operations using configuration."""
     print("\n6. Using configuration in LDIF operations...")
     api = FlextLdifAPI()
 
-    # Create sample LDIF content
     sample_ldif = """dn: cn=test,dc=example,dc=com
 cn: test
 objectClass: person
@@ -96,7 +102,6 @@ objectClass: person
 sn: AdminUser
 """
 
-    # Write to temporary file
     with tempfile.NamedTemporaryFile(
         encoding="utf-8",
         mode="w",
@@ -107,20 +112,17 @@ sn: AdminUser
         temp_path = Path(f.name)
 
     try:
-        # Parse LDIF using configuration
         parse_result = api.parse_file(temp_path)
         if parse_result.is_success:
             entries = parse_result.unwrap()
             print(f"✅ Parsed {len(entries)} entries successfully")
 
-            # Validate entries using configuration
             validate_result = api.validate(entries)
             if validate_result.is_success:
                 print("✅ Entry validation passed")
             else:
                 print(f"❌ Entry validation failed: {validate_result.error}")
 
-            # Analyze entries if analytics is enabled
             if config.ldif_enable_analytics:
                 analyze_result = api.analyze(entries)
                 if analyze_result.is_success:
@@ -132,19 +134,33 @@ sn: AdminUser
             print(f"❌ LDIF parsing failed: {parse_result.error}")
 
     finally:
-        # Clean up temporary file
         temp_path.unlink(missing_ok=True)
 
-    # Demonstrate configuration inheritance from flext-core
+
+def _show_core_inheritance(config: FlextLdifConfig) -> None:
+    """Demonstrate configuration inheritance from flext-core."""
     print("\n7. Demonstrating flext-core inheritance...")
     print(f"   Base URL: {config.base_url}")
     print(f"   Debug mode: {config.debug}")
     print(f"   Log level: {config.log_level}")
     print(f"   Max workers: {config.max_workers}")
 
-    # Show validation config
     validation_config = config.get_ldif_validation_config()
     print(f"   Validation config: {validation_config}")
+
+
+def main() -> None:
+    """Demonstrate LDIF configuration usage."""
+    print("=== FLEXT-LDIF Configuration Example ===\n")
+
+    config = _initialize_config()
+    if config is None:
+        return
+
+    _display_config_info(config)
+    _validate_and_override_config(config)
+    _demonstrate_ldif_operations(config)
+    _show_core_inheritance(config)
 
     print("\n=== Configuration Example Complete ===")
 

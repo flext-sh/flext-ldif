@@ -98,7 +98,12 @@ class LdifValidationDemonstrator:
         self._test_invalid_ldif()
 
     def _parse_sample_file(self) -> list[FlextLdifModels.Entry] | None:
-        """Parse sample LDIF file and return entries."""
+        """Parse sample LDIF file and return entries.
+
+        Returns:
+            list[FlextLdifModels.Entry] | None: Parsed entries or None if parsing failed
+
+        """
         sample_file = Path(__file__).parent / "sample_complex.ldif"
         parse_result = self.api.parse_file(sample_file)
         if not parse_result.is_success:

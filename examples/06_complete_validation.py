@@ -46,7 +46,12 @@ from flext_ldif.config import FlextLdifConfig
 
 
 def test_1_flext_ldif_prefixes_validation() -> FlextTypes.Core.Dict:
-    """Teste 1: Validação de todos os prefixos FlextLdif* que REALMENTE EXISTEM."""
+    """Teste 1: Validação de todos os prefixos FlextLdif* que REALMENTE EXISTEM.
+
+    Returns:
+        FlextTypes.Core.Dict: Test results dictionary
+
+    """
     # ✅ Testando classes principais com prefixo FlextLdif* (APENAS as que existem)
     config = FlextLdifConfig()
 
@@ -76,7 +81,12 @@ def test_1_flext_ldif_prefixes_validation() -> FlextTypes.Core.Dict:
 
 
 def test_2_domain_specifications_validation() -> FlextTypes.Core.Dict:
-    """Teste 2: Validação usando FlextLdifEntry (specifications integradas via composição)."""
+    """Teste 2: Validação usando FlextLdifEntry (specifications integradas via composição).
+
+    Returns:
+        FlextTypes.Core.Dict: Test results dictionary
+
+    """
     # ✅ CORREÇÃO: Specifications estão integradas no FlextLdifEntry via composição
     # Testando funcionalidade através da API que realmente existe
 
@@ -389,10 +399,9 @@ cn: Test User"""
         pass
 
 
-def test_8_comprehensive_functionality_test() -> None:
-    """Teste 8: Teste abrangente de todas as funcionalidades."""
-    # Create comprehensive test data
-    complex_ldif = """dn: dc=comprehensive,dc=test
+def _get_comprehensive_test_ldif() -> str:
+    """Get comprehensive test LDIF content."""
+    return """dn: dc=comprehensive,dc=test
 objectClass: organization
 dc: comprehensive
 o: Comprehensive Test Organization
@@ -443,75 +452,104 @@ description: Regular users group
 member: uid=admin,ou=people,dc=comprehensive,dc=test
 member: uid=user1,ou=people,dc=comprehensive,dc=test"""
 
+
+def _parse_and_validate_ldif(ldif_content: str) -> list:
+    """Parse and validate LDIF content."""
+    format_handler = FlextLdifFormatHandler()
+    parse_result = format_handler.parse_ldif(ldif_content)
+    if parse_result.is_failure:
+        msg = f"Parse failed: {parse_result.error}"
+        raise ValueError(msg)
+    entries = parse_result.unwrap()
+
+    api = FlextLdifAPI()
+    validation_result = api.validate_entries(entries)
+    if validation_result.is_failure:
+        msg = f"Validation failed: {validation_result.error}"
+        raise ValueError(msg)
+
+    return entries
+
+
+def _validate_entry_dns(entries: list) -> None:
+    """Validate entry DNs contain expected components."""
+    for entry in entries:
+        if hasattr(entry, "dn"):
+            dn_str = str(entry.dn)
+            # Validate DN contains expected components
+            is_valid_dn = any([
+                "uid=" in dn_str,
+                ("cn=" in dn_str and "ou=groups" in dn_str),
+                "ou=" in dn_str,
+                "dc=" in dn_str
+            ])
+            if not is_valid_dn:
+                continue
+
+
+def _test_file_operations(entries: list) -> None:
+    """Test file write and read operations."""
+    with tempfile.NamedTemporaryFile(
+        encoding="utf-8",
+        mode="w",
+        suffix=".ldif",
+        delete=False,
+    ) as f:
+        temp_file = Path(f.name)
+
     try:
-        # ✅ CORREÇÃO: Usar funções que realmente existem
         format_handler = FlextLdifFormatHandler()
-        parse_result = format_handler.parse_ldif(complex_ldif)
-        if parse_result.is_failure:
-            msg = f"Parse failed: {parse_result.error}"
+        write_result = format_handler.write_ldif(entries)
+        if write_result.is_failure:
+            msg = f"Write failed: {write_result.error}"
             raise ValueError(msg)
-        entries = parse_result.unwrap()
+        ldif_content = write_result.unwrap()
+        temp_file.write_text(ldif_content, encoding="utf-8")
 
-        api = FlextLdifAPI()
-        validation_result = api.validate_entries(entries)
-        if validation_result.is_failure:
-            msg = f"Validation failed: {validation_result.error}"
-            raise ValueError(msg)
+        # Test reading from file
+        if temp_file.exists():
+            file_content = temp_file.read_text(encoding="utf-8")
+            parse_result = format_handler.parse_ldif(file_content)
+            if parse_result.is_failure:
+                msg = f"Parse failed: {parse_result.error}"
+                raise ValueError(msg)
 
-        if entries:
-            for entry in entries:
-                if hasattr(entry, "dn"):
-                    dn_str = str(entry.dn)
-                    if (
-                        "uid=" in dn_str
-                        or ("cn=" in dn_str and "ou=groups" in dn_str)
-                        or "ou=" in dn_str
-                        or "dc=" in dn_str
-                    ):
-                        pass
+    finally:
+        Path(temp_file).unlink(missing_ok=True)
 
-        # ✅ CORREÇÃO: Usar API para sorting ao invés de função inexistente
+
+def test_8_comprehensive_functionality_test() -> None:
+    """Teste 8: Teste abrangente de todas as funcionalidades.
+
+    Raises:
+        ValueError: If parsing, validation, or writing operations fail
+
+    """
+    try:
+        complex_ldif = _get_comprehensive_test_ldif()
+        entries = _parse_and_validate_ldif(complex_ldif)
+
+        _validate_entry_dns(entries)
+
+        # Test hierarchical sorting if available
         if entries:
             api = FlextLdifAPI()
             with contextlib.suppress(Exception):
                 api.sort_hierarchically(entries)
 
-        with tempfile.NamedTemporaryFile(
-            encoding="utf-8",
-            mode="w",
-            suffix=".ldif",
-            delete=False,
-        ) as f:
-            temp_file = Path(f.name)
-
-        try:
-            # Test writing to string and then to file
-            format_handler = FlextLdifFormatHandler()
-            write_result = format_handler.write_ldif(entries)
-            if write_result.is_failure:
-                msg = f"Write failed: {write_result.error}"
-                raise ValueError(msg)
-            ldif_content = write_result.unwrap()
-            temp_file.write_text(ldif_content, encoding="utf-8")
-
-            # Test reading from file
-            if temp_file.exists():
-                file_content = temp_file.read_text(encoding="utf-8")
-                parse_result = format_handler.parse_ldif(file_content)
-                if parse_result.is_failure:
-                    msg = f"Parse failed: {parse_result.error}"
-                    raise ValueError(msg)
-
-        finally:
-            # Cleanup
-            Path(temp_file).unlink(missing_ok=True)
+        _test_file_operations(entries)
 
     except (RuntimeError, ValueError, TypeError):
         pass
 
 
 def main() -> bool | None:
-    """Executar todos os testes de validação."""
+    """Executar todos os testes de validação.
+
+    Returns:
+        bool | None: True if all tests pass, False if any fail, None if interrupted
+
+    """
     try:
         # Execute all validation tests
         test_1_flext_ldif_prefixes_validation()

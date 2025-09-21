@@ -40,7 +40,12 @@ class FlextLdifExceptions:
 
     @classmethod
     def validation_error(cls, message: str, **context: object) -> FlextResult[None]:
-        """Create validation error with context that returns FlextResult."""
+        """Create validation error with context that returns FlextResult.
+
+        Returns:
+            FlextResult[None]: Failure result with enriched error message
+
+        """
         # Enrich message with LDIF-specific context
         dn = context.get("entry_dn") or context.get("dn")
         attribute_name = context.get("attribute_name")
@@ -60,7 +65,12 @@ class FlextLdifExceptions:
 
     @classmethod
     def parse_error(cls, message: str, **context: object) -> FlextResult[None]:
-        """Create parse error with line/column context."""
+        """Create parse error with line/column context.
+
+        Returns:
+            FlextResult[None]: Failure result with enriched error message
+
+        """
         line_number = context.get("line_number") or context.get("line")
         column = context.get("column")
         content_preview = context.get("content_preview") or context.get("content")
@@ -102,7 +112,12 @@ class FlextLdifExceptions:
 
     @classmethod
     def processing_error(cls, message: str, **context: object) -> FlextResult[None]:
-        """Create processing error with operation context."""
+        """Create processing error with operation context.
+
+        Returns:
+            FlextResult[None]: Failure result with enriched error message
+
+        """
         operation = context.get("operation")
         entry_count = context.get("entry_count")
 
@@ -122,7 +137,12 @@ class FlextLdifExceptions:
 
     @classmethod
     def file_error(cls, message: str, **context: object) -> FlextResult[None]:
-        """Create file error with path context."""
+        """Create file error with path context.
+
+        Returns:
+            FlextResult[None]: Failure result with enriched error message
+
+        """
         file_path = context.get("file_path")
 
         enriched_message = message
@@ -134,7 +154,12 @@ class FlextLdifExceptions:
 
     @classmethod
     def configuration_error(cls, message: str, **context: object) -> FlextResult[None]:
-        """Create configuration error with config key context."""
+        """Create configuration error with config key context.
+
+        Returns:
+            FlextResult[None]: Failure result with enriched error message
+
+        """
         config_key = context.get("config_key")
 
         enriched_message = message
@@ -146,7 +171,12 @@ class FlextLdifExceptions:
 
     @classmethod
     def connection_error(cls, message: str, **context: object) -> FlextResult[None]:
-        """Create connection error."""
+        """Create connection error.
+
+        Returns:
+            FlextResult[None]: Failure result with enriched error message
+
+        """
         # Use context for enriching connection error details
         host = context.get("host")
         port = context.get("port")
@@ -162,7 +192,12 @@ class FlextLdifExceptions:
 
     @classmethod
     def timeout_error(cls, message: str, **context: object) -> FlextResult[None]:
-        """Create timeout error."""
+        """Create timeout error.
+
+        Returns:
+            FlextResult[None]: Failure result with enriched error message
+
+        """
         # Use context for enriching timeout error details
         operation = context.get("operation")
         timeout_seconds = context.get("timeout_seconds")
@@ -178,7 +213,12 @@ class FlextLdifExceptions:
 
     @classmethod
     def authentication_error(cls, message: str, **context: object) -> FlextResult[None]:
-        """Create authentication error."""
+        """Create authentication error.
+
+        Returns:
+            FlextResult[None]: Failure result with enriched error message
+
+        """
         # Use context for enriching authentication error details
         username = context.get("username")
         auth_method = context.get("auth_method")
@@ -194,7 +234,12 @@ class FlextLdifExceptions:
 
     @classmethod
     def error(cls, message: str, **context: object) -> FlextResult[None]:
-        """Create generic LDIF error."""
+        """Create generic LDIF error.
+
+        Returns:
+            FlextResult[None]: Failure result with enriched error message
+
+        """
         # Use context for enriching generic error details
         error_type = context.get("error_type")
         component = context.get("component")
@@ -210,7 +255,12 @@ class FlextLdifExceptions:
 
     @classmethod
     def entry_error(cls, message: str, **context: object) -> FlextResult[None]:
-        """Create entry error with DN and attribute context."""
+        """Create entry error with DN and attribute context.
+
+        Returns:
+            FlextResult[None]: Failure result with enriched error message
+
+        """
         dn = context.get("dn") or context.get("entry_dn")
         attribute_name = context.get("attribute_name")
         entry_data = context.get("entry_data")
@@ -249,7 +299,12 @@ class FlextLdifExceptions:
     def create(
         cls, message: str, error_type: str | None = None, **context: object
     ) -> FlextResult[None]:
-        """Create error with specific type."""
+        """Create error with specific type.
+
+        Returns:
+            FlextResult[None]: Failure result with enriched error message
+
+        """
         if error_type == "ValidationError":
             return cls.validation_error(message, **context)
         if error_type == "ParseError":

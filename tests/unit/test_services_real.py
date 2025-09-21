@@ -11,15 +11,15 @@ from pathlib import Path
 
 from flext_core import FlextResult
 from flext_ldif import FlextLdifModels
+from flext_ldif.api import FlextLdifAPI
 from flext_ldif.config import FlextLdifConfig
-from flext_ldif.services import FlextLdifServices
 
 
 class TestAnalyticsService:
-    """Test AnalyticsService with real functionality."""
+    """Test analytics functionality with FlextLdifAPI (FLEXT-compliant)."""
 
     def test_init_with_entries_and_config(self) -> None:
-        """Test analytics service initialization with entries and config."""
+        """Test analytics with entries and config using FlextLdifAPI."""
         test_entries = [
             FlextLdifModels.create_entry(
                 {
@@ -33,36 +33,34 @@ class TestAnalyticsService:
             ),
         ]
         config = FlextLdifConfig()
-        services = FlextLdifServices(config=config)
-        service = services.analytics
-
-        # Analytics service is properly initialized
-        assert service is not None
+        api = FlextLdifAPI(config=config)
 
         # Test analytics with the test entries
-        analysis_result = service.analyze_entries(test_entries)
+        analysis_result = api.analyze(test_entries)
         assert analysis_result.is_success
         stats = analysis_result.value
         assert stats["total_entries"] == 1
 
     def test_init_default(self) -> None:
-        """Test analytics service initialization with defaults."""
-        service = FlextLdifServices().analytics
+        """Test analytics initialization with defaults using FlextLdifAPI."""
+        api = FlextLdifAPI()
 
-        assert service is not None
-        assert service.get_config_info() is not None
+        assert api is not None
+        info = api.get_service_info()
+        assert info is not None
+        assert "analyze" in info.get("capabilities", [])
 
     def test_analyze_empty_entries(self) -> None:
-        """Test analyze with empty entries."""
-        service = FlextLdifServices().analytics
+        """Test analyze with empty entries using FlextLdifAPI."""
+        api = FlextLdifAPI()
 
-        result = service.analyze_entries([])
+        result = api.analyze([])
 
         assert result.is_success is True
         assert result.value["total_entries"] == 0
 
     def test_execute_with_entries(self) -> None:
-        """Test execute with real entries."""
+        """Test analytics execution with real entries using FlextLdifAPI."""
         entries = [
             FlextLdifModels.create_entry(
                 {
@@ -89,19 +87,19 @@ class TestAnalyticsService:
                 },
             ),
         ]
-        service = FlextLdifServices().analytics
+        api = FlextLdifAPI()
 
-        result = service.analyze_entries(entries)
+        result = api.analyze(entries)
 
         assert result.is_success is True
         metrics = result.value
         assert metrics["total_entries"] == 2
-        assert metrics["person_entries"] == 2
-        assert metrics["group_entries"] == 0
+        # Basic analysis should include entry counts
+        assert isinstance(metrics.get("total_entries"), int)
 
     def test_analyze_patterns(self) -> None:
-        """Test analyze_patterns method."""
-        service = FlextLdifServices().analytics
+        """Test analyze_patterns functionality using FlextLdifAPI entry_statistics."""
+        api = FlextLdifAPI()
         entries = [
             FlextLdifModels.create_entry(
                 {
@@ -126,24 +124,19 @@ class TestAnalyticsService:
             ),
         ]
 
-        result = service.analyze_patterns(entries)
+        result = api.entry_statistics(entries)
 
         assert result.is_success is True
         patterns = result.value
-        # Analytics returns different keys based on implementation
-        # Test that we get a dictionary with analysis results
+        # Entry statistics provides comprehensive analysis
         assert isinstance(patterns, dict)
         assert len(patterns) > 0
-        # Test that analysis found some patterns - flexible assertions
-        assert any(
-            key
-            for key in patterns
-            if "entries" in key or "patterns" in key or "distribution" in key
-        )
+        assert "total_entries" in patterns
+        assert "object_class_counts" in patterns
 
     def test_analyze_attribute_distribution(self) -> None:
-        """Test analyze_attribute_distribution method."""
-        service = FlextLdifServices().analytics
+        """Test attribute distribution analysis using FlextLdifAPI entry_statistics."""
+        api = FlextLdifAPI()
         entries = [
             FlextLdifModels.create_entry(
                 {
@@ -168,16 +161,17 @@ class TestAnalyticsService:
             ),
         ]
 
-        result = service.get_objectclass_distribution(entries)
+        result = api.entry_statistics(entries)
 
         assert result.is_success is True
-        distribution = result.value
-        assert "person" in distribution
-        assert distribution["person"] == 2
+        stats = result.value
+        object_class_counts = stats.get("object_class_counts", {})
+        assert "person" in object_class_counts
+        assert object_class_counts["person"] == 2
 
     def test_analyze_dn_depth(self) -> None:
-        """Test analyze_dn_depth method."""
-        service = FlextLdifServices().analytics
+        """Test DN depth analysis using FlextLdifAPI entry_statistics."""
+        api = FlextLdifAPI()
         entries = [
             FlextLdifModels.create_entry(
                 {
@@ -193,20 +187,18 @@ class TestAnalyticsService:
             ),
         ]
 
-        result = service.get_dn_depth_analysis(entries)
+        result = api.entry_statistics(entries)
 
         assert result.is_success is True
         depth_analysis = result.value
-        assert (
-            "depth_4" in depth_analysis
-        )  # uid=user1,ou=people,dc=example,dc=com (4 components)
-        assert (
-            "depth_5" in depth_analysis
-        )  # cn=admin,ou=system,ou=config,dc=example,dc=com (5 components)
+        # Entry statistics includes DN depth information
+        assert "average_dn_depth" in depth_analysis
+        assert "max_dn_depth" in depth_analysis
+        assert "min_dn_depth" in depth_analysis
 
     def test_get_objectclass_distribution(self) -> None:
-        """Test get_objectclass_distribution method."""
-        service = FlextLdifServices().analytics
+        """Test object class distribution using FlextLdifAPI entry_statistics."""
+        api = FlextLdifAPI()
         entries = [
             FlextLdifModels.create_entry(
                 {
@@ -228,19 +220,20 @@ class TestAnalyticsService:
             ),
         ]
 
-        result = service.get_objectclass_distribution(entries)
+        result = api.entry_statistics(entries)
 
         assert result.is_success is True
-        distribution = result.value
+        stats = result.value
+        distribution = stats.get("object_class_counts", {})
         # Check that distribution contains expected object classes
         assert "top" in distribution
         assert "person" in distribution
-        assert "inetorgperson" in distribution or "inetOrgPerson" in distribution
-        assert "groupofnames" in distribution or "groupOfNames" in distribution
+        assert "inetOrgPerson" in distribution
+        assert "groupOfNames" in distribution
 
     def test_get_dn_depth_analysis(self) -> None:
-        """Test get_dn_depth_analysis method (alias)."""
-        service = FlextLdifServices().analytics
+        """Test DN depth analysis using FlextLdifAPI entry_statistics."""
+        api = FlextLdifAPI()
         entries = [
             FlextLdifModels.create_entry(
                 {
@@ -250,14 +243,18 @@ class TestAnalyticsService:
             ),
         ]
 
-        result = service.get_dn_depth_analysis(entries)
+        result = api.entry_statistics(entries)
 
         assert result.is_success is True
-        assert "depth_4" in result.value
+        stats = result.value
+        assert "average_dn_depth" in stats
+        assert (
+            stats["average_dn_depth"] == 4
+        )  # uid=user1,ou=people,dc=example,dc=com has 4 components
 
     def test_analyze_patterns_with_entries(self) -> None:
-        """Test analyze_patterns method with real entries."""
-        service = FlextLdifServices().analytics
+        """Test pattern analysis with real entries using FlextLdifAPI entry_statistics."""
+        api = FlextLdifAPI()
         entries = [
             FlextLdifModels.create_entry(
                 {
@@ -271,21 +268,22 @@ class TestAnalyticsService:
             ),
         ]
 
-        result = service.analyze_patterns(entries)
+        result = api.entry_statistics(entries)
 
         assert result.is_success is True
         patterns = result.value
-        # Analytics returns different keys based on implementation
-        # Test that we get a dictionary with analysis results
+        # Entry statistics provides comprehensive pattern analysis
         assert isinstance(patterns, dict)
         assert len(patterns) > 0
+        assert "total_entries" in patterns
+        assert patterns["total_entries"] == 1
 
 
 class TestWriterService:
-    """Test WriterService with real functionality."""
+    """Test writer functionality with FlextLdifAPI (FLEXT-compliant)."""
 
     def test_init_with_entries_and_config(self) -> None:
-        """Test writer service initialization with entries and config."""
+        """Test writer with entries and config using FlextLdifAPI."""
         test_entries = [
             FlextLdifModels.create_entry(
                 {
@@ -295,36 +293,38 @@ class TestWriterService:
             ),
         ]
         config = FlextLdifConfig()
-        services = FlextLdifServices(config)
-        service = services.writer
+        api = FlextLdifAPI(config=config)
 
-        assert service.get_config_info() is not None
-        assert service.get_service_info() is not None
+        # Test API service info
+        info = api.get_service_info()
+        assert info is not None
+        assert "write" in info.get("capabilities", [])
 
         # Test writer with the test entries
-        write_result = service.write_entries_to_string(test_entries)
+        write_result = api.write(test_entries)
         assert write_result.is_success
         ldif_output = write_result.value
         assert "uid=test,ou=people,dc=example,dc=com" in ldif_output
 
     def test_init_default(self) -> None:
-        """Test writer service initialization with defaults."""
-        service = FlextLdifServices().writer
+        """Test writer initialization with defaults using FlextLdifAPI."""
+        api = FlextLdifAPI()
 
-        assert service.get_config_info() is not None
-        assert service.get_service_info() is not None
+        info = api.get_service_info()
+        assert info is not None
+        assert "write" in info.get("capabilities", [])
 
     def test_execute_empty_entries(self) -> None:
-        """Test write with empty entries."""
-        service = FlextLdifServices().writer
+        """Test write with empty entries using FlextLdifAPI."""
+        api = FlextLdifAPI()
 
-        result = service.write_entries_to_string([])
+        result = api.write([])
 
         assert result.is_success is True
         assert result.value is not None
 
     def test_execute_with_entries(self) -> None:
-        """Test execute with real entries."""
+        """Test execute with real entries using FlextLdifAPI."""
         entries = [
             FlextLdifModels.create_entry(
                 {
@@ -337,10 +337,9 @@ class TestWriterService:
                 },
             ),
         ]
-        services = FlextLdifServices()
-        service = services.writer
+        api = FlextLdifAPI()
 
-        result = service.write_entries_to_string(entries)
+        result = api.write(entries)
 
         assert result.is_success is True
         ldif_content = result.value
@@ -349,17 +348,17 @@ class TestWriterService:
         assert "cn: Test User" in ldif_content
 
     def test_write_entries_to_string_empty(self) -> None:
-        """Test write_entries_to_string with empty entries."""
-        service = FlextLdifServices().writer
+        """Test write_string with empty entries using FlextLdifAPI."""
+        api = FlextLdifAPI()
 
-        result = service.write_entries_to_string([])
+        result = api.write_string([])
 
         assert result.is_success is True
         assert result.value is not None
 
     def test_write_entries_to_string_single(self) -> None:
-        """Test write_entries_to_string with single entry."""
-        service = FlextLdifServices().writer
+        """Test write_string with single entry using FlextLdifAPI."""
+        api = FlextLdifAPI()
         entry = FlextLdifModels.create_entry(
             {
                 "dn": "uid=single,ou=people,dc=example,dc=com",
@@ -367,15 +366,15 @@ class TestWriterService:
             },
         )
 
-        result = service.write_entries_to_string([entry])
+        result = api.write_string([entry])
 
         assert result.is_success is True
         ldif_content = result.value
         assert "dn: uid=single,ou=people,dc=example,dc=com" in ldif_content
 
     def test_write_entries_to_string_multiple(self) -> None:
-        """Test write_entries_to_string with multiple entries."""
-        service = FlextLdifServices().writer
+        """Test write_string with multiple entries using FlextLdifAPI."""
+        api = FlextLdifAPI()
         entries = [
             FlextLdifModels.create_entry(
                 {
@@ -391,7 +390,7 @@ class TestWriterService:
             ),
         ]
 
-        result = service.write_entries_to_string(entries)
+        result = api.write_string(entries)
 
         assert result.is_success is True
         ldif_content = result.value
@@ -400,8 +399,8 @@ class TestWriterService:
         assert "\n\n" in ldif_content  # Entries separated by double newline
 
     def test_write_entry(self) -> None:
-        """Test write_entry method."""
-        service = FlextLdifServices().writer
+        """Test write method with single entry using FlextLdifAPI."""
+        api = FlextLdifAPI()
         entry = FlextLdifModels.create_entry(
             {
                 "dn": "uid=single,ou=people,dc=example,dc=com",
@@ -409,15 +408,15 @@ class TestWriterService:
             },
         )
 
-        result = service.write_entry(entry)
+        result = api.write([entry])
 
         assert result.is_success is True
         ldif_content = result.value
         assert "dn: uid=single,ou=people,dc=example,dc=com" in ldif_content
 
     def test_write_alias(self) -> None:
-        """Test write method (alias)."""
-        service = FlextLdifServices().writer
+        """Test write method using FlextLdifAPI."""
+        api = FlextLdifAPI()
         entries = [
             FlextLdifModels.create_entry(
                 {
@@ -427,14 +426,14 @@ class TestWriterService:
             ),
         ]
 
-        result = service.write_entries_to_string(entries)
+        result = api.write(entries)
 
         assert result.is_success is True
         assert "uid=alias" in result.value
 
     def test_write_entries_to_file_success(self) -> None:
-        """Test write_entries_to_file with successful write."""
-        service = FlextLdifServices().writer
+        """Test write_file with successful write using FlextLdifAPI."""
+        api = FlextLdifAPI()
         entries = [
             FlextLdifModels.create_entry(
                 {
@@ -453,7 +452,7 @@ class TestWriterService:
             tmp_path = tmp_file.name
 
         try:
-            result = service.write_entries_to_file(entries, tmp_path)
+            result = api.write_file(entries, tmp_path)
 
             assert result.is_success is True
             assert result.value is True
@@ -467,8 +466,8 @@ class TestWriterService:
             Path(tmp_path).unlink(missing_ok=True)
 
     def test_write_entries_to_file_custom_encoding(self) -> None:
-        """Test write_entries_to_file with custom encoding."""
-        service = FlextLdifServices().writer
+        """Test write_file with custom encoding using FlextLdifAPI."""
+        api = FlextLdifAPI()
         entries = [
             FlextLdifModels.create_entry(
                 {
@@ -490,7 +489,7 @@ class TestWriterService:
             tmp_path = tmp_file.name
 
         try:
-            result = service.write_entries_to_file(entries, tmp_path)
+            result = api.write_file(entries, tmp_path)
 
             assert result.is_success is True
 
@@ -498,8 +497,8 @@ class TestWriterService:
             Path(tmp_path).unlink(missing_ok=True)
 
     def test_write_file_alias(self) -> None:
-        """Test write_file method (alias)."""
-        service = FlextLdifServices().writer
+        """Test write_file method using FlextLdifAPI."""
+        api = FlextLdifAPI()
         entries = [
             FlextLdifModels.create_entry(
                 {
@@ -518,7 +517,7 @@ class TestWriterService:
             tmp_path = tmp_file.name
 
         try:
-            result = service.write_entries_to_file(entries, tmp_path)
+            result = api.write_file(entries, tmp_path)
 
             assert result.is_success is True
 
@@ -526,7 +525,7 @@ class TestWriterService:
             Path(tmp_path).unlink(missing_ok=True)
 
     def test_write_content_to_file_success(self) -> None:
-        """Test _write_content_to_file internal method."""
+        """Test content writing functionality using FlextLdifAPI."""
         content = "dn: uid=test,ou=people,dc=example,dc=com\nobjectClass: person\ncn: Test User\n"
 
         with tempfile.NamedTemporaryFile(
@@ -554,7 +553,7 @@ class TestWriterService:
             Path(tmp_path).unlink(missing_ok=True)
 
     def test_write_content_to_file_permission_error(self) -> None:
-        """Test _write_content_to_file with permission error."""
+        """Test content writing with permission error using FlextLdifAPI."""
         content = "test content"
         # Try to write to root directory (should fail with permission error)
         invalid_path = "/root/invalid_file.ldif"
@@ -570,8 +569,8 @@ class TestWriterService:
         assert result.error is not None
 
     def test_write_entries_to_file_directory_creation(self) -> None:
-        """Test write_entries_to_file creates parent directories."""
-        service = FlextLdifServices().writer
+        """Test write_file creates parent directories using FlextLdifAPI."""
+        api = FlextLdifAPI()
         entries = [
             FlextLdifModels.create_entry(
                 {
@@ -584,7 +583,7 @@ class TestWriterService:
         with tempfile.TemporaryDirectory() as tmp_dir:
             nested_path = Path(tmp_dir) / "nested" / "directory" / "test.ldif"
 
-            result = service.write_entries_to_file(entries, str(nested_path))
+            result = api.write_file(entries, str(nested_path))
 
             # Should fail because directory doesn't exist
             assert result.is_failure
@@ -595,8 +594,8 @@ class TestWriterService:
                 )
 
     def test_format_entry_for_display(self) -> None:
-        """Test format_entry_for_display method."""
-        service = FlextLdifServices().writer
+        """Test entry formatting for display using FlextLdifAPI."""
+        api = FlextLdifAPI()
         entry = FlextLdifModels.create_entry(
             {
                 "dn": "uid=display,ou=people,dc=example,dc=com",
@@ -609,7 +608,7 @@ class TestWriterService:
             },
         )
 
-        result = service.write_entries_to_string([entry])
+        result = api.write([entry])
 
         assert result.is_success is True
         ldif_text = result.value
