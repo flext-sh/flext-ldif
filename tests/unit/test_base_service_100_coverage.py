@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 from flext_core import FlextResult
 from flext_ldif import FlextLdifConfig, FlextLdifConstants
-from flext_ldif.base_service import FlextLdifBaseService
+from flext_ldif.processor import FlextLdifProcessor
 
 
 class ConcreteTestService(FlextLdifBaseService):

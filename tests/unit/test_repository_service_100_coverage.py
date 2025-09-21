@@ -10,7 +10,7 @@ import time
 from typing import Protocol
 
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.repository_service import FlextLdifRepositoryService
+from flext_ldif.processor import FlextLdifProcessor
 
 
 class EntryProtocol(Protocol):
