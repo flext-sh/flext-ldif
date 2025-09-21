@@ -177,7 +177,7 @@ class FlextLdifModels:
                         "DN must contain attribute=value pairs"
                     )
 
-                return FlextResult[bool].ok(value=True)
+                return FlextResult[bool].ok(True)
             except Exception as e:
                 return FlextResult[bool].fail(f"DN validation failed: {e}")
 
@@ -389,7 +389,7 @@ class FlextLdifModels:
                         "Entry must have objectClass attribute"
                     )
 
-                return FlextResult[bool].ok(value=True)
+                return FlextResult[bool].ok(True)
             except Exception as e:
                 return FlextResult[bool].fail(f"Entry validation failed: {e}")
 

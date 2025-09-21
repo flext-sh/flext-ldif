@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import FlextResult, FlextExceptions
+from flext_core import FlextExceptions, FlextResult
 from flext_ldif import (
     FlextLdifAPI,
     FlextLdifFormatHandler,
@@ -281,7 +281,9 @@ objectClass: person
 """
 
         handler = FlextLdifFormatHandler()
-        with pytest.raises(FlextExceptions.BaseError):  # Should raise FlextLdifParseError
+        with pytest.raises(
+            FlextExceptions.BaseError
+        ):  # Should raise FlextLdifParseError
             FlextResult.unwrap_or_raise(handler.parse_ldif(invalid_ldif))
 
     def test_roundtrip_consistency(self) -> None:

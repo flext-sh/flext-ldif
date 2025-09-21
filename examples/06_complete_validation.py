@@ -481,7 +481,7 @@ def _validate_entry_dns(entries: list) -> None:
                 "uid=" in dn_str,
                 ("cn=" in dn_str and "ou=groups" in dn_str),
                 "ou=" in dn_str,
-                "dc=" in dn_str
+                "dc=" in dn_str,
             ])
             if not is_valid_dn:
                 continue

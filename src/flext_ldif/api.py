@@ -108,7 +108,7 @@ class FlextLdifAPI(FlextDomainService[dict[str, object]]):
         if isinstance(file_path, str):
             file_path = Path(file_path)
         return self._processor_result.flat_map(
-            lambda processor: processor.parse_file(file_path)
+            lambda processor: processor.parse_ldif_file(file_path)
         ).map(self._log_parse_file_success)
 
     def validate_entries(

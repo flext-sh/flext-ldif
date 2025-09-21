@@ -12,7 +12,7 @@ import pytest
 
 from flext_ldif import FlextLdifModels
 from flext_ldif.format_handlers import FlextLdifFormatHandler
-from flext_ldif.writer_service import FlextLdifWriterService
+from flext_ldif.processor import FlextLdifProcessor
 
 
 class TestFlextLdifFormatHandler:

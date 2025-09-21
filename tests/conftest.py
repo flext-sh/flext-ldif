@@ -93,7 +93,11 @@ def ldif_test_data() -> LdifTestData:
 
 @pytest.fixture
 def test_file_manager() -> Generator[FileManager]:
-    """Test file manager with automatic cleanup."""
+    """Test file manager with automatic cleanup.
+    
+    Yields:
+        FileManager: File manager instance for testing
+    """
     with FileManager() as manager:
         yield manager
 
@@ -106,7 +110,11 @@ def test_validators() -> TestValidators:
 
 @pytest.fixture
 def test_ldif_dir() -> Generator[Path]:
-    """Temporary directory for LDIF test files."""
+    """Temporary directory for LDIF test files.
+    
+    Yields:
+        Path: Temporary directory path for LDIF test files
+    """
     with tempfile.TemporaryDirectory() as temp_dir:
         ldif_dir = Path(temp_dir) / "ldif_files"
         ldif_dir.mkdir()
