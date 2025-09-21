@@ -177,12 +177,12 @@ class FlextLdifModels:
                         "DN must contain attribute=value pairs"
                     )
 
-                return FlextResult[bool].ok(True)
+                return FlextResult[bool].ok(data=True)
             except Exception as e:
                 return FlextResult[bool].fail(f"DN validation failed: {e}")
 
         @classmethod
-        def create(cls, dn: str) -> FlextResult[FlextLdifModels.DistinguishedName]:
+        def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
             """Create DN with validation returning FlextResult.
 
             Returns:
@@ -190,9 +190,10 @@ class FlextLdifModels:
 
             """
             try:
-                return FlextResult[FlextLdifModels.DistinguishedName].ok(cls(value=dn))
+                dn = str(args[0]) if args else str(kwargs.get("dn", ""))
+                return FlextResult[object].ok(cls(value=dn))
             except Exception as e:
-                return FlextResult[FlextLdifModels.DistinguishedName].fail(str(e))
+                return FlextResult[object].fail(str(e))
 
     class LdifAttributes(FlextModels.Value):
         """LDIF attributes dictionary with proper validation.
@@ -226,18 +227,9 @@ class FlextLdifModels:
             if not isinstance(v, dict):
                 raise TypeError(ATTRIBUTES_TYPE_ERROR)
 
-            for key, values in v.items():
+            for key in v:
                 if not isinstance(key, str) or not key.strip():
                     raise ValueError(ATTRIBUTE_NAME_ERROR)
-
-                if not isinstance(values, list):
-                    msg = f"Attribute '{key}' {ATTRIBUTE_VALUES_ERROR}"  # type: ignore[unreachable]
-                    raise TypeError(msg)
-
-                for value in values:
-                    if not isinstance(value, str):
-                        msg = f"All values for attribute '{key}' {ATTRIBUTE_VALUE_TYPE_ERROR}"  # type: ignore[unreachable]
-                        raise TypeError(msg)
 
             return v
 
@@ -273,9 +265,7 @@ class FlextLdifModels:
             return values[0] if values else None
 
         @classmethod
-        def create(
-            cls, data: dict[str, list[str]]
-        ) -> FlextResult[FlextLdifModels.LdifAttributes]:
+        def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
             """Create attributes with validation returning FlextResult.
 
             Returns:
@@ -283,9 +273,12 @@ class FlextLdifModels:
 
             """
             try:
-                return FlextResult[FlextLdifModels.LdifAttributes].ok(cls(data=data))
+                data = args[0] if args else kwargs.get("data", {})
+                if not isinstance(data, dict):
+                    return FlextResult[object].fail("Data must be a dictionary")
+                return FlextResult[object].ok(cls(data=data))
             except Exception as e:
-                return FlextResult[FlextLdifModels.LdifAttributes].fail(str(e))
+                return FlextResult[object].fail(str(e))
 
     class Entry(FlextModels.Value):
         """LDIF entry combining DN and attributes.
@@ -367,6 +360,19 @@ class FlextLdifModels:
             object_classes = self.get_attribute("objectClass") or []
             return any(oc.lower() == "organizationalunit" for oc in object_classes)
 
+        def has_object_class(self, object_class: str) -> bool:
+            """Check if entry has specific object class.
+
+            Args:
+                object_class: Object class to check for
+
+            Returns:
+                bool: True if entry has the object class
+
+            """
+            object_classes = self.get_attribute("objectClass") or []
+            return any(oc.lower() == object_class.lower() for oc in object_classes)
+
         def validate_business_rules(self) -> FlextResult[bool]:
             """Validate business rules for entry.
 
@@ -389,37 +395,49 @@ class FlextLdifModels:
                         "Entry must have objectClass attribute"
                     )
 
-                return FlextResult[bool].ok(True)
+                return FlextResult[bool].ok(data=True)
             except Exception as e:
                 return FlextResult[bool].fail(f"Entry validation failed: {e}")
 
         @classmethod
-        def create(
-            cls, dn: str, attributes: dict[str, list[str]]
-        ) -> FlextResult[FlextLdifModels.Entry]:
+        def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
             """Create entry with validation returning FlextResult.
 
             Returns:
                 FlextResult[FlextLdifModels.Entry]: Created entry or error
 
             """
-            dn_result = FlextLdifModels.DistinguishedName.create(dn)
-            if dn_result.is_failure:
-                return FlextResult[FlextLdifModels.Entry].fail(
-                    f"Invalid DN: {dn_result.error}"
-                )
+            dn = str(args[0]) if len(args) > 0 else str(kwargs.get("dn", ""))
+            attributes = args[1] if len(args) > 1 else kwargs.get("attributes", {})
+            if not isinstance(attributes, dict):
+                return FlextResult[object].fail("Attributes must be a dictionary")
 
-            attr_result = FlextLdifModels.LdifAttributes.create(attributes)
+            dn_result: FlextResult[object] = FlextLdifModels.DistinguishedName.create(
+                dn
+            )
+            if dn_result.is_failure:
+                return FlextResult[object].fail(f"Invalid DN: {dn_result.error}")
+
+            attr_result: FlextResult[object] = FlextLdifModels.LdifAttributes.create(
+                attributes
+            )
             if attr_result.is_failure:
-                return FlextResult[FlextLdifModels.Entry].fail(
+                return FlextResult[object].fail(
                     f"Invalid attributes: {attr_result.error}"
                 )
 
             try:
-                entry = cls(dn=dn_result.unwrap(), attributes=attr_result.unwrap())
-                return FlextResult[FlextLdifModels.Entry].ok(entry)
+                dn_obj = dn_result.unwrap()
+                attr_obj = attr_result.unwrap()
+                if isinstance(dn_obj, FlextLdifModels.DistinguishedName) and isinstance(
+                    attr_obj, FlextLdifModels.LdifAttributes
+                ):
+                    entry = cls(dn=dn_obj, attributes=attr_obj)
+                else:
+                    return FlextResult[object].fail("Type mismatch in unwrapped values")
+                return FlextResult[object].ok(entry)
             except Exception as e:
-                return FlextResult[FlextLdifModels.Entry].fail(str(e))
+                return FlextResult[object].fail(str(e))
 
     class LdifUrl(FlextModels.Value):
         """LDIF URL value object for URL validation."""
@@ -427,7 +445,7 @@ class FlextLdifModels:
         url: str = Field(..., description="LDIF URL value")
 
         @classmethod
-        def create(cls, url: str) -> FlextResult[FlextLdifModels.LdifUrl]:
+        def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
             """Create URL with validation.
 
             Returns:
@@ -435,9 +453,10 @@ class FlextLdifModels:
 
             """
             try:
-                return FlextResult[FlextLdifModels.LdifUrl].ok(cls(url=url))
+                url = str(args[0]) if args else str(kwargs.get("url", ""))
+                return FlextResult[object].ok(cls(url=url))
             except Exception as e:
-                return FlextResult[FlextLdifModels.LdifUrl].fail(str(e))
+                return FlextResult[object].fail(str(e))
 
     # =============================================================================
     # FACTORY METHODS (FlextResult patterns)
@@ -472,7 +491,17 @@ class FlextLdifModels:
                 else:
                     normalized_attrs[key] = [str(value)]
 
-            return FlextLdifModels.Entry.create(dn, normalized_attrs)
+            result = FlextLdifModels.Entry.create(dn, normalized_attrs)
+            if result.is_success:
+                entry_obj = result.unwrap()
+                if isinstance(entry_obj, FlextLdifModels.Entry):
+                    return FlextResult[FlextLdifModels.Entry].ok(entry_obj)
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    "Type mismatch in unwrapped entry"
+                )
+            return FlextResult[FlextLdifModels.Entry].fail(
+                result.error or "Unknown error"
+            )
 
         except Exception as e:
             return FlextResult[FlextLdifModels.Entry].fail(
@@ -481,13 +510,43 @@ class FlextLdifModels:
 
     @staticmethod
     def create_dn(dn_value: str) -> FlextResult[DistinguishedName]:
-        """Create DN with validation."""
-        return FlextLdifModels.DistinguishedName.create(dn_value)
+        """Create DN with validation.
+
+        Returns:
+            FlextResult[DistinguishedName]: Success with validated DN or failure with error message.
+
+        """
+        result = FlextLdifModels.DistinguishedName.create(dn_value)
+        if result.is_success:
+            dn_obj = result.unwrap()
+            if isinstance(dn_obj, FlextLdifModels.DistinguishedName):
+                return FlextResult[FlextLdifModels.DistinguishedName].ok(dn_obj)
+            return FlextResult[FlextLdifModels.DistinguishedName].fail(
+                "Type mismatch in unwrapped DN"
+            )
+        return FlextResult[FlextLdifModels.DistinguishedName].fail(
+            result.error or "Unknown error"
+        )
 
     @staticmethod
     def create_attributes(data: dict[str, list[str]]) -> FlextResult[LdifAttributes]:
-        """Create attributes with validation."""
-        return FlextLdifModels.LdifAttributes.create(data)
+        """Create attributes with validation.
+
+        Returns:
+            FlextResult[LdifAttributes]: Success with validated attributes or failure with error message.
+
+        """
+        result = FlextLdifModels.LdifAttributes.create(data)
+        if result.is_success:
+            attr_obj = result.unwrap()
+            if isinstance(attr_obj, FlextLdifModels.LdifAttributes):
+                return FlextResult[FlextLdifModels.LdifAttributes].ok(attr_obj)
+            return FlextResult[FlextLdifModels.LdifAttributes].fail(
+                "Type mismatch in unwrapped attributes"
+            )
+        return FlextResult[FlextLdifModels.LdifAttributes].fail(
+            result.error or "Unknown error"
+        )
 
 
 __all__ = ["FlextLdifModels"]

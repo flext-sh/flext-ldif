@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif.api import FlextLdifAPI
-from flext_ldif.base_service import FlextLdifBaseService
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.exceptions import FlextLdifExceptions
@@ -19,7 +18,6 @@ from flext_ldif.typings import FlextLdifTypes
 
 __all__ = [
     "FlextLdifAPI",
-    "FlextLdifBaseService",
     "FlextLdifConfig",
     "FlextLdifConstants",
     "FlextLdifExceptions",

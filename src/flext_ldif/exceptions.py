@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextExceptions, FlextResult
+from flext_core import FlextConstants, FlextExceptions, FlextResult
 from flext_ldif.constants import FlextLdifConstants
 
 
@@ -60,7 +60,7 @@ class FlextLdifExceptions:
             enriched_message += f" (Rule: {validation_rule})"
 
         # Use flext-core exception with LDIF domain prefix
-        error_code = f"LDIF_{FlextExceptions.ErrorCodes.VALIDATION_ERROR}"
+        error_code = f"LDIF_{FlextConstants.Errors.VALIDATION_ERROR}"
         return FlextResult[None].fail(enriched_message, error_code=error_code)
 
     @classmethod
@@ -107,7 +107,7 @@ class FlextLdifExceptions:
             if len(content_str) > FlextLdifConstants.Formatting.CONTENT_PREVIEW_LENGTH:
                 enriched_message += "..."
 
-        error_code = f"LDIF_{FlextExceptions.ErrorCodes.PROCESSING_ERROR}"
+        error_code = f"LDIF_{FlextConstants.Errors.PROCESSING_ERROR}"
         return FlextResult[None].fail(enriched_message, error_code=error_code)
 
     @classmethod
@@ -132,7 +132,7 @@ class FlextLdifExceptions:
             elif isinstance(entry_count, str) and entry_count.isdigit():
                 enriched_message += f" (Entries: {int(entry_count)})"
 
-        error_code = f"LDIF_{FlextExceptions.ErrorCodes.PROCESSING_ERROR}"
+        error_code = f"LDIF_{FlextConstants.Errors.PROCESSING_ERROR}"
         return FlextResult[None].fail(enriched_message, error_code=error_code)
 
     @classmethod
@@ -149,7 +149,7 @@ class FlextLdifExceptions:
         if file_path:
             enriched_message += f" (File: {file_path!s})"
 
-        error_code = f"LDIF_{FlextExceptions.ErrorCodes.OPERATION_ERROR}"
+        error_code = f"LDIF_{FlextConstants.Errors.OPERATION_ERROR}"
         return FlextResult[None].fail(enriched_message, error_code=error_code)
 
     @classmethod
@@ -166,7 +166,7 @@ class FlextLdifExceptions:
         if config_key:
             enriched_message += f" (Config: {config_key!s})"
 
-        error_code = f"LDIF_{FlextExceptions.ErrorCodes.CONFIGURATION_ERROR}"
+        error_code = f"LDIF_{FlextConstants.Errors.CONFIGURATION_ERROR}"
         return FlextResult[None].fail(enriched_message, error_code=error_code)
 
     @classmethod
@@ -187,7 +187,7 @@ class FlextLdifExceptions:
         if port:
             enriched_message += f" (Port: {port})"
 
-        error_code = f"LDIF_{FlextExceptions.ErrorCodes.CONNECTION_ERROR}"
+        error_code = f"LDIF_{FlextConstants.Errors.CONNECTION_ERROR}"
         return FlextResult[None].fail(enriched_message, error_code=error_code)
 
     @classmethod
@@ -208,7 +208,7 @@ class FlextLdifExceptions:
         if timeout_seconds:
             enriched_message += f" (Timeout: {timeout_seconds}s)"
 
-        error_code = f"LDIF_{FlextExceptions.ErrorCodes.TIMEOUT_ERROR}"
+        error_code = f"LDIF_{FlextConstants.Errors.TIMEOUT_ERROR}"
         return FlextResult[None].fail(enriched_message, error_code=error_code)
 
     @classmethod
@@ -229,7 +229,7 @@ class FlextLdifExceptions:
         if auth_method:
             enriched_message += f" (Method: {auth_method})"
 
-        error_code = f"LDIF_{FlextExceptions.ErrorCodes.AUTHENTICATION_ERROR}"
+        error_code = f"LDIF_{FlextConstants.Errors.AUTHENTICATION_ERROR}"
         return FlextResult[None].fail(enriched_message, error_code=error_code)
 
     @classmethod
@@ -250,7 +250,7 @@ class FlextLdifExceptions:
         if component:
             enriched_message += f" (Component: {component})"
 
-        error_code = f"LDIF_{FlextExceptions.ErrorCodes.GENERIC_ERROR}"
+        error_code = f"LDIF_{FlextConstants.Errors.GENERIC_ERROR}"
         return FlextResult[None].fail(enriched_message, error_code=error_code)
 
     @classmethod
@@ -292,7 +292,7 @@ class FlextLdifExceptions:
         elif attribute_name:
             enriched_message += f" (Attribute: {attribute_name!s})"
 
-        error_code = f"LDIF_{FlextExceptions.ErrorCodes.VALIDATION_ERROR}"
+        error_code = f"LDIF_{FlextConstants.Errors.VALIDATION_ERROR}"
         return FlextResult[None].fail(enriched_message, error_code=error_code)
 
     @classmethod
