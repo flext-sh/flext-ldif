@@ -11,7 +11,6 @@ import time
 from pathlib import Path
 
 from flext_ldif.format_handlers import FlextLdifFormatHandler
-from flext_ldif.processor import FlextLdifProcessor
 
 
 class FormatHandlerError(Exception):
