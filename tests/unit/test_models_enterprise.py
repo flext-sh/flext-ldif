@@ -59,7 +59,9 @@ class TestFlextLdifModelsEntryEnterprise:
         # Store original values before Pydantic modifies them
         original_dn = sample_entry_data["dn"]
         original_attributes = sample_entry_data["attributes"]
-        entry = FlextLdifModels.create_entry(sample_entry_data)
+        entry_result = FlextLdifModels.create_entry(sample_entry_data)
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         assert entry is not None
 
@@ -88,7 +90,9 @@ class TestFlextLdifModelsEntryEnterprise:
         """Test entry creation with string DN (auto-conversion)."""
         # Store original DN value before Pydantic modifies it
         original_dn = sample_entry_data["dn"]
-        entry = FlextLdifModels.create_entry(sample_entry_data)
+        entry_result = FlextLdifModels.create_entry(sample_entry_data)
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         assert isinstance(entry.dn, FlextLdifModels.DistinguishedName)
 
@@ -110,7 +114,9 @@ class TestFlextLdifModelsEntryEnterprise:
         """Test entry creation with dict attributes (auto-conversion)."""
         # Store original attributes value before Pydantic modifies it
         original_attributes = sample_entry_data["attributes"]
-        entry = FlextLdifModels.create_entry(sample_entry_data)
+        entry_result = FlextLdifModels.create_entry(sample_entry_data)
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         # Test that attributes data is accessible and correct
         # The type might be AttributesDict which behaves like dict
@@ -162,7 +168,9 @@ class TestFlextLdifModelsEntryEnterprise:
         sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test getting attribute values succeeds."""
-        entry = FlextLdifModels.create_entry(sample_entry_data)
+        entry_result = FlextLdifModels.create_entry(sample_entry_data)
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         cn_values = entry.get_attribute("cn")
         if cn_values != ["John Doe"]:
@@ -186,7 +194,9 @@ class TestFlextLdifModelsEntryEnterprise:
         sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test getting nonexistent attribute returns None."""
-        entry = FlextLdifModels.create_entry(sample_entry_data)
+        entry_result = FlextLdifModels.create_entry(sample_entry_data)
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         result = entry.get_attribute("nonexistent")
         assert result is None
@@ -196,7 +206,9 @@ class TestFlextLdifModelsEntryEnterprise:
         sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test setting attribute values succeeds."""
-        entry = FlextLdifModels.create_entry(sample_entry_data)
+        entry_result = FlextLdifModels.create_entry(sample_entry_data)
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         # Set new attribute
         entry.set_attribute("telephoneNumber", ["+1-555-0123"])
@@ -215,7 +227,9 @@ class TestFlextLdifModelsEntryEnterprise:
         sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test checking attribute existence succeeds."""
-        entry = FlextLdifModels.create_entry(sample_entry_data)
+        entry_result = FlextLdifModels.create_entry(sample_entry_data)
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         if not (entry.has_attribute("cn")):
             cn_msg: str = f"Expected True, got {entry.has_attribute('cn')}"
@@ -237,7 +251,9 @@ class TestFlextLdifModelsEntryEnterprise:
         sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test getting object classes succeeds."""
-        entry = FlextLdifModels.create_entry(sample_entry_data)
+        entry_result = FlextLdifModels.create_entry(sample_entry_data)
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         object_classes = entry.get_object_classes()
         if object_classes != ["person", "inetOrgPerson"]:
@@ -251,7 +267,9 @@ class TestFlextLdifModelsEntryEnterprise:
         sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test checking object class existence succeeds."""
-        entry = FlextLdifModels.create_entry(sample_entry_data)
+        entry_result = FlextLdifModels.create_entry(sample_entry_data)
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         if "person" not in entry.get_object_classes():
             f"Expected correct DN, got {entry.dn.value}"
@@ -266,7 +284,9 @@ class TestFlextLdifModelsEntryEnterprise:
         sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test getting attribute values using real functionality."""
-        entry = FlextLdifModels.create_entry(sample_entry_data)
+        entry_result = FlextLdifModels.create_entry(sample_entry_data)
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         # Test real functionality - use get_attribute method from LdifAttributes
         cn_values = entry.attributes.get_attribute("cn")
@@ -278,7 +298,9 @@ class TestFlextLdifModelsEntryEnterprise:
         sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test operation check methods return correct LDIF behavior."""
-        entry = FlextLdifModels.create_entry(sample_entry_data)
+        entry_result = FlextLdifModels.create_entry(sample_entry_data)
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         # When no changetype is specified, LDIF defaults to add operation
         assert entry.is_add_operation() is True
@@ -290,7 +312,9 @@ class TestFlextLdifModelsEntryEnterprise:
         sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test getting single attribute value succeeds."""
-        entry = FlextLdifModels.create_entry(sample_entry_data)
+        entry_result = FlextLdifModels.create_entry(sample_entry_data)
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         cn_value = entry.get_single_value("cn")
         if cn_value != "John Doe":
@@ -307,7 +331,9 @@ class TestFlextLdifModelsEntryEnterprise:
         sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test getting single value from nonexistent attribute returns None."""
-        entry = FlextLdifModels.create_entry(sample_entry_data)
+        entry_result = FlextLdifModels.create_entry(sample_entry_data)
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         result = entry.get_single_value("nonexistent")
         assert result is None
@@ -316,7 +342,9 @@ class TestFlextLdifModelsEntryEnterprise:
         """Test converting entry to LDIF string succeeds."""
         # Store original DN value before Pydantic modifies it
         original_dn = sample_entry_data["dn"]
-        entry = FlextLdifModels.create_entry(sample_entry_data)
+        entry_result = FlextLdifModels.create_entry(sample_entry_data)
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         ldif_output = entry.to_ldif()
 
@@ -342,7 +370,9 @@ class TestFlextLdifModelsEntryEnterprise:
         sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test domain rules validation succeeds for valid entry."""
-        entry = FlextLdifModels.create_entry(sample_entry_data)
+        entry_result = FlextLdifModels.create_entry(sample_entry_data)
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         # Should not raise exception
         result = entry.validate_business_rules()
@@ -444,7 +474,12 @@ description: With multiple descriptions"""
         }
 
         # Use the model validator to handle type conversion
-        entry = FlextLdifModels.create_entry({"dn": dn, "attributes": attributes})
+        entry_result = FlextLdifModels.create_entry({
+            "dn": dn,
+            "attributes": attributes,
+        })
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         if entry.dn.value != dn:
             raise AssertionError(f"Expected DN {dn}, got {entry.dn.value}")
@@ -459,7 +494,9 @@ description: With multiple descriptions"""
         sample_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test entry immutability through Pydantic frozen behavior."""
-        entry = FlextLdifModels.create_entry(sample_entry_data)
+        entry_result = FlextLdifModels.create_entry(sample_entry_data)
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         # Direct assignment should work through set_attribute method
         # but direct modification of internal structures should be controlled
@@ -485,8 +522,13 @@ description: With multiple descriptions"""
         # Create fresh copy of data to avoid Pydantic mutation issues
         fresh_data = deepcopy(dict(sample_entry_data))
 
-        entry1 = FlextLdifModels.create_entry(sample_entry_data)
-        entry2 = FlextLdifModels.create_entry(fresh_data)
+        entry1_result = FlextLdifModels.create_entry(sample_entry_data)
+        assert entry1_result.is_success, f"Entry creation failed: {entry1_result.error}"
+        entry1 = entry1_result.unwrap()
+
+        entry2_result = FlextLdifModels.create_entry(fresh_data)
+        assert entry2_result.is_success, f"Entry creation failed: {entry2_result.error}"
+        entry2 = entry2_result.unwrap()
 
         # Should have equal DN and attributes (entities have different timestamps/IDs)
         if entry1.dn.value != entry2.dn.value:
@@ -529,7 +571,9 @@ description: With multiple descriptions"""
         # Store original values before Pydantic modifies them
         original_dn = sample_entry_data["dn"]
         original_attributes = sample_entry_data["attributes"]
-        entry = FlextLdifModels.create_entry(sample_entry_data)
+        entry_result = FlextLdifModels.create_entry(sample_entry_data)
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         # Serialize to dict
         entry_dict = entry.model_dump()
@@ -565,7 +609,9 @@ description: With multiple descriptions"""
         """Test entry JSON serialization."""
         # Store original DN value before Pydantic modifies it
         original_dn = sample_entry_data["dn"]
-        entry = FlextLdifModels.create_entry(sample_entry_data)
+        entry_result = FlextLdifModels.create_entry(sample_entry_data)
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         # Serialize to JSON using Pydantic method
         json_str = entry.model_dump_json()
@@ -597,7 +643,9 @@ description: With multiple descriptions"""
         }
 
         start_time = time.time()
-        entry = FlextLdifModels.create_entry(entry_data)
+        entry_result = FlextLdifModels.create_entry(entry_data)
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
         creation_time = time.time() - start_time
 
         # Should create quickly
@@ -646,7 +694,9 @@ description: With multiple descriptions"""
             },
         }
 
-        entry = FlextLdifModels.create_entry(entry_data)
+        entry_result = FlextLdifModels.create_entry(entry_data)
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         if "Üser Spëcial" not in entry.dn.value:
             raise AssertionError(f"Expected correct DN, got {entry.dn.value}")
@@ -667,7 +717,9 @@ description: With multiple descriptions"""
             },
         }
 
-        entry = FlextLdifModels.create_entry(entry_data)
+        entry_result = FlextLdifModels.create_entry(entry_data)
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         if entry.get_attribute("description") != [long_value]:
             (f"Expected {[long_value]}, got {entry.get_attribute('description')}")
@@ -687,7 +739,9 @@ description: With multiple descriptions"""
             },
         }
 
-        entry = FlextLdifModels.create_entry(entry_data)
+        entry_result = FlextLdifModels.create_entry(entry_data)
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         if entry.get_attribute("description") != [""]:
             f"Expected {['']}, got {entry.get_attribute('description')}"

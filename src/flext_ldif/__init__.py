@@ -16,6 +16,17 @@ from flext_ldif.processor import FlextLdifProcessor
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.typings import FlextLdifTypes
 
+
+class FlextLdifServices:
+    """Services container for LDIF operations."""
+
+    def __init__(self) -> None:
+        """Initialize services."""
+        self.parser = FlextLdifAPI()
+        self.validator = FlextLdifAPI()
+        self.writer = FlextLdifAPI()
+
+
 __all__ = [
     "FlextLdifAPI",
     "FlextLdifConfig",
@@ -25,6 +36,7 @@ __all__ = [
     "FlextLdifModels",
     "FlextLdifProcessor",
     "FlextLdifProtocols",
+    "FlextLdifServices",
     "FlextLdifTypes",
 ]
 

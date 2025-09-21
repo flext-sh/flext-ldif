@@ -500,5 +500,110 @@ class FlextLdifAPI(FlextDomainService[dict[str, object]]):
         """
         return datetime.now(UTC).isoformat()
 
+    def filter_persons(
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Filter entries to only include person entries.
+
+        Args:
+            entries: List of LDIF entries to filter
+
+        Returns:
+            FlextResult[list[FlextLdifModels.Entry]]: Filtered person entries
+
+        """
+        try:
+            person_entries = [entry for entry in entries if entry.is_person_entry()]
+            return FlextResult[list[FlextLdifModels.Entry]].ok(person_entries)
+        except Exception as e:
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                f"Person filtering failed: {e}"
+            )
+
+    def sort_hierarchically(
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Sort entries hierarchically by DN.
+
+        Args:
+            entries: List of LDIF entries to sort
+
+        Returns:
+            FlextResult[list[FlextLdifModels.Entry]]: Hierarchically sorted entries
+
+        """
+        try:
+            # Sort by DN length first (shorter DNs are higher in hierarchy)
+            # Then alphabetically
+            sorted_entries = sorted(
+                entries, key=lambda e: (len(e.dn.value), e.dn.value)
+            )
+            return FlextResult[list[FlextLdifModels.Entry]].ok(sorted_entries)
+        except Exception as e:
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                f"Hierarchical sorting failed: {e}"
+            )
+
+    def filter_by_objectclass(
+        self, entries: list[FlextLdifModels.Entry], object_class: str
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Filter entries by object class.
+
+        Args:
+            entries: List of LDIF entries to filter
+            object_class: Object class to filter by
+
+        Returns:
+            FlextResult[list[FlextLdifModels.Entry]]: Filtered entries
+
+        """
+        try:
+            filtered_entries = [
+                entry for entry in entries if entry.has_object_class(object_class)
+            ]
+            return FlextResult[list[FlextLdifModels.Entry]].ok(filtered_entries)
+        except Exception as e:
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                f"Object class filtering failed: {e}"
+            )
+
+    def validate_entries_alias(
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Alias for validate_entries method for convenience.
+
+        Args:
+            entries: List of LDIF entries to validate
+
+        Returns:
+            FlextResult[list[FlextLdifModels.Entry]]: Validated entries
+
+        """
+        return self.validate_entries(entries)
+
+    def filter_valid(
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Filter entries to only include valid entries.
+
+        Args:
+            entries: List of LDIF entries to filter
+
+        Returns:
+            FlextResult[list[FlextLdifModels.Entry]]: Valid entries
+
+        """
+        try:
+            valid_entries = []
+            for entry in entries:
+                validation_result = entry.validate_business_rules()
+                if validation_result.is_success:
+                    valid_entries.append(entry)
+            return FlextResult[list[FlextLdifModels.Entry]].ok(valid_entries)
+        except Exception as e:
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                f"Valid filtering failed: {e}"
+            )
+
 
 __all__ = ["FlextLdifAPI"]

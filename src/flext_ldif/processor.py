@@ -15,7 +15,7 @@ import re
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from pydantic import ConfigDict
 
@@ -690,13 +690,15 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
 
         # Extract schema rules with proper typing
         required_attrs_raw: object = schema_rules.get("required_attributes", [])
-        required_attrs: list[str] = (
-            required_attrs_raw if isinstance(required_attrs_raw, list) else []
+        required_attrs: list[str] = cast(
+            "list[str]",
+            required_attrs_raw if isinstance(required_attrs_raw, list) else [],
         )
 
         required_classes_raw = schema_rules.get("required_object_classes", [])
-        required_classes: list[str] = (
-            required_classes_raw if isinstance(required_classes_raw, list) else []
+        required_classes: list[str] = cast(
+            "list[str]",
+            required_classes_raw if isinstance(required_classes_raw, list) else [],
         )
 
         compliance_results: list[dict[str, object]] = []
@@ -882,15 +884,15 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             # Adjust score based on additional checks
             penalty_factors: list[float] = []
             empty_attrs = quality_checks.get("empty_attributes", 0)
-            if isinstance(empty_attrs, (int, float)) and empty_attrs > 0:
+            if empty_attrs > 0:
                 penalty_factors.append(0.9)
 
             missing_oc = quality_checks.get("missing_object_classes", 0)
-            if isinstance(missing_oc, (int, float)) and missing_oc > 0:
+            if missing_oc > 0:
                 penalty_factors.append(0.8)
 
             duplicate_dns = quality_checks.get("duplicate_dns", 0)
-            if isinstance(duplicate_dns, (int, float)) and duplicate_dns > 0:
+            if duplicate_dns > 0:
                 penalty_factors.append(0.7)
 
             # Apply penalties
