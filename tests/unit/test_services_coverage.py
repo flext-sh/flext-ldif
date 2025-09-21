@@ -132,10 +132,10 @@ class TestServiceCompatibilityModules:
             sys.modules["flext_core"].FlextLogger = type("FlextLogger", (), {})
 
             try:
-                import flext_ldif.services
+                import flext_ldif
 
-                assert hasattr(flext_ldif.services, "__all__")
-                assert "FlextLdifServices" in flext_ldif.services.__all__
+                assert hasattr(flext_ldif, "__all__")
+                assert "FlextLdifAPI" in flext_ldif.__all__
             except ImportError:
                 pytest.skip("Cannot test due to dependency issues")
 

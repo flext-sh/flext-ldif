@@ -11,7 +11,6 @@ from flext_ldif import (
     FlextLdifAPI,
     FlextLdifFormatHandler,
     FlextLdifModels,
-    FlextLdifServices,
     __version__,
 )
 
@@ -30,21 +29,25 @@ class TestModuleImports:
         assert FlextLdifModels.LdifAttributes is not None
         # Factory methods are now available directly on FlextLdifModels class
 
-    def test_service_imports(self) -> None:
-        """Test service imports work correctly."""
-        # Test service classes are accessible through FlextLdifServices attributes
-        services = FlextLdifServices()
-        assert services.parser is not None
-        assert services.validator is not None
-        assert services.writer is not None
-        assert services.analytics is not None
-        assert services.transformer is not None
-        assert services.repository is not None
+    def test_api_functionality(self) -> None:
+        """Test API functionality works correctly."""
+        # Test unified API is accessible and functional
+        api = FlextLdifAPI()
+        assert api is not None
+
+        # Test API methods exist and are callable
+        assert callable(api.parse)
+        assert callable(api.validate_entries)
+        assert callable(api.write)
+        assert callable(api.transform)
+        assert callable(api.analyze)
+        assert callable(api.filter_entries)
 
     def test_class_based_interface_imports(self) -> None:
         """Test class-based interface imports."""
         # FlextLdifCore eliminated - was wrapper violating SOLID
-        assert FlextLdifServices is not None
+        # FlextLdifServices eliminated - was compatibility wrapper violating FLEXT rules
+        assert FlextLdifAPI is not None
         assert FlextLdifFormatHandler is not None
         # FlextLdifUtilities removed - was dead code
 

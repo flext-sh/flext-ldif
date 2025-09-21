@@ -15,7 +15,6 @@ from flext_ldif.format_handlers import FlextLdifFormatHandler
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.processor import FlextLdifProcessor
 from flext_ldif.protocols import FlextLdifProtocols
-from flext_ldif.services import FlextLdifServices
 from flext_ldif.typings import FlextLdifTypes
 
 __all__ = [
@@ -28,7 +27,6 @@ __all__ = [
     "FlextLdifModels",
     "FlextLdifProcessor",
     "FlextLdifProtocols",
-    "FlextLdifServices",
     "FlextLdifTypes",
 ]
 

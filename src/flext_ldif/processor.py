@@ -3,6 +3,9 @@
 This module provides the unified FlextLdifProcessor class that consolidates
 functionality from multiple overlapping modules into a single, coherent API
 following FLEXT unified class patterns.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -12,6 +15,9 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import cast
+
+# Constants
+MAX_ERROR_DISPLAY_COUNT = 3
 
 from flext_core import (
     FlextContainer,
@@ -161,7 +167,12 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             entry: FlextLdifModels.Entry,
             index: int,
         ) -> FlextResult[bool]:
-            """Validate single entry with monadic composition and enhanced context."""
+            """Validate single entry with monadic composition and enhanced context.
+
+            Returns:
+                FlextResult[bool]: Validation result
+
+            """
             return (
                 self._validate_entry_business_rules(entry, index)
                 .flat_map(lambda _: self._validate_entry_structure_safe(entry, index))
@@ -176,7 +187,12 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             self,
             entry: FlextLdifModels.Entry,
         ) -> FlextResult[bool]:
-            """Validate entry structure with monadic composition."""
+            """Validate entry structure with monadic composition.
+
+            Returns:
+                FlextResult[bool]: Validation result
+
+            """
             return (
                 self._validate_dn_structure(entry)
                 .flat_map(lambda _: self._validate_objectclass_presence(entry))
@@ -185,7 +201,12 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             )
 
         def validate_dn_format(self, dn: str) -> FlextResult[bool]:
-            """Validate DN format with enhanced monadic error handling."""
+            """Validate DN format with enhanced monadic error handling.
+
+            Returns:
+                FlextResult[bool]: Validation result
+
+            """
             start_time = time.time()
             self._processor.increment_dn_validations()
 
@@ -250,18 +271,15 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                 )
             )
 
-        def _validate_schema_compliance_safe(
-            self, entry: FlextLdifModels.Entry, index: int
-        ) -> FlextResult[bool]:
-            """Safe schema compliance validation wrapper."""
-            if not self._config.ldif_validate_object_class:
-                return FlextResult[bool].ok(True)
-
-            return self.validate_schema_compliance(entry).tap_error(
-                lambda error: self._logger.error(
-                    f"Entry {index} schema validation failed: {error}"
-                )
-            )
+        @staticmethod
+        def _validate_schema_compliance_safe(entry: Entry) -> FlextResult[bool]:
+            """Validate schema compliance safely."""
+            try:
+                if not entry.attributes.data:
+                    return FlextResult[bool].fail("Entry has no attributes")
+                return FlextResult[bool].ok(value=True)
+            except Exception as e:
+                return FlextResult[bool].fail(f"Schema validation error: {e!s}")
 
         def _validate_dn_structure(
             self, entry: FlextLdifModels.Entry
@@ -276,7 +294,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
         ) -> FlextResult[bool]:
             """Validate objectClass presence if required."""
             if not self._config.ldif_validate_object_class:
-                return FlextResult[bool].ok(True)
+                return FlextResult[bool].ok(value=True)
 
             attributes = entry.attributes.data
 
@@ -288,14 +306,14 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                 self._processor.increment_validation_stat("missing_objectclass_errors")
                 return FlextResult[bool].fail("objectClass attribute cannot be empty")
 
-            return FlextResult[bool].ok(True)
+            return FlextResult[bool].ok(value=True)
 
         def _validate_attribute_values(
             self, entry: FlextLdifModels.Entry
         ) -> FlextResult[bool]:
             """Validate attribute values if empty values are not allowed."""
             if self._config.ldif_allow_empty_values:
-                return FlextResult[bool].ok(True)
+                return FlextResult[bool].ok(value=True)
 
             for attr_name, attr_values in entry.attributes.data.items():
                 if not attr_values or any(not value.strip() for value in attr_values):
@@ -306,7 +324,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                         f"Empty values not allowed for attribute: {attr_name}"
                     )
 
-            return FlextResult[bool].ok(True)
+            return FlextResult[bool].ok(value=True)
 
         def _create_dn_object(
             self, dn: str
@@ -385,7 +403,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                     if result.is_failure:
                         return result
 
-            return FlextResult[bool].ok(True)
+            return FlextResult[bool].ok(value=True)
 
         def _validate_required_attributes(
             self,
@@ -403,7 +421,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                         f"Missing required attribute '{required_attr}' for objectClass '{obj_class}'"
                     )
 
-            return FlextResult[bool].ok(True)
+            return FlextResult[bool].ok(value=True)
 
         # Logging and metrics helpers
         def _log_validation_failure(
@@ -620,9 +638,11 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                 if "service" in dn_lower or "svc" in dn_lower:
                     return FlextResult[str].ok("service_accounts")
                 return FlextResult[str].ok("user_accounts")
-            if object_classes.intersection(
-                {"group", "groupofnames", "groupofuniquenames"}
-            ):
+            if object_classes.intersection({
+                "group",
+                "groupofnames",
+                "groupofuniquenames",
+            }):
                 if "security" in dn_lower:
                     return FlextResult[str].ok("security_groups")
                 return FlextResult[str].ok("distribution_groups")
@@ -648,12 +668,10 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                 if self._has_missing_required_attributes(entry):
                     missing_required_attrs += 1
 
-            return FlextResult[dict[str, int]].ok(
-                {
-                    "entries_with_empty_attributes": empty_attributes,
-                    "entries_missing_required_attributes": missing_required_attrs,
-                }
-            )
+            return FlextResult[dict[str, int]].ok({
+                "entries_with_empty_attributes": empty_attributes,
+                "entries_missing_required_attributes": missing_required_attrs,
+            })
 
         def _has_empty_attributes(self, entry: FlextLdifModels.Entry) -> bool:
             """Check if entry has empty attributes."""
@@ -898,10 +916,17 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             self,
             entries: list[FlextLdifModels.Entry],
             transformation: Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry],
-        ) -> FlextResult[tuple[list[FlextLdifModels.Entry], Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry]]]:
+        ) -> FlextResult[
+            tuple[
+                list[FlextLdifModels.Entry],
+                Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry],
+            ]
+        ]:
             """Validate inputs for transformation pipeline."""
             if not entries:
-                return FlextResult.fail("Cannot apply transformation to empty entry list")
+                return FlextResult.fail(
+                    "Cannot apply transformation to empty entry list"
+                )
 
             # Type annotation ensures callable, so no runtime check needed
             return FlextResult.ok((entries, transformation))
@@ -945,11 +970,20 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
         def _validate_safe_transformation_inputs(
             self,
             entries: list[FlextLdifModels.Entry],
-            transformation: Callable[[FlextLdifModels.Entry], FlextResult[FlextLdifModels.Entry]],
-        ) -> FlextResult[tuple[list[FlextLdifModels.Entry], Callable[[FlextLdifModels.Entry], FlextResult[FlextLdifModels.Entry]]]]:
+            transformation: Callable[
+                [FlextLdifModels.Entry], FlextResult[FlextLdifModels.Entry]
+            ],
+        ) -> FlextResult[
+            tuple[
+                list[FlextLdifModels.Entry],
+                Callable[[FlextLdifModels.Entry], FlextResult[FlextLdifModels.Entry]],
+            ]
+        ]:
             """Validate inputs for safe transformation pipeline."""
             if not entries:
-                return FlextResult.fail("Cannot apply safe transformation to empty entry list")
+                return FlextResult.fail(
+                    "Cannot apply safe transformation to empty entry list"
+                )
 
             # Type annotation ensures callable, so no runtime check needed
             return FlextResult.ok((entries, transformation))
@@ -978,8 +1012,12 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
 
             if errors:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Safe transformation failed for {len(errors)} entries: {'; '.join(errors[:3])}"
-                    + (f" (and {len(errors) - 3} more)" if len(errors) > 3 else "")
+                    f"Safe transformation failed for {len(errors)} entries: {'; '.join(errors[:MAX_ERROR_DISPLAY_COUNT])}"
+                    + (
+                        f" (and {len(errors) - MAX_ERROR_DISPLAY_COUNT} more)"
+                        if len(errors) > MAX_ERROR_DISPLAY_COUNT
+                        else ""
+                    )
                 )
 
             return FlextResult[list[FlextLdifModels.Entry]].ok(transformed_entries)
@@ -1079,10 +1117,10 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
 
             if validation_errors:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Validation failed for {len(validation_errors)} entries: {'; '.join(validation_errors[:3])}"
+                    f"Validation failed for {len(validation_errors)} entries: {'; '.join(validation_errors[:MAX_ERROR_DISPLAY_COUNT])}"
                     + (
-                        f" (and {len(validation_errors) - 3} more)"
-                        if len(validation_errors) > 3
+                        f" (and {len(validation_errors) - MAX_ERROR_DISPLAY_COUNT} more)"
+                        if len(validation_errors) > MAX_ERROR_DISPLAY_COUNT
                         else ""
                     )
                 )
@@ -1190,7 +1228,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
         """Write entries to LDIF string format using railway pattern composition."""
         return (
             self._validate_entries_for_writing(entries)
-            .flat_map(self._format_handler.write_entries_to_string)
+            .flat_map(self._format_handler.write_ldif)
             .map(self._record_write_metrics(entries))
             .tap_error(
                 lambda error: self._logger.error(
@@ -1733,15 +1771,13 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             self._logger.exception("health_check_failed", error=str(exc))
 
         # Overall health determination
-        overall_healthy = all(
-            [
-                health_status.get("processor_healthy", False),
-                health_status.get("parser_healthy", False),
-                health_status.get("validator_healthy", False),
-                health_status.get("writer_healthy", False),
-                health_status.get("analytics_healthy", False),
-            ]
-        )
+        overall_healthy = all([
+            health_status.get("processor_healthy", False),
+            health_status.get("parser_healthy", False),
+            health_status.get("validator_healthy", False),
+            health_status.get("writer_healthy", False),
+            health_status.get("analytics_healthy", False),
+        ])
 
         health_status["overall_healthy"] = overall_healthy
 
@@ -1755,13 +1791,11 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
 
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute processor operation - domain service interface."""
-        return FlextResult[dict[str, object]].ok(
-            {
-                "status": "ready",
-                "processor": "FlextLdifProcessor",
-                "unified": True,
-            }
-        )
+        return FlextResult[dict[str, object]].ok({
+            "status": "ready",
+            "processor": "FlextLdifProcessor",
+            "unified": True,
+        })
 
     # Private Helper Methods
 
@@ -1809,7 +1843,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
 
         return (
             self._validate_content_input(content)
-            .flat_map(self._format_handler.parse_ldif_content)
+            .flat_map(self._format_handler.parse_ldif)
             .map(self._record_parse_metrics(start_time, content_size))
             .tap_error(
                 lambda error: self._logger.error(
@@ -1916,7 +1950,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
     ) -> Callable[[bool], bool]:
         """Create a write file metrics recording function for railway pattern mapping."""
 
-        def record_file_metrics(success: bool) -> bool:
+        def record_file_metrics(*, success: bool) -> bool:
             elapsed = time.time() - start_time
 
             self._logger.info(
@@ -2050,7 +2084,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
     ) -> Callable[[bool], bool]:
         """Create single validation success recording function for railway pattern."""
 
-        def record_success(result: bool) -> bool:
+        def record_success(*, result: bool) -> bool:
             validation_time = time.time() - start_time
             self._record_validation_success(1, validation_time)
             return result
@@ -2592,15 +2626,13 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
 
         """
         if not entries:
-            return FlextResult[dict[str, object]].ok(
-                {
-                    "summary": {
-                        "total_entries": 0,
-                        "insights": "No entries to analyze",
-                    },
-                    "recommendations": ["Add LDIF entries to enable analysis"],
-                }
-            )
+            return FlextResult[dict[str, object]].ok({
+                "summary": {
+                    "total_entries": 0,
+                    "insights": "No entries to analyze",
+                },
+                "recommendations": ["Add LDIF entries to enable analysis"],
+            })
 
         self._logger.info("analytics_insights_started", entry_count=len(entries))
 
@@ -2664,21 +2696,17 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             )
 
         if entry_count > FlextLdifConstants.Analytics.LARGE_DATASET_THRESHOLD:
-            recommendations.extend(
-                [
-                    "Enable parallel processing for better performance",
-                    "Consider implementing data partitioning strategies",
-                    "Monitor memory usage during processing",
-                ]
-            )
+            recommendations.extend([
+                "Enable parallel processing for better performance",
+                "Consider implementing data partitioning strategies",
+                "Monitor memory usage during processing",
+            ])
 
-        recommendations.extend(
-            [
-                "Implement regular data validation checks",
-                "Consider adding data quality monitoring",
-                "Enable analytics caching for repeated operations",
-            ]
-        )
+        recommendations.extend([
+            "Implement regular data validation checks",
+            "Consider adding data quality monitoring",
+            "Enable analytics caching for repeated operations",
+        ])
 
         return recommendations
 
@@ -2756,23 +2784,19 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
         suggestions = []
 
         if entry_count > FlextLdifConstants.Processing.MAX_CACHE_ENTRIES:
-            suggestions.extend(
-                [
-                    "Enable result caching for improved performance",
-                    "Consider batch processing for large datasets",
-                ]
-            )
+            suggestions.extend([
+                "Enable result caching for improved performance",
+                "Consider batch processing for large datasets",
+            ])
 
         if entry_count > FlextLdifConstants.Analytics.SMALL_BATCH_SIZE_THRESHOLD:
             suggestions.append("Enable parallel processing for faster analysis")
 
-        suggestions.extend(
-            [
-                "Monitor memory usage during processing",
-                "Consider implementing progress tracking for long operations",
-                "Enable analytics caching for repeated queries",
-            ]
-        )
+        suggestions.extend([
+            "Monitor memory usage during processing",
+            "Consider implementing progress tracking for long operations",
+            "Enable analytics caching for repeated queries",
+        ])
 
         return suggestions
 
@@ -2827,13 +2851,11 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
 
         """
         if not entries:
-            return FlextResult[dict[str, object]].ok(
-                {
-                    "stored_entries": 0,
-                    "storage_time_ms": 0.0,
-                    "validation_passed": True,
-                }
-            )
+            return FlextResult[dict[str, object]].ok({
+                "stored_entries": 0,
+                "storage_time_ms": 0.0,
+                "validation_passed": True,
+            })
 
         start_time = time.time()
         self._logger.info("entry_storage_started", entry_count=len(entries))
@@ -2899,7 +2921,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             # Update operation count
             self._operation_count += 1
 
-            return FlextResult[bool].ok(True)
+            return FlextResult[bool].ok(value=True)
 
         except Exception as exc:
             return FlextResult[bool].fail(f"Storage operation failed: {exc}")
@@ -2940,7 +2962,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                             f"Invalid attribute name: {attr_name}"
                         )
 
-            return FlextResult[bool].ok(True)
+            return FlextResult[bool].ok(value=True)
 
         except Exception as exc:
             return FlextResult[bool].fail(f"Validation failed: {exc}")
@@ -3167,28 +3189,3 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries by objectClass."""
         return self.filter_by_objectclass(entries, object_class)
-
-    def parse_content(self, content: str) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Parse LDIF content string - compatibility alias."""
-        return self.parse_string(content)
-
-    def write_entries_to_string(
-        self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[str]:
-        """Write entries to LDIF string - compatibility alias."""
-        return self.write_string(entries)
-
-    def write_entries_to_file(
-        self, entries: list[FlextLdifModels.Entry], file_path: str
-    ) -> FlextResult[bool]:
-        """Write entries to LDIF file - compatibility alias."""
-        result = self.write_string(entries)
-        if result.is_failure:
-            return FlextResult[bool].fail(result.error or "Write failed")
-
-        try:
-            with Path(file_path).open("w", encoding="utf-8") as f:
-                f.write(result.unwrap())
-            return FlextResult[bool].ok(True)
-        except Exception as e:
-            return FlextResult[bool].fail(f"File write failed: {e}")

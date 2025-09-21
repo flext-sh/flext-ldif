@@ -63,7 +63,12 @@ class FlextLdifFormatHandler:
         self._line_index = 0
 
     def process_request(self, request: dict[str, object]) -> FlextResult[object]:
-        """Process LDIF requests using template method pattern."""
+        """Process LDIF requests using template method pattern.
+
+        Returns:
+            FlextResult[object]: Processing result
+
+        """
         # Use duck typing instead of isinstance check
         try:
             operation = request.get("operation")
@@ -101,7 +106,12 @@ class FlextLdifFormatHandler:
         return FlextResult[object].fail("Invalid LDIF request format")
 
     def parse_ldif(self, content: str) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Parse LDIF content."""
+        """Parse LDIF content.
+
+        Returns:
+            FlextResult[list[FlextLdifModels.Entry]]: Parsed entries or error
+
+        """
         try:
             self._content = content
             self._lines = content.splitlines()
@@ -127,7 +137,12 @@ class FlextLdifFormatHandler:
         self,
         entries: list[FlextLdifModels.Entry] | None,
     ) -> FlextResult[str]:
-        """Write LDIF entries."""
+        """Write LDIF entries.
+
+        Returns:
+            FlextResult[str]: LDIF content string or error
+
+        """
         if entries is None:
             return FlextResult[str].fail("Entries cannot be None")
 
@@ -144,7 +159,12 @@ class FlextLdifFormatHandler:
             return FlextResult[str].fail(error_msg)
 
     def is_dn(self, s: str) -> bool:
-        """Return True if s is a valid LDAP DN."""
+        """Return True if s is a valid LDAP DN.
+
+        Returns:
+            bool: True if s is a valid DN, False otherwise
+
+        """
         if not s:
             return True
         try:
@@ -156,7 +176,12 @@ class FlextLdifFormatHandler:
             return False
 
     def validate_url_scheme(self, url: str) -> None:
-        """Validate URL scheme using centralized FlextModels validation."""
+        """Validate URL scheme using centralized FlextModels validation.
+
+        Raises:
+            ValueError: If URL scheme validation fails
+
+        """
         try:
             # Use centralized FlextLdifModels.LdifUrl for validation
             FlextLdifModels.LdifUrl(url=url)
@@ -164,7 +189,12 @@ class FlextLdifFormatHandler:
             raise ValueError(str(e)) from e
 
     def lower_list(self, items: list[str] | None) -> FlextTypes.Core.StringList:
-        """Return a list with the lowercased items using FlextUtilities."""
+        """Return a list with the lowercased items using FlextUtilities.
+
+        Returns:
+            FlextTypes.Core.StringList: List of lowercased items
+
+        """
         if not items:
             return []
         # Use FlextUtilities.TextProcessor for consistent text processing
@@ -182,14 +212,27 @@ class FlextLdifFormatHandler:
         self.records_written = 0
 
     def _parse_entries(self) -> Iterator[tuple[str, dict[str, list[str]]]]:
-        """Parse LDIF content and yield (dn, attributes) tuples."""
+        """Parse LDIF content and yield (dn, attributes) tuples.
+
+        Yields:
+            tuple[str, dict[str, list[str]]]: (dn, attributes) tuples
+
+        """
         while self._line_index < len(self._lines):
             entry_data = self._parse_entry()
             if entry_data:
                 yield entry_data
 
     def _parse_entry(self) -> tuple[str, dict[str, list[str]]] | None:
-        """Parse a single LDIF entry."""
+        """Parse a single LDIF entry.
+
+        Returns:
+            tuple[str, dict[str, list[str]]] | None: (dn, attributes) tuple or None
+
+        Raises:
+            ValueError: If parsing fails
+
+        """
         # Skip empty lines, comments, and version lines
         while self._line_index < len(self._lines):
             line = self._lines[self._line_index].strip()
@@ -235,7 +278,12 @@ class FlextLdifFormatHandler:
         return dn, attributes
 
     def _get_complete_line(self) -> str:
-        """Get complete line handling LDIF continuation lines."""
+        """Get complete line handling LDIF continuation lines.
+
+        Returns:
+            str: Complete line content
+
+        """
         if self._line_index >= len(self._lines):
             return ""
 
@@ -254,7 +302,15 @@ class FlextLdifFormatHandler:
         return complete_line
 
     def _parse_attribute_line(self, line: str) -> tuple[str, str]:
-        """Parse an attribute line and return (name, value)."""
+        """Parse an attribute line and return (name, value).
+
+        Returns:
+            tuple[str, str]: (attribute_name, attribute_value)
+
+        Raises:
+            ValueError: If parsing fails
+
+        """
         if "::" in line:
             # Base64-encoded value
             attr_name, encoded_value = line.split("::", 1)
@@ -277,7 +333,15 @@ class FlextLdifFormatHandler:
         return attr_name, attr_value
 
     def _parse_attribute_value(self, line: str) -> str:
-        """Parse attribute value from a line."""
+        """Parse attribute value from a line.
+
+        Returns:
+            str: Parsed attribute value
+
+        Raises:
+            ValueError: If parsing fails
+
+        """
         if "::" in line:
             # Base64-encoded
             _, encoded_value = line.split("::", 1)
@@ -332,7 +396,12 @@ class FlextLdifFormatHandler:
                 pos = end
 
     def _needs_base64_encoding(self, attr_type: str, attr_value: str) -> bool:
-        """Determine if an attribute value should be base64-encoded."""
+        """Determine if an attribute value should be base64-encoded.
+
+        Returns:
+            bool: True if base64 encoding is needed
+
+        """
         if attr_type.lower() in self._base64_attrs:
             return True
         # Use compiled regex pattern instead of search for better performance
@@ -341,22 +410,13 @@ class FlextLdifFormatHandler:
         return attr_value.startswith(" ") or attr_value.endswith(" ")
 
     def _get_writer_output(self) -> str:
-        """Get the complete LDIF output as string."""
+        """Get the complete LDIF output as string.
+
+        Returns:
+            str: Complete LDIF output
+
+        """
         return self._line_sep.join(self._output_lines)
-
-    # Compatibility aliases for processor integration
-
-    def parse_ldif_content(
-        self, content: str
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Parse LDIF content string - alias for parse_ldif."""
-        return self.parse_ldif(content)
-
-    def write_entries_to_string(
-        self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[str]:
-        """Write entries to LDIF string - alias for write_ldif."""
-        return self.write_ldif(entries)
 
 
 __all__ = ["FlextLdifFormatHandler"]

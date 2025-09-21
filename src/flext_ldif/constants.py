@@ -169,45 +169,37 @@ class FlextLdifConstants:
         """LDAP object class constants for LDIF processing with enhanced enterprise support."""
 
         # Person-related object classes
-        LDAP_PERSON_CLASSES: ClassVar[frozenset[str]] = frozenset(
-            {
-                "person",
-                "inetOrgPerson",
-                "organizationalPerson",
-                "inetorgperson",
-                "organizationalperson",
-                "user",
-                "posixAccount",
-            }
-        )
+        LDAP_PERSON_CLASSES: ClassVar[frozenset[str]] = frozenset({
+            "person",
+            "inetOrgPerson",
+            "organizationalPerson",
+            "inetorgperson",
+            "organizationalperson",
+            "user",
+            "posixAccount",
+        })
 
         # Group-related object classes
-        LDAP_GROUP_CLASSES: ClassVar[frozenset[str]] = frozenset(
-            {
-                "groupOfNames",
-                "groupOfUniqueNames",
-                "group",
-                "groupofnames",
-                "groupofuniquenames",
-            }
-        )
+        LDAP_GROUP_CLASSES: ClassVar[frozenset[str]] = frozenset({
+            "groupOfNames",
+            "groupOfUniqueNames",
+            "group",
+            "groupofnames",
+            "groupofuniquenames",
+        })
 
         # Organizational object classes
-        LDAP_ORGANIZATIONAL_CLASSES: ClassVar[frozenset[str]] = frozenset(
-            {
-                "organizationalUnit",
-                "organization",
-                "organizationalunit",
-            }
-        )
+        LDAP_ORGANIZATIONAL_CLASSES: ClassVar[frozenset[str]] = frozenset({
+            "organizationalUnit",
+            "organization",
+            "organizationalunit",
+        })
 
         # Domain object classes
-        LDAP_DOMAIN_CLASSES: ClassVar[frozenset[str]] = frozenset(
-            {
-                "domain",
-                "dcobject",
-            }
-        )
+        LDAP_DOMAIN_CLASSES: ClassVar[frozenset[str]] = frozenset({
+            "domain",
+            "dcobject",
+        })
 
         # Default object class assignments for factory methods
         DEFAULT_PERSON_CLASSES: ClassVar[list[str]] = ["inetOrgPerson", "person"]
@@ -258,22 +250,18 @@ class FlextLdifConstants:
         REQUIRED_DOMAIN_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset({"dc"})
 
         # Extended requirements for enterprise scenarios
-        RECOMMENDED_PERSON_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
-            {
-                "cn",
-                "sn",
-                "mail",
-                "uid",
-                "givenName",
-            }
-        )
-        RECOMMENDED_GROUP_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
-            {
-                "cn",
-                "member",
-                "description",
-            }
-        )
+        RECOMMENDED_PERSON_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset({
+            "cn",
+            "sn",
+            "mail",
+            "uid",
+            "givenName",
+        })
+        RECOMMENDED_GROUP_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset({
+            "cn",
+            "member",
+            "description",
+        })
 
     class Operations:
         """LDIF operation constants with enhanced modification support."""
@@ -293,23 +281,21 @@ class FlextLdifConstants:
     class Messages:
         """LDIF-specific validation and error messages with enhanced context."""
 
-        VALIDATION_MESSAGES: ClassVar[MappingProxyType[str, str]] = MappingProxyType(
-            {
-                "INVALID_DN": "Invalid DN",
-                "INVALID_DN_FORMAT": "Invalid DN format",
-                "MISSING_OBJECTCLASS": "Missing required objectClass",
-                "INVALID_ATTRIBUTE_VALUE": "Invalid attribute value",
-                "DUPLICATE_ATTRIBUTE": "Duplicate attribute found",
-                "EMPTY_ENTRY": "Entry cannot be empty",
-                "MISSING_DN": "Missing DN",
-                "INVALID_ATTRIBUTE_NAME": "Invalid attribute name",
-                "INSUFFICIENT_DN_COMPONENTS": "DN has insufficient components",
-                "INVALID_COMPONENT_FORMAT": "Invalid DN component format",
-                "PARSE_ERROR": "LDIF parsing error",
-                "VALIDATION_FAILED": "Entry validation failed",
-                "WRITE_ERROR": "LDIF write operation failed",
-            }
-        )
+        VALIDATION_MESSAGES: ClassVar[MappingProxyType[str, str]] = MappingProxyType({
+            "INVALID_DN": "Invalid DN",
+            "INVALID_DN_FORMAT": "Invalid DN format",
+            "MISSING_OBJECTCLASS": "Missing required objectClass",
+            "INVALID_ATTRIBUTE_VALUE": "Invalid attribute value",
+            "DUPLICATE_ATTRIBUTE": "Duplicate attribute found",
+            "EMPTY_ENTRY": "Entry cannot be empty",
+            "MISSING_DN": "Missing DN",
+            "INVALID_ATTRIBUTE_NAME": "Invalid attribute name",
+            "INSUFFICIENT_DN_COMPONENTS": "DN has insufficient components",
+            "INVALID_COMPONENT_FORMAT": "Invalid DN component format",
+            "PARSE_ERROR": "LDIF parsing error",
+            "VALIDATION_FAILED": "Entry validation failed",
+            "WRITE_ERROR": "LDIF write operation failed",
+        })
 
     class Formatting:
         """LDIF formatting and display constants with enhanced presentation."""
@@ -378,28 +364,53 @@ class FlextLdifConstants:
 
         @staticmethod
         def _env_enabled(flag_name: str, default: str = "0") -> bool:
-            """Check if environment variable indicates feature is enabled."""
+            """Check if environment variable indicates feature is enabled.
+
+            Returns:
+                bool: True if feature is enabled, False otherwise
+
+            """
             value = os.environ.get(flag_name, default)
             return value.lower() not in {"0", "false", "no"}
 
         @classmethod
         def dispatcher_enabled(cls) -> bool:
-            """Return True when dispatcher integration should be used."""
+            """Return True when dispatcher integration should be used.
+
+            Returns:
+                bool: True if dispatcher integration is enabled
+
+            """
             return cls._env_enabled("FLEXT_LDIF_ENABLE_DISPATCHER")
 
         @classmethod
         def analytics_enabled(cls) -> bool:
-            """Return True when analytics features should be active."""
+            """Return True when analytics features should be active.
+
+            Returns:
+                bool: True if analytics features are enabled
+
+            """
             return cls._env_enabled("FLEXT_LDIF_ENABLE_ANALYTICS", "1")
 
         @classmethod
         def parallel_processing_enabled(cls) -> bool:
-            """Return True when parallel processing should be used."""
+            """Return True when parallel processing should be used.
+
+            Returns:
+                bool: True if parallel processing is enabled
+
+            """
             return cls._env_enabled("FLEXT_LDIF_ENABLE_PARALLEL", "1")
 
         @classmethod
         def debug_mode_enabled(cls) -> bool:
-            """Return True when debug mode features should be active."""
+            """Return True when debug mode features should be active.
+
+            Returns:
+                bool: True if debug mode is enabled
+
+            """
             return cls._env_enabled("FLEXT_LDIF_DEBUG_MODE")
 
 

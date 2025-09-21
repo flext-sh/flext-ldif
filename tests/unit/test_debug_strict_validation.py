@@ -6,11 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
-from flext_core import FlextResult, FlextUtilities
+from flext_core import FlextUtilities
+from flext_ldif.api import FlextLdifAPI
 from flext_ldif.config import FlextLdifConfig
-from flext_ldif.services import FlextLdifServices
+from flext_ldif.models import FlextLdifModels
 
 
 def test_debug_strict_validation_flow() -> None:
@@ -18,42 +19,38 @@ def test_debug_strict_validation_flow() -> None:
     # Use proper FlextLdifConfig
     config = FlextLdifConfig()
 
-    validator = FlextLdifServices(config=config)
+    # Initialize API with config
+    api = FlextLdifAPI(config=config)
 
-    # Entry simples
-    entry = Mock()
-    entry.dn = Mock(value="cn=debug,dc=example,dc=com")
-    entry.validate_business_rules = Mock(return_value=FlextResult[None].ok(None))
+    # Create proper FlextLdifModels.Entry instead of Mock
+    dn_obj = FlextLdifModels.DistinguishedName(value="cn=debug,dc=example,dc=com")
+    attrs_obj = FlextLdifModels.LdifAttributes(data={"cn": ["debug"]})
+    entry = FlextLdifModels.Entry(dn=dn_obj, attributes=attrs_obj)
 
-    # Attributes mock corretamente - deve ser dict-like
-    mock_attributes = {"cn": ["debug"]}  # Use dict real em vez de Mock
-    entry.attributes = mock_attributes
+    # Test validation using API
+    result = api.validate_entries([entry])
 
-    # Test validation without patching non-existent methods
-    validator.validator.validate_entries([entry])
-
-    assert True  # Só queremos ver o debug
+    assert result.is_success or result.is_failure  # Test successful execution
 
 
 def test_debug_manual_validation_call() -> None:
-    """Debug: Chamar validate_entry_structure diretamente."""
+    """Debug: Chamar validação manual de estrutura diretamente."""
     config = FlextLdifConfig()
-    validator = FlextLdifServices(config=config).validator
 
-    entry = Mock()
-    entry.dn = Mock(value="cn=manual,dc=example,dc=com")
-    entry.validate_business_rules = Mock(return_value=FlextResult[None].ok(None))
+    # Initialize API with config
+    api = FlextLdifAPI(config=config)
 
-    # Mock attributes corretamente - deve ser dict-like
-    mock_attributes = {"cn": ["manual"]}  # Use dict real em vez de Mock
-    entry.attributes = mock_attributes
+    # Create proper FlextLdifModels.Entry instead of Mock
+    dn_obj = FlextLdifModels.DistinguishedName(value="cn=manual,dc=example,dc=com")
+    attrs_obj = FlextLdifModels.LdifAttributes(data={"cn": ["manual"]})
+    entry = FlextLdifModels.Entry(dn=dn_obj, attributes=attrs_obj)
 
-    # Chamar método diretamente usando a nova API
+    # Test validation using API - the API handles internal structure validation
     with patch.object(
         FlextUtilities.TypeGuards,
         "is_list_non_empty",
         return_value=True,
     ):
-        result = validator.validate_entry_structure(entry)
+        result = api.validate_entries([entry])
 
     assert result.is_success or result.is_failure  # Test successful execution

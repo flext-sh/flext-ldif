@@ -15,7 +15,6 @@ from flext_core import FlextResult
 from flext_ldif import (
     FlextLdifAPI,
     FlextLdifFormatHandler,
-    FlextLdifServices,
 )
 
 
@@ -127,11 +126,11 @@ member: cn=John Doe,ou=people,dc=example,dc=com
         entries = FlextResult.unwrap_or_raise(handler.parse_ldif(complex_ldif_content))
         assert len(entries) == 6
 
-        # Step 2: Validate using services instead of core wrapper
-        validator_service = FlextLdifServices().validator
-        validated_entries = FlextResult.unwrap_or_raise(
-            validator_service.validate_entries(entries),
-        )
+        # Step 2: Validate using FlextLdifAPI (FLEXT-compliant)
+        api = FlextLdifAPI()
+        validation_result = api.validate_entries(entries)
+        assert validation_result.is_success
+        validated_entries = validation_result.unwrap()
         assert len(validated_entries) == 6
 
         # Step 3: Write using convenience function

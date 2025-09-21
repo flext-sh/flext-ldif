@@ -39,26 +39,22 @@ class TestFlextLdifAPIRealCoverage:
     def sample_entries(self) -> list[FlextLdifModels.Entry]:
         """Create sample entries for testing."""
         return [
-            FlextLdifModels.create_entry(
-                {
-                    "dn": "cn=test1,dc=example,dc=com",
-                    "attributes": {
-                        "cn": ["test1"],
-                        "sn": ["Test1"],
-                        "objectClass": ["person"],
-                    },
-                }
-            ),
-            FlextLdifModels.create_entry(
-                {
-                    "dn": "cn=test2,dc=example,dc=com",
-                    "attributes": {
-                        "cn": ["test2"],
-                        "sn": ["Test2"],
-                        "objectClass": ["person"],
-                    },
-                }
-            ),
+            FlextLdifModels.create_entry({
+                "dn": "cn=test1,dc=example,dc=com",
+                "attributes": {
+                    "cn": ["test1"],
+                    "sn": ["Test1"],
+                    "objectClass": ["person"],
+                },
+            }),
+            FlextLdifModels.create_entry({
+                "dn": "cn=test2,dc=example,dc=com",
+                "attributes": {
+                    "cn": ["test2"],
+                    "sn": ["Test2"],
+                    "objectClass": ["person"],
+                },
+            }),
         ]
 
     def test_api_initialization_default(self) -> None:
@@ -236,12 +232,10 @@ objectClass: person
             cn_values = entry.attributes.get_attribute("cn")
             cn_value = cn_values[0] if cn_values else "test"
             new_attrs["mail"] = [f"{cn_value}@example.com"]
-            return FlextLdifModels.create_entry(
-                {
-                    "dn": entry.dn.value,
-                    "attributes": new_attrs,
-                }
-            )
+            return FlextLdifModels.create_entry({
+                "dn": entry.dn.value,
+                "attributes": new_attrs,
+            })
 
         result = api_default.transform(sample_entries, add_mail_attr)
         assert result.is_success
@@ -372,16 +366,14 @@ objectClass: person
         """Test filter_entries with conditions that might fail."""
         # Create entries with extreme values that might cause issues using list comprehension
         large_entries = [
-            FlextLdifModels.create_entry(
-                {
-                    "dn": f"cn=user{i},dc=example,dc=com",
-                    "attributes": {
-                        "cn": [f"user{i}"],
-                        "sn": [f"User{i}"],
-                        "objectClass": ["person"],
-                    },
-                }
-            )
+            FlextLdifModels.create_entry({
+                "dn": f"cn=user{i},dc=example,dc=com",
+                "attributes": {
+                    "cn": [f"user{i}"],
+                    "sn": [f"User{i}"],
+                    "objectClass": ["person"],
+                },
+            })
             for i in range(1000)
         ]
 
@@ -400,16 +392,14 @@ objectClass: person
 
         # Test with single entry
         single_entry = [
-            FlextLdifModels.create_entry(
-                {
-                    "dn": "cn=single,dc=example,dc=com",
-                    "attributes": {
-                        "cn": ["single"],
-                        "sn": ["Single"],
-                        "objectClass": ["person"],
-                    },
-                }
-            )
+            FlextLdifModels.create_entry({
+                "dn": "cn=single,dc=example,dc=com",
+                "attributes": {
+                    "cn": ["single"],
+                    "sn": ["Single"],
+                    "objectClass": ["person"],
+                },
+            })
         ]
 
         result = api_default.analyze(single_entry)

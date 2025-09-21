@@ -8,12 +8,11 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextExceptions
 from flext_ldif import (
     FlextLdifAPI,
     FlextLdifFormatHandler,
 )
-from flext_ldif.services import FlextLdifServices
 
 
 class TestRealLdifParsing:
@@ -137,11 +136,11 @@ sn: User
         handler = FlextLdifFormatHandler()
         entries = FlextResult.unwrap_or_raise(handler.parse_ldif(ldif_content))
 
-        # Test validation using services instead of core wrapper
-        validator_service = FlextLdifServices().validator
-        validated_entries = FlextResult.unwrap_or_raise(
-            validator_service.validate_entries(entries),
-        )
+        # Test validation using FlextLdifAPI directly (FLEXT-compliant pattern)
+        api = FlextLdifAPI()
+        validation_result = api.validate_entries(entries)
+        assert validation_result.is_success
+        validated_entries = validation_result.unwrap()
         assert len(validated_entries) == 1
 
     def test_write_real_entries(self) -> None:
@@ -282,7 +281,7 @@ objectClass: person
 """
 
         handler = FlextLdifFormatHandler()
-        with pytest.raises(Exception):  # Should raise FlextLdifParseError
+        with pytest.raises(FlextExceptions.BaseError):  # Should raise FlextLdifParseError
             FlextResult.unwrap_or_raise(handler.parse_ldif(invalid_ldif))
 
     def test_roundtrip_consistency(self) -> None:

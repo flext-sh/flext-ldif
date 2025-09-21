@@ -287,7 +287,12 @@ cn: incomplete
 
 
 def _parse_sample_ldif_data() -> str:
-    """Provide sample LDIF data for advanced filtering demonstration."""
+    """Provide sample LDIF data for advanced filtering demonstration.
+
+    Returns:
+        str: Sample LDIF data string
+
+    """
     return """dn: dc=advanced,dc=com
 objectClass: top
 objectClass: domain
@@ -366,7 +371,12 @@ def _filter_by_title_containing(
     entries: list[FlextLdifModels.Entry],
     keyword: str,
 ) -> list[FlextLdifModels.Entry]:
-    """Custom filter for entries with title containing keyword."""
+    """Custom filter for entries with title containing keyword.
+
+    Returns:
+        list[FlextLdifModels.Entry]: Filtered entries containing the keyword
+
+    """
     result: list[FlextLdifModels.Entry] = []
     for entry in entries:
         title_attr = entry.get_attribute("title")
@@ -384,7 +394,12 @@ def _demonstrate_custom_title_filtering(
 
 
 def _determine_entry_type(entry: FlextLdifModels.Entry) -> str:
-    """Determine the type of an LDAP entry based on object classes."""
+    """Determine the type of an LDAP entry based on object classes.
+
+    Returns:
+        str: Entry type classification
+
+    """
     has_object_class = entry.has_object_class
     if has_object_class("domain"):
         return "domain"
