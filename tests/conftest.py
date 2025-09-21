@@ -13,6 +13,9 @@ from pathlib import Path
 from typing import ClassVar
 
 import pytest
+
+from flext_core import FlextResult, FlextTypes
+from flext_ldif import FlextLdifAPI
 from flext_tests import (
     FlextTestsBuilders,
     FlextTestsDomains,
@@ -20,9 +23,6 @@ from flext_tests import (
     FlextTestsMatchers,
     FlextTestsUtilities,
 )
-
-from flext_core import FlextResult, FlextTypes
-from flext_ldif import FlextLdifAPI
 from tests.test_support import (
     FileManager,
     LdifTestData,

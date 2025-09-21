@@ -55,6 +55,11 @@ class FlextLdifConfig(FlextConfig):
         description="Default encoding for LDIF files",
     )
 
+    base_url: str = Field(
+        default="ldap://localhost:389",
+        description="Base URL for LDAP server connection",
+    )
+
     # LDIF Validation Configuration
     ldif_strict_validation: bool = Field(
         default=True,

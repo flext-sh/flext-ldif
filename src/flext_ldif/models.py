@@ -264,6 +264,27 @@ class FlextLdifModels:
             values = self.get_attribute(name)
             return values[0] if values else None
 
+        def __contains__(self, name: str) -> bool:
+            """Check if attribute exists (supports 'in' operator).
+
+            Args:
+                name: Attribute name to check
+
+            Returns:
+                bool: True if attribute exists
+
+            """
+            return self.has_attribute(name)
+
+        def __len__(self) -> int:
+            """Get number of attributes (supports len() function).
+
+            Returns:
+                int: Number of attributes
+
+            """
+            return len(self.data)
+
         @classmethod
         def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
             """Create attributes with validation returning FlextResult.
