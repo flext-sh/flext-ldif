@@ -20,6 +20,7 @@ from typing import ClassVar
 from pydantic import ConfigDict
 
 from flext_core import (
+    FlextConstants,
     FlextDomainService,
     FlextLogger,
     FlextResult,
@@ -48,19 +49,24 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
         arbitrary_types_allowed=True,
     )
 
-    # Constants for magic values
-    DEFAULT_MAX_ENTRIES: ClassVar[int] = 10000
-    QUALITY_THRESHOLD_HIGH: ClassVar[float] = 0.9
-    QUALITY_THRESHOLD_MEDIUM: ClassVar[float] = 0.8
-    MIN_ENTRY_COUNT_FOR_ANALYTICS: ClassVar[int] = 50
-    MIN_ATTRIBUTE_COUNT_THRESHOLD: ClassVar[int] = 3
+    # Constants for magic values - use FlextConstants for standardization
+    DEFAULT_MAX_ENTRIES: ClassVar[int] = FlextConstants.Performance.MAX_BATCH_OPERATIONS
+    QUALITY_THRESHOLD_HIGH: ClassVar[float] = (
+        FlextConstants.Performance.CRITICAL_USAGE_PERCENT / 100.0
+    )
+    QUALITY_THRESHOLD_MEDIUM: ClassVar[float] = 0.8  # Specific to LDIF quality analysis
+    MIN_ENTRY_COUNT_FOR_ANALYTICS: ClassVar[int] = (
+        FlextConstants.Performance.PARALLEL_THRESHOLD // 2
+    )
+    MIN_ATTRIBUTE_COUNT_THRESHOLD: ClassVar[int] = (
+        FlextConstants.Validation.MIN_NAME_LENGTH
+    )
 
     def __init__(self, config: FlextLdifConfig | None = None) -> None:
         """Initialize LDIF processor with configuration."""
         super().__init__()
-        # Explicitly type _config as FlextLdifConfig for MyPy
-        self._config: FlextLdifConfig = config or FlextLdifConfig()
         self._logger = FlextLogger(__name__)
+        self._config = config
 
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute health check operation - required by FlextDomainService.
@@ -79,14 +85,16 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
         """Helper class for parsing operations."""
 
         @staticmethod
-        def _process_entry_block(block: str) -> FlextResult[FlextLdifModels.Entry]:
+        def process_entry_block(block: str) -> FlextResult[FlextLdifModels.Entry]:
             """Process a single LDIF entry block.
 
             Returns:
                 FlextResult containing parsed Entry model or error message.
 
             """
-            lines = [line.strip() for line in block.strip().split("\n") if line.strip()]
+            lines: list[str] = [
+                line.strip() for line in block.strip().split("\n") if line.strip()
+            ]
             if not lines:
                 return FlextResult[FlextLdifModels.Entry].fail("Empty entry block")
 
@@ -143,7 +151,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             return FlextResult[FlextLdifModels.Entry].ok(entry_result.value)
 
         @staticmethod
-        def _process_line_continuation(content: str) -> str:
+        def process_line_continuation(content: str) -> str:
             """Process LDIF line continuations.
 
             Returns:
@@ -151,7 +159,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
 
             """
             lines = content.split("\n")
-            processed_lines = []
+            processed_lines: list[str] = []
             current_line = ""
 
             for line in lines:
@@ -169,14 +177,19 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
 
             return "\n".join(processed_lines)
 
-    class _ValidationHelper:
+    class _LdifValidationHelper:
         """Helper class for validation operations."""
 
         @staticmethod
-        def _validate_dn_structure(
+        def validate_dn_structure(
             dn: FlextLdifModels.DistinguishedName,
         ) -> FlextResult[None]:
-            """Validate DN structure."""
+            """Validate DN structure.
+
+            Returns:
+                FlextResult[None]: Success if DN is valid, failure with error message if invalid.
+
+            """
             if not dn.value:
                 return FlextResult[None].fail("DN cannot be empty")
 
@@ -193,10 +206,15 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             return FlextResult[None].ok(None)
 
         @staticmethod
-        def _validate_required_attributes(
+        def validate_required_attributes(
             entry: FlextLdifModels.Entry, required_attrs: list[str]
         ) -> FlextResult[None]:
-            """Validate required attributes are present."""
+            """Validate required attributes are present.
+
+            Returns:
+                FlextResult[None]: Success if all required attributes are present, failure with error message if missing.
+
+            """
             for attr in required_attrs:
                 if not entry.get_attribute(attr):
                     return FlextResult[None].fail(
@@ -206,10 +224,15 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             return FlextResult[None].ok(None)
 
         @staticmethod
-        def _validate_object_classes(
+        def validate_object_classes(
             entry: FlextLdifModels.Entry, required_classes: list[str]
         ) -> FlextResult[None]:
-            """Validate required object classes are present."""
+            """Validate required object classes are present.
+
+            Returns:
+                FlextResult[None]: Success if all required object classes are present, failure with error message if missing.
+
+            """
             object_classes = entry.get_attribute("objectClass") or []
 
             for required_class in required_classes:
@@ -224,9 +247,9 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
         """Helper class for writing operations."""
 
         @staticmethod
-        def _format_entry_as_ldif(entry: FlextLdifModels.Entry) -> str:
+        def format_entry_as_ldif(entry: FlextLdifModels.Entry) -> str:
             """Format entry as LDIF string."""
-            lines = [f"dn: {entry.dn.value}"]
+            lines: list[str] = [f"dn: {entry.dn.value}"]
 
             # Sort attributes for consistent output
             for attr_name in sorted(entry.attributes.data.keys()):
@@ -236,10 +259,10 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             return "\n".join(lines)
 
         @staticmethod
-        def _apply_line_wrapping(content: str, max_line_length: int = 78) -> str:
+        def apply_line_wrapping(content: str, max_line_length: int = 78) -> str:
             """Apply LDIF line wrapping rules."""
             lines = content.split("\n")
-            wrapped_lines = []
+            wrapped_lines: list[str] = []
 
             for line in lines:
                 if len(line) <= max_line_length:
@@ -259,7 +282,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
         """Helper class for analytics operations."""
 
         @staticmethod
-        def _calculate_entry_statistics(
+        def calculate_entry_statistics(
             entries: list[FlextLdifModels.Entry],
         ) -> dict[str, object]:
             """Calculate basic entry statistics."""
@@ -291,7 +314,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             }
 
         @staticmethod
-        def _analyze_dn_patterns(
+        def analyze_dn_patterns(
             entries: list[FlextLdifModels.Entry],
         ) -> dict[str, object]:
             """Analyze DN patterns in entries."""
@@ -319,15 +342,15 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             }
 
         @staticmethod
-        def _calculate_quality_metrics(
+        def calculate_quality_metrics(
             entries: list[FlextLdifModels.Entry],
         ) -> dict[str, object]:
             """Calculate quality metrics for entries."""
             if not entries:
                 return {"quality_score": 0.0, "issues": ["No entries to analyze"]}
 
-            issues = []
-            quality_factors = []
+            issues: list[str] = []
+            quality_factors: list[float] = []
 
             # Check for duplicate DNs
             dns = [entry.dn.value for entry in entries]
@@ -378,16 +401,16 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             return FlextResult[list[FlextLdifModels.Entry]].ok([])
 
         # Process line continuations
-        processed_content = self._ParseHelper._process_line_continuation(content)
+        processed_content = self._ParseHelper.process_line_continuation(content)
 
         # Split into entry blocks
-        entry_blocks = [
+        entry_blocks: list[str] = [
             block.strip() for block in processed_content.split("\n\n") if block.strip()
         ]
 
-        entries = []
+        entries: list[FlextLdifModels.Entry] = []
         for i, block in enumerate(entry_blocks):
-            entry_result = self._ParseHelper._process_entry_block(block)
+            entry_result = self._ParseHelper.process_entry_block(block)
             if entry_result.is_failure:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
                     f"Failed to parse entry {i + 1}: {entry_result.error}"
@@ -408,7 +431,9 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             )
 
         try:
-            content = file_path.read_text(encoding=self._config.ldif_encoding)
+            content = file_path.read_text(
+                encoding=getattr(self._config, "ldif_encoding", "utf-8")
+            )
             self._logger.info(
                 f"Read LDIF file: {file_path} ({len(content)} characters)"
             )
@@ -439,7 +464,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
 
         for i, entry in enumerate(entries):
             # Validate DN structure
-            dn_validation = self._ValidationHelper._validate_dn_structure(entry.dn)
+            dn_validation = self._LdifValidationHelper.validate_dn_structure(entry.dn)
             if dn_validation.is_failure:
                 return FlextResult[None].fail(
                     f"Entry {i} DN validation failed: {dn_validation.error}"
@@ -449,7 +474,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             required_attrs = self._get_required_attributes_for_classes(
                 entry.get_attribute("objectClass") or []
             )
-            attr_validation = self._ValidationHelper._validate_required_attributes(
+            attr_validation = self._LdifValidationHelper.validate_required_attributes(
                 entry, required_attrs
             )
             if attr_validation.is_failure:
@@ -465,17 +490,17 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
         if not entries:
             return FlextResult[str].ok("")
 
-        entry_strings = []
+        entry_strings: list[str] = []
         for entry in entries:
-            entry_ldif = self._WriterHelper._format_entry_as_ldif(entry)
+            entry_ldif = self._WriterHelper.format_entry_as_ldif(entry)
             entry_strings.append(entry_ldif)
 
         # Join entries with double newline
         content = "\n\n".join(entry_strings) + "\n"
 
         # Apply line wrapping if configured
-        if hasattr(self._config, "wrap_lines") and self._config.wrap_lines:
-            content = self._WriterHelper._apply_line_wrapping(content)
+        if getattr(self._config, "wrap_lines", False):
+            content = self._WriterHelper.apply_line_wrapping(content)
 
         self._logger.info(
             f"Generated LDIF content for {len(entries)} entries ({len(content)} characters)"
@@ -512,7 +537,8 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                 )
 
             output_path.write_text(
-                content_result.value, encoding=self._config.ldif_encoding
+                content_result.value,
+                encoding=getattr(self._config, "ldif_encoding", "utf-8"),
             )
             self._logger.info(
                 f"Successfully wrote {len(entries)} entries to {file_path}"
@@ -532,7 +558,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
         if not entries:
             return FlextResult[list[FlextLdifModels.Entry]].ok([])
 
-        transformed_entries = []
+        transformed_entries: list[FlextLdifModels.Entry] = []
         for i, entry in enumerate(entries):
             try:
                 transformed = transformer(entry)
@@ -557,7 +583,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
 
         # Only perform detailed analytics for reasonable entry counts
         if len(entries) < self.MIN_ENTRY_COUNT_FOR_ANALYTICS:
-            basic_stats = self._AnalyticsHelper._calculate_entry_statistics(entries)
+            basic_stats = self._AnalyticsHelper.calculate_entry_statistics(entries)
             basic_stats["note"] = (
                 f"Basic analysis only (< {self.MIN_ENTRY_COUNT_FOR_ANALYTICS} entries)"
             )
@@ -565,9 +591,9 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
 
         # Comprehensive analytics
         try:
-            statistics = self._AnalyticsHelper._calculate_entry_statistics(entries)
-            dn_analysis = self._AnalyticsHelper._analyze_dn_patterns(entries)
-            quality_metrics = self._AnalyticsHelper._calculate_quality_metrics(entries)
+            statistics = self._AnalyticsHelper.calculate_entry_statistics(entries)
+            dn_analysis = self._AnalyticsHelper.analyze_dn_patterns(entries)
+            quality_metrics = self._AnalyticsHelper.calculate_quality_metrics(entries)
 
             combined_analysis: dict[str, object] = {
                 "basic_statistics": statistics,
@@ -595,7 +621,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
 
         try:
             compiled_pattern = re.compile(pattern, re.IGNORECASE)
-            filtered_entries = [
+            filtered_entries: list[FlextLdifModels.Entry] = [
                 entry for entry in entries if compiled_pattern.search(entry.dn.value)
             ]
 
@@ -616,7 +642,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
         if not entries:
             return FlextResult[list[FlextLdifModels.Entry]].ok([])
 
-        filtered_entries = []
+        filtered_entries: list[FlextLdifModels.Entry] = []
         for entry in entries:
             object_classes = entry.get_attribute("objectClass") or []
             if any(oc.lower() == object_class.lower() for oc in object_classes):
@@ -644,7 +670,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
         if not entries:
             return FlextResult[list[FlextLdifModels.Entry]].ok([])
 
-        matching_entries = []
+        matching_entries: list[FlextLdifModels.Entry] = []
         for entry in entries:
             attr_values = entry.get_attribute(attr_name) or []
             if any(value.lower() == attr_value.lower() for value in attr_values):
@@ -663,7 +689,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             return FlextResult[dict[str, object]].ok({"status": "no_entries"})
 
         # Extract schema rules with proper typing
-        required_attrs_raw = schema_rules.get("required_attributes", [])
+        required_attrs_raw: object = schema_rules.get("required_attributes", [])
         required_attrs: list[str] = (
             required_attrs_raw if isinstance(required_attrs_raw, list) else []
         )
@@ -673,7 +699,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             required_classes_raw if isinstance(required_classes_raw, list) else []
         )
 
-        compliance_results = []
+        compliance_results: list[dict[str, object]] = []
         for i, entry in enumerate(entries):
             entry_compliance: dict[str, object] = {
                 "entry_index": i,
@@ -683,7 +709,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
 
             # Check required attributes
             if required_attrs:
-                attrs_result = self._ValidationHelper._validate_required_attributes(
+                attrs_result = self._LdifValidationHelper.validate_required_attributes(
                     entry, required_attrs
                 )
                 if attrs_result.is_failure:
@@ -693,7 +719,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
 
             # Check required object classes
             if required_classes:
-                classes_result = self._ValidationHelper._validate_object_classes(
+                classes_result = self._LdifValidationHelper.validate_object_classes(
                     entry, required_classes
                 )
                 if classes_result.is_failure:
@@ -738,8 +764,12 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             return FlextResult[list[FlextLdifModels.Entry]].ok(entries1)
 
         # Build DN index for first set
-        dn_index = {entry.dn.value.lower(): entry for entry in entries1}
-        merged_entries = list(entries1)  # Start with all from first set
+        dn_index: dict[str, FlextLdifModels.Entry] = {
+            entry.dn.value.lower(): entry for entry in entries1
+        }
+        merged_entries: list[FlextLdifModels.Entry] = list(
+            entries1
+        )  # Start with all from first set
 
         duplicates_count = 0
         for entry in entries2:
@@ -832,7 +862,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
 
         try:
             # Basic quality metrics
-            quality_metrics = self._AnalyticsHelper._calculate_quality_metrics(entries)
+            quality_metrics = self._AnalyticsHelper.calculate_quality_metrics(entries)
 
             # Additional quality checks
             quality_checks = {
@@ -850,7 +880,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                 quality_score = 0.0
 
             # Adjust score based on additional checks
-            penalty_factors = []
+            penalty_factors: list[float] = []
             empty_attrs = quality_checks.get("empty_attributes", 0)
             if isinstance(empty_attrs, (int, float)) and empty_attrs > 0:
                 penalty_factors.append(0.9)
@@ -876,7 +906,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                 quality_level = "needs_improvement"
 
             # Compile recommendations
-            recommendations = []
+            recommendations: list[str] = []
             if quality_checks.get("empty_attributes", 0) > 0:
                 recommendations.append("Remove or populate empty attributes")
             if quality_checks.get("missing_object_classes", 0) > 0:
@@ -911,7 +941,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                 "status": "healthy",
                 "timestamp": datetime.now(UTC).isoformat(),
                 "config": {
-                    "encoding": self._config.ldif_encoding,
+                    "encoding": getattr(self._config, "ldif_encoding", "utf-8"),
                     "max_entries": getattr(
                         self._config, "max_entries", self.DEFAULT_MAX_ENTRIES
                     ),
@@ -945,7 +975,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
     def get_config_info(self) -> dict[str, object]:
         """Get configuration information."""
         return {
-            "encoding": self._config.ldif_encoding,
+            "encoding": getattr(self._config, "ldif_encoding", "utf-8"),
             "max_entries": getattr(
                 self._config, "max_entries", self.DEFAULT_MAX_ENTRIES
             ),
@@ -1001,7 +1031,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
     ) -> list[str]:
         """Get required attributes for given object classes."""
         # Basic LDAP object class requirements
-        required_attrs = []
+        required_attrs: list[str] = []
 
         for oc in object_classes:
             oc_lower = oc.lower()
@@ -1034,14 +1064,14 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
 
     def _count_duplicate_dns(self, entries: list[FlextLdifModels.Entry]) -> int:
         """Count duplicate DN entries."""
-        dns = [entry.dn.value.lower() for entry in entries]
+        dns: list[str] = [entry.dn.value.lower() for entry in entries]
         return len(dns) - len(set(dns))
 
     def _count_invalid_dns(self, entries: list[FlextLdifModels.Entry]) -> int:
         """Count entries with invalid DN format."""
         count = 0
         for entry in entries:
-            result = self._ValidationHelper._validate_dn_structure(entry.dn)
+            result = self._LdifValidationHelper.validate_dn_structure(entry.dn)
             if result.is_failure:
                 count += 1
         return count

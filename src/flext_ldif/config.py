@@ -10,7 +10,7 @@ from typing import Self
 
 from pydantic import Field, field_validator, model_validator
 
-from flext_core import FlextConfig, FlextResult
+from flext_core import FlextConfig, FlextConstants, FlextResult
 from flext_ldif.constants import FlextLdifConstants
 
 
@@ -28,23 +28,23 @@ class FlextLdifConfig(FlextConfig):
     # LDIF-SPECIFIC CONFIGURATION FIELDS
     # =============================================================================
 
-    # LDIF Processing Configuration
+    # LDIF Processing Configuration - using FlextConstants as SOURCE OF TRUTH
     ldif_max_entries: int = Field(
-        default=1000000,
+        default=FlextConstants.Limits.MAX_LIST_SIZE * 100,  # 1,000,000
         description="Maximum number of LDIF entries to process in a single operation",
         ge=1,
         le=10000000,
     )
 
     ldif_max_line_length: int = Field(
-        default=8192,
+        default=FlextConstants.Utilities.BYTES_PER_KB * 8,  # 8192 bytes
         description="Maximum line length for LDIF parsing",
         ge=1,
         le=65536,
     )
 
     ldif_buffer_size: int = Field(
-        default=65536,
+        default=FlextConstants.Utilities.BYTES_PER_KB * 64,  # 65536 bytes
         description="Buffer size for LDIF file operations",
         ge=1024,
         le=1048576,
@@ -299,8 +299,11 @@ class FlextLdifConfig(FlextConfig):
             FlextResult[None]: Success or failure result
 
         """
+        # Check if configuration is sealed
         if self.is_sealed():
-            return FlextResult[None].fail("Cannot modify sealed configuration")
+            return FlextResult[None].fail(
+                "Cannot apply overrides to sealed configuration"
+            )
 
         try:
             for key, value in overrides.items():
@@ -386,10 +389,19 @@ class FlextLdifConfig(FlextConfig):
                 error_code="LDIF_CONFIG_INIT_ERROR",
             )
 
+    def seal(self) -> None:
+        """Seal configuration to prevent further modifications."""
+        # Mark configuration as sealed
+        self._sealed = True
+
+    def is_sealed(self) -> bool:
+        """Check if configuration is sealed."""
+        return getattr(self, "_sealed", False)
+
     @classmethod
     def reset_global_ldif_config(cls) -> None:
         """Reset global LDIF configuration (for testing)."""
-        FlextConfig.clear_global_instance()
+        FlextConfig.reset_global_instance()
 
 
 __all__ = ["FlextLdifConfig"]

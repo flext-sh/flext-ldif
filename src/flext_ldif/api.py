@@ -41,8 +41,8 @@ class FlextLdifAPI(FlextDomainService[dict[str, object]]):
     def __init__(self, config: FlextLdifConfig | None = None) -> None:
         """Initialize LDIF API with processor."""
         super().__init__()
-        self._config = config or FlextLdifConfig()
         self._logger = FlextLogger(__name__)
+        self._config = config
 
         # Initialize processor with error handling
         self._processor_result = self._initialize_processor()
@@ -187,8 +187,12 @@ class FlextLdifAPI(FlextDomainService[dict[str, object]]):
         """
         if transformer is None:
             # Default transformer - identity function
-            def transformer(entry: FlextLdifModels.Entry) -> FlextLdifModels.Entry:
+            def identity_transformer(
+                entry: FlextLdifModels.Entry,
+            ) -> FlextLdifModels.Entry:
                 return entry
+
+            transformer = identity_transformer
 
         return self._processor_result.flat_map(
             lambda processor: processor.transform_entries(entries, transformer)
@@ -207,7 +211,7 @@ class FlextLdifAPI(FlextDomainService[dict[str, object]]):
             self._processor_result.flat_map(
                 lambda processor: processor.analyze_entries(entries)
             )
-            .map(lambda stats: cast("dict[str, object]", stats))
+            .map(lambda stats: stats)
             .map(self._log_analysis_success)
         )
 

@@ -88,7 +88,11 @@ class TestFlextLdifModelsEntryReal:
                 "sn": ["User"],
             },
         }
-        entry = FlextLdifModels.create_entry(cast("FlextTypes.Core.Dict", entry_data))
+        entry_result = FlextLdifModels.create_entry(
+            cast("FlextTypes.Core.Dict", entry_data)
+        )
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         # Verify entry properties
         assert entry.dn is not None
@@ -116,7 +120,11 @@ class TestFlextLdifModelsEntryReal:
                 "telephoneNumber": ["+1-555-0123", "+1-555-0124", "+1-555-0125"],
             },
         }
-        entry = FlextLdifModels.create_entry(cast("FlextTypes.Core.Dict", entry_data))
+        entry_result = FlextLdifModels.create_entry(
+            cast("FlextTypes.Core.Dict", entry_data)
+        )
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         # Verify multi-valued attributes
         mail_values = entry.get_attribute("mail")
@@ -146,7 +154,11 @@ class TestFlextLdifModelsEntryReal:
                 "jpegPhoto": ["/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQ=="],
             },
         }
-        entry = FlextLdifModels.create_entry(cast("FlextTypes.Core.Dict", entry_data))
+        entry_result = FlextLdifModels.create_entry(
+            cast("FlextTypes.Core.Dict", entry_data)
+        )
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         # Verify binary attribute
         jpeg_photo = entry.get_attribute("jpegPhoto")
@@ -172,7 +184,11 @@ class TestFlextLdifModelsEntryReal:
                 "description": ["Contains special characters: áéíóú ÁÉÍÓÚ ñÑ çÇ"],
             },
         }
-        entry = FlextLdifModels.create_entry(cast("FlextTypes.Core.Dict", entry_data))
+        entry_result = FlextLdifModels.create_entry(
+            cast("FlextTypes.Core.Dict", entry_data)
+        )
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         # Verify special characters are preserved
         cn_values = entry.get_attribute("cn")
@@ -195,7 +211,11 @@ class TestFlextLdifModelsEntryReal:
                 "description": ["Original description"],
             },
         }
-        entry = FlextLdifModels.create_entry(cast("FlextTypes.Core.Dict", entry_data))
+        entry_result = FlextLdifModels.create_entry(
+            cast("FlextTypes.Core.Dict", entry_data)
+        )
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         # Test getting attributes
         uid_values = entry.get_attribute("uid")
@@ -221,7 +241,11 @@ class TestFlextLdifModelsEntryReal:
                 "sn": ["User"],
             },
         }
-        entry = FlextLdifModels.create_entry(cast("FlextTypes.Core.Dict", entry_data))
+        entry_result = FlextLdifModels.create_entry(
+            cast("FlextTypes.Core.Dict", entry_data)
+        )
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         # Test DN string representation
         dn_str = entry.dn.value
@@ -247,7 +271,11 @@ class TestFlextLdifModelsEntryReal:
                 "mail": ["valid.user@example.com"],
             },
         }
-        entry = FlextLdifModels.create_entry(cast("FlextTypes.Core.Dict", entry_data))
+        entry_result = FlextLdifModels.create_entry(
+            cast("FlextTypes.Core.Dict", entry_data)
+        )
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         # Should be able to validate business rules (if implemented)
         try:
@@ -272,7 +300,11 @@ class TestFlextLdifModelsEntryReal:
                 "sn": ["User"],
             },
         }
-        entry = FlextLdifModels.create_entry(cast("FlextTypes.Core.Dict", entry_data))
+        entry_result = FlextLdifModels.create_entry(
+            cast("FlextTypes.Core.Dict", entry_data)
+        )
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         # Should be able to convert to dict
         entry_dict = entry.model_dump()
@@ -454,7 +486,11 @@ class TestModelIntegrationReal:
                 "description": ["User for testing model integration"],
             },
         }
-        entry = FlextLdifModels.create_entry(cast("FlextTypes.Core.Dict", entry_data))
+        entry_result = FlextLdifModels.create_entry(
+            cast("FlextTypes.Core.Dict", entry_data)
+        )
+        assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
+        entry = entry_result.unwrap()
 
         # Verify all components work together
         assert entry.dn is not None
