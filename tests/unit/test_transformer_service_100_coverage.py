@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from flext_core import FlextResult
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.processor import FlextLdifProcessor
 
 
 class TestFlextLdifTransformerService:

@@ -14,11 +14,11 @@ from flext_ldif import FlextLdifConfig, FlextLdifConstants
 from flext_ldif.processor import FlextLdifProcessor
 
 
-class ConcreteTestService(FlextLdifBaseService):
-    """Concrete implementation for testing abstract base service."""
+class ConcreteTestService(FlextLdifProcessor):
+    """Concrete implementation for testing base service functionality."""
 
     def execute(self) -> FlextResult[str]:
-        """Concrete implementation of abstract execute method."""
+        """Override execute method for testing."""
         return FlextResult[str].ok("test_result")
 
 
