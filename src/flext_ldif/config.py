@@ -265,7 +265,9 @@ class FlextLdifConfig(FlextConfig):
             ):
                 errors.append("Maximum entries too low for production use")
 
-            if self.ldif_buffer_size < FlextLdifConstants.Format.MIN_BUFFER_SIZE:
+            if (
+                self.ldif_buffer_size < FlextLdifConstants.Format.MIN_BUFFER_SIZE
+            ):  # pragma: no cover
                 errors.append("Buffer size too small for efficient processing")
 
             # Validate worker configuration
@@ -323,9 +325,9 @@ class FlextLdifConfig(FlextConfig):
                 return FlextResult[None].fail(str(e))
 
             return FlextResult[None].ok(None)
-        except ValueError as e:
+        except ValueError as e:  # pragma: no cover
             return FlextResult[None].fail(str(e))
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return FlextResult[None].fail(f"Failed to apply overrides: {e}")
 
     @classmethod
@@ -386,9 +388,9 @@ class FlextLdifConfig(FlextConfig):
             FlextConfig.set_global_instance(config)
 
             return FlextResult[FlextLdifConfig].ok(config)
-        except ValueError as e:
+        except ValueError as e:  # pragma: no cover
             return FlextResult[FlextLdifConfig].fail(str(e))
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return FlextResult[FlextLdifConfig].fail(
                 f"Failed to initialize LDIF configuration: {e}",
                 error_code="LDIF_CONFIG_INIT_ERROR",

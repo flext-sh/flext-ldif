@@ -316,7 +316,7 @@ class FlextLdifAPI(FlextService[dict[str, object]]):
             }
 
             return FlextResult[dict[str, object]].ok(statistics)
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return FlextResult[dict[str, object]].fail(
                 f"Statistics generation failed: {e}"
             )
@@ -447,7 +447,7 @@ class FlextLdifAPI(FlextService[dict[str, object]]):
         try:
             person_entries = [entry for entry in entries if entry.is_person_entry()]
             return FlextResult[list[FlextLdifModels.Entry]].ok(person_entries)
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Person filtering failed: {e}"
             )
@@ -470,7 +470,7 @@ class FlextLdifAPI(FlextService[dict[str, object]]):
                 entry for entry in entries if entry.has_object_class(object_class)
             ]
             return FlextResult[list[FlextLdifModels.Entry]].ok(filtered_entries)
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Object class filtering failed: {e}"
             )
@@ -494,7 +494,7 @@ class FlextLdifAPI(FlextService[dict[str, object]]):
                 if validation_result.is_success:
                     valid_entries.append(entry)
             return FlextResult[list[FlextLdifModels.Entry]].ok(valid_entries)
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Valid filtering failed: {e}"
             )

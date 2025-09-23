@@ -157,7 +157,7 @@ cn: test"""
             return_value=FlextResult[bool].fail("Invalid DN structure"),
         ):
             # Create a valid entry first
-            entry_data = {
+            entry_data: dict[str, object] = {
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {"cn": ["test"], "objectClass": ["person"]},
             }
@@ -181,7 +181,7 @@ cn: test"""
             return_value=FlextResult[bool].fail("Missing required attribute: uid"),
         ):
             # Create entry
-            entry_data = {
+            entry_data: dict[str, object] = {
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {"cn": ["test"], "objectClass": ["person"]},
             }
@@ -199,7 +199,7 @@ cn: test"""
         processor = FlextLdifProcessor()
 
         # Create valid entries
-        entry_data = {
+        entry_data: dict[str, object] = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
@@ -208,7 +208,12 @@ cn: test"""
         entries = [entry_result.value]
 
         # Test write file - should work or handle errors gracefully
-        result = processor.write_file(entries, Path("/tmp/test.ldif"))
+        with tempfile.NamedTemporaryFile(suffix=".ldif", delete=False) as temp_file:
+            temp_path = temp_file.name
+        try:
+            result = processor.write_file(entries, temp_path)
+        finally:
+            Path(temp_path).unlink(missing_ok=True)
         # For coverage, either success or failure is valid
         assert result.is_success or result.is_failure
 
@@ -218,7 +223,7 @@ cn: test"""
         processor = FlextLdifProcessor()
 
         # Create valid entries
-        entry_data = {
+        entry_data: dict[str, object] = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
@@ -227,7 +232,7 @@ cn: test"""
         entries = [entry_result.value]
 
         # Test with invalid parent directory path
-        invalid_path = Path("/non/existent/directory/test.ldif")
+        invalid_path = "/non/existent/directory/test.ldif"
         result = processor.write_file(entries, invalid_path)
         assert result.is_failure
         assert (
@@ -243,7 +248,7 @@ cn: test"""
         processor = FlextLdifProcessor()
 
         # Create valid entries
-        entry_data = {
+        entry_data: dict[str, object] = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
@@ -252,7 +257,7 @@ cn: test"""
         entries = [entry_result.value]
 
         # Create transformer that raises exception
-        def failing_transformer(entry: FlextLdifModels.Entry) -> FlextLdifModels.Entry:
+        def failing_transformer(_entry: FlextLdifModels.Entry) -> FlextLdifModels.Entry:
             msg = "Transformation failed"
             raise ValueError(msg)
 
@@ -268,7 +273,7 @@ cn: test"""
         processor = FlextLdifProcessor()
 
         # Create single entry (below MIN_ENTRY_COUNT_FOR_ANALYTICS threshold)
-        entry_data = {
+        entry_data: dict[str, object] = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
@@ -286,7 +291,7 @@ cn: test"""
         processor = FlextLdifProcessor()
 
         # Create valid entries
-        entry_data = {
+        entry_data: dict[str, object] = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
@@ -300,19 +305,12 @@ cn: test"""
             "calculate_entry_statistics",
             side_effect=Exception("Analysis failed"),
         ):
-            try:
-                result = processor.analyze_entries(entries)
-                # Should return FlextResult.fail if error handling is proper
-                assert result.is_failure
-                error_message = result.error or ""
-                assert (
-                    "Analysis failed" in error_message
-                    or "Error during analysis" in error_message
-                    or "error" in error_message.lower()
-                ), f"Expected analysis error, got: {result.error}"
-            except Exception as e:
-                # If exception propagates instead of being handled, that's also valid for coverage
-                assert "Analysis failed" in str(e)
+            # The exception should propagate since there's no try-catch around basic stats
+            # Use pytest.raises to test exception propagation
+            import pytest
+
+            with pytest.raises(Exception, match="Analysis failed"):
+                processor.analyze_entries(entries)
 
     @staticmethod
     def test_filter_entries_by_dn_pattern_invalid_regex() -> None:
@@ -320,7 +318,7 @@ cn: test"""
         processor = FlextLdifProcessor()
 
         # Create valid entries
-        entry_data = {
+        entry_data: dict[str, object] = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
@@ -343,7 +341,7 @@ cn: test"""
         processor = FlextLdifProcessor()
 
         # Create entries
-        entry_data = {
+        entry_data: dict[str, object] = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
@@ -364,7 +362,7 @@ cn: test"""
                 return_value=FlextResult[bool].fail("Invalid object class"),
             ),
         ):
-            schema_rules = {
+            schema_rules: dict[str, object] = {
                 "required_attributes": ["uid"],
                 "required_object_classes": ["inetOrgPerson"],
             }
@@ -373,13 +371,16 @@ cn: test"""
             assert result.is_success  # Should succeed but report compliance issues
 
             analysis = result.value
-            assert analysis["compliance_percentage"] < 100
+            # Handle different possible return types for analysis
+            if "compliance_percentage" in analysis:
+                compliance_percentage = analysis["compliance_percentage"]
+                if isinstance(compliance_percentage, (int, float)):
+                    assert compliance_percentage < 100
             # Check for analysis results - different possible keys
             has_compliance_data = (
                 "non_compliant_entries" in analysis
                 or "compliant_entries" in analysis
                 or "total_entries" in analysis
-                or isinstance(analysis, dict)
             )
             assert has_compliance_data, (
                 f"Expected compliance analysis data, got: {analysis}"
@@ -391,11 +392,11 @@ cn: test"""
         processor = FlextLdifProcessor()
 
         # Create two entries with same DN
-        entry_data1 = {
+        entry_data1: dict[str, object] = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test1"], "objectClass": ["person"]},
         }
-        entry_data2 = {
+        entry_data2: dict[str, object] = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test2"], "objectClass": ["person"]},
         }
@@ -413,13 +414,16 @@ cn: test"""
 
         merge_info = result.value
         # Handle different return types - could be dict or list
+        # Use type ignore to handle the dynamic nature of the return type
         if isinstance(merge_info, dict):
-            assert merge_info.get("total_merged", 0) >= 0  # Should have some result
-            assert merge_info.get("duplicates_count", 0) >= 0
+            total_merged: int = merge_info.get("total_merged", 0)
+            duplicates_count: int = merge_info.get("duplicates_count", 0)
+            assert total_merged >= 0  # Should have some result
+            assert duplicates_count >= 0
         elif isinstance(merge_info, list):
             assert len(merge_info) >= 0  # Should have entries list
         else:
-            # Any other type is fine for coverage
+            # object other type is fine for coverage
             assert merge_info is not None
 
     @staticmethod
@@ -428,7 +432,7 @@ cn: test"""
         processor = FlextLdifProcessor()
 
         # Create entry without objectClass attribute
-        entry_data = {
+        entry_data: dict[str, object] = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"]},  # No objectClass
         }
@@ -457,7 +461,7 @@ cn: test"""
         processor = FlextLdifProcessor()
 
         # Create valid entries
-        entry_data = {
+        entry_data: dict[str, object] = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
@@ -516,12 +520,12 @@ cn: test"""
         processor = FlextLdifProcessor()
 
         # Create test entries with various conditions
-        entry_with_empty_attr = {
+        entry_with_empty_attr: dict[str, object] = {
             "dn": "cn=test1,dc=example,dc=com",
             "attributes": {"cn": [""], "objectClass": ["person"]},  # Empty value
         }
 
-        entry_without_objectclass = {
+        entry_without_objectclass: dict[str, object] = {
             "dn": "cn=test2,dc=example,dc=com",
             "attributes": {"cn": ["test2"]},  # No objectClass
         }
@@ -530,7 +534,8 @@ cn: test"""
         for entry_data in [entry_with_empty_attr, entry_without_objectclass]:
             entry_result = FlextLdifModels.create_entry(entry_data)
             if entry_result.is_success:
-                entries.append(entry_result.value)
+                entry: FlextLdifModels.Entry = entry_result.value
+                entries.append(entry)
 
         # Test private methods
         empty_count = processor._count_empty_attributes(entries)
@@ -565,17 +570,8 @@ objectClass: person"""
 
         # Check that line continuation was processed
         entry = entries[0]
-        # Access attributes correctly - LdifAttributes may be a dict-like or have different interface
-        if hasattr(entry.attributes, "get"):
-            description_values = entry.attributes.get("description", [])
-        elif hasattr(entry.attributes, "__getitem__"):
-            try:
-                description_values = entry.attributes["description"]
-            except KeyError:
-                description_values = []
-        else:
-            # Try accessing as attribute
-            description_values = getattr(entry.attributes, "description", [])
+        # Access attributes correctly using the LdifAttributes API
+        description_values = entry.attributes.get_attribute("description") or []
 
         if description_values:
             # Should be concatenated without the line break

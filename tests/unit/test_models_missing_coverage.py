@@ -19,7 +19,7 @@ class TestFlextLdifModelsMissingCoverage:
     def test_create_entry_with_invalid_dn_object() -> None:
         """Test create_entry with invalid DN object type."""
         # Test with DN as invalid object type
-        invalid_entry_data = {
+        invalid_entry_data: dict[str, object] = {
             "dn": {"invalid": "dn_object"},  # Invalid DN type
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
@@ -32,7 +32,7 @@ class TestFlextLdifModelsMissingCoverage:
     def test_create_entry_with_invalid_attributes_object() -> None:
         """Test create_entry with invalid attributes object type."""
         # Test with attributes as invalid object type
-        invalid_entry_data = {
+        invalid_entry_data: dict[str, object] = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": "invalid_attributes_type",  # Should be dict
         }
@@ -84,7 +84,7 @@ class TestFlextLdifModelsMissingCoverage:
     def test_entry_business_rules_validation_edge_cases() -> None:
         """Test Entry business rules validation with edge cases."""
         # Test with minimal DN components
-        minimal_dn_entry = {
+        minimal_dn_entry: dict[str, object] = {
             "dn": "cn=test",  # Very minimal DN
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
@@ -94,18 +94,14 @@ class TestFlextLdifModelsMissingCoverage:
             entry = result.value
             # Test business rules validation if it exists
             if hasattr(entry, "validate_business_rules"):
-                try:
-                    validation_result = entry.validate_business_rules()
-                    assert validation_result is not None
-                except Exception:
-                    # If validation fails, that's fine - we're testing error paths
-                    pass
+                validation_result = entry.validate_business_rules()
+                assert validation_result is not None
 
     @staticmethod
     def test_entry_object_class_methods_coverage() -> None:
         """Test Entry object class checking methods for coverage."""
         # Create entries with different object classes
-        test_entries = [
+        test_entries: list[dict[str, object]] = [
             {
                 "dn": "cn=person,dc=example,dc=com",
                 "attributes": {"cn": ["person"], "objectClass": ["person", "top"]},
@@ -148,7 +144,7 @@ class TestFlextLdifModelsMissingCoverage:
     @staticmethod
     def test_entry_attribute_access_methods() -> None:
         """Test Entry attribute access methods for coverage."""
-        entry_data = {
+        entry_data: dict[str, object] = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {
                 "cn": ["test", "test2"],  # Multi-valued
@@ -189,15 +185,15 @@ class TestFlextLdifModelsMissingCoverage:
         ]
 
         for url in test_urls:
-            if hasattr(FlextLdifModels, "create_url"):
-                result = FlextLdifModels.create_url(url)
-                # Should either succeed for valid URLs or fail for invalid ones
-                assert result.is_success or result.is_failure
+            # Test URL creation using LdifUrl class directly
+            result = FlextLdifModels.LdifUrl.create(url)
+            # Should either succeed for valid URLs or fail for invalid ones
+            assert result.is_success or result.is_failure
 
     @staticmethod
     def test_model_serialization_methods() -> None:
         """Test model serialization methods for coverage."""
-        entry_data = {
+        entry_data: dict[str, object] = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
@@ -209,27 +205,21 @@ class TestFlextLdifModelsMissingCoverage:
         # Test various serialization methods if they exist
         serialization_methods = [
             "model_dump",
-            "dict",
-            "json",
             "model_dump_json",
             "__dict__",
         ]
 
         for method_name in serialization_methods:
             if hasattr(entry, method_name):
-                try:
-                    method = getattr(entry, method_name)
-                    result = method() if callable(method) else method
-                    assert result is not None
-                except Exception:
-                    # If serialization fails, that's fine - we're testing coverage
-                    pass
+                method = getattr(entry, method_name)
+                result = method() if callable(method) else method
+                assert result is not None
 
     @staticmethod
     def test_model_validation_error_paths() -> None:
         """Test model validation error paths for coverage."""
         # Test various invalid model data that should trigger validation errors
-        invalid_model_data = [
+        invalid_model_data: list[dict[str, object]] = [
             # Invalid DN formats
             {"dn": "", "attributes": {}},  # Empty DN
             {"dn": "invalid_dn_format", "attributes": {}},  # Invalid DN format
@@ -245,13 +235,17 @@ class TestFlextLdifModelsMissingCoverage:
         ]
 
         for invalid_data in invalid_model_data:
-            try:
-                result = FlextLdifModels.create_entry(invalid_data)
-                # Should fail validation
+            result = FlextLdifModels.create_entry(invalid_data)
+            # Some validation errors should fail, others might succeed
+            # Empty DN should fail, empty attribute values are actually valid
+            if invalid_data.get("dn") in {"", "invalid_dn_format"}:
                 assert result.is_failure
-            except Exception:
-                # If it raises an exception instead of returning a failed result, that's also fine
-                pass
+            elif invalid_data.get("attributes") == {"": ["value"]}:
+                # Empty attribute name should fail
+                assert result.is_failure
+            else:
+                # Empty attribute values are valid in LDAP
+                assert result.is_success or result.is_failure
 
     @staticmethod
     def test_factory_method_error_handling() -> None:
@@ -259,24 +253,20 @@ class TestFlextLdifModelsMissingCoverage:
         # Test factory methods with data that might cause internal errors
 
         # Test with data that could cause processing errors in factory methods
-        edge_case_data = [
+        edge_case_data: list[dict[str, object]] = [
             {"dn": None, "attributes": {"cn": ["test"]}},  # None DN
             {"dn": "cn=test,dc=example,dc=com", "attributes": None},  # None attributes
         ]
 
         for invalid_data in edge_case_data:
-            try:
-                result = FlextLdifModels.create_entry(invalid_data)
-                # Should handle processing errors gracefully
-                assert result.is_failure or result.is_success  # Either outcome is valid
-            except Exception:
-                # If it raises an exception, that's also fine for error handling coverage
-                pass
+            result = FlextLdifModels.create_entry(invalid_data)
+            # Should handle processing errors gracefully
+            assert result.is_failure or result.is_success  # Either outcome is valid
 
     @staticmethod
     def test_model_private_methods() -> None:
         """Test private model methods for coverage."""
-        entry_data = {
+        entry_data: dict[str, object] = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
@@ -295,19 +285,15 @@ class TestFlextLdifModelsMissingCoverage:
 
         for method_name in private_methods:
             if hasattr(entry, method_name):
-                try:
-                    method = getattr(entry, method_name)
-                    if callable(method):
-                        # Try to call with reasonable parameters
-                        if "dn" in method_name:
-                            method("cn=test,dc=example,dc=com")
-                        elif "attributes" in method_name:
-                            method({"cn": ["test"]})
-                        else:
-                            method()
-                except Exception:
-                    # If private methods fail, that's fine - we're testing coverage
-                    pass
+                method = getattr(entry, method_name)
+                if callable(method):
+                    # Try to call with reasonable parameters
+                    if "dn" in method_name:
+                        method("cn=test,dc=example,dc=com")
+                    elif "attributes" in method_name:
+                        method({"cn": ["test"]})
+                    else:
+                        method()
 
     @staticmethod
     def test_config_model_coverage() -> None:
@@ -321,18 +307,10 @@ class TestFlextLdifModelsMissingCoverage:
             )
 
             if config_class:
-                try:
-                    # Test config creation with various parameters
-                    config = config_class()
-                    assert config is not None
+                # Test config creation with various parameters
+                config = config_class()
+                assert config is not None
 
-                    # Test config methods if they exist
-                    if hasattr(config, "validate"):
-                        try:
-                            config.validate({"test": "value"})
-                        except Exception:
-                            pass
-
-                except Exception:
-                    # If config creation fails, that's fine - we're testing coverage
-                    pass
+                # Test config methods if they exist
+                if hasattr(config, "validate"):
+                    config.validate({"test": "value"})
