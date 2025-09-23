@@ -8,13 +8,13 @@ from __future__ import annotations
 
 import os
 import tempfile
-from collections.abc import Callable, Collection, Generator
+from collections.abc import Callable, Generator
 from pathlib import Path
 from typing import ClassVar
 
 import pytest
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextConstants, FlextResult, FlextTypes
 from flext_ldif import FlextLdifAPI
 from flext_tests import (
     FlextTestsBuilders,
@@ -59,7 +59,7 @@ def set_test_environment() -> Generator[None]:
 def ldif_processor_config() -> FlextTypes.Core.Dict:
     """LDIF processor configuration for testing."""
     return {
-        "encoding": "utf-8",
+        "encoding": FlextConstants.Mixins.DEFAULT_ENCODING,
         "strict_parsing": True,
         "max_entries": 10000,
         "validate_dn": True,
@@ -239,6 +239,15 @@ def ldap_schema_config() -> FlextTypes.Core.Dict:
 @pytest.fixture
 def transformation_rules() -> FlextTypes.Core.Dict:
     """Provide transformation rules for LDIF processing."""
+
+    def _transform_mail(x: str | float | None) -> str:
+        """Transform mail attribute to lowercase."""
+        return str(x).lower() if x else ""
+
+    def _transform_cn(x: str | float | None) -> str:
+        """Transform cn attribute to title case."""
+        return str(x).title() if x else ""
+
     return {
         "attribute_mappings": {
             "telephoneNumber": "phone",
@@ -246,8 +255,8 @@ def transformation_rules() -> FlextTypes.Core.Dict:
             "departmentNumber": "department",
         },
         "value_transformations": {
-            "mail": lambda x: str(x).lower() if x else "",
-            "cn": lambda x: str(x).title() if x else "",
+            "mail": _transform_mail,
+            "cn": _transform_cn,
         },
         "dn_transformations": {
             "base_dn": "dc=newdomain,dc=com",
@@ -358,19 +367,19 @@ def flext_utilities() -> FlextTestsUtilities:
 
 # LDIF-specific test data using FlextTests patterns
 @pytest.fixture
-def ldif_test_entries() -> list[dict[str, Collection[str] | str]]:
+def ldif_test_entries() -> list[FlextTypes.Core.Dict]:
     """Generate LDIF test entries using FlextTests domain patterns."""
     # Create realistic LDIF entries using domain patterns
     # Create test users using FlextTestsDomains patterns
-    users = [
+    users: list[dict[str, str]] = [
         {"name": "Test User 1", "email": "user1@example.com"},
         {"name": "Test User 2", "email": "user2@example.com"},
         {"name": "Test User 3", "email": "user3@example.com"},
     ]
-    entries = []
+    entries: list[FlextTypes.Core.Dict] = []
 
     for i, user in enumerate(users):
-        entry = {
+        entry: FlextTypes.Core.Dict = {
             "dn": f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com",
             "attributes": {
                 "objectClass": ["inetOrgPerson", "person"],
@@ -387,32 +396,41 @@ def ldif_test_entries() -> list[dict[str, Collection[str] | str]]:
         entries.append(entry)
 
     # Add a group entry
-    entries.append(
-        {
-            "dn": "cn=testgroup,ou=groups,dc=example,dc=com",
-            "attributes": {
-                "objectClass": ["groupOfNames"],
-                "cn": ["Test Group"],
-                "description": ["Test group for LDIF processing"],
-                "member": [entry["dn"] for entry in entries],
-            },
+    group_entry: FlextTypes.Core.Dict = {
+        "dn": "cn=testgroup,ou=groups,dc=example,dc=com",
+        "attributes": {
+            "objectClass": ["groupOfNames"],
+            "cn": ["Test Group"],
+            "description": ["Test group for LDIF processing"],
+            "member": [entry["dn"] for entry in entries],
         },
-    )
+    }
+    entries.append(group_entry)
 
     return entries
 
 
 @pytest.fixture
-def ldif_test_content(ldif_test_entries: list[dict[str, object]]) -> str:
+def ldif_test_content(ldif_test_entries: list[FlextTypes.Core.Dict]) -> str:
     """Generate LDIF content string from test entries."""
-    content_lines = []
+    content_lines: list[str] = []
 
     for entry in ldif_test_entries:
         content_lines.append(f"dn: {entry['dn']}")
         attributes = entry["attributes"]
         assert isinstance(attributes, dict), "attributes must be a dictionary"
-        for attr, values in attributes.items():
-            content_lines.extend(f"{attr}: {value}" for value in values)
+
+        # Process attributes - all values are lists of strings based on actual structure
+        for attr_key, attr_values in attributes.items():
+            attr_name = f"{attr_key!s}"
+            # Based on actual code structure, all attribute values are lists
+            if isinstance(attr_values, list):
+                content_lines.extend(
+                    f"{attr_name}: {value_item!s}" for value_item in attr_values
+                )
+            else:
+                # Fallback for single values (shouldn't happen based on structure)
+                content_lines.append(f"{attr_name}: {attr_values!s}")
         content_lines.append("")  # Empty line between entries
 
     return "\n".join(content_lines)
@@ -522,9 +540,11 @@ class LDIFTestConstants:
 
     # Performance test parameters
     PERFORMANCE_THRESHOLDS: ClassVar[dict[str, object]] = {
-        "max_parse_time_per_entry": 0.001,  # 1ms per entry
-        "max_memory_per_entry": 1024,  # 1KB per entry
-        "max_total_parse_time": 10.0,  # 10 seconds total
+        "max_parse_time_per_entry": FlextConstants.Performance.AUTH_PERFORMANCE_WARNING_MS
+        / 1_000_000.0,  # 1ms per entry
+        "max_memory_per_entry": FlextConstants.Utilities.BYTES_PER_KB,  # 1KB per entry
+        "max_total_parse_time": FlextConstants.Performance.CLI_PERFORMANCE_CRITICAL_MS
+        / 1000.0,  # 10 seconds total
         "batch_sizes": [1, 10, 100, 1000],
     }
 

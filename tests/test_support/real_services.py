@@ -68,7 +68,7 @@ class RealServiceFactory:
         max_line_length: int = 76,
     ) -> FlextLdifAPI:
         """Create API with specific configuration."""
-        config = {
+        config: FlextTypes.Core.Dict = {
             "strict_parsing": strict_parsing,
             "validate_dn": validate_dn,
             "max_entries": max_entries,

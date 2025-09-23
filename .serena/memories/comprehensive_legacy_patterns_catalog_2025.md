@@ -99,7 +99,7 @@
 **Priority**: CRITICAL - Violate core architectural principles
 
 1. **FlextWebConfigs → FlextWebService** (Unified Service Pattern)
-   - Convert container class to FlextDomainService
+   - Convert container class to FlextService
    - Migrate static methods to instance methods with FlextResult
    - Update all 4+ usage locations
    - Maintain API compatibility during transition

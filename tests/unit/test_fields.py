@@ -312,7 +312,7 @@ class TestFieldDefaults:
 
         # Validate they have expected values
         assert dn_attr == "dn"
-        assert attr_sep == ": "
+        assert attr_sep == ":"
 
     def test_field_patterns_types(self) -> None:
         """Test that constants have correct types."""

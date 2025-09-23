@@ -282,7 +282,7 @@ For FLEXT ecosystem integration patterns, see [flext-core documentation](../../f
 
 - FlextResult error handling
 - FlextContainer dependency injection
-- FlextDomainService architecture
+- FlextService architecture
 - Type safety with Pydantic v2
 
 Focus on LDIF-specific concerns:

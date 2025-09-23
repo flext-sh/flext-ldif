@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import re
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
@@ -14,14 +13,13 @@ from typing import cast
 
 from pydantic import ConfigDict
 
-from flext_core import FlextDomainService, FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextService
+from flext_ldif.config import FlextLdifConfig
+from flext_ldif.models import FlextLdifModels
+from flext_ldif.processor import FlextLdifProcessor
 
-from .config import FlextLdifConfig
-from .models import FlextLdifModels
-from .processor import FlextLdifProcessor
 
-
-class FlextLdifAPI(FlextDomainService[dict[str, object]]):
+class FlextLdifAPI(FlextService[dict[str, object]]):
     """Unified LDIF API for direct LDIF processing operations.
 
     Provides a single interface for all LDIF processing operations including
@@ -64,7 +62,7 @@ class FlextLdifAPI(FlextDomainService[dict[str, object]]):
             return FlextResult[FlextLdifProcessor].fail(error_msg)
 
     def execute(self) -> FlextResult[dict[str, object]]:
-        """Execute health check operation - required by FlextDomainService.
+        """Execute health check operation - required by FlextService.
 
         Returns:
             FlextResult[dict[str, object]]: Health check status information.
@@ -86,15 +84,6 @@ class FlextLdifAPI(FlextDomainService[dict[str, object]]):
         return self._processor_result.flat_map(
             lambda processor: processor.parse_string(content)
         ).map(self._log_parse_success)
-
-    def parse_string(self, content: str) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Parse LDIF content string into entries (alias for parse).
-
-        Returns:
-            FlextResult[list[FlextLdifModels.Entry]]: Success with parsed entries or failure with error message.
-
-        """
-        return self.parse(content)
 
     def parse_ldif_file(
         self, file_path: Path | str
@@ -120,15 +109,15 @@ class FlextLdifAPI(FlextDomainService[dict[str, object]]):
             FlextResult[list[FlextLdifModels.Entry]]: Success with validated entries or failure with error message.
 
         """
-        return (
-            self._processor_result.flat_map(
-                lambda processor: processor.validate_entries(entries)
-            )
-            .map(
-                lambda _: entries
-            )  # Return the original entries if validation succeeds
-            .map(self._log_validation_success_with_entries)
-            .recover(lambda _: [])  # Return empty list on validation failure
+        validation_result = self._processor_result.flat_map(
+            lambda processor: processor.validate_entries(entries)
+        )
+
+        if validation_result.is_success:
+            self._log_validation_success_with_entries(entries)
+            return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+        return FlextResult[list[FlextLdifModels.Entry]].fail(
+            validation_result.error or "Validation failed"
         )
 
     def write(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
@@ -141,15 +130,6 @@ class FlextLdifAPI(FlextDomainService[dict[str, object]]):
         return self._processor_result.flat_map(
             lambda processor: processor.write_string(entries)
         ).map(self._log_write_success)
-
-    def write_string(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
-        """Write entries to LDIF format string (alias for write).
-
-        Returns:
-            FlextResult[str]: Success with LDIF content string or failure with error message.
-
-        """
-        return self.write(entries)
 
     def write_file(
         self, entries: list[FlextLdifModels.Entry], file_path: Path | str
@@ -295,37 +275,6 @@ class FlextLdifAPI(FlextDomainService[dict[str, object]]):
     # ADDITIONAL API METHODS - Enhanced functionality
     # =============================================================================
 
-    def by_object_class(
-        self, entries: list[FlextLdifModels.Entry], object_class: str
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Filter entries by object class.
-
-        Returns:
-            FlextResult[list[FlextLdifModels.Entry]]: Success with filtered entries or failure with error message.
-
-        """
-
-        def object_class_filter(entry: FlextLdifModels.Entry) -> bool:
-            object_classes = entry.get_attribute("objectClass") or []
-            return any(oc.lower() == object_class.lower() for oc in object_classes)
-
-        return self.filter_entries(entries, object_class_filter)
-
-    def by_dn_pattern(
-        self, entries: list[FlextLdifModels.Entry], pattern: str
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Filter entries by DN pattern.
-
-        Returns:
-            FlextResult[list[FlextLdifModels.Entry]]: Success with filtered entries or failure with error message.
-
-        """
-
-        def dn_pattern_filter(entry: FlextLdifModels.Entry) -> bool:
-            return bool(re.search(pattern, entry.dn.value))
-
-        return self.filter_entries(entries, dn_pattern_filter)
-
     def entry_statistics(
         self, entries: list[FlextLdifModels.Entry]
     ) -> FlextResult[dict[str, object]]:
@@ -355,38 +304,21 @@ class FlextLdifAPI(FlextDomainService[dict[str, object]]):
                 # Track DN depths
                 dn_depths.append(entry.dn.depth)
 
-            statistics = {
-                "total_entries": total_entries,
-                "object_class_counts": object_class_counts,
-                "attribute_counts": attribute_counts,
-                "average_dn_depth": sum(dn_depths) / len(dn_depths) if dn_depths else 0,
-                "max_dn_depth": max(dn_depths) if dn_depths else 0,
-                "min_dn_depth": min(dn_depths) if dn_depths else 0,
+            statistics: dict[str, object] = {
+                "total_entries": cast("object", total_entries),
+                "object_class_counts": cast("object", object_class_counts),
+                "attribute_counts": cast("object", attribute_counts),
+                "average_dn_depth": cast(
+                    "object", sum(dn_depths) / len(dn_depths) if dn_depths else 0
+                ),
+                "max_dn_depth": cast("object", max(dn_depths) if dn_depths else 0),
+                "min_dn_depth": cast("object", min(dn_depths) if dn_depths else 0),
             }
 
             return FlextResult[dict[str, object]].ok(statistics)
         except Exception as e:
             return FlextResult[dict[str, object]].fail(
                 f"Statistics generation failed: {e}"
-            )
-
-    def find_entry_by_dn(
-        self, entries: list[FlextLdifModels.Entry], dn: str
-    ) -> FlextResult[FlextLdifModels.Entry | None]:
-        """Find entry by DN from provided entries list.
-
-        Returns:
-            FlextResult[FlextLdifModels.Entry | None]: Success with found entry or None, failure with error message.
-
-        """
-        try:
-            for entry in entries:
-                if entry.dn.value.lower() == dn.lower():
-                    return FlextResult[FlextLdifModels.Entry | None].ok(entry)
-            return FlextResult[FlextLdifModels.Entry | None].ok(None)
-        except Exception as e:
-            return FlextResult[FlextLdifModels.Entry | None].fail(
-                f"DN search failed: {e}"
             )
 
     # =============================================================================
@@ -520,30 +452,6 @@ class FlextLdifAPI(FlextDomainService[dict[str, object]]):
                 f"Person filtering failed: {e}"
             )
 
-    def sort_hierarchically(
-        self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Sort entries hierarchically by DN.
-
-        Args:
-            entries: List of LDIF entries to sort
-
-        Returns:
-            FlextResult[list[FlextLdifModels.Entry]]: Hierarchically sorted entries
-
-        """
-        try:
-            # Sort by DN length first (shorter DNs are higher in hierarchy)
-            # Then alphabetically
-            sorted_entries = sorted(
-                entries, key=lambda e: (len(e.dn.value), e.dn.value)
-            )
-            return FlextResult[list[FlextLdifModels.Entry]].ok(sorted_entries)
-        except Exception as e:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
-                f"Hierarchical sorting failed: {e}"
-            )
-
     def filter_by_objectclass(
         self, entries: list[FlextLdifModels.Entry], object_class: str
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
@@ -567,20 +475,6 @@ class FlextLdifAPI(FlextDomainService[dict[str, object]]):
                 f"Object class filtering failed: {e}"
             )
 
-    def validate_entries_alias(
-        self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Alias for validate_entries method for convenience.
-
-        Args:
-            entries: List of LDIF entries to validate
-
-        Returns:
-            FlextResult[list[FlextLdifModels.Entry]]: Validated entries
-
-        """
-        return self.validate_entries(entries)
-
     def filter_valid(
         self, entries: list[FlextLdifModels.Entry]
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
@@ -594,7 +488,7 @@ class FlextLdifAPI(FlextDomainService[dict[str, object]]):
 
         """
         try:
-            valid_entries = []
+            valid_entries: list[FlextLdifModels.Entry] = []
             for entry in entries:
                 validation_result = entry.validate_business_rules()
                 if validation_result.is_success:

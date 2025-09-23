@@ -40,7 +40,7 @@
 
 ## Integration Dependencies
 
-- **flext-core**: Foundation library (FlextResult, FlextContainer, FlextDomainService)
+- **flext-core**: Foundation library (FlextResult, FlextContainer, FlextService)
 - **flext-cli**: CLI framework (NO direct Click/Rich imports)
 - **flext-ldap**: LDAP operations integration
 - **flext-observability**: Monitoring and logging

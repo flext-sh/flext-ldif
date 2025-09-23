@@ -31,12 +31,13 @@ class TestFlextLdifConstants:
         ):
             # Create mock FlextConstants base class
             mock_constants_class = type("FlextConstants", (), {})
-            sys.modules["flext_core"].FlextConstants = mock_constants_class
+            # Use setattr to avoid PyRight attribute access issues
+            setattr(sys.modules["flext_core"], "FlextConstants", mock_constants_class)
 
             # Create mock FlextTypes with Config
             mock_config_class = type("Config", (), {})
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
-            sys.modules["flext_core"].FlextTypes = mock_types_class
+            setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
                 import flext_ldif.constants
@@ -59,11 +60,11 @@ class TestFlextLdifConstants:
         ):
             # Create comprehensive mocks
             mock_constants_class = type("FlextConstants", (), {})
-            sys.modules["flext_core"].FlextConstants = mock_constants_class
+            setattr(sys.modules["flext_core"], "FlextConstants", mock_constants_class)
 
             mock_config_class = type("Config", (), {})
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
-            sys.modules["flext_core"].FlextTypes = mock_types_class
+            setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
                 import flext_ldif.constants
@@ -71,12 +72,10 @@ class TestFlextLdifConstants:
                 constants = flext_ldif.constants.FlextLdifConstants
 
                 # Test that key constants exist (these should be defined)
-                assert hasattr(constants, "DEFAULT_MAX_ENTRIES") or hasattr(
-                    constants, "MAX_ENTRIES"
-                )
-                assert hasattr(constants, "DEFAULT_CHUNK_SIZE") or hasattr(
-                    constants, "CHUNK_SIZE"
-                )
+                assert hasattr(constants, "Format")
+                assert hasattr(constants, "Processing")
+                assert hasattr(constants, "ObjectClasses")
+                assert hasattr(constants, "Validation")
 
             except (ImportError, AttributeError):
                 pytest.skip(
@@ -95,11 +94,11 @@ class TestFlextLdifConstants:
             },
         ):
             mock_constants_class = type("FlextConstants", (), {})
-            sys.modules["flext_core"].FlextConstants = mock_constants_class
+            setattr(sys.modules["flext_core"], "FlextConstants", mock_constants_class)
 
             mock_config_class = type("Config", (), {})
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
-            sys.modules["flext_core"].FlextTypes = mock_types_class
+            setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
                 import flext_ldif.constants
@@ -107,9 +106,8 @@ class TestFlextLdifConstants:
                 constants = flext_ldif.constants.FlextLdifConstants
 
                 # Test validation constants exist
-                assert hasattr(constants, "DEFAULT_VALIDATION_ENABLED") or hasattr(
-                    constants, "VALIDATION_ENABLED"
-                )
+                assert hasattr(constants, "LdifValidation")
+                assert hasattr(constants.LdifValidation, "MIN_DN_COMPONENTS")
 
             except (ImportError, AttributeError):
                 pytest.skip("Cannot test validation constants due to issues")
@@ -126,21 +124,21 @@ class TestFlextLdifConstants:
             },
         ):
             mock_constants_class = type("FlextConstants", (), {})
-            sys.modules["flext_core"].FlextConstants = mock_constants_class
+            setattr(sys.modules["flext_core"], "FlextConstants", mock_constants_class)
 
             mock_config_class = type("Config", (), {})
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
-            sys.modules["flext_core"].FlextTypes = mock_types_class
+            setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
                 import flext_ldif.constants
 
                 constants = flext_ldif.constants.FlextLdifConstants
 
-                # Test error message constants
-                assert hasattr(constants, "ERROR_EMPTY_ENTRY") or hasattr(
-                    constants, "EMPTY_ENTRY_ERROR"
-                )
+                # Test format constants exist
+                assert hasattr(constants, "Format")
+                assert hasattr(constants.Format, "DN_ATTRIBUTE")
+                assert hasattr(constants.Format, "ATTRIBUTE_SEPARATOR")
 
             except (ImportError, AttributeError):
                 pytest.skip("Cannot test error constants due to issues")
@@ -157,21 +155,21 @@ class TestFlextLdifConstants:
             },
         ):
             mock_constants_class = type("FlextConstants", (), {})
-            sys.modules["flext_core"].FlextConstants = mock_constants_class
+            setattr(sys.modules["flext_core"], "FlextConstants", mock_constants_class)
 
             mock_config_class = type("Config", (), {})
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
-            sys.modules["flext_core"].FlextTypes = mock_types_class
+            setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
                 import flext_ldif.constants
 
                 constants = flext_ldif.constants.FlextLdifConstants
 
-                # Test format constants
-                assert hasattr(constants, "DEFAULT_LINE_SEPARATOR") or hasattr(
-                    constants, "LINE_SEPARATOR"
-                )
+                # Test processing constants
+                assert hasattr(constants, "Processing")
+                assert hasattr(constants.Processing, "MIN_WORKERS_FOR_PARALLEL")
+                assert hasattr(constants.Processing, "MAX_WORKERS_LIMIT")
 
             except (ImportError, AttributeError):
                 pytest.skip("Cannot test format constants due to issues")
@@ -188,11 +186,11 @@ class TestFlextLdifConstants:
             },
         ):
             mock_constants_class = type("FlextConstants", (), {})
-            sys.modules["flext_core"].FlextConstants = mock_constants_class
+            setattr(sys.modules["flext_core"], "FlextConstants", mock_constants_class)
 
             mock_config_class = type("Config", (), {})
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
-            sys.modules["flext_core"].FlextTypes = mock_types_class
+            setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
                 import flext_ldif.constants

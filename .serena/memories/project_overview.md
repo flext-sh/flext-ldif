@@ -29,7 +29,7 @@ FLEXT-LDIF is an enterprise-grade LDIF (LDAP Data Interchange Format) processing
 
 ## Dependencies
 
-- **Core**: flext-core (FlextResult, FlextContainer, FlextDomainService)
+- **Core**: flext-core (FlextResult, FlextContainer, FlextService)
 - **LDIF**: ldif3 (>=3.2.2) - internal abstraction only
 - **CLI**: flext-cli (NO direct Click/Rich imports)
 - **Validation**: pydantic (>=2.11.7)

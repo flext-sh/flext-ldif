@@ -18,32 +18,31 @@ class TestFlextLdifProcessor:
     """Test coverage for FlextLdifProcessor class and processing functionality."""
 
     @staticmethod
+    def _create_mock_flext_core() -> MagicMock:
+        """Create a mock flext_core module with proper attributes."""
+        mock_flext_core = MagicMock()
+        mock_flext_core.FlextService = MagicMock(return_value=MagicMock())
+        mock_flext_core.FlextResult = MagicMock()
+        mock_flext_core.FlextLogger = type("FlextLogger", (), {})
+        mock_flext_core.FlextTypes = type(
+            "FlextTypes", (), {"Config": type("Config", (), {})}
+        )
+        return mock_flext_core
+
+    @staticmethod
     def test_processor_module_import() -> None:
         """Test processor module can be imported."""
-        # Mock the problematic dependencies
+        mock_flext_core = TestFlextLdifProcessor._create_mock_flext_core()
+
         with patch.dict(
             sys.modules,
             {
-                "flext_core": type(sys)("flext_core"),
-                "flext_core.domain_services": type(sys)("flext_core.domain_services"),
-                "flext_core.result": type(sys)("flext_core.result"),
-                "flext_core.typings": type(sys)("flext_core.typings"),
+                "flext_core": mock_flext_core,
+                "flext_core.service": MagicMock(),
+                "flext_core.result": MagicMock(),
+                "flext_core.typings": MagicMock(),
             },
         ):
-            # Create mock classes
-            mock_domain_service = type("FlextDomainService", (), {})
-            sys.modules["flext_core"].FlextDomainService = mock_domain_service
-
-            mock_result_class = type("FlextResult", (), {})
-            sys.modules["flext_core"].FlextResult = mock_result_class
-
-            mock_logger_class = type("FlextLogger", (), {})
-            sys.modules["flext_core"].FlextLogger = mock_logger_class
-
-            mock_config_type = type("Config", (), {})
-            mock_types_class = type("FlextTypes", (), {"Config": mock_config_type})
-            sys.modules["flext_core"].FlextTypes = mock_types_class
-
             try:
                 import flext_ldif.processor
 
@@ -54,31 +53,17 @@ class TestFlextLdifProcessor:
     @staticmethod
     def test_processor_initialization() -> None:
         """Test processor can be initialized."""
+        mock_flext_core = TestFlextLdifProcessor._create_mock_flext_core()
+
         with patch.dict(
             sys.modules,
             {
-                "flext_core": type(sys)("flext_core"),
-                "flext_core.domain_services": type(sys)("flext_core.domain_services"),
-                "flext_core.result": type(sys)("flext_core.result"),
-                "flext_core.typings": type(sys)("flext_core.typings"),
+                "flext_core": mock_flext_core,
+                "flext_core.service": MagicMock(),
+                "flext_core.result": MagicMock(),
+                "flext_core.typings": MagicMock(),
             },
         ):
-            # Create mock base class with initialization
-            mock_domain_service_instance = MagicMock()
-            mock_domain_service = MagicMock(return_value=mock_domain_service_instance)
-            sys.modules["flext_core"].FlextDomainService = mock_domain_service
-
-            mock_result_class = MagicMock()
-            sys.modules["flext_core"].FlextResult = mock_result_class
-
-            mock_logger_instance = MagicMock()
-            mock_logger_class = MagicMock(return_value=mock_logger_instance)
-            sys.modules["flext_core"].FlextLogger = mock_logger_class
-
-            mock_config_type = type("Config", (), {})
-            mock_types_class = type("FlextTypes", (), {"Config": mock_config_type})
-            sys.modules["flext_core"].FlextTypes = mock_types_class
-
             try:
                 import flext_ldif.processor
 
@@ -92,45 +77,38 @@ class TestFlextLdifProcessor:
     @staticmethod
     def test_processor_parsing_functionality() -> None:
         """Test processor parsing functionality."""
+        mock_flext_core = TestFlextLdifProcessor._create_mock_flext_core()
+
+        # Mock parsing functionality
+        mock_parse_result = MagicMock()
+        mock_parse_result.is_success = True
+        mock_parse_result.unwrap.return_value = []
+
+        mock_domain_service_instance = MagicMock()
+        mock_domain_service_instance.parse_string = MagicMock(
+            return_value=mock_parse_result
+        )
+        mock_flext_core.FlextService = MagicMock(
+            return_value=mock_domain_service_instance
+        )
+
         with patch.dict(
             sys.modules,
             {
-                "flext_core": type(sys)("flext_core"),
-                "flext_core.domain_services": type(sys)("flext_core.domain_services"),
-                "flext_core.result": type(sys)("flext_core.result"),
-                "flext_core.typings": type(sys)("flext_core.typings"),
+                "flext_core": mock_flext_core,
+                "flext_core.service": MagicMock(),
+                "flext_core.result": MagicMock(),
+                "flext_core.typings": MagicMock(),
             },
         ):
-            # Mock parsing functionality
-            mock_parse_result = MagicMock()
-            mock_parse_result.is_success = True
-            mock_parse_result.unwrap.return_value = []
-
-            mock_domain_service_instance = MagicMock()
-            mock_domain_service_instance.parse_content = MagicMock(
-                return_value=mock_parse_result
-            )
-            mock_domain_service = MagicMock(return_value=mock_domain_service_instance)
-            sys.modules["flext_core"].FlextDomainService = mock_domain_service
-
-            mock_result_class = MagicMock()
-            sys.modules["flext_core"].FlextResult = mock_result_class
-
-            mock_logger_class = type("FlextLogger", (), {})
-            sys.modules["flext_core"].FlextLogger = mock_logger_class
-
-            mock_config_type = type("Config", (), {})
-            mock_types_class = type("FlextTypes", (), {"Config": mock_config_type})
-            sys.modules["flext_core"].FlextTypes = mock_types_class
-
             try:
                 import flext_ldif.processor
 
                 processor = flext_ldif.processor.FlextLdifProcessor()
 
                 # Test parsing methods if they exist
-                if hasattr(processor, "parse_content"):
-                    result = processor.parse_content(
+                if hasattr(processor, "parse_string"):
+                    result: object = processor.parse_string(
                         "dn: cn=test,dc=example,dc=com\ncn: test\n"
                     )
                     assert result is not None
@@ -141,37 +119,30 @@ class TestFlextLdifProcessor:
     @staticmethod
     def test_processor_validation_functionality() -> None:
         """Test processor validation functionality."""
+        mock_flext_core = TestFlextLdifProcessor._create_mock_flext_core()
+
+        # Mock validation functionality
+        mock_validation_result = MagicMock()
+        mock_validation_result.is_success = True
+        mock_validation_result.unwrap.return_value = True
+
+        mock_domain_service_instance = MagicMock()
+        mock_domain_service_instance.validate_entries = MagicMock(
+            return_value=mock_validation_result
+        )
+        mock_flext_core.FlextService = MagicMock(
+            return_value=mock_domain_service_instance
+        )
+
         with patch.dict(
             sys.modules,
             {
-                "flext_core": type(sys)("flext_core"),
-                "flext_core.domain_services": type(sys)("flext_core.domain_services"),
-                "flext_core.result": type(sys)("flext_core.result"),
-                "flext_core.typings": type(sys)("flext_core.typings"),
+                "flext_core": mock_flext_core,
+                "flext_core.service": MagicMock(),
+                "flext_core.result": MagicMock(),
+                "flext_core.typings": MagicMock(),
             },
         ):
-            # Mock validation functionality
-            mock_validation_result = MagicMock()
-            mock_validation_result.is_success = True
-            mock_validation_result.unwrap.return_value = True
-
-            mock_domain_service_instance = MagicMock()
-            mock_domain_service_instance.validate_entries = MagicMock(
-                return_value=mock_validation_result
-            )
-            mock_domain_service = MagicMock(return_value=mock_domain_service_instance)
-            sys.modules["flext_core"].FlextDomainService = mock_domain_service
-
-            mock_result_class = MagicMock()
-            sys.modules["flext_core"].FlextResult = mock_result_class
-
-            mock_logger_class = type("FlextLogger", (), {})
-            sys.modules["flext_core"].FlextLogger = mock_logger_class
-
-            mock_config_type = type("Config", (), {})
-            mock_types_class = type("FlextTypes", (), {"Config": mock_config_type})
-            sys.modules["flext_core"].FlextTypes = mock_types_class
-
             try:
                 import flext_ldif.processor
 
@@ -179,7 +150,7 @@ class TestFlextLdifProcessor:
 
                 # Test validation methods if they exist
                 if hasattr(processor, "validate_entries"):
-                    result = processor.validate_entries([])
+                    result: object = processor.validate_entries([])
                     assert result is not None
 
             except (ImportError, AttributeError):
@@ -188,37 +159,30 @@ class TestFlextLdifProcessor:
     @staticmethod
     def test_processor_transformation_functionality() -> None:
         """Test processor transformation functionality."""
+        mock_flext_core = TestFlextLdifProcessor._create_mock_flext_core()
+
+        # Mock transformation functionality
+        mock_transform_result = MagicMock()
+        mock_transform_result.is_success = True
+        mock_transform_result.unwrap.return_value = []
+
+        mock_domain_service_instance = MagicMock()
+        mock_domain_service_instance.transform_entries = MagicMock(
+            return_value=mock_transform_result
+        )
+        mock_flext_core.FlextService = MagicMock(
+            return_value=mock_domain_service_instance
+        )
+
         with patch.dict(
             sys.modules,
             {
-                "flext_core": type(sys)("flext_core"),
-                "flext_core.domain_services": type(sys)("flext_core.domain_services"),
-                "flext_core.result": type(sys)("flext_core.result"),
-                "flext_core.typings": type(sys)("flext_core.typings"),
+                "flext_core": mock_flext_core,
+                "flext_core.service": MagicMock(),
+                "flext_core.result": MagicMock(),
+                "flext_core.typings": MagicMock(),
             },
         ):
-            # Mock transformation functionality
-            mock_transform_result = MagicMock()
-            mock_transform_result.is_success = True
-            mock_transform_result.unwrap.return_value = []
-
-            mock_domain_service_instance = MagicMock()
-            mock_domain_service_instance.transform_entries = MagicMock(
-                return_value=mock_transform_result
-            )
-            mock_domain_service = MagicMock(return_value=mock_domain_service_instance)
-            sys.modules["flext_core"].FlextDomainService = mock_domain_service
-
-            mock_result_class = MagicMock()
-            sys.modules["flext_core"].FlextResult = mock_result_class
-
-            mock_logger_class = type("FlextLogger", (), {})
-            sys.modules["flext_core"].FlextLogger = mock_logger_class
-
-            mock_config_type = type("Config", (), {})
-            mock_types_class = type("FlextTypes", (), {"Config": mock_config_type})
-            sys.modules["flext_core"].FlextTypes = mock_types_class
-
             try:
                 import flext_ldif.processor
 
@@ -226,7 +190,7 @@ class TestFlextLdifProcessor:
 
                 # Test transformation methods if they exist
                 if hasattr(processor, "transform_entries"):
-                    result = processor.transform_entries([], lambda x: x)
+                    result: object = processor.transform_entries([], lambda x: x)
                     assert result is not None
 
             except (ImportError, AttributeError):
@@ -235,47 +199,40 @@ class TestFlextLdifProcessor:
     @staticmethod
     def test_processor_writing_functionality() -> None:
         """Test processor writing functionality."""
+        mock_flext_core = TestFlextLdifProcessor._create_mock_flext_core()
+
+        # Mock writing functionality
+        mock_write_result = MagicMock()
+        mock_write_result.is_success = True
+        mock_write_result.unwrap.return_value = (
+            "dn: cn=test,dc=example,dc=com\ncn: test\n"
+        )
+
+        mock_domain_service_instance = MagicMock()
+        mock_domain_service_instance.write_string = MagicMock(
+            return_value=mock_write_result
+        )
+        mock_flext_core.FlextService = MagicMock(
+            return_value=mock_domain_service_instance
+        )
+
         with patch.dict(
             sys.modules,
             {
-                "flext_core": type(sys)("flext_core"),
-                "flext_core.domain_services": type(sys)("flext_core.domain_services"),
-                "flext_core.result": type(sys)("flext_core.result"),
-                "flext_core.typings": type(sys)("flext_core.typings"),
+                "flext_core": mock_flext_core,
+                "flext_core.service": MagicMock(),
+                "flext_core.result": MagicMock(),
+                "flext_core.typings": MagicMock(),
             },
         ):
-            # Mock writing functionality
-            mock_write_result = MagicMock()
-            mock_write_result.is_success = True
-            mock_write_result.unwrap.return_value = (
-                "dn: cn=test,dc=example,dc=com\ncn: test\n"
-            )
-
-            mock_domain_service_instance = MagicMock()
-            mock_domain_service_instance.write_entries = MagicMock(
-                return_value=mock_write_result
-            )
-            mock_domain_service = MagicMock(return_value=mock_domain_service_instance)
-            sys.modules["flext_core"].FlextDomainService = mock_domain_service
-
-            mock_result_class = MagicMock()
-            sys.modules["flext_core"].FlextResult = mock_result_class
-
-            mock_logger_class = type("FlextLogger", (), {})
-            sys.modules["flext_core"].FlextLogger = mock_logger_class
-
-            mock_config_type = type("Config", (), {})
-            mock_types_class = type("FlextTypes", (), {"Config": mock_config_type})
-            sys.modules["flext_core"].FlextTypes = mock_types_class
-
             try:
                 import flext_ldif.processor
 
                 processor = flext_ldif.processor.FlextLdifProcessor()
 
                 # Test writing methods if they exist
-                if hasattr(processor, "write_entries"):
-                    result = processor.write_entries([])
+                if hasattr(processor, "write_string"):
+                    result: object = processor.write_string([])
                     assert result is not None
 
             except (ImportError, AttributeError):
@@ -284,28 +241,17 @@ class TestFlextLdifProcessor:
     @staticmethod
     def test_processor_all_exports() -> None:
         """Test that __all__ is properly defined."""
+        mock_flext_core = TestFlextLdifProcessor._create_mock_flext_core()
+
         with patch.dict(
             sys.modules,
             {
-                "flext_core": type(sys)("flext_core"),
-                "flext_core.domain_services": type(sys)("flext_core.domain_services"),
-                "flext_core.result": type(sys)("flext_core.result"),
-                "flext_core.typings": type(sys)("flext_core.typings"),
+                "flext_core": mock_flext_core,
+                "flext_core.service": MagicMock(),
+                "flext_core.result": MagicMock(),
+                "flext_core.typings": MagicMock(),
             },
         ):
-            mock_domain_service = type("FlextDomainService", (), {})
-            sys.modules["flext_core"].FlextDomainService = mock_domain_service
-
-            mock_result_class = type("FlextResult", (), {})
-            sys.modules["flext_core"].FlextResult = mock_result_class
-
-            mock_logger_class = type("FlextLogger", (), {})
-            sys.modules["flext_core"].FlextLogger = mock_logger_class
-
-            mock_config_type = type("Config", (), {})
-            mock_types_class = type("FlextTypes", (), {"Config": mock_config_type})
-            sys.modules["flext_core"].FlextTypes = mock_types_class
-
             try:
                 import flext_ldif.processor
 

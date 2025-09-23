@@ -1,4 +1,4 @@
-"""FLEXT LDIF Models - Domain models for LDIF processing.
+"""FLEXT LDIF Models.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,310 +6,166 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pydantic import Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 
-from flext_core import (
-    FlextModels,
-    FlextResult,
-)
-
-# Validation error messages as constants
-DN_EMPTY_ERROR = "DN cannot be empty"
-DN_INVALID_FORMAT_ERROR = "DN must contain attribute=value pairs"
-DN_INVALID_CHARS_ERROR = "DN contains invalid characters"
-ATTRIBUTES_TYPE_ERROR = "Attributes must be a dictionary"
-ATTRIBUTE_NAME_ERROR = "Attribute names must be non-empty strings"
-ATTRIBUTE_VALUES_ERROR = "values must be a list"
-ATTRIBUTE_VALUE_TYPE_ERROR = "must be strings"
-
-# Constants
-MIN_DN_COMPONENTS = 2
+from flext_core import FlextModels, FlextResult
+from flext_ldif.constants import FlextLdifConstants
 
 
-class FlextLdifModels:
-    """LDIF domain models with proper Pydantic v2 and flext-core integration.
+class FlextLdifModels(FlextModels):
+    """LDIF domain models extending flext-core FlextModels.
 
-    Unified class containing LDIF model definitions with:
-    - Proper Pydantic v2 features (ConfigDict, computed_field, model_validator)
-    - Flext-core integration patterns
-    - Type-safe domain modeling with zero legacy code
-    - Railway-oriented programming with FlextResult chaining
-    - Zero fallback patterns or compatibility layers
-
-    Uses flext-core patterns directly without any aliases or wrappers.
+    Contains ONLY Pydantic v2 model definitions with business logic.
     """
 
-    # =============================================================================
-    # LDIF DOMAIN VALUE OBJECTS (Proper Pydantic v2)
-    # =============================================================================
+    class DistinguishedName(BaseModel):
+        """Pydantic model for LDAP Distinguished Name."""
 
-    class DistinguishedName(FlextModels.Value):
-        """Distinguished Name value object with proper Pydantic v2 validation.
-
-        Immutable value object for LDAP Distinguished Names using:
-        - ConfigDict for Pydantic v2 configuration
-        - computed_field for calculated properties
-        - model_validator for business rules
-        - FlextResult patterns for validation
-        """
-
-        value: str = Field(
-            ...,
-            min_length=1,
-            description="LDAP Distinguished Name",
-            examples=["cn=user,dc=example,dc=com", "ou=users,dc=corp,dc=local"],
-        )
+        value: str = Field(..., min_length=1, description="DN string value")
 
         @field_validator("value")
         @classmethod
         def validate_dn_format(cls, v: str) -> str:
-            """Validate DN format using proper validation patterns.
+            """Validate DN format and characters."""
+            if not v.strip():
+                raise ValueError(FlextLdifConstants.ErrorMessages.DN_EMPTY_ERROR)
 
-            Returns:
-                str: The validated DN string
+            # Basic DN format validation - must contain = character
+            if "=" not in v:
+                raise ValueError(
+                    FlextLdifConstants.ErrorMessages.DN_INVALID_FORMAT_ERROR
+                )
 
-            Raises:
-                ValueError: If DN format validation fails
-
-            """
-            if not v or not v.strip():
-                error_msg = DN_EMPTY_ERROR
-                raise ValueError(error_msg)
-
-            normalized = v.strip()
-
-            # Basic DN format validation - must contain = and optionally ,
-            if "=" not in normalized:
-                error_msg = DN_INVALID_FORMAT_ERROR
-                raise ValueError(error_msg)
-
-            # Check for valid characters (basic validation)
+            # Check for invalid characters (excluding "@" for email support)
             invalid_chars = {
-                "@",
                 "#",
                 "$",
                 "%",
+                "^",
                 "&",
                 "*",
-                "|",
-                "<",
-                ">",
-                ";",
-                ":",
-                "'",
-                '"',
-                "\\",
-                "/",
-                "?",
+                "(",
+                ")",
                 "[",
                 "]",
                 "{",
                 "}",
-                "(",
-                ")",
+                "|",
+                "\\",
+                "/",
+                "?",
+                "<",
+                ">",
             }
-            if any(char in normalized for char in invalid_chars):
-                error_msg = DN_INVALID_CHARS_ERROR
-                raise ValueError(error_msg)
+            if any(char in v for char in invalid_chars):
+                raise ValueError(
+                    FlextLdifConstants.ErrorMessages.DN_INVALID_CHARS_ERROR
+                )
 
-            return normalized
-
-        @property
-        def rdn(self) -> str:
-            """Get the relative DN (first component)."""
-            return self.value.split(",")[0].strip()
-
-        @property
-        def parent_dn(self) -> str | None:
-            """Get parent DN (all components except first)."""
-            components = self.value.split(",")
-            if len(components) <= 1:
-                return None
-            return ",".join(components[1:]).strip()
+            return v.strip()
 
         @property
         def depth(self) -> int:
-            """Get DN depth (number of components)."""
-            return len(self._parse_components())
+            """Get DN component depth."""
+            return len([
+                component for component in self.value.split(",") if component.strip()
+            ])
 
         @property
         def components(self) -> list[str]:
-            """Get all DN components."""
-            return self._parse_components()
-
-        @property
-        def is_leaf(self) -> bool:
-            """Check if this is a leaf DN (has parent)."""
-            return self.parent_dn is not None
-
-        @property
-        def base_dn(self) -> str:
-            """Get base DN (last two components if available)."""
-            components = self.value.split(",")
-            if len(components) >= MIN_DN_COMPONENTS:
-                return ",".join(components[-MIN_DN_COMPONENTS:]).strip()
-            return self.value
-
-        def _parse_components(self) -> list[str]:
-            """Parse DN into components.
-
-            Returns:
-                list[str]: List of DN components
-
-            """
-            return [comp.strip() for comp in self.value.split(",") if comp.strip()]
-
-        def validate_business_rules(self) -> FlextResult[bool]:
-            """Validate business rules for DN.
-
-            Returns:
-                FlextResult[bool]: Validation result
-
-            """
-            try:
-                # Basic validation - DN must have valid format
-                if not self.value or not self.value.strip():
-                    return FlextResult[bool].fail("DN cannot be empty")
-
-                # Must contain attribute=value pairs
-                if "=" not in self.value:
-                    return FlextResult[bool].fail(
-                        "DN must contain attribute=value pairs"
-                    )
-
-                return FlextResult[bool].ok(data=True)
-            except Exception as e:
-                return FlextResult[bool].fail(f"DN validation failed: {e}")
+            """Get DN components as list."""
+            return [
+                component.strip()
+                for component in self.value.split(",")
+                if component.strip()
+            ]
 
         @classmethod
-        def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
-            """Create DN with validation returning FlextResult.
-
-            Returns:
-                FlextResult[FlextLdifModels.DistinguishedName]: Created DN or error
-
-            """
+        def create(
+            cls, dn_value: str
+        ) -> FlextResult[FlextLdifModels.DistinguishedName]:
+            """Create DN with validation returning FlextResult."""
             try:
-                dn = str(args[0]) if args else str(kwargs.get("dn", ""))
-                return FlextResult[object].ok(cls(value=dn))
-            except Exception as e:
-                return FlextResult[object].fail(str(e))
+                dn = cls(value=dn_value)
+                return FlextResult["FlextLdifModels.DistinguishedName"].ok(dn)
+            except ValueError as e:
+                return FlextResult["FlextLdifModels.DistinguishedName"].fail(str(e))
 
-    class LdifAttributes(FlextModels.Value):
-        """LDIF attributes dictionary with proper validation.
-
-        Immutable value object for LDAP attributes using:
-        - Proper dict[str, list[str]] type annotation
-        - Validation for LDAP attribute requirements
-        - FlextResult patterns for operations
-        """
+    class LdifAttributes(BaseModel):
+        """Pydantic model for LDIF entry attributes."""
 
         data: dict[str, list[str]] = Field(
-            default_factory=dict,
-            description="LDAP attribute data as key-value pairs",
+            default_factory=dict, description="Attribute name to values mapping"
         )
 
         @field_validator("data")
         @classmethod
-        def validate_attribute_data(
-            cls, v: dict[str, list[str]]
-        ) -> dict[str, list[str]]:
-            """Validate attribute data structure.
-
-            Returns:
-                dict[str, list[str]]: Validated attribute data
-
-            Raises:
-                TypeError: If data structure is invalid
-                ValueError: If attribute names or values are invalid
-
-            """
+        def validate_attributes(cls, v: dict[str, list[str]]) -> dict[str, list[str]]:
+            """Validate attribute data structure."""
             if not isinstance(v, dict):
-                raise TypeError(ATTRIBUTES_TYPE_ERROR)
+                raise TypeError(FlextLdifConstants.ErrorMessages.ATTRIBUTES_TYPE_ERROR)
 
-            for key in v:
-                if not isinstance(key, str) or not key.strip():
-                    raise ValueError(ATTRIBUTE_NAME_ERROR)
+            for attr_name, attr_values in v.items():
+                cls._validate_attribute_name(attr_name)
+                cls._validate_attribute_values(attr_name, attr_values)
 
             return v
 
+        @staticmethod
+        def _validate_attribute_name(attr_name: object) -> None:
+            """Validate attribute name."""
+            if not isinstance(attr_name, str) or not attr_name.strip():
+                raise ValueError(FlextLdifConstants.ErrorMessages.ATTRIBUTE_NAME_ERROR)
+
+        @staticmethod
+        def _validate_attribute_values(attr_name: str, attr_values: object) -> None:
+            """Validate attribute values."""
+            if not isinstance(attr_values, list):
+                msg = f"Attribute '{attr_name}' {FlextLdifConstants.ErrorMessages.ATTRIBUTE_VALUES_ERROR}"
+                raise TypeError(msg)
+
+            for value in attr_values:
+                if not isinstance(value, str):
+                    msg = f"Attribute '{attr_name}' values {FlextLdifConstants.ErrorMessages.ATTRIBUTE_VALUE_TYPE_ERROR}"
+                    raise TypeError(msg)
+
         def get_attribute(self, name: str) -> list[str] | None:
-            """Get attribute values by name (case-insensitive).
-
-            Returns:
-                list[str] | None: Attribute values or None if not found
-
-            """
-            for key, values in self.data.items():
-                if key.lower() == name.lower():
-                    return values
-            return None
+            """Get attribute values by name."""
+            return self.data.get(name)
 
         def has_attribute(self, name: str) -> bool:
-            """Check if attribute exists (case-insensitive).
+            """Check if attribute exists."""
+            return name in self.data
 
-            Returns:
-                bool: True if attribute exists
+        def add_attribute(self, name: str, values: list[str]) -> None:
+            """Add attribute with values."""
+            self.data[name] = values
 
-            """
-            return self.get_attribute(name) is not None
-
-        def get_single_value(self, name: str) -> str | None:
-            """Get single attribute value.
-
-            Returns:
-                str | None: Single attribute value or None
-
-            """
-            values = self.get_attribute(name)
-            return values[0] if values else None
+        def remove_attribute(self, name: str) -> bool:
+            """Remove attribute. Returns True if removed, False if not found."""
+            return self.data.pop(name, None) is not None
 
         def __contains__(self, name: str) -> bool:
-            """Check if attribute exists (supports 'in' operator).
-
-            Args:
-                name: Attribute name to check
-
-            Returns:
-                bool: True if attribute exists
-
-            """
-            return self.has_attribute(name)
+            """Support 'in' operator for attribute names."""
+            return name in self.data
 
         def __len__(self) -> int:
-            """Get number of attributes (supports len() function).
-
-            Returns:
-                int: Number of attributes
-
-            """
+            """Support len() function for number of attributes."""
             return len(self.data)
 
         @classmethod
-        def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
-            """Create attributes with validation returning FlextResult.
-
-            Returns:
-                FlextResult[FlextLdifModels.LdifAttributes]: Created attributes or error
-
-            """
+        def create(
+            cls, data: dict[str, list[str]]
+        ) -> FlextResult[FlextLdifModels.LdifAttributes]:
+            """Create attributes with validation returning FlextResult."""
             try:
-                data = args[0] if args else kwargs.get("data", {})
-                if not isinstance(data, dict):
-                    return FlextResult[object].fail("Data must be a dictionary")
-                return FlextResult[object].ok(cls(data=data))
-            except Exception as e:
-                return FlextResult[object].fail(str(e))
+                attributes = cls(data=data)
+                return FlextResult["FlextLdifModels.LdifAttributes"].ok(attributes)
+            except ValueError as e:
+                return FlextResult["FlextLdifModels.LdifAttributes"].fail(str(e))
 
-    class Entry(FlextModels.Value):
-        """LDIF entry combining DN and attributes.
-
-        Immutable value object representing a complete LDIF entry with:
-        - Distinguished Name (DN)
-        - Attributes dictionary
-        - Helper methods for LDAP operations
-        - FlextResult patterns for validation
-        """
+    class Entry(BaseModel):
+        """Pydantic model for LDIF entry."""
 
         dn: FlextLdifModels.DistinguishedName = Field(
             ..., description="Distinguished Name"
@@ -319,255 +175,158 @@ class FlextLdifModels:
         )
 
         def get_attribute(self, name: str) -> list[str] | None:
-            """Get attribute values by name.
-
-            Returns:
-                list[str] | None: Attribute values or None if not found
-
-            """
+            """Get attribute values by name."""
             return self.attributes.get_attribute(name)
 
+        def get_single_value(self, name: str) -> str | None:
+            """Get single attribute value by name."""
+            values = self.get_attribute(name)
+            return values[0] if values else None
+
         def has_attribute(self, name: str) -> bool:
-            """Check if attribute exists.
-
-            Returns:
-                bool: True if attribute exists
-
-            """
+            """Check if attribute exists."""
             return self.attributes.has_attribute(name)
 
-        def get_single_value(self, name: str) -> str | None:
-            """Get single attribute value.
-
-            Returns:
-                str | None: Single attribute value or None
-
-            """
-            return self.attributes.get_single_value(name)
+        def has_object_class(self, object_class: str) -> bool:
+            """Check if entry has specified object class."""
+            object_classes = self.get_attribute("objectClass") or []
+            return object_class.lower() in [oc.lower() for oc in object_classes]
 
         def is_person_entry(self) -> bool:
-            """Check if entry is a person.
-
-            Returns:
-                bool: True if entry is a person
-
-            """
+            """Check if entry is a person entry."""
             object_classes = self.get_attribute("objectClass") or []
-            return any(
-                oc.lower() in {"person", "inetorgperson", "organizationalperson"}
-                for oc in object_classes
-            )
+            person_classes = {oc.lower() for oc in object_classes}
+            ldap_person_classes = {
+                oc.lower()
+                for oc in FlextLdifConstants.ObjectClasses.LDAP_PERSON_CLASSES
+            }
+            return bool(person_classes.intersection(ldap_person_classes))
 
         def is_group_entry(self) -> bool:
-            """Check if entry is a group.
-
-            Returns:
-                bool: True if entry is a group
-
-            """
+            """Check if entry is a group entry."""
             object_classes = self.get_attribute("objectClass") or []
-            return any(
-                oc.lower() in {"group", "groupofnames", "groupofuniquenames"}
-                for oc in object_classes
-            )
+            group_classes = {oc.lower() for oc in object_classes}
+            ldap_group_classes = {
+                oc.lower() for oc in FlextLdifConstants.ObjectClasses.LDAP_GROUP_CLASSES
+            }
+            return bool(group_classes.intersection(ldap_group_classes))
 
         def is_organizational_unit(self) -> bool:
-            """Check if entry is an organizational unit.
-
-            Returns:
-                bool: True if entry is an organizational unit
-
-            """
-            object_classes = self.get_attribute("objectClass") or []
-            return any(oc.lower() == "organizationalunit" for oc in object_classes)
-
-        def has_object_class(self, object_class: str) -> bool:
-            """Check if entry has specific object class.
-
-            Args:
-                object_class: Object class to check for
-
-            Returns:
-                bool: True if entry has the object class
-
-            """
-            object_classes = self.get_attribute("objectClass") or []
-            return any(oc.lower() == object_class.lower() for oc in object_classes)
+            """Check if entry is an organizational unit."""
+            return self.has_object_class("organizationalUnit")
 
         def validate_business_rules(self) -> FlextResult[bool]:
-            """Validate business rules for entry.
+            """Validate entry against business rules."""
+            # Basic validation - entry must have DN and at least one attribute
+            if not self.dn.value:
+                return FlextResult[bool].fail("Entry must have a valid DN")
 
-            Returns:
-                FlextResult[bool]: Validation result
+            if not self.attributes.data:
+                return FlextResult[bool].fail("Entry must have at least one attribute")
 
-            """
-            try:
-                # Validate DN
-                dn_validation = self.dn.validate_business_rules()
-                if dn_validation.is_failure:
-                    return FlextResult[bool].fail(
-                        f"DN validation failed: {dn_validation.error}"
-                    )
+            # Check minimum DN components
+            if self.dn.depth < FlextLdifConstants.LdifValidation.MIN_DN_COMPONENTS:
+                return FlextResult[bool].fail("DN must have at least one component")
 
-                # Entry must have objectClass
-                object_classes = self.get_attribute("objectClass")
-                if not object_classes:
-                    return FlextResult[bool].fail(
-                        "Entry must have objectClass attribute"
-                    )
-
-                return FlextResult[bool].ok(data=True)
-            except Exception as e:
-                return FlextResult[bool].fail(f"Entry validation failed: {e}")
+            return FlextResult[bool].ok(True)
 
         @classmethod
-        def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
-            """Create entry with validation returning FlextResult.
-
-            Returns:
-                FlextResult[FlextLdifModels.Entry]: Created entry or error
-
-            """
-            dn = str(args[0]) if len(args) > 0 else str(kwargs.get("dn", ""))
-            attributes = args[1] if len(args) > 1 else kwargs.get("attributes", {})
-            if not isinstance(attributes, dict):
-                return FlextResult[object].fail("Attributes must be a dictionary")
-
-            dn_result: FlextResult[object] = FlextLdifModels.DistinguishedName.create(
-                dn
-            )
+        def create(
+            cls, dn: str, attributes: dict[str, list[str]]
+        ) -> FlextResult[FlextLdifModels.Entry]:
+            """Create entry with validation returning FlextResult."""
+            # Create DN
+            dn_result = FlextLdifModels.DistinguishedName.create(dn)
             if dn_result.is_failure:
-                return FlextResult[object].fail(f"Invalid DN: {dn_result.error}")
+                return FlextResult["FlextLdifModels.Entry"].fail(
+                    dn_result.error or "Invalid DN"
+                )
 
-            attr_result: FlextResult[object] = FlextLdifModels.LdifAttributes.create(
-                attributes
-            )
-            if attr_result.is_failure:
-                return FlextResult[object].fail(
-                    f"Invalid attributes: {attr_result.error}"
+            # Create attributes
+            attrs_result = FlextLdifModels.LdifAttributes.create(attributes)
+            if attrs_result.is_failure:
+                return FlextResult["FlextLdifModels.Entry"].fail(
+                    attrs_result.error or "Invalid attributes"
                 )
 
             try:
-                dn_obj = dn_result.unwrap()
-                attr_obj = attr_result.unwrap()
-                if isinstance(dn_obj, FlextLdifModels.DistinguishedName) and isinstance(
-                    attr_obj, FlextLdifModels.LdifAttributes
-                ):
-                    entry = cls(dn=dn_obj, attributes=attr_obj)
-                else:
-                    return FlextResult[object].fail("Type mismatch in unwrapped values")
-                return FlextResult[object].ok(entry)
+                entry = cls(dn=dn_result.value, attributes=attrs_result.value)
+                return FlextResult["FlextLdifModels.Entry"].ok(entry)
             except Exception as e:
-                return FlextResult[object].fail(str(e))
+                return FlextResult["FlextLdifModels.Entry"].fail(str(e))
 
-    class LdifUrl(FlextModels.Value):
-        """LDIF URL value object for URL validation."""
+    class LdifUrl(BaseModel):
+        """Pydantic model for LDIF URL references."""
 
-        url: str = Field(..., description="LDIF URL value")
+        url: str = Field(..., description="URL string")
+        description: str = Field(default="", description="Optional description")
+
+        @field_validator("url")
+        @classmethod
+        def validate_url_format(cls, v: str) -> str:
+            """Basic URL format validation."""
+            if not v.strip():
+                msg = "URL cannot be empty"
+                raise ValueError(msg)
+
+            # Basic URL validation - must start with protocol
+            valid_protocols = ("http://", "https://", "ldap://", "ldaps://")
+            if not v.startswith(valid_protocols):
+                msg = "URL must start with valid protocol"
+                raise ValueError(msg)
+
+            return v.strip()
 
         @classmethod
-        def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
-            """Create URL with validation.
-
-            Returns:
-                FlextResult[FlextLdifModels.LdifUrl]: Created URL or error
-
-            """
+        def create(
+            cls, url: str, description: str = ""
+        ) -> FlextResult[FlextLdifModels.LdifUrl]:
+            """Create URL with validation returning FlextResult."""
             try:
-                url = str(args[0]) if args else str(kwargs.get("url", ""))
-                return FlextResult[object].ok(cls(url=url))
-            except Exception as e:
-                return FlextResult[object].fail(str(e))
+                ldif_url = cls(url=url, description=description)
+                return FlextResult["FlextLdifModels.LdifUrl"].ok(ldif_url)
+            except ValueError as e:
+                return FlextResult["FlextLdifModels.LdifUrl"].fail(str(e))
 
     # =============================================================================
-    # FACTORY METHODS (FlextResult patterns)
+    # FACTORY METHODS
     # =============================================================================
 
     @staticmethod
     def create_entry(data: dict[str, object]) -> FlextResult[Entry]:
-        """Create entry from dictionary data.
+        """Create entry from dictionary data."""
+        dn = data.get("dn")
+        if not isinstance(dn, str):
+            return FlextResult[FlextLdifModels.Entry].fail("DN must be a string")
 
-        Returns:
-            FlextResult[Entry]: Created entry or error
-
-        """
-        try:
-            dn = data.get("dn")
-            if not isinstance(dn, str):
-                return FlextResult[FlextLdifModels.Entry].fail("DN must be a string")
-
-            attributes = data.get("attributes", {})
-            if not isinstance(attributes, dict):
-                return FlextResult[FlextLdifModels.Entry].fail(
-                    "Attributes must be a dictionary"
-                )
-
-            # Convert attributes to proper format
-            normalized_attrs: dict[str, list[str]] = {}
-            for key, value in attributes.items():
-                if isinstance(value, str):
-                    normalized_attrs[key] = [value]
-                elif isinstance(value, list):
-                    normalized_attrs[key] = [str(v) for v in value]
-                else:
-                    normalized_attrs[key] = [str(value)]
-
-            result = FlextLdifModels.Entry.create(dn, normalized_attrs)
-            if result.is_success:
-                entry_obj = result.unwrap()
-                if isinstance(entry_obj, FlextLdifModels.Entry):
-                    return FlextResult[FlextLdifModels.Entry].ok(entry_obj)
-                return FlextResult[FlextLdifModels.Entry].fail(
-                    "Type mismatch in unwrapped entry"
-                )
+        attributes = data.get("attributes", {})
+        if not isinstance(attributes, dict):
             return FlextResult[FlextLdifModels.Entry].fail(
-                result.error or "Unknown error"
+                "Attributes must be a dictionary"
             )
 
-        except Exception as e:
-            return FlextResult[FlextLdifModels.Entry].fail(
-                f"Entry creation failed: {e}"
-            )
+        # Convert attributes to proper format
+        normalized_attrs: dict[str, list[str]] = {}
+        for key, value in attributes.items():
+            key_str = str(key)
+            if isinstance(value, str):
+                normalized_attrs[key_str] = [value]
+            elif isinstance(value, list):
+                normalized_attrs[key_str] = [str(v) for v in value if v is not None]
+            else:
+                normalized_attrs[key_str] = [str(value)]
+
+        return FlextLdifModels.Entry.create(dn, normalized_attrs)
 
     @staticmethod
     def create_dn(dn_value: str) -> FlextResult[DistinguishedName]:
-        """Create DN with validation.
-
-        Returns:
-            FlextResult[DistinguishedName]: Success with validated DN or failure with error message.
-
-        """
-        result = FlextLdifModels.DistinguishedName.create(dn_value)
-        if result.is_success:
-            dn_obj = result.unwrap()
-            if isinstance(dn_obj, FlextLdifModels.DistinguishedName):
-                return FlextResult[FlextLdifModels.DistinguishedName].ok(dn_obj)
-            return FlextResult[FlextLdifModels.DistinguishedName].fail(
-                "Type mismatch in unwrapped DN"
-            )
-        return FlextResult[FlextLdifModels.DistinguishedName].fail(
-            result.error or "Unknown error"
-        )
+        """Create DN from string value."""
+        return FlextLdifModels.DistinguishedName.create(dn_value)
 
     @staticmethod
     def create_attributes(data: dict[str, list[str]]) -> FlextResult[LdifAttributes]:
-        """Create attributes with validation.
-
-        Returns:
-            FlextResult[LdifAttributes]: Success with validated attributes or failure with error message.
-
-        """
-        result = FlextLdifModels.LdifAttributes.create(data)
-        if result.is_success:
-            attr_obj = result.unwrap()
-            if isinstance(attr_obj, FlextLdifModels.LdifAttributes):
-                return FlextResult[FlextLdifModels.LdifAttributes].ok(attr_obj)
-            return FlextResult[FlextLdifModels.LdifAttributes].fail(
-                "Type mismatch in unwrapped attributes"
-            )
-        return FlextResult[FlextLdifModels.LdifAttributes].fail(
-            result.error or "Unknown error"
-        )
+        """Create attributes from dictionary data."""
+        return FlextLdifModels.LdifAttributes.create(data)
 
 
 __all__ = ["FlextLdifModels"]

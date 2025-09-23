@@ -8,11 +8,8 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import FlextExceptions, FlextResult
-from flext_ldif import (
-    FlextLdifAPI,
-    FlextLdifFormatHandler,
-)
+from flext_core import FlextResult
+from flext_ldif import FlextLdifAPI
 
 
 class TestRealLdifParsing:
@@ -31,8 +28,8 @@ telephoneNumber: +1-555-123-4567
 """
 
         # Test using REAL instance-based interface (not class method)
-        handler = FlextLdifFormatHandler()
-        parse_result = handler.parse_ldif(ldif_content)
+        api = FlextLdifAPI()
+        parse_result = api.parse(ldif_content)
         assert parse_result.is_success
         entries = parse_result.value
 
@@ -63,8 +60,8 @@ cn: User
 sn: Regular
 """
 
-        handler = FlextLdifFormatHandler()
-        entries = FlextResult.unwrap_or_raise(handler.parse_ldif(ldif_content))
+        api = FlextLdifAPI()
+        entries = FlextResult.unwrap_or_raise(api.parse(ldif_content))
 
         assert len(entries) == 2
 
@@ -90,8 +87,8 @@ member: cn=John Doe,ou=people,dc=example,dc=com
 member: cn=Jane Smith,ou=people,dc=example,dc=com
 """
 
-        handler = FlextLdifFormatHandler()
-        entries = FlextResult.unwrap_or_raise(handler.parse_ldif(ldif_content))
+        api = FlextLdifAPI()
+        entries = FlextResult.unwrap_or_raise(api.parse(ldif_content))
 
         assert len(entries) == 1
         group = entries[0]
@@ -114,8 +111,8 @@ ou: people
 description: All users in the organization
 """
 
-        handler = FlextLdifFormatHandler()
-        entries = FlextResult.unwrap_or_raise(handler.parse_ldif(ldif_content))
+        api = FlextLdifAPI()
+        entries = FlextResult.unwrap_or_raise(api.parse(ldif_content))
 
         assert len(entries) == 1
         ou = entries[0]
@@ -133,8 +130,8 @@ cn: TestUser
 sn: User
 """
 
-        handler = FlextLdifFormatHandler()
-        entries = FlextResult.unwrap_or_raise(handler.parse_ldif(ldif_content))
+        api = FlextLdifAPI()
+        entries = FlextResult.unwrap_or_raise(api.parse(ldif_content))
 
         # Test validation using FlextLdifAPI directly (FLEXT-compliant pattern)
         api = FlextLdifAPI()
@@ -152,11 +149,11 @@ sn: Test
 """
 
         # Parse original
-        handler = FlextLdifFormatHandler()
-        entries = FlextResult.unwrap_or_raise(handler.parse_ldif(original_ldif))
+        api = FlextLdifAPI()
+        entries = FlextResult.unwrap_or_raise(api.parse(original_ldif))
 
         # Write back to LDIF
-        written_ldif = FlextResult.unwrap_or_raise(handler.write_ldif(entries))
+        written_ldif = FlextResult.unwrap_or_raise(api.write(entries))
 
         # Should contain the essential data
         assert "dn: cn=WriteTest,dc=example,dc=com" in written_ldif
@@ -165,7 +162,7 @@ sn: Test
         assert "sn: Test" in written_ldif
 
         # Parse the written LDIF to verify it's valid
-        reparsed_entries = FlextResult.unwrap_or_raise(handler.parse_ldif(written_ldif))
+        reparsed_entries = FlextResult.unwrap_or_raise(api.parse(written_ldif))
         assert len(reparsed_entries) == 1
         assert reparsed_entries[0].dn.value == entries[0].dn.value
 
@@ -190,7 +187,7 @@ sn: Direct
         # Test validation
         validate_result = api.validate_entries(entries)
         assert validate_result.is_success
-        assert validate_result.unwrap() is True
+        assert isinstance(validate_result.unwrap(), list)
 
         # Test writing
         write_result = api.write(entries)
@@ -233,8 +230,8 @@ description: System Administrators
 member: cn=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=example,dc=com
 """
 
-        handler = FlextLdifFormatHandler()
-        entries = FlextResult.unwrap_or_raise(handler.parse_ldif(complex_ldif))
+        api = FlextLdifAPI()
+        entries = FlextResult.unwrap_or_raise(api.parse(complex_ldif))
 
         # Should have 5 entries
         assert len(entries) == 5
@@ -265,12 +262,12 @@ member: cn=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=example,dc=com
 
     def test_empty_ldif_content(self) -> None:
         """Test handling empty LDIF content."""
-        handler = FlextLdifFormatHandler()
-        empty_entries = FlextResult.unwrap_or_raise(handler.parse_ldif(""))
+        api = FlextLdifAPI()
+        empty_entries = FlextResult.unwrap_or_raise(api.parse(""))
         assert len(empty_entries) == 0
 
         whitespace_entries = FlextResult.unwrap_or_raise(
-            handler.parse_ldif("   \n\n   "),
+            api.parse("   \n\n   "),
         )
         assert len(whitespace_entries) == 0
 
@@ -280,11 +277,11 @@ member: cn=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=example,dc=com
 objectClass: person
 """
 
-        handler = FlextLdifFormatHandler()
+        api = FlextLdifAPI()
         with pytest.raises(
-            FlextExceptions.BaseError
-        ):  # Should raise FlextLdifParseError
-            FlextResult.unwrap_or_raise(handler.parse_ldif(invalid_ldif))
+            RuntimeError
+        ):  # unwrap_or_raise raises RuntimeError by default
+            FlextResult.unwrap_or_raise(api.parse(invalid_ldif))
 
     def test_roundtrip_consistency(self) -> None:
         """Test that parse -> write -> parse maintains data consistency."""
@@ -301,14 +298,14 @@ telephoneNumber: +1-555-999-8888
 """
 
         # First parse
-        handler = FlextLdifFormatHandler()
-        entries1 = FlextResult.unwrap_or_raise(handler.parse_ldif(original_ldif))
+        api = FlextLdifAPI()
+        entries1 = FlextResult.unwrap_or_raise(api.parse(original_ldif))
 
         # Write to LDIF
-        written_ldif = FlextResult.unwrap_or_raise(handler.write_ldif(entries1))
+        written_ldif = FlextResult.unwrap_or_raise(api.write(entries1))
 
         # Parse again
-        entries2 = FlextResult.unwrap_or_raise(handler.parse_ldif(written_ldif))
+        entries2 = FlextResult.unwrap_or_raise(api.parse(written_ldif))
 
         # Should have same number of entries
         assert len(entries1) == len(entries2) == 1

@@ -5,7 +5,7 @@
 ### Single Class Per Module
 
 ```python
-class UnifiedProjectService(FlextDomainService):
+class UnifiedProjectService(FlextService):
     """Single responsibility class with nested helpers."""
 
     def __init__(self, **data) -> None:
