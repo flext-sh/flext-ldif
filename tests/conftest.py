@@ -10,7 +10,7 @@ import os
 import tempfile
 from collections.abc import Callable, Generator
 from pathlib import Path
-from typing import ClassVar
+from typing import cast
 
 import pytest
 
@@ -184,13 +184,6 @@ def real_writer_service() -> FlextLdifAPI:
 def integration_services() -> FlextTypes.Core.Dict:
     """Complete service set for integration testing."""
     return RealServiceFactory.services_for_integration_test()
-
-
-# Legacy fixture for backward compatibility
-@pytest.fixture
-def ldif_api(real_ldif_api: FlextLdifAPI) -> FlextLdifAPI:
-    """Backward compatibility fixture."""
-    return real_ldif_api
 
 
 # FlextTests integration for result validation
@@ -420,17 +413,17 @@ def ldif_test_content(ldif_test_entries: list[FlextTypes.Core.Dict]) -> str:
         attributes = entry["attributes"]
         assert isinstance(attributes, dict), "attributes must be a dictionary"
 
+        # Cast to proper type for type checker
+        typed_attributes = cast("dict[str, list[str]]", attributes)
+
         # Process attributes - all values are lists of strings based on actual structure
-        for attr_key, attr_values in attributes.items():
-            attr_name = f"{attr_key!s}"
+        for attr_key, attr_values in typed_attributes.items():
+            attr_name: str = str(attr_key)
             # Based on actual code structure, all attribute values are lists
-            if isinstance(attr_values, list):
-                content_lines.extend(
-                    f"{attr_name}: {value_item!s}" for value_item in attr_values
-                )
-            else:
-                # Fallback for single values (shouldn't happen based on structure)
-                content_lines.append(f"{attr_name}: {attr_values!s}")
+            # attr_values is already typed as list[str] from the cast above
+            content_lines.extend(
+                f"{attr_name}: {value_item!s}" for value_item in attr_values
+            )
         content_lines.append("")  # Empty line between entries
 
     return "\n".join(content_lines)
@@ -488,65 +481,26 @@ def pytest_configure(config: pytest.Config) -> None:
 
 # Common test constants using FlextTests patterns
 class LDIFTestConstants:
-    """Centralized test constants for LDIF testing."""
+    """Constants for LDIF testing."""
 
-    # Standard LDAP object classes
-    OBJECT_CLASSES: ClassVar[dict[str, list[str]]] = {
-        "person": ["top", "person"],
-        "inetOrgPerson": ["top", "person", "organizationalPerson", "inetOrgPerson"],
-        "groupOfNames": ["top", "groupOfNames"],
-        "organizationalUnit": ["top", "organizationalUnit"],
-    }
+    # Test file paths
+    SAMPLE_LDIF_FILE = "tests/fixtures/sample_basic.ldif"
+    COMPLEX_LDIF_FILE = "tests/fixtures/sample_complex.ldif"
+    INVALID_LDIF_FILE = "tests/fixtures/sample_invalid.ldif"
 
-    # Standard LDAP attributes by object class
-    REQUIRED_ATTRIBUTES: ClassVar[dict[str, list[str]]] = {
-        "person": ["sn", "cn"],
-        "inetOrgPerson": ["sn", "cn"],
-        "groupOfNames": ["member", "cn"],
-        "organizationalUnit": ["ou"],
-    }
+    # Test data
+    SAMPLE_DN = "cn=test,ou=users,dc=example,dc=com"
+    SAMPLE_ATTRIBUTE = "cn"
+    SAMPLE_VALUE = "test user"
 
-    # Common attribute patterns
-    ATTRIBUTE_PATTERNS: ClassVar[dict[str, list[str]]] = {
-        "dn_patterns": [
-            "uid={uid},ou=people,dc=example,dc=com",
-            "cn={cn},ou=groups,dc=example,dc=com",
-            "ou={ou},dc=example,dc=com",
-        ],
-        "mail_domains": ["example.com", "test.org", "company.net"],
-        "phone_formats": ["+1-555-{:04d}", "(555) {:04d}", "555.{:04d}"],
-    }
+    # Test limits
+    MAX_TEST_ENTRIES = 100
+    MAX_TEST_ATTRIBUTES = 50
+    MAX_TEST_VALUES = 20
 
-    # Error conditions for testing
-    ERROR_CONDITIONS: ClassVar[dict[str, list[str]]] = {
-        "invalid_dn_formats": [
-            "invalid-dn-no-equals",
-            "=missing-attribute",
-            "attr=,missing-value",
-            "uid=test,,double-comma",
-        ],
-        "malformed_attributes": [
-            "no-colon-separator",
-            ": missing-attribute-name",
-            "attr: ",  # empty value
-            "attr:\t\tonly-whitespace",
-        ],
-        "encoding_issues": [
-            "attr:: invalid-base64",
-            "attr:< invalid-url",
-            "binary:: not-base64-encoded",
-        ],
-    }
-
-    # Performance test parameters
-    PERFORMANCE_THRESHOLDS: ClassVar[dict[str, object]] = {
-        "max_parse_time_per_entry": FlextConstants.Performance.AUTH_PERFORMANCE_WARNING_MS
-        / 1_000_000.0,  # 1ms per entry
-        "max_memory_per_entry": FlextConstants.Utilities.BYTES_PER_KB,  # 1KB per entry
-        "max_total_parse_time": FlextConstants.Performance.CLI_PERFORMANCE_CRITICAL_MS
-        / 1000.0,  # 10 seconds total
-        "batch_sizes": [1, 10, 100, 1000],
-    }
+    # Test timeouts (in milliseconds)
+    DEFAULT_TIMEOUT_MS = 5000
+    MAX_PARSE_TIME_PER_ENTRY = 1000  # 1 second per entry
 
 
 @pytest.fixture

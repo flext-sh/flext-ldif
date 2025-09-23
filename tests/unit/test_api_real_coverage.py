@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -361,7 +362,9 @@ objectClass: person
         assert isinstance(capabilities, list)
         # Based on API return type, capabilities is list[str]
         # Cast to help Pyright understand the type
-        capabilities_list: list[str] = [str(cap) for cap in capabilities]
+        capabilities_list: list[str] = [
+            str(capability_item) for capability_item in cast("list[str]", capabilities)
+        ]
         for capability in expected_capabilities:
             assert capability in capabilities_list, (
                 f"Capability '{capability}' not found in capabilities"

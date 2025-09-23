@@ -29,8 +29,10 @@ logger = FlextLogger(__name__)
 class ExecResult:
     """Type stub for Docker exec_run result."""
 
-    exit_code: int
-    output: tuple[bytes, bytes] | bytes
+    def __init__(self, exit_code: int, output: tuple[bytes, bytes] | bytes) -> None:
+        """Initialize ExecResult with exit code and output."""
+        self.exit_code = exit_code
+        self.output = output
 
 
 def _exec_container_command(
@@ -53,24 +55,24 @@ def _exec_container_command(
     """Execute a command in a Docker container with proper typing."""
     from typing import cast
 
-    return cast(
-        "ExecResult",
-        container.exec_run(
-            cmd=cmd,
-            demux=demux,
-            stdout=stdout,
-            stderr=stderr,
-            stdin=stdin,
-            tty=tty,
-            privileged=privileged,
-            user=user,
-            detach=detach,
-            stream=stream,
-            socket=socket,
-            environment=environment,
-            workdir=workdir,
-        ),
+    exec_result = container.exec_run(
+        cmd=cmd,
+        demux=demux,
+        stdout=stdout,
+        stderr=stderr,
+        stdin=stdin,
+        tty=tty,
+        privileged=privileged,
+        user=user,
+        detach=detach,
+        stream=stream,
+        socket=socket,
+        environment=environment,
+        workdir=workdir,
     )
+
+    # Cast to our ExecResult type to satisfy type checker
+    return cast("ExecResult", exec_result)
 
 
 DOCKER_AVAILABLE = True

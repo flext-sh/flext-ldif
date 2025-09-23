@@ -375,7 +375,8 @@ objectClass: person"""
                 cast("dict[str, object]", entry_data)
             )
             assert entry_result.is_success
-            entries.append(entry_result.value)
+            entry: FlextLdifModels.Entry = entry_result.value
+            entries.append(entry)
 
         processor = FlextLdifProcessor()
         result = processor.analyze_entries(entries)
