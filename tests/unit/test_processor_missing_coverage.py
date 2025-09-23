@@ -25,12 +25,12 @@ class TestFlextLdifProcessorMissingCoverage:
         """Test process_entry_block with empty block."""
         processor = FlextLdifProcessor()
 
-        # Test completely empty block
+        # Test completely empty block  # type: ignore[attr-defined]
         result = processor._ParseHelper.process_entry_block("")
         assert result.is_failure
         assert "Empty entry block" in (result.error or "")
 
-        # Test block with only whitespace
+        # Test block with only whitespace  # type: ignore[attr-defined]
         result = processor._ParseHelper.process_entry_block("   \n   \n   ")
         assert result.is_failure
         assert "Empty entry block" in (result.error or "")
@@ -43,7 +43,7 @@ class TestFlextLdifProcessorMissingCoverage:
         # Test entry not starting with 'dn:'
         invalid_block = """cn: test
 objectClass: person"""
-
+  # type: ignore[attr-defined]
         result = processor._ParseHelper.process_entry_block(invalid_block)
         assert result.is_failure
         assert "Entry must start with 'dn:'" in (result.error or "")
@@ -56,7 +56,7 @@ objectClass: person"""
         # Test with empty DN value
         invalid_block = """dn:
 objectClass: person"""
-
+  # type: ignore[attr-defined]
         result = processor._ParseHelper.process_entry_block(invalid_block)
         assert result.is_failure
         assert "DN cannot be empty" in (result.error or "")
@@ -71,7 +71,7 @@ objectClass: person"""
 objectClass: person
 invalidlineformat
 cn: test"""
-
+  # type: ignore[attr-defined]
         result = processor._ParseHelper.process_entry_block(block)
         assert result.is_success  # Should succeed by skipping invalid line
 
@@ -151,7 +151,7 @@ cn: test"""
         processor = FlextLdifProcessor()
 
         # Create entry with invalid DN that should fail validation
-        with patch.object(
+        with patch.object(  # type: ignore[attr-defined]
             processor._LdifValidationHelper,
             "validate_dn_structure",
             return_value=FlextResult[bool].fail("Invalid DN structure"),
@@ -175,7 +175,7 @@ cn: test"""
         processor = FlextLdifProcessor()
 
         # Mock required attributes validation to fail
-        with patch.object(
+        with patch.object(  # type: ignore[attr-defined]
             processor._LdifValidationHelper,
             "validate_required_attributes",
             return_value=FlextResult[bool].fail("Missing required attribute: uid"),
@@ -300,7 +300,7 @@ cn: test"""
         entries = [entry_result.value]
 
         # Mock analytics helper to raise exception
-        with patch.object(
+        with patch.object(  # type: ignore[attr-defined]
             processor._AnalyticsHelper,
             "calculate_entry_statistics",
             side_effect=Exception("Analysis failed"),
@@ -351,12 +351,12 @@ cn: test"""
 
         # Mock validation helpers to return errors
         with (
-            patch.object(
+            patch.object(  # type: ignore[attr-defined]
                 processor._LdifValidationHelper,
                 "validate_required_attributes",
                 return_value=FlextResult[bool].fail("Missing required attribute"),
             ),
-            patch.object(
+            patch.object(  # type: ignore[attr-defined]
                 processor._LdifValidationHelper,
                 "validate_object_classes",
                 return_value=FlextResult[bool].fail("Invalid object class"),
@@ -413,18 +413,9 @@ cn: test"""
         assert result.is_success
 
         merge_info = result.value
-        # Handle different return types - could be dict or list
-        # Use type ignore to handle the dynamic nature of the return type
-        if isinstance(merge_info, dict):
-            total_merged: int = merge_info.get("total_merged", 0)
-            duplicates_count: int = merge_info.get("duplicates_count", 0)
-            assert total_merged >= 0  # Should have some result
-            assert duplicates_count >= 0
-        elif isinstance(merge_info, list):
-            assert len(merge_info) >= 0  # Should have entries list
-        else:
-            # object other type is fine for coverage
-            assert merge_info is not None
+        # merge_entries returns list[FlextLdifModels.Entry]
+        assert isinstance(merge_info, list)
+        assert len(merge_info) >= 0  # Should have entries list
 
     @staticmethod
     def test_detect_patterns_empty_object_classes() -> None:
@@ -470,7 +461,7 @@ cn: test"""
         entries = [entry_result.value]
 
         # Mock quality metrics calculation to raise exception
-        with patch.object(
+        with patch.object(  # type: ignore[attr-defined]
             processor._AnalyticsHelper,
             "calculate_quality_metrics",
             side_effect=Exception("Quality calculation failed"),
@@ -502,7 +493,7 @@ cn: test"""
         # Mock mkdir to raise PermissionError
         with patch.object(
             Path, "mkdir", side_effect=PermissionError("Cannot create directory")
-        ):
+        ):  # type: ignore[attr-defined]
             result = processor._validate_file_path(test_path)
             assert result.is_failure
             # Should fail with permission or directory creation error
@@ -534,19 +525,19 @@ cn: test"""
         for entry_data in [entry_with_empty_attr, entry_without_objectclass]:
             entry_result = FlextLdifModels.create_entry(entry_data)
             if entry_result.is_success:
-                entry: FlextLdifModels.Entry = entry_result.value
+                entry: FlextLdifModels.Entry = entry_result.value  # type: ignore[attr-defined]
                 entries.append(entry)
 
-        # Test private methods
+        # Test private methods  # type: ignore[arg-type]
         empty_count = processor._count_empty_attributes(entries)
         assert empty_count >= 0
-
+  # type: ignore[arg-type]
         missing_oc_count = processor._count_missing_object_classes(entries)
         assert missing_oc_count >= 0
-
+  # type: ignore[arg-type]
         duplicate_count = processor._count_duplicate_dns(entries)
         assert duplicate_count >= 0
-
+  # type: ignore[arg-type]
         invalid_dn_count = processor._count_invalid_dns(entries)
         assert invalid_dn_count >= 0
 

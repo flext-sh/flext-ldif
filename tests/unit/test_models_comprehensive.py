@@ -248,7 +248,7 @@ class TestFlextLdifModelsComprehensive:
         assert result.error is not None
 
     def test_entry_get_single_value_existing(self) -> None:
-        """Test get_single_value with existing attribute."""
+        """Test get_single_value with existing attribute."""  # type: ignore[assignment]
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {
@@ -266,7 +266,7 @@ class TestFlextLdifModelsComprehensive:
         assert entry.get_single_value("mail") == "test@example.com"  # First value
 
     def test_entry_get_single_value_missing(self) -> None:
-        """Test get_single_value with missing attribute."""
+        """Test get_single_value with missing attribute."""  # type: ignore[assignment]
         entry_data = {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
         entry_result = FlextLdifModels.create_entry(
             cast("dict[str, object]", entry_data)
@@ -277,7 +277,7 @@ class TestFlextLdifModelsComprehensive:
         assert entry.get_single_value("missing") is None
 
     def test_entry_has_object_class_case_insensitive(self) -> None:
-        """Test has_object_class with case insensitive matching."""
+        """Test has_object_class with case insensitive matching."""  # type: ignore[assignment]
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"objectClass": ["Person", "inetOrgPerson"]},
@@ -294,7 +294,7 @@ class TestFlextLdifModelsComprehensive:
         assert entry.has_object_class("missing") is False
 
     def test_entry_is_person_entry_true(self) -> None:
-        """Test is_person_entry returns True for person entries."""
+        """Test is_person_entry returns True for person entries."""  # type: ignore[assignment]
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"objectClass": ["inetOrgPerson", "organizationalPerson"]},
@@ -308,7 +308,7 @@ class TestFlextLdifModelsComprehensive:
         assert entry.is_person_entry() is True
 
     def test_entry_is_person_entry_false(self) -> None:
-        """Test is_person_entry returns False for non-person entries."""
+        """Test is_person_entry returns False for non-person entries."""  # type: ignore[assignment]
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"objectClass": ["organizationalUnit"]},
@@ -322,7 +322,7 @@ class TestFlextLdifModelsComprehensive:
         assert entry.is_person_entry() is False
 
     def test_entry_is_group_entry_true(self) -> None:
-        """Test is_group_entry returns True for group entries."""
+        """Test is_group_entry returns True for group entries."""  # type: ignore[assignment]
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"objectClass": ["groupOfNames", "top"]},
@@ -336,7 +336,7 @@ class TestFlextLdifModelsComprehensive:
         assert entry.is_group_entry() is True
 
     def test_entry_is_group_entry_false(self) -> None:
-        """Test is_group_entry returns False for non-group entries."""
+        """Test is_group_entry returns False for non-group entries."""  # type: ignore[assignment]
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"objectClass": ["person"]},
@@ -350,7 +350,7 @@ class TestFlextLdifModelsComprehensive:
         assert entry.is_group_entry() is False
 
     def test_entry_is_organizational_unit_true(self) -> None:
-        """Test is_organizational_unit returns True for OU entries."""
+        """Test is_organizational_unit returns True for OU entries."""  # type: ignore[assignment]
         entry_data = {
             "dn": "ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["organizationalUnit"]},
@@ -364,7 +364,7 @@ class TestFlextLdifModelsComprehensive:
         assert entry.is_organizational_unit() is True
 
     def test_entry_is_organizational_unit_false(self) -> None:
-        """Test is_organizational_unit returns False for non-OU entries."""
+        """Test is_organizational_unit returns False for non-OU entries."""  # type: ignore[assignment]
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"objectClass": ["person"]},
@@ -378,7 +378,7 @@ class TestFlextLdifModelsComprehensive:
         assert entry.is_organizational_unit() is False
 
     def test_entry_validate_business_rules_success(self) -> None:
-        """Test business rules validation success."""
+        """Test business rules validation success."""  # type: ignore[assignment]
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
@@ -395,7 +395,7 @@ class TestFlextLdifModelsComprehensive:
     def test_entry_validate_business_rules_empty_dn(self) -> None:
         """Test business rules validation with empty DN."""
         # This is difficult to test directly since the DN model validates on creation
-        # But we can test through the create_entry path with invalid DN
+        # But we can test through the create_entry path with invalid DN  # type: ignore[assignment]
         entry_data = {"dn": "", "attributes": {"cn": ["test"]}}
         entry_result = FlextLdifModels.create_entry(
             cast("dict[str, object]", entry_data)
@@ -419,7 +419,7 @@ class TestFlextLdifModelsComprehensive:
 
     def test_entry_validate_business_rules_insufficient_dn_components(self) -> None:
         """Test business rules validation with insufficient DN components."""
-        # Test with minimal DN that might not meet component requirements
+        # Test with minimal DN that might not meet component requirements  # type: ignore[assignment]
         entry_data = {
             "dn": "cn=test",  # Only one component
             "attributes": {"cn": ["test"]},
@@ -435,7 +435,7 @@ class TestFlextLdifModelsComprehensive:
         assert result.is_success
 
     def test_entry_create_invalid_dn(self) -> None:
-        """Test entry creation with invalid DN."""
+        """Test entry creation with invalid DN."""  # type: ignore[assignment]
         entry_data = {"dn": "invalid_dn_format", "attributes": {"cn": ["test"]}}
         entry_result = FlextLdifModels.create_entry(
             cast("dict[str, object]", entry_data)
@@ -445,7 +445,7 @@ class TestFlextLdifModelsComprehensive:
         assert entry_result.error is not None
 
     def test_entry_create_invalid_attributes(self) -> None:
-        """Test entry creation with invalid attributes."""
+        """Test entry creation with invalid attributes."""  # type: ignore[assignment]
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"": ["test"]},  # Invalid attribute name
@@ -458,7 +458,7 @@ class TestFlextLdifModelsComprehensive:
 
     def test_entry_create_exception_handling(self) -> None:
         """Test entry creation exception handling."""
-        # Test with data that would cause an exception during entry creation
+        # Test with data that would cause an exception during entry creation  # type: ignore[assignment]
         entry_data = {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
 
         # This should succeed normally
@@ -543,7 +543,7 @@ class TestFlextLdifModelsComprehensive:
         assert result.error and "Attributes must be a dictionary" in result.error
 
     def test_create_entry_factory_method_attribute_normalization(self) -> None:
-        """Test create_entry factory method attribute normalization."""
+        """Test create_entry factory method attribute normalization."""  # type: ignore[assignment]
         data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {

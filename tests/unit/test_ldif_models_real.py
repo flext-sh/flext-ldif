@@ -78,7 +78,7 @@ class TestFlextLdifModelsEntryReal:
     """Test FlextLdifModels.Entry with real functionality."""
 
     def test_entry_creation_basic(self) -> None:
-        """Test basic entry creation."""
+        """Test basic entry creation."""  # type: ignore[assignment]
         entry_data = {
             "dn": "uid=test.user,ou=people,dc=example,dc=com",
             "attributes": {
@@ -103,7 +103,7 @@ class TestFlextLdifModelsEntryReal:
         assert "sn" in entry.attributes
 
     def test_entry_creation_with_multi_valued_attributes(self) -> None:
-        """Test entry creation with multi-valued attributes."""
+        """Test entry creation with multi-valued attributes."""  # type: ignore[assignment]
         entry_data = {
             "dn": "uid=multi.user,ou=people,dc=example,dc=com",
             "attributes": {
@@ -138,7 +138,7 @@ class TestFlextLdifModelsEntryReal:
         assert len(phone_values) == 3
 
     def test_entry_creation_with_binary_data(self) -> None:
-        """Test entry creation with binary (base64) data."""
+        """Test entry creation with binary (base64) data."""  # type: ignore[assignment]
         entry_data = {
             "dn": "uid=photo.user,ou=people,dc=example,dc=com",
             "attributes": {
@@ -167,7 +167,7 @@ class TestFlextLdifModelsEntryReal:
         assert len(jpeg_photo[0]) > 20  # Should contain base64 data
 
     def test_entry_creation_with_special_characters(self) -> None:
-        """Test entry creation with UTF-8 special characters."""
+        """Test entry creation with UTF-8 special characters."""  # type: ignore[assignment]
         entry_data = {
             "dn": "uid=special.chars,ou=people,dc=example,dc=com",
             "attributes": {
@@ -200,7 +200,7 @@ class TestFlextLdifModelsEntryReal:
         assert "áéíóú ÁÉÍÓÚ ñÑ" in description_values[0]
 
     def test_entry_attribute_operations(self) -> None:
-        """Test entry attribute operations."""
+        """Test entry attribute operations."""  # type: ignore[assignment]
         entry_data = {
             "dn": "uid=ops.user,ou=people,dc=example,dc=com",
             "attributes": {
@@ -231,7 +231,7 @@ class TestFlextLdifModelsEntryReal:
         assert entry.has_attribute("nonExistent") is False
 
     def test_entry_dn_operations(self) -> None:
-        """Test entry DN operations."""
+        """Test entry DN operations."""  # type: ignore[assignment]
         entry_data = {
             "dn": "uid=dn.user,ou=people,dc=example,dc=com",
             "attributes": {
@@ -255,7 +255,7 @@ class TestFlextLdifModelsEntryReal:
         assert entry.dn is not None
 
     def test_entry_validation_rules(self) -> None:
-        """Test entry business rule validation."""
+        """Test entry business rule validation."""  # type: ignore[assignment]
         entry_data = {
             "dn": "uid=valid.user,ou=people,dc=example,dc=com",
             "attributes": {
@@ -290,7 +290,7 @@ class TestFlextLdifModelsEntryReal:
         assert validation_passed is not None
 
     def test_entry_serialization(self) -> None:
-        """Test entry serialization to dict."""
+        """Test entry serialization to dict."""  # type: ignore[assignment]
         entry_data = {
             "dn": "uid=serial.user,ou=people,dc=example,dc=com",
             "attributes": {
@@ -468,7 +468,7 @@ class TestModelIntegrationReal:
 
     def test_entry_with_all_model_components(self) -> None:
         """Test entry creation using all model components."""
-        # Create entry with all components
+        # Create entry with all components  # type: ignore[assignment]
         entry_data = {
             "dn": "uid=integration.user,ou=people,dc=example,dc=com",
             "attributes": {

@@ -189,7 +189,10 @@ markers = [
     "timeout: Timeout tests",
     "asyncio: Async tests",
 ]
-filterwarnings = ["ignore::DeprecationWarning:pyasn1(.*|$)"]
+filterwarnings = [
+    "ignore::DeprecationWarning:pyasn1(.*|$)",
+    "ignore::UserWarning:flext_core.loggings"
+]
 
 [tool.coverage.run]
 source = ["src"]

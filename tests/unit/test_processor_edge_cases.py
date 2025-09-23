@@ -196,10 +196,10 @@ objectClass: person
                     "mail": [f"test{i}@example.com"],
                 },
             })
-            if entry_result.is_success:
+            if entry_result.is_success:  # type: ignore[attr-defined]
                 entries.append(entry_result.value)
 
-        api = FlextLdifAPI()
+        api = FlextLdifAPI()  # type: ignore[arg-type]
         result = api.entry_statistics(entries)
         assert result.is_success
         stats = result.unwrap()

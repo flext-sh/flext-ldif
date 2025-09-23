@@ -15,7 +15,7 @@ import re
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import ClassVar, cast
+from typing import ClassVar, cast, override
 
 from pydantic import ConfigDict
 
@@ -67,6 +67,7 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
         self._logger = FlextLogger(__name__)
         self._config = config
 
+    @override
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute health check operation - required by FlextService.
 

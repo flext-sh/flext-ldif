@@ -65,7 +65,7 @@ objectClass: inetOrgPerson
         with patch("flext_ldif.api.FlextLdifProcessor") as mock_processor:
             mock_processor.side_effect = Exception("Processor init failed")
 
-            api = FlextLdifAPI()
+            api = FlextLdifAPI()  # type: ignore[attr-defined]
             result = api._initialize_processor()
 
             assert result.is_failure
@@ -559,35 +559,35 @@ objectClass: inetOrgPerson
         """Test private logging methods for coverage."""
         entries = [sample_entry]
 
-        # Test _log_parse_success
+        # Test _log_parse_success  # type: ignore[attr-defined]
         api._log_parse_success(entries)
 
-        # Test _log_parse_file_success
+        # Test _log_parse_file_success  # type: ignore[attr-defined]
         api._log_parse_file_success(entries)
 
-        # Test _log_validation_success_with_entries
+        # Test _log_validation_success_with_entries  # type: ignore[attr-defined]
         api._log_validation_success_with_entries(entries)
 
-        # Test _log_write_success
+        # Test _log_write_success  # type: ignore[attr-defined]
         api._log_write_success("ldif content")
 
-        # Test _log_write_file_success
+        # Test _log_write_file_success  # type: ignore[attr-defined]
         api._log_write_file_success(success=True)
 
-        # Test _log_transformation_success
+        # Test _log_transformation_success  # type: ignore[attr-defined]
         api._log_transformation_success(entries)
 
         # Test _log_analysis_success
-        analysis = {"total_entries": 1}
+        analysis = {"total_entries": 1}  # type: ignore[attr-defined]
         api._log_analysis_success(cast("dict[str, object]", analysis))
 
     def test_get_config_summary(self, api: FlextLdifAPI) -> None:
-        """Test _get_config_summary method."""
+        """Test _get_config_summary method."""  # type: ignore[attr-defined]
         summary = api._get_config_summary()
         assert isinstance(summary, dict)
 
     def test_get_timestamp(self, api: FlextLdifAPI) -> None:
-        """Test _get_timestamp method."""
+        """Test _get_timestamp method."""  # type: ignore[attr-defined]
         timestamp = api._get_timestamp()
         assert isinstance(timestamp, str)
         # Should be in ISO format

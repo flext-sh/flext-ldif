@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 from pydantic import BaseModel, Field, field_validator
 
 from flext_core import FlextModels, FlextResult
@@ -100,16 +102,16 @@ class FlextLdifModels(FlextModels):
 
         @field_validator("data")
         @classmethod
-        def validate_attributes(cls, v: dict[str, list[str]]) -> dict[str, list[str]]:
+        def validate_attributes(cls, v: object) -> dict[str, list[str]]:
             """Validate attribute data structure."""
-            if not isinstance(v, dict):  # pragma: no cover
+            if not isinstance(v, dict):
                 raise TypeError(FlextLdifConstants.ErrorMessages.ATTRIBUTES_TYPE_ERROR)
 
             for attr_name, attr_values in v.items():
-                cls._validate_attribute_name(attr_name)
+                cls._validate_attribute_name(attr_name)  # type: ignore[arg-type]
                 cls._validate_attribute_values(attr_name, attr_values)
 
-            return v
+            return cast("dict[str, list[str]]", v)
 
         @staticmethod
         def _validate_attribute_name(attr_name: object) -> None:
@@ -123,7 +125,7 @@ class FlextLdifModels(FlextModels):
             if not isinstance(attr_values, list):  # pragma: no cover
                 msg = f"Attribute '{attr_name}' {FlextLdifConstants.ErrorMessages.ATTRIBUTE_VALUES_ERROR}"
                 raise TypeError(msg)
-
+  # type: ignore[assignment]
             for value in attr_values:
                 if not isinstance(value, str):  # pragma: no cover
                     msg = f"Attribute '{attr_name}' values {FlextLdifConstants.ErrorMessages.ATTRIBUTE_VALUE_TYPE_ERROR}"
@@ -308,14 +310,14 @@ class FlextLdifModels(FlextModels):
             )
 
         # Convert attributes to proper format
-        normalized_attrs: dict[str, list[str]] = {}
+        normalized_attrs: dict[str, list[str]] = {}  # type: ignore[assignment]
         for key, value in attributes.items():
             key_str = str(key)
             if isinstance(value, str):
                 normalized_attrs[key_str] = [value]
-            elif isinstance(value, list):
+            elif isinstance(value, list):  # type: ignore[assignment]
                 normalized_attrs[key_str] = [str(v) for v in value if v is not None]
-            else:
+            else:  # type: ignore[arg-type]
                 normalized_attrs[key_str] = [str(value)]
 
         return FlextLdifModels.Entry.create(dn, normalized_attrs)
