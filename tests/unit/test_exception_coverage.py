@@ -77,7 +77,7 @@ class TestModelsExceptionCoverage:
     @staticmethod
     def test_entry_create_exception_during_instantiation() -> None:
         """Test Entry.create when instantiation fails due to invalid data."""
-        # Pass invalid DN data to trigger exception during entry creation
+        # Pass invalid DN data to trigger exception during entry creation  # type: ignore[assignment]
         invalid_entry_data = {
             "dn": 123,  # Invalid: DN must be string
             "attributes": {"cn": ["test"]},
@@ -105,7 +105,7 @@ class TestProcessorExceptionCoverage:
         """Test analytics calculation with empty entries list."""
         from flext_ldif.processor import FlextLdifProcessor
 
-        processor = FlextLdifProcessor()
+        processor = FlextLdifProcessor()  # type: ignore[attr-defined]
         stats = processor._AnalyticsHelper.calculate_entry_statistics([])
 
         assert stats["total_entries"] == 0

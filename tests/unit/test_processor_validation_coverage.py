@@ -20,7 +20,7 @@ class TestProcessorValidationCoverage:
 
         # Create DN with newline
         dn_result = FlextLdifModels.create_dn("cn=test\ndc=example")
-        if dn_result.is_success:
+        if dn_result.is_success:  # type: ignore[attr-defined]
             result = processor._LdifValidationHelper.validate_dn_structure(
                 dn_result.value
             )
@@ -48,7 +48,7 @@ class TestProcessorValidationCoverage:
         })
         assert entry_result.is_success
 
-        # Validate with required attributes it doesn't have
+        # Validate with required attributes it doesn't have  # type: ignore[attr-defined]
         result = processor._LdifValidationHelper.validate_required_attributes(
             entry_result.value, ["sn", "mail"]
         )
@@ -69,7 +69,7 @@ class TestProcessorValidationCoverage:
             },
         })
         assert entry_result.is_success
-
+  # type: ignore[attr-defined]
         result = processor._LdifValidationHelper.validate_required_attributes(
             entry_result.value, ["cn", "sn"]
         )
@@ -117,7 +117,7 @@ objectClass: dcObject
             },
         })
         assert entry_result.is_success
-
+  # type: ignore[attr-defined]
         ldif_output = processor._WriterHelper.format_entry_as_ldif(entry_result.value)
         # Should have multiple cn lines
         assert ldif_output.count("cn:") >= 3
@@ -137,9 +137,9 @@ objectClass: dcObject
                     "objectClass": ["person"],
                 },
             })
-            if entry_result.is_success:
+            if entry_result.is_success:  # type: ignore[attr-defined]
                 entries.append(entry_result.value)
-
+  # type: ignore[arg-type]
         result = processor._AnalyticsHelper.calculate_entry_statistics(entries)
         assert "total_entries" in result
         assert result["total_entries"] == 3
@@ -151,7 +151,7 @@ objectClass: dcObject
 
         # LDIF with continuation line (space at start)
         content = "dn: cn=test,dc=example,dc=com\ndescription: This is a long\n  description\ncn: test\n"
-
+  # type: ignore[attr-defined]
         result = processor._ParseHelper.process_line_continuation(content)
         # Should join continuation lines
         assert "long description" in result or "long\n  description" in result

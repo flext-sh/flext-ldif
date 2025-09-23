@@ -109,9 +109,9 @@ objectClass: person
                     "objectClass": ["person", "inetOrgPerson"],
                 },
             })
-            if entry_result.is_success:
+            if entry_result.is_success:  # type: ignore[attr-defined]
                 entries.append(entry_result.value)
-
+  # type: ignore[arg-type]
         result = processor.analyze_entries(entries)
         assert result.is_success
 

@@ -28,9 +28,10 @@ logger = FlextLogger(__name__)
 
 class ExecResult:
     """Type stub for Docker exec_run result."""
-
+  # type: ignore[misc]
     def __init__(self, exit_code: int, output: tuple[bytes, bytes] | bytes) -> None:
         """Initialize ExecResult with exit code and output."""
+        # No parent class to call super().__init__() on
         self.exit_code = exit_code
         self.output = output
 
@@ -54,7 +55,7 @@ def _exec_container_command(
 ) -> ExecResult:
     """Execute a command in a Docker container with proper typing."""
     from typing import cast
-
+  # type: ignore[attr-defined]
     exec_result = container.exec_run(
         cmd=cmd,
         demux=demux,
@@ -97,10 +98,10 @@ TEST_ENV_VARS = {
 
 class OpenLDAPContainerManager:
     """Manages OpenLDAP Docker container for LDIF testing."""
-
+  # type: ignore[misc]
     def __init__(self) -> None:
         """Initialize the container manager."""
-        super().__init__()
+        # No parent class to call super().__init__() on
         self.client: DockerClient | None = None
         if DOCKER_AVAILABLE:
             self.client = docker.from_env()

@@ -145,15 +145,15 @@ class TestAnalyticsWorkflow:
                     "mail": [f"user{i}@example.com"],
                 },
             })
-            if entry_result.is_success:
+            if entry_result.is_success:  # type: ignore[attr-defined]
                 entries.append(entry_result.value)
 
         # Analyze entries
-        api = FlextLdifAPI()
+        api = FlextLdifAPI()  # type: ignore[arg-type]
         analyze_result = api.analyze(entries)
         assert analyze_result.is_success
 
-        # Verify analytics
+        # Verify analytics  # type: ignore[arg-type]
         stats_result = api.entry_statistics(entries)
         assert stats_result.is_success
         stats = stats_result.value

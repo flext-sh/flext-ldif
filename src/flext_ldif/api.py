@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import cast
+from typing import cast, override
 
 from pydantic import ConfigDict
 
@@ -61,6 +61,7 @@ class FlextLdifAPI(FlextService[dict[str, object]]):
             self._logger.exception(error_msg)
             return FlextResult[FlextLdifProcessor].fail(error_msg)
 
+    @override
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute health check operation - required by FlextService.
 
@@ -232,6 +233,7 @@ class FlextLdifAPI(FlextService[dict[str, object]]):
             )
         )
 
+    @override
     def get_service_info(self) -> dict[str, object]:
         """Get service information using safe evaluation.
 
