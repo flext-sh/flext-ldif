@@ -22,6 +22,7 @@ class FileManager:
 
     def __init__(self, base_dir: Path | None = None) -> None:
         """Initialize file manager with optional base directory."""
+        super().__init__()
         self.base_dir = base_dir
         self.created_files: list[Path] = []
         self.created_dirs: list[Path] = []
@@ -78,7 +79,7 @@ class FileManager:
             directory = Path(tempfile.mkdtemp())
             self.created_dirs.append(directory)
 
-        files = {}
+        files: dict[str, Path] = {}
         for name, sample in LdifTestData.all_samples().items():
             file_path = self.create_sample_file(sample, f"{name}.ldif", directory)
             files[name] = file_path
@@ -131,7 +132,7 @@ class FileManager:
 
     def create_file_set(
         self,
-        samples: FlextTypes.Core.Headers,
+        samples: dict[str, str],
         directory: Path | None = None,
     ) -> dict[str, Path]:
         """Create multiple files from content dictionary."""
@@ -139,7 +140,7 @@ class FileManager:
             directory = Path(tempfile.mkdtemp())
             self.created_dirs.append(directory)
 
-        files = {}
+        files: dict[str, Path] = {}
         for name, content in samples.items():
             filename = f"{name}.ldif" if not name.endswith(".ldif") else name
             file_path = self.create_ldif_file(content, filename, directory)
@@ -179,7 +180,7 @@ class FileManager:
     @contextmanager
     def temporary_files(
         cls,
-        samples: FlextTypes.Core.Headers,
+        samples: dict[str, str],
     ) -> Generator[dict[str, Path]]:
         """Context manager for temporary files."""
         with cls() as manager:

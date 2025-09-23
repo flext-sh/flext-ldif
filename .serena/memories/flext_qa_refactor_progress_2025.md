@@ -60,7 +60,7 @@
 
 **Refactoring Strategy**:
 
-1. Convert FlextWebConfigs to FlextWebService(FlextDomainService)
+1. Convert FlextWebConfigs to FlextWebService(FlextService)
 2. Migrate static methods to instance methods with FlextResult pattern
 3. Update all references across dependent projects
 4. Maintain API compatibility during transition

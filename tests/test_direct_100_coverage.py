@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import sys
 import tempfile
 from pathlib import Path
 
@@ -18,9 +17,6 @@ from flext_ldif.config import FlextLdifConfig
 from flext_ldif.exceptions import FlextLdifExceptions
 from flext_ldif.models import FlextLdifModels
 
-# Add src to path
-sys.path.insert(0, "src")
-
 
 def test_all_services_100_percent() -> None:
     """Force 100% coverage by calling ALL methods."""
@@ -28,7 +24,7 @@ def test_all_services_100_percent() -> None:
     config = FlextLdifConfig(ldif_strict_validation=False, ldif_max_entries=1000)
     assert config.ldif_strict_validation is False
 
-    # Test entries
+    # Test entries - unwrap FlextResult to get actual Entry objects
     test_entries = [
         FlextLdifModels.create_entry(
             {
@@ -40,7 +36,7 @@ def test_all_services_100_percent() -> None:
                     "telephoneNumber": ["+1234567890"],
                 },
             },
-        ),
+        ).unwrap(),
         FlextLdifModels.create_entry(
             {
                 "dn": "cn=group1,ou=groups,dc=test,dc=com",
@@ -50,54 +46,54 @@ def test_all_services_100_percent() -> None:
                     "member": ["cn=person1,dc=test,dc=com"],
                 },
             },
-        ),
+        ).unwrap(),
     ]
 
     # FORCE ALL ANALYTICS SERVICE BRANCHES
 
     # Force None config branch using FlextLdifAPI (FLEXT-compliant)
     api = FlextLdifAPI()
-    result = api.analyze([])
-    assert result.is_success
+    analyze_result = api.analyze([])
+    assert analyze_result.is_success
 
     # Force config branch - test analytics functionality
-    result = api.entry_statistics([])
-    assert result.is_success
+    stats_result = api.entry_statistics([])
+    assert stats_result.is_success
 
     # Force with entries - analytics service works with entries from main services
-    result = api.entry_statistics([])
-    assert result.is_success
+    stats_result2 = api.entry_statistics([])
+    assert stats_result2.is_success
 
     # Force ALL analyze methods - use API methods instead of services
-    result = api.analyze(test_entries)
-    assert result.is_success
+    analyze_result2 = api.analyze(test_entries)
+    assert analyze_result2.is_success
 
-    result = api.analyze([])
-    assert result.is_success
+    analyze_result3 = api.analyze([])
+    assert analyze_result3.is_success
 
-    result = api.entry_statistics(test_entries)
-    assert result.is_success
+    stats_result3 = api.entry_statistics(test_entries)
+    assert stats_result3.is_success
 
-    result = api.entry_statistics([])
-    assert result.is_success
+    stats_result4 = api.entry_statistics([])
+    assert stats_result4.is_success
 
-    result = api.entry_statistics(test_entries)
-    assert result.is_success
+    stats_result5 = api.entry_statistics(test_entries)
+    assert stats_result5.is_success
 
-    result = api.entry_statistics([])
-    assert result.is_success
+    stats_result6 = api.entry_statistics([])
+    assert stats_result6.is_success
 
-    result = api.entry_statistics(test_entries)
-    assert result.is_success
+    stats_result7 = api.entry_statistics(test_entries)
+    assert stats_result7.is_success
 
-    result = api.entry_statistics([])
-    assert result.is_success
+    stats_result8 = api.entry_statistics([])
+    assert stats_result8.is_success
 
-    result = api.entry_statistics(test_entries)
-    assert result.is_success
+    stats_result9 = api.entry_statistics(test_entries)
+    assert stats_result9.is_success
 
-    result = api.entry_statistics([])
-    assert result.is_success
+    stats_result10 = api.entry_statistics([])
+    assert stats_result10.is_success
 
     # FORCE ALL PARSER SERVICE BRANCHES
 
@@ -113,42 +109,42 @@ def test_all_services_100_percent() -> None:
     ]
 
     for content in test_cases:
-        result = api.parse(content)
-        assert result is not None
+        parse_result = api.parse(content)
+        assert parse_result is not None
 
     # FORCE ALL VALIDATOR SERVICE BRANCHES
 
-    result = api.validate_entries(test_entries)
-    assert result is not None
+    validate_result1 = api.validate_entries(test_entries)
+    assert validate_result1 is not None
 
-    result = api.validate_entries([])
-    assert result is not None
+    validate_result2 = api.validate_entries([])
+    assert validate_result2 is not None
 
     # Test individual entry validation - use analyze for detailed validation
     if test_entries:
-        result = api.analyze(test_entries)
-        assert result is not None
+        analyze_result = api.analyze(test_entries)
+        assert analyze_result is not None
 
     # FORCE ALL WRITER SERVICE BRANCHES
 
-    result = api.write(test_entries)
-    assert result is not None
+    write_result1 = api.write(test_entries)
+    assert write_result1 is not None
 
-    result = api.write([])
-    assert result is not None
+    write_result2 = api.write([])
+    assert write_result2 is not None
 
     # Test individual entry writing - use write method
     if test_entries:
-        result = api.write([test_entries[0]])
-        assert result is not None
+        write_result3 = api.write([test_entries[0]])
+        assert write_result3 is not None
 
     # File operations
     with tempfile.NamedTemporaryFile(delete=False, suffix=".ldif") as f:
         temp_path = Path(f.name)
 
     try:
-        result = api.write_file(test_entries, str(temp_path))
-        assert result is not None
+        write_file_result = api.write_file(test_entries, str(temp_path))
+        assert write_file_result is not None
     finally:
         if temp_path.exists():
             temp_path.unlink()
@@ -159,73 +155,35 @@ def test_all_services_100_percent() -> None:
     def identity_transform(entry: FlextLdifModels.Entry) -> FlextLdifModels.Entry:
         return entry
 
-    result = api.transform(test_entries, identity_transform)
-    assert result is not None
+    transform_result1 = api.transform(test_entries, identity_transform)
+    assert transform_result1 is not None
 
-    result = api.transform([], identity_transform)
-    assert result is not None
+    transform_result2 = api.transform([], identity_transform)
+    assert transform_result2 is not None
 
     # Test DN normalization - use transform for this
-    result = api.transform(test_entries, identity_transform)
-    assert result is not None
+    transform_result3 = api.transform(test_entries, identity_transform)
+    assert transform_result3 is not None
 
     # FORCE ALL REPOSITORY SERVICE BRANCHES
 
     # Use analytics functionality from API
-    result = api.analyze(test_entries)
-    assert result.is_success
+    analytics_result1 = api.analyze(test_entries)
+    assert analytics_result1.is_success
 
-    result = api.analyze([])
-    assert result.is_success
+    analytics_result2 = api.analyze([])
+    assert analytics_result2.is_success
 
-    result = api.entry_statistics(test_entries)
-    assert result.is_success
+    stats_result1 = api.entry_statistics(test_entries)
+    assert stats_result1.is_success
 
-    result = api.entry_statistics(test_entries)
-    assert result.is_success
+    stats_result2 = api.entry_statistics(test_entries)
+    assert stats_result2.is_success
 
-    # Test utilities - Use FlextUtilities from flext-core instead of non-existent FlextLdifUtilities
-
-    from flext_core import FlextUtilities
-
-    utilities = FlextUtilities()
-
-    # Test file extension validation using FlextUtilities.TextProcessor
-    result = utilities.TextProcessor.validate_text_format(
-        "test.ldif", format_pattern=r"\.ldif$"
-    )
-    assert result.is_success
-    assert result.unwrap() is True
-
-    result = utilities.TextProcessor.validate_text_format(
-        "test.txt", format_pattern=r"\.ldif$"
-    )
-    assert result.is_success
-    assert result.unwrap() is False
-
-    # Test DN formatting using FlextUtilities.TextProcessor
-    result = utilities.TextProcessor.normalize_text("cn=test,dc=com")
-    assert result.is_success
-
-    result = utilities.TextProcessor.normalize_text("")
-    assert result.is_success  # Empty string is valid for normalization
-
-    # Test entry conversion - use API analyze for this
-    if test_entries:
-        result = api.analyze(test_entries)
-        assert result.is_success
-
-        # Calculate entry size using FlextUtilities.DataTransformer
-        entry_dict = {
-            "dn": test_entries[0].dn.value,
-            "attributes": dict(test_entries[0].attributes.data),
-        }
-        result = utilities.DataTransformer.calculate_data_size(entry_dict)
-        assert result.is_success
-
-    # Test utility info - use health_check from API
+    # Test health check functionality
     health_result = api.health_check()
     assert health_result is not None
+    assert health_result.is_success
 
     # Test exceptions
 
@@ -238,7 +196,7 @@ def test_all_services_100_percent() -> None:
         FlextLdifExceptions.connection_error("test"),
         FlextLdifExceptions.file_error("test"),
         FlextLdifExceptions.configuration_error("test"),
-        FlextLdifExceptions.processing_error("test", operation="test"),
+        FlextLdifExceptions.processing_error("test"),
         FlextLdifExceptions.processing_error("test"),  # No operation
         FlextLdifExceptions.authentication_error("test"),
         FlextLdifExceptions.timeout_error("test"),

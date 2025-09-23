@@ -60,7 +60,7 @@
 #### FlextWebConfigs Container Class → FlextWebService
 
 - **Current**: Container class with nested classes and static methods
-- **Target**: Unified FlextDomainService following architectural patterns
+- **Target**: Unified FlextService following architectural patterns
 - **Impact**: 4+ files across flext-quality and flext-web
 - **Complexity**: HIGH - Core web configuration system
 - **Estimated Effort**: 2-3 hours with comprehensive testing

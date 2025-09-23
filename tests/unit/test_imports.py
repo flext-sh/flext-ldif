@@ -9,7 +9,6 @@ from __future__ import annotations
 import flext_ldif
 from flext_ldif import (
     FlextLdifAPI,
-    FlextLdifFormatHandler,
     FlextLdifModels,
     __version__,
 )
@@ -47,8 +46,8 @@ class TestModuleImports:
         """Test class-based interface imports."""
         # FlextLdifCore eliminated - was wrapper violating SOLID
         # FlextLdifServices eliminated - was compatibility wrapper violating FLEXT rules
+        # FlextLdifFormatHandler eliminated - was redundant with FlextLdifAPI
         assert FlextLdifAPI is not None
-        assert FlextLdifFormatHandler is not None
         # FlextLdifUtilities removed - was dead code
 
     def test_library_has_no_cli(self) -> None:
@@ -70,8 +69,7 @@ class TestModuleImports:
         assert api is not None
         assert isinstance(api, FlextLdifAPI)
 
-        # Test that class methods exist and are callable
-        assert callable(FlextLdifFormatHandler.parse_ldif)
-        assert callable(FlextLdifFormatHandler.write_ldif)
+        # Test that API methods exist and are callable
+        # FlextLdifFormatHandler removed - functionality consolidated into FlextLdifAPI
         # FlextLdifFormatValidators removed - validation now in FlextLdifModels
         # LdifDomainProcessors was removed as it was not implemented

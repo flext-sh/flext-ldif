@@ -35,6 +35,8 @@ class TestConstants:
 
     def test_min_dn_components_defined(self) -> None:
         """Test minimum DN components is properly defined."""
-        assert isinstance(FlextLdifConstants.Validation.MIN_DN_COMPONENTS, int)
-        assert FlextLdifConstants.Validation.MIN_DN_COMPONENTS > 0
-        assert FlextLdifConstants.Validation.MIN_DN_COMPONENTS <= 5  # Reasonable limit
+        assert isinstance(FlextLdifConstants.LdifValidation.MIN_DN_COMPONENTS, int)
+        assert FlextLdifConstants.LdifValidation.MIN_DN_COMPONENTS > 0
+        assert (
+            FlextLdifConstants.LdifValidation.MIN_DN_COMPONENTS <= 5
+        )  # Reasonable limit  # Reasonable limit

@@ -1,4 +1,4 @@
-"""FLEXT LDIF Protocols - Unified protocol definitions for LDIF operations.
+"""FLEXT LDIF Protocols.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import IO, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from flext_core import FlextProtocols, FlextResult
 
@@ -14,233 +14,114 @@ from flext_core import FlextProtocols, FlextResult
 class FlextLdifProtocols(FlextProtocols):
     """LDIF-specific protocols extending flext-core FlextProtocols.
 
-    Single unified class containing all LDIF protocol definitions
-    following SOLID principles and FLEXT ecosystem patterns.
-
-    Uses FlextProtocols inheritance to reduce code duplication and ensure
-    consistent protocol patterns across the FLEXT ecosystem.
+    Contains ONLY protocol definitions for duck typing support.
     """
 
-    # =============================================================================
-    # LDIF DOMAIN PROTOCOLS (extending FlextProtocols patterns)
-    # =============================================================================
+    @runtime_checkable
+    class LdifEntryProtocol(Protocol):
+        """Protocol for LDIF entry objects."""
+
+        @property
+        def dn(self) -> object:
+            """Get the distinguished name of the entry."""
+            ...
+
+        @property
+        def attributes(self) -> object:
+            """Get the attributes of the entry."""
+            ...
+
+        def get_attribute(self, name: str) -> list[str] | None:
+            """Get attribute values by name."""
+            ...
+
+        def has_object_class(self, object_class: str) -> bool:
+            """Check if entry has specified object class."""
+            ...
+
+        def is_person_entry(self) -> bool:
+            """Check if entry is a person entry."""
+            ...
+
+        def validate_business_rules(self) -> FlextResult[bool]:
+            """Validate entry against business rules."""
+            ...
 
     @runtime_checkable
-    class LdifParserProtocol(Protocol):
-        """Protocol for LDIF parser implementations."""
+    class LdifProcessorProtocol(Protocol):
+        """Protocol for LDIF processors."""
 
-        def parse_content(self, content: str) -> FlextResult[list[object]]:
+        def parse(self, content: str) -> FlextResult[list[object]]:
             """Parse LDIF content string into entries."""
             ...
 
-        def parse_ldif_file(self, file_path: str) -> FlextResult[list[object]]:
-            """Parse LDIF file into entries."""
+        def validate_entries(self, entries: list[object]) -> FlextResult[list[object]]:
+            """Validate LDIF entries."""
             ...
 
-        def parse_stream(self, stream: IO[str]) -> FlextResult[list[object]]:
-            """Parse LDIF stream into entries."""
+        def write(self, entries: list[object]) -> FlextResult[str]:
+            """Write entries to LDIF string."""
+            ...
+
+        def transform_entries(
+            self, entries: list[object], transformer: object
+        ) -> FlextResult[list[object]]:
+            """Transform entries using transformer function."""
+            ...
+
+        def analyze_entries(
+            self, entries: list[object]
+        ) -> FlextResult[dict[str, object]]:
+            """Analyze entries and provide statistics."""
             ...
 
     @runtime_checkable
     class LdifValidatorProtocol(Protocol):
-        """Protocol for LDIF validator implementations."""
+        """Protocol for LDIF validators."""
 
-        def validate_entry(self, entry: object) -> FlextResult[None]:
-            """Validate single LDIF entry."""
+        def validate_entry(self, entry: object) -> FlextResult[bool]:
+            """Validate a single LDIF entry."""
             ...
 
-        def validate_entries(self, entries: list[object]) -> FlextResult[None]:
+        def validate_entries(self, entries: list[object]) -> FlextResult[bool]:
             """Validate multiple LDIF entries."""
             ...
 
-        def validate_syntax(self, content: str) -> FlextResult[None]:
-            """Validate LDIF syntax."""
+        def get_validation_errors(self) -> list[str]:
+            """Get list of validation errors."""
             ...
 
     @runtime_checkable
     class LdifWriterProtocol(Protocol):
-        """Protocol for LDIF writer implementations."""
+        """Protocol for LDIF writers."""
 
         def write_entries_to_string(self, entries: list[object]) -> FlextResult[str]:
-            """Write entries to LDIF string."""
+            """Write entries to LDIF format string."""
             ...
 
         def write_entries_to_file(
-            self,
-            entries: list[object],
-            file_path: str,
-        ) -> FlextResult[None]:
+            self, entries: list[object], file_path: str
+        ) -> FlextResult[bool]:
             """Write entries to LDIF file."""
-            ...
-
-        def write_entries_to_stream(
-            self,
-            entries: list[object],
-            stream: IO[str],
-        ) -> FlextResult[None]:
-            """Write entries to LDIF stream."""
-            ...
-
-    @runtime_checkable
-    class LdifRepositoryProtocol(Protocol):
-        """Protocol for LDIF repository implementations."""
-
-        def store_entries(self, entries: list[object]) -> FlextResult[None]:
-            """Store LDIF entries."""
-            ...
-
-        def retrieve_entries(
-            self,
-            filter_criteria: dict[str, object],
-        ) -> FlextResult[list[object]]:
-            """Retrieve LDIF entries by criteria."""
-            ...
-
-        def count_entries(
-            self,
-            filter_criteria: dict[str, object] | None = None,
-        ) -> FlextResult[int]:
-            """Count LDIF entries."""
             ...
 
     @runtime_checkable
     class LdifAnalyticsProtocol(Protocol):
-        """Protocol for LDIF analytics implementations."""
+        """Protocol for LDIF analytics."""
 
-        def calculate_statistics(
-            self,
-            entries: list[object],
+        def analyze_entries(
+            self, entries: list[object]
         ) -> FlextResult[dict[str, object]]:
-            """Calculate LDIF statistics."""
+            """Analyze LDIF entries and generate analytics."""
             ...
 
-        def generate_report(self, statistics: dict[str, object]) -> FlextResult[str]:
-            """Generate analytics report."""
+        def get_statistics(self) -> dict[str, int | float]:
+            """Get analytics statistics."""
             ...
 
-        def get_entry_distribution(
-            self,
-            entries: list[object],
-        ) -> FlextResult[dict[str, int]]:
-            """Get entry type distribution."""
+        def detect_patterns(self, entries: list[object]) -> dict[str, object]:
+            """Detect patterns in LDIF entries."""
             ...
-
-    @runtime_checkable
-    class LdifTransformerProtocol(Protocol):
-        """Protocol for LDIF transformer implementations."""
-
-        def transform_entries(self, entries: list[object]) -> FlextResult[list[object]]:
-            """Transform LDIF entries."""
-            ...
-
-        def apply_transformations(
-            self,
-            transformations: list[object],
-        ) -> FlextResult[None]:
-            """Apply transformation rules."""
-            ...
-
-        def normalize_entries(self, entries: list[object]) -> FlextResult[list[object]]:
-            """Normalize LDIF entries."""
-            ...
-
-    @runtime_checkable
-    class LdifFormatHandlerProtocol(Protocol):
-        """Protocol for LDIF format handlers."""
-
-        def can_handle(self, source: str) -> bool:
-            """Check if handler can process source."""
-            ...
-
-        def read_content(self, source: str) -> FlextResult[str]:
-            """Read content from source."""
-            ...
-
-        def validate_source(self, source: str) -> FlextResult[None]:
-            """Validate source format."""
-            ...
-
-    @runtime_checkable
-    class LdifDispatcherProtocol(Protocol):
-        """Protocol for LDIF service dispatchers."""
-
-        def dispatch_operation(
-            self,
-            operation: str,
-            **kwargs: object,
-        ) -> FlextResult[object]:
-            """Dispatch LDIF operation."""
-            ...
-
-        def supports_operation(self, operation: str) -> bool:
-            """Check if operation is supported."""
-            ...
-
-    @runtime_checkable
-    class LdifServiceProtocol(Protocol):
-        """Base protocol for all LDIF services."""
-
-        def initialize(self) -> FlextResult[None]:
-            """Initialize the service."""
-            ...
-
-        def is_healthy(self) -> bool:
-            """Check service health."""
-            ...
-
-        def cleanup(self) -> FlextResult[None]:
-            """Cleanup service resources."""
-            ...
-
-    @runtime_checkable
-    class ServiceContainerProtocol(Protocol):
-        """Protocol describing the services required by dispatcher handlers.
-
-        Moved from dispatcher.py to maintain unified protocol definitions.
-        """
-
-        parser: FlextLdifProtocols.LdifParserProtocol
-        validator: FlextLdifProtocols.LdifValidatorProtocol
-        writer: FlextLdifProtocols.LdifWriterProtocol
-
-    # =============================================================================
-    # LDIF PROTOCOL VALIDATORS (using flext-core patterns)
-    # =============================================================================
-
-    @classmethod
-    def validate_ldif_parser(cls, obj: object) -> bool:
-        """Validate object implements LdifParserProtocol."""
-        return isinstance(obj, cls.LdifParserProtocol)
-
-    @classmethod
-    def validate_ldif_validator(cls, obj: object) -> bool:
-        """Validate object implements LdifValidatorProtocol."""
-        return isinstance(obj, cls.LdifValidatorProtocol)
-
-    @classmethod
-    def validate_ldif_writer(cls, obj: object) -> bool:
-        """Validate object implements LdifWriterProtocol."""
-        return isinstance(obj, cls.LdifWriterProtocol)
-
-    @classmethod
-    def validate_ldif_repository(cls, obj: object) -> bool:
-        """Validate object implements LdifRepositoryProtocol."""
-        return isinstance(obj, cls.LdifRepositoryProtocol)
-
-    @classmethod
-    def validate_ldif_analytics(cls, obj: object) -> bool:
-        """Validate object implements LdifAnalyticsProtocol."""
-        return isinstance(obj, cls.LdifAnalyticsProtocol)
-
-    @classmethod
-    def validate_ldif_transformer(cls, obj: object) -> bool:
-        """Validate object implements LdifTransformerProtocol."""
-        return isinstance(obj, cls.LdifTransformerProtocol)
-
-    @classmethod
-    def validate_ldif_service(cls, obj: object) -> bool:
-        """Validate object implements LdifServiceProtocol."""
-        return isinstance(obj, cls.LdifServiceProtocol)
 
 
 __all__ = ["FlextLdifProtocols"]

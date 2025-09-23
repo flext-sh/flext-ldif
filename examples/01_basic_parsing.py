@@ -57,7 +57,7 @@ def main() -> None:
     # Parse LDIF from file
     sample_file = Path(__file__).parent / "sample_basic.ldif"
 
-    result = api.parse_file(sample_file)
+    result = api.parse_ldif_file(sample_file)
 
     # Use railway programming with modern FlextResult pattern
     if not result.is_success:
@@ -68,11 +68,11 @@ def main() -> None:
         return
 
     # Display basic statistics with railway programming
-    def display_stats(stats: dict[str, int]) -> None:
+    def display_stats(stats: dict[str, object]) -> None:
         for _key, _value in stats.items():
             pass
 
-    api.get_entry_statistics(entries).tap(display_stats)
+    api.entry_statistics(entries).map(display_stats)
 
     # Display first entry details
     if entries:

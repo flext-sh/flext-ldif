@@ -36,12 +36,8 @@ class TestValidators:
             # object_classes is already a list from get_attribute
 
             # Basic validation for common object classes
-            object_classes_list = (
-                list(object_classes)
-                if isinstance(object_classes, list)
-                else [object_classes]
-                if object_classes
-                else []
+            object_classes_list: list[str] = (
+                list(object_classes) if object_classes else []
             )
             if "person" in object_classes_list:
                 validations["person_has_cn"] = "cn" in entry.attributes
@@ -55,7 +51,7 @@ class TestValidators:
     @staticmethod
     def validate_dn_format(dn: str) -> bool:
         """Validate DN format according to RFC standards."""
-        if not dn or not isinstance(dn, str):
+        if not dn:
             return False
 
         # Basic DN format validation
@@ -66,7 +62,7 @@ class TestValidators:
     @staticmethod
     def validate_attribute_name(attr_name: str) -> bool:
         """Validate LDAP attribute name format."""
-        if not attr_name or not isinstance(attr_name, str):
+        if not attr_name:
             return False
 
         # LDAP attribute names: start with letter, can contain letters, digits, hyphens
@@ -105,7 +101,7 @@ class TestValidators:
     @staticmethod
     def validate_ldif_content(content: str) -> FlextTypes.Core.Dict:
         """Validate raw LDIF content format."""
-        if not content or not isinstance(content, str):
+        if not content:
             return {"is_valid": False, "reason": "Empty or non-string content"}
 
         lines = content.strip().split("\n")
@@ -186,15 +182,16 @@ class TestValidators:
             return {**base_validation, "entries_valid": False}
 
         entries = result.value if hasattr(result, "value") else []
-        entries_validation = {
+        entry_validations_list: list[dict[str, bool | int | str | None]] = []
+        entries_validation: dict[
+            str, bool | int | list[dict[str, bool | int | str | None]]
+        ] = {
             "count_matches": len(entries) == expected_count,
             "actual_count": len(entries),
             "expected_count": expected_count,
             "all_entries_valid": True,
-            "entry_validations": [],
+            "entry_validations": entry_validations_list,
         }
-        entry_validations_list = entries_validation["entry_validations"]
-        assert isinstance(entry_validations_list, list)
 
         # Validate each entry
         for i, entry in enumerate(entries):

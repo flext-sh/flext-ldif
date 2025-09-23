@@ -31,12 +31,12 @@ class TestFlextLdifExceptions:
         ):
             # Create mock FlextExceptions base class
             mock_exceptions_class = type("FlextExceptions", (), {})
-            sys.modules["flext_core"].FlextExceptions = mock_exceptions_class
+            setattr(sys.modules["flext_core"], "FlextExceptions", mock_exceptions_class)
 
             # Create mock FlextTypes with Config
             mock_config_class = type("Config", (), {})
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
-            sys.modules["flext_core"].FlextTypes = mock_types_class
+            setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
                 import flext_ldif.exceptions
@@ -58,24 +58,20 @@ class TestFlextLdifExceptions:
         ):
             # Create comprehensive mocks
             mock_exceptions_class = type("FlextExceptions", (), {})
-            sys.modules["flext_core"].FlextExceptions = mock_exceptions_class
+            setattr(sys.modules["flext_core"], "FlextExceptions", mock_exceptions_class)
 
             mock_config_class = type("Config", (), {})
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
-            sys.modules["flext_core"].FlextTypes = mock_types_class
+            setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
                 import flext_ldif.exceptions
 
                 exceptions = flext_ldif.exceptions.FlextLdifExceptions
 
-                # Test that key exception classes exist
-                assert hasattr(exceptions, "ParseError") or hasattr(
-                    exceptions, "PARSING_ERROR"
-                )
-                assert hasattr(exceptions, "ValidationError") or hasattr(
-                    exceptions, "VALIDATION_ERROR"
-                )
+                # Test that factory methods exist (new API)
+                assert hasattr(exceptions, "parse_error")
+                assert hasattr(exceptions, "validation_error")
 
             except (ImportError, AttributeError):
                 pytest.skip(
@@ -94,21 +90,19 @@ class TestFlextLdifExceptions:
             },
         ):
             mock_exceptions_class = type("FlextExceptions", (), {})
-            sys.modules["flext_core"].FlextExceptions = mock_exceptions_class
+            setattr(sys.modules["flext_core"], "FlextExceptions", mock_exceptions_class)
 
             mock_config_class = type("Config", (), {})
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
-            sys.modules["flext_core"].FlextTypes = mock_types_class
+            setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
                 import flext_ldif.exceptions
 
                 exceptions = flext_ldif.exceptions.FlextLdifExceptions
 
-                # Test validation exception classes exist
-                assert hasattr(exceptions, "ValidationError") or hasattr(
-                    exceptions, "INVALID_ENTRY"
-                )
+                # Test validation factory methods exist
+                assert hasattr(exceptions, "validation_error")
 
             except (ImportError, AttributeError):
                 pytest.skip("Cannot test validation exceptions due to issues")
@@ -125,21 +119,19 @@ class TestFlextLdifExceptions:
             },
         ):
             mock_exceptions_class = type("FlextExceptions", (), {})
-            sys.modules["flext_core"].FlextExceptions = mock_exceptions_class
+            setattr(sys.modules["flext_core"], "FlextExceptions", mock_exceptions_class)
 
             mock_config_class = type("Config", (), {})
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
-            sys.modules["flext_core"].FlextTypes = mock_types_class
+            setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
                 import flext_ldif.exceptions
 
                 exceptions = flext_ldif.exceptions.FlextLdifExceptions
 
-                # Test processing exception classes
-                assert hasattr(exceptions, "ProcessingError") or hasattr(
-                    exceptions, "PROCESSING_FAILED"
-                )
+                # Test processing factory methods exist
+                assert hasattr(exceptions, "processing_error")
 
             except (ImportError, AttributeError):
                 pytest.skip("Cannot test processing exceptions due to issues")
@@ -156,21 +148,19 @@ class TestFlextLdifExceptions:
             },
         ):
             mock_exceptions_class = type("FlextExceptions", (), {})
-            sys.modules["flext_core"].FlextExceptions = mock_exceptions_class
+            setattr(sys.modules["flext_core"], "FlextExceptions", mock_exceptions_class)
 
             mock_config_class = type("Config", (), {})
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
-            sys.modules["flext_core"].FlextTypes = mock_types_class
+            setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
                 import flext_ldif.exceptions
 
                 exceptions = flext_ldif.exceptions.FlextLdifExceptions
 
-                # Test IO exception classes
-                assert hasattr(exceptions, "IOError") or hasattr(
-                    exceptions, "FILE_ERROR"
-                )
+                # Test IO factory methods exist
+                assert hasattr(exceptions, "file_error")
 
             except (ImportError, AttributeError):
                 pytest.skip("Cannot test IO exceptions due to issues")
@@ -187,21 +177,19 @@ class TestFlextLdifExceptions:
             },
         ):
             mock_exceptions_class = type("FlextExceptions", (), {})
-            sys.modules["flext_core"].FlextExceptions = mock_exceptions_class
+            setattr(sys.modules["flext_core"], "FlextExceptions", mock_exceptions_class)
 
             mock_config_class = type("Config", (), {})
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
-            sys.modules["flext_core"].FlextTypes = mock_types_class
+            setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
                 import flext_ldif.exceptions
 
                 exceptions = flext_ldif.exceptions.FlextLdifExceptions
 
-                # Test that exception creation methods exist
-                assert hasattr(exceptions, "create_parse_error") or hasattr(
-                    exceptions, "parse_error"
-                )
+                # Test that factory methods exist
+                assert hasattr(exceptions, "parse_error")
 
             except (ImportError, AttributeError):
                 pytest.skip("Cannot test exception creation due to issues")
@@ -218,11 +206,11 @@ class TestFlextLdifExceptions:
             },
         ):
             mock_exceptions_class = type("FlextExceptions", (), {})
-            sys.modules["flext_core"].FlextExceptions = mock_exceptions_class
+            setattr(sys.modules["flext_core"], "FlextExceptions", mock_exceptions_class)
 
             mock_config_class = type("Config", (), {})
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
-            sys.modules["flext_core"].FlextTypes = mock_types_class
+            setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
                 import flext_ldif.exceptions

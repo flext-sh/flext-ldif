@@ -21,18 +21,17 @@ from pydantic import ConfigDict
 
 from flext_core import (
     FlextConstants,
-    FlextDomainService,
     FlextLogger,
     FlextResult,
+    FlextService,
 )
-
-from .config import FlextLdifConfig
-from .models import FlextLdifModels
+from flext_ldif.config import FlextLdifConfig
+from flext_ldif.models import FlextLdifModels
 
 __all__ = ["FlextLdifProcessor"]
 
 
-class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
+class FlextLdifProcessor(FlextService[dict[str, object]]):
     """Unified LDIF processor for all LDIF operations.
 
     Provides comprehensive LDIF processing capabilities including parsing,
@@ -69,7 +68,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
         self._config = config
 
     def execute(self) -> FlextResult[dict[str, object]]:
-        """Execute health check operation - required by FlextDomainService.
+        """Execute health check operation - required by FlextService.
 
         Returns:
             FlextResult containing health status dictionary with processor metrics.
@@ -138,8 +137,8 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
 
             # Create entry
             entry_data: dict[str, object] = {
-                "dn": dn_result.value,
-                "attributes": attrs_result.value,
+                "dn": dn_value,  # Use the original DN string
+                "attributes": attributes_data,  # Use the original attributes dict
             }
 
             entry_result = FlextLdifModels.create_entry(entry_data)
@@ -152,10 +151,10 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
 
         @staticmethod
         def process_line_continuation(content: str) -> str:
-            """Process LDIF line continuations.
+            """Process LDIF line continuations while preserving entry separators.
 
             Returns:
-                Processed content with line continuations resolved.
+                Processed content with line continuations resolved but blank lines preserved.
 
             """
             lines = content.split("\n")
@@ -167,11 +166,21 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                     # Continuation line
                     current_line += line[1:]  # Remove leading space/tab
                 else:
-                    # New line
+                    # New line or empty line
                     if current_line:
                         processed_lines.append(current_line)
-                    current_line = line
+                        current_line = ""
 
+                    # Always append the new line (including empty lines for entry separation)
+                    processed_lines.append(line)
+
+                    # If this is not an empty line, start building current_line
+                    if line.strip():
+                        current_line = (
+                            processed_lines.pop()
+                        )  # Remove it from processed and use as current
+
+            # Handle any remaining current_line (shouldn't happen with proper LDIF)
             if current_line:
                 processed_lines.append(current_line)
 
@@ -439,8 +448,19 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
             )
             return self.parse_string(content)
         except UnicodeDecodeError as e:
+            # Create error message with safe serializable information
             error_msg = f"Failed to decode file {file_path}: {e}"
-            self._logger.exception(error_msg)
+            # Log as error with serializable context (not exception to avoid bytes serialization)
+            self._logger.exception(
+                error_msg,
+                extra={
+                    "file_path": str(file_path),
+                    "error_type": "UnicodeDecodeError",
+                    "error_reason": getattr(e, "reason", "unknown"),
+                    "error_start": getattr(e, "start", -1),
+                    "error_end": getattr(e, "end", -1),
+                },
+            )
             return FlextResult[list[FlextLdifModels.Entry]].fail(error_msg)
         except OSError as e:
             error_msg = f"Failed to read file {file_path}: {e}"
@@ -708,6 +728,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                 "dn": entry.dn.value,
                 "issues": [],
             }
+            issues_list: list[str] = []
 
             # Check required attributes
             if required_attrs:
@@ -715,9 +736,8 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                     entry, required_attrs
                 )
                 if attrs_result.is_failure:
-                    issues_list = entry_compliance["issues"]
-                    if isinstance(issues_list, list):
-                        issues_list.append(attrs_result.error)
+                    error_msg = attrs_result.error or "Unknown error"
+                    issues_list.append(error_msg)
 
             # Check required object classes
             if required_classes:
@@ -725,9 +745,11 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                     entry, required_classes
                 )
                 if classes_result.is_failure:
-                    issues_list = entry_compliance["issues"]
-                    if isinstance(issues_list, list):
-                        issues_list.append(classes_result.error)
+                    error_msg = classes_result.error or "Unknown error"
+                    issues_list.append(error_msg)
+
+            # Update entry compliance with issues
+            entry_compliance["issues"] = issues_list
 
             compliance_results.append(entry_compliance)
 
@@ -791,8 +813,7 @@ class FlextLdifProcessor(FlextDomainService[dict[str, object]]):
                 dn_index[dn_key] = entry
 
         self._logger.info(
-            f"Merged entries: {len(entries1)} + {len(entries2)} = {len(merged_entries)} "
-            f"({duplicates_count} duplicates handled)"
+            f"Merged entries: {len(entries1)} + {len(entries2)} = {len(merged_entries)} ({duplicates_count} duplicates handled)"
         )
         return FlextResult[list[FlextLdifModels.Entry]].ok(merged_entries)
 

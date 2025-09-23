@@ -23,6 +23,56 @@ from flext_core import FlextLogger, FlextTypes
 
 logger = FlextLogger(__name__)
 
+# Type alias for exec result to avoid type issues
+
+
+class ExecResult:
+    """Type stub for Docker exec_run result."""
+
+    exit_code: int
+    output: tuple[bytes, bytes] | bytes
+
+
+def _exec_container_command(
+    container: Container,
+    cmd: list[str] | str,
+    *,
+    demux: bool = False,
+    stdout: bool = True,
+    stderr: bool = True,
+    stdin: bool = False,
+    tty: bool = False,
+    privileged: bool = False,
+    user: str = "",
+    detach: bool = False,
+    stream: bool = False,
+    socket: bool = False,
+    environment: dict[str, str] | None = None,
+    workdir: str | None = None,
+) -> ExecResult:
+    """Execute a command in a Docker container with proper typing."""
+    from typing import cast
+
+    return cast(
+        "ExecResult",
+        container.exec_run(
+            cmd=cmd,
+            demux=demux,
+            stdout=stdout,
+            stderr=stderr,
+            stdin=stdin,
+            tty=tty,
+            privileged=privileged,
+            user=user,
+            detach=detach,
+            stream=stream,
+            socket=socket,
+            environment=environment,
+            workdir=workdir,
+        ),
+    )
+
+
 DOCKER_AVAILABLE = True
 
 # OpenLDAP Container Configuration
@@ -48,8 +98,9 @@ class OpenLDAPContainerManager:
 
     def __init__(self) -> None:
         """Initialize the container manager."""
+        super().__init__()
         self.client: DockerClient | None = None
-        if DOCKER_AVAILABLE and docker is not None:
+        if DOCKER_AVAILABLE:
             self.client = docker.from_env()
         self.container: Container | None = None
 
@@ -132,8 +183,9 @@ class OpenLDAPContainerManager:
                 _check_container_status()
 
                 # Try to connect to LDAP port
-                exec_result = self.container.exec_run(
-                    [
+                exec_result: ExecResult = _exec_container_command(
+                    self.container,
+                    cmd=[
                         "ldapsearch",
                         "-x",
                         "-H",
@@ -275,7 +327,9 @@ member: uid=bob.wilson,ou=people,{OPENLDAP_BASE_DN}
                 f'-w "{OPENLDAP_ADMIN_PASSWORD}" -f "$TF"; '
                 'RC=$?; rm -f "$TF"; exit $RC'
             )
-            exec_result = self.container.exec_run(["sh", "-c", shell_cmd], demux=True)
+            exec_result: ExecResult = _exec_container_command(
+                self.container, cmd=["sh", "-c", shell_cmd], demux=True
+            )
             if exec_result.exit_code != 0:
                 return
         except (RuntimeError, ValueError, TypeError):
@@ -289,8 +343,9 @@ member: uid=bob.wilson,ou=people,{OPENLDAP_BASE_DN}
         search_base = base_dn or OPENLDAP_BASE_DN
 
         try:
-            exec_result = self.container.exec_run(
-                [
+            exec_result: ExecResult = _exec_container_command(
+                self.container,
+                cmd=[
                     "ldapsearch",
                     "-x",
                     "-H",
@@ -310,8 +365,11 @@ member: uid=bob.wilson,ou=people,{OPENLDAP_BASE_DN}
             )
 
             if exec_result.exit_code == 0:
-                stdout, _stderr = exec_result.output
-                return stdout.decode() if stdout else ""
+                if isinstance(exec_result.output, tuple):
+                    stdout, _stderr = exec_result.output
+                    return stdout.decode() if stdout else ""
+                # Single bytes output
+                return exec_result.output.decode() if exec_result.output else ""
 
         except (RuntimeError, ValueError, TypeError):
             pass
@@ -440,28 +498,39 @@ async def temporary_ldif_data(
         raise RuntimeError(msg)
 
     # Create temp file path in container safely without hardcoded /tmp
-    mktemp_result = container.exec_run(
-        ["mktemp", "-t", "flext_ldif.XXXXXX.ldif"],
+    mktemp_result: ExecResult = _exec_container_command(
+        container,
+        cmd=["mktemp", "-t", "flext_ldif.XXXXXX.ldif"],
         demux=True,
     )
-    if (
-        mktemp_result.exit_code != 0
-        or not mktemp_result.output
-        or not mktemp_result.output[0]
-    ):
+    if mktemp_result.exit_code != 0 or not mktemp_result.output:
         err_msg = "Failed to create temporary file in container"
         raise RuntimeError(err_msg)
-    temp_file = mktemp_result.output[0].decode().strip()
+
+    # Handle both tuple and single bytes output
+    if isinstance(mktemp_result.output, tuple):
+        if not mktemp_result.output[0]:
+            err_msg = "Failed to create temporary file in container"
+            raise RuntimeError(err_msg)
+        temp_file: str = mktemp_result.output[0].decode().strip()
+    else:
+        temp_file = mktemp_result.output.decode().strip()
 
     try:
         # Write LDIF to container
-        exec_result = container.exec_run(
-            ["sh", "-c", f"cat > {temp_file} << 'EOF'\n{ldif_content}\nEOF"],
+        exec_result: ExecResult = _exec_container_command(
+            container,
+            cmd=["sh", "-c", f"cat > {temp_file} << 'EOF'\n{ldif_content}\nEOF"],
             demux=True,
         )
 
         if exec_result.exit_code != 0:
-            write_msg: str = f"Failed to write temporary LDIF: {exec_result.output}"
+            output_str = (
+                exec_result.output.decode()
+                if isinstance(exec_result.output, bytes)
+                else str(exec_result.output)
+            )
+            write_msg: str = f"Failed to write temporary LDIF: {output_str}"
             raise RuntimeError(write_msg)
 
         yield temp_file
@@ -469,7 +538,7 @@ async def temporary_ldif_data(
     finally:
         # Auto-cleanup
         with contextlib.suppress(RuntimeError, ValueError, TypeError):
-            container.exec_run(["rm", "-f", temp_file])
+            _exec_container_command(container, cmd=["rm", "-f", temp_file])
 
 
 def check_docker_available() -> bool:
