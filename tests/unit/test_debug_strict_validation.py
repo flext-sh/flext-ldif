@@ -9,9 +9,7 @@ from __future__ import annotations
 from unittest.mock import patch
 
 from flext_core import FlextUtilities
-from flext_ldif.api import FlextLdifAPI
-from flext_ldif.config import FlextLdifConfig
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifAPI, FlextLdifConfig, FlextLdifModels
 
 
 def test_debug_strict_validation_flow() -> None:

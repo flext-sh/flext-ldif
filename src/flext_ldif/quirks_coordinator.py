@@ -3,7 +3,9 @@
 Unified quirks management coordinator using flext-core paradigm with nested operation classes.
 """
 
-from typing import Any, ClassVar
+from typing import ClassVar
+
+from pydantic import ConfigDict
 
 from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif.models import FlextLdifModels
@@ -13,10 +15,14 @@ from flext_ldif.quirks import (
 )
 
 
-class FlextLdifQuirks(FlextService):
+class FlextLdifQuirks(FlextService[dict[str, object]]):
     """Unified quirks management coordinator following flext-core single class paradigm."""
 
-    model_config: ClassVar[dict[str, Any]] = {"arbitrary_types_allowed": True, "validate_assignment": False, "extra": "allow"}
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        arbitrary_types_allowed=True,
+        validate_assignment=False,
+        extra="allow",
+    )
 
     class Manager:
         """Nested class for quirks management operations."""
@@ -45,9 +51,7 @@ class FlextLdifQuirks(FlextService):
             """Get ACL attribute name for server type."""
             return self._manager.get_acl_attribute_name(server_type)
 
-        def get_acl_format(
-            self, server_type: str | None = None
-        ) -> FlextResult[str]:
+        def get_acl_format(self, server_type: str | None = None) -> FlextResult[str]:
             """Get ACL format for server type."""
             return self._manager.get_acl_format(server_type)
 
@@ -64,7 +68,7 @@ class FlextLdifQuirks(FlextService):
             self, entry: FlextLdifModels.Entry, server_type: str
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Adapt entry for specific server type."""
-            return self._adapter.adapt_entry_for_server(entry, server_type)
+            return self._adapter.adapt_entry(entry, server_type)
 
         def adapt_entries(
             self, entries: list[FlextLdifModels.Entry], server_type: str
@@ -73,7 +77,9 @@ class FlextLdifQuirks(FlextService):
             adapted_entries: list[FlextLdifModels.Entry] = []
 
             for entry in entries:
-                adapt_result = self._adapter.adapt_entry(entry, server_type)
+                adapt_result: FlextResult[FlextLdifModels.Entry] = (
+                    self._adapter.adapt_entry(entry, server_type)
+                )
                 if adapt_result.is_success:
                     adapted_entries.append(adapt_result.value)
                 else:
@@ -87,28 +93,56 @@ class FlextLdifQuirks(FlextService):
             self, entry: FlextLdifModels.Entry, server_type: str
         ) -> FlextResult[bool]:
             """Validate entry compatibility with server type."""
-            return self._adapter.validate_entry_for_server(entry, server_type)
+            result = self._adapter.validate_entry(entry, server_type)
+            if result.is_success:
+                compliant_value = result.value.get("compliant", False)
+                # Ensure compliant is a boolean
+                compliant = (
+                    bool(compliant_value) if compliant_value is not None else False
+                )
+                return FlextResult[bool].ok(compliant)
+            return FlextResult[bool].fail(result.error or "Validation failed")
 
         def validate_entries_for_server(
             self, entries: list[FlextLdifModels.Entry], server_type: str
         ) -> FlextResult[dict[str, object]]:
             """Validate multiple entries for server compatibility."""
-            validation_results = {
+            validation_results: dict[str, object] = {
                 "valid_count": 0,
                 "invalid_count": 0,
-                "errors": []
+                "errors": [],
             }
 
             for entry in entries:
-                validate_result = self._adapter.validate_entry_for_server(entry, server_type)
-                if validate_result.is_success and validate_result.value:
-                    validation_results["valid_count"] += 1
+                validate_result = self._adapter.validate_entry(entry, server_type)
+                if validate_result.is_success:
+                    compliant_value = validate_result.value.get("compliant", False)
+                    compliant = (
+                        bool(compliant_value) if compliant_value is not None else False
+                    )
+                    if compliant:
+                        current_valid = validation_results["valid_count"]
+                        validation_results["valid_count"] = int(str(current_valid)) + 1
+                    else:
+                        current_invalid = validation_results["invalid_count"]
+                        validation_results["invalid_count"] = (
+                            int(str(current_invalid)) + 1
+                        )
+                        errors_list = validation_results["errors"]
+                        if isinstance(errors_list, list):
+                            errors_list.append({
+                                "dn": entry.dn.value,
+                                "error": "Server compliance validation failed",
+                            })
                 else:
-                    validation_results["invalid_count"] += 1
-                    validation_results["errors"].append({
-                        "dn": entry.dn,
-                        "error": validate_result.error or "Validation failed"
-                    })
+                    current_invalid = validation_results["invalid_count"]
+                    validation_results["invalid_count"] = int(str(current_invalid)) + 1
+                    errors_list = validation_results["errors"]
+                    if isinstance(errors_list, list):
+                        errors_list.append({
+                            "dn": entry.dn.value,
+                            "error": validate_result.error or "Validation failed",
+                        })
 
             return FlextResult[dict[str, object]].ok(validation_results)
 
@@ -120,15 +154,13 @@ class FlextLdifQuirks(FlextService):
         self.manager = self.Manager(self)
         self.adapter = self.EntryAdapter(self)
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self: object) -> FlextResult[dict[str, object]]:
         """Execute health check - required by FlextService."""
-        return FlextResult[dict[str, object]].ok(
-            {
-                "status": "healthy",
-                "service": "FlextLdifQuirks",
-                "operations": ["manager", "adapter"],
-            }
-        )
+        return FlextResult[dict[str, object]].ok({
+            "status": "healthy",
+            "service": "FlextLdifQuirks",
+            "operations": ["manager", "adapter"],
+        })
 
 
 __all__ = ["FlextLdifQuirks"]

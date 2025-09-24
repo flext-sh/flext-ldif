@@ -13,6 +13,9 @@ from unittest.mock import patch
 
 import pytest
 
+import flext_ldif
+import flext_ldif.exceptions
+
 
 class TestFlextLdifExceptions:
     """Test coverage for FlextLdifExceptions class and all exception types."""
@@ -39,8 +42,6 @@ class TestFlextLdifExceptions:
             setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
-                import flext_ldif.exceptions
-
                 assert hasattr(flext_ldif.exceptions, "FlextLdifExceptions")
             except ImportError:
                 pytest.skip("Cannot test due to dependency issues")
@@ -57,16 +58,11 @@ class TestFlextLdifExceptions:
             },
         ):
             # Create comprehensive mocks
-            mock_exceptions_class = type("FlextExceptions", (), {})
-            setattr(sys.modules["flext_core"], "FlextExceptions", mock_exceptions_class)
-
             mock_config_class = type("Config", (), {})
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
             setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
-                import flext_ldif.exceptions
-
                 exceptions = flext_ldif.exceptions.FlextLdifExceptions
 
                 # Test that factory methods exist (new API)
@@ -89,16 +85,13 @@ class TestFlextLdifExceptions:
                 "flext_core.typings": type(sys)("flext_core.typings"),
             },
         ):
-            mock_exceptions_class = type("FlextExceptions", (), {})
-            setattr(sys.modules["flext_core"], "FlextExceptions", mock_exceptions_class)
+            type("FlextExceptions", (), {})
 
             mock_config_class = type("Config", (), {})
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
             setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
-                import flext_ldif.exceptions
-
                 exceptions = flext_ldif.exceptions.FlextLdifExceptions
 
                 # Test validation factory methods exist
@@ -118,16 +111,13 @@ class TestFlextLdifExceptions:
                 "flext_core.typings": type(sys)("flext_core.typings"),
             },
         ):
-            mock_exceptions_class = type("FlextExceptions", (), {})
-            setattr(sys.modules["flext_core"], "FlextExceptions", mock_exceptions_class)
+            type("FlextExceptions", (), {})
 
             mock_config_class = type("Config", (), {})
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
             setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
-                import flext_ldif.exceptions
-
                 exceptions = flext_ldif.exceptions.FlextLdifExceptions
 
                 # Test processing factory methods exist
@@ -147,16 +137,13 @@ class TestFlextLdifExceptions:
                 "flext_core.typings": type(sys)("flext_core.typings"),
             },
         ):
-            mock_exceptions_class = type("FlextExceptions", (), {})
-            setattr(sys.modules["flext_core"], "FlextExceptions", mock_exceptions_class)
+            type("FlextExceptions", (), {})
 
             mock_config_class = type("Config", (), {})
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
             setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
-                import flext_ldif.exceptions
-
                 exceptions = flext_ldif.exceptions.FlextLdifExceptions
 
                 # Test IO factory methods exist
@@ -176,16 +163,13 @@ class TestFlextLdifExceptions:
                 "flext_core.typings": type(sys)("flext_core.typings"),
             },
         ):
-            mock_exceptions_class = type("FlextExceptions", (), {})
-            setattr(sys.modules["flext_core"], "FlextExceptions", mock_exceptions_class)
+            type("FlextExceptions", (), {})
 
             mock_config_class = type("Config", (), {})
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
             setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
-                import flext_ldif.exceptions
-
                 exceptions = flext_ldif.exceptions.FlextLdifExceptions
 
                 # Test that factory methods exist
@@ -205,16 +189,13 @@ class TestFlextLdifExceptions:
                 "flext_core.typings": type(sys)("flext_core.typings"),
             },
         ):
-            mock_exceptions_class = type("FlextExceptions", (), {})
-            setattr(sys.modules["flext_core"], "FlextExceptions", mock_exceptions_class)
+            type("FlextExceptions", (), {})
 
             mock_config_class = type("Config", (), {})
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
             setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
-                import flext_ldif.exceptions
-
                 assert hasattr(flext_ldif.exceptions, "__all__")
                 assert "FlextLdifExceptions" in flext_ldif.exceptions.__all__
 

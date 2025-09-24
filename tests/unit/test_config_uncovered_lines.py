@@ -7,8 +7,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from pydantic_core import ValidationError
 
-from flext_ldif.config import FlextLdifConfig
+from flext_ldif import FlextLdifConfig
 
 
 class TestConfigUncoveredLines:
@@ -17,8 +18,6 @@ class TestConfigUncoveredLines:
     @staticmethod
     def test_analytics_cache_size_validation() -> None:
         """Test lines 195-196: analytics cache size validation."""
-        from pydantic_core import ValidationError
-
         with pytest.raises(ValidationError, match="greater than or equal to 100"):
             FlextLdifConfig(
                 ldif_enable_analytics=True,
@@ -36,8 +35,6 @@ class TestConfigUncoveredLines:
     @staticmethod
     def test_apply_overrides_validation_error() -> None:
         """Test lines 324-325: override validation error handling."""
-        from pydantic_core import ValidationError
-
         config = FlextLdifConfig()
 
         invalid_overrides: dict[str, object] = {

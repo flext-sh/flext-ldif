@@ -427,7 +427,7 @@ Performance Profile Analysis:
 def validate_dn_format(cls, v: str) -> str:
     # All validation logic properly centralized
 
-# ✅ CORRECT - Validation in config.py (Confirmed by AST)  
+# ✅ CORRECT - Validation in config.py (Confirmed by AST)
 @field_validator("ldif_encoding")
 @classmethod
 def validate_encoding(cls, v: str) -> str:

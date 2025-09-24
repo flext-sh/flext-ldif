@@ -13,6 +13,8 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from flext_core import FlextResult
 from flext_ldif import FlextLdifModels, FlextLdifProcessor
 
@@ -300,17 +302,16 @@ cn: test"""
         entries = [entry_result.value]
 
         # Mock analytics helper to raise exception
-        with patch.object(
-            processor._AnalyticsHelper,
-            "calculate_entry_statistics",
-            side_effect=Exception("Analysis failed"),
+        with (
+            patch.object(
+                processor._AnalyticsHelper,
+                "calculate_entry_statistics",
+                side_effect=Exception("Analysis failed"),
+            ),
+            pytest.raises(Exception, match="Analysis failed"),
         ):
-            # The exception should propagate since there's no try-catch around basic stats
             # Use pytest.raises to test exception propagation
-            import pytest
-
-            with pytest.raises(Exception, match="Analysis failed"):
-                processor.analyze_entries(entries)
+            processor.analyze_entries(entries)
 
     @staticmethod
     def test_filter_entries_by_dn_pattern_invalid_regex() -> None:

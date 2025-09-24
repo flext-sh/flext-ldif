@@ -10,8 +10,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_ldif import FlextLdifAPI, FlextLdifModels
-from flext_ldif.config import FlextLdifConfig
+from flext_ldif import FlextLdifAPI, FlextLdifConfig, FlextLdifModels
 
 
 class TestBasicParsingWorkflow:

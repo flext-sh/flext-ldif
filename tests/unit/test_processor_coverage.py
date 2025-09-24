@@ -1,6 +1,7 @@
-"""Test coverage for processor module.
+"""Test coverage for processor module using flext-core patterns.
 
-Tests the core LDIF processor functionality with comprehensive coverage.
+Tests the core LDIF processor functionality with comprehensive coverage
+using real flext-core integration instead of mocking.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -8,255 +9,216 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import sys
-from unittest.mock import MagicMock, patch
+from typing import cast
 
-import pytest
+from flext_core import FlextResult
+from flext_ldif import FlextLdifModels, FlextLdifProcessor, processor
 
 
-class TestFlextLdifProcessor:
-    """Test coverage for FlextLdifProcessor class and processing functionality."""
+class TestFlextLdifProcessorCoverage:
+    """Test coverage for FlextLdifProcessor using flext-core patterns."""
 
-    @staticmethod
-    def _create_mock_flext_core() -> MagicMock:
-        """Create a mock flext_core module with proper attributes."""
-        mock_flext_core = MagicMock()
-        mock_flext_core.FlextService = MagicMock(return_value=MagicMock())
-        mock_flext_core.FlextResult = MagicMock()
-        mock_flext_core.FlextLogger = type("FlextLogger", (), {})
-        mock_flext_core.FlextTypes = type(
-            "FlextTypes", (), {"Config": type("Config", (), {})}
+    def test_processor_module_import(self) -> None:
+        """Test processor module can be imported with flext-core integration."""
+        assert hasattr(processor, "FlextLdifProcessor")
+        assert hasattr(processor, "__all__")
+        assert "FlextLdifProcessor" in processor.__all__
+
+    def test_processor_initialization(self) -> None:
+        """Test processor can be initialized with flext-core patterns."""
+        processor = FlextLdifProcessor()
+
+        assert processor is not None
+        assert hasattr(processor, "_logger")
+        assert hasattr(processor, "_config")
+
+    def test_processor_execute_method(self) -> None:
+        """Test processor execute method returns FlextResult."""
+        processor = FlextLdifProcessor()
+        result = processor.execute()
+
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+        assert "status" in result.value
+        assert result.value["status"] == "healthy"
+
+    def test_processor_parsing_functionality(self) -> None:
+        """Test processor parsing functionality with real FlextResult."""
+        processor = FlextLdifProcessor()
+
+        ldif_content = """dn: cn=test,dc=example,dc=com
+cn: test
+objectClass: person
+sn: Test User"""
+
+        result = processor.parse_string(ldif_content)
+
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+        entries = result.unwrap()
+        assert len(entries) == 1
+        assert entries[0].dn.value == "cn=test,dc=example,dc=com"
+
+    def test_processor_validation_functionality(self) -> None:
+        """Test processor validation functionality with real FlextResult."""
+        processor = FlextLdifProcessor()
+
+        # Create a valid entry
+        entry_data = {
+            "dn": "cn=test,dc=example,dc=com",
+            "attributes": {"cn": ["test"], "objectClass": ["person"], "sn": ["Test"]},
+        }
+        entry_result = FlextLdifModels.Entry.create(
+            cast("dict[str, object]", entry_data)
         )
-        return mock_flext_core
+        assert entry_result.is_success
+        entry = entry_result.value
 
-    @staticmethod
-    def test_processor_module_import() -> None:
-        """Test processor module can be imported."""
-        mock_flext_core = TestFlextLdifProcessor._create_mock_flext_core()
+        result = processor.validate_entries([entry])
 
-        with patch.dict(
-            sys.modules,
-            {
-                "flext_core": mock_flext_core,
-                "flext_core.service": MagicMock(),
-                "flext_core.result": MagicMock(),
-                "flext_core.typings": MagicMock(),
-            },
-        ):
-            try:
-                import flext_ldif.processor
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+        # validate_entries returns FlextResult[list[Entry]] with validated entries
+        assert result.value is not None
+        assert len(result.value) == 1
+        assert result.value[0].dn.value == "cn=test,dc=example,dc=com"
 
-                assert hasattr(flext_ldif.processor, "FlextLdifProcessor")
-            except ImportError:
-                pytest.skip("Cannot test due to dependency issues")
+    def test_processor_transformation_functionality(self) -> None:
+        """Test processor transformation functionality with real FlextResult."""
+        processor = FlextLdifProcessor()
 
-    @staticmethod
-    def test_processor_initialization() -> None:
-        """Test processor can be initialized."""
-        mock_flext_core = TestFlextLdifProcessor._create_mock_flext_core()
-
-        with patch.dict(
-            sys.modules,
-            {
-                "flext_core": mock_flext_core,
-                "flext_core.service": MagicMock(),
-                "flext_core.result": MagicMock(),
-                "flext_core.typings": MagicMock(),
-            },
-        ):
-            try:
-                import flext_ldif.processor
-
-                # Test initialization
-                processor = flext_ldif.processor.FlextLdifProcessor()
-                assert processor is not None
-
-            except (ImportError, TypeError):
-                pytest.skip("Cannot test initialization due to issues")
-
-    @staticmethod
-    def test_processor_parsing_functionality() -> None:
-        """Test processor parsing functionality."""
-        mock_flext_core = TestFlextLdifProcessor._create_mock_flext_core()
-
-        # Mock parsing functionality
-        mock_parse_result = MagicMock()
-        mock_parse_result.is_success = True
-        mock_parse_result.unwrap.return_value = []
-
-        mock_domain_service_instance = MagicMock()
-        mock_domain_service_instance.parse_string = MagicMock(
-            return_value=mock_parse_result
+        # Create a test entry
+        entry_data = {
+            "dn": "cn=test,dc=example,dc=com",
+            "attributes": {"cn": ["test"], "objectClass": ["person"]},
+        }
+        entry_result = FlextLdifModels.Entry.create(
+            cast("dict[str, object]", entry_data)
         )
-        mock_flext_core.FlextService = MagicMock(
-            return_value=mock_domain_service_instance
+        assert entry_result.is_success
+        entry = entry_result.value
+
+        def transform_func(entry: FlextLdifModels.Entry) -> FlextLdifModels.Entry:
+            entry.attributes.add_attribute("transformed", ["true"])
+            return entry
+
+        result = processor.transform_entries([entry], transform_func)
+
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+        transformed_entries = result.unwrap()
+        assert len(transformed_entries) == 1
+        assert transformed_entries[0].has_attribute("transformed")
+
+    def test_processor_writing_functionality(self) -> None:
+        """Test processor writing functionality with real FlextResult."""
+        processor = FlextLdifProcessor()
+
+        # Create a test entry
+        entry_data = {
+            "dn": "cn=test,dc=example,dc=com",
+            "attributes": {"cn": ["test"], "objectClass": ["person"]},
+        }
+        entry_result = FlextLdifModels.Entry.create(
+            cast("dict[str, object]", entry_data)
         )
+        assert entry_result.is_success
+        entry = entry_result.value
 
-        with patch.dict(
-            sys.modules,
-            {
-                "flext_core": mock_flext_core,
-                "flext_core.service": MagicMock(),
-                "flext_core.result": MagicMock(),
-                "flext_core.typings": MagicMock(),
-            },
-        ):
-            try:
-                import flext_ldif.processor
+        result = processor.write_string([entry])
 
-                processor = flext_ldif.processor.FlextLdifProcessor()
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+        ldif_content = result.unwrap()
+        assert "dn: cn=test,dc=example,dc=com" in ldif_content
+        assert "cn: test" in ldif_content
 
-                # Test parsing methods if they exist
-                if hasattr(processor, "parse_string"):
-                    result: object = processor.parse_string(
-                        "dn: cn=test,dc=example,dc=com\ncn: test\n"
-                    )
-                    assert result is not None
+    def test_processor_health_check(self) -> None:
+        """Test processor health check functionality."""
+        processor = FlextLdifProcessor()
+        result = processor.get_processor_health()
 
-            except (ImportError, AttributeError):
-                pytest.skip("Cannot test parsing due to issues")
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+        health_data = result.unwrap()
+        assert "status" in health_data
+        assert "timestamp" in health_data
+        assert "config" in health_data
+        assert "capabilities" in health_data
+        assert health_data["status"] == "healthy"
 
-    @staticmethod
-    def test_processor_validation_functionality() -> None:
-        """Test processor validation functionality."""
-        mock_flext_core = TestFlextLdifProcessor._create_mock_flext_core()
+    def test_processor_config_info(self) -> None:
+        """Test processor configuration information."""
+        processor = FlextLdifProcessor()
+        config_info = processor.get_config_info()
 
-        # Mock validation functionality
-        mock_validation_result = MagicMock()
-        mock_validation_result.is_success = True
-        mock_validation_result.unwrap.return_value = True
+        assert isinstance(config_info, dict)
+        assert "encoding" in config_info
+        assert "max_entries" in config_info
+        assert "strict_validation" in config_info
+        assert "wrap_lines" in config_info
 
-        mock_domain_service_instance = MagicMock()
-        mock_domain_service_instance.validate_entries = MagicMock(
-            return_value=mock_validation_result
-        )
-        mock_flext_core.FlextService = MagicMock(
-            return_value=mock_domain_service_instance
-        )
+    def test_processor_error_handling(self) -> None:
+        """Test processor error handling with FlextResult patterns."""
+        processor = FlextLdifProcessor()
 
-        with patch.dict(
-            sys.modules,
-            {
-                "flext_core": mock_flext_core,
-                "flext_core.service": MagicMock(),
-                "flext_core.result": MagicMock(),
-                "flext_core.typings": MagicMock(),
-            },
-        ):
-            try:
-                import flext_ldif.processor
+        # Test with invalid LDIF content
+        invalid_content = "invalid ldif content without proper structure"
+        result = processor.parse_string(invalid_content)
 
-                processor = flext_ldif.processor.FlextLdifProcessor()
+        assert isinstance(result, FlextResult)
+        assert result.is_failure
+        assert result.error is not None
+        assert "Failed to parse entry" in result.error
 
-                # Test validation methods if they exist
-                if hasattr(processor, "validate_entries"):
-                    result: object = processor.validate_entries([])
-                    assert result is not None
+    def test_processor_empty_input_handling(self) -> None:
+        """Test processor handles empty input gracefully."""
+        processor = FlextLdifProcessor()
 
-            except (ImportError, AttributeError):
-                pytest.skip("Cannot test validation due to issues")
+        # Test with empty content
+        result = processor.parse_string("")
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+        entries = result.unwrap()
+        assert len(entries) == 0
 
-    @staticmethod
-    def test_processor_transformation_functionality() -> None:
-        """Test processor transformation functionality."""
-        mock_flext_core = TestFlextLdifProcessor._create_mock_flext_core()
+        # Test with empty entries list
+        result = processor.validate_entries([])
+        assert isinstance(result, FlextResult)
+        assert result.is_failure
+        assert "No entries to validate" in result.error
 
-        # Mock transformation functionality
-        mock_transform_result = MagicMock()
-        mock_transform_result.is_success = True
-        mock_transform_result.unwrap.return_value = []
+    def test_processor_flext_result_composition(self) -> None:
+        """Test processor uses FlextResult composition patterns."""
+        processor = FlextLdifProcessor()
 
-        mock_domain_service_instance = MagicMock()
-        mock_domain_service_instance.transform_entries = MagicMock(
-            return_value=mock_transform_result
-        )
-        mock_flext_core.FlextService = MagicMock(
-            return_value=mock_domain_service_instance
-        )
+        # Test chaining operations
+        ldif_content = """dn: cn=test,dc=example,dc=com
+cn: test
+sn: Test
+objectClass: person"""
 
-        with patch.dict(
-            sys.modules,
-            {
-                "flext_core": mock_flext_core,
-                "flext_core.service": MagicMock(),
-                "flext_core.result": MagicMock(),
-                "flext_core.typings": MagicMock(),
-            },
-        ):
-            try:
-                import flext_ldif.processor
+        # Parse -> Validate -> Transform -> Write chain
+        parse_result = processor.parse_string(ldif_content)
+        assert parse_result.is_success
 
-                processor = flext_ldif.processor.FlextLdifProcessor()
+        entries = parse_result.unwrap()
+        validate_result = processor.validate_entries(entries)
+        assert validate_result.is_success
 
-                # Test transformation methods if they exist
-                if hasattr(processor, "transform_entries"):
-                    result: object = processor.transform_entries([], lambda x: x)
-                    assert result is not None
+        # validate_entries returns FlextResult[None], so we use the original entries
+        def transform_func(entry: FlextLdifModels.Entry) -> FlextLdifModels.Entry:
+            entry.attributes.add_attribute("processed", ["true"])
+            return entry
 
-            except (ImportError, AttributeError):
-                pytest.skip("Cannot test transformation due to issues")
+        transform_result = processor.transform_entries(entries, transform_func)
+        assert transform_result.is_success
 
-    @staticmethod
-    def test_processor_writing_functionality() -> None:
-        """Test processor writing functionality."""
-        mock_flext_core = TestFlextLdifProcessor._create_mock_flext_core()
+        transformed_entries = transform_result.unwrap()
+        write_result = processor.write_string(transformed_entries)
+        assert write_result.is_success
 
-        # Mock writing functionality
-        mock_write_result = MagicMock()
-        mock_write_result.is_success = True
-        mock_write_result.unwrap.return_value = (
-            "dn: cn=test,dc=example,dc=com\ncn: test\n"
-        )
-
-        mock_domain_service_instance = MagicMock()
-        mock_domain_service_instance.write_string = MagicMock(
-            return_value=mock_write_result
-        )
-        mock_flext_core.FlextService = MagicMock(
-            return_value=mock_domain_service_instance
-        )
-
-        with patch.dict(
-            sys.modules,
-            {
-                "flext_core": mock_flext_core,
-                "flext_core.service": MagicMock(),
-                "flext_core.result": MagicMock(),
-                "flext_core.typings": MagicMock(),
-            },
-        ):
-            try:
-                import flext_ldif.processor
-
-                processor = flext_ldif.processor.FlextLdifProcessor()
-
-                # Test writing methods if they exist
-                if hasattr(processor, "write_string"):
-                    result: object = processor.write_string([])
-                    assert result is not None
-
-            except (ImportError, AttributeError):
-                pytest.skip("Cannot test writing due to issues")
-
-    @staticmethod
-    def test_processor_all_exports() -> None:
-        """Test that __all__ is properly defined."""
-        mock_flext_core = TestFlextLdifProcessor._create_mock_flext_core()
-
-        with patch.dict(
-            sys.modules,
-            {
-                "flext_core": mock_flext_core,
-                "flext_core.service": MagicMock(),
-                "flext_core.result": MagicMock(),
-                "flext_core.typings": MagicMock(),
-            },
-        ):
-            try:
-                import flext_ldif.processor
-
-                assert hasattr(flext_ldif.processor, "__all__")
-                assert "FlextLdifProcessor" in flext_ldif.processor.__all__
-
-            except ImportError:
-                pytest.skip("Cannot test __all__ due to import issues")
+        # Verify the chain worked
+        ldif_output = write_result.unwrap()
+        assert "cn=test,dc=example,dc=com" in ldif_output
+        assert "processed: true" in ldif_output

@@ -6,8 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import FlextLdifModels
-from flext_ldif.processor import FlextLdifProcessor
+from flext_ldif import FlextLdifModels, FlextLdifProcessor
 
 
 class TestProcessorQualityPaths:

@@ -15,16 +15,13 @@ from pydantic import ConfigDict
 from flext_core import FlextContainer, FlextLogger, FlextResult, FlextService
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.management import FlextLdifManagement
-from flext_ldif.mixins import FlextLdifMixins
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.processor import FlextLdifProcessor
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifAPI(
-    FlextService[FlextLdifTypes.Core.HealthStatusDict], FlextLdifMixins.FactoryMixin
-):
+class FlextLdifAPI(FlextService[FlextLdifTypes.Core.HealthStatusDict]):
     """Unified LDIF API for direct LDIF processing operations.
 
     Provides a single interface for all LDIF processing operations including
@@ -45,14 +42,16 @@ class FlextLdifAPI(
         """Initialize LDIF API with management layer and processor."""
         super().__init__()
         self._logger = FlextLogger(__name__)
-        self._config = config
+        self._config: FlextLdifConfig | None = config
         self._container = FlextContainer.get_global()
 
         # Initialize management layer for unified operations
         self._management = FlextLdifManagement()
 
         # Initialize processor with error handling (for backward compatibility)
-        self._processor_result = self._initialize_processor()
+        self._processor_result: FlextResult[FlextLdifProcessor] = (
+            self._initialize_processor()
+        )
 
     def _initialize_processor(self) -> FlextResult[FlextLdifProcessor]:
         """Initialize the processor with proper error handling.
@@ -311,7 +310,11 @@ class FlextLdifAPI(
 
             for entry in entries:
                 # Count object classes
-                object_classes = entry.get_attribute("objectClass") or []
+                object_classes_raw = entry.get_attribute("objectClass") or []
+                # Ensure object_classes is a list of strings
+                object_classes: list[str] = [
+                    str(oc) for oc in object_classes_raw if oc is not None
+                ]
                 for oc in object_classes:
                     object_class_counts[oc] = object_class_counts.get(oc, 0) + 1
 
@@ -504,7 +507,7 @@ class FlextLdifAPI(
         try:
             valid_entries: list[FlextLdifModels.Entry] = []
             for entry in entries:
-                validation_result = entry.validate_business_rules()
+                validation_result: FlextResult[bool] = entry.validate_business_rules()
                 if validation_result.is_success:
                     valid_entries.append(entry)
             return FlextResult[list[FlextLdifModels.Entry]].ok(valid_entries)
@@ -585,7 +588,7 @@ class FlextLdifAPI(
 
     def process_complete(
         self, content: str, server_type: str | None = None
-    ) -> FlextResult[dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Complete LDIF processing pipeline with all operations.
 
         Parses content, detects server type, extracts schema and ACLs, and adapts

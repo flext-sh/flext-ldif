@@ -11,8 +11,7 @@ from pydantic import Field, ValidationError
 from pydantic.fields import FieldInfo
 
 from flext_core import FlextModels
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifConstants, FlextLdifModels
 
 # Reason: Pydantic field assignment pattern is not understood by pyright but is valid
 

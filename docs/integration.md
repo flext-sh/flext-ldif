@@ -251,12 +251,12 @@ class LdifAPIService(FlextAPIService):
 ### LDIF CLI Service Integration
 
 ```python
-from flext_cli import FlextCLIService
+from flext_cli import FlextCliService
 from flext_core import FlextResult
 from flext_ldif import FlextLdifAPI
 from pathlib import Path
 
-class LdifCLIService(FlextCLIService):
+class LdifCLIService(FlextCliService):
     """CLI service for LDIF operations with memory monitoring."""
 
     def __init__(self) -> None:

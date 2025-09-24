@@ -8,8 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.config import FlextLdifConfig
-from flext_ldif.constants import FlextLdifConstants
+from flext_ldif import FlextLdifConfig, FlextLdifConstants
 
 
 class TestConfigValidation:

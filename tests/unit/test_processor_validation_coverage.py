@@ -6,8 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import FlextLdifModels
-from flext_ldif.processor import FlextLdifProcessor
+from flext_ldif import FlextLdifAPI, FlextLdifModels, FlextLdifProcessor
 
 
 class TestProcessorValidationCoverage:
@@ -80,8 +79,6 @@ class TestProcessorValidationCoverage:
     @staticmethod
     def test_parse_ldif_with_base64_values() -> None:
         """Test parsing LDIF with :: (base64) notation via full parse."""
-        from flext_ldif import FlextLdifAPI
-
         # LDIF with base64-encoded value (::)
         ldif_content = """dn: cn=test,dc=example,dc=com
 cn:: VGVzdA==
@@ -95,8 +92,6 @@ objectClass: person
     @staticmethod
     def test_parse_entry_with_minimal_attributes() -> None:
         """Test parsing entry with minimal attributes."""
-        from flext_ldif import FlextLdifAPI
-
         ldif_content = """dn: dc=com
 dc: com
 objectClass: dcObject

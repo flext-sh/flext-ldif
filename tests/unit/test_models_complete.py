@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels
 
 
 class TestDistinguishedNameExceptionHandling:

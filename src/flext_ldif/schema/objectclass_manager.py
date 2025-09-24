@@ -16,7 +16,7 @@ class FlextLdifObjectClassManager(FlextService[dict[str, object]]):
         super().__init__()
         self._logger = FlextLogger(__name__)
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self: object) -> FlextResult[dict[str, object]]:
         """Execute objectClass manager service."""
         return FlextResult[dict[str, object]].ok({
             "service": "FlextLdifObjectClassManager",

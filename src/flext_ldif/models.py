@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast, override
+from typing import cast
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -27,14 +27,13 @@ class FlextLdifModels(FlextModels):
     Uses flext-core SOURCE OF TRUTH for model patterns and validation.
     """
 
-    class DistinguishedName(BaseModel, FlextLdifMixins.ValidationMixin):
+    class DistinguishedName(BaseModel):
         """Pydantic model for LDAP Distinguished Name."""
 
         value: str = Field(..., min_length=1, description="DN string value")
 
         @field_validator("value")
         @staticmethod
-        @override
         def validate_dn_format(value: str) -> str:
             """Validate DN format and characters."""
             return FlextLdifMixins.ValidationMixin.validate_dn_format(value)
@@ -70,7 +69,7 @@ class FlextLdifModels(FlextModels):
                     f"DN creation error: {e}"
                 )
 
-    class LdifAttributes(BaseModel, FlextLdifMixins.ValidationMixin):
+    class LdifAttributes(BaseModel):
         """Pydantic model for LDIF entry attributes."""
 
         data: dict[str, list[str]] = Field(
@@ -84,7 +83,7 @@ class FlextLdifModels(FlextModels):
             if not isinstance(v, dict):
                 raise TypeError(FlextLdifConstants.ErrorMessages.ATTRIBUTES_TYPE_ERROR)
 
-            validated_dict = cast("dict[str, object]", v)
+            validated_dict: dict[str, object] = cast("dict[str, object]", v)
             for attr_name, attr_values in validated_dict.items():
                 FlextLdifMixins.ValidationMixin.validate_attribute_name(str(attr_name))
                 FlextLdifMixins.ValidationMixin.validate_attribute_values(
@@ -157,12 +156,12 @@ class FlextLdifModels(FlextModels):
 
         def has_object_class(self, object_class: str) -> bool:
             """Check if entry has specified object class."""
-            object_classes = self.get_attribute("objectClass") or []
+            object_classes: list[str] = self.get_attribute("objectClass") or []
             return object_class.lower() in [oc.lower() for oc in object_classes]
 
         def is_person_entry(self) -> bool:
             """Check if entry is a person entry."""
-            object_classes = self.get_attribute("objectClass") or []
+            object_classes: list[str] = self.get_attribute("objectClass") or []
             person_classes = {oc.lower() for oc in object_classes}
             ldap_person_classes = {
                 oc.lower()
@@ -172,7 +171,7 @@ class FlextLdifModels(FlextModels):
 
         def is_group_entry(self) -> bool:
             """Check if entry is a group entry."""
-            object_classes = self.get_attribute("objectClass") or []
+            object_classes: list[str] = self.get_attribute("objectClass") or []
             group_classes = {oc.lower() for oc in object_classes}
             ldap_group_classes = {
                 oc.lower() for oc in FlextLdifConstants.ObjectClasses.LDAP_GROUP_CLASSES
@@ -221,15 +220,15 @@ class FlextLdifModels(FlextModels):
                         "DN must be a string"
                     )
 
-                attrs = data.get("attributes", {})
-                if not isinstance(attrs, dict):
+                attrs_raw = data.get("attributes", {})
+                if not isinstance(attrs_raw, dict):
                     return FlextResult[FlextLdifModels.Entry].fail(
                         "Attributes must be a dictionary"
                     )
 
                 # Normalize attributes to proper format
                 normalized_attrs: dict[str, list[str]] = {}
-                attributes_dict = cast("dict[str, object]", attrs)
+                attributes_dict: dict[str, object] = attrs_raw
                 for key, value in attributes_dict.items():
                     key_str: str = str(key)
                     if isinstance(value, str):
@@ -253,26 +252,30 @@ class FlextLdifModels(FlextModels):
                 )
 
             # Create DN
-            dn_result = FlextLdifModels.DistinguishedName.create(dn_str)
+            dn_result: FlextResult[FlextLdifModels.DistinguishedName] = (
+                FlextLdifModels.DistinguishedName.create(dn_str)
+            )
             if dn_result.is_failure:
-                return FlextResult["FlextLdifModels.Entry"].fail(
+                return FlextResult[FlextLdifModels.Entry].fail(
                     dn_result.error or "Invalid DN"
                 )
 
             # Create attributes
-            attrs_result = FlextLdifModels.LdifAttributes.create(attrs_data)
+            attrs_result: FlextResult[FlextLdifModels.LdifAttributes] = (
+                FlextLdifModels.LdifAttributes.create(attrs_data)
+            )
             if attrs_result.is_failure:
-                return FlextResult["FlextLdifModels.Entry"].fail(
+                return FlextResult[FlextLdifModels.Entry].fail(
                     attrs_result.error or "Invalid attributes"
                 )
 
             try:
                 entry = cls(dn=dn_result.value, attributes=attrs_result.value)
-                return FlextResult["FlextLdifModels.Entry"].ok(entry)
+                return FlextResult[FlextLdifModels.Entry].ok(entry)
             except Exception as e:  # pragma: no cover
-                return FlextResult["FlextLdifModels.Entry"].fail(str(e))
+                return FlextResult[FlextLdifModels.Entry].fail(str(e))
 
-    class LdifUrl(BaseModel, FlextLdifMixins.ValidationMixin):
+    class LdifUrl(BaseModel):
         """Pydantic model for LDIF URL references."""
 
         url: str = Field(..., description="URL string")
@@ -339,7 +342,7 @@ class FlextLdifModels(FlextModels):
             self, operation: str, attr_name: str, attr_values: list[str]
         ) -> None:
             """Add modification operation."""
-            modification = {
+            modification: dict[str, object] = {
                 "operation": operation,
                 "attribute": attr_name,
                 "values": attr_values,
@@ -368,13 +371,13 @@ class FlextLdifModels(FlextModels):
                     )
 
                 # Extract attributes
-                attrs = data.get("attributes", {})
-                if not isinstance(attrs, dict):
-                    attrs = {}
+                attrs_raw = data.get("attributes", {})
+                if not isinstance(attrs_raw, dict):
+                    attrs_raw = {}
 
                 # Normalize attributes to proper format
                 normalized_attrs: dict[str, list[str]] = {}
-                attributes_dict = cast("dict[str, object]", attrs)
+                attributes_dict: dict[str, object] = attrs_raw
                 for key, value in attributes_dict.items():
                     key_str: str = str(key)
                     if isinstance(value, str):
@@ -387,23 +390,32 @@ class FlextLdifModels(FlextModels):
                         normalized_attrs[key_str] = [str(value)]
 
                 # Create DN
-                dn_result = FlextLdifModels.DistinguishedName.create(dn_value)
+                dn_result: FlextResult[FlextLdifModels.DistinguishedName] = (
+                    FlextLdifModels.DistinguishedName.create(dn_value)
+                )
                 if dn_result.is_failure:
                     return FlextResult[FlextLdifModels.ChangeRecord].fail(
                         dn_result.error or "Invalid DN"
                     )
 
                 # Create attributes
-                attrs_result = FlextLdifModels.LdifAttributes.create(normalized_attrs)
+                attrs_result: FlextResult[FlextLdifModels.LdifAttributes] = (
+                    FlextLdifModels.LdifAttributes.create(normalized_attrs)
+                )
                 if attrs_result.is_failure:
                     return FlextResult[FlextLdifModels.ChangeRecord].fail(
                         attrs_result.error or "Invalid attributes"
                     )
 
                 # Extract modifications
-                modifications = data.get("modifications", [])
-                if not isinstance(modifications, list):
-                    modifications = []
+                modifications_raw = data.get("modifications", [])
+                if not isinstance(modifications_raw, list):
+                    modifications_raw = []
+
+                # Convert to proper type
+                modifications: list[dict[str, object]] = [
+                    mod for mod in modifications_raw if isinstance(mod, dict)
+                ]
 
                 # Create change record
                 change_record = cls(

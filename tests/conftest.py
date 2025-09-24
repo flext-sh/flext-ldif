@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
-import sys
 import tempfile
 from collections.abc import Callable, Generator
 from pathlib import Path
@@ -18,6 +17,7 @@ import pytest
 from flext_core import FlextConstants, FlextResult, FlextTypes
 from flext_ldif import FlextLdifAPI
 from flext_tests import (
+    FlextTestDocker,
     FlextTestsBuilders,
     FlextTestsDomains,
     FlextTestsFixtures,
@@ -30,11 +30,6 @@ from tests.test_support import (
     RealServiceFactory,
     TestValidators,
 )
-
-# Add docker directory to path to import shared fixtures
-docker_dir = Path("/home/marlonsc/flext/docker")
-if str(docker_dir) not in sys.path:
-    sys.path.insert(0, str(docker_dir))
 
 
 # Test environment setup
@@ -49,18 +44,28 @@ def set_test_environment() -> Generator[None]:
     os.environ.pop("FLEXT_LOG_LEVEL", None)
 
 
-# Docker container initialization (session-scoped, started once)
-@pytest.fixture(scope="session", autouse=True)
-def ensure_shared_docker_container(shared_ldap_container: object) -> None:
+# Docker container management with FlextTestDocker
+
+
+@pytest.fixture(scope="session")
+def docker_control() -> FlextTestDocker:
+    """Provide Docker control instance for tests."""
+    return FlextTestDocker()
+
+
+@pytest.fixture(scope="session", autouse=False)
+def ensure_shared_docker_container(docker_control: FlextTestDocker) -> None:
     """Ensure shared Docker container is started for the test session.
-    
-    This fixture automatically starts the shared LDAP container if not running,
-    and ensures it's available for all tests in the session.
+
+    Uses FlextTestDocker to manage container lifecycle with auto-start.
     """
-    # Suppress unused parameter warning - fixture is used for side effects
-    _ = shared_ldap_container
-    # The shared_ldap_container fixture will be invoked automatically
-    # and will start/stop the container for the entire test session
+    result = docker_control.start_container("flext-openldap-test")
+    if result.is_failure:
+        pytest.skip(f"Failed to start LDAP container: {result.error}")
+
+    yield
+
+    docker_control.stop_container("flext-openldap-test", remove=False)
 
 
 # LDIF processing fixtures - optimized with real services
@@ -210,6 +215,62 @@ def assert_result_failure(
 ) -> Callable[[FlextResult[object]], None]:
     """Fixture providing FlextTests result failure assertion."""
     return flext_matchers.assert_result_failure
+
+
+# Enhanced flext-core result validation fixtures
+@pytest.fixture
+def validate_flext_result_success() -> Callable[[FlextResult[object]], dict[str, bool]]:
+    """Validate FlextResult success characteristics using flext-core patterns."""
+
+    def validator(result: FlextResult[object]) -> dict[str, bool]:
+        return {
+            "is_success": result.is_success,
+            "has_value": result.is_success and result.value is not None,
+            "no_error": result.error is None,
+            "has_error_code": result.error_code is not None,
+            "has_error_data": bool(result.error_data),
+        }
+
+    return validator
+
+
+@pytest.fixture
+def validate_flext_result_failure() -> Callable[[FlextResult[object]], dict[str, bool]]:
+    """Validate FlextResult failure characteristics using flext-core patterns."""
+
+    def validator(result: FlextResult[object]) -> dict[str, bool]:
+        return {
+            "is_failure": result.is_failure,
+            "has_error": result.error is not None,
+            "error_not_empty": bool(result.error and result.error.strip()),
+            "has_error_code": result.error_code is not None,
+            "has_error_data": bool(result.error_data),
+        }
+
+    return validator
+
+
+@pytest.fixture
+def flext_result_composition_helper() -> Callable[
+    [list[FlextResult[object]]], dict[str, object]
+]:
+    """Helper for testing FlextResult composition patterns."""
+
+    def helper(results: list[FlextResult[object]]) -> dict[str, object]:
+        successes = [r for r in results if r.is_success]
+        failures = [r for r in results if r.is_failure]
+
+        return {
+            "total_results": len(results),
+            "success_count": len(successes),
+            "failure_count": len(failures),
+            "success_rate": len(successes) / len(results) if results else 0.0,
+            "all_successful": all(r.is_success for r in results),
+            "any_successful": any(r.is_success for r in results),
+            "error_messages": [r.error for r in failures if r.error],
+        }
+
+    return helper
 
 
 # Schema validation fixtures

@@ -12,12 +12,12 @@ from __future__ import annotations
 import operator
 from typing import cast
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
 
-class FlextLdifQuirksAdapter:
+class FlextLdifQuirksAdapter(FlextService[dict[str, object]]):
     """Handler for LDAP server implementation quirks and differences.
 
     Provides adaptation mechanisms for different LDAP server implementations
@@ -124,6 +124,37 @@ class FlextLdifQuirksAdapter:
             },
         }
 
+    def execute(self) -> FlextResult[dict[str, object]]:
+        """Execute quirks adapter health check operation - required by FlextService.
+
+        Returns:
+            FlextResult containing adapter health status information.
+
+        """
+        try:
+            health_info: dict[str, object] = {
+                "status": "healthy",
+                "adapter_type": "FlextLdifQuirksAdapter",
+                "current_server_type": self._server_type,
+                "supported_servers": list(self._adaptation_rules.keys()),
+                "capabilities": [
+                    "detect_server_type",
+                    "adapt_entry",
+                    "validate_server_compliance",
+                    "get_server_info",
+                    "attribute_mapping",
+                    "dn_format_validation",
+                    "object_class_validation",
+                    "server_specific_adaptations",
+                ],
+                "adaptation_rules_count": len(self._adaptation_rules),
+            }
+            return FlextResult[dict[str, object]].ok(health_info)
+        except Exception as e:
+            error_msg = f"Quirks adapter health check failed: {e}"
+            self._logger.exception(error_msg)
+            return FlextResult[dict[str, object]].fail(error_msg)
+
     def detect_server_type(
         self, entries: list[FlextLdifModels.Entry]
     ) -> FlextResult[str]:
@@ -154,7 +185,7 @@ class FlextLdifQuirksAdapter:
                     dn_patterns.add(attr_name)
 
             # Analyze object classes
-            obj_classes = entry.get_attribute("objectClass") or []
+            obj_classes: list[str] = entry.get_attribute("objectClass") or []
             object_classes.update(obj_classes)
 
             # Analyze special attributes
@@ -170,19 +201,28 @@ class FlextLdifQuirksAdapter:
             score = 0.0
 
             # Score DN patterns
-            server_dn_patterns = set(rules.get("dn_patterns", []))
+            dn_patterns_raw = rules.get("dn_patterns", [])
+            server_dn_patterns: set[str] = (
+                set(dn_patterns_raw) if isinstance(dn_patterns_raw, list) else set()
+            )
             dn_matches = len(dn_patterns.intersection(server_dn_patterns))
             if server_dn_patterns:
                 score += (dn_matches / len(server_dn_patterns)) * 0.4
 
             # Score object classes
-            server_obj_classes = set(rules.get("required_object_classes", []))
+            obj_classes_raw = rules.get("required_object_classes", [])
+            server_obj_classes: set[str] = (
+                set(obj_classes_raw) if isinstance(obj_classes_raw, list) else set()
+            )
             obj_class_matches = len(object_classes.intersection(server_obj_classes))
             if server_obj_classes:
                 score += (obj_class_matches / len(server_obj_classes)) * 0.3
 
             # Score special attributes
-            server_special_attrs = set(rules.get("special_attributes", []))
+            special_attrs_raw = rules.get("special_attributes", [])
+            server_special_attrs: set[str] = (
+                set(special_attrs_raw) if isinstance(special_attrs_raw, list) else set()
+            )
             attr_matches = len(special_attributes.intersection(server_special_attrs))
             if server_special_attrs:
                 score += (attr_matches / len(server_special_attrs)) * 0.3
@@ -192,7 +232,10 @@ class FlextLdifQuirksAdapter:
         # Find best match
         if server_scores:
             best_server = max(server_scores.items(), key=operator.itemgetter(1))
-            if best_server[1] > 0.3:  # Minimum confidence threshold
+            min_confidence_threshold = 0.3
+            if (
+                best_server[1] > min_confidence_threshold
+            ):  # Minimum confidence threshold
                 self._server_type = best_server[0]
                 self._logger.info(
                     f"Detected server type: {best_server[0]} (confidence: {best_server[1]:.2f})"
@@ -249,13 +292,15 @@ class FlextLdifQuirksAdapter:
             adapted_data["attributes"] = adapted_attrs
 
             # Create adapted entry
-            adapted_entry_result = FlextLdifModels.Entry.create(adapted_data)
+            adapted_entry_result: FlextResult[FlextLdifModels.Entry] = (
+                FlextLdifModels.Entry.create(adapted_data)
+            )
             if adapted_entry_result.is_failure:
                 return FlextResult[FlextLdifModels.Entry].fail(
                     f"Failed to create adapted entry: {adapted_entry_result.error}"
                 )
 
-            return FlextResult[FlextLdifModels.Entry].ok(adapted_entry_result.value)
+            return adapted_entry_result
 
         except Exception as e:
             error_msg = f"Entry adaptation failed: {e}"
@@ -295,17 +340,19 @@ class FlextLdifQuirksAdapter:
                 # Normalize AD-specific attributes
                 adapted_values = [val.lower() for val in adapted_values]
 
-        elif server_type == FlextLdifConstants.LdapServers.OPENLDAP:
+        elif (
+            server_type == FlextLdifConstants.LdapServers.OPENLDAP
+            and attr_name.lower() == "objectclass"
+        ):
             # OpenLDAP-specific adaptations
-            if attr_name.lower() == "objectclass":
-                # Ensure required OpenLDAP object classes are present
-                required_classes = cast(
-                    "list[str]",
-                    self._adaptation_rules[server_type]["required_object_classes"],
-                )
-                for required_class in required_classes:
-                    if required_class not in adapted_values:
-                        adapted_values.append(required_class)
+            # Ensure required OpenLDAP object classes are present
+            required_classes = cast(
+                "list[str]",
+                self._adaptation_rules[server_type]["required_object_classes"],
+            )
+            for required_class in required_classes:
+                if required_class not in adapted_values:
+                    adapted_values.append(required_class)
 
         return adapted_values
 
@@ -342,11 +389,15 @@ class FlextLdifQuirksAdapter:
         # Validate DN format
         dn_validation = self._validate_dn_format(entry.dn.value, target)
         if not dn_validation["valid"]:
-            issues.extend(dn_validation["issues"])
+            issues_list = dn_validation.get("issues", [])
+            if isinstance(issues_list, list):
+                issues.extend(issues_list)
 
         # Validate object classes
-        obj_classes = entry.get_attribute("objectClass") or []
-        required_classes = cast("list[str]", rules.get("required_object_classes", []))
+        obj_classes: list[str] = entry.get_attribute("objectClass") or []
+        required_classes: list[str] = cast(
+            "list[str]", rules.get("required_object_classes", [])
+        )
 
         issues.extend(
             f"Missing required object class: {required_class}"
@@ -355,7 +406,9 @@ class FlextLdifQuirksAdapter:
         )
 
         # Validate special attributes
-        special_attrs = cast("list[str]", rules.get("special_attributes", []))
+        special_attrs: list[str] = cast(
+            "list[str]", rules.get("special_attributes", [])
+        )
         warnings: list[str] = [
             f"Missing recommended attribute: {special_attr}"
             for special_attr in special_attrs
@@ -381,9 +434,15 @@ class FlextLdifQuirksAdapter:
             Validation result dictionary
 
         """
-        rules = self._adaptation_rules.get(server_type, {})
-        dn_patterns = cast("list[str]", rules.get("dn_patterns", []))
-        case_sensitive = cast("bool", rules.get("dn_case_sensitive", False))
+        rules: dict[str, object] = self._adaptation_rules.get(server_type, {})
+        dn_patterns_raw = rules.get("dn_patterns", [])
+        dn_patterns: list[str] = (
+            cast("list[str]", dn_patterns_raw)
+            if isinstance(dn_patterns_raw, list)
+            else []
+        )
+        case_sensitive_raw = rules.get("dn_case_sensitive", False)
+        case_sensitive = cast("bool", case_sensitive_raw)
 
         issues: list[str] = []
 
@@ -400,7 +459,9 @@ class FlextLdifQuirksAdapter:
             if not case_sensitive:
                 attr_name_lower = attr_name.lower()
                 matching_patterns = [
-                    p for p in dn_patterns if p.lower() == attr_name_lower
+                    p
+                    for p in dn_patterns
+                    if isinstance(p, str) and p.lower() == attr_name_lower
                 ]
             else:
                 matching_patterns = [p for p in dn_patterns if p == attr_name]

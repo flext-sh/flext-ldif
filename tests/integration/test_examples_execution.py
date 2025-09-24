@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_ldif import FlextLdifAPI
+from flext_ldif import FlextLdifAPI, FlextLdifConfig
 
 
 class TestBasicParsingExample:
@@ -39,8 +39,6 @@ objectClass: organizationalUnit
 """
         sample_file = test_ldif_dir / "sample_basic.ldif"
         sample_file.write_text(sample_ldif, encoding="utf-8")
-
-        from flext_ldif.config import FlextLdifConfig
 
         config = FlextLdifConfig(
             ldif_strict_validation=True,

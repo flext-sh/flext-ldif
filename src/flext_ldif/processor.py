@@ -27,7 +27,6 @@ from flext_core import (
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.entry import FlextLdifEntryBuilder
 from flext_ldif.management import FlextLdifManagement
-from flext_ldif.mixins import FlextLdifMixins
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.parser import FlextLdifParser
 from flext_ldif.quirks import FlextLdifQuirksManager
@@ -38,16 +37,12 @@ from flext_ldif.schema import (
     FlextLdifSchemaValidator,
 )
 from flext_ldif.typings import FlextLdifTypes
+from flext_ldif.utilities import FlextLdifUtilities
 
 __all__ = ["FlextLdifProcessor"]
 
 
-class FlextLdifProcessor(
-    FlextService[dict[str, object]],
-    FlextLdifMixins.ValidationMixin,
-    FlextLdifMixins.FactoryMixin,
-    FlextLdifMixins.BusinessRulesMixin,
-):
+class FlextLdifProcessor(FlextService[dict[str, object]]):
     """Unified LDIF processor for all LDIF operations.
 
     Provides comprehensive LDIF processing capabilities including parsing,
@@ -81,10 +76,10 @@ class FlextLdifProcessor(
         """Initialize LDIF processor with configuration."""
         super().__init__()
         self._logger = FlextLogger(__name__)
-        self._config = config
+        self._config: FlextLdifConfig | None = config
 
         # Initialize advanced components
-        parser_config = {
+        parser_config: dict[str, object] = {
             "encoding": getattr(config, "ldif_encoding", "utf-8"),
             "strict_mode": getattr(config, "strict_validation", True),
             "detect_server": True,
@@ -92,8 +87,8 @@ class FlextLdifProcessor(
         }
         self._parser = FlextLdifParser(parser_config)
 
-        # Initialize unified management layer
-        self._management = FlextLdifManagement()
+        # Initialize unified management layer (lazy import to avoid circular dependency)
+        self._management: FlextLdifManagement | None = None
         self._quirks = FlextLdifQuirksManager()
 
         # Initialize schema and entry components
@@ -111,7 +106,20 @@ class FlextLdifProcessor(
             FlextResult containing health status dictionary with processor metrics.
 
         """
-        return self.get_processor_health()
+        return FlextResult[dict[str, object]].ok({
+            "status": "healthy",
+            "processor": "FlextLdifProcessor",
+            "config": self._get_config_summary(),
+        })
+
+    def _get_config_summary(self) -> dict[str, object]:
+        """Get configuration summary."""
+        if self._config is None:
+            return {"config": "default"}
+        return {
+            "encoding": getattr(self._config, "ldif_encoding", "utf-8"),
+            "strict_validation": getattr(self._config, "strict_validation", True),
+        }
 
     # =============================================================================
     # NESTED HELPER CLASSES - Organization following FLEXT patterns
@@ -211,7 +219,7 @@ class FlextLdifProcessor(
 
             return "\n".join(processed_lines)
 
-    class _LdifValidationHelper(FlextLdifMixins.ValidationMixin):
+    class _LdifValidationHelper:
         """Helper class for validation operations."""
 
         @staticmethod
@@ -267,7 +275,7 @@ class FlextLdifProcessor(
                 FlextResult[None]: Success if all required object classes are present, failure with error message if missing.
 
             """
-            object_classes = entry.get_attribute("objectClass") or []
+            object_classes: list[str] = entry.get_attribute("objectClass") or []
 
             for required_class in required_classes:
                 if required_class not in object_classes:
@@ -444,7 +452,9 @@ class FlextLdifProcessor(
 
         entries: list[FlextLdifModels.Entry] = []
         for i, block in enumerate(entry_blocks):
-            entry_result = self._ParseHelper.process_entry_block(block)
+            entry_result: FlextResult[FlextLdifModels.Entry] = (
+                self._ParseHelper.process_entry_block(block)
+            )
             if entry_result.is_failure:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
                     f"Failed to parse entry {i + 1}: {entry_result.error}",
@@ -467,7 +477,12 @@ class FlextLdifProcessor(
             FlextResult containing list of parsed entries and change records
 
         """
-        return self._parser.parse_string(content)
+        parse_result = self._parser.parse_string(content)
+        if parse_result.is_failure:
+            return FlextResult[
+                list[FlextLdifModels.Entry | FlextLdifModels.ChangeRecord]
+            ].fail(parse_result.error or "Parse failed")
+        return parse_result
 
     def parse_file_advanced(
         self, file_path: Path
@@ -481,7 +496,14 @@ class FlextLdifProcessor(
             FlextResult containing list of parsed entries and change records
 
         """
-        return self._parser.parse_file(file_path)
+        # Use modern Pydantic approach instead of deprecated parse_file
+        try:
+            content = file_path.read_text(encoding="utf-8")
+            return self._parser.parse_string(content)
+        except Exception as e:
+            return FlextResult[
+                list[FlextLdifModels.Entry | FlextLdifModels.ChangeRecord]
+            ].fail(f"Failed to read file {file_path}: {e}")
 
     def detect_server_type(
         self, entries: list[FlextLdifModels.Entry]
@@ -513,7 +535,13 @@ class FlextLdifProcessor(
         if not entries:
             return FlextResult[list[FlextLdifModels.Entry]].ok([])
 
-        adapted_result = self._management.adapt_entries_for_server(entries, target_server or "")
+        # Initialize management if not already done
+        if self._management is None:
+            self._management = FlextLdifManagement()
+
+        adapted_result = self._management.adapt_entries_for_server(
+            entries, target_server or ""
+        )
         if adapted_result.is_failure:
             self._logger.warning(f"Failed to adapt entries: {adapted_result.error}")
             return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
@@ -564,10 +592,18 @@ class FlextLdifProcessor(
         all_recommendations: list[str] = []
         compliant_count = 0
 
-        validation_result = self._management.validate_entries_for_server(entries, server_type)
+        # Initialize management if not already done
+        if self._management is None:
+            self._management = FlextLdifManagement()
+
+        validation_result = self._management.validate_entries_for_server(
+            entries, server_type
+        )
         if validation_result.is_success:
             validation_data = validation_result.value
-            for val_report in cast("list[dict[str, object]]", validation_data.get("validation_reports", [])):
+            for val_report in cast(
+                "list[dict[str, object]]", validation_data.get("validation_reports", [])
+            ):
                 all_issues.extend(cast("list[str]", val_report.get("issues", [])))
                 all_warnings.extend(cast("list[str]", val_report.get("warnings", [])))
                 all_recommendations.extend(
@@ -607,13 +643,20 @@ class FlextLdifProcessor(
             FlextResult containing server information
 
         """
-        quirks_result = self._quirks.get_server_quirks(server_type)
+        # Use the quirks manager's server type if not provided
+        if server_type is None:
+            server_type = self._quirks.server_type
+
+        quirks_result: FlextResult[dict[str, object]] = self._quirks.get_server_quirks(
+            server_type
+        )
         if quirks_result.is_failure:
             return FlextResult[dict[str, object]].fail(
                 quirks_result.error or "Failed to get server info"
             )
+
         return FlextResult[dict[str, object]].ok({
-            "server_type": server_type or self._quirks._server_type,
+            "server_type": server_type,
             "quirks": quirks_result.value,
         })
 
@@ -621,7 +664,7 @@ class FlextLdifProcessor(
         self, file_path: Path
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Parse LDIF file into entries."""
-        validation_result = self._validate_file_path(file_path)
+        validation_result: FlextResult[None] = self._validate_file_path(file_path)
         if validation_result.is_failure:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 validation_result.error or "File path validation failed"
@@ -657,24 +700,26 @@ class FlextLdifProcessor(
 
     def validate_entries(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[None]:
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Validate a list of LDIF entries.
 
         Args:
             entries: List of entries to validate
 
         Returns:
-            FlextResult[None]: Success if all entries are valid, failure with error message
+            FlextResult[list[FlextLdifModels.Entry]]: Success with validated entries, failure with error message
 
         """
         if not entries:
-            return FlextResult[None].fail("No entries to validate")
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                "No entries to validate"
+            )
 
         for i, entry in enumerate(entries):
             # Validate DN structure
             dn_validation = self._LdifValidationHelper.validate_dn_structure(entry.dn)
             if dn_validation.is_failure:
-                return FlextResult[None].fail(
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
                     f"Entry {i} DN validation failed: {dn_validation.error}"
                 )
 
@@ -686,12 +731,12 @@ class FlextLdifProcessor(
                 entry, required_attrs
             )
             if attr_validation.is_failure:
-                return FlextResult[None].fail(
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
                     f"Entry {i} attribute validation failed: {attr_validation.error}"
                 )
 
         self._logger.info(f"Successfully validated {len(entries)} entries")
-        return FlextResult[None].ok(None)
+        return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
     def write_string(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
         """Write entries to LDIF format string."""
@@ -728,7 +773,7 @@ class FlextLdifProcessor(
             FlextResult[None]: Success if written successfully, failure with error message
 
         """
-        content_result = self.write_string(entries)
+        content_result: FlextResult[str] = self.write_string(entries)
         if content_result.is_failure:  # pragma: no cover
             return FlextResult[None].fail(
                 content_result.error or "Failed to generate LDIF content"
@@ -854,7 +899,11 @@ class FlextLdifProcessor(
 
         filtered_entries: list[FlextLdifModels.Entry] = []
         for entry in entries:
-            object_classes = entry.get_attribute("objectClass") or []
+            object_classes_raw = entry.get_attribute("objectClass") or []
+            # Ensure object_classes is a list of strings
+            object_classes: list[str] = [
+                str(oc) for oc in object_classes_raw if oc is not None
+            ]
             if any(oc.lower() == object_class.lower() for oc in object_classes):
                 filtered_entries.append(entry)
 
@@ -882,7 +931,11 @@ class FlextLdifProcessor(
 
         matching_entries: list[FlextLdifModels.Entry] = []
         for entry in entries:
-            attr_values = entry.get_attribute(attr_name) or []
+            attr_values_raw = entry.get_attribute(attr_name) or []
+            # Ensure attr_values is a list of strings
+            attr_values: list[str] = [
+                str(value) for value in attr_values_raw if value is not None
+            ]
             if any(value.lower() == attr_value.lower() for value in attr_values):
                 matching_entries.append(entry)
 
@@ -905,7 +958,7 @@ class FlextLdifProcessor(
             required_attrs_raw if isinstance(required_attrs_raw, list) else [],
         )
 
-        required_classes_raw = schema_rules.get("required_object_classes", [])
+        required_classes_raw: object = schema_rules.get("required_object_classes", [])
         required_classes: list[str] = cast(
             "list[str]",
             required_classes_raw if isinstance(required_classes_raw, list) else [],
@@ -1022,7 +1075,11 @@ class FlextLdifProcessor(
         # Detect object class patterns
         class_combinations: dict[str, int] = {}
         for entry in entries:
-            object_classes = entry.get_attribute("objectClass") or []
+            object_classes_raw = entry.get_attribute("objectClass") or []
+            # Ensure object_classes is a list of strings
+            object_classes: list[str] = [
+                str(oc) for oc in object_classes_raw if oc is not None
+            ]
             if object_classes:
                 class_key = ",".join(sorted(object_classes))
                 class_combinations[class_key] = class_combinations.get(class_key, 0) + 1
@@ -1211,8 +1268,6 @@ class FlextLdifProcessor(
             FlextResult[None]: Success if path is valid, failure with error message
 
         """
-        from flext_ldif.utilities import FlextLdifUtilities
-
         return FlextLdifUtilities.FileUtilities.validate_file_path(file_path)
 
     def _get_required_attributes_for_classes(
@@ -1260,7 +1315,9 @@ class FlextLdifProcessor(
         """Count entries with invalid DN format."""
         count = 0
         for entry in entries:
-            result = self._LdifValidationHelper.validate_dn_structure(entry.dn)
+            result: FlextResult[None] = (
+                self._LdifValidationHelper.validate_dn_structure(entry.dn)
+            )
             if result.is_failure:
                 count += 1
         return count
@@ -1268,11 +1325,29 @@ class FlextLdifProcessor(
     def extract_schema_from_entries(
         self, entries: list[FlextLdifModels.Entry]
     ) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
+        """Extract schema information from LDIF entries.
+
+        Args:
+            entries: List of LDIF entries to analyze
+
+        Returns:
+            FlextResult containing schema discovery results
+
+        """
         return self._schema_extractor.extract_from_entries(entries)
 
     def extract_attribute_usage(
         self, entries: list[FlextLdifModels.Entry]
     ) -> FlextResult[dict[str, dict[str, object]]]:
+        """Extract attribute usage statistics from LDIF entries.
+
+        Args:
+            entries: List of LDIF entries to analyze
+
+        Returns:
+            FlextResult containing attribute usage statistics
+
+        """
         return self._schema_extractor.extract_attribute_usage(entries)
 
     def validate_entry_against_schema(
@@ -1280,6 +1355,16 @@ class FlextLdifProcessor(
         entry: FlextLdifModels.Entry,
         schema: FlextLdifModels.SchemaDiscoveryResult,
     ) -> FlextResult[dict[str, object]]:
+        """Validate an entry against a schema.
+
+        Args:
+            entry: LDIF entry to validate
+            schema: Schema to validate against
+
+        Returns:
+            FlextResult containing validation results
+
+        """
         return self._schema_validator.validate_entry_against_schema(entry, schema)
 
     def validate_objectclass_requirements(
@@ -1287,38 +1372,66 @@ class FlextLdifProcessor(
         entry: FlextLdifModels.Entry,
         schema: FlextLdifModels.SchemaDiscoveryResult,
     ) -> FlextResult[dict[str, object]]:
+        """Validate objectClass requirements for an entry.
+
+        Args:
+            entry: LDIF entry to validate
+            schema: Schema containing objectClass definitions
+
+        Returns:
+            FlextResult containing validation results
+
+        """
         return self._schema_validator.validate_objectclass_requirements(entry, schema)
 
     def build_standard_person_schema(
         self,
     ) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
+        """Build a standard person schema.
+
+        Returns:
+            FlextResult containing standard person schema
+
+        """
         return self._schema_builder.build_standard_person_schema()
 
     def build_standard_group_schema(
         self,
     ) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
+        """Build a standard group schema.
+
+        Returns:
+            FlextResult containing standard group schema
+
+        """
         return self._schema_builder.build_standard_group_schema()
 
     def get_objectclass_definition(
-        self, objectclass_name: str
+        self,
+        objectclass_name: str,
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Get objectClass definition (not implemented in current version)."""
+        _ = objectclass_name  # Suppress unused argument warning
         return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
             "get_objectclass_definition not available in current version"
         )
 
     def get_required_attributes_for_objectclasses(
-        self, objectclasses: list[str]
+        self,
+        objectclasses: list[str],
     ) -> FlextResult[list[str]]:
         """Get required attributes for objectClasses (requires schema context)."""
+        _ = objectclasses  # Suppress unused argument warning
         return FlextResult[list[str]].fail(
             "get_required_attributes_for_objectclasses requires schema context"
         )
 
     def validate_objectclass_combination(
-        self, objectclasses: list[str]
+        self,
+        objectclasses: list[str],
     ) -> FlextResult[dict[str, object]]:
         """Validate objectClass combination (requires schema context)."""
+        _ = objectclasses  # Suppress unused argument warning
         return FlextResult[dict[str, object]].fail(
             "validate_objectclass_combination requires schema context"
         )
@@ -1333,6 +1446,21 @@ class FlextLdifProcessor(
         given_name: str | None = None,
         additional_attrs: dict[str, list[str]] | None = None,
     ) -> FlextResult[FlextLdifModels.Entry]:
+        """Build a person entry with standard attributes.
+
+        Args:
+            cn: Common name
+            sn: Surname
+            base_dn: Base DN for the entry
+            uid: User ID (optional)
+            mail: Email address (optional)
+            given_name: Given name (optional)
+            additional_attrs: Additional attributes (optional)
+
+        Returns:
+            FlextResult containing the created person entry
+
+        """
         return self._entry_builder.build_person_entry(
             cn, sn, base_dn, uid, mail, given_name, additional_attrs
         )
@@ -1345,6 +1473,19 @@ class FlextLdifProcessor(
         description: str | None = None,
         additional_attrs: dict[str, list[str]] | None = None,
     ) -> FlextResult[FlextLdifModels.Entry]:
+        """Build a group entry with standard attributes.
+
+        Args:
+            cn: Common name
+            base_dn: Base DN for the entry
+            members: List of member DNs (optional)
+            description: Group description (optional)
+            additional_attrs: Additional attributes (optional)
+
+        Returns:
+            FlextResult containing the created group entry
+
+        """
         return self._entry_builder.build_group_entry(
             cn, base_dn, members, description, additional_attrs
         )
@@ -1356,6 +1497,18 @@ class FlextLdifProcessor(
         description: str | None = None,
         additional_attrs: dict[str, list[str]] | None = None,
     ) -> FlextResult[FlextLdifModels.Entry]:
+        """Build an organizational unit entry.
+
+        Args:
+            ou: Organizational unit name
+            base_dn: Base DN for the entry
+            description: OU description (optional)
+            additional_attrs: Additional attributes (optional)
+
+        Returns:
+            FlextResult containing the created OU entry
+
+        """
         return self._entry_builder.build_organizational_unit_entry(
             ou, base_dn, description, additional_attrs
         )
@@ -1363,9 +1516,19 @@ class FlextLdifProcessor(
     def build_entries_from_json(
         self, json_data: str
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Build LDIF entries from JSON data.
+
+        Args:
+            json_data: JSON string containing entry data
+
+        Returns:
+            FlextResult containing list of created entries
+
+        """
         return self._entry_builder.build_entries_from_json(json_data)
 
     def convert_entries_to_json(
         self, entries: list[FlextLdifModels.Entry], indent: int = 2
     ) -> FlextResult[str]:
+        """Convert LDIF entries to JSON format."""
         return self._entry_builder.convert_entries_to_json(entries, indent)

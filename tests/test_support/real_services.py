@@ -7,8 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextTypes
-from flext_ldif import FlextLdifAPI
-from flext_ldif.config import FlextLdifConfig
+from flext_ldif import FlextLdifAPI, FlextLdifConfig
 
 
 class RealServiceFactory:

@@ -9,8 +9,7 @@ from __future__ import annotations
 from typing import cast
 
 from flext_core import FlextResult
-from flext_ldif.api import FlextLdifAPI
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifAPI, FlextLdifModels
 
 
 class TestFilterValid:

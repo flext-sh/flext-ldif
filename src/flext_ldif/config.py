@@ -8,9 +8,10 @@ from __future__ import annotations
 
 from typing import Self
 
+from flext_core.config import FlextConfig
 from pydantic import Field, field_validator, model_validator
 
-from flext_core import FlextConfig, FlextConstants, FlextResult
+from flext_core import FlextConstants, FlextContainer, FlextResult
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.mixins import FlextLdifMixins
 
@@ -24,6 +25,12 @@ class FlextLdifConfig(FlextConfig):
     Provides LDIF-specific settings with proper validation.
     Uses flext-core SOURCE OF TRUTH for configuration management.
     """
+
+    # =============================================================================
+    # PRIVATE ATTRIBUTES
+    # =============================================================================
+
+    _sealed: bool = False
 
     # =============================================================================
     # LDIF-SPECIFIC CONFIGURATION FIELDS
@@ -199,7 +206,7 @@ class FlextLdifConfig(FlextConfig):
     # LDIF-SPECIFIC CONFIGURATION METHODS
     # =============================================================================
 
-    def get_ldif_processing_config(self) -> dict[str, object]:
+    def get_ldif_processing_config(self: Self) -> dict[str, object]:
         """Get LDIF processing configuration as dictionary.
 
         Returns:
@@ -217,7 +224,7 @@ class FlextLdifConfig(FlextConfig):
             "max_file_size_mb": self.ldif_max_file_size_mb,
         }
 
-    def get_ldif_validation_config(self) -> dict[str, object]:
+    def get_ldif_validation_config(self: Self) -> dict[str, object]:
         """Get LDIF validation configuration as dictionary.
 
         Returns:
@@ -234,7 +241,7 @@ class FlextLdifConfig(FlextConfig):
             "skip_comments": self.ldif_skip_comments,
         }
 
-    def get_ldif_analytics_config(self) -> dict[str, object]:
+    def get_ldif_analytics_config(self: Self) -> dict[str, object]:
         """Get LDIF analytics configuration as dictionary.
 
         Returns:
@@ -246,7 +253,7 @@ class FlextLdifConfig(FlextConfig):
             "cache_size": self.ldif_analytics_cache_size,
         }
 
-    def validate_ldif_business_rules(self) -> FlextResult[None]:
+    def validate_ldif_business_rules(self: Self) -> FlextResult[None]:
         """Validate LDIF-specific business rules.
 
         Returns:
@@ -347,7 +354,7 @@ class FlextLdifConfig(FlextConfig):
             return FlextResult[None].fail(f"Failed to apply overrides: {e}")
 
     @classmethod
-    def get_global_ldif_config(cls) -> FlextLdifConfig:
+    def get_global_ldif_config(cls: object) -> FlextLdifConfig:
         """Get global LDIF configuration instance.
 
         Returns:
@@ -358,10 +365,16 @@ class FlextLdifConfig(FlextConfig):
 
         """
         # Use the parent's singleton pattern correctly
-        global_instance = FlextConfig.get_global_instance()
+        # Use FlextContainer for global configuration management
+        container = FlextContainer.get_global()
+        global_instance_result = container.get("ldif_config")
+        if global_instance_result.is_success:
+            global_instance = global_instance_result.value
+        else:
+            global_instance = None
 
         # If it's already a FlextLdifConfig, return it
-        if isinstance(global_instance, cls):
+        if isinstance(global_instance, FlextLdifConfig):
             return global_instance
 
         # If it's a base FlextConfig, we need to initialize LDIF config
@@ -372,7 +385,7 @@ class FlextLdifConfig(FlextConfig):
     @classmethod
     def initialize_global_ldif_config(
         cls,
-        **kwargs: str | int | bool | None,
+        **kwargs: object,
     ) -> FlextResult[FlextLdifConfig]:
         """Initialize global LDIF configuration.
 
@@ -392,16 +405,15 @@ class FlextLdifConfig(FlextConfig):
                 # Not initialized yet, proceed with initialization
                 pass
 
-            # Create new LDIF config instance with default parameters
-            config = cls()
-
-            # Update with provided parameters if any
-            for key, value in kwargs.items():
-                if hasattr(config, key):
-                    setattr(config, key, value)
+            # Create new LDIF config instance with parameters - this triggers Pydantic validation
+            # Pydantic BaseSettings handles kwargs properly
+            # Type cast to bypass mypy's argument checking since BaseSettings handles dynamic kwargs
+            config = cls(**kwargs)  # type: ignore[arg-type]
 
             # Set as global instance using parent's method
-            FlextConfig.set_global_instance(config)
+            # Use FlextContainer for global configuration management
+            container = FlextContainer.get_global()
+            container.register("ldif_config", config)
 
             return FlextResult[FlextLdifConfig].ok(config)
         except ValueError as e:  # pragma: no cover
@@ -422,9 +434,11 @@ class FlextLdifConfig(FlextConfig):
         return getattr(self, "_sealed", False)
 
     @classmethod
-    def reset_global_ldif_config(cls) -> None:
+    def reset_global_ldif_config(cls: object) -> None:
         """Reset global LDIF configuration (for testing)."""
-        FlextConfig.reset_global_instance()
+        # Use FlextContainer for global configuration management
+        container = FlextContainer.get_global()
+        container.unregister("ldif_config")
 
 
 __all__ = ["FlextLdifConfig"]

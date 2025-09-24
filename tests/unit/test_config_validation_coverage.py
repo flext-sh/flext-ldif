@@ -9,7 +9,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from flext_ldif.config import FlextLdifConfig
+from flext_ldif import FlextLdifConfig
 
 
 class TestConfigValidationCoverage:

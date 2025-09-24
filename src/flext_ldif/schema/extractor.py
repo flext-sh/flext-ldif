@@ -18,7 +18,7 @@ class FlextLdifSchemaExtractor(FlextService[FlextLdifModels.SchemaDiscoveryResul
         super().__init__()
         self._logger = FlextLogger(__name__)
 
-    def execute(self) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
+    def execute(self: object) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
         """Execute schema extractor service."""
         return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(
             "Use extract_from_entries() method instead"
@@ -62,11 +62,9 @@ class FlextLdifSchemaExtractor(FlextService[FlextLdifModels.SchemaDiscoveryResul
                     if attr_name.lower() == "objectclass":
                         for oc_name in attr_values:
                             if oc_name not in object_classes:
-                                oc_result = (
-                                    FlextLdifModels.SchemaObjectClass.create(
-                                        name=oc_name,
-                                        description="Discovered from LDIF entries",
-                                    )
+                                oc_result = FlextLdifModels.SchemaObjectClass.create(
+                                    name=oc_name,
+                                    description="Discovered from LDIF entries",
                                 )
                                 if oc_result.is_success:
                                     object_classes[oc_name] = oc_result.value

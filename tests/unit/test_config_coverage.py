@@ -126,13 +126,10 @@ class TestFlextLdifConfig:
             mock_core_module = sys.modules["flext_core"]
             setattr(mock_core_module, "FlextConfig", mock_config_class)
 
-            mock_config_type = type("Config", (), {})
-            mock_types_class = type("FlextTypes", (), {"Config": mock_config_type})
+            mock_types_class = type("Types", (), {})
             setattr(mock_core_module, "FlextTypes", mock_types_class)
 
             try:
-                import flext_ldif.config
-
                 config = flext_ldif.config.FlextLdifConfig()
 
                 # Test validation methods if they exist
@@ -171,13 +168,10 @@ class TestFlextLdifConfig:
             mock_core_module = sys.modules["flext_core"]
             setattr(mock_core_module, "FlextConfig", mock_config_class)
 
-            mock_config_type = type("Config", (), {})
-            mock_types_class = type("FlextTypes", (), {"Config": mock_config_type})
+            mock_types_class = type("Types", (), {})
             setattr(mock_core_module, "FlextTypes", mock_types_class)
 
             try:
-                import flext_ldif.config
-
                 # Test global config access if it exists
                 if hasattr(flext_ldif.config.FlextLdifConfig, "get_global_ldif_config"):
                     # Just verify the method exists and is callable
@@ -212,13 +206,10 @@ class TestFlextLdifConfig:
             mock_core_module = sys.modules["flext_core"]
             setattr(mock_core_module, "FlextConfig", mock_config_class)
 
-            mock_config_type = type("Config", (), {})
-            mock_types_class = type("FlextTypes", (), {"Config": mock_config_type})
+            mock_types_class = type("Types", (), {})
             setattr(mock_core_module, "FlextTypes", mock_types_class)
 
             try:
-                import flext_ldif.config
-
                 assert hasattr(flext_ldif.config, "__all__")
                 assert "FlextLdifConfig" in flext_ldif.config.__all__
 

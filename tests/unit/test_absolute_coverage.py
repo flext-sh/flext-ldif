@@ -13,9 +13,7 @@ from unittest.mock import patch
 import pytest
 from pydantic_core import ValidationError
 
-from flext_ldif import FlextLdifModels
-from flext_ldif.config import FlextLdifConfig
-from flext_ldif.processor import FlextLdifProcessor
+from flext_ldif import FlextLdifConfig, FlextLdifModels, FlextLdifProcessor
 
 
 class TestProcessorDefensivePaths:
@@ -134,8 +132,6 @@ class TestConfigDefensivePaths:
     @staticmethod
     def test_apply_overrides_exception_path() -> None:
         """Test lines 324-325: exception during override application."""
-        from pydantic_core import ValidationError
-
         config = FlextLdifConfig()
 
         bad_overrides: dict[str, object] = {
