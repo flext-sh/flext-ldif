@@ -14,7 +14,7 @@ from typing import cast
 import pytest
 from pydantic_core import ValidationError
 
-from flext_ldif import FlextLdifConfig, FlextLdifModels
+from flext_ldif import FlextLdifConfig, FlextLdifModels, FlextLdifProcessor
 
 
 class TestConfigExceptionCoverage:
@@ -81,9 +81,7 @@ class TestModelsExceptionCoverage:
             "attributes": {"cn": ["test"]},
         }
 
-        result = FlextLdifModels.Entry.create(
-            cast("dict[str, object]", invalid_entry_data)
-        )
+        result = FlextLdifModels.Entry.create(invalid_entry_data)
         assert result.is_failure
         # Should contain error message about DN validation
         assert result.error is not None
@@ -101,8 +99,6 @@ class TestProcessorExceptionCoverage:
     @staticmethod
     def test_analytics_empty_entries() -> None:
         """Test analytics calculation with empty entries list."""
-        from flext_ldif.processor import FlextLdifProcessor
-
         processor = FlextLdifProcessor()
         stats = processor._AnalyticsHelper.calculate_entry_statistics([])
 

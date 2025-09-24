@@ -12,9 +12,7 @@ from typing import cast
 
 import pytest
 
-from flext_ldif.api import FlextLdifAPI
-from flext_ldif.config import FlextLdifConfig
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifAPI, FlextLdifConfig, FlextLdifModels
 
 
 class TestFlextLdifAPIRealCoverage:

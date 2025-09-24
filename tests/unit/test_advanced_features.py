@@ -10,10 +10,12 @@ from __future__ import annotations
 
 import base64
 
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.parser import FlextLdifParser
-from flext_ldif.processor import FlextLdifProcessor
-from flext_ldif.quirks import FlextLdifQuirksAdapter
+from flext_ldif import (
+    FlextLdifModels,
+    FlextLdifParser,
+    FlextLdifProcessor,
+    FlextLdifQuirksAdapter,
+)
 
 
 class TestAdvancedLdifFeatures:
@@ -415,7 +417,7 @@ objectClass: person"""
         entry = result.value[0]
         empty_binary = entry.get_attribute("emptyBinary")
         assert empty_binary is not None
-        assert empty_binary[0] == ""
+        assert not empty_binary[0]
 
     def test_invalid_base64_handling(self) -> None:
         """Test handling of invalid Base64 data."""

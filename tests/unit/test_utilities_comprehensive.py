@@ -11,8 +11,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from flext_ldif.protocols import FlextLdifProtocols
-from flext_ldif.utilities import FlextLdifUtilities
+from flext_ldif import FlextLdifProtocols, FlextLdifUtilities
 
 
 class TestTimeUtilities:

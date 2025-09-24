@@ -36,9 +36,15 @@ class FlextLdifAclParser(FlextService[dict[str, object]]):
             FlextResult containing unified ACL
 
         """
-        target_result = FlextLdifModels.AclTarget.create()
-        subject_result = FlextLdifModels.AclSubject.create()
-        perms_result = FlextLdifModels.AclPermissions.create(read=True)
+        target_result: FlextResult[FlextLdifModels.AclTarget] = (
+            FlextLdifModels.AclTarget.create()
+        )
+        subject_result: FlextResult[FlextLdifModels.AclSubject] = (
+            FlextLdifModels.AclSubject.create()
+        )
+        perms_result: FlextResult[FlextLdifModels.AclPermissions] = (
+            FlextLdifModels.AclPermissions.create(read=True)
+        )
 
         if (
             target_result.is_failure
@@ -70,9 +76,15 @@ class FlextLdifAclParser(FlextService[dict[str, object]]):
             FlextResult containing unified ACL
 
         """
-        target_result = FlextLdifModels.AclTarget.create()
-        subject_result = FlextLdifModels.AclSubject.create()
-        perms_result = FlextLdifModels.AclPermissions.create(read=True)
+        target_result: FlextResult[FlextLdifModels.AclTarget] = (
+            FlextLdifModels.AclTarget.create()
+        )
+        subject_result: FlextResult[FlextLdifModels.AclSubject] = (
+            FlextLdifModels.AclSubject.create()
+        )
+        perms_result: FlextResult[FlextLdifModels.AclPermissions] = (
+            FlextLdifModels.AclPermissions.create(read=True)
+        )
 
         if (
             target_result.is_failure
@@ -105,9 +117,15 @@ class FlextLdifAclParser(FlextService[dict[str, object]]):
             FlextResult containing unified ACL
 
         """
-        target_result = FlextLdifModels.AclTarget.create()
-        subject_result = FlextLdifModels.AclSubject.create()
-        perms_result = FlextLdifModels.AclPermissions.create(read=True)
+        target_result: FlextResult[FlextLdifModels.AclTarget] = (
+            FlextLdifModels.AclTarget.create()
+        )
+        subject_result: FlextResult[FlextLdifModels.AclSubject] = (
+            FlextLdifModels.AclSubject.create()
+        )
+        perms_result: FlextResult[FlextLdifModels.AclPermissions] = (
+            FlextLdifModels.AclPermissions.create(read=True)
+        )
 
         if (
             target_result.is_failure

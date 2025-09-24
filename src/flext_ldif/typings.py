@@ -83,7 +83,7 @@ class FlextLdifTypes(FlextTypes):
     class Processing:
         """Generic type variables for LDIF processing."""
 
-        # Generic type variables
+        # Generic type variables - NO type annotations on TypeVar declarations
         T_Entry = TypeVar("T_Entry")
         T_Result = TypeVar("T_Result")
         T_Config = TypeVar("T_Config")

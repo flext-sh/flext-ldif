@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.mixins import FlextLdifMixins
+from flext_ldif import FlextLdifMixins
 
 
 class TestValidationMixin:

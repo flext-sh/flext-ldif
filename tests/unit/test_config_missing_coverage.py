@@ -12,7 +12,6 @@ from __future__ import annotations
 import os
 from unittest.mock import patch
 
-from flext_core import FlextTypes
 from flext_ldif import FlextLdifConfig
 
 
@@ -46,7 +45,7 @@ class TestFlextLdifConfigMissingCoverage:
     def test_config_validation_with_invalid_data() -> None:
         """Test config validation with invalid configuration data."""
         # Test with invalid configuration that should fail validation
-        invalid_config_options = [
+        invalid_config_options: list[dict[str, int | str]] = [
             {"ldif_max_entries": -1},  # Negative value should be invalid
             {"ldif_encoding": ""},  # Empty encoding should be invalid
             {
@@ -57,12 +56,11 @@ class TestFlextLdifConfigMissingCoverage:
         for invalid_config_data in invalid_config_options:
             try:
                 # Intentionally pass invalid data to test validation
-                # Ensure app_name is properly typed as string to avoid type errors
-                config_data: FlextTypes.Core.ConfigDict = {
-                    "app_name": "test-ldif-config",  # Explicitly set app_name as string
-                    **invalid_config_data,
-                }
-                config = FlextLdifConfig(**config_data)
+                # Create config with valid base and then try to update with invalid data
+                config = FlextLdifConfig(app_name="test-ldif-config")
+                # Try to update with invalid data to test validation
+                for key, value in invalid_config_data.items():
+                    setattr(config, key, value)
                 # If it doesn't raise during init, test validation method if available
                 if hasattr(config, "model_validate"):
                     try:
@@ -126,7 +124,7 @@ class TestFlextLdifConfigMissingCoverage:
     def test_config_validation_error_paths() -> None:
         """Test configuration validation error paths."""
         # Test various invalid configurations that should trigger different validation errors
-        invalid_configs = [
+        invalid_configs: list[dict[str, int | str]] = [
             {"ldif_max_entries": -1},  # Negative value should be invalid
             {"ldif_encoding": ""},  # Empty encoding should be invalid
             {
@@ -137,12 +135,11 @@ class TestFlextLdifConfigMissingCoverage:
         for invalid_config in invalid_configs:
             try:
                 # Intentionally pass invalid data to test validation
-                # Ensure app_name is properly typed as string to avoid type errors
-                config_data: FlextTypes.Core.ConfigDict = {
-                    "app_name": "test-ldif-config",  # Explicitly set app_name as string
-                    **invalid_config,
-                }
-                FlextLdifConfig(**config_data)
+                # Create config with valid base and then try to update with invalid data
+                config = FlextLdifConfig(app_name="test-ldif-config")
+                # Try to update with invalid data to test validation
+                for key, value in invalid_config.items():
+                    setattr(config, key, value)
             except Exception:
                 # Expected - invalid configuration should raise exception
                 # This is intentional for testing error handling

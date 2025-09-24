@@ -191,17 +191,6 @@ class FlextLdifMixins(FlextMixins):
             return attr_values
 
     # =========================================================================
-    # FACTORY MIXIN - Common factory patterns
-    # =========================================================================
-
-    class FactoryMixin:
-        """DEPRECATED: Factory mixin methods removed.
-
-        All factory methods have been replaced with direct FlextResult usage.
-        This class is kept for backward compatibility but contains no methods.
-        """
-
-    # =========================================================================
     # BUSINESS RULES MIXIN - Common business rule validation patterns
     # =========================================================================
 

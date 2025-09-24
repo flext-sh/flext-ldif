@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextProtocols
-from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif import FlextLdifProtocols
 
 
 class TestProtocolDefinitions:

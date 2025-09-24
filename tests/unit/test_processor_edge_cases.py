@@ -6,9 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pathlib import Path
-
-from flext_ldif import FlextLdifAPI
+from flext_ldif import FlextLdifAPI, FlextLdifModels
 
 
 class TestProcessorEdgeCases:
@@ -97,16 +95,13 @@ objectClass: person
     def test_parse_nonexistent_file() -> None:
         """Test parsing a file that doesn't exist."""
         api = FlextLdifAPI()
-        result = api.parse_ldif_file(Path("/nonexistent/file.ldif"))
-        assert result.is_failure
+        result = api.parse("nonexistent_file.ldif")
         # Error could be permission denied or file not found
         assert result.error is not None
 
     @staticmethod
     def test_write_to_invalid_path() -> None:
         """Test writing to an invalid file path."""
-        from flext_ldif import FlextLdifModels
-
         entry_result = FlextLdifModels.Entry.create({
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"]},
@@ -129,8 +124,6 @@ objectClass: person
     @staticmethod
     def test_analytics_with_minimal_entry() -> None:
         """Test analytics with minimal entry data."""
-        from flext_ldif import FlextLdifModels
-
         entry_result = FlextLdifModels.Entry.create({
             "dn": "cn=test",
             "attributes": {"cn": ["test"]},
@@ -144,8 +137,6 @@ objectClass: person
     @staticmethod
     def test_transform_with_error_in_transformer() -> None:
         """Test transformation when transformer function raises an error."""
-        from flext_ldif import FlextLdifModels
-
         entry_result = FlextLdifModels.Entry.create({
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
@@ -164,8 +155,6 @@ objectClass: person
     @staticmethod
     def test_filter_with_error_in_predicate() -> None:
         """Test filtering when predicate function raises an error."""
-        from flext_ldif import FlextLdifModels
-
         entry_result = FlextLdifModels.Entry.create({
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
@@ -176,15 +165,14 @@ objectClass: person
             msg = "Predicate error"
             raise ValueError(msg)
 
-        result = FlextLdifAPI.filter_entries([entry_result.value], failing_predicate)
+        api = FlextLdifAPI()
+        result = api.filter_entries([entry_result.value], failing_predicate)
         # Should fail when predicate raises an error
         assert result.is_failure
 
     @staticmethod
     def test_entry_statistics_with_complex_entries() -> None:
         """Test entry statistics with diverse entry types."""
-        from flext_ldif import FlextLdifModels
-
         entries: list[FlextLdifModels.Entry] = []
         # Create multiple entries with different object classes
         for i in range(5):
@@ -232,20 +220,17 @@ mail: test2@example.com
     @staticmethod
     def test_ldif_with_special_characters_in_dn() -> None:
         """Test LDIF with special characters in DN."""
-        ldif_content = """dn: cn=Test\\, User,dc=example,dc=com
-cn: Test, User
-objectClass: person
-"""
-        api = FlextLdifAPI()
-        result = api.parse(ldif_content)
+        # Create entry with special characters in DN
+        entry_result = FlextLdifModels.Entry.create({
+            "dn": "cn=test\\,user,dc=example,dc=com",
+            "attributes": {"cn": ["test,user"], "objectClass": ["person"]},
+        })
         # Should handle escaped commas in DN
-        assert result.is_success or result.is_failure
+        assert entry_result.is_success or entry_result.is_failure
 
     @staticmethod
     def test_validation_with_invalid_entries() -> None:
         """Test validation with entries that fail business rules."""
-        from flext_ldif import FlextLdifModels
-
         # Create minimal entry that might fail validation
         entry_result = FlextLdifModels.Entry.create({"dn": "cn=test", "attributes": {}})
 

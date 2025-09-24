@@ -63,7 +63,9 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
                     attributes[key] = values
 
         entry_data: dict[str, object] = {"dn": dn, "attributes": attributes}
-        result = FlextLdifModels.Entry.create(entry_data)
+        result: FlextResult[FlextLdifModels.Entry] = FlextLdifModels.Entry.create(
+            entry_data
+        )
 
         if result.is_success:
             self._logger.info(f"Created person entry: {dn}")
@@ -99,7 +101,9 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
                     attributes[key] = values
 
         entry_data: dict[str, object] = {"dn": dn, "attributes": attributes}
-        result = FlextLdifModels.Entry.create(entry_data)
+        result: FlextResult[FlextLdifModels.Entry] = FlextLdifModels.Entry.create(
+            entry_data
+        )
 
         if result.is_success:
             self._logger.info(f"Created group entry: {dn}")
@@ -129,7 +133,9 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
                     attributes[key] = values
 
         entry_data: dict[str, object] = {"dn": dn, "attributes": attributes}
-        result = FlextLdifModels.Entry.create(entry_data)
+        result: FlextResult[FlextLdifModels.Entry] = FlextLdifModels.Entry.create(
+            entry_data
+        )
 
         if result.is_success:
             self._logger.info(f"Created organizational unit entry: {dn}")
@@ -157,7 +163,9 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
             "dn": dn,
             "attributes": cast("dict[str, object]", entry_attrs),
         }
-        result = FlextLdifModels.Entry.create(entry_data)
+        result: FlextResult[FlextLdifModels.Entry] = FlextLdifModels.Entry.create(
+            entry_data
+        )
 
         if result.is_success:
             self._logger.info(f"Created custom entry: {dn}")
@@ -169,7 +177,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Build entries from JSON data."""
         try:
-            data = json.loads(json_data)
+            data: object = json.loads(json_data)
 
             if not isinstance(data, list):
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
@@ -185,7 +193,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
                     )
 
                 dn = item.get("dn")
-                attributes = item.get("attributes", {})
+                attributes: dict[str, object] = item.get("attributes", {})
 
                 if not dn:
                     return FlextResult[list[FlextLdifModels.Entry]].fail(
@@ -202,7 +210,9 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
                         normalized_attrs[key] = [str(value)]
 
                 entry_data = {"dn": dn, "attributes": normalized_attrs}
-                entry_result = FlextLdifModels.Entry.create(entry_data)
+                entry_result: FlextResult[FlextLdifModels.Entry] = (
+                    FlextLdifModels.Entry.create(entry_data)
+                )
 
                 if entry_result.is_failure:
                     return FlextResult[list[FlextLdifModels.Entry]].fail(
@@ -229,7 +239,10 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
 
         for item in data:
             dn = item.get("dn")
-            attributes = item.get("attributes", {})
+            attributes_raw = item.get("attributes", {})
+            attributes: dict[str, object] = (
+                attributes_raw if isinstance(attributes_raw, dict) else {}
+            )
 
             if not dn:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
@@ -238,7 +251,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
 
             normalized_attrs: dict[str, list[str]] = {}
             if isinstance(attributes, dict):
-                for key, value in cast("dict[str, object]", attributes).items():
+                for key, value in attributes.items():
                     if isinstance(value, str):
                         normalized_attrs[key] = [value]
                     elif isinstance(value, list):
@@ -247,7 +260,9 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
                         normalized_attrs[key] = [str(value)]
 
             entry_data: dict[str, object] = {"dn": dn, "attributes": normalized_attrs}
-            entry_result = FlextLdifModels.Entry.create(entry_data)
+            entry_result: FlextResult[FlextLdifModels.Entry] = (
+                FlextLdifModels.Entry.create(entry_data)
+            )
 
             if entry_result.is_failure:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
@@ -278,7 +293,9 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
             entries_data: list[dict[str, object]] = []
 
             for entry in entries:
-                entry_dict_result = self.convert_entry_to_dict(entry)
+                entry_dict_result: FlextResult[dict[str, object]] = (
+                    self.convert_entry_to_dict(entry)
+                )
                 if entry_dict_result.is_failure:
                     return FlextResult[str].fail(
                         f"Failed to convert entry: {entry_dict_result.error}"

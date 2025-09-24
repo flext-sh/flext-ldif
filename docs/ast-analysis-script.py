@@ -10,19 +10,24 @@ Date: 2025-01-27
 """
 
 import ast
+import logging
 from collections import Counter
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import TypedDict
+
+# Configure logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
 
 
 class ModuleAnalysis(TypedDict):
     """Type definition for module analysis results."""
 
     file: str
-    imports: list[dict[str, Any]]
-    classes: list[dict[str, Any]]
-    functions: list[dict[str, Any]]
-    calls: list[dict[str, Any]]
+    imports: list[dict[str, object]]
+    classes: list[dict[str, object]]
+    functions: list[dict[str, object]]
+    calls: list[dict[str, object]]
     complexity: int
     lines_of_code: int
     ast_nodes: int
@@ -32,23 +37,23 @@ class LibraryAnalysis(TypedDict):
     """Type definition for library usage analysis results."""
 
     file: str
-    flext_core_usage: list[dict[str, Any]]
-    pydantic_usage: list[dict[str, Any]]
-    standard_lib_usage: list[dict[str, Any]]
-    external_calls: list[dict[str, Any]]
-    performance_impact: dict[str, Any]
-    memory_impact: dict[str, Any]
-    dependency_graph: list[dict[str, Any]]
+    flext_core_usage: list[dict[str, object]]
+    pydantic_usage: list[dict[str, object]]
+    standard_lib_usage: list[dict[str, object]]
+    external_calls: list[dict[str, object]]
+    performance_impact: dict[str, object]
+    memory_impact: dict[str, object]
+    dependency_graph: list[dict[str, object]]
 
 
 class CallGraphAnalysis(TypedDict):
     """Type definition for call graph analysis results."""
 
     file: str
-    internal_calls: list[dict[str, Any]]
-    external_calls: list[dict[str, Any]]
-    method_chains: list[dict[str, Any]]
-    dependency_chain: list[dict[str, Any]]
+    internal_calls: list[dict[str, object]]
+    external_calls: list[dict[str, object]]
+    method_chains: list[dict[str, object]]
+    dependency_chain: list[dict[str, object]]
     complexity_score: int
 
 
@@ -92,7 +97,7 @@ class ComprehensiveReport(TypedDict):
 
     source_directory: str
     total_files: int
-    module_analyses: dict[str, dict[str, Any]]
+    module_analyses: dict[str, dict[str, object]]
     aggregate_statistics: AggregateStatistics
     library_usage_summary: LibraryUsageSummary
     performance_summary: PerformanceSummary
@@ -111,7 +116,7 @@ class ASTAnalyzer:
     - Dependency analysis
 
     Attributes:
-        analysis_results (Dict[str, Any]): Storage for analysis results
+        analysis_results (Dict[str, object]): Storage for analysis results
         performance_critical_ops (List[str]): List of performance-critical operations
         library_usage_patterns (Dict[str, int]): Library usage frequency tracking
 
@@ -119,7 +124,7 @@ class ASTAnalyzer:
 
     def __init__(self) -> None:
         """Initialize the AST analyzer with default configuration."""
-        self.analysis_results: dict[str, Any] = {}
+        self.analysis_results: dict[str, object] = {}
         self.performance_critical_ops: list[str] = [
             "read_text",
             "write_text",
@@ -150,7 +155,7 @@ class ASTAnalyzer:
             file_path (Union[str, Path]): Path to the Python file to analyze
 
         Returns:
-            Dict[str, Any]: Comprehensive analysis results including:
+            Dict[str, object]: Comprehensive analysis results including:
                 - file: File path
                 - imports: List of import statements
                 - classes: List of class definitions
@@ -255,14 +260,14 @@ class ASTAnalyzer:
         except Exception as e:
             return {"error": str(e), "file": str(file_path)}
 
-    def _extract_call_info(self, node: ast.Call) -> dict[str, Any] | None:
+    def _extract_call_info(self, node: ast.Call) -> dict[str, object] | None:
         """Extract detailed information from a function call node.
 
         Args:
             node (ast.Call): The AST call node to analyze
 
         Returns:
-            Optional[Dict[str, Any]]: Call information or None if extraction fails
+            Optional[Dict[str, object]]: Call information or None if extraction fails
 
         """
         try:
@@ -288,9 +293,10 @@ class ASTAnalyzer:
                     "is_performance_critical": node.func.attr
                     in self.performance_critical_ops,
                 }
-        except Exception:
-            # Ignore parsing errors for individual nodes
-            pass
+        except Exception as e:
+            # Ignore parsing errors for individual nodes - this is intentional
+            # Log the exception for debugging purposes
+            logger.warning("Failed to parse node: %s", e)
         return None
 
     def _calculate_complexity_score(self, analysis: ModuleAnalysis) -> int:
@@ -303,7 +309,7 @@ class ASTAnalyzer:
         - Number of imports (weight: 2)
 
         Args:
-            analysis (Dict[str, Any]): Analysis results to score
+            analysis (Dict[str, object]): Analysis results to score
 
         Returns:
             int: Calculated complexity score
@@ -326,7 +332,7 @@ class ASTAnalyzer:
             file_path (Union[str, Path]): Path to the Python file to analyze
 
         Returns:
-            Dict[str, Any]: Library usage analysis including:
+            Dict[str, object]: Library usage analysis including:
                 - flext_core_usage: Flext-core library usage
                 - pydantic_usage: Pydantic library usage
                 - standard_lib_usage: Standard library usage
@@ -471,14 +477,14 @@ class ASTAnalyzer:
             return "medium"
         return "low"
 
-    def _analyze_call_performance(self, node: ast.Call) -> dict[str, Any] | None:
+    def _analyze_call_performance(self, node: ast.Call) -> dict[str, object] | None:
         """Analyze the performance impact of a function call.
 
         Args:
             node (ast.Call): The AST call node to analyze
 
         Returns:
-            Optional[Dict[str, Any]]: Performance analysis or None
+            Optional[Dict[str, object]]: Performance analysis or None
 
         """
         if isinstance(node.func, ast.Attribute) and isinstance(
@@ -528,7 +534,7 @@ class ASTAnalyzer:
             file_path (Union[str, Path]): Path to the Python file to analyze
 
         Returns:
-            Dict[str, Any]: Call graph analysis including:
+            Dict[str, object]: Call graph analysis including:
                 - internal_calls: Self-referential method calls
                 - external_calls: External library calls
                 - method_chains: Complex method chaining
@@ -586,14 +592,14 @@ class ASTAnalyzer:
         except Exception as e:
             return {"error": str(e), "file": str(file_path)}
 
-    def _extract_call_graph_info(self, node: ast.Call) -> dict[str, Any] | None:
+    def _extract_call_graph_info(self, node: ast.Call) -> dict[str, object] | None:
         """Extract call graph information from an AST call node.
 
         Args:
             node (ast.Call): The AST call node to analyze
 
         Returns:
-            Optional[Dict[str, Any]]: Call graph information or None
+            Optional[Dict[str, object]]: Call graph information or None
 
         """
         try:
@@ -622,9 +628,10 @@ class ASTAnalyzer:
                     "args_count": len(node.args),
                     "is_internal": func_name.startswith("_"),
                 }
-        except Exception:
-            # Ignore parsing errors for individual nodes
-            pass
+        except Exception as e:
+            # Ignore parsing errors for individual nodes - this is intentional
+            # Log the exception for debugging purposes
+            logger.warning("Failed to parse node: %s", e)
         return None
 
     def _is_method_chain(self, node: ast.Call) -> bool:
@@ -656,7 +663,7 @@ class ASTAnalyzer:
             source_directory (Union[str, Path]): Directory containing Python files
 
         Returns:
-            Dict[str, Any]: Comprehensive analysis report including:
+            Dict[str, object]: Comprehensive analysis report including:
                 - module_analyses: Individual module analyses
                 - aggregate_statistics: Overall project statistics
                 - library_usage_summary: Library usage patterns
@@ -794,7 +801,7 @@ class ASTAnalyzer:
         """Generate recommendations based on the analysis results.
 
         Args:
-            report (Dict[str, Any]): The comprehensive analysis report
+            report (Dict[str, object]): The comprehensive analysis report
 
         Returns:
             List[str]: List of recommendations

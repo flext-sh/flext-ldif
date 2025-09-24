@@ -6,20 +6,29 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from typing import Any, ClassVar
+from typing import ClassVar
+
+from pydantic import ConfigDict
 
 from flext_core import FlextContainer, FlextLogger, FlextResult, FlextService
 from flext_ldif.acls_coordinator import FlextLdifAcls
 from flext_ldif.entries_coordinator import FlextLdifEntries
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.parser import FlextLdifParser
+
+# from flext_ldif.processor import FlextLdifProcessor  # Avoid circular import
 from flext_ldif.quirks_coordinator import FlextLdifQuirks
 from flext_ldif.schemas_coordinator import FlextLdifSchemas
 
 
-class FlextLdifManagement(FlextService):
+class FlextLdifManagement(FlextService[dict[str, object]]):
     """Master coordinator for schema, ACL, entry, and quirks operations using flext-core paradigm."""
 
-    model_config: ClassVar[dict[str, Any]] = {"arbitrary_types_allowed": True, "validate_assignment": False, "extra": "allow"}
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        arbitrary_types_allowed=True,
+        validate_assignment=False,
+        extra="allow",
+    )
 
     def __init__(self, server_type: str | None = None) -> None:
         """Initialize management coordinator.
@@ -34,10 +43,17 @@ class FlextLdifManagement(FlextService):
         self._container = FlextContainer.get_global()
 
         # Initialize domain coordinators directly
-        self.schemas = FlextLdifSchemas()
-        self.entries = FlextLdifEntries()
-        self.acls = FlextLdifAcls()
-        self.quirks = FlextLdifQuirks()
+        self.schemas: FlextLdifSchemas = FlextLdifSchemas()
+        self.entries: FlextLdifEntries = FlextLdifEntries()
+        self.acls: FlextLdifAcls = FlextLdifAcls()
+        self.quirks: FlextLdifQuirks = FlextLdifQuirks()
+
+        # Initialize nested coordinator classes
+        self.schemas.extractor = self.schemas.Extractor(self.schemas)
+        self.schemas.validator = self.schemas.Validator(self.schemas)
+        self.acls.service = self.acls.Service(self.acls)
+        self.quirks.manager = self.quirks.Manager(self.quirks)
+        self.quirks.adapter = self.quirks.EntryAdapter(self.quirks)
 
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute health check - required by FlextService."""
@@ -50,7 +66,7 @@ class FlextLdifManagement(FlextService):
 
     def process_ldif_complete(
         self, content: str, server_type: str | None = None
-    ) -> FlextResult[dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Complete LDIF processing pipeline.
 
         Args:
@@ -61,35 +77,51 @@ class FlextLdifManagement(FlextService):
             FlextResult with processed entries, schema, ACLs, and server type
 
         """
-        # Parse content first (implement parse method)
-        from flext_ldif.processor import FlextLdifProcessor
-        processor = FlextLdifProcessor()
-        parse_result = processor.parse_string(content)
+        # Parse content first using parser directly to avoid circular import
+        parser = FlextLdifParser()
+        parse_result: FlextResult[
+            list[FlextLdifModels.Entry | FlextLdifModels.ChangeRecord]
+        ] = parser.parse_string(content)
 
         if parse_result.is_failure:
-            return FlextResult[dict].fail(parse_result.error or "Parse failed")
+            return FlextResult[dict[str, object]].fail(
+                parse_result.error or "Parse failed"
+            )
 
-        entries = parse_result.value
+        parsed_items = parse_result.value
+
+        # Filter to only Entry types for processing
+        entries: list[FlextLdifModels.Entry] = [
+            item for item in parsed_items if isinstance(item, FlextLdifModels.Entry)
+        ]
 
         # Detect server type if not provided
         if not server_type:
-            server_result = self.quirks.manager.detect_server_type(entries)
+            server_result: FlextResult[str] = self.quirks.manager.detect_server_type(
+                entries
+            )
             server_type = server_result.value if server_result.is_success else "generic"
 
         # Extract and validate schemas
-        schema_result = self.schemas.extractor.extract_from_entries(entries)
+        schema_result: FlextResult[FlextLdifModels.SchemaDiscoveryResult] = (
+            self.schemas.extractor.extract_from_entries(entries)
+        )
 
         # Process ACLs
-        acl_result = self.acls.service.extract_from_entries(entries, server_type)
+        acl_result: FlextResult[list[FlextLdifModels.UnifiedAcl]] = (
+            self.acls.service.extract_from_entries(entries, server_type)
+        )
 
         # Adapt for server quirks
-        adapted_result = self.quirks.adapter.adapt_entries(entries, server_type)
+        adapted_result: FlextResult[list[FlextLdifModels.Entry]] = (
+            self.quirks.adapter.adapt_entries(entries, server_type)
+        )
 
-        return FlextResult[dict].ok({
+        return FlextResult[dict[str, object]].ok({
             "entries": adapted_result.value if adapted_result.is_success else entries,
             "schema": schema_result.value if schema_result.is_success else None,
             "acls": acl_result.value if acl_result.is_success else [],
-            "server_type": server_type
+            "server_type": server_type,
         })
 
     def process_entries_with_acl(
@@ -99,14 +131,18 @@ class FlextLdifManagement(FlextService):
         if not entries:
             return FlextResult[dict[str, object]].fail("No entries to process")
 
-        server_type_result = self.quirks.manager.detect_server_type(entries)
+        server_type_result: FlextResult[str] = self.quirks.manager.detect_server_type(
+            entries
+        )
         if server_type_result.is_failure:
             return FlextResult[dict[str, object]].fail(
                 server_type_result.error or "Failed to detect server type"
             )
 
         server_type = server_type_result.value
-        acl_result = self.acls.service.extract_from_entries(entries, server_type)
+        acl_result: FlextResult[list[FlextLdifModels.UnifiedAcl]] = (
+            self.acls.service.extract_from_entries(entries, server_type)
+        )
 
         return FlextResult[dict[str, object]].ok({
             "server_type": server_type,
@@ -122,7 +158,9 @@ class FlextLdifManagement(FlextService):
         if not entries:
             return FlextResult[dict[str, object]].fail("No entries to process")
 
-        schema_result = self.schemas.extractor.extract_from_entries(entries)
+        schema_result: FlextResult[FlextLdifModels.SchemaDiscoveryResult] = (
+            self.schemas.extractor.extract_from_entries(entries)
+        )
         if schema_result.is_failure:
             return FlextResult[dict[str, object]].fail(
                 schema_result.error or "Failed to extract schema"
@@ -132,7 +170,9 @@ class FlextLdifManagement(FlextService):
 
         validation_results: list[dict[str, object]] = []
         for entry in entries:
-            val_result = self.schemas.validator.validate_entry(entry, schema)
+            val_result: FlextResult[dict[str, object]] = (
+                self.schemas.validator.validate_entry(entry, schema)
+            )
             if val_result.is_success:
                 validation_results.append(val_result.value)
 

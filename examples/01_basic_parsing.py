@@ -38,9 +38,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from flext_core import FlextLogger
-from flext_ldif import FlextLdifAPI, FlextLdifModels
-from flext_ldif.config import FlextLdifConfig
-from flext_ldif.typings import FlextLdifTypes
+from flext_ldif import FlextLdifAPI, FlextLdifConfig, FlextLdifModels, FlextLdifTypes
 
 logger = FlextLogger(__name__)
 

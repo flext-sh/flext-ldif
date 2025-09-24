@@ -12,6 +12,8 @@ from flext_ldif import (
 
 
 class TestSchemaIntegration:
+    """Test schema integration functionality."""
+
     def test_schema_extraction_from_entries(self) -> None:
         processor = FlextLdifProcessor()
         builder = FlextLdifEntryBuilder()
@@ -61,7 +63,9 @@ class TestSchemaIntegration:
         schema = schema_result.value
 
         # Test objectClass hierarchy resolution
-        hierarchy_result = manager.resolve_objectclass_hierarchy("inetOrgPerson", schema)
+        hierarchy_result = manager.resolve_objectclass_hierarchy(
+            "inetOrgPerson", schema
+        )
         assert hierarchy_result.is_success
         hierarchy = hierarchy_result.value
         assert "inetOrgPerson" in hierarchy

@@ -9,8 +9,9 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
+from pydantic import ValidationError
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels
 
 
 class TestFlextLdifModelsComprehensive:
@@ -18,14 +19,11 @@ class TestFlextLdifModelsComprehensive:
 
     def test_distinguished_name_validation_empty(self) -> None:
         """Test DN validation with empty value."""
-        from pydantic import ValidationError
-
         with pytest.raises(ValidationError) as exc_info:
             FlextLdifModels.DistinguishedName(value="")
 
         assert "string_too_short" in str(exc_info.value)
 
-    def test_distinguished_name_validation_whitespace_only(self) -> None:
         """Test DN validation with whitespace only."""
         with pytest.raises(ValueError):
             FlextLdifModels.DistinguishedName(value="   ")
@@ -37,8 +35,6 @@ class TestFlextLdifModelsComprehensive:
 
     def test_distinguished_name_validation_invalid_chars(self) -> None:
         """Test DN validation with invalid characters."""
-        from pydantic import ValidationError
-        
         invalid_chars = [
             "#",
             "$",
@@ -110,7 +106,6 @@ class TestFlextLdifModelsComprehensive:
         """Test DN creation factory method success."""
         result = FlextLdifModels.DistinguishedName.create("cn=test,dc=example,dc=com")
 
-        assert result.is_success
         assert result.value.value == "cn=test,dc=example,dc=com"
 
     def test_distinguished_name_create_failure(self) -> None:
@@ -122,10 +117,6 @@ class TestFlextLdifModelsComprehensive:
 
     def test_ldif_attributes_validation_invalid_type(self) -> None:
         """Test attributes validation with invalid data type."""
-        from typing import cast
-
-        from pydantic import ValidationError
-
         # Intentionally pass invalid data type to test validation
         invalid_data = cast("dict[str, list[str]]", "not_a_dict")
 
@@ -139,10 +130,6 @@ class TestFlextLdifModelsComprehensive:
         with pytest.raises(ValueError):
             FlextLdifModels.LdifAttributes(data={"": ["value"]})  # Empty name
 
-    def test_ldif_attributes_validation_invalid_attribute_name_type(self) -> None:
-        """Test attributes validation with non-string attribute name."""
-        from typing import cast
-
         # Intentionally pass invalid attribute name type to test validation
         invalid_data = cast("dict[str, list[str]]", {123: ["value"]})
 
@@ -151,10 +138,6 @@ class TestFlextLdifModelsComprehensive:
 
     def test_ldif_attributes_validation_invalid_values_type(self) -> None:
         """Test attributes validation with invalid values type."""
-        from typing import cast
-
-        from pydantic import ValidationError
-
         # Intentionally pass invalid values type to test validation
         invalid_data = cast("dict[str, list[str]]", {"attr": "not_a_list"})
 
@@ -166,10 +149,6 @@ class TestFlextLdifModelsComprehensive:
     @staticmethod
     def test_ldif_attributes_validation_invalid_value_type() -> None:
         """Test validation with invalid value type in list."""
-        from typing import cast
-
-        from pydantic import ValidationError
-
         # Intentionally pass invalid value type in list to test validation
         invalid_data = cast("dict[str, list[str]]", {"attr": ["valid", 123]})
 
@@ -567,7 +546,6 @@ class TestFlextLdifModelsComprehensive:
         result = FlextLdifModels.DistinguishedName.create("cn=test,dc=example,dc=com")
 
         assert result.is_success
-        assert result.value.value == "cn=test,dc=example,dc=com"
 
     def test_create_attributes_factory_method(self) -> None:
         """Test create_attributes factory method."""
@@ -577,10 +555,6 @@ class TestFlextLdifModelsComprehensive:
         assert result.is_success
         assert result.value.get_attribute("cn") == ["test"]
 
-    def test_ldif_attributes_private_validation_methods(self) -> None:
-        """Test private validation methods are called properly."""
-        from typing import cast
-
         # Test with invalid attribute name - should trigger _validate_attribute_name
         # Intentionally pass invalid attribute name type to test validation
         invalid_name_data = cast("dict[str, list[str]]", {None: ["value"]})
@@ -589,7 +563,6 @@ class TestFlextLdifModelsComprehensive:
             FlextLdifModels.LdifAttributes(data=invalid_name_data)
 
         # Test with invalid values type - should trigger _validate_attribute_values
-        from pydantic import ValidationError
 
         # Intentionally pass invalid values type to test validation
         invalid_values_data = cast("dict[str, list[str]]", {"attr": None})

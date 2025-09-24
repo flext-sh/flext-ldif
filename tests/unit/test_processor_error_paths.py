@@ -8,8 +8,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_ldif import FlextLdifAPI, FlextLdifModels
-from flext_ldif.processor import FlextLdifProcessor
+from flext_ldif import (
+    FlextLdifAPI,
+    FlextLdifConfig,
+    FlextLdifModels,
+    FlextLdifProcessor,
+)
 
 
 class TestProcessorErrorPaths:
@@ -33,8 +37,6 @@ class TestProcessorErrorPaths:
     @staticmethod
     def test_validate_entries_with_invalid_object_classes() -> None:
         """Test validation when entry has invalid object classes."""
-        from flext_ldif.config import FlextLdifConfig
-
         config = FlextLdifConfig(ldif_validate_object_class=True)
         processor = FlextLdifProcessor(config)
 
@@ -175,8 +177,6 @@ objectClass: person
     @staticmethod
     def test_processor_with_strict_validation_config() -> None:
         """Test processor with strict validation enabled."""
-        from flext_ldif.config import FlextLdifConfig
-
         config = FlextLdifConfig(
             ldif_strict_validation=True,
             ldif_validate_object_class=True,

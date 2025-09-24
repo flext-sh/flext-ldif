@@ -14,9 +14,7 @@ from __future__ import annotations
 import base64
 from pathlib import Path
 
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.processor import FlextLdifProcessor
-from flext_ldif.server_quirks import FlextLdifServerQuirks
+from flext_ldif import FlextLdifModels, FlextLdifProcessor, FlextLdifServerQuirks
 
 
 def create_sample_ldif_content() -> str:

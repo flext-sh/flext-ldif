@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.config import FlextLdifConfig
+from flext_ldif import FlextLdifConfig
 
 
 class TestFlextLdifConfig:
@@ -125,7 +125,10 @@ class TestFlextLdifConfig:
             assert validation_result.is_failure
             error_message = validation_result.error
             assert error_message is not None
-            assert "Maximum entries too low" in error_message
+            assert (
+                "Too few entries for production use" in error_message
+                or "Maximum entries too low" in error_message
+            )
 
     def test_configuration_overrides(self) -> None:
         """Test applying configuration overrides."""

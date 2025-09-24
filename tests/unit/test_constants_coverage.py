@@ -13,6 +13,8 @@ from unittest.mock import patch
 
 import pytest
 
+import flext_ldif.constants
+
 
 class TestFlextLdifConstants:
     """Test coverage for FlextLdifConstants class and all constants."""
@@ -40,8 +42,6 @@ class TestFlextLdifConstants:
             setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
-                import flext_ldif.constants
-
                 assert hasattr(flext_ldif.constants, "FlextLdifConstants")
             except ImportError:
                 pytest.skip("Cannot test due to dependency issues")
@@ -67,8 +67,6 @@ class TestFlextLdifConstants:
             setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
-                import flext_ldif.constants
-
                 constants = flext_ldif.constants.FlextLdifConstants
 
                 # Test that key constants exist (these should be defined)
@@ -101,8 +99,6 @@ class TestFlextLdifConstants:
             setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
-                import flext_ldif.constants
-
                 constants = flext_ldif.constants.FlextLdifConstants
 
                 # Test validation constants exist
@@ -131,8 +127,6 @@ class TestFlextLdifConstants:
             setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
-                import flext_ldif.constants
-
                 constants = flext_ldif.constants.FlextLdifConstants
 
                 # Test format constants exist
@@ -162,8 +156,6 @@ class TestFlextLdifConstants:
             setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
-                import flext_ldif.constants
-
                 constants = flext_ldif.constants.FlextLdifConstants
 
                 # Test processing constants
@@ -193,8 +185,6 @@ class TestFlextLdifConstants:
             setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
             try:
-                import flext_ldif.constants
-
                 assert hasattr(flext_ldif.constants, "__all__")
                 assert "FlextLdifConstants" in flext_ldif.constants.__all__
 

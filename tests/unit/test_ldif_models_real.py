@@ -9,8 +9,7 @@ from __future__ import annotations
 from typing import cast
 
 from flext_core import FlextTypes
-from flext_ldif.config import FlextLdifConfig
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifConfig, FlextLdifModels
 
 
 class TestFlextLdifModelsConfigReal:

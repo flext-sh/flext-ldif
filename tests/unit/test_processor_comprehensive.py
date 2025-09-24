@@ -11,9 +11,7 @@ from pathlib import Path
 from typing import cast
 from unittest.mock import patch
 
-from flext_ldif.config import FlextLdifConfig
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.processor import FlextLdifProcessor
+from flext_ldif import FlextLdifConfig, FlextLdifModels, FlextLdifProcessor
 
 
 class TestFlextLdifProcessorComprehensive:
@@ -758,9 +756,7 @@ objectClass: person"""
         assert "capabilities" in result.value
         assert result.value["status"] == "healthy"
 
-    def test_get_processor_health_exception(self) -> None:
         """Test processor health check with exception."""
-        from unittest.mock import patch
 
         processor = FlextLdifProcessor()
 

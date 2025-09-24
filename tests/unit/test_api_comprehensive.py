@@ -15,9 +15,7 @@ from unittest.mock import patch
 
 import pytest
 
-from flext_ldif.api import FlextLdifAPI
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.typings import FlextLdifTypes
+from flext_ldif import FlextLdifAPI, FlextLdifModels, FlextLdifTypes, FlextLdifUtilities
 
 
 class TestFlextLdifAPIComprehensive:
@@ -589,8 +587,6 @@ objectClass: inetOrgPerson
 
     def test_get_timestamp(self) -> None:
         """Test timestamp functionality via utilities."""
-        from flext_ldif.utilities import FlextLdifUtilities
-
         timestamp = FlextLdifUtilities.TimeUtilities.get_timestamp()
         assert isinstance(timestamp, str)
         # Should be in ISO format

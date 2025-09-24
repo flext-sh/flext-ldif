@@ -8,9 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_ldif import FlextLdifModels
-from flext_ldif.config import FlextLdifConfig
-from flext_ldif.processor import FlextLdifProcessor
+from flext_ldif import FlextLdifConfig, FlextLdifModels, FlextLdifProcessor
 
 
 class TestProcessorUncoveredLines:

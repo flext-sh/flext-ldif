@@ -12,9 +12,12 @@ from pathlib import Path
 import pytest
 from pydantic_core import ValidationError
 
-from flext_ldif import FlextLdifModels
-from flext_ldif.config import FlextLdifConfig
-from flext_ldif.processor import FlextLdifProcessor
+from flext_ldif import (
+    FlextLdifAPI,
+    FlextLdifConfig,
+    FlextLdifModels,
+    FlextLdifProcessor,
+)
 
 
 class TestProcessorCriticalPaths:
@@ -161,8 +164,6 @@ class TestApiEdgeCases:
     @staticmethod
     def test_api_branch_coverage() -> None:
         """Test api.py line 496->494 branch."""
-        from flext_ldif import FlextLdifAPI
-
         api = FlextLdifAPI()
 
         result = api.filter_valid([])

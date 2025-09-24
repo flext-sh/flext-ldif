@@ -9,24 +9,33 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 # Add docker directory to path to import shared fixtures
 docker_dir = Path(__file__).parent.parent.parent.parent / "docker"
-sys.path.insert(0, str(docker_dir))
 
 # Import shared fixtures
-from shared_ldap_fixtures import (
-    FlextSharedLDAPContainerManager,
-    check_docker_available,
-    shared_ldap_config,
-    shared_ldap_container,
-    shared_ldap_container_manager,
-    shared_ldif_data,
-    skip_if_no_docker,
-    temporary_shared_ldif_data,
-)
+try:
+    from .shared_ldap_fixtures import (
+        FlextSharedLDAPContainerManager,
+        check_docker_available,
+        shared_ldap_config,
+        shared_ldap_container,
+        shared_ldap_container_manager,
+        shared_ldif_data,
+        skip_if_no_docker,
+        temporary_shared_ldif_data,
+    )
+except ImportError:
+    # Fallback for when shared fixtures are not available
+    FlextSharedLDAPContainerManager = None
+    check_docker_available = None
+    shared_ldap_config = None
+    shared_ldap_container = None
+    shared_ldap_container_manager = None
+    shared_ldif_data = None
+    skip_if_no_docker = None
+    temporary_shared_ldif_data = None
 
 # Re-export shared fixtures for backward compatibility
 __all__ = [

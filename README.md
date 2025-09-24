@@ -174,7 +174,7 @@ result = processor.parse_string_advanced(ldif_content)
 if result.is_success:
     entries = result.value
     print(f"Advanced parsing: {len(entries)} entries/records")
-    
+
     # Validate RFC compliance
     compliance = processor.validate_rfc_compliance(entries)
     if compliance.is_success:
@@ -192,13 +192,13 @@ processor = FlextLdifProcessor()
 result = processor.parse_string(ldif_content)
 if result.is_success:
     entries = result.value
-    
+
     # Detect server type
     server_result = processor.detect_server_type(entries)
     if server_result.is_success:
         server_type = server_result.value
         print(f"Detected server: {server_type}")
-        
+
         # Adapt entries for specific server
         adapted_result = processor.adapt_entries_for_server(entries, "active_directory")
         if adapted_result.is_success:

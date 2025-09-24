@@ -155,16 +155,16 @@ def create_ldif_entry(entry_data: dict) -> FlextResult[FlextLdifModels.Entry]:
 ### flext-cli Integration
 
 ```python
-from flext_cli import FlextCliApi, FlextCliMain, FlextCliConfigs
+from flext_cli import FlextCliApi, FlextCliCommands, FlextCliConfigs
 
 class ProjectCliService:
     def __init__(self) -> None:
         self._cli_api = FlextCliApi()
 
-    def create_cli_interface(self) -> FlextResult[FlextCliMain]:
-        main_cli = FlextCliMain(name="project-cli")
+    def create_cli_interface(self) -> FlextResult[FlextCliCommands]:
+        main_cli = FlextCliCommands(name="project-cli")
         # Use flext-cli for ALL output - NO Rich directly
-        return FlextResult[FlextCliMain].ok(main_cli)
+        return FlextResult[FlextCliCommands].ok(main_cli)
 ```
 
 ## Import Patterns
@@ -174,7 +174,7 @@ class ProjectCliService:
 ```python
 # ✅ CORRECT
 from flext_core import FlextResult, FlextLogger, FlextContainer
-from flext_cli import FlextCliApi, FlextCliMain  # CLI projects only
+from flext_cli import FlextCliApi, FlextCliCommands  # CLI projects only
 
 # ❌ FORBIDDEN
 from flext_core.result import FlextResult  # Internal imports prohibited

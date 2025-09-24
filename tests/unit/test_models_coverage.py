@@ -11,7 +11,7 @@ from __future__ import annotations
 import sys
 from unittest.mock import patch
 
-import pytest
+import flext_ldif.models
 
 
 class TestFlextLdifModels:
@@ -38,12 +38,7 @@ class TestFlextLdifModels:
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
             setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
-            try:
-                import flext_ldif.models
-
-                assert hasattr(flext_ldif.models, "FlextLdifModels")
-            except ImportError:
-                pytest.skip("Cannot test due to dependency issues")
+            assert hasattr(flext_ldif.models, "FlextLdifModels")
 
     @staticmethod
     def test_entry_model_functionality() -> None:
@@ -56,7 +51,6 @@ class TestFlextLdifModels:
                 "flext_core.typings": type(sys)("flext_core.typings"),
             },
         ):
-            # Create comprehensive mocks
             mock_models_class = type("FlextModels", (), {})
             setattr(sys.modules["flext_core"], "FlextModels", mock_models_class)
 
@@ -64,19 +58,11 @@ class TestFlextLdifModels:
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
             setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
-            try:
-                import flext_ldif.models
+            models = flext_ldif.models.FlextLdifModels
 
-                models = flext_ldif.models.FlextLdifModels
-
-                # Test that key model classes exist
-                assert hasattr(models, "Entry") or hasattr(models, "LdifEntry")
-                assert hasattr(models, "create_entry") or hasattr(models, "Entry")
-
-            except (ImportError, AttributeError):
-                pytest.skip(
-                    "Cannot test entry model due to dependency or attribute issues"
-                )
+            # Test that key model classes exist
+            assert hasattr(models, "Entry") or hasattr(models, "LdifEntry")
+            assert hasattr(models, "create_entry") or hasattr(models, "Entry")
 
     @staticmethod
     def test_attributes_model_functionality() -> None:
@@ -96,16 +82,10 @@ class TestFlextLdifModels:
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
             setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
-            try:
-                import flext_ldif.models
+            models = flext_ldif.models.FlextLdifModels
 
-                models = flext_ldif.models.FlextLdifModels
-
-                # Test attributes model classes exist
-                assert hasattr(models, "LdifAttributes") or hasattr(models, "Entry")
-
-            except (ImportError, AttributeError):
-                pytest.skip("Cannot test attributes model due to issues")
+            # Test attributes model classes exist
+            assert hasattr(models, "LdifAttributes") or hasattr(models, "Entry")
 
     @staticmethod
     def test_distinguished_name_model_functionality() -> None:
@@ -125,16 +105,10 @@ class TestFlextLdifModels:
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
             setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
-            try:
-                import flext_ldif.models
+            models = flext_ldif.models.FlextLdifModels
 
-                models = flext_ldif.models.FlextLdifModels
-
-                # Test DN model classes
-                assert hasattr(models, "DistinguishedName") or hasattr(models, "Entry")
-
-            except (ImportError, AttributeError):
-                pytest.skip("Cannot test DN model due to issues")
+            # Test DN model classes
+            assert hasattr(models, "DistinguishedName") or hasattr(models, "Entry")
 
     @staticmethod
     def test_factory_methods_functionality() -> None:
@@ -154,20 +128,14 @@ class TestFlextLdifModels:
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
             setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
-            try:
-                import flext_ldif.models
+            models = flext_ldif.models.FlextLdifModels
 
-                models = flext_ldif.models.FlextLdifModels
-
-                # Test that models class exists and has expected structure
-                # Factory methods have been deprecated and removed
-                assert models is not None
-                assert hasattr(models, "Entry")
-                assert hasattr(models, "DistinguishedName")
-                assert hasattr(models, "LdifAttributes")
-
-            except (ImportError, AttributeError):
-                pytest.skip("Cannot test factory methods due to issues")
+            # Test that models class exists and has expected structure
+            # Factory methods have been deprecated and removed
+            assert models is not None
+            assert hasattr(models, "Entry")
+            assert hasattr(models, "DistinguishedName")
+            assert hasattr(models, "LdifAttributes")
 
     @staticmethod
     def test_validation_methods_functionality() -> None:
@@ -187,19 +155,13 @@ class TestFlextLdifModels:
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
             setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
-            try:
-                import flext_ldif.models
+            models = flext_ldif.models.FlextLdifModels
 
-                models = flext_ldif.models.FlextLdifModels
-
-                # Test validation methods - factory methods have been deprecated
-                # Check that model classes have validation capabilities
-                assert models is not None
-                assert hasattr(models.DistinguishedName, "create")
-                assert hasattr(models.Entry, "model_validate")
-
-            except (ImportError, AttributeError):
-                pytest.skip("Cannot test validation methods due to issues")
+            # Test validation methods - factory methods have been deprecated
+            # Check that model classes have validation capabilities
+            assert models is not None
+            assert hasattr(models.DistinguishedName, "create")
+            assert hasattr(models.Entry, "model_validate")
 
     @staticmethod
     def test_serialization_methods_functionality() -> None:
@@ -219,19 +181,13 @@ class TestFlextLdifModels:
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
             setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
-            try:
-                import flext_ldif.models
+            models = flext_ldif.models.FlextLdifModels
 
-                models = flext_ldif.models.FlextLdifModels
-
-                # Test serialization methods - factory methods have been deprecated
-                # Check that model classes have serialization capabilities
-                assert models is not None
-                assert hasattr(models.Entry, "model_dump")
-                assert hasattr(models.LdifAttributes, "model_dump")
-
-            except (ImportError, AttributeError):
-                pytest.skip("Cannot test serialization methods due to issues")
+            # Test serialization methods - factory methods have been deprecated
+            # Check that model classes have serialization capabilities
+            assert models is not None
+            assert hasattr(models.Entry, "model_dump")
+            assert hasattr(models.LdifAttributes, "model_dump")
 
     @staticmethod
     def test_all_exports() -> None:
@@ -251,11 +207,5 @@ class TestFlextLdifModels:
             mock_types_class = type("FlextTypes", (), {"Config": mock_config_class})
             setattr(sys.modules["flext_core"], "FlextTypes", mock_types_class)
 
-            try:
-                import flext_ldif.models
-
-                assert hasattr(flext_ldif.models, "__all__")
-                assert "FlextLdifModels" in flext_ldif.models.__all__
-
-            except ImportError:
-                pytest.skip("Cannot test __all__ due to import issues")
+            assert hasattr(flext_ldif.models, "__all__")
+            assert "FlextLdifModels" in flext_ldif.models.__all__

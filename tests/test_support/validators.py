@@ -71,7 +71,7 @@ class TestValidators:
 
     @staticmethod
     def validate_result_success(result: FlextResult[T]) -> FlextTypes.Core.Dict:
-        """Validate FlextResult success characteristics."""
+        """Validate FlextResult success characteristics using flext-core patterns."""
         has_value = False
         value_type_name = None
         if result.is_success:
@@ -86,16 +86,31 @@ class TestValidators:
             "has_value": has_value,
             "no_error": result.error is None,
             "value_type": value_type_name,
+            "has_error_code": result.error_code is not None,
+            "has_error_data": bool(result.error_data),
+            "error_code": result.error_code,
+            "error_data_keys": list(result.error_data.keys())
+            if result.error_data
+            else [],
         }
 
     @staticmethod
-    def validate_result_failure(result: FlextResult[object]) -> FlextTypes.Core.Dict:
-        """Validate FlextResult failure characteristics."""
+    def validate_result_failure(result: FlextResult[T]) -> FlextTypes.Core.Dict:
+        """Validate FlextResult failure characteristics using flext-core patterns."""
         return {
             "is_failure": result.is_failure,
             "has_error": result.error is not None,
             "error_type": type(result.error).__name__ if result.error else None,
             "error_message": str(result.error) if result.error else None,
+            "has_error_code": result.error_code is not None,
+            "has_error_data": bool(result.error_data),
+            "error_code": result.error_code,
+            "error_data_keys": list(result.error_data.keys())
+            if result.error_data
+            else [],
+            "error_data_values": list(result.error_data.values())
+            if result.error_data
+            else [],
         }
 
     @staticmethod
@@ -226,3 +241,86 @@ class TestValidators:
         assert validation["is_success"], f"Result failed: {result.error}"
         assert validation["has_value"], f"Result missing value: {result}"
         assert validation["no_error"], f"Result has error: {result.error}"
+
+    @staticmethod
+    def validate_flext_result_composition(
+        results: list[FlextResult[object]],
+    ) -> FlextTypes.Core.Dict:
+        """Validate FlextResult composition patterns."""
+        successes = [r for r in results if r.is_success]
+        failures = [r for r in results if r.is_failure]
+
+        return {
+            "total_results": len(results),
+            "success_count": len(successes),
+            "failure_count": len(failures),
+            "success_rate": len(successes) / len(results) if results else 0.0,
+            "all_successful": all(r.is_success for r in results),
+            "any_successful": any(r.is_success for r in results),
+            "error_messages": [r.error for r in failures if r.error],
+            "error_codes": [r.error_code for r in failures if r.error_code],
+            "has_structured_errors": any(r.error_data for r in failures),
+        }
+
+    @staticmethod
+    def validate_flext_result_chain(
+        results: list[FlextResult[object]],
+    ) -> FlextTypes.Core.Dict:
+        """Validate FlextResult chain operations."""
+        if not results:
+            return {
+                "is_valid_chain": True,
+                "chain_length": 0,
+                "first_failure_index": None,
+            }
+
+        first_failure_index = None
+        for i, result in enumerate(results):
+            if result.is_failure:
+                first_failure_index = i
+                break
+
+        return {
+            "is_valid_chain": first_failure_index is None,
+            "chain_length": len(results),
+            "first_failure_index": first_failure_index,
+            "successful_operations": first_failure_index
+            if first_failure_index is not None
+            else len(results),
+            "failed_operations": len(results)
+            - (
+                first_failure_index if first_failure_index is not None else len(results)
+            ),
+        }
+
+    @staticmethod
+    def assert_flext_result_composition(
+        results: list[FlextResult[object]], expected_success_rate: float = 1.0
+    ) -> None:
+        """Assert FlextResult composition meets expectations."""
+        composition = TestValidators.validate_flext_result_composition(results)
+
+        assert composition["success_rate"] >= expected_success_rate, (
+            f"Success rate {composition['success_rate']:.2f} below expected {expected_success_rate:.2f}"
+        )
+
+        if expected_success_rate == 1.0:
+            assert composition["all_successful"], (
+                f"Expected all results to be successful, but {composition['failure_count']} failed"
+            )
+
+    @staticmethod
+    def assert_flext_result_chain(
+        results: list[FlextResult[object]], *, expect_all_success: bool = True
+    ) -> None:
+        """Assert FlextResult chain operations."""
+        chain_info = TestValidators.validate_flext_result_chain(results)
+
+        if expect_all_success:
+            assert chain_info["is_valid_chain"], (
+                f"Chain failed at index {chain_info['first_failure_index']}"
+            )
+        else:
+            assert not chain_info["is_valid_chain"], (
+                "Expected chain to have failures but all operations succeeded"
+            )

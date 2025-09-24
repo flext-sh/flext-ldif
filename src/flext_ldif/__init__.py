@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextContainer
+from flext_core import FlextContainer, FlextResult
 from flext_ldif import acl, entry, quirks, schema
 from flext_ldif.acl import FlextLdifAclParser, FlextLdifAclService
 from flext_ldif.acls_coordinator import FlextLdifAcls
@@ -60,16 +60,16 @@ def configure_container() -> None:
     container.register("api", FlextLdifAPI())
 
 
-def get_ldif_management() -> FlextLdifManagement:
+def get_ldif_management() -> object:
     """Get configured LDIF management instance via FlextContainer.
 
     Returns:
-        FlextLdifManagement: Configured management coordinator
+        Configured management coordinator
 
     """
-    result = FlextContainer.get_global().get("management")
+    result: FlextResult[object] = FlextContainer.get_global().get("management")
     if result.is_success:
-        return result.value  # type: ignore[return-value]
+        return result.value
     error_msg = f"Failed to get management: {result.error}"
     raise RuntimeError(error_msg)
 
@@ -80,60 +80,51 @@ def get_ldif_management() -> FlextLdifManagement:
 
 
 __all__ = [
-    # === COORDINATORS (Primary API) ===
-    "FlextLdifAcls",         # ACL operations coordinator
-    "FlextLdifEntries",      # Entry operations coordinator
-    "FlextLdifManagement",   # Master orchestrator
-    "FlextLdifQuirks",       # Quirks operations coordinator
-    "FlextLdifSchemas",      # Schema operations coordinator
-
     # === MAIN API ===
-    "FlextLdifAPI",          # High-level API
-    "FlextLdifProcessor",    # LDIF processor
-
-    # === MODELS AND CONFIG ===
-    "FlextLdifConfig",       # Configuration
-    "FlextLdifConstants",    # Constants
-    "FlextLdifModels",       # Domain models
-    "FlextLdifTypes",        # Type definitions
-
+    "FlextLdifAPI",  # High-level API
     # === IMPLEMENTATION MODULES (from subdirectories) ===
     # ACL
     "FlextLdifAclParser",
     "FlextLdifAclService",
-
+    # === COORDINATORS (Primary API) ===
+    "FlextLdifAcls",  # ACL operations coordinator
+    # === MODELS AND CONFIG ===
+    "FlextLdifConfig",  # Configuration
+    "FlextLdifConstants",  # Constants
+    "FlextLdifEntries",  # Entry operations coordinator
+    # Entry
+    "FlextLdifEntryBuilder",
+    # Quirks
+    "FlextLdifEntryQuirks",
+    # === UTILITIES ===
+    "FlextLdifExceptions",
+    "FlextLdifManagement",
+    "FlextLdifMixins",
+    "FlextLdifModels",  # Domain models
     # Schema
     "FlextLdifObjectClassManager",
+    "FlextLdifParser",
+    "FlextLdifProcessor",  # LDIF processor
+    "FlextLdifProtocols",
+    "FlextLdifQuirks",  # Quirks operations coordinator
+    "FlextLdifQuirksAdapter",
+    "FlextLdifQuirksManager",
     "FlextLdifSchemaBuilder",
     "FlextLdifSchemaExtractor",
     "FlextLdifSchemaValidator",
-
-    # Entry
-    "FlextLdifEntryBuilder",
-
-    # Quirks
-    "FlextLdifEntryQuirks",
-    "FlextLdifQuirksAdapter",
-    "FlextLdifQuirksManager",
-
-    # === UTILITIES ===
-    "FlextLdifExceptions",
-    "FlextLdifMixins",
-    "FlextLdifParser",
-    "FlextLdifProtocols",
+    "FlextLdifSchemas",  # Schema operations coordinator
+    "FlextLdifTypes",  # Type definitions
     "FlextLdifUtilities",
-
-    # === HELPER FUNCTIONS ===
-    "configure_container",
-    "get_ldif_management",
-
     # === MODULE EXPORTS ===
     "acl",
+    # === HELPER FUNCTIONS ===
+    "configure_container",
     "entry",
+    "get_ldif_management",
     "quirks",
     "quirks_constants",
     "schema",
-  ]
+]
 
 # Version information
 __version__ = "0.9.0"

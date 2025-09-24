@@ -23,12 +23,12 @@ class FlextLdifProtocols(FlextProtocols):
         """Protocol for LDIF entry objects."""
 
         @property
-        def dn(self) -> str:
+        def dn(self: object) -> str:
             """Get the distinguished name of the entry."""
             ...
 
         @property
-        def attributes(self) -> dict[str, list[str]]:
+        def attributes(self: object) -> dict[str, list[str]]:
             """Get the attributes of the entry."""
             ...
 
@@ -44,11 +44,11 @@ class FlextLdifProtocols(FlextProtocols):
             """Check if entry has specified object class."""
             ...
 
-        def is_person_entry(self) -> bool:
+        def is_person_entry(self: object) -> bool:
             """Check if entry is a person entry."""
             ...
 
-        def validate_business_rules(self) -> FlextResult[bool]:
+        def validate_business_rules(self: object) -> FlextResult[bool]:
             """Validate entry against business rules."""
             ...
 
@@ -61,7 +61,7 @@ class FlextLdifProtocols(FlextProtocols):
             ...
 
         def validate_entries(self, entries: list[object]) -> FlextResult[list[object]]:
-            """Validate LDIF entries."""
+            """Validate LDIF entries and return validated entries."""
             ...
 
         def write(self, entries: list[object]) -> FlextResult[str]:
@@ -92,7 +92,7 @@ class FlextLdifProtocols(FlextProtocols):
             """Validate multiple LDIF entries."""
             ...
 
-        def get_validation_errors(self) -> list[str]:
+        def get_validation_errors(self: object) -> list[str]:
             """Get list of validation errors."""
             ...
 
@@ -120,12 +120,80 @@ class FlextLdifProtocols(FlextProtocols):
             """Analyze LDIF entries and generate analytics."""
             ...
 
-        def get_statistics(self) -> dict[str, int | float]:
+        def get_statistics(self: object) -> dict[str, int | float]:
             """Get analytics statistics."""
             ...
 
         def detect_patterns(self, entries: list[object]) -> dict[str, object]:
             """Detect patterns in LDIF entries."""
+            ...
+
+    # =============================================================================
+    # EXTENSIBILITY PROTOCOLS (SOLID PATTERNS)
+    # =============================================================================
+
+    @runtime_checkable
+    class ParserStrategyProtocol(Protocol):
+        """Protocol for parser encoding detection strategies."""
+
+        def detect(self, content: bytes) -> FlextResult[str]:
+            """Detect encoding from content."""
+            ...
+
+        def supports(self, encoding: str) -> bool:
+            """Check if strategy supports given encoding."""
+            ...
+
+    @runtime_checkable
+    class SchemaBuilderProtocol(Protocol):
+        """Protocol for schema builders."""
+
+        def add_object_class(self, object_class: object) -> object:
+            """Add object class to schema."""
+            ...
+
+        def add_attribute(self, attribute: object) -> object:
+            """Add attribute to schema."""
+            ...
+
+        def build(self: object) -> FlextResult[object]:
+            """Build final schema."""
+            ...
+
+    @runtime_checkable
+    class AclRuleProtocol(Protocol):
+        """Protocol for ACL rules (Composite pattern)."""
+
+        def evaluate(self, context: dict[str, object]) -> FlextResult[bool]:
+            """Evaluate ACL rule against context."""
+            ...
+
+        def add_rule(self, rule: object) -> None:
+            """Add sub-rule (for composite rules)."""
+            ...
+
+    @runtime_checkable
+    class ServerAdapterProtocol(Protocol):
+        """Protocol for server-specific adapters."""
+
+        def adapt(self, entry: object) -> FlextResult[object]:
+            """Adapt entry for specific server type."""
+            ...
+
+        def supports_server(self, server_type: str) -> bool:
+            """Check if adapter supports server type."""
+            ...
+
+    @runtime_checkable
+    class ValidatorPluginProtocol(Protocol):
+        """Protocol for custom validator plugins."""
+
+        def validate(self, data: object) -> FlextResult[bool]:
+            """Validate data against custom rules."""
+            ...
+
+        def get_error_messages(self: object) -> list[str]:
+            """Get validation error messages."""
             ...
 
 
