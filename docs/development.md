@@ -90,7 +90,7 @@ entry_data = {
         "mail": ["user@example.com"]
     }
 }
-entry = FlextLdifModels.Factory.create_entry(entry_data)
+entry = FlextLdifModels.Entry.create(entry_data)
 
 # LDIF processing with memory awareness
 api = FlextLdifAPI()

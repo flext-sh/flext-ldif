@@ -35,7 +35,7 @@ class TestConfigValidationCoverage:
         )
         result = config.validate_ldif_business_rules()
         assert result.is_failure
-        assert "Maximum entries too low for production use" in (result.error or "")
+        assert "Too few entries for production use" in (result.error or "")
 
     @staticmethod
     def test_business_rules_buffer_size_too_small() -> None:
@@ -58,7 +58,7 @@ class TestConfigValidationCoverage:
         )
         result = config.validate_ldif_business_rules()
         assert result.is_failure
-        assert "Too many workers may cause resource contention" in (result.error or "")
+        assert "Workers exceeds maximum limit" in (result.error or "")
 
     @staticmethod
     def test_apply_overrides_with_invalid_value() -> None:

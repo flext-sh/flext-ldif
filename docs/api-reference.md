@@ -357,7 +357,7 @@ class Factory:
     """Factory for creating LDIF domain objects."""
 
     @staticmethod
-    def create_entry(dn: str, attributes: dict[str, list[str]]) -> Entry:
+    def create(data: dict[str, object] | str, attributes: dict[str, list[str]] | None = None) -> Entry:
         """Create LDIF entry with validation."""
 
     @staticmethod

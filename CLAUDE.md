@@ -232,7 +232,7 @@ entry_data = {
     "dn": "cn=test,dc=example,dc=com",
     "attributes": {"cn": ["test"], "objectClass": ["person"]}
 }
-entry = FlextLdifModels.create_entry(entry_data)
+entry = FlextLdifModels.Entry.create(entry_data)
 
 # Access consolidated models - use flext-ldif config directly
 from flext_ldif.config import FlextLdifConfig

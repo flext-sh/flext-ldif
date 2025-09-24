@@ -159,13 +159,12 @@ class TestFlextLdifModels:
 
                 models = flext_ldif.models.FlextLdifModels
 
-                # Test factory methods
-                assert hasattr(models, "create_entry") or hasattr(
-                    models, "entry_factory"
-                )
-                assert hasattr(models, "create_attributes") or hasattr(
-                    models, "attributes_factory"
-                )
+                # Test that models class exists and has expected structure
+                # Factory methods have been deprecated and removed
+                assert models is not None
+                assert hasattr(models, "Entry")
+                assert hasattr(models, "DistinguishedName")
+                assert hasattr(models, "LdifAttributes")
 
             except (ImportError, AttributeError):
                 pytest.skip("Cannot test factory methods due to issues")
@@ -193,8 +192,11 @@ class TestFlextLdifModels:
 
                 models = flext_ldif.models.FlextLdifModels
 
-                # Test validation methods
-                assert hasattr(models, "create_entry") or hasattr(models, "create_dn")
+                # Test validation methods - factory methods have been deprecated
+                # Check that model classes have validation capabilities
+                assert models is not None
+                assert hasattr(models.DistinguishedName, "create")
+                assert hasattr(models.Entry, "model_validate")
 
             except (ImportError, AttributeError):
                 pytest.skip("Cannot test validation methods due to issues")
@@ -222,10 +224,11 @@ class TestFlextLdifModels:
 
                 models = flext_ldif.models.FlextLdifModels
 
-                # Test serialization methods
-                assert hasattr(models, "create_entry") or hasattr(
-                    models, "create_attributes"
-                )
+                # Test serialization methods - factory methods have been deprecated
+                # Check that model classes have serialization capabilities
+                assert models is not None
+                assert hasattr(models.Entry, "model_dump")
+                assert hasattr(models.LdifAttributes, "model_dump")
 
             except (ImportError, AttributeError):
                 pytest.skip("Cannot test serialization methods due to issues")

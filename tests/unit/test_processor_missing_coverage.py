@@ -25,12 +25,12 @@ class TestFlextLdifProcessorMissingCoverage:
         """Test process_entry_block with empty block."""
         processor = FlextLdifProcessor()
 
-        # Test completely empty block  # type: ignore[attr-defined]
+        # Test completely empty block
         result = processor._ParseHelper.process_entry_block("")
         assert result.is_failure
         assert "Empty entry block" in (result.error or "")
 
-        # Test block with only whitespace  # type: ignore[attr-defined]
+        # Test block with only whitespace
         result = processor._ParseHelper.process_entry_block("   \n   \n   ")
         assert result.is_failure
         assert "Empty entry block" in (result.error or "")
@@ -43,7 +43,7 @@ class TestFlextLdifProcessorMissingCoverage:
         # Test entry not starting with 'dn:'
         invalid_block = """cn: test
 objectClass: person"""
-  # type: ignore[attr-defined]
+
         result = processor._ParseHelper.process_entry_block(invalid_block)
         assert result.is_failure
         assert "Entry must start with 'dn:'" in (result.error or "")
@@ -56,7 +56,7 @@ objectClass: person"""
         # Test with empty DN value
         invalid_block = """dn:
 objectClass: person"""
-  # type: ignore[attr-defined]
+
         result = processor._ParseHelper.process_entry_block(invalid_block)
         assert result.is_failure
         assert "DN cannot be empty" in (result.error or "")
@@ -71,7 +71,7 @@ objectClass: person"""
 objectClass: person
 invalidlineformat
 cn: test"""
-  # type: ignore[attr-defined]
+
         result = processor._ParseHelper.process_entry_block(block)
         assert result.is_success  # Should succeed by skipping invalid line
 
@@ -151,7 +151,7 @@ cn: test"""
         processor = FlextLdifProcessor()
 
         # Create entry with invalid DN that should fail validation
-        with patch.object(  # type: ignore[attr-defined]
+        with patch.object(
             processor._LdifValidationHelper,
             "validate_dn_structure",
             return_value=FlextResult[bool].fail("Invalid DN structure"),
@@ -161,7 +161,7 @@ cn: test"""
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {"cn": ["test"], "objectClass": ["person"]},
             }
-            entry_result = FlextLdifModels.create_entry(entry_data)
+            entry_result = FlextLdifModels.Entry.create(entry_data)
             assert entry_result.is_success
 
             entries = [entry_result.value]
@@ -175,7 +175,7 @@ cn: test"""
         processor = FlextLdifProcessor()
 
         # Mock required attributes validation to fail
-        with patch.object(  # type: ignore[attr-defined]
+        with patch.object(
             processor._LdifValidationHelper,
             "validate_required_attributes",
             return_value=FlextResult[bool].fail("Missing required attribute: uid"),
@@ -185,7 +185,7 @@ cn: test"""
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {"cn": ["test"], "objectClass": ["person"]},
             }
-            entry_result = FlextLdifModels.create_entry(entry_data)
+            entry_result = FlextLdifModels.Entry.create(entry_data)
             assert entry_result.is_success
 
             entries = [entry_result.value]
@@ -203,7 +203,7 @@ cn: test"""
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
-        entry_result = FlextLdifModels.create_entry(entry_data)
+        entry_result = FlextLdifModels.Entry.create(entry_data)
         assert entry_result.is_success
         entries = [entry_result.value]
 
@@ -227,7 +227,7 @@ cn: test"""
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
-        entry_result = FlextLdifModels.create_entry(entry_data)
+        entry_result = FlextLdifModels.Entry.create(entry_data)
         assert entry_result.is_success
         entries = [entry_result.value]
 
@@ -252,7 +252,7 @@ cn: test"""
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
-        entry_result = FlextLdifModels.create_entry(entry_data)
+        entry_result = FlextLdifModels.Entry.create(entry_data)
         assert entry_result.is_success
         entries = [entry_result.value]
 
@@ -277,7 +277,7 @@ cn: test"""
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
-        entry_result = FlextLdifModels.create_entry(entry_data)
+        entry_result = FlextLdifModels.Entry.create(entry_data)
         assert entry_result.is_success
         entries = [entry_result.value]
 
@@ -295,12 +295,12 @@ cn: test"""
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
-        entry_result = FlextLdifModels.create_entry(entry_data)
+        entry_result = FlextLdifModels.Entry.create(entry_data)
         assert entry_result.is_success
         entries = [entry_result.value]
 
         # Mock analytics helper to raise exception
-        with patch.object(  # type: ignore[attr-defined]
+        with patch.object(
             processor._AnalyticsHelper,
             "calculate_entry_statistics",
             side_effect=Exception("Analysis failed"),
@@ -322,7 +322,7 @@ cn: test"""
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
-        entry_result = FlextLdifModels.create_entry(entry_data)
+        entry_result = FlextLdifModels.Entry.create(entry_data)
         assert entry_result.is_success
         entries = [entry_result.value]
 
@@ -345,18 +345,18 @@ cn: test"""
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
-        entry_result = FlextLdifModels.create_entry(entry_data)
+        entry_result = FlextLdifModels.Entry.create(entry_data)
         assert entry_result.is_success
         entries = [entry_result.value]
 
         # Mock validation helpers to return errors
         with (
-            patch.object(  # type: ignore[attr-defined]
+            patch.object(
                 processor._LdifValidationHelper,
                 "validate_required_attributes",
                 return_value=FlextResult[bool].fail("Missing required attribute"),
             ),
-            patch.object(  # type: ignore[attr-defined]
+            patch.object(
                 processor._LdifValidationHelper,
                 "validate_object_classes",
                 return_value=FlextResult[bool].fail("Invalid object class"),
@@ -401,8 +401,8 @@ cn: test"""
             "attributes": {"cn": ["test2"], "objectClass": ["person"]},
         }
 
-        entry1_result = FlextLdifModels.create_entry(entry_data1)
-        entry2_result = FlextLdifModels.create_entry(entry_data2)
+        entry1_result = FlextLdifModels.Entry.create(entry_data1)
+        entry2_result = FlextLdifModels.Entry.create(entry_data2)
         assert entry1_result.is_success
         assert entry2_result.is_success
 
@@ -427,7 +427,7 @@ cn: test"""
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"]},  # No objectClass
         }
-        entry_result = FlextLdifModels.create_entry(entry_data)
+        entry_result = FlextLdifModels.Entry.create(entry_data)
         assert entry_result.is_success
         entries = [entry_result.value]
 
@@ -456,12 +456,12 @@ cn: test"""
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
-        entry_result = FlextLdifModels.create_entry(entry_data)
+        entry_result = FlextLdifModels.Entry.create(entry_data)
         assert entry_result.is_success
         entries = [entry_result.value]
 
         # Mock quality metrics calculation to raise exception
-        with patch.object(  # type: ignore[attr-defined]
+        with patch.object(
             processor._AnalyticsHelper,
             "calculate_quality_metrics",
             side_effect=Exception("Quality calculation failed"),
@@ -493,7 +493,7 @@ cn: test"""
         # Mock mkdir to raise PermissionError
         with patch.object(
             Path, "mkdir", side_effect=PermissionError("Cannot create directory")
-        ):  # type: ignore[attr-defined]
+        ):
             result = processor._validate_file_path(test_path)
             assert result.is_failure
             # Should fail with permission or directory creation error
@@ -521,23 +521,23 @@ cn: test"""
             "attributes": {"cn": ["test2"]},  # No objectClass
         }
 
-        entries = []
+        entries: list[FlextLdifModels.Entry] = []
         for entry_data in [entry_with_empty_attr, entry_without_objectclass]:
-            entry_result = FlextLdifModels.create_entry(entry_data)
+            entry_result = FlextLdifModels.Entry.create(entry_data)
             if entry_result.is_success:
-                entry: FlextLdifModels.Entry = entry_result.value  # type: ignore[attr-defined]
+                entry: FlextLdifModels.Entry = entry_result.value
                 entries.append(entry)
 
-        # Test private methods  # type: ignore[arg-type]
+        # Test private methods
         empty_count = processor._count_empty_attributes(entries)
         assert empty_count >= 0
-  # type: ignore[arg-type]
+
         missing_oc_count = processor._count_missing_object_classes(entries)
         assert missing_oc_count >= 0
-  # type: ignore[arg-type]
+
         duplicate_count = processor._count_duplicate_dns(entries)
         assert duplicate_count >= 0
-  # type: ignore[arg-type]
+
         invalid_dn_count = processor._count_invalid_dns(entries)
         assert invalid_dn_count >= 0
 

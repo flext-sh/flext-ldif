@@ -26,7 +26,7 @@ class TestProcessorCriticalPaths:
         config = FlextLdifConfig(ldif_max_line_length=30)
         processor = FlextLdifProcessor(config)
 
-        entry_result = FlextLdifModels.create_entry({
+        entry_result = FlextLdifModels.Entry.create({
             "dn": "cn=test,dc=com",
             "attributes": {
                 "cn": ["test"],
@@ -44,19 +44,19 @@ class TestProcessorCriticalPaths:
         """Test lines 568-571: transformation errors on multiple entries."""
         processor = FlextLdifProcessor()
 
-        entries = []
+        entries: list[FlextLdifModels.Entry] = []
         for i in range(3):
-            entry_result = FlextLdifModels.create_entry({
+            entry_result = FlextLdifModels.Entry.create({
                 "dn": f"cn=test{i},dc=example,dc=com",
                 "attributes": {"cn": [f"test{i}"], "objectClass": ["person"]},
             })
-            if entry_result.is_success:  # type: ignore[attr-defined]
+            if entry_result.is_success:
                 entries.append(entry_result.value)
 
         def error_transformer(_entry: FlextLdifModels.Entry) -> FlextLdifModels.Entry:
             msg = "Transform error"
             raise RuntimeError(msg)
-  # type: ignore[arg-type]
+
         result = processor.transform_entries(entries, error_transformer)
         assert result.is_failure
 
@@ -65,22 +65,24 @@ class TestProcessorCriticalPaths:
         """Test lines 904, 910, 918, 928, 935, 939: all quality report branches."""
         processor = FlextLdifProcessor()
 
-        entries_with_all_issues = []
+        entries_with_all_issues: list[FlextLdifModels.Entry] = []
 
-        for i in range(20):  # type: ignore[assignment]
-            entry_data = {
+        for i in range(20):
+            entry_data: dict[str, object] = {
                 "dn": f"cn=user{i},dc=example,dc=com" if i % 5 != 0 else "invalid_dn",
                 "attributes": {
                     "cn": [f"user{i}"] if i % 3 != 0 else [],
                 },
             }
             if i % 2 == 0:
-                entry_data["attributes"]["objectClass"] = ["person"]
-  # type: ignore[arg-type]
-            entry_result = FlextLdifModels.create_entry(entry_data)
-            if entry_result.is_success:  # type: ignore[attr-defined]
+                attributes = entry_data["attributes"]
+                if isinstance(attributes, dict):
+                    attributes["objectClass"] = ["person"]
+
+            entry_result = FlextLdifModels.Entry.create(entry_data)
+            if entry_result.is_success:
                 entries_with_all_issues.append(entry_result.value)
-  # type: ignore[arg-type]
+
         result = processor.generate_quality_report(entries_with_all_issues)
         assert result.is_success
         report = result.value
@@ -92,7 +94,7 @@ class TestProcessorCriticalPaths:
         processor = FlextLdifProcessor()
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            test_path = Path(tmpdir) / "nonexistent" / "test.ldif"  # type: ignore[attr-defined]
+            test_path = Path(tmpdir) / "nonexistent" / "test.ldif"
             result = processor._validate_file_path(test_path)
 
         assert result.is_success or result.is_failure
@@ -102,12 +104,12 @@ class TestProcessorCriticalPaths:
         """Test line 1100: counting actually invalid DNs."""
         processor = FlextLdifProcessor()
 
-        invalid_entry_result = FlextLdifModels.create_entry({
+        invalid_entry_result = FlextLdifModels.Entry.create({
             "dn": "invalid_dn_format",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         })
 
-        if invalid_entry_result.is_success:  # type: ignore[attr-defined]
+        if invalid_entry_result.is_success:
             count = processor._count_invalid_dns([invalid_entry_result.value])
             assert count >= 0
 
@@ -136,7 +138,10 @@ class TestConfigRemainingPaths:
         try:
             result = config.apply_ldif_overrides(overrides)
             if result.is_failure and result.error:
-                assert "validation" in result.error.lower() or "cache" in result.error.lower()
+                assert (
+                    "validation" in result.error.lower()
+                    or "cache" in result.error.lower()
+                )
         except ValidationError:
             pass
 

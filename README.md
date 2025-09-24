@@ -1,8 +1,8 @@
 # FLEXT-LDIF
 
-**LDIF processing library** for the FLEXT ecosystem, providing LDAP data parsing and validation using service-oriented architecture and type-safe error handling.
+**Advanced LDIF processing library** for the FLEXT ecosystem, providing comprehensive LDAP data parsing, validation, and server-specific adaptations with full RFC 2849 compliance.
 
-> **STATUS**: Version 0.9.9 - Functional LDIF processing with memory-bound operations ⚠️ **Files >100MB may fail due to memory constraints**
+> **STATUS**: Version 0.9.0 - **ENHANCED** with RFC 2849 compliance, server quirks handling, and advanced parsing capabilities 🚀
 
 ---
 
@@ -14,15 +14,57 @@ FLEXT-LDIF provides LDIF (LDAP Data Interchange Format) processing capabilities 
 
 ### **Key Responsibilities**
 
-1. **LDIF Processing** - Parse and validate LDIF files with error handling
-2. **Type Safety** - Pydantic v2 models for data validation
-3. **Service Architecture** - Modular services for parsing, validation, and writing
+1. **RFC 2849 Compliance** - Full LDIF standard compliance with Base64 encoding, change records, and URL references
+2. **Server-Specific Adaptations** - Handle quirks from Active Directory, OpenLDAP, Apache Directory Server, and others
+3. **Advanced Parsing** - Multi-encoding support, line continuations, comments, and attribute options
+4. **Type Safety** - Pydantic v2 models for data validation with comprehensive error handling
+5. **Service Architecture** - Modular services for parsing, validation, writing, and server detection
 
 ### **Integration Points**
 
 - **[flext-core](../flext-core/README.md)** → Foundation patterns (FlextResult, FlextContainer)
 - **[client-a-oud-mig](../client-a-oud-mig/README.md)** → Oracle Unified Directory migration project
 - **Projects requiring LDIF processing** → Directory data operations
+
+---
+
+## 🚀 Advanced Features
+
+### **RFC 2849 Compliance**
+
+FLEXT-LDIF now provides full compliance with RFC 2849 LDIF specification:
+
+- **Base64 Encoding** - Automatic handling of `::` syntax for binary data
+- **Change Records** - Support for `add`, `modify`, `delete`, and `modrdn` operations
+- **Line Continuations** - Proper handling of line folding and continuation
+- **Comments** - Support for `#` comment lines
+- **URL References** - Handling of `<url>` references for external data
+- **Attribute Options** - Support for language tags and other attribute options
+- **Version Control** - LDIF version header support
+
+### **Server-Specific Adaptations**
+
+Automatic detection and adaptation for different LDAP server implementations:
+
+- **Active Directory** - DN case sensitivity, required object classes, attribute mappings
+- **OpenLDAP** - Standard LDAP compliance, schema validation
+- **Apache Directory Server** - Specific validation rules and attribute handling
+- **Novell eDirectory** - Legacy compatibility and special attributes
+- **IBM Tivoli Directory Server** - Enterprise-specific requirements
+- **Generic LDAP** - Fallback for unknown server types
+
+### **Multi-Encoding Support**
+
+- **Automatic Detection** - Detects UTF-8, Latin-1, ASCII, and other encodings
+- **Encoding Conversion** - Seamless handling of mixed encoding content
+- **Unicode Support** - Full Unicode character support in DNs and attributes
+
+### **Advanced Validation**
+
+- **RFC Compliance Validation** - Comprehensive compliance checking
+- **Server-Specific Validation** - Validation against server-specific rules
+- **Quality Assessment** - Quality metrics and recommendations
+- **Error Recovery** - Graceful handling of malformed LDIF with detailed error reporting
 
 ---
 
@@ -104,6 +146,112 @@ if result.is_success:
         print(f"Validation error: {validation_result.error}")
 else:
     print(f"Parse error: {result.error}")
+```
+
+---
+
+## 📚 Advanced Usage Examples
+
+### **RFC 2849 Compliant Parsing**
+
+```python
+from flext_ldif import FlextLdifProcessor
+import base64
+
+# LDIF with RFC 2849 features
+ldif_content = """
+version: 1
+dn: cn=test,dc=example,dc=com
+cn: test
+description:: VGVzdCBkZXNjcmlwdGlvbg==
+objectClass: person
+"""
+
+processor = FlextLdifProcessor()
+
+# Parse with advanced RFC 2849 compliance
+result = processor.parse_string_advanced(ldif_content)
+if result.is_success:
+    entries = result.value
+    print(f"Advanced parsing: {len(entries)} entries/records")
+    
+    # Validate RFC compliance
+    compliance = processor.validate_rfc_compliance(entries)
+    if compliance.is_success:
+        print(f"Compliance score: {compliance.value['compliance_score']:.2f}")
+```
+
+### **Server Detection and Adaptation**
+
+```python
+from flext_ldif import FlextLdifProcessor
+
+processor = FlextLdifProcessor()
+
+# Parse entries
+result = processor.parse_string(ldif_content)
+if result.is_success:
+    entries = result.value
+    
+    # Detect server type
+    server_result = processor.detect_server_type(entries)
+    if server_result.is_success:
+        server_type = server_result.value
+        print(f"Detected server: {server_type}")
+        
+        # Adapt entries for specific server
+        adapted_result = processor.adapt_entries_for_server(entries, "active_directory")
+        if adapted_result.is_success:
+            adapted_entries = adapted_result.value
+            print(f"Adapted {len(adapted_entries)} entries for Active Directory")
+```
+
+### **Change Records Processing**
+
+```python
+from flext_ldif import FlextLdifProcessor
+
+# LDIF with change records
+change_ldif = """
+dn: cn=new user,dc=example,dc=com
+changetype: add
+cn: new user
+objectClass: person
+
+dn: cn=existing user,dc=example,dc=com
+changetype: modify
+cn: existing user
+objectClass: person
+"""
+
+processor = FlextLdifProcessor()
+result = processor.parse_string_advanced(change_ldif)
+
+if result.is_success:
+    for item in result.value:
+        if hasattr(item, 'changetype'):
+            print(f"Change Record: {item.changetype} - {item.dn.value}")
+        else:
+            print(f"Entry: {item.dn.value}")
+```
+
+### **File Processing with Encoding Detection**
+
+```python
+from pathlib import Path
+from flext_ldif import FlextLdifProcessor
+
+processor = FlextLdifProcessor()
+
+# Process file with automatic encoding detection
+file_path = Path("data.ldif")
+result = processor.parse_file_advanced(file_path)
+
+if result.is_success:
+    entries = result.value
+    print(f"Processed file: {len(entries)} entries")
+else:
+    print(f"Processing failed: {result.error}")
 ```
 
 ---

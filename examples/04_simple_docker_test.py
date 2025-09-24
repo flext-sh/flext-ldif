@@ -14,6 +14,8 @@ import importlib.util
 import sys
 from pathlib import Path
 
+import pytest
+
 from flext_ldif import FlextLdifAPI
 
 # Add tests directory to path for imports
@@ -32,16 +34,10 @@ spec.loader.exec_module(docker_fixtures)
 # Dynamically loaded module attributes are available at runtime
 
 
-def test_with_docker_container() -> bool | None:
-    """Example of manual Docker container usage for testing.
-
-    Returns:
-      bool | None: Description.
-
-    """
+def test_with_docker_container() -> None:
+    """Example of manual Docker container usage for testing."""
     # Check if Docker is available
-    if not docker_fixtures.check_docker_available():
-        return False
+    assert docker_fixtures.check_docker_available(), "Docker is not available"
 
     # Create container manager
     manager = docker_fixtures.OpenLDAPContainerManager()
@@ -52,15 +48,14 @@ def test_with_docker_container() -> bool | None:
 
         # Export LDIF data from container
         ldif_data = manager.get_ldif_export()
-
-        if not ldif_data:
-            return False
+        assert ldif_data, "Failed to export LDIF data from container"
 
         # Test parsing
         api = FlextLdifAPI()
         parse_result = api.parse(ldif_data)
-        if parse_result.is_failure:
-            return False
+        assert parse_result.is_success, (
+            f"Failed to parse LDIF data: {parse_result.error}"
+        )
         entries = parse_result.unwrap()
 
         # Constants for testing
@@ -76,12 +71,14 @@ def test_with_docker_container() -> bool | None:
 
         # Test validation - parse first, then validate
         parse_result2 = api.parse(ldif_data)
-        if parse_result2.is_failure:
-            return False
+        assert parse_result2.is_success, (
+            f"Failed to parse LDIF data (second time): {parse_result2.error}"
+        )
         entries2 = parse_result2.unwrap()
         validate_result = api.validate_entries(entries2)
-        if validate_result.is_failure:
-            return False
+        assert validate_result.is_success, (
+            f"Failed to validate entries: {validate_result.error}"
+        )
 
         # Filter pessoas usando API real com modern FlextResult pattern
         person_filter_result = api.filter_persons(entries)
@@ -102,10 +99,11 @@ def test_with_docker_container() -> bool | None:
             and entry.is_organizational_unit()
         )
 
-        return True
+        # Test passed successfully
+        assert True
 
-    except (RuntimeError, ValueError, TypeError):
-        return False
+    except (RuntimeError, ValueError, TypeError) as e:
+        pytest.fail(f"Test failed with exception: {e}")
 
     finally:
         # Always cleanup
@@ -113,9 +111,9 @@ def test_with_docker_container() -> bool | None:
 
 
 if __name__ == "__main__":
-    success = test_with_docker_container()
-
-    if success:
-        pass
-    else:
+    try:
+        test_with_docker_container()
+        print("✅ Test passed successfully!")
+    except Exception as e:
+        print(f"❌ Test failed: {e}")
         sys.exit(1)

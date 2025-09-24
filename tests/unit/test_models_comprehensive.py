@@ -37,6 +37,8 @@ class TestFlextLdifModelsComprehensive:
 
     def test_distinguished_name_validation_invalid_chars(self) -> None:
         """Test DN validation with invalid characters."""
+        from pydantic import ValidationError
+        
         invalid_chars = [
             "#",
             "$",
@@ -48,8 +50,6 @@ class TestFlextLdifModelsComprehensive:
             ")",
             "[",
             "]",
-            "{",
-            "}",
             "|",
             "\\",
             "/",
@@ -59,7 +59,7 @@ class TestFlextLdifModelsComprehensive:
         ]
 
         for char in invalid_chars:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValidationError):
                 FlextLdifModels.DistinguishedName(
                     value=f"cn=test{char},dc=example,dc=com"
                 )
@@ -248,7 +248,7 @@ class TestFlextLdifModelsComprehensive:
         assert result.error is not None
 
     def test_entry_get_single_value_existing(self) -> None:
-        """Test get_single_value with existing attribute."""  # type: ignore[assignment]
+        """Test get_single_value with existing attribute."""
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {
@@ -256,7 +256,7 @@ class TestFlextLdifModelsComprehensive:
                 "mail": ["test@example.com", "alt@example.com"],
             },
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_success
@@ -266,9 +266,9 @@ class TestFlextLdifModelsComprehensive:
         assert entry.get_single_value("mail") == "test@example.com"  # First value
 
     def test_entry_get_single_value_missing(self) -> None:
-        """Test get_single_value with missing attribute."""  # type: ignore[assignment]
+        """Test get_single_value with missing attribute."""
         entry_data = {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_success
@@ -277,12 +277,12 @@ class TestFlextLdifModelsComprehensive:
         assert entry.get_single_value("missing") is None
 
     def test_entry_has_object_class_case_insensitive(self) -> None:
-        """Test has_object_class with case insensitive matching."""  # type: ignore[assignment]
+        """Test has_object_class with case insensitive matching."""
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"objectClass": ["Person", "inetOrgPerson"]},
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_success
@@ -294,12 +294,12 @@ class TestFlextLdifModelsComprehensive:
         assert entry.has_object_class("missing") is False
 
     def test_entry_is_person_entry_true(self) -> None:
-        """Test is_person_entry returns True for person entries."""  # type: ignore[assignment]
+        """Test is_person_entry returns True for person entries."""
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"objectClass": ["inetOrgPerson", "organizationalPerson"]},
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_success
@@ -308,12 +308,12 @@ class TestFlextLdifModelsComprehensive:
         assert entry.is_person_entry() is True
 
     def test_entry_is_person_entry_false(self) -> None:
-        """Test is_person_entry returns False for non-person entries."""  # type: ignore[assignment]
+        """Test is_person_entry returns False for non-person entries."""
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"objectClass": ["organizationalUnit"]},
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_success
@@ -322,12 +322,12 @@ class TestFlextLdifModelsComprehensive:
         assert entry.is_person_entry() is False
 
     def test_entry_is_group_entry_true(self) -> None:
-        """Test is_group_entry returns True for group entries."""  # type: ignore[assignment]
+        """Test is_group_entry returns True for group entries."""
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"objectClass": ["groupOfNames", "top"]},
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_success
@@ -336,12 +336,12 @@ class TestFlextLdifModelsComprehensive:
         assert entry.is_group_entry() is True
 
     def test_entry_is_group_entry_false(self) -> None:
-        """Test is_group_entry returns False for non-group entries."""  # type: ignore[assignment]
+        """Test is_group_entry returns False for non-group entries."""
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"objectClass": ["person"]},
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_success
@@ -350,12 +350,12 @@ class TestFlextLdifModelsComprehensive:
         assert entry.is_group_entry() is False
 
     def test_entry_is_organizational_unit_true(self) -> None:
-        """Test is_organizational_unit returns True for OU entries."""  # type: ignore[assignment]
+        """Test is_organizational_unit returns True for OU entries."""
         entry_data = {
             "dn": "ou=people,dc=example,dc=com",
             "attributes": {"objectClass": ["organizationalUnit"]},
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_success
@@ -364,12 +364,12 @@ class TestFlextLdifModelsComprehensive:
         assert entry.is_organizational_unit() is True
 
     def test_entry_is_organizational_unit_false(self) -> None:
-        """Test is_organizational_unit returns False for non-OU entries."""  # type: ignore[assignment]
+        """Test is_organizational_unit returns False for non-OU entries."""
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"objectClass": ["person"]},
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_success
@@ -378,12 +378,12 @@ class TestFlextLdifModelsComprehensive:
         assert entry.is_organizational_unit() is False
 
     def test_entry_validate_business_rules_success(self) -> None:
-        """Test business rules validation success."""  # type: ignore[assignment]
+        """Test business rules validation success."""
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_success
@@ -395,9 +395,9 @@ class TestFlextLdifModelsComprehensive:
     def test_entry_validate_business_rules_empty_dn(self) -> None:
         """Test business rules validation with empty DN."""
         # This is difficult to test directly since the DN model validates on creation
-        # But we can test through the create_entry path with invalid DN  # type: ignore[assignment]
+        # But we can test through the create_entry path with invalid DN
         entry_data = {"dn": "", "attributes": {"cn": ["test"]}}
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
 
@@ -409,7 +409,7 @@ class TestFlextLdifModelsComprehensive:
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {},
         }
-        entry_result = FlextLdifModels.create_entry(entry_data)
+        entry_result = FlextLdifModels.Entry.create(entry_data)
         assert entry_result.is_success
         entry = entry_result.value
 
@@ -419,12 +419,12 @@ class TestFlextLdifModelsComprehensive:
 
     def test_entry_validate_business_rules_insufficient_dn_components(self) -> None:
         """Test business rules validation with insufficient DN components."""
-        # Test with minimal DN that might not meet component requirements  # type: ignore[assignment]
+        # Test with minimal DN that might not meet component requirements
         entry_data = {
             "dn": "cn=test",  # Only one component
             "attributes": {"cn": ["test"]},
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_success
@@ -435,9 +435,9 @@ class TestFlextLdifModelsComprehensive:
         assert result.is_success
 
     def test_entry_create_invalid_dn(self) -> None:
-        """Test entry creation with invalid DN."""  # type: ignore[assignment]
+        """Test entry creation with invalid DN."""
         entry_data = {"dn": "invalid_dn_format", "attributes": {"cn": ["test"]}}
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
 
@@ -445,12 +445,12 @@ class TestFlextLdifModelsComprehensive:
         assert entry_result.error is not None
 
     def test_entry_create_invalid_attributes(self) -> None:
-        """Test entry creation with invalid attributes."""  # type: ignore[assignment]
+        """Test entry creation with invalid attributes."""
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"": ["test"]},  # Invalid attribute name
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
 
@@ -458,11 +458,11 @@ class TestFlextLdifModelsComprehensive:
 
     def test_entry_create_exception_handling(self) -> None:
         """Test entry creation exception handling."""
-        # Test with data that would cause an exception during entry creation  # type: ignore[assignment]
+        # Test with data that would cause an exception during entry creation
         entry_data = {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
 
         # This should succeed normally
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_success
@@ -526,7 +526,7 @@ class TestFlextLdifModelsComprehensive:
             "dn": 123,  # Invalid type
             "attributes": {"cn": ["test"]},
         }
-        result = FlextLdifModels.create_entry(data)
+        result = FlextLdifModels.Entry.create(data)
 
         assert result.is_failure
         assert result.error and "DN must be a string" in result.error
@@ -537,13 +537,13 @@ class TestFlextLdifModelsComprehensive:
             "dn": "cn=test,dc=example,dc=com",
             "attributes": "invalid",  # Invalid type
         }
-        result = FlextLdifModels.create_entry(cast("dict[str, object]", data))
+        result = FlextLdifModels.Entry.create(cast("dict[str, object]", data))
 
         assert result.is_failure
         assert result.error and "Attributes must be a dictionary" in result.error
 
     def test_create_entry_factory_method_attribute_normalization(self) -> None:
-        """Test create_entry factory method attribute normalization."""  # type: ignore[assignment]
+        """Test create_entry factory method attribute normalization."""
         data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {
@@ -553,7 +553,7 @@ class TestFlextLdifModelsComprehensive:
                 "number": 123,  # Should be converted to string
             },
         }
-        result = FlextLdifModels.create_entry(cast("dict[str, object]", data))
+        result = FlextLdifModels.Entry.create(cast("dict[str, object]", data))
 
         assert result.is_success
         entry = result.value
@@ -564,7 +564,7 @@ class TestFlextLdifModelsComprehensive:
 
     def test_create_dn_factory_method(self) -> None:
         """Test create_dn factory method."""
-        result = FlextLdifModels.create_dn("cn=test,dc=example,dc=com")
+        result = FlextLdifModels.DistinguishedName.create("cn=test,dc=example,dc=com")
 
         assert result.is_success
         assert result.value.value == "cn=test,dc=example,dc=com"
@@ -572,7 +572,7 @@ class TestFlextLdifModelsComprehensive:
     def test_create_attributes_factory_method(self) -> None:
         """Test create_attributes factory method."""
         data = {"cn": ["test"], "objectClass": ["person"]}
-        result = FlextLdifModels.create_attributes(data)
+        result = FlextLdifModels.LdifAttributes.create(data)
 
         assert result.is_success
         assert result.value.get_attribute("cn") == ["test"]

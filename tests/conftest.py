@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
+import sys
 import tempfile
 from collections.abc import Callable, Generator
 from pathlib import Path
@@ -30,6 +31,11 @@ from tests.test_support import (
     TestValidators,
 )
 
+# Add docker directory to path to import shared fixtures
+docker_dir = Path("/home/marlonsc/flext/docker")
+if str(docker_dir) not in sys.path:
+    sys.path.insert(0, str(docker_dir))
+
 
 # Test environment setup
 @pytest.fixture(autouse=True)
@@ -44,14 +50,17 @@ def set_test_environment() -> Generator[None]:
 
 
 # Docker container initialization (session-scoped, started once)
-# Temporarily disabled to fix test execution
-# @pytest.fixture(scope="session", autouse=True)
-# def ensure_docker_container(docker_openldap_container: object) -> None:
-#     """Ensure Docker container is started for the test session."""
-#     # Suppress unused parameter warning - fixture is used for side effects
-#     _ = docker_openldap_container
-#     # The docker_openldap_container fixture will be invoked automatically
-#     # and will start/stop the container for the entire test session
+@pytest.fixture(scope="session", autouse=True)
+def ensure_shared_docker_container(shared_ldap_container: object) -> None:
+    """Ensure shared Docker container is started for the test session.
+    
+    This fixture automatically starts the shared LDAP container if not running,
+    and ensures it's available for all tests in the session.
+    """
+    # Suppress unused parameter warning - fixture is used for side effects
+    _ = shared_ldap_container
+    # The shared_ldap_container fixture will be invoked automatically
+    # and will start/stop the container for the entire test session
 
 
 # LDIF processing fixtures - optimized with real services

@@ -38,9 +38,7 @@ class TestConfigExceptionCoverage:
         )
         result = config.validate_ldif_business_rules()
         assert result.is_failure
-        assert "Analytics cache size too large for memory efficiency" in str(
-            result.error
-        )
+        assert "Analytics cache size exceeds maximum limit" in str(result.error)
 
 
 class TestModelsExceptionCoverage:
@@ -77,13 +75,13 @@ class TestModelsExceptionCoverage:
     @staticmethod
     def test_entry_create_exception_during_instantiation() -> None:
         """Test Entry.create when instantiation fails due to invalid data."""
-        # Pass invalid DN data to trigger exception during entry creation  # type: ignore[assignment]
+        # Pass invalid DN data to trigger exception during entry creation
         invalid_entry_data = {
             "dn": 123,  # Invalid: DN must be string
             "attributes": {"cn": ["test"]},
         }
 
-        result = FlextLdifModels.create_entry(
+        result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", invalid_entry_data)
         )
         assert result.is_failure
@@ -105,7 +103,7 @@ class TestProcessorExceptionCoverage:
         """Test analytics calculation with empty entries list."""
         from flext_ldif.processor import FlextLdifProcessor
 
-        processor = FlextLdifProcessor()  # type: ignore[attr-defined]
+        processor = FlextLdifProcessor()
         stats = processor._AnalyticsHelper.calculate_entry_statistics([])
 
         assert stats["total_entries"] == 0

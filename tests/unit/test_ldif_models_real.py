@@ -78,7 +78,7 @@ class TestFlextLdifModelsEntryReal:
     """Test FlextLdifModels.Entry with real functionality."""
 
     def test_entry_creation_basic(self) -> None:
-        """Test basic entry creation."""  # type: ignore[assignment]
+        """Test basic entry creation."""
         entry_data = {
             "dn": "uid=test.user,ou=people,dc=example,dc=com",
             "attributes": {
@@ -88,7 +88,7 @@ class TestFlextLdifModelsEntryReal:
                 "sn": ["User"],
             },
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("FlextTypes.Core.Dict", entry_data)
         )
         assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
@@ -103,7 +103,7 @@ class TestFlextLdifModelsEntryReal:
         assert "sn" in entry.attributes
 
     def test_entry_creation_with_multi_valued_attributes(self) -> None:
-        """Test entry creation with multi-valued attributes."""  # type: ignore[assignment]
+        """Test entry creation with multi-valued attributes."""
         entry_data = {
             "dn": "uid=multi.user,ou=people,dc=example,dc=com",
             "attributes": {
@@ -120,7 +120,7 @@ class TestFlextLdifModelsEntryReal:
                 "telephoneNumber": ["+1-555-0123", "+1-555-0124", "+1-555-0125"],
             },
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("FlextTypes.Core.Dict", entry_data)
         )
         assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
@@ -138,7 +138,7 @@ class TestFlextLdifModelsEntryReal:
         assert len(phone_values) == 3
 
     def test_entry_creation_with_binary_data(self) -> None:
-        """Test entry creation with binary (base64) data."""  # type: ignore[assignment]
+        """Test entry creation with binary (base64) data."""
         entry_data = {
             "dn": "uid=photo.user,ou=people,dc=example,dc=com",
             "attributes": {
@@ -154,7 +154,7 @@ class TestFlextLdifModelsEntryReal:
                 "jpegPhoto": ["/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQ=="],
             },
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("FlextTypes.Core.Dict", entry_data)
         )
         assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
@@ -167,7 +167,7 @@ class TestFlextLdifModelsEntryReal:
         assert len(jpeg_photo[0]) > 20  # Should contain base64 data
 
     def test_entry_creation_with_special_characters(self) -> None:
-        """Test entry creation with UTF-8 special characters."""  # type: ignore[assignment]
+        """Test entry creation with UTF-8 special characters."""
         entry_data = {
             "dn": "uid=special.chars,ou=people,dc=example,dc=com",
             "attributes": {
@@ -184,7 +184,7 @@ class TestFlextLdifModelsEntryReal:
                 "description": ["Contains special characters: áéíóú ÁÉÍÓÚ ñÑ çÇ"],
             },
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("FlextTypes.Core.Dict", entry_data)
         )
         assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
@@ -200,7 +200,7 @@ class TestFlextLdifModelsEntryReal:
         assert "áéíóú ÁÉÍÓÚ ñÑ" in description_values[0]
 
     def test_entry_attribute_operations(self) -> None:
-        """Test entry attribute operations."""  # type: ignore[assignment]
+        """Test entry attribute operations."""
         entry_data = {
             "dn": "uid=ops.user,ou=people,dc=example,dc=com",
             "attributes": {
@@ -211,7 +211,7 @@ class TestFlextLdifModelsEntryReal:
                 "description": ["Original description"],
             },
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("FlextTypes.Core.Dict", entry_data)
         )
         assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
@@ -231,7 +231,7 @@ class TestFlextLdifModelsEntryReal:
         assert entry.has_attribute("nonExistent") is False
 
     def test_entry_dn_operations(self) -> None:
-        """Test entry DN operations."""  # type: ignore[assignment]
+        """Test entry DN operations."""
         entry_data = {
             "dn": "uid=dn.user,ou=people,dc=example,dc=com",
             "attributes": {
@@ -241,7 +241,7 @@ class TestFlextLdifModelsEntryReal:
                 "sn": ["User"],
             },
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("FlextTypes.Core.Dict", entry_data)
         )
         assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
@@ -255,7 +255,7 @@ class TestFlextLdifModelsEntryReal:
         assert entry.dn is not None
 
     def test_entry_validation_rules(self) -> None:
-        """Test entry business rule validation."""  # type: ignore[assignment]
+        """Test entry business rule validation."""
         entry_data = {
             "dn": "uid=valid.user,ou=people,dc=example,dc=com",
             "attributes": {
@@ -271,7 +271,7 @@ class TestFlextLdifModelsEntryReal:
                 "mail": ["valid.user@example.com"],
             },
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("FlextTypes.Core.Dict", entry_data)
         )
         assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
@@ -290,7 +290,7 @@ class TestFlextLdifModelsEntryReal:
         assert validation_passed is not None
 
     def test_entry_serialization(self) -> None:
-        """Test entry serialization to dict."""  # type: ignore[assignment]
+        """Test entry serialization to dict."""
         entry_data = {
             "dn": "uid=serial.user,ou=people,dc=example,dc=com",
             "attributes": {
@@ -300,7 +300,7 @@ class TestFlextLdifModelsEntryReal:
                 "sn": ["User"],
             },
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("FlextTypes.Core.Dict", entry_data)
         )
         assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"
@@ -468,7 +468,7 @@ class TestModelIntegrationReal:
 
     def test_entry_with_all_model_components(self) -> None:
         """Test entry creation using all model components."""
-        # Create entry with all components  # type: ignore[assignment]
+        # Create entry with all components
         entry_data = {
             "dn": "uid=integration.user,ou=people,dc=example,dc=com",
             "attributes": {
@@ -486,7 +486,7 @@ class TestModelIntegrationReal:
                 "description": ["User for testing model integration"],
             },
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("FlextTypes.Core.Dict", entry_data)
         )
         assert entry_result.is_success, f"Entry creation failed: {entry_result.error}"

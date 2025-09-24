@@ -43,12 +43,12 @@ class TestFlextLdifAPIMissingCoverage:
         """Test write_file with string path instead of Path object."""
         api = FlextLdifAPI()
 
-        # Create valid entries  # type: ignore[assignment]
+        # Create valid entries
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_success
@@ -172,12 +172,12 @@ cn: test
         """Test filter_entries when repository access fails."""
         api = FlextLdifAPI()
 
-        # Create valid entries  # type: ignore[assignment]
+        # Create valid entries
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_success
@@ -217,12 +217,12 @@ cn: test
         """Test validation operations when repository operations fail."""
         api = FlextLdifAPI()
 
-        # Create valid entries  # type: ignore[assignment]
+        # Create valid entries
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_success
@@ -269,20 +269,20 @@ cn: test
         """Test various filter methods for coverage."""
         api = FlextLdifAPI()
 
-        # Create test entries with different characteristics  # type: ignore[assignment]
+        # Create test entries with different characteristics
         person_entry = {
             "dn": "cn=person,dc=example,dc=com",
             "attributes": {"cn": ["person"], "objectClass": ["person"]},
         }
-  # type: ignore[assignment]
+
         org_entry = {
             "dn": "ou=org,dc=example,dc=com",
             "attributes": {"ou": ["org"], "objectClass": ["organizationalUnit"]},
         }
 
-        entries: list[FlextLdifModels.Entry] = []  # type: ignore[assignment]
+        entries: list[FlextLdifModels.Entry] = []
         for entry_data in [person_entry, org_entry]:
-            entry_result = FlextLdifModels.create_entry(
+            entry_result = FlextLdifModels.Entry.create(
                 cast("dict[str, object]", entry_data)
             )
             if entry_result.is_success:

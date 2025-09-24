@@ -26,7 +26,7 @@ def test_all_services_100_percent() -> None:
 
     # Test entries - unwrap FlextResult to get actual Entry objects
     test_entries = [
-        FlextLdifModels.create_entry(
+        FlextLdifModels.Entry.create(
             {
                 "dn": "cn=person1,dc=test,dc=com",
                 "attributes": {
@@ -37,7 +37,7 @@ def test_all_services_100_percent() -> None:
                 },
             },
         ).unwrap(),
-        FlextLdifModels.create_entry(
+        FlextLdifModels.Entry.create(
             {
                 "dn": "cn=group1,ou=groups,dc=test,dc=com",
                 "attributes": {
