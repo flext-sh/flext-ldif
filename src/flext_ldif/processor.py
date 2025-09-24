@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import os
 import re
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -26,12 +25,29 @@ from flext_core import (
     FlextService,
 )
 from flext_ldif.config import FlextLdifConfig
+from flext_ldif.entry import FlextLdifEntryBuilder
+from flext_ldif.management import FlextLdifManagement
+from flext_ldif.mixins import FlextLdifMixins
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.parser import FlextLdifParser
+from flext_ldif.quirks import FlextLdifQuirksManager
+from flext_ldif.schema import (
+    FlextLdifObjectClassManager,
+    FlextLdifSchemaBuilder,
+    FlextLdifSchemaExtractor,
+    FlextLdifSchemaValidator,
+)
+from flext_ldif.typings import FlextLdifTypes
 
 __all__ = ["FlextLdifProcessor"]
 
 
-class FlextLdifProcessor(FlextService[dict[str, object]]):
+class FlextLdifProcessor(
+    FlextService[dict[str, object]],
+    FlextLdifMixins.ValidationMixin,
+    FlextLdifMixins.FactoryMixin,
+    FlextLdifMixins.BusinessRulesMixin,
+):
     """Unified LDIF processor for all LDIF operations.
 
     Provides comprehensive LDIF processing capabilities including parsing,
@@ -66,6 +82,26 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
         super().__init__()
         self._logger = FlextLogger(__name__)
         self._config = config
+
+        # Initialize advanced components
+        parser_config = {
+            "encoding": getattr(config, "ldif_encoding", "utf-8"),
+            "strict_mode": getattr(config, "strict_validation", True),
+            "detect_server": True,
+            "compliance_level": "strict",
+        }
+        self._parser = FlextLdifParser(parser_config)
+
+        # Initialize unified management layer
+        self._management = FlextLdifManagement()
+        self._quirks = FlextLdifQuirksManager()
+
+        # Initialize schema and entry components
+        self._schema_extractor = FlextLdifSchemaExtractor()
+        self._schema_validator = FlextLdifSchemaValidator()
+        self._schema_builder = FlextLdifSchemaBuilder()
+        self._objectclass_manager = FlextLdifObjectClassManager()
+        self._entry_builder = FlextLdifEntryBuilder()
 
     @override
     def execute(self) -> FlextResult[dict[str, object]]:
@@ -109,13 +145,6 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
             if not dn_value:
                 return FlextResult[FlextLdifModels.Entry].fail("DN cannot be empty")
 
-            # Create DN object
-            dn_result = FlextLdifModels.create_dn(dn_value)
-            if dn_result.is_failure:
-                return FlextResult[FlextLdifModels.Entry].fail(
-                    dn_result.error or "Failed to create DN"
-                )
-
             # Process attributes
             attributes_data: dict[str, list[str]] = {}
             for line in lines[1:]:
@@ -129,21 +158,16 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
                     attributes_data[attr_name] = []
                 attributes_data[attr_name].append(attr_value)
 
-            # Create attributes object
-            attrs_result = FlextLdifModels.create_attributes(attributes_data)
-            if attrs_result.is_failure:  # pragma: no cover
-                return FlextResult[FlextLdifModels.Entry].fail(
-                    attrs_result.error or "Failed to create attributes"
-                )
-
-            # Create entry
-            entry_data: dict[str, object] = {
-                "dn": dn_value,  # Use the original DN string
-                "attributes": attributes_data,  # Use the original attributes dict
+            # Create entry directly with dict
+            entry_data: FlextLdifTypes.Core.LdifEntryDict = {
+                "dn": dn_value,
+                "attributes": cast("dict[str, str | list[str]]", attributes_data),
             }
 
-            entry_result = FlextLdifModels.create_entry(entry_data)
-            if entry_result.is_failure:  # pragma: no cover
+            entry_result = FlextLdifModels.Entry.create(
+                cast("dict[str, object]", entry_data)
+            )
+            if entry_result.is_failure:
                 return FlextResult[FlextLdifModels.Entry].fail(
                     entry_result.error or "Failed to create entry"
                 )
@@ -187,7 +211,7 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
 
             return "\n".join(processed_lines)
 
-    class _LdifValidationHelper:
+    class _LdifValidationHelper(FlextLdifMixins.ValidationMixin):
         """Helper class for validation operations."""
 
         @staticmethod
@@ -423,12 +447,175 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
             entry_result = self._ParseHelper.process_entry_block(block)
             if entry_result.is_failure:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Failed to parse entry {i + 1}: {entry_result.error}"
+                    f"Failed to parse entry {i + 1}: {entry_result.error}",
+                    error_code="PARSE_ERROR",
                 )
             entries.append(entry_result.value)
 
         self._logger.info(f"Successfully parsed {len(entries)} entries from string")
         return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+
+    def parse_string_advanced(
+        self, content: str
+    ) -> FlextResult[list[FlextLdifModels.Entry | FlextLdifModels.ChangeRecord]]:
+        """Parse LDIF content string with full RFC 2849 compliance.
+
+        Args:
+            content: LDIF content string
+
+        Returns:
+            FlextResult containing list of parsed entries and change records
+
+        """
+        return self._parser.parse_string(content)
+
+    def parse_file_advanced(
+        self, file_path: Path
+    ) -> FlextResult[list[FlextLdifModels.Entry | FlextLdifModels.ChangeRecord]]:
+        """Parse LDIF file with advanced RFC 2849 compliance and encoding detection.
+
+        Args:
+            file_path: Path to LDIF file
+
+        Returns:
+            FlextResult containing list of parsed entries and change records
+
+        """
+        return self._parser.parse_file(file_path)
+
+    def detect_server_type(
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> FlextResult[str]:
+        """Detect LDAP server type from entries.
+
+        Args:
+            entries: List of LDIF entries to analyze
+
+        Returns:
+            FlextResult containing detected server type
+
+        """
+        return self._quirks.detect_server_type(entries)
+
+    def adapt_entries_for_server(
+        self, entries: list[FlextLdifModels.Entry], target_server: str | None = None
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Adapt entries for specific LDAP server type.
+
+        Args:
+            entries: List of entries to adapt
+            target_server: Target server type, or None for auto-detection
+
+        Returns:
+            FlextResult containing adapted entries
+
+        """
+        if not entries:
+            return FlextResult[list[FlextLdifModels.Entry]].ok([])
+
+        adapted_result = self._management.adapt_entries_for_server(entries, target_server or "")
+        if adapted_result.is_failure:
+            self._logger.warning(f"Failed to adapt entries: {adapted_result.error}")
+            return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+
+        adapted_entries = adapted_result.value
+        self._logger.info(f"Adapted {len(adapted_entries)} entries for server type")
+        return FlextResult[list[FlextLdifModels.Entry]].ok(adapted_entries)
+
+    def validate_rfc_compliance(
+        self, entries: list[FlextLdifModels.Entry | FlextLdifModels.ChangeRecord]
+    ) -> FlextResult[dict[str, object]]:
+        """Validate RFC 2849 compliance of entries.
+
+        Args:
+            entries: List of entries to validate
+
+        Returns:
+            FlextResult containing compliance report
+
+        """
+        return self._parser.validate_rfc_compliance(entries)
+
+    def validate_server_compliance(
+        self, entries: list[FlextLdifModels.Entry], server_type: str | None = None
+    ) -> FlextResult[dict[str, object]]:
+        """Validate entries against server-specific rules.
+
+        Args:
+            entries: List of entries to validate
+            server_type: Server type to validate against, or None for auto-detection
+
+        Returns:
+            FlextResult containing validation report
+
+        """
+        if not entries:
+            return FlextResult[dict[str, object]].ok({
+                "server_type": server_type or "unknown",
+                "compliant": True,
+                "issues": [],
+                "warnings": [],
+                "recommendations": [],
+            })
+
+        # Validate each entry
+        all_issues: list[str] = []
+        all_warnings: list[str] = []
+        all_recommendations: list[str] = []
+        compliant_count = 0
+
+        validation_result = self._management.validate_entries_for_server(entries, server_type)
+        if validation_result.is_success:
+            validation_data = validation_result.value
+            for val_report in cast("list[dict[str, object]]", validation_data.get("validation_reports", [])):
+                all_issues.extend(cast("list[str]", val_report.get("issues", [])))
+                all_warnings.extend(cast("list[str]", val_report.get("warnings", [])))
+                all_recommendations.extend(
+                    cast("list[str]", validation_data.get("recommendations", []))
+                )
+
+                if cast("bool", val_report.get("compliant", False)):
+                    compliant_count += 1
+
+        overall_compliant = len(all_issues) == 0
+        compliance_percentage = (
+            (compliant_count / len(entries)) * 100 if entries else 100
+        )
+
+        report: dict[str, object] = {
+            "server_type": server_type or "auto-detected",
+            "total_entries": len(entries),
+            "compliant_entries": compliant_count,
+            "compliance_percentage": compliance_percentage,
+            "overall_compliant": overall_compliant,
+            "issues": all_issues,
+            "warnings": all_warnings,
+            "recommendations": all_recommendations,
+        }
+
+        return FlextResult[dict[str, object]].ok(report)
+
+    def get_server_info(
+        self, server_type: str | None = None
+    ) -> FlextResult[dict[str, object]]:
+        """Get information about LDAP server type and its quirks.
+
+        Args:
+            server_type: Server type to get info for, or None for current
+
+        Returns:
+            FlextResult containing server information
+
+        """
+        quirks_result = self._quirks.get_server_quirks(server_type)
+        if quirks_result.is_failure:
+            return FlextResult[dict[str, object]].fail(
+                quirks_result.error or "Failed to get server info"
+            )
+        return FlextResult[dict[str, object]].ok({
+            "server_type": server_type or self._quirks._server_type,
+            "quirks": quirks_result.value,
+        })
 
     def parse_ldif_file(
         self, file_path: Path
@@ -587,7 +774,9 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
             except Exception as e:
                 error_msg = f"Transformation failed for entry {i + 1}: {e}"
                 self._logger.exception(error_msg)
-                return FlextResult[list[FlextLdifModels.Entry]].fail(error_msg)
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                    error_msg, error_code="TRANSFORM_ERROR"
+                )
 
         self._logger.info(f"Successfully transformed {len(entries)} entries")
         return FlextResult[list[FlextLdifModels.Entry]].ok(transformed_entries)
@@ -1022,33 +1211,9 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
             FlextResult[None]: Success if path is valid, failure with error message
 
         """
-        try:
-            # Check if parent directory exists or can be created
-            parent_dir = file_path.parent
-            if not parent_dir.exists():
-                try:
-                    parent_dir.mkdir(parents=True, exist_ok=True)
-                except OSError as e:
-                    return FlextResult[None].fail(
-                        f"Cannot create directory {parent_dir}: {e}"
-                    )
+        from flext_ldif.utilities import FlextLdifUtilities
 
-            # Check write permissions
-            if file_path.exists():
-                if not os.access(file_path, os.W_OK):
-                    return FlextResult[None].fail(
-                        f"No write permission for file: {file_path}"
-                    )
-            # Check parent directory write permission
-            elif not os.access(parent_dir, os.W_OK):
-                return FlextResult[None].fail(
-                    f"No write permission for directory: {parent_dir}"
-                )
-
-            return FlextResult[None].ok(None)
-
-        except Exception as e:
-            return FlextResult[None].fail(f"File path validation failed: {e}")
+        return FlextLdifUtilities.FileUtilities.validate_file_path(file_path)
 
     def _get_required_attributes_for_classes(
         self, object_classes: list[str]
@@ -1099,3 +1264,108 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
             if result.is_failure:
                 count += 1
         return count
+
+    def extract_schema_from_entries(
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
+        return self._schema_extractor.extract_from_entries(entries)
+
+    def extract_attribute_usage(
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> FlextResult[dict[str, dict[str, object]]]:
+        return self._schema_extractor.extract_attribute_usage(entries)
+
+    def validate_entry_against_schema(
+        self,
+        entry: FlextLdifModels.Entry,
+        schema: FlextLdifModels.SchemaDiscoveryResult,
+    ) -> FlextResult[dict[str, object]]:
+        return self._schema_validator.validate_entry_against_schema(entry, schema)
+
+    def validate_objectclass_requirements(
+        self,
+        entry: FlextLdifModels.Entry,
+        schema: FlextLdifModels.SchemaDiscoveryResult,
+    ) -> FlextResult[dict[str, object]]:
+        return self._schema_validator.validate_objectclass_requirements(entry, schema)
+
+    def build_standard_person_schema(
+        self,
+    ) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
+        return self._schema_builder.build_standard_person_schema()
+
+    def build_standard_group_schema(
+        self,
+    ) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
+        return self._schema_builder.build_standard_group_schema()
+
+    def get_objectclass_definition(
+        self, objectclass_name: str
+    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+        """Get objectClass definition (not implemented in current version)."""
+        return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
+            "get_objectclass_definition not available in current version"
+        )
+
+    def get_required_attributes_for_objectclasses(
+        self, objectclasses: list[str]
+    ) -> FlextResult[list[str]]:
+        """Get required attributes for objectClasses (requires schema context)."""
+        return FlextResult[list[str]].fail(
+            "get_required_attributes_for_objectclasses requires schema context"
+        )
+
+    def validate_objectclass_combination(
+        self, objectclasses: list[str]
+    ) -> FlextResult[dict[str, object]]:
+        """Validate objectClass combination (requires schema context)."""
+        return FlextResult[dict[str, object]].fail(
+            "validate_objectclass_combination requires schema context"
+        )
+
+    def build_person_entry(
+        self,
+        cn: str,
+        sn: str,
+        base_dn: str,
+        uid: str | None = None,
+        mail: str | None = None,
+        given_name: str | None = None,
+        additional_attrs: dict[str, list[str]] | None = None,
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        return self._entry_builder.build_person_entry(
+            cn, sn, base_dn, uid, mail, given_name, additional_attrs
+        )
+
+    def build_group_entry(
+        self,
+        cn: str,
+        base_dn: str,
+        members: list[str] | None = None,
+        description: str | None = None,
+        additional_attrs: dict[str, list[str]] | None = None,
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        return self._entry_builder.build_group_entry(
+            cn, base_dn, members, description, additional_attrs
+        )
+
+    def build_organizational_unit_entry(
+        self,
+        ou: str,
+        base_dn: str,
+        description: str | None = None,
+        additional_attrs: dict[str, list[str]] | None = None,
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        return self._entry_builder.build_organizational_unit_entry(
+            ou, base_dn, description, additional_attrs
+        )
+
+    def build_entries_from_json(
+        self, json_data: str
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        return self._entry_builder.build_entries_from_json(json_data)
+
+    def convert_entries_to_json(
+        self, entries: list[FlextLdifModels.Entry], indent: int = 2
+    ) -> FlextResult[str]:
+        return self._entry_builder.convert_entries_to_json(entries, indent)

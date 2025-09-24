@@ -24,7 +24,7 @@ class TestFlextLdifModelsMissingCoverage:
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
 
-        result = FlextLdifModels.create_entry(invalid_entry_data)
+        result = FlextLdifModels.Entry.create(invalid_entry_data)
         assert result.is_failure
         assert "dn" in (result.error or "").lower()
 
@@ -37,7 +37,7 @@ class TestFlextLdifModelsMissingCoverage:
             "attributes": "invalid_attributes_type",  # Should be dict
         }
 
-        result = FlextLdifModels.create_entry(invalid_entry_data)
+        result = FlextLdifModels.Entry.create(invalid_entry_data)
         assert result.is_failure
         assert "attributes" in (result.error or "").lower()
 
@@ -53,7 +53,7 @@ class TestFlextLdifModelsMissingCoverage:
         ]
 
         for dn_string in edge_case_dns:
-            result = FlextLdifModels.create_dn(dn_string)
+            result = FlextLdifModels.DistinguishedName.create(dn_string)
             # Should either succeed or fail gracefully
             assert result.is_success or result.is_failure
 
@@ -77,7 +77,7 @@ class TestFlextLdifModelsMissingCoverage:
         ]
 
         for attr_data in edge_case_attributes:
-            result = FlextLdifModels.create_attributes(attr_data)
+            result = FlextLdifModels.LdifAttributes.create(attr_data)
             assert result.is_success  # Should handle edge cases gracefully
 
     @staticmethod
@@ -89,7 +89,7 @@ class TestFlextLdifModelsMissingCoverage:
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
 
-        result = FlextLdifModels.create_entry(minimal_dn_entry)
+        result = FlextLdifModels.Entry.create(minimal_dn_entry)
         if result.is_success:
             entry = result.value
             # Test business rules validation if it exists
@@ -120,7 +120,7 @@ class TestFlextLdifModelsMissingCoverage:
         ]
 
         for entry_data in test_entries:
-            entry_result = FlextLdifModels.create_entry(entry_data)
+            entry_result = FlextLdifModels.Entry.create(entry_data)
             if entry_result.is_success:
                 entry = entry_result.value
 
@@ -153,7 +153,7 @@ class TestFlextLdifModelsMissingCoverage:
             },
         }
 
-        entry_result = FlextLdifModels.create_entry(entry_data)
+        entry_result = FlextLdifModels.Entry.create(entry_data)
         assert entry_result.is_success
         entry = entry_result.value
 
@@ -198,7 +198,7 @@ class TestFlextLdifModelsMissingCoverage:
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
 
-        entry_result = FlextLdifModels.create_entry(entry_data)
+        entry_result = FlextLdifModels.Entry.create(entry_data)
         assert entry_result.is_success
         entry = entry_result.value
 
@@ -235,7 +235,7 @@ class TestFlextLdifModelsMissingCoverage:
         ]
 
         for invalid_data in invalid_model_data:
-            result = FlextLdifModels.create_entry(invalid_data)
+            result = FlextLdifModels.Entry.create(invalid_data)
             # Some validation errors should fail, others might succeed
             # Empty DN should fail, empty attribute values are actually valid
             if invalid_data.get("dn") in {"", "invalid_dn_format"}:
@@ -259,7 +259,7 @@ class TestFlextLdifModelsMissingCoverage:
         ]
 
         for invalid_data in edge_case_data:
-            result = FlextLdifModels.create_entry(invalid_data)
+            result = FlextLdifModels.Entry.create(invalid_data)
             # Should handle processing errors gracefully
             assert result.is_failure or result.is_success  # Either outcome is valid
 
@@ -271,7 +271,7 @@ class TestFlextLdifModelsMissingCoverage:
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
 
-        entry_result = FlextLdifModels.create_entry(entry_data)
+        entry_result = FlextLdifModels.Entry.create(entry_data)
         assert entry_result.is_success
         entry = entry_result.value
 

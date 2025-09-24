@@ -37,11 +37,24 @@ class FlextLdifConstants(FlextConstants):
 
         DN_ATTRIBUTE: Final[str] = "dn"
         ATTRIBUTE_SEPARATOR: Final[str] = ":"
-        DEFAULT_ENCODING: Final[str] = "utf-8"
         MAX_LINE_LENGTH: Final[int] = 78
         MIN_BUFFER_SIZE: Final[int] = 1024
         CONTENT_PREVIEW_LENGTH: Final[int] = 100
         MAX_ATTRIBUTES_DISPLAY: Final[int] = 10
+
+        # RFC 2849 specific constants
+        BASE64_PREFIX: Final[str] = "::"
+        COMMENT_PREFIX: Final[str] = "#"
+        VERSION_PREFIX: Final[str] = "version:"
+        CHANGE_TYPE_PREFIX: Final[str] = "changetype:"
+        LINE_CONTINUATION_CHARS: Final[frozenset[str]] = frozenset([" ", "\t"])
+        ATTRIBUTE_OPTION_SEPARATOR: Final[str] = ";"
+        URL_PREFIX: Final[str] = "<"
+        URL_SUFFIX: Final[str] = ">"
+
+        # LDIF version constants
+        LDIF_VERSION_1: Final[str] = "1"
+        DEFAULT_LDIF_VERSION: Final[str] = LDIF_VERSION_1
 
     # =============================================================================
     # PROCESSING CONSTANTS
@@ -98,52 +111,148 @@ class FlextLdifConstants(FlextConstants):
         ATTRIBUTE_VALUES_ERROR: Final[str] = "Attribute values must be a list"
         ATTRIBUTE_VALUE_TYPE_ERROR: Final[str] = "Attribute values must be strings"
 
+    # =============================================================================
+    # ENUMS
+    # =============================================================================
 
-# =============================================================================
-# ENUMS
-# =============================================================================
+    class ProcessingStage(StrEnum):
+        """Processing stages for LDIF operations."""
 
+        PARSING = "parsing"
+        VALIDATION = "validation"
+        ANALYTICS = "analytics"
+        WRITING = "writing"
 
-class LdifProcessingStage(StrEnum):
-    """Processing stages for LDIF operations."""
+    class HealthStatus(StrEnum):
+        """Health status for LDIF services."""
 
-    PARSING = "parsing"
-    VALIDATION = "validation"
-    ANALYTICS = "analytics"
-    WRITING = "writing"
+        HEALTHY = "healthy"
+        DEGRADED = "degraded"
+        UNHEALTHY = "unhealthy"
 
+    class EntryType(StrEnum):
+        """Types of LDIF entries."""
 
-class LdifHealthStatus(StrEnum):
-    """Health status for LDIF services."""
+        PERSON = "person"
+        GROUP = "group"
+        ORGANIZATIONAL_UNIT = "organizationalunit"
+        DOMAIN = "domain"
+        OTHER = "other"
 
-    HEALTHY = "healthy"
-    DEGRADED = "degraded"
-    UNHEALTHY = "unhealthy"
+    class EntryModification(StrEnum):
+        """LDIF entry modification types."""
 
+        ADD = "add"
+        MODIFY = "modify"
+        DELETE = "delete"
+        MODRDN = "modrdn"
 
-class LdifEntryType(StrEnum):
-    """Types of LDIF entries."""
+    # =============================================================================
+    # ENCODING CONSTANTS
+    # =============================================================================
 
-    PERSON = "person"
-    GROUP = "group"
-    ORGANIZATIONAL_UNIT = "organizationalunit"
-    DOMAIN = "domain"
-    OTHER = "other"
+    class Encoding:
+        """Character encoding constants for LDIF processing."""
 
+        UTF8: Final[str] = "utf-8"
+        LATIN1: Final[str] = "latin-1"
+        ASCII: Final[str] = "ascii"
+        DEFAULT_ENCODING: Final[str] = UTF8
 
-class LdifEntryModification(StrEnum):
-    """LDIF entry modification types."""
+        # Supported encodings for LDIF processing
+        SUPPORTED_ENCODINGS: Final[frozenset[str]] = frozenset([
+            UTF8,
+            LATIN1,
+            ASCII,
+            "utf-16",
+            "utf-32",
+            "cp1252",
+            "iso-8859-1",
+        ])
 
-    ADD = "add"
-    MODIFY = "modify"
-    DELETE = "delete"
-    MODRDN = "modrdn"
+    # =============================================================================
+    # LDAP SERVER CONSTANTS
+    # =============================================================================
+
+    class LdapServers:
+        """LDAP server implementation constants."""
+
+        # Server types
+        ACTIVE_DIRECTORY: Final[str] = "active_directory"
+        OPENLDAP: Final[str] = "openldap"
+        APACHE_DIRECTORY: Final[str] = "apache_directory"
+        NOVELL_EDIRECTORY: Final[str] = "novell_edirectory"
+        IBM_TIVOLI: Final[str] = "ibm_tivoli"
+        GENERIC: Final[str] = "generic"
+
+        # Server-specific DN patterns
+        AD_DN_PATTERNS: Final[frozenset[str]] = frozenset([
+            "CN=",
+            "OU=",
+            "DC=",
+            "O=",
+            "L=",
+            "ST=",
+            "C=",
+        ])
+
+        OPENLDAP_DN_PATTERNS: Final[frozenset[str]] = frozenset([
+            "cn=",
+            "ou=",
+            "dc=",
+            "o=",
+            "l=",
+            "st=",
+            "c=",
+            "uid=",
+        ])
+
+        # Server-specific object classes
+        AD_REQUIRED_CLASSES: Final[frozenset[str]] = frozenset([
+            "top",
+            "person",
+            "organizationalPerson",
+            "user",
+        ])
+
+        OPENLDAP_REQUIRED_CLASSES: Final[frozenset[str]] = frozenset([
+            "top",
+            "person",
+            "organizationalPerson",
+            "inetOrgPerson",
+        ])
+
+    # =============================================================================
+    # RFC 2849 COMPLIANCE CONSTANTS
+    # =============================================================================
+
+    class RfcCompliance:
+        """RFC 2849 compliance validation constants."""
+
+        # Required RFC 2849 features
+        REQUIRED_FEATURES: Final[frozenset[str]] = frozenset([
+            "base64_encoding",
+            "line_continuation",
+            "change_records",
+            "url_references",
+            "attribute_options",
+            "comments",
+            "version_control",
+        ])
+
+        # Optional RFC 2849 features
+        OPTIONAL_FEATURES: Final[frozenset[str]] = frozenset([
+            "language_tags",
+            "binary_data",
+            "large_entries",
+        ])
+
+        # Validation strictness levels
+        STRICT: Final[str] = "strict"
+        MODERATE: Final[str] = "moderate"
+        LENIENT: Final[str] = "lenient"
 
 
 __all__ = [
     "FlextLdifConstants",
-    "LdifEntryModification",
-    "LdifEntryType",
-    "LdifHealthStatus",
-    "LdifProcessingStage",
 ]

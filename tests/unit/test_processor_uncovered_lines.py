@@ -22,7 +22,7 @@ class TestProcessorUncoveredLines:
         config = FlextLdifConfig(ldif_max_line_length=20)
         processor = FlextLdifProcessor(config)
 
-        entry_result = FlextLdifModels.create_entry({
+        entry_result = FlextLdifModels.Entry.create({
             "dn": "cn=short,dc=com",
             "attributes": {"cn": ["short"], "objectClass": ["person"]},
         })
@@ -37,19 +37,22 @@ class TestProcessorUncoveredLines:
     def test_calculate_quality_metrics_with_empty_entries() -> None:
         """Test line 360: empty entries list in quality metrics."""
         processor = FlextLdifProcessor()
-  # type: ignore[attr-defined]
+
         quality_data = processor._AnalyticsHelper.calculate_quality_metrics([])
         assert quality_data["quality_score"] == 0.0
         issues = quality_data.get("issues", [])
-        assert isinstance(issues, list)  # type: ignore[assignment]
-        assert any("No entries" in str(issue) for issue in issues)
+        assert isinstance(issues, list)
+        # Check if any issue contains "No entries" text
+        issues_list: list[str] = issues
+        issue_texts = [str(issue) for issue in issues_list if issue is not None]
+        assert any("No entries" in text for text in issue_texts)
 
     @staticmethod
     def test_transform_entries_with_error() -> None:
         """Test lines 568-571: transformation error handling."""
         processor = FlextLdifProcessor()
 
-        entry_result = FlextLdifModels.create_entry({
+        entry_result = FlextLdifModels.Entry.create({
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         })
@@ -69,15 +72,15 @@ class TestProcessorUncoveredLines:
         """Test lines 904-939: quality report generation branches."""
         processor = FlextLdifProcessor()
 
-        entries_with_issues = []
+        entries_with_issues: list[FlextLdifModels.Entry] = []
         for i in range(5):
-            entry_result = FlextLdifModels.create_entry({
+            entry_result = FlextLdifModels.Entry.create({
                 "dn": f"cn=user{i},dc=example,dc=com",
                 "attributes": {"cn": [f"user{i}"]},
             })
-            if entry_result.is_success:  # type: ignore[attr-defined]
+            if entry_result.is_success:
                 entries_with_issues.append(entry_result.value)
-  # type: ignore[arg-type]
+
         result = processor.generate_quality_report(entries_with_issues)
         assert result.is_success
         report = result.value
@@ -89,7 +92,7 @@ class TestProcessorUncoveredLines:
         """Test line 1044: validation when parent directory doesn't exist."""
         processor = FlextLdifProcessor()
 
-        nonexistent_path = Path("/nonexistent/directory/file.ldif")  # type: ignore[attr-defined]
+        nonexistent_path = Path("/nonexistent/directory/file.ldif")
         result = processor._validate_file_path(nonexistent_path)
 
         assert result.is_failure or result.is_success
@@ -99,12 +102,12 @@ class TestProcessorUncoveredLines:
         """Test line 1100: counting invalid DNs."""
         processor = FlextLdifProcessor()
 
-        valid_entry = FlextLdifModels.create_entry({
+        valid_entry = FlextLdifModels.Entry.create({
             "dn": "cn=valid,dc=example,dc=com",
             "attributes": {"cn": ["valid"], "objectClass": ["person"]},
         })
         assert valid_entry.is_success
-  # type: ignore[attr-defined]
+
         count = processor._count_invalid_dns([valid_entry.value])
         assert count == 0
 
@@ -127,23 +130,29 @@ objectClass: person
         """Test quality metrics calculation hitting all branches."""
         processor = FlextLdifProcessor()
 
-        entries_various = []
+        entries_various: list[FlextLdifModels.Entry] = []
 
         for i in range(10):
-            entry_result = FlextLdifModels.create_entry({
-                "dn": f"cn=user{i},ou=test,dc=example,dc=com" if i % 2 == 0 else f"cn=user{i},dc=example,dc=com",
+            entry_result = FlextLdifModels.Entry.create({
+                "dn": f"cn=user{i},ou=test,dc=example,dc=com"
+                if i % 2 == 0
+                else f"cn=user{i},dc=example,dc=com",
                 "attributes": {
                     "cn": [f"user{i}"],
-                    "objectClass": ["person"] if i % 3 == 0 else ["person", "inetOrgPerson"],
+                    "objectClass": ["person"]
+                    if i % 3 == 0
+                    else ["person", "inetOrgPerson"],
                     "mail": [f"user{i}@example.com"] if i % 2 == 0 else [],
                 },
             })
-            if entry_result.is_success:  # type: ignore[attr-defined]
+            if entry_result.is_success:
                 entries_various.append(entry_result.value)
-  # type: ignore[arg-type]
+
         result = processor.analyze_entries(entries_various)
         assert result.is_success
-  # type: ignore[arg-type]
-        quality_data = processor._AnalyticsHelper.calculate_quality_metrics(entries_various)
+
+        quality_data = processor._AnalyticsHelper.calculate_quality_metrics(
+            entries_various
+        )
         assert "quality_score" in quality_data
         assert "issues" in quality_data

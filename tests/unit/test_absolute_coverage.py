@@ -26,7 +26,7 @@ class TestProcessorDefensivePaths:
         """Test lines 568-571: OSError during file write."""
         processor = FlextLdifProcessor()
 
-        entry_result = FlextLdifModels.create_entry({
+        entry_result = FlextLdifModels.Entry.create({
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         })
@@ -37,8 +37,9 @@ class TestProcessorDefensivePaths:
 
         with patch("pathlib.Path.write_text", side_effect=OSError("Disk full")):
             result = processor.write_file([entry_result.value], tmp_path)
-            assert result.is_failure  # type: ignore[operator]
-            assert "Failed to write file" in result.error
+            assert result.is_failure
+            assert result.error is not None
+            assert result.error and "Failed to write file" in result.error
 
     @staticmethod
     def test_parse_with_continuation_line_wrapping() -> None:
@@ -46,7 +47,7 @@ class TestProcessorDefensivePaths:
         config = FlextLdifConfig(ldif_max_line_length=40)
         processor = FlextLdifProcessor(config)
 
-        short_entry = FlextLdifModels.create_entry({
+        short_entry = FlextLdifModels.Entry.create({
             "dn": "cn=short,dc=com",
             "attributes": {"cn": ["short"], "objectClass": ["person"]},
         })
@@ -62,7 +63,7 @@ class TestProcessorDefensivePaths:
 
         problem_entries: list[FlextLdifModels.Entry] = []
         for i in range(15):
-            entry_result = FlextLdifModels.create_entry({
+            entry_result = FlextLdifModels.Entry.create({
                 "dn": f"cn=user{i},dc=example,dc=com",
                 "attributes": {
                     "cn": [f"user{i}"] if i % 4 != 0 else [],
@@ -89,7 +90,7 @@ class TestProcessorDefensivePaths:
             Path("/sys/class/impossible.ldif"),
         ]
 
-        for path in edge_paths:  # type: ignore[attr-defined]
+        for path in edge_paths:
             result = processor._validate_file_path(path)
             assert result.is_success or result.is_failure
 
@@ -107,14 +108,14 @@ class TestProcessorDefensivePaths:
         ]
 
         for dn in dns:
-            entry_result = FlextLdifModels.create_entry({
+            entry_result = FlextLdifModels.Entry.create({
                 "dn": dn,
                 "attributes": {"cn": ["test"], "objectClass": ["person"]},
             })
             if entry_result.is_success:
                 test_entries.append(entry_result.value)
 
-        if test_entries:  # type: ignore[attr-defined]
+        if test_entries:
             count = processor._count_invalid_dns(test_entries)
             assert count >= 0
 
@@ -143,8 +144,12 @@ class TestConfigDefensivePaths:
 
         try:
             result = config.apply_ldif_overrides(bad_overrides)
-            if result.is_failure:  # type: ignore[union-attr]
-                assert "validation" in result.error.lower() or "error" in result.error.lower()
+            if result.is_failure:
+                assert result.error is not None
+                assert result.error and (
+                    "validation" in result.error.lower()
+                    or "error" in result.error.lower()
+                )
         except ValidationError:
             pass
 

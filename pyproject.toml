@@ -23,9 +23,11 @@ dependencies = [
     "pydantic (>=2.11.7)",
     "pydantic-settings (>=2.10.1)",
     "ldif3 (>=3.2.2)",
+    "ldap3 (>=2.9.1)",
     "click (>=8.1.0)",
     "structlog (>=25.4.0,<26.0.0)",
     "flext-core @ file:///home/marlonsc/flext/flext-core",
+    "colorlog (>=6.9.0,<7.0.0)",
 ]
 [[project.authors]]
 name = "FLEXT Team"
@@ -140,6 +142,7 @@ exclude = [
     ".venv/",
     "build/",
     "dist/",
+    "docs/",
     "node_modules/",
     "vendor/",
 ]
@@ -222,6 +225,7 @@ output = "reports/coverage.xml"
 [tool.poetry.dependencies]
 python = ">=3.13,<3.14"
 ldif3 = ">=3.2.2"
+ldap3 = ">=2.9.1"
 click = ">=8.1.0"
 
 # Local ecosystem deps in editable mode for workspace development

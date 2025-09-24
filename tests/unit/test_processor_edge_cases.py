@@ -107,7 +107,7 @@ objectClass: person
         """Test writing to an invalid file path."""
         from flext_ldif import FlextLdifModels
 
-        entry_result = FlextLdifModels.create_entry({
+        entry_result = FlextLdifModels.Entry.create({
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"]},
         })
@@ -131,7 +131,7 @@ objectClass: person
         """Test analytics with minimal entry data."""
         from flext_ldif import FlextLdifModels
 
-        entry_result = FlextLdifModels.create_entry({
+        entry_result = FlextLdifModels.Entry.create({
             "dn": "cn=test",
             "attributes": {"cn": ["test"]},
         })
@@ -146,7 +146,7 @@ objectClass: person
         """Test transformation when transformer function raises an error."""
         from flext_ldif import FlextLdifModels
 
-        entry_result = FlextLdifModels.create_entry({
+        entry_result = FlextLdifModels.Entry.create({
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         })
@@ -166,7 +166,7 @@ objectClass: person
         """Test filtering when predicate function raises an error."""
         from flext_ldif import FlextLdifModels
 
-        entry_result = FlextLdifModels.create_entry({
+        entry_result = FlextLdifModels.Entry.create({
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         })
@@ -185,10 +185,10 @@ objectClass: person
         """Test entry statistics with diverse entry types."""
         from flext_ldif import FlextLdifModels
 
-        entries = []
+        entries: list[FlextLdifModels.Entry] = []
         # Create multiple entries with different object classes
         for i in range(5):
-            entry_result = FlextLdifModels.create_entry({
+            entry_result = FlextLdifModels.Entry.create({
                 "dn": f"cn=test{i},ou=users,dc=example,dc=com",
                 "attributes": {
                     "cn": [f"test{i}"],
@@ -196,10 +196,10 @@ objectClass: person
                     "mail": [f"test{i}@example.com"],
                 },
             })
-            if entry_result.is_success:  # type: ignore[attr-defined]
+            if entry_result.is_success:
                 entries.append(entry_result.value)
 
-        api = FlextLdifAPI()  # type: ignore[arg-type]
+        api = FlextLdifAPI()
         result = api.entry_statistics(entries)
         assert result.is_success
         stats = result.unwrap()
@@ -247,7 +247,7 @@ objectClass: person
         from flext_ldif import FlextLdifModels
 
         # Create minimal entry that might fail validation
-        entry_result = FlextLdifModels.create_entry({"dn": "cn=test", "attributes": {}})
+        entry_result = FlextLdifModels.Entry.create({"dn": "cn=test", "attributes": {}})
 
         api = FlextLdifAPI()
         if entry_result.is_success:

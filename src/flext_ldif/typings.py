@@ -16,6 +16,7 @@ class FlextLdifTypes(FlextTypes):
     """LDIF-specific type definitions extending flext-core FlextTypes.
 
     Contains ONLY type definitions, no implementations.
+    Uses flext-core SOURCE OF TRUTH for type patterns.
     """
 
     # =============================================================================
@@ -36,14 +37,44 @@ class FlextLdifTypes(FlextTypes):
         LdifFileContent = NewType("LdifFileContent", str)
 
         # Data structure types
-        LdifEntryDict = dict[str, object]
+        LdifEntryDict = dict[str, str | list[str] | dict[str, str | list[str]]]
         LdifAttributeDict = dict[str, FlextTypes.Core.StringList]
-        LdifStatistics = dict[str, int | float | FlextTypes.Core.StringList]
+        LdifStatistics = dict[
+            str, int | float | str | FlextTypes.Core.StringList | dict[str, int]
+        ]
+        HealthStatusDict = dict[
+            str, int | float | str | FlextTypes.Core.StringList | dict[str, int]
+        ]
 
         # Literal types for compile-time validation
         HealthStatus = Literal["healthy", "degraded", "unhealthy"]
         ProcessingStage = Literal["parsing", "validation", "analytics", "writing"]
         EntryModificationType = Literal["add", "modify", "delete", "modrdn"]
+
+        # RFC 2849 specific types
+        LdifVersion = Literal["1"]
+        EncodingType = Literal[
+            "utf-8", "latin-1", "ascii", "utf-16", "utf-32", "cp1252", "iso-8859-1"
+        ]
+        LdapServerType = Literal[
+            "active_directory",
+            "openldap",
+            "apache_directory",
+            "novell_edirectory",
+            "ibm_tivoli",
+            "generic",
+        ]
+        ComplianceLevel = Literal["strict", "moderate", "lenient"]
+
+        # Advanced LDIF types
+        Base64String = NewType("Base64String", str)
+        LdifUrl = NewType("LdifUrl", str)
+        AttributeOption = NewType("AttributeOption", str)
+        LanguageTag = NewType("LanguageTag", str)
+
+        # Change record types
+        ChangeRecordDict = dict[str, str | list[str] | dict[str, str | list[str]]]
+        ModificationOperation = Literal["add", "delete", "replace"]
 
     # =============================================================================
     # GENERIC TYPE VARIABLES

@@ -12,6 +12,7 @@ from pydantic import Field, field_validator, model_validator
 
 from flext_core import FlextConfig, FlextConstants, FlextResult
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.mixins import FlextLdifMixins
 
 
 class FlextLdifConfig(FlextConfig):
@@ -143,7 +144,7 @@ class FlextLdifConfig(FlextConfig):
 
     @field_validator("ldif_encoding")
     @classmethod
-    def validate_encoding(cls, v: str) -> str:
+    def validate_ldif_encoding(cls, v: str) -> str:
         """Validate encoding is supported.
 
         Returns:
@@ -153,17 +154,13 @@ class FlextLdifConfig(FlextConfig):
             ValueError: If the encoding is not supported
 
         """
-        try:
-            test_bytes = "test".encode(v)
-            test_bytes.decode(v)
-        except (UnicodeError, LookupError) as e:
-            msg = f"Unsupported encoding: {v}"
-            raise ValueError(msg) from e
-        return v
+        return FlextLdifMixins.ValidationMixin.validate_encoding(v)
 
     @model_validator(mode="after")
     def validate_ldif_configuration(self) -> Self:
         """Validate LDIF-specific configuration consistency.
+
+        Extends FlextConfig.validate_configuration_consistency() with LDIF-specific validation.
 
         Returns:
             Self: The validated configuration instance
@@ -172,14 +169,15 @@ class FlextLdifConfig(FlextConfig):
             ValueError: If configuration validation fails
 
         """
-        # Validate worker configuration
-        if (
-            self.ldif_parallel_processing
-            and self.ldif_max_workers
-            < FlextLdifConstants.Processing.MIN_WORKERS_FOR_PARALLEL
-        ):
-            msg = "Parallel processing requires at least 2 workers"
-            raise ValueError(msg)
+        # Add LDIF-specific validation
+        # Validate worker configuration using business rules mixin
+        worker_result = FlextLdifMixins.BusinessRulesMixin.validate_parallel_configuration_consistency(
+            parallel_enabled=self.ldif_parallel_processing,
+            worker_count=self.ldif_max_workers,
+            min_workers=FlextLdifConstants.Processing.MIN_WORKERS_FOR_PARALLEL,
+        )
+        if worker_result.is_failure:
+            raise ValueError(worker_result.error)
 
         # Validate chunk size vs max entries
         if self.ldif_chunk_size > self.ldif_max_entries:
@@ -258,33 +256,51 @@ class FlextLdifConfig(FlextConfig):
         try:
             errors: list[str] = []
 
-            # Validate processing limits
-            if (
-                self.ldif_max_entries
-                < FlextLdifConstants.Processing.MIN_PRODUCTION_ENTRIES
-            ):
-                errors.append("Maximum entries too low for production use")
+            # Validate processing limits using business rules mixin
+            entries_result = (
+                FlextLdifMixins.BusinessRulesMixin.validate_minimum_entries(
+                    self.ldif_max_entries,
+                    FlextLdifConstants.Processing.MIN_PRODUCTION_ENTRIES,
+                    "entries",
+                )
+            )
+            if entries_result.is_failure:
+                errors.append(
+                    entries_result.error or "Maximum entries too low for production use"
+                )
 
             if (
                 self.ldif_buffer_size < FlextLdifConstants.Format.MIN_BUFFER_SIZE
             ):  # pragma: no cover
                 errors.append("Buffer size too small for efficient processing")
 
-            # Validate worker configuration
-            if (
-                self.ldif_parallel_processing
-                and self.ldif_max_workers
-                > FlextLdifConstants.Processing.MAX_WORKERS_LIMIT
-            ):
-                errors.append("Too many workers may cause resource contention")
+            # Validate worker configuration using business rules mixin
+            workers_result = (
+                FlextLdifMixins.BusinessRulesMixin.validate_resource_limits(
+                    self.ldif_max_workers,
+                    FlextLdifConstants.Processing.MAX_WORKERS_LIMIT,
+                    "Workers",
+                )
+            )
+            if workers_result.is_failure:
+                errors.append(
+                    workers_result.error
+                    or "Too many workers may cause resource contention"
+                )
 
-            # Validate analytics configuration
-            if (
-                self.ldif_enable_analytics
-                and self.ldif_analytics_cache_size
-                > FlextLdifConstants.Processing.MAX_ANALYTICS_CACHE_SIZE
-            ):
-                errors.append("Analytics cache size too large for memory efficiency")
+            # Validate analytics configuration using business rules mixin
+            analytics_result = (
+                FlextLdifMixins.BusinessRulesMixin.validate_resource_limits(
+                    self.ldif_analytics_cache_size,
+                    FlextLdifConstants.Processing.MAX_ANALYTICS_CACHE_SIZE,
+                    "Analytics cache size",
+                )
+            )
+            if analytics_result.is_failure:
+                errors.append(
+                    analytics_result.error
+                    or "Analytics cache size too large for memory efficiency"
+                )
 
             if errors:
                 return FlextResult[None].fail(

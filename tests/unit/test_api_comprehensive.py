@@ -17,6 +17,7 @@ import pytest
 
 from flext_ldif.api import FlextLdifAPI
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.typings import FlextLdifTypes
 
 
 class TestFlextLdifAPIComprehensive:
@@ -65,7 +66,7 @@ objectClass: inetOrgPerson
         with patch("flext_ldif.api.FlextLdifProcessor") as mock_processor:
             mock_processor.side_effect = Exception("Processor init failed")
 
-            api = FlextLdifAPI()  # type: ignore[attr-defined]
+            api = FlextLdifAPI()
             result = api._initialize_processor()
 
             assert result.is_failure
@@ -158,7 +159,7 @@ objectClass: inetOrgPerson
             result = api.parse_ldif_file(dir_path)
 
             assert result.is_failure
-            assert result.error and "Is a directory" in result.error
+            assert result.error and "Path exists but is not a file" in result.error
 
     # =============================================================================
     # VALIDATION TESTS
@@ -559,36 +560,38 @@ objectClass: inetOrgPerson
         """Test private logging methods for coverage."""
         entries = [sample_entry]
 
-        # Test _log_parse_success  # type: ignore[attr-defined]
+        # Test _log_parse_success
         api._log_parse_success(entries)
 
-        # Test _log_parse_file_success  # type: ignore[attr-defined]
+        # Test _log_parse_file_success
         api._log_parse_file_success(entries)
 
-        # Test _log_validation_success_with_entries  # type: ignore[attr-defined]
+        # Test _log_validation_success_with_entries
         api._log_validation_success_with_entries(entries)
 
-        # Test _log_write_success  # type: ignore[attr-defined]
+        # Test _log_write_success
         api._log_write_success("ldif content")
 
-        # Test _log_write_file_success  # type: ignore[attr-defined]
+        # Test _log_write_file_success
         api._log_write_file_success(success=True)
 
-        # Test _log_transformation_success  # type: ignore[attr-defined]
+        # Test _log_transformation_success
         api._log_transformation_success(entries)
 
         # Test _log_analysis_success
-        analysis = {"total_entries": 1}  # type: ignore[attr-defined]
-        api._log_analysis_success(cast("dict[str, object]", analysis))
+        analysis = {"total_entries": 1}
+        api._log_analysis_success(cast("FlextLdifTypes.Core.LdifStatistics", analysis))
 
     def test_get_config_summary(self, api: FlextLdifAPI) -> None:
-        """Test _get_config_summary method."""  # type: ignore[attr-defined]
+        """Test _get_config_summary method."""
         summary = api._get_config_summary()
         assert isinstance(summary, dict)
 
-    def test_get_timestamp(self, api: FlextLdifAPI) -> None:
-        """Test _get_timestamp method."""  # type: ignore[attr-defined]
-        timestamp = api._get_timestamp()
+    def test_get_timestamp(self) -> None:
+        """Test timestamp functionality via utilities."""
+        from flext_ldif.utilities import FlextLdifUtilities
+
+        timestamp = FlextLdifUtilities.TimeUtilities.get_timestamp()
         assert isinstance(timestamp, str)
         # Should be in ISO format
         assert "T" in timestamp

@@ -20,7 +20,7 @@ class TestProcessorErrorPaths:
         """Test write_file when OS permission denied."""
         processor = FlextLdifProcessor()
 
-        entry_result = FlextLdifModels.create_entry({
+        entry_result = FlextLdifModels.Entry.create({
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         })
@@ -39,7 +39,7 @@ class TestProcessorErrorPaths:
         processor = FlextLdifProcessor(config)
 
         # Create entry with potentially invalid object class
-        entry_result = FlextLdifModels.create_entry({
+        entry_result = FlextLdifModels.Entry.create({
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {
                 "cn": ["test"],
@@ -96,22 +96,22 @@ objectClass: person
         processor = FlextLdifProcessor()
 
         # Create entries with varied DN depths
-        entries = []
+        entries: list[FlextLdifModels.Entry] = []
         for i in range(3):
             depth = i + 1
             dn_parts = [f"cn=user{i}"] + [f"ou=dept{j}" for j in range(depth)]
             dn = ",".join(dn_parts) + ",dc=example,dc=com"
 
-            entry_result = FlextLdifModels.create_entry({
+            entry_result = FlextLdifModels.Entry.create({
                 "dn": dn,
                 "attributes": {
                     "cn": [f"user{i}"],
                     "objectClass": ["person", "inetOrgPerson"],
                 },
             })
-            if entry_result.is_success:  # type: ignore[attr-defined]
+            if entry_result.is_success:
                 entries.append(entry_result.value)
-  # type: ignore[arg-type]
+
         result = processor.analyze_entries(entries)
         assert result.is_success
 
@@ -120,7 +120,7 @@ objectClass: person
         """Test transformation with None transformer (identity)."""
         processor = FlextLdifProcessor()
 
-        entry_result = FlextLdifModels.create_entry({
+        entry_result = FlextLdifModels.Entry.create({
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         })
@@ -158,7 +158,7 @@ objectClass: person
     def test_write_entry_with_empty_attributes() -> None:
         """Test writing entry with empty attribute values."""
         # Try to create entry with empty attribute list
-        entry_result = FlextLdifModels.create_entry({
+        entry_result = FlextLdifModels.Entry.create({
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {
                 "cn": ["test"],

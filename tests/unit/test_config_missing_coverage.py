@@ -12,6 +12,7 @@ from __future__ import annotations
 import os
 from unittest.mock import patch
 
+from flext_core import FlextTypes
 from flext_ldif import FlextLdifConfig
 
 
@@ -44,17 +45,24 @@ class TestFlextLdifConfigMissingCoverage:
     @staticmethod
     def test_config_validation_with_invalid_data() -> None:
         """Test config validation with invalid configuration data."""
-        # Test with invalid configuration that should fail validation  # type: ignore[assignment]
+        # Test with invalid configuration that should fail validation
         invalid_config_options = [
             {"ldif_max_entries": -1},  # Negative value should be invalid
             {"ldif_encoding": ""},  # Empty encoding should be invalid
-            {"ldif_max_line_length": None},  # None value should be invalid
+            {
+                "ldif_max_line_length": 0
+            },  # Zero value should be invalid (ge=1 constraint)
         ]
-  # type: ignore[assignment]
+
         for invalid_config_data in invalid_config_options:
             try:
-                # Use type: ignore to suppress type checker warnings for intentional invalid data
-                config = FlextLdifConfig(**invalid_config_data)
+                # Intentionally pass invalid data to test validation
+                # Ensure app_name is properly typed as string to avoid type errors
+                config_data: FlextTypes.Core.ConfigDict = {
+                    "app_name": "test-ldif-config",  # Explicitly set app_name as string
+                    **invalid_config_data,
+                }
+                config = FlextLdifConfig(**config_data)
                 # If it doesn't raise during init, test validation method if available
                 if hasattr(config, "model_validate"):
                     try:
@@ -87,17 +95,17 @@ class TestFlextLdifConfigMissingCoverage:
         """Test individual field validators if they exist."""
         config = FlextLdifConfig()
 
-        # Test accessing various configuration fields to trigger validators  # type: ignore[assignment]
+        # Test accessing various configuration fields to trigger validators
         field_access_tests = [
             ("ldif_encoding", "utf-8"),
             ("ldif_max_entries", 1000),
             ("ldif_max_line_length", 8192),
         ]
 
-        for field_name, _test_value in field_access_tests:  # type: ignore[arg-type]
+        for field_name, _test_value in field_access_tests:
             if hasattr(config, field_name):
                 # Try to access the field to trigger any validation
-                try:  # type: ignore[arg-type]
+                try:
                     getattr(config, field_name)
                 except Exception:
                     # If it fails, that's fine - we're testing coverage
@@ -117,17 +125,24 @@ class TestFlextLdifConfigMissingCoverage:
     @staticmethod
     def test_config_validation_error_paths() -> None:
         """Test configuration validation error paths."""
-        # Test various invalid configurations that should trigger different validation errors  # type: ignore[assignment]
+        # Test various invalid configurations that should trigger different validation errors
         invalid_configs = [
-            {"ldif_max_entries": "not_a_number"},  # Type error
-            {"ldif_encoding": 123},  # Wrong type for encoding
-            {"unknown_field": "value"},  # Unknown field
+            {"ldif_max_entries": -1},  # Negative value should be invalid
+            {"ldif_encoding": ""},  # Empty encoding should be invalid
+            {
+                "ldif_max_line_length": 0
+            },  # Zero value should be invalid (ge=1 constraint)
         ]
-  # type: ignore[assignment]
+
         for invalid_config in invalid_configs:
             try:
-                # Use type: ignore to suppress type checker warnings for intentional invalid data  # type: ignore[arg-type]
-                FlextLdifConfig(**invalid_config)
+                # Intentionally pass invalid data to test validation
+                # Ensure app_name is properly typed as string to avoid type errors
+                config_data: FlextTypes.Core.ConfigDict = {
+                    "app_name": "test-ldif-config",  # Explicitly set app_name as string
+                    **invalid_config,
+                }
+                FlextLdifConfig(**config_data)
             except Exception:
                 # Expected - invalid configuration should raise exception
                 # This is intentional for testing error handling
@@ -209,7 +224,7 @@ class TestFlextLdifConfigMissingCoverage:
 
         if hasattr(config, "model_validate"):
             try:
-                # Test validation with context  # type: ignore[assignment]
+                # Test validation with context
                 test_data = {"ldif_max_entries": 1000, "ldif_encoding": "utf-8"}
                 validated = config.model_validate(test_data)
                 assert validated is not None

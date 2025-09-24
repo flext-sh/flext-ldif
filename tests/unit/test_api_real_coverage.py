@@ -38,7 +38,7 @@ class TestFlextLdifAPIRealCoverage:
     @pytest.fixture
     def sample_entries(self) -> list[FlextLdifModels.Entry]:
         """Create sample entries for testing."""
-        entry1_result = FlextLdifModels.create_entry({
+        entry1_result = FlextLdifModels.Entry.create({
             "dn": "cn=test1,dc=example,dc=com",
             "attributes": {
                 "cn": ["test1"],
@@ -46,7 +46,7 @@ class TestFlextLdifAPIRealCoverage:
                 "objectClass": ["person"],
             },
         })
-        entry2_result = FlextLdifModels.create_entry({
+        entry2_result = FlextLdifModels.Entry.create({
             "dn": "cn=test2,dc=example,dc=com",
             "attributes": {
                 "cn": ["test2"],
@@ -255,7 +255,7 @@ objectClass: person
             cn_values = entry.attributes.get_attribute("cn")
             cn_value = cn_values[0] if cn_values else "test"
             new_attrs["mail"] = [f"{cn_value}@example.com"]
-            entry_result = FlextLdifModels.create_entry({
+            entry_result = FlextLdifModels.Entry.create({
                 "dn": entry.dn.value,
                 "attributes": new_attrs,
             })
@@ -418,7 +418,7 @@ objectClass: person
         # Create entries with extreme values that might cause issues using list comprehension
         large_entries: list[FlextLdifModels.Entry] = []
         for i in range(100):  # Reduced size for test performance
-            entry_result = FlextLdifModels.create_entry({
+            entry_result = FlextLdifModels.Entry.create({
                 "dn": f"cn=user{i},dc=example,dc=com",
                 "attributes": {
                     "cn": [f"user{i}"],
@@ -449,7 +449,7 @@ objectClass: person
         assert len(analysis) > 0
 
         # Test with single entry
-        single_entry_result = FlextLdifModels.create_entry({
+        single_entry_result = FlextLdifModels.Entry.create({
             "dn": "cn=single,dc=example,dc=com",
             "attributes": {
                 "cn": ["single"],

@@ -19,8 +19,8 @@ class TestProcessorValidationCoverage:
         processor = FlextLdifProcessor()
 
         # Create DN with newline
-        dn_result = FlextLdifModels.create_dn("cn=test\ndc=example")
-        if dn_result.is_success:  # type: ignore[attr-defined]
+        dn_result = FlextLdifModels.DistinguishedName.create("cn=test\ndc=example")
+        if dn_result.is_success:
             result = processor._LdifValidationHelper.validate_dn_structure(
                 dn_result.value
             )
@@ -33,7 +33,9 @@ class TestProcessorValidationCoverage:
         # DN without = sign is actually invalid and won't parse
         # This documents that line 206-207 are unreachable because
         # DN creation itself requires = signs
-        dn_result = FlextLdifModels.create_dn("cn=test,dc=example,dc=com")
+        dn_result = FlextLdifModels.DistinguishedName.create(
+            "cn=test,dc=example,dc=com"
+        )
         assert dn_result.is_success
 
     @staticmethod
@@ -42,13 +44,13 @@ class TestProcessorValidationCoverage:
         processor = FlextLdifProcessor()
 
         # Create entry missing required attributes
-        entry_result = FlextLdifModels.create_entry({
+        entry_result = FlextLdifModels.Entry.create({
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         })
         assert entry_result.is_success
 
-        # Validate with required attributes it doesn't have  # type: ignore[attr-defined]
+        # Validate with required attributes it doesn't have
         result = processor._LdifValidationHelper.validate_required_attributes(
             entry_result.value, ["sn", "mail"]
         )
@@ -60,7 +62,7 @@ class TestProcessorValidationCoverage:
         """Test required attributes validation when all present."""
         processor = FlextLdifProcessor()
 
-        entry_result = FlextLdifModels.create_entry({
+        entry_result = FlextLdifModels.Entry.create({
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {
                 "cn": ["test"],
@@ -69,7 +71,7 @@ class TestProcessorValidationCoverage:
             },
         })
         assert entry_result.is_success
-  # type: ignore[attr-defined]
+
         result = processor._LdifValidationHelper.validate_required_attributes(
             entry_result.value, ["cn", "sn"]
         )
@@ -109,7 +111,7 @@ objectClass: dcObject
         """Test writing entry with multi-valued attributes."""
         processor = FlextLdifProcessor()
 
-        entry_result = FlextLdifModels.create_entry({
+        entry_result = FlextLdifModels.Entry.create({
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {
                 "cn": ["test", "test2", "test3"],
@@ -117,7 +119,7 @@ objectClass: dcObject
             },
         })
         assert entry_result.is_success
-  # type: ignore[attr-defined]
+
         ldif_output = processor._WriterHelper.format_entry_as_ldif(entry_result.value)
         # Should have multiple cn lines
         assert ldif_output.count("cn:") >= 3
@@ -127,19 +129,19 @@ objectClass: dcObject
         """Test analytics calculation with varied entry types."""
         processor = FlextLdifProcessor()
 
-        entries = []
+        entries: list[FlextLdifModels.Entry] = []
         # Create entries with different characteristics
         for i in range(3):
-            entry_result = FlextLdifModels.create_entry({
+            entry_result = FlextLdifModels.Entry.create({
                 "dn": f"cn=user{i},ou=dept{i % 2},dc=example,dc=com",
                 "attributes": {
                     "cn": [f"user{i}"],
                     "objectClass": ["person"],
                 },
             })
-            if entry_result.is_success:  # type: ignore[attr-defined]
+            if entry_result.is_success:
                 entries.append(entry_result.value)
-  # type: ignore[arg-type]
+
         result = processor._AnalyticsHelper.calculate_entry_statistics(entries)
         assert "total_entries" in result
         assert result["total_entries"] == 3
@@ -151,7 +153,7 @@ objectClass: dcObject
 
         # LDIF with continuation line (space at start)
         content = "dn: cn=test,dc=example,dc=com\ndescription: This is a long\n  description\ncn: test\n"
-  # type: ignore[attr-defined]
+
         result = processor._ParseHelper.process_line_continuation(content)
         # Should join continuation lines
         assert "long description" in result or "long\n  description" in result

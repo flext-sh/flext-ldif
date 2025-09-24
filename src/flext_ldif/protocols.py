@@ -15,6 +15,7 @@ class FlextLdifProtocols(FlextProtocols):
     """LDIF-specific protocols extending flext-core FlextProtocols.
 
     Contains ONLY protocol definitions for duck typing support.
+    Uses flext-core SOURCE OF TRUTH for protocol patterns.
     """
 
     @runtime_checkable
@@ -22,17 +23,21 @@ class FlextLdifProtocols(FlextProtocols):
         """Protocol for LDIF entry objects."""
 
         @property
-        def dn(self) -> object:
+        def dn(self) -> str:
             """Get the distinguished name of the entry."""
             ...
 
         @property
-        def attributes(self) -> object:
+        def attributes(self) -> dict[str, list[str]]:
             """Get the attributes of the entry."""
             ...
 
         def get_attribute(self, name: str) -> list[str] | None:
             """Get attribute values by name."""
+            ...
+
+        def has_attribute(self, name: str) -> bool:
+            """Check if entry has specified attribute."""
             ...
 
         def has_object_class(self, object_class: str) -> bool:

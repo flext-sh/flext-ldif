@@ -40,6 +40,7 @@ from pathlib import Path
 from flext_core import FlextLogger
 from flext_ldif import FlextLdifAPI, FlextLdifModels
 from flext_ldif.config import FlextLdifConfig
+from flext_ldif.typings import FlextLdifTypes
 
 logger = FlextLogger(__name__)
 
@@ -68,7 +69,7 @@ def main() -> None:
         return
 
     # Display basic statistics with railway programming
-    def display_stats(stats: dict[str, object]) -> None:
+    def display_stats(stats: FlextLdifTypes.Core.LdifStatistics) -> None:
         for _key, _value in stats.items():
             pass
 

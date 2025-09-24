@@ -18,7 +18,7 @@ class TestProcessorLongLines:
         # Create a very long description value (>76 chars to trigger wrapping)
         long_description = "A" * 200  # 200 character long value
 
-        entry_result = FlextLdifModels.create_entry({
+        entry_result = FlextLdifModels.Entry.create({
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {
                 "cn": ["test"],
@@ -43,7 +43,7 @@ class TestProcessorLongLines:
         long_value1 = "B" * 150
         long_value2 = "C" * 180
 
-        entry_result = FlextLdifModels.create_entry({
+        entry_result = FlextLdifModels.Entry.create({
             "dn": "cn=longtest,dc=example,dc=com",
             "attributes": {
                 "cn": ["longtest"],
@@ -94,7 +94,7 @@ objectClass: person
             + ",dc=example,dc=com"
         )
 
-        entry_result = FlextLdifModels.create_entry({
+        entry_result = FlextLdifModels.Entry.create({
             "dn": long_dn,
             "attributes": {
                 "cn": ["user"],

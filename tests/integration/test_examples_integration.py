@@ -87,11 +87,11 @@ class TestTransformationWorkflow:
     def test_transformation_workflow() -> None:
         """Test entry transformation workflow."""
         # Create sample entries
-        entry1_result = FlextLdifModels.create_entry({
+        entry1_result = FlextLdifModels.Entry.create({
             "dn": "cn=test1,dc=example,dc=com",
             "attributes": {"cn": ["test1"], "objectClass": ["person"]},
         })
-        entry2_result = FlextLdifModels.create_entry({
+        entry2_result = FlextLdifModels.Entry.create({
             "dn": "cn=test2,dc=example,dc=com",
             "attributes": {"cn": ["test2"], "objectClass": ["person"]},
         })
@@ -109,7 +109,7 @@ class TestTransformationWorkflow:
             # Create new attributes dict with uppercased cn
             new_attrs_data = {**entry.attributes.data, "cn": new_cn_values}
             # Create new entry with transformed attributes
-            new_entry_result = FlextLdifModels.create_entry({
+            new_entry_result = FlextLdifModels.Entry.create({
                 "dn": entry.dn.value,
                 "attributes": new_attrs_data,
             })
@@ -135,9 +135,9 @@ class TestAnalyticsWorkflow:
     def test_analytics_workflow() -> None:
         """Test entry analytics workflow."""
         # Create diverse entries
-        entries = []
+        entries: list[FlextLdifModels.Entry] = []
         for i in range(5):
-            entry_result = FlextLdifModels.create_entry({
+            entry_result = FlextLdifModels.Entry.create({
                 "dn": f"cn=user{i},ou=people,dc=example,dc=com",
                 "attributes": {
                     "cn": [f"user{i}"],
@@ -145,15 +145,15 @@ class TestAnalyticsWorkflow:
                     "mail": [f"user{i}@example.com"],
                 },
             })
-            if entry_result.is_success:  # type: ignore[attr-defined]
+            if entry_result.is_success:
                 entries.append(entry_result.value)
 
         # Analyze entries
-        api = FlextLdifAPI()  # type: ignore[arg-type]
+        api = FlextLdifAPI()
         analyze_result = api.analyze(entries)
         assert analyze_result.is_success
 
-        # Verify analytics  # type: ignore[arg-type]
+        # Verify analytics
         stats_result = api.entry_statistics(entries)
         assert stats_result.is_success
         stats = stats_result.value
@@ -175,7 +175,7 @@ class TestValidationWorkflow:
     def test_validation_workflow() -> None:
         """Test entry validation workflow."""
         # Create valid entry with required attributes for person
-        valid_entry_result = FlextLdifModels.create_entry({
+        valid_entry_result = FlextLdifModels.Entry.create({
             "dn": "cn=valid,dc=example,dc=com",
             "attributes": {
                 "cn": ["valid"],
@@ -203,11 +203,11 @@ class TestFilteringWorkflow:
     def test_object_class_filtering() -> None:
         """Test filtering by object class."""
         # Create mixed entries
-        person_result = FlextLdifModels.create_entry({
+        person_result = FlextLdifModels.Entry.create({
             "dn": "cn=person1,dc=example,dc=com",
             "attributes": {"cn": ["person1"], "objectClass": ["person"]},
         })
-        ou_result = FlextLdifModels.create_entry({
+        ou_result = FlextLdifModels.Entry.create({
             "dn": "ou=group,dc=example,dc=com",
             "attributes": {"ou": ["group"], "objectClass": ["organizationalUnit"]},
         })
@@ -228,11 +228,11 @@ class TestFilteringWorkflow:
     def test_custom_filtering() -> None:
         """Test custom filtering with predicate."""
         # Create entries with different depths
-        shallow_result = FlextLdifModels.create_entry({
+        shallow_result = FlextLdifModels.Entry.create({
             "dn": "dc=com",
             "attributes": {"dc": ["com"], "objectClass": ["dcObject"]},
         })
-        deep_result = FlextLdifModels.create_entry({
+        deep_result = FlextLdifModels.Entry.create({
             "dn": "cn=test,ou=users,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         })

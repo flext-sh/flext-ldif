@@ -24,14 +24,14 @@ class TestFlextLdifProcessorComprehensive:
         config = FlextLdifConfig(ldif_max_entries=5000)
         processor = FlextLdifProcessor(config=config)
 
-        assert processor is not None  # type: ignore[attr-defined]
+        assert processor is not None
         assert processor._config == config
 
     def test_processor_initialization_without_config(self) -> None:
         """Test processor initialization without config."""
         processor = FlextLdifProcessor()
 
-        assert processor is not None  # type: ignore[attr-defined]
+        assert processor is not None
         assert processor._config is None
 
     def test_execute_method(self) -> None:
@@ -162,7 +162,7 @@ objectClass: person"""
         assert result.is_failure
         assert result.error and (
             "Failed to read file" in result.error
-            or "Cannot create directory" in result.error
+            or "Permission denied creating directory" in result.error
         )
 
     def test_parse_ldif_file_unicode_decode_error(self) -> None:
@@ -190,12 +190,12 @@ objectClass: person"""
         assert result.error and "No entries to validate" in result.error
 
     def test_validate_entries_valid(self) -> None:
-        """Test validating valid entries."""  # type: ignore[assignment]
+        """Test validating valid entries."""
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"], "sn": ["Test"]},
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_success
@@ -207,10 +207,10 @@ objectClass: person"""
 
     def test_validate_entries_invalid_dn(self) -> None:
         """Test validating entries with invalid DN."""
-        # Create entry with invalid DN (no = sign)  # type: ignore[assignment]
+        # Create entry with invalid DN (no = sign)
         entry_data = {"dn": "invalid_dn_format", "attributes": {"cn": ["test"]}}
         # This should fail at entry creation level
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_failure
@@ -224,12 +224,12 @@ objectClass: person"""
         assert not result.value
 
     def test_write_string_single_entry(self) -> None:
-        """Test writing single entry to string."""  # type: ignore[assignment]
+        """Test writing single entry to string."""
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_success
@@ -244,9 +244,9 @@ objectClass: person"""
     def test_write_string_with_line_wrapping(self) -> None:
         """Test writing with line wrapping enabled."""
         processor = FlextLdifProcessor()
-  # type: ignore[assignment]
+
         entry_data = {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_success
@@ -255,9 +255,9 @@ objectClass: person"""
         assert result.is_success
 
     def test_write_file_success(self) -> None:
-        """Test writing entries to file successfully."""  # type: ignore[assignment]
+        """Test writing entries to file successfully."""
         entry_data = {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_success
@@ -278,9 +278,9 @@ objectClass: person"""
             Path(temp_path).unlink()
 
     def test_write_file_permission_error(self) -> None:
-        """Test writing to path without permissions."""  # type: ignore[assignment]
+        """Test writing to path without permissions."""
         entry_data = {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_success
@@ -306,9 +306,9 @@ objectClass: person"""
         assert result.value == []
 
     def test_transform_entries_identity(self) -> None:
-        """Test transforming entries with identity function."""  # type: ignore[assignment]
+        """Test transforming entries with identity function."""
         entry_data = {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_success
@@ -320,9 +320,9 @@ objectClass: person"""
         assert len(result.value) == 1
 
     def test_transform_entries_with_exception(self) -> None:
-        """Test transformation with failing transformer."""  # type: ignore[assignment]
+        """Test transformation with failing transformer."""
         entry_data = {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_success
@@ -347,9 +347,9 @@ objectClass: person"""
         assert result.value["entry_count"] == 0
 
     def test_analyze_entries_small_count(self) -> None:
-        """Test analyzing small number of entries (basic analysis)."""  # type: ignore[assignment]
+        """Test analyzing small number of entries (basic analysis)."""
         entry_data = {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_success
@@ -364,21 +364,21 @@ objectClass: person"""
 
     def test_analyze_entries_comprehensive(self) -> None:
         """Test comprehensive analysis with many entries."""
-        entries = []
+        entries: list[FlextLdifModels.Entry] = []
         # Create enough entries to trigger comprehensive analysis (use 100 to be safe)
-        for i in range(100):  # Above MIN_ENTRY_COUNT_FOR_ANALYTICS  # type: ignore[assignment]
+        for i in range(100):  # Above MIN_ENTRY_COUNT_FOR_ANALYTICS
             entry_data = {
                 "dn": f"cn=user{i},dc=example,dc=com",
                 "attributes": {"cn": [f"user{i}"], "objectClass": ["person"]},
             }
-            entry_result = FlextLdifModels.create_entry(
+            entry_result = FlextLdifModels.Entry.create(
                 cast("dict[str, object]", entry_data)
             )
             assert entry_result.is_success
-            entry: FlextLdifModels.Entry = entry_result.value  # type: ignore[attr-defined]
+            entry: FlextLdifModels.Entry = entry_result.value
             entries.append(entry)
 
-        processor = FlextLdifProcessor()  # type: ignore[arg-type]
+        processor = FlextLdifProcessor()
         result = processor.analyze_entries(entries)
 
         assert result.is_success
@@ -390,9 +390,9 @@ objectClass: person"""
     def test_analyze_entries_exception(self) -> None:
         """Test analysis with exception."""
         processor = FlextLdifProcessor()
-  # type: ignore[assignment]
+
         entry_data = {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
-        entry_result = FlextLdifModels.create_entry(
+        entry_result = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         )
         assert entry_result.is_success
@@ -414,19 +414,19 @@ objectClass: person"""
         assert result.value == []
 
     def test_filter_entries_by_dn_pattern_success(self) -> None:
-        """Test filtering entries by DN pattern successfully."""  # type: ignore[assignment]
+        """Test filtering entries by DN pattern successfully."""
         entry1_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"]},
-        }  # type: ignore[assignment]
+        }
         entry2_data = {
             "dn": "cn=user,dc=example,dc=com",
             "attributes": {"cn": ["user"]},
         }
-        entry1 = FlextLdifModels.create_entry(
+        entry1 = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry1_data)
         ).value
-        entry2 = FlextLdifModels.create_entry(
+        entry2 = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry2_data)
         ).value
 
@@ -438,9 +438,9 @@ objectClass: person"""
         assert result.value[0].dn.value == "cn=test,dc=example,dc=com"
 
     def test_filter_entries_by_dn_pattern_invalid_regex(self) -> None:
-        """Test filtering with invalid regex pattern."""  # type: ignore[assignment]
+        """Test filtering with invalid regex pattern."""
         entry_data = {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
-        entry = FlextLdifModels.create_entry(
+        entry = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         ).value
 
@@ -459,19 +459,19 @@ objectClass: person"""
         assert result.value == []
 
     def test_filter_entries_by_object_class_success(self) -> None:
-        """Test filtering entries by object class successfully."""  # type: ignore[assignment]
+        """Test filtering entries by object class successfully."""
         person_data = {
             "dn": "cn=person,dc=example,dc=com",
             "attributes": {"cn": ["person"], "objectClass": ["person"]},
-        }  # type: ignore[assignment]
+        }
         group_data = {
             "dn": "cn=group,dc=example,dc=com",
             "attributes": {"cn": ["group"], "objectClass": ["groupOfNames"]},
         }
-        person_entry = FlextLdifModels.create_entry(
+        person_entry = FlextLdifModels.Entry.create(
             cast("dict[str, object]", person_data)
         ).value
-        group_entry = FlextLdifModels.create_entry(
+        group_entry = FlextLdifModels.Entry.create(
             cast("dict[str, object]", group_data)
         ).value
 
@@ -485,9 +485,9 @@ objectClass: person"""
         assert result.value[0].dn.value == "cn=person,dc=example,dc=com"
 
     def test_get_entry_by_dn_found(self) -> None:
-        """Test getting entry by DN when found."""  # type: ignore[assignment]
+        """Test getting entry by DN when found."""
         entry_data = {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
-        entry = FlextLdifModels.create_entry(
+        entry = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         ).value
 
@@ -499,9 +499,9 @@ objectClass: person"""
         assert result.value.dn.value == "cn=test,dc=example,dc=com"
 
     def test_get_entry_by_dn_not_found(self) -> None:
-        """Test getting entry by DN when not found."""  # type: ignore[assignment]
+        """Test getting entry by DN when not found."""
         entry_data = {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
-        entry = FlextLdifModels.create_entry(
+        entry = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         ).value
 
@@ -520,19 +520,19 @@ objectClass: person"""
         assert result.value == []
 
     def test_get_entries_by_attribute_found(self) -> None:
-        """Test getting entries by attribute when found."""  # type: ignore[assignment]
+        """Test getting entries by attribute when found."""
         entry1_data = {
             "dn": "cn=test1,dc=example,dc=com",
             "attributes": {"cn": ["test"], "mail": ["test@example.com"]},
-        }  # type: ignore[assignment]
+        }
         entry2_data = {
             "dn": "cn=test2,dc=example,dc=com",
             "attributes": {"cn": ["other"], "mail": ["other@example.com"]},
         }
-        entry1 = FlextLdifModels.create_entry(
+        entry1 = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry1_data)
         ).value
-        entry2 = FlextLdifModels.create_entry(
+        entry2 = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry2_data)
         ).value
 
@@ -552,12 +552,12 @@ objectClass: person"""
         assert result.value["status"] == "no_entries"
 
     def test_validate_schema_compliance_with_rules(self) -> None:
-        """Test schema compliance validation with rules."""  # type: ignore[assignment]
+        """Test schema compliance validation with rules."""
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"], "sn": ["Test"]},
         }
-        entry = FlextLdifModels.create_entry(
+        entry = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         ).value
 
@@ -586,9 +586,9 @@ objectClass: person"""
         assert result.value == []
 
     def test_merge_entries_first_empty(self) -> None:
-        """Test merging with first list empty."""  # type: ignore[assignment]
+        """Test merging with first list empty."""
         entry_data = {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
-        entry = FlextLdifModels.create_entry(
+        entry = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         ).value
 
@@ -599,9 +599,9 @@ objectClass: person"""
         assert len(result.value) == 1
 
     def test_merge_entries_second_empty(self) -> None:
-        """Test merging with second list empty."""  # type: ignore[assignment]
+        """Test merging with second list empty."""
         entry_data = {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
-        entry = FlextLdifModels.create_entry(
+        entry = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         ).value
 
@@ -612,19 +612,19 @@ objectClass: person"""
         assert len(result.value) == 1
 
     def test_merge_entries_with_duplicates_no_overwrite(self) -> None:
-        """Test merging entries with duplicates without overwriting."""  # type: ignore[assignment]
+        """Test merging entries with duplicates without overwriting."""
         entry1_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test1"]},
-        }  # type: ignore[assignment]
+        }
         entry2_data = {
             "dn": "cn=test,dc=example,dc=com",  # Same DN
             "attributes": {"cn": ["test2"]},
         }
-        entry1 = FlextLdifModels.create_entry(
+        entry1 = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry1_data)
         ).value
-        entry2 = FlextLdifModels.create_entry(
+        entry2 = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry2_data)
         ).value
 
@@ -636,19 +636,19 @@ objectClass: person"""
         assert result.value[0].get_attribute("cn") == ["test1"]  # Original kept
 
     def test_merge_entries_with_duplicates_overwrite(self) -> None:
-        """Test merging entries with duplicates with overwriting."""  # type: ignore[assignment]
+        """Test merging entries with duplicates with overwriting."""
         entry1_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test1"]},
-        }  # type: ignore[assignment]
+        }
         entry2_data = {
             "dn": "cn=test,dc=example,dc=com",  # Same DN
             "attributes": {"cn": ["test2"]},
         }
-        entry1 = FlextLdifModels.create_entry(
+        entry1 = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry1_data)
         ).value
-        entry2 = FlextLdifModels.create_entry(
+        entry2 = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry2_data)
         ).value
 
@@ -669,11 +669,11 @@ objectClass: person"""
         assert "summary" in result.value
 
     def test_detect_patterns_with_entries(self) -> None:
-        """Test pattern detection with actual entries."""  # type: ignore[assignment]
+        """Test pattern detection with actual entries."""
         entry1_data = {
             "dn": "cn=test1,ou=people,dc=example,dc=com",
             "attributes": {"cn": ["test1"], "objectClass": ["person", "inetOrgPerson"]},
-        }  # type: ignore[assignment]
+        }
         entry2_data = {
             "dn": "cn=test2,ou=people,dc=example,dc=com",
             "attributes": {
@@ -682,10 +682,10 @@ objectClass: person"""
                 "mail": ["test2@example.com"],
             },
         }
-        entry1 = FlextLdifModels.create_entry(
+        entry1 = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry1_data)
         ).value
-        entry2 = FlextLdifModels.create_entry(
+        entry2 = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry2_data)
         ).value
 
@@ -707,12 +707,12 @@ objectClass: person"""
         assert result.value["status"] == "no_entries"
 
     def test_generate_quality_report_with_entries(self) -> None:
-        """Test quality report generation with entries."""  # type: ignore[assignment]
+        """Test quality report generation with entries."""
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test"], "objectClass": ["person"], "sn": ["Test"]},
         }
-        entry = FlextLdifModels.create_entry(
+        entry = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         ).value
 
@@ -729,14 +729,14 @@ objectClass: person"""
     def test_generate_quality_report_exception(self) -> None:
         """Test quality report generation with exception."""
         processor = FlextLdifProcessor()
-  # type: ignore[assignment]
+
         entry_data = {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
-        entry = FlextLdifModels.create_entry(
+        entry = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         ).value
 
         # Mock the quality metrics calculation to raise an exception
-        with patch.object(  # type: ignore[attr-defined]
+        with patch.object(
             processor._AnalyticsHelper, "calculate_quality_metrics"
         ) as mock_method:
             mock_method.side_effect = RuntimeError("Quality calculation failed")
@@ -789,14 +789,14 @@ objectClass: person"""
 
     def test_validate_file_path_nonexistent_parent(self) -> None:
         """Test file path validation with nonexistent parent directory."""
-        test_path = Path("/nonexistent/deeply/nested/path/test.ldif")  # type: ignore[attr-defined]
+        test_path = Path("/nonexistent/deeply/nested/path/test.ldif")
         result = FlextLdifProcessor._validate_file_path(test_path)
 
         # Should fail because we can't create the deeply nested path
         assert result.is_failure
         assert result.error and (
-            "Cannot create directory" in result.error
-            or "No write permission" in result.error
+            "Permission denied creating directory" in result.error
+            or "Failed to create directory" in result.error
         )
 
     def test_validate_file_path_existing_file_readonly(self) -> None:
@@ -807,12 +807,12 @@ objectClass: person"""
         try:
             # Make file readonly
             temp_path.chmod(0o444)
-  # type: ignore[attr-defined]
+
             result = FlextLdifProcessor._validate_file_path(temp_path)
 
             # Should fail because file is readonly
             assert result.is_failure
-            assert result.error and "No write permission for file" in result.error
+            assert result.error and "File is not writable" in result.error
         finally:
             temp_path.chmod(0o644)  # Restore permissions to delete
             temp_path.unlink()
@@ -821,30 +821,30 @@ objectClass: person"""
         """Test getting required attributes for object classes."""
         processor = FlextLdifProcessor()
 
-        # Test person class  # type: ignore[attr-defined]
+        # Test person class
         attrs = processor._get_required_attributes_for_classes(["person"])
         assert "cn" in attrs
         assert "sn" in attrs
 
-        # Test organizationalunit class  # type: ignore[attr-defined]
+        # Test organizationalunit class
         attrs = processor._get_required_attributes_for_classes(["organizationalunit"])
         assert "ou" in attrs
 
-        # Test groupofnames class  # type: ignore[attr-defined]
+        # Test groupofnames class
         attrs = processor._get_required_attributes_for_classes(["groupofnames"])
         assert "cn" in attrs
         assert "member" in attrs
 
-        # Test unknown class  # type: ignore[attr-defined]
+        # Test unknown class
         attrs = processor._get_required_attributes_for_classes(["unknownclass"])
         assert attrs == []
 
     def test_count_empty_attributes(self) -> None:
-        """Test counting entries with empty attributes."""  # type: ignore[assignment]
+        """Test counting entries with empty attributes."""
         entry1_data = {
             "dn": "cn=test1,dc=example,dc=com",
             "attributes": {"cn": ["test1"], "description": [""]},  # Empty description
-        }  # type: ignore[assignment]
+        }
         entry2_data = {
             "dn": "cn=test2,dc=example,dc=com",
             "attributes": {
@@ -852,24 +852,24 @@ objectClass: person"""
                 "mail": ["test@example.com"],
             },  # No empty attrs
         }
-        entry1 = FlextLdifModels.create_entry(
+        entry1 = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry1_data)
         ).value
-        entry2 = FlextLdifModels.create_entry(
+        entry2 = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry2_data)
         ).value
 
-        processor = FlextLdifProcessor()  # type: ignore[attr-defined]
+        processor = FlextLdifProcessor()
         count = processor._count_empty_attributes([entry1, entry2])
 
         assert count == 1  # Only entry1 has empty attribute
 
     def test_count_missing_object_classes(self) -> None:
-        """Test counting entries missing objectClass."""  # type: ignore[assignment]
+        """Test counting entries missing objectClass."""
         entry1_data = {
             "dn": "cn=test1,dc=example,dc=com",
             "attributes": {"cn": ["test1"]},  # No objectClass
-        }  # type: ignore[assignment]
+        }
         entry2_data = {
             "dn": "cn=test2,dc=example,dc=com",
             "attributes": {
@@ -877,43 +877,43 @@ objectClass: person"""
                 "objectClass": ["person"],
             },  # Has objectClass
         }
-        entry1 = FlextLdifModels.create_entry(
+        entry1 = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry1_data)
         ).value
-        entry2 = FlextLdifModels.create_entry(
+        entry2 = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry2_data)
         ).value
 
-        processor = FlextLdifProcessor()  # type: ignore[attr-defined]
+        processor = FlextLdifProcessor()
         count = processor._count_missing_object_classes([entry1, entry2])
 
         assert count == 1  # Only entry1 missing objectClass
 
     def test_count_duplicate_dns(self) -> None:
-        """Test counting duplicate DN entries."""  # type: ignore[assignment]
+        """Test counting duplicate DN entries."""
         entry1_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {"cn": ["test1"]},
-        }  # type: ignore[assignment]
+        }
         entry2_data = {
             "dn": "cn=test,dc=example,dc=com",  # Same DN
             "attributes": {"cn": ["test2"]},
-        }  # type: ignore[assignment]
+        }
         entry3_data = {
             "dn": "cn=unique,dc=example,dc=com",  # Unique DN
             "attributes": {"cn": ["unique"]},
         }
-        entry1 = FlextLdifModels.create_entry(
+        entry1 = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry1_data)
         ).value
-        entry2 = FlextLdifModels.create_entry(
+        entry2 = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry2_data)
         ).value
-        entry3 = FlextLdifModels.create_entry(
+        entry3 = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry3_data)
         ).value
 
-        processor = FlextLdifProcessor()  # type: ignore[attr-defined]
+        processor = FlextLdifProcessor()
         count = processor._count_duplicate_dns([entry1, entry2, entry3])
 
         assert count == 1  # One duplicate (3 total - 2 unique = 1 duplicate)
@@ -921,17 +921,17 @@ objectClass: person"""
     def test_count_invalid_dns(self) -> None:
         """Test counting invalid DN entries."""
         # This test verifies the private method exists and can be called
-        # In practice, invalid DNs would be caught during entry creation  # type: ignore[assignment]
+        # In practice, invalid DNs would be caught during entry creation
         entry_data = {
             "dn": "cn=valid,dc=example,dc=com",
             "attributes": {"cn": ["valid"]},
         }
-        entry = FlextLdifModels.create_entry(
+        entry = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         ).value
 
         processor = FlextLdifProcessor()
-        # All our entries should be valid since they passed model validation  # type: ignore[attr-defined]
+        # All our entries should be valid since they passed model validation
         count = processor._count_invalid_dns([entry])
 
         assert count == 0  # All entries have valid DNs
@@ -942,14 +942,14 @@ objectClass: person"""
 description: This is a long line that
  continues on the next line
 cn: test"""
-  # type: ignore[attr-defined]
+
         processed = FlextLdifProcessor._ParseHelper.process_line_continuation(content)
 
         assert "This is a long line thatcontinues on the next line" in processed
 
     def test_writer_helper_apply_line_wrapping(self) -> None:
         """Test line wrapping application."""
-        long_line = "a" * 100  # Long line that should be wrapped  # type: ignore[attr-defined]
+        long_line = "a" * 100  # Long line that should be wrapped
         wrapped = FlextLdifProcessor._WriterHelper.apply_line_wrapping(
             long_line, max_line_length=50
         )
@@ -961,22 +961,22 @@ cn: test"""
         )  # Each line should be <= 51 (50 + possible leading space)
 
     def test_analytics_helper_analyze_dn_patterns(self) -> None:
-        """Test DN pattern analysis."""  # type: ignore[assignment]
+        """Test DN pattern analysis."""
         entry1_data = {
             "dn": "cn=user1,ou=people,dc=example,dc=com",
             "attributes": {"cn": ["user1"]},
-        }  # type: ignore[assignment]
+        }
         entry2_data = {
             "dn": "cn=user2,ou=people,dc=example,dc=com",
             "attributes": {"cn": ["user2"]},
         }
-        entry1 = FlextLdifModels.create_entry(
+        entry1 = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry1_data)
         ).value
-        entry2 = FlextLdifModels.create_entry(
+        entry2 = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry2_data)
         ).value
-  # type: ignore[attr-defined]
+
         analysis = FlextLdifProcessor._AnalyticsHelper.analyze_dn_patterns([
             entry1,
             entry2,
@@ -992,14 +992,14 @@ cn: test"""
         block = """dn: cn=test,dc=example,dc=com
 invalid_line_without_colon
 cn: test"""
-  # type: ignore[attr-defined]
+
         result = FlextLdifProcessor._ParseHelper.process_entry_block(block)
 
         # Should still succeed, invalid lines are skipped
         assert result.is_success
 
     def test_validation_helper_validate_object_classes_missing(self) -> None:
-        """Test object class validation with missing required classes."""  # type: ignore[assignment]
+        """Test object class validation with missing required classes."""
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {
@@ -1007,10 +1007,10 @@ cn: test"""
                 "objectClass": ["inetOrgPerson"],
             },  # Missing "person"
         }
-        entry = FlextLdifModels.create_entry(
+        entry = FlextLdifModels.Entry.create(
             cast("dict[str, object]", entry_data)
         ).value
-  # type: ignore[attr-defined]
+
         result = FlextLdifProcessor._LdifValidationHelper.validate_object_classes(
             entry, ["person"]
         )

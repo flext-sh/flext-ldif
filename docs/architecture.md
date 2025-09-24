@@ -271,7 +271,7 @@ class FlextLdifModels:
         """Factory for creating domain entities."""
 
         @staticmethod
-        def create_entry(dn: str, attributes: dict[str, list[str]]) -> Entry:
+        def create(data: dict[str, object] | str, attributes: dict[str, list[str]] | None = None) -> Entry:
             """Create LDIF entry with validation."""
             return FlextLdifModels.Entry(dn=dn, attributes=attributes)
 ```

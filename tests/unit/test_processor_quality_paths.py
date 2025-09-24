@@ -21,7 +21,7 @@ class TestProcessorQualityPaths:
         # Create entries with duplicate DNs
         entries: list[FlextLdifModels.Entry] = []
         for _ in range(2):
-            entry_result = FlextLdifModels.create_entry({
+            entry_result = FlextLdifModels.Entry.create({
                 "dn": "cn=duplicate,dc=example,dc=com",
                 "attributes": {
                     "cn": ["duplicate"],
@@ -31,11 +31,11 @@ class TestProcessorQualityPaths:
             if entry_result.is_success:
                 entries.append(entry_result.value)
 
-        # Quality check should detect duplicates  # type: ignore[attr-defined]
+        # Quality check should detect duplicates
         quality_data = processor._AnalyticsHelper.calculate_quality_metrics(entries)
         assert "issues" in quality_data
         issues_obj = quality_data.get("issues", [])
-        assert isinstance(issues_obj, list)  # type: ignore[assignment]
+        assert isinstance(issues_obj, list)
         issues: list[str] = issues_obj
         assert any("Duplicate DNs" in str(issue) for issue in issues)
 
@@ -47,7 +47,7 @@ class TestProcessorQualityPaths:
         # Create entries without objectClass
         entries: list[FlextLdifModels.Entry] = []
         for i in range(5):
-            entry_result = FlextLdifModels.create_entry({
+            entry_result = FlextLdifModels.Entry.create({
                 "dn": f"cn=user{i},dc=example,dc=com",
                 "attributes": {
                     "cn": [f"user{i}"],
@@ -56,11 +56,11 @@ class TestProcessorQualityPaths:
             if entry_result.is_success:
                 entries.append(entry_result.value)
 
-        # Quality check should detect missing objectClass  # type: ignore[attr-defined]
+        # Quality check should detect missing objectClass
         quality_data = processor._AnalyticsHelper.calculate_quality_metrics(entries)
         assert "issues" in quality_data
         issues_obj = quality_data.get("issues", [])
-        assert isinstance(issues_obj, list)  # type: ignore[assignment]
+        assert isinstance(issues_obj, list)
         issues: list[str] = issues_obj
         assert any("objectClass" in str(issue) for issue in issues)
 
@@ -72,7 +72,7 @@ class TestProcessorQualityPaths:
         # Create entries with only 1 attribute each
         entries: list[FlextLdifModels.Entry] = []
         for i in range(5):
-            entry_result = FlextLdifModels.create_entry({
+            entry_result = FlextLdifModels.Entry.create({
                 "dn": f"cn=minimal{i},dc=example,dc=com",
                 "attributes": {
                     "cn": [f"minimal{i}"],
@@ -81,11 +81,11 @@ class TestProcessorQualityPaths:
             if entry_result.is_success:
                 entries.append(entry_result.value)
 
-        # Quality check should detect minimal attributes  # type: ignore[attr-defined]
+        # Quality check should detect minimal attributes
         quality_data = processor._AnalyticsHelper.calculate_quality_metrics(entries)
         assert "issues" in quality_data
         issues_obj = quality_data.get("issues", [])
-        assert isinstance(issues_obj, list)  # type: ignore[assignment]
+        assert isinstance(issues_obj, list)
         issues: list[str] = issues_obj
         assert any("few attributes" in str(issue) for issue in issues)
 
@@ -97,7 +97,7 @@ class TestProcessorQualityPaths:
         # Create first set of entries
         entries1: list[FlextLdifModels.Entry] = []
         for i in range(2):
-            entry_result = FlextLdifModels.create_entry({
+            entry_result = FlextLdifModels.Entry.create({
                 "dn": f"cn=user{i},dc=example,dc=com",
                 "attributes": {
                     "cn": [f"user{i}"],
@@ -110,7 +110,7 @@ class TestProcessorQualityPaths:
         # Create second set with different DNs
         entries2: list[FlextLdifModels.Entry] = []
         for i in range(2, 4):
-            entry_result = FlextLdifModels.create_entry({
+            entry_result = FlextLdifModels.Entry.create({
                 "dn": f"cn=user{i},dc=example,dc=com",
                 "attributes": {
                     "cn": [f"user{i}"],
