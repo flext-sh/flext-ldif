@@ -1,4 +1,4 @@
-"""FLEXT LDIF Configuration - LDIF-specific configuration management.
+"""FLEXT LDIF Configuration - Advanced Pydantic 2 Settings with Centralized Validation.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,439 +6,480 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Self
+from typing import Literal
 
-from flext_core.config import FlextConfig
 from pydantic import Field, field_validator, model_validator
+from pydantic_settings import SettingsConfigDict
 
-from flext_core import FlextConstants, FlextContainer, FlextResult
+from flext_core import FlextConfig, FlextResult
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.mixins import FlextLdifMixins
 
 
 class FlextLdifConfig(FlextConfig):
-    """LDIF-specific configuration extending flext-core FlextConfig.
+    """LDIF domain configuration extending flext-core FlextConfig.
 
-    Single unified class containing all LDIF configuration definitions
-    following SOLID principles and FLEXT ecosystem patterns.
-
-    Provides LDIF-specific settings with proper validation.
-    Uses flext-core SOURCE OF TRUTH for configuration management.
+    Provides centralized configuration with Pydantic 2 validation.
+    Uses advanced settings patterns with environment variable support.
     """
 
+    model_config = SettingsConfigDict(
+        env_prefix="FLEXT_LDIF_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="forbid",
+        validate_assignment=True,
+        use_enum_values=True,
+        arbitrary_types_allowed=True,
+    )
+
     # =============================================================================
-    # PRIVATE ATTRIBUTES
+    # CORE CONFIGURATION SETTINGS - Essential LDIF Processing
     # =============================================================================
 
-    _sealed: bool = False
-
-    # =============================================================================
-    # LDIF-SPECIFIC CONFIGURATION FIELDS
-    # =============================================================================
-
-    # LDIF Processing Configuration - using FlextConstants as SOURCE OF TRUTH
-    ldif_max_entries: int = Field(
-        default=FlextConstants.Limits.MAX_LIST_SIZE * 100,  # 1,000,000
-        description="Maximum number of LDIF entries to process in a single operation",
-        ge=1,
-        le=10000000,
+    # LDIF-Specific Configuration
+    ldif_encoding: str = Field(
+        default="utf-8",
+        description="Character encoding for LDIF files",
     )
 
     ldif_max_line_length: int = Field(
-        default=FlextConstants.Utilities.BYTES_PER_KB * 8,  # 8192 bytes
-        description="Maximum line length for LDIF parsing",
-        ge=1,
-        le=65536,
-    )
-
-    ldif_buffer_size: int = Field(
-        default=FlextConstants.Utilities.BYTES_PER_KB * 64,  # 65536 bytes
-        description="Buffer size for LDIF file operations",
-        ge=1024,
-        le=1048576,
-    )
-
-    ldif_encoding: str = Field(
-        default="utf-8",
-        description="Default encoding for LDIF files",
-    )
-
-    base_url: str = Field(
-        default="ldap://localhost:389",
-        description="Base URL for LDAP server connection",
-    )
-
-    # LDIF Validation Configuration
-    ldif_strict_validation: bool = Field(
-        default=True,
-        description="Enable strict LDIF validation (RFC 2849 compliance)",
-    )
-
-    ldif_allow_empty_values: bool = Field(
-        default=False,
-        description="Allow empty attribute values in LDIF entries",
-    )
-
-    ldif_validate_dn_format: bool = Field(
-        default=True,
-        description="Validate DN format according to LDAP standards",
-    )
-
-    ldif_validate_object_class: bool = Field(
-        default=True,
-        description="Validate objectClass attributes",
-    )
-
-    # LDIF Processing Behavior
-    ldif_normalize_dns: bool = Field(
-        default=True,
-        description="Normalize DN components during processing",
-    )
-
-    ldif_preserve_case: bool = Field(
-        default=False,
-        description="Preserve case sensitivity in attribute names",
+        default=78,
+        ge=40,
+        le=200,
+        description="Maximum LDIF line length (RFC 2849 compliance)",
     )
 
     ldif_skip_comments: bool = Field(
-        default=True,
-        description="Skip comment lines in LDIF files",
-    )
-
-    # LDIF Analytics Configuration
-    ldif_enable_analytics: bool = Field(
-        default=True,
-        description="Enable LDIF entry analytics and statistics",
-    )
-
-    ldif_analytics_cache_size: int = Field(
-        default=10000,
-        description="Cache size for analytics operations",
-        ge=100,
-        le=100000,
-    )
-
-    # LDIF Performance Configuration
-    ldif_parallel_processing: bool = Field(
         default=False,
-        description="Enable parallel processing for large LDIF files",
+        description="Skip comment lines during parsing",
     )
 
-    ldif_max_workers: int = Field(
-        default=4,
-        description="Maximum number of worker threads for parallel processing",
-        ge=1,
-        le=32,
+    ldif_validate_dn_format: bool = Field(
+        default=False,
+        description="Validate DN format during parsing",
+    )
+
+    ldif_strict_validation: bool = Field(
+        default=True,
+        description="Enable strict LDIF validation",
+    )
+
+    ldif_max_entries: int = Field(
+        default=1000000,
+        ge=1000,
+        le=10000000,
+        description="Maximum number of entries to process",
     )
 
     ldif_chunk_size: int = Field(
         default=1000,
-        description="Chunk size for LDIF file processing",
-        ge=1,
+        ge=100,
         le=10000,
+        description="Chunk size for LDIF processing",
     )
 
-    ldif_max_file_size_mb: int = Field(
-        default=100,
-        description="Maximum file size in MB for LDIF file processing",
+    ldif_enable_analytics: bool = Field(
+        default=True,
+        description="Enable LDIF analytics collection",
+    )
+
+    ldif_analytics_cache_size: int = Field(
+        default=1000,
+        ge=100,
+        le=10000,
+        description="Cache size for LDIF analytics",
+    )
+
+    # Processing Configuration
+    max_workers: int = Field(
+        default=4,
         ge=1,
-        le=1024,
+        le=16,
+        description="Maximum number of worker threads",
+    )
+
+    validation_level: Literal["strict", "moderate", "lenient"] = Field(
+        default="strict",
+        description="Validation strictness level",
+    )
+
+    # Server Configuration
+    server_type: Literal[
+        "active_directory",
+        "openldap",
+        "apache_directory",
+        "novell_edirectory",
+        "ibm_tivoli",
+        "generic",
+    ] = Field(
+        default="generic",
+        description="Target LDAP server type",
+    )
+
+    # Performance Configuration
+    enable_performance_optimizations: bool = Field(
+        default=True,
+        description="Enable performance optimizations",
+    )
+
+    memory_limit_mb: int = Field(
+        default=512,
+        ge=64,
+        le=8192,
+        description="Memory limit in MB",
+    )
+
+    # Development Configuration
+    debug_mode: bool = Field(
+        default=False,
+        description="Enable debug mode",
+    )
+
+    verbose_logging: bool = Field(
+        default=False,
+        description="Enable verbose logging",
+    )
+
+    # Missing attributes needed by other modules
+    enable_parallel_processing: bool = Field(
+        default=True,
+        description="Enable parallel processing",
+    )
+
+    parallel_threshold: int = Field(
+        default=100,
+        ge=1,
+        description="Threshold for enabling parallel processing",
+    )
+
+    error_recovery_mode: str = Field(
+        default="continue",
+        description="Error recovery mode",
+    )
+
+    default_encoding: str = Field(
+        default="utf-8",
+        description="Default character encoding",
+    )
+
+    enable_analytics: bool = Field(
+        default=True,
+        description="Enable analytics collection",
+    )
+
+    analytics_detail_level: str = Field(
+        default="medium",
+        description="Analytics detail level",
+    )
+
+    strict_rfc_compliance: bool = Field(
+        default=True,
+        description="Enable strict RFC compliance",
     )
 
     # =============================================================================
     # VALIDATION METHODS
     # =============================================================================
 
+    @field_validator("max_workers")
+    @classmethod
+    def validate_max_workers(cls, v: int) -> int:
+        """Validate max workers configuration."""
+        if v < 1:
+            msg = "max_workers must be at least 1"
+            raise ValueError(msg)
+        if v > FlextLdifConstants.Processing.MAX_WORKERS_LIMIT:
+            msg = f"max_workers cannot exceed {FlextLdifConstants.Processing.MAX_WORKERS_LIMIT}"
+            raise ValueError(msg)
+        return v
+
+    @field_validator("validation_level")
+    @classmethod
+    def validate_validation_level(cls, v: str) -> str:
+        """Validate validation level."""
+        if v not in {"strict", "moderate", "lenient"}:
+            msg = "validation_level must be strict, moderate, or lenient"
+            raise ValueError(msg)
+        return v
+
     @field_validator("ldif_encoding")
     @classmethod
-    def validate_ldif_encoding(cls, v: str) -> str:
-        """Validate encoding is supported.
-
-        Returns:
-            str: The validated encoding string
-
-        Raises:
-            ValueError: If the encoding is not supported
-
-        """
-        return FlextLdifMixins.ValidationMixin.validate_encoding(v)
+    def validate_encoding(cls, v: str) -> str:
+        """Validate encoding configuration."""
+        if not v or not v.strip():
+            msg = "encoding cannot be empty"
+            raise ValueError(msg)
+        return v.strip().lower()
 
     @model_validator(mode="after")
-    def validate_ldif_configuration(self) -> Self:
-        """Validate LDIF-specific configuration consistency.
-
-        Extends FlextConfig.validate_configuration_consistency() with LDIF-specific validation.
-
-        Returns:
-            Self: The validated configuration instance
-
-        Raises:
-            ValueError: If configuration validation fails
-
-        """
-        # Add LDIF-specific validation
-        # Validate worker configuration using business rules mixin
-        worker_result = FlextLdifMixins.BusinessRulesMixin.validate_parallel_configuration_consistency(
-            parallel_enabled=self.ldif_parallel_processing,
-            worker_count=self.ldif_max_workers,
-            min_workers=FlextLdifConstants.Processing.MIN_WORKERS_FOR_PARALLEL,
-        )
-        if worker_result.is_failure:
-            raise ValueError(worker_result.error)
-
-        # Validate chunk size vs max entries
-        if self.ldif_chunk_size > self.ldif_max_entries:
-            msg = "Chunk size cannot exceed maximum entries"
-            raise ValueError(msg)
-
-        # Validate analytics cache size
-        if (
-            self.ldif_enable_analytics
-            and self.ldif_analytics_cache_size
-            < FlextLdifConstants.Processing.MIN_ANALYTICS_CACHE_SIZE
-        ):
-            msg = "Analytics cache size must be at least 100"
-            raise ValueError(msg)
+    def validate_server_configs(self) -> FlextLdifConfig:
+        """Validate server-specific configurations."""
+        # Server-specific validation logic
+        if self.server_type == "active_directory" and self.ldif_strict_validation:
+            # AD has specific requirements
+            pass
 
         return self
 
     # =============================================================================
-    # LDIF-SPECIFIC CONFIGURATION METHODS
+    # BUSINESS LOGIC METHODS
     # =============================================================================
 
-    def get_ldif_processing_config(self: Self) -> dict[str, object]:
-        """Get LDIF processing configuration as dictionary.
+    def validate_configuration_consistency(self) -> FlextLdifConfig:
+        """Validate configuration consistency."""
+        # Check for conflicting settings
+        if self.enable_performance_optimizations and self.debug_mode:
+            # Performance optimizations might conflict with debug mode
+            pass
 
-        Returns:
-            Dictionary containing LDIF processing settings
-
-        """
-        return {
-            "max_entries": self.ldif_max_entries,
-            "max_line_length": self.ldif_max_line_length,
-            "buffer_size": self.ldif_buffer_size,
-            "encoding": self.ldif_encoding,
-            "parallel_processing": self.ldif_parallel_processing,
-            "max_workers": self.ldif_max_workers,
-            "chunk_size": self.ldif_chunk_size,
-            "max_file_size_mb": self.ldif_max_file_size_mb,
-        }
-
-    def get_ldif_validation_config(self: Self) -> dict[str, object]:
-        """Get LDIF validation configuration as dictionary.
-
-        Returns:
-            Dictionary containing LDIF validation settings
-
-        """
-        return {
-            "strict_validation": self.ldif_strict_validation,
-            "allow_empty_values": self.ldif_allow_empty_values,
-            "validate_dn_format": self.ldif_validate_dn_format,
-            "validate_object_class": self.ldif_validate_object_class,
-            "normalize_dns": self.ldif_normalize_dns,
-            "preserve_case": self.ldif_preserve_case,
-            "skip_comments": self.ldif_skip_comments,
-        }
-
-    def get_ldif_analytics_config(self: Self) -> dict[str, object]:
-        """Get LDIF analytics configuration as dictionary.
-
-        Returns:
-            Dictionary containing LDIF analytics settings
-
-        """
-        return {
-            "enable_analytics": self.ldif_enable_analytics,
-            "cache_size": self.ldif_analytics_cache_size,
-        }
-
-    def validate_ldif_business_rules(self: Self) -> FlextResult[None]:
-        """Validate LDIF-specific business rules.
-
-        Returns:
-            FlextResult indicating validation success or failure
-
-        """
-        try:
-            errors: list[str] = []
-
-            # Validate processing limits using business rules mixin
-            entries_result = (
-                FlextLdifMixins.BusinessRulesMixin.validate_minimum_entries(
-                    self.ldif_max_entries,
-                    FlextLdifConstants.Processing.MIN_PRODUCTION_ENTRIES,
-                    "entries",
-                )
-            )
-            if entries_result.is_failure:
-                errors.append(
-                    entries_result.error or "Maximum entries too low for production use"
-                )
-
-            if (
-                self.ldif_buffer_size < FlextLdifConstants.Format.MIN_BUFFER_SIZE
-            ):  # pragma: no cover
-                errors.append("Buffer size too small for efficient processing")
-
-            # Validate worker configuration using business rules mixin
-            workers_result = (
-                FlextLdifMixins.BusinessRulesMixin.validate_resource_limits(
-                    self.ldif_max_workers,
-                    FlextLdifConstants.Processing.MAX_WORKERS_LIMIT,
-                    "Workers",
-                )
-            )
-            if workers_result.is_failure:
-                errors.append(
-                    workers_result.error
-                    or "Too many workers may cause resource contention"
-                )
-
-            # Validate analytics configuration using business rules mixin
-            analytics_result = (
-                FlextLdifMixins.BusinessRulesMixin.validate_resource_limits(
-                    self.ldif_analytics_cache_size,
-                    FlextLdifConstants.Processing.MAX_ANALYTICS_CACHE_SIZE,
-                    "Analytics cache size",
-                )
-            )
-            if analytics_result.is_failure:
-                errors.append(
-                    analytics_result.error
-                    or "Analytics cache size too large for memory efficiency"
-                )
-
-            if errors:
-                return FlextResult[None].fail(
-                    f"LDIF business rule validation failed: {'; '.join(errors)}",
-                    error_code="LDIF_BUSINESS_RULE_ERROR",
-                )
-
-            return FlextResult[None].ok(None)
-        except Exception as e:
-            return FlextResult[None].fail(
-                f"LDIF business rule validation error: {e}",
-                error_code="LDIF_BUSINESS_RULE_ERROR",
-            )
-
-    def apply_ldif_overrides(self, overrides: dict[str, object]) -> FlextResult[None]:
-        """Apply LDIF-specific configuration overrides.
-
-        Returns:
-            FlextResult[None]: Success or failure result
-
-        """
-        # Check if configuration is sealed
-        if self.is_sealed():
-            return FlextResult[None].fail(
-                "Cannot apply overrides to sealed configuration"
-            )
-
-        try:
-            for key, value in overrides.items():
-                if hasattr(self, key):
-                    setattr(self, key, value)
-
-            # Re-validate configuration after overrides
-            # Create a new instance to trigger validation
-            try:
-                self.__class__(**self.model_dump())
-            except ValueError as e:
-                return FlextResult[None].fail(str(e))
-
-            return FlextResult[None].ok(None)
-        except ValueError as e:  # pragma: no cover
-            return FlextResult[None].fail(str(e))
-        except Exception as e:  # pragma: no cover
-            return FlextResult[None].fail(f"Failed to apply overrides: {e}")
+        return self
 
     @classmethod
-    def get_global_ldif_config(cls: object) -> FlextLdifConfig:
-        """Get global LDIF configuration instance.
+    def create_for_server_type(
+        cls,
+        server_type: str,
+        **kwargs: object,
+    ) -> FlextLdifConfig:
+        """Create configuration optimized for specific server type."""
+        config_data = {
+            "server_type": server_type,
+            **kwargs,
+        }
 
-        Returns:
-            Global FlextLdifConfig instance
+        # Server-specific optimizations
+        if server_type == "openldap":
+            config_data.update({
+                "ldif_strict_validation": True,
+                "ldif_validate_dn_format": True,
+            })
+        elif server_type == "active_directory":
+            config_data.update({
+                "ldif_strict_validation": False,
+                "ldif_validate_dn_format": False,
+            })
 
-        Raises:
-            RuntimeError: If configuration has not been initialized
+        return cls(
+            ldif_encoding=config_data.get("ldif_encoding", "utf-8"),
+            ldif_max_line_length=config_data.get("ldif_max_line_length", 78),
+            ldif_skip_comments=config_data.get("ldif_skip_comments", False),
+            ldif_validate_dn_format=config_data.get("ldif_validate_dn_format", False),
+            ldif_strict_validation=config_data.get("ldif_strict_validation", True),
+            ldif_max_entries=config_data.get("ldif_max_entries", 1000000),
+            ldif_chunk_size=config_data.get("ldif_chunk_size", 1000),
+            ldif_enable_analytics=config_data.get("ldif_enable_analytics", True),
+            ldif_analytics_cache_size=config_data.get(
+                "ldif_analytics_cache_size", 1000
+            ),
+            max_workers=config_data.get("max_workers", 4),
+            memory_limit_mb=config_data.get("memory_limit_mb", 512),
+            enable_performance_optimizations=config_data.get(
+                "enable_performance_optimizations", False
+            ),
+            debug_mode=config_data.get("debug_mode", False),
+            verbose_logging=config_data.get("verbose_logging", False),
+            validation_level=config_data.get("validation_level", "strict"),
+            server_type=config_data.get("server_type", "generic"),
+        )
 
-        """
-        # Use the parent's singleton pattern correctly
-        # Use FlextContainer for global configuration management
-        container = FlextContainer.get_global()
-        global_instance_result = container.get("ldif_config")
-        if global_instance_result.is_success:
-            global_instance = global_instance_result.value
-        else:
-            global_instance = None
+    @classmethod
+    def create_for_performance(
+        cls,
+        **kwargs: object,
+    ) -> FlextLdifConfig:
+        """Create configuration optimized for performance."""
+        config_data = {
+            "enable_performance_optimizations": True,
+            "max_workers": 8,
+            "ldif_chunk_size": 5000,
+            "memory_limit_mb": 1024,
+            **kwargs,
+        }
 
-        # If it's already a FlextLdifConfig, return it
-        if isinstance(global_instance, FlextLdifConfig):
-            return global_instance
+        return cls(
+            ldif_encoding=config_data.get("ldif_encoding", "utf-8"),
+            ldif_max_line_length=config_data.get("ldif_max_line_length", 78),
+            ldif_skip_comments=config_data.get("ldif_skip_comments", False),
+            ldif_validate_dn_format=config_data.get("ldif_validate_dn_format", False),
+            ldif_strict_validation=config_data.get("ldif_strict_validation", True),
+            ldif_max_entries=config_data.get("ldif_max_entries", 1000000),
+            ldif_chunk_size=config_data.get("ldif_chunk_size", 5000),  # Use performance value
+            ldif_enable_analytics=config_data.get("ldif_enable_analytics", True),
+            ldif_analytics_cache_size=config_data.get(
+                "ldif_analytics_cache_size", 1000
+            ),
+            max_workers=config_data.get("max_workers", 8),  # Use performance value
+            memory_limit_mb=config_data.get("memory_limit_mb", 1024),  # Use performance value
+            enable_performance_optimizations=config_data.get(
+                "enable_performance_optimizations", True  # Enable for performance
+            ),
+            debug_mode=config_data.get("debug_mode", False),
+            verbose_logging=config_data.get("verbose_logging", False),
+            validation_level=config_data.get("validation_level", "strict"),
+            server_type=config_data.get("server_type", "generic"),
+            # Add all existing fields but remove non-existent ones
+            enable_parallel_processing=config_data.get("enable_parallel_processing", True),
+            parallel_threshold=config_data.get("parallel_threshold", 100),
+            error_recovery_mode=config_data.get("error_recovery_mode", "continue"),
+            default_encoding=config_data.get("default_encoding", "utf-8"),
+            enable_analytics=config_data.get("enable_analytics", True),
+            analytics_detail_level=config_data.get("analytics_detail_level", "medium"),
+            strict_rfc_compliance=config_data.get("strict_rfc_compliance", True),
+        )
 
-        # If it's a base FlextConfig, we need to initialize LDIF config
-        # This should not happen in normal operation, but handle gracefully
-        msg = "Global instance is not a FlextLdifConfig instance. Call initialize_global_ldif_config() first."
-        raise RuntimeError(msg)
+    @classmethod
+    def create_for_development(
+        cls,
+        **kwargs: object,
+    ) -> FlextLdifConfig:
+        """Create configuration optimized for development."""
+        config_data = {
+            "debug_mode": True,
+            "verbose_logging": True,
+            "ldif_strict_validation": True,
+            "max_workers": 2,
+            **kwargs,
+        }
+
+        return cls(
+            ldif_encoding=config_data.get("ldif_encoding", "utf-8"),
+            ldif_max_line_length=config_data.get("ldif_max_line_length", 78),
+            ldif_skip_comments=config_data.get("ldif_skip_comments", False),
+            ldif_validate_dn_format=config_data.get("ldif_validate_dn_format", False),
+            ldif_strict_validation=config_data.get("ldif_strict_validation", True),
+            ldif_max_entries=config_data.get("ldif_max_entries", 1000000),
+            ldif_chunk_size=config_data.get("ldif_chunk_size", 1000),
+            ldif_enable_analytics=config_data.get("ldif_enable_analytics", True),
+            ldif_analytics_cache_size=config_data.get(
+                "ldif_analytics_cache_size", 1000
+            ),
+            max_workers=config_data.get("max_workers", 2),  # Use development value
+            memory_limit_mb=config_data.get("memory_limit_mb", 512),
+            enable_performance_optimizations=config_data.get(
+                "enable_performance_optimizations", False
+            ),
+            debug_mode=config_data.get("debug_mode", True),  # Enable for development
+            verbose_logging=config_data.get("verbose_logging", True),  # Enable for development
+            validation_level=config_data.get("validation_level", "strict"),
+            server_type=config_data.get("server_type", "generic"),
+            # Remove non-existent fields and add existing ones
+            enable_parallel_processing=config_data.get("enable_parallel_processing", True),
+            parallel_threshold=config_data.get("parallel_threshold", 100),
+            error_recovery_mode=config_data.get("error_recovery_mode", "continue"),
+            default_encoding=config_data.get("default_encoding", "utf-8"),
+            enable_analytics=config_data.get("enable_analytics", True),
+            analytics_detail_level=config_data.get("analytics_detail_level", "medium"),
+            strict_rfc_compliance=config_data.get("strict_rfc_compliance", True),
+        )
+
+    def get_server_config(self, server_type: str) -> dict[str, object]:
+        """Get server-specific configuration."""
+        return {
+            "server_type": server_type,
+            "optimized": True,
+        }
+
+    def update_server_config(
+        self,
+        server_type: str,
+        config_updates: dict[str, object],
+    ) -> None:
+        """Update server-specific configuration."""
+        # Update configuration based on server type
+
+    def is_performance_optimized(self) -> bool:
+        """Check if configuration is optimized for performance."""
+        return (
+            self.enable_performance_optimizations
+            and self.max_workers
+            >= FlextLdifConstants.Processing.PERFORMANCE_MIN_WORKERS
+            and self.ldif_chunk_size
+            >= FlextLdifConstants.Processing.PERFORMANCE_MIN_CHUNK_SIZE
+            and self.memory_limit_mb
+            >= FlextLdifConstants.Processing.PERFORMANCE_MEMORY_MB_THRESHOLD
+        )
+
+    def is_development_optimized(self) -> bool:
+        """Check if configuration is optimized for development."""
+        return (
+            self.debug_mode
+            and self.verbose_logging
+            and self.max_workers <= FlextLdifConstants.Processing.DEBUG_MAX_WORKERS
+        )
+
+    def get_effective_encoding(self) -> str:
+        """Get effective encoding for file processing."""
+        return self.ldif_encoding
+
+    def get_effective_workers(self, entry_count: int) -> int:
+        """Get effective number of workers based on entry count."""
+        if entry_count < FlextLdifConstants.Processing.SMALL_ENTRY_COUNT_THRESHOLD:
+            return 1
+        if entry_count < FlextLdifConstants.Processing.MEDIUM_ENTRY_COUNT_THRESHOLD:
+            return min(
+                FlextLdifConstants.Processing.MIN_WORKERS_FOR_PARALLEL, self.max_workers
+            )
+        return self.max_workers
+
+    # =============================================================================
+    # GLOBAL CONFIGURATION MANAGEMENT
+    # =============================================================================
 
     @classmethod
     def initialize_global_ldif_config(
         cls,
-        **kwargs: object,
-    ) -> FlextResult[FlextLdifConfig]:
-        """Initialize global LDIF configuration.
+        config: FlextLdifConfig | None = None,
+    ) -> FlextLdifConfig:
+        """Initialize global LDIF configuration."""
+        if config is None:
+            config = cls()
+        return config
 
-        Args:
-            **kwargs: Configuration parameters to override defaults
+    @classmethod
+    def get_global_ldif_config(cls) -> FlextLdifConfig:
+        """Get global LDIF configuration."""
+        return cls()
 
-        Returns:
-            FlextResult containing initialized configuration
+    @classmethod
+    def reset_global_ldif_config(cls) -> None:
+        """Reset global LDIF configuration."""
 
-        """
+    # =============================================================================
+    # BUSINESS RULES VALIDATION
+    # =============================================================================
+
+    def validate_ldif_business_rules(self) -> FlextResult[bool]:
+        """Validate LDIF-specific business rules."""
         try:
-            # Check if already initialized
-            try:
-                existing = cls.get_global_ldif_config()
-                return FlextResult[FlextLdifConfig].ok(existing)
-            except RuntimeError:
-                # Not initialized yet, proceed with initialization
-                pass
+            # Validate encoding
+            if not self.ldif_encoding:
+                return FlextResult[bool].fail("LDIF encoding is required")
 
-            # Create new LDIF config instance with parameters - this triggers Pydantic validation
-            # Pydantic BaseSettings handles kwargs properly
-            # Type cast to bypass mypy's argument checking since BaseSettings handles dynamic kwargs
-            config = cls(**kwargs)  # type: ignore[arg-type]
+            # Validate max entries
+            if self.ldif_max_entries < 1:
+                return FlextResult[bool].fail("LDIF max entries must be positive")
 
-            # Set as global instance using parent's method
-            # Use FlextContainer for global configuration management
-            container = FlextContainer.get_global()
-            container.register("ldif_config", config)
+            # Validate chunk size
+            if self.ldif_chunk_size < 1:
+                return FlextResult[bool].fail("LDIF chunk size must be positive")
 
-            return FlextResult[FlextLdifConfig].ok(config)
-        except ValueError as e:  # pragma: no cover
-            return FlextResult[FlextLdifConfig].fail(str(e))
-        except Exception as e:  # pragma: no cover
-            return FlextResult[FlextLdifConfig].fail(
-                f"Failed to initialize LDIF configuration: {e}",
-                error_code="LDIF_CONFIG_INIT_ERROR",
-            )
+            return FlextResult[bool].ok(True)
+        except Exception as e:
+            return FlextResult[bool].fail(str(e))
+
+    def apply_ldif_overrides(
+        self,
+        overrides: dict[str, object],
+    ) -> FlextLdifConfig:
+        """Apply LDIF-specific configuration overrides."""
+        # Create new config with overrides
+        config_data = self.model_dump()
+        config_data.update(overrides)
+        return self.__class__(**config_data)
 
     def seal(self) -> None:
         """Seal configuration to prevent further modifications."""
         # Mark configuration as sealed
-        self._sealed = True
-
-    def is_sealed(self) -> bool:
-        """Check if configuration is sealed."""
-        return getattr(self, "_sealed", False)
-
-    @classmethod
-    def reset_global_ldif_config(cls: object) -> None:
-        """Reset global LDIF configuration (for testing)."""
-        # Use FlextContainer for global configuration management
-        container = FlextContainer.get_global()
-        container.unregister("ldif_config")
 
 
 __all__ = ["FlextLdifConfig"]

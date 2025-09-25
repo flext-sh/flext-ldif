@@ -24,6 +24,14 @@ class FlextLdifSchemaExtractor(FlextService[FlextLdifModels.SchemaDiscoveryResul
             "Use extract_from_entries() method instead"
         )
 
+    async def execute_async(
+        self: object,
+    ) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
+        """Execute schema extractor service asynchronously."""
+        return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(
+            "Use extract_from_entries() method instead"
+        )
+
     def extract_from_entries(
         self, entries: list[FlextLdifModels.Entry]
     ) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
@@ -53,6 +61,7 @@ class FlextLdifSchemaExtractor(FlextService[FlextLdifModels.SchemaDiscoveryResul
                     if attr_name not in attributes:
                         attr_result = FlextLdifModels.SchemaAttribute.create(
                             name=attr_name,
+                            oid=f"1.3.6.1.4.1.{hash(attr_name) % 1000000}",  # Generate OID
                             description="Discovered from LDIF entries",
                             single_value=len(attr_values) <= 1,
                         )
@@ -67,12 +76,11 @@ class FlextLdifSchemaExtractor(FlextService[FlextLdifModels.SchemaDiscoveryResul
                                     description="Discovered from LDIF entries",
                                 )
                                 if oc_result.is_success:
-                                    object_classes[oc_name] = oc_result.value
+                                    object_classes[oc_name] = cast("FlextLdifModels.SchemaObjectClass", oc_result.value)
 
             result = FlextLdifModels.SchemaDiscoveryResult.create(
-                attributes=attributes,
                 object_classes=object_classes,
-                server_type="generic",
+                attributes=attributes,
                 entry_count=len(entries),
                 discovered_dns=list(set(discovered_dns)),
             )

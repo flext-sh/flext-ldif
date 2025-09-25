@@ -174,14 +174,14 @@ class TestValidationWorkflow:
     def test_validation_workflow() -> None:
         """Test entry validation workflow."""
         # Create valid entry with required attributes for person
-        valid_entry_result = FlextLdifModels.Entry.create({
-            "dn": "cn=valid,dc=example,dc=com",
-            "attributes": {
+        valid_entry_result = FlextLdifModels.Entry.create(
+            dn="cn=valid,dc=example,dc=com",
+            attributes={
                 "cn": ["valid"],
                 "sn": ["Valid"],
                 "objectClass": ["person"],
             },
-        })
+        )
         assert valid_entry_result.is_success
 
         # Validate entry

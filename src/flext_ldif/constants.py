@@ -37,6 +37,9 @@ class FlextLdifConstants(FlextConstants):
 
         DN_ATTRIBUTE: Final[str] = "dn"
         ATTRIBUTE_SEPARATOR: Final[str] = ":"
+
+        # LDIF ObjectClass constants
+        LDIF_OBJECTCLASS_GROUPOFNAMES: Final[str] = "groupOfNames"
         MAX_LINE_LENGTH: Final[int] = 78
         MIN_BUFFER_SIZE: Final[int] = 1024
         CONTENT_PREVIEW_LENGTH: Final[int] = 100
@@ -64,10 +67,39 @@ class FlextLdifConstants(FlextConstants):
         """Processing behavior configuration constants."""
 
         MIN_WORKERS_FOR_PARALLEL: Final[int] = 2
+        MAX_WORKERS_LIMIT: Final[int] = 16  # Maximum allowed workers
+        PERFORMANCE_MIN_WORKERS: Final[int] = (
+            4  # Minimum workers for performance optimization
+        )
+        PERFORMANCE_MIN_CHUNK_SIZE: Final[int] = (
+            1000  # Minimum chunk size for performance
+        )
         MIN_ANALYTICS_CACHE_SIZE: Final[int] = 100
-        MIN_PRODUCTION_ENTRIES: Final[int] = 1000
-        MAX_WORKERS_LIMIT: Final[int] = 8
         MAX_ANALYTICS_CACHE_SIZE: Final[int] = 10000
+        MIN_PRODUCTION_ENTRIES: Final[int] = 1000
+        MIN_MEMORY_MB: Final[int] = 64  # Minimum memory limit in MB
+        ENCODING_CONFIDENCE_THRESHOLD: Final[float] = (
+            0.7  # Minimum confidence for encoding detection
+        )
+
+        # Additional constants for config validation
+        PERFORMANCE_MEMORY_MB_THRESHOLD: Final[int] = (
+            512  # Memory threshold for performance
+        )
+        DEBUG_MAX_WORKERS: Final[int] = 2  # Max workers in debug mode
+        SMALL_ENTRY_COUNT_THRESHOLD: Final[int] = (
+            100  # Threshold for small entry counts
+        )
+        MEDIUM_ENTRY_COUNT_THRESHOLD: Final[int] = (
+            1000  # Threshold for medium entry counts
+        )
+        MIN_ATTRIBUTE_PARTS: Final[int] = 2  # Minimum parts for attribute parsing
+
+    # =============================================================================
+    # UTILITY CONSTANTS
+    # =============================================================================
+
+    # Utilities constants are inherited from parent FlextConstants
 
     # =============================================================================
     # VALIDATION CONSTANTS
@@ -77,6 +109,14 @@ class FlextLdifConstants(FlextConstants):
         """LDIF-specific validation rules and constraints."""
 
         MIN_DN_COMPONENTS: Final[int] = 1
+
+        # RFC 4514 DN length limit
+        MAX_DN_LENGTH: Final[int] = 255
+
+        # Reasonable limits for LDAP attributes
+        MAX_ATTRIBUTES_PER_ENTRY: Final[int] = 1000
+        MAX_VALUES_PER_ATTRIBUTE: Final[int] = 100
+        MAX_ATTRIBUTE_VALUE_LENGTH: Final[int] = 10000
 
     # =============================================================================
     # OBJECTCLASS CONSTANTS

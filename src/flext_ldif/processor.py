@@ -36,7 +36,6 @@ from flext_ldif.schema import (
     FlextLdifSchemaExtractor,
     FlextLdifSchemaValidator,
 )
-from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 __all__ = ["FlextLdifProcessor"]
@@ -76,12 +75,12 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
         """Initialize LDIF processor with configuration."""
         super().__init__()
         self._logger = FlextLogger(__name__)
-        self._config: FlextLdifConfig | None = config
+        self._config: FlextLdifConfig = config or FlextLdifConfig()
 
         # Initialize advanced components
         parser_config: dict[str, object] = {
-            "encoding": getattr(config, "ldif_encoding", "utf-8"),
-            "strict_mode": getattr(config, "strict_validation", True),
+            "encoding": getattr(self._config, "ldif_encoding", "utf-8"),
+            "strict_mode": getattr(self._config, "strict_validation", True),
             "detect_server": True,
             "compliance_level": "strict",
         }
@@ -101,6 +100,19 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
     @override
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute health check operation - required by FlextService.
+
+        Returns:
+            FlextResult containing health status dictionary with processor metrics.
+
+        """
+        return FlextResult[dict[str, object]].ok({
+            "status": "healthy",
+            "processor": "FlextLdifProcessor",
+            "config": self._get_config_summary(),
+        })
+
+    async def execute_async(self) -> FlextResult[dict[str, object]]:
+        """Execute health check operation asynchronously - required by FlextService.
 
         Returns:
             FlextResult containing health status dictionary with processor metrics.
@@ -167,14 +179,8 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
                 attributes_data[attr_name].append(attr_value)
 
             # Create entry directly with dict
-            entry_data: FlextLdifTypes.Core.LdifEntryDict = {
-                "dn": dn_value,
-                "attributes": cast("dict[str, str | list[str]]", attributes_data),
-            }
 
-            entry_result = FlextLdifModels.Entry.create(
-                cast("dict[str, object]", entry_data)
-            )
+            entry_result = FlextLdifModels.Entry.create(data={"dn": dn_value, "attributes": attributes_data})
             if entry_result.is_failure:
                 return FlextResult[FlextLdifModels.Entry].fail(
                     entry_result.error or "Failed to create entry"
@@ -258,7 +264,7 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
 
             """
             for attr in required_attrs:
-                if not entry.get_attribute(attr):
+                if not entry.attributes.get_attribute(attr):
                     return FlextResult[None].fail(
                         f"Required attribute '{attr}' is missing"
                     )
@@ -275,7 +281,9 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
                 FlextResult[None]: Success if all required object classes are present, failure with error message if missing.
 
             """
-            object_classes: list[str] = entry.get_attribute("objectClass") or []
+            object_classes: list[str] = (
+                entry.attributes.get_attribute("objectClass") or []
+            )
 
             for required_class in required_classes:
                 if required_class not in object_classes:
@@ -342,9 +350,10 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
             total_attributes = 0
 
             for entry in entries:
-                entry_attrs = set(entry.attributes.data.keys())
-                all_attributes.update(entry_attrs)
-                total_attributes += len(entry_attrs)
+                if hasattr(entry, "to_ldif_string"):
+                    entry_attrs = set(entry.attributes.data.keys())
+                    all_attributes.update(entry_attrs)
+                    total_attributes += len(entry_attrs)
 
             return {
                 "total_entries": total_entries,
@@ -365,16 +374,19 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
             base_patterns: dict[str, int] = {}
 
             for entry in entries:
-                # Full DN pattern
-                dn_patterns[entry.dn.value] = dn_patterns.get(entry.dn.value, 0) + 1
+                if hasattr(entry, "to_ldif_string"):
+                    # Full DN pattern
+                    dn_patterns[entry.dn.value] = dn_patterns.get(entry.dn.value, 0) + 1
 
-                # Base pattern (last two components)
-                components = entry.dn.components
-                if len(components) >= min_dn_components_for_base_pattern:
-                    base_pattern = ",".join(
-                        components[-min_dn_components_for_base_pattern:]
-                    )
-                    base_patterns[base_pattern] = base_patterns.get(base_pattern, 0) + 1
+                    # Base pattern (last two components)
+                    components = entry.dn.components
+                    if len(components) >= min_dn_components_for_base_pattern:
+                        base_pattern = ",".join(
+                            components[-min_dn_components_for_base_pattern:]
+                        )
+                        base_patterns[base_pattern] = (
+                            base_patterns.get(base_pattern, 0) + 1
+                        )
 
             return {
                 "dn_patterns": dn_patterns,
@@ -404,7 +416,7 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
 
             # Check for entries with objectClass
             entries_with_object_class = sum(
-                1 for entry in entries if entry.get_attribute("objectClass")
+                1 for entry in entries if entry.attributes.get_attribute("objectClass")
             )
             object_class_ratio = entries_with_object_class / len(entries)
             quality_factors.append(object_class_ratio)
@@ -496,7 +508,7 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
             FlextResult containing list of parsed entries and change records
 
         """
-        # Use modern Pydantic approach instead of deprecated parse_file
+        # Use modern Pydantic approach
         try:
             content = file_path.read_text(encoding="utf-8")
             return self._parser.parse_string(content)
@@ -698,6 +710,116 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
             self._logger.exception(error_msg)
             return FlextResult[list[FlextLdifModels.Entry]].fail(error_msg)
 
+    def parse_file(self, file_path: Path) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Alias for parse_ldif_file for backward compatibility."""
+        return self.parse_ldif_file(file_path)
+
+    def filter_entries(
+        self, entries: list[FlextLdifModels.Entry], filters: dict[str, object]
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Filter entries based on criteria."""
+        try:
+            filtered_entries = []
+            for entry in entries:
+                if hasattr(entry, "to_ldif_string"):
+                    # Simple filtering logic - can be extended
+                    if "dn_pattern" in filters:
+                        pattern = str(filters["dn_pattern"])
+                        if pattern.lower() not in entry.dn.value.lower():
+                            continue
+                    if "object_class" in filters:
+                        obj_class = str(filters["object_class"])
+                        if not entry.has_object_class(obj_class):
+                            continue
+                    filtered_entries.append(entry)
+
+            return FlextResult[list[FlextLdifModels.Entry]].ok(filtered_entries)
+        except Exception as e:
+            error_msg = f"Failed to filter entries: {e}"
+            self._logger.exception(error_msg)
+            return FlextResult[list[FlextLdifModels.Entry]].fail(error_msg)
+
+    def get_statistics(
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> FlextResult[dict[str, object]]:
+        """Get statistics about entries."""
+        try:
+            stats = {
+                "total_entries": len(entries),
+                "object_class_counts": {},
+                "attribute_counts": {},
+                "average_dn_depth": 0,
+                "max_dn_depth": 0,
+            }
+
+            if entries:
+                dn_depths = [entry.dn.depth for entry in entries]
+                stats["average_dn_depth"] = sum(dn_depths) / len(dn_depths)
+                stats["max_dn_depth"] = max(dn_depths)
+
+                # Count object classes and attributes
+                for entry in entries:
+                    if hasattr(entry, "attributes") and entry.attributes:
+                        for attr_name, attr_values in entry.attributes.data.items():
+                            if attr_name.lower() == "objectclass":
+                                for obj_class in attr_values:
+                                    stats["object_class_counts"][obj_class] = (
+                                        stats["object_class_counts"].get(obj_class, 0)
+                                        + 1
+                                    )
+                            stats["attribute_counts"][attr_name] = stats[
+                                "attribute_counts"
+                            ].get(attr_name, 0) + len(attr_values)
+
+            return FlextResult[dict[str, object]].ok(stats)
+        except Exception as e:
+            error_msg = f"Failed to get statistics: {e}"
+            self._logger.exception(error_msg)
+            return FlextResult[dict[str, object]].fail(error_msg)
+
+    def write_entries_to_string(
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> FlextResult[str]:
+        """Convert entries to LDIF string format."""
+        try:
+            ldif_lines = []
+            for entry in entries:
+                # Add DN line
+                ldif_lines.append(f"dn: {entry.dn}")
+                # Add attributes
+                for attr_name, attr_values in entry.attributes.attributes.items():
+                    if isinstance(attr_values, list):
+                        ldif_lines.extend(
+                            f"{attr_name}: {value}" for value in attr_values
+                        )
+                    else:
+                        ldif_lines.append(f"{attr_name}: {attr_values}")
+                # Add empty line between entries
+                ldif_lines.append("")
+            return FlextResult[str].ok("\n".join(ldif_lines))
+        except Exception as e:
+            error_msg = f"Failed to convert entries to string: {e}"
+            self._logger.exception(error_msg)
+            return FlextResult[str].fail(error_msg)
+
+    def write_entries_to_file(
+        self, entries: list[FlextLdifModels.Entry], output_file: Path
+    ) -> FlextResult[None]:
+        """Write entries to LDIF file."""
+        try:
+            write_result = self.write_entries_to_string(entries)
+            if write_result.is_failure:
+                return FlextResult[None].fail(
+                    write_result.error or "Failed to generate LDIF content"
+                )
+
+            output_file.write_text(write_result.value, encoding="utf-8")
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            error_msg = f"Failed to write entries to file: {e}"
+            self._logger.exception(error_msg)
+            return FlextResult[None].fail(error_msg)
+
     def validate_entries(
         self, entries: list[FlextLdifModels.Entry]
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
@@ -725,7 +847,7 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
 
             # Validate required attributes (basic validation)
             required_attrs = self._get_required_attributes_for_classes(
-                entry.get_attribute("objectClass") or []
+                entry.attributes.get_attribute("objectClass") or []
             )
             attr_validation = self._LdifValidationHelper.validate_required_attributes(
                 entry, required_attrs
@@ -899,7 +1021,7 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
 
         filtered_entries: list[FlextLdifModels.Entry] = []
         for entry in entries:
-            object_classes_raw = entry.get_attribute("objectClass") or []
+            object_classes_raw = entry.attributes.get_attribute("objectClass") or []
             # Ensure object_classes is a list of strings
             object_classes: list[str] = [
                 str(oc) for oc in object_classes_raw if oc is not None
@@ -917,7 +1039,10 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
     ) -> FlextResult[FlextLdifModels.Entry | None]:
         """Get entry by DN from provided entries."""
         for entry in entries:
-            if entry.dn.value.lower() == dn.lower():
+            if (
+                hasattr(entry, "to_ldif_string")
+                and entry.dn.value.lower() == dn.lower()
+            ):
                 return FlextResult[FlextLdifModels.Entry | None].ok(entry)
 
         return FlextResult[FlextLdifModels.Entry | None].ok(None)
@@ -931,17 +1056,18 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
 
         matching_entries: list[FlextLdifModels.Entry] = []
         for entry in entries:
-            attr_values_raw = entry.get_attribute(attr_name) or []
-            # Ensure attr_values is a list of strings
-            attr_values: list[str] = [
-                str(value) for value in attr_values_raw if value is not None
-            ]
-            if any(value.lower() == attr_value.lower() for value in attr_values):
-                matching_entries.append(entry)
+            if hasattr(entry, "to_ldif_string"):
+                attr_values_raw = entry.attributes.get_attribute(attr_name) or []
+                # Ensure attr_values is a list of strings
+                attr_values: list[str] = [
+                    str(value) for value in attr_values_raw if value is not None
+                ]
+                if any(value.lower() == attr_value.lower() for value in attr_values):
+                    matching_entries.append(entry)
 
-        self._logger.info(
-            f"Found {len(matching_entries)} entries with {attr_name}={attr_value}"
-        )
+                self._logger.info(
+                    f"Found {len(matching_entries)} entries with {attr_name}={attr_value}"
+                )
         return FlextResult[list[FlextLdifModels.Entry]].ok(matching_entries)
 
     def validate_schema_compliance(
@@ -1034,9 +1160,8 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
         dn_index: dict[str, FlextLdifModels.Entry] = {
             entry.dn.value.lower(): entry for entry in entries1
         }
-        merged_entries: list[FlextLdifModels.Entry] = list(
-            entries1
-        )  # Start with all from first set
+        # Start with all from first set
+        merged_entries = list(entries1)
 
         duplicates_count = 0
         for entry in entries2:
@@ -1075,35 +1200,40 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
         # Detect object class patterns
         class_combinations: dict[str, int] = {}
         for entry in entries:
-            object_classes_raw = entry.get_attribute("objectClass") or []
-            # Ensure object_classes is a list of strings
-            object_classes: list[str] = [
-                str(oc) for oc in object_classes_raw if oc is not None
-            ]
-            if object_classes:
-                class_key = ",".join(sorted(object_classes))
-                class_combinations[class_key] = class_combinations.get(class_key, 0) + 1
+            if hasattr(entry, "to_ldif_string"):
+                object_classes_raw = entry.attributes.get_attribute("objectClass") or []
+                # Ensure object_classes is a list of strings
+                object_classes: list[str] = [
+                    str(oc) for oc in object_classes_raw if oc is not None
+                ]
+                if object_classes:
+                    class_key = ",".join(sorted(object_classes))
+                    class_combinations[class_key] = (
+                        class_combinations.get(class_key, 0) + 1
+                    )
 
         patterns["object_class_patterns"] = class_combinations
 
         # Detect attribute patterns
         attribute_frequency: dict[str, int] = {}
         for entry in entries:
-            for attr_name in entry.attributes.data:
-                attribute_frequency[attr_name] = (
-                    attribute_frequency.get(attr_name, 0) + 1
-                )
+            if hasattr(entry, "to_ldif_string"):
+                for attr_name in entry.attributes.data:
+                    attribute_frequency[attr_name] = (
+                        attribute_frequency.get(attr_name, 0) + 1
+                    )
 
         patterns["attribute_frequency"] = attribute_frequency
 
         # Detect DN structure patterns
         dn_structures: dict[str, int] = {}
         for entry in entries:
-            components = entry.dn.components
-            if components:
-                # Create pattern from component types (e.g., "cn,ou,dc,dc")
-                structure = ",".join(comp.split("=")[0] for comp in components)
-                dn_structures[structure] = dn_structures.get(structure, 0) + 1
+            if hasattr(entry, "to_ldif_string"):
+                components = entry.dn.components
+                if components:
+                    # Create pattern from component types (e.g., "cn,ou,dc,dc")
+                    structure = ",".join(comp.split("=")[0] for comp in components)
+                    dn_structures[structure] = dn_structures.get(structure, 0) + 1
 
         patterns["dn_structures"] = dn_structures
 
@@ -1268,7 +1398,14 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
             FlextResult[None]: Success if path is valid, failure with error message
 
         """
-        return FlextLdifUtilities.FileUtilities.validate_file_path(file_path)
+        validation_result = FlextLdifUtilities.FileUtilities.validate_file_path(
+            file_path
+        )
+        if validation_result.is_failure:
+            return FlextResult[None].fail(
+                validation_result.error or "File path validation failed"
+            )
+        return FlextResult[None].ok(None)
 
     def _get_required_attributes_for_classes(
         self, object_classes: list[str]
@@ -1292,19 +1429,22 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
         """Count entries with empty attributes."""
         count = 0
         for entry in entries:
-            for attr_values in entry.attributes.data.values():
-                if not attr_values or (
-                    len(attr_values) == 1 and not attr_values[0].strip()
-                ):
-                    count += 1
-                    break
+            if hasattr(entry, "to_ldif_string"):
+                for attr_values in entry.attributes.data.values():
+                    if not attr_values or (
+                        len(attr_values) == 1 and not attr_values[0].strip()
+                    ):
+                        count += 1
+                        break
         return count
 
     def _count_missing_object_classes(
         self, entries: list[FlextLdifModels.Entry]
     ) -> int:
         """Count entries missing objectClass."""
-        return sum(1 for entry in entries if not entry.get_attribute("objectClass"))
+        return sum(
+            1 for entry in entries if not entry.attributes.get_attribute("objectClass")
+        )
 
     def _count_duplicate_dns(self, entries: list[FlextLdifModels.Entry]) -> int:
         """Count duplicate DN entries."""
@@ -1315,11 +1455,12 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
         """Count entries with invalid DN format."""
         count = 0
         for entry in entries:
-            result: FlextResult[None] = (
-                self._LdifValidationHelper.validate_dn_structure(entry.dn)
-            )
-            if result.is_failure:
-                count += 1
+            if hasattr(entry, "to_ldif_string"):
+                result: FlextResult[None] = (
+                    self._LdifValidationHelper.validate_dn_structure(entry.dn)
+                )
+                if result.is_failure:
+                    count += 1
         return count
 
     def extract_schema_from_entries(
@@ -1532,3 +1673,58 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
     ) -> FlextResult[str]:
         """Convert LDIF entries to JSON format."""
         return self._entry_builder.convert_entries_to_json(entries, indent)
+
+    def parse_ldif_content(
+        self, content: str
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Parse LDIF content from a string."""
+        try:
+            # Use advanced parser for full RFC 2849 compliance including comments
+            parse_result = self.parse_string_advanced(content)
+            if parse_result.is_failure:
+                return FlextResult[list[FlextLdifModels.Entry]].fail(parse_result.error)
+
+            # Filter to only return Entry objects (not ChangeRecord objects)
+            entries = [
+                item
+                for item in parse_result.value
+                if isinstance(item, FlextLdifModels.Entry)
+            ]
+            return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+        except Exception as e:
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                f"Failed to parse LDIF content: {e}"
+            )
+
+    def write_ldif_content(
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> FlextResult[str]:
+        """Write entries to LDIF string content."""
+        try:
+            content = ""
+            for entry in entries:
+                if hasattr(entry, "to_ldif_string"):
+                    content += f"dn: {entry.dn.value}\n"
+                    for attr_name, attr_values in entry.attributes.data.items():
+                        for value in attr_values:
+                            content += f"{attr_name}: {value}\n"
+                    content += "\n"
+            return FlextResult[str].ok(content)
+        except Exception as e:
+            return FlextResult[str].fail(f"Failed to write LDIF content: {e}")
+
+    def get_status(self) -> FlextResult[dict[str, object]]:
+        """Get processor status information."""
+        try:
+            status = {
+                "processor_type": "FlextLdifProcessor",
+                "config_loaded": self._config is not None,
+                "parser_initialized": hasattr(self, "_parser")
+                and self._parser is not None,
+                "logger_initialized": hasattr(self, "_logger")
+                and self._logger is not None,
+                "timestamp": datetime.now(UTC).isoformat(),
+            }
+            return FlextResult[dict[str, object]].ok(status)
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(f"Failed to get status: {e}")

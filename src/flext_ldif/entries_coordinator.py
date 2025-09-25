@@ -3,8 +3,6 @@
 Unified entry management coordinator using flext-core paradigm with nested operation classes.
 """
 
-from typing import ClassVar
-
 from pydantic import ConfigDict
 
 from flext_core import FlextLogger, FlextResult, FlextService
@@ -16,7 +14,7 @@ from flext_ldif.quirks import FlextLdifEntryQuirks
 class FlextLdifEntries(FlextService[dict[str, object]]):
     """Unified entry management coordinator following flext-core single class paradigm."""
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(
+    model_config = ConfigDict(
         arbitrary_types_allowed=True,
         validate_assignment=False,
         extra="allow",
@@ -81,7 +79,7 @@ class FlextLdifEntries(FlextService[dict[str, object]]):
             """Validate distinguished name format."""
             try:
                 dn_result: FlextResult[FlextLdifModels.DistinguishedName] = (
-                    FlextLdifModels.DistinguishedName.create(dn)
+                    FlextLdifModels.DistinguishedName.create(dn)  # type: ignore[assignment]
                 )
                 if dn_result.is_success:
                     return FlextResult[bool].ok(True)
@@ -143,10 +141,10 @@ class FlextLdifEntries(FlextService[dict[str, object]]):
                     normalized_name = attr_name.lower()
                     normalized_attrs[normalized_name] = attr_values
 
-                return FlextLdifModels.Entry.create({
-                    "dn": entry.dn.value,
-                    "attributes": normalized_attrs,
-                })
+                return FlextLdifModels.Entry.create(
+                    dn=entry.dn.value,  # type: ignore[misc]
+                    attributes=normalized_attrs,  # type: ignore[misc]
+                )
             except Exception as e:
                 return FlextResult[FlextLdifModels.Entry].fail(
                     f"Normalization failed: {e}"
@@ -183,6 +181,14 @@ class FlextLdifEntries(FlextService[dict[str, object]]):
         self.transformer = self.Transformer(self)
 
     def execute(self) -> FlextResult[dict[str, object]]:
+        """Execute health check - required by FlextService."""
+        return FlextResult[dict[str, object]].ok({
+            "status": "healthy",
+            "service": "FlextLdifEntries",
+            "operations": ["builder", "validator", "transformer"],
+        })
+
+    async def execute_async(self) -> FlextResult[dict[str, object]]:
         """Execute health check - required by FlextService."""
         return FlextResult[dict[str, object]].ok({
             "status": "healthy",

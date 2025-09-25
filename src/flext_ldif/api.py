@@ -21,7 +21,7 @@ from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifAPI(FlextService[FlextLdifTypes.Core.HealthStatusDict]):
+class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
     """Unified LDIF API for direct LDIF processing operations.
 
     Provides a single interface for all LDIF processing operations including
@@ -48,7 +48,7 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.Core.HealthStatusDict]):
         # Initialize management layer for unified operations
         self._management = FlextLdifManagement()
 
-        # Initialize processor with error handling (for backward compatibility)
+        # Initialize processor with error handling
         self._processor_result: FlextResult[FlextLdifProcessor] = (
             self._initialize_processor()
         )
@@ -70,11 +70,20 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.Core.HealthStatusDict]):
             return FlextResult[FlextLdifProcessor].fail(error_msg)
 
     @override
-    def execute(self) -> FlextResult[FlextLdifTypes.Core.HealthStatusDict]:
+    def execute(self) -> FlextResult[FlextLdifTypes.HealthStatusDict]:
         """Execute health check operation - required by FlextService.
 
         Returns:
-            FlextResult[FlextLdifTypes.Core.HealthStatusDict]: Health check status information.
+            FlextResult[FlextLdifTypes.HealthStatusDict]: Health check status information.
+
+        """
+        return self.health_check()
+
+    async def execute_async(self) -> FlextResult[FlextLdifTypes.HealthStatusDict]:
+        """Execute health check operation asynchronously - required by FlextService.
+
+        Returns:
+            FlextResult[FlextLdifTypes.HealthStatusDict]: Health check status information.
 
         """
         return self.health_check()
@@ -200,15 +209,7 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.Core.HealthStatusDict]):
             self._processor_result.flat_map(
                 lambda processor: processor.analyze_entries(entries)
             )
-            .map(lambda stats: stats)
-            .map(
-                lambda stats: cast(
-                    "dict[str, object]",
-                    self._log_analysis_success(
-                        cast("FlextLdifTypes.Core.LdifStatistics", stats)
-                    ),
-                )
-            )
+            .map(self._log_analysis_success)
         )
 
     @staticmethod
@@ -230,16 +231,16 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.Core.HealthStatusDict]):
                 f"Filter operation failed: {e}", error_code="FILTER_ERROR"
             )
 
-    def health_check(self) -> FlextResult[FlextLdifTypes.Core.HealthStatusDict]:
+    def health_check(self) -> FlextResult[FlextLdifTypes.HealthStatusDict]:
         """Perform health check on the API and processor.
 
         Returns:
-            FlextResult[FlextLdifTypes.Core.HealthStatusDict]: Health status information.
+            FlextResult[FlextLdifTypes.HealthStatusDict]: Health status information.
 
         """
         return self._processor_result.map(
             lambda _: cast(
-                "FlextLdifTypes.Core.HealthStatusDict",
+                "FlextLdifTypes.HealthStatusDict",
                 {
                     "status": "healthy",
                     "timestamp": FlextLdifUtilities.TimeUtilities.get_timestamp(),
@@ -253,7 +254,7 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.Core.HealthStatusDict]):
         """Get service information using safe evaluation.
 
         Returns:
-            FlextLdifTypes.Core.LdifStatistics: Service information dictionary.
+            FlextLdifTypes.LdifStatistics: Service information dictionary.
 
         """
         return self._processor_result.map(
@@ -294,11 +295,11 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.Core.HealthStatusDict]):
 
     def entry_statistics(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[FlextLdifTypes.Core.LdifStatistics]:
+    ) -> FlextResult[dict[str, object]]:
         """Get comprehensive entry statistics.
 
         Returns:
-            FlextResult[FlextLdifTypes.Core.LdifStatistics]: Success with statistics or failure with error message.
+            FlextResult[dict[str, object]]: Success with statistics or failure with error message.
 
         """
         try:
@@ -325,7 +326,7 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.Core.HealthStatusDict]):
                 # Track DN depths
                 dn_depths.append(entry.dn.depth)
 
-            statistics: FlextLdifTypes.Core.LdifStatistics = {
+            statistics: FlextLdifTypes.LdifStatistics = {
                 "total_entries": total_entries,
                 "object_class_counts": object_class_counts,
                 "attribute_counts": attribute_counts,
@@ -334,9 +335,9 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.Core.HealthStatusDict]):
                 "min_dn_depth": min(dn_depths) if dn_depths else 0,
             }
 
-            return FlextResult[FlextLdifTypes.Core.LdifStatistics].ok(statistics)
+            return FlextResult[dict[str, object]].ok(statistics)
         except Exception as e:  # pragma: no cover
-            return FlextResult[FlextLdifTypes.Core.LdifStatistics].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Statistics generation failed: {e}", error_code="STATISTICS_ERROR"
             )
 
@@ -417,12 +418,12 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.Core.HealthStatusDict]):
         return entries
 
     def _log_analysis_success(
-        self, stats: FlextLdifTypes.Core.LdifStatistics
-    ) -> FlextLdifTypes.Core.LdifStatistics:
+        self, stats: FlextLdifTypes.LdifStatistics
+    ) -> FlextLdifTypes.LdifStatistics:
         """Log successful analysis operation.
 
         Returns:
-            FlextLdifTypes.Core.LdifStatistics: The input statistics (unchanged).
+            FlextLdifTypes.LdifStatistics: The input statistics (unchanged).
 
         """
         self._logger.info(
@@ -430,15 +431,15 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.Core.HealthStatusDict]):
         )
         return stats
 
-    def _get_config_summary(self) -> FlextLdifTypes.Core.LdifStatistics:
+    def _get_config_summary(self) -> FlextLdifTypes.LdifStatistics:
         """Get configuration summary for service info.
 
         Returns:
-            FlextLdifTypes.Core.LdifStatistics: Configuration summary dictionary.
+            FlextLdifTypes.LdifStatistics: Configuration summary dictionary.
 
         """
         return cast(
-            "FlextLdifTypes.Core.LdifStatistics",
+            "FlextLdifTypes.LdifStatistics",
             {
                 "max_entries": getattr(self._config, "ldif_max_entries", 10000),
                 "strict_validation": str(

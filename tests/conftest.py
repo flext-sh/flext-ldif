@@ -24,12 +24,27 @@ from flext_tests import (
     FlextTestsMatchers,
     FlextTestsUtilities,
 )
-from tests.test_support import (
+
+from .test_support import (
     FileManager,
     LdifTestData,
     RealServiceFactory,
     TestValidators,
 )
+
+
+class TestFileManager:
+    """Simple file manager for tests."""
+
+    def __init__(self, temp_dir: Path) -> None:
+        """Initialize with temp directory."""
+        self.temp_dir = temp_dir
+
+    def create_file(self, filename: str, content: str) -> Path:
+        """Create a temporary file with content."""
+        file_path = self.temp_dir / filename
+        file_path.write_text(content, encoding="utf-8")
+        return file_path
 
 
 # Test environment setup
@@ -54,7 +69,7 @@ def docker_control() -> FlextTestDocker:
 
 
 @pytest.fixture(scope="session", autouse=False)
-def ensure_shared_docker_container(docker_control: FlextTestDocker) -> None:
+def ensure_shared_docker_container(docker_control: FlextTestDocker) -> Generator[None]:
     """Ensure shared Docker container is started for the test session.
 
     Uses FlextTestDocker to manage container lifecycle with auto-start.

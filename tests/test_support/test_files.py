@@ -11,6 +11,7 @@ import tempfile
 from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
+from types import TracebackType
 from typing import Self
 
 from flext_core import FlextTypes
@@ -171,7 +172,7 @@ class FileManager:
         self,
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
-        exc_tb: object,
+        exc_tb: TracebackType | None,
     ) -> None:
         """Context manager exit with cleanup."""
         self.cleanup()

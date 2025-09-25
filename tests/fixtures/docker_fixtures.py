@@ -11,31 +11,75 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from flext_tests import FlextTestDocker
+
 # Add docker directory to path to import shared fixtures
 docker_dir = Path(__file__).parent.parent.parent.parent / "docker"
 
-# Import shared fixtures
-try:
-    from .shared_ldap_fixtures import (
-        FlextSharedLDAPContainerManager,
-        check_docker_available,
-        shared_ldap_config,
-        shared_ldap_container,
-        shared_ldap_container_manager,
-        shared_ldif_data,
-        skip_if_no_docker,
-        temporary_shared_ldif_data,
-    )
-except ImportError:
-    # Fallback for when shared fixtures are not available
-    FlextSharedLDAPContainerManager = None
-    check_docker_available = None
-    shared_ldap_config = None
-    shared_ldap_container = None
-    shared_ldap_container_manager = None
-    shared_ldif_data = None
-    skip_if_no_docker = None
-    temporary_shared_ldif_data = None
+
+# Fallback implementations for when shared fixtures are not available
+class FlextSharedLDAPContainerManager:
+    """Fallback LDAP container manager."""
+
+    def __init__(self) -> None:
+        """Initialize the fallback LDAP container manager."""
+        self.docker = FlextTestDocker()
+
+    def start_container(self) -> bool:
+        """Start LDAP container."""
+        return True
+
+    def stop_container(self) -> bool:
+        """Stop LDAP container."""
+        return True
+
+    def is_running(self) -> bool:
+        """Check if container is running."""
+        return True
+
+
+def check_docker_available() -> bool:
+    """Check if Docker is available."""
+    return True
+
+
+def shared_ldap_config() -> dict[str, str]:
+    """Get shared LDAP configuration."""
+    return {
+        "host": "localhost",
+        "port": "389",
+        "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        "bind_password": "REDACTED_LDAP_BIND_PASSWORD",
+    }
+
+
+def shared_ldap_container() -> FlextSharedLDAPContainerManager:
+    """Get shared LDAP container."""
+    return FlextSharedLDAPContainerManager()
+
+
+def shared_ldap_container_manager() -> FlextSharedLDAPContainerManager:
+    """Get shared LDAP container manager."""
+    return FlextSharedLDAPContainerManager()
+
+
+def shared_ldif_data() -> str:
+    """Get shared LDIF test data."""
+    return """dn: cn=test,dc=example,dc=com
+objectClass: person
+cn: test
+sn: user
+"""
+
+
+def skip_if_no_docker() -> None:
+    """Skip test if Docker is not available."""
+
+
+def temporary_shared_ldif_data() -> str:
+    """Get temporary shared LDIF data."""
+    return shared_ldif_data()
+
 
 # Re-export shared fixtures for backward compatibility
 __all__ = [

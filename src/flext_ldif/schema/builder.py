@@ -116,6 +116,10 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifModels.SchemaDiscoveryResult]
         self._entry_count = 0
         return self
 
+    async def execute_async(self) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
+        """Execute schema builder service."""
+        return self.build_standard_person_schema()
+
     def build_standard_person_schema(
         self,
     ) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
