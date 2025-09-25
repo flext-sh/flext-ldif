@@ -6,8 +6,6 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from typing import ClassVar
-
 from pydantic import ConfigDict
 
 from flext_core import FlextContainer, FlextLogger, FlextResult, FlextService
@@ -24,7 +22,7 @@ from flext_ldif.schemas_coordinator import FlextLdifSchemas
 class FlextLdifManagement(FlextService[dict[str, object]]):
     """Master coordinator for schema, ACL, entry, and quirks operations using flext-core paradigm."""
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(
+    model_config = ConfigDict(
         arbitrary_types_allowed=True,
         validate_assignment=False,
         extra="allow",
@@ -56,6 +54,15 @@ class FlextLdifManagement(FlextService[dict[str, object]]):
         self.quirks.adapter = self.quirks.EntryAdapter(self.quirks)
 
     def execute(self) -> FlextResult[dict[str, object]]:
+        """Execute health check - required by FlextService."""
+        return FlextResult[dict[str, object]].ok({
+            "status": "healthy",
+            "service": "FlextLdifManagement",
+            "server_type": self._server_type,
+            "coordinators": ["schemas", "entries", "acls", "quirks"],
+        })
+
+    async def execute_async(self) -> FlextResult[dict[str, object]]:
         """Execute health check - required by FlextService."""
         return FlextResult[dict[str, object]].ok({
             "status": "healthy",

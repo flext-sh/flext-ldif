@@ -3,8 +3,6 @@
 Unified ACL management coordinator using flext-core paradigm with nested operation classes.
 """
 
-from typing import ClassVar
-
 from pydantic import ConfigDict
 
 from flext_core import FlextLogger, FlextResult, FlextService
@@ -16,7 +14,7 @@ from flext_ldif.quirks import constants
 class FlextLdifAcls(FlextService[dict[str, object]]):
     """Unified ACL management coordinator following flext-core single class paradigm."""
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(
+    model_config = ConfigDict(
         arbitrary_types_allowed=True,
         validate_assignment=False,
         extra="allow",
@@ -103,35 +101,43 @@ class FlextLdifAcls(FlextService[dict[str, object]]):
             self, target_dn: str, subject_dn: str
         ) -> FlextResult[FlextLdifModels.UnifiedAcl]:
             """Build ACL with read permission."""
-            target_result: FlextResult[FlextLdifModels.AclTarget] = (
-                FlextLdifModels.AclTarget.create(target_dn=target_dn)
-            )
-            if target_result.is_failure:
+            # Create ACL components and extract values safely
+            target_creation = FlextLdifModels.AclTarget.create(target_dn=target_dn)
+            if not target_creation.is_success:
                 return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                    target_result.error or "Target creation failed"
+                    target_creation.error or "Target creation failed"
                 )
-
-            subject_result: FlextResult[FlextLdifModels.AclSubject] = (
-                FlextLdifModels.AclSubject.create(subject_dn=subject_dn)
-            )
-            if subject_result.is_failure:
+            if not isinstance(target_creation.value, FlextLdifModels.AclTarget):
+                return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclTarget type")
+            
+            subject_creation = FlextLdifModels.AclSubject.create(subject_dn=subject_dn)
+            if not subject_creation.is_success:
                 return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                    subject_result.error or "Subject creation failed"
+                    subject_creation.error or "Subject creation failed"
                 )
+            if not isinstance(subject_creation.value, FlextLdifModels.AclSubject):
+                return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclSubject type")
 
-            perms_result = FlextLdifModels.AclPermissions.create(
+            target_result = target_creation.value
+            subject_result = subject_creation.value
+
+            perms_creation = FlextLdifModels.AclPermissions.create(
                 read=True, search=True, compare=True
             )
-            if perms_result.is_failure:
+            if not perms_creation.is_success:
                 return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                    perms_result.error or "Permissions creation failed"
+                    perms_creation.error or "Permissions creation failed"
                 )
+            if not isinstance(perms_creation.value, FlextLdifModels.AclPermissions):
+                return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclPermissions type")
+
+            perms_result = perms_creation.value
 
             return FlextLdifModels.UnifiedAcl.create(
                 name="read_permission",
-                target=target_result.value,
-                subject=subject_result.value,
-                permissions=perms_result.value,
+                target=target_result,
+                subject=subject_result,
+                permissions=perms_result,
                 server_type="generic",
                 raw_acl=f"to {target_dn} by {subject_dn} read",
             )
@@ -140,35 +146,43 @@ class FlextLdifAcls(FlextService[dict[str, object]]):
             self, target_dn: str, subject_dn: str
         ) -> FlextResult[FlextLdifModels.UnifiedAcl]:
             """Build ACL with write permission."""
-            target_result: FlextResult[FlextLdifModels.AclTarget] = (
-                FlextLdifModels.AclTarget.create(target_dn=target_dn)
-            )
-            if target_result.is_failure:
+            # Create ACL components and extract values safely
+            target_creation = FlextLdifModels.AclTarget.create(target_dn=target_dn)
+            if not target_creation.is_success:
                 return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                    target_result.error or "Target creation failed"
+                    target_creation.error or "Target creation failed"
                 )
-
-            subject_result: FlextResult[FlextLdifModels.AclSubject] = (
-                FlextLdifModels.AclSubject.create(subject_dn=subject_dn)
-            )
-            if subject_result.is_failure:
+            if not isinstance(target_creation.value, FlextLdifModels.AclTarget):
+                return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclTarget type")
+            
+            subject_creation = FlextLdifModels.AclSubject.create(subject_dn=subject_dn)
+            if not subject_creation.is_success:
                 return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                    subject_result.error or "Subject creation failed"
+                    subject_creation.error or "Subject creation failed"
                 )
+            if not isinstance(subject_creation.value, FlextLdifModels.AclSubject):
+                return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclSubject type")
 
-            perms_result = FlextLdifModels.AclPermissions.create(
+            target_result = target_creation.value
+            subject_result = subject_creation.value
+
+            perms_creation = FlextLdifModels.AclPermissions.create(
                 read=True, write=True, add=True, delete=True
             )
-            if perms_result.is_failure:
+            if not perms_creation.is_success:
                 return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                    perms_result.error or "Permissions creation failed"
+                    perms_creation.error or "Permissions creation failed"
                 )
+            if not isinstance(perms_creation.value, FlextLdifModels.AclPermissions):
+                return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclPermissions type")
+
+            perms_result = perms_creation.value
 
             return FlextLdifModels.UnifiedAcl.create(
                 name="write_permission",
-                target=target_result.value,
-                subject=subject_result.value,
-                permissions=perms_result.value,
+                target=target_result,
+                subject=subject_result,
+                permissions=perms_result,
                 server_type="generic",
                 raw_acl=f"to {target_dn} by {subject_dn} write",
             )
@@ -177,23 +191,27 @@ class FlextLdifAcls(FlextService[dict[str, object]]):
             self, target_dn: str, subject_dn: str
         ) -> FlextResult[FlextLdifModels.UnifiedAcl]:
             """Build ACL with admin permission."""
-            target_result: FlextResult[FlextLdifModels.AclTarget] = (
-                FlextLdifModels.AclTarget.create(target_dn=target_dn)
-            )
-            if target_result.is_failure:
+            # Create ACL components and extract values safely
+            target_creation = FlextLdifModels.AclTarget.create(target_dn=target_dn)
+            if not target_creation.is_success:
                 return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                    target_result.error or "Target creation failed"
+                    target_creation.error or "Target creation failed"
                 )
-
-            subject_result: FlextResult[FlextLdifModels.AclSubject] = (
-                FlextLdifModels.AclSubject.create(subject_dn=subject_dn)
-            )
-            if subject_result.is_failure:
+            if not isinstance(target_creation.value, FlextLdifModels.AclTarget):
+                return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclTarget type")
+            
+            subject_creation = FlextLdifModels.AclSubject.create(subject_dn=subject_dn)
+            if not subject_creation.is_success:
                 return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                    subject_result.error or "Subject creation failed"
+                    subject_creation.error or "Subject creation failed"
                 )
+            if not isinstance(subject_creation.value, FlextLdifModels.AclSubject):
+                return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclSubject type")
 
-            perms_result = FlextLdifModels.AclPermissions.create(
+            target_result = target_creation.value
+            subject_result = subject_creation.value
+
+            perms_creation = FlextLdifModels.AclPermissions.create(
                 read=True,
                 write=True,
                 add=True,
@@ -202,18 +220,22 @@ class FlextLdifAcls(FlextService[dict[str, object]]):
                 compare=True,
                 proxy=True,
             )
-            if perms_result.is_failure:
+            if not perms_creation.is_success:
                 return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                    perms_result.error or "Permissions creation failed"
+                    perms_creation.error or "Permissions creation failed"
                 )
+            if not isinstance(perms_creation.value, FlextLdifModels.AclPermissions):
+                return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclPermissions type")
+
+            perms_result = perms_creation.value
 
             return FlextLdifModels.UnifiedAcl.create(
                 name="admin_permission",
-                target=target_result.value,
-                subject=subject_result.value,
-                permissions=perms_result.value,
+                target=target_result,
+                subject=subject_result,
+                permissions=perms_result,
                 server_type="generic",
-                raw_acl=f"to {target_dn} by {subject_dn} write",
+                raw_acl=f"to {target_dn} by {subject_dn} admin",
             )
 
     class Converter:
@@ -315,6 +337,14 @@ class FlextLdifAcls(FlextService[dict[str, object]]):
         self.converter = self.Converter(self)
 
     def execute(self) -> FlextResult[dict[str, object]]:
+        """Execute health check - required by FlextService."""
+        return FlextResult[dict[str, object]].ok({
+            "status": "healthy",
+            "service": "FlextLdifAcls",
+            "operations": ["parser", "service", "builder", "converter"],
+        })
+
+    async def execute_async(self) -> FlextResult[dict[str, object]]:
         """Execute health check - required by FlextService."""
         return FlextResult[dict[str, object]].ok({
             "status": "healthy",

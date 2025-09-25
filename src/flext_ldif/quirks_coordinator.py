@@ -3,8 +3,6 @@
 Unified quirks management coordinator using flext-core paradigm with nested operation classes.
 """
 
-from typing import ClassVar
-
 from pydantic import ConfigDict
 
 from flext_core import FlextLogger, FlextResult, FlextService
@@ -18,7 +16,7 @@ from flext_ldif.quirks import (
 class FlextLdifQuirks(FlextService[dict[str, object]]):
     """Unified quirks management coordinator following flext-core single class paradigm."""
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(
+    model_config = ConfigDict(
         arbitrary_types_allowed=True,
         validate_assignment=False,
         extra="allow",
@@ -155,6 +153,14 @@ class FlextLdifQuirks(FlextService[dict[str, object]]):
         self.adapter = self.EntryAdapter(self)
 
     def execute(self: object) -> FlextResult[dict[str, object]]:
+        """Execute health check - required by FlextService."""
+        return FlextResult[dict[str, object]].ok({
+            "status": "healthy",
+            "service": "FlextLdifQuirks",
+            "operations": ["manager", "adapter"],
+        })
+
+    async def execute_async(self: object) -> FlextResult[dict[str, object]]:
         """Execute health check - required by FlextService."""
         return FlextResult[dict[str, object]].ok({
             "status": "healthy",

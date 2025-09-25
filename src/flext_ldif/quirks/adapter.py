@@ -151,9 +151,16 @@ class FlextLdifQuirksAdapter(FlextService[dict[str, object]]):
             }
             return FlextResult[dict[str, object]].ok(health_info)
         except Exception as e:
-            error_msg = f"Quirks adapter health check failed: {e}"
-            self._logger.exception(error_msg)
-            return FlextResult[dict[str, object]].fail(error_msg)
+            return FlextResult[dict[str, object]].fail(f"Health check failed: {e}")
+
+    async def execute_async(self) -> FlextResult[dict[str, object]]:
+        """Execute quirks adapter health check operation asynchronously - required by FlextService.
+
+        Returns:
+            FlextResult containing adapter health status information.
+
+        """
+        return self.execute()
 
     def detect_server_type(
         self, entries: list[FlextLdifModels.Entry]
@@ -293,7 +300,9 @@ class FlextLdifQuirksAdapter(FlextService[dict[str, object]]):
 
             # Create adapted entry
             adapted_entry_result: FlextResult[FlextLdifModels.Entry] = (
-                FlextLdifModels.Entry.create(adapted_data)
+                FlextLdifModels.Entry.create(
+                    dn=adapted_data["dn"], attributes=adapted_data["attributes"]
+                )
             )
             if adapted_entry_result.is_failure:
                 return FlextResult[FlextLdifModels.Entry].fail(

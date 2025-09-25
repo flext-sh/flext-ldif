@@ -197,9 +197,9 @@ class TestValidators:
             return {**base_validation, "entries_valid": False}
 
         entries = result.value if hasattr(result, "value") else []
-        entry_validations_list: list[dict[str, bool | int | str | None]] = []
+        entry_validations_list: list[dict[str, bool | int, str | None]] = []
         entries_validation: dict[
-            str, bool | int | list[dict[str, bool | int | str | None]]
+            str, bool | int, list[dict[str, bool | int, str | None]]
         ] = {
             "count_matches": len(entries) == expected_count,
             "actual_count": len(entries),
@@ -300,8 +300,12 @@ class TestValidators:
         """Assert FlextResult composition meets expectations."""
         composition = TestValidators.validate_flext_result_composition(results)
 
-        assert composition["success_rate"] >= expected_success_rate, (
-            f"Success rate {composition['success_rate']:.2f} below expected {expected_success_rate:.2f}"
+        success_rate_value = composition["success_rate"]
+        if not isinstance(success_rate_value, (int, float)):
+            success_rate_value = 0.0
+        success_rate = float(success_rate_value)
+        assert success_rate >= expected_success_rate, (
+            f"Success rate {success_rate:.2f} below expected {expected_success_rate:.2f}"
         )
 
         if expected_success_rate == 1.0:

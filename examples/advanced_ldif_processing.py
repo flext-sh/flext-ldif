@@ -14,7 +14,7 @@ from __future__ import annotations
 import base64
 from pathlib import Path
 
-from flext_ldif import FlextLdifModels, FlextLdifProcessor, FlextLdifServerQuirks
+from flext_ldif import FlextLdifModels, FlextLdifProcessor, FlextLdifQuirksAdapter
 
 
 def create_sample_ldif_content() -> str:
@@ -209,7 +209,7 @@ def demonstrate_server_adaptation() -> None:
         for server_type in server_types:
             print(f"\nAdapting for {server_type}:")
 
-            quirks_handler = FlextLdifServerQuirks()
+            quirks_handler = FlextLdifQuirksAdapter()
             adaptation_result = quirks_handler.adapt_entry(entry, server_type)
 
             if adaptation_result.is_success:
@@ -286,13 +286,13 @@ def demonstrate_server_compliance_validation() -> None:
                 )
 
                 issues = validation_data.get("issues", [])
-                if issues:
+                if issues and isinstance(issues, list):
                     print(f"  Issues: {len(issues)}")
                     for issue in issues[:3]:  # Show first 3 issues
                         print(f"    - {issue}")
 
                 warnings = validation_data.get("warnings", [])
-                if warnings:
+                if warnings and isinstance(warnings, list):
                     print(f"  Warnings: {len(warnings)}")
                     for warning in warnings[:3]:  # Show first 3 warnings
                         print(f"    - {warning}")

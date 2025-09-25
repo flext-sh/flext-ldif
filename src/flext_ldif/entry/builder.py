@@ -44,33 +44,35 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Build a person entry with standard attributes."""
         dn = f"cn={cn},{base_dn}"
+
+        # Build basic attributes
         attributes: dict[str, list[str]] = {
-            "objectClass": ["top", "person", "organizationalPerson", "inetOrgPerson"],
+            "objectClass": ["inetOrgPerson", "person"],
             "cn": [cn],
             "sn": [sn],
         }
 
+        # Add optional attributes
         if uid:
             attributes["uid"] = [uid]
         if mail:
             attributes["mail"] = [mail]
         if given_name:
             attributes["givenName"] = [given_name]
-
         if additional_attrs:
-            for key, values in additional_attrs.items():
-                if key not in attributes:
-                    attributes[key] = values
+            attributes.update(additional_attrs)
 
-        entry_data: dict[str, object] = {"dn": dn, "attributes": attributes}
-        result: FlextResult[FlextLdifModels.Entry] = FlextLdifModels.Entry.create(
-            entry_data
+        # Create entry
+        return FlextLdifModels.Entry.create(
+            dn=dn,  # type: ignore[misc]
+            attributes=attributes,  # type: ignore[misc]
         )
 
-        if result.is_success:
-            self._logger.info(f"Created person entry: {dn}")
-
-        return result
+    async def execute_async(self) -> FlextResult[FlextLdifModels.Entry]:
+        """Execute entry builder service."""
+        return FlextResult[FlextLdifModels.Entry].fail(
+            "Use specific build methods (build_person_entry, etc.)"
+        )
 
     def build_group_entry(
         self,
@@ -211,7 +213,9 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
 
                 entry_data = {"dn": dn, "attributes": normalized_attrs}
                 entry_result: FlextResult[FlextLdifModels.Entry] = (
-                    FlextLdifModels.Entry.create(entry_data)
+                    FlextLdifModels.Entry.create(
+                        dn=entry_data["dn"], attributes=entry_data["attributes"]
+                    )
                 )
 
                 if entry_result.is_failure:
@@ -261,7 +265,9 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
 
             entry_data: dict[str, object] = {"dn": dn, "attributes": normalized_attrs}
             entry_result: FlextResult[FlextLdifModels.Entry] = (
-                FlextLdifModels.Entry.create(entry_data)
+                FlextLdifModels.Entry.create(
+                    dn=entry_data["dn"], attributes=entry_data["attributes"]
+                )
             )
 
             if entry_result.is_failure:

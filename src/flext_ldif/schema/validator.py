@@ -23,6 +23,13 @@ class FlextLdifSchemaValidator(FlextService[dict[str, object]]):
             "status": "ready",
         })
 
+    async def execute_async(self) -> FlextResult[dict[str, object]]:
+        """Execute schema validator service."""
+        return FlextResult[dict[str, object]].ok({
+            "service": "FlextLdifSchemaValidator",
+            "status": "ready",
+        })
+
     def validate_entry_against_schema(
         self,
         entry: FlextLdifModels.Entry,

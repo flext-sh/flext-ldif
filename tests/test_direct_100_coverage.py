@@ -29,24 +29,20 @@ def test_all_services_100_percent() -> None:
     # Test entries - unwrap FlextResult to get actual Entry objects
     test_entries = [
         FlextLdifModels.Entry.create(
-            {
-                "dn": "cn=person1,dc=test,dc=com",
-                "attributes": {
-                    "cn": ["person1"],
-                    "objectClass": ["person", "organizationalPerson"],
-                    "mail": ["person1@test.com"],
-                    "telephoneNumber": ["+1234567890"],
-                },
+            dn="cn=person1,dc=test,dc=com",
+            attributes={
+                "cn": ["person1"],
+                "objectClass": ["person", "organizationalPerson"],
+                "mail": ["person1@test.com"],
+                "telephoneNumber": ["+1234567890"],
             },
         ).unwrap(),
         FlextLdifModels.Entry.create(
-            {
-                "dn": "cn=group1,ou=groups,dc=test,dc=com",
-                "attributes": {
-                    "cn": ["group1"],
-                    "objectClass": ["groupOfNames"],
-                    "member": ["cn=person1,dc=test,dc=com"],
-                },
+            dn="cn=group1,ou=groups,dc=test,dc=com",
+            attributes={
+                "cn": ["group1"],
+                "objectClass": ["groupOfNames"],
+                "member": ["cn=person1,dc=test,dc=com"],
             },
         ).unwrap(),
     ]

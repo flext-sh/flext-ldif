@@ -33,6 +33,13 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
             "status": "ready",
         })
 
+    async def execute_async(self: object) -> FlextResult[dict[str, object]]:
+        """Execute entry quirks service."""
+        return FlextResult[dict[str, object]].ok({
+            "service": "FlextLdifEntryQuirks",
+            "status": "ready",
+        })
+
     def adapt_entry(
         self, entry: FlextLdifModels.Entry, target_server: str | None = None
     ) -> FlextResult[FlextLdifModels.Entry]:
@@ -77,7 +84,9 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
             adapted_data["attributes"] = adapted_attrs
 
             adapted_entry_result: FlextResult[FlextLdifModels.Entry] = (
-                FlextLdifModels.Entry.create(adapted_data)
+                FlextLdifModels.Entry.create(
+                    dn=adapted_data["dn"], attributes=adapted_data["attributes"]
+                )  # type: ignore[misc]
             )
             if adapted_entry_result.is_failure:
                 return FlextResult[FlextLdifModels.Entry].fail(

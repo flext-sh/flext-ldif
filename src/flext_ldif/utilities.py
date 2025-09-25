@@ -22,6 +22,7 @@ class FlextLdifUtilities(FlextUtilities):
     Contains all utility subclasses for LDIF domain operations.
     Follows FLEXT pattern: one class per module with nested subclasses.
     Extends FlextUtilities with LDIF-specific functionality.
+    Provides proxy methods for backward compatibility.
     """
 
     # =========================================================================
@@ -246,3 +247,58 @@ class FlextLdifUtilities(FlextUtilities):
                 if hasattr(entry, "attributes"):
                     attribute_names.update(entry.attributes.keys())
             return attribute_names
+
+    # =========================================================================
+    # PROXY METHODS - Direct access to nested utility methods for compatibility
+    # =========================================================================
+
+    @classmethod
+    def get_timestamp(cls) -> str:
+        """Proxy method for TimeUtilities.get_timestamp()."""
+        return cls.TimeUtilities.get_timestamp()
+
+    @classmethod
+    def get_formatted_timestamp(cls, format_string: str = "%Y-%m-%d %H:%M:%S") -> str:
+        """Proxy method for TimeUtilities.get_formatted_timestamp()."""
+        return cls.TimeUtilities.get_formatted_timestamp(format_string)
+
+    @classmethod
+    def validate_file_path(cls, file_path: Path) -> FlextResult[None]:
+        """Proxy method for FileUtilities.validate_file_path()."""
+        return cls.FileUtilities.validate_file_path(file_path)
+
+    @classmethod
+    def ensure_file_extension(cls, file_path: Path, extension: str) -> Path:
+        """Proxy method for FileUtilities.ensure_file_extension()."""
+        return cls.FileUtilities.ensure_file_extension(file_path, extension)
+
+    @classmethod
+    def format_bytes(cls, byte_count: int) -> str:
+        """Proxy method for TextUtilities.format_bytes()."""
+        return cls.TextUtilities.format_bytes(byte_count)
+
+    @classmethod
+    def truncate_string(cls, text: str, max_length: int, suffix: str = "...") -> str:
+        """Proxy method for TextUtilities.truncate_string()."""
+        return cls.TextUtilities.truncate_string(text, max_length, suffix)
+
+    @classmethod
+    def count_entries_with_attribute(
+        cls, entries: list[FlextLdifProtocols.LdifEntryProtocol], attribute_name: str
+    ) -> int:
+        """Proxy method for LdifUtilities.count_entries_with_attribute()."""
+        return cls.LdifUtilities.count_entries_with_attribute(entries, attribute_name)
+
+    @classmethod
+    def extract_dns_from_entries(
+        cls, entries: list[FlextLdifProtocols.LdifEntryProtocol]
+    ) -> list[str]:
+        """Proxy method for LdifUtilities.extract_dns_from_entries()."""
+        return cls.LdifUtilities.extract_dns_from_entries(entries)
+
+    @classmethod
+    def get_unique_attribute_names(
+        cls, entries: list[FlextLdifProtocols.LdifEntryProtocol]
+    ) -> set[str]:
+        """Proxy method for LdifUtilities.get_unique_attribute_names()."""
+        return cls.LdifUtilities.get_unique_attribute_names(entries)
