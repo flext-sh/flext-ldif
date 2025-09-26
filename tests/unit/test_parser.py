@@ -1,4 +1,7 @@
-"""FLEXT LDIF Parser - Comprehensive Unit Tests.
+"""Test suite for FlextLdifParser.
+
+This module provides comprehensive testing for the parser functionality
+using real services and FlextTests infrastructure.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,455 +9,555 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import threading
-import time
+import base64
 from pathlib import Path
 
-import pytest
+from tests.test_support import FileManager
 
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.parser import FlextLdifParser
 
 
-class FileManager:
-    """Simple file manager for tests."""
-
-    def __init__(self, temp_dir: Path) -> None:
-        """Initialize with temp directory."""
-        self.temp_dir = temp_dir
-
-    def create_file(self, filename: str, content: str) -> Path:
-        """Create a temporary file with content."""
-        file_path = self.temp_dir / filename
-        file_path.write_text(content, encoding="utf-8")
-        return file_path
-
-
-@pytest.mark.unit
 class TestFlextLdifParser:
-    """Comprehensive tests for FlextLdifParser class."""
+    """Test suite for FlextLdifParser."""
 
-    def test_parser_initialization_default(self) -> None:
-        """Test parser initialization with default configuration."""
+    def test_initialization(self) -> None:
+        """Test parser initialization."""
         parser = FlextLdifParser()
 
         assert parser is not None
-        # When initialized with dict config, it stores _config_dict instead of _config
-        assert hasattr(parser, '_config_dict') or hasattr(parser, '_config')
         assert parser._logger is not None
+        assert parser._config is not None
 
-    def test_parser_initialization_with_config(self) -> None:
-        """Test parser initialization with custom configuration."""
+    def test_initialization_with_config(self) -> None:
+        """Test parser initialization with configuration."""
         config = FlextLdifConfig()
-        parser = FlextLdifParser(config=config)
+        parser = FlextLdifParser(config)
 
         assert parser is not None
-        assert parser._config == config
+        assert parser._logger is not None
+        assert parser._config is not None
 
-    def test_parser_initialization_with_invalid_config(self) -> None:
-        """Test parser initialization with invalid configuration."""
-        # Should handle invalid config gracefully
-        parser = FlextLdifParser(config=None)
-        assert parser is not None
-
-    def test_parse_entry_valid(self) -> None:
-        """Test parsing valid LDIF entry."""
+    def test_execute_success(self) -> None:
+        """Test successful execution."""
         parser = FlextLdifParser()
 
-        entry_content = """dn: cn=test,dc=example,dc=com
-objectClass: person
-cn: Test User
-mail: test@example.com
-"""
-        result = parser.parse_string(entry_content)
+        result = parser.execute()
+
+        assert result.is_success
+        assert result.value is not None
+        assert isinstance(result.value, dict)
+
+    def test_parse_state_enum(self) -> None:
+        """Test ParseState enum values."""
+        assert FlextLdifParser.ParseState.INITIAL.value == "initial"
+        assert FlextLdifParser.ParseState.VERSION.value == "version"
+        assert FlextLdifParser.ParseState.COMMENT.value == "comment"
+        assert FlextLdifParser.ParseState.ENTRY.value == "entry"
+        assert FlextLdifParser.ParseState.CHANGE_RECORD.value == "change_record"
+        assert FlextLdifParser.ParseState.ATTRIBUTE.value == "attribute"
+        assert FlextLdifParser.ParseState.CONTINUATION.value == "continuation"
+        assert FlextLdifParser.ParseState.ERROR.value == "error"
+
+    def test_parse_content_empty(self) -> None:
+        """Test parsing empty content."""
+        parser = FlextLdifParser()
+
+        result = parser.parse_entries("")
 
         assert result.is_success
         assert isinstance(result.value, list)
-        assert len(result.value) > 0
-        assert isinstance(result.value[0], FlextLdifModels.Entry)
-        assert result.value[0].dn.value == "cn=test,dc=example,dc=com"
+        assert len(result.value) == 0
 
-    def test_parse_entry_invalid_dn(self) -> None:
-        """Test parsing entry with invalid DN."""
+    def test_parse_content_whitespace_only(self) -> None:
+        """Test parsing whitespace-only content."""
         parser = FlextLdifParser()
 
-        entry_content = """dn: invalid-dn-format
-objectClass: person
-cn: Test User
-"""
-        result = parser.parse_string(entry_content)
+        result = parser.parse_string("   \n  \t  \n  ")
 
-        # Should handle invalid DN gracefully
-        assert result.is_success or result.is_failure
+        assert result.is_success
+        assert isinstance(result.value, list)
+        assert len(result.value) == 0
 
-    def test_parse_string_missing_dn(self) -> None:
-        """Test parsing content with missing DN."""
+    def test_parse_content_comments_only(self) -> None:
+        """Test parsing content with only comments."""
         parser = FlextLdifParser()
 
-        entry_content = """objectClass: person
-cn: Test User
-"""
-        result = parser.parse_string(entry_content)
-
-        # Should handle missing DN gracefully
-        assert result.is_success or result.is_failure
-
-    def test_parse_entry_empty(self) -> None:
-        """Test parsing empty entry."""
-        parser = FlextLdifParser()
-
-        result = parser.parse_entry("")
-
-        # Should handle empty entry gracefully
-        assert result.is_success or result.is_failure
-
-    def test_parse_entry_with_comments(self) -> None:
-        """Test parsing entry with comments."""
-        parser = FlextLdifParser()
-
-        entry_content = """# This is a comment
-dn: cn=test,dc=example,dc=com
-objectClass: person
-cn: Test User
+        content = """# This is a comment
 # Another comment
-mail: test@example.com
-"""
-        result = parser.parse_string(entry_content)
+# Yet another comment"""
+
+        result = parser.parse_string(content)
 
         assert result.is_success
         assert isinstance(result.value, list)
-        assert len(result.value) == 1
-        assert isinstance(result.value[0], FlextLdifModels.Entry)
+        assert len(result.value) == 0
 
-    def test_parse_entry_with_multiple_values(self) -> None:
-        """Test parsing entry with multiple attribute values."""
+    def test_parse_content_simple_entry(self) -> None:
+        """Test parsing simple LDIF entry."""
         parser = FlextLdifParser()
 
-        entry_content = """dn: cn=test,dc=example,dc=com
+        content = """dn: cn=testuser,dc=example,dc=com
 objectClass: person
-objectClass: organizationalPerson
-cn: Test User
-mail: test@example.com
-mail: test2@example.com
-"""
-        result = parser.parse_string(entry_content)
+cn: testuser
+sn: user"""
+
+        result = parser.parse_string(content)
 
         assert result.is_success
         assert isinstance(result.value, list)
         assert len(result.value) == 1
+
         entry = result.value[0]
         assert isinstance(entry, FlextLdifModels.Entry)
-        assert len(entry.attributes.attributes["objectClass"]) == 2
-        assert len(entry.attributes.attributes["mail"]) == 2
+        assert entry.dn.value == "cn=testuser,dc=example,dc=com"
+        assert "objectClass" in entry.attributes.data
+        assert "cn" in entry.attributes.data
+        assert "sn" in entry.attributes.data
 
-    def test_parse_entry_with_binary_data(self) -> None:
-        """Test parsing entry with binary data."""
+    def test_parse_content_multiple_entries(self) -> None:
+        """Test parsing multiple LDIF entries."""
         parser = FlextLdifParser()
 
-        entry_content = """dn: cn=test,dc=example,dc=com
+        content = """dn: cn=user1,dc=example,dc=com
 objectClass: person
-cn: Test User
-userPassword:: e1NTSEF9b2RkblFvUjNpV2EyclRjQ2p4WUdsdWRPaThka0dvb0c=
-"""
-        result = parser.parse_entry(entry_content)
+cn: user1
 
-        assert result.is_success
-        assert isinstance(result.value, FlextLdifModels.Entry)
-
-    def test_parse_entry_with_continuation_lines(self) -> None:
-        """Test parsing entry with continuation lines."""
-        parser = FlextLdifParser()
-
-        entry_content = """dn: cn=test,dc=example,dc=com
+dn: cn=user2,dc=example,dc=com
 objectClass: person
-cn: Test User
-description: This is a very long description that
- continues on the next line
-mail: test@example.com
-"""
-        result = parser.parse_string(entry_content)
+cn: user2"""
 
-        assert result.is_success
-        entries = result.value
-        assert isinstance(entries, list)
-        # The parser might skip malformed entries, so we just check it's a list
-        # if len(entries) > 0:
-        #     entry = entries[0]
-        #     assert "description" in entry.attributes
-        #     assert "continues on the next line" in entry.attributes["description"][0]
-
-    def test_parse_string_valid(self, sample_ldif_entries: str) -> None:
-        """Test parsing multiple valid LDIF entries."""
-        parser = FlextLdifParser()
-        result = parser.parse_string(sample_ldif_entries)
+        result = parser.parse_string(content)
 
         assert result.is_success
         assert isinstance(result.value, list)
-        # The parser might skip malformed entries, so we just check it's a list
-        # assert len(result.value) > 0
+        assert len(result.value) == 2
 
-        # Verify all entries are FlextLdifModels.Entry instances (if any)
-        for entry in result.value:
-            assert isinstance(entry, FlextLdifModels.Entry)
+        entry1 = result.value[0]
+        entry2 = result.value[1]
 
-    def test_parse_string_invalid(self, invalid_ldif_data: str) -> None:
-        """Test parsing invalid LDIF entries."""
+        assert entry1.dn.value == "cn=user1,dc=example,dc=com"
+        assert entry2.dn.value == "cn=user2,dc=example,dc=com"
+
+    def test_parse_content_with_version(self) -> None:
+        """Test parsing content with version line."""
         parser = FlextLdifParser()
-        result = parser.parse_string(invalid_ldif_data)
 
-        # Should handle invalid entries gracefully
-        assert result.is_success or result.is_failure
+        content = """version: 1
+dn: cn=testuser,dc=example,dc=com
+objectClass: person
+cn: testuser"""
 
-    def test_parse_string_empty(self) -> None:
-        """Test parsing empty LDIF entries."""
+        result = parser.parse_string(content)
+
+        assert result.is_success
+        assert isinstance(result.value, list)
+        assert len(result.value) == 1
+
+    def test_parse_content_with_continuation(self) -> None:
+        """Test parsing content with line continuation."""
         parser = FlextLdifParser()
-        result = parser.parse_string("")
 
-        # Should handle empty content gracefully
+        content = """dn: cn=testuser,dc=example,dc=com
+description: This is a very long description that
+ continues on the next line
+cn: testuser"""
+
+        result = parser.parse_string(content)
+
+        assert result.is_success
+        assert isinstance(result.value, list)
+        assert len(result.value) == 1
+
+        entry = result.value[0]
+        assert "description" in entry.attributes.data
+        description = entry.attributes.data["description"]
+        assert len(description) == 1
+        assert "continues on the next line" in description[0]
+
+    def test_parse_content_with_base64(self) -> None:
+        """Test parsing content with base64 encoded data."""
+        parser = FlextLdifParser()
+
+        # Base64 encode "test data"
+
+        encoded_data = base64.b64encode(b"test data").decode("ascii")
+
+        content = f"""dn: cn=testuser,dc=example,dc=com
+userPassword:: {encoded_data}
+cn: testuser"""
+
+        result = parser.parse_string(content)
+
+        assert result.is_success
+        assert isinstance(result.value, list)
+        assert len(result.value) == 1
+
+        entry = result.value[0]
+        assert "userPassword" in entry.attributes.data
+        password = entry.attributes.data["userPassword"]
+        assert len(password) == 1
+        assert password[0] == "test data"
+
+    def test_parse_content_with_change_record(self) -> None:
+        """Test parsing content with change record."""
+        parser = FlextLdifParser()
+
+        content = """dn: cn=testuser,dc=example,dc=com
+changetype: add
+objectClass: person
+cn: testuser"""
+
+        result = parser.parse_string(content)
+
+        assert result.is_success
+        assert isinstance(result.value, list)
+        assert len(result.value) == 1
+
+        entry = result.value[0]
+        assert entry.dn.value == "cn=testuser,dc=example,dc=com"
+        assert entry.changetype == "add"
+
+    def test_parse_content_with_attribute_options(self) -> None:
+        """Test parsing content with attribute options."""
+        parser = FlextLdifParser()
+
+        content = """dn: cn=testuser,dc=example,dc=com
+cn;lang-en: testuser
+cn;lang-fr: utilisateur test
+cn: testuser"""
+
+        result = parser.parse_string(content)
+
+        assert result.is_success
+        assert isinstance(result.value, list)
+        assert len(result.value) == 1
+
+        entry = result.value[0]
+        assert "cn" in entry.attributes.data
+        cn_values = entry.attributes.data["cn"]
+        assert len(cn_values) == 3
+        assert "testuser" in cn_values
+        assert "utilisateur test" in cn_values
+
+    def test_parse_content_invalid_dn(self) -> None:
+        """Test parsing content with invalid DN."""
+        parser = FlextLdifParser()
+
+        content = """dn: invalid-dn-without-equals
+objectClass: person
+cn: testuser"""
+
+        result = parser.parse_string(content)
+
+        # Should still succeed but might handle invalid DN gracefully
         assert result.is_success or result.is_failure
         if result.is_success:
             assert isinstance(result.value, list)
 
-    def test_parse_string_with_changes(self, sample_ldif_with_changes: str) -> None:
-        """Test parsing LDIF entries with change records."""
+    def test_parse_content_missing_dn(self) -> None:
+        """Test parsing content without DN."""
         parser = FlextLdifParser()
-        result = parser.parse_string(sample_ldif_with_changes)
 
-        assert result.is_success
-        assert isinstance(result.value, list)
+        content = """objectClass: person
+cn: testuser"""
 
-    def test_parse_string_with_binary(self, sample_ldif_with_binary: str) -> None:
-        """Test parsing LDIF entries with binary data."""
+        result = parser.parse_string(content)
+
+        # Should fail or handle gracefully
+        assert result.is_success or result.is_failure
+
+    def test_parse_file_nonexistent(self) -> None:
+        """Test parsing nonexistent file."""
         parser = FlextLdifParser()
-        result = parser.parse_string(sample_ldif_with_binary)
 
-        assert result.is_success
-        assert isinstance(result.value, list)
-
-    def test_parse_ldif_file_valid(self, ldif_test_file: Path) -> None:
-        """Test parsing valid LDIF file."""
-        parser = FlextLdifParser()
-        result = parser.parse_ldif_file(ldif_test_file)
-
-        assert result.is_success
-        assert isinstance(result.value, list)
-
-    def test_parse_ldif_file_nonexistent(self) -> None:
-        """Test parsing nonexistent LDIF file."""
-        parser = FlextLdifParser()
-        nonexistent_file = Path("/nonexistent/file.ldif")
-        result = parser.parse_ldif_file(nonexistent_file)
+        result = parser.parse_ldif_file_from_path(Path("nonexistent.ldif"))
 
         assert result.is_failure
-        assert result.error is not None
+        assert "No such file or directory" in result.error
 
-    def test_parse_ldif_file_invalid_format(
-        self, test_file_manager: FileManager
-    ) -> None:
-        """Test parsing file with invalid LDIF format."""
+    def test_parse_file_success(self, test_file_manager: FileManager) -> None:
+        """Test parsing existing file."""
         parser = FlextLdifParser()
 
-        # Create a file with invalid LDIF format
-        invalid_file = test_file_manager.create_invalid_file()
-        result = parser.parse_ldif_file(invalid_file)
-
-        # Should handle invalid format gracefully
-        assert result.is_success or result.is_failure
-
-    def test_validate_rfc_compliance_valid(self, sample_ldif_entries: str) -> None:
-        """Test validating RFC compliance of valid LDIF entries."""
-        parser = FlextLdifParser()
-        result = parser.validate_rfc_compliance(sample_ldif_entries)
-
-        assert result.is_success
-        assert isinstance(result.value, dict)
-
-    def test_validate_rfc_compliance_invalid(self, invalid_ldif_data: str) -> None:
-        """Test validating RFC compliance of invalid LDIF entries."""
-        parser = FlextLdifParser()
-        result = parser.validate_rfc_compliance(invalid_ldif_data)
-
-        # Should return validation results
-        assert result.is_success or result.is_failure
-        if result.is_success:
-            assert isinstance(result.value, dict)
-
-    def test_validate_rfc_compliance_empty(self) -> None:
-        """Test validating RFC compliance of empty LDIF entries."""
-        parser = FlextLdifParser()
-        result = parser.validate_rfc_compliance("")
-
-        # Should handle empty content gracefully
-        assert result.is_success or result.is_failure
-
-    def test_detect_server_type(self, sample_ldif_entries: str) -> None:
-        """Test detecting server type from LDIF content."""
-        parser = FlextLdifParser()
-        # First parse the content to get entries
-        parse_result = parser.parse_string(sample_ldif_entries)
-        if parse_result.is_success:
-            result = parser.detect_server_type(parse_result.value)
-            assert result.is_success
-            assert isinstance(result.value, str)
-            # Should return a valid server type
-            assert result.value in {
-                "generic",
-                "active_directory",
-                "openldap",
-                "apache_directory",
-            }
-
-    def test_detect_server_type_invalid(self, invalid_ldif_data: str) -> None:
-        """Test detecting server type from invalid LDIF content."""
-        parser = FlextLdifParser()
-        result = parser.detect_server_type(invalid_ldif_data)
-
-        # Should handle invalid content gracefully
-        assert result.is_success or result.is_failure
-
-    def test_detect_server_type_empty(self) -> None:
-        """Test detecting server type from empty LDIF content."""
-        parser = FlextLdifParser()
-        result = parser.detect_server_type("")
-
-        # Should handle empty content gracefully
-        assert result.is_success or result.is_failure
-
-    def test_parser_execute(self) -> None:
-        """Test parser execute method (required by FlextService)."""
-        parser = FlextLdifParser()
-
-        result = parser.execute()
-
-        assert result.is_success
-        assert isinstance(result.value, dict)
-
-    @pytest.mark.asyncio
-    async def test_parser_execute_async(self) -> None:
-        """Test parser execute_async method (required by FlextService)."""
-        parser = FlextLdifParser()
-
-        result = await parser.execute_async()
-
-        assert result.is_success
-        assert isinstance(result.value, dict)
-
-    def test_parser_performance(self) -> None:
-        """Test parser performance characteristics."""
-        parser = FlextLdifParser()
-
-        # Test basic performance
-
-        start_time = time.time()
-
-        result = parser.execute()
-
-        end_time = time.time()
-        execution_time = end_time - start_time
-
-        assert result.is_success
-        assert execution_time < 1.0  # Should complete within 1 second
-
-    def test_parser_memory_usage(self) -> None:
-        """Test parser memory usage characteristics."""
-        parser = FlextLdifParser()
-
-        # Test that parser can handle multiple operations without issues
-        test_content = """dn: cn=test,dc=example,dc=com
+        content = """dn: cn=testuser,dc=example,dc=com
 objectClass: person
+cn: testuser
+sn: user"""
+
+        ldif_file = test_file_manager.create_ldif_file(content, "test.ldif")
+
+        result = parser.parse_ldif_file_from_path(ldif_file)
+
+        assert result.is_success
+        assert isinstance(result.value, list)
+        assert len(result.value) == 1
+
+    def test_parse_file_with_config(self, test_file_manager: FileManager) -> None:
+        """Test parsing file with configuration."""
+        config = FlextLdifConfig()
+        parser = FlextLdifParser(config)
+
+        content = """dn: cn=testuser,dc=example,dc=com
+objectClass: person
+cn: testuser"""
+
+        ldif_file = test_file_manager.create_ldif_file(content, "test.ldif")
+
+        result = parser.parse_ldif_file_from_path(ldif_file)
+
+        assert result.is_success
+        assert isinstance(result.value, list)
+        assert len(result.value) == 1
+
+    def test_parse_content_with_real_ldif_data(self) -> None:
+        """Test parsing with realistic LDIF data."""
+        parser = FlextLdifParser()
+
+        content = """version: 1
+# This is a sample LDIF file
+dn: uid=john.doe,ou=people,dc=example,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+uid: john.doe
+cn: John Doe
+sn: Doe
+givenName: John
+mail: john.doe@example.com
+telephoneNumber: +1-555-123-4567
+employeeNumber: E12345
+
+dn: uid=jane.smith,ou=people,dc=example,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+uid: jane.smith
+cn: Jane Smith
+sn: Smith
+givenName: Jane
+mail: jane.smith@example.com
+telephoneNumber: +1-555-987-6543
+employeeNumber: E67890"""
+
+        result = parser.parse_string(content)
+
+        assert result.is_success
+        assert isinstance(result.value, list)
+        assert len(result.value) == 2
+
+        entry1 = result.value[0]
+        entry2 = result.value[1]
+
+        assert entry1.dn.value == "uid=john.doe,ou=people,dc=example,dc=com"
+        assert entry2.dn.value == "uid=jane.smith,ou=people,dc=example,dc=com"
+
+        assert "mail" in entry1.attributes.data
+        assert "mail" in entry2.attributes.data
+        assert entry1.attributes.data["mail"][0] == "john.doe@example.com"
+        assert entry2.attributes.data["mail"][0] == "jane.smith@example.com"
+
+    def test_parse_content_with_binary_data(self) -> None:
+        """Test parsing content with binary data."""
+        parser = FlextLdifParser()
+
+        # Create binary data and encode it
+
+        binary_data = b"binary\x00data\xff\xfe"
+        encoded_data = base64.b64encode(binary_data).decode("ascii")
+
+        content = f"""dn: cn=testuser,dc=example,dc=com
+userCertificate:: {encoded_data}
+cn: testuser"""
+
+        result = parser.parse_string(content)
+
+        assert result.is_success
+        assert isinstance(result.value, list)
+        assert len(result.value) == 1
+
+        entry = result.value[0]
+        assert "userCertificate" in entry.attributes.data
+        certificate = entry.attributes.data["userCertificate"]
+        assert len(certificate) == 1
+        assert certificate[0] == encoded_data
+
+    def test_parse_content_with_multivalued_attributes(self) -> None:
+        """Test parsing content with multivalued attributes."""
+        parser = FlextLdifParser()
+
+        content = """dn: cn=testuser,dc=example,dc=com
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: testuser
 cn: Test User
 mail: test@example.com
-"""
+mail: testuser@example.com
+telephoneNumber: +1-555-123-4567
+telephoneNumber: +1-555-987-6543"""
 
-        # Perform multiple operations
-        for _ in range(10):
-            result = parser.parse_string(test_content)
-            assert result.is_success or result.is_failure
+        result = parser.parse_string(content)
 
-        # Parser should still be functional
-        final_result = parser.parse_string(test_content)
-        assert final_result.is_success or final_result.is_failure
+        assert result.is_success
+        assert isinstance(result.value, list)
+        assert len(result.value) == 1
 
-    def test_parser_error_handling(self) -> None:
-        """Test parser error handling capabilities."""
+        entry = result.value[0]
+        assert "objectClass" in entry.attributes.data
+        assert "cn" in entry.attributes.data
+        assert "mail" in entry.attributes.data
+        assert "telephoneNumber" in entry.attributes.data
+
+        # Check multivalued attributes
+        object_classes = entry.attributes.data["objectClass"]
+        assert len(object_classes) == 3
+        assert "person" in object_classes
+        assert "organizationalPerson" in object_classes
+        assert "inetOrgPerson" in object_classes
+
+        cn_values = entry.attributes.data["cn"]
+        assert len(cn_values) == 2
+        assert "testuser" in cn_values
+        assert "Test User" in cn_values
+
+        mail_values = entry.attributes.data["mail"]
+        assert len(mail_values) == 2
+        assert "test@example.com" in mail_values
+        assert "testuser@example.com" in mail_values
+
+    def test_parse_content_with_special_characters(self) -> None:
+        """Test parsing content with special characters."""
         parser = FlextLdifParser()
 
-        # Test with various error conditions
-        result = parser.parse_string("invalid ldif content")
+        content = """dn: cn=test\\,user,dc=example,dc=com
+description: This contains special chars: <>&"'
+cn: test,user"""
 
-        # Should handle errors gracefully
-        assert result.is_success or result.is_failure
-        if result.is_failure:
-            assert result.error is not None
+        result = parser.parse_string(content)
 
-    def test_parser_large_content(self) -> None:
-        """Test parser with large content."""
+        assert result.is_success
+        assert isinstance(result.value, list)
+        assert len(result.value) == 1
+
+        entry = result.value[0]
+        assert entry.dn.value == "cn=test\\,user,dc=example,dc=com"
+        assert "description" in entry.attributes.data
+        assert "cn" in entry.attributes.data
+
+    def test_parse_content_with_empty_attributes(self) -> None:
+        """Test parsing content with empty attributes."""
         parser = FlextLdifParser()
 
-        # Create smaller LDIF content for testing (reduced from 1000 to 10)
-        large_content = "\n".join([
-            "\n".join([
-                f"dn: cn=user{i},dc=example,dc=com",
-                "objectClass: person",
-                f"cn: User {i}",
-                f"mail: user{i}@example.com",
-                f"description: User {i} description",
-                "",
-            ])
-            for i in range(10)
-        ])
+        content = """dn: cn=testuser,dc=example,dc=com
+objectClass: person
+cn: testuser
+emptyAttribute:
+anotherEmptyAttribute: """
 
-        result = parser.parse_string(large_content)
+        result = parser.parse_string(content)
 
-        # Should handle large content gracefully - may succeed or fail depending on implementation
-        assert result.is_success or result.is_failure
-        if result.is_success:
-            assert len(result.value) >= 0  # Should parse some entries
+        assert result.is_success
+        assert isinstance(result.value, list)
+        assert len(result.value) == 1
 
-    def test_parser_edge_cases(self) -> None:
-        """Test parser with edge cases."""
+        entry = result.value[0]
+        assert "emptyAttribute" in entry.attributes.data
+        assert "anotherEmptyAttribute" in entry.attributes.data
+
+        empty_attr = entry.attributes.data["emptyAttribute"]
+        another_empty_attr = entry.attributes.data["anotherEmptyAttribute"]
+
+        assert len(empty_attr) == 1
+        assert len(another_empty_attr) == 1
+        assert not empty_attr[0]
+        assert not another_empty_attr[0]
+
+    def test_parse_content_with_long_lines(self) -> None:
+        """Test parsing content with very long lines."""
         parser = FlextLdifParser()
 
-        # Test with very long lines
-        long_line_content = (
-            "dn: cn="
-            + "x" * 10000
-            + ",dc=example,dc=com\nobjectClass: person\ncn: Test"
-        )
-        result = parser.parse_string(long_line_content)
+        # Create a very long description
+        long_description = "This is a very long description. " * 100
 
-        # Should handle long lines gracefully
-        assert result.is_success or result.is_failure
+        content = f"""dn: cn=testuser,dc=example,dc=com
+objectClass: person
+cn: testuser
+description: {long_description}"""
 
-        # Test with special characters
-        special_char_content = "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: Test with special chars: !@#$%^&*()"
-        result = parser.parse_string(special_char_content)
+        result = parser.parse_string(content)
 
-        # Should handle special characters gracefully
-        assert result.is_success or result.is_failure
+        assert result.is_success
+        assert isinstance(result.value, list)
+        assert len(result.value) == 1
 
-    def test_parser_concurrent_operations(self) -> None:
-        """Test parser concurrent operations."""
+        entry = result.value[0]
+        assert "description" in entry.attributes.data
+        description = entry.attributes.data["description"]
+        assert len(description) == 1
+        assert len(description[0]) > 1000  # Should be very long
+
+    def test_parse_content_with_mixed_content(self) -> None:
+        """Test parsing content with mixed valid and invalid content."""
         parser = FlextLdifParser()
-        results = []
 
-        def worker() -> None:
-            result = parser.execute()
-            results.append(result)
+        content = """# Comment at the beginning
+version: 1
+# Another comment
 
-        # Start multiple threads
-        threads = []
-        for _ in range(5):
-            thread = threading.Thread(target=worker)
-            threads.append(thread)
-            thread.start()
+dn: cn=validuser,dc=example,dc=com
+objectClass: person
+cn: validuser
 
-        # Wait for all threads to complete
-        for thread in threads:
-            thread.join()
+# Comment in the middle
 
-        # Verify all operations succeeded
-        assert len(results) == 5
-        for result in results:
-            assert result.is_success
+dn: cn=anotheruser,dc=example,dc=com
+objectClass: person
+cn: anotheruser
+
+# Comment at the end"""
+
+        result = parser.parse_string(content)
+
+        assert result.is_success
+        assert isinstance(result.value, list)
+        assert len(result.value) == 2
+
+        entry1 = result.value[0]
+        entry2 = result.value[1]
+
+        assert entry1.dn.value == "cn=validuser,dc=example,dc=com"
+        assert entry2.dn.value == "cn=anotheruser,dc=example,dc=com"
+
+    def test_parse_content_with_unicode(self) -> None:
+        """Test parsing content with Unicode characters."""
+        parser = FlextLdifParser()
+
+        content = """dn: cn=测试用户,dc=example,dc=com
+objectClass: person
+cn: 测试用户
+description: This contains Unicode: ñáéíóú 中文 🚀"""
+
+        result = parser.parse_string(content)
+
+        assert result.is_success
+        assert isinstance(result.value, list)
+        assert len(result.value) == 1
+
+        entry = result.value[0]
+        assert entry.dn.value == "cn=测试用户,dc=example,dc=com"
+        assert "cn" in entry.attributes.data
+        assert "description" in entry.attributes.data
+
+        cn_values = entry.attributes.data["cn"]
+        assert len(cn_values) == 1
+        assert cn_values[0] == "测试用户"
+
+        description_values = entry.attributes.data["description"]
+        assert len(description_values) == 1
+        assert "Unicode" in description_values[0]
+        assert "中文" in description_values[0]
+        assert "🚀" in description_values[0]

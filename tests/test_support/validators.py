@@ -8,9 +8,12 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import TypeVar
 
-from flext_core import FlextResult, FlextTypes, T
+from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifModels
+
+T = TypeVar("T")
 
 
 class TestValidators:
@@ -56,7 +59,10 @@ class TestValidators:
 
         # Basic DN format validation
         # Should have attribute=value pairs separated by commas
-        dn_pattern = r"^([a-zA-Z][a-zA-Z0-9]*\s*=\s*[^,]+)(,\s*[a-zA-Z][a-zA-Z0-9]*\s*=\s*[^,]+)*$"
+        dn_pattern = (
+            r"^([a-zA-Z][a-zA-Z0-9]*\s*=\s*[^,]+)"
+            r"(,\s*[a-zA-Z][a-zA-Z0-9]*\s*=\s*[^,]+)*$"
+        )
         return bool(re.match(dn_pattern, dn.strip()))
 
     @staticmethod
@@ -305,12 +311,14 @@ class TestValidators:
             success_rate_value = 0.0
         success_rate = float(success_rate_value)
         assert success_rate >= expected_success_rate, (
-            f"Success rate {success_rate:.2f} below expected {expected_success_rate:.2f}"
+            f"Success rate {success_rate:.2f} below expected "
+            f"{expected_success_rate:.2f}"
         )
 
         if expected_success_rate == 1.0:
             assert composition["all_successful"], (
-                f"Expected all results to be successful, but {composition['failure_count']} failed"
+                f"Expected all results to be successful, but "
+                f"{composition['failure_count']} failed"
             )
 
     @staticmethod

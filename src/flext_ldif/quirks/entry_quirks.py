@@ -1,10 +1,12 @@
-"""LDAP Entry Quirks Handler.
+"""Entry quirks module for LDIF processing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from typing import cast
+from __future__ import annotations
+
+from typing import cast, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif.models import FlextLdifModels
@@ -15,6 +17,7 @@ from flext_ldif.quirks.manager import FlextLdifQuirksManager
 class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
     """Entry adaptation and validation for server-specific quirks."""
 
+    @override
     def __init__(self, quirks_manager: FlextLdifQuirksManager | None = None) -> None:
         """Initialize entry quirks handler.
 
@@ -26,17 +29,18 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
         self._logger = FlextLogger(__name__)
         self._quirks = quirks_manager or FlextLdifQuirksManager()
 
+    @override
     def execute(self: object) -> FlextResult[dict[str, object]]:
         """Execute entry quirks service."""
         return FlextResult[dict[str, object]].ok({
-            "service": "FlextLdifEntryQuirks",
+            "service": FlextLdifEntryQuirks,
             "status": "ready",
         })
 
     async def execute_async(self: object) -> FlextResult[dict[str, object]]:
         """Execute entry quirks service."""
         return FlextResult[dict[str, object]].ok({
-            "service": "FlextLdifEntryQuirks",
+            "service": FlextLdifEntryQuirks,
             "status": "ready",
         })
 
@@ -86,7 +90,7 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
             adapted_entry_result: FlextResult[FlextLdifModels.Entry] = (
                 FlextLdifModels.Entry.create(
                     dn=adapted_data["dn"], attributes=adapted_data["attributes"]
-                )  # type: ignore[misc]
+                )
             )
             if adapted_entry_result.is_failure:
                 return FlextResult[FlextLdifModels.Entry].fail(

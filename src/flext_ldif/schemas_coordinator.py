@@ -1,7 +1,8 @@
-"""FLEXT LDIF Schemas Coordinator.
+"""Schemas coordinator module for LDIF processing."""
 
-Unified schema management coordinator using flext-core paradigm with nested operation classes.
-"""
+from __future__ import annotations
+
+from typing import override
 
 from pydantic import ConfigDict
 
@@ -16,7 +17,11 @@ from flext_ldif.schema import (
 
 
 class FlextLdifSchemas(FlextService[dict[str, object]]):
-    """Unified schema management coordinator following flext-core single class paradigm."""
+    """Unified schema management coordinator following flext-core single class paradigm.
+
+    Provides comprehensive schema management operations including extraction,
+    validation, building, and management of LDAP schemas and object classes.
+    """
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
@@ -27,7 +32,8 @@ class FlextLdifSchemas(FlextService[dict[str, object]]):
     class Extractor:
         """Nested class for schema extraction operations."""
 
-        def __init__(self, parent: "FlextLdifSchemas") -> None:
+        @override
+        def __init__(self, parent: FlextLdifSchemas) -> None:
             """Initialize schema extractor with parent coordinator reference."""
             self._parent = parent
             self._extractor = FlextLdifSchemaExtractor()
@@ -48,7 +54,8 @@ class FlextLdifSchemas(FlextService[dict[str, object]]):
     class Validator:
         """Nested class for schema validation operations."""
 
-        def __init__(self, parent: "FlextLdifSchemas") -> None:
+        @override
+        def __init__(self, parent: FlextLdifSchemas) -> None:
             """Initialize schema validator with parent coordinator reference."""
             self._parent = parent
             self._validator = FlextLdifSchemaValidator()
@@ -86,7 +93,8 @@ class FlextLdifSchemas(FlextService[dict[str, object]]):
     class Builder:
         """Nested class for schema building operations."""
 
-        def __init__(self, parent: "FlextLdifSchemas") -> None:
+        @override
+        def __init__(self, parent: FlextLdifSchemas) -> None:
             """Initialize schema builder with parent coordinator reference."""
             self._parent = parent
             self._builder = FlextLdifSchemaBuilder()
@@ -107,7 +115,8 @@ class FlextLdifSchemas(FlextService[dict[str, object]]):
     class ObjectClassManager:
         """Nested class for objectclass management operations."""
 
-        def __init__(self, parent: "FlextLdifSchemas") -> None:
+        @override
+        def __init__(self, parent: FlextLdifSchemas) -> None:
             """Initialize objectclass manager with parent coordinator reference."""
             self._parent = parent
             self._manager = FlextLdifObjectClassManager()
@@ -122,8 +131,14 @@ class FlextLdifSchemas(FlextService[dict[str, object]]):
                     f"Failed to create schema: {schema_result.error}"
                 )
 
-            return self._manager.resolve_objectclass_hierarchy(
-                object_class_name, schema_result.value
+            if schema_result.is_success and isinstance(
+                schema_result.value, FlextLdifModels.SchemaDiscoveryResult
+            ):
+                return self._manager.resolve_objectclass_hierarchy(
+                    object_class_name, schema_result.value
+                )
+            return FlextResult[list[str]].fail(
+                f"Failed to create schema: {schema_result.error}"
             )
 
         def get_required_attributes(
@@ -137,8 +152,14 @@ class FlextLdifSchemas(FlextService[dict[str, object]]):
                     f"Failed to create schema: {schema_result.error}"
                 )
 
-            return self._manager.get_all_required_attributes(
-                object_class_names, schema_result.value
+            if schema_result.is_success and isinstance(
+                schema_result.value, FlextLdifModels.SchemaDiscoveryResult
+            ):
+                return self._manager.get_all_required_attributes(
+                    object_class_names, schema_result.value
+                )
+            return FlextResult[list[str]].fail(
+                f"Failed to create schema: {schema_result.error}"
             )
 
         def get_definition(
@@ -152,12 +173,18 @@ class FlextLdifSchemas(FlextService[dict[str, object]]):
                     f"Failed to create schema: {schema_result.error}"
                 )
 
-            # Get objectclass definition from schema
-            if object_class_name in schema_result.value.object_classes:
-                oc_def = schema_result.value.object_classes[object_class_name]
-                return FlextResult[FlextLdifModels.SchemaObjectClass].ok(oc_def)
+            if schema_result.is_success and isinstance(
+                schema_result.value, FlextLdifModels.SchemaDiscoveryResult
+            ):
+                # Get objectclass definition from schema
+                if object_class_name in schema_result.value.object_classes:
+                    oc_def = schema_result.value.object_classes[object_class_name]
+                    return FlextResult[FlextLdifModels.SchemaObjectClass].ok(oc_def)
+                return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
+                    f"ObjectClass '{object_class_name}' not found in schema"
+                )
             return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
-                f"ObjectClass '{object_class_name}' not found in schema"
+                f"Failed to create schema: {schema_result.error}"
             )
 
         def validate_combination(
@@ -171,20 +198,27 @@ class FlextLdifSchemas(FlextService[dict[str, object]]):
                     f"Failed to create schema: {schema_result.error}"
                 )
 
-            result = self._manager.validate_objectclass_combination(
-                object_class_names, schema_result.value
-            )
-            if result.is_success:
-                # Extract boolean from result
-                validation_data = result.value
-                is_valid: bool = (
-                    bool(validation_data.get("valid", False))
-                    if isinstance(validation_data, dict)
-                    else False
+            if schema_result.is_success and isinstance(
+                schema_result.value, FlextLdifModels.SchemaDiscoveryResult
+            ):
+                result = self._manager.validate_objectclass_combination(
+                    object_class_names, schema_result.value
                 )
-                return FlextResult[bool].ok(is_valid)
-            return FlextResult[bool].fail(result.error or "Validation failed")
+                if result.is_success:
+                    # Extract boolean from result
+                    validation_data = result.value
+                    is_valid: bool = (
+                        bool(validation_data.get("valid", False))
+                        if isinstance(validation_data, dict)
+                        else False
+                    )
+                    return FlextResult[bool].ok(is_valid)
+                return FlextResult[bool].fail(result.error or "Validation failed")
+            return FlextResult[bool].fail(
+                f"Failed to create schema: {schema_result.error}"
+            )
 
+    @override
     def __init__(self) -> None:
         """Initialize schema coordinator with nested operation classes."""
         super().__init__()
@@ -195,11 +229,12 @@ class FlextLdifSchemas(FlextService[dict[str, object]]):
         self.builder = self.Builder(self)
         self.objectclass = self.ObjectClassManager(self)
 
+    @override
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute health check - required by FlextService."""
         return FlextResult[dict[str, object]].ok({
             "status": "healthy",
-            "service": "FlextLdifSchemas",
+            "service": FlextLdifSchemas,
             "operations": ["extractor", "validator", "builder", "objectclass"],
         })
 
@@ -207,7 +242,7 @@ class FlextLdifSchemas(FlextService[dict[str, object]]):
         """Execute health check - required by FlextService."""
         return FlextResult[dict[str, object]].ok({
             "status": "healthy",
-            "service": "FlextLdifSchemas",
+            "service": FlextLdifSchemas,
             "operations": ["extractor", "validator", "builder", "objectclass"],
         })
 

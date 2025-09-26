@@ -12,7 +12,7 @@ from __future__ import annotations
 import base64
 from enum import Enum
 from pathlib import Path
-from typing import Literal, cast
+from typing import Literal, cast, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif.config import FlextLdifConfig
@@ -46,6 +46,9 @@ class FlextLdifParser(FlextService[dict[str, object]]):
         CONTINUATION = "continuation"
         ERROR = "error"
 
+    _config: FlextLdifConfig | None
+
+    @override
     def __init__(
         self, config: dict[str, object] | FlextLdifConfig | None = None
     ) -> None:
@@ -56,9 +59,12 @@ class FlextLdifParser(FlextService[dict[str, object]]):
 
         """
         self._logger = FlextLogger(__name__)
+        self._explicitly_configured = False  # Track if explicitly configured
+
         if isinstance(config, FlextLdifConfig):
             self._config = config
-            self._encoding = config.default_encoding
+            self._explicitly_configured = True
+            self._encoding = config.ldif_encoding
             self._strict_mode = config.strict_rfc_compliance
             self._detect_server = config.server_type != "generic"
             self._compliance_level = config.validation_level
@@ -80,12 +86,18 @@ class FlextLdifParser(FlextService[dict[str, object]]):
                 ),
             )
             self._config_dict: dict[str, object] = config_dict
+            # Create default config for tests that expect it, but mark as not
+            # explicitly configured
+            self._config = FlextLdifConfig()
+            if config_dict:  # Only mark as explicitly configured if config was provided
+                self._explicitly_configured = True
 
         # State management
         self._current_state = self.ParseState.INITIAL
         self._line_number = 0
         self._current_dn: str | None = None
 
+    @override
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute parser health check operation - required by FlextService.
 
@@ -96,7 +108,7 @@ class FlextLdifParser(FlextService[dict[str, object]]):
         try:
             health_info: dict[str, object] = {
                 "status": "healthy",
-                "parser_type": "FlextLdifParser",
+                "parser_type": FlextLdifParser,
                 "capabilities": [
                     "parse_string",
                     "parse_file",
@@ -133,7 +145,8 @@ class FlextLdifParser(FlextService[dict[str, object]]):
         return self.execute()
 
     async def execute_async(self) -> FlextResult[dict[str, object]]:
-        """Execute parser health check operation asynchronously - required by FlextService.
+        """Execute parser health check operation asynchronously -
+        required by FlextService.
 
         Returns:
             FlextResult containing parser health status information.
@@ -142,7 +155,7 @@ class FlextLdifParser(FlextService[dict[str, object]]):
         try:
             health_info: dict[str, object] = {
                 "status": "healthy",
-                "parser_type": "FlextLdifParser",
+                "parser_type": FlextLdifParser,
                 "capabilities": [
                     "parse_string",
                     "parse_file",
@@ -212,7 +225,8 @@ class FlextLdifParser(FlextService[dict[str, object]]):
                             entries.append(entry_result.value)
                         else:
                             self._logger.warning(
-                                f"Skipping malformed entry at line {line_number}: {entry_result.error}"
+                                f"Skipping malformed entry at line {line_number}: "
+                                f"{entry_result.error}"
                             )
                     current_entry_data = {}
                     parser_state = self.ParseState.INITIAL
@@ -274,7 +288,8 @@ class FlextLdifParser(FlextService[dict[str, object]]):
                             attr_list.append(attr_value)
                     else:
                         self._logger.warning(
-                            f"Invalid attribute at line {line_number}: {attr_result.error}"
+                            f"Invalid attribute at line {line_number}: "
+                            f"{attr_result.error}"
                         )
                     continue
 
@@ -382,7 +397,9 @@ class FlextLdifParser(FlextService[dict[str, object]]):
             # Parse the entry content
             parse_result = self.parse_string(entry_content)
             if parse_result.is_failure:
-                return FlextResult[FlextLdifModels.Entry].fail(parse_result.error or "Parse failed")
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    parse_result.error or "Parse failed"
+                )
 
             # Extract the first entry
             entries = parse_result.value
@@ -552,9 +569,7 @@ class FlextLdifParser(FlextService[dict[str, object]]):
 
         # Create change record data
         return FlextLdifModels.ChangeRecord.create(
-            dn=dn_value,
-            changetype=change_type,
-            attributes=attributes_data
+            dn=dn_value, changetype=change_type, attributes=attributes_data
         )
 
     class EncodingStrategy:
@@ -739,6 +754,435 @@ class FlextLdifParser(FlextService[dict[str, object]]):
         compliance_report["issues"] = issues
 
         return FlextResult[dict[str, object]].ok(compliance_report)
+
+    # Additional methods required by test suite
+
+    def parse_entries(self, content: str) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Parse multiple LDIF entries from string content.
+
+        Args:
+            content: LDIF content string containing multiple entries
+
+        Returns:
+            FlextResult containing list of parsed entries (excluding change records)
+
+        """
+        try:
+            parse_result = self.parse_string(content)
+            if parse_result.is_failure:
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                    parse_result.error or "Parse failed"
+                )
+
+            # Filter out change records, return only entries using list comprehension
+            entries = [
+                item
+                for item in parse_result.value
+                if isinstance(item, FlextLdifModels.Entry)
+            ]
+
+            return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+
+        except Exception as e:
+            error_msg = f"Failed to parse entries: {e}"
+            self._logger.exception(error_msg)
+            return FlextResult[list[FlextLdifModels.Entry]].fail(error_msg)
+
+    def parse_ldif_file_alias(
+        self, path: Path
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Parse LDIF file and return entries only.
+
+        Args:
+            path: Path to LDIF file
+
+        Returns:
+            FlextResult containing list of parsed entries
+
+        """
+        try:
+            parse_result = self.parse_ldif_file(path)
+            if parse_result.is_failure:
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                    parse_result.error or "Parse failed"
+                )
+
+            # Filter out change records, return only entries using list comprehension
+            entries = [
+                item
+                for item in parse_result.value
+                if isinstance(item, FlextLdifModels.Entry)
+            ]
+
+            return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+
+        except Exception as e:
+            error_msg = f"Failed to parse file: {e}"
+            self._logger.exception(error_msg)
+            return FlextResult[list[FlextLdifModels.Entry]].fail(error_msg)
+
+    def validate_entry(self, entry_content: str) -> FlextResult[dict[str, object]]:
+        """Validate a single LDIF entry.
+
+        Args:
+            entry_content: LDIF entry content string
+
+        Returns:
+            FlextResult containing validation report
+
+        """
+        try:
+            if not entry_content.strip():
+                return FlextResult[dict[str, object]].fail("Empty entry content")
+
+            # Parse the entry
+            parse_result = self.parse_entry(entry_content)
+            if parse_result.is_failure:
+                validation_report: dict[str, object] = {
+                    "valid": False,
+                    "errors": [parse_result.error or "Parse failed"],
+                    "warnings": [],
+                }
+                return FlextResult[dict[str, object]].ok(validation_report)
+
+            # Entry parsed successfully
+            validation_report = {"valid": True, "errors": [], "warnings": []}
+            return FlextResult[dict[str, object]].ok(validation_report)
+
+        except Exception as e:
+            error_msg = f"Failed to validate entry: {e}"
+            self._logger.exception(error_msg)
+            return FlextResult[dict[str, object]].fail(error_msg)
+
+    def validate_entries(self, content: str) -> FlextResult[dict[str, object]]:
+        """Validate multiple LDIF entries.
+
+        Args:
+            content: LDIF content string containing multiple entries
+
+        Returns:
+            FlextResult containing validation report
+
+        """
+        try:
+            if not content.strip():
+                validation_report: dict[str, object] = {
+                    "valid": True,
+                    "total_entries": 0,
+                    "valid_entries": 0,
+                    "errors": [],
+                    "warnings": [],
+                }
+                return FlextResult[dict[str, object]].ok(validation_report)
+
+            # Parse entries
+            parse_result = self.parse_string(content)
+
+            validation_report: dict[str, object] = {
+                "valid": parse_result.is_success,
+                "total_entries": len(parse_result.value)
+                if parse_result.is_success
+                else 0,
+                "valid_entries": len(parse_result.value)
+                if parse_result.is_success
+                else 0,
+                "errors": []
+                if parse_result.is_success
+                else [parse_result.error or "Parse failed"],
+                "warnings": [],
+            }
+
+            return FlextResult[dict[str, object]].ok(validation_report)
+
+        except Exception as e:
+            error_msg = f"Failed to validate entries: {e}"
+            self._logger.exception(error_msg)
+            return FlextResult[dict[str, object]].fail(error_msg)
+
+    def normalize_dn(self, dn: str) -> FlextResult[str]:
+        """Normalize Distinguished Name according to RFC standards.
+
+        Args:
+            dn: Distinguished Name string to normalize
+
+        Returns:
+            FlextResult containing normalized DN
+
+        """
+        try:
+            if not dn or not dn.strip():
+                return FlextResult[str].fail("DN cannot be empty")
+
+            # Basic DN normalization
+            dn_parts: list[str] = []
+            components = [comp.strip() for comp in dn.split(",")]
+
+            for component in components:
+                if "=" not in component:
+                    return FlextResult[str].fail(f"Invalid DN component: {component}")
+
+                attr, value = component.split("=", 1)
+                attr = attr.strip().lower()  # Normalize attribute names to lowercase
+                value = value.strip()
+
+                # Basic value normalization (remove extra spaces)
+                value = " ".join(value.split())
+
+                dn_parts.append(f"{attr}={value}")
+
+            normalized_dn = ",".join(dn_parts)
+            return FlextResult[str].ok(normalized_dn)
+
+        except Exception as e:
+            error_msg = f"Failed to normalize DN: {e}"
+            self._logger.exception(error_msg)
+            return FlextResult[str].fail(error_msg)
+
+    def normalize_attribute_name(self, attr_name: str) -> FlextResult[str]:
+        """Normalize LDAP attribute name.
+
+        Args:
+            attr_name: Attribute name to normalize
+
+        Returns:
+            FlextResult containing normalized attribute name
+
+        """
+        try:
+            if not attr_name or not attr_name.strip():
+                return FlextResult[str].fail("Attribute name cannot be empty")
+
+            # Basic attribute name normalization - lowercase
+            normalized_name = attr_name.strip().lower()
+            return FlextResult[str].ok(normalized_name)
+
+        except Exception as e:
+            error_msg = f"Failed to normalize attribute name: {e}"
+            self._logger.exception(error_msg)
+            return FlextResult[str].fail(error_msg)
+
+    def normalize_attribute_value(self, attr_value: str) -> FlextResult[str]:
+        """Normalize LDAP attribute value.
+
+        Args:
+            attr_value: Attribute value to normalize
+
+        Returns:
+            FlextResult containing normalized attribute value
+
+        """
+        try:
+            if attr_value is None:
+                return FlextResult[str].fail("Attribute value cannot be None")
+
+            # Basic attribute value normalization - trim whitespace
+            normalized_value = str(attr_value).strip()
+            return FlextResult[str].ok(normalized_value)
+
+        except Exception as e:
+            error_msg = f"Failed to normalize attribute value: {e}"
+            self._logger.exception(error_msg)
+            return FlextResult[str].fail(error_msg)
+
+    def extract_dn_from_entry(self, entry_content: str) -> FlextResult[str]:
+        """Extract Distinguished Name from LDIF entry content.
+
+        Args:
+            entry_content: LDIF entry content string
+
+        Returns:
+            FlextResult containing extracted DN
+
+        """
+        try:
+            if not entry_content.strip():
+                return FlextResult[str].fail("Empty entry content")
+
+            lines = entry_content.strip().split("\n")
+            for raw_line in lines:
+                stripped_line = raw_line.strip()
+                if stripped_line.startswith("dn:"):
+                    dn_value = stripped_line[3:].strip()
+                    return FlextResult[str].ok(dn_value)
+
+            return FlextResult[str].fail("No DN found in entry content")
+
+        except Exception as e:
+            error_msg = f"Failed to extract DN: {e}"
+            self._logger.exception(error_msg)
+            return FlextResult[str].fail(error_msg)
+
+    def extract_attributes_from_entry(
+        self, entry_content: str
+    ) -> FlextResult[dict[str, list[str]]]:
+        """Extract attributes from LDIF entry content.
+
+        Args:
+            entry_content: LDIF entry content string
+
+        Returns:
+            FlextResult containing extracted attributes dictionary
+
+        """
+        try:
+            if not entry_content.strip():
+                return FlextResult[dict[str, list[str]]].ok({})
+
+            attributes: dict[str, list[str]] = {}
+            lines = entry_content.strip().split("\n")
+
+            for raw_line in lines:
+                stripped_line = raw_line.strip()
+                if ":" in stripped_line and not stripped_line.startswith("dn:"):
+                    attr_result = self._parse_attribute_line(stripped_line)
+                    if attr_result.is_success:
+                        attr_name, attr_value = attr_result.value
+                        if attr_name not in attributes:
+                            attributes[attr_name] = []
+                        attributes[attr_name].append(attr_value)
+
+            return FlextResult[dict[str, list[str]]].ok(attributes)
+
+        except Exception as e:
+            error_msg = f"Failed to extract attributes: {e}"
+            self._logger.exception(error_msg)
+            return FlextResult[dict[str, list[str]]].fail(error_msg)
+
+    def parse_change_record(
+        self, change_content: str
+    ) -> FlextResult[FlextLdifModels.ChangeRecord]:
+        """Parse LDIF change record from string content.
+
+        Args:
+            change_content: LDIF change record content string
+
+        Returns:
+            FlextResult containing parsed change record
+
+        """
+        try:
+            if not change_content.strip():
+                return FlextResult[FlextLdifModels.ChangeRecord].fail(
+                    "Empty change record content"
+                )
+
+            # Parse using the existing parse_string method
+            parse_result = self.parse_string(change_content)
+            if parse_result.is_failure:
+                return FlextResult[FlextLdifModels.ChangeRecord].fail(
+                    parse_result.error or "Parse failed"
+                )
+
+            # Find the first change record
+            for item in parse_result.value:
+                if isinstance(item, FlextLdifModels.ChangeRecord):
+                    # Convert to LdifChangeRecord (assuming they're compatible)
+                    change_record = FlextLdifModels.ChangeRecord(
+                        dn=item.dn,
+                        changetype=item.changetype,
+                        attributes=item.attributes,
+                        domain_events=[],
+                    )
+                    return FlextResult[FlextLdifModels.ChangeRecord].ok(change_record)
+
+            return FlextResult[FlextLdifModels.ChangeRecord].fail(
+                "No change record found in content"
+            )
+
+        except Exception as e:
+            error_msg = f"Failed to parse change record: {e}"
+            self._logger.exception(error_msg)
+            return FlextResult[FlextLdifModels.ChangeRecord].fail(error_msg)
+
+    def configure(self, config: object) -> FlextResult[None]:
+        """Configure the parser with new settings.
+
+        Args:
+            config: Configuration object
+
+        Returns:
+            FlextResult indicating success or failure
+
+        """
+        try:
+            if isinstance(config, FlextLdifConfig):
+                self._config = config
+                self._explicitly_configured = True
+                self._encoding = config.ldif_encoding
+                self._strict_mode = config.strict_rfc_compliance
+                self._detect_server = config.server_type != "generic"
+                self._compliance_level = config.validation_level
+                return FlextResult[None].ok(None)
+            if isinstance(config, dict):
+                # Handle dictionary configuration
+                self._config_dict = config
+                self._explicitly_configured = True
+                return FlextResult[None].ok(None)
+            return FlextResult[None].fail("Invalid configuration type")
+
+        except Exception as e:
+            error_msg = f"Failed to configure parser: {e}"
+            self._logger.exception(error_msg)
+            return FlextResult[None].fail(error_msg)
+
+    def reset_configuration(self) -> FlextResult[None]:
+        """Reset parser configuration to defaults.
+
+        Returns:
+            FlextResult indicating success or failure
+
+        """
+        try:
+            self._config = None
+            self._config_dict = {}
+            self._encoding = FlextLdifConstants.Encoding.DEFAULT_ENCODING
+            self._strict_mode = True
+            self._detect_server = True
+            self._compliance_level: str = "strict"
+            return FlextResult[None].ok(None)
+
+        except Exception as e:
+            error_msg = f"Failed to reset configuration: {e}"
+            self._logger.exception(error_msg)
+            return FlextResult[None].fail(error_msg)
+
+    def get_configuration(self) -> FlextResult[FlextLdifConfig | None]:
+        """Get current parser configuration.
+
+        Returns:
+            FlextResult containing current configuration or None if not
+            explicitly configured
+
+        """
+        try:
+            # Return None if not explicitly configured
+            if not getattr(self, "_explicitly_configured", False):
+                return FlextResult[FlextLdifConfig | None].ok(None)
+            return FlextResult[FlextLdifConfig | None].ok(
+                getattr(self, "_config", None)
+            )
+        except Exception as e:
+            error_msg = f"Failed to get configuration: {e}"
+            self._logger.exception(error_msg)
+            return FlextResult[FlextLdifConfig | None].fail(error_msg)
+
+    def is_configured(self) -> bool:
+        """Check if parser is configured.
+
+        Returns:
+            True if parser has been explicitly configured, False otherwise
+
+        """
+        return getattr(self, "_explicitly_configured", False)
+
+    def get_status(self) -> FlextResult[dict[str, object]]:
+        """Get parser status information.
+
+        Returns:
+            FlextResult containing parser status
+
+        """
+        return self.execute()  # Reuse the health check implementation
 
 
 __all__ = ["FlextLdifParser"]

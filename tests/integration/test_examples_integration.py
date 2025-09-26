@@ -44,8 +44,9 @@ objectClass: organizationalUnit
         # Replicate basic parsing workflow
         config = FlextLdifConfig(
             ldif_strict_validation=True,
-            ldif_max_entries=100,
-            ldif_chunk_size=50,
+            ldif_max_entries=1000,
+            ldif_chunk_size=1000,
+            enable_performance_optimizations=False,
         )
         api = FlextLdifAPI(config)
 

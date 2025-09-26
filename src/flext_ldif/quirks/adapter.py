@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from typing import cast
+from typing import cast, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif.constants import FlextLdifConstants
@@ -24,6 +24,7 @@ class FlextLdifQuirksAdapter(FlextService[dict[str, object]]):
     including Active Directory, OpenLDAP, Apache Directory Server, etc.
     """
 
+    @override
     def __init__(self, server_type: str | None = None) -> None:
         """Initialize server quirks handler.
 
@@ -124,6 +125,7 @@ class FlextLdifQuirksAdapter(FlextService[dict[str, object]]):
             },
         }
 
+    @override
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute quirks adapter health check operation - required by FlextService.
 
@@ -154,7 +156,8 @@ class FlextLdifQuirksAdapter(FlextService[dict[str, object]]):
             return FlextResult[dict[str, object]].fail(f"Health check failed: {e}")
 
     async def execute_async(self) -> FlextResult[dict[str, object]]:
-        """Execute quirks adapter health check operation asynchronously - required by FlextService.
+        """Execute quirks adapter health check operation asynchronously -
+        required by FlextService.
 
         Returns:
             FlextResult containing adapter health status information.
@@ -245,7 +248,8 @@ class FlextLdifQuirksAdapter(FlextService[dict[str, object]]):
             ):  # Minimum confidence threshold
                 self._server_type = best_server[0]
                 self._logger.info(
-                    f"Detected server type: {best_server[0]} (confidence: {best_server[1]:.2f})"
+                    f"Detected server type: {best_server[0]} "
+                    f"(confidence: {best_server[1]:.2f})"
                 )
                 return FlextResult[str].ok(best_server[0])
 
@@ -395,6 +399,12 @@ class FlextLdifQuirksAdapter(FlextService[dict[str, object]]):
         issues: list[str] = []
         recommendations: list[str] = []
 
+        # Check if entry is None
+        if entry is None:
+            return FlextResult[dict].fail(
+                "Server compliance validation failed: Entry is None"
+            )
+
         # Validate DN format
         dn_validation = self._validate_dn_format(entry.dn.value, target)
         if not dn_validation["valid"]:
@@ -522,7 +532,9 @@ class FlextLdifQuirksAdapter(FlextService[dict[str, object]]):
 
         """
         descriptions = {
-            FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY: "Microsoft Active Directory",
+            FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY: (
+                "Microsoft Active Directory"
+            ),
             FlextLdifConstants.LdapServers.OPENLDAP: "OpenLDAP",
             FlextLdifConstants.LdapServers.APACHE_DIRECTORY: "Apache Directory Server",
             FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY: "Novell eDirectory",

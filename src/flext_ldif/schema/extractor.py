@@ -1,10 +1,8 @@
-"""FLEXT LDIF Schema Extractor.
+"""Schema extractor module for LDIF processing."""
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+from __future__ import annotations
 
-from typing import cast
+from typing import cast, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif.models import FlextLdifModels
@@ -13,11 +11,13 @@ from flext_ldif.models import FlextLdifModels
 class FlextLdifSchemaExtractor(FlextService[FlextLdifModels.SchemaDiscoveryResult]):
     """Schema extraction service for LDIF entries."""
 
+    @override
     def __init__(self) -> None:
         """Initialize schema extractor."""
         super().__init__()
         self._logger = FlextLogger(__name__)
 
+    @override
     def execute(self: object) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
         """Execute schema extractor service."""
         return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(
@@ -50,39 +50,35 @@ class FlextLdifSchemaExtractor(FlextService[FlextLdifModels.SchemaDiscoveryResul
             )
 
         try:
-            attributes: dict[str, FlextLdifModels.SchemaAttribute] = {}
+            attributes: dict[str, dict[str, str]] = {}
             object_classes: dict[str, FlextLdifModels.SchemaObjectClass] = {}
-            discovered_dns: list[str] = []
 
             for entry in entries:
-                discovered_dns.append(entry.dn.value)
-
                 for attr_name, attr_values in entry.attributes.data.items():
-                    if attr_name not in attributes:
-                        attr_result = FlextLdifModels.SchemaAttribute.create(
-                            name=attr_name,
-                            oid=f"1.3.6.1.4.1.{hash(attr_name) % 1000000}",  # Generate OID
-                            description="Discovered from LDIF entries",
-                            single_value=len(attr_values) <= 1,
-                        )
-                        if attr_result.is_success:
-                            attributes[attr_name] = attr_result.value
-
                     if attr_name.lower() == "objectclass":
+                        # Handle object classes specially
                         for oc_name in attr_values:
                             if oc_name not in object_classes:
                                 oc_result = FlextLdifModels.SchemaObjectClass.create(
                                     name=oc_name,
-                                    description="Discovered from LDIF entries",
+                                    oid=f"1.3.6.1.4.1.{hash(oc_name) % 1000000}",
                                 )
                                 if oc_result.is_success:
-                                    object_classes[oc_name] = cast("FlextLdifModels.SchemaObjectClass", oc_result.value)
+                                    object_classes[oc_name] = cast(
+                                        "FlextLdifModels.SchemaObjectClass",
+                                        oc_result.value,
+                                    )
+                    # Handle regular attributes
+                    elif attr_name not in attributes:
+                        attributes[attr_name] = {
+                            "oid": f"1.3.6.1.4.1.{hash(attr_name) % 1000000}",
+                            "description": "Discovered from LDIF entries",
+                            "single_value": str(len(attr_values) <= 1),
+                        }
 
             result = FlextLdifModels.SchemaDiscoveryResult.create(
                 object_classes=object_classes,
                 attributes=attributes,
-                entry_count=len(entries),
-                discovered_dns=list(set(discovered_dns)),
             )
 
             if result.is_success:
@@ -91,7 +87,15 @@ class FlextLdifSchemaExtractor(FlextService[FlextLdifModels.SchemaDiscoveryResul
                     f"{len(object_classes)} objectClasses from {len(entries)} entries"
                 )
 
-            return result
+            if result.is_success and isinstance(
+                result.value, FlextLdifModels.SchemaDiscoveryResult
+            ):
+                return FlextResult[FlextLdifModels.SchemaDiscoveryResult].ok(
+                    result.value
+                )
+            return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(
+                result.error or "Failed to create schema"
+            )
 
         except Exception as e:
             return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(

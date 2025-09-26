@@ -24,8 +24,7 @@ from flext_tests import (
     FlextTestsMatchers,
     FlextTestsUtilities,
 )
-
-from .test_support import (
+from tests.test_support import (
     FileManager,
     LdifTestData,
     RealServiceFactory,
@@ -521,8 +520,15 @@ def ldif_error_scenarios() -> dict[str, str]:
         "invalid_dn": "dn: invalid-dn-format\nobjectClass: person\n",
         "missing_dn": "objectClass: person\ncn: Test User\n",
         "empty_content": "",
-        "malformed_attribute": "dn: cn=test,dc=example,dc=com\ninvalid-attribute-line\n",
-        "circular_reference": "dn: cn=group1,dc=example,dc=com\nmember: cn=group2,dc=example,dc=com\n\ndn: cn=group2,dc=example,dc=com\nmember: cn=group1,dc=example,dc=com\n",
+        "malformed_attribute": (
+            "dn: cn=test,dc=example,dc=com\ninvalid-attribute-line\n"
+        ),
+        "circular_reference": (
+            "dn: cn=group1,dc=example,dc=com\n"
+            "member: cn=group2,dc=example,dc=com\n\n"
+            "dn: cn=group2,dc=example,dc=com\n"
+            "member: cn=group1,dc=example,dc=com\n"
+        ),
     }
 
 

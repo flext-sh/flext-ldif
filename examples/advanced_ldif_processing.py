@@ -148,7 +148,8 @@ def demonstrate_advanced_parsing() -> None:
         # Show change record details
         for i, change_record in enumerate(change_records):
             print(
-                f"  Change Record {i + 1}: {change_record.changetype} - {change_record.dn.value}"
+                f"  Change Record {i + 1}: {change_record.changetype} - "
+                f"{change_record.dn.value}"
             )
     else:
         print(f"✗ Advanced parsing failed: {result.error}")
@@ -177,7 +178,8 @@ def demonstrate_server_detection() -> None:
                 print(f"  Server: {info.get('description', 'Unknown')}")
                 print(f"  DN Case Sensitive: {info.get('dn_case_sensitive', False)}")
                 print(
-                    f"  Required Object Classes: {info.get('required_object_classes', [])}"
+                    f"  Required Object Classes: "
+                    f"{info.get('required_object_classes', [])}"
                 )
         else:
             print(f"✗ Server detection failed: {detection_result.error}")
@@ -188,7 +190,7 @@ def demonstrate_server_adaptation() -> None:
     print("\n=== Server-Specific Adaptation ===")
 
     # Create a sample entry
-    entry_data = {
+    entry_data: dict[str, object] = {
         "dn": "cn=test user,ou=users,dc=example,dc=com",
         "attributes": {
             "cn": ["test user"],
@@ -240,10 +242,12 @@ def demonstrate_compliance_validation() -> None:
             print("✓ Compliance validation completed")
             print(f"  Total entries: {compliance_data.get('total_entries', 0)}")
             print(
-                f"  Compliance level: {compliance_data.get('compliance_level', 'unknown')}"
+                f"  Compliance level: "
+                f"{compliance_data.get('compliance_level', 'unknown')}"
             )
             print(
-                f"  Compliance score: {compliance_data.get('compliance_score', 0.0):.2f}"
+                f"  Compliance score: "
+                f"{compliance_data.get('compliance_score', 0.0):.2f}"
             )
             print(
                 f"  Features detected: {compliance_data.get('features_detected', [])}"
@@ -276,13 +280,16 @@ def demonstrate_server_compliance_validation() -> None:
                 print(f"  Server type: {validation_data.get('server_type', 'unknown')}")
                 print(f"  Total entries: {validation_data.get('total_entries', 0)}")
                 print(
-                    f"  Compliant entries: {validation_data.get('compliant_entries', 0)}"
+                    f"  Compliant entries: "
+                    f"{validation_data.get('compliant_entries', 0)}"
                 )
                 print(
-                    f"  Compliance percentage: {validation_data.get('compliance_percentage', 0.0):.1f}%"
+                    f"  Compliance percentage: "
+                    f"{validation_data.get('compliance_percentage', 0.0):.1f}%"
                 )
                 print(
-                    f"  Overall compliant: {validation_data.get('overall_compliant', False)}"
+                    f"  Overall compliant: "
+                    f"{validation_data.get('overall_compliant', False)}"
                 )
 
                 issues = validation_data.get("issues", [])

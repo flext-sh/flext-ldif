@@ -57,7 +57,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
         """Initialize the processor with proper error handling.
 
         Returns:
-            FlextResult[FlextLdifProcessor]: Success with initialized processor or failure with error message.
+            FlextResult[FlextLdifProcessor]: Success with initialized processor
+            or failure with error message.
 
         """
         try:
@@ -74,7 +75,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
         """Execute health check operation - required by FlextService.
 
         Returns:
-            FlextResult[FlextLdifTypes.HealthStatusDict]: Health check status information.
+            FlextResult[FlextLdifTypes.HealthStatusDict]: Health check status
+            information.
 
         """
         return self.health_check()
@@ -83,7 +85,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
         """Execute health check operation asynchronously - required by FlextService.
 
         Returns:
-            FlextResult[FlextLdifTypes.HealthStatusDict]: Health check status information.
+            FlextResult[FlextLdifTypes.HealthStatusDict]: Health check status
+            information.
 
         """
         return self.health_check()
@@ -96,7 +99,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
         """Parse LDIF content string into entries.
 
         Returns:
-            FlextResult[list[FlextLdifModels.Entry]]: Success with parsed entries or failure with error message.
+            FlextResult[list[FlextLdifModels.Entry]]: Success with parsed entries
+            or failure with error message.
 
         """
         return self._processor_result.flat_map(
@@ -109,7 +113,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
         """Parse LDIF file using file path (string or Path).
 
         Returns:
-            FlextResult[list[FlextLdifModels.Entry]]: Success with parsed entries or failure with error message.
+            FlextResult[list[FlextLdifModels.Entry]]: Success with parsed entries
+            or failure with error message.
 
         """
         if isinstance(file_path, str):
@@ -124,7 +129,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
         """Validate LDIF entries and return valid entries.
 
         Returns:
-            FlextResult[list[FlextLdifModels.Entry]]: Success with validated entries or failure with error message.
+            FlextResult[list[FlextLdifModels.Entry]]: Success with validated
+            entries or failure with error message.
 
         """
         validation_result = self._processor_result.flat_map(
@@ -142,7 +148,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
         """Write entries to LDIF format string.
 
         Returns:
-            FlextResult[str]: Success with LDIF content string or failure with error message.
+            FlextResult[str]: Success with LDIF content string or failure with
+            error message.
 
         """
         return self._processor_result.flat_map(
@@ -155,7 +162,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
         """Write entries to LDIF file.
 
         Returns:
-            FlextResult[bool]: Success with True if file written successfully or failure with error message.
+            FlextResult[bool]: Success with True if file written successfully
+            or failure with error message.
 
         """
         if isinstance(file_path, str):
@@ -180,7 +188,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
         """Transform entries using optional transformer function.
 
         Returns:
-            FlextResult[list[FlextLdifModels.Entry]]: Success with transformed entries or failure with error message.
+            FlextResult[list[FlextLdifModels.Entry]]: Success with transformed
+            entries or failure with error message.
 
         """
         if transformer is None:
@@ -202,15 +211,13 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
         """Analyze entries and return statistics.
 
         Returns:
-            FlextResult[dict[str, object]]: Success with analysis statistics or failure with error message.
+            FlextResult[dict[str, object]]: Success with analysis statistics
+            or failure with error message.
 
         """
-        return (
-            self._processor_result.flat_map(
-                lambda processor: processor.analyze_entries(entries)
-            )
-            .map(self._log_analysis_success)
-        )
+        return self._processor_result.flat_map(
+            lambda processor: processor.analyze_entries(entries)
+        ).map(self._log_analysis_success)
 
     @staticmethod
     def filter_entries(
@@ -220,7 +227,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
         """Filter entries using provided predicate function.
 
         Returns:
-            FlextResult[list[FlextLdifModels.Entry]]: Success with filtered entries or failure with error message.
+            FlextResult[list[FlextLdifModels.Entry]]: Success with filtered
+            entries or failure with error message.
 
         """
         try:
@@ -299,7 +307,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
         """Get comprehensive entry statistics.
 
         Returns:
-            FlextResult[dict[str, object]]: Success with statistics or failure with error message.
+            FlextResult[dict[str, object]]: Success with statistics or failure
+            with error message.
 
         """
         try:

@@ -6,10 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests.test_support.ldif_data import LdifSample, LdifTestData
-from tests.test_support.real_services import RealServiceFactory
-from tests.test_support.test_files import FileManager
-from tests.test_support.validators import TestValidators
+from .ldif_data import LdifSample, LdifTestData
+from .real_services import RealServiceFactory
+from .test_files import FileManager
+from .validators import TestValidators
 
 __all__ = [
     "FileManager",

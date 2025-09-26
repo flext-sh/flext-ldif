@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable, Iterator, Sequence
+from typing import override
 
 # Import centralized TypeVars from flext-core (FLEXT STANDARD)
 from flext_core.typings import T, U
@@ -93,8 +94,8 @@ class FlextLdifMixins(FlextMixins):
                 msg = "URL cannot be empty"
                 raise ValueError(msg)
 
-            # Basic URL validation
-            url_pattern = r"^https?://[^\s/$.?#].[^\s]*$"
+            # Basic URL validation - support HTTP, HTTPS, and LDAP URLs
+            url_pattern = r"^(https?|ldap)://[^\s/$.?#].[^\s]*$"
             if not re.match(url_pattern, url):
                 msg = f"Invalid URL format: {url}"
                 raise ValueError(msg)
@@ -250,7 +251,9 @@ class FlextLdifMixins(FlextMixins):
             """Count entries by type."""
             type_counts: dict[str, int] = {}
             for entry in entries:
-                entry_type = getattr(entry, "entry_type", "unknown")
+                entry_type = getattr(
+                    entry, "type", getattr(entry, "entry_type", "unknown")
+                )
                 type_counts[entry_type] = type_counts.get(entry_type, 0) + 1
             return type_counts
 
@@ -300,6 +303,7 @@ class FlextLdifMixins(FlextMixins):
     class CachingMixin:
         """Mixin providing caching utilities with monadic composition."""
 
+        @override
         def __init__(self) -> None:
             """Initialize caching mixin with empty cache and statistics."""
             self._cache: dict[str, object] = {}
@@ -335,7 +339,9 @@ class FlextLdifMixins(FlextMixins):
 
         def get_cache_stats(self) -> dict[str, int]:
             """Get cache statistics."""
-            return self._cache_stats.copy()
+            stats = self._cache_stats.copy()
+            stats["size"] = len(self._cache)
+            return stats
 
     # =============================================================================
     # MONADIC COMPOSITION MIXINS - Advanced Functional Patterns
@@ -433,6 +439,7 @@ class FlextLdifMixins(FlextMixins):
     class MixinCoordinator:
         """Unified mixin coordinator managing all mixin functionality."""
 
+        @override
         def __init__(self) -> None:
             """Initialize mixin coordinator with all available mixins."""
             self._validation_mixin = FlextLdifMixins.ValidationMixin()

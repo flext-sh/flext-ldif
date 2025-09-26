@@ -227,7 +227,11 @@ class FlextLdifUtilities(FlextUtilities):
                 list[str]: List of DN strings
 
             """
-            return [entry.dn for entry in entries if hasattr(entry, "dn")]
+            return [
+                getattr(entry.dn, "value", str(entry.dn))
+                for entry in entries
+                if hasattr(entry, "dn")
+            ]
 
         @staticmethod
         def get_unique_attribute_names(

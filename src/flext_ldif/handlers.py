@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import cast
+from typing import cast, override
 
 from flext_core import FlextBus, FlextContainer, FlextLogger, FlextResult, FlextTypes
 from flext_ldif.config import FlextLdifConfig
@@ -23,6 +23,7 @@ class FlextLdifHandlers(FlextBus):
     Implements monadic composition with FlextResult throughout.
     """
 
+    @override
     def __init__(self, config: FlextLdifConfig) -> None:
         """Initialize LDIF handlers with configuration and container."""
         super().__init__()
@@ -38,9 +39,11 @@ class FlextLdifHandlers(FlextBus):
         self._analytics_handler = self.AnalyticsHandler(config)
         self._coordinator = self.HandlerCoordinator(config)
 
+    @override
     def execute(self, command: object) -> FlextResult[object]:
         """Execute handlers and return statistics using railway pattern."""
-        # Command parameter is required by FlextBus interface but not used in this implementation
+        # Command parameter is required by FlextBus interface but not used in
+        # this implementation
         _ = command
         validation_result = self._validate_configuration()
         if validation_result.is_failure:
@@ -103,6 +106,7 @@ class FlextLdifHandlers(FlextBus):
     class ValidationHandler:
         """Centralized validation handler with monadic composition."""
 
+        @override
         def __init__(self, config: FlextLdifConfig) -> None:
             """Initialize validation handler with configuration."""
             self._config = config
@@ -167,6 +171,7 @@ class FlextLdifHandlers(FlextBus):
     class ProcessingHandler:
         """Advanced processing handler with monadic composition."""
 
+        @override
         def __init__(self, config: FlextLdifConfig) -> None:
             """Initialize processing handler with configuration."""
             self._config = config
@@ -256,6 +261,7 @@ class FlextLdifHandlers(FlextBus):
     class ErrorHandler:
         """Centralized error handler with recovery strategies."""
 
+        @override
         def __init__(self, config: FlextLdifConfig) -> None:
             """Initialize error handler with configuration."""
             self._config = config
@@ -298,7 +304,8 @@ class FlextLdifHandlers(FlextBus):
             self, error: Exception, context: FlextTypes.Core.JsonDict | None = None
         ) -> FlextResult[FlextTypes.Core.Value]:
             """Handle error with default strategy."""
-            # Context parameter is required by interface but not used in default strategy
+            # Context parameter is required by interface but not used in
+            # default strategy
             _ = context
             if self._config.error_recovery_mode == "strict":
                 return FlextResult[FlextTypes.Core.Value].fail(
@@ -320,12 +327,17 @@ class FlextLdifHandlers(FlextBus):
     class FileHandler:
         """Advanced file handler with encoding detection and validation."""
 
+        @override
         def __init__(self, config: FlextLdifConfig) -> None:
             """Initialize file handler with configuration."""
             self._config = config
 
         def read_file(self, file_path: Path) -> FlextResult[str]:
-            """Read file with encoding detection and validation using railway pattern."""
+            """Read file with encoding detection and validation using railway pattern.
+
+            Handles file reading with proper encoding detection and validation
+            following the railway pattern for error handling.
+            """
             if not file_path or not file_path.exists():
                 return FlextResult[str].fail(f"File not found: {file_path}")
 
@@ -360,7 +372,7 @@ class FlextLdifHandlers(FlextBus):
             file_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Write file with configured encoding
-            encoding = self._config.default_encoding
+            encoding = self._config.ldif_encoding
             file_path.write_text(content, encoding=encoding)
 
             return FlextResult[bool].ok(True)
@@ -371,7 +383,7 @@ class FlextLdifHandlers(FlextBus):
                 return FlextResult[bool].fail("File content is empty")
 
             # Check for valid LDIF structure
-            if not content.startswith(("dn:", "version:", "#")):
+            if not content.startswith("dn: , version: , #"):
                 return FlextResult[bool].fail("Invalid LDIF file format")
 
             return FlextResult[bool].ok(True)
@@ -383,6 +395,7 @@ class FlextLdifHandlers(FlextBus):
     class AnalyticsHandler:
         """Advanced analytics handler with comprehensive statistics."""
 
+        @override
         def __init__(self, config: FlextLdifConfig) -> None:
             """Initialize analytics handler with configuration."""
             self._config = config
@@ -391,8 +404,13 @@ class FlextLdifHandlers(FlextBus):
         def analyze_entries(
             self, entries: Sequence[FlextLdifModels.Entry]
         ) -> FlextResult[FlextTypes.Core.JsonDict]:
-            """Analyze entries and generate comprehensive analytics using railway pattern."""
-            if not self._config.enable_analytics:
+            """Analyze entries and generate comprehensive analytics using
+            railway pattern.
+
+            Performs comprehensive analysis of LDIF entries including statistics,
+            validation results, and metadata extraction.
+            """
+            if not self._config.ldif_enable_analytics:
                 return FlextResult[FlextTypes.Core.JsonDict].ok({})
 
             if not entries:
@@ -539,6 +557,7 @@ class FlextLdifHandlers(FlextBus):
     class HandlerCoordinator:
         """Unified handler coordinator managing all handler types."""
 
+        @override
         def __init__(self, config: FlextLdifConfig) -> None:
             """Initialize handler coordinator with configuration."""
             self._config = config

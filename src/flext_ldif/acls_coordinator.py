@@ -1,7 +1,12 @@
 """FLEXT LDIF ACLs Coordinator.
 
-Unified ACL management coordinator using flext-core paradigm with nested operation classes.
+Unified ACL management coordinator using flext-core paradigm with nested
+operation classes.
 """
+
+from __future__ import annotations
+
+from typing import override
 
 from pydantic import ConfigDict
 
@@ -23,7 +28,8 @@ class FlextLdifAcls(FlextService[dict[str, object]]):
     class Parser:
         """Nested class for ACL parsing operations."""
 
-        def __init__(self, parent: "FlextLdifAcls") -> None:
+        @override
+        def __init__(self, parent: FlextLdifAcls) -> None:
             """Initialize ACL parser with parent coordinator reference."""
             self._parent = parent
             self._parser = FlextLdifAclParser()
@@ -62,7 +68,8 @@ class FlextLdifAcls(FlextService[dict[str, object]]):
     class Service:
         """Nested class for ACL service operations."""
 
-        def __init__(self, parent: "FlextLdifAcls") -> None:
+        @override
+        def __init__(self, parent: FlextLdifAcls) -> None:
             """Initialize ACL service with parent coordinator reference."""
             self._parent = parent
             self._service = FlextLdifAclService()
@@ -92,7 +99,8 @@ class FlextLdifAcls(FlextService[dict[str, object]]):
     class Builder:
         """Nested class for ACL building operations."""
 
-        def __init__(self, parent: "FlextLdifAcls") -> None:
+        @override
+        def __init__(self, parent: FlextLdifAcls) -> None:
             """Initialize ACL builder with parent coordinator reference."""
             self._parent = parent
             self._logger = FlextLogger(__name__)
@@ -108,15 +116,19 @@ class FlextLdifAcls(FlextService[dict[str, object]]):
                     target_creation.error or "Target creation failed"
                 )
             if not isinstance(target_creation.value, FlextLdifModels.AclTarget):
-                return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclTarget type")
-            
+                return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                    "Invalid AclTarget type"
+                )
+
             subject_creation = FlextLdifModels.AclSubject.create(subject_dn=subject_dn)
             if not subject_creation.is_success:
                 return FlextResult[FlextLdifModels.UnifiedAcl].fail(
                     subject_creation.error or "Subject creation failed"
                 )
             if not isinstance(subject_creation.value, FlextLdifModels.AclSubject):
-                return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclSubject type")
+                return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                    "Invalid AclSubject type"
+                )
 
             target_result = target_creation.value
             subject_result = subject_creation.value
@@ -129,7 +141,9 @@ class FlextLdifAcls(FlextService[dict[str, object]]):
                     perms_creation.error or "Permissions creation failed"
                 )
             if not isinstance(perms_creation.value, FlextLdifModels.AclPermissions):
-                return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclPermissions type")
+                return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                    "Invalid AclPermissions type"
+                )
 
             perms_result = perms_creation.value
 
@@ -153,15 +167,19 @@ class FlextLdifAcls(FlextService[dict[str, object]]):
                     target_creation.error or "Target creation failed"
                 )
             if not isinstance(target_creation.value, FlextLdifModels.AclTarget):
-                return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclTarget type")
-            
+                return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                    "Invalid AclTarget type"
+                )
+
             subject_creation = FlextLdifModels.AclSubject.create(subject_dn=subject_dn)
             if not subject_creation.is_success:
                 return FlextResult[FlextLdifModels.UnifiedAcl].fail(
                     subject_creation.error or "Subject creation failed"
                 )
             if not isinstance(subject_creation.value, FlextLdifModels.AclSubject):
-                return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclSubject type")
+                return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                    "Invalid AclSubject type"
+                )
 
             target_result = target_creation.value
             subject_result = subject_creation.value
@@ -174,7 +192,9 @@ class FlextLdifAcls(FlextService[dict[str, object]]):
                     perms_creation.error or "Permissions creation failed"
                 )
             if not isinstance(perms_creation.value, FlextLdifModels.AclPermissions):
-                return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclPermissions type")
+                return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                    "Invalid AclPermissions type"
+                )
 
             perms_result = perms_creation.value
 
@@ -198,15 +218,19 @@ class FlextLdifAcls(FlextService[dict[str, object]]):
                     target_creation.error or "Target creation failed"
                 )
             if not isinstance(target_creation.value, FlextLdifModels.AclTarget):
-                return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclTarget type")
-            
+                return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                    "Invalid AclTarget type"
+                )
+
             subject_creation = FlextLdifModels.AclSubject.create(subject_dn=subject_dn)
             if not subject_creation.is_success:
                 return FlextResult[FlextLdifModels.UnifiedAcl].fail(
                     subject_creation.error or "Subject creation failed"
                 )
             if not isinstance(subject_creation.value, FlextLdifModels.AclSubject):
-                return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclSubject type")
+                return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                    "Invalid AclSubject type"
+                )
 
             target_result = target_creation.value
             subject_result = subject_creation.value
@@ -225,7 +249,9 @@ class FlextLdifAcls(FlextService[dict[str, object]]):
                     perms_creation.error or "Permissions creation failed"
                 )
             if not isinstance(perms_creation.value, FlextLdifModels.AclPermissions):
-                return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclPermissions type")
+                return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                    "Invalid AclPermissions type"
+                )
 
             perms_result = perms_creation.value
 
@@ -241,7 +267,8 @@ class FlextLdifAcls(FlextService[dict[str, object]]):
     class Converter:
         """Nested class for ACL format conversion operations."""
 
-        def __init__(self, parent: "FlextLdifAcls") -> None:
+        @override
+        def __init__(self, parent: FlextLdifAcls) -> None:
             """Initialize ACL converter with parent coordinator reference."""
             self._parent = parent
             self._logger = FlextLogger(__name__)
@@ -326,6 +353,7 @@ class FlextLdifAcls(FlextService[dict[str, object]]):
             except Exception as e:
                 return FlextResult[str].fail(f"AD conversion failed: {e}")
 
+    @override
     def __init__(self) -> None:
         """Initialize ACL coordinator with nested operation classes."""
         super().__init__()
@@ -336,11 +364,12 @@ class FlextLdifAcls(FlextService[dict[str, object]]):
         self.builder = self.Builder(self)
         self.converter = self.Converter(self)
 
+    @override
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute health check - required by FlextService."""
         return FlextResult[dict[str, object]].ok({
             "status": "healthy",
-            "service": "FlextLdifAcls",
+            "service": FlextLdifAcls,
             "operations": ["parser", "service", "builder", "converter"],
         })
 
@@ -348,7 +377,7 @@ class FlextLdifAcls(FlextService[dict[str, object]]):
         """Execute health check - required by FlextService."""
         return FlextResult[dict[str, object]].ok({
             "status": "healthy",
-            "service": "FlextLdifAcls",
+            "service": FlextLdifAcls,
             "operations": ["parser", "service", "builder", "converter"],
         })
 

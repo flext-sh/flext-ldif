@@ -75,7 +75,8 @@ def get_ldif_management() -> object:
 
 
 # Auto-configure container on module import
-# Note: Disabled to avoid circular imports - call configure_container() explicitly if needed
+# Note: Disabled to avoid circular imports - call configure_container()
+# explicitly if needed
 # configure_container()
 
 

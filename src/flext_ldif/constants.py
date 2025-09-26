@@ -96,6 +96,19 @@ class FlextLdifConstants(FlextConstants):
         MIN_ATTRIBUTE_PARTS: Final[int] = 2  # Minimum parts for attribute parsing
 
     # =============================================================================
+    # QUALITY ANALYSIS CONSTANTS
+    # =============================================================================
+
+    class QualityAnalysis:
+        """Quality analysis threshold constants."""
+
+        # Quality thresholds for LDIF analysis
+        QUALITY_THRESHOLD_MEDIUM: Final[float] = 0.8  # Medium quality threshold
+        MIN_DN_COMPONENTS_FOR_BASE_PATTERN: Final[int] = (
+            2  # Minimum DN components for base pattern analysis
+        )
+
+    # =============================================================================
     # UTILITY CONSTANTS
     # =============================================================================
 

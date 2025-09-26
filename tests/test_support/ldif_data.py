@@ -160,7 +160,12 @@ description: Secondary description
     @staticmethod
     def long_lines() -> LdifSample:
         """LDIF with line continuations."""
-        long_description = "This is a very long description that spans multiple lines and needs to be wrapped according to LDIF specification which requires lines longer than 76 characters to be continued on the next line with a single space prefix"
+        long_description = (
+            "This is a very long description that spans multiple lines and "
+            "needs to be wrapped according to LDIF specification which requires "
+            "lines longer than 76 characters to be continued on the next line "
+            "with a single space prefix"
+        )
 
         content = f"""dn: uid=long.lines,ou=people,dc=example,dc=com
 objectClass: inetOrgPerson
