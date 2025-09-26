@@ -145,8 +145,7 @@ class FlextLdifParser(FlextService[dict[str, object]]):
         return self.execute()
 
     async def execute_async(self) -> FlextResult[dict[str, object]]:
-        """Execute parser health check operation asynchronously -
-        required by FlextService.
+        """Execute parser health check operation asynchronously - required by FlextService.
 
         Returns:
             FlextResult containing parser health status information.

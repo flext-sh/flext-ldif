@@ -404,8 +404,7 @@ class FlextLdifHandlers(FlextBus):
         def analyze_entries(
             self, entries: Sequence[FlextLdifModels.Entry]
         ) -> FlextResult[FlextTypes.Core.JsonDict]:
-            """Analyze entries and generate comprehensive analytics using
-            railway pattern.
+            """Analyze entries and generate comprehensive analytics using railway pattern.
 
             Performs comprehensive analysis of LDIF entries including statistics,
             validation results, and metadata extraction.

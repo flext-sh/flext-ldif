@@ -156,8 +156,7 @@ class FlextLdifQuirksAdapter(FlextService[dict[str, object]]):
             return FlextResult[dict[str, object]].fail(f"Health check failed: {e}")
 
     async def execute_async(self) -> FlextResult[dict[str, object]]:
-        """Execute quirks adapter health check operation asynchronously -
-        required by FlextService.
+        """Execute quirks adapter health check operation asynchronously - required by FlextService.
 
         Returns:
             FlextResult containing adapter health status information.
