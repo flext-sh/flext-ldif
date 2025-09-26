@@ -4,6 +4,10 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+from __future__ import annotations
+
+from typing import override
+
 from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif.models import FlextLdifModels
 
@@ -11,22 +15,24 @@ from flext_ldif.models import FlextLdifModels
 class FlextLdifObjectClassManager(FlextService[dict[str, object]]):
     """ObjectClass hierarchy and validation management."""
 
+    @override
     def __init__(self) -> None:
         """Initialize objectClass manager."""
         super().__init__()
         self._logger = FlextLogger(__name__)
 
+    @override
     def execute(self: object) -> FlextResult[dict[str, object]]:
         """Execute objectClass manager service."""
         return FlextResult[dict[str, object]].ok({
-            "service": "FlextLdifObjectClassManager",
+            "service": FlextLdifObjectClassManager,
             "status": "ready",
         })
 
     async def execute_async(self: object) -> FlextResult[dict[str, object]]:
         """Execute objectClass manager service."""
         return FlextResult[dict[str, object]].ok({
-            "service": "FlextLdifObjectClassManager",
+            "service": FlextLdifObjectClassManager,
             "status": "ready",
         })
 

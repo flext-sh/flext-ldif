@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
-from typing import cast
+from typing import cast, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif.models import FlextLdifModels
@@ -20,12 +20,14 @@ from flext_ldif.schema import FlextLdifObjectClassManager
 class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
     """Entry builder service for creating LDIF entries."""
 
+    @override
     def __init__(self) -> None:
         """Initialize entry builder."""
         super().__init__()
         self._logger = FlextLogger(__name__)
         self._objectclass_manager = FlextLdifObjectClassManager()
 
+    @override
     def execute(self) -> FlextResult[FlextLdifModels.Entry]:
         """Execute entry builder service."""
         return FlextResult[FlextLdifModels.Entry].fail(
@@ -64,8 +66,8 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
 
         # Create entry
         return FlextLdifModels.Entry.create(
-            dn=dn,  # type: ignore[misc]
-            attributes=attributes,  # type: ignore[misc]
+            dn=dn,
+            attributes=attributes,
         )
 
     async def execute_async(self) -> FlextResult[FlextLdifModels.Entry]:

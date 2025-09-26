@@ -1,7 +1,12 @@
 """FLEXT LDIF Quirks Coordinator.
 
-Unified quirks management coordinator using flext-core paradigm with nested operation classes.
+Unified quirks management coordinator using flext-core paradigm with nested
+operation classes.
 """
+
+from __future__ import annotations
+
+from typing import override
 
 from pydantic import ConfigDict
 
@@ -14,7 +19,11 @@ from flext_ldif.quirks import (
 
 
 class FlextLdifQuirks(FlextService[dict[str, object]]):
-    """Unified quirks management coordinator following flext-core single class paradigm."""
+    """Unified quirks management coordinator following flext-core single class paradigm.
+
+    Provides comprehensive quirks management operations including detection,
+    adaptation, and handling of LDAP server-specific behaviors and anomalies.
+    """
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
@@ -25,7 +34,8 @@ class FlextLdifQuirks(FlextService[dict[str, object]]):
     class Manager:
         """Nested class for quirks management operations."""
 
-        def __init__(self, parent: "FlextLdifQuirks") -> None:
+        @override
+        def __init__(self, parent: FlextLdifQuirks) -> None:
             """Initialize quirks manager with parent coordinator reference."""
             self._parent = parent
             self._manager = FlextLdifQuirksManager()
@@ -56,7 +66,8 @@ class FlextLdifQuirks(FlextService[dict[str, object]]):
     class EntryAdapter:
         """Nested class for entry adaptation operations."""
 
-        def __init__(self, parent: "FlextLdifQuirks") -> None:
+        @override
+        def __init__(self, parent: FlextLdifQuirks) -> None:
             """Initialize entry adapter with parent coordinator reference."""
             self._parent = parent
             self._adapter = FlextLdifEntryQuirks()
@@ -144,6 +155,7 @@ class FlextLdifQuirks(FlextService[dict[str, object]]):
 
             return FlextResult[dict[str, object]].ok(validation_results)
 
+    @override
     def __init__(self) -> None:
         """Initialize quirks coordinator with nested operation classes."""
         super().__init__()
@@ -152,11 +164,12 @@ class FlextLdifQuirks(FlextService[dict[str, object]]):
         self.manager = self.Manager(self)
         self.adapter = self.EntryAdapter(self)
 
+    @override
     def execute(self: object) -> FlextResult[dict[str, object]]:
         """Execute health check - required by FlextService."""
         return FlextResult[dict[str, object]].ok({
             "status": "healthy",
-            "service": "FlextLdifQuirks",
+            "service": FlextLdifQuirks,
             "operations": ["manager", "adapter"],
         })
 
@@ -164,7 +177,7 @@ class FlextLdifQuirks(FlextService[dict[str, object]]):
         """Execute health check - required by FlextService."""
         return FlextResult[dict[str, object]].ok({
             "status": "healthy",
-            "service": "FlextLdifQuirks",
+            "service": FlextLdifQuirks,
             "operations": ["manager", "adapter"],
         })
 

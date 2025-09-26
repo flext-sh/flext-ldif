@@ -1,7 +1,12 @@
 """FLEXT LDIF Entries Coordinator.
 
-Unified entry management coordinator using flext-core paradigm with nested operation classes.
+Unified entry management coordinator using flext-core paradigm with nested
+operation classes.
 """
+
+from __future__ import annotations
+
+from typing import override
 
 from pydantic import ConfigDict
 
@@ -12,7 +17,11 @@ from flext_ldif.quirks import FlextLdifEntryQuirks
 
 
 class FlextLdifEntries(FlextService[dict[str, object]]):
-    """Unified entry management coordinator following flext-core single class paradigm."""
+    """Unified entry management coordinator following flext-core single class paradigm.
+
+    Provides comprehensive entry management operations including creation,
+    validation, transformation, and analysis of LDIF entries.
+    """
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
@@ -23,7 +32,8 @@ class FlextLdifEntries(FlextService[dict[str, object]]):
     class Builder:
         """Nested class for entry building operations."""
 
-        def __init__(self, parent: "FlextLdifEntries") -> None:
+        @override
+        def __init__(self, parent: FlextLdifEntries) -> None:
             """Initialize entry builder with parent coordinator reference."""
             self._parent = parent
             self._builder = FlextLdifEntryBuilder()
@@ -70,7 +80,8 @@ class FlextLdifEntries(FlextService[dict[str, object]]):
     class Validator:
         """Nested class for entry validation operations."""
 
-        def __init__(self, parent: "FlextLdifEntries") -> None:
+        @override
+        def __init__(self, parent: FlextLdifEntries) -> None:
             """Initialize entry validator with parent coordinator reference."""
             self._parent = parent
             self._logger = FlextLogger(__name__)
@@ -78,9 +89,7 @@ class FlextLdifEntries(FlextService[dict[str, object]]):
         def validate_dn(self, dn: str) -> FlextResult[bool]:
             """Validate distinguished name format."""
             try:
-                dn_result: FlextResult[FlextLdifModels.DistinguishedName] = (
-                    FlextLdifModels.DistinguishedName.create(dn)  # type: ignore[assignment]
-                )
+                dn_result = FlextLdifModels.DistinguishedName.create(dn)
                 if dn_result.is_success:
                     return FlextResult[bool].ok(True)
                 return FlextResult[bool].fail(dn_result.error or "Invalid DN")
@@ -125,7 +134,8 @@ class FlextLdifEntries(FlextService[dict[str, object]]):
     class Transformer:
         """Nested class for entry transformation operations."""
 
-        def __init__(self, parent: "FlextLdifEntries") -> None:
+        @override
+        def __init__(self, parent: FlextLdifEntries) -> None:
             """Initialize entry transformer with parent coordinator reference."""
             self._parent = parent
             self._entry_quirks = FlextLdifEntryQuirks()
@@ -142,8 +152,8 @@ class FlextLdifEntries(FlextService[dict[str, object]]):
                     normalized_attrs[normalized_name] = attr_values
 
                 return FlextLdifModels.Entry.create(
-                    dn=entry.dn.value,  # type: ignore[misc]
-                    attributes=normalized_attrs,  # type: ignore[misc]
+                    dn=entry.dn.value,
+                    attributes=normalized_attrs,
                 )
             except Exception as e:
                 return FlextResult[FlextLdifModels.Entry].fail(
@@ -171,6 +181,7 @@ class FlextLdifEntries(FlextService[dict[str, object]]):
                     f"JSON conversion failed: {e}"
                 )
 
+    @override
     def __init__(self) -> None:
         """Initialize entry coordinator with nested operation classes."""
         super().__init__()
@@ -180,11 +191,12 @@ class FlextLdifEntries(FlextService[dict[str, object]]):
         self.validator = self.Validator(self)
         self.transformer = self.Transformer(self)
 
+    @override
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute health check - required by FlextService."""
         return FlextResult[dict[str, object]].ok({
             "status": "healthy",
-            "service": "FlextLdifEntries",
+            "service": FlextLdifEntries,
             "operations": ["builder", "validator", "transformer"],
         })
 
@@ -192,7 +204,7 @@ class FlextLdifEntries(FlextService[dict[str, object]]):
         """Execute health check - required by FlextService."""
         return FlextResult[dict[str, object]].ok({
             "status": "healthy",
-            "service": "FlextLdifEntries",
+            "service": FlextLdifEntries,
             "operations": ["builder", "validator", "transformer"],
         })
 

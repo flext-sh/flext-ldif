@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Iterator, Sequence
-from typing import Literal, TypeVar
+from typing import Literal
 
 from flext_core import FlextResult, FlextTypes
 
@@ -22,17 +22,8 @@ from flext_core import FlextResult, FlextTypes
 # LDIF-SPECIFIC TYPE VARIABLES - Domain-specific TypeVars for LDIF operations
 # =============================================================================
 
+
 # LDIF domain TypeVars
-TLdifEntry = TypeVar("TLdifEntry")
-TLdifAttribute = TypeVar("TLdifAttribute")
-TLdifParser = TypeVar("TLdifParser")
-TLdifValidator = TypeVar("TLdifValidator")
-TLdifWriter = TypeVar("TLdifWriter")
-TLdifProcessor = TypeVar("TLdifProcessor")
-TLdifAnalyzer = TypeVar("TLdifAnalyzer")
-TLdifTransformer = TypeVar("TLdifTransformer")
-
-
 class FlextLdifTypes(FlextTypes):
     """LDIF-specific type definitions extending FlextTypes.
 
@@ -250,21 +241,54 @@ class FlextLdifTypes(FlextTypes):
             str, int | bool | float | dict[str, FlextTypes.Core.ConfigValue]
         ]
 
+    # =========================================================================
+    # LDIF PROJECT TYPES - Domain-specific project types extending FlextTypes
+    # =========================================================================
+
+    class Project(FlextTypes.Project):
+        """LDIF-specific project types extending FlextTypes.Project.
+
+        Adds LDIF/directory data processing-specific project types while inheriting
+        generic types from FlextTypes. Follows domain separation principle:
+        LDIF domain owns directory data processing-specific types.
+        """
+
+        # LDIF-specific project types extending the generic ones
+        type LdifProjectType = Literal[
+            # Generic types inherited from FlextTypes.Project
+            "library",
+            "application",
+            "service",
+            # LDIF-specific types
+            "ldif-processor",
+            "directory-converter",
+            "ldif-validator",
+            "ldif-analyzer",
+            "ldif-parser",
+            "directory-migrator",
+            "ldap-data-processor",
+            "ldif-transformer",
+            "directory-sync",
+            "ldif-exporter",
+            "ldif-importer",
+            "data-migration",
+            "ldif-etl",
+            "directory-backup",
+            "ldif-merger",
+            "schema-converter",
+        ]
+
+        # LDIF-specific project configurations
+        type LdifProjectConfig = dict[str, FlextTypes.Core.ConfigValue | object]
+        type ProcessingConfig = dict[str, str | int | bool | list[str]]
+        type ValidationConfig = dict[str, bool | str | dict[str, object]]
+        type TransformationConfig = dict[str, FlextTypes.Core.ConfigValue | object]
+
 
 # =============================================================================
 # PUBLIC API EXPORTS - LDIF TypeVars and types
 # =============================================================================
 
 __all__: list[str] = [
-    # LDIF Types class
     "FlextLdifTypes",
-    # LDIF-specific TypeVars
-    "TLdifAnalyzer",
-    "TLdifAttribute",
-    "TLdifEntry",
-    "TLdifParser",
-    "TLdifProcessor",
-    "TLdifTransformer",
-    "TLdifValidator",
-    "TLdifWriter",
 ]

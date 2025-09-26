@@ -1,11 +1,6 @@
-"""FLEXT LDIF Schema Management.
+"""Schema management module for LDIF processing."""
 
-This module provides unified schema extraction, validation, and management
-for LDIF processing across different LDAP server types.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+from __future__ import annotations
 
 from flext_ldif.schema.builder import FlextLdifSchemaBuilder
 from flext_ldif.schema.extractor import FlextLdifSchemaExtractor

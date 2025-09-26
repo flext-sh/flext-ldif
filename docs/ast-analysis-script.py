@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """FLEXT-LDIF AST Analysis Script.
 
-This script performs comprehensive AST (Abstract Syntax Tree) analysis of the flext-ldif
-project to examine profound impact, library usage patterns, and performance characteristics.
+This script performs comprehensive AST (Abstract Syntax Tree) analysis of the
+flext-ldif project to examine profound impact, library usage patterns, and
+performance characteristics.
 
 Author: FLEXT Development Team
 Version: 1.0.0
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
 
 
-class ModuleAnalysis(TypedDict):
+class ModuleAnalysis(TypedDict, total=False):
     """Type definition for module analysis results."""
 
     file: str
@@ -31,9 +32,10 @@ class ModuleAnalysis(TypedDict):
     complexity: int
     lines_of_code: int
     ast_nodes: int
+    error: str  # Optional error field
 
 
-class LibraryAnalysis(TypedDict):
+class LibraryAnalysis(TypedDict, total=False):
     """Type definition for library usage analysis results."""
 
     file: str
@@ -44,9 +46,10 @@ class LibraryAnalysis(TypedDict):
     performance_impact: dict[str, object]
     memory_impact: dict[str, object]
     dependency_graph: list[dict[str, object]]
+    error: str  # Optional error field
 
 
-class CallGraphAnalysis(TypedDict):
+class CallGraphAnalysis(TypedDict, total=False):
     """Type definition for call graph analysis results."""
 
     file: str
@@ -55,6 +58,7 @@ class CallGraphAnalysis(TypedDict):
     method_chains: list[dict[str, object]]
     dependency_chain: list[dict[str, object]]
     complexity_score: int
+    error: str  # Optional error field
 
 
 class AggregateStatistics(TypedDict):
@@ -674,7 +678,8 @@ class ASTAnalyzer:
             >>> analyzer = ASTAnalyzer()
             >>> report = analyzer.generate_comprehensive_report("src/")
             >>> print(
-            ...     f"Total complexity: {report['aggregate_statistics']['total_complexity']}"
+            ...     f"Total complexity: "
+            ...     f"{report['aggregate_statistics']['total_complexity']}"
             ... )
 
         """
@@ -766,15 +771,16 @@ class ASTAnalyzer:
             # Update performance summary
             if "error" not in library_analysis:
                 for call, details in library_analysis["performance_impact"].items():
-                    impact_level = details["impact"]
-                    if impact_level == "high":
-                        report["performance_summary"]["high_impact_operations"][
-                            call
-                        ] += 1
-                    elif impact_level == "medium":
-                        report["performance_summary"]["medium_impact_operations"][
-                            call
-                        ] += 1
+                    if isinstance(details, dict) and "impact" in details:
+                        impact_level = details["impact"]
+                        if impact_level == "high":
+                            report["performance_summary"]["high_impact_operations"][
+                                call
+                            ] += 1
+                        elif impact_level == "medium":
+                            report["performance_summary"]["medium_impact_operations"][
+                                call
+                            ] += 1
                     else:
                         report["performance_summary"]["low_impact_operations"][
                             call
@@ -783,14 +789,26 @@ class ASTAnalyzer:
             # Update call graph summary
             if "error" not in call_graph_analysis:
                 for call in call_graph_analysis["internal_calls"]:
-                    report["call_graph_summary"]["internal_calls"][
-                        call["function"]
-                    ] += 1
+                    if isinstance(call, dict) and "function" in call:
+                        function_value = call["function"]
+                        if isinstance(function_value, str):
+                            function_name = function_value  # type: ignore[assignment]
+                        else:
+                            function_name = str(function_value)
+                        report["call_graph_summary"]["internal_calls"][
+                            function_name
+                        ] += 1
 
                 for call in call_graph_analysis["external_calls"]:
-                    report["call_graph_summary"]["external_calls"][
-                        call["function"]
-                    ] += 1
+                    if isinstance(call, dict) and "function" in call:
+                        function_value = call["function"]
+                        if isinstance(function_value, str):
+                            function_name = function_value  # type: ignore[assignment]
+                        else:
+                            function_name = str(function_value)
+                        report["call_graph_summary"]["external_calls"][
+                            function_name
+                        ] += 1
 
         # Generate recommendations
         report["recommendations"] = self._generate_recommendations(report)

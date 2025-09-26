@@ -67,7 +67,7 @@ def main() -> None:
         return
 
     # Display basic statistics with railway programming
-    def display_stats(stats: FlextLdifTypes.Core.LdifStatistics) -> None:
+    def display_stats(stats: FlextLdifTypes.LdifStatistics) -> None:
         for _key, _value in stats.items():
             pass
 
@@ -78,11 +78,15 @@ def main() -> None:
         first_entry = entries[0]
 
         # Validate domain rules with railway programming
+        def log_success(*, success: bool) -> None:
+            logger.info(f"   ✅ Domain validation passed (success: {success})")
+
+        def log_error(error: str) -> None:
+            logger.error(f"   ❌ Domain validation failed: {error}")
+
         first_entry.validate_business_rules().tap(
-            lambda _: logger.info("   ✅ Domain validation passed"),
-        ).tap_error(
-            lambda error: logger.error(f"   ❌ Domain validation failed: {error}"),
-        )
+            lambda x: log_success(success=x)
+        ).tap_error(log_error)
 
     # Demonstrate filtering with railway programming
     output_file = Path(__file__).parent / "output_basic.ldif"
@@ -93,11 +97,15 @@ def main() -> None:
             mail = entry.get_single_value("mail") or "No email"
             print(f"Person: {cn}, Email: {mail}")
 
+    def log_write_success(_: object) -> None:
+        logger.info("✅ Successfully wrote filtered entries to output file")
+
+    def log_write_error(error: str) -> None:
+        logger.error(f"❌ Operation failed: {error}")
+
     api.filter_persons(entries).tap(process_person_entries).flat_map(
         lambda person_entries: api.write_file(person_entries, str(output_file)),
-    ).tap(
-        lambda _: logger.info("✅ Successfully wrote filtered entries to output file"),
-    ).tap_error(lambda error: logger.error(f"❌ Operation failed: {error}"))
+    ).tap(log_write_success).tap_error(log_write_error)
 
 
 if __name__ == "__main__":

@@ -4,6 +4,10 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+from __future__ import annotations
+
+from typing import override
+
 from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks import constants
@@ -12,22 +16,24 @@ from flext_ldif.quirks import constants
 class FlextLdifAclParser(FlextService[dict[str, object]]):
     """Multi-server ACL parser for different LDAP implementations."""
 
+    @override
     def __init__(self) -> None:
         """Initialize ACL parser."""
         super().__init__()
         self._logger = FlextLogger(__name__)
 
+    @override
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute parser service."""
         return FlextResult[dict[str, object]].ok({
-            "service": "FlextLdifAclParser",
+            "service": FlextLdifAclParser,
             "status": "ready",
         })
 
     async def execute_async(self) -> FlextResult[dict[str, object]]:
         """Execute parser service asynchronously."""
         return FlextResult[dict[str, object]].ok({
-            "service": "FlextLdifAclParser",
+            "service": FlextLdifAclParser,
             "status": "ready",
         })
 
@@ -50,19 +56,31 @@ class FlextLdifAclParser(FlextService[dict[str, object]]):
 
         # Extract values with proper type checking
         if not target_creation.is_success:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail("Failed to create AclTarget")
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                "Failed to create AclTarget"
+            )
         if not isinstance(target_creation.value, FlextLdifModels.AclTarget):
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclTarget type")
-        
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                "Invalid AclTarget type"
+            )
+
         if not subject_creation.is_success:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail("Failed to create AclSubject")
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                "Failed to create AclSubject"
+            )
         if not isinstance(subject_creation.value, FlextLdifModels.AclSubject):
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclSubject type")
-        
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                "Invalid AclSubject type"
+            )
+
         if not perms_creation.is_success:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail("Failed to create AclPermissions")
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                "Failed to create AclPermissions"
+            )
         if not isinstance(perms_creation.value, FlextLdifModels.AclPermissions):
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclPermissions type")
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                "Invalid AclPermissions type"
+            )
 
         target_result = target_creation.value
         subject_result = subject_creation.value
@@ -96,19 +114,31 @@ class FlextLdifAclParser(FlextService[dict[str, object]]):
 
         # Extract values with proper type checking
         if not target_creation.is_success:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail("Failed to create AclTarget")
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                "Failed to create AclTarget"
+            )
         if not isinstance(target_creation.value, FlextLdifModels.AclTarget):
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclTarget type")
-        
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                "Invalid AclTarget type"
+            )
+
         if not subject_creation.is_success:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail("Failed to create AclSubject")
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                "Failed to create AclSubject"
+            )
         if not isinstance(subject_creation.value, FlextLdifModels.AclSubject):
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclSubject type")
-        
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                "Invalid AclSubject type"
+            )
+
         if not perms_creation.is_success:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail("Failed to create AclPermissions")
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                "Failed to create AclPermissions"
+            )
         if not isinstance(perms_creation.value, FlextLdifModels.AclPermissions):
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclPermissions type")
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                "Invalid AclPermissions type"
+            )
 
         target_result = target_creation.value
         subject_result = subject_creation.value
@@ -143,19 +173,31 @@ class FlextLdifAclParser(FlextService[dict[str, object]]):
 
         # Extract values with proper type checking
         if not target_creation.is_success:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail("Failed to create AclTarget")
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                "Failed to create AclTarget"
+            )
         if not isinstance(target_creation.value, FlextLdifModels.AclTarget):
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclTarget type")
-        
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                "Invalid AclTarget type"
+            )
+
         if not subject_creation.is_success:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail("Failed to create AclSubject")
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                "Failed to create AclSubject"
+            )
         if not isinstance(subject_creation.value, FlextLdifModels.AclSubject):
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclSubject type")
-        
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                "Invalid AclSubject type"
+            )
+
         if not perms_creation.is_success:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail("Failed to create AclPermissions")
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                "Failed to create AclPermissions"
+            )
         if not isinstance(perms_creation.value, FlextLdifModels.AclPermissions):
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclPermissions type")
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                "Invalid AclPermissions type"
+            )
 
         target_result = target_creation.value
         subject_result = subject_creation.value

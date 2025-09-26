@@ -6,6 +6,10 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+from __future__ import annotations
+
+from typing import override
+
 from pydantic import ConfigDict
 
 from flext_core import FlextContainer, FlextLogger, FlextResult, FlextService
@@ -20,7 +24,12 @@ from flext_ldif.schemas_coordinator import FlextLdifSchemas
 
 
 class FlextLdifManagement(FlextService[dict[str, object]]):
-    """Master coordinator for schema, ACL, entry, and quirks operations using flext-core paradigm."""
+    """Master coordinator for schema, ACL, entry, and quirks operations using
+    flext-core paradigm.
+
+    Provides unified management interface for all LDIF processing operations
+    including schema management, ACL operations, entry processing, and quirks handling.
+    """
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
@@ -28,6 +37,7 @@ class FlextLdifManagement(FlextService[dict[str, object]]):
         extra="allow",
     )
 
+    @override
     def __init__(self, server_type: str | None = None) -> None:
         """Initialize management coordinator.
 
@@ -53,11 +63,12 @@ class FlextLdifManagement(FlextService[dict[str, object]]):
         self.quirks.manager = self.quirks.Manager(self.quirks)
         self.quirks.adapter = self.quirks.EntryAdapter(self.quirks)
 
+    @override
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute health check - required by FlextService."""
         return FlextResult[dict[str, object]].ok({
             "status": "healthy",
-            "service": "FlextLdifManagement",
+            "service": FlextLdifManagement,
             "server_type": self._server_type,
             "coordinators": ["schemas", "entries", "acls", "quirks"],
         })
@@ -66,7 +77,7 @@ class FlextLdifManagement(FlextService[dict[str, object]]):
         """Execute health check - required by FlextService."""
         return FlextResult[dict[str, object]].ok({
             "status": "healthy",
-            "service": "FlextLdifManagement",
+            "service": FlextLdifManagement,
             "server_type": self._server_type,
             "coordinators": ["schemas", "entries", "acls", "quirks"],
         })

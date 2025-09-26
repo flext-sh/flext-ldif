@@ -12,6 +12,11 @@ from flext_core import FlextModels, FlextResult
 from flext_ldif.constants import FlextLdifConstants
 
 
+def _create_ldif_attributes() -> FlextLdifModels.LdifAttributes:
+    """Helper function to create LdifAttributes instance."""
+    return FlextLdifModels.LdifAttributes()
+
+
 class FlextLdifModels(FlextModels):
     """LDIF domain models extending flext-core FlextModels.
 
@@ -127,6 +132,22 @@ class FlextLdifModels(FlextModels):
             """Get attributes data dictionary."""
             return self.attributes
 
+        def __getitem__(self, name: str) -> list[str]:
+            """Dictionary-like access to attributes."""
+            return self.get_attribute(name)
+
+        def __setitem__(self, name: str, values: list[str]) -> None:
+            """Dictionary-like setting of attributes."""
+            # Since the model is frozen, we need to use object.__setattr__
+            if hasattr(self, "attributes"):
+                self.attributes[name.lower()] = values
+            else:
+                object.__setattr__(self, "attributes", {name.lower(): values})
+
+        def __contains__(self, name: str) -> bool:
+            """Dictionary-like 'in' check."""
+            return self.has_attribute(name)
+
     class Entry(FlextModels.Entity):
         """LDIF entry representing a complete LDAP object."""
 
@@ -141,7 +162,7 @@ class FlextLdifModels(FlextModels):
         )
 
         attributes: FlextLdifModels.LdifAttributes = Field(
-            default_factory=lambda: FlextLdifModels.LdifAttributes(attributes={}),  # type: ignore[attr-defined]
+            default_factory=_create_ldif_attributes,
             description="Entry attributes",
         )
 
@@ -286,7 +307,7 @@ class FlextLdifModels(FlextModels):
         )
 
         attributes: FlextLdifModels.LdifAttributes = Field(
-            default_factory=lambda: FlextLdifModels.LdifAttributes(attributes={}),  # type: ignore[attr-defined]
+            default_factory=_create_ldif_attributes,
             description="Change attributes",
         )
 
@@ -390,8 +411,7 @@ class FlextLdifModels(FlextModels):
                 attributes = kwargs.get("attributes", {})
 
                 instance = cls(
-                    object_classes=object_classes or {},
-                    attributes=attributes or {}
+                    object_classes=object_classes or {}, attributes=attributes or {}
                 )
                 return FlextResult[object].ok(instance)
             except Exception as e:
@@ -507,7 +527,7 @@ class FlextLdifModels(FlextModels):
                 search = kwargs.get("search", False)
                 compare = kwargs.get("compare", False)
                 proxy = kwargs.get("proxy", False)
-                
+
                 instance = cls(
                     read=read,
                     write=write,
@@ -646,6 +666,8 @@ class FlextLdifModels(FlextModels):
 
     # Alias for Entry class (tests expect LdifEntry)
     LdifEntry = Entry
+    # Alias for ChangeRecord class (tests expect LdifChangeRecord)
+    LdifChangeRecord = ChangeRecord
 
 
 __all__ = ["FlextLdifModels"]

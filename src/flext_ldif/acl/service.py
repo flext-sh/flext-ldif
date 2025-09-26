@@ -4,7 +4,9 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from typing import cast
+from __future__ import annotations
+
+from typing import cast, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif.models import FlextLdifModels
@@ -17,6 +19,7 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
     class AclRule:
         """Base ACL rule following AclRuleProtocol - Composite pattern."""
 
+        @override
         def __init__(self, rule_type: str = "base") -> None:
             """Initialize ACL rule."""
             self._rule_type = rule_type
@@ -28,7 +31,7 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
             _ = context  # Suppress unused argument warning
             return FlextResult[bool].ok(True)
 
-        def add_rule(self, rule: "FlextLdifAclService.AclRule") -> None:
+        def add_rule(self, rule: FlextLdifAclService.AclRule) -> None:
             """Add sub-rule (for composite rules)."""
             msg = "Base rule does not support adding sub-rules"
             raise NotImplementedError(msg)
@@ -36,13 +39,14 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
     class CompositeAclRule(AclRule):
         """Composite ACL rule combining multiple rules."""
 
+        @override
         def __init__(self, operator: str = "AND") -> None:
             """Initialize composite ACL rule."""
             super().__init__(rule_type="composite")
             self._operator = operator.upper()
             self._rules: list[FlextLdifAclService.AclRule] = []
 
-        def add_rule(self, rule: "FlextLdifAclService.AclRule") -> None:
+        def add_rule(self, rule: FlextLdifAclService.AclRule) -> None:
             """Add sub-rule to composite."""
             self._rules.append(rule)
 
@@ -70,6 +74,7 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
     class PermissionRule(AclRule):
         """Permission-based ACL rule."""
 
+        @override
         def __init__(self, permission: str, *, required: bool = True) -> None:
             """Initialize permission rule."""
             super().__init__(rule_type="permission")
@@ -86,6 +91,7 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
     class SubjectRule(AclRule):
         """Subject-based ACL rule."""
 
+        @override
         def __init__(self, subject_dn: str) -> None:
             """Initialize subject rule."""
             super().__init__(rule_type="subject")
@@ -97,6 +103,7 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
             result = subject == self._subject_dn
             return FlextResult[bool].ok(result)
 
+    @override
     def __init__(self, quirks_manager: FlextLdifQuirksManager | None = None) -> None:
         """Initialize ACL service with composite pattern support."""
         super().__init__()
@@ -105,17 +112,17 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
 
     def create_composite_rule(
         self, operator: str = "AND"
-    ) -> "FlextLdifAclService.CompositeAclRule":
+    ) -> FlextLdifAclService.CompositeAclRule:
         """Create composite ACL rule for combining multiple rules."""
         return self.CompositeAclRule(operator=operator)
 
     def create_permission_rule(
         self, permission: str, *, required: bool = True
-    ) -> "FlextLdifAclService.PermissionRule":
+    ) -> FlextLdifAclService.PermissionRule:
         """Create permission-based ACL rule."""
         return self.PermissionRule(permission=permission, required=required)
 
-    def create_subject_rule(self, subject_dn: str) -> "FlextLdifAclService.SubjectRule":
+    def create_subject_rule(self, subject_dn: str) -> FlextLdifAclService.SubjectRule:
         """Create subject-based ACL rule."""
         return self.SubjectRule(subject_dn=subject_dn)
 
@@ -132,6 +139,11 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
             FlextResult containing list of unified ACL entries
 
         """
+        if entry is None:
+            return FlextResult[list[FlextLdifModels.UnifiedAcl]].fail(
+                "Invalid entry: Entry is None"
+            )
+
         acl_attr_result: FlextResult[str] = self._quirks.get_acl_attribute_name(
             server_type
         )
@@ -175,19 +187,31 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
 
         # Extract values with proper type checking
         if not target_creation.is_success:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail("Failed to create AclTarget")
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                "Failed to create AclTarget"
+            )
         if not isinstance(target_creation.value, FlextLdifModels.AclTarget):
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclTarget type")
-        
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                "Invalid AclTarget type"
+            )
+
         if not subject_creation.is_success:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail("Failed to create AclSubject")
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                "Failed to create AclSubject"
+            )
         if not isinstance(subject_creation.value, FlextLdifModels.AclSubject):
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclSubject type")
-        
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                "Invalid AclSubject type"
+            )
+
         if not perms_creation.is_success:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail("Failed to create AclPermissions")
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                "Failed to create AclPermissions"
+            )
         if not isinstance(perms_creation.value, FlextLdifModels.AclPermissions):
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail("Invalid AclPermissions type")
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                "Invalid AclPermissions type"
+            )
 
         target_result = target_creation.value
         subject_result = subject_creation.value
@@ -206,11 +230,15 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
         self, rules: list[AclRule], context: dict[str, object]
     ) -> FlextResult[bool]:
         """Evaluate ACL rules against context using composite pattern."""
+        if context is None:
+            return FlextResult[bool].fail("Invalid context: Context is None")
+
         composite = self.create_composite_rule(operator="AND")
         for rule in rules:
             composite.add_rule(rule)
         return composite.evaluate(context)
 
+    @override
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute ACL service health check.
 
@@ -219,7 +247,7 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
 
         """
         return FlextResult[dict[str, object]].ok({
-            "service": "FlextLdifAclService",
+            "service": FlextLdifAclService,
             "status": "ready",
             "patterns": {
                 "composite": "Composite ACL rule evaluation",
@@ -235,7 +263,7 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
 
         """
         return FlextResult[dict[str, object]].ok({
-            "service": "FlextLdifAclService",
+            "service": FlextLdifAclService,
             "status": "ready",
             "patterns": {
                 "composite": "Composite ACL rule evaluation",

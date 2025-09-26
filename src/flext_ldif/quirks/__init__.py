@@ -8,6 +8,8 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+from __future__ import annotations
+
 from flext_ldif.quirks import constants
 from flext_ldif.quirks.adapter import FlextLdifQuirksAdapter
 from flext_ldif.quirks.entry_quirks import FlextLdifEntryQuirks
