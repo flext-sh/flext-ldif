@@ -24,8 +24,7 @@ from flext_ldif.schemas_coordinator import FlextLdifSchemas
 
 
 class FlextLdifManagement(FlextService[dict[str, object]]):
-    """Master coordinator for schema, ACL, entry, and quirks operations using
-    flext-core paradigm.
+    """Master coordinator for schema, ACL, entry, and quirks operations using flext-core paradigm.
 
     Provides unified management interface for all LDIF processing operations
     including schema management, ACL operations, entry processing, and quirks handling.
