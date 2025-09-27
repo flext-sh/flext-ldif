@@ -152,7 +152,7 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
             return FlextResult[list[FlextLdifModels.UnifiedAcl]].fail(error_msg)
 
         acl_attribute = acl_attr_result.value
-        acl_values: list[str] = entry.get_attribute(acl_attribute) or []
+        acl_values: list[str] = entry.get_attribute_values(acl_attribute)
 
         if not acl_values:
             return FlextResult[list[FlextLdifModels.UnifiedAcl]].ok([])

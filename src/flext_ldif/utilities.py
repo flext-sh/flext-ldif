@@ -63,50 +63,80 @@ class FlextLdifUtilities(FlextUtilities):
         """File-related utility methods for LDIF operations."""
 
         @staticmethod
-        def validate_file_path(file_path: Path) -> FlextResult[None]:
-            """Validate file path for write operations.
+        def validate_file_path(
+            file_path: Path, *, check_writable: bool = False
+        ) -> FlextResult[Path]:
+            """Validate file path for read/write operations.
 
             Args:
                 file_path: Path to validate
+                check_writable: If True, check if file/parent directory is writable
 
             Returns:
-                FlextResult[None]: Success if path is valid, failure with error message
+                FlextResult[Path]: Success with validated path (resolved), failure with error message
 
             """
             try:
-                # Check if parent directory exists or can be created
-                parent_dir = file_path.parent
-                if not parent_dir.exists():
-                    try:
-                        parent_dir.mkdir(parents=True, exist_ok=True)
-                    except PermissionError:
-                        return FlextResult[None].fail(
-                            f"Permission denied creating directory: {parent_dir}"
-                        )
-                    except OSError as e:
-                        return FlextResult[None].fail(
-                            f"Failed to create directory {parent_dir}: {e}"
-                        )
+                # Resolve the path to absolute
+                resolved_path = file_path.resolve()
 
-                # Check if file is writable (if it exists)
-                if file_path.exists():
-                    if not file_path.is_file():
-                        return FlextResult[None].fail(
-                            f"Path exists but is not a file: {file_path}"
-                        )
-                    if not file_path.stat().st_mode & 0o200:  # Check write permission
-                        return FlextResult[None].fail(
-                            f"File is not writable: {file_path}"
-                        )
-                # Check if we can write to the parent directory
-                elif not parent_dir.stat().st_mode & 0o200:
-                    return FlextResult[None].fail(
-                        f"Parent directory is not writable: {parent_dir}"
+                # Check if path exists
+                if not resolved_path.exists():
+                    # If file doesn't exist, check if we can create it
+                    if check_writable:
+                        # Check if parent directory exists and is writable
+                        parent_dir = resolved_path.parent
+                        if not parent_dir.exists():
+                            return FlextResult[Path].fail(
+                                f"Parent directory does not exist: {parent_dir}"
+                            )
+
+                        if (
+                            not parent_dir.stat().st_mode & 0o200
+                        ):  # Check write permission
+                            return FlextResult[Path].fail(
+                                f"Parent directory is not writable: {parent_dir}"
+                            )
+
+                        # For write operations, allow creating new files
+                        return FlextResult[Path].ok(resolved_path)
+                    # For read operations, file must exist
+                    return FlextResult[Path].fail(
+                        f"Path does not exist: {resolved_path}"
                     )
 
-                return FlextResult[None].ok(None)
+                # Check if it's a directory
+                if resolved_path.is_dir():
+                    return FlextResult[Path].fail(
+                        f"Path is a directory: {resolved_path}"
+                    )
+
+                # Check if it's a file
+                if not resolved_path.is_file():
+                    return FlextResult[Path].fail(
+                        f"Path exists but is not a file: {resolved_path}"
+                    )
+
+                # Check writable permissions if requested
+                if check_writable:
+                    # Check if file is writable
+                    if (
+                        not resolved_path.stat().st_mode & 0o200
+                    ):  # Check write permission
+                        return FlextResult[Path].fail(
+                            f"File is not writable: {resolved_path}"
+                        )
+
+                    # Check if parent directory is writable
+                    parent_dir = resolved_path.parent
+                    if not parent_dir.stat().st_mode & 0o200:
+                        return FlextResult[Path].fail(
+                            f"Parent directory is not writable: {parent_dir}"
+                        )
+
+                return FlextResult[Path].ok(resolved_path)
             except Exception as e:  # pragma: no cover
-                return FlextResult[None].fail(f"File path validation failed: {e}")
+                return FlextResult[Path].fail(f"File path validation failed: {e}")
 
         @staticmethod
         def ensure_file_extension(file_path: Path, extension: str) -> Path:
@@ -127,6 +157,42 @@ class FlextLdifUtilities(FlextUtilities):
                 return file_path.with_suffix(extension)
             return file_path
 
+        @staticmethod
+        def count_lines_in_file(file_path: Path) -> FlextResult[int]:
+            """Count lines in a text file.
+
+            Args:
+                file_path: Path to the file to count lines in
+
+            Returns:
+                FlextResult[int]: Success with line count, failure with error message
+
+            """
+            try:
+                # Check if file exists
+                if not file_path.exists():
+                    return FlextResult[int].fail(f"File does not exist: {file_path}")
+
+                # Check if it's a file
+                if not file_path.is_file():
+                    return FlextResult[int].fail(f"Path is not a file: {file_path}")
+
+                # Count lines
+                line_count = 0
+                with Path(file_path).open("r", encoding="utf-8") as file:
+                    for _ in file:
+                        line_count += 1
+
+                return FlextResult[int].ok(line_count)
+            except UnicodeDecodeError as e:
+                return FlextResult[int].fail(
+                    f"Encoding error reading file {file_path}: {e}"
+                )
+            except Exception as e:  # pragma: no cover
+                return FlextResult[int].fail(
+                    f"Error counting lines in file {file_path}: {e}"
+                )
+
     # =========================================================================
     # TEXT UTILITIES - Text processing and formatting operations
     # =========================================================================
@@ -145,7 +211,11 @@ class FlextLdifUtilities(FlextUtilities):
                 str: Human-readable byte count (e.g., "1.5 KB")
 
             """
-            if byte_count == 0:
+            if not isinstance(byte_count, int):
+                msg = f"Expected int, got {type(byte_count).__name__}"
+                raise TypeError(msg)
+
+            if byte_count <= 0:
                 return "0 B"
 
             size_names = ["B", "KB", "MB", "GB", "TB"]
@@ -157,8 +227,6 @@ class FlextLdifUtilities(FlextUtilities):
                 size /= bytes_per_kb
                 size_index += 1
 
-            if size_index == 0:
-                return f"{int(size)} {size_names[size_index]}"
             return f"{size:.1f} {size_names[size_index]}"
 
         @staticmethod
@@ -181,6 +249,35 @@ class FlextLdifUtilities(FlextUtilities):
                 return suffix[:max_length]
 
             return text[: max_length - len(suffix)] + suffix
+
+        @staticmethod
+        def format_byte_size(byte_count: int) -> str:
+            """Format byte count in human-readable format (alias for format_bytes).
+
+            Args:
+                byte_count: Number of bytes
+
+            Returns:
+                str: Human-readable byte count (e.g., "1.5 KB")
+
+            """
+            if not isinstance(byte_count, int):
+                msg = f"Expected int, got {type(byte_count).__name__}"
+                raise TypeError(msg)
+
+            if byte_count <= 0:
+                return "0 B"
+
+            size_names = ["B", "KB", "MB", "GB", "TB"]
+            size_index = 0
+            size = float(byte_count)
+
+            bytes_per_kb = 1024.0
+            while size >= bytes_per_kb and size_index < len(size_names) - 1:
+                size /= bytes_per_kb
+                size_index += 1
+
+            return f"{size:.1f} {size_names[size_index]}"
 
     # =========================================================================
     # LDIF UTILITIES - LDIF-specific utility operations
@@ -267,9 +364,13 @@ class FlextLdifUtilities(FlextUtilities):
         return cls.TimeUtilities.get_formatted_timestamp(format_string)
 
     @classmethod
-    def validate_file_path(cls, file_path: Path) -> FlextResult[None]:
+    def validate_file_path(
+        cls, file_path: Path, *, check_writable: bool = False
+    ) -> FlextResult[Path]:
         """Proxy method for FileUtilities.validate_file_path()."""
-        return cls.FileUtilities.validate_file_path(file_path)
+        return cls.FileUtilities.validate_file_path(
+            file_path, check_writable=check_writable
+        )
 
     @classmethod
     def ensure_file_extension(cls, file_path: Path, extension: str) -> Path:
@@ -277,9 +378,19 @@ class FlextLdifUtilities(FlextUtilities):
         return cls.FileUtilities.ensure_file_extension(file_path, extension)
 
     @classmethod
+    def count_lines_in_file(cls, file_path: Path) -> FlextResult[int]:
+        """Proxy method for FileUtilities.count_lines_in_file()."""
+        return cls.FileUtilities.count_lines_in_file(file_path)
+
+    @classmethod
     def format_bytes(cls, byte_count: int) -> str:
         """Proxy method for TextUtilities.format_bytes()."""
         return cls.TextUtilities.format_bytes(byte_count)
+
+    @classmethod
+    def format_byte_size(cls, byte_count: int) -> str:
+        """Proxy method for TextUtilities.format_byte_size()."""
+        return cls.TextUtilities.format_byte_size(byte_count)
 
     @classmethod
     def truncate_string(cls, text: str, max_length: int, suffix: str = "...") -> str:

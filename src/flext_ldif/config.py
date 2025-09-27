@@ -23,23 +23,25 @@ class FlextLdifConfig(FlextConfig):
     - Extends FlextConfig from flext-core
     - No nested classes within Config
     - All defaults from FlextLdifConstants
-    - Dependency injection integration with flext-core container
+    - Uses enhanced singleton pattern with inverse dependency injection
     - Uses Pydantic 2.11+ features (SecretStr for secrets)
     """
 
-    # Singleton pattern attributes
+    # Singleton pattern variables
     _global_instance: ClassVar[FlextLdifConfig | None] = None
     _lock: ClassVar[threading.Lock] = threading.Lock()
 
     model_config = SettingsConfigDict(
         env_prefix="FLEXT_LDIF_",
-        env_file=".env",
-        env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore",  # Changed from forbid to ignore for compatibility
+        extra="ignore",
+        # Inherit enhanced Pydantic 2.11+ features from FlextConfig
         validate_assignment=True,
-        use_enum_values=True,
-        arbitrary_types_allowed=True,
+        str_strip_whitespace=True,
+        json_schema_extra={
+            "title": "FLEXT LDIF Configuration",
+            "description": "Enterprise LDIF processing configuration extending FlextConfig",
+        },
     )
 
     # LDIF Format Configuration using FlextLdifConstants for defaults
@@ -351,17 +353,27 @@ class FlextLdifConfig(FlextConfig):
     def create_for_environment(
         cls, environment: str, **overrides: object
     ) -> FlextLdifConfig:
-        """Create configuration for specific environment."""
-        return cls(environment=environment, **overrides)
+        """Create configuration for specific environment using enhanced singleton pattern."""
+        # Note: environment parameter is kept for API compatibility but not used in current implementation
+        _ = environment  # Suppress unused parameter warning
+        instance = cls.get_global_instance()
+
+        # Apply overrides if provided
+        if overrides:
+            instance_dict = instance.model_dump()
+            instance_dict.update(overrides)
+            return cls.model_validate(instance_dict)
+
+        return instance
 
     @classmethod
     def create_default(cls) -> FlextLdifConfig:
-        """Create default configuration instance."""
+        """Create default configuration instance using enhanced singleton pattern."""
         return cls()
 
     @classmethod
     def create_for_performance(cls) -> FlextLdifConfig:
-        """Create configuration optimized for performance."""
+        """Create configuration optimized for performance using enhanced singleton pattern."""
         return cls(
             enable_performance_optimizations=True,
             max_workers=FlextLdifConstants.Processing.PERFORMANCE_MIN_WORKERS,
@@ -374,7 +386,7 @@ class FlextLdifConfig(FlextConfig):
 
     @classmethod
     def create_for_development(cls) -> FlextLdifConfig:
-        """Create configuration optimized for development."""
+        """Create configuration optimized for development using enhanced singleton pattern."""
         return cls(
             enable_performance_optimizations=False,
             max_workers=2,
@@ -387,7 +399,7 @@ class FlextLdifConfig(FlextConfig):
 
     @classmethod
     def create_for_server_type(cls, server_type: str) -> FlextLdifConfig:
-        """Create configuration optimized for specific server type."""
+        """Create configuration optimized for specific server type using enhanced singleton pattern."""
         config_data: dict[str, object] = {
             "server_type": server_type,
         }
@@ -404,7 +416,10 @@ class FlextLdifConfig(FlextConfig):
                 "ldif_validate_dn_format": False,
             })
 
-        return cls(**config_data)
+        instance = cls.get_or_create_shared_instance(
+            project_name="flext-ldif", **config_data
+        )
+        return cls.model_validate(instance.model_dump())
 
     def get_effective_encoding(self) -> str:
         """Get effective encoding for LDIF processing."""
@@ -440,10 +455,9 @@ class FlextLdifConfig(FlextConfig):
             and self.max_workers <= FlextLdifConstants.Processing.DEBUG_MAX_WORKERS
         )
 
-    # Singleton pattern override for proper typing
     @classmethod
     def get_global_instance(cls) -> FlextLdifConfig:
-        """Get the global singleton instance of FlextLdifConfig."""
+        """Get the global singleton instance using enhanced FlextConfig pattern."""
         if cls._global_instance is None:
             with cls._lock:
                 if cls._global_instance is None:
@@ -453,8 +467,8 @@ class FlextLdifConfig(FlextConfig):
     @classmethod
     def reset_global_instance(cls) -> None:
         """Reset the global FlextLdifConfig instance (mainly for testing)."""
-        cls._global_instance = None
-        # Mark configuration as sealed
+        with cls._lock:
+            cls._global_instance = None
 
 
 __all__ = ["FlextLdifConfig"]

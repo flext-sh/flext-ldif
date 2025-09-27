@@ -24,7 +24,9 @@ class TestValidators:
         """Validate a real LDIF entry object."""
         validations = {
             "has_dn": bool(entry.dn and str(entry.dn).strip()),
-            "has_attributes": bool(entry.attributes and len(entry.attributes) > 0),
+            "has_attributes": bool(
+                entry.attributes and len(entry.attributes.attributes) > 0
+            ),
             "has_object_class": "objectClass" in entry.attributes
             if entry.attributes
             else False,
@@ -35,13 +37,9 @@ class TestValidators:
 
         # Check for required attributes based on objectClass
         if validations["has_object_class"] and entry.attributes:
-            object_classes = entry.get_attribute("objectClass") or []
-            # object_classes is already a list from get_attribute
-
-            # Basic validation for common object classes
-            object_classes_list: list[str] = (
-                list(object_classes) if object_classes else []
-            )
+            attr_values = entry.get_attribute("objectClass")
+            # Convert AttributeValues to list of strings
+            object_classes_list: list[str] = attr_values.values if attr_values else []
             if "person" in object_classes_list:
                 validations["person_has_cn"] = "cn" in entry.attributes
                 validations["person_has_sn"] = "sn" in entry.attributes
@@ -127,7 +125,7 @@ class TestValidators:
 
         lines = content.strip().split("\n")
         entry_count = 0
-        current_dn = None
+        current_dn: str | None = None
 
         for raw_line in lines:
             line = raw_line.strip()
@@ -203,9 +201,9 @@ class TestValidators:
             return {**base_validation, "entries_valid": False}
 
         entries = result.value if hasattr(result, "value") else []
-        entry_validations_list: list[dict[str, bool | int, str | None]] = []
+        entry_validations_list: list[dict[str, bool | int | str | None]] = []
         entries_validation: dict[
-            str, bool | int, list[dict[str, bool | int, str | None]]
+            str, bool | int | list[dict[str, bool | int | str | None]]
         ] = {
             "count_matches": len(entries) == expected_count,
             "actual_count": len(entries),

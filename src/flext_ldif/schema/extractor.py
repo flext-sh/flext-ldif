@@ -57,14 +57,14 @@ class FlextLdifSchemaExtractor(FlextService[FlextLdifModels.SchemaDiscoveryResul
                 for attr_name, attr_values in entry.attributes.data.items():
                     if attr_name.lower() == "objectclass":
                         # Handle object classes specially
-                        for oc_name in attr_values:
+                        for oc_name in attr_values.values:
                             if oc_name not in object_classes:
                                 oc_result = FlextLdifModels.SchemaObjectClass.create(
                                     name=oc_name,
                                     oid=f"1.3.6.1.4.1.{hash(oc_name) % 1000000}",
                                 )
                                 if oc_result.is_success:
-                                    object_classes[oc_name] = cast(
+                                    object_classes[str(oc_name)] = cast(
                                         "FlextLdifModels.SchemaObjectClass",
                                         oc_result.value,
                                     )
@@ -73,7 +73,7 @@ class FlextLdifSchemaExtractor(FlextService[FlextLdifModels.SchemaDiscoveryResul
                         attributes[attr_name] = {
                             "oid": f"1.3.6.1.4.1.{hash(attr_name) % 1000000}",
                             "description": "Discovered from LDIF entries",
-                            "single_value": str(len(attr_values) <= 1),
+                            "single_value": str(len(attr_values.values) <= 1),
                         }
 
             result = FlextLdifModels.SchemaDiscoveryResult.create(
@@ -131,7 +131,7 @@ class FlextLdifSchemaExtractor(FlextService[FlextLdifModels.SchemaDiscoveryResul
                 stats = usage_stats[attr_name]
                 stats["count"] = cast("int", stats["count"]) + 1
 
-                value_count = len(attr_values)
+                value_count = len(attr_values.values)
                 if value_count > cast("int", stats["max_values"]):
                     stats["max_values"] = value_count
 

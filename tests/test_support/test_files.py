@@ -15,7 +15,8 @@ from types import TracebackType
 from typing import Self
 
 from flext_core import FlextTypes
-from tests.test_support.ldif_data import LdifSample, LdifTestData
+
+from .ldif_data import LdifSample, LdifTestData
 
 
 class FileManager:

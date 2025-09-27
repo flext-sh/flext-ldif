@@ -72,18 +72,20 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
 
             attribute_mappings_raw = rules.get("attribute_mappings", {})
             attribute_mappings = cast("dict[str, str]", attribute_mappings_raw)
-            adapted_attrs: dict[str, list[str]] = {}
+            adapted_attrs: dict[str, FlextLdifModels.AttributeValues] = {}
 
             for attr_name, attr_values in entry.attributes.data.items():
                 mapped_name = attribute_mappings.get(attr_name, attr_name)
 
                 adapted_values = self._adapt_attribute_values(
                     attr_name,
-                    attr_values,
+                    attr_values.values,
                     target_server or constants.SERVER_TYPE_GENERIC,
                 )
 
-                adapted_attrs[mapped_name] = adapted_values
+                adapted_attrs[mapped_name] = FlextLdifModels.AttributeValues(
+                    values=adapted_values
+                )
 
             adapted_data["attributes"] = adapted_attrs
 

@@ -320,13 +320,12 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
 
             for entry in entries:
                 # Count object classes
-                object_classes_raw = entry.get_attribute("objectClass") or []
-                # Ensure object_classes is a list of strings
-                object_classes: list[str] = [
-                    str(oc) for oc in object_classes_raw if oc is not None
-                ]
-                for oc in object_classes:
-                    object_class_counts[oc] = object_class_counts.get(oc, 0) + 1
+                object_class_attr = entry.get_attribute("objectClass")
+                if object_class_attr:
+                    # Extract individual object class names from AttributeValues
+                    object_classes = object_class_attr.values
+                    for oc in object_classes:
+                        object_class_counts[oc] = object_class_counts.get(oc, 0) + 1
 
                 # Count attributes
                 for attr_name in entry.attributes.data:

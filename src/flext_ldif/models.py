@@ -96,6 +96,11 @@ class FlextLdifModels(FlextModels):
                 raise ValueError(error_msg)
             return v.strip().lower()
 
+        @property
+        def single_value(self) -> str | None:
+            """Get single value (first value if multiple exist)."""
+            return self.values[0] if self.values else None
+
     class LdifAttributes(FlextModels.Value):
         """Collection of LDIF attributes."""
 
@@ -105,22 +110,24 @@ class FlextLdifModels(FlextModels):
             extra="forbid",
         )
 
-        attributes: dict[str, list[str]] = Field(
+        attributes: dict[str, FlextLdifModels.AttributeValues] = Field(
             default_factory=dict,
-            description="Dictionary of attribute names to values",
+            description="Dictionary of attribute names to AttributeValues",
         )
 
-        def get_attribute(self, name: str) -> list[str]:
+        def get_attribute(self, name: str) -> FlextLdifModels.AttributeValues | None:
             """Get attribute values by name."""
             name_lower = name.lower()
-            for key, values in self.attributes.items():
+            for key, attr_values in self.attributes.items():
                 if key.lower() == name_lower:
-                    return values
-            return []
+                    return attr_values
+            return None
 
         def set_attribute(self, name: str, values: list[str]) -> None:
             """Set attribute values."""
-            self.attributes[name.lower()] = values
+            self.attributes[name.lower()] = FlextLdifModels.AttributeValues(
+                values=values
+            )
 
         def has_attribute(self, name: str) -> bool:
             """Check if attribute exists."""
@@ -128,11 +135,11 @@ class FlextLdifModels(FlextModels):
             return any(key.lower() == name_lower for key in self.attributes)
 
         @property
-        def data(self) -> dict[str, list[str]]:
+        def data(self) -> dict[str, FlextLdifModels.AttributeValues]:
             """Get attributes data dictionary."""
             return self.attributes
 
-        def __getitem__(self, name: str) -> list[str]:
+        def __getitem__(self, name: str) -> FlextLdifModels.AttributeValues | None:
             """Dictionary-like access to attributes."""
             return self.get_attribute(name)
 
@@ -140,13 +147,34 @@ class FlextLdifModels(FlextModels):
             """Dictionary-like setting of attributes."""
             # Since the model is frozen, we need to use object.__setattr__
             if hasattr(self, "attributes"):
-                self.attributes[name.lower()] = values
+                self.attributes[name.lower()] = FlextLdifModels.AttributeValues(
+                    values=values
+                )
             else:
-                object.__setattr__(self, "attributes", {name.lower(): values})
+                object.__setattr__(
+                    self,
+                    "attributes",
+                    {name.lower(): FlextLdifModels.AttributeValues(values=values)},
+                )
 
         def __contains__(self, name: str) -> bool:
             """Dictionary-like 'in' check."""
             return self.has_attribute(name)
+
+        def add_attribute(self, name: str, values: str | list[str]) -> None:
+            """Add attribute with values."""
+            if isinstance(values, str):
+                values = [values]
+            self.set_attribute(name, values)
+
+        def remove_attribute(self, name: str) -> None:
+            """Remove attribute by name."""
+            name_lower = name.lower()
+            keys_to_remove = [
+                key for key in self.attributes if key.lower() == name_lower
+            ]
+            for key in keys_to_remove:
+                del self.attributes[key]
 
     class Entry(FlextModels.Entity):
         """LDIF entry representing a complete LDAP object."""
@@ -166,7 +194,7 @@ class FlextLdifModels(FlextModels):
             description="Entry attributes",
         )
 
-        def get_attribute(self, name: str) -> list[str]:
+        def get_attribute(self, name: str) -> FlextLdifModels.AttributeValues | None:
             """Get attribute values by name."""
             return self.attributes.get_attribute(name)
 
@@ -174,32 +202,45 @@ class FlextLdifModels(FlextModels):
             """Check if attribute exists."""
             return self.attributes.has_attribute(name)
 
+        def get_attribute_values(self, name: str) -> list[str]:
+            """Get attribute values as a list of strings."""
+            attr_values = self.get_attribute(name)
+            return attr_values.values if attr_values else []
+
         def get_single_value(self, name: str) -> str | None:
             """Get single attribute value (first value if multiple exist)."""
-            values = self.get_attribute(name)
-            return values[0] if values else None
+            attr_values = self.get_attribute(name)
+            return attr_values.single_value if attr_values else None
 
         def is_person_entry(self) -> bool:
             """Check if entry is a person entry."""
-            object_classes = self.get_attribute("objectClass")
+            attr_values = self.get_attribute("objectClass")
+            if not attr_values:
+                return False
             person_classes = {"person", "inetorgperson"}
-            return any(oc.lower() in person_classes for oc in object_classes)
+            return any(oc.lower() in person_classes for oc in attr_values.values)
 
         def is_group_entry(self) -> bool:
             """Check if entry is a group entry."""
-            object_classes = self.get_attribute("objectClass")
+            attr_values = self.get_attribute("objectClass")
+            if not attr_values:
+                return False
             group_classes = {"group", "groupofnames", "groupofuniquenames"}
-            return any(oc.lower() in group_classes for oc in object_classes)
+            return any(oc.lower() in group_classes for oc in attr_values.values)
 
         def is_organizational_unit(self) -> bool:
             """Check if entry is an organizational unit."""
-            object_classes = self.get_attribute("objectClass")
-            return "organizationalunit" in [oc.lower() for oc in object_classes]
+            attr_values = self.get_attribute("objectClass")
+            if not attr_values:
+                return False
+            return "organizationalunit" in [oc.lower() for oc in attr_values.values]
 
         def has_object_class(self, object_class: str) -> bool:
             """Check if entry has specific object class."""
-            object_classes = self.get_attribute("objectClass")
-            return object_class.lower() in [oc.lower() for oc in object_classes]
+            attr_values = self.get_attribute("objectClass")
+            if not attr_values:
+                return False
+            return object_class.lower() in [oc.lower() for oc in attr_values.values]
 
         def validate_business_rules(self) -> FlextResult[bool]:
             """Validate entry against business rules."""
@@ -233,15 +274,38 @@ class FlextLdifModels(FlextModels):
                         attrs_dict = {}
                         for key, value in attributes.items():
                             if isinstance(value, list):
-                                attrs_dict[key] = [str(v) for v in value]
+                                attrs_dict[key] = FlextLdifModels.AttributeValues(
+                                    values=[str(v) for v in value]
+                                )
+                            elif isinstance(value, FlextLdifModels.AttributeValues):
+                                # Already an AttributeValues object, use it directly
+                                attrs_dict[key] = value
                             else:
-                                attrs_dict[key] = [str(value)]
+                                attrs_dict[key] = FlextLdifModels.AttributeValues(
+                                    values=[str(value)]
+                                )
                         attributes = attrs_dict
                     else:
                         attributes = {}
                 else:
                     dn = str(kwargs.get("dn", ""))
                     attributes = kwargs.get("attributes", {})
+                    # Convert attributes to proper format when passed as kwargs
+                    if isinstance(attributes, dict):
+                        attrs_dict = {}
+                        for key, value in attributes.items():
+                            if isinstance(value, list):
+                                attrs_dict[key] = FlextLdifModels.AttributeValues(
+                                    values=[str(v) for v in value]
+                                )
+                            elif isinstance(value, FlextLdifModels.AttributeValues):
+                                # Already an AttributeValues object, use it directly
+                                attrs_dict[key] = value
+                            else:
+                                attrs_dict[key] = FlextLdifModels.AttributeValues(
+                                    values=[str(value)]
+                                )
+                        attributes = attrs_dict
 
                 dn_obj = FlextLdifModels.DistinguishedName(value=dn)
                 attrs_obj = FlextLdifModels.LdifAttributes(attributes=attributes or {})
@@ -251,6 +315,20 @@ class FlextLdifModels(FlextModels):
             except Exception as e:
                 return FlextResult[FlextLdifModels.Entry].fail(str(e))
 
+        def to_ldif_string(self, indent: int = 0) -> str:
+            """Convert entry to LDIF string."""
+            lines = [f"dn: {self.dn.value}"]
+            indent_str = " " * indent if indent > 0 else ""
+
+            attribute_lines = [
+                f"{indent_str}{attr_name}: {value}"
+                for attr_name, attr_values in self.attributes.attributes.items()
+                for value in attr_values.values
+            ]
+            lines.extend(attribute_lines)
+
+            return "\n".join(lines)
+
         @classmethod
         def from_ldif_string(
             cls, ldif_string: str
@@ -259,7 +337,7 @@ class FlextLdifModels(FlextModels):
             try:
                 lines = ldif_string.strip().split("\n")
                 dn = ""
-                attributes: dict[str, list[str]] = {}
+                attributes: dict[str, FlextLdifModels.AttributeValues] = {}
 
                 for line in lines:
                     stripped_line = line.strip()
@@ -276,8 +354,10 @@ class FlextLdifModels(FlextModels):
                             attr_name = attr_line[0].strip()
                             attr_value = attr_line[1].strip()
                             if attr_name not in attributes:
-                                attributes[attr_name] = []
-                            attributes[attr_name].append(attr_value)
+                                attributes[attr_name] = FlextLdifModels.AttributeValues(
+                                    values=[]
+                                )
+                            attributes[attr_name].values.append(attr_value)
 
                 if not dn:
                     return FlextResult[FlextLdifModels.Entry].fail(
@@ -321,7 +401,21 @@ class FlextLdifModels(FlextModels):
             """Create a new ChangeRecord instance."""
             try:
                 dn_obj = FlextLdifModels.DistinguishedName(value=dn)
-                attrs_obj = FlextLdifModels.LdifAttributes(attributes=attributes or {})
+
+                # Convert attributes to proper format
+                attrs_dict: dict[str, FlextLdifModels.AttributeValues] = {}
+                if attributes:
+                    for key, value in attributes.items():
+                        if isinstance(value, list):
+                            attrs_dict[key] = FlextLdifModels.AttributeValues(
+                                values=[str(v) for v in value]
+                            )
+                        else:
+                            attrs_dict[key] = FlextLdifModels.AttributeValues(
+                                values=[str(value)]
+                            )
+
+                attrs_obj = FlextLdifModels.LdifAttributes(attributes=attrs_dict)
                 return FlextResult[FlextLdifModels.ChangeRecord].ok(
                     cls(
                         dn=dn_obj,
@@ -350,6 +444,11 @@ class FlextLdifModels(FlextModels):
         oid: str = Field(
             ...,
             description="Object identifier",
+        )
+
+        description: str = Field(
+            default="",
+            description="Object class description",
         )
 
         must: list[str] = Field(
@@ -382,6 +481,24 @@ class FlextLdifModels(FlextModels):
             description="Optional attributes",
         )
 
+        @classmethod
+        def create(cls, *args: object, **kwargs: object) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+            """Create a new SchemaObjectClass instance."""
+            try:
+                _ = args  # Suppress unused argument warning
+                name = kwargs.get("name", "")
+                description = kwargs.get("description", "")
+                required_attributes = kwargs.get("required_attributes", [])
+                instance = cls(
+                    name=name,
+                    oid=kwargs.get("oid", ""),
+                    description=description,
+                    required_attributes=required_attributes,
+                )
+                return FlextResult[FlextLdifModels.SchemaObjectClass].ok(instance)
+            except Exception as e:
+                return FlextResult[FlextLdifModels.SchemaObjectClass].fail(str(e))
+
     class SchemaDiscoveryResult(FlextModels.Value):
         """Result of schema discovery operation."""
 
@@ -396,26 +513,41 @@ class FlextLdifModels(FlextModels):
             description="Discovered object classes",
         )
 
-        attributes: dict[str, dict[str, str]] = Field(
+        attributes: dict[str, FlextLdifModels.SchemaAttribute] = Field(
             default_factory=dict,
             description="Discovered attributes",
         )
 
+        server_type: str = Field(
+            default="generic",
+            description="Server type",
+        )
+
+        entry_count: int = Field(
+            default=0,
+            description="Number of entries processed",
+        )
+
         @classmethod
-        def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
+        def create(cls, *args: object, **kwargs: object) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
             """Create a new SchemaDiscoveryResult instance."""
             try:
                 # Extract parameters from kwargs (ignore args for compatibility)
                 _ = args  # Suppress unused argument warning
                 object_classes = kwargs.get("object_classes", {})
                 attributes = kwargs.get("attributes", {})
+                server_type = kwargs.get("server_type", "generic")
+                entry_count = kwargs.get("entry_count", 0)
 
                 instance = cls(
-                    object_classes=object_classes or {}, attributes=attributes or {}
+                    object_classes=object_classes or {},
+                    attributes=attributes or {},
+                    server_type=server_type,
+                    entry_count=entry_count,
                 )
-                return FlextResult[object].ok(instance)
+                return FlextResult[FlextLdifModels.SchemaDiscoveryResult].ok(instance)
             except Exception as e:
-                return FlextResult[object].fail(str(e))
+                return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(str(e))
 
     # =============================================================================
     # ACL MODELS - LDAP Access Control List Models
@@ -645,7 +777,7 @@ class FlextLdifModels(FlextModels):
         )
 
         @classmethod
-        def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
+        def create(cls, *args: object, **kwargs: object) -> FlextResult[FlextLdifModels.SchemaAttribute]:
             """Create a new SchemaAttribute instance."""
             try:
                 _ = args  # Suppress unused argument warning
@@ -656,9 +788,95 @@ class FlextLdifModels(FlextModels):
                     description=kwargs.get("description", ""),
                     single_value=kwargs.get("single_value", False),
                 )
-                return FlextResult[object].ok(instance)
+                return FlextResult[FlextLdifModels.SchemaAttribute].ok(instance)
             except Exception as e:
-                return FlextResult[object].fail(str(e))
+                return FlextResult[FlextLdifModels.SchemaAttribute].fail(str(e))
+
+    # =============================================================================
+    # ADDITIONAL MODELS REQUIRED BY TESTS
+    # =============================================================================
+
+    class SearchConfig(FlextModels.Value):
+        """Search configuration for LDIF operations."""
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+        )
+
+        base_dn: str = Field(
+            ...,
+            min_length=1,
+            description="Base DN for search",
+        )
+
+        search_filter: str = Field(
+            default="(objectClass=*)",
+            description="LDAP search filter",
+        )
+
+        attributes: list[str] = Field(
+            default_factory=list,
+            description="Attributes to return",
+        )
+
+        @field_validator("base_dn")
+        @classmethod
+        def validate_base_dn(cls, v: str) -> str:
+            """Validate base DN."""
+            if not v.strip():
+                msg = "Base DN cannot be empty"
+                raise ValueError(msg)
+            return v.strip()
+
+    class LdifDocument(FlextModels.Entity):
+        """LDIF document containing multiple entries."""
+
+        model_config = ConfigDict(
+            validate_assignment=True,
+            extra="forbid",
+        )
+
+        entries: list[FlextLdifModels.Entry] = Field(
+            default_factory=list,
+            description="LDIF entries",
+        )
+
+        @classmethod
+        def from_ldif_string(
+            cls, ldif_string: str
+        ) -> FlextResult[FlextLdifModels.LdifDocument]:
+            """Create LdifDocument from LDIF string."""
+            try:
+                if not ldif_string.strip():
+                    return FlextResult[FlextLdifModels.LdifDocument].ok(
+                        cls(entries=[], domain_events=[])
+                    )
+
+                # Split by double newlines to separate entries
+                entry_blocks = ldif_string.strip().split("\n\n")
+                entries = []
+
+                for block in entry_blocks:
+                    if block.strip():
+                        result = FlextLdifModels.Entry.from_ldif_string(block)
+                        if result.is_success:
+                            entries.append(result.value)
+                        else:
+                            return FlextResult[FlextLdifModels.LdifDocument].fail(
+                                f"Failed to parse entry: {result.error}"
+                            )
+
+                return FlextResult[FlextLdifModels.LdifDocument].ok(
+                    cls(entries=entries, domain_events=[])
+                )
+            except Exception as e:
+                return FlextResult[FlextLdifModels.LdifDocument].fail(str(e))
+
+        def to_ldif_string(self) -> str:
+            """Convert document to LDIF string."""
+            return "\n\n".join(entry.to_ldif_string() for entry in self.entries)
 
     # =============================================================================
     # ALIASES FOR BACKWARD COMPATIBILITY
@@ -668,6 +886,41 @@ class FlextLdifModels(FlextModels):
     LdifEntry = Entry
     # Alias for ChangeRecord class (tests expect LdifChangeRecord)
     LdifChangeRecord = ChangeRecord
+
+    class AttributeValues(FlextModels.Value):
+        """Simple attribute values container for tests."""
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+        )
+
+        values: list[str] = Field(
+            default_factory=list,
+            description="Attribute values",
+        )
+
+        def __len__(self) -> int:
+            """Return the number of values."""
+            return len(self.values)
+
+        def __getitem__(self, index: int) -> str:
+            """Get value by index."""
+            return self.values[index]
+
+        def __contains__(self, item: str) -> bool:
+            """Check if value exists in the list."""
+            return item in self.values
+
+        @property
+        def single_value(self) -> str | None:
+            """Get single value (first value if multiple exist)."""
+            return self.values[0] if self.values else None
+
+    # Aliases for test compatibility
+    DN = DistinguishedName
+    Attributes = LdifAttributes
 
 
 __all__ = ["FlextLdifModels"]

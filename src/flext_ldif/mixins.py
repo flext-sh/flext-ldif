@@ -391,7 +391,7 @@ class FlextLdifMixins(FlextMixins):
 
         @staticmethod
         def map_iterator(
-            iterator: Iterator[object], func: Callable[[object], object]
+            iterator: Iterator[object], func: Callable[..., object]
         ) -> Iterator[FlextResult[object]]:
             """Map iterator with FlextResult."""
             for item in iterator:

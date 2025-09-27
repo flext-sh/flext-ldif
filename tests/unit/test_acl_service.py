@@ -288,6 +288,7 @@ class TestFlextLdifAclService:
     def test_extract_acls_from_entry_none(self) -> None:
         """Test extracting ACLs from None entry."""
         service = FlextLdifAclService()
+        # Test the None case that the method explicitly handles
         result = service.extract_acls_from_entry(None)  # type: ignore[arg-type]
 
         assert result.is_failure

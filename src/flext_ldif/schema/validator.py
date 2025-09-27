@@ -53,7 +53,7 @@ class FlextLdifSchemaValidator(FlextService[dict[str, object]]):
             if attr_name not in schema.attributes
         ]
 
-        entry_object_classes: list[str] = entry.get_attribute("objectClass") or []
+        entry_object_classes: list[str] = entry.get_attribute_values("objectClass")
         issues: list[str] = [
             f"ObjectClass '{oc}' not in discovered schema"
             for oc in entry_object_classes
@@ -86,7 +86,7 @@ class FlextLdifSchemaValidator(FlextService[dict[str, object]]):
         """
         issues: list[str] = []
         entry_attrs = set(entry.attributes.data.keys())
-        entry_object_classes: list[str] = entry.get_attribute("objectClass") or []
+        entry_object_classes: list[str] = entry.get_attribute_values("objectClass")
 
         for oc_name in entry_object_classes:
             if oc_name in schema.object_classes:

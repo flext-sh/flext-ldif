@@ -52,10 +52,16 @@ class TestFlextLdifEntryBuilder:
         assert result.is_success
         entry = result.value
         assert entry.dn.value == "cn=Test User,dc=example,dc=com"
-        assert "inetOrgPerson" in entry.attributes.attributes.get("objectClass", [])
-        assert "person" in entry.attributes.attributes.get("objectClass", [])
-        assert entry.attributes.attributes.get("cn") == ["Test User"]
-        assert entry.attributes.attributes.get("sn") == ["User"]
+        object_class_attr = entry.attributes.attributes.get("objectClass")
+        assert object_class_attr is not None
+        assert "inetOrgPerson" in object_class_attr.values
+        assert "person" in object_class_attr.values
+        cn_attr = entry.attributes.attributes.get("cn")
+        assert cn_attr is not None
+        assert cn_attr.values == ["Test User"]
+        sn_attr = entry.attributes.attributes.get("sn")
+        assert sn_attr is not None
+        assert sn_attr.values == ["User"]
 
     def test_build_person_entry_with_optional_attrs(self) -> None:
         """Test building a person entry with optional attributes."""
@@ -72,9 +78,15 @@ class TestFlextLdifEntryBuilder:
 
         assert result.is_success
         entry = result.value
-        assert entry.attributes.attributes.get("uid") == ["testuser"]
-        assert entry.attributes.attributes.get("mail") == ["test@example.com"]
-        assert entry.attributes.attributes.get("givenName") == ["Test"]
+        uid_attr = entry.attributes.attributes.get("uid")
+        assert uid_attr is not None
+        assert uid_attr.values == ["testuser"]
+        mail_attr = entry.attributes.attributes.get("mail")
+        assert mail_attr is not None
+        assert mail_attr.values == ["test@example.com"]
+        given_name_attr = entry.attributes.attributes.get("givenName")
+        assert given_name_attr is not None
+        assert given_name_attr.values == ["Test"]
 
     def test_build_person_entry_with_additional_attrs(self) -> None:
         """Test building a person entry with additional attributes."""
@@ -94,8 +106,12 @@ class TestFlextLdifEntryBuilder:
 
         assert result.is_success
         entry = result.value
-        assert entry.attributes.attributes.get("telephoneNumber") == ["+1234567890"]
-        assert entry.attributes.attributes.get("title") == ["Software Engineer"]
+        telephone_attr = entry.attributes.attributes.get("telephoneNumber")
+        assert telephone_attr is not None
+        assert telephone_attr.values == ["+1234567890"]
+        title_attr = entry.attributes.attributes.get("title")
+        assert title_attr is not None
+        assert title_attr.values == ["Software Engineer"]
 
     def test_build_group_entry_basic(self) -> None:
         """Test building a basic group entry."""
@@ -106,11 +122,17 @@ class TestFlextLdifEntryBuilder:
         assert result.is_success
         entry = result.value
         assert entry.dn.value == "cn=Test Group,dc=example,dc=com"
-        assert "top" in entry.attributes.attributes.get("objectClass", [])
-        assert "groupOfNames" in entry.attributes.attributes.get("objectClass", [])
-        assert entry.attributes.attributes.get("cn") == ["Test Group"]
+        object_class_attr = entry.attributes.attributes.get("objectClass")
+        assert object_class_attr is not None
+        assert "top" in object_class_attr.values
+        assert "groupOfNames" in object_class_attr.values
+        cn_attr = entry.attributes.attributes.get("cn")
+        assert cn_attr is not None
+        assert cn_attr.values == ["Test Group"]
         # Should have self as member when no members provided
-        assert entry.dn.value in entry.attributes.attributes.get("member", [])
+        member_attr = entry.attributes.attributes.get("member")
+        assert member_attr is not None
+        assert entry.dn.value in member_attr.values
 
     def test_build_group_entry_with_members(self) -> None:
         """Test building a group entry with members."""
@@ -127,10 +149,12 @@ class TestFlextLdifEntryBuilder:
 
         assert result.is_success
         entry = result.value
-        assert entry.attributes.attributes.get("member") == members
-        assert entry.attributes.attributes.get("description") == [
-            "Test group description"
-        ]
+        member_attr = entry.attributes.attributes.get("member")
+        assert member_attr is not None
+        assert member_attr.values == members
+        description_attr = entry.attributes.attributes.get("description")
+        assert description_attr is not None
+        assert description_attr.values == ["Test group description"]
 
     def test_build_group_entry_with_additional_attrs(self) -> None:
         """Test building a group entry with additional attributes."""
@@ -149,12 +173,12 @@ class TestFlextLdifEntryBuilder:
 
         assert result.is_success
         entry = result.value
-        assert entry.attributes.attributes.get("owner") == [
-            "cn=admin,dc=example,dc=com"
-        ]
-        assert entry.attributes.attributes.get("seeAlso") == [
-            "cn=othergroup,dc=example,dc=com"
-        ]
+        owner_attr = entry.attributes.attributes.get("owner")
+        assert owner_attr is not None
+        assert owner_attr.values == ["cn=admin,dc=example,dc=com"]
+        see_also_attr = entry.attributes.attributes.get("seeAlso")
+        assert see_also_attr is not None
+        assert see_also_attr.values == ["cn=othergroup,dc=example,dc=com"]
 
     def test_build_organizational_unit_entry_basic(self) -> None:
         """Test building a basic organizational unit entry."""
@@ -167,11 +191,13 @@ class TestFlextLdifEntryBuilder:
         assert result.is_success
         entry = result.value
         assert entry.dn.value == "ou=TestOU,dc=example,dc=com"
-        assert "top" in entry.attributes.attributes.get("objectClass", [])
-        assert "organizationalUnit" in entry.attributes.attributes.get(
-            "objectClass", []
-        )
-        assert entry.attributes.attributes.get("ou") == ["TestOU"]
+        object_class_attr = entry.attributes.attributes.get("objectClass")
+        assert object_class_attr is not None
+        assert "top" in object_class_attr.values
+        assert "organizationalUnit" in object_class_attr.values
+        ou_attr = entry.attributes.attributes.get("ou")
+        assert ou_attr is not None
+        assert ou_attr.values == ["TestOU"]
 
     def test_build_organizational_unit_entry_with_description(self) -> None:
         """Test building an organizational unit entry with description."""
@@ -185,9 +211,9 @@ class TestFlextLdifEntryBuilder:
 
         assert result.is_success
         entry = result.value
-        assert entry.attributes.attributes.get("description") == [
-            "Test organizational unit"
-        ]
+        description_attr = entry.attributes.attributes.get("description")
+        assert description_attr is not None
+        assert description_attr.values == ["Test organizational unit"]
 
     def test_build_organizational_unit_entry_with_additional_attrs(self) -> None:
         """Test building an organizational unit entry with additional attributes."""
@@ -201,8 +227,12 @@ class TestFlextLdifEntryBuilder:
 
         assert result.is_success
         entry = result.value
-        assert entry.attributes.attributes.get("businessCategory") == ["IT"]
-        assert entry.attributes.attributes.get("st") == ["California"]
+        business_category_attr = entry.attributes.attributes.get("businessCategory")
+        assert business_category_attr is not None
+        assert business_category_attr.values == ["IT"]
+        st_attr = entry.attributes.attributes.get("st")
+        assert st_attr is not None
+        assert st_attr.values == ["California"]
 
     def test_build_custom_entry_basic(self) -> None:
         """Test building a custom entry."""
@@ -217,10 +247,16 @@ class TestFlextLdifEntryBuilder:
         assert result.is_success
         entry = result.value
         assert entry.dn.value == "cn=custom,dc=example,dc=com"
-        assert "top" in entry.attributes.attributes.get("objectClass", [])
-        assert "customObject" in entry.attributes.attributes.get("objectClass", [])
-        assert entry.attributes.attributes.get("cn") == ["custom"]
-        assert entry.attributes.attributes.get("customAttr") == ["value1", "value2"]
+        object_class_attr = entry.attributes.attributes.get("objectClass")
+        assert object_class_attr is not None
+        assert "top" in object_class_attr.values
+        assert "customObject" in object_class_attr.values
+        cn_attr = entry.attributes.attributes.get("cn")
+        assert cn_attr is not None
+        assert cn_attr.values == ["custom"]
+        custom_attr_attr = entry.attributes.attributes.get("customAttr")
+        assert custom_attr_attr is not None
+        assert custom_attr_attr.values == ["value1", "value2"]
 
     def test_build_custom_entry_without_validation(self) -> None:
         """Test building a custom entry without validation."""
@@ -339,8 +375,12 @@ class TestFlextLdifEntryBuilder:
         entries = result.value
         assert len(entries) == 1
         entry = entries[0]
-        assert entry.attributes.attributes.get("objectClass") == ["person"]
-        assert entry.attributes.attributes.get("cn") == ["User 1"]
+        object_class_attr = entry.attributes.attributes.get("objectClass")
+        assert object_class_attr is not None
+        assert object_class_attr.values == ["person"]
+        cn_attr = entry.attributes.attributes.get("cn")
+        assert cn_attr is not None
+        assert cn_attr.values == ["User 1"]
 
     def test_build_entries_from_dict_valid(self) -> None:
         """Test building entries from valid dictionary data."""
@@ -424,9 +464,15 @@ class TestFlextLdifEntryBuilder:
         entries = result.value
         assert len(entries) == 1
         entry = entries[0]
-        assert entry.attributes.attributes.get("objectClass") == ["person"]
-        assert entry.attributes.attributes.get("cn") == ["User 1"]
-        assert entry.attributes.attributes.get("age") == ["25"]
+        object_class_attr = entry.attributes.attributes.get("objectClass")
+        assert object_class_attr is not None
+        assert object_class_attr.values == ["person"]
+        cn_attr = entry.attributes.attributes.get("cn")
+        assert cn_attr is not None
+        assert cn_attr.values == ["User 1"]
+        age_attr = entry.attributes.attributes.get("age")
+        assert age_attr is not None
+        assert age_attr.values == ["25"]
 
     def test_convert_entry_to_dict(self) -> None:
         """Test converting an entry to dictionary format."""
@@ -545,6 +591,7 @@ class TestFlextLdifEntryBuilder:
         assert result.is_success
         entry = result.value
         # Verify standard object classes are present
-        object_classes = entry.attributes.attributes.get("objectClass", [])
-        assert "inetOrgPerson" in object_classes
-        assert "person" in object_classes
+        object_class_attr = entry.attributes.attributes.get("objectClass")
+        assert object_class_attr is not None
+        assert "inetOrgPerson" in object_class_attr.values
+        assert "person" in object_class_attr.values
