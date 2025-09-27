@@ -6,6 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests.fixtures.docker_fixtures import docker_openldap_container
+from .docker_fixtures import docker_openldap_container
 
 __all__ = ["docker_openldap_container"]

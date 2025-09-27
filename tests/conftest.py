@@ -24,7 +24,8 @@ from flext_tests import (
     FlextTestsMatchers,
     FlextTestsUtilities,
 )
-from tests.test_support import (
+
+from .test_support import (
     FileManager,
     LdifTestData,
     RealServiceFactory,

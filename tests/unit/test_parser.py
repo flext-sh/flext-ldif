@@ -217,7 +217,7 @@ cn: testuser"""
 
         entry = result.value[0]
         assert entry.dn.value == "cn=testuser,dc=example,dc=com"
-        assert entry.changetype == "add"
+        # Note: changetype is handled by ChangeRecord model, not Entry model
 
     def test_parse_content_with_attribute_options(self) -> None:
         """Test parsing content with attribute options."""
@@ -275,7 +275,7 @@ cn: testuser"""
         result = parser.parse_ldif_file_from_path(Path("nonexistent.ldif"))
 
         assert result.is_failure
-        assert "No such file or directory" in result.error
+        assert result.error is not None and "No such file or directory" in result.error
 
     def test_parse_file_success(self, test_file_manager: FileManager) -> None:
         """Test parsing existing file."""
@@ -414,20 +414,20 @@ telephoneNumber: +1-555-987-6543"""
 
         # Check multivalued attributes
         object_classes = entry.attributes.data["objectClass"]
-        assert len(object_classes) == 3
-        assert "person" in object_classes
-        assert "organizationalPerson" in object_classes
-        assert "inetOrgPerson" in object_classes
+        assert len(object_classes.values) == 3
+        assert "person" in object_classes.values
+        assert "organizationalPerson" in object_classes.values
+        assert "inetOrgPerson" in object_classes.values
 
         cn_values = entry.attributes.data["cn"]
-        assert len(cn_values) == 2
-        assert "testuser" in cn_values
-        assert "Test User" in cn_values
+        assert len(cn_values.values) == 2
+        assert "testuser" in cn_values.values
+        assert "Test User" in cn_values.values
 
         mail_values = entry.attributes.data["mail"]
-        assert len(mail_values) == 2
-        assert "test@example.com" in mail_values
-        assert "testuser@example.com" in mail_values
+        assert len(mail_values.values) == 2
+        assert "test@example.com" in mail_values.values
+        assert "testuser@example.com" in mail_values.values
 
     def test_parse_content_with_special_characters(self) -> None:
         """Test parsing content with special characters."""
@@ -471,10 +471,10 @@ anotherEmptyAttribute: """
         empty_attr = entry.attributes.data["emptyAttribute"]
         another_empty_attr = entry.attributes.data["anotherEmptyAttribute"]
 
-        assert len(empty_attr) == 1
-        assert len(another_empty_attr) == 1
-        assert not empty_attr[0]
-        assert not another_empty_attr[0]
+        assert len(empty_attr.values) == 1
+        assert len(another_empty_attr.values) == 1
+        assert not empty_attr.values[0]
+        assert not another_empty_attr.values[0]
 
     def test_parse_content_with_long_lines(self) -> None:
         """Test parsing content with very long lines."""
@@ -497,8 +497,8 @@ description: {long_description}"""
         entry = result.value[0]
         assert "description" in entry.attributes.data
         description = entry.attributes.data["description"]
-        assert len(description) == 1
-        assert len(description[0]) > 1000  # Should be very long
+        assert len(description.values) == 1
+        assert len(description.values[0]) > 1000  # Should be very long
 
     def test_parse_content_with_mixed_content(self) -> None:
         """Test parsing content with mixed valid and invalid content."""

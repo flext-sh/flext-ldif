@@ -320,10 +320,10 @@ class ASTAnalyzer:
 
         """
         return (
-            len(analysis["classes"]) * 5
-            + len(analysis["functions"]) * 3
-            + len(analysis["calls"]) * 1
-            + len(analysis["imports"]) * 2
+            len(analysis.get("classes", [])) * 5
+            + len(analysis.get("functions", [])) * 3
+            + len(analysis.get("calls", [])) * 1
+            + len(analysis.get("imports", [])) * 2
         )
 
     def analyze_library_usage(self, file_path: str | Path) -> LibraryAnalysis:
@@ -732,45 +732,46 @@ class ASTAnalyzer:
 
             # Update aggregate statistics
             if "error" not in module_analysis:
-                report["aggregate_statistics"]["total_complexity"] += module_analysis[
-                    "complexity"
-                ]
-                report["aggregate_statistics"]["total_lines_of_code"] += (
-                    module_analysis["lines_of_code"]
+                report["aggregate_statistics"]["total_complexity"] += (
+                    module_analysis.get("complexity", 0)
                 )
-                report["aggregate_statistics"]["total_ast_nodes"] += module_analysis[
-                    "ast_nodes"
-                ]
+                report["aggregate_statistics"]["total_lines_of_code"] += (
+                    module_analysis.get("lines_of_code", 0)
+                )
+                report["aggregate_statistics"]["total_ast_nodes"] += (
+                    module_analysis.get("ast_nodes", 0)
+                )
                 report["aggregate_statistics"]["total_function_calls"] += len(
-                    module_analysis["calls"]
+                    module_analysis.get("calls", [])
                 )
                 report["aggregate_statistics"]["total_classes"] += len(
-                    module_analysis["classes"]
+                    module_analysis.get("classes", [])
                 )
                 report["aggregate_statistics"]["total_functions"] += len(
-                    module_analysis["functions"]
+                    module_analysis.get("functions", [])
                 )
 
             # Update library usage summary
             if "error" not in library_analysis:
-                for usage in library_analysis["flext_core_usage"]:
+                for usage in library_analysis.get("flext_core_usage", []):
                     report["library_usage_summary"]["flext_core_usage"][
                         f"{usage['module']}.{usage['name']}"
                     ] += 1
 
-                for usage in library_analysis["pydantic_usage"]:
+                for usage in library_analysis.get("pydantic_usage", []):
                     report["library_usage_summary"]["pydantic_usage"][
                         f"{usage['module']}.{usage['name']}"
                     ] += 1
 
-                for usage in library_analysis["standard_lib_usage"]:
+                for usage in library_analysis.get("standard_lib_usage", []):
                     report["library_usage_summary"]["standard_lib_usage"][
                         f"{usage['module']}.{usage['name']}"
                     ] += 1
 
             # Update performance summary
             if "error" not in library_analysis:
-                for call, details in library_analysis["performance_impact"].items():
+                performance_impact = library_analysis.get("performance_impact", {})
+                for call, details in performance_impact.items():
                     if isinstance(details, dict) and "impact" in details:
                         impact_level = details["impact"]
                         if impact_level == "high":
@@ -788,22 +789,24 @@ class ASTAnalyzer:
 
             # Update call graph summary
             if "error" not in call_graph_analysis:
-                for call in call_graph_analysis["internal_calls"]:
+                internal_calls = call_graph_analysis.get("internal_calls", [])
+                for call in internal_calls:
                     if isinstance(call, dict) and "function" in call:
                         function_value = call["function"]
                         if isinstance(function_value, str):
-                            function_name = function_value  # type: ignore[assignment]
+                            function_name = function_value
                         else:
                             function_name = str(function_value)
                         report["call_graph_summary"]["internal_calls"][
                             function_name
                         ] += 1
 
-                for call in call_graph_analysis["external_calls"]:
+                external_calls = call_graph_analysis.get("external_calls", [])
+                for call in external_calls:
                     if isinstance(call, dict) and "function" in call:
                         function_value = call["function"]
                         if isinstance(function_value, str):
-                            function_name = function_value  # type: ignore[assignment]
+                            function_name = function_value
                         else:
                             function_name = str(function_value)
                         report["call_graph_summary"]["external_calls"][

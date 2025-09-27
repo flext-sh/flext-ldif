@@ -21,9 +21,10 @@ from flext_ldif.parser import FlextLdifParser
 # from flext_ldif.processor import FlextLdifProcessor  # Avoid circular import
 from flext_ldif.quirks_coordinator import FlextLdifQuirks
 from flext_ldif.schemas_coordinator import FlextLdifSchemas
+from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifManagement(FlextService[dict[str, object]]):
+class FlextLdifManagement(FlextService[FlextLdifTypes.LdifCore.ManagementDict]):
     """Master coordinator for schema, ACL, entry, and quirks operations using flext-core paradigm.
 
     Provides unified management interface for all LDIF processing operations
@@ -63,18 +64,20 @@ class FlextLdifManagement(FlextService[dict[str, object]]):
         self.quirks.adapter = self.quirks.EntryAdapter(self.quirks)
 
     @override
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self) -> FlextResult[FlextLdifTypes.LdifCore.ManagementDict]:
         """Execute health check - required by FlextService."""
-        return FlextResult[dict[str, object]].ok({
+        return FlextResult[FlextLdifTypes.LdifCore.ManagementDict].ok({
             "status": "healthy",
             "service": FlextLdifManagement,
             "server_type": self._server_type,
             "coordinators": ["schemas", "entries", "acls", "quirks"],
         })
 
-    async def execute_async(self) -> FlextResult[dict[str, object]]:
+    async def execute_async(
+        self,
+    ) -> FlextResult[FlextLdifTypes.LdifCore.ManagementDict]:
         """Execute health check - required by FlextService."""
-        return FlextResult[dict[str, object]].ok({
+        return FlextResult[FlextLdifTypes.LdifCore.ManagementDict].ok({
             "status": "healthy",
             "service": FlextLdifManagement,
             "server_type": self._server_type,

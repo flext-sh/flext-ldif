@@ -194,7 +194,7 @@ class FlextLdifQuirksAdapter(FlextService[dict[str, object]]):
                     dn_patterns.add(attr_name)
 
             # Analyze object classes
-            obj_classes: list[str] = entry.get_attribute("objectClass") or []
+            obj_classes: list[str] = entry.get_attribute_values("objectClass")
             object_classes.update(obj_classes)
 
             # Analyze special attributes
@@ -286,7 +286,7 @@ class FlextLdifQuirksAdapter(FlextService[dict[str, object]]):
             attribute_mappings = cast(
                 "dict[str, str]", rules.get("attribute_mappings", {})
             )
-            adapted_attrs: dict[str, list[str]] = {}
+            adapted_attrs: dict[str, FlextLdifModels.AttributeValues] = {}
 
             for attr_name, attr_values in entry.attributes.data.items():
                 # Map attribute name if needed
@@ -294,18 +294,18 @@ class FlextLdifQuirksAdapter(FlextService[dict[str, object]]):
 
                 # Apply server-specific adaptations
                 adapted_values = self._adapt_attribute_values(
-                    attr_name, attr_values, target
+                    attr_name, attr_values.values, target
                 )
 
-                adapted_attrs[mapped_name] = adapted_values
+                adapted_attrs[mapped_name] = FlextLdifModels.AttributeValues(
+                    values=adapted_values
+                )
 
             adapted_data["attributes"] = adapted_attrs
 
             # Create adapted entry
             adapted_entry_result: FlextResult[FlextLdifModels.Entry] = (
-                FlextLdifModels.Entry.create(
-                    dn=adapted_data["dn"], attributes=adapted_data["attributes"]
-                )
+                FlextLdifModels.Entry.create(data=adapted_data)
             )
             if adapted_entry_result.is_failure:
                 return FlextResult[FlextLdifModels.Entry].fail(
@@ -412,7 +412,7 @@ class FlextLdifQuirksAdapter(FlextService[dict[str, object]]):
                 issues.extend(issues_list)
 
         # Validate object classes
-        obj_classes: list[str] = entry.get_attribute("objectClass") or []
+        obj_classes: list[str] = entry.get_attribute_values("objectClass")
         required_classes: list[str] = cast(
             "list[str]", rules.get("required_object_classes", [])
         )
@@ -542,6 +542,37 @@ class FlextLdifQuirksAdapter(FlextService[dict[str, object]]):
         }
 
         return descriptions.get(server_type, "Unknown Server Type")
+
+    @property
+    def server_type(self) -> str:
+        """Get current server type."""
+        return self._server_type
+
+    @property
+    def adaptation_rules(self) -> dict[str, dict[str, object]]:
+        """Get adaptation rules."""
+        return self._adaptation_rules
+
+    @property
+    def logger(self) -> FlextLogger:
+        """Get logger instance."""
+        return self._logger
+
+    def adapt_attribute_values(
+        self, attr_name: str, attr_values: list[str], server_type: str
+    ) -> list[str]:
+        """Public method to adapt attribute values for specific server type.
+
+        Args:
+            attr_name: Attribute name
+            attr_values: Original attribute values
+            server_type: Target server type
+
+        Returns:
+            Adapted attribute values
+
+        """
+        return self._adapt_attribute_values(attr_name, attr_values, server_type)
 
 
 __all__ = ["FlextLdifQuirksAdapter"]

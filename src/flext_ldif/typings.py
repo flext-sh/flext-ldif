@@ -136,6 +136,44 @@ class FlextLdifTypes(FlextTypes):
 
     # Missing type needed by api.py
     type LdifStatistics = dict[str, object]
+    # =========================================================================
+    # CORE LDIF TYPES - Commonly used LDIF type aliases extending FlextTypes.Core
+    # =========================================================================
+
+    class LdifCore:
+        """Core LDIF types extending FlextTypes.Core."""
+
+        # Service and management types
+        type ServiceDict = dict[str, object]
+        type ManagementDict = dict[str, object]
+        type ConfigDict = dict[str, object]
+        type StatusDict = dict[str, object]
+        type ResultDict = dict[str, object]
+
+        # Processing and validation types
+        type ProcessingDict = dict[str, object]
+        type ValidationDict = dict[str, object]
+        type AnalysisDict = dict[str, object]
+        type ReportDict = dict[str, object]
+
+        # Entry and data types
+        type EntryDict = dict[str, object]
+        type AttributesDict = dict[str, object]
+        type MetadataDict = dict[str, object]
+        type ContextDict = dict[str, object]
+
+        # Health and monitoring types
+        type HealthDict = dict[str, object]
+        type MetricsDict = dict[str, object]
+        type StatisticsDict = dict[str, object]
+        type InfoDict = dict[str, object]
+
+        # Specialized LDIF types
+        type QuirksDict = dict[str, object]
+        type AclDict = dict[str, object]
+        type SchemaDict = dict[str, object]
+        type ParserDict = dict[str, object]
+        type ProcessorDict = dict[str, object]
 
     # =========================================================================
     # LDIF WRITING TYPES - Complex LDIF output generation types

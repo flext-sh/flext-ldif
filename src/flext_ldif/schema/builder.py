@@ -25,6 +25,31 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifModels.SchemaDiscoveryResult]
         self._server_type = "generic"
         self._entry_count = 0
 
+    @property
+    def logger(self) -> FlextLogger:
+        """Get the logger instance."""
+        return self._logger
+
+    @property
+    def attributes(self) -> dict[str, FlextLdifModels.SchemaAttribute]:
+        """Get the attributes dictionary."""
+        return self._attributes
+
+    @property
+    def object_classes(self) -> dict[str, FlextLdifModels.SchemaObjectClass]:
+        """Get the object classes dictionary."""
+        return self._object_classes
+
+    @property
+    def server_type(self) -> str:
+        """Get the server type."""
+        return self._server_type
+
+    @property
+    def entry_count(self) -> int:
+        """Get the entry count."""
+        return self._entry_count
+
     @override
     def execute(self) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
         """Execute schema builder service."""

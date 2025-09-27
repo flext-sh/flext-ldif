@@ -103,7 +103,7 @@ class TestTransformationWorkflow:
         # Define transformer
         def uppercase_cn(entry: FlextLdifModels.Entry) -> FlextLdifModels.Entry:
             # Get current cn values
-            cn_values = entry.get_attribute("cn") or []
+            cn_values = entry.get_attribute_values("cn")
             # Create new uppercased values
             new_cn_values = [cn.upper() for cn in cn_values]
             # Create new attributes dict with uppercased cn
@@ -123,7 +123,7 @@ class TestTransformationWorkflow:
         assert len(transformed) == 2
 
         # Verify transformation
-        cn_values = transformed[0].get_attribute("cn")
+        cn_values = transformed[0].get_attribute_values("cn")
         assert cn_values is not None
         assert "TEST1" in cn_values
 

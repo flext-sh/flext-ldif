@@ -23,16 +23,16 @@ class TestFlextLdifQuirksAdapter:
         """Test adapter initialization with default server type."""
         adapter = FlextLdifQuirksAdapter()
         assert adapter is not None
-        assert adapter._logger is not None
-        assert adapter._server_type == FlextLdifConstants.LdapServers.GENERIC
-        assert adapter._adaptation_rules is not None
-        assert len(adapter._adaptation_rules) > 0
+        assert adapter.logger is not None
+        assert adapter.server_type == FlextLdifConstants.LdapServers.GENERIC
+        assert adapter.adaptation_rules is not None
+        assert len(adapter.adaptation_rules) > 0
 
     def test_initialization_with_server_type(self) -> None:
         """Test adapter initialization with specific server type."""
         adapter = FlextLdifQuirksAdapter(FlextLdifConstants.LdapServers.OPENLDAP)
         assert adapter is not None
-        assert adapter._server_type == FlextLdifConstants.LdapServers.OPENLDAP
+        assert adapter.server_type == FlextLdifConstants.LdapServers.OPENLDAP
 
     def test_initialization_with_active_directory(self) -> None:
         """Test adapter initialization with Active Directory server type."""
@@ -40,7 +40,7 @@ class TestFlextLdifQuirksAdapter:
             FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY
         )
         assert adapter is not None
-        assert adapter._server_type == FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY
+        assert adapter.server_type == FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY
 
     def test_execute_health_check(self) -> None:
         """Test execute method for health check."""
@@ -184,7 +184,7 @@ class TestFlextLdifQuirksAdapter:
         assert result.is_success
         adapted_entry = result.value
         assert adapted_entry.dn.value == entry.dn.value
-        assert adapted_entry.attributes.data["cn"] == ["Test User"]
+        assert adapted_entry.attributes.data["cn"].values == ["Test User"]
 
     def test_adapt_entry_generic_to_openldap(self) -> None:
         """Test adapting generic entry to OpenLDAP format."""
@@ -210,7 +210,7 @@ class TestFlextLdifQuirksAdapter:
         assert result.is_success
         adapted_entry = result.value
         assert adapted_entry.dn.value == entry.dn.value
-        assert adapted_entry.attributes.data["cn"] == ["testuser"]
+        assert adapted_entry.attributes.data["cn"].values == ["testuser"]
 
     def test_adapt_entry_active_directory_to_openldap(self) -> None:
         """Test adapting Active Directory entry to OpenLDAP format."""
@@ -241,7 +241,7 @@ class TestFlextLdifQuirksAdapter:
         assert adapted_entry.dn.value == entry.dn.value
         # Check that displayName is preserved (mapping might not be implemented)
         assert "displayName" in adapted_entry.attributes.data
-        assert adapted_entry.attributes.data["displayName"] == ["Test User"]
+        assert adapted_entry.attributes.data["displayName"].values == ["Test User"]
         # Check that other AD-specific attributes are preserved
         assert "userPrincipalName" in adapted_entry.attributes.data
         assert "sAMAccountName" in adapted_entry.attributes.data
@@ -298,7 +298,7 @@ class TestFlextLdifQuirksAdapter:
         adapter = FlextLdifQuirksAdapter(FlextLdifConstants.LdapServers.OPENLDAP)
 
         # Test objectClass adaptation
-        adapted_values = adapter._adapt_attribute_values(
+        adapted_values = adapter.adapt_attribute_values(
             "objectClass", ["person"], FlextLdifConstants.LdapServers.OPENLDAP
         )
 
@@ -312,7 +312,7 @@ class TestFlextLdifQuirksAdapter:
         )
 
         # Test objectClass adaptation
-        adapted_values = adapter._adapt_attribute_values(
+        adapted_values = adapter.adapt_attribute_values(
             "objectClass", ["person"], FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY
         )
 
@@ -324,7 +324,7 @@ class TestFlextLdifQuirksAdapter:
         adapter = FlextLdifQuirksAdapter(FlextLdifConstants.LdapServers.GENERIC)
 
         # Test generic adaptation
-        adapted_values = adapter._adapt_attribute_values(
+        adapted_values = adapter.adapt_attribute_values(
             "cn", ["Test User"], FlextLdifConstants.LdapServers.GENERIC
         )
 
@@ -338,7 +338,7 @@ class TestFlextLdifQuirksAdapter:
         )
 
         # Test case insensitive objectClass matching
-        adapted_values = adapter._adapt_attribute_values(
+        adapted_values = adapter.adapt_attribute_values(
             "objectclass", ["person"], FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY
         )
 
@@ -349,7 +349,7 @@ class TestFlextLdifQuirksAdapter:
         """Test that adaptation rules are properly set up."""
         adapter = FlextLdifQuirksAdapter()
 
-        rules = adapter._adaptation_rules
+        rules = adapter.adaptation_rules
 
         # Check that all expected server types are present
         expected_servers = [
@@ -376,7 +376,7 @@ class TestFlextLdifQuirksAdapter:
             FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY
         )
 
-        rules = adapter._adaptation_rules[
+        rules = adapter.adaptation_rules[
             FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY
         ]
 
@@ -395,7 +395,7 @@ class TestFlextLdifQuirksAdapter:
         """Test OpenLDAP specific adaptation rules."""
         adapter = FlextLdifQuirksAdapter(FlextLdifConstants.LdapServers.OPENLDAP)
 
-        rules = adapter._adaptation_rules[FlextLdifConstants.LdapServers.OPENLDAP]
+        rules = adapter.adaptation_rules[FlextLdifConstants.LdapServers.OPENLDAP]
 
         assert rules["dn_case_sensitive"] is False
         assert isinstance(rules["required_object_classes"], list)
@@ -411,7 +411,7 @@ class TestFlextLdifQuirksAdapter:
         """Test generic server adaptation rules."""
         adapter = FlextLdifQuirksAdapter(FlextLdifConstants.LdapServers.GENERIC)
 
-        rules = adapter._adaptation_rules[FlextLdifConstants.LdapServers.GENERIC]
+        rules = adapter.adaptation_rules[FlextLdifConstants.LdapServers.GENERIC]
 
         assert rules["dn_case_sensitive"] is False
         assert rules["required_object_classes"] == ["top"]
@@ -478,13 +478,13 @@ class TestFlextLdifQuirksAdapter:
         """Test server type property access."""
         adapter = FlextLdifQuirksAdapter(FlextLdifConstants.LdapServers.OPENLDAP)
 
-        assert adapter._server_type == FlextLdifConstants.LdapServers.OPENLDAP
+        assert adapter.server_type == FlextLdifConstants.LdapServers.OPENLDAP
 
     def test_adaptation_rules_property(self) -> None:
         """Test adaptation rules property access."""
         adapter = FlextLdifQuirksAdapter()
 
-        rules = adapter._adaptation_rules
+        rules = adapter.adaptation_rules
         assert isinstance(rules, dict)
         assert len(rules) > 0
 

@@ -65,10 +65,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
             attributes.update(additional_attrs)
 
         # Create entry
-        return FlextLdifModels.Entry.create(
-            dn=dn,
-            attributes=attributes,
-        )
+        return FlextLdifModels.Entry.create(data={"dn": dn, "attributes": attributes})
 
     async def execute_async(self) -> FlextResult[FlextLdifModels.Entry]:
         """Execute entry builder service."""
@@ -215,9 +212,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
 
                 entry_data = {"dn": dn, "attributes": normalized_attrs}
                 entry_result: FlextResult[FlextLdifModels.Entry] = (
-                    FlextLdifModels.Entry.create(
-                        dn=entry_data["dn"], attributes=entry_data["attributes"]
-                    )
+                    FlextLdifModels.Entry.create(entry_data)
                 )
 
                 if entry_result.is_failure:
@@ -267,9 +262,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
 
             entry_data: dict[str, object] = {"dn": dn, "attributes": normalized_attrs}
             entry_result: FlextResult[FlextLdifModels.Entry] = (
-                FlextLdifModels.Entry.create(
-                    dn=entry_data["dn"], attributes=entry_data["attributes"]
-                )
+                FlextLdifModels.Entry.create(entry_data)
             )
 
             if entry_result.is_failure:
@@ -286,9 +279,13 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
         self, entry: FlextLdifModels.Entry
     ) -> FlextResult[dict[str, object]]:
         """Convert an entry to dictionary format."""
+        attributes_dict: dict[str, list[str]] = {}
+        for key, attr_values in entry.attributes.data.items():
+            attributes_dict[key] = attr_values.values
+
         entry_dict: dict[str, object] = {
             "dn": entry.dn.value,
-            "attributes": dict(entry.attributes.data),
+            "attributes": attributes_dict,
         }
 
         return FlextResult[dict[str, object]].ok(entry_dict)

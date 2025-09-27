@@ -272,7 +272,7 @@ class FlextLdifHandlers(FlextBus):
         def register_handler(
             self,
             error_type: str,
-            handler: Callable[[Exception], FlextResult[FlextTypes.Core.Value]],
+            handler: Callable[[Exception], FlextResult[FlextTypes.Core.Value]] | None,
         ) -> FlextResult[None]:
             """Register error handler for specific error type."""
             if not error_type or handler is None:
@@ -286,7 +286,9 @@ class FlextLdifHandlers(FlextBus):
             return len(self._error_handlers)
 
         def handle_error(
-            self, error: Exception, context: FlextTypes.Core.JsonDict | None = None
+            self,
+            error: Exception | None,
+            context: FlextTypes.Core.JsonDict | None = None,
         ) -> FlextResult[FlextTypes.Core.Value]:
             """Handle error using registered handlers with railway pattern."""
             if not error:
@@ -332,7 +334,7 @@ class FlextLdifHandlers(FlextBus):
             """Initialize file handler with configuration."""
             self._config = config
 
-        def read_file(self, file_path: Path) -> FlextResult[str]:
+        def read_file(self, file_path: Path | None) -> FlextResult[str]:
             """Read file with encoding detection and validation using railway pattern.
 
             Handles file reading with proper encoding detection and validation
@@ -402,7 +404,7 @@ class FlextLdifHandlers(FlextBus):
             self._analytics_data: FlextTypes.Core.JsonDict = {}
 
         def analyze_entries(
-            self, entries: Sequence[FlextLdifModels.Entry]
+            self, entries: Sequence[FlextLdifModels.Entry] | None
         ) -> FlextResult[FlextTypes.Core.JsonDict]:
             """Analyze entries and generate comprehensive analytics using railway pattern.
 
@@ -506,7 +508,7 @@ class FlextLdifHandlers(FlextBus):
             object_class_counts: dict[str, int] = {}
 
             for entry in entries:
-                object_classes = entry.get_attribute("objectClass") or []
+                object_classes = entry.get_attribute_values("objectClass")
                 for oc in object_classes:
                     object_class_counts[oc] = object_class_counts.get(oc, 0) + 1
 

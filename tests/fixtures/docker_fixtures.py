@@ -37,6 +37,33 @@ class FlextSharedLDAPContainerManager:
         """Check if container is running."""
         return True
 
+    def get_ldif_export(self) -> str:
+        """Get LDIF export from container.
+
+        Returns:
+            str: Sample LDIF data for testing
+
+        """
+        # Return sample LDIF data for testing
+        return """dn: cn=John Doe,ou=people,dc=example,dc=com
+cn: John Doe
+sn: Doe
+mail: john@example.com
+objectClass: person
+objectClass: inetOrgPerson
+
+dn: cn=Jane Smith,ou=people,dc=example,dc=com
+cn: Jane Smith
+sn: Smith
+mail: jane@example.com
+objectClass: person
+objectClass: inetOrgPerson
+
+dn: ou=people,dc=example,dc=com
+ou: people
+objectClass: organizationalUnit
+"""
+
 
 def check_docker_available() -> bool:
     """Check if Docker is available."""

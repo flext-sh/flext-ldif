@@ -298,9 +298,7 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
                 present, failure with error message if missing.
 
             """
-            object_classes: list[str] = (
-                entry.attributes.get_attribute("objectClass") or []
-            )
+            object_classes: list[str] = entry.get_attribute_values("objectClass")
 
             for required_class in required_classes:
                 if required_class not in object_classes:
@@ -789,12 +787,12 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
                         for attr_name, attr_values in entry.attributes.data.items():
                             if attr_name.lower() == "objectclass":
                                 for obj_class in attr_values:
-                                    object_class_counts[obj_class] = (
-                                        object_class_counts.get(obj_class, 0) + 1
+                                    object_class_counts[str(obj_class)] = (
+                                        object_class_counts.get(str(obj_class), 0) + 1
                                     )
                             attribute_counts[attr_name] = attribute_counts.get(
                                 attr_name, 0
-                            ) + len(attr_values)
+                            ) + len(attr_values.values)
 
             # Update stats with the properly typed dictionaries
             stats["object_class_counts"] = object_class_counts
@@ -817,12 +815,9 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
                 ldif_lines.append(f"dn: {entry.dn.value}")
                 # Add attributes
                 for attr_name, attr_values in entry.attributes.attributes.items():
-                    if isinstance(attr_values, list):
-                        ldif_lines.extend(
-                            f"{attr_name}: {value}" for value in attr_values
-                        )
-                    else:
-                        ldif_lines.append(f"{attr_name}: {attr_values}")
+                    ldif_lines.extend(
+                        f"{attr_name}: {value}" for value in attr_values.values
+                    )
                 # Add empty line between entries
                 ldif_lines.append("")
             return FlextResult[str].ok("\n".join(ldif_lines))
@@ -877,7 +872,7 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
 
             # Validate required attributes (basic validation)
             required_attrs = self._get_required_attributes_for_classes(
-                entry.attributes.get_attribute("objectClass") or []
+                entry.get_attribute_values("objectClass")
             )
             attr_validation = self._LdifValidationHelper.validate_required_attributes(
                 entry, required_attrs
@@ -936,8 +931,8 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
         try:
             output_path = Path(file_path)
 
-            # Validate file path
-            path_validation = self._validate_file_path(output_path)
+            # Validate file path for write operations
+            path_validation = self._validate_file_path(output_path, check_writable=True)
             if path_validation.is_failure:
                 return FlextResult[None].fail(
                     path_validation.error or "File path validation failed"
@@ -1054,7 +1049,7 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
 
         filtered_entries: list[FlextLdifModels.Entry] = []
         for entry in entries:
-            object_classes_raw = entry.attributes.get_attribute("objectClass") or []
+            object_classes_raw = entry.get_attribute_values("objectClass")
             # Ensure object_classes is a list of strings
             object_classes: list[str] = [
                 str(oc) for oc in object_classes_raw if oc is not None
@@ -1251,7 +1246,7 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
         class_combinations: dict[str, int] = {}
         for entry in entries:
             if hasattr(entry, "to_ldif_string"):
-                object_classes_raw = entry.attributes.get_attribute("objectClass") or []
+                object_classes_raw = entry.get_attribute_values("objectClass")
                 # Ensure object_classes is a list of strings
                 object_classes: list[str] = [
                     str(oc) for oc in object_classes_raw if oc is not None
@@ -1438,18 +1433,21 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
     # =============================================================================
 
     @staticmethod
-    def _validate_file_path(file_path: Path) -> FlextResult[None]:
+    def _validate_file_path(
+        file_path: Path, *, check_writable: bool = False
+    ) -> FlextResult[None]:
         """Validate file path for write operations.
 
         Args:
             file_path: Path to validate
+            check_writable: If True, check if parent directory is writable for new files
 
         Returns:
             FlextResult[None]: Success if path is valid, failure with error message
 
         """
         validation_result = FlextLdifUtilities.FileUtilities.validate_file_path(
-            file_path
+            file_path, check_writable=check_writable
         )
         if validation_result.is_failure:
             return FlextResult[None].fail(
@@ -1482,7 +1480,8 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
             if hasattr(entry, "to_ldif_string"):
                 for attr_values in entry.attributes.data.values():
                     if not attr_values or (
-                        len(attr_values) == 1 and not attr_values[0].strip()
+                        len(attr_values.values) == 1
+                        and not str(attr_values.values[0]).strip()
                     ):
                         count += 1
                         break
@@ -1820,7 +1819,9 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
                     if isinstance(comment, str):
                         # Create a new entry with the comment attribute
                         new_attrs = dict(entry.attributes.data)
-                        new_attrs["comment"] = [comment]
+                        new_attrs["comment"] = FlextLdifModels.AttributeValues(
+                            values=[comment]
+                        )
 
                         # Create new entry with transformed attributes
                         new_entry = FlextLdifModels.Entry(
@@ -1862,3 +1863,103 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
             return FlextResult[dict[str, object]].ok(status)
         except Exception as e:
             return FlextResult[dict[str, object]].fail(f"Failed to get status: {e}")
+
+    def filter_ldif_content(
+        self, content: str, filters: dict[str, str]
+    ) -> FlextResult[str]:
+        """Filter LDIF content based on provided filters."""
+        try:
+            # Parse the content first
+            parse_result = self.parse_string(content)
+            if parse_result.is_failure:
+                return FlextResult[str].fail(
+                    f"Failed to parse LDIF content: {parse_result.error}"
+                )
+
+            entries = parse_result.value
+            filtered_entries = []
+
+            # Apply filters
+            for entry in entries:
+                include_entry = True
+                for filter_key, filter_value in filters.items():
+                    if filter_key in entry.attributes:
+                        if filter_value not in str(entry.attributes[filter_key]):
+                            include_entry = False
+                            break
+                    else:
+                        # If filter key doesn't exist in entry, exclude it
+                        include_entry = False
+                        break
+
+                if include_entry:
+                    filtered_entries.append(entry)
+
+            # Convert back to LDIF string
+            result_content = self.write_string(filtered_entries)
+            if result_content.is_failure:
+                return FlextResult[str].fail(
+                    f"Failed to write filtered content: {result_content.error}"
+                )
+
+            return FlextResult[str].ok(result_content.value)
+        except Exception as e:
+            return FlextResult[str].fail(f"Failed to filter LDIF content: {e}")
+
+    def analyze_ldif_content(self, content: str) -> FlextResult[dict[str, object]]:
+        """Analyze LDIF content and return statistics."""
+        try:
+            # Parse the content
+            parse_result = self.parse_string(content)
+            if parse_result.is_failure:
+                return FlextResult[dict[str, object]].fail(
+                    f"Failed to parse LDIF content: {parse_result.error}"
+                )
+
+            entries = parse_result.value
+
+            # Calculate statistics
+            stats: dict[str, object] = {
+                "total_entries": len(entries),
+                "object_classes": {},
+                "attributes": {},
+                "dn_patterns": {},
+            }
+
+            for entry in entries:
+                # Count object classes
+                object_classes = entry.get_attribute("objectClass") or []
+                object_classes_dict = stats["object_classes"]
+                if isinstance(object_classes_dict, dict):
+                    # Cast to proper type for type checker
+                    typed_dict = object_classes_dict
+                    for obj_class in object_classes:
+                        typed_dict[obj_class] = typed_dict.get(obj_class, 0) + 1
+
+                # Count attributes
+                attributes_dict = stats["attributes"]
+                if isinstance(attributes_dict, dict):
+                    # Cast to proper type for type checker
+                    typed_attr_dict = attributes_dict
+                    for attr_name in entry.attributes.attributes:
+                        typed_attr_dict[attr_name] = (
+                            typed_attr_dict.get(attr_name, 0) + 1
+                        )
+
+                # Analyze DN patterns
+                dn_parts = entry.dn.value.split(",")
+                if dn_parts:
+                    pattern = (
+                        dn_parts[0].split("=")[0] if "=" in dn_parts[0] else dn_parts[0]
+                    )
+                    dn_patterns_dict = stats["dn_patterns"]
+                    if isinstance(dn_patterns_dict, dict):
+                        # Cast to proper type for type checker
+                        typed_dn_dict = dn_patterns_dict
+                        typed_dn_dict[pattern] = typed_dn_dict.get(pattern, 0) + 1
+
+            return FlextResult[dict[str, object]].ok(stats)
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(
+                f"Failed to analyze LDIF content: {e}"
+            )
