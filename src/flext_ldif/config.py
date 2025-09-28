@@ -27,7 +27,7 @@ class FlextLdifConfig(FlextConfig):
     - Uses Pydantic 2.11+ features (SecretStr for secrets)
     """
 
-    # Singleton pattern variables
+    # Singleton pattern variables - inherited from parent class but redeclared for pyrefly
     _global_instance: ClassVar[FlextLdifConfig | None] = None
     _lock: ClassVar[threading.Lock] = threading.Lock()
 
@@ -356,15 +356,21 @@ class FlextLdifConfig(FlextConfig):
         """Create configuration for specific environment using enhanced singleton pattern."""
         # Note: environment parameter is kept for API compatibility but not used in current implementation
         _ = environment  # Suppress unused parameter warning
-        instance = cls.get_global_instance()
 
-        # Apply overrides if provided
-        if overrides:
-            instance_dict = instance.model_dump()
-            instance_dict.update(overrides)
-            return cls.model_validate(instance_dict)
+        # Create a new instance with the provided overrides
+        # Get default values from the shared instance
+        shared_instance = cls.get_global_instance()
+        instance_dict = {}
 
-        return instance
+        # Copy all fields from the shared instance
+        for field_name in cls.model_fields:
+            if hasattr(shared_instance, field_name):
+                instance_dict[field_name] = getattr(shared_instance, field_name)
+
+        # Apply overrides
+        instance_dict.update(overrides)
+
+        return cls.model_validate(instance_dict)
 
     @classmethod
     def create_default(cls) -> FlextLdifConfig:

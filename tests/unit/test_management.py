@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 """
 
 import pytest
-from tests.test_support import LdifTestData
+from tests.support import LdifTestData
 
 from flext_core import FlextResult
 from flext_ldif.management import FlextLdifManagement

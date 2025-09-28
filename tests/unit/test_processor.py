@@ -13,7 +13,7 @@ import pathlib
 from pathlib import Path
 from typing import cast
 
-from tests.test_support import (
+from tests.support import (
     FileManager,
     LdifTestData,
     RealServiceFactory,

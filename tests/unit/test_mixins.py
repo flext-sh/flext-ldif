@@ -4,7 +4,7 @@ from collections.abc import Sequence
 from typing import cast
 
 import pytest
-from tests.test_support import (
+from tests.support import (
     LdifTestData,
 )
 

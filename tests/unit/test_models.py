@@ -373,6 +373,7 @@ cn: test2
             "attributes": {
                 "attributes": {
                     "cn": {"values": ["test"]},
+                    "objectClass": {"values": ["person"]},
                 }
             },
         }
