@@ -15,13 +15,20 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifModels.SchemaDiscoveryResult]
     SchemaBuilderProtocol for extensibility.
     """
 
+    # Type annotations for instance variables
+    _logger: FlextLogger
+    _attributes: dict[str, FlextLdifModels.SchemaAttribute]
+    _object_classes: dict[str, FlextLdifModels.SchemaObjectClass]
+    _server_type: str
+    _entry_count: int
+
     @override
     def __init__(self) -> None:
         """Initialize schema builder."""
         super().__init__()
         self._logger = FlextLogger(__name__)
-        self._attributes: dict[str, FlextLdifModels.SchemaAttribute] = {}
-        self._object_classes: dict[str, FlextLdifModels.SchemaObjectClass] = {}
+        self._attributes = {}
+        self._object_classes = {}
         self._server_type = "generic"
         self._entry_count = 0
 

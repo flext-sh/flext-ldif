@@ -230,9 +230,10 @@ class TestFlextLdifSchemaValidator:
         assert isinstance(validation_data, dict)
         assert "valid" in validation_data
         assert "issues" in validation_data
-        assert isinstance(validation_data["issues"], list)
+        issues: list[str] = validation_data["issues"]  # type: ignore[assignment]
+        assert isinstance(issues, list)
         # Should have issues due to missing required attribute
-        assert len(validation_data["issues"]) > 0
+        assert len(issues) > 0
 
     def test_validate_objectclass_requirements_unknown_objectclass(self) -> None:
         """Test validating objectClass requirements for unknown objectClass."""
@@ -345,7 +346,12 @@ class TestFlextLdifSchemaValidator:
 
         schema = FlextLdifModels.SchemaDiscoveryResult(
             object_classes={"person": person_def, "top": top_def},
-            attributes={"cn": cn_attr, "sn": sn_attr, "objectClass": oc_attr, "uid": uid_attr},
+            attributes={
+                "cn": cn_attr,
+                "sn": sn_attr,
+                "objectClass": oc_attr,
+                "uid": uid_attr,
+            },
         )
 
         # Test both validation methods

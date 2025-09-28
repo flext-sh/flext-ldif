@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 from pydantic import ConfigDict, Field, field_validator
 
 from flext_core import FlextModels, FlextResult
@@ -308,7 +310,10 @@ class FlextLdifModels(FlextModels):
                         attributes = attrs_dict
 
                 dn_obj = FlextLdifModels.DistinguishedName(value=dn)
-                attrs_obj = FlextLdifModels.LdifAttributes(attributes=attributes or {})
+                attrs_dict = cast(
+                    "dict[str, FlextLdifModels.AttributeValues]", attributes or {}
+                )
+                attrs_obj = FlextLdifModels.LdifAttributes(attributes=attrs_dict)
                 return FlextResult[FlextLdifModels.Entry].ok(
                     cls(dn=dn_obj, attributes=attrs_obj, domain_events=[])
                 )
@@ -421,7 +426,6 @@ class FlextLdifModels(FlextModels):
                         dn=dn_obj,
                         changetype=changetype,
                         attributes=attrs_obj,
-                        domain_events=[],
                     )
                 )
             except Exception as e:
@@ -482,22 +486,27 @@ class FlextLdifModels(FlextModels):
         )
 
         @classmethod
-        def create(cls, *args: object, **kwargs: object) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+        def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
             """Create a new SchemaObjectClass instance."""
             try:
                 _ = args  # Suppress unused argument warning
-                name = kwargs.get("name", "")
-                description = kwargs.get("description", "")
-                required_attributes = kwargs.get("required_attributes", [])
+                name = str(kwargs.get("name", ""))
+                description = str(kwargs.get("description", ""))
+                required_attrs = kwargs.get("required_attributes", [])
+                required_attributes = (
+                    list(required_attrs)
+                    if isinstance(required_attrs, (list, tuple))
+                    else []
+                )
                 instance = cls(
                     name=name,
-                    oid=kwargs.get("oid", ""),
+                    oid=str(kwargs.get("oid", "")),
                     description=description,
                     required_attributes=required_attributes,
                 )
-                return FlextResult[FlextLdifModels.SchemaObjectClass].ok(instance)
+                return FlextResult[object].ok(instance)
             except Exception as e:
-                return FlextResult[FlextLdifModels.SchemaObjectClass].fail(str(e))
+                return FlextResult[object].fail(str(e))
 
     class SchemaDiscoveryResult(FlextModels.Value):
         """Result of schema discovery operation."""
@@ -529,15 +538,24 @@ class FlextLdifModels(FlextModels):
         )
 
         @classmethod
-        def create(cls, *args: object, **kwargs: object) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
+        def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
             """Create a new SchemaDiscoveryResult instance."""
             try:
                 # Extract parameters from kwargs (ignore args for compatibility)
                 _ = args  # Suppress unused argument warning
-                object_classes = kwargs.get("object_classes", {})
-                attributes = kwargs.get("attributes", {})
-                server_type = kwargs.get("server_type", "generic")
-                entry_count = kwargs.get("entry_count", 0)
+                obj_classes = kwargs.get("object_classes", {})
+                object_classes = (
+                    dict(obj_classes) if isinstance(obj_classes, dict) else {}
+                )
+                attrs = kwargs.get("attributes", {})
+                attributes = dict(attrs) if isinstance(attrs, dict) else {}
+                server_type = str(kwargs.get("server_type", "generic"))
+                entry_count_val = kwargs.get("entry_count", 0)
+                entry_count = (
+                    int(entry_count_val)
+                    if isinstance(entry_count_val, (int, str))
+                    else 0
+                )
 
                 instance = cls(
                     object_classes=object_classes or {},
@@ -545,9 +563,9 @@ class FlextLdifModels(FlextModels):
                     server_type=server_type,
                     entry_count=entry_count,
                 )
-                return FlextResult[FlextLdifModels.SchemaDiscoveryResult].ok(instance)
+                return FlextResult[object].ok(instance)
             except Exception as e:
-                return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(str(e))
+                return FlextResult[object].fail(str(e))
 
     # =============================================================================
     # ACL MODELS - LDAP Access Control List Models
@@ -572,7 +590,7 @@ class FlextLdifModels(FlextModels):
             """Create a new AclTarget instance."""
             try:
                 _ = args  # Suppress unused argument warning
-                target_dn = kwargs.get("target_dn", "")
+                target_dn = str(kwargs.get("target_dn", ""))
                 instance = cls(target_dn=target_dn)
                 return FlextResult[object].ok(instance)
             except Exception as e:
@@ -597,7 +615,7 @@ class FlextLdifModels(FlextModels):
             """Create a new AclSubject instance."""
             try:
                 _ = args  # Suppress unused argument warning
-                subject_dn = kwargs.get("subject_dn", "")
+                subject_dn = str(kwargs.get("subject_dn", ""))
                 instance = cls(subject_dn=subject_dn)
                 return FlextResult[object].ok(instance)
             except Exception as e:
@@ -652,13 +670,13 @@ class FlextLdifModels(FlextModels):
             """Create a new AclPermissions instance."""
             try:
                 _ = args  # Suppress unused argument warning
-                read = kwargs.get("read", False)
-                write = kwargs.get("write", False)
-                add = kwargs.get("add", False)
-                delete = kwargs.get("delete", False)
-                search = kwargs.get("search", False)
-                compare = kwargs.get("compare", False)
-                proxy = kwargs.get("proxy", False)
+                read = bool(kwargs.get("read"))
+                write = bool(kwargs.get("write"))
+                add = bool(kwargs.get("add"))
+                delete = bool(kwargs.get("delete"))
+                search = bool(kwargs.get("search"))
+                compare = bool(kwargs.get("compare"))
+                proxy = bool(kwargs.get("proxy"))
 
                 instance = cls(
                     read=read,
@@ -732,7 +750,6 @@ class FlextLdifModels(FlextModels):
                         name=name,
                         server_type=server_type,
                         raw_acl=raw_acl,
-                        domain_events=[],
                     )
                 )
             except Exception as e:
@@ -777,20 +794,20 @@ class FlextLdifModels(FlextModels):
         )
 
         @classmethod
-        def create(cls, *args: object, **kwargs: object) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+        def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
             """Create a new SchemaAttribute instance."""
             try:
                 _ = args  # Suppress unused argument warning
                 instance = cls(
-                    name=kwargs.get("name", ""),
-                    oid=kwargs.get("oid", ""),
-                    syntax=kwargs.get("syntax", ""),
-                    description=kwargs.get("description", ""),
-                    single_value=kwargs.get("single_value", False),
+                    name=str(kwargs.get("name", "")),
+                    oid=str(kwargs.get("oid", "")),
+                    syntax=str(kwargs.get("syntax", "")),
+                    description=str(kwargs.get("description", "")),
+                    single_value=bool(kwargs.get("single_value")),
                 )
-                return FlextResult[FlextLdifModels.SchemaAttribute].ok(instance)
+                return FlextResult[object].ok(instance)
             except Exception as e:
-                return FlextResult[FlextLdifModels.SchemaAttribute].fail(str(e))
+                return FlextResult[object].fail(str(e))
 
     # =============================================================================
     # ADDITIONAL MODELS REQUIRED BY TESTS

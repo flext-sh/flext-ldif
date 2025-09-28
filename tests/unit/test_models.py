@@ -139,7 +139,6 @@ class TestFlextLdifModels:
                     "cn": FlextLdifModels.AttributeValues(values=["test"]),
                 }
             ),
-            domain_events=[],
         )
         assert entry.dn.value == "cn=test,dc=example,dc=com"
         assert "cn" in entry.attributes.attributes
@@ -150,7 +149,6 @@ class TestFlextLdifModels:
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DN(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.Attributes(attributes={}),
-            domain_events=[],
         )
         assert entry.dn.value == "cn=test,dc=example,dc=com"
 
@@ -194,7 +192,6 @@ sn: user
                     "sn": FlextLdifModels.AttributeValues(values=["user"]),
                 }
             ),
-            domain_events=[],
         )
 
         ldif_string = entry.to_ldif_string()
@@ -212,7 +209,6 @@ sn: user
                     "cn": FlextLdifModels.AttributeValues(values=["test"]),
                 }
             ),
-            domain_events=[],
         )
 
         ldif_string = entry.to_ldif_string(indent=4)
@@ -271,12 +267,10 @@ sn: user
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DN(value="cn=test1,dc=example,dc=com"),
                 attributes=FlextLdifModels.Attributes(attributes={}),
-                domain_events=[],
             ),
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DN(value="cn=test2,dc=example,dc=com"),
                 attributes=FlextLdifModels.Attributes(attributes={}),
-                domain_events=[],
             ),
         ]
 
@@ -290,7 +284,6 @@ sn: user
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DN(value="cn=test,dc=example,dc=com"),
                 attributes=FlextLdifModels.Attributes(attributes={}),
-                domain_events=[],
             ),
         ]
 
@@ -312,7 +305,6 @@ sn: user
                         "cn": FlextLdifModels.AttributeValues(values=["test"]),
                     }
                 ),
-                domain_events=[],
             ),
         ]
 
@@ -367,7 +359,6 @@ cn: test2
                     "cn": FlextLdifModels.AttributeValues(values=["test"]),
                 }
             ),
-            domain_events=[],
         )
 
         # Test model_dump
@@ -397,7 +388,6 @@ cn: test2
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DN(value=""),  # Empty DN
                 attributes=FlextLdifModels.Attributes(attributes={}),
-                domain_events=[],
             )
 
     def test_model_inheritance(self) -> None:
@@ -419,7 +409,6 @@ cn: test2
                     "cn": FlextLdifModels.AttributeValues(values=["test"]),
                 }
             ),
-            domain_events=[],
         )
 
         # Test that methods exist and are callable

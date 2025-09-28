@@ -93,7 +93,6 @@
 
 [tool.pyrefly]
     python_version = "3.13"
-    exclude = ["tests/**"]
 
 [tool.poetry.dependencies]
     python = ">=3.13,<3.14"

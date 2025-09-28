@@ -187,8 +187,12 @@ class TestFlextLdifObjectClassManager:
             oid="2.5.6.6",
             optional_attributes=["mail", "telephoneNumber"],
         )
-        mail_attr = FlextLdifModels.SchemaAttribute(name="mail", oid="0.9.2342.19200300.100.1.3")
-        tel_attr = FlextLdifModels.SchemaAttribute(name="telephoneNumber", oid="2.5.4.20")
+        mail_attr = FlextLdifModels.SchemaAttribute(
+            name="mail", oid="0.9.2342.19200300.100.1.3"
+        )
+        tel_attr = FlextLdifModels.SchemaAttribute(
+            name="telephoneNumber", oid="2.5.4.20"
+        )
         schema = FlextLdifModels.SchemaDiscoveryResult(
             object_classes={"person": oc_def},
             attributes={
@@ -219,8 +223,12 @@ class TestFlextLdifObjectClassManager:
             name="group", oid="2.5.6.9", optional_attributes=["description"]
         )
 
-        mail_attr = FlextLdifModels.SchemaAttribute(name="mail", oid="0.9.2342.19200300.100.1.3")
-        tel_attr = FlextLdifModels.SchemaAttribute(name="telephoneNumber", oid="2.5.4.20")
+        mail_attr = FlextLdifModels.SchemaAttribute(
+            name="mail", oid="0.9.2342.19200300.100.1.3"
+        )
+        tel_attr = FlextLdifModels.SchemaAttribute(
+            name="telephoneNumber", oid="2.5.4.20"
+        )
         desc_attr = FlextLdifModels.SchemaAttribute(name="description", oid="2.5.4.13")
         schema = FlextLdifModels.SchemaDiscoveryResult(
             object_classes={"person": person_def, "group": group_def},
@@ -318,7 +326,7 @@ class TestFlextLdifObjectClassManager:
         assert "structural_count" in validation_data
         assert validation_data["valid"] is False
         assert validation_data["structural_count"] == 2
-        issues = validation_data["issues"]
+        issues: list[str] = validation_data["issues"]  # type: ignore[assignment]
         assert isinstance(issues, list)
         assert len(issues) > 0
 
@@ -407,8 +415,12 @@ class TestFlextLdifObjectClassManager:
 
         cn_attr = FlextLdifModels.SchemaAttribute(name="cn", oid="2.5.4.3")
         sn_attr = FlextLdifModels.SchemaAttribute(name="sn", oid="2.5.4.4")
-        mail_attr = FlextLdifModels.SchemaAttribute(name="mail", oid="0.9.2342.19200300.100.1.3")
-        tel_attr = FlextLdifModels.SchemaAttribute(name="telephoneNumber", oid="2.5.4.20")
+        mail_attr = FlextLdifModels.SchemaAttribute(
+            name="mail", oid="0.9.2342.19200300.100.1.3"
+        )
+        tel_attr = FlextLdifModels.SchemaAttribute(
+            name="telephoneNumber", oid="2.5.4.20"
+        )
         schema = FlextLdifModels.SchemaDiscoveryResult(
             object_classes={"person": person_def, "top": top_def},
             attributes={

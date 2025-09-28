@@ -1829,7 +1829,6 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
                             attributes=FlextLdifModels.LdifAttributes(
                                 attributes=new_attrs
                             ),
-                            domain_events=[],
                         )
                         transformed_entries.append(new_entry)
                     else:

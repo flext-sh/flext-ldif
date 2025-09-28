@@ -35,6 +35,11 @@ class FlextLdifAcls(FlextService[dict[str, object]]):
             self._parser = FlextLdifAclParser()
             self._logger = FlextLogger(__name__)
 
+        @property
+        def parent(self) -> FlextLdifAcls:
+            """Get the parent coordinator instance."""
+            return self._parent
+
         def parse_openldap(
             self, acl_string: str
         ) -> FlextResult[FlextLdifModels.UnifiedAcl]:
@@ -75,6 +80,11 @@ class FlextLdifAcls(FlextService[dict[str, object]]):
             self._service = FlextLdifAclService()
             self._logger = FlextLogger(__name__)
 
+        @property
+        def parent(self) -> FlextLdifAcls:
+            """Get the parent coordinator instance."""
+            return self._parent
+
         def extract_from_entry(
             self, entry: FlextLdifModels.Entry, server_type: str | None = None
         ) -> FlextResult[list[FlextLdifModels.UnifiedAcl]]:
@@ -104,6 +114,11 @@ class FlextLdifAcls(FlextService[dict[str, object]]):
             """Initialize ACL builder with parent coordinator reference."""
             self._parent = parent
             self._logger = FlextLogger(__name__)
+
+        @property
+        def parent(self) -> FlextLdifAcls:
+            """Get the parent coordinator instance."""
+            return self._parent
 
         def build_read_permission(
             self, target_dn: str, subject_dn: str
@@ -272,6 +287,11 @@ class FlextLdifAcls(FlextService[dict[str, object]]):
             """Initialize ACL converter with parent coordinator reference."""
             self._parent = parent
             self._logger = FlextLogger(__name__)
+
+        @property
+        def parent(self) -> FlextLdifAcls:
+            """Get the parent coordinator instance."""
+            return self._parent
 
         def _get_access_level(self, perms: FlextLdifModels.AclPermissions) -> str:
             """Determine access level from permissions."""
