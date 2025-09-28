@@ -50,7 +50,7 @@ class FlextLdifSchemaExtractor(FlextService[FlextLdifModels.SchemaDiscoveryResul
             )
 
         try:
-            attributes: dict[str, dict[str, str]] = {}
+            attributes: dict[str, FlextLdifModels.SchemaAttribute] = {}
             object_classes: dict[str, FlextLdifModels.SchemaObjectClass] = {}
 
             for entry in entries:
@@ -63,18 +63,22 @@ class FlextLdifSchemaExtractor(FlextService[FlextLdifModels.SchemaDiscoveryResul
                                     name=oc_name,
                                     oid=f"1.3.6.1.4.1.{hash(oc_name) % 1000000}",
                                 )
-                                if oc_result.is_success:
-                                    object_classes[str(oc_name)] = cast(
-                                        "FlextLdifModels.SchemaObjectClass",
-                                        oc_result.value,
-                                    )
+                                if oc_result.is_success and isinstance(
+                                    oc_result.value, FlextLdifModels.SchemaObjectClass
+                                ):
+                                    object_classes[str(oc_name)] = oc_result.value
                     # Handle regular attributes
                     elif attr_name not in attributes:
-                        attributes[attr_name] = {
-                            "oid": f"1.3.6.1.4.1.{hash(attr_name) % 1000000}",
-                            "description": "Discovered from LDIF entries",
-                            "single_value": str(len(attr_values.values) <= 1),
-                        }
+                        attr_result = FlextLdifModels.SchemaAttribute.create(
+                            name=attr_name,
+                            oid=f"1.3.6.1.4.1.{hash(attr_name) % 1000000}",
+                            description="Discovered from LDIF entries",
+                            single_value=len(attr_values.values) <= 1,
+                        )
+                        if attr_result.is_success and isinstance(
+                            attr_result.value, FlextLdifModels.SchemaAttribute
+                        ):
+                            attributes[attr_name] = attr_result.value
 
             result = FlextLdifModels.SchemaDiscoveryResult.create(
                 object_classes=object_classes,

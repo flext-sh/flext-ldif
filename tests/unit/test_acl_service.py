@@ -289,7 +289,7 @@ class TestFlextLdifAclService:
         """Test extracting ACLs from None entry."""
         service = FlextLdifAclService()
         # Test the None case that the method explicitly handles
-        result = service.extract_acls_from_entry(None)  # type: ignore[arg-type]
+        result = service.extract_acls_from_entry(None)
 
         assert result.is_failure
         assert result.error is not None
@@ -322,7 +322,7 @@ class TestFlextLdifAclService:
             service.create_permission_rule("read")
         ]
 
-        result = service.evaluate_acl_rules(rules, None)  # type: ignore[arg-type]
+        result = service.evaluate_acl_rules(rules, None)
 
         assert result.is_failure
         assert result.error is not None

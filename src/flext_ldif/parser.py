@@ -1080,7 +1080,6 @@ class FlextLdifParser(FlextService[dict[str, object]]):
                         dn=item.dn,
                         changetype=item.changetype,
                         attributes=item.attributes,
-                        domain_events=[],
                     )
                     return FlextResult[FlextLdifModels.ChangeRecord].ok(change_record)
 
