@@ -12,7 +12,7 @@ from __future__ import annotations
 import base64
 from pathlib import Path
 
-from tests.test_support import FileManager
+from tests.support import FileManager
 
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.models import FlextLdifModels

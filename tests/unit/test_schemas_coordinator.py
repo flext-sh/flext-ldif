@@ -1,7 +1,7 @@
 """Test suite for FlextLdifSchemas."""
 
 import pytest
-from tests.test_support import LdifTestData
+from tests.support import LdifTestData
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.schemas_coordinator import FlextLdifSchemas
@@ -133,7 +133,10 @@ class TestFlextLdifSchemasValidator:
             "attributes": {
                 "cn": {"name": "cn", "description": "Common Name"},
                 "sn": {"name": "sn", "description": "Surname"},
-                "objectClass": {"name": "objectClass", "description": "Object Class"},
+                "objectClass": {
+                    "name": "objectClass",
+                    "description": "Object Class",
+                },
             },
             "object_classes": {
                 "top": {

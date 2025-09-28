@@ -1,5 +1,7 @@
 """Test suite for FlextLdifObjectClassManager."""
 
+from typing import cast
+
 import pytest
 
 from flext_ldif.models import FlextLdifModels
@@ -326,7 +328,7 @@ class TestFlextLdifObjectClassManager:
         assert "structural_count" in validation_data
         assert validation_data["valid"] is False
         assert validation_data["structural_count"] == 2
-        issues: list[str] = validation_data["issues"]  # type: ignore[assignment]
+        issues: list[str] = cast("list[str]", validation_data["issues"])
         assert isinstance(issues, list)
         assert len(issues) > 0
 

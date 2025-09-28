@@ -1,0 +1,6 @@
+ WARN PYTHONPATH environment variable is set to `src`. Checks in other environments may not include these paths.
+DEBUG Checking 33 files (listing took 0.00s)
+DEBUG Running with 20 threads (5 MiB stack size)
+DEBUG Running epoch 1 of run 0
+ WARN /home/marlonsc/flext/flext-ldif/pyproject.toml: Invalid search-path: `/home/marlonsc/flext/flext-ldif/scripts` does not exist
+ INFO 1 error

@@ -679,9 +679,20 @@ class FlextLdifParser(FlextService[dict[str, object]]):
                         attr_name = component.split("=")[0].strip()
                         dn_patterns.add(attr_name)
 
-            if hasattr(entry, "get_attribute"):
-                obj_classes: list[str] = entry.get_attribute("objectClass") or []
+            # Handle different entry types
+            if isinstance(entry, FlextLdifModels.Entry):
+                # For Entry objects
+                obj_class_attr = entry.get_attribute("objectClass")
+                obj_classes: list[str] = obj_class_attr.values if obj_class_attr else []
                 object_classes.update(obj_classes)
+            elif isinstance(entry, FlextLdifModels.ChangeRecord):
+                # For ChangeRecord objects
+                obj_class_attr = entry.attributes.get_attribute("objectClass")
+                obj_classes: list[str] = obj_class_attr.values if obj_class_attr else []
+                object_classes.update(obj_classes)
+            else:
+                # For other entry types that might not have objectClass
+                pass
 
         # Check for Active Directory patterns
         ad_patterns = FlextLdifConstants.LdapServers.AD_DN_PATTERNS

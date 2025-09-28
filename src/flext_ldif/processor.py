@@ -51,6 +51,12 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
 
     Follows the unified class pattern with nested helper classes for
     organization while maintaining single responsibility.
+
+    Implements FlextLdifProtocols through structural subtyping:
+    - LdifProcessorProtocol: parse, validate_entries, write, transform_entries, analyze_entries methods
+    - LdifValidatorProtocol: validate_entries method
+    - LdifWriterProtocol: write_entries_to_string, write_entries_to_file methods
+    - LdifAnalyticsProtocol: analyze_entries, get_statistics, detect_patterns methods
     """
 
     model_config = ConfigDict(
@@ -461,6 +467,38 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
                 "entries_with_object_class": entries_with_object_class,
                 "average_attributes_per_entry": avg_attrs,
             }
+
+    # =============================================================================
+    # PROTOCOL IMPLEMENTATION METHODS - FlextLdifProtocols compliance
+    # =============================================================================
+
+    def parse(self, content: str) -> FlextResult[list[object]]:
+        """Parse LDIF content string into entries - implements LdifProcessorProtocol.
+
+        Args:
+            content: LDIF content string to parse
+
+        Returns:
+            FlextResult[list[object]]: Parsed entries as objects
+
+        """
+        # Delegate to existing parse_string method and cast result
+        result = self.parse_string(content)
+        return result.map(lambda entries: cast("list[object]", entries))
+
+    def write(self, entries: list[object]) -> FlextResult[str]:
+        """Write entries to LDIF string - implements LdifProcessorProtocol.
+
+        Args:
+            entries: List of entries to write
+
+        Returns:
+            FlextResult[str]: LDIF formatted string
+
+        """
+        # Cast entries to the correct type and delegate to existing write_string method
+        typed_entries = cast("list[FlextLdifModels.Entry]", entries)
+        return self.write_string(typed_entries)
 
     # =============================================================================
     # CORE API METHODS - Main functionality

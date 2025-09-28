@@ -230,7 +230,7 @@ class TestFlextLdifSchemaValidator:
         assert isinstance(validation_data, dict)
         assert "valid" in validation_data
         assert "issues" in validation_data
-        issues: list[str] = validation_data["issues"]  # type: ignore[assignment]
+        issues: list[str] = validation_data["issues"]
         assert isinstance(issues, list)
         # Should have issues due to missing required attribute
         assert len(issues) > 0

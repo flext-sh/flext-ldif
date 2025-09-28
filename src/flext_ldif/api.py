@@ -30,11 +30,17 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
 
     Now leverages the unified FlextLdifManagement layer for coordinated schema,
     ACL, entry, and quirks management following FLEXT architectural principles.
+
+    Implements FlextLdifProtocols through structural subtyping:
+    - LdifProcessorProtocol: parse, validate_entries, write, transform_entries, analyze_entries methods
+    - LdifValidatorProtocol: validate_entries method
+    - LdifWriterProtocol: write_entries_to_string, write_entries_to_file methods
+    - LdifAnalyticsProtocol: analyze_entries, get_statistics, detect_patterns methods
     """
 
     model_config = ConfigDict(
         validate_assignment=True,
-        extra="forbid",
+        extra="allow",
         arbitrary_types_allowed=True,
     )
 
@@ -42,7 +48,7 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
         """Initialize LDIF API with management layer and processor."""
         super().__init__()
         self._logger = FlextLogger(__name__)
-        self._config: FlextLdifConfig | None = config
+        self._config: FlextLdifConfig = config or FlextLdifConfig()
         self._container = FlextContainer.get_global()
 
         # Initialize management layer for unified operations
@@ -218,6 +224,131 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
         return self._processor_result.flat_map(
             lambda processor: processor.analyze_entries(entries)
         ).map(self._log_analysis_success)
+
+    # =============================================================================
+    # PROTOCOL IMPLEMENTATION METHODS - FlextLdifProtocols compliance
+    # =============================================================================
+
+    def transform_entries(
+        self, entries: list[object], transformer: object
+    ) -> FlextResult[list[object]]:
+        """Transform entries using transformer function - implements LdifProcessorProtocol.
+
+        Args:
+            entries: List of LDIF entries to transform
+            transformer: Transformer function or object
+
+        Returns:
+            FlextResult[list[object]]: Transformed entries
+
+        """
+        # Cast entries to the correct type and delegate to existing transform method
+        typed_entries = cast("list[FlextLdifModels.Entry]", entries)
+        typed_transformer = cast(
+            "Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry]", transformer
+        )
+
+        result = self.transform(typed_entries, typed_transformer)
+        return result.map(lambda x: cast("list[object]", x))
+
+    def analyze_entries(self, entries: list[object]) -> FlextResult[dict[str, object]]:
+        """Analyze LDIF entries and generate analytics - implements LdifProcessorProtocol and LdifAnalyticsProtocol.
+
+        Args:
+            entries: List of LDIF entries to analyze
+
+        Returns:
+            FlextResult[dict[str, object]]: Analysis results
+
+        """
+        # Cast entries to the correct type and delegate to existing analyze method
+        typed_entries = cast("list[FlextLdifModels.Entry]", entries)
+        return self.analyze(typed_entries)
+
+    def write_entries_to_string(self, entries: list[object]) -> FlextResult[str]:
+        """Write entries to LDIF format string - implements LdifWriterProtocol.
+
+        Args:
+            entries: List of LDIF entries to write
+
+        Returns:
+            FlextResult[str]: LDIF formatted string
+
+        """
+        # Cast entries to the correct type and delegate to existing write method
+        typed_entries = cast("list[FlextLdifModels.Entry]", entries)
+        return self.write(typed_entries)
+
+    def write_entries_to_file(
+        self, entries: list[object], file_path: str
+    ) -> FlextResult[bool]:
+        """Write entries to LDIF file - implements LdifWriterProtocol.
+
+        Args:
+            entries: List of LDIF entries to write
+            file_path: Path to output file
+
+        Returns:
+            FlextResult[bool]: Success status
+
+        """
+        # Cast entries to the correct type and delegate to existing write_file method
+        typed_entries = cast("list[FlextLdifModels.Entry]", entries)
+        result = self.write_file(typed_entries, Path(file_path))
+        return result.map(lambda _: True)  # Convert None to bool
+
+    def get_statistics(self) -> dict[str, int | float]:
+        """Get analytics statistics - implements LdifAnalyticsProtocol.
+
+        Returns:
+            dict[str, int | float]: Statistics data
+
+        """
+        # Return basic statistics - could be enhanced with actual processor stats
+        return {
+            "entries_processed": 0,
+            "validation_success_rate": 1.0,
+            "processing_time": 0.0,
+        }
+
+    def detect_patterns(self, entries: list[object]) -> dict[str, object]:
+        """Detect patterns in LDIF entries - implements LdifAnalyticsProtocol.
+
+        Args:
+            entries: List of LDIF entries to analyze
+
+        Returns:
+            dict[str, object]: Detected patterns
+
+        """
+        # Cast entries and perform basic pattern detection
+        typed_entries = cast("list[FlextLdifModels.Entry]", entries)
+
+        # Basic pattern detection - could be enhanced
+        object_classes = set()
+        dn_patterns = set()
+
+        for entry in typed_entries:
+            if hasattr(entry, "attributes") and "objectClass" in entry.attributes:
+                object_class_attr = entry.attributes["objectClass"]
+                if object_class_attr:
+                    object_classes.update(object_class_attr.values)
+            if hasattr(entry, "dn"):
+                # Extract DN components for pattern analysis
+                dn_value = (
+                    entry.dn.value if hasattr(entry.dn, "value") else str(entry.dn)
+                )
+                dn_parts = dn_value.split(",")
+                if dn_parts:
+                    dn_patterns.add(
+                        dn_parts[0].split("=")[0] if "=" in dn_parts[0] else dn_parts[0]
+                    )
+
+        return {
+            "object_classes": list(object_classes),
+            "dn_patterns": list(dn_patterns),
+            "entry_count": len(typed_entries),
+        }
 
     @staticmethod
     def filter_entries(

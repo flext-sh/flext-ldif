@@ -264,6 +264,8 @@ class TestFlextLdifConfig:
 
     def test_create_for_server_type(self) -> None:
         """Test creating configuration for specific server type."""
+        # Reset shared instance to ensure clean state
+        FlextLdifConfig.reset_global_instance()
         config = FlextLdifConfig.create_for_server_type("openldap")
         assert isinstance(config, FlextLdifConfig)
         assert config.server_type == "openldap"
