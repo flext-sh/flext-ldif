@@ -10,10 +10,7 @@ import re
 from collections.abc import Callable, Iterator, Sequence
 from typing import override
 
-# Import centralized TypeVars from flext-core (FLEXT STANDARD)
-from flext_core.typings import T, U
-
-from flext_core import FlextMixins, FlextResult
+from flext_core import FlextMixins, FlextResult, T, U
 from flext_ldif.constants import FlextLdifConstants
 
 

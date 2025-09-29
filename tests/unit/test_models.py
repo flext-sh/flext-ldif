@@ -18,28 +18,28 @@ class TestFlextLdifModels:
 
     def test_dn_creation(self) -> None:
         """Test DN model creation."""
-        dn = FlextLdifModels.DN(value="cn=test,dc=example,dc=com")
+        dn = FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com")
         assert dn.value == "cn=test,dc=example,dc=com"
 
     def test_dn_validation(self) -> None:
         """Test DN validation."""
         # Valid DN
-        dn = FlextLdifModels.DN(value="cn=test,dc=example,dc=com")
+        dn = FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com")
         assert dn.value == "cn=test,dc=example,dc=com"
 
         # Empty DN should fail
         with pytest.raises(ValidationError):
-            FlextLdifModels.DN(value="")
+            FlextLdifModels.DistinguishedName(value="")
 
         # DN too long should fail
         long_dn = "cn=" + "x" * 2048 + ",dc=example,dc=com"
         with pytest.raises(ValidationError):
-            FlextLdifModels.DN(value=long_dn)
+            FlextLdifModels.DistinguishedName(value=long_dn)
 
     def test_dn_normalization(self) -> None:
         """Test DN normalization."""
         # Test case normalization
-        dn = FlextLdifModels.DN(value="CN=Test,DC=Example,DC=Com")
+        dn = FlextLdifModels.DistinguishedName(value="CN=Test,DC=Example,DC=Com")
         assert dn.value == "CN=Test,DC=Example,DC=Com"  # Should preserve case
 
     def test_attribute_values_creation(self) -> None:
@@ -67,7 +67,7 @@ class TestFlextLdifModels:
 
     def test_attributes_creation(self) -> None:
         """Test Attributes model creation."""
-        attrs = FlextLdifModels.Attributes(
+        attrs = FlextLdifModels.LdifAttributes(
             attributes={
                 "cn": FlextLdifModels.AttributeValues(values=["test"]),
                 "sn": FlextLdifModels.AttributeValues(values=["user"]),
@@ -79,7 +79,7 @@ class TestFlextLdifModels:
 
     def test_attributes_get_attribute(self) -> None:
         """Test getting attributes by name."""
-        attrs = FlextLdifModels.Attributes(
+        attrs = FlextLdifModels.LdifAttributes(
             attributes={
                 "cn": FlextLdifModels.AttributeValues(values=["test"]),
             }
@@ -95,7 +95,7 @@ class TestFlextLdifModels:
 
     def test_attributes_add_attribute(self) -> None:
         """Test adding attributes."""
-        attrs = FlextLdifModels.Attributes(attributes={})
+        attrs = FlextLdifModels.LdifAttributes(attributes={})
 
         attrs.add_attribute("cn", "test")
         cn_attr = attrs.get_attribute("cn")
@@ -104,7 +104,7 @@ class TestFlextLdifModels:
 
     def test_attributes_add_attribute_multiple_values(self) -> None:
         """Test adding attributes with multiple values."""
-        attrs = FlextLdifModels.Attributes(attributes={})
+        attrs = FlextLdifModels.LdifAttributes(attributes={})
 
         attrs.add_attribute("cn", ["test1", "test2"])
         cn_attr = attrs.get_attribute("cn")
@@ -113,7 +113,7 @@ class TestFlextLdifModels:
 
     def test_attributes_remove_attribute(self) -> None:
         """Test removing attributes."""
-        attrs = FlextLdifModels.Attributes(
+        attrs = FlextLdifModels.LdifAttributes(
             attributes={
                 "cn": FlextLdifModels.AttributeValues(values=["test"]),
             }
@@ -125,7 +125,7 @@ class TestFlextLdifModels:
 
     def test_attributes_remove_nonexistent_attribute(self) -> None:
         """Test removing non-existent attribute."""
-        attrs = FlextLdifModels.Attributes(attributes={})
+        attrs = FlextLdifModels.LdifAttributes(attributes={})
 
         # Should not raise error
         attrs.remove_attribute("nonexistent")
@@ -133,8 +133,8 @@ class TestFlextLdifModels:
     def test_entry_creation(self) -> None:
         """Test Entry model creation."""
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DN(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.Attributes(
+            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "cn": FlextLdifModels.AttributeValues(values=["test"]),
                 }
@@ -147,8 +147,8 @@ class TestFlextLdifModels:
         """Test Entry validation."""
         # Valid entry
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DN(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.Attributes(attributes={}),
+            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=FlextLdifModels.LdifAttributes(attributes={}),
         )
         assert entry.dn.value == "cn=test,dc=example,dc=com"
 
@@ -185,8 +185,8 @@ sn: user
     def test_entry_to_ldif_string(self) -> None:
         """Test converting entry to LDIF string."""
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DN(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.Attributes(
+            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "cn": FlextLdifModels.AttributeValues(values=["test"]),
                     "sn": FlextLdifModels.AttributeValues(values=["user"]),
@@ -203,8 +203,8 @@ sn: user
     def test_entry_to_ldif_string_with_indent(self) -> None:
         """Test converting entry to LDIF string with indentation."""
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DN(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.Attributes(
+            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "cn": FlextLdifModels.AttributeValues(values=["test"]),
                 }
@@ -265,12 +265,16 @@ sn: user
         """Test LdifDocument model creation."""
         entries = [
             FlextLdifModels.Entry(
-                dn=FlextLdifModels.DN(value="cn=test1,dc=example,dc=com"),
-                attributes=FlextLdifModels.Attributes(attributes={}),
+                dn=FlextLdifModels.DistinguishedName(
+                    value="cn=test1,dc=example,dc=com"
+                ),
+                attributes=FlextLdifModels.LdifAttributes(attributes={}),
             ),
             FlextLdifModels.Entry(
-                dn=FlextLdifModels.DN(value="cn=test2,dc=example,dc=com"),
-                attributes=FlextLdifModels.Attributes(attributes={}),
+                dn=FlextLdifModels.DistinguishedName(
+                    value="cn=test2,dc=example,dc=com"
+                ),
+                attributes=FlextLdifModels.LdifAttributes(attributes={}),
             ),
         ]
 
@@ -282,8 +286,8 @@ sn: user
         # Valid document
         entries = [
             FlextLdifModels.Entry(
-                dn=FlextLdifModels.DN(value="cn=test,dc=example,dc=com"),
-                attributes=FlextLdifModels.Attributes(attributes={}),
+                dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
+                attributes=FlextLdifModels.LdifAttributes(attributes={}),
             ),
         ]
 
@@ -299,8 +303,8 @@ sn: user
         """Test converting LdifDocument to string."""
         entries = [
             FlextLdifModels.Entry(
-                dn=FlextLdifModels.DN(value="cn=test,dc=example,dc=com"),
-                attributes=FlextLdifModels.Attributes(
+                dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
+                attributes=FlextLdifModels.LdifAttributes(
                     attributes={
                         "cn": FlextLdifModels.AttributeValues(values=["test"]),
                     }
@@ -353,8 +357,8 @@ cn: test2
     def test_model_serialization(self) -> None:
         """Test model serialization."""
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DN(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.Attributes(
+            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "cn": FlextLdifModels.AttributeValues(values=["test"]),
                 }
@@ -387,16 +391,16 @@ cn: test2
         # Invalid DN
         with pytest.raises(ValidationError):
             FlextLdifModels.Entry(
-                dn=FlextLdifModels.DN(value=""),  # Empty DN
-                attributes=FlextLdifModels.Attributes(attributes={}),
+                dn=FlextLdifModels.DistinguishedName(value=""),  # Empty DN
+                attributes=FlextLdifModels.LdifAttributes(attributes={}),
             )
 
     def test_model_inheritance(self) -> None:
         """Test that models properly inherit from FlextModels."""
         # Test that all models are properly structured
-        assert hasattr(FlextLdifModels, "DN")
+        assert hasattr(FlextLdifModels, "DistinguishedName")
         assert hasattr(FlextLdifModels, "AttributeValues")
-        assert hasattr(FlextLdifModels, "Attributes")
+        assert hasattr(FlextLdifModels, "LdifAttributes")
         assert hasattr(FlextLdifModels, "Entry")
         assert hasattr(FlextLdifModels, "SearchConfig")
         assert hasattr(FlextLdifModels, "LdifDocument")
@@ -404,8 +408,8 @@ cn: test2
     def test_model_methods(self) -> None:
         """Test that model methods work correctly."""
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DN(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.Attributes(
+            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "cn": FlextLdifModels.AttributeValues(values=["test"]),
                 }
@@ -425,11 +429,11 @@ cn: test2
     def test_edge_cases(self) -> None:
         """Test edge cases in models."""
         # Test DN with special characters
-        dn = FlextLdifModels.DN(value="cn=test+user,dc=example,dc=com")
+        dn = FlextLdifModels.DistinguishedName(value="cn=test+user,dc=example,dc=com")
         assert dn.value == "cn=test+user,dc=example,dc=com"
 
         # Test attributes with special characters
-        attrs = FlextLdifModels.Attributes(
+        attrs = FlextLdifModels.LdifAttributes(
             attributes={
                 "cn;lang-en": FlextLdifModels.AttributeValues(values=["test"]),
             }
@@ -437,7 +441,7 @@ cn: test2
         assert "cn;lang-en" in attrs.attributes
 
         # Test empty attribute values
-        attrs = FlextLdifModels.Attributes(
+        attrs = FlextLdifModels.LdifAttributes(
             attributes={
                 "cn": FlextLdifModels.AttributeValues(values=[""]),
             }

@@ -21,11 +21,6 @@ from flext_core import FlextModels, FlextResult
 from flext_ldif.constants import FlextLdifConstants
 
 
-def _create_ldif_attributes() -> FlextLdifModels.LdifAttributes:
-    """Helper function to create LdifAttributes instance."""
-    return FlextLdifModels.LdifAttributes()
-
-
 class FlextLdifModels(FlextModels):
     """LDIF domain models extending flext-core FlextModels.
 
@@ -375,8 +370,8 @@ class FlextLdifModels(FlextModels):
             description="Distinguished Name of the entry",
         )
 
-        attributes: FlextLdifModels.LdifAttributes = Field(
-            default_factory=_create_ldif_attributes,
+        attributes: "FlextLdifModels.LdifAttributes" = Field(
+            default_factory=lambda: FlextLdifModels.LdifAttributes(),  # type: ignore[unbound-name]  # noqa: PLW0108
             description="Entry attributes",
         )
 
@@ -631,8 +626,8 @@ class FlextLdifModels(FlextModels):
             description="Type of change (add, modify, delete)",
         )
 
-        attributes: FlextLdifModels.LdifAttributes = Field(
-            default_factory=_create_ldif_attributes,
+        attributes: "FlextLdifModels.LdifAttributes" = Field(
+            default_factory=lambda: FlextLdifModels.LdifAttributes(),  # type: ignore[unbound-name]  # noqa: PLW0108
             description="Change attributes",
         )
 
@@ -1060,7 +1055,9 @@ class FlextLdifModels(FlextModels):
                 return FlextResult[object].fail(str(e))
 
         @field_serializer("read", when_used="json")
-        def serialize_permissions_with_summary(self, value: bool, *, _info: object) -> dict[str, object]:
+        def serialize_permissions_with_summary(
+            self, value: bool, *, _info: object
+        ) -> dict[str, object]:
             """Serialize permissions with summary context."""
             return {"read": value, "permissions_context": self.permissions_summary}
 
@@ -1354,15 +1351,6 @@ class FlextLdifModels(FlextModels):
             """Serialize entries with document context."""
             return {"entries": value, "document_context": self.document_summary}
 
-    # =============================================================================
-    # ALIASES FOR BACKWARD COMPATIBILITY
-    # =============================================================================
-
-    # Alias for Entry class (tests expect LdifEntry)
-    LdifEntry = Entry
-    # Alias for ChangeRecord class (tests expect LdifChangeRecord)
-    LdifChangeRecord = ChangeRecord
-
     class AttributeValues(FlextModels.Value):
         """Simple attribute values container for tests."""
 
@@ -1412,10 +1400,6 @@ class FlextLdifModels(FlextModels):
         ) -> dict[str, object]:
             """Serialize values with summary context."""
             return {"values": value, "values_context": self.values_summary}
-
-    # Aliases for test compatibility
-    DN = DistinguishedName
-    Attributes = LdifAttributes
 
 
 __all__ = ["FlextLdifModels"]

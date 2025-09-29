@@ -108,7 +108,7 @@ def temporary_shared_ldif_data() -> str:
     return shared_ldif_data()
 
 
-# Re-export shared fixtures for backward compatibility
+# Public API exports
 __all__ = [
     "FlextSharedLDAPContainerManager",
     "check_docker_available",
@@ -119,11 +119,3 @@ __all__ = [
     "skip_if_no_docker",
     "temporary_shared_ldif_data",
 ]
-
-# Legacy aliases for backward compatibility
-OpenLDAPContainerManager = FlextSharedLDAPContainerManager
-container_manager = shared_ldap_container_manager
-docker_openldap_container = shared_ldap_container
-ldif_test_config = shared_ldap_config
-real_ldif_data = shared_ldif_data
-temporary_ldif_data = temporary_shared_ldif_data

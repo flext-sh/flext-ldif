@@ -277,7 +277,7 @@ cn: testuser"""
         assert result.is_failure
         assert result.error is not None and "No such file or directory" in result.error
 
-    def test_parse_file_success(self, test_file_manager: FileManager) -> None:
+    def test_parse_file_success(self) -> None:
         """Test parsing existing file."""
         parser = FlextLdifParser()
 
@@ -286,7 +286,7 @@ objectClass: person
 cn: testuser
 sn: user"""
 
-        ldif_file = test_file_manager.create_ldif_file(content, "test.ldif")
+        ldif_file = FileManager.create_temp_ldif_file(content)
 
         result = parser.parse_ldif_file_from_path(ldif_file)
 
@@ -294,7 +294,7 @@ sn: user"""
         assert isinstance(result.value, list)
         assert len(result.value) == 1
 
-    def test_parse_file_with_config(self, test_file_manager: FileManager) -> None:
+    def test_parse_file_with_config(self) -> None:
         """Test parsing file with configuration."""
         config = FlextLdifConfig()
         parser = FlextLdifParser(config)
@@ -303,7 +303,7 @@ sn: user"""
 objectClass: person
 cn: testuser"""
 
-        ldif_file = test_file_manager.create_ldif_file(content, "test.ldif")
+        ldif_file = FileManager.create_temp_ldif_file(content)
 
         result = parser.parse_ldif_file_from_path(ldif_file)
 

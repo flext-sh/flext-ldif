@@ -766,12 +766,6 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
             self._logger.exception(error_msg)
             return FlextResult[list[FlextLdifModels.Entry]].fail(error_msg)
 
-    def parse_ldif_file_alias(
-        self, path: Path
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Alias for parse_ldif_file for backward compatibility."""
-        return self.parse_ldif_file(path)
-
     def filter_entries(
         self, entries: list[FlextLdifModels.Entry], filters: dict[str, object]
     ) -> FlextResult[list[FlextLdifModels.Entry]]:

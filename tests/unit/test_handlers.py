@@ -9,7 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult
+from typing import cast
+
+from flext_core import FlextContainer, FlextResult
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.handlers import FlextLdifHandlers
 
@@ -23,7 +25,7 @@ class TestFlextLdifHandlers:
         handlers = FlextLdifHandlers(config)
 
         # Simulate invalid config
-        handlers._ldif_config = None  # type: ignore[attr-assignment]
+        handlers._ldif_config = cast("FlextLdifConfig", None)
 
         result = handlers._validate_configuration()
 
@@ -37,12 +39,15 @@ class TestFlextLdifHandlers:
 
         # Simulate container failure
         original_container = handlers._container
-        handlers._container = None  # type: ignore[attr-assignment]
+        handlers._container = cast("FlextContainer", None)
 
         try:
             result = handlers._initialize_handlers()
             assert result.is_failure
-            assert result.error is not None and "Handler initialization failed" in result.error
+            assert (
+                result.error is not None
+                and "Handler initialization failed" in result.error
+            )
         finally:
             handlers._container = original_container
 

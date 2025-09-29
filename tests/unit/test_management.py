@@ -118,7 +118,7 @@ class TestFlextLdifManagement:
         management = FlextLdifManagement()
         large_sample = LdifTestData.large_dataset(50)  # Smaller size for performance
 
-        result = management.process_ldif_complete(large_sample.content)
+        result = management.process_entries_with_schema(large_sample)
 
         # Should handle large datasets
         assert result.is_success or result.is_failure

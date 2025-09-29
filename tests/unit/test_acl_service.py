@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
+from typing import cast
 
 import pytest
 
@@ -172,14 +173,18 @@ class TestFlextLdifAclService:
         composite.add_rule(write_rule)
 
         # Test with all permissions
-        context: dict[str, object] = {"permissions": {"read": True, "write": True}}
-        result = composite.evaluate(context)
+        test_context1: dict[str, object] = {
+            "permissions": {"read": True, "write": True}
+        }
+        result = composite.evaluate(test_context1)
         assert result.is_success
         assert result.value is True
 
         # Test with missing permission
-        context: dict[str, object] = {"permissions": {"read": True, "write": False}}
-        result = composite.evaluate(context)
+        test_context2: dict[str, object] = {
+            "permissions": {"read": True, "write": False}
+        }
+        result = composite.evaluate(test_context2)
         assert result.is_success
         assert result.value is False
 
@@ -195,14 +200,16 @@ class TestFlextLdifAclService:
         composite.add_rule(write_rule)
 
         # Test with one permission
-        context: dict[str, object] = {"permissions": {"read": True, "write": False}}
-        result = composite.evaluate(context)
+        context_one: dict[str, object] = {"permissions": {"read": True, "write": False}}
+        result = composite.evaluate(context_one)
         assert result.is_success
         assert result.value is True
 
         # Test with no permissions
-        context: dict[str, object] = {"permissions": {"read": False, "write": False}}
-        result = composite.evaluate(context)
+        context_none: dict[str, object] = {
+            "permissions": {"read": False, "write": False}
+        }
+        result = composite.evaluate(context_none)
         assert result.is_success
         assert result.value is False
 
@@ -228,20 +235,20 @@ class TestFlextLdifAclService:
         rule = service.create_permission_rule("read", required=True)
 
         # Test with permission
-        context: dict[str, object] = {"permissions": {"read": True}}
-        result = rule.evaluate(context)
+        context_with_perm: dict[str, object] = {"permissions": {"read": True}}
+        result = rule.evaluate(context_with_perm)
         assert result.is_success
         assert result.value is True
 
         # Test without permission
-        context: dict[str, object] = {"permissions": {"read": False}}
-        result = rule.evaluate(context)
+        context_without_perm: dict[str, object] = {"permissions": {"read": False}}
+        result = rule.evaluate(context_without_perm)
         assert result.is_success
         assert result.value is False
 
         # Test with missing permissions dict
-        context: dict[str, object] = {}
-        result = rule.evaluate(context)
+        context_missing: dict[str, object] = {}
+        result = rule.evaluate(context_missing)
         assert result.is_success
         assert result.value is False
 
@@ -251,14 +258,14 @@ class TestFlextLdifAclService:
         rule = service.create_permission_rule("write", required=False)
 
         # Test with permission (should be False since required=False)
-        context: dict[str, object] = {"permissions": {"write": True}}
-        result = rule.evaluate(context)
+        context_with_write: dict[str, object] = {"permissions": {"write": True}}
+        result = rule.evaluate(context_with_write)
         assert result.is_success
         assert result.value is False
 
         # Test without permission (should be True since required=False)
-        context: dict[str, object] = {"permissions": {"write": False}}
-        result = rule.evaluate(context)
+        context_without_write: dict[str, object] = {"permissions": {"write": False}}
+        result = rule.evaluate(context_without_write)
         assert result.is_success
         assert result.value is True
 
@@ -268,20 +275,20 @@ class TestFlextLdifAclService:
         rule = service.create_subject_rule("cn=admin,dc=example,dc=com")
 
         # Test with matching subject
-        context: dict[str, object] = {"subject_dn": "cn=admin,dc=example,dc=com"}
-        result = rule.evaluate(context)
+        context_admin: dict[str, object] = {"subject_dn": "cn=admin,dc=example,dc=com"}
+        result = rule.evaluate(context_admin)
         assert result.is_success
         assert result.value is True
 
         # Test with non-matching subject
-        context: dict[str, object] = {"subject_dn": "cn=user,dc=example,dc=com"}
-        result = rule.evaluate(context)
+        context_user: dict[str, object] = {"subject_dn": "cn=user,dc=example,dc=com"}
+        result = rule.evaluate(context_user)
         assert result.is_success
         assert result.value is False
 
         # Test with missing subject_dn
-        context: dict[str, object] = {}
-        result = rule.evaluate(context)
+        context_empty: dict[str, object] = {}
+        result = rule.evaluate(context_empty)
         assert result.is_success
         assert result.value is False
 
@@ -289,7 +296,8 @@ class TestFlextLdifAclService:
         """Test extracting ACLs from None entry."""
         service = FlextLdifAclService()
         # Test the None case that the method explicitly handles
-        result = service.extract_acls_from_entry(None)
+        # Use cast to tell type checker we're intentionally passing None for testing
+        result = service.extract_acls_from_entry(cast("FlextLdifModels.Entry", None))
 
         assert result.is_failure
         assert result.error is not None
@@ -321,8 +329,8 @@ class TestFlextLdifAclService:
         rules: list[FlextLdifAclService.AclRule] = [
             service.create_permission_rule("read")
         ]
-
-        result = service.evaluate_acl_rules(rules, None)
+        # Use cast to tell type checker we're intentionally passing None for testing
+        result = service.evaluate_acl_rules(rules, cast("dict[str, object]", None))
 
         assert result.is_failure
         assert result.error is not None
@@ -331,9 +339,9 @@ class TestFlextLdifAclService:
     def test_evaluate_acl_rules_empty_list(self) -> None:
         """Test evaluating empty ACL rules list."""
         service = FlextLdifAclService()
-        context: dict[str, object] = {"permissions": {"read": True}}
+        context_empty_rules: dict[str, object] = {"permissions": {"read": True}}
 
-        result = service.evaluate_acl_rules([], context)
+        result = service.evaluate_acl_rules([], context_empty_rules)
 
         assert result.is_success
         assert result.value is True  # Empty composite rule returns True
@@ -350,20 +358,20 @@ class TestFlextLdifAclService:
         rules: list[FlextLdifAclService.AclRule] = [read_rule, write_rule, subject_rule]
 
         # Test with all conditions met
-        context: dict[str, object] = {
+        context_all_conditions: dict[str, object] = {
             "permissions": {"read": True, "write": True},
             "subject_dn": "cn=admin,dc=example,dc=com",
         }
-        result = service.evaluate_acl_rules(rules, context)
+        result = service.evaluate_acl_rules(rules, context_all_conditions)
         assert result.is_success
         assert result.value is True
 
         # Test with some conditions not met
-        context: dict[str, object] = {
+        context_partial_conditions: dict[str, object] = {
             "permissions": {"read": True, "write": False},
             "subject_dn": "cn=admin,dc=example,dc=com",
         }
-        result = service.evaluate_acl_rules(rules, context)
+        result = service.evaluate_acl_rules(rules, context_partial_conditions)
         assert result.is_success
         assert result.value is False
 
@@ -431,8 +439,10 @@ class TestFlextLdifAclService:
         outer_composite.add_rule(inner_composite)
 
         # Test evaluation
-        context: dict[str, object] = {"permissions": {"read": True, "write": False}}
-        result = outer_composite.evaluate(context)
+        context_or_test: dict[str, object] = {
+            "permissions": {"read": True, "write": False}
+        }
+        result = outer_composite.evaluate(context_or_test)
 
         assert result.is_success
         assert result.value is True  # OR of read=True, write=False = True
@@ -452,8 +462,8 @@ class TestFlextLdifAclService:
         failing_rule = FailingRule()
         composite.add_rule(failing_rule)
 
-        context: dict[str, object] = {"test": "value"}
-        result = composite.evaluate(context)
+        context_error_test: dict[str, object] = {"test": "value"}
+        result = composite.evaluate(context_error_test)
 
         assert result.is_failure
         assert result.error is not None
