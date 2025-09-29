@@ -798,39 +798,6 @@ class FlextLdifParser(FlextService[dict[str, object]]):
             self._logger.exception(error_msg)
             return FlextResult[list[FlextLdifModels.Entry]].fail(error_msg)
 
-    def parse_ldif_file_alias(
-        self, path: Path
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Parse LDIF file and return entries only.
-
-        Args:
-            path: Path to LDIF file
-
-        Returns:
-            FlextResult containing list of parsed entries
-
-        """
-        try:
-            parse_result = self.parse_ldif_file(path)
-            if parse_result.is_failure:
-                return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    parse_result.error or "Parse failed"
-                )
-
-            # Filter out change records, return only entries using list comprehension
-            entries = [
-                item
-                for item in parse_result.value
-                if isinstance(item, FlextLdifModels.Entry)
-            ]
-
-            return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
-
-        except Exception as e:
-            error_msg = f"Failed to parse file: {e}"
-            self._logger.exception(error_msg)
-            return FlextResult[list[FlextLdifModels.Entry]].fail(error_msg)
-
     def validate_entry(self, entry_content: str) -> FlextResult[dict[str, object]]:
         """Validate a single LDIF entry.
 

@@ -252,9 +252,13 @@ class TestFlextLdifConfig:
 
     def test_create_for_performance(self) -> None:
         """Test creating performance-optimized configuration."""
+        # Reset singleton to ensure clean state
+        FlextLdifConfig.reset_global_instance()
+
         config = FlextLdifConfig.create_for_performance()
         assert isinstance(config, FlextLdifConfig)
         assert config.enable_performance_optimizations is True
+        assert config.max_workers >= 4  # Should meet performance minimum
 
     def test_create_for_development(self) -> None:
         """Test creating development-optimized configuration."""
@@ -343,7 +347,7 @@ class TestFlextLdifConfig:
         assert config.ldif_chunk_size == 1000
         assert config.max_workers == 4
         assert config.ldif_encoding == "utf-8"
-        assert config.memory_limit_mb == 512
+        assert config.memory_limit_mb == 64  # Minimum required memory
         assert config.parallel_threshold == 100
         assert config.ldif_analytics_cache_size == 1000
         assert config.ldif_enable_analytics is True

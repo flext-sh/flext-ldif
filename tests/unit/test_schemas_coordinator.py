@@ -1,5 +1,7 @@
 """Test suite for FlextLdifSchemas."""
 
+from typing import cast
+
 import pytest
 from tests.support import LdifTestData
 
@@ -86,7 +88,7 @@ class TestFlextLdifSchemasExtractor:
         result = extractor.extract_from_entries([])
         # Empty entries should return a failure
         assert result.is_failure
-        assert "No entries provided" in result.error
+        assert result.error is not None and "No entries provided" in result.error
 
     def test_extract_attributes_basic(self) -> None:
         """Test extracting attribute usage statistics."""
@@ -166,7 +168,9 @@ class TestFlextLdifSchemasValidator:
         assert entry_result.is_success
         entry = entry_result.value
 
-        result = validator.validate_entry(entry, schema)
+        result = validator.validate_entry(
+            entry, cast("FlextLdifModels.SchemaDiscoveryResult", schema)
+        )
         assert result.is_success
         report = result.value
         assert isinstance(report, dict)
@@ -197,7 +201,9 @@ class TestFlextLdifSchemasValidator:
         assert schema_result.is_success
         schema = schema_result.value
 
-        result = validator.validate_objectclass("person", schema)
+        result = validator.validate_objectclass(
+            "person", cast("FlextLdifModels.SchemaDiscoveryResult", schema)
+        )
         assert result.is_success
         report = result.value
         assert isinstance(report, dict)
@@ -402,7 +408,9 @@ class TestFlextLdifSchemasIntegration:
         built_schema = build_result.value
 
         # Validate entries against both schemas
+        extracted_schema = None
         if extract_result.is_success:
+            extracted_schema = extract_result.value
             validate_extracted = coordinator.validator.validate_entry(
                 entry, extracted_schema
             )

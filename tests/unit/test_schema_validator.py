@@ -1,7 +1,9 @@
 """Test suite for FlextLdifSchemaValidator."""
 
+from typing import cast
+
 import pytest
-from tests.test_support.ldif_data import LdifTestData
+from tests.support import LdifTestData
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.processor import FlextLdifProcessor
@@ -230,7 +232,7 @@ class TestFlextLdifSchemaValidator:
         assert isinstance(validation_data, dict)
         assert "valid" in validation_data
         assert "issues" in validation_data
-        issues: list[str] = validation_data["issues"]
+        issues = cast("list[str]", validation_data["issues"])
         assert isinstance(issues, list)
         # Should have issues due to missing required attribute
         assert len(issues) > 0

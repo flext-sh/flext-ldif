@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 import tempfile
+import warnings
 from collections.abc import Callable, Generator
 from pathlib import Path
 from typing import cast
@@ -23,6 +24,10 @@ from flext_tests import (
     FlextTestsFixtures,
     FlextTestsMatchers,
     FlextTestsUtilities,
+)
+from flext_tests.parallel_docker import (
+    get_shared_openldap_container,
+    release_shared_openldap_container,
 )
 
 from .test_support import (
@@ -69,18 +74,26 @@ def docker_control() -> FlextTestDocker:
 
 
 @pytest.fixture(scope="session", autouse=False)
-def ensure_shared_docker_container(docker_control: FlextTestDocker) -> Generator[None]:
+def ensure_shared_docker_container(_: FlextTestDocker) -> Generator[None]:
     """Ensure shared Docker container is started for the test session.
 
-    Uses FlextTestDocker to manage container lifecycle with auto-start.
+    Uses ParallelDockerManager for container sharing across parallel tests.
     """
-    result = docker_control.start_container("flext-openldap-test")
-    if result.is_failure:
-        pytest.skip(f"Failed to start LDAP container: {result.error}")
+    # Request shared container through parallel manager
+    container_result = get_shared_openldap_container()
+    if container_result.is_failure:
+        pytest.skip(f"Failed to get shared LDAP container: {container_result.error}")
 
     yield
 
-    docker_control.stop_container("flext-openldap-test", remove=False)
+    # Release shared container (may not actually stop if other tests using it)
+    release_result = release_shared_openldap_container()
+    if release_result.is_failure:
+        # Use pytest.warns contextmanager or simply log the warning
+        warnings.warn(
+            f"Failed to release shared container: {release_result.error}",
+            stacklevel=2,
+        )
 
 
 # LDIF processing fixtures - optimized with real services

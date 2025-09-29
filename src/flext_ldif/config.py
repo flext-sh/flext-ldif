@@ -7,12 +7,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from typing import ClassVar, Literal
+from typing import ClassVar, Literal, cast
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
-from flext_core import FlextConfig
+from flext_core import FlextConfig, FlextConstants
 from flext_ldif.constants import FlextLdifConstants
 
 
@@ -75,28 +75,28 @@ class FlextLdifConfig(FlextConfig):
     # Processing Configuration using FlextLdifConstants for defaults
     ldif_max_entries: int = Field(
         default=1000000,
-        ge=1000,
+        ge=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
         le=10000000,
         description="Maximum number of entries to process",
     )
 
     ldif_chunk_size: int = Field(
-        default=1000,
+        default=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
         ge=100,
         le=10000,
         description="Chunk size for LDIF processing",
     )
 
     max_workers: int = Field(
-        default=4,  # Default value instead of referencing FlextConstants
+        default=FlextLdifConstants.Processing.PERFORMANCE_MIN_WORKERS,
         ge=1,
         le=FlextLdifConstants.Processing.MAX_WORKERS_LIMIT,
         description="Maximum number of worker threads",
     )
 
-    # Memory and Performance Configuration
+    # Memory and Performance Configuration - Fix default value
     memory_limit_mb: int = Field(
-        default=512,
+        default=FlextLdifConstants.Processing.MIN_MEMORY_MB,
         ge=FlextLdifConstants.Processing.MIN_MEMORY_MB,
         le=8192,
         description="Memory limit in MB",
@@ -125,7 +125,7 @@ class FlextLdifConfig(FlextConfig):
     )
 
     ldif_analytics_cache_size: int = Field(
-        default=1000,
+        default=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
         ge=FlextLdifConstants.Processing.MIN_ANALYTICS_CACHE_SIZE,
         le=FlextLdifConstants.Processing.MAX_ANALYTICS_CACHE_SIZE,
         description="Cache size for LDIF analytics",
@@ -354,33 +354,22 @@ class FlextLdifConfig(FlextConfig):
         cls, environment: str, **overrides: object
     ) -> FlextLdifConfig:
         """Create configuration for specific environment using enhanced singleton pattern."""
-        # Note: environment parameter is kept for API compatibility but not used in current implementation
-        _ = environment  # Suppress unused parameter warning
-
-        # Create a new instance with the provided overrides
-        # Get default values from the shared instance
-        shared_instance = cls.get_global_instance()
-        instance_dict = {}
-
-        # Copy all fields from the shared instance
-        for field_name in cls.model_fields:
-            if hasattr(shared_instance, field_name):
-                instance_dict[field_name] = getattr(shared_instance, field_name)
-
-        # Apply overrides
-        instance_dict.update(overrides)
-
-        return cls.model_validate(instance_dict)
+        instance = cls.get_or_create_shared_instance(
+            project_name="flext-ldif", environment=environment, **overrides
+        )
+        return cast("FlextLdifConfig", instance)
 
     @classmethod
     def create_default(cls) -> FlextLdifConfig:
         """Create default configuration instance using enhanced singleton pattern."""
-        return cls()
+        instance = cls.get_or_create_shared_instance(project_name="flext-ldif")
+        return cast("FlextLdifConfig", instance)
 
     @classmethod
     def create_for_performance(cls) -> FlextLdifConfig:
         """Create configuration optimized for performance using enhanced singleton pattern."""
-        return cls(
+        instance = cls.get_or_create_shared_instance(
+            project_name="flext-ldif",
             enable_performance_optimizations=True,
             max_workers=FlextLdifConstants.Processing.PERFORMANCE_MIN_WORKERS,
             ldif_chunk_size=FlextLdifConstants.Processing.PERFORMANCE_MIN_CHUNK_SIZE,
@@ -389,19 +378,23 @@ class FlextLdifConfig(FlextConfig):
             debug_mode=False,
             verbose_logging=False,
         )
+        return cast("FlextLdifConfig", instance)
 
     @classmethod
     def create_for_development(cls) -> FlextLdifConfig:
         """Create configuration optimized for development using enhanced singleton pattern."""
-        return cls(
+        instance = cls.get_or_create_shared_instance(
+            project_name="flext-ldif",
             enable_performance_optimizations=False,
-            max_workers=2,
-            ldif_chunk_size=100,
-            memory_limit_mb=256,
+            max_workers=FlextConstants.Performance.MIN_DB_POOL_SIZE,
+            ldif_chunk_size=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE
+            // 10,
+            memory_limit_mb=FlextLdifConstants.Processing.MIN_MEMORY_MB,
             ldif_strict_validation=False,
             debug_mode=True,
             verbose_logging=True,
         )
+        return cast("FlextLdifConfig", instance)
 
     @classmethod
     def create_for_server_type(cls, server_type: str) -> FlextLdifConfig:
@@ -425,7 +418,7 @@ class FlextLdifConfig(FlextConfig):
         instance = cls.get_or_create_shared_instance(
             project_name="flext-ldif", **config_data
         )
-        return cls.model_validate(instance.model_dump())
+        return cast("FlextLdifConfig", instance)
 
     def get_effective_encoding(self) -> str:
         """Get effective encoding for LDIF processing."""
@@ -464,17 +457,15 @@ class FlextLdifConfig(FlextConfig):
     @classmethod
     def get_global_instance(cls) -> FlextLdifConfig:
         """Get the global singleton instance using enhanced FlextConfig pattern."""
-        if cls._global_instance is None:
-            with cls._lock:
-                if cls._global_instance is None:
-                    cls._global_instance = cls()
-        return cls._global_instance
+        with cls._lock:
+            if cls._global_instance is None:
+                cls._global_instance = cls()
+            return cls._global_instance
 
     @classmethod
     def reset_global_instance(cls) -> None:
         """Reset the global FlextLdifConfig instance (mainly for testing)."""
-        with cls._lock:
-            cls._global_instance = None
+        super().reset_global_instance()
 
 
 __all__ = ["FlextLdifConfig"]

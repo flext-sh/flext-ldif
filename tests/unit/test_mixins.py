@@ -4,9 +4,7 @@ from collections.abc import Sequence
 from typing import cast
 
 import pytest
-from tests.support import (
-    LdifTestData,
-)
+from tests.support import LdifTestData
 
 from flext_ldif.mixins import FlextLdifMixins
 

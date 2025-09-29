@@ -260,6 +260,7 @@ class TestFlextLdifSchemaExtractor:
 
         # The extraction may fail due to validation issues, but we should test that it returns a result
         assert result.is_success or result.is_failure
+        usage_stats = {}
         if result.is_success:
             usage_stats = result.value
         assert usage_stats == {}
@@ -286,6 +287,7 @@ class TestFlextLdifSchemaExtractor:
 
         # The extraction may fail due to validation issues, but we should test that it returns a result
         assert result.is_success or result.is_failure
+        usage_stats = {}
         if result.is_success:
             usage_stats = result.value
 
@@ -340,6 +342,7 @@ class TestFlextLdifSchemaExtractor:
 
         # The extraction may fail due to validation issues, but we should test that it returns a result
         assert result.is_success or result.is_failure
+        usage_stats = {}
         if result.is_success:
             usage_stats = result.value
 
@@ -380,6 +383,7 @@ class TestFlextLdifSchemaExtractor:
 
         # The extraction may fail due to validation issues, but we should test that it returns a result
         assert result.is_success or result.is_failure
+        usage_stats = {}
         if result.is_success:
             usage_stats = result.value
 

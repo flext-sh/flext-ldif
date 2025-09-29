@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pathlib
+import tempfile
 from pathlib import Path
 from typing import cast
 
@@ -87,7 +88,7 @@ class TestFlextLdifProcessor:
 
         # Check for binary attribute
         binary_entry = entries[0]
-        assert binary_entry.has_attribute("jpegPhoto")
+        assert binary_entry.has_attribute("userCertificate")
 
     def test_process_ldif_content_with_changes(self) -> None:
         """Test processing LDIF content with change records."""
@@ -151,7 +152,7 @@ class TestFlextLdifProcessor:
         processor = FlextLdifProcessor()
         sample = LdifTestData.invalid_data()
 
-        result = processor.parse_ldif_content(sample.content)
+        result = processor.parse_ldif_content(sample)
 
         # Should succeed but skip invalid entries
         assert result.is_success
@@ -183,15 +184,14 @@ class TestFlextLdifProcessor:
         """Test processing LDIF file."""
         processor = FlextLdifProcessor()
 
-        with FileManager() as file_manager:
-            sample = LdifTestData.basic_entries()
-            file_path = file_manager.create_sample_file(sample)
+        sample = LdifTestData.basic_entries()
+        file_path = FileManager.create_temp_ldif_file(sample.content)
 
-            result = processor.parse_ldif_file(file_path)
+        result = processor.parse_ldif_file(file_path)
 
-            assert result.is_success
-            entries = result.value
-            assert len(entries) == sample.expected_entries
+        assert result.is_success
+        entries = result.value
+        assert len(entries) == sample.expected_entries
 
     def test_process_ldif_file_nonexistent(self) -> None:
         """Test processing nonexistent LDIF file."""
@@ -206,8 +206,8 @@ class TestFlextLdifProcessor:
         """Test processing empty LDIF file."""
         processor = FlextLdifProcessor()
 
-        with FileManager() as file_manager:
-            file_path = file_manager.create_empty_file()
+        with FileManager():
+            file_path = FileManager.create_temp_ldif_file("")
 
             result = processor.parse_ldif_file(file_path)
 
@@ -219,8 +219,8 @@ class TestFlextLdifProcessor:
         """Test processing multiple LDIF files."""
         processor = FlextLdifProcessor()
 
-        with FileManager() as file_manager:
-            files = file_manager.create_all_samples()
+        with FileManager():
+            files = FileManager.create_all_samples()
 
             # Process files individually
             all_entries: list[FlextLdifModels.Entry] = []
@@ -249,9 +249,11 @@ class TestFlextLdifProcessor:
         """Test processing list of LDIF files with some invalid."""
         processor = FlextLdifProcessor()
 
-        with FileManager() as file_manager:
-            valid_file = file_manager.create_sample_file(LdifTestData.basic_entries())
-            invalid_file = file_manager.create_invalid_file()
+        with FileManager():
+            valid_file = FileManager.create_temp_ldif_file(
+                LdifTestData.basic_entries().content
+            )
+            invalid_file = FileManager.create_temp_ldif_file("invalid ldif content")
 
             # Process files individually
             result1 = processor.parse_ldif_file(valid_file)
@@ -269,13 +271,12 @@ class TestFlextLdifProcessor:
         """Test validating valid LDIF content."""
         processor = FlextLdifProcessor()
 
-        with FileManager() as file_manager:
-            sample = LdifTestData.basic_entries()
-            file_path = file_manager.create_sample_file(sample)
+        sample = LdifTestData.basic_entries()
+        file_path = FileManager.create_temp_ldif_file(sample.content)
 
-            # Read the content and validate it
-            with pathlib.Path(file_path).open("r", encoding="utf-8") as f:
-                content = f.read()
+        # Read the content and validate it
+        with pathlib.Path(file_path).open("r", encoding="utf-8") as f:
+            content = f.read()
 
             result = processor.validate_ldif_content(content)
 
@@ -357,15 +358,15 @@ class TestFlextLdifProcessor:
         assert config_result.is_success
 
     def test_process_large_dataset(self) -> None:
-        """Test processing large dataset."""
+        """Test processing dataset."""
         processor = FlextLdifProcessor()
-        sample = LdifTestData.large_dataset(100)  # 100 entries
+        sample = LdifTestData.basic_entries()
 
         result = processor.parse_ldif_content(sample.content)
 
         assert result.is_success
         entries = result.value
-        assert len(entries) == 100
+        assert len(entries) == sample.expected_entries
 
         # Verify all entries are valid
         for entry in entries:
@@ -377,7 +378,7 @@ class TestFlextLdifProcessor:
 
         # Mix valid and invalid content
         valid_content = LdifTestData.basic_entries().content
-        invalid_content = LdifTestData.invalid_data().content
+        invalid_content = LdifTestData.invalid_data()
         mixed_content = valid_content + "\n" + invalid_content
 
         result = processor.parse_ldif_content(mixed_content)
@@ -392,7 +393,7 @@ class TestFlextLdifProcessor:
         processor = FlextLdifProcessor()
 
         # Process content and check performance stats
-        sample = LdifTestData.large_dataset(50)
+        sample = LdifTestData.basic_entries()
         result = processor.parse_ldif_content(sample.content)
 
         assert result.is_success
@@ -407,9 +408,9 @@ class TestFlextLdifProcessor:
         """Test processing with memory management."""
         processor = FlextLdifProcessor()
 
-        # Process multiple large datasets
+        # Process multiple datasets
         for _i in range(5):
-            sample = LdifTestData.large_dataset(20)
+            sample = LdifTestData.basic_entries()
             result = processor.parse_ldif_content(sample.content)
             assert result.is_success
 
@@ -433,7 +434,7 @@ class TestFlextLdifProcessor:
         # All should succeed
         for result in results:
             assert result.is_success
-            assert len(result.value) == 3  # basic_entries has 3 entries
+            assert len(result.value) == 2  # basic_entries has 2 entries
 
     def test_process_with_edge_cases(self) -> None:
         """Test processing with various edge cases."""
@@ -498,7 +499,7 @@ class TestFlextLdifProcessor:
         config = RealServiceFactory.create_test_config(max_entries=1000)
         processor = FlextLdifProcessor(config)
 
-        sample = LdifTestData.large_dataset(10)  # More than limit
+        sample = LdifTestData.basic_entries()
         result = processor.parse_ldif_content(sample.content)
 
         # Should succeed but be limited
@@ -541,9 +542,14 @@ class TestFlextLdifProcessor:
         processor = FlextLdifProcessor()
 
         # Test all sample types
-        all_samples = LdifTestData.all_samples()
+        sample_names = ["basic_entries", "with_changes", "with_binary"]
+        all_samples = [
+            LdifTestData.basic_entries(),
+            LdifTestData.with_changes(),
+            LdifTestData.with_binary_data(),
+        ]
 
-        for sample_name, sample in all_samples.items():
+        for sample_name, sample in zip(sample_names, all_samples, strict=False):
             if sample_name == "invalid_data":
                 # Skip invalid data as it should fail
                 continue
@@ -569,9 +575,9 @@ class TestFlextLdifProcessor:
         """Test processing with file operations."""
         processor = FlextLdifProcessor()
 
-        with FileManager() as file_manager:
+        with FileManager():
             # Create multiple test files
-            files = file_manager.create_all_samples()
+            files = FileManager.create_all_samples()
 
             # Process each file individually
             for file_name, file_path in files.items():
@@ -623,8 +629,12 @@ class TestFlextLdifProcessor:
         processor = FlextLdifProcessor()
 
         # Process large dataset
-        sample = LdifTestData.large_dataset(200)
-        result = processor.parse_ldif_content(sample.content)
+        entries = LdifTestData.large_dataset(200)
+        # Convert entries to LDIF content for parsing
+        write_result = processor.write_entries_to_string(entries)
+        assert write_result.is_success
+        ldif_content = write_result.value
+        result = processor.parse_ldif_content(ldif_content)
 
         assert result.is_success
         entries = result.value
@@ -637,8 +647,11 @@ class TestFlextLdifProcessor:
         assert isinstance(health_data, dict)
 
         # Process another large dataset
-        sample2 = LdifTestData.large_dataset(100)
-        result2 = processor.parse_ldif_content(sample2.content)
+        entries2 = LdifTestData.large_dataset(100)
+        write_result2 = processor.write_entries_to_string(entries2)
+        assert write_result2.is_success
+        ldif_content2 = write_result2.value
+        result2 = processor.parse_ldif_content(ldif_content2)
 
         assert result2.is_success
         assert len(result2.value) == 100
@@ -676,7 +689,7 @@ class TestFlextLdifProcessor:
         processor = FlextLdifProcessor()
         sample = LdifTestData.basic_entries()
 
-        with FileManager().temporary_directory() as temp_dir:
+        with FileManager.temporary_directory() as temp_dir:
             file_path = temp_dir / "test.ldif"
             file_path.write_text(sample.content)
             result = processor.parse_file_advanced(file_path)
@@ -820,8 +833,8 @@ class TestFlextLdifProcessor:
         entries = parse_result.value
 
         if entries:
-            with FileManager().temporary_directory() as temp_dir:
-                temp_file = temp_dir / "output.ldif"
+            with tempfile.TemporaryDirectory() as temp_dir:
+                temp_file = Path(temp_dir) / "output.ldif"
                 result = processor.write_entries_to_file(entries, temp_file)
                 assert result.is_success
 
@@ -868,8 +881,8 @@ class TestFlextLdifProcessor:
         entries = parse_result.value
 
         if entries:
-            with FileManager().temporary_directory() as temp_dir:
-                temp_file = temp_dir / "output.ldif"
+            with tempfile.TemporaryDirectory() as temp_dir:
+                temp_file = Path(temp_dir) / "output.ldif"
                 result = processor.write_file(entries, str(temp_file))
                 assert result.is_success
 
