@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import os
 import tempfile
-import warnings
 from collections.abc import Callable, Generator
 from pathlib import Path
 from typing import cast
@@ -18,16 +17,11 @@ import pytest
 from flext_core import FlextConstants, FlextResult, FlextTypes
 from flext_ldif import FlextLdifAPI
 from flext_tests import (
-    FlextTestDocker,
     FlextTestsBuilders,
     FlextTestsDomains,
-    FlextTestsFixtures,
+    FlextTestsFactories,
     FlextTestsMatchers,
     FlextTestsUtilities,
-)
-from flext_tests.parallel_docker import (
-    get_shared_openldap_container,
-    release_shared_openldap_container,
 )
 
 from .test_support import (
@@ -64,36 +58,27 @@ def set_test_environment() -> Generator[None]:
     os.environ.pop("FLEXT_LOG_LEVEL", None)
 
 
-# Docker container management with FlextTestDocker
-
-
-@pytest.fixture(scope="session")
-def docker_control() -> FlextTestDocker:
-    """Provide Docker control instance for tests."""
-    return FlextTestDocker()
-
-
-@pytest.fixture(scope="session", autouse=False)
-def ensure_shared_docker_container(_: FlextTestDocker) -> Generator[None]:
-    """Ensure shared Docker container is started for the test session.
-
-    Uses ParallelDockerManager for container sharing across parallel tests.
-    """
-    # Request shared container through parallel manager
-    container_result = get_shared_openldap_container()
-    if container_result.is_failure:
-        pytest.skip(f"Failed to get shared LDAP container: {container_result.error}")
-
-    yield
-
-    # Release shared container (may not actually stop if other tests using it)
-    release_result = release_shared_openldap_container()
-    if release_result.is_failure:
-        # Use pytest.warns contextmanager or simply log the warning
-        warnings.warn(
-            f"Failed to release shared container: {release_result.error}",
-            stacklevel=2,
-        )
+# ============================================================================
+# DOCKER CONTAINER MANAGEMENT (CENTRALIZED FIXTURES)
+# ============================================================================
+#
+# Docker fixtures are provided by flext_tests.fixtures.docker_fixtures:
+#   - ldap_container: OpenLDAP container (port 3390) - PRIMARY FOR LDIF TESTING
+#   - oracle_container: Oracle DB container (port 1522)
+#   - client-a_oud_container: client-a OUD container (port 3389)
+#   - postgres_container: PostgreSQL container (port 5432)
+#   - redis_container: Redis container (port 6379)
+#
+# The ldap_container fixture is automatically available for all tests that need it.
+# FlextTestDocker is also available via flext_test_docker fixture if direct
+# container management is needed.
+#
+# Example usage:
+#   def test_ldif_with_ldap(ldap_container: str):
+#       # ldap_container provides connection string like "ldap://localhost:3390"
+#       # Container is automatically started and cleaned up
+#       pass
+#
 
 
 # LDIF processing fixtures - optimized with real services
@@ -439,9 +424,9 @@ def flext_domains() -> FlextTestsDomains:
 
 
 @pytest.fixture
-def flext_fixtures() -> FlextTestsFixtures:
-    """FlextTests fixtures and utilities."""
-    return FlextTestsFixtures()
+def flext_fixtures() -> FlextTestsFactories:
+    """FlextTests factories and utilities."""
+    return FlextTestsFactories()
 
 
 @pytest.fixture

@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterator, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from typing import Literal
 
 from flext_core import FlextResult, FlextTypes
@@ -51,6 +51,7 @@ class FlextLdifTypes(FlextTypes):
             str, str | int | bool | dict[str, FlextTypes.Core.JsonValue]
         ]
         type EntryProcessing = dict[str, str | bool | list[dict[str, object]]]
+        type EntryCreateData = Mapping[str, object]
 
     # =========================================================================
     # LDIF PARSING TYPES - Complex parsing operation types
@@ -85,7 +86,7 @@ class FlextLdifTypes(FlextTypes):
         type ValidationRules = list[
             dict[str, str | bool | list[str] | dict[str, object]]
         ]
-        type ValidationResult = dict[
+        type LdifValidationResult = dict[
             str, bool | str | list[str] | dict[str, FlextTypes.Core.JsonValue]
         ]
         type ValidationContext = dict[str, str | bool | list[str] | dict[str, object]]
@@ -111,7 +112,7 @@ class FlextLdifTypes(FlextTypes):
         type ProcessingMetrics = dict[
             str, int | float | dict[str, FlextTypes.Core.JsonValue]
         ]
-        type ProcessingResult = dict[
+        type LdifProcessingResult = dict[
             str, bool | list[object] | dict[str, FlextTypes.Core.JsonValue]
         ]
         type TransformationRules = list[dict[str, str | Callable[[object], object]]]

@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 from typing import Self, cast
 
 from pydantic import (
@@ -20,7 +21,7 @@ from pydantic import (
 
 from flext_core import FlextModels, FlextResult
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.utilities import FlextLdifUtilities
+from flext_ldif.typings import FlextLdifTypes
 
 
 def _default_ldif_attributes() -> FlextLdifModels.LdifAttributes:
@@ -136,6 +137,7 @@ class FlextLdifModels(FlextModels):
         """Distinguished Name (DN) for LDIF entries.
 
         Represents a unique identifier for LDAP entries following RFC 4514.
+        Centralizes ALL DN validation logic using Pydantic validators.
         """
 
         model_config = ConfigDict(
@@ -148,9 +150,89 @@ class FlextLdifModels(FlextModels):
         value: str = Field(
             ...,
             min_length=1,
-            max_length=2048,
+            max_length=FlextLdifConstants.LdifValidation.MAX_DN_LENGTH,
             description="The DN string value",
         )
+
+        @field_validator("value")
+        @classmethod
+        def validate_dn_format(cls, v: str) -> str:
+            """Validate DN format - CENTRALIZED validation in Model."""
+            if not v or not v.strip():
+                msg = FlextLdifConstants.ErrorMessages.DN_EMPTY_ERROR
+                raise ValueError(msg)
+
+            # Check length limit (RFC 4514)
+            if len(v) > FlextLdifConstants.LdifValidation.MAX_DN_LENGTH:
+                msg = (
+                    f"DN exceeds maximum length of "
+                    f"{FlextLdifConstants.LdifValidation.MAX_DN_LENGTH}"
+                )
+                raise ValueError(msg)
+
+            # Parse and validate components
+            components = cls._parse_dn_components(v)
+
+            # Validate minimum components
+            if len(components) < FlextLdifConstants.LdifValidation.MIN_DN_COMPONENTS:
+                msg = (
+                    f"DN must have at least "
+                    f"{FlextLdifConstants.LdifValidation.MIN_DN_COMPONENTS} component(s)"
+                )
+                raise ValueError(msg)
+
+            # Validate each component has attribute=value format
+            for component in components:
+                if "=" not in component:
+                    msg = (
+                        f"{FlextLdifConstants.ErrorMessages.DN_INVALID_FORMAT_ERROR}: "
+                        f"Component '{component}' missing '=' separator"
+                    )
+                    raise ValueError(msg)
+
+                attr, value_part = component.split("=", 1)
+                if not attr.strip() or not value_part.strip():
+                    msg = (
+                        f"{FlextLdifConstants.ErrorMessages.DN_INVALID_FORMAT_ERROR}: "
+                        f"Empty attribute or value in component '{component}'"
+                    )
+                    raise ValueError(msg)
+
+            return v.strip()
+
+        @staticmethod
+        def _parse_dn_components(dn: str) -> list[str]:
+            r"""Parse DN into components handling escaped commas (\,).
+
+            Internal helper for DN component parsing following RFC 4514.
+            """
+            components: list[str] = []
+            current_component = ""
+            i = 0
+            while i < len(dn):
+                if dn[i] == "\\" and i + 1 < len(dn):
+                    # Escaped character - include backslash and next char
+                    current_component += dn[i : i + 2]
+                    i += 2
+                elif dn[i] == ",":
+                    # Unescaped comma - component boundary
+                    if current_component.strip():
+                        components.append(current_component.strip())
+                    current_component = ""
+                    i += 1
+                else:
+                    current_component += dn[i]
+                    i += 1
+
+            # Add last component
+            if current_component.strip():
+                components.append(current_component.strip())
+
+            if not components:
+                msg = "DN has no valid components"
+                raise ValueError(msg)
+
+            return components
 
         @computed_field
         @property
@@ -160,43 +242,55 @@ class FlextLdifModels(FlextModels):
 
         @computed_field
         @property
-        def normalized_value(self) -> str:
-            """Computed field for normalized DN value using centralized utilities."""
-            # Use centralized normalization - SINGLE SOURCE OF TRUTH
-            normalized_result = FlextLdifUtilities.DnUtilities.normalize_dn(self.value)
-            return (
-                normalized_result.unwrap()
-                if normalized_result.is_success
-                else self.value.strip().lower()
-            )
-
-        @computed_field
-        @property
         def components(self) -> list[str]:
-            """Computed field for DN components using centralized FlextLdifUtilities."""
-            # Use centralized parsing - SINGLE SOURCE OF TRUTH
-            components_result = FlextLdifUtilities.DnUtilities.parse_dn_components(
-                self.value
-            )
-            return components_result.unwrap() if components_result.is_success else []
+            """Computed field for DN components."""
+            try:
+                return self._parse_dn_components(self.value)
+            except ValueError:
+                return []
 
         @computed_field
         @property
         def depth(self) -> int:
-            """Computed field for DN depth using centralized FlextLdifUtilities."""
-            # Use centralized depth calculation - SINGLE SOURCE OF TRUTH
-            depth_result = FlextLdifUtilities.DnUtilities.get_dn_depth(self.value)
-            return depth_result.unwrap() if depth_result.is_success else 0
+            """Computed field for DN depth (number of components)."""
+            return len(self.components)
 
-        @field_validator("value")
-        @classmethod
-        def validate_dn_format(cls, v: str) -> str:
-            """Validate DN format using centralized FlextLdifUtilities.DnUtilities."""
-            # Use centralized validation - SINGLE SOURCE OF TRUTH
-            validation_result = FlextLdifUtilities.DnUtilities.validate_dn_format(v)
-            if validation_result.is_failure:
-                raise ValueError(validation_result.error or "Invalid DN format")
-            return v.strip()
+        @computed_field
+        @property
+        def normalized_value(self) -> str:
+            """Computed field for normalized DN value."""
+            try:
+                components = self._parse_dn_components(self.value)
+                normalized_components: list[str] = []
+                for component in components:
+                    attr, value_part = component.split("=", 1)
+                    # Normalize: lowercase attribute, trim spaces from value
+                    attr_normalized = attr.strip().lower()
+                    value_normalized = " ".join(value_part.strip().split())
+                    normalized_components.append(
+                        f"{attr_normalized}={value_normalized}"
+                    )
+                return ",".join(normalized_components)
+            except (ValueError, AttributeError):
+                return self.value.strip().lower()
+
+        def extract_attribute(self, attribute_name: str) -> str | None:
+            """Extract specific attribute value from DN.
+
+            Args:
+                attribute_name: Attribute name to extract (case-insensitive)
+
+            Returns:
+                Attribute value or None if not found
+
+            """
+            attr_lower = attribute_name.lower()
+            for component in self.components:
+                if "=" in component:
+                    attr, value_part = component.split("=", 1)
+                    if attr.strip().lower() == attr_lower:
+                        return value_part.strip()
+            return None
 
         @field_serializer("value", when_used="json")
         def serialize_dn_with_metadata(
@@ -508,9 +602,17 @@ class FlextLdifModels(FlextModels):
 
         @classmethod
         def create(
-            cls, data: dict[str, object] | None = None, **kwargs: object
+            cls,
+            data: FlextLdifTypes.Entry.EntryCreateData | None = None,
+            **kwargs: object,
         ) -> FlextResult[FlextLdifModels.Entry]:
-            """Create a new Entry instance."""
+            """Create a new Entry instance.
+
+            Args:
+                data: Dictionary containing 'dn' (str) and 'attributes' (dict[str, list[str] | str])
+                **kwargs: Alternative parameter format
+
+            """
             try:
                 # Handle both dict and individual parameter patterns
                 if data is not None:
@@ -518,7 +620,7 @@ class FlextLdifModels(FlextModels):
                     attributes = data.get("attributes")
                     if isinstance(attributes, dict):
                         # Convert to proper format
-                        attrs_dict = {}
+                        attrs_dict: dict[str, FlextLdifModels.AttributeValues] = {}
                         for key, value in attributes.items():
                             if isinstance(value, list):
                                 attrs_dict[key] = FlextLdifModels.AttributeValues(
@@ -539,7 +641,7 @@ class FlextLdifModels(FlextModels):
                     attributes = kwargs.get("attributes", {})
                     # Convert attributes to proper format when passed as kwargs
                     if isinstance(attributes, dict):
-                        attrs_dict = {}
+                        attrs_dict: dict[str, FlextLdifModels.AttributeValues] = {}
                         for key, value in attributes.items():
                             if isinstance(value, list):
                                 attrs_dict[key] = FlextLdifModels.AttributeValues(
@@ -555,10 +657,11 @@ class FlextLdifModels(FlextModels):
                         attributes = attrs_dict
 
                 dn_obj = FlextLdifModels.DistinguishedName(value=dn)
-                attrs_dict = cast(
-                    "dict[str, FlextLdifModels.AttributeValues]", attributes or {}
+                attrs_obj = FlextLdifModels.LdifAttributes(
+                    attributes=cast(
+                        "dict[str, FlextLdifModels.AttributeValues]", attributes or {}
+                    )
                 )
-                attrs_obj = FlextLdifModels.LdifAttributes(attributes=attrs_dict)
                 return FlextResult[FlextLdifModels.Entry].ok(
                     cls(dn=dn_obj, attributes=attrs_obj, domain_events=[])
                 )
@@ -1320,7 +1423,7 @@ class FlextLdifModels(FlextModels):
         @property
         def document_summary(self) -> dict[str, object]:
             """Computed field for document summary."""
-            entry_types = {}
+            entry_types: dict[str, int] = {}
             for entry in self.entries:
                 entry_type = entry.entry_type
                 entry_types[entry_type] = entry_types.get(entry_type, 0) + 1
@@ -1374,7 +1477,11 @@ class FlextLdifModels(FlextModels):
             return {"entries": value, "document_context": self.document_summary}
 
     class AttributeValues(FlextModels.Value):
-        """Simple attribute values container for tests."""
+        """Attribute values container with centralized validation.
+
+        Validates attribute values following LDAP/LDIF standards.
+        All validation logic centralized in this Model using Pydantic validators.
+        """
 
         model_config = ConfigDict(
             frozen=True,
@@ -1387,6 +1494,23 @@ class FlextLdifModels(FlextModels):
             default_factory=list,
             description="Attribute values",
         )
+
+        @field_validator("values")
+        @classmethod
+        def validate_values(cls, v: list[str]) -> list[str]:
+            """Validate attribute values - centralized validation in Model."""
+            if not isinstance(v, list):
+                msg = FlextLdifConstants.ErrorMessages.ATTRIBUTE_VALUES_ERROR
+                raise TypeError(msg)
+
+            validated_values: list[str] = []
+            for value in v:
+                if not isinstance(value, str):
+                    msg = FlextLdifConstants.ErrorMessages.ATTRIBUTE_VALUE_TYPE_ERROR
+                    raise TypeError(msg)
+                validated_values.append(value.strip())
+
+            return validated_values
 
         @computed_field
         @property
@@ -1422,6 +1546,596 @@ class FlextLdifModels(FlextModels):
         ) -> dict[str, object]:
             """Serialize values with summary context."""
             return {"values": value, "values_context": self.values_summary}
+
+    class AttributeName(FlextModels.Value):
+        """Attribute name with RFC 4512 validation.
+
+        Validates LDAP attribute names following RFC 4512 standards.
+        All validation logic centralized in this Model using Pydantic validators.
+        """
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        name: str = Field(
+            ...,
+            min_length=FlextLdifConstants.LdifValidation.MIN_ATTRIBUTE_NAME_LENGTH,
+            max_length=FlextLdifConstants.LdifValidation.MAX_ATTRIBUTE_NAME_LENGTH,
+            description="LDAP attribute name",
+        )
+
+        @field_validator("name")
+        @classmethod
+        def validate_name(cls, v: str) -> str:
+            """Validate attribute name format - centralized validation in Model."""
+            if not isinstance(v, str):
+                msg = FlextLdifConstants.ErrorMessages.ATTRIBUTE_NAME_ERROR
+                raise TypeError(msg)
+
+            if not v.strip():
+                msg = FlextLdifConstants.ErrorMessages.ATTRIBUTE_NAME_EMPTY_ERROR
+                raise ValueError(msg)
+
+            # RFC 4512 attribute name validation using centralized pattern from Constants
+            if not re.match(
+                FlextLdifConstants.LdifValidation.ATTRIBUTE_NAME_PATTERN, v
+            ):
+                msg = f"Invalid attribute name format: {v}"
+                raise ValueError(msg)
+
+            return v.strip()
+
+        @computed_field
+        @property
+        def normalized_name(self) -> str:
+            """Computed field for normalized (lowercase) attribute name."""
+            return self.name.lower()
+
+        @computed_field
+        @property
+        def is_operational(self) -> bool:
+            """Check if this is an operational attribute (starts with special chars)."""
+            # Operational attributes typically start with specific prefixes
+            operational_prefixes = (
+                "createTimestamp",
+                "modifyTimestamp",
+                "entryDN",
+                "entryUUID",
+            )
+            return self.name in operational_prefixes
+
+    class LdifUrl(FlextModels.Value):
+        """LDIF URL reference with validation.
+
+        Validates URL format for LDIF URL references (HTTP, HTTPS, LDAP protocols).
+        All validation logic centralized in this Model using Pydantic validators.
+        """
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        url: str = Field(
+            ...,
+            min_length=FlextLdifConstants.LdifValidation.MIN_URL_LENGTH,
+            max_length=FlextLdifConstants.LdifValidation.MAX_URL_LENGTH,
+            description="URL reference",
+        )
+
+        @field_validator("url")
+        @classmethod
+        def validate_url_format(cls, v: str) -> str:
+            """Validate URL format - centralized validation in Model."""
+            if not v or not v.strip():
+                msg = FlextLdifConstants.ErrorMessages.URL_EMPTY_ERROR
+                raise ValueError(msg)
+
+            # URL validation using centralized pattern from Constants
+            if not re.match(FlextLdifConstants.LdifValidation.URL_PATTERN, v):
+                msg = f"Invalid URL format: {v}"
+                raise ValueError(msg)
+
+            return v.strip()
+
+        @computed_field
+        @property
+        def protocol(self) -> str:
+            """Computed field for URL protocol."""
+            return self.url.split("://")[0] if "://" in self.url else "unknown"
+
+        @computed_field
+        @property
+        def is_secure(self) -> bool:
+            """Check if URL uses secure protocol (HTTPS/LDAPS) using Constants."""
+            return self.protocol in FlextLdifConstants.LdifValidation.SECURE_PROTOCOLS
+
+    class Encoding(FlextModels.Value):
+        """Character encoding with validation.
+
+        Validates character encoding against supported encodings.
+        All validation logic centralized in this Model using Pydantic validators.
+        """
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        encoding: str = Field(
+            ...,
+            min_length=FlextLdifConstants.LdifValidation.MIN_ENCODING_LENGTH,
+            max_length=FlextLdifConstants.LdifValidation.MAX_ENCODING_LENGTH,
+            description="Character encoding",
+        )
+
+        @field_validator("encoding")
+        @classmethod
+        def validate_encoding(cls, v: str) -> str:
+            """Validate encoding - centralized validation in Model."""
+            if v not in FlextLdifConstants.Encoding.SUPPORTED_ENCODINGS:
+                msg = f"Unsupported encoding: {v}"
+                raise ValueError(msg)
+            return v
+
+        @computed_field
+        @property
+        def is_utf8(self) -> bool:
+            """Check if encoding is UTF-8."""
+            return self.encoding.lower() in {"utf-8", "utf8"}
+
+        @computed_field
+        @property
+        def normalized_encoding(self) -> str:
+            """Computed field for normalized encoding name."""
+            return self.encoding.lower().replace("-", "")
+
+    # =========================================================================
+    # RESULT MODELS - Operation result containers with validation
+    # =========================================================================
+
+    class LdifProcessingResult(FlextModels.Value):
+        """Processing operation result with statistics and error tracking.
+
+        Centralizes all processing operation results with automatic validation.
+        """
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        status: str = Field(
+            description="Processing status (success, partial, failed)",
+        )
+        entries: list[FlextLdifModels.Entry] = Field(
+            default_factory=list,
+            description="Processed entries",
+        )
+        errors: list[str] = Field(
+            default_factory=list,
+            description="Processing errors encountered",
+        )
+        warnings: list[str] = Field(
+            default_factory=list,
+            description="Processing warnings",
+        )
+        statistics: dict[str, int | float] = Field(
+            default_factory=dict,
+            description="Processing statistics",
+        )
+
+        @field_validator("status")
+        @classmethod
+        def validate_status(cls, v: str) -> str:
+            """Validate status field."""
+            valid_statuses = {"success", "partial", "failed", "pending"}
+            if v not in valid_statuses:
+                msg = f"Invalid status: {v}. Must be one of {valid_statuses}"
+                raise ValueError(msg)
+            return v
+
+        @computed_field
+        @property
+        def is_success(self) -> bool:
+            """Check if processing was successful."""
+            return self.status == "success" and len(self.errors) == 0
+
+        @computed_field
+        @property
+        def entry_count(self) -> int:
+            """Get count of processed entries."""
+            return len(self.entries)
+
+        @computed_field
+        @property
+        def error_count(self) -> int:
+            """Get count of errors."""
+            return len(self.errors)
+
+    class LdifValidationResult(FlextModels.Value):
+        """Validation operation result with detailed error tracking.
+
+        Centralizes all validation results with automatic validation.
+        """
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        is_valid: bool = Field(
+            description="Whether validation passed",
+        )
+        errors: list[str] = Field(
+            default_factory=list,
+            description="Validation errors",
+        )
+        warnings: list[str] = Field(
+            default_factory=list,
+            description="Validation warnings",
+        )
+        entry_count: int = Field(
+            default=0,
+            description="Total entries validated",
+        )
+        valid_count: int = Field(
+            default=0,
+            description="Count of valid entries",
+        )
+
+        @model_validator(mode="after")
+        def validate_counts(self) -> FlextLdifModels.LdifValidationResult:
+            """Validate count consistency."""
+            if self.valid_count > self.entry_count:
+                msg = "valid_count cannot exceed entry_count"
+                raise ValueError(msg)
+            if self.is_valid and self.errors:
+                msg = "is_valid cannot be True when errors exist"
+                raise ValueError(msg)
+            return self
+
+        @computed_field
+        @property
+        def invalid_count(self) -> int:
+            """Get count of invalid entries."""
+            return self.entry_count - self.valid_count
+
+        @computed_field
+        @property
+        def success_rate(self) -> float:
+            """Calculate validation success rate."""
+            if self.entry_count == 0:
+                return 0.0
+            return (self.valid_count / self.entry_count) * 100.0
+
+    class ParseResult(FlextModels.Value):
+        """Parsing operation result with error tracking.
+
+        Centralizes all parsing results with automatic validation.
+        """
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        entries: list[FlextLdifModels.Entry] = Field(
+            default_factory=list,
+            description="Parsed entries",
+        )
+        parse_errors: list[str] = Field(
+            default_factory=list,
+            description="Parsing errors encountered",
+        )
+        line_count: int = Field(
+            default=0,
+            ge=0,
+            description="Total lines parsed",
+        )
+        success_rate: float = Field(
+            default=0.0,
+            ge=0.0,
+            le=100.0,
+            description="Parse success rate percentage",
+        )
+
+        @computed_field
+        @property
+        def entry_count(self) -> int:
+            """Get count of parsed entries."""
+            return len(self.entries)
+
+        @computed_field
+        @property
+        def error_count(self) -> int:
+            """Get count of parse errors."""
+            return len(self.parse_errors)
+
+        @computed_field
+        @property
+        def is_success(self) -> bool:
+            """Check if parsing was successful."""
+            return len(self.parse_errors) == 0 and len(self.entries) > 0
+
+    class TransformResult(FlextModels.Value):
+        """Transformation operation result with change tracking.
+
+        Centralizes all transformation results with automatic validation.
+        """
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        transformed_entries: list[FlextLdifModels.Entry] = Field(
+            default_factory=list,
+            description="Transformed entries",
+        )
+        transformation_log: list[str] = Field(
+            default_factory=list,
+            description="Log of transformations applied",
+        )
+        changes_count: int = Field(
+            default=0,
+            ge=0,
+            description="Number of changes made",
+        )
+
+        @computed_field
+        @property
+        def entry_count(self) -> int:
+            """Get count of transformed entries."""
+            return len(self.transformed_entries)
+
+    class AnalyticsResult(FlextModels.Value):
+        """Analytics operation result with pattern detection.
+
+        Centralizes all analytics results with automatic validation.
+        """
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        statistics: dict[str, int | float] = Field(
+            default_factory=dict,
+            description="Statistical data",
+        )
+        patterns: dict[str, object] = Field(
+            default_factory=dict,
+            description="Detected patterns",
+        )
+        object_class_distribution: dict[str, int] = Field(
+            default_factory=dict,
+            description="Distribution of object classes",
+        )
+        dn_patterns: list[str] = Field(
+            default_factory=list,
+            description="Distinguished name patterns",
+        )
+
+        @computed_field
+        @property
+        def total_object_classes(self) -> int:
+            """Get total unique object classes."""
+            return len(self.object_class_distribution)
+
+    class WriteResult(FlextModels.Value):
+        """Write operation result with success tracking.
+
+        Centralizes all write operation results with automatic validation.
+        """
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        success: bool = Field(
+            description="Whether write was successful",
+        )
+        file_path: str | None = Field(
+            default=None,
+            description="Path to written file",
+        )
+        entries_written: int = Field(
+            default=0,
+            ge=0,
+            description="Number of entries written",
+        )
+        errors: list[str] = Field(
+            default_factory=list,
+            description="Write errors encountered",
+        )
+
+        @model_validator(mode="after")
+        def validate_write_consistency(self) -> FlextLdifModels.WriteResult:
+            """Validate write result consistency."""
+            if self.success and self.errors:
+                msg = "success cannot be True when errors exist"
+                raise ValueError(msg)
+            if not self.success and self.entries_written > 0:
+                msg = "entries_written should be 0 when success is False"
+                raise ValueError(msg)
+            return self
+
+    class FilterResult(FlextModels.Value):
+        """Filter operation result with count tracking.
+
+        Centralizes all filter results with automatic validation.
+        """
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        filtered_entries: list[FlextLdifModels.Entry] = Field(
+            default_factory=list,
+            description="Filtered entries",
+        )
+        original_count: int = Field(
+            default=0,
+            ge=0,
+            description="Original entry count before filtering",
+        )
+        filtered_count: int = Field(
+            default=0,
+            ge=0,
+            description="Count after filtering",
+        )
+        criteria: dict[str, object] = Field(
+            default_factory=dict,
+            description="Filter criteria used",
+        )
+
+        @model_validator(mode="after")
+        def validate_filter_counts(self) -> FlextLdifModels.FilterResult:
+            """Validate filter count consistency."""
+            if self.filtered_count > self.original_count:
+                msg = "filtered_count cannot exceed original_count"
+                raise ValueError(msg)
+            if self.filtered_count != len(self.filtered_entries):
+                msg = "filtered_count must match length of filtered_entries"
+                raise ValueError(msg)
+            return self
+
+        @computed_field
+        @property
+        def removed_count(self) -> int:
+            """Get count of entries removed by filter."""
+            return self.original_count - self.filtered_count
+
+        @computed_field
+        @property
+        def filter_rate(self) -> float:
+            """Calculate filter rate percentage."""
+            if self.original_count == 0:
+                return 0.0
+            return (self.filtered_count / self.original_count) * 100.0
+
+    class HealthCheckResult(FlextModels.Value):
+        """Health check result for services and components.
+
+        Centralizes health check data with status and metrics.
+        """
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        status: str = Field(
+            description="Health status (healthy/degraded/unhealthy)",
+        )
+        service_name: str = Field(
+            description="Service being checked",
+        )
+        timestamp: str = Field(
+            description="Check timestamp",
+        )
+        details: dict[str, object] = Field(
+            default_factory=dict,
+            description="Additional health details",
+        )
+        metrics: dict[str, object] = Field(
+            default_factory=dict,
+            description="Health metrics",
+        )
+
+        @field_validator("status")
+        @classmethod
+        def validate_status(cls, v: str) -> str:
+            """Validate health status uses Constants enum values."""
+            valid_statuses = {
+                FlextLdifConstants.HealthStatus.HEALTHY.value,
+                FlextLdifConstants.HealthStatus.DEGRADED.value,
+                FlextLdifConstants.HealthStatus.UNHEALTHY.value,
+            }
+            if v not in valid_statuses:
+                msg = f"Invalid status: {v}. Must be one of {valid_statuses}"
+                raise ValueError(msg)
+            return v
+
+        @computed_field
+        @property
+        def is_healthy(self) -> bool:
+            """Check if service is healthy."""
+            return self.status == FlextLdifConstants.HealthStatus.HEALTHY.value
+
+        @computed_field
+        @property
+        def is_degraded(self) -> bool:
+            """Check if service is degraded."""
+            return self.status == FlextLdifConstants.HealthStatus.DEGRADED.value
+
+    class ServiceStatus(FlextModels.Value):
+        """Service status information.
+
+        Centralizes service status data including configuration and state.
+        """
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        service_name: str = Field(
+            description="Service name",
+        )
+        status: str = Field(
+            description="Current status",
+        )
+        configuration: dict[str, object] = Field(
+            default_factory=dict,
+            description="Service configuration",
+        )
+        statistics: dict[str, object] = Field(
+            default_factory=dict,
+            description="Service statistics",
+        )
+        capabilities: list[str] = Field(
+            default_factory=list,
+            description="Service capabilities",
+        )
+
+        @computed_field
+        @property
+        def is_operational(self) -> bool:
+            """Check if service is operational."""
+            return self.status in {
+                FlextLdifConstants.HealthStatus.HEALTHY.value,
+                FlextLdifConstants.HealthStatus.DEGRADED.value,
+            }
 
 
 __all__ = ["FlextLdifModels"]

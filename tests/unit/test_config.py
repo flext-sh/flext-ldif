@@ -380,3 +380,178 @@ class TestFlextLdifConfig:
 
         with pytest.raises(ValidationError):
             FlextLdifConfig(ldif_encoding=123)
+
+    # =========================================================================
+    # VALIDATOR EDGE CASES - Complete coverage for all validators
+    # =========================================================================
+
+    def test_validate_ldif_encoding_invalid(self) -> None:
+        """Test encoding validator with invalid encoding."""
+        with pytest.raises(ValidationError) as exc_info:
+            FlextLdifConfig(ldif_encoding="invalid-encoding")
+        assert "Invalid encoding" in str(exc_info.value)
+
+    def test_validate_max_workers_below_minimum(self) -> None:
+        """Test max_workers validator with value below minimum."""
+        with pytest.raises(ValidationError) as exc_info:
+            FlextLdifConfig(max_workers=0)
+        # Pydantic v2 error message format
+        assert "Input should be greater than or equal to 1" in str(exc_info.value)
+
+    def test_validate_max_workers_above_maximum(self) -> None:
+        """Test max_workers validator with value above maximum."""
+        with pytest.raises(ValidationError) as exc_info:
+            FlextLdifConfig(max_workers=999999)
+        # Pydantic v2 error message format
+        assert "Input should be less than or equal to 16" in str(exc_info.value)
+
+    def test_validate_validation_level_invalid(self) -> None:
+        """Test validation_level validator with invalid value."""
+        with pytest.raises(ValidationError) as exc_info:
+            FlextLdifConfig(validation_level="invalid")
+        assert "must be one of" in str(exc_info.value)
+
+    def test_validate_server_type_invalid(self) -> None:
+        """Test server_type validator with invalid value."""
+        with pytest.raises(ValidationError) as exc_info:
+            FlextLdifConfig(server_type="unknown_server")
+        assert "Invalid server_type" in str(exc_info.value)
+
+    def test_validate_analytics_detail_level_invalid(self) -> None:
+        """Test analytics_detail_level validator with invalid value."""
+        with pytest.raises(ValidationError) as exc_info:
+            FlextLdifConfig(analytics_detail_level="ultra")
+        assert "must be one of" in str(exc_info.value)
+
+    def test_validate_error_recovery_mode_invalid(self) -> None:
+        """Test error_recovery_mode validator with invalid value."""
+        with pytest.raises(ValidationError) as exc_info:
+            FlextLdifConfig(error_recovery_mode="abort")
+        assert "must be one of" in str(exc_info.value)
+
+    # =========================================================================
+    # FACTORY METHOD COVERAGE - All create_* methods
+    # =========================================================================
+
+    def test_create_default_factory(self) -> None:
+        """Test create_default factory method."""
+        config = FlextLdifConfig.create_default()
+        assert isinstance(config, FlextLdifConfig)
+        assert config.ldif_encoding == "utf-8"
+        assert config.max_workers == 4
+
+    def test_create_for_performance_factory(self) -> None:
+        """Test create_for_performance factory method."""
+        config = FlextLdifConfig.create_for_performance()
+        assert isinstance(config, FlextLdifConfig)
+        assert config.enable_performance_optimizations is True
+        assert config.enable_parallel_processing is True
+
+    def test_create_for_development_factory(self) -> None:
+        """Test create_for_development factory method."""
+        config = FlextLdifConfig.create_for_development()
+        assert isinstance(config, FlextLdifConfig)
+        assert config.debug_mode is True
+        assert config.verbose_logging is True
+
+    def test_create_for_server_type_factory(self) -> None:
+        """Test create_for_server_type factory method."""
+        config = FlextLdifConfig.create_for_server_type("active_directory")
+        assert isinstance(config, FlextLdifConfig)
+        assert config.server_type == "active_directory"
+
+    # =========================================================================
+    # GETTER METHOD COVERAGE - All get_* methods
+    # =========================================================================
+
+    def test_get_format_config_complete(self) -> None:
+        """Test get_format_config method comprehensively."""
+        config = FlextLdifConfig()
+        format_config = config.get_format_config()
+        assert isinstance(format_config, dict)
+        assert "encoding" in format_config
+        assert "max_line_length" in format_config
+        assert format_config["encoding"] == "utf-8"
+
+    def test_get_processing_config_complete(self) -> None:
+        """Test get_processing_config method comprehensively."""
+        config = FlextLdifConfig()
+        proc_config = config.get_processing_config()
+        assert isinstance(proc_config, dict)
+        assert "max_workers" in proc_config
+        assert "chunk_size" in proc_config
+        assert proc_config["max_workers"] == 4
+
+    def test_get_analytics_config_complete(self) -> None:
+        """Test get_analytics_config method comprehensively."""
+        config = FlextLdifConfig()
+        analytics_config = config.get_analytics_config()
+        assert isinstance(analytics_config, dict)
+        # Check for actual keys returned
+        assert "enable_analytics" in analytics_config or "cache_size" in analytics_config
+
+    def test_get_server_config(self) -> None:
+        """Test get_server_config method."""
+        config = FlextLdifConfig()
+        server_config = config.get_server_config()
+        assert isinstance(server_config, dict)
+        assert "server_type" in server_config
+
+    def test_get_debug_config(self) -> None:
+        """Test get_debug_config method."""
+        config = FlextLdifConfig()
+        debug_config = config.get_debug_config()
+        assert isinstance(debug_config, dict)
+        assert "debug_mode" in debug_config
+        assert "verbose_logging" in debug_config
+
+    def test_get_effective_encoding(self) -> None:
+        """Test get_effective_encoding method."""
+        # Encoding is already normalized in validator, use lowercase
+        config = FlextLdifConfig(ldif_encoding="utf-8")
+        encoding = config.get_effective_encoding()
+        assert encoding == "utf-8"
+
+    def test_get_effective_workers(self) -> None:
+        """Test get_effective_workers method."""
+        config = FlextLdifConfig(max_workers=8)
+        workers = config.get_effective_workers()
+        assert workers == 8
+
+    def test_is_performance_optimized(self) -> None:
+        """Test is_performance_optimized method."""
+        perf_config = FlextLdifConfig.create_for_performance()
+        assert perf_config.is_performance_optimized() is True
+
+        normal_config = FlextLdifConfig()
+        # Check actual value, don't assume
+        result = normal_config.is_performance_optimized()
+        assert isinstance(result, bool)
+
+    def test_is_development_optimized(self) -> None:
+        """Test is_development_optimized method."""
+        dev_config = FlextLdifConfig.create_for_development()
+        assert dev_config.is_development_optimized() is True
+
+        normal_config = FlextLdifConfig()
+        result = normal_config.is_development_optimized()
+        assert isinstance(result, bool)
+
+    def test_global_instance_management(self) -> None:
+        """Test global instance get and reset."""
+        # Get global instance
+        instance1 = FlextLdifConfig.get_global_instance()
+        assert isinstance(instance1, FlextLdifConfig)
+
+        # Should return same instance
+        instance2 = FlextLdifConfig.get_global_instance()
+        assert instance1 is instance2
+
+        # Reset global instance
+        FlextLdifConfig.reset_global_instance()
+
+        # Should create new instance after reset
+        instance3 = FlextLdifConfig.get_global_instance()
+        assert isinstance(instance3, FlextLdifConfig)
+        # After reset, it's a new instance
+        assert instance3 is not instance1

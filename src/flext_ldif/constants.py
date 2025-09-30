@@ -132,6 +132,21 @@ class FlextLdifConstants(FlextConstants):
         MAX_VALUES_PER_ATTRIBUTE: Final[int] = 100
         MAX_ATTRIBUTE_VALUE_LENGTH: Final[int] = 10000
 
+        # Attribute name constraints (RFC 4512)
+        MIN_ATTRIBUTE_NAME_LENGTH: Final[int] = 1
+        MAX_ATTRIBUTE_NAME_LENGTH: Final[int] = 255
+        ATTRIBUTE_NAME_PATTERN: Final[str] = r"^[a-zA-Z][a-zA-Z0-9-]*$"
+
+        # URL validation constraints
+        MIN_URL_LENGTH: Final[int] = 1
+        MAX_URL_LENGTH: Final[int] = 2048
+        URL_PATTERN: Final[str] = r"^(https?|ldap)://[^\s/$.?#].[^\s]*$"
+        SECURE_PROTOCOLS: Final[frozenset[str]] = frozenset(["https", "ldaps"])
+
+        # Encoding constraints
+        MIN_ENCODING_LENGTH: Final[int] = 1
+        MAX_ENCODING_LENGTH: Final[int] = 50
+
     # =============================================================================
     # OBJECTCLASS CONSTANTS
     # =============================================================================

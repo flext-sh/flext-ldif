@@ -310,17 +310,17 @@ class FlextLdifHandlers(FlextBus):
             # Context parameter is required by interface but not used in
             # default strategy
             _ = context
-            if self._config.error_recovery_mode == "strict":
+            if self._config.error_recovery_mode == "stop":
                 return FlextResult[FlextTypes.Core.Value].fail(
-                    f"Strict mode error: {error}"
+                    f"Stop mode error: {error}"
                 )
 
-            if self._config.error_recovery_mode == "lenient":
+            if self._config.error_recovery_mode == "skip":
                 return FlextResult[FlextTypes.Core.Value].ok({})
 
-            # adaptive mode
+            # continue mode
             return FlextResult[FlextTypes.Core.Value].fail(
-                f"Adaptive mode error: {error}"
+                f"Continue mode error: {error}"
             )
 
     # =============================================================================
@@ -428,7 +428,7 @@ class FlextLdifHandlers(FlextBus):
                 "object_class_statistics": self._analyze_object_classes(entries),
             }
 
-            if self._config.analytics_detail_level == "comprehensive":
+            if self._config.analytics_detail_level == "high":
                 analytics.update({
                     "validation_statistics": self._analyze_validation(entries),
                     "performance_metrics": self._analyze_performance(entries),

@@ -128,3 +128,133 @@ class TestFlextLdifExceptions:
         result = FlextLdifExceptions.entry_error("Entry validation failed")
         assert result.is_failure
         assert result.error == "Entry validation failed"
+
+    def test_dn_validation_error(self) -> None:
+        """Test DN validation error factory method."""
+        result = FlextLdifExceptions.dn_validation_error("Invalid DN format")
+        assert result.is_failure
+        assert result.error == "Invalid DN format"
+        assert result.error_code == "DN_VALIDATION_ERROR"
+
+    def test_dn_validation_error_with_dn_value(self) -> None:
+        """Test DN validation error with DN value parameter."""
+        result = FlextLdifExceptions.dn_validation_error(
+            "DN too long", dn_value="cn=" + "x" * 10000
+        )
+        assert result.is_failure
+        assert result.error == "DN too long"
+        assert result.error_code == "DN_VALIDATION_ERROR"
+
+    def test_attribute_validation_error(self) -> None:
+        """Test attribute validation error factory method."""
+        result = FlextLdifExceptions.attribute_validation_error("Invalid attribute")
+        assert result.is_failure
+        assert result.error == "Invalid attribute"
+        assert result.error_code == "ATTRIBUTE_VALIDATION_ERROR"
+
+    def test_attribute_validation_error_with_details(self) -> None:
+        """Test attribute validation error with attribute details."""
+        result = FlextLdifExceptions.attribute_validation_error(
+            "Attribute value type mismatch",
+            attribute_name="mail",
+            attribute_value="invalid@email",
+        )
+        assert result.is_failure
+        assert result.error == "Attribute value type mismatch"
+        assert result.error_code == "ATTRIBUTE_VALIDATION_ERROR"
+
+    def test_encoding_error(self) -> None:
+        """Test encoding error factory method."""
+        result = FlextLdifExceptions.encoding_error("Encoding failed")
+        assert result.is_failure
+        assert result.error == "Encoding failed"
+        assert result.error_code == "ENCODING_ERROR"
+
+    def test_encoding_error_with_encoding(self) -> None:
+        """Test encoding error with encoding type."""
+        result = FlextLdifExceptions.encoding_error(
+            "Cannot decode bytes", encoding="utf-8"
+        )
+        assert result.is_failure
+        assert result.error == "Cannot decode bytes"
+        assert result.error_code == "ENCODING_ERROR"
+
+    def test_url_validation_error(self) -> None:
+        """Test URL validation error factory method."""
+        result = FlextLdifExceptions.url_validation_error("Invalid URL")
+        assert result.is_failure
+        assert result.error == "Invalid URL"
+        assert result.error_code == "URL_VALIDATION_ERROR"
+
+    def test_url_validation_error_with_url(self) -> None:
+        """Test URL validation error with URL value."""
+        result = FlextLdifExceptions.url_validation_error(
+            "Malformed LDAP URL", url="ldap//invalid"
+        )
+        assert result.is_failure
+        assert result.error == "Malformed LDAP URL"
+        assert result.error_code == "URL_VALIDATION_ERROR"
+
+    def test_schema_validation_error(self) -> None:
+        """Test schema validation error factory method."""
+        result = FlextLdifExceptions.schema_validation_error("Schema mismatch")
+        assert result.is_failure
+        assert result.error == "Schema mismatch"
+        assert result.error_code == "SCHEMA_VALIDATION_ERROR"
+
+    def test_schema_validation_error_with_schema_name(self) -> None:
+        """Test schema validation error with schema name."""
+        result = FlextLdifExceptions.schema_validation_error(
+            "Unknown schema", schema_name="inetOrgPerson"
+        )
+        assert result.is_failure
+        assert result.error == "Unknown schema"
+        assert result.error_code == "SCHEMA_VALIDATION_ERROR"
+
+    def test_objectclass_error(self) -> None:
+        """Test objectclass error factory method."""
+        result = FlextLdifExceptions.objectclass_error("Invalid objectClass")
+        assert result.is_failure
+        assert result.error == "Invalid objectClass"
+        assert result.error_code == "OBJECTCLASS_ERROR"
+
+    def test_objectclass_error_with_objectclass(self) -> None:
+        """Test objectclass error with objectclass value."""
+        result = FlextLdifExceptions.objectclass_error(
+            "Unknown objectClass", objectclass="customClass"
+        )
+        assert result.is_failure
+        assert result.error == "Unknown objectClass"
+        assert result.error_code == "OBJECTCLASS_ERROR"
+
+    def test_ldif_format_error(self) -> None:
+        """Test LDIF format error factory method."""
+        result = FlextLdifExceptions.ldif_format_error("Invalid LDIF format")
+        assert result.is_failure
+        assert result.error == "Invalid LDIF format"
+        assert result.error_code == "LDIF_FORMAT_ERROR"
+
+    def test_ldif_format_error_with_line_number(self) -> None:
+        """Test LDIF format error with line number."""
+        result = FlextLdifExceptions.ldif_format_error(
+            "Missing colon after attribute", line_number=42
+        )
+        assert result.is_failure
+        assert result.error == "Missing colon after attribute"
+        assert result.error_code == "LDIF_FORMAT_ERROR"
+
+    def test_rfc_compliance_error(self) -> None:
+        """Test RFC compliance error factory method."""
+        result = FlextLdifExceptions.rfc_compliance_error("RFC violation")
+        assert result.is_failure
+        assert result.error == "RFC violation"
+        assert result.error_code == "RFC_COMPLIANCE_ERROR"
+
+    def test_rfc_compliance_error_with_rfc_section(self) -> None:
+        """Test RFC compliance error with RFC section."""
+        result = FlextLdifExceptions.rfc_compliance_error(
+            "Invalid DN encoding", rfc_section="RFC 4514 Section 2.4"
+        )
+        assert result.is_failure
+        assert result.error == "Invalid DN encoding"
+        assert result.error_code == "RFC_COMPLIANCE_ERROR"

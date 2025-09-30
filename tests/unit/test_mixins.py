@@ -6,6 +6,7 @@ from typing import cast
 import pytest
 from tests.support import LdifTestData
 
+from flext_core import FlextResult
 from flext_ldif.mixins import FlextLdifMixins
 
 
@@ -68,6 +69,51 @@ class TestFlextLdifAnalyticsMixin:
         assert type_counts["group"] == 1
         assert attr_freq["cn"] == 2
 
+    def test_analyze_dn_patterns(self) -> None:
+        """Test analyze_dn_patterns method (lines 248-263)."""
+        # Create entries with various DNs to cover all branches
+        entries = [
+            type("Entry", (), {"dn": "cn=test1,ou=users,dc=example,dc=com"})(),
+            type("Entry", (), {"dn": "cn=test2,ou=users,dc=example,dc=com"})(),
+            type("Entry", (), {"dn": "invalid<>DN"})(),  # Invalid DN - line 261-263
+            type("Entry", (), {"dn": ""})(),  # Empty DN
+        ]
+
+        result = FlextLdifMixins.AnalyticsMixin.analyze_dn_patterns(entries)
+
+        assert isinstance(result, dict)
+        # Valid DNs should contribute to pattern counts
+        assert "cn" in result
+        assert "ou" in result
+        assert "dc" in result
+
+    def test_analyze_with_result_success(self) -> None:
+        """Test analyze_with_result with successful analysis (lines 272-274)."""
+        def analyzer(data: list[int]) -> dict[str, object]:
+            return {"sum": sum(data), "count": len(data)}
+
+        result = FlextLdifMixins.AnalyticsMixin.analyze_with_result(
+            analyzer, [1, 2, 3, 4, 5]
+        )
+
+        assert result.is_success
+        unwrapped = result.unwrap()
+        assert unwrapped["sum"] == 15
+        assert unwrapped["count"] == 5
+
+    def test_analyze_with_result_error(self) -> None:
+        """Test analyze_with_result with error (lines 272, 275-276)."""
+        def error_analyzer(data: list[int]) -> dict[str, object]:
+            error_msg = "Analysis error"
+            raise ValueError(error_msg)
+
+        result = FlextLdifMixins.AnalyticsMixin.analyze_with_result(
+            error_analyzer, [1, 2, 3]
+        )
+
+        assert result.is_failure
+        assert "Analysis error" in result.error
+
 
 class TestFlextLdifValidationMixin:
     """Test suite for FlextLdifMixins.ValidationMixin."""
@@ -116,7 +162,7 @@ class TestFlextLdifValidationMixin:
             FlextLdifMixins.ValidationMixin.validate_attribute_values("not a list")
 
         # Invalid values - non-string value
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError):
             FlextLdifMixins.ValidationMixin.validate_attribute_values(
                 cast("Sequence[str]", [123])
             )
@@ -204,6 +250,34 @@ class TestFlextLdifProcessingMixin:
         assert result.error is not None
         assert "Test error" in result.error
 
+    def test_normalize_dn_components_invalid_dn(self) -> None:
+        """Test normalize_dn_components with invalid DN (error path lines 117-118)."""
+        # Invalid DN that will trigger ValueError and return original
+        invalid_dn = "invalid<>DN"
+        result = FlextLdifMixins.ProcessingMixin.normalize_dn_components(invalid_dn)
+        assert result == invalid_dn  # Should return original on error
+
+    def test_extract_dn_components_invalid_dn(self) -> None:
+        """Test extract_dn_components with invalid DN (error path lines 132-133)."""
+        # Invalid DN that will trigger ValueError and return empty list
+        invalid_dn = "invalid<>DN"
+        result = FlextLdifMixins.ProcessingMixin.extract_dn_components(invalid_dn)
+        assert result == []  # Should return empty list on error
+
+    def test_process_batch_with_result_error(self) -> None:
+        """Test process_batch_with_result with error (lines 156-163)."""
+        def error_processor(x: str) -> str:
+            error_msg = "Batch processing error"
+            raise ValueError(error_msg)
+
+        data_batch = ["item1", "item2", "item3"]
+        result = FlextLdifMixins.ProcessingMixin.process_batch_with_result(
+            error_processor, data_batch
+        )
+
+        assert result.is_failure
+        assert "Batch processing error" in result.error
+
 
 class TestFlextLdifTransformationMixin:
     """Test suite for FlextLdifMixins.TransformationMixin."""
@@ -243,6 +317,27 @@ class TestFlextLdifTransformationMixin:
         assert "cn" in result
         assert "sn" in result
         assert "mail" in result
+
+    def test_transform_dn_case_with_invalid_component(self) -> None:
+        """Test transform_dn_case with component without '=' (line 191)."""
+        # DN component without '=' should be preserved as-is
+        dn = "CN=Test,invalidcomponent,DC=Com"
+        result = FlextLdifMixins.TransformationMixin.transform_dn_case(dn, str.lower)
+        # Invalid component should be preserved
+        assert "invalidcomponent" in result
+
+    def test_transform_with_result_error(self) -> None:
+        """Test transform_with_result with error (lines 211-215)."""
+        def error_transformer(x: str) -> str:
+            error_msg = "Transform error"
+            raise ValueError(error_msg)
+
+        result = FlextLdifMixins.TransformationMixin.transform_with_result(
+            error_transformer, "test"
+        )
+
+        assert result.is_failure
+        assert "Transform error" in result.error
 
 
 class TestFlextLdifCachingMixin:
@@ -289,6 +384,22 @@ class TestFlextLdifCachingMixin:
         assert "size" in stats
         assert "hits" in stats
         assert "misses" in stats
+
+    def test_get_from_cache_hit(self) -> None:
+        """Test cache hit path (lines 295-296)."""
+        mixin = FlextLdifMixins.CachingMixin()
+
+        # Set a value first
+        mixin.set_in_cache("key1", "value1")
+
+        # Get it back - should hit cache (lines 295-296)
+        result = mixin.get_from_cache("key1")
+        assert result.is_success
+        assert result.unwrap() == "value1"
+
+        # Check stats show a hit
+        stats = mixin.get_cache_stats()
+        assert stats["hits"] >= 1
 
 
 class TestFlextLdifIteratorMixin:
@@ -450,3 +561,108 @@ class TestFlextLdifMixinsIntegration:
             mock_entries
         )
         assert analytics_result["person"] >= 1
+
+    # =========================================================================
+    # COVERAGE IMPROVEMENT TESTS - Missing Lines (93 lines)
+    # =========================================================================
+
+    def test_validate_encoding_with_model(self) -> None:
+        """Test validate_encoding using Model validation (lines 86-90)."""
+        # Valid encoding
+        result = FlextLdifMixins.ValidationMixin.validate_encoding("utf-8")
+        assert result == "utf-8"
+
+        # Invalid encoding should raise ValueError
+        with pytest.raises(ValueError):
+            FlextLdifMixins.ValidationMixin.validate_encoding("invalid-encoding")
+
+    def test_validate_with_result_success(self) -> None:
+        """Test validate_with_result with successful validation (lines 97-99)."""
+        def validate_positive(x: int) -> int:
+            if x > 0:
+                return x
+            error_msg = "Must be positive"
+            raise ValueError(error_msg)
+
+        result = FlextLdifMixins.ValidationMixin.validate_with_result(validate_positive, 5)
+        assert result.is_success
+        assert result.unwrap() == 5
+
+    def test_validate_with_result_error(self) -> None:
+        """Test validate_with_result with validation error (lines 100-101)."""
+        def validate_positive(x: int) -> int:
+            if x > 0:
+                return x
+            error_msg = "Must be positive"
+            raise ValueError(error_msg)
+
+        result = FlextLdifMixins.ValidationMixin.validate_with_result(validate_positive, -5)
+        assert result.is_failure
+        assert "positive" in str(result.error).lower()
+
+    def test_caching_mixin_clear_cache_error_handling(self) -> None:
+        """Test clear_cache success path and error handling."""
+        cache = FlextLdifMixins.CachingMixin()
+
+        # Add data to cache
+        cache.set_in_cache("key1", "value1")
+        cache.set_in_cache("key2", "value2")
+
+        # Verify cache has data
+        stats = cache.get_cache_stats()
+        assert stats["size"] == 2
+
+        # Clear cache successfully
+        result = cache.clear_cache()
+        assert result.is_success
+
+        # Verify cache is empty after clear
+        stats = cache.get_cache_stats()
+        assert stats["size"] == 0
+        assert stats["hits"] == 0
+        assert stats["misses"] == 0
+
+    def test_iterator_mixin_process_iterator_with_result(self) -> None:
+        """Test process_iterator_with_result method."""
+        data = [1, 2, 3, 4, 5]
+        data_iter = iter(data)
+
+        def processor(x: object) -> FlextResult[object]:
+            if isinstance(x, int) and x > 0:
+                return FlextResult[object].ok(x * 2)
+            return FlextResult[object].fail("Invalid value")
+
+        results = list(
+            FlextLdifMixins.IteratorMixin.process_iterator_with_result(
+                data_iter, processor
+            )
+        )
+        assert len(results) == 5
+        assert all(r.is_success for r in results)
+        assert results[0].unwrap() == 2
+        assert results[4].unwrap() == 10
+
+    def test_mixin_coordinator_combine_mixins(self) -> None:
+        """Test combine_mixins method."""
+        coordinator = FlextLdifMixins.MixinCoordinator()
+
+        # Test combining mixins
+        result = coordinator.combine_mixins(
+            FlextLdifMixins.ValidationMixin,
+            FlextLdifMixins.ProcessingMixin
+        )
+        assert result.is_success
+        combined_class = result.unwrap()
+        assert combined_class is not None
+
+    def test_mixin_coordinator_get_mixins(self) -> None:
+        """Test all get_*_mixin methods."""
+        coordinator = FlextLdifMixins.MixinCoordinator()
+
+        # Test all getter methods
+        assert coordinator.get_validation_mixin() is not None
+        assert coordinator.get_processing_mixin() is not None
+        assert coordinator.get_transformation_mixin() is not None
+        assert coordinator.get_analytics_mixin() is not None
+        assert coordinator.get_caching_mixin() is not None
+        assert coordinator.get_iterator_mixin() is not None

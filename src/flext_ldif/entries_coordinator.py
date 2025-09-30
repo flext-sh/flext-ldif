@@ -13,10 +13,8 @@ from pydantic import ConfigDict
 from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.entry import FlextLdifEntryBuilder
-from flext_ldif.mixins import FlextLdifMixins
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks import FlextLdifEntryQuirks
-from flext_ldif.utilities import FlextLdifUtilities
 
 
 class FlextLdifEntries(FlextService[dict[str, object]]):
@@ -90,32 +88,34 @@ class FlextLdifEntries(FlextService[dict[str, object]]):
             self._logger = FlextLogger(__name__)
 
         def validate_dn(self, dn: str) -> FlextResult[bool]:
-            """Validate distinguished name format using centralized utilities."""
-            # Use centralized validation - SINGLE SOURCE OF TRUTH
-            return FlextLdifUtilities.DnUtilities.validate_dn_format(dn)
+            """Validate distinguished name format using DistinguishedName Model."""
+            # Use Model validation - centralized in FlextLdifModels.DistinguishedName
+            try:
+                FlextLdifModels.DistinguishedName(value=dn)
+                return FlextResult[bool].ok(True)
+            except ValueError as e:
+                return FlextResult[bool].fail(str(e))
 
         def validate_attributes(
             self, attributes: dict[str, list[str]]
         ) -> FlextResult[bool]:
-            """Validate entry attributes using centralized ValidationMixin."""
+            """Validate entry attributes using centralized Models."""
             if not attributes:
                 return FlextResult[bool].fail(
                     FlextLdifConstants.ErrorMessages.ATTRIBUTES_EMPTY_ERROR
                 )
 
-            # Use centralized validation from ValidationMixin
+            # Use centralized validation from Models - validation happens in Pydantic validators
             for attr_name, attr_values in attributes.items():
-                # Validate attribute name using centralized method
+                # Validate attribute name using AttributeName Model
                 try:
-                    FlextLdifMixins.ValidationMixin.validate_attribute_name(attr_name)
+                    FlextLdifModels.AttributeName(name=attr_name)
                 except (TypeError, ValueError) as e:
                     return FlextResult[bool].fail(str(e))
 
-                # Validate attribute values using centralized method
+                # Validate attribute values using AttributeValues Model
                 try:
-                    FlextLdifMixins.ValidationMixin.validate_attribute_values(
-                        attr_values
-                    )
+                    FlextLdifModels.AttributeValues(values=attr_values)
                 except (TypeError, ValueError) as e:
                     return FlextResult[bool].fail(str(e))
 

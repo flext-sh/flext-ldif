@@ -113,7 +113,7 @@ class FlextLdifQuirksManager(FlextService[dict[str, object]]):
             return FlextResult[str].ok(constants.SERVER_TYPE_GENERIC)
 
         for entry in entries:
-            object_classes_raw = entry.get_attribute("objectClass") or []
+            object_classes_raw: object = entry.get_attribute("objectClass") or []
             object_classes: list[str] = (
                 object_classes_raw if isinstance(object_classes_raw, list) else []
             )
