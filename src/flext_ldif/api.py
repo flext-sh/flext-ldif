@@ -14,6 +14,7 @@ from pydantic import ConfigDict
 
 from flext_core import FlextContainer, FlextLogger, FlextResult, FlextService
 from flext_ldif.config import FlextLdifConfig
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.management import FlextLdifManagement
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.processor import FlextLdifProcessor
@@ -110,11 +111,12 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
 
         """
         return self._processor_result.flat_map(
-            lambda processor: processor.parse_string(content)
+            lambda processor: processor.parse_string(content),
         ).map(self._log_parse_success)
 
     def parse_ldif_file(
-        self, file_path: Path | str
+        self,
+        file_path: Path | str,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Parse LDIF file using file path (string or Path).
 
@@ -126,11 +128,12 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
         if isinstance(file_path, str):
             file_path = Path(file_path)
         return self._processor_result.flat_map(
-            lambda processor: processor.parse_ldif_file(file_path)
+            lambda processor: processor.parse_ldif_file(file_path),
         ).map(self._log_parse_file_success)
 
     def validate_entries(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Validate LDIF entries and return valid entries.
 
@@ -140,14 +143,14 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
 
         """
         validation_result = self._processor_result.flat_map(
-            lambda processor: processor.validate_entries(entries)
+            lambda processor: processor.validate_entries(entries),
         )
 
         if validation_result.is_success:
             self._log_validation_success_with_entries(entries)
             return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
         return FlextResult[list[FlextLdifModels.Entry]].fail(
-            validation_result.error or "Validation failed"
+            validation_result.error or "Validation failed",
         )
 
     def write(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
@@ -159,11 +162,13 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
 
         """
         return self._processor_result.flat_map(
-            lambda processor: processor.write_string(entries)
+            lambda processor: processor.write_string(entries),
         ).map(self._log_write_success)
 
     def write_file(
-        self, entries: list[FlextLdifModels.Entry], file_path: Path | str
+        self,
+        entries: list[FlextLdifModels.Entry],
+        file_path: Path | str,
     ) -> FlextResult[bool]:
         """Write entries to LDIF file.
 
@@ -177,7 +182,7 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
 
         return (
             self._processor_result.flat_map(
-                lambda processor: processor.write_file(entries, str(file_path))
+                lambda processor: processor.write_file(entries, str(file_path)),
             )
             .map(lambda _: True)
             .map(lambda success: self._log_write_file_success(success=success))
@@ -208,11 +213,12 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
             transformer = identity_transformer
 
         return self._processor_result.flat_map(
-            lambda processor: processor.transform_entries(entries, transformer)
+            lambda processor: processor.transform_entries(entries, transformer),
         ).map(self._log_transformation_success)
 
     def analyze(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[dict[str, object]]:
         """Analyze entries and return statistics.
 
@@ -222,7 +228,7 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
 
         """
         return self._processor_result.flat_map(
-            lambda processor: processor.analyze_entries(entries)
+            lambda processor: processor.analyze_entries(entries),
         ).map(self._log_analysis_success)
 
     # =============================================================================
@@ -230,7 +236,9 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
     # =============================================================================
 
     def transform_entries(
-        self, entries: list[object], transformer: object
+        self,
+        entries: list[object],
+        transformer: object,
     ) -> FlextResult[list[object]]:
         """Transform entries using transformer function - implements LdifProcessorProtocol.
 
@@ -245,7 +253,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
         # Cast entries to the correct type and delegate to existing transform method
         typed_entries = cast("list[FlextLdifModels.Entry]", entries)
         typed_transformer = cast(
-            "Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry]", transformer
+            "Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry]",
+            transformer,
         )
 
         result = self.transform(typed_entries, typed_transformer)
@@ -280,7 +289,9 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
         return self.write(typed_entries)
 
     def write_entries_to_file(
-        self, entries: list[object], file_path: str
+        self,
+        entries: list[object],
+        file_path: str,
     ) -> FlextResult[bool]:
         """Write entries to LDIF file - implements LdifWriterProtocol.
 
@@ -341,7 +352,9 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
                 dn_parts = dn_value.split(",")
                 if dn_parts:
                     dn_patterns.add(
-                        dn_parts[0].split("=")[0] if "=" in dn_parts[0] else dn_parts[0]
+                        dn_parts[0].split("=")[0]
+                        if "=" in dn_parts[0]
+                        else dn_parts[0],
                     )
 
         return {
@@ -367,7 +380,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
             return FlextResult[list[FlextLdifModels.Entry]].ok(filtered_entries)
         except Exception as e:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
-                f"Filter operation failed: {e}", error_code="FILTER_ERROR"
+                f"Filter operation failed: {e}",
+                error_code="FILTER_ERROR",
             )
 
     def health_check(self) -> FlextResult[FlextLdifTypes.HealthStatusDict]:
@@ -385,7 +399,7 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
                     "timestamp": FlextLdifUtilities.TimeUtilities.get_timestamp(),
                     "config": self._get_config_summary(),
                 },
-            )
+            ),
         )
 
     @override
@@ -416,7 +430,7 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
                     "config": self._get_config_summary(),
                     "pattern": "railway_oriented_programming",
                 },
-            )
+            ),
         ).unwrap_or(
             cast(
                 "dict[str, object]",
@@ -425,7 +439,7 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
                     "status": "processor_initialization_failed",
                     "pattern": "railway_oriented_programming",
                 },
-            )
+            ),
         )
 
     # =============================================================================
@@ -433,7 +447,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
     # =============================================================================
 
     def entry_statistics(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[dict[str, object]]:
         """Get comprehensive entry statistics.
 
@@ -477,7 +492,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
             return FlextResult[dict[str, object]].ok(statistics)
         except Exception as e:  # pragma: no cover
             return FlextResult[dict[str, object]].fail(
-                f"Statistics generation failed: {e}", error_code="STATISTICS_ERROR"
+                f"Statistics generation failed: {e}",
+                error_code="STATISTICS_ERROR",
             )
 
     # =============================================================================
@@ -485,7 +501,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
     # =============================================================================
 
     def _log_parse_success(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> list[FlextLdifModels.Entry]:
         """Log successful parsing operation.
 
@@ -497,7 +514,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
         return entries
 
     def _log_parse_file_success(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> list[FlextLdifModels.Entry]:
         """Log successful file parsing operation.
 
@@ -509,7 +527,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
         return entries
 
     def _log_validation_success_with_entries(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> list[FlextLdifModels.Entry]:
         """Log successful validation operation with entries.
 
@@ -518,7 +537,7 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
 
         """
         self._logger.info(
-            f"Validation completed successfully for {len(entries)} entries"
+            f"Validation completed successfully for {len(entries)} entries",
         )
         return entries
 
@@ -530,7 +549,7 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
 
         """
         self._logger.info(
-            f"Successfully generated LDIF content ({len(content)} characters)"
+            f"Successfully generated LDIF content ({len(content)} characters)",
         )
         return content
 
@@ -541,11 +560,12 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
             bool: The success status.
 
         """
-        self._logger.info(f"Successfully wrote LDIF file: {success}")
+        self._logger.info("Successfully wrote LDIF file: %s", success)
         return success
 
     def _log_transformation_success(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> list[FlextLdifModels.Entry]:
         """Log successful transformation operation.
 
@@ -557,7 +577,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
         return entries
 
     def _log_analysis_success(
-        self, stats: FlextLdifTypes.LdifStatistics
+        self,
+        stats: FlextLdifTypes.LdifStatistics,
     ) -> FlextLdifTypes.LdifStatistics:
         """Log successful analysis operation.
 
@@ -566,7 +587,7 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
 
         """
         self._logger.info(
-            f"Successfully analyzed entries, generated {len(stats)} statistics"
+            f"Successfully analyzed entries, generated {len(stats)} statistics",
         )
         return stats
 
@@ -582,14 +603,19 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
             {
                 "max_entries": getattr(self._config, "ldif_max_entries", 10000),
                 "strict_validation": str(
-                    getattr(self._config, "ldif_strict_validation", True)
+                    getattr(self._config, "ldif_strict_validation", True),
                 ),
-                "encoding": getattr(self._config, "ldif_encoding", "utf-8"),
+                "encoding": getattr(
+                    self._config,
+                    "ldif_encoding",
+                    FlextLdifConstants.Encoding.DEFAULT_ENCODING,
+                ),
             },
         )
 
     def filter_persons(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries to only include person entries.
 
@@ -605,11 +631,14 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
             return FlextResult[list[FlextLdifModels.Entry]].ok(person_entries)
         except Exception as e:  # pragma: no cover
             return FlextResult[list[FlextLdifModels.Entry]].fail(
-                f"Person filtering failed: {e}", error_code="PERSON_FILTER_ERROR"
+                f"Person filtering failed: {e}",
+                error_code="PERSON_FILTER_ERROR",
             )
 
     def filter_by_objectclass(
-        self, entries: list[FlextLdifModels.Entry], object_class: str
+        self,
+        entries: list[FlextLdifModels.Entry],
+        object_class: str,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries by object class.
 
@@ -633,7 +662,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
             )
 
     def filter_valid(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries to only include valid entries.
 
@@ -653,7 +683,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
             return FlextResult[list[FlextLdifModels.Entry]].ok(valid_entries)
         except Exception as e:  # pragma: no cover
             return FlextResult[list[FlextLdifModels.Entry]].fail(
-                f"Valid filtering failed: {e}", error_code="VALID_FILTER_ERROR"
+                f"Valid filtering failed: {e}",
+                error_code="VALID_FILTER_ERROR",
             )
 
     # =============================================================================
@@ -661,7 +692,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
     # =============================================================================
 
     def process_with_schema(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[dict[str, object]]:
         """Process entries with schema extraction and validation.
 
@@ -677,7 +709,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
         return self._management.process_entries_with_schema(entries)
 
     def process_with_acl(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[dict[str, object]]:
         """Process entries with ACL extraction.
 
@@ -693,7 +726,9 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
         return self._management.process_entries_with_acl(entries)
 
     def adapt_for_server(
-        self, entries: list[FlextLdifModels.Entry], target_server: str
+        self,
+        entries: list[FlextLdifModels.Entry],
+        target_server: str,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Adapt entries for target LDAP server type.
 
@@ -710,7 +745,9 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
         return self._management.adapt_entries_for_server(entries, target_server)
 
     def validate_for_server(
-        self, entries: list[FlextLdifModels.Entry], server_type: str | None = None
+        self,
+        entries: list[FlextLdifModels.Entry],
+        server_type: str | None = None,
     ) -> FlextResult[dict[str, object]]:
         """Validate entries for server compliance.
 
@@ -727,7 +764,9 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
         return self._management.validate_entries_for_server(entries, server_type)
 
     def process_complete(
-        self, content: str, server_type: str | None = None
+        self,
+        content: str,
+        server_type: str | None = None,
     ) -> FlextResult[dict[str, object]]:
         """Complete LDIF processing pipeline with all operations.
 

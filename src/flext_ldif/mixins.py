@@ -12,6 +12,7 @@ from typing import override
 
 from flext_core import FlextMixins, FlextResult, T, U
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.utilities import FlextLdifUtilities
 
 
 class FlextLdifMixins(FlextMixins):
@@ -30,24 +31,13 @@ class FlextLdifMixins(FlextMixins):
 
         @staticmethod
         def validate_dn_format(dn_value: str) -> str:
-            """Validate DN format and return normalized value."""
-            if not dn_value or not dn_value.strip():
-                raise ValueError(FlextLdifConstants.ErrorMessages.DN_EMPTY_ERROR)
-
-            # Basic DN format validation
-            if not re.match(
-                r"^[a-zA-Z][a-zA-Z0-9-]*=", dn_value.split(",", maxsplit=1)[0]
-            ):
-                raise ValueError(
-                    FlextLdifConstants.ErrorMessages.DN_INVALID_FORMAT_ERROR
-                )
-
-            # Check for invalid characters
-            invalid_chars = {"\n", "\r", "\0"}
-            if any(char in dn_value for char in invalid_chars):
-                raise ValueError(
-                    FlextLdifConstants.ErrorMessages.DN_INVALID_CHARS_ERROR
-                )
+            """Validate DN format using centralized FlextLdifUtilities.DnUtilities."""
+            # Use centralized validation - SINGLE SOURCE OF TRUTH
+            validation_result = FlextLdifUtilities.DnUtilities.validate_dn_format(
+                dn_value
+            )
+            if validation_result.is_failure:
+                raise ValueError(validation_result.error or "Invalid DN format")
 
             return dn_value.strip()
 
@@ -58,8 +48,9 @@ class FlextLdifMixins(FlextMixins):
                 raise TypeError(FlextLdifConstants.ErrorMessages.ATTRIBUTE_NAME_ERROR)
 
             if not attr_name.strip():
-                msg = "Attribute name cannot be empty"
-                raise ValueError(msg)
+                raise ValueError(
+                    FlextLdifConstants.ErrorMessages.ATTRIBUTE_NAME_EMPTY_ERROR
+                )
 
             # RFC 4512 attribute name validation
             if not re.match(r"^[a-zA-Z][a-zA-Z0-9-]*$", attr_name):
@@ -88,8 +79,7 @@ class FlextLdifMixins(FlextMixins):
         def validate_url_format(url: str) -> str:
             """Validate URL format for LDIF URL references."""
             if not url or not url.strip():
-                msg = "URL cannot be empty"
-                raise ValueError(msg)
+                raise ValueError(FlextLdifConstants.ErrorMessages.URL_EMPTY_ERROR)
 
             # Basic URL validation - support HTTP, HTTPS, and LDAP URLs
             url_pattern = r"^(https?|ldap)://[^\s/$.?#].[^\s]*$"
@@ -127,32 +117,26 @@ class FlextLdifMixins(FlextMixins):
 
         @staticmethod
         def normalize_dn_components(dn: str) -> str:
-            """Normalize DN components."""
-            components = [comp.strip() for comp in dn.split(",") if comp.strip()]
-            normalized_components: list[str] = []
-
-            for comp in components:
-                if "=" in comp:
-                    attr, value = comp.split("=", 1)
-                    normalized_attr = attr.strip().lower()
-                    normalized_value = value.strip()
-                    component_str = f"{normalized_attr}={normalized_value}"
-                    normalized_components.append(component_str)
-                else:
-                    normalized_components.append(comp)
-
-            return ",".join(normalized_components)
+            """Normalize DN components using centralized FlextLdifUtilities."""
+            # Use centralized normalization - SINGLE SOURCE OF TRUTH
+            normalized_result = FlextLdifUtilities.DnUtilities.normalize_dn(dn)
+            return normalized_result.unwrap() if normalized_result.is_success else dn
 
         @staticmethod
         def extract_dn_components(dn: str) -> list[tuple[str, str]]:
-            """Extract DN components as (attribute, value) pairs."""
-            components = []
-            for comp in dn.split(","):
-                stripped_comp = comp.strip()
-                if "=" in stripped_comp:
-                    attr, value = stripped_comp.split("=", 1)
-                    components.append((attr.strip(), value.strip()))
-            return components
+            """Extract DN components as (attribute, value) pairs using centralized utilities."""
+            # Use centralized parsing - SINGLE SOURCE OF TRUTH
+            components_result = FlextLdifUtilities.DnUtilities.parse_dn_components(dn)
+            if components_result.is_failure:
+                return []
+
+            components = components_result.unwrap()
+            pairs: list[tuple[str, str]] = []
+            for comp in components:
+                if "=" in comp:
+                    attr, value = comp.split("=", 1)
+                    pairs.append((attr.strip(), value.strip()))
+            return pairs
 
         @staticmethod
         def build_dn_from_components(components: Sequence[tuple[str, str]]) -> str:
@@ -266,18 +250,23 @@ class FlextLdifMixins(FlextMixins):
 
         @staticmethod
         def analyze_dn_patterns(entries: Sequence[object]) -> dict[str, int]:
-            """Analyze DN patterns."""
+            """Analyze DN patterns using centralized FlextLdifUtilities."""
             pattern_counts: dict[str, int] = {}
             for entry in entries:
                 dn = getattr(entry, "dn", "")
                 if isinstance(dn, str):
-                    for comp in dn.split(","):
-                        stripped_comp = comp.strip()
-                        if "=" in stripped_comp:
-                            attr_name = stripped_comp.split("=")[0].lower()
-                            pattern_counts[attr_name] = (
-                                pattern_counts.get(attr_name, 0) + 1
-                            )
+                    # Use centralized parsing - SINGLE SOURCE OF TRUTH
+                    components_result = (
+                        FlextLdifUtilities.DnUtilities.parse_dn_components(dn)
+                    )
+                    if components_result.is_success:
+                        components = components_result.unwrap()
+                        for comp in components:
+                            if "=" in comp:
+                                attr_name = comp.split("=")[0].strip().lower()
+                                pattern_counts[attr_name] = (
+                                    pattern_counts.get(attr_name, 0) + 1
+                                )
             return pattern_counts
 
         @classmethod

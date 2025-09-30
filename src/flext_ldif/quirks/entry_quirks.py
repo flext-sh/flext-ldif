@@ -12,6 +12,7 @@ from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks import constants
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
+from flext_ldif.utilities import FlextLdifUtilities
 
 
 class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
@@ -245,7 +246,13 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
 
         issues: list[str] = []
 
-        components = [comp.strip() for comp in dn.split(",")]
+        # Use centralized DnUtilities for DN parsing
+        components_result = FlextLdifUtilities.DnUtilities.parse_dn_components(dn)
+        if components_result.is_failure:
+            issues.append(f"Invalid DN format: {components_result.error}")
+            return FlextResult[list[str]].ok(issues)
+
+        components = components_result.unwrap()
         for component in components:
             if "=" not in component:
                 issues.append(f"Invalid DN component format: {component}")

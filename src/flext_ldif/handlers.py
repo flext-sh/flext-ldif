@@ -12,6 +12,7 @@ from typing import cast, override
 
 from flext_core import FlextBus, FlextContainer, FlextLogger, FlextResult, FlextTypes
 from flext_ldif.config import FlextLdifConfig
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
 
@@ -150,7 +151,7 @@ class FlextLdifHandlers(FlextBus):
             """Validate batch of data using monadic composition."""
             if not data_batch:
                 return FlextResult[Sequence[FlextTypes.Core.Value]].fail(
-                    "Data batch cannot be empty"
+                    FlextLdifConstants.ErrorMessages.DATA_BATCH_EMPTY_ERROR
                 )
 
             validated_batch: list[FlextTypes.Core.Value] = []
@@ -221,7 +222,7 @@ class FlextLdifHandlers(FlextBus):
             """Process batch of data with parallel processing support."""
             if not data_batch:
                 return FlextResult[Sequence[FlextTypes.Core.Value]].fail(
-                    "Data batch cannot be empty"
+                    FlextLdifConstants.ErrorMessages.DATA_BATCH_EMPTY_ERROR
                 )
 
             if (
@@ -416,7 +417,7 @@ class FlextLdifHandlers(FlextBus):
 
             if not entries:
                 return FlextResult[FlextTypes.Core.JsonDict].fail(
-                    "Entries cannot be empty"
+                    FlextLdifConstants.ErrorMessages.ENTRIES_EMPTY_ERROR
                 )
 
             analytics = {

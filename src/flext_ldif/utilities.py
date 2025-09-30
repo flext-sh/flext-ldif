@@ -13,6 +13,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from flext_core import FlextResult, FlextUtilities
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.protocols import FlextLdifProtocols
 
 
@@ -22,7 +23,6 @@ class FlextLdifUtilities(FlextUtilities):
     Contains all utility subclasses for LDIF domain operations.
     Follows FLEXT pattern: one class per module with nested subclasses.
     Extends FlextUtilities with LDIF-specific functionality.
-    Provides proxy methods for backward compatibility.
     """
 
     # =========================================================================
@@ -179,7 +179,9 @@ class FlextLdifUtilities(FlextUtilities):
 
                 # Count lines
                 line_count = 0
-                with Path(file_path).open("r", encoding="utf-8") as file:
+                with Path(file_path).open(
+                    "r", encoding=FlextLdifConstants.Encoding.DEFAULT_ENCODING
+                ) as file:
                     for _ in file:
                         line_count += 1
 
@@ -348,3 +350,205 @@ class FlextLdifUtilities(FlextUtilities):
                 if hasattr(entry, "attributes"):
                     attribute_names.update(entry.attributes.keys())
             return attribute_names
+
+    # =========================================================================
+    # DN UTILITIES - Distinguished Name operations (SINGLE SOURCE OF TRUTH)
+    # =========================================================================
+
+    class DnUtilities:
+        """Distinguished Name utility methods - centralized DN operations.
+
+        This is the SINGLE SOURCE OF TRUTH for all DN operations in flext-ldif.
+        All DN parsing, validation, and normalization should use these methods.
+        """
+
+        @staticmethod
+        def parse_dn_components(dn: str) -> FlextResult[list[str]]:
+            r"""Parse DN into components - SINGLE SOURCE OF TRUTH for DN splitting.
+
+            Handles escaped commas (\,) properly according to RFC 4514.
+
+            Args:
+                dn: Distinguished Name string
+
+            Returns:
+                FlextResult[list[str]]: List of DN components or error
+
+            """
+            if not dn or not dn.strip():
+                return FlextResult[list[str]].fail("DN cannot be empty")
+
+            try:
+                # Split by comma but respect escaped commas (\\,)
+                # RFC 4514: Commas can be escaped with backslash
+                components: list[str] = []
+                current_component = ""
+                i = 0
+                while i < len(dn):
+                    if dn[i] == "\\" and i + 1 < len(dn):
+                        # Escaped character - include backslash and next char
+                        current_component += dn[i : i + 2]
+                        i += 2
+                    elif dn[i] == ",":
+                        # Unescaped comma - component boundary
+                        if current_component.strip():
+                            components.append(current_component.strip())
+                        current_component = ""
+                        i += 1
+                    else:
+                        current_component += dn[i]
+                        i += 1
+
+                # Add last component
+                if current_component.strip():
+                    components.append(current_component.strip())
+
+                if not components:
+                    return FlextResult[list[str]].fail("DN has no valid components")
+                return FlextResult[list[str]].ok(components)
+            except Exception as e:
+                return FlextResult[list[str]].fail(
+                    f"Failed to parse DN components: {e}"
+                )
+
+        @staticmethod
+        def validate_dn_format(dn: str) -> FlextResult[bool]:
+            """Validate DN format - SINGLE SOURCE OF TRUTH for DN validation.
+
+            Args:
+                dn: Distinguished Name string to validate
+
+            Returns:
+                FlextResult[bool]: True if valid, error message if invalid
+
+            """
+            if not dn or not dn.strip():
+                return FlextResult[bool].fail(
+                    FlextLdifConstants.ErrorMessages.DN_EMPTY_ERROR
+                )
+
+            # Check length limit (RFC 4514)
+            if len(dn) > FlextLdifConstants.LdifValidation.MAX_DN_LENGTH:
+                return FlextResult[bool].fail(
+                    f"DN exceeds maximum length of "
+                    f"{FlextLdifConstants.LdifValidation.MAX_DN_LENGTH}"
+                )
+
+            # Parse components using centralized method
+            components_result = FlextLdifUtilities.DnUtilities.parse_dn_components(dn)
+            if components_result.is_failure:
+                return FlextResult[bool].fail(
+                    f"{FlextLdifConstants.ErrorMessages.DN_INVALID_FORMAT_ERROR}: "
+                    f"{components_result.error}"
+                )
+
+            components = components_result.unwrap()
+
+            # Validate minimum components
+            if len(components) < FlextLdifConstants.LdifValidation.MIN_DN_COMPONENTS:
+                return FlextResult[bool].fail(
+                    f"DN must have at least "
+                    f"{FlextLdifConstants.LdifValidation.MIN_DN_COMPONENTS} component(s)"
+                )
+
+            # Validate each component has attribute=value format
+            for component in components:
+                if "=" not in component:
+                    return FlextResult[bool].fail(
+                        f"{FlextLdifConstants.ErrorMessages.DN_INVALID_FORMAT_ERROR}: "
+                        f"Component '{component}' missing '=' separator"
+                    )
+
+                attr, value = component.split("=", 1)
+                if not attr.strip() or not value.strip():
+                    return FlextResult[bool].fail(
+                        f"{FlextLdifConstants.ErrorMessages.DN_INVALID_FORMAT_ERROR}: "
+                        f"Empty attribute or value in component '{component}'"
+                    )
+
+            return FlextResult[bool].ok(True)
+
+        @staticmethod
+        def normalize_dn(dn: str) -> FlextResult[str]:
+            """Normalize DN to canonical form - SINGLE SOURCE OF TRUTH.
+
+            Args:
+                dn: Distinguished Name string to normalize
+
+            Returns:
+                FlextResult[str]: Normalized DN or error
+
+            """
+            # Validate first
+            validation_result = FlextLdifUtilities.DnUtilities.validate_dn_format(dn)
+            if validation_result.is_failure:
+                return FlextResult[str].fail(validation_result.error or "Invalid DN")
+
+            # Parse components
+            components_result = FlextLdifUtilities.DnUtilities.parse_dn_components(dn)
+            if components_result.is_failure:
+                return FlextResult[str].fail(
+                    components_result.error or "Failed to parse DN"
+                )
+
+            components = components_result.unwrap()
+
+            # Normalize each component
+            normalized_components: list[str] = []
+            for component in components:
+                attr, value = component.split("=", 1)
+                # Normalize: lowercase attribute, trim spaces from value
+                attr_normalized = attr.strip().lower()
+                value_normalized = " ".join(value.strip().split())
+                normalized_components.append(f"{attr_normalized}={value_normalized}")
+
+            return FlextResult[str].ok(",".join(normalized_components))
+
+        @staticmethod
+        def get_dn_depth(dn: str) -> FlextResult[int]:
+            """Get DN depth (number of components).
+
+            Args:
+                dn: Distinguished Name string
+
+            Returns:
+                FlextResult[int]: DN depth or error
+
+            """
+            components_result = FlextLdifUtilities.DnUtilities.parse_dn_components(dn)
+            if components_result.is_failure:
+                return FlextResult[int].fail(
+                    components_result.error or "Failed to parse DN"
+                )
+            return FlextResult[int].ok(len(components_result.unwrap()))
+
+        @staticmethod
+        def extract_dn_attribute(dn: str, attribute_name: str) -> FlextResult[str]:
+            """Extract specific attribute value from DN.
+
+            Args:
+                dn: Distinguished Name string
+                attribute_name: Attribute name to extract (case-insensitive)
+
+            Returns:
+                FlextResult[str]: Attribute value or error if not found
+
+            """
+            components_result = FlextLdifUtilities.DnUtilities.parse_dn_components(dn)
+            if components_result.is_failure:
+                return FlextResult[str].fail(
+                    components_result.error or "Failed to parse DN"
+                )
+
+            components = components_result.unwrap()
+            attr_lower = attribute_name.lower()
+
+            for component in components:
+                if "=" in component:
+                    attr, value = component.split("=", 1)
+                    if attr.strip().lower() == attr_lower:
+                        return FlextResult[str].ok(value.strip())
+
+            return FlextResult[str].fail(
+                f"Attribute '{attribute_name}' not found in DN"
+            )
