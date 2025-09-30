@@ -61,7 +61,7 @@ class FlextLdifUtilities(FlextUtilities):
         BYTES_PER_UNIT: Final[float] = 1024.0
 
         @staticmethod
-        def format_byte_size(size_bytes: float) -> str:
+        def format_byte_size(size_bytes: object) -> str:
             """Format byte size to human-readable string.
 
             Args:
@@ -71,6 +71,10 @@ class FlextLdifUtilities(FlextUtilities):
                 str: Formatted size string (e.g., "1.5 KB", "2.0 MB")
 
             """
+            if not isinstance(size_bytes, (int, float)):
+                msg = f"size_bytes must be int or float, got {type(size_bytes)}"
+                raise TypeError(msg)
+
             # Handle special cases
             if size_bytes <= 0:
                 return "0 B"

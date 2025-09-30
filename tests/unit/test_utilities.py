@@ -339,7 +339,7 @@ class TestFlextLdifUtilities:
         """Test error handling in utility methods."""
         utilities = FlextLdifUtilities()
 
-        # Test invalid input types (should raise TypeError for non-int inputs)
+        # Test invalid input types
         with pytest.raises(TypeError):
             utilities.TextUtilities.format_byte_size("invalid")
 

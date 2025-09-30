@@ -188,10 +188,14 @@ class TestFlextLdifEntries:
         def test_convert_to_json(self) -> None:
             """Test convert_to_json."""
             coordinator = FlextLdifEntries()
-            entry = FlextLdifModels.Entry(
-                dn="cn=test,dc=example,dc=com",
-                attributes={"cn": ["test"], "objectClass": ["person"]},
+            entry_result = FlextLdifModels.Entry.create(
+                data={
+                    "dn": "cn=test,dc=example,dc=com",
+                    "attributes": {"cn": ["test"], "objectClass": ["person"]},
+                }
             )
+            assert entry_result.is_success
+            entry = entry_result.value
             result = coordinator.transformer.convert_to_json(entry)
             assert result.is_success
             data = result.unwrap()
