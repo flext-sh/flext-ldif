@@ -1,6 +1,7 @@
 """Unit tests for flext_ldif.api module."""
 
 from pathlib import Path
+from typing import cast
 
 from flext_ldif import FlextLdifAPI, FlextLdifConfig
 from flext_ldif.models import FlextLdifModels
@@ -339,5 +340,7 @@ sn: user
         """Test validating invalid entries."""
         api = FlextLdifAPI()
         invalid_entry = {"dn": "", "attributes": {}}  # Invalid DN
-        result = api.validate_entries([invalid_entry])
+        result = api.validate_entries(
+            cast("list[FlextLdifModels.Entry]", [invalid_entry])
+        )
         assert result.is_failure

@@ -15,23 +15,17 @@ Available server quirks:
 
 from __future__ import annotations
 
+from flext_ldif.quirks.servers.oid_quirks import OidAclQuirk, OidSchemaQuirk
+from flext_ldif.quirks.servers.oud_quirks import (
+    OudAclQuirk,
+    OudEntryQuirk,
+    OudSchemaQuirk,
+)
+
 __all__ = [
     "OidAclQuirk",
     "OidSchemaQuirk",
+    "OudAclQuirk",
+    "OudEntryQuirk",
+    "OudSchemaQuirk",
 ]
-
-
-def __getattr__(name: str) -> type:
-    """Lazy import for server quirks."""
-    if name == "OidSchemaQuirk":
-        from flext_ldif.quirks.servers.oid_quirks import OidSchemaQuirk
-
-        return OidSchemaQuirk
-
-    if name == "OidAclQuirk":
-        from flext_ldif.quirks.servers.oid_quirks import OidAclQuirk
-
-        return OidAclQuirk
-
-    msg = f"module '{__name__}' has no attribute '{name}'"
-    raise AttributeError(msg)

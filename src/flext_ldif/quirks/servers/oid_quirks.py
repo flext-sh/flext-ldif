@@ -16,6 +16,7 @@ OID-specific features:
 from __future__ import annotations
 
 import re
+from typing import ClassVar
 
 from pydantic import Field
 
@@ -40,10 +41,14 @@ class OidSchemaQuirk(BaseSchemaQuirk):
     """
 
     server_type: str = Field(default="oid", description="Oracle OID server type")
-    priority: int = Field(default=10, description="High priority for OID-specific parsing")
+    priority: int = Field(
+        default=10, description="High priority for OID-specific parsing"
+    )
 
     # Oracle OID namespace pattern
-    ORACLE_OID_PATTERN = re.compile(r"2\.16\.840\.1\.113894\.")
+    ORACLE_OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
+        r"2\.16\.840\.1\.113894\."
+    )
 
     def __init__(self, **data: object) -> None:
         """Initialize OID schema quirk."""
@@ -262,7 +267,9 @@ class OidAclQuirk(BaseAclQuirk):
                 return FlextResult[dict[str, object]].ok({
                     "type": "entry_level" if is_entry_level else "standard",
                     "raw": acl_line,
-                    "parsed": acl_obj.model_dump() if hasattr(acl_obj, "model_dump") else {},
+                    "parsed": acl_obj.model_dump()
+                    if hasattr(acl_obj, "model_dump")
+                    else {},
                 })
 
             return FlextResult[dict[str, object]].fail(result.error or "Parse failed")

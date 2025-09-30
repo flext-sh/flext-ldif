@@ -33,7 +33,9 @@ class BaseSchemaQuirk(ABC, FlextModels.Value):
     server_type: str = Field(
         description="Server type this quirk applies to (e.g., 'oid', 'oud', 'openldap')"
     )
-    priority: int = Field(default=100, description="Quirk priority (lower = higher priority)")
+    priority: int = Field(
+        default=100, description="Quirk priority (lower = higher priority)"
+    )
 
     @abstractmethod
     def can_handle_attribute(self, attr_definition: str) -> bool:

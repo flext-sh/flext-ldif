@@ -1,16 +1,10 @@
-"""RFC 2849 Compliant LDIF Parser.
+"""Oracle OID LDIF Parser - Handles OID LDIF files without version headers.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
-Implements RFC 2849: The LDAP Data Interchange Format (LDIF) - Technical Specification
-
-Key RFC 2849 features:
-- Line folding: Lines starting with single space are continuations
-- Base64 encoding: Values starting with '::' are base64-encoded
-- Distinguished Names: RFC 4514 DN syntax
-- Change records: add, delete, modify, moddn operations
-- Comments: Lines starting with '#' are ignored
+Oracle OID exports LDIF files without the "version: 1" header required by RFC 2849.
+This parser extends the RFC parser to accept Oracle OID format.
 """
 
 from __future__ import annotations
@@ -22,54 +16,34 @@ from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif.models import FlextLdifModels
 
 
-class RfcLdifParserService(FlextService[dict]):
-    """Generic LDIF parser with RFC 2849 compliance by default.
+class OidLdifParserService(FlextService[dict]):
+    """Oracle OID LDIF parser - accepts files without version header.
 
-    This is a GENERIC parser that can parse ANY LDIF data from any LDAP server.
-    RFC 2849 compliance is the DEFAULT behavior, but quirks can extend/modify it.
+    Oracle OID LDIF exports don't include the RFC 2849 "version: 1" header.
+    This parser accepts both RFC-compliant files and Oracle OID files.
 
-    **Architecture**:
-    - GENERIC: Parses any LDIF data (OID, OUD, OpenLDAP, AD, etc.)
-    - RFC-COMPLIANT by default: Follows RFC 2849 when no quirks applied
-    - EXTENSIBLE: Quirks configure parsing behavior for server-specific formats
-
-    **Features**:
-    - Line folding (RFC 2849 Section 2)
-    - Base64 encoding (RFC 2849 Section 2)
-    - DN parsing (RFC 4514)
-    - Attribute value parsing (ANY attribute names/values)
-    - Change record parsing
-    - Lenient parsing (accepts non-RFC extensions)
-
-    **Example**:
-        # Basic RFC-compliant parsing
-        params = {"file_path": "entries.ldif", "parse_changes": False}
-        parser = RfcLdifParserService(params=params)
+    Example:
+        params = {"file_path": "oid_export.ldif", "parse_changes": False}
+        parser = OidLdifParserService(params=params)
         result = parser.execute()
-
-        # With quirks for OID-specific parsing
-        params = {"file_path": "oid.ldif", "quirk_registry": registry, "source_server": "oid"}
-        parser = RfcLdifParserService(params=params)
-        result = parser.execute()
+        if result.is_success:
+            entries = result.value["entries"]
 
     """
 
-    def __init__(self, *, params: dict, quirk_registry: object | None = None) -> None:
-        """Initialize generic LDIF parser.
+    def __init__(self, *, params: dict) -> None:
+        """Initialize OID LDIF parser.
 
         Args:
-            params: Parsing parameters (file_path, parse_changes, encoding, source_server)
-            quirk_registry: Optional quirk registry for server-specific extensions
+            params: Parsing parameters (file_path, parse_changes, encoding)
 
         """
         super().__init__()
         self._logger = FlextLogger(__name__)
         self._params = params
-        self._quirk_registry = quirk_registry
-        self._source_server = params.get("source_server", "rfc")
 
     def execute(self) -> FlextResult[dict]:
-        """Execute RFC-compliant LDIF parsing.
+        """Execute OID LDIF parsing.
 
         Returns:
             FlextResult with parsed LDIF data containing:
@@ -93,7 +67,7 @@ class RfcLdifParserService(FlextService[dict]):
             encoding = self._params.get("encoding", "utf-8")
 
             self._logger.info(
-                f"Parsing LDIF file (RFC 2849): {file_path}",
+                f"Parsing Oracle OID LDIF file: {file_path}",
                 extra={
                     "file_path": str(file_path),
                     "parse_changes": parse_changes,
@@ -101,7 +75,7 @@ class RfcLdifParserService(FlextService[dict]):
                 },
             )
 
-            # Parse LDIF file
+            # Parse LDIF file using OID-compatible logic
             parse_result = self._parse_ldif_file(
                 file_path, parse_changes=parse_changes, encoding=encoding
             )
@@ -112,7 +86,7 @@ class RfcLdifParserService(FlextService[dict]):
             data = parse_result.value
 
             self._logger.info(
-                "LDIF parsed successfully",
+                "Oracle OID LDIF parsed successfully",
                 extra={
                     "total_entries": len(data["entries"]),
                     "total_changes": len(data["changes"]),
@@ -123,14 +97,14 @@ class RfcLdifParserService(FlextService[dict]):
             return FlextResult[dict].ok(data)
 
         except Exception as e:
-            error_msg = f"Failed to execute RFC LDIF parser: {e}"
+            error_msg = f"Failed to execute OID LDIF parser: {e}"
             self._logger.exception(error_msg)
             return FlextResult[dict].fail(error_msg)
 
     def _parse_ldif_file(
         self, file_path: Path, *, parse_changes: bool, encoding: str
     ) -> FlextResult[dict]:
-        """Parse LDIF file according to RFC 2849.
+        """Parse LDIF file with OID compatibility.
 
         Args:
             file_path: Path to LDIF file
@@ -202,7 +176,7 @@ class RfcLdifParserService(FlextService[dict]):
             })
 
         except Exception as e:
-            return FlextResult[dict].fail(f"Failed to parse LDIF file: {e}")
+            return FlextResult[dict].fail(f"Failed to parse OID LDIF file: {e}")
 
     def _process_ldif_line(
         self,
@@ -213,9 +187,9 @@ class RfcLdifParserService(FlextService[dict]):
         *,
         parse_changes: bool,
     ) -> None:
-        """Process a single complete LDIF line.
+        """Process a single complete LDIF line with OID compatibility.
 
-        Uses instance variables _current_entry and _current_dn for state tracking.
+        Oracle OID quirk: Accept files without "version:" header.
 
         Args:
             line: Complete LDIF line (after folding)
@@ -225,12 +199,12 @@ class RfcLdifParserService(FlextService[dict]):
             parse_changes: Whether to parse change records
 
         """
-        # RFC 2849: Comments start with '#'
+        # Comments start with '#'
         if line.startswith("#"):
             comments.append(line[1:].strip())
             return
 
-        # RFC 2849: Empty line separates entries
+        # Empty line separates entries
         if not line.strip():
             if self._current_entry:
                 entry_result = self._create_entry(self._current_entry)
@@ -239,7 +213,14 @@ class RfcLdifParserService(FlextService[dict]):
                 self._current_entry = None
             return
 
-        # RFC 2849: DN line starts entry
+        # OID QUIRK: Accept version header but don't require it
+        # Oracle OID files don't include "version: 1" header
+        if line.startswith("version:"):
+            version = line[8:].strip()
+            self._logger.debug(f"LDIF version: {version}")
+            return
+
+        # DN line starts entry
         if line.startswith("dn:"):
             if self._current_entry:
                 entry_result = self._create_entry(self._current_entry)
@@ -250,7 +231,7 @@ class RfcLdifParserService(FlextService[dict]):
             self._current_entry = {"dn": self._current_dn, "attributes": {}}
             return
 
-        # RFC 2849: Change records
+        # Change records
         if parse_changes and line.startswith("changetype:"):
             changetype = line[11:].strip()
             if self._current_entry:
@@ -259,7 +240,7 @@ class RfcLdifParserService(FlextService[dict]):
                 changes.append({"dn": self._current_dn, "changetype": changetype})
             return
 
-        # RFC 2849: Attribute-value pair
+        # Attribute-value pair
         if ":" in line:
             attr_name, attr_value = self._parse_attribute_line(line)
             if self._current_entry and attr_name:
@@ -286,15 +267,15 @@ class RfcLdifParserService(FlextService[dict]):
             Tuple of (attribute_name, attribute_value)
 
         """
-        # RFC 2849: Find first colon
+        # Find first colon
         colon_pos = line.find(":")
         if colon_pos == -1:
             return ("", "")
 
         attr_name = line[:colon_pos].strip()
-        value_part = line[colon_pos + 1 :]
+        value_part = line[colon_pos + 1:]
 
-        # RFC 2849: Base64 encoding (::)
+        # Base64 encoding (::)
         if value_part.startswith(":"):
             base64_value = value_part[1:].strip()
             try:
@@ -303,7 +284,7 @@ class RfcLdifParserService(FlextService[dict]):
             except Exception:
                 return (attr_name, base64_value)
 
-        # RFC 2849: URL reference (:<)
+        # URL reference (:<)
         if value_part.startswith("<"):
             url = value_part[1:].strip()
             return (attr_name, f"<URL>{url}")
@@ -323,7 +304,7 @@ class RfcLdifParserService(FlextService[dict]):
         """
         value = value_str.strip()
 
-        # RFC 2849: Base64 encoded value
+        # Base64 encoded value
         if value.startswith(":"):
             base64_value = value[1:].strip()
             try:
@@ -349,4 +330,4 @@ class RfcLdifParserService(FlextService[dict]):
         return FlextLdifModels.Entry.create(data=entry_data)
 
 
-__all__ = ["RfcLdifParserService"]
+__all__ = ["OidLdifParserService"]
