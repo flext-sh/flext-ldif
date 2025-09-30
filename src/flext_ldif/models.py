@@ -141,7 +141,7 @@ class FlextLdifModels(FlextModels):
         - Rich metadata using FlextModels.Metadata
         - Status tracking similar to ProcessingResult
         - Execution time tracking for performance analysis
-        
+
         Technology-specific results extend this with additional fields.
         """
 
@@ -196,15 +196,15 @@ class FlextLdifModels(FlextModels):
             return self.execution_time_ms / 1000.0
 
     class BaseSchemaAttribute(
-            FlextModels.Value,
-            FlextModels.IdentifiableMixin,
-            FlextModels.VersionableMixin,
-        ):
+        FlextModels.Value,
+        FlextModels.IdentifiableMixin,
+        FlextModels.VersionableMixin,
+    ):
         """Base class for schema attribute definitions.
 
         Common fields for both standard LDIF and OID attribute types.
         Technology-specific attributes extend with additional fields.
-        
+
         Enhanced with:
         - IdentifiableMixin: Provides unique id (UUID) for tracking
         - VersionableMixin: Provides version and schema_version for versioning
@@ -260,14 +260,14 @@ class FlextLdifModels(FlextModels):
             }
 
     class BaseSchemaObjectClass(
-            FlextModels.Value,
-            FlextModels.IdentifiableMixin,
-            FlextModels.VersionableMixin,
-        ):
+        FlextModels.Value,
+        FlextModels.IdentifiableMixin,
+        FlextModels.VersionableMixin,
+    ):
         """Base class for schema objectClass definitions.
 
         Common fields for both standard LDIF and OID objectClass types.
-        
+
         Enhanced with:
         - IdentifiableMixin: Provides unique id (UUID) for tracking
         - VersionableMixin: Provides version and schema_version for versioning
@@ -685,7 +685,9 @@ class FlextLdifModels(FlextModels):
 
             # Check for standard DN format
             dn = data.get("dn", "")
-            if isinstance(dn, str) and any(part in dn for part in ["dc=", "ou=", "cn="]):
+            if isinstance(dn, str) and any(
+                part in dn for part in ["dc=", "ou=", "cn="]
+            ):
                 return True
 
             return True  # Default to standard if no vendor markers found  # Default to standard if no vendor markers found
@@ -2193,7 +2195,9 @@ class FlextLdifModels(FlextModels):
 
                 # Map to base class fields
                 params["description"] = params.get("desc", "")
-                params["superior"] = ",".join(params.get("sup", []))  # Base class uses string
+                params["superior"] = ",".join(
+                    params.get("sup", [])
+                )  # Base class uses string
                 params["required_attributes"] = params.get("must", [])
                 params["optional_attributes"] = params.get("may", [])
 
@@ -3181,7 +3185,9 @@ class FlextLdifModels(FlextModels):
         )
 
         @classmethod
-        def from_subject_string(cls, subject_str: str) -> FlextResult[FlextLdifModels.OidAciSubject]:
+        def from_subject_string(
+            cls, subject_str: str
+        ) -> FlextResult[FlextLdifModels.OidAciSubject]:
             """Parse OID subject string like 'group="cn=REDACTED_LDAP_BIND_PASSWORDs,..."' or 'by *'."""
             try:
                 subject_clean = subject_str.strip()
@@ -3254,11 +3260,17 @@ class FlextLdifModels(FlextModels):
             hide_input_in_errors=True,
         )
 
-        subject: FlextLdifModels.OidAciSubject = Field(description="Subject of the rule")
-        permissions: FlextLdifModels.OidAciPermissions = Field(description="Permissions granted/denied")
+        subject: FlextLdifModels.OidAciSubject = Field(
+            description="Subject of the rule"
+        )
+        permissions: FlextLdifModels.OidAciPermissions = Field(
+            description="Permissions granted/denied"
+        )
 
         @classmethod
-        def from_rule_string(cls, rule_str: str) -> FlextResult[FlextLdifModels.OidAciRule]:
+        def from_rule_string(
+            cls, rule_str: str
+        ) -> FlextResult[FlextLdifModels.OidAciRule]:
             """Parse OID ACI rule like 'by group="..." (read,write)'."""
             try:
                 # Remove leading 'by ' if present
@@ -3545,7 +3557,9 @@ class FlextLdifModels(FlextModels):
         )
 
         @classmethod
-        def from_ldif_line(cls, ldif_line: str) -> FlextResult[FlextLdifModels.OidEntryLevelAci]:
+        def from_ldif_line(
+            cls, ldif_line: str
+        ) -> FlextResult[FlextLdifModels.OidEntryLevelAci]:
             """Parse OID orclentrylevelaci from LDIF line.
 
             Example formats:

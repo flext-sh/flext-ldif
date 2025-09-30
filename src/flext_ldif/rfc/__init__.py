@@ -15,35 +15,12 @@ Server-specific extensions should be implemented as quirks, not in this base lay
 
 from __future__ import annotations
 
+from flext_ldif.rfc.rfc_ldif_parser import RfcLdifParserService
+from flext_ldif.rfc.rfc_ldif_writer import RfcLdifWriterService
+from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
+
 __all__ = [
-    "RfcAclParser",
-    "RfcEntryProcessor",
-    "RfcLdifParser",
-    "RfcSchemaParser",
+    "RfcLdifParserService",
+    "RfcLdifWriterService",
+    "RfcSchemaParserService",
 ]
-
-
-def __getattr__(name: str) -> type:
-    """Lazy import for RFC parsers."""
-    if name == "RfcLdifParser":
-        from flext_ldif.rfc.rfc_ldif_parser import RfcLdifParserService
-
-        return RfcLdifParserService
-
-    if name == "RfcSchemaParser":
-        from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
-
-        return RfcSchemaParserService
-
-    if name == "RfcAclParser":
-        from flext_ldif.rfc.rfc_acl_parser import RfcAclParserService
-
-        return RfcAclParserService
-
-    if name == "RfcEntryProcessor":
-        from flext_ldif.rfc.rfc_entry_processor import RfcEntryProcessorService
-
-        return RfcEntryProcessorService
-
-    msg = f"module '{__name__}' has no attribute '{name}'"
-    raise AttributeError(msg)

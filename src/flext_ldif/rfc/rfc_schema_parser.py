@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
@@ -27,6 +28,8 @@ class RfcSchemaParserService(FlextService[dict]):
     Parses LDAP schema definitions strictly according to RFC 4512 specification.
     Does NOT handle vendor-specific OIDs or extensions - those belong in quirks.
 
+    model_config = ConfigDict(ignored_types=(ClassVar,))
+
     Features:
     - AttributeType parsing (RFC 4512 Section 4.1.2)
     - ObjectClass parsing (RFC 4512 Section 4.1.1)
@@ -34,8 +37,9 @@ class RfcSchemaParserService(FlextService[dict]):
     - Schema subentry discovery
 
     Example:
-        parser = RfcSchemaParserService()
-        result = parser.execute({"file_path": "schema.ldif"})
+        params = {"file_path": "schema.ldif", "parse_attributes": True}
+        parser = RfcSchemaParserService(params=params)
+        result = parser.execute()
         if result.is_success:
             attrs = result.value["attributes"]
             classes = result.value["objectclasses"]
@@ -43,7 +47,7 @@ class RfcSchemaParserService(FlextService[dict]):
     """
 
     # RFC 4512: AttributeType definition regex
-    ATTRIBUTE_TYPE_PATTERN = re.compile(
+    ATTRIBUTE_TYPE_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
         r"\(\s*"  # Opening parenthesis
         r"(?P<oid>[\d\.]+)\s+"  # OID (numeric)
         r"(?:NAME\s+'(?P<name>[^']+)'\s+)?"  # Optional NAME
@@ -63,7 +67,7 @@ class RfcSchemaParserService(FlextService[dict]):
     )
 
     # RFC 4512: ObjectClass definition regex
-    OBJECT_CLASS_PATTERN = re.compile(
+    OBJECT_CLASS_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
         r"\(\s*"  # Opening parenthesis
         r"(?P<oid>[\d\.]+)\s+"  # OID (numeric)
         r"(?:NAME\s+'(?P<name>[^']+)'\s+)?"  # Optional NAME
@@ -77,19 +81,19 @@ class RfcSchemaParserService(FlextService[dict]):
         re.VERBOSE,
     )
 
-    def __init__(self) -> None:
-        """Initialize RFC schema parser."""
-        super().__init__()
-        self._logger = FlextLogger(__name__)
-
-    def execute(self, params: dict) -> FlextResult[dict]:
-        """Execute RFC-compliant schema parsing.
+    def __init__(self, *, params: dict) -> None:
+        """Initialize RFC schema parser.
 
         Args:
-            params: Dictionary with:
-                - file_path: Path to schema LDIF file
-                - parse_attributes: Parse attributeTypes (default True)
-                - parse_objectclasses: Parse objectClasses (default True)
+            params: Parsing parameters (file_path, parse_attributes, parse_objectclasses)
+
+        """
+        super().__init__()
+        self._logger = FlextLogger(__name__)
+        self._params = params
+
+    def execute(self) -> FlextResult[dict]:
+        """Execute RFC-compliant schema parsing.
 
         Returns:
             FlextResult with parsed schema data containing:
@@ -101,7 +105,7 @@ class RfcSchemaParserService(FlextService[dict]):
         """
         try:
             # Extract parameters
-            file_path_str = params.get("file_path", "")
+            file_path_str = self._params.get("file_path", "")
             if not file_path_str:
                 return FlextResult[dict].fail("file_path parameter is required")
 
@@ -109,8 +113,8 @@ class RfcSchemaParserService(FlextService[dict]):
             if not file_path.exists():
                 return FlextResult[dict].fail(f"Schema file not found: {file_path}")
 
-            parse_attributes = params.get("parse_attributes", True)
-            parse_objectclasses = params.get("parse_objectclasses", True)
+            parse_attributes = self._params.get("parse_attributes", True)
+            parse_objectclasses = self._params.get("parse_objectclasses", True)
 
             self._logger.info(
                 f"Parsing LDAP schema (RFC 4512): {file_path}",
@@ -306,9 +310,7 @@ class RfcSchemaParserService(FlextService[dict]):
         must_attrs = []
         if match.group("must"):
             must_attrs = [
-                attr.strip()
-                for attr in match.group("must").split("$")
-                if attr.strip()
+                attr.strip() for attr in match.group("must").split("$") if attr.strip()
             ]
 
         may_attrs = []
