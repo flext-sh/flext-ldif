@@ -1149,13 +1149,15 @@ class TestFlextLdifProcessor:
             sn="Doe",
             base_dn="dc=example,dc=com",
             given_name="John",
-            mail="john.doe@example.com"
+            mail="john.doe@example.com",
         )
 
         assert result.is_success
         entry = result.unwrap()
         assert "John Doe" in entry.dn.value
-        assert entry.has_object_class("person") or entry.has_object_class("inetOrgPerson")
+        assert entry.has_object_class("person") or entry.has_object_class(
+            "inetOrgPerson"
+        )
 
     def test_build_group_entry(self) -> None:
         """Test building group entry."""
@@ -1164,7 +1166,7 @@ class TestFlextLdifProcessor:
         result = processor.build_group_entry(
             cn="REDACTED_LDAP_BIND_PASSWORDs",
             base_dn="dc=example,dc=com",
-            members=["cn=user1,dc=example,dc=com", "cn=user2,dc=example,dc=com"]
+            members=["cn=user1,dc=example,dc=com", "cn=user2,dc=example,dc=com"],
         )
 
         assert result.is_success
@@ -1176,9 +1178,7 @@ class TestFlextLdifProcessor:
         processor = FlextLdifProcessor()
 
         result = processor.build_organizational_unit_entry(
-            ou="users",
-            base_dn="dc=example,dc=com",
-            description="User accounts"
+            ou="users", base_dn="dc=example,dc=com", description="User accounts"
         )
 
         assert result.is_success
@@ -1192,12 +1192,12 @@ class TestFlextLdifProcessor:
         json_data = json.dumps([
             {
                 "dn": "cn=test1,dc=example,dc=com",
-                "attributes": {"cn": ["test1"], "objectClass": ["person"]}
+                "attributes": {"cn": ["test1"], "objectClass": ["person"]},
             },
             {
                 "dn": "cn=test2,dc=example,dc=com",
-                "attributes": {"cn": ["test2"], "objectClass": ["person"]}
-            }
+                "attributes": {"cn": ["test2"], "objectClass": ["person"]},
+            },
         ])
 
         result = processor.build_entries_from_json(json_data)
@@ -1325,7 +1325,10 @@ class TestFlextLdifProcessor:
     def test_validate_objectclass_combination(self) -> None:
         """Test validating objectClass combinations."""
         processor = FlextLdifProcessor()
-        result = processor.validate_objectclass_combination(["person", "organizationalPerson"])
+        result = processor.validate_objectclass_combination([
+            "person",
+            "organizationalPerson",
+        ])
         # Method returns failure by design (requires schema context)
         assert result.is_failure
         assert "schema context" in str(result.error).lower()
@@ -1381,9 +1384,7 @@ class TestFlextLdifProcessor:
         processor = FlextLdifProcessor()
 
         result = processor.build_person_entry(
-            cn="minimal",
-            sn="user",
-            base_dn="dc=example,dc=com"
+            cn="minimal", sn="user", base_dn="dc=example,dc=com"
         )
 
         assert result.is_success
@@ -1395,9 +1396,7 @@ class TestFlextLdifProcessor:
         processor = FlextLdifProcessor()
 
         result = processor.build_group_entry(
-            cn="emptygroup",
-            base_dn="dc=example,dc=com",
-            members=[]
+            cn="emptygroup", base_dn="dc=example,dc=com", members=[]
         )
 
         assert result.is_success
@@ -1520,45 +1519,43 @@ objectClass: top
         assert isinstance(analysis, dict)
 
     def test_parse_file_unicode_decode_error(self) -> None:
-        """Test parse_file with UnicodeDecodeError (lines 787-802)."""
+        """Test parse_file_advanced with UnicodeDecodeError (lines 787-802)."""
         processor = FlextLdifProcessor()
 
         # Create temporary file with invalid UTF-8 bytes
-        with tempfile.NamedTemporaryFile(mode='wb', delete=False, suffix=".ldif") as f:
+        with tempfile.NamedTemporaryFile(mode="wb", delete=False, suffix=".ldif") as f:
             # Write invalid UTF-8 sequence
-            f.write(b'\xff\xfe invalid utf-8')
+            f.write(b"\xff\xfe invalid utf-8")
             temp_path = Path(f.name)
 
         try:
-            # The parse_file might raise UnicodeDecodeError or return failure
-            try:
-                result = processor.parse_file(temp_path)
-                # If it returns a result, it should be failure
-                assert result.is_failure
-                assert "decode" in str(result.error).lower() or "unicode" in str(result.error).lower()
-            except UnicodeDecodeError:
-                # If it raises an exception, that's also valid error handling
-                pass
+            # The parse_file_advanced should return failure for invalid encoding
+            result = processor.parse_file_advanced(temp_path)
+            # It should return a failure result
+            assert result.is_failure
+            assert (
+                "decode" in str(result.error).lower()
+                or "unicode" in str(result.error).lower()
+                or "read" in str(result.error).lower()
+            )
         finally:
             temp_path.unlink()
 
     def test_parse_file_os_error(self) -> None:
-        """Test parse_file with OSError (lines 803-806)."""
+        """Test parse_file_advanced with OSError (lines 803-806)."""
         processor = FlextLdifProcessor()
 
         # Use a path that will cause OSError (permission denied or invalid path)
         invalid_path = Path("/root/nonexistent_file_12345.ldif")
 
-        # The parse_file might raise an exception or return failure
-        try:
-            result = processor.parse_file(invalid_path)
-            # If it returns a result, it should be failure
-            assert result.is_failure
-            # Error should mention file reading failure
-            assert "fail" in str(result.error).lower() or "read" in str(result.error).lower()
-        except (OSError, PermissionError):
-            # If it raises an exception, that's also valid error handling
-            pass
+        # The parse_file_advanced should return failure for invalid path
+        result = processor.parse_file_advanced(invalid_path)
+        # It should return a failure result
+        assert result.is_failure
+        # Error should mention file reading failure
+        assert (
+            "fail" in str(result.error).lower() or "read" in str(result.error).lower()
+        )
 
     def test_filter_entries_dn_pattern(self) -> None:
         """Test filter_entries with dn_pattern filter (lines 817-822)."""
@@ -1655,7 +1652,9 @@ objectClass: top
         invalid_path = Path("/root/nonexistent_dir_12345/output.ldif")
         result = processor.write_entries_to_file(entries, invalid_path)
         assert result.is_failure
-        assert "fail" in str(result.error).lower() or "write" in str(result.error).lower()
+        assert (
+            "fail" in str(result.error).lower() or "write" in str(result.error).lower()
+        )
 
     def test_validate_entries_error_recovery(self) -> None:
         """Test validate_entries with error handling (line 914)."""
@@ -1705,9 +1704,9 @@ objectClass: top
         assert parse_result.is_success
         entries = parse_result.unwrap()
 
-        # Transform with empty transformations
-        result = processor.transform_entries(entries, {})
-        assert result.is_success or result.is_failure
+        # Transform with identity function
+        result = processor.transform_entries(entries, lambda x: x)
+        assert result.is_success
 
     def test_analyze_entries_error_handling(self) -> None:
         """Test analyze_entries with error handling (line 964)."""
@@ -1749,7 +1748,10 @@ objectClass: top
         result = processor.transform_entries(entries, failing_transformer)
         # Should fail with transformation error
         assert result.is_failure
-        assert "transformation" in str(result.error).lower() or "fail" in str(result.error).lower()
+        assert (
+            "transformation" in str(result.error).lower()
+            or "fail" in str(result.error).lower()
+        )
 
     def test_write_file_success_path(self) -> None:
         """Test write_file success path (lines 1038-1041)."""
@@ -1765,11 +1767,13 @@ objectClass: top
         entries = parse_result.unwrap()
 
         # Write to temporary file
-        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', delete=False, suffix=".ldif") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", delete=False, suffix=".ldif"
+        ) as f:
             temp_path = Path(f.name)
 
         try:
-            result = processor.write_file(entries, temp_path)
+            result = processor.write_file(entries, str(temp_path))
             assert result.is_success
             # Verify file was written
             assert temp_path.exists()
@@ -1839,7 +1843,9 @@ objectClass: top
         entries = parse_result.unwrap()
 
         # Search for non-existent attribute
-        result = processor.get_entries_by_attribute(entries, "nonexistent_attr", "value")
+        result = processor.get_entries_by_attribute(
+            entries, "nonexistent_attr", "value"
+        )
         assert result.is_success
         found_entries = result.unwrap()
         # Should return empty list
@@ -1951,7 +1957,7 @@ objectClass: top
             cn="advanced",
             sn="user",
             base_dn="dc=example,dc=com",
-            additional_attrs={"mail": ["advanced@example.com"]}
+            additional_attrs={"mail": ["advanced@example.com"]},
         )
 
         assert result.is_success
@@ -1962,14 +1968,10 @@ objectClass: top
         """Test build_group_entry with many members (lines 1381-1380, 1383-1380)."""
         processor = FlextLdifProcessor()
 
-        members = [
-            f"cn=user{i},dc=example,dc=com" for i in range(10)
-        ]
+        members = [f"cn=user{i},dc=example,dc=com" for i in range(10)]
 
         result = processor.build_group_entry(
-            cn="biggroup",
-            base_dn="dc=example,dc=com",
-            members=members
+            cn="biggroup", base_dn="dc=example,dc=com", members=members
         )
 
         assert result.is_success
@@ -2003,7 +2005,9 @@ objectClass: top
         person_schema = person_result.unwrap()
         # Result is a SchemaDiscoveryResult object, not a dict
         assert person_schema is not None
-        assert hasattr(person_schema, 'object_classes') or isinstance(person_schema, dict)
+        assert hasattr(person_schema, "object_classes") or isinstance(
+            person_schema, dict
+        )
 
         # Build group schema
         group_result = processor.build_standard_group_schema()
@@ -2011,7 +2015,7 @@ objectClass: top
         group_schema = group_result.unwrap()
         # Result is a SchemaDiscoveryResult object, not a dict
         assert group_schema is not None
-        assert hasattr(group_schema, 'object_classes') or isinstance(group_schema, dict)
+        assert hasattr(group_schema, "object_classes") or isinstance(group_schema, dict)
 
     def test_get_objectclass_operations(self) -> None:
         """Test objectclass operations (lines 1454-1457, 1462, 1464, 1466)."""
@@ -2022,7 +2026,10 @@ objectClass: top
         assert result.is_success or result.is_failure
 
         # Get required attributes
-        req_result = processor.get_required_attributes_for_objectclasses(["person", "top"])
+        req_result = processor.get_required_attributes_for_objectclasses([
+            "person",
+            "top",
+        ])
         assert req_result.is_success or req_result.is_failure
 
         # Validate objectClass combination
@@ -2151,7 +2158,9 @@ objectClass: top
         entries = parse_result.unwrap()
 
         # Validate RFC compliance
-        rfc_result = processor.validate_rfc_compliance(entries)
+        rfc_result = processor.validate_rfc_compliance(
+            cast("list[FlextLdifModels.Entry | FlextLdifModels.ChangeRecord]", entries)
+        )
         assert rfc_result.is_success or rfc_result.is_failure
 
         # Get statistics

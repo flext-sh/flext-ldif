@@ -341,10 +341,10 @@ class TestFlextLdifUtilities:
 
         # Test invalid input types (should raise TypeError for non-int inputs)
         with pytest.raises(TypeError):
-            utilities.TextUtilities.format_byte_size("invalid")  # type: ignore[arg-type]
+            utilities.TextUtilities.format_byte_size("invalid")
 
         with pytest.raises(TypeError):
-            utilities.TextUtilities.format_byte_size(None)  # type: ignore[arg-type]
+            utilities.TextUtilities.format_byte_size(None)
 
     def test_edge_cases(self) -> None:
         """Test edge cases in utility methods."""

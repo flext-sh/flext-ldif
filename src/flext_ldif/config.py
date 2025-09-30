@@ -370,12 +370,12 @@ class FlextLdifConfig(FlextConfig):
         """Create configuration optimized for performance using enhanced singleton pattern."""
         instance = cls.get_or_create_shared_instance(
             project_name="flext-ldif",
-            enable_performance_optimizations=True,
+            debug_mode=False,
             max_workers=FlextLdifConstants.Processing.PERFORMANCE_MIN_WORKERS,
             ldif_chunk_size=FlextLdifConstants.Processing.PERFORMANCE_MIN_CHUNK_SIZE,
+            enable_performance_optimizations=True,
             memory_limit_mb=FlextLdifConstants.Processing.PERFORMANCE_MEMORY_MB_THRESHOLD,
             ldif_strict_validation=True,
-            debug_mode=False,
             verbose_logging=False,
         )
         return cast("FlextLdifConfig", instance)
