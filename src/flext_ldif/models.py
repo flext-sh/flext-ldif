@@ -347,15 +347,17 @@ class FlextLdifModels(FlextModels):
         @property
         def granted_count(self) -> int:
             """Count of granted permissions."""
-            return sum([
-                self.read,
-                self.write,
-                self.add,
-                self.delete,
-                self.search,
-                self.compare,
-                self.proxy,
-            ])
+            return sum(
+                [
+                    self.read,
+                    self.write,
+                    self.add,
+                    self.delete,
+                    self.search,
+                    self.compare,
+                    self.proxy,
+                ]
+            )
 
         @computed_field
         @property
@@ -3483,9 +3485,9 @@ class FlextLdifModels(FlextModels):
                 # Create OUD target
                 target_result = FlextLdifModels.AclTarget.create(
                     target_dn="",
-                    attributes=[self.target]
-                    if self.access_type.startswith("attr")
-                    else [],
+                    attributes=(
+                        [self.target] if self.access_type.startswith("attr") else []
+                    ),
                     filter=self.filter,
                 )
                 if target_result.is_failure:

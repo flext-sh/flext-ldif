@@ -84,7 +84,9 @@ class OudSchemaQuirk(BaseSchemaQuirk):
             if attr_result.is_success:
                 attr_obj = attr_result.value
                 # Convert to dict for quirk system with OUD metadata
-                base_data = attr_obj.model_dump() if hasattr(attr_obj, "model_dump") else {}
+                base_data = (
+                    attr_obj.model_dump() if hasattr(attr_obj, "model_dump") else {}
+                )
                 return FlextResult[dict[str, object]].ok(
                     {
                         **base_data,

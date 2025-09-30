@@ -182,10 +182,10 @@ class FlextLdifHandlers(FlextBus):
 
         def add_processor(
             self,
-            processor: Callable[
-                [FlextTypes.Core.Value], FlextResult[FlextTypes.Core.Value]
-            ]
-            | None,
+            processor: (
+                Callable[[FlextTypes.Core.Value], FlextResult[FlextTypes.Core.Value]]
+                | None
+            ),
         ) -> FlextResult[None]:
             """Add processor to the chain."""
             if processor is None:
@@ -429,10 +429,12 @@ class FlextLdifHandlers(FlextBus):
             }
 
             if self._config.analytics_detail_level == "high":
-                analytics.update({
-                    "validation_statistics": self._analyze_validation(entries),
-                    "performance_metrics": self._analyze_performance(entries),
-                })
+                analytics.update(
+                    {
+                        "validation_statistics": self._analyze_validation(entries),
+                        "performance_metrics": self._analyze_performance(entries),
+                    }
+                )
 
             # Convert analytics to proper JsonDict format
             json_analytics = cast("FlextTypes.Core.JsonDict", analytics)
@@ -533,9 +535,9 @@ class FlextLdifHandlers(FlextBus):
 
             return {
                 "validation_results": dict(validation_results.items()),
-                "validation_errors": list(validation_errors[:10])
-                if validation_errors
-                else [],  # Limit to first 10 errors
+                "validation_errors": (
+                    list(validation_errors[:10]) if validation_errors else []
+                ),  # Limit to first 10 errors
             }
 
         def _analyze_performance(
