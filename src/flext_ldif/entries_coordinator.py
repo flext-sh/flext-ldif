@@ -11,9 +11,12 @@ from typing import override
 from pydantic import ConfigDict
 
 from flext_core import FlextLogger, FlextResult, FlextService
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.entry import FlextLdifEntryBuilder
+from flext_ldif.mixins import FlextLdifMixins
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks import FlextLdifEntryQuirks
+from flext_ldif.utilities import FlextLdifUtilities
 
 
 class FlextLdifEntries(FlextService[dict[str, object]]):
@@ -87,36 +90,43 @@ class FlextLdifEntries(FlextService[dict[str, object]]):
             self._logger = FlextLogger(__name__)
 
         def validate_dn(self, dn: str) -> FlextResult[bool]:
-            """Validate distinguished name format."""
-            try:
-                dn_result = FlextLdifModels.DistinguishedName.create(dn)
-                if dn_result.is_success:
-                    return FlextResult[bool].ok(True)
-                return FlextResult[bool].fail(dn_result.error or "Invalid DN")
-            except Exception as e:
-                return FlextResult[bool].fail(f"DN validation failed: {e}")
+            """Validate distinguished name format using centralized utilities."""
+            # Use centralized validation - SINGLE SOURCE OF TRUTH
+            return FlextLdifUtilities.DnUtilities.validate_dn_format(dn)
 
         def validate_attributes(
             self, attributes: dict[str, list[str]]
         ) -> FlextResult[bool]:
-            """Validate entry attributes."""
+            """Validate entry attributes using centralized ValidationMixin."""
             if not attributes:
-                return FlextResult[bool].fail("Attributes cannot be empty")
+                return FlextResult[bool].fail(
+                    FlextLdifConstants.ErrorMessages.ATTRIBUTES_EMPTY_ERROR
+                )
 
+            # Use centralized validation from ValidationMixin
             for attr_name, attr_values in attributes.items():
-                if not attr_name or not attr_name.strip():
-                    return FlextResult[bool].fail("Attribute name cannot be empty")
-                if not attr_values or not any(attr_values):
-                    return FlextResult[bool].fail(
-                        f"Attribute '{attr_name}' has no values"
+                # Validate attribute name using centralized method
+                try:
+                    FlextLdifMixins.ValidationMixin.validate_attribute_name(attr_name)
+                except (TypeError, ValueError) as e:
+                    return FlextResult[bool].fail(str(e))
+
+                # Validate attribute values using centralized method
+                try:
+                    FlextLdifMixins.ValidationMixin.validate_attribute_values(
+                        attr_values
                     )
+                except (TypeError, ValueError) as e:
+                    return FlextResult[bool].fail(str(e))
 
             return FlextResult[bool].ok(True)
 
         def validate_objectclasses(self, objectclasses: list[str]) -> FlextResult[bool]:
             """Validate objectclass list."""
             if not objectclasses:
-                return FlextResult[bool].fail("ObjectClass list cannot be empty")
+                return FlextResult[bool].fail(
+                    FlextLdifConstants.ErrorMessages.OBJECTCLASS_EMPTY_ERROR
+                )
 
             required_classes = {"top"}
             missing = required_classes - set(objectclasses)

@@ -15,6 +15,7 @@ from typing import cast, override
 from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.utilities import FlextLdifUtilities
 
 
 class FlextLdifQuirksAdapter(FlextService[dict[str, object]]):
@@ -185,13 +186,17 @@ class FlextLdifQuirksAdapter(FlextService[dict[str, object]]):
         special_attributes: set[str] = set()
 
         for entry in entries:
-            # Analyze DN patterns
+            # Analyze DN patterns - use centralized DnUtilities
             dn_value = entry.dn.value
-            components = [comp.strip() for comp in dn_value.split(",")]
-            for component in components:
-                if "=" in component:
-                    attr_name = component.split("=")[0].strip()
-                    dn_patterns.add(attr_name)
+            components_result = FlextLdifUtilities.DnUtilities.parse_dn_components(
+                dn_value
+            )
+            if components_result.is_success:
+                components = components_result.unwrap()
+                for component in components:
+                    if "=" in component:
+                        attr_name = component.split("=")[0].strip()
+                        dn_patterns.add(attr_name)
 
             # Analyze object classes
             obj_classes: list[str] = entry.get_attribute_values("objectClass")
@@ -464,8 +469,13 @@ class FlextLdifQuirksAdapter(FlextService[dict[str, object]]):
 
         issues: list[str] = []
 
-        # Check DN components
-        components = [comp.strip() for comp in dn.split(",")]
+        # Check DN components - use centralized DnUtilities
+        components_result = FlextLdifUtilities.DnUtilities.parse_dn_components(dn)
+        if components_result.is_failure:
+            issues.append(f"Invalid DN format: {components_result.error}")
+            return FlextResult[list[str]].ok(issues)
+
+        components = components_result.unwrap()
         for component in components:
             if "=" not in component:
                 issues.append(f"Invalid DN component format: {component}")

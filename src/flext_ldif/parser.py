@@ -18,6 +18,7 @@ from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.utilities import FlextLdifUtilities
 
 
 class FlextLdifParser(FlextService[dict[str, object]]):
@@ -370,7 +371,7 @@ class FlextLdifParser(FlextService[dict[str, object]]):
     def parse_ldif_file_from_path(
         self, file_path: Path
     ) -> FlextResult[list[FlextLdifModels.Entry | FlextLdifModels.ChangeRecord]]:
-        """Alias for parse_ldif_file for backward compatibility."""
+        """Parse LDIF file from Path object."""
         return self.parse_ldif_file(file_path)
 
     def parse_lines(
@@ -596,7 +597,7 @@ class FlextLdifParser(FlextService[dict[str, object]]):
                 return latin1_result
 
             # Default: UTF-8 with replacement
-            return FlextResult[str].ok("utf-8")
+            return FlextResult[str].ok(FlextLdifConstants.Encoding.DEFAULT_ENCODING)
 
         @staticmethod
         def try_utf8(content: bytes) -> FlextResult[str]:
@@ -604,8 +605,8 @@ class FlextLdifParser(FlextService[dict[str, object]]):
             if not content:
                 return FlextResult[str].fail("Empty content")
             try:
-                content.decode("utf-8")
-                return FlextResult[str].ok("utf-8")
+                content.decode(FlextLdifConstants.Encoding.DEFAULT_ENCODING)
+                return FlextResult[str].ok(FlextLdifConstants.Encoding.DEFAULT_ENCODING)
             except UnicodeDecodeError as e:
                 return FlextResult[str].fail(f"UTF-8 decode failed: {e}")
 
@@ -615,15 +616,21 @@ class FlextLdifParser(FlextService[dict[str, object]]):
             if not content:
                 return FlextResult[str].fail("Empty content")
             try:
-                content.decode("latin-1")
-                return FlextResult[str].ok("latin-1")
+                content.decode(FlextLdifConstants.Encoding.LATIN1)
+                return FlextResult[str].ok(FlextLdifConstants.Encoding.LATIN1)
             except UnicodeDecodeError as e:
                 return FlextResult[str].fail(f"Latin-1 decode failed: {e}")
 
         @staticmethod
         def supports(encoding: str) -> bool:
             """Check if encoding is supported."""
-            supported = {"utf-8", "latin-1", "ascii", "utf-16", "cp1252"}
+            supported = {
+                FlextLdifConstants.Encoding.DEFAULT_ENCODING,
+                FlextLdifConstants.Encoding.LATIN1,
+                FlextLdifConstants.Encoding.ASCII,
+                "utf-16",
+                "cp1252",
+            }
             return encoding.lower() in supported
 
     def _detect_encoding(self, content: str | bytes) -> str | None:
@@ -641,14 +648,16 @@ class FlextLdifParser(FlextService[dict[str, object]]):
             content_bytes = content
         else:
             # Convert to string first, then encode
-            content_bytes = str(content).encode("utf-8", errors="replace")
+            content_bytes = str(content).encode(
+                FlextLdifConstants.Encoding.DEFAULT_ENCODING, errors="replace"
+            )
 
         result = self.EncodingStrategy.detect(content_bytes)
         if result.is_success:
             return result.unwrap()
 
         # Default encoding from config
-        return "utf-8"
+        return FlextLdifConstants.Encoding.DEFAULT_ENCODING
 
     def detect_server_type(
         self, entries: list[FlextLdifModels.Entry | FlextLdifModels.ChangeRecord]
@@ -672,12 +681,17 @@ class FlextLdifParser(FlextService[dict[str, object]]):
         for entry in entries:
             if hasattr(entry, "dn"):
                 dn_value = entry.dn.value
-                # Extract DN components
-                components = [comp.strip() for comp in dn_value.split(",")]
-                for component in components:
-                    if "=" in component:
-                        attr_name = component.split("=")[0].strip()
-                        dn_patterns.add(attr_name)
+                # Extract DN components using centralized utility
+
+                components_result = FlextLdifUtilities.DnUtilities.parse_dn_components(
+                    dn_value
+                )
+                if components_result.is_success:
+                    components = components_result.unwrap()
+                    for component in components:
+                        if "=" in component:
+                            attr_name = component.split("=")[0].strip()
+                            dn_patterns.add(attr_name)
 
             # Handle different entry types
             if isinstance(entry, FlextLdifModels.Entry):
@@ -877,7 +891,7 @@ class FlextLdifParser(FlextService[dict[str, object]]):
             return FlextResult[dict[str, object]].fail(error_msg)
 
     def normalize_dn(self, dn: str) -> FlextResult[str]:
-        """Normalize Distinguished Name according to RFC standards.
+        """Normalize Distinguished Name using centralized FlextLdifUtilities.
 
         Args:
             dn: Distinguished Name string to normalize
@@ -886,34 +900,8 @@ class FlextLdifParser(FlextService[dict[str, object]]):
             FlextResult containing normalized DN
 
         """
-        try:
-            if not dn or not dn.strip():
-                return FlextResult[str].fail("DN cannot be empty")
-
-            # Basic DN normalization
-            dn_parts: list[str] = []
-            components = [comp.strip() for comp in dn.split(",")]
-
-            for component in components:
-                if "=" not in component:
-                    return FlextResult[str].fail(f"Invalid DN component: {component}")
-
-                attr, value = component.split("=", 1)
-                attr = attr.strip().lower()  # Normalize attribute names to lowercase
-                value = value.strip()
-
-                # Basic value normalization (remove extra spaces)
-                value = " ".join(value.split())
-
-                dn_parts.append(f"{attr}={value}")
-
-            normalized_dn = ",".join(dn_parts)
-            return FlextResult[str].ok(normalized_dn)
-
-        except Exception as e:
-            error_msg = f"Failed to normalize DN: {e}"
-            self._logger.exception(error_msg)
-            return FlextResult[str].fail(error_msg)
+        # Use centralized normalization - SINGLE SOURCE OF TRUTH
+        return FlextLdifUtilities.DnUtilities.normalize_dn(dn)
 
     def normalize_attribute_name(self, attr_name: str) -> FlextResult[str]:
         """Normalize LDAP attribute name.
@@ -927,7 +915,9 @@ class FlextLdifParser(FlextService[dict[str, object]]):
         """
         try:
             if not attr_name or not attr_name.strip():
-                return FlextResult[str].fail("Attribute name cannot be empty")
+                return FlextResult[str].fail(
+                    FlextLdifConstants.ErrorMessages.ATTRIBUTE_NAME_EMPTY_ERROR
+                )
 
             # Basic attribute name normalization - lowercase
             normalized_name = attr_name.strip().lower()

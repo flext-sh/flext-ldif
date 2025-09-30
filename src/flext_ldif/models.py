@@ -11,6 +11,7 @@ from typing import Self, cast
 from pydantic import (
     ConfigDict,
     Field,
+    SerializationInfo,
     computed_field,
     field_serializer,
     field_validator,
@@ -19,6 +20,13 @@ from pydantic import (
 
 from flext_core import FlextModels, FlextResult
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.utilities import FlextLdifUtilities
+
+
+def _default_ldif_attributes() -> FlextLdifModels.LdifAttributes:
+    """Factory function for default LDIF attributes."""
+    # Returns empty LdifAttributes instance
+    return FlextLdifModels.LdifAttributes(attributes={})
 
 
 class FlextLdifModels(FlextModels):
@@ -153,28 +161,41 @@ class FlextLdifModels(FlextModels):
         @computed_field
         @property
         def normalized_value(self) -> str:
-            """Computed field for normalized DN value."""
-            return self.value.strip().lower()
+            """Computed field for normalized DN value using centralized utilities."""
+            # Use centralized normalization - SINGLE SOURCE OF TRUTH
+            normalized_result = FlextLdifUtilities.DnUtilities.normalize_dn(self.value)
+            return (
+                normalized_result.unwrap()
+                if normalized_result.is_success
+                else self.value.strip().lower()
+            )
 
         @computed_field
         @property
         def components(self) -> list[str]:
-            """Computed field for DN components."""
-            return [comp.strip() for comp in self.value.split(",") if comp.strip()]
+            """Computed field for DN components using centralized FlextLdifUtilities."""
+            # Use centralized parsing - SINGLE SOURCE OF TRUTH
+            components_result = FlextLdifUtilities.DnUtilities.parse_dn_components(
+                self.value
+            )
+            return components_result.unwrap() if components_result.is_success else []
 
         @computed_field
         @property
         def depth(self) -> int:
-            """Computed field for DN depth (number of components)."""
-            return len(self.components)
+            """Computed field for DN depth using centralized FlextLdifUtilities."""
+            # Use centralized depth calculation - SINGLE SOURCE OF TRUTH
+            depth_result = FlextLdifUtilities.DnUtilities.get_dn_depth(self.value)
+            return depth_result.unwrap() if depth_result.is_success else 0
 
         @field_validator("value")
         @classmethod
         def validate_dn_format(cls, v: str) -> str:
-            """Validate DN format."""
-            if not v.strip():
-                error_msg = "DN cannot be empty"
-                raise ValueError(error_msg)
+            """Validate DN format using centralized FlextLdifUtilities.DnUtilities."""
+            # Use centralized validation - SINGLE SOURCE OF TRUTH
+            validation_result = FlextLdifUtilities.DnUtilities.validate_dn_format(v)
+            if validation_result.is_failure:
+                raise ValueError(validation_result.error or "Invalid DN format")
             return v.strip()
 
         @field_serializer("value", when_used="json")
@@ -235,8 +256,9 @@ class FlextLdifModels(FlextModels):
         def validate_name(cls, v: str) -> str:
             """Validate attribute name."""
             if not v.strip():
-                error_msg = "Attribute name cannot be empty"
-                raise ValueError(error_msg)
+                raise ValueError(
+                    FlextLdifConstants.ErrorMessages.ATTRIBUTE_NAME_EMPTY_ERROR
+                )
             return v.strip().lower()
 
         @field_serializer("values", when_used="json")
@@ -370,8 +392,8 @@ class FlextLdifModels(FlextModels):
             description="Distinguished Name of the entry",
         )
 
-        attributes: "FlextLdifModels.LdifAttributes" = Field(
-            default_factory=lambda: FlextLdifModels.LdifAttributes(),  # type: ignore[unbound-name]  # noqa: PLW0108
+        attributes: FlextLdifModels.LdifAttributes = Field(
+            default_factory=_default_ldif_attributes,
             description="Entry attributes",
         )
 
@@ -415,8 +437,7 @@ class FlextLdifModels(FlextModels):
         def validate_entry_consistency(self) -> Self:
             """Validate entry consistency."""
             if not self.dn.value.strip():
-                msg = "Entry DN cannot be empty"
-                raise ValueError(msg)
+                raise ValueError(FlextLdifConstants.ErrorMessages.ENTRY_DN_EMPTY_ERROR)
             # Note: objectClass validation is relaxed for LDIF parsing flexibility
             # Some LDIF operations (like modify) may not include objectClass
             return self
@@ -474,7 +495,9 @@ class FlextLdifModels(FlextModels):
             try:
                 # Basic validation - ensure DN exists and has attributes
                 if not self.dn.value.strip():
-                    return FlextResult[bool].fail("DN cannot be empty")
+                    return FlextResult[bool].fail(
+                        FlextLdifConstants.ErrorMessages.DN_EMPTY_ERROR
+                    )
 
                 # Note: objectClass validation is relaxed for LDIF parsing flexibility
                 # Some LDIF operations may not include objectClass
@@ -570,7 +593,7 @@ class FlextLdifModels(FlextModels):
                     stripped_line = line.strip()
                     if not stripped_line or stripped_line.startswith("#"):
                         continue
-                    if stripped_line.startswith("dn:"):
+                    if stripped_line.startswith(FlextLdifConstants.Format.DN_PREFIX):
                         dn = stripped_line[3:].strip()
                     elif ":" in stripped_line:
                         attr_line = stripped_line.split(":", 1)
@@ -626,8 +649,8 @@ class FlextLdifModels(FlextModels):
             description="Type of change (add, modify, delete)",
         )
 
-        attributes: "FlextLdifModels.LdifAttributes" = Field(
-            default_factory=lambda: FlextLdifModels.LdifAttributes(),  # type: ignore[unbound-name]  # noqa: PLW0108
+        attributes: FlextLdifModels.LdifAttributes = Field(
+            default_factory=_default_ldif_attributes,
             description="Change attributes",
         )
 
@@ -1056,7 +1079,7 @@ class FlextLdifModels(FlextModels):
 
         @field_serializer("read", when_used="json")
         def serialize_permissions_with_summary(
-            self, value: bool, *, _info: object
+            self, value: bool, _info: SerializationInfo
         ) -> dict[str, object]:
             """Serialize permissions with summary context."""
             return {"read": value, "permissions_context": self.permissions_summary}
@@ -1278,8 +1301,7 @@ class FlextLdifModels(FlextModels):
         def validate_base_dn(cls, v: str) -> str:
             """Validate base DN."""
             if not v.strip():
-                msg = "Base DN cannot be empty"
-                raise ValueError(msg)
+                raise ValueError(FlextLdifConstants.ErrorMessages.BASE_DN_EMPTY_ERROR)
             return v.strip()
 
     class LdifDocument(FlextModels.Entity):

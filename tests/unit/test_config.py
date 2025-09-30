@@ -194,6 +194,7 @@ class TestFlextLdifConfig:
             "test",
             ldif_max_entries=5000,
             max_workers=4,  # Must be >= 4 for performance mode
+            debug_mode=False,  # Override test environment debug mode
         )
         assert config.ldif_max_entries == 5000
         assert config.max_workers == 4

@@ -37,6 +37,7 @@ class FlextLdifConstants(FlextConstants):
 
         DN_ATTRIBUTE: Final[str] = "dn"
         ATTRIBUTE_SEPARATOR: Final[str] = ":"
+        DN_PREFIX: Final[str] = "dn:"  # Combined DN attribute with separator
 
         # LDIF ObjectClass constants
         LDIF_OBJECTCLASS_GROUPOFNAMES: Final[str] = "groupOfNames"
@@ -156,13 +157,37 @@ class FlextLdifConstants(FlextConstants):
     class ErrorMessages:
         """Error message constants for validation."""
 
+        # DN Errors
         DN_EMPTY_ERROR: Final[str] = "DN cannot be empty"
         DN_INVALID_FORMAT_ERROR: Final[str] = "DN has invalid format"
         DN_INVALID_CHARS_ERROR: Final[str] = "DN contains invalid characters"
+
+        # Attribute Errors
+        ATTRIBUTES_EMPTY_ERROR: Final[str] = "Attributes cannot be empty"
         ATTRIBUTES_TYPE_ERROR: Final[str] = "Attributes must be a dictionary"
+        ATTRIBUTE_NAME_EMPTY_ERROR: Final[str] = "Attribute name cannot be empty"
         ATTRIBUTE_NAME_ERROR: Final[str] = "Attribute name must be a string"
         ATTRIBUTE_VALUES_ERROR: Final[str] = "Attribute values must be a list"
         ATTRIBUTE_VALUE_TYPE_ERROR: Final[str] = "Attribute values must be strings"
+
+        # ObjectClass Errors
+        OBJECTCLASS_EMPTY_ERROR: Final[str] = "ObjectClass list cannot be empty"
+
+        # Entry Errors
+        ENTRY_DN_EMPTY_ERROR: Final[str] = "Entry DN cannot be empty"
+        ENTRIES_EMPTY_ERROR: Final[str] = "Entries cannot be empty"
+
+        # Base DN Errors
+        BASE_DN_EMPTY_ERROR: Final[str] = "Base DN cannot be empty"
+
+        # Data Errors
+        DATA_BATCH_EMPTY_ERROR: Final[str] = "Data batch cannot be empty"
+
+        # URL Errors
+        URL_EMPTY_ERROR: Final[str] = "URL cannot be empty"
+
+        # Format Errors
+        INVALID_LDIF_FORMAT_ERROR: Final[str] = "Invalid LDIF file format"
 
     # =============================================================================
     # ENUMS
