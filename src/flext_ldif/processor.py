@@ -94,7 +94,7 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
             self._config: FlextLdifConfig | None = FlextLdifConfig()
         else:
             # Use provided config (including None if explicitly passed)
-            self._config: FlextLdifConfig | None = config
+            self._config = config
 
         # Initialize advanced components
         parser_config: dict[str, object] = {
@@ -1186,11 +1186,11 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
         matching_entries: list[FlextLdifModels.Entry] = []
         for entry in entries:
             if hasattr(entry, "to_ldif_string"):
-                attr_values_raw = entry.attributes.get_attribute(attr_name) or []
+                attr_values_obj = entry.attributes.get_attribute(attr_name)
                 # Ensure attr_values is a list of strings
-                attr_values: list[str] = [
-                    str(value) for value in attr_values_raw if value is not None
-                ]
+                attr_values: list[str] = (
+                    attr_values_obj.values if attr_values_obj else []
+                )
                 if any(value.lower() == attr_value.lower() for value in attr_values):
                     matching_entries.append(entry)
 
@@ -2076,7 +2076,10 @@ class FlextLdifProcessor(FlextService[dict[str, object]]):
 
             for entry in entries:
                 # Count object classes
-                object_classes = entry.get_attribute("objectClass") or []
+                object_classes_obj = entry.get_attribute("objectClass")
+                object_classes: list[str] = (
+                    object_classes_obj.values if object_classes_obj else []
+                )
                 object_classes_dict = stats["object_classes"]
                 if isinstance(object_classes_dict, dict):
                     # Cast to proper type for type checker

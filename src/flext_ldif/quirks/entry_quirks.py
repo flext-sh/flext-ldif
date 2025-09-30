@@ -12,7 +12,6 @@ from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks import constants
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
-from flext_ldif.utilities import FlextLdifUtilities
 
 
 class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
@@ -68,44 +67,40 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
 
         rules = quirks_result.value
 
-        try:
-            adapted_data: dict[str, object] = {"dn": entry.dn.value, "attributes": {}}
+        # Create adapted entry data - FlextResult handles errors explicitly
+        adapted_data: dict[str, object] = {"dn": entry.dn.value, "attributes": {}}
 
-            attribute_mappings_raw = rules.get("attribute_mappings", {})
-            attribute_mappings = cast("dict[str, str]", attribute_mappings_raw)
-            adapted_attrs: dict[str, FlextLdifModels.AttributeValues] = {}
+        attribute_mappings_raw = rules.get("attribute_mappings", {})
+        attribute_mappings = cast("dict[str, str]", attribute_mappings_raw)
+        adapted_attrs: dict[str, FlextLdifModels.AttributeValues] = {}
 
-            for attr_name, attr_values in entry.attributes.data.items():
-                mapped_name = attribute_mappings.get(attr_name, attr_name)
+        for attr_name, attr_values in entry.attributes.data.items():
+            mapped_name = attribute_mappings.get(attr_name, attr_name)
 
-                adapted_values = self._adapt_attribute_values(
-                    attr_name,
-                    attr_values.values,
-                    target_server or constants.SERVER_TYPE_GENERIC,
-                )
-
-                adapted_attrs[mapped_name] = FlextLdifModels.AttributeValues(
-                    values=adapted_values
-                )
-
-            adapted_data["attributes"] = adapted_attrs
-
-            adapted_entry_result: FlextResult[FlextLdifModels.Entry] = (
-                FlextLdifModels.Entry.create(
-                    dn=adapted_data["dn"], attributes=adapted_data["attributes"]
-                )
+            adapted_values = self._adapt_attribute_values(
+                attr_name,
+                attr_values.values,
+                target_server or constants.SERVER_TYPE_GENERIC,
             )
-            if adapted_entry_result.is_failure:
-                return FlextResult[FlextLdifModels.Entry].fail(
-                    f"Failed to create adapted entry: {adapted_entry_result.error}"
-                )
 
-            return adapted_entry_result
+            adapted_attrs[mapped_name] = FlextLdifModels.AttributeValues(
+                values=adapted_values
+            )
 
-        except Exception as e:
-            error_msg = f"Entry adaptation failed: {e}"
-            self._logger.exception(error_msg)
+        adapted_data["attributes"] = adapted_attrs
+
+        # Create adapted entry - FlextResult pattern with explicit error handling
+        adapted_entry_result: FlextResult[FlextLdifModels.Entry] = (
+            FlextLdifModels.Entry.create(
+                dn=adapted_data["dn"], attributes=adapted_data["attributes"]
+            )
+        )
+        if adapted_entry_result.is_failure:
+            error_msg = f"Failed to create adapted entry: {adapted_entry_result.error}"
+            self._logger.error(error_msg)
             return FlextResult[FlextLdifModels.Entry].fail(error_msg)
+
+        return adapted_entry_result
 
     def _adapt_attribute_values(
         self, attr_name: str, attr_values: list[str], server_type: str
@@ -190,7 +185,7 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
             if isinstance(dn_issues, list):
                 issues.extend(dn_issues)
 
-        obj_classes_raw = entry.get_attribute("objectClass") or []
+        obj_classes_raw: object = entry.get_attribute("objectClass") or []
         obj_classes: list[str] = (
             obj_classes_raw if isinstance(obj_classes_raw, list) else []
         )
@@ -246,13 +241,14 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
 
         issues: list[str] = []
 
-        # Use centralized DnUtilities for DN parsing
-        components_result = FlextLdifUtilities.DnUtilities.parse_dn_components(dn)
-        if components_result.is_failure:
-            issues.append(f"Invalid DN format: {components_result.error}")
-            return FlextResult[list[str]].ok(issues)
+        # Use DistinguishedName Model for DN parsing
+        try:
+            dn_model = FlextLdifModels.DistinguishedName(value=dn)
+            components = dn_model.components
+        except ValueError as e:
+            issues.append(f"Invalid DN format: {e}")
+            return {"valid": False, "issues": issues}
 
-        components = components_result.unwrap()
         for component in components:
             if "=" not in component:
                 issues.append(f"Invalid DN component format: {component}")

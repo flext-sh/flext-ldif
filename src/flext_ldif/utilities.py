@@ -11,10 +11,10 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Final
 
 from flext_core import FlextResult, FlextUtilities
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.protocols import FlextLdifProtocols
 
 
 class FlextLdifUtilities(FlextUtilities):
@@ -54,6 +54,37 @@ class FlextLdifUtilities(FlextUtilities):
 
             """
             return datetime.now(UTC).strftime(format_string)
+
+    class TextUtilities:
+        """Text-related utility methods for LDIF operations."""
+
+        BYTES_PER_UNIT: Final[float] = 1024.0
+
+        @staticmethod
+        def format_byte_size(size_bytes: float) -> str:
+            """Format byte size to human-readable string.
+
+            Args:
+                size_bytes: Size in bytes to format
+
+            Returns:
+                str: Formatted size string (e.g., "1.5 KB", "2.0 MB")
+
+            """
+            # Handle special cases
+            if size_bytes <= 0:
+                return "0 B"
+
+            units = ["B", "KB", "MB", "GB", "TB"]
+            unit_index = 0
+            size = float(size_bytes)
+
+            bytes_per_unit = FlextLdifUtilities.TextUtilities.BYTES_PER_UNIT
+            while size >= bytes_per_unit and unit_index < len(units) - 1:
+                size /= bytes_per_unit
+                unit_index += 1
+
+            return f"{size:.1f} {units[unit_index]}"
 
     # =========================================================================
     # FILE UTILITIES - File and path-related operations
@@ -194,162 +225,6 @@ class FlextLdifUtilities(FlextUtilities):
                 return FlextResult[int].fail(
                     f"Error counting lines in file {file_path}: {e}"
                 )
-
-    # =========================================================================
-    # TEXT UTILITIES - Text processing and formatting operations
-    # =========================================================================
-
-    class TextUtilities:
-        """Text processing utility methods for LDIF operations."""
-
-        @staticmethod
-        def format_bytes(byte_count: int) -> str:
-            """Format byte count in human-readable format.
-
-            Args:
-                byte_count: Number of bytes
-
-            Returns:
-                str: Human-readable byte count (e.g., "1.5 KB")
-
-            """
-            if not isinstance(byte_count, int):
-                msg = f"Expected int, got {type(byte_count).__name__}"
-                raise TypeError(msg)
-
-            if byte_count <= 0:
-                return "0 B"
-
-            size_names = ["B", "KB", "MB", "GB", "TB"]
-            size_index = 0
-            size = float(byte_count)
-
-            bytes_per_kb = 1024.0
-            while size >= bytes_per_kb and size_index < len(size_names) - 1:
-                size /= bytes_per_kb
-                size_index += 1
-
-            return f"{size:.1f} {size_names[size_index]}"
-
-        @staticmethod
-        def truncate_string(text: str, max_length: int, suffix: str = "...") -> str:
-            """Truncate string to maximum length with suffix.
-
-            Args:
-                text: Text to truncate
-                max_length: Maximum length including suffix
-                suffix: Suffix to add when truncating
-
-            Returns:
-                str: Truncated string with suffix if needed
-
-            """
-            if len(text) <= max_length:
-                return text
-
-            if max_length <= len(suffix):
-                return suffix[:max_length]
-
-            return text[: max_length - len(suffix)] + suffix
-
-        @staticmethod
-        def format_byte_size(byte_count: object) -> str:
-            """Format byte count in human-readable format (alias for format_bytes).
-
-            Args:
-                byte_count: Number of bytes
-
-            Returns:
-                str: Human-readable byte count (e.g., "1.5 KB")
-
-            """
-            if not isinstance(byte_count, int):
-                msg = f"Expected int, got {type(byte_count).__name__}"
-                raise TypeError(msg)
-
-            if byte_count <= 0:
-                return "0 B"
-
-            size_names = ["B", "KB", "MB", "GB", "TB"]
-            size_index = 0
-            size = float(byte_count)
-
-            bytes_per_kb = 1024.0
-            while size >= bytes_per_kb and size_index < len(size_names) - 1:
-                size /= bytes_per_kb
-                size_index += 1
-
-            return f"{size:.1f} {size_names[size_index]}"
-
-    # =========================================================================
-    # LDIF UTILITIES - LDIF-specific utility operations
-    # =========================================================================
-
-    class LdifUtilities:
-        """LDIF-specific utility methods."""
-
-        @staticmethod
-        def count_entries_with_attribute(
-            entries: list[FlextLdifProtocols.LdifEntryProtocol], attribute_name: str
-        ) -> int:
-            """Count entries that have a specific attribute.
-
-            Args:
-                entries: List of entries to check
-                attribute_name: Name of the attribute to check for
-
-            Returns:
-                int: Number of entries with the attribute
-
-            """
-            count = 0
-            for entry in entries:
-                if (
-                    hasattr(entry, "has_attribute")
-                    and entry.has_attribute(attribute_name)
-                ) or (
-                    hasattr(entry, "attributes") and attribute_name in entry.attributes
-                ):
-                    count += 1
-            return count
-
-        @staticmethod
-        def extract_dns_from_entries(
-            entries: list[FlextLdifProtocols.LdifEntryProtocol],
-        ) -> list[str]:
-            """Extract DN values from a list of entries.
-
-            Args:
-                entries: List of entries to extract DNs from
-
-            Returns:
-                list[str]: List of DN strings
-
-            """
-            return [
-                getattr(entry.dn, "value", str(entry.dn))
-                for entry in entries
-                if hasattr(entry, "dn")
-            ]
-
-        @staticmethod
-        def get_unique_attribute_names(
-            entries: list[FlextLdifProtocols.LdifEntryProtocol],
-        ) -> set[str]:
-            """Get unique attribute names from all entries.
-
-            Args:
-                entries: List of entries to analyze
-
-            Returns:
-                set[str]: Set of unique attribute names
-
-            """
-            attribute_names: set[str] = set()
-            for entry in entries:
-                if hasattr(entry, "attributes"):
-                    attribute_names.update(entry.attributes.keys())
-            return attribute_names
 
     # =========================================================================
     # DN UTILITIES - Distinguished Name operations (SINGLE SOURCE OF TRUTH)

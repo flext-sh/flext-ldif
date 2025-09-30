@@ -101,5 +101,77 @@ class FlextLdifExceptions(FlextExceptions):
         """Create entry error FlextResult."""
         return FlextResult[None].fail(message, error_code="ENTRY_ERROR")
 
+    # =============================================================================
+    # LDIF-SPECIFIC DOMAIN ERRORS
+    # =============================================================================
+
+    @classmethod
+    def dn_validation_error(
+        cls, message: str, *, dn_value: str | None = None
+    ) -> FlextResult[None]:
+        """Create DN validation error FlextResult."""
+        _ = dn_value  # Suppress unused argument warning
+        return FlextResult[None].fail(message, error_code="DN_VALIDATION_ERROR")
+
+    @classmethod
+    def attribute_validation_error(
+        cls,
+        message: str,
+        *,
+        attribute_name: str | None = None,
+        attribute_value: object = None,
+    ) -> FlextResult[None]:
+        """Create attribute validation error FlextResult."""
+        _ = attribute_name, attribute_value  # Suppress unused argument warnings
+        return FlextResult[None].fail(message, error_code="ATTRIBUTE_VALIDATION_ERROR")
+
+    @classmethod
+    def encoding_error(
+        cls, message: str, *, encoding: str | None = None
+    ) -> FlextResult[None]:
+        """Create encoding error FlextResult."""
+        _ = encoding  # Suppress unused argument warning
+        return FlextResult[None].fail(message, error_code="ENCODING_ERROR")
+
+    @classmethod
+    def url_validation_error(
+        cls, message: str, *, url: str | None = None
+    ) -> FlextResult[None]:
+        """Create URL validation error FlextResult."""
+        _ = url  # Suppress unused argument warning
+        return FlextResult[None].fail(message, error_code="URL_VALIDATION_ERROR")
+
+    @classmethod
+    def schema_validation_error(
+        cls, message: str, *, schema_name: str | None = None
+    ) -> FlextResult[None]:
+        """Create schema validation error FlextResult."""
+        _ = schema_name  # Suppress unused argument warning
+        return FlextResult[None].fail(message, error_code="SCHEMA_VALIDATION_ERROR")
+
+    @classmethod
+    def objectclass_error(
+        cls, message: str, *, objectclass: str | None = None
+    ) -> FlextResult[None]:
+        """Create objectclass error FlextResult."""
+        _ = objectclass  # Suppress unused argument warning
+        return FlextResult[None].fail(message, error_code="OBJECTCLASS_ERROR")
+
+    @classmethod
+    def ldif_format_error(
+        cls, message: str, *, line_number: int | None = None
+    ) -> FlextResult[None]:
+        """Create LDIF format error FlextResult."""
+        _ = line_number  # Suppress unused argument warning
+        return FlextResult[None].fail(message, error_code="LDIF_FORMAT_ERROR")
+
+    @classmethod
+    def rfc_compliance_error(
+        cls, message: str, *, rfc_section: str | None = None
+    ) -> FlextResult[None]:
+        """Create RFC compliance error FlextResult."""
+        _ = rfc_section  # Suppress unused argument warning
+        return FlextResult[None].fail(message, error_code="RFC_COMPLIANCE_ERROR")
+
 
 __all__ = ["FlextLdifExceptions"]

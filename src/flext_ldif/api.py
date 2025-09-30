@@ -237,30 +237,25 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
 
     def transform_entries(
         self,
-        entries: list[object],
-        transformer: object,
-    ) -> FlextResult[list[object]]:
+        entries: list[FlextLdifModels.Entry],
+        transformer: Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry],
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Transform entries using transformer function - implements LdifProcessorProtocol.
 
         Args:
             entries: List of LDIF entries to transform
-            transformer: Transformer function or object
+            transformer: Transformer function
 
         Returns:
-            FlextResult[list[object]]: Transformed entries
+            FlextResult[list[FlextLdifModels.Entry]]: Transformed entries
 
         """
-        # Cast entries to the correct type and delegate to existing transform method
-        typed_entries = cast("list[FlextLdifModels.Entry]", entries)
-        typed_transformer = cast(
-            "Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry]",
-            transformer,
-        )
+        # Delegate to existing transform method
+        return self.transform(entries, transformer)
 
-        result = self.transform(typed_entries, typed_transformer)
-        return result.map(lambda x: cast("list[object]", x))
-
-    def analyze_entries(self, entries: list[object]) -> FlextResult[dict[str, object]]:
+    def analyze_entries(
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> FlextResult[dict[str, object]]:
         """Analyze LDIF entries and generate analytics - implements LdifProcessorProtocol and LdifAnalyticsProtocol.
 
         Args:
@@ -270,11 +265,12 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
             FlextResult[dict[str, object]]: Analysis results
 
         """
-        # Cast entries to the correct type and delegate to existing analyze method
-        typed_entries = cast("list[FlextLdifModels.Entry]", entries)
-        return self.analyze(typed_entries)
+        # Delegate to existing analyze method
+        return self.analyze(entries)
 
-    def write_entries_to_string(self, entries: list[object]) -> FlextResult[str]:
+    def write_entries_to_string(
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> FlextResult[str]:
         """Write entries to LDIF format string - implements LdifWriterProtocol.
 
         Args:
@@ -284,13 +280,12 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
             FlextResult[str]: LDIF formatted string
 
         """
-        # Cast entries to the correct type and delegate to existing write method
-        typed_entries = cast("list[FlextLdifModels.Entry]", entries)
-        return self.write(typed_entries)
+        # Delegate to existing write method
+        return self.write(entries)
 
     def write_entries_to_file(
         self,
-        entries: list[object],
+        entries: list[FlextLdifModels.Entry],
         file_path: str,
     ) -> FlextResult[bool]:
         """Write entries to LDIF file - implements LdifWriterProtocol.
@@ -303,9 +298,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
             FlextResult[bool]: Success status
 
         """
-        # Cast entries to the correct type and delegate to existing write_file method
-        typed_entries = cast("list[FlextLdifModels.Entry]", entries)
-        result = self.write_file(typed_entries, Path(file_path))
+        # Delegate to existing write_file method
+        result = self.write_file(entries, Path(file_path))
         return result.map(lambda _: True)  # Convert None to bool
 
     def get_statistics(self) -> dict[str, int | float]:
@@ -322,7 +316,9 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
             "processing_time": 0.0,
         }
 
-    def detect_patterns(self, entries: list[object]) -> dict[str, object]:
+    def detect_patterns(
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> dict[str, object]:
         """Detect patterns in LDIF entries - implements LdifAnalyticsProtocol.
 
         Args:
@@ -332,8 +328,8 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.HealthStatusDict]):
             dict[str, object]: Detected patterns
 
         """
-        # Cast entries and perform basic pattern detection
-        typed_entries = cast("list[FlextLdifModels.Entry]", entries)
+        # Perform basic pattern detection
+        typed_entries = entries
 
         # Basic pattern detection - could be enhanced
         object_classes = set()

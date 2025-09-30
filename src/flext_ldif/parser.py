@@ -18,7 +18,6 @@ from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.utilities import FlextLdifUtilities
 
 
 class FlextLdifParser(FlextService[dict[str, object]]):
@@ -681,17 +680,15 @@ class FlextLdifParser(FlextService[dict[str, object]]):
         for entry in entries:
             if hasattr(entry, "dn"):
                 dn_value = entry.dn.value
-                # Extract DN components using centralized utility
-
-                components_result = FlextLdifUtilities.DnUtilities.parse_dn_components(
-                    dn_value
-                )
-                if components_result.is_success:
-                    components = components_result.unwrap()
-                    for component in components:
+                # Extract DN components using DistinguishedName Model
+                try:
+                    dn_model = FlextLdifModels.DistinguishedName(value=dn_value)
+                    for component in dn_model.components:
                         if "=" in component:
                             attr_name = component.split("=")[0].strip()
                             dn_patterns.add(attr_name)
+                except ValueError:
+                    pass
 
             # Handle different entry types
             if isinstance(entry, FlextLdifModels.Entry):
@@ -702,7 +699,7 @@ class FlextLdifParser(FlextService[dict[str, object]]):
             elif isinstance(entry, FlextLdifModels.ChangeRecord):
                 # For ChangeRecord objects
                 obj_class_attr = entry.attributes.get_attribute("objectClass")
-                obj_classes: list[str] = obj_class_attr.values if obj_class_attr else []
+                obj_classes = obj_class_attr.values if obj_class_attr else []
                 object_classes.update(obj_classes)
             else:
                 # For other entry types that might not have objectClass
@@ -869,7 +866,7 @@ class FlextLdifParser(FlextService[dict[str, object]]):
             # Parse entries
             parse_result = self.parse_string(content)
 
-            validation_report: dict[str, object] = {
+            validation_report = {
                 "valid": parse_result.is_success,
                 "total_entries": len(parse_result.value)
                 if parse_result.is_success
@@ -891,7 +888,7 @@ class FlextLdifParser(FlextService[dict[str, object]]):
             return FlextResult[dict[str, object]].fail(error_msg)
 
     def normalize_dn(self, dn: str) -> FlextResult[str]:
-        """Normalize Distinguished Name using centralized FlextLdifUtilities.
+        """Normalize Distinguished Name using DistinguishedName Model.
 
         Args:
             dn: Distinguished Name string to normalize
@@ -900,8 +897,12 @@ class FlextLdifParser(FlextService[dict[str, object]]):
             FlextResult containing normalized DN
 
         """
-        # Use centralized normalization - SINGLE SOURCE OF TRUTH
-        return FlextLdifUtilities.DnUtilities.normalize_dn(dn)
+        # Use Model normalization - centralized in FlextLdifModels.DistinguishedName
+        try:
+            dn_model = FlextLdifModels.DistinguishedName(value=dn)
+            return FlextResult[str].ok(dn_model.normalized_value)
+        except ValueError as e:
+            return FlextResult[str].fail(str(e))
 
     def normalize_attribute_name(self, attr_name: str) -> FlextResult[str]:
         """Normalize LDAP attribute name.
@@ -1104,7 +1105,7 @@ class FlextLdifParser(FlextService[dict[str, object]]):
             self._encoding = FlextLdifConstants.Encoding.DEFAULT_ENCODING
             self._strict_mode = True
             self._detect_server = True
-            self._compliance_level: str = "strict"
+            self._compliance_level = "strict"
             return FlextResult[None].ok(None)
 
         except Exception as e:

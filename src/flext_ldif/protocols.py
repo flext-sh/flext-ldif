@@ -6,9 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_core import FlextProtocols, FlextResult
+
+if TYPE_CHECKING:
+    from flext_ldif.models import FlextLdifModels
 
 
 class FlextLdifProtocols(FlextProtocols):
@@ -56,26 +60,30 @@ class FlextLdifProtocols(FlextProtocols):
     class LdifProcessorProtocol(Protocol):
         """Protocol for LDIF processors."""
 
-        def parse(self, content: str) -> FlextResult[list[object]]:
+        def parse(self, content: str) -> FlextResult[list[FlextLdifModels.Entry]]:
             """Parse LDIF content string into entries."""
             ...
 
-        def validate_entries(self, entries: list[object]) -> FlextResult[list[object]]:
+        def validate_entries(
+            self, entries: list[FlextLdifModels.Entry]
+        ) -> FlextResult[list[FlextLdifModels.Entry]]:
             """Validate LDIF entries and return validated entries."""
             ...
 
-        def write(self, entries: list[object]) -> FlextResult[str]:
+        def write(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
             """Write entries to LDIF string."""
             ...
 
         def transform_entries(
-            self, entries: list[object], transformer: object
-        ) -> FlextResult[list[object]]:
+            self,
+            entries: list[FlextLdifModels.Entry],
+            transformer: Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry],
+        ) -> FlextResult[list[FlextLdifModels.Entry]]:
             """Transform entries using transformer function."""
             ...
 
         def analyze_entries(
-            self, entries: list[object]
+            self, entries: list[FlextLdifModels.Entry]
         ) -> FlextResult[dict[str, object]]:
             """Analyze entries and provide statistics."""
             ...
@@ -84,11 +92,13 @@ class FlextLdifProtocols(FlextProtocols):
     class LdifValidatorProtocol(Protocol):
         """Protocol for LDIF validators."""
 
-        def validate_entry(self, entry: object) -> FlextResult[bool]:
+        def validate_entry(self, entry: FlextLdifModels.Entry) -> FlextResult[bool]:
             """Validate a single LDIF entry."""
             ...
 
-        def validate_entries(self, entries: list[object]) -> FlextResult[bool]:
+        def validate_entries(
+            self, entries: list[FlextLdifModels.Entry]
+        ) -> FlextResult[bool]:
             """Validate multiple LDIF entries."""
             ...
 
@@ -100,12 +110,14 @@ class FlextLdifProtocols(FlextProtocols):
     class LdifWriterProtocol(Protocol):
         """Protocol for LDIF writers."""
 
-        def write_entries_to_string(self, entries: list[object]) -> FlextResult[str]:
+        def write_entries_to_string(
+            self, entries: list[FlextLdifModels.Entry]
+        ) -> FlextResult[str]:
             """Write entries to LDIF format string."""
             ...
 
         def write_entries_to_file(
-            self, entries: list[object], file_path: str
+            self, entries: list[FlextLdifModels.Entry], file_path: str
         ) -> FlextResult[bool]:
             """Write entries to LDIF file."""
             ...
@@ -115,7 +127,7 @@ class FlextLdifProtocols(FlextProtocols):
         """Protocol for LDIF analytics."""
 
         def analyze_entries(
-            self, entries: list[object]
+            self, entries: list[FlextLdifModels.Entry]
         ) -> FlextResult[dict[str, object]]:
             """Analyze LDIF entries and generate analytics."""
             ...
@@ -124,7 +136,9 @@ class FlextLdifProtocols(FlextProtocols):
             """Get analytics statistics."""
             ...
 
-        def detect_patterns(self, entries: list[object]) -> dict[str, object]:
+        def detect_patterns(
+            self, entries: list[FlextLdifModels.Entry]
+        ) -> dict[str, object]:
             """Detect patterns in LDIF entries."""
             ...
 

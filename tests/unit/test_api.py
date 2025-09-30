@@ -184,7 +184,9 @@ sn: user
         info = api.get_service_info()
         assert info["api"] == "FlextLdifAPI"
         assert "capabilities" in info
-        assert "parse" in info["capabilities"]
+        capabilities = info["capabilities"]
+        assert isinstance(capabilities, list)
+        assert "parse" in capabilities
         assert "pattern" in info
 
     def test_entry_statistics(self) -> None:

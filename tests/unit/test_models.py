@@ -449,3 +449,32 @@ cn: test2
         cn_attr = attrs.get_attribute("cn")
         assert cn_attr is not None
         assert cn_attr.values == [""]
+
+    def test_ldif_processing_result_creation(self) -> None:
+        """Test LdifProcessingResult model creation."""
+        result = FlextLdifModels.LdifProcessingResult(
+            status="success",
+            entries=[],
+            errors=[],
+            warnings=[],
+            statistics={"processed": 10},
+        )
+        assert result.status == "success"
+        assert result.is_success is True
+        assert result.entry_count == 0
+        assert result.error_count == 0
+
+    def test_service_status_creation(self) -> None:
+        """Test ServiceStatus model creation."""
+        status = FlextLdifModels.ServiceStatus(
+            service_name="ldif_processor",
+            status="healthy",
+            configuration={"max_entries": 1000},
+            statistics={"processed": 500},
+            capabilities=["parse", "validate"],
+        )
+        assert status.service_name == "ldif_processor"
+        assert status.status == "healthy"
+        assert status.is_operational is True
+        assert "max_entries" in status.configuration
+        assert status.capabilities == ["parse", "validate"]

@@ -6,13 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import re
 from collections.abc import Callable, Iterator, Sequence
 from typing import override
 
 from flext_core import FlextMixins, FlextResult, T, U
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.utilities import FlextLdifUtilities
+from flext_ldif.models import FlextLdifModels
 
 
 class FlextLdifMixins(FlextMixins):
@@ -27,75 +25,69 @@ class FlextLdifMixins(FlextMixins):
     # =============================================================================
 
     class ValidationMixin:
-        """Mixin providing validation utilities with monadic composition."""
+        """Mixin providing validation utilities with monadic composition.
+
+        All validation now delegates to centralized Models with Pydantic validators.
+        Maintains backward compatibility while centralizing validation logic.
+        """
 
         @staticmethod
         def validate_dn_format(dn_value: str) -> str:
-            """Validate DN format using centralized FlextLdifUtilities.DnUtilities."""
-            # Use centralized validation - SINGLE SOURCE OF TRUTH
-            validation_result = FlextLdifUtilities.DnUtilities.validate_dn_format(
-                dn_value
-            )
-            if validation_result.is_failure:
-                raise ValueError(validation_result.error or "Invalid DN format")
-
-            return dn_value.strip()
+            """Validate DN format using DistinguishedName Model validation."""
+            # Use Model validation - centralized in FlextLdifModels.DistinguishedName
+            try:
+                dn_model = FlextLdifModels.DistinguishedName(value=dn_value)
+                return dn_model.value
+            except ValueError as e:
+                msg = f"Invalid DN format: {e}"
+                raise ValueError(msg) from e
 
         @staticmethod
         def validate_attribute_name(attr_name: str) -> str:
-            """Validate attribute name format."""
-            if not isinstance(attr_name, str):
-                raise TypeError(FlextLdifConstants.ErrorMessages.ATTRIBUTE_NAME_ERROR)
-
-            if not attr_name.strip():
-                raise ValueError(
-                    FlextLdifConstants.ErrorMessages.ATTRIBUTE_NAME_EMPTY_ERROR
-                )
-
-            # RFC 4512 attribute name validation
-            if not re.match(r"^[a-zA-Z][a-zA-Z0-9-]*$", attr_name):
-                msg = f"Invalid attribute name format: {attr_name}"
-                raise ValueError(msg)
-
-            return attr_name.strip()
+            """Validate attribute name format using AttributeName Model."""
+            # Use Model validation - centralized in FlextLdifModels.AttributeName
+            try:
+                attr_model = FlextLdifModels.AttributeName(name=attr_name)
+                return attr_model.name
+            except Exception as e:
+                msg = f"Invalid attribute name: {e}"
+                raise ValueError(msg) from e
 
         @staticmethod
         def validate_attribute_values(values: Sequence[str]) -> list[str]:
-            """Validate attribute values."""
-            if not isinstance(values, (list, tuple)):
-                raise TypeError(FlextLdifConstants.ErrorMessages.ATTRIBUTE_VALUES_ERROR)
+            """Validate attribute values using AttributeValues Model."""
+            # Check if input is a string (which is iterable but not valid)
+            if isinstance(values, str):
+                msg = "Attribute values must be a sequence, not a string"
+                raise TypeError(msg)
 
-            validated_values: list[str] = []
-            for value in values:
-                if not isinstance(value, str):
-                    raise TypeError(
-                        FlextLdifConstants.ErrorMessages.ATTRIBUTE_VALUE_TYPE_ERROR
-                    )
-                validated_values.append(value.strip())
-
-            return validated_values
+            # Use Model validation - centralized in FlextLdifModels.AttributeValues
+            try:
+                values_model = FlextLdifModels.AttributeValues(values=list(values))
+                return values_model.values
+            except Exception as e:
+                msg = f"Invalid attribute values: {e}"
+                raise ValueError(msg) from e
 
         @staticmethod
         def validate_url_format(url: str) -> str:
-            """Validate URL format for LDIF URL references."""
-            if not url or not url.strip():
-                raise ValueError(FlextLdifConstants.ErrorMessages.URL_EMPTY_ERROR)
-
-            # Basic URL validation - support HTTP, HTTPS, and LDAP URLs
-            url_pattern = r"^(https?|ldap)://[^\s/$.?#].[^\s]*$"
-            if not re.match(url_pattern, url):
-                msg = f"Invalid URL format: {url}"
-                raise ValueError(msg)
-
-            return url.strip()
+            """Validate URL format using LdifUrl Model."""
+            # Use Model validation - centralized in FlextLdifModels.LdifUrl
+            try:
+                url_model = FlextLdifModels.LdifUrl(url=url)
+                return url_model.url
+            except ValueError as e:
+                raise ValueError(str(e)) from e
 
         @staticmethod
         def validate_encoding(encoding: str) -> str:
-            """Validate character encoding."""
-            if encoding not in FlextLdifConstants.Encoding.SUPPORTED_ENCODINGS:
-                msg = f"Unsupported encoding: {encoding}"
-                raise ValueError(msg)
-            return encoding
+            """Validate character encoding using Encoding Model."""
+            # Use Model validation - centralized in FlextLdifModels.Encoding
+            try:
+                encoding_model = FlextLdifModels.Encoding(encoding=encoding)
+                return encoding_model.encoding
+            except ValueError as e:
+                raise ValueError(str(e)) from e
 
         @classmethod
         def validate_with_result(
@@ -117,26 +109,28 @@ class FlextLdifMixins(FlextMixins):
 
         @staticmethod
         def normalize_dn_components(dn: str) -> str:
-            """Normalize DN components using centralized FlextLdifUtilities."""
-            # Use centralized normalization - SINGLE SOURCE OF TRUTH
-            normalized_result = FlextLdifUtilities.DnUtilities.normalize_dn(dn)
-            return normalized_result.unwrap() if normalized_result.is_success else dn
+            """Normalize DN components using DistinguishedName Model."""
+            # Use Model normalization - centralized in FlextLdifModels.DistinguishedName
+            try:
+                dn_model = FlextLdifModels.DistinguishedName(value=dn)
+                return dn_model.normalized_value
+            except ValueError:
+                return dn
 
         @staticmethod
         def extract_dn_components(dn: str) -> list[tuple[str, str]]:
-            """Extract DN components as (attribute, value) pairs using centralized utilities."""
-            # Use centralized parsing - SINGLE SOURCE OF TRUTH
-            components_result = FlextLdifUtilities.DnUtilities.parse_dn_components(dn)
-            if components_result.is_failure:
+            """Extract DN components as (attribute, value) pairs using DistinguishedName Model."""
+            # Use Model parsing - centralized in FlextLdifModels.DistinguishedName
+            try:
+                dn_model = FlextLdifModels.DistinguishedName(value=dn)
+                pairs: list[tuple[str, str]] = []
+                for comp in dn_model.components:
+                    if "=" in comp:
+                        attr, value = comp.split("=", 1)
+                        pairs.append((attr.strip(), value.strip()))
+                return pairs
+            except ValueError:
                 return []
-
-            components = components_result.unwrap()
-            pairs: list[tuple[str, str]] = []
-            for comp in components:
-                if "=" in comp:
-                    attr, value = comp.split("=", 1)
-                    pairs.append((attr.strip(), value.strip()))
-            return pairs
 
         @staticmethod
         def build_dn_from_components(components: Sequence[tuple[str, str]]) -> str:
@@ -250,23 +244,22 @@ class FlextLdifMixins(FlextMixins):
 
         @staticmethod
         def analyze_dn_patterns(entries: Sequence[object]) -> dict[str, int]:
-            """Analyze DN patterns using centralized FlextLdifUtilities."""
+            """Analyze DN patterns using DistinguishedName Model."""
             pattern_counts: dict[str, int] = {}
             for entry in entries:
                 dn = getattr(entry, "dn", "")
                 if isinstance(dn, str):
-                    # Use centralized parsing - SINGLE SOURCE OF TRUTH
-                    components_result = (
-                        FlextLdifUtilities.DnUtilities.parse_dn_components(dn)
-                    )
-                    if components_result.is_success:
-                        components = components_result.unwrap()
-                        for comp in components:
+                    # Use Model parsing - centralized in FlextLdifModels.DistinguishedName
+                    try:
+                        dn_model = FlextLdifModels.DistinguishedName(value=dn)
+                        for comp in dn_model.components:
                             if "=" in comp:
                                 attr_name = comp.split("=")[0].strip().lower()
                                 pattern_counts[attr_name] = (
                                     pattern_counts.get(attr_name, 0) + 1
                                 )
+                    except ValueError:
+                        continue
             return pattern_counts
 
         @classmethod
