@@ -19,6 +19,7 @@ from flext_ldif.exceptions import FlextLdifExceptions
 from flext_ldif.management import FlextLdifManagement
 from flext_ldif.mixins import FlextLdifMixins
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.oid_oud_pipeline import FlextLdifOidOudPipelineService
 from flext_ldif.parser import FlextLdifParser
 from flext_ldif.processor import FlextLdifProcessor
 from flext_ldif.protocols import FlextLdifProtocols
@@ -81,44 +82,34 @@ def get_ldif_management() -> object:
 
 
 __all__ = [
-    # === MAIN API ===
-    "FlextLdifAPI",  # High-level API
-    # === IMPLEMENTATION MODULES (from subdirectories) ===
-    # ACL
+    "FlextLdifAPI",
     "FlextLdifAclParser",
     "FlextLdifAclService",
-    # === COORDINATORS (Primary API) ===
-    "FlextLdifAcls",  # ACL operations coordinator
-    # === MODELS AND CONFIG ===
-    "FlextLdifConfig",  # Configuration
-    "FlextLdifConstants",  # Constants
-    "FlextLdifEntries",  # Entry operations coordinator
-    # Entry
+    "FlextLdifAcls",
+    "FlextLdifConfig",
+    "FlextLdifConstants",
+    "FlextLdifEntries",
     "FlextLdifEntryBuilder",
-    # Quirks
     "FlextLdifEntryQuirks",
-    # === UTILITIES ===
     "FlextLdifExceptions",
     "FlextLdifManagement",
     "FlextLdifMixins",
-    "FlextLdifModels",  # Domain models
-    # Schema
+    "FlextLdifModels",
     "FlextLdifObjectClassManager",
+    "FlextLdifOidOudPipelineService",
     "FlextLdifParser",
-    "FlextLdifProcessor",  # LDIF processor
+    "FlextLdifProcessor",
     "FlextLdifProtocols",
-    "FlextLdifQuirks",  # Quirks operations coordinator
+    "FlextLdifQuirks",
     "FlextLdifQuirksAdapter",
     "FlextLdifQuirksManager",
     "FlextLdifSchemaBuilder",
     "FlextLdifSchemaExtractor",
     "FlextLdifSchemaValidator",
-    "FlextLdifSchemas",  # Schema operations coordinator
-    "FlextLdifTypes",  # Type definitions
+    "FlextLdifSchemas",
+    "FlextLdifTypes",
     "FlextLdifUtilities",
-    # === MODULE EXPORTS ===
     "acl",
-    # === HELPER FUNCTIONS ===
     "configure_container",
     "entry",
     "get_ldif_management",

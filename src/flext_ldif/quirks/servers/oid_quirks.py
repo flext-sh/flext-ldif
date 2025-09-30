@@ -1,0 +1,334 @@
+"""Oracle Internet Directory (OID) Quirks.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
+Implements Oracle OID-specific extensions as quirks on top of RFC-compliant
+base parsers. This wraps existing OID parser logic as composable quirks.
+
+OID-specific features:
+- Oracle OID attribute types (2.16.840.1.113894.* namespace)
+- Oracle orclaci and orclentrylevelaci ACLs
+- Oracle-specific schema attributes
+- Oracle operational attributes
+"""
+
+from __future__ import annotations
+
+import re
+
+from pydantic import Field
+
+from flext_core import FlextLogger, FlextResult
+from flext_ldif.models import FlextLdifModels
+from flext_ldif.quirks.base import BaseAclQuirk, BaseSchemaQuirk
+
+
+class OidSchemaQuirk(BaseSchemaQuirk):
+    """Oracle OID schema quirk.
+
+    Extends RFC 4512 schema parsing with Oracle OID-specific features:
+    - Oracle OID namespace (2.16.840.1.113894.*)
+    - Oracle-specific syntaxes
+    - Oracle attribute extensions
+
+    Example:
+        quirk = OidSchemaQuirk(server_type="oid")
+        if quirk.can_handle_attribute(attr_def):
+            result = quirk.parse_attribute(attr_def)
+
+    """
+
+    server_type: str = Field(default="oid", description="Oracle OID server type")
+    priority: int = Field(default=10, description="High priority for OID-specific parsing")
+
+    # Oracle OID namespace pattern
+    ORACLE_OID_PATTERN = re.compile(r"2\.16\.840\.1\.113894\.")
+
+    def __init__(self, **data: object) -> None:
+        """Initialize OID schema quirk."""
+        super().__init__(**data)
+        self._logger = FlextLogger(__name__)
+
+    def can_handle_attribute(self, attr_definition: str) -> bool:
+        """Check if this is an Oracle OID attribute.
+
+        Args:
+            attr_definition: AttributeType definition string
+
+        Returns:
+            True if this contains Oracle OID namespace
+
+        """
+        return bool(self.ORACLE_OID_PATTERN.search(attr_definition))
+
+    def parse_attribute(self, attr_definition: str) -> FlextResult[dict[str, object]]:
+        """Parse Oracle OID attribute definition.
+
+        Args:
+            attr_definition: AttributeType definition string
+
+        Returns:
+            FlextResult with parsed OID attribute data
+
+        """
+        try:
+            # Parse OID attribute using FlextLdifModels
+            # This wraps the existing OID parsing logic
+            attr_result = FlextLdifModels.OidSchemaAttribute.from_ldif_line(
+                f"attributetypes: {attr_definition}"
+            )
+
+            if attr_result.is_success:
+                attr_obj = attr_result.value
+                # Convert to dict for quirk system
+                return FlextResult[dict[str, object]].ok(
+                    attr_obj.model_dump() if hasattr(attr_obj, "model_dump") else {}
+                )
+
+            return FlextResult[dict[str, object]].fail(
+                attr_result.error or "Failed to parse OID attribute"
+            )
+
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(
+                f"OID attribute parsing failed: {e}"
+            )
+
+    def can_handle_objectclass(self, oc_definition: str) -> bool:
+        """Check if this is an Oracle OID objectClass.
+
+        Args:
+            oc_definition: ObjectClass definition string
+
+        Returns:
+            True if this contains Oracle OID namespace
+
+        """
+        return bool(self.ORACLE_OID_PATTERN.search(oc_definition))
+
+    def parse_objectclass(self, oc_definition: str) -> FlextResult[dict[str, object]]:
+        """Parse Oracle OID objectClass definition.
+
+        Args:
+            oc_definition: ObjectClass definition string
+
+        Returns:
+            FlextResult with parsed OID objectClass data
+
+        """
+        try:
+            # Parse OID objectClass using FlextLdifModels
+            # This wraps the existing OID parsing logic
+            oc_result = FlextLdifModels.OidSchemaObjectClass.from_ldif_line(
+                f"objectclasses: {oc_definition}"
+            )
+
+            if oc_result.is_success:
+                oc_obj = oc_result.value
+                # Convert to dict for quirk system
+                return FlextResult[dict[str, object]].ok(
+                    oc_obj.model_dump() if hasattr(oc_obj, "model_dump") else {}
+                )
+
+            return FlextResult[dict[str, object]].fail(
+                oc_result.error or "Failed to parse OID objectClass"
+            )
+
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(
+                f"OID objectClass parsing failed: {e}"
+            )
+
+    def convert_attribute_to_rfc(
+        self, attr_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
+        """Convert OID attribute to RFC-compliant format.
+
+        Args:
+            attr_data: OID attribute data
+
+        Returns:
+            FlextResult with RFC-compliant attribute data
+
+        """
+        try:
+            # Oracle OID attributes can be represented in RFC format
+            # by removing Oracle-specific extensions
+            rfc_data = {
+                "oid": attr_data.get("oid"),
+                "name": attr_data.get("name"),
+                "desc": attr_data.get("desc"),
+                "syntax": attr_data.get("syntax"),
+                "equality": attr_data.get("equality"),
+            }
+
+            return FlextResult[dict[str, object]].ok(rfc_data)
+
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(
+                f"OID→RFC conversion failed: {e}"
+            )
+
+    def convert_objectclass_to_rfc(
+        self, oc_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
+        """Convert OID objectClass to RFC-compliant format.
+
+        Args:
+            oc_data: OID objectClass data
+
+        Returns:
+            FlextResult with RFC-compliant objectClass data
+
+        """
+        try:
+            # Convert Oracle OID objectClass to RFC format
+            rfc_data = {
+                "oid": oc_data.get("oid"),
+                "name": oc_data.get("name"),
+                "desc": oc_data.get("desc"),
+                "sup": oc_data.get("sup"),
+                "kind": oc_data.get("kind"),
+                "must": oc_data.get("must"),
+                "may": oc_data.get("may"),
+            }
+
+            return FlextResult[dict[str, object]].ok(rfc_data)
+
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(
+                f"OID→RFC conversion failed: {e}"
+            )
+
+
+class OidAclQuirk(BaseAclQuirk):
+    """Oracle OID ACL quirk.
+
+    Extends RFC ACL parsing with Oracle OID-specific ACL formats:
+    - orclaci: Oracle standard ACIs
+    - orclentrylevelaci: Oracle entry-level ACIs
+
+    Example:
+        quirk = OidAclQuirk(server_type="oid")
+        if quirk.can_handle_acl(acl_line):
+            result = quirk.parse_acl(acl_line)
+
+    """
+
+    server_type: str = Field(default="oid", description="Oracle OID server type")
+    priority: int = Field(default=10, description="High priority for OID ACL parsing")
+
+    def __init__(self, **data: object) -> None:
+        """Initialize OID ACL quirk."""
+        super().__init__(**data)
+        self._logger = FlextLogger(__name__)
+
+    def can_handle_acl(self, acl_line: str) -> bool:
+        """Check if this is an Oracle OID ACL.
+
+        Args:
+            acl_line: ACL definition line
+
+        Returns:
+            True if this is orclaci or orclentrylevelaci
+
+        """
+        return acl_line.startswith(("orclaci:", "orclentrylevelaci:"))
+
+    def parse_acl(self, acl_line: str) -> FlextResult[dict[str, object]]:
+        """Parse Oracle OID ACL definition.
+
+        Args:
+            acl_line: ACL definition line
+
+        Returns:
+            FlextResult with parsed OID ACL data
+
+        """
+        try:
+            # Determine ACL type
+            is_entry_level = acl_line.startswith("orclentrylevelaci:")
+
+            # Parse using existing OID ACI parser models
+            if is_entry_level:
+                result = FlextLdifModels.OidEntryLevelAci.from_ldif_line(acl_line)
+            else:
+                result = FlextLdifModels.OidAci.from_ldif_line(acl_line)
+
+            if result.is_success:
+                # Convert model to dict for quirk system
+                acl_obj = result.value
+                return FlextResult[dict[str, object]].ok({
+                    "type": "entry_level" if is_entry_level else "standard",
+                    "raw": acl_line,
+                    "parsed": acl_obj.model_dump() if hasattr(acl_obj, "model_dump") else {},
+                })
+
+            return FlextResult[dict[str, object]].fail(result.error or "Parse failed")
+
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(f"OID ACL parsing failed: {e}")
+
+    def convert_acl_to_rfc(
+        self, acl_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
+        """Convert OID ACL to RFC-compliant format.
+
+        Args:
+            acl_data: OID ACL data
+
+        Returns:
+            FlextResult with RFC-compliant ACL data
+
+        """
+        try:
+            # Oracle OID ACLs don't have direct RFC equivalent
+            # Return generic ACL representation
+            rfc_data = {
+                "type": "acl",
+                "format": "rfc_generic",
+                "source_format": "oracle_oid",
+                "data": acl_data,
+            }
+
+            return FlextResult[dict[str, object]].ok(rfc_data)
+
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(
+                f"OID ACL→RFC conversion failed: {e}"
+            )
+
+    def convert_acl_from_rfc(
+        self, acl_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
+        """Convert RFC ACL to OID-specific format.
+
+        Args:
+            acl_data: RFC-compliant ACL data
+
+        Returns:
+            FlextResult with OID ACL data
+
+        """
+        try:
+            # Convert RFC ACL to Oracle OID format
+            # This is target-specific conversion for migrations
+            oid_data = {
+                "format": "oracle_oid",
+                "target_format": "orclaci",
+                "data": acl_data,
+            }
+
+            return FlextResult[dict[str, object]].ok(oid_data)
+
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(
+                f"RFC→OID ACL conversion failed: {e}"
+            )
+
+
+__all__ = [
+    "OidAclQuirk",
+    "OidSchemaQuirk",
+]

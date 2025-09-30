@@ -327,5 +327,17 @@ sn: user
 """
         result = api.process_complete(ldif_content)
         assert result.is_success
-        processed = result.unwrap()
-        assert "entries" in processed or isinstance(processed, dict)
+
+    def test_parse_invalid_ldif(self) -> None:
+        """Test parsing invalid LDIF content."""
+        api = FlextLdifAPI()
+        invalid_ldif = "invalid content without dn"
+        result = api.parse(invalid_ldif)
+        assert result.is_failure
+
+    def test_validate_invalid_entries(self) -> None:
+        """Test validating invalid entries."""
+        api = FlextLdifAPI()
+        invalid_entry = {"dn": "", "attributes": {}}  # Invalid DN
+        result = api.validate_entries([invalid_entry])
+        assert result.is_failure

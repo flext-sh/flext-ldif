@@ -353,7 +353,7 @@ class FlextLdifHandlers(FlextBus):
             # Validate content using railway pattern
             return self._validate_file_content(content).map(lambda _: content)
 
-        def write_file(self, file_path: Path, content: str) -> FlextResult[bool]:
+        def write_file(self, file_path: Path | None, content: str) -> FlextResult[bool]:
             """Write file with validation and encoding using railway pattern."""
             if not file_path or not content:
                 return FlextResult[bool].fail("File path and content are required")

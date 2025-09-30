@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import Self, cast
+from typing import Literal, Self, cast
 
 from pydantic import (
     ConfigDict,
@@ -128,6 +128,567 @@ class FlextLdifModels(FlextModels):
                 "enterprise_ready": True,
             },
         }
+
+    # =============================================================================
+    # BASE CLASSES - Technology-Agnostic Foundation
+    # =============================================================================
+
+    class BaseOperationResult(FlextModels.Value):
+        """Base class for all LDIF operation results.
+
+        Enhanced with FlextModels patterns:
+        - Structured errors using FlextModels.ErrorDetail
+        - Rich metadata using FlextModels.Metadata
+        - Status tracking similar to ProcessingResult
+        - Execution time tracking for performance analysis
+        
+        Technology-specific results extend this with additional fields.
+        """
+
+        model_config = ConfigDict(
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        status: Literal["success", "failure", "partial"] = Field(
+            default="success",
+            description="Operation status",
+        )
+
+        errors: list[FlextModels.ErrorDetail] = Field(
+            default_factory=list,
+            description="Structured operation errors with codes and context",
+        )
+
+        metadata: FlextModels.Metadata | None = Field(
+            default=None,
+            description="Operation metadata (timestamps, tags, attributes)",
+        )
+
+        execution_time_ms: int = Field(
+            default=0,
+            description="Execution time in milliseconds",
+        )
+
+        @computed_field
+        @property
+        def error_count(self) -> int:
+            """Get count of errors."""
+            return len(self.errors)
+
+        @computed_field
+        @property
+        def has_errors(self) -> bool:
+            """Check if operation has errors."""
+            return len(self.errors) > 0
+
+        @computed_field
+        @property
+        def is_success(self) -> bool:
+            """Check if operation was successful (no errors)."""
+            return self.status == "success" and len(self.errors) == 0
+
+        @computed_field
+        @property
+        def execution_time_seconds(self) -> float:
+            """Get execution time in seconds."""
+            return self.execution_time_ms / 1000.0
+
+    class BaseSchemaAttribute(
+            FlextModels.Value,
+            FlextModels.IdentifiableMixin,
+            FlextModels.VersionableMixin,
+        ):
+        """Base class for schema attribute definitions.
+
+        Common fields for both standard LDIF and OID attribute types.
+        Technology-specific attributes extend with additional fields.
+        
+        Enhanced with:
+        - IdentifiableMixin: Provides unique id (UUID) for tracking
+        - VersionableMixin: Provides version and schema_version for versioning
+        """
+
+        model_config = ConfigDict(
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        name: str = Field(
+            ...,
+            description="Attribute name",
+        )
+
+        oid: str = Field(
+            ...,
+            description="Attribute OID",
+        )
+
+        syntax: str = Field(
+            default="",
+            description="Attribute syntax",
+        )
+
+        description: str = Field(
+            default="",
+            description="Attribute description",
+        )
+
+        single_value: bool = Field(
+            default=False,
+            description="Whether attribute is single-valued",
+        )
+
+        @computed_field
+        @property
+        def schema_key(self) -> str:
+            """Computed field for unique schema key."""
+            return f"schema_attr:{self.name.lower()}"
+
+        @computed_field
+        @property
+        def attribute_properties(self) -> dict[str, object]:
+            """Base attribute properties."""
+            return {
+                "name": self.name,
+                "oid": self.oid,
+                "single_valued": self.single_value,
+                "has_syntax": bool(self.syntax),
+                "has_description": bool(self.description),
+            }
+
+    class BaseSchemaObjectClass(
+            FlextModels.Value,
+            FlextModels.IdentifiableMixin,
+            FlextModels.VersionableMixin,
+        ):
+        """Base class for schema objectClass definitions.
+
+        Common fields for both standard LDIF and OID objectClass types.
+        
+        Enhanced with:
+        - IdentifiableMixin: Provides unique id (UUID) for tracking
+        - VersionableMixin: Provides version and schema_version for versioning
+        """
+
+        model_config = ConfigDict(
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        name: str = Field(
+            ...,
+            description="ObjectClass name",
+        )
+
+        oid: str = Field(
+            ...,
+            description="ObjectClass OID",
+        )
+
+        description: str = Field(
+            default="",
+            description="ObjectClass description",
+        )
+
+        superior: str = Field(
+            default="",
+            description="Superior objectClass",
+        )
+
+        required_attributes: list[str] = Field(
+            default_factory=list,
+            description="Required (MUST) attributes",
+        )
+
+        optional_attributes: list[str] = Field(
+            default_factory=list,
+            description="Optional (MAY) attributes",
+        )
+
+        @computed_field
+        @property
+        def objectclass_key(self) -> str:
+            """Unique key for objectClass."""
+            return f"objectclass:{self.name.lower()}"
+
+        @computed_field
+        @property
+        def has_superior(self) -> bool:
+            """Check if objectClass has superior."""
+            return bool(self.superior)
+
+    class BaseAclPermissions(FlextModels.Value):
+        """Base class for ACL permissions.
+
+        Common permission fields for both standard and OID ACLs.
+        OID extends with negative permissions and additional types.
+        """
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        read: bool = Field(default=False, description="Read permission")
+        write: bool = Field(default=False, description="Write permission")
+        add: bool = Field(default=False, description="Add permission")
+        delete: bool = Field(default=False, description="Delete permission")
+        search: bool = Field(default=False, description="Search permission")
+        compare: bool = Field(default=False, description="Compare permission")
+        proxy: bool = Field(default=False, description="Proxy permission")
+
+        @computed_field
+        @property
+        def granted_count(self) -> int:
+            """Count of granted permissions."""
+            return sum([
+                self.read,
+                self.write,
+                self.add,
+                self.delete,
+                self.search,
+                self.compare,
+                self.proxy,
+            ])
+
+        @computed_field
+        @property
+        def permissions_summary(self) -> dict[str, object]:
+            """Summary of permissions."""
+            permissions = {
+                "read": self.read,
+                "write": self.write,
+                "add": self.add,
+                "delete": self.delete,
+                "search": self.search,
+                "compare": self.compare,
+                "proxy": self.proxy,
+            }
+            return {
+                "permissions": permissions,
+                "granted_count": self.granted_count,
+                "total_permissions": len(permissions),
+            }
+
+    class BaseAclSubject(FlextModels.Value):
+        """Base class for ACL subjects.
+
+        Common fields for identifying who the ACL applies to.
+        """
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        subject_type: str = Field(
+            ...,
+            description="Type of subject (user, group, etc.)",
+        )
+
+        subject_value: str = Field(
+            ...,
+            description="Subject identifier value",
+        )
+
+        @computed_field
+        @property
+        def subject_key(self) -> str:
+            """Unique key for subject."""
+            return f"{self.subject_type}:{self.subject_value}"
+
+    class BaseAcl(FlextModels.Value):
+        """Base class for ACL rules.
+
+        Common structure for ACL definitions across technologies.
+        """
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        name: str = Field(
+            ...,
+            description="ACL name/identifier",
+        )
+
+        target_dn: str = Field(
+            default="",
+            description="Target DN for ACL",
+        )
+
+        @computed_field
+        @property
+        def acl_key(self) -> str:
+            """Unique key for ACL."""
+            return f"acl:{self.name.lower()}"
+
+    # ============================================================================
+    # TECHNOLOGY DETECTION SPECIFICATIONS
+    # ============================================================================
+
+    class TechnologySpecification(FlextModels.Value):
+        """Base specification for detecting LDIF technology and format types.
+
+        Uses Specification pattern to encapsulate business rules for:
+        - OID format detection (Oracle Internet Directory)
+        - OUD quirks detection (Oracle Unified Directory)
+        - Standard LDIF format detection
+
+        This enables strategy pattern through composition rather than inheritance.
+        """
+
+        model_config = ConfigDict(
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        name: str = Field(
+            ...,
+            description="Technology name (e.g., 'OID', 'OUD', 'Standard')",
+        )
+
+        patterns: list[str] = Field(
+            default_factory=list,
+            description="Regex patterns that indicate this technology",
+        )
+
+        attribute_markers: list[str] = Field(
+            default_factory=list,
+            description="Attribute names that indicate this technology",
+        )
+
+        syntax_markers: list[str] = Field(
+            default_factory=list,
+            description="Syntax patterns that indicate this technology",
+        )
+
+        @classmethod
+        def is_satisfied_by(cls) -> bool:
+            """Check if data satisfies this specification.
+
+            Returns:
+                True if data matches this technology specification
+
+            """
+            return False  # Override in subclasses  # Override in subclasses
+
+    class OidSpecification(TechnologySpecification):
+        """Specification for detecting Oracle Internet Directory (OID) format.
+
+        OID format characteristics:
+        - Uses numeric OIDs instead of attribute names
+        - Custom syntax for ACIs (orclaci, orclacientry)
+        - Specific schema attribute patterns
+        """
+
+        model_config = ConfigDict(
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        def __init__(self, **data: object) -> None:
+            """Initialize OID specification with detection patterns."""
+            super().__init__(
+                name="OID",
+                patterns=[
+                    r"orclaci:",
+                    r"orclacientry:",
+                    r"^\d+\.\d+\.\d+\.\d+",  # Numeric OID pattern
+                    r"orclguid",
+                    r"orclobjectguid",
+                ],
+                attribute_markers=[
+                    "orclaci",
+                    "orclacientry",
+                    "orclguid",
+                    "orclobjectguid",
+                    "orclentryid",
+                ],
+                syntax_markers=[
+                    "OID syntax",
+                    "Oracle OID",
+                ],
+                **data,
+            )
+
+        @classmethod
+        def is_satisfied_by(cls, data: dict[str, object]) -> bool:
+            """Check if data uses OID format.
+
+            Args:
+                data: Dictionary with 'attributes', 'dn', or 'content' to check
+
+            Returns:
+                True if data appears to be in OID format
+
+            """
+            # Check for OID-specific attributes
+            attributes = data.get("attributes", {})
+            if isinstance(attributes, dict):
+                oid_attrs = {"orclaci", "orclacientry", "orclguid", "orclobjectguid"}
+                if any(attr in attributes for attr in oid_attrs):
+                    return True
+
+            # Check DN for OID patterns
+            dn = data.get("dn", "")
+            if isinstance(dn, str) and "orcl" in dn.lower():
+                return True
+
+            # Check content for OID patterns
+            content = data.get("content", "")
+            return isinstance(content, str) and any(
+                marker in content for marker in ["orclaci:", "orclacientry:"]
+            )
+
+    class OudSpecification(TechnologySpecification):
+        """Specification for detecting Oracle Unified Directory (OUD) quirks.
+
+        OUD quirks characteristics:
+        - Specific attribute handling differences
+        - Custom schema extensions
+        - Migration-specific attributes
+        """
+
+        model_config = ConfigDict(
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        def __init__(self, **data: object) -> None:
+            """Initialize OUD specification with detection patterns."""
+            super().__init__(
+                name="OUD",
+                patterns=[
+                    r"ds-sync-",
+                    r"ds-cfg-",
+                    r"oud-",
+                ],
+                attribute_markers=[
+                    "ds-sync-hist",
+                    "ds-cfg-enabled",
+                    "ds-sync-generation-id",
+                ],
+                syntax_markers=[
+                    "OUD syntax",
+                    "Directory Server",
+                ],
+                **data,
+            )
+
+        @classmethod
+        def is_satisfied_by(cls, data: dict[str, object]) -> bool:
+            """Check if data contains OUD quirks.
+
+            Args:
+                data: Dictionary with 'attributes', 'dn', or 'content' to check
+
+            Returns:
+                True if data contains OUD-specific patterns
+
+            """
+            # Check for OUD-specific attributes
+            attributes = data.get("attributes", {})
+            if isinstance(attributes, dict):
+                oud_attrs = {"ds-sync-hist", "ds-cfg-enabled", "ds-sync-generation-id"}
+                if any(attr in attributes for attr in oud_attrs):
+                    return True
+
+            # Check DN for OUD patterns
+            dn = data.get("dn", "")
+            if isinstance(dn, str) and any(
+                marker in dn.lower() for marker in ["ds-sync", "ds-cfg"]
+            ):
+                return True
+
+            # Check content for OUD patterns
+            content = data.get("content", "")
+            return isinstance(content, str) and any(
+                marker in content for marker in ["ds-sync-", "ds-cfg-"]
+            )
+
+    class StandardLdifSpecification(TechnologySpecification):
+        """Specification for detecting standard LDIF format.
+
+        Standard LDIF characteristics:
+        - RFC 2849 compliance
+        - Standard attribute names (cn, ou, dc, etc.)
+        - No vendor-specific extensions
+        """
+
+        model_config = ConfigDict(
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        def __init__(self, **data: object) -> None:
+            """Initialize Standard LDIF specification."""
+            super().__init__(
+                name="Standard",
+                patterns=[
+                    r"^dn:",
+                    r"^changetype:",
+                    r"^objectClass:",
+                ],
+                attribute_markers=[
+                    "cn",
+                    "ou",
+                    "dc",
+                    "objectClass",
+                    "uid",
+                ],
+                syntax_markers=[
+                    "Standard LDIF",
+                    "RFC 2849",
+                ],
+                **data,
+            )
+
+        @classmethod
+        def is_satisfied_by(cls, data: dict[str, object]) -> bool:
+            """Check if data is standard LDIF format.
+
+            Args:
+                data: Dictionary with 'attributes', 'dn', or 'content' to check
+
+            Returns:
+                True if data appears to be standard LDIF (no vendor extensions)
+
+            """
+            # If OID or OUD markers are present, it's not standard
+            if FlextLdifModels.OidSpecification.is_satisfied_by(data):
+                return False
+            if FlextLdifModels.OudSpecification.is_satisfied_by(data):
+                return False
+
+            # Check for standard LDIF attributes
+            attributes = data.get("attributes", {})
+            if isinstance(attributes, dict):
+                standard_attrs = {"cn", "ou", "dc", "objectClass", "uid"}
+                if any(attr in attributes for attr in standard_attrs):
+                    return True
+
+            # Check for standard DN format
+            dn = data.get("dn", "")
+            if isinstance(dn, str) and any(part in dn for part in ["dc=", "ou=", "cn="]):
+                return True
+
+            return True  # Default to standard if no vendor markers found  # Default to standard if no vendor markers found
 
     # =============================================================================
     # ADVANCED BASE MODEL CLASSES - Monadic Composition Patterns
@@ -830,66 +1391,32 @@ class FlextLdifModels(FlextModels):
                 },
             }
 
-    class SchemaObjectClass(FlextModels.Value):
-        """LDAP object class definition."""
+    class SchemaObjectClass(BaseSchemaObjectClass):
+        """Standard LDAP object class definition.
 
-        model_config = ConfigDict(
-            frozen=True,
-            validate_assignment=True,
-            extra="forbid",
-            hide_input_in_errors=True,
-        )
-
-        name: str = Field(
-            ...,
-            description="Object class name",
-        )
-
-        oid: str = Field(
-            ...,
-            description="Object identifier",
-        )
-
-        description: str = Field(
-            default="",
-            description="Object class description",
-        )
-
-        must: list[str] = Field(
-            default_factory=list,
-            description="Required attributes",
-        )
-
-        may: list[str] = Field(
-            default_factory=list,
-            description="Optional attributes",
-        )
+        Extends BaseSchemaObjectClass with standard LDIF behavior.
+        Overrides superior to be a list for multiple inheritance support.
+        """
 
         superior: list[str] = Field(
             default_factory=list,
             description="Superior object classes",
         )
 
+        must: list[str] = Field(
+            default_factory=list,
+            description="Required attributes (MUST)",
+        )
+
+        may: list[str] = Field(
+            default_factory=list,
+            description="Optional attributes (MAY)",
+        )
+
         structural: bool = Field(
             default=False,
             description="Whether this is a structural object class",
         )
-
-        required_attributes: list[str] = Field(
-            default_factory=list,
-            description="Required attributes",
-        )
-
-        optional_attributes: list[str] = Field(
-            default_factory=list,
-            description="Optional attributes",
-        )
-
-        @computed_field
-        @property
-        def objectclass_key(self) -> str:
-            """Computed field for unique object class key."""
-            return f"oc:{self.name.lower()}"
 
         @computed_field
         @property
@@ -1057,26 +1584,16 @@ class FlextLdifModels(FlextModels):
             except Exception as e:
                 return FlextResult[object].fail(str(e))
 
-    class AclSubject(FlextModels.Value):
-        """ACL subject definition."""
+    class AclSubject(BaseAclSubject):
+        """Standard ACL subject definition.
 
-        model_config = ConfigDict(
-            frozen=True,
-            validate_assignment=True,
-            extra="forbid",
-            hide_input_in_errors=True,
-        )
+        Extends BaseAclSubject with standard LDIF behavior.
+        """
 
         subject_dn: str = Field(
             default="",
             description="Subject DN for ACL",
         )
-
-        @computed_field
-        @property
-        def subject_key(self) -> str:
-            """Computed field for unique subject key."""
-            return f"subject:{self.subject_dn.lower()}"
 
         @classmethod
         def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
@@ -1084,75 +1601,20 @@ class FlextLdifModels(FlextModels):
             try:
                 _ = args  # Suppress unused argument warning
                 subject_dn = str(kwargs.get("subject_dn", ""))
-                instance = cls(subject_dn=subject_dn)
+                instance = cls(
+                    subject_type="dn",
+                    subject_value=subject_dn,
+                    subject_dn=subject_dn,
+                )
                 return FlextResult[object].ok(instance)
             except Exception as e:
                 return FlextResult[object].fail(str(e))
 
-    class AclPermissions(FlextModels.Value):
-        """ACL permissions definition."""
+    class AclPermissions(BaseAclPermissions):
+        """Standard ACL permissions definition.
 
-        model_config = ConfigDict(
-            frozen=True,
-            validate_assignment=True,
-            extra="forbid",
-            hide_input_in_errors=True,
-        )
-
-        read: bool = Field(
-            default=False,
-            description="Read permission",
-        )
-
-        write: bool = Field(
-            default=False,
-            description="Write permission",
-        )
-
-        add: bool = Field(
-            default=False,
-            description="Add permission",
-        )
-
-        delete: bool = Field(
-            default=False,
-            description="Delete permission",
-        )
-
-        search: bool = Field(
-            default=False,
-            description="Search permission",
-        )
-
-        compare: bool = Field(
-            default=False,
-            description="Compare permission",
-        )
-
-        proxy: bool = Field(
-            default=False,
-            description="Proxy permission",
-        )
-
-        @computed_field
-        @property
-        def permissions_summary(self) -> dict[str, object]:
-            """Computed field for permissions summary."""
-            permissions = {
-                "read": self.read,
-                "write": self.write,
-                "add": self.add,
-                "delete": self.delete,
-                "search": self.search,
-                "compare": self.compare,
-                "proxy": self.proxy,
-            }
-            granted_count = sum(permissions.values())
-            return {
-                "permissions": permissions,
-                "granted_count": granted_count,
-                "total_permissions": len(permissions),
-            }
+        Extends BaseAclPermissions with standard LDIF behavior.
+        """
 
         @classmethod
         def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
@@ -1291,57 +1753,17 @@ class FlextLdifModels(FlextModels):
     # SCHEMA MODELS - Additional Schema-related Models
     # =============================================================================
 
-    class SchemaAttribute(FlextModels.Value):
-        """LDAP schema attribute definition."""
+    class SchemaAttribute(BaseSchemaAttribute):
+        """Standard LDAP schema attribute definition.
 
-        model_config = ConfigDict(
-            frozen=True,
-            validate_assignment=True,
-            extra="forbid",
-            hide_input_in_errors=True,
-        )
-
-        name: str = Field(
-            ...,
-            description="Attribute name",
-        )
-
-        oid: str = Field(
-            ...,
-            description="Attribute OID",
-        )
-
-        syntax: str = Field(
-            default="",
-            description="Attribute syntax",
-        )
-
-        description: str = Field(
-            default="",
-            description="Attribute description",
-        )
-
-        single_value: bool = Field(
-            default=False,
-            description="Whether attribute is single-valued",
-        )
+        Extends BaseSchemaAttribute with standard LDIF behavior.
+        """
 
         @computed_field
         @property
         def schema_attribute_key(self) -> str:
             """Computed field for unique schema attribute key."""
             return f"schema_attr:{self.name.lower()}"
-
-        @computed_field
-        @property
-        def attribute_properties(self) -> dict[str, object]:
-            """Computed field for attribute properties."""
-            return {
-                "name": self.name,
-                "single_valued": self.single_value,
-                "has_syntax": bool(self.syntax),
-                "has_description": bool(self.description),
-            }
 
         @classmethod
         def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
@@ -1358,6 +1780,583 @@ class FlextLdifModels(FlextModels):
                 return FlextResult[object].ok(instance)
             except Exception as e:
                 return FlextResult[object].fail(str(e))
+
+    # =============================================================================
+    # OID SCHEMA MODELS - Oracle Internet Directory Schema Definitions
+    # =============================================================================
+
+    class OidSchemaAttribute(BaseSchemaAttribute):
+        """OID (Oracle Internet Directory) schema attribute definition.
+
+        Extends BaseSchemaAttribute with OID-specific fields and parsing.
+        Example OID format:
+        attributetypes: ( 2.16.840.1.113894.1.1.220 NAME 'orclOIDSCExtHost'
+            EQUALITY caseIgnoreMatch SYNTAX '1.3.6.1.4.1.1466.115.121.1.15'
+            SINGLE-VALUE USAGE userApplications )
+        """
+
+        # OID-specific fields
+        desc: str = Field(
+            default="",
+            description="Attribute DESC (description) - OID uses 'desc' instead of 'description'",
+        )
+
+        equality: str = Field(
+            default="",
+            description="EQUALITY matching rule (e.g., 'caseIgnoreMatch')",
+        )
+
+        ordering: str = Field(
+            default="",
+            description="ORDERING matching rule",
+        )
+
+        substr: str = Field(
+            default="",
+            description="SUBSTR matching rule",
+        )
+
+        usage: str = Field(
+            default="userApplications",
+            description="USAGE (userApplications, directoryOperation, etc.)",
+        )
+
+        sup: str = Field(
+            default="",
+            description="SUP (superior/parent attribute)",
+        )
+
+        raw_definition: str = Field(
+            default="",
+            description="Raw OID attribute definition string",
+        )
+
+        @computed_field
+        @property
+        def oid_attribute_key(self) -> str:
+            """Computed field for unique OID attribute key."""
+            return f"oid_attr:{self.name.lower()}"
+
+        @computed_field
+        @property
+        def is_oracle_specific(self) -> bool:
+            """Check if attribute is Oracle-specific (starts with 'orcl')."""
+            return self.name.lower().startswith("orcl")
+
+        @computed_field
+        @property
+        def attribute_properties(self) -> dict[str, object]:
+            """Computed field for OID attribute properties."""
+            return {
+                "name": self.name,
+                "oid": self.oid,
+                "single_valued": self.single_value,
+                "oracle_specific": self.is_oracle_specific,
+                "has_equality": bool(self.equality),
+                "has_syntax": bool(self.syntax),
+                "usage": self.usage,
+            }
+
+        @classmethod
+        def from_ldif_line(
+            cls, ldif_line: str
+        ) -> FlextResult[FlextLdifModels.OidSchemaAttribute]:
+            """Parse OID attribute definition from LDIF line.
+
+            Args:
+                ldif_line: LDIF line starting with 'attributetypes: ( ...'
+
+            Returns:
+                FlextResult with parsed OidSchemaAttribute or error
+
+            """
+            try:
+                # Remove 'attributetypes: ' prefix and parentheses
+                line = ldif_line.strip()
+                if not line.startswith("attributetypes:"):
+                    return FlextResult[FlextLdifModels.OidSchemaAttribute].fail(
+                        "Invalid OID attribute line - must start with 'attributetypes:'"
+                    )
+
+                # Extract content between parentheses
+                content = line[line.find("(") + 1 : line.rfind(")")].strip()
+
+                # Parse OID (first token)
+                tokens = content.split()
+                if not tokens:
+                    return FlextResult[FlextLdifModels.OidSchemaAttribute].fail(
+                        "Empty OID attribute definition"
+                    )
+
+                oid_value = tokens[0].strip()
+
+                # Parse key-value pairs
+                params: dict[str, str | bool] = {
+                    "oid": oid_value,
+                    "raw_definition": ldif_line,
+                }
+
+                i = 1
+                while i < len(tokens):
+                    attribute_name = tokens[i].upper()
+
+                    if attribute_name == "NAME":
+                        i += 1
+                        if i < len(tokens):
+                            params["name"] = tokens[i].strip("'\"")
+                    elif attribute_name == "DESC":
+                        i += 1
+                        if i < len(tokens):
+                            params["desc"] = tokens[i].strip("'\"")
+                    elif attribute_name == "EQUALITY":
+                        i += 1
+                        if i < len(tokens):
+                            params["equality"] = tokens[i].strip("'\"")
+                    elif attribute_name == "ORDERING":
+                        i += 1
+                        if i < len(tokens):
+                            params["ordering"] = tokens[i].strip("'\"")
+                    elif attribute_name == "SUBSTR":
+                        i += 1
+                        if i < len(tokens):
+                            params["substr"] = tokens[i].strip("'\"")
+                    elif attribute_name == "SYNTAX":
+                        i += 1
+                        if i < len(tokens):
+                            params["syntax"] = tokens[i].strip("'\"")
+                    elif attribute_name == "SINGLE-VALUE":
+                        params["single_value"] = True
+                    elif attribute_name == "USAGE":
+                        i += 1
+                        if i < len(tokens):
+                            params["usage"] = tokens[i].strip("'\"")
+                    elif attribute_name == "SUP":
+                        i += 1
+                        if i < len(tokens):
+                            params["sup"] = tokens[i].strip("'\"")
+
+                    i += 1
+
+                # Validate required fields
+                if "name" not in params:
+                    return FlextResult[FlextLdifModels.OidSchemaAttribute].fail(
+                        f"OID attribute missing NAME: {oid_value}"
+                    )
+
+                # Map desc to description for base class compatibility
+                if "desc" in params:
+                    params["description"] = params["desc"]
+
+                instance = cls(**params)
+                return FlextResult[FlextLdifModels.OidSchemaAttribute].ok(instance)
+
+            except Exception as e:
+                return FlextResult[FlextLdifModels.OidSchemaAttribute].fail(
+                    f"Failed to parse OID attribute: {e}"
+                )
+
+        def to_oud_attribute(self) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+            """Convert OID attribute to OUD-compatible SchemaAttribute.
+
+            Returns:
+                FlextResult with converted SchemaAttribute
+
+            """
+            try:
+                # Create OUD-compatible schema attribute
+                oud_attr = FlextLdifModels.SchemaAttribute(
+                    name=self.name,
+                    oid=self.oid,
+                    syntax=self.syntax,
+                    description=self.desc or self.description,
+                    single_value=self.single_value,
+                )
+                return FlextResult[FlextLdifModels.SchemaAttribute].ok(oud_attr)
+            except Exception as e:
+                return FlextResult[FlextLdifModels.SchemaAttribute].fail(
+                    f"Failed to convert OID attribute to OUD: {e}"
+                )
+
+    class OidSchemaObjectClass(BaseSchemaObjectClass):
+        """OID (Oracle Internet Directory) schema objectClass definition.
+
+        Extends BaseSchemaObjectClass with OID-specific fields and parsing.
+        Example OID format:
+        objectclasses: ( 2.16.840.1.113894.1.2.100 NAME 'orclContainer'
+            DESC 'Oracle Container' SUP top STRUCTURAL
+            MUST ( cn ) MAY ( description ) )
+        """
+
+        # OID-specific fields
+        desc: str = Field(
+            default="",
+            description="ObjectClass DESC (description) - OID uses 'desc'",
+        )
+
+        sup: list[str] = Field(
+            default_factory=list,
+            description="SUP (superior/parent objectClasses)",
+        )
+
+        structural: bool = Field(
+            default=False,
+            description="STRUCTURAL type flag",
+        )
+
+        auxiliary: bool = Field(
+            default=False,
+            description="AUXILIARY type flag",
+        )
+
+        abstract: bool = Field(
+            default=False,
+            description="ABSTRACT type flag",
+        )
+
+        must: list[str] = Field(
+            default_factory=list,
+            description="MUST attributes (required)",
+        )
+
+        may: list[str] = Field(
+            default_factory=list,
+            description="MAY attributes (optional)",
+        )
+
+        raw_definition: str = Field(
+            default="",
+            description="Raw OID objectClass definition string",
+        )
+
+        @computed_field
+        @property
+        def oid_objectclass_key(self) -> str:
+            """Computed field for unique OID objectClass key."""
+            return f"oid_oc:{self.name.lower()}"
+
+        @computed_field
+        @property
+        def is_oracle_specific(self) -> bool:
+            """Check if objectClass is Oracle-specific."""
+            return self.name.lower().startswith("orcl")
+
+        @computed_field
+        @property
+        def objectclass_type(self) -> str:
+            """Computed field for objectClass type."""
+            if self.structural:
+                return "STRUCTURAL"
+            if self.auxiliary:
+                return "AUXILIARY"
+            if self.abstract:
+                return "ABSTRACT"
+            return "unknown"
+
+        @computed_field
+        @property
+        def objectclass_properties(self) -> dict[str, object]:
+            """Computed field for OID objectClass properties."""
+            return {
+                "name": self.name,
+                "oid": self.oid,
+                "type": self.objectclass_type,
+                "oracle_specific": self.is_oracle_specific,
+                "required_attrs": len(self.must),
+                "optional_attrs": len(self.may),
+                "has_superior": len(self.sup) > 0,
+            }
+
+        @classmethod
+        def from_ldif_line(
+            cls, ldif_line: str
+        ) -> FlextResult[FlextLdifModels.OidSchemaObjectClass]:
+            """Parse OID objectClass definition from LDIF line.
+
+            Args:
+                ldif_line: LDIF line starting with 'objectclasses: ( ...'
+
+            Returns:
+                FlextResult with parsed OidSchemaObjectClass or error
+
+            """
+            try:
+                # Remove 'objectclasses: ' prefix and parentheses
+                line = ldif_line.strip()
+                if not line.startswith("objectclasses:"):
+                    return FlextResult[FlextLdifModels.OidSchemaObjectClass].fail(
+                        "Invalid OID objectClass line - must start with 'objectclasses:'"
+                    )
+
+                # Extract content between parentheses
+                content = line[line.find("(") + 1 : line.rfind(")")].strip()
+
+                # Parse OID (first token)
+                tokens = content.split()
+                if not tokens:
+                    return FlextResult[FlextLdifModels.OidSchemaObjectClass].fail(
+                        "Empty OID objectClass definition"
+                    )
+
+                oid_value = tokens[0].strip()
+
+                # Parse key-value pairs
+                params: dict[str, str | bool | list[str]] = {
+                    "oid": oid_value,
+                    "raw_definition": ldif_line,
+                    "sup": [],
+                    "must": [],
+                    "may": [],
+                }
+
+                i = 1
+                while i < len(tokens):
+                    attribute_name = tokens[i].upper()
+
+                    if attribute_name == "NAME":
+                        i += 1
+                        if i < len(tokens):
+                            params["name"] = tokens[i].strip("'\"")
+                    elif attribute_name == "DESC":
+                        i += 1
+                        if i < len(tokens):
+                            params["desc"] = tokens[i].strip("'\"")
+                    elif attribute_name == "SUP":
+                        i += 1
+                        if i < len(tokens):
+                            sup_value = tokens[i].strip("'\"")
+                            if isinstance(params["sup"], list):
+                                params["sup"].append(sup_value)
+                    elif attribute_name == "STRUCTURAL":
+                        params["structural"] = True
+                    elif attribute_name == "AUXILIARY":
+                        params["auxiliary"] = True
+                    elif attribute_name == "ABSTRACT":
+                        params["abstract"] = True
+                    elif attribute_name == "MUST":
+                        # Parse attribute list in parentheses or single attribute
+                        i += 1
+                        if i < len(tokens):
+                            attr_token = tokens[i].strip()
+                            if attr_token.startswith("("):
+                                # Multiple attributes
+                                attrs = []
+                                while i < len(tokens) and not tokens[
+                                    i
+                                ].strip().endswith(")"):
+                                    attr = tokens[i].strip("()").strip()
+                                    if attr:
+                                        attrs.append(attr)
+                                    i += 1
+                                # Add last attribute
+                                if i < len(tokens):
+                                    attr = tokens[i].strip("()").strip()
+                                    if attr:
+                                        attrs.append(attr)
+                                if isinstance(params["must"], list):
+                                    params["must"].extend(attrs)
+                            # Single attribute
+                            elif isinstance(params["must"], list):
+                                params["must"].append(attr_token.strip("'\""))
+                    elif attribute_name == "MAY":
+                        # Parse attribute list in parentheses or single attribute
+                        i += 1
+                        if i < len(tokens):
+                            attr_token = tokens[i].strip()
+                            if attr_token.startswith("("):
+                                # Multiple attributes
+                                attrs = []
+                                while i < len(tokens) and not tokens[
+                                    i
+                                ].strip().endswith(")"):
+                                    attr = tokens[i].strip("()").strip()
+                                    if attr:
+                                        attrs.append(attr)
+                                    i += 1
+                                # Add last attribute
+                                if i < len(tokens):
+                                    attr = tokens[i].strip("()").strip()
+                                    if attr:
+                                        attrs.append(attr)
+                                if isinstance(params["may"], list):
+                                    params["may"].extend(attrs)
+                            # Single attribute
+                            elif isinstance(params["may"], list):
+                                params["may"].append(attr_token.strip("'\""))
+
+                    i += 1
+
+                # Validate required fields
+                if "name" not in params:
+                    return FlextResult[FlextLdifModels.OidSchemaObjectClass].fail(
+                        f"OID objectClass missing NAME: {oid_value}"
+                    )
+
+                # Map to base class fields
+                params["description"] = params.get("desc", "")
+                params["superior"] = ",".join(params.get("sup", []))  # Base class uses string
+                params["required_attributes"] = params.get("must", [])
+                params["optional_attributes"] = params.get("may", [])
+
+                instance = cls(**params)
+                return FlextResult[FlextLdifModels.OidSchemaObjectClass].ok(instance)
+
+            except Exception as e:
+                return FlextResult[FlextLdifModels.OidSchemaObjectClass].fail(
+                    f"Failed to parse OID objectClass: {e}"
+                )
+
+        def to_oud_objectclass(self) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+            """Convert OID objectClass to OUD-compatible SchemaObjectClass.
+
+            Returns:
+                FlextResult with converted SchemaObjectClass
+
+            """
+            try:
+                # Create OUD-compatible schema objectClass
+                oud_oc = FlextLdifModels.SchemaObjectClass(
+                    name=self.name,
+                    oid=self.oid,
+                    description=self.desc or self.description,
+                    must=self.must,
+                    may=self.may,
+                    superior=self.sup[0] if self.sup else self.superior,
+                    structural=self.structural,
+                    required_attributes=self.must,
+                    optional_attributes=self.may,
+                )
+                return FlextResult[FlextLdifModels.SchemaObjectClass].ok(oud_oc)
+            except Exception as e:
+                return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
+                    f"Failed to convert OID objectClass to OUD: {e}"
+                )
+
+    class OidSchema(FlextModels.Value):
+        """Complete OID schema container with attributes and objectClasses.
+
+        Container for all OID schema definitions parsed from schema LDIF files.
+        Provides conversion methods to OUD-compatible schema format.
+        """
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        attributes: dict[str, FlextLdifModels.OidSchemaAttribute] = Field(
+            default_factory=dict,
+            description="OID schema attributes indexed by name",
+        )
+
+        objectclasses: dict[str, FlextLdifModels.OidSchemaObjectClass] = Field(
+            default_factory=dict,
+            description="OID schema objectClasses indexed by name",
+        )
+
+        source_dn: str = Field(
+            default="cn=subschemasubentry",
+            description="Source DN from schema LDIF",
+        )
+
+        @computed_field
+        @property
+        def schema_summary(self) -> dict[str, object]:
+            """Computed field for schema summary."""
+            oracle_attrs = sum(
+                1 for a in self.attributes.values() if a.is_oracle_specific
+            )
+            oracle_ocs = sum(
+                1 for o in self.objectclasses.values() if o.is_oracle_specific
+            )
+
+            return {
+                "total_attributes": len(self.attributes),
+                "total_objectclasses": len(self.objectclasses),
+                "oracle_specific_attributes": oracle_attrs,
+                "oracle_specific_objectclasses": oracle_ocs,
+                "standard_attributes": len(self.attributes) - oracle_attrs,
+                "standard_objectclasses": len(self.objectclasses) - oracle_ocs,
+            }
+
+        @computed_field
+        @property
+        def oracle_specific_items(self) -> dict[str, list[str]]:
+            """Get lists of Oracle-specific schema items."""
+            oracle_attrs = [
+                name
+                for name, attr in self.attributes.items()
+                if attr.is_oracle_specific
+            ]
+            oracle_ocs = [
+                name for name, oc in self.objectclasses.items() if oc.is_oracle_specific
+            ]
+
+            return {
+                "attributes": oracle_attrs,
+                "objectclasses": oracle_ocs,
+            }
+
+        def to_oud_schema(self) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
+            """Convert OID schema to OUD-compatible SchemaDiscoveryResult.
+
+            Returns:
+                FlextResult with converted schema or error with conversion warnings
+
+            """
+            try:
+                oud_attributes: dict[str, FlextLdifModels.SchemaAttribute] = {}
+                oud_objectclasses: dict[str, FlextLdifModels.SchemaObjectClass] = {}
+
+                conversion_warnings: list[str] = []
+
+                # Convert attributes
+                for name, oid_attr in self.attributes.items():
+                    result = oid_attr.to_oud_attribute()
+                    if result.is_success:
+                        oud_attributes[name] = result.value
+                    else:
+                        conversion_warnings.append(
+                            f"Failed to convert attribute {name}: {result.error}"
+                        )
+
+                # Convert objectClasses
+                for name, oid_oc in self.objectclasses.items():
+                    result = oid_oc.to_oud_objectclass()
+                    if result.is_success:
+                        oud_objectclasses[name] = result.value
+                    else:
+                        conversion_warnings.append(
+                            f"Failed to convert objectClass {name}: {result.error}"
+                        )
+
+                # Create SchemaDiscoveryResult
+                schema_result = FlextLdifModels.SchemaDiscoveryResult(
+                    object_classes=oud_objectclasses,
+                    attributes=oud_attributes,
+                    server_type="oud",
+                    entry_count=len(oud_attributes) + len(oud_objectclasses),
+                )
+
+                if conversion_warnings:
+                    warning_msg = f"Schema converted with {len(conversion_warnings)} warnings: {'; '.join(conversion_warnings[:5])}"
+                    return FlextResult[FlextLdifModels.SchemaDiscoveryResult].ok(
+                        schema_result,
+                        metadata={
+                            "warnings": conversion_warnings,
+                            "message": warning_msg,
+                        },
+                    )
+
+                return FlextResult[FlextLdifModels.SchemaDiscoveryResult].ok(
+                    schema_result
+                )
+
+            except Exception as e:
+                return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(
+                    f"Failed to convert OID schema to OUD: {e}"
+                )
 
     # =============================================================================
     # ADDITIONAL MODELS REQUIRED BY TESTS
@@ -1821,26 +2820,15 @@ class FlextLdifModels(FlextModels):
                 return 0.0
             return (self.valid_count / self.entry_count) * 100.0
 
-    class ParseResult(FlextModels.Value):
+    class ParseResult(BaseOperationResult):
         """Parsing operation result with error tracking.
 
-        Centralizes all parsing results with automatic validation.
+        Extends BaseOperationResult with parse-specific fields.
         """
-
-        model_config = ConfigDict(
-            frozen=True,
-            validate_assignment=True,
-            extra="forbid",
-            hide_input_in_errors=True,
-        )
 
         entries: list[FlextLdifModels.Entry] = Field(
             default_factory=list,
             description="Parsed entries",
-        )
-        parse_errors: list[str] = Field(
-            default_factory=list,
-            description="Parsing errors encountered",
         )
         line_count: int = Field(
             default=0,
@@ -1862,28 +2850,15 @@ class FlextLdifModels(FlextModels):
 
         @computed_field
         @property
-        def error_count(self) -> int:
-            """Get count of parse errors."""
-            return len(self.parse_errors)
-
-        @computed_field
-        @property
         def is_success(self) -> bool:
             """Check if parsing was successful."""
-            return len(self.parse_errors) == 0 and len(self.entries) > 0
+            return len(self.errors) == 0 and len(self.entries) > 0
 
-    class TransformResult(FlextModels.Value):
+    class TransformResult(BaseOperationResult):
         """Transformation operation result with change tracking.
 
-        Centralizes all transformation results with automatic validation.
+        Extends BaseOperationResult with transformation-specific fields.
         """
-
-        model_config = ConfigDict(
-            frozen=True,
-            validate_assignment=True,
-            extra="forbid",
-            hide_input_in_errors=True,
-        )
 
         transformed_entries: list[FlextLdifModels.Entry] = Field(
             default_factory=list,
@@ -1905,18 +2880,11 @@ class FlextLdifModels(FlextModels):
             """Get count of transformed entries."""
             return len(self.transformed_entries)
 
-    class AnalyticsResult(FlextModels.Value):
+    class AnalyticsResult(BaseOperationResult):
         """Analytics operation result with pattern detection.
 
-        Centralizes all analytics results with automatic validation.
+        Extends BaseOperationResult with analytics-specific fields.
         """
-
-        model_config = ConfigDict(
-            frozen=True,
-            validate_assignment=True,
-            extra="forbid",
-            hide_input_in_errors=True,
-        )
 
         statistics: dict[str, int | float] = Field(
             default_factory=dict,
@@ -1941,18 +2909,11 @@ class FlextLdifModels(FlextModels):
             """Get total unique object classes."""
             return len(self.object_class_distribution)
 
-    class WriteResult(FlextModels.Value):
+    class WriteResult(BaseOperationResult):
         """Write operation result with success tracking.
 
-        Centralizes all write operation results with automatic validation.
+        Extends BaseOperationResult with write-specific fields.
         """
-
-        model_config = ConfigDict(
-            frozen=True,
-            validate_assignment=True,
-            extra="forbid",
-            hide_input_in_errors=True,
-        )
 
         success: bool = Field(
             description="Whether write was successful",
@@ -1966,13 +2927,9 @@ class FlextLdifModels(FlextModels):
             ge=0,
             description="Number of entries written",
         )
-        errors: list[str] = Field(
-            default_factory=list,
-            description="Write errors encountered",
-        )
 
         @model_validator(mode="after")
-        def validate_write_consistency(self) -> FlextLdifModels.WriteResult:
+        def validate_write_consistency(self) -> Self:
             """Validate write result consistency."""
             if self.success and self.errors:
                 msg = "success cannot be True when errors exist"
@@ -1982,18 +2939,11 @@ class FlextLdifModels(FlextModels):
                 raise ValueError(msg)
             return self
 
-    class FilterResult(FlextModels.Value):
+    class FilterResult(BaseOperationResult):
         """Filter operation result with count tracking.
 
-        Centralizes all filter results with automatic validation.
+        Extends BaseOperationResult with filter-specific fields.
         """
-
-        model_config = ConfigDict(
-            frozen=True,
-            validate_assignment=True,
-            extra="forbid",
-            hide_input_in_errors=True,
-        )
 
         filtered_entries: list[FlextLdifModels.Entry] = Field(
             default_factory=list,
@@ -2015,7 +2965,7 @@ class FlextLdifModels(FlextModels):
         )
 
         @model_validator(mode="after")
-        def validate_filter_counts(self) -> FlextLdifModels.FilterResult:
+        def validate_filter_counts(self) -> Self:
             """Validate filter count consistency."""
             if self.filtered_count > self.original_count:
                 msg = "filtered_count cannot exceed original_count"
@@ -2039,18 +2989,11 @@ class FlextLdifModels(FlextModels):
                 return 0.0
             return (self.filtered_count / self.original_count) * 100.0
 
-    class HealthCheckResult(FlextModels.Value):
+    class HealthCheckResult(BaseOperationResult):
         """Health check result for services and components.
 
-        Centralizes health check data with status and metrics.
+        Extends BaseOperationResult with health check specific fields.
         """
-
-        model_config = ConfigDict(
-            frozen=True,
-            validate_assignment=True,
-            extra="forbid",
-            hide_input_in_errors=True,
-        )
 
         status: str = Field(
             description="Health status (healthy/degraded/unhealthy)",
@@ -2136,6 +3079,625 @@ class FlextLdifModels(FlextModels):
                 FlextLdifConstants.HealthStatus.HEALTHY.value,
                 FlextLdifConstants.HealthStatus.DEGRADED.value,
             }
+
+    # ============================================================================
+    # OID ACI (Access Control) Models
+    # ============================================================================
+
+    class OidAciPermissions(BaseAclPermissions):
+        """OID ACI permissions - parsed from permissions clause.
+
+        Extends BaseAclPermissions with Oracle-specific permissions and negative permissions.
+        """
+
+        # Additional OID-specific permissions
+        browse: bool = Field(default=False, description="Browse permission")
+        selfwrite: bool = Field(default=False, description="Selfwrite permission")
+
+        # Negative permissions (Oracle-specific deny pattern)
+        noread: bool = Field(default=False, description="Deny read")
+        nowrite: bool = Field(default=False, description="Deny write")
+        nosearch: bool = Field(default=False, description="Deny search")
+        nocompare: bool = Field(default=False, description="Deny compare")
+        nobrowse: bool = Field(default=False, description="Deny browse")
+        noadd: bool = Field(default=False, description="Deny add")
+        nodelete: bool = Field(default=False, description="Deny delete")
+        noselfwrite: bool = Field(default=False, description="Deny selfwrite")
+        noproxy: bool = Field(default=False, description="Deny proxy")
+
+        @classmethod
+        def from_permission_string(
+            cls, perm_str: str
+        ) -> FlextResult[FlextLdifModels.OidAciPermissions]:
+            """Parse OID permission string like '(read,write,search,compare)'."""
+            try:
+                # Remove parentheses and split by comma
+                perms_clean = perm_str.strip("() ")
+                if not perms_clean:
+                    return FlextResult[FlextLdifModels.OidAciPermissions].fail(
+                        "Empty permission string"
+                    )
+
+                perm_list = [p.strip().lower() for p in perms_clean.split(",")]
+
+                # Create permissions dict
+                perm_dict = {}
+                for perm in perm_list:
+                    if perm in {
+                        "read",
+                        "write",
+                        "search",
+                        "compare",
+                        "browse",
+                        "add",
+                        "delete",
+                        "selfwrite",
+                        "proxy",
+                        "noread",
+                        "nowrite",
+                        "nosearch",
+                        "nocompare",
+                        "nobrowse",
+                        "noadd",
+                        "nodelete",
+                        "noselfwrite",
+                        "noproxy",
+                    }:
+                        perm_dict[perm] = True
+
+                return cls.create(**perm_dict)
+            except Exception as e:
+                return FlextResult[FlextLdifModels.OidAciPermissions].fail(
+                    f"Failed to parse permissions: {e}"
+                )
+
+        def to_oud_permissions(self) -> FlextResult[FlextLdifModels.AclPermissions]:
+            """Convert OID permissions to OUD AclPermissions."""
+            try:
+                # OUD uses similar permission model, applying negative permissions
+                return FlextLdifModels.AclPermissions.create(
+                    read=self.read and not self.noread,
+                    write=self.write and not self.nowrite,
+                    search=self.search and not self.nosearch,
+                    compare=self.compare and not self.nocompare,
+                    add=self.add and not self.noadd,
+                    delete=self.delete and not self.nodelete,
+                    proxy=self.proxy and not self.noproxy,
+                )
+            except Exception as e:
+                return FlextResult[FlextLdifModels.AclPermissions].fail(
+                    f"Failed to convert permissions: {e}"
+                )
+
+    class OidAciSubject(BaseAclSubject):
+        """OID ACI subject - who the rule applies to.
+
+        Extends BaseAclSubject with OID-specific fields and parsing.
+        """
+
+        bind_mode: str = Field(
+            default="",
+            description="BindMode constraint like (Simple|SSLNoAuth)",
+        )
+
+        @classmethod
+        def from_subject_string(cls, subject_str: str) -> FlextResult[FlextLdifModels.OidAciSubject]:
+            """Parse OID subject string like 'group="cn=admins,..."' or 'by *'."""
+            try:
+                subject_clean = subject_str.strip()
+
+                # Handle wildcard (by *)
+                if subject_clean == "*":
+                    return cls.create(subject_type="*", subject_value="*")
+
+                # Handle self
+                if subject_clean.lower() == "self":
+                    return cls.create(subject_type="self", subject_value="self")
+
+                # Parse subject with value: group="...", dn="...", etc.
+                if "=" in subject_clean:
+                    # Extract subject type and value
+                    parts = subject_clean.split("=", 1)
+                    subject_type = parts[0].strip().lower()
+
+                    # Extract value (may be quoted)
+                    value_part = parts[1].strip()
+                    if value_part.startswith('"') and '"' in value_part[1:]:
+                        # Extract quoted value
+                        end_quote = value_part.index('"', 1)
+                        subject_value = value_part[1:end_quote]
+
+                        # Check for BindMode constraint
+                        bind_mode = ""
+                        remainder = value_part[end_quote + 1 :].strip()
+                        if remainder.startswith("BindMode="):
+                            bind_mode = remainder[9:].strip()
+
+                        return cls.create(
+                            subject_type=subject_type,
+                            subject_value=subject_value,
+                            bind_mode=bind_mode,
+                        )
+                    # Unquoted value
+                    return cls.create(
+                        subject_type=subject_type,
+                        subject_value=value_part,
+                    )
+
+                return FlextResult[FlextLdifModels.OidAciSubject].fail(
+                    f"Unable to parse subject: {subject_str}"
+                )
+            except Exception as e:
+                return FlextResult[FlextLdifModels.OidAciSubject].fail(
+                    f"Failed to parse subject: {e}"
+                )
+
+        def to_oud_subject(self) -> FlextResult[FlextLdifModels.AclSubject]:
+            """Convert OID subject to OUD AclSubject."""
+            try:
+                # OUD uses similar subject model
+                return FlextLdifModels.AclSubject.create(
+                    subject_dn=self.subject_value,
+                )
+            except Exception as e:
+                return FlextResult[FlextLdifModels.AclSubject].fail(
+                    f"Failed to convert subject: {e}"
+                )
+
+    class OidAciRule(FlextModels.Value):
+        """Single OID ACI rule - 'by <subject> <permissions>'."""
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        subject: FlextLdifModels.OidAciSubject = Field(description="Subject of the rule")
+        permissions: FlextLdifModels.OidAciPermissions = Field(description="Permissions granted/denied")
+
+        @classmethod
+        def from_rule_string(cls, rule_str: str) -> FlextResult[FlextLdifModels.OidAciRule]:
+            """Parse OID ACI rule like 'by group="..." (read,write)'."""
+            try:
+                # Remove leading 'by ' if present
+                rule_clean = rule_str.strip()
+                if rule_clean.lower().startswith("by "):
+                    rule_clean = rule_clean[3:].strip()
+
+                # Find permissions clause (in parentheses)
+                perm_start = rule_clean.rfind("(")
+                if perm_start == -1:
+                    return FlextResult[FlextLdifModels.OidAciRule].fail(
+                        "No permissions found in rule"
+                    )
+
+                perm_end = rule_clean.rfind(")")
+                if perm_end == -1 or perm_end < perm_start:
+                    return FlextResult[FlextLdifModels.OidAciRule].fail(
+                        "Malformed permissions clause"
+                    )
+
+                # Extract subject and permissions
+                subject_str = rule_clean[:perm_start].strip()
+                perm_str = rule_clean[perm_start : perm_end + 1]
+
+                # Parse subject
+                subject_result = FlextLdifModels.OidAciSubject.from_subject_string(
+                    subject_str
+                )
+                if subject_result.is_failure:
+                    return FlextResult[FlextLdifModels.OidAciRule].fail(
+                        f"Failed to parse subject: {subject_result.error}"
+                    )
+
+                # Parse permissions
+                perm_result = FlextLdifModels.OidAciPermissions.from_permission_string(
+                    perm_str
+                )
+                if perm_result.is_failure:
+                    return FlextResult[FlextLdifModels.OidAciRule].fail(
+                        f"Failed to parse permissions: {perm_result.error}"
+                    )
+
+                return cls.create(
+                    subject=subject_result.value,
+                    permissions=perm_result.value,
+                )
+            except Exception as e:
+                return FlextResult[FlextLdifModels.OidAciRule].fail(
+                    f"Failed to parse rule: {e}"
+                )
+
+    class OidAci(FlextModels.Value):
+        """OID orclaci attribute - entry-level or attribute-level ACI."""
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        access_type: str = Field(
+            description="Access type: 'entry' or 'attr' or 'attr!'"
+        )
+        target: str = Field(
+            default="",
+            description="Target entry or attribute (e.g., 'entry', 'attr=(*)', 'attr!=(password)')",
+        )
+        filter: str = Field(
+            default="",
+            description="Optional LDAP filter constraint",
+        )
+        rules: list[FlextLdifModels.OidAciRule] = Field(
+            default_factory=list,
+            description="List of ACI rules (by <subject> <permissions>)",
+        )
+        raw_aci: str = Field(
+            default="",
+            description="Original raw OID ACI string",
+        )
+
+        @classmethod
+        def from_ldif_line(cls, ldif_line: str) -> FlextResult[FlextLdifModels.OidAci]:
+            """Parse OID orclaci from LDIF line.
+
+            Example formats:
+            - orclaci: access to entry by group="..." (browse,add,delete) by * (browse)
+            - orclaci: access to attr=(*) by group="..." (read,write) by * (read)
+            - orclaci: access to attr!=(password) by dn="..." (read) by * (none)
+            - orclaci: access to entry filter=(objectclass=orclNetService) by group="..." (browse,add)
+            """
+            try:
+                # Remove attribute name prefix
+                if ldif_line.startswith("orclaci:"):
+                    ldif_line = ldif_line[8:].strip()
+
+                raw_aci = ldif_line
+
+                # Parse: access to <target> [filter=(...)] by <subject> <perms> by ...
+                if not ldif_line.lower().startswith("access to "):
+                    return FlextResult[FlextLdifModels.OidAci].fail(
+                        "OID ACI must start with 'access to'"
+                    )
+
+                ldif_line = ldif_line[10:].strip()  # Remove "access to "
+
+                # Find first "by" to separate target from rules
+                by_index = ldif_line.lower().find(" by ")
+                if by_index == -1:
+                    return FlextResult[FlextLdifModels.OidAci].fail(
+                        "No 'by' clause found in OID ACI"
+                    )
+
+                target_part = ldif_line[:by_index].strip()
+                rules_part = ldif_line[by_index + 1 :].strip()  # Keep " by ..."
+
+                # Parse target and filter
+                access_type = ""
+                target = ""
+                filter_str = ""
+
+                # Check for filter constraint
+                filter_index = target_part.lower().find("filter=")
+                if filter_index != -1:
+                    # Extract filter
+                    filter_start = filter_index + 7  # len("filter=")
+                    if target_part[filter_start] == "(":
+                        # Find matching closing parenthesis
+                        paren_count = 1
+                        filter_end = filter_start + 1
+                        while filter_end < len(target_part) and paren_count > 0:
+                            if target_part[filter_end] == "(":
+                                paren_count += 1
+                            elif target_part[filter_end] == ")":
+                                paren_count -= 1
+                            filter_end += 1
+
+                        filter_str = target_part[filter_start:filter_end]
+                        target_part = target_part[:filter_index].strip()
+
+                # Determine access type and target
+                if target_part.startswith("entry"):
+                    access_type = "entry"
+                    target = "entry"
+                elif target_part.startswith("attr!=("):
+                    access_type = "attr!"
+                    # Extract attribute name from attr!=(attrname)
+                    end_paren = target_part.find(")")
+                    if end_paren != -1:
+                        target = target_part[7:end_paren]  # Skip "attr!=("
+                elif target_part.startswith("attr=("):
+                    access_type = "attr"
+                    # Extract attribute name from attr=(attrname)
+                    end_paren = target_part.find(")")
+                    if end_paren != -1:
+                        target = target_part[6:end_paren]  # Skip "attr=("
+                else:
+                    return FlextResult[FlextLdifModels.OidAci].fail(
+                        f"Unknown access type in target: {target_part}"
+                    )
+
+                # Parse rules (split by " by ")
+                rules: list[FlextLdifModels.OidAciRule] = []
+                rules_part_lower = rules_part.lower()
+
+                # Split by " by " (case-insensitive)
+                rule_strings = []
+                current_pos = 0
+                while True:
+                    by_pos = rules_part_lower.find(" by ", current_pos)
+                    if by_pos == -1:
+                        # Last rule
+                        if current_pos < len(rules_part):
+                            rule_strings.append(rules_part[current_pos:].strip())
+                        break
+
+                    if current_pos == 0:
+                        # First rule (has leading "by ")
+                        current_pos = by_pos + 4
+                        continue
+
+                    # Extract rule between current_pos and by_pos
+                    rule_strings.append(rules_part[current_pos:by_pos].strip())
+                    current_pos = by_pos + 4
+
+                # Parse each rule
+                for rule_str in rule_strings:
+                    if not rule_str or rule_str.lower() == "by":
+                        continue
+
+                    rule_result = FlextLdifModels.OidAciRule.from_rule_string(rule_str)
+                    if rule_result.is_success:
+                        rules.append(rule_result.value)
+
+                return cls.create(
+                    access_type=access_type,
+                    target=target,
+                    filter=filter_str,
+                    rules=rules,
+                    raw_aci=raw_aci,
+                )
+            except Exception as e:
+                return FlextResult[FlextLdifModels.OidAci].fail(
+                    f"Failed to parse OID ACI: {e}"
+                )
+
+        def to_oud_aci(self) -> FlextResult[FlextLdifModels.UnifiedAcl]:
+            """Convert OID ACI to OUD UnifiedAcl."""
+            try:
+                # Create OUD target
+                target_result = FlextLdifModels.AclTarget.create(
+                    target_dn="",
+                    attributes=[self.target]
+                    if self.access_type.startswith("attr")
+                    else [],
+                    filter=self.filter,
+                )
+                if target_result.is_failure:
+                    return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                        f"Failed to create target: {target_result.error}"
+                    )
+
+                # Convert first rule (OUD typically uses single subject/permission pair)
+                if not self.rules:
+                    return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                        "No rules to convert"
+                    )
+
+                first_rule = self.rules[0]
+
+                # Convert subject
+                subject_result = first_rule.subject.to_oud_subject()
+                if subject_result.is_failure:
+                    return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                        f"Failed to convert subject: {subject_result.error}"
+                    )
+
+                # Convert permissions
+                perm_result = first_rule.permissions.to_oud_permissions()
+                if perm_result.is_failure:
+                    return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                        f"Failed to convert permissions: {perm_result.error}"
+                    )
+
+                return FlextLdifModels.UnifiedAcl.create(
+                    name="converted_oid_aci",
+                    target=target_result.value,
+                    subject=subject_result.value,
+                    permissions=perm_result.value,
+                    server_type="oracle_oud",
+                    raw_acl=self.raw_aci,
+                )
+            except Exception as e:
+                return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                    f"Failed to convert OID ACI: {e}"
+                )
+
+    class OidEntryLevelAci(FlextModels.Value):
+        """OID orclentrylevelaci attribute - entry-level ACI with constraints."""
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+            hide_input_in_errors=True,
+        )
+
+        access_type: str = Field(description="Access type: 'entry' or 'attr'")
+        target: str = Field(
+            default="",
+            description="Target entry or attribute",
+        )
+        constraint: str = Field(
+            default="",
+            description="Optional constraint like 'added_object_constraint=(objectclass=...)'",
+        )
+        rules: list[FlextLdifModels.OidAciRule] = Field(
+            default_factory=list,
+            description="List of ACI rules",
+        )
+        raw_aci: str = Field(
+            default="",
+            description="Original raw OID entry-level ACI string",
+        )
+
+        @classmethod
+        def from_ldif_line(cls, ldif_line: str) -> FlextResult[FlextLdifModels.OidEntryLevelAci]:
+            """Parse OID orclentrylevelaci from LDIF line.
+
+            Example formats:
+            - orclentrylevelaci: access to attr=(*) by group="..." (read,write) by * (read)
+            - orclentrylevelaci: access to entry by group="..." added_object_constraint=(objectclass=...) (add)
+            """
+            try:
+                # Remove attribute name prefix
+                if ldif_line.startswith("orclentrylevelaci:"):
+                    ldif_line = ldif_line[18:].strip()
+
+                raw_aci = ldif_line
+
+                # Similar parsing to OidAci but with added_object_constraint support
+                if not ldif_line.lower().startswith("access to "):
+                    return FlextResult[FlextLdifModels.OidEntryLevelAci].fail(
+                        "Entry-level ACI must start with 'access to'"
+                    )
+
+                ldif_line = ldif_line[10:].strip()
+
+                # Find first "by" to separate target from rules
+                by_index = ldif_line.lower().find(" by ")
+                if by_index == -1:
+                    return FlextResult[FlextLdifModels.OidEntryLevelAci].fail(
+                        "No 'by' clause found"
+                    )
+
+                target_part = ldif_line[:by_index].strip()
+                rules_part = ldif_line[by_index + 1 :].strip()
+
+                # Parse target and constraint
+                access_type = ""
+                target = ""
+                constraint = ""
+
+                # Check for added_object_constraint
+                constraint_index = target_part.lower().find("added_object_constraint=")
+                if constraint_index != -1:
+                    # Extract constraint
+                    constraint_start = constraint_index + 24
+                    if target_part[constraint_start] == "(":
+                        paren_count = 1
+                        constraint_end = constraint_start + 1
+                        while constraint_end < len(target_part) and paren_count > 0:
+                            if target_part[constraint_end] == "(":
+                                paren_count += 1
+                            elif target_part[constraint_end] == ")":
+                                paren_count -= 1
+                            constraint_end += 1
+
+                        constraint = target_part[constraint_start:constraint_end]
+                        target_part = target_part[:constraint_index].strip()
+
+                # Determine access type
+                if target_part.startswith("entry"):
+                    access_type = "entry"
+                    target = "entry"
+                elif target_part.startswith("attr=("):
+                    access_type = "attr"
+                    end_paren = target_part.find(")")
+                    if end_paren != -1:
+                        target = target_part[6:end_paren]
+                else:
+                    return FlextResult[FlextLdifModels.OidEntryLevelAci].fail(
+                        f"Unknown access type: {target_part}"
+                    )
+
+                # Parse rules (same as OidAci)
+                rules: list[FlextLdifModels.OidAciRule] = []
+                rules_part_lower = rules_part.lower()
+
+                rule_strings = []
+                current_pos = 0
+                while True:
+                    by_pos = rules_part_lower.find(" by ", current_pos)
+                    if by_pos == -1:
+                        if current_pos < len(rules_part):
+                            rule_strings.append(rules_part[current_pos:].strip())
+                        break
+
+                    if current_pos == 0:
+                        current_pos = by_pos + 4
+                        continue
+
+                    rule_strings.append(rules_part[current_pos:by_pos].strip())
+                    current_pos = by_pos + 4
+
+                for rule_str in rule_strings:
+                    if not rule_str or rule_str.lower() == "by":
+                        continue
+
+                    rule_result = FlextLdifModels.OidAciRule.from_rule_string(rule_str)
+                    if rule_result.is_success:
+                        rules.append(rule_result.value)
+
+                return cls.create(
+                    access_type=access_type,
+                    target=target,
+                    constraint=constraint,
+                    rules=rules,
+                    raw_aci=raw_aci,
+                )
+            except Exception as e:
+                return FlextResult[FlextLdifModels.OidEntryLevelAci].fail(
+                    f"Failed to parse entry-level ACI: {e}"
+                )
+
+        def to_oud_aci(self) -> FlextResult[FlextLdifModels.UnifiedAcl]:
+            """Convert OID entry-level ACI to OUD UnifiedAcl."""
+            try:
+                # Similar conversion to OidAci
+                target_result = FlextLdifModels.AclTarget.create(
+                    target_dn="",
+                    attributes=[self.target] if self.access_type == "attr" else [],
+                )
+                if target_result.is_failure:
+                    return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                        f"Failed to create target: {target_result.error}"
+                    )
+
+                if not self.rules:
+                    return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                        "No rules to convert"
+                    )
+
+                first_rule = self.rules[0]
+
+                subject_result = first_rule.subject.to_oud_subject()
+                if subject_result.is_failure:
+                    return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                        f"Failed to convert subject: {subject_result.error}"
+                    )
+
+                perm_result = first_rule.permissions.to_oud_permissions()
+                if perm_result.is_failure:
+                    return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                        f"Failed to convert permissions: {perm_result.error}"
+                    )
+
+                return FlextLdifModels.UnifiedAcl.create(
+                    name="converted_entry_level_aci",
+                    target=target_result.value,
+                    subject=subject_result.value,
+                    permissions=perm_result.value,
+                    server_type="oracle_oud",
+                    raw_acl=self.raw_aci,
+                )
+            except Exception as e:
+                return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                    f"Failed to convert entry-level ACI: {e}"
+                )
 
 
 __all__ = ["FlextLdifModels"]

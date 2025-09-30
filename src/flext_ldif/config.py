@@ -465,7 +465,8 @@ class FlextLdifConfig(FlextConfig):
     @classmethod
     def reset_global_instance(cls) -> None:
         """Reset the global FlextLdifConfig instance (mainly for testing)."""
-        super().reset_global_instance()
+        with cls._lock:
+            cls._global_instance = None
 
 
 __all__ = ["FlextLdifConfig"]

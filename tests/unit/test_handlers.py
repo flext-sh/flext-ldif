@@ -448,7 +448,11 @@ sn: user
         handlers = FlextLdifHandlers(config)
 
         # Create a mock coordinator that fails configuration
-        class FailingCoordinator:
+        class FailingCoordinator(FlextLdifHandlers.HandlerCoordinator):
+            def __init__(self) -> None:
+                # Don't call super().__init__ to avoid full initialization
+                pass
+
             def configure_handlers(self) -> FlextResult[None]:
                 return FlextResult[None].fail("Configuration failed")
 
@@ -819,7 +823,7 @@ sn: user
         analytics = result.unwrap()
         entry_types_raw = analytics.get("entry_types", {})
         assert isinstance(entry_types_raw, dict)
-        entry_types: dict[str, int] = entry_types_raw
+        entry_types = cast("dict[str, int]", entry_types_raw)
         assert entry_types.get("person", 0) >= 1
 
     def test_analytics_handler_analyze_entry_types_group(self) -> None:
@@ -841,7 +845,7 @@ sn: user
         analytics = result.unwrap()
         entry_types_raw = analytics.get("entry_types", {})
         assert isinstance(entry_types_raw, dict)
-        entry_types: dict[str, int] = entry_types_raw
+        entry_types = cast("dict[str, int]", entry_types_raw)
         assert entry_types.get("group", 0) >= 1
 
     def test_analytics_handler_analyze_entry_types_organizational_unit(self) -> None:
@@ -866,7 +870,7 @@ sn: user
         analytics = result.unwrap()
         entry_types_raw = analytics.get("entry_types", {})
         assert isinstance(entry_types_raw, dict)
-        entry_types: dict[str, int] = entry_types_raw
+        entry_types = cast("dict[str, int]", entry_types_raw)
         assert entry_types.get("organizational_unit", 0) >= 1
 
     def test_analytics_handler_analyze_validation_statistics(self) -> None:
