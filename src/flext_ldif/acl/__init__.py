@@ -9,12 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.acl.oid_aci_parser import FlextLdifOidAciParserService
 from flext_ldif.acl.parser import FlextLdifAclParser
 from flext_ldif.acl.service import FlextLdifAclService
 
 __all__ = [
     "FlextLdifAclParser",
     "FlextLdifAclService",
-    "FlextLdifOidAciParserService",
 ]

@@ -264,13 +264,17 @@ class OidAclQuirk(BaseAclQuirk):
             if result.is_success:
                 # Convert model to dict for quirk system
                 acl_obj = result.value
-                return FlextResult[dict[str, object]].ok({
-                    "type": "entry_level" if is_entry_level else "standard",
-                    "raw": acl_line,
-                    "parsed": acl_obj.model_dump()
-                    if hasattr(acl_obj, "model_dump")
-                    else {},
-                })
+                return FlextResult[dict[str, object]].ok(
+                    {
+                        "type": "entry_level" if is_entry_level else "standard",
+                        "raw": acl_line,
+                        "parsed": (
+                            acl_obj.model_dump()
+                            if hasattr(acl_obj, "model_dump")
+                            else {}
+                        ),
+                    }
+                )
 
             return FlextResult[dict[str, object]].fail(result.error or "Parse failed")
 

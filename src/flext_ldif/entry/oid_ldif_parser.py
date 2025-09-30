@@ -164,16 +164,18 @@ class OidLdifParserService(FlextService[dict]):
                 if entry_result.is_success:
                     entries.append(entry_result.value)
 
-            return FlextResult[dict].ok({
-                "entries": entries,
-                "changes": changes,
-                "comments": comments,
-                "stats": {
-                    "total_entries": len(entries),
-                    "total_changes": len(changes),
-                    "total_comments": len(comments),
-                },
-            })
+            return FlextResult[dict].ok(
+                {
+                    "entries": entries,
+                    "changes": changes,
+                    "comments": comments,
+                    "stats": {
+                        "total_entries": len(entries),
+                        "total_changes": len(changes),
+                        "total_comments": len(comments),
+                    },
+                }
+            )
 
         except Exception as e:
             return FlextResult[dict].fail(f"Failed to parse OID LDIF file: {e}")
@@ -273,7 +275,7 @@ class OidLdifParserService(FlextService[dict]):
             return ("", "")
 
         attr_name = line[:colon_pos].strip()
-        value_part = line[colon_pos + 1:]
+        value_part = line[colon_pos + 1 :]
 
         # Base64 encoding (::)
         if value_part.startswith(":"):

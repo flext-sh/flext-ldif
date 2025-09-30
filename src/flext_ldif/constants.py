@@ -154,16 +154,20 @@ class FlextLdifConstants(FlextConstants):
     class ObjectClasses:
         """LDAP object class definitions."""
 
-        LDAP_PERSON_CLASSES: Final[frozenset[str]] = frozenset([
-            "person",
-            "organizationalperson",
-            "inetorgperson",
-        ])
+        LDAP_PERSON_CLASSES: Final[frozenset[str]] = frozenset(
+            [
+                "person",
+                "organizationalperson",
+                "inetorgperson",
+            ]
+        )
 
-        LDAP_GROUP_CLASSES: Final[frozenset[str]] = frozenset([
-            "groupofnames",
-            "groupofuniquenames",
-        ])
+        LDAP_GROUP_CLASSES: Final[frozenset[str]] = frozenset(
+            [
+                "groupofnames",
+                "groupofuniquenames",
+            ]
+        )
 
     # =============================================================================
     # ERROR MESSAGE CONSTANTS
@@ -253,15 +257,17 @@ class FlextLdifConstants(FlextConstants):
         DEFAULT_ENCODING: Final[str] = UTF8
 
         # Supported encodings for LDIF processing
-        SUPPORTED_ENCODINGS: Final[frozenset[str]] = frozenset([
-            UTF8,
-            LATIN1,
-            ASCII,
-            "utf-16",
-            "utf-32",
-            "cp1252",
-            "iso-8859-1",
-        ])
+        SUPPORTED_ENCODINGS: Final[frozenset[str]] = frozenset(
+            [
+                UTF8,
+                LATIN1,
+                ASCII,
+                "utf-16",
+                "utf-32",
+                "cp1252",
+                "iso-8859-1",
+            ]
+        )
 
     # =============================================================================
     # LDAP SERVER CONSTANTS
@@ -279,41 +285,49 @@ class FlextLdifConstants(FlextConstants):
         GENERIC: Final[str] = "generic"
 
         # Server-specific DN patterns
-        AD_DN_PATTERNS: Final[frozenset[str]] = frozenset([
-            "CN=",
-            "OU=",
-            "DC=",
-            "O=",
-            "L=",
-            "ST=",
-            "C=",
-        ])
+        AD_DN_PATTERNS: Final[frozenset[str]] = frozenset(
+            [
+                "CN=",
+                "OU=",
+                "DC=",
+                "O=",
+                "L=",
+                "ST=",
+                "C=",
+            ]
+        )
 
-        OPENLDAP_DN_PATTERNS: Final[frozenset[str]] = frozenset([
-            "cn=",
-            "ou=",
-            "dc=",
-            "o=",
-            "l=",
-            "st=",
-            "c=",
-            "uid=",
-        ])
+        OPENLDAP_DN_PATTERNS: Final[frozenset[str]] = frozenset(
+            [
+                "cn=",
+                "ou=",
+                "dc=",
+                "o=",
+                "l=",
+                "st=",
+                "c=",
+                "uid=",
+            ]
+        )
 
         # Server-specific object classes
-        AD_REQUIRED_CLASSES: Final[frozenset[str]] = frozenset([
-            "top",
-            "person",
-            "organizationalPerson",
-            "user",
-        ])
+        AD_REQUIRED_CLASSES: Final[frozenset[str]] = frozenset(
+            [
+                "top",
+                "person",
+                "organizationalPerson",
+                "user",
+            ]
+        )
 
-        OPENLDAP_REQUIRED_CLASSES: Final[frozenset[str]] = frozenset([
-            "top",
-            "person",
-            "organizationalPerson",
-            "inetOrgPerson",
-        ])
+        OPENLDAP_REQUIRED_CLASSES: Final[frozenset[str]] = frozenset(
+            [
+                "top",
+                "person",
+                "organizationalPerson",
+                "inetOrgPerson",
+            ]
+        )
 
     # =============================================================================
     # RFC 2849 COMPLIANCE CONSTANTS
@@ -323,22 +337,26 @@ class FlextLdifConstants(FlextConstants):
         """RFC 2849 compliance validation constants."""
 
         # Required RFC 2849 features
-        REQUIRED_FEATURES: Final[frozenset[str]] = frozenset([
-            "base64_encoding",
-            "line_continuation",
-            "change_records",
-            "url_references",
-            "attribute_options",
-            "comments",
-            "version_control",
-        ])
+        REQUIRED_FEATURES: Final[frozenset[str]] = frozenset(
+            [
+                "base64_encoding",
+                "line_continuation",
+                "change_records",
+                "url_references",
+                "attribute_options",
+                "comments",
+                "version_control",
+            ]
+        )
 
         # Optional RFC 2849 features
-        OPTIONAL_FEATURES: Final[frozenset[str]] = frozenset([
-            "language_tags",
-            "binary_data",
-            "large_entries",
-        ])
+        OPTIONAL_FEATURES: Final[frozenset[str]] = frozenset(
+            [
+                "language_tags",
+                "binary_data",
+                "large_entries",
+            ]
+        )
 
         # Validation strictness levels
         STRICT: Final[str] = "strict"
