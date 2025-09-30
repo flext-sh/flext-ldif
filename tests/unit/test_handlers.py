@@ -222,10 +222,10 @@ class TestFlextLdifHandlers:
         """Test batch validation in ValidationHandler."""
         config = FlextLdifConfig()
         handlers = FlextLdifHandlers(config)
-        
+
         validation_handler = handlers._validation_handler
         batch_data = [{"id": 1}, {"id": 2}, {"id": 3}]
-        
+
         result = validation_handler.validate_batch(batch_data)
         assert result.is_success
         results = result.unwrap()
@@ -250,10 +250,10 @@ class TestFlextLdifHandlers:
         """Test single item processing in ProcessingHandler."""
         config = FlextLdifConfig()
         handlers = FlextLdifHandlers(config)
-        
+
         processing_handler = handlers._processing_handler
         test_data = {"test": "value"}
-        
+
         result = processing_handler.process(test_data)
         assert result.is_success
 
@@ -261,10 +261,10 @@ class TestFlextLdifHandlers:
         """Test batch processing in ProcessingHandler."""
         config = FlextLdifConfig()
         handlers = FlextLdifHandlers(config)
-        
+
         processing_handler = handlers._processing_handler
         batch_data = [{"id": 1}, {"id": 2}, {"id": 3}]
-        
+
         result = processing_handler.process_batch(batch_data)
         assert result.is_success
         results = result.unwrap()
@@ -289,10 +289,10 @@ class TestFlextLdifHandlers:
         """Test error handling with registered handlers."""
         config = FlextLdifConfig()
         handlers = FlextLdifHandlers(config)
-        
+
         error_handler = handlers._error_handler
         test_error = ValueError("test error")
-        
+
         result = error_handler.handle_error(test_error)
         assert result.is_success or result.is_failure
 
@@ -312,7 +312,9 @@ cn: test
 
 """
 
-        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', delete=False, suffix='.ldif') as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", delete=False, suffix=".ldif"
+        ) as f:
             f.write(ldif_content)
             temp_path = Path(f.name)
 
@@ -343,7 +345,9 @@ sn: user
 
 """
 
-        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', delete=False, suffix='.ldif') as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", delete=False, suffix=".ldif"
+        ) as f:
             temp_path = Path(f.name)
 
         try:
@@ -362,15 +366,15 @@ sn: user
         """Test analyzing entries with AnalyticsHandler."""
         config = FlextLdifConfig()
         handlers = FlextLdifHandlers(config)
-        
+
         analytics_handler = handlers._analytics_handler
-        
+
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
-            "attributes": {"cn": ["test"], "objectClass": ["person"]}
+            "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
         entry = FlextLdifModels.Entry.create(entry_data).unwrap()
-        
+
         result = analytics_handler.analyze_entries([entry])
         assert result.is_success
 
@@ -378,19 +382,19 @@ sn: user
         """Test retrieving analytics statistics."""
         config = FlextLdifConfig()
         handlers = FlextLdifHandlers(config)
-        
+
         analytics_handler = handlers._analytics_handler
         stats = analytics_handler.get_statistics()
-        
+
         assert isinstance(stats, dict)
 
     def test_handler_coordinator_get_handlers(self) -> None:
         """Test retrieving individual handlers from coordinator."""
         config = FlextLdifConfig()
         handlers = FlextLdifHandlers(config)
-        
+
         coordinator = handlers._coordinator
-        
+
         assert coordinator.get_validation_handler() is not None
         assert coordinator.get_processing_handler() is not None
         assert coordinator.get_error_handler() is not None
@@ -433,7 +437,10 @@ sn: user
 
         result = handlers.execute("test_command")
         assert result.is_failure
-        assert result.error is not None and ("Initialization failed" in result.error or "Handler initialization failed" in result.error)
+        assert result.error is not None and (
+            "Initialization failed" in result.error
+            or "Handler initialization failed" in result.error
+        )
 
     def test_execute_configuration_failure(self) -> None:
         """Test execute with handler configuration failure."""
@@ -445,7 +452,7 @@ sn: user
             def configure_handlers(self) -> FlextResult[None]:
                 return FlextResult[None].fail("Configuration failed")
 
-        handlers._coordinator = FailingCoordinator()  # type: ignore[assignment]
+        handlers._coordinator = FailingCoordinator()
 
         result = handlers.execute("test_command")
         assert result.is_failure
@@ -499,7 +506,9 @@ sn: user
 
         result = validation_handler.validate_batch([])
         assert result.is_failure
-        assert FlextLdifConstants.ErrorMessages.DATA_BATCH_EMPTY_ERROR in str(result.error)
+        assert FlextLdifConstants.ErrorMessages.DATA_BATCH_EMPTY_ERROR in str(
+            result.error
+        )
 
     def test_validation_handler_validate_batch_with_failure(self) -> None:
         """Test validate_batch stops at first validation failure."""
@@ -555,7 +564,9 @@ sn: user
 
         result = processing_handler.process_batch([])
         assert result.is_failure
-        assert FlextLdifConstants.ErrorMessages.DATA_BATCH_EMPTY_ERROR in str(result.error)
+        assert FlextLdifConstants.ErrorMessages.DATA_BATCH_EMPTY_ERROR in str(
+            result.error
+        )
 
     def test_processing_handler_process_batch_parallel(self) -> None:
         """Test process_batch triggers parallel processing when threshold met."""
@@ -685,7 +696,7 @@ sn: user
         config = FlextLdifConfig()
         file_handler = FlextLdifHandlers.FileHandler(config)
 
-        result = file_handler.write_file(None, "test content")  # type: ignore[arg-type]
+        result = file_handler.write_file(None, "test content")
         assert result.is_failure
         assert "File path and content are required" in str(result.error)
 
@@ -694,7 +705,9 @@ sn: user
         config = FlextLdifConfig()
         file_handler = FlextLdifHandlers.FileHandler(config)
 
-        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', delete=False, suffix=".ldif") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", delete=False, suffix=".ldif"
+        ) as f:
             temp_path = Path(f.name)
 
         try:
@@ -757,7 +770,7 @@ sn: user
 
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
-            "attributes": {"cn": ["test"], "objectClass": ["person"]}
+            "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
         entry = FlextLdifModels.Entry.create(entry_data).unwrap()
 
@@ -774,7 +787,7 @@ sn: user
 
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
-            "attributes": {"cn": ["test"], "objectClass": ["person"]}
+            "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
         entry = FlextLdifModels.Entry.create(entry_data).unwrap()
 
@@ -796,7 +809,7 @@ sn: user
         # Create person entry
         person_data = {
             "dn": "cn=john,dc=example,dc=com",
-            "attributes": {"cn": ["john"], "objectClass": ["person", "inetOrgPerson"]}
+            "attributes": {"cn": ["john"], "objectClass": ["person", "inetOrgPerson"]},
         }
         person_entry = FlextLdifModels.Entry.create(person_data).unwrap()
 
@@ -804,7 +817,9 @@ sn: user
         assert result.is_success
 
         analytics = result.unwrap()
-        entry_types = analytics.get("entry_types", {})
+        entry_types_raw = analytics.get("entry_types", {})
+        assert isinstance(entry_types_raw, dict)
+        entry_types: dict[str, int] = entry_types_raw
         assert entry_types.get("person", 0) >= 1
 
     def test_analytics_handler_analyze_entry_types_group(self) -> None:
@@ -816,7 +831,7 @@ sn: user
         # Create group entry
         group_data = {
             "dn": "cn=admins,dc=example,dc=com",
-            "attributes": {"cn": ["admins"], "objectClass": ["groupOfNames", "top"]}
+            "attributes": {"cn": ["admins"], "objectClass": ["groupOfNames", "top"]},
         }
         group_entry = FlextLdifModels.Entry.create(group_data).unwrap()
 
@@ -824,7 +839,9 @@ sn: user
         assert result.is_success
 
         analytics = result.unwrap()
-        entry_types = analytics.get("entry_types", {})
+        entry_types_raw = analytics.get("entry_types", {})
+        assert isinstance(entry_types_raw, dict)
+        entry_types: dict[str, int] = entry_types_raw
         assert entry_types.get("group", 0) >= 1
 
     def test_analytics_handler_analyze_entry_types_organizational_unit(self) -> None:
@@ -836,7 +853,10 @@ sn: user
         # Create OU entry
         ou_data = {
             "dn": "ou=users,dc=example,dc=com",
-            "attributes": {"ou": ["users"], "objectClass": ["organizationalUnit", "top"]}
+            "attributes": {
+                "ou": ["users"],
+                "objectClass": ["organizationalUnit", "top"],
+            },
         }
         ou_entry = FlextLdifModels.Entry.create(ou_data).unwrap()
 
@@ -844,7 +864,9 @@ sn: user
         assert result.is_success
 
         analytics = result.unwrap()
-        entry_types = analytics.get("entry_types", {})
+        entry_types_raw = analytics.get("entry_types", {})
+        assert isinstance(entry_types_raw, dict)
+        entry_types: dict[str, int] = entry_types_raw
         assert entry_types.get("organizational_unit", 0) >= 1
 
     def test_analytics_handler_analyze_validation_statistics(self) -> None:
@@ -856,7 +878,7 @@ sn: user
 
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
-            "attributes": {"cn": ["test"], "objectClass": ["person"]}
+            "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
         entry = FlextLdifModels.Entry.create(entry_data).unwrap()
 
@@ -864,7 +886,9 @@ sn: user
         assert result.is_success
 
         analytics = result.unwrap()
-        validation_stats = analytics.get("validation_statistics", {})
+        validation_stats_raw = analytics.get("validation_statistics", {})
+        assert isinstance(validation_stats_raw, dict)
+        validation_stats: dict[str, object] = validation_stats_raw
         assert "validation_results" in validation_stats
         assert "validation_errors" in validation_stats
 
@@ -877,7 +901,7 @@ sn: user
 
         entry_data = {
             "dn": "cn=test,dc=example,dc=com",
-            "attributes": {"cn": ["test"], "objectClass": ["person"]}
+            "attributes": {"cn": ["test"], "objectClass": ["person"]},
         }
         entry = FlextLdifModels.Entry.create(entry_data).unwrap()
 
@@ -885,7 +909,9 @@ sn: user
         assert result.is_success
 
         analytics = result.unwrap()
-        performance_metrics = analytics.get("performance_metrics", {})
+        performance_metrics_raw = analytics.get("performance_metrics", {})
+        assert isinstance(performance_metrics_raw, dict)
+        performance_metrics: dict[str, object] = performance_metrics_raw
         assert "total_entries" in performance_metrics
         assert performance_metrics["total_entries"] == 1
 
@@ -898,7 +924,9 @@ sn: user
         result = coordinator._configure_validation_handler()
         assert result.is_success
 
-    def test_handler_coordinator_configure_error_handler_registers_defaults(self) -> None:
+    def test_handler_coordinator_configure_error_handler_registers_defaults(
+        self,
+    ) -> None:
         """Test _configure_error_handler registers default error handlers."""
         config = FlextLdifConfig()
         coordinator = FlextLdifHandlers.HandlerCoordinator(config)

@@ -682,7 +682,7 @@ sn: user"""
         # Create entry with invalid DN
         entry_result = FlextLdifModels.Entry.create({
             "dn": "invalid dn format",
-            "attributes": {"cn": ["test"]}
+            "attributes": {"cn": ["test"]},
         })
 
         if entry_result.is_success:
@@ -842,11 +842,7 @@ changetype: delete"""
         """Test parser configuration."""
         parser = FlextLdifParser()
 
-        config_dict = {
-            "encoding": "utf-8",
-            "strict_mode": True,
-            "detect_server": True
-        }
+        config_dict = {"encoding": "utf-8", "strict_mode": True, "detect_server": True}
 
         result = parser.configure(config_dict)
         assert result.is_success
@@ -978,8 +974,10 @@ userCertificate;binary:: {binary_data}"""
         parser = FlextLdifParser()
 
         # Create file with Latin-1 content that will fail UTF-8 decoding
-        latin1_content = b"dn: cn=caf\xe9,dc=example,dc=com\nobjectClass: person\ncn: caf\xe9\n"
-        with tempfile.NamedTemporaryFile(mode='wb', delete=False, suffix=".ldif") as f:
+        latin1_content = (
+            b"dn: cn=caf\xe9,dc=example,dc=com\nobjectClass: person\ncn: caf\xe9\n"
+        )
+        with tempfile.NamedTemporaryFile(mode="wb", delete=False, suffix=".ldif") as f:
             f.write(latin1_content)
             ldif_file = Path(f.name)
 
@@ -996,7 +994,7 @@ userCertificate;binary:: {binary_data}"""
 
         # Create file with invalid bytes that can't be decoded
         invalid_bytes = b"\xff\xfe\xfd\xfc\xfb\xfa"
-        with tempfile.NamedTemporaryFile(mode='wb', delete=False, suffix=".ldif") as f:
+        with tempfile.NamedTemporaryFile(mode="wb", delete=False, suffix=".ldif") as f:
             f.write(invalid_bytes)
             ldif_file = Path(f.name)
 
@@ -1013,7 +1011,11 @@ userCertificate;binary:: {binary_data}"""
         parser = FlextLdifParser()
 
         # Test with valid lines first
-        valid_lines = ["dn: cn=test,dc=example,dc=com", "objectClass: person", "cn: test"]
+        valid_lines = [
+            "dn: cn=test,dc=example,dc=com",
+            "objectClass: person",
+            "cn: test",
+        ]
         result = parser.parse_lines(valid_lines)
         assert result.is_success
 
@@ -1134,7 +1136,7 @@ cn: test"""
     def test_initialization_with_dict_config_explicit(self) -> None:
         """Test dict config setting explicit_configured flag."""
         # Dict config with options should set explicit_configured
-        config_dict = {"encoding": "latin-1", "strict_mode": False}
+        config_dict: dict[str, object] = {"encoding": "latin-1", "strict_mode": False}
         parser = FlextLdifParser(config_dict)
 
         assert parser._explicitly_configured is True

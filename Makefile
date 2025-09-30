@@ -79,7 +79,7 @@ format: ## Format code
 
 .PHONY: type-check
 type-check: ## Run type checking with Pyrefly (ZERO TOLERANCE)
-	PYTHONPATH=$(SRC_DIR) $(POETRY) run pyrefly check $(SRC_DIR)
+	PYTHONPATH=. $(POETRY) run pyrefly check $(SRC_DIR) $(TESTS_DIR)
 
 .PHONY: security
 security: ## Run security scanning

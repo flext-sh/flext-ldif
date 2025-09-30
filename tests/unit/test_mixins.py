@@ -89,7 +89,8 @@ class TestFlextLdifAnalyticsMixin:
 
     def test_analyze_with_result_success(self) -> None:
         """Test analyze_with_result with successful analysis (lines 272-274)."""
-        def analyzer(data: list[int]) -> dict[str, object]:
+
+        def analyzer(data: Sequence[int]) -> dict[str, object]:
             return {"sum": sum(data), "count": len(data)}
 
         result = FlextLdifMixins.AnalyticsMixin.analyze_with_result(
@@ -103,7 +104,8 @@ class TestFlextLdifAnalyticsMixin:
 
     def test_analyze_with_result_error(self) -> None:
         """Test analyze_with_result with error (lines 272, 275-276)."""
-        def error_analyzer(data: list[int]) -> dict[str, object]:
+
+        def error_analyzer(data: Sequence[int]) -> dict[str, object]:
             error_msg = "Analysis error"
             raise ValueError(error_msg)
 
@@ -112,6 +114,7 @@ class TestFlextLdifAnalyticsMixin:
         )
 
         assert result.is_failure
+        assert result.error is not None
         assert "Analysis error" in result.error
 
 
@@ -266,6 +269,7 @@ class TestFlextLdifProcessingMixin:
 
     def test_process_batch_with_result_error(self) -> None:
         """Test process_batch_with_result with error (lines 156-163)."""
+
         def error_processor(x: str) -> str:
             error_msg = "Batch processing error"
             raise ValueError(error_msg)
@@ -276,6 +280,7 @@ class TestFlextLdifProcessingMixin:
         )
 
         assert result.is_failure
+        assert result.error is not None
         assert "Batch processing error" in result.error
 
 
@@ -328,6 +333,7 @@ class TestFlextLdifTransformationMixin:
 
     def test_transform_with_result_error(self) -> None:
         """Test transform_with_result with error (lines 211-215)."""
+
         def error_transformer(x: str) -> str:
             error_msg = "Transform error"
             raise ValueError(error_msg)
@@ -337,6 +343,7 @@ class TestFlextLdifTransformationMixin:
         )
 
         assert result.is_failure
+        assert result.error is not None
         assert "Transform error" in result.error
 
 
@@ -578,25 +585,31 @@ class TestFlextLdifMixinsIntegration:
 
     def test_validate_with_result_success(self) -> None:
         """Test validate_with_result with successful validation (lines 97-99)."""
+
         def validate_positive(x: int) -> int:
             if x > 0:
                 return x
             error_msg = "Must be positive"
             raise ValueError(error_msg)
 
-        result = FlextLdifMixins.ValidationMixin.validate_with_result(validate_positive, 5)
+        result = FlextLdifMixins.ValidationMixin.validate_with_result(
+            validate_positive, 5
+        )
         assert result.is_success
         assert result.unwrap() == 5
 
     def test_validate_with_result_error(self) -> None:
         """Test validate_with_result with validation error (lines 100-101)."""
+
         def validate_positive(x: int) -> int:
             if x > 0:
                 return x
             error_msg = "Must be positive"
             raise ValueError(error_msg)
 
-        result = FlextLdifMixins.ValidationMixin.validate_with_result(validate_positive, -5)
+        result = FlextLdifMixins.ValidationMixin.validate_with_result(
+            validate_positive, -5
+        )
         assert result.is_failure
         assert "positive" in str(result.error).lower()
 
@@ -648,8 +661,7 @@ class TestFlextLdifMixinsIntegration:
 
         # Test combining mixins
         result = coordinator.combine_mixins(
-            FlextLdifMixins.ValidationMixin,
-            FlextLdifMixins.ProcessingMixin
+            FlextLdifMixins.ValidationMixin, FlextLdifMixins.ProcessingMixin
         )
         assert result.is_success
         combined_class = result.unwrap()
