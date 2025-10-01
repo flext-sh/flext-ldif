@@ -9,10 +9,10 @@ server-specific quirks with RFC-compliant base parsers.
 
 from __future__ import annotations
 
-from typing import Any
-
 from flext_core import FlextLogger, FlextModels, FlextResult
-from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
+
+from flext_ldif.quirks.base import (BaseAclQuirk, BaseEntryQuirk,
+                                    BaseSchemaQuirk)
 
 
 class QuirkRegistryService(FlextModels.Entity):
@@ -183,7 +183,9 @@ class QuirkRegistryService(FlextModels.Entity):
         """
         return self._entry_quirks.get(server_type, [])
 
-    def get_all_quirks_for_server(self, server_type: str) -> dict[str, list[Any]]:
+    def get_all_quirks_for_server(
+        self, server_type: str
+    ) -> dict[str, list[BaseSchemaQuirk] | list[BaseAclQuirk] | list[BaseEntryQuirk]]:
         """Get all quirks (schema, ACL, entry) for a server type.
 
         Args:
@@ -303,31 +305,29 @@ class QuirkRegistryService(FlextModels.Entity):
             },
         }
 
+    class _GlobalAccess:
+        """Nested singleton management for global quirk registry."""
 
-class _GlobalQuirkRegistry:
-    """Singleton holder for global quirk registry."""
+        _instance: QuirkRegistryService | None = None
 
-    _instance: QuirkRegistryService | None = None
+        @classmethod
+        def get_instance(cls) -> QuirkRegistryService:
+            """Get or create the global registry instance."""
+            if cls._instance is None:
+                cls._instance = QuirkRegistryService()
+            return cls._instance
 
     @classmethod
-    def get_instance(cls) -> QuirkRegistryService:
-        """Get or create the global registry instance."""
-        if cls._instance is None:
-            cls._instance = QuirkRegistryService()
-        return cls._instance
+    def get_global_instance(cls) -> QuirkRegistryService:
+        """Get or create the global quirk registry instance.
 
+        Returns:
+            Global QuirkRegistryService instance
 
-def get_global_quirk_registry() -> QuirkRegistryService:
-    """Get or create the global quirk registry instance.
-
-    Returns:
-        Global QuirkRegistryService instance
-
-    """
-    return _GlobalQuirkRegistry.get_instance()
+        """
+        return cls._GlobalAccess.get_instance()
 
 
 __all__ = [
     "QuirkRegistryService",
-    "get_global_quirk_registry",
 ]

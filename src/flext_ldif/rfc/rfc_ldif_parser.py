@@ -19,6 +19,7 @@ import base64
 from pathlib import Path
 
 from flext_core import FlextLogger, FlextResult, FlextService
+
 from flext_ldif.models import FlextLdifModels
 
 
@@ -71,6 +72,10 @@ class RfcLdifParserService(FlextService[dict]):
     def execute(self) -> FlextResult[dict]:
         """Execute RFC-compliant LDIF parsing.
 
+        Supports both file-based and content-based parsing:
+        - file_path: Parse from file (traditional approach)
+        - content: Parse from string (direct content parsing)
+
         Returns:
             FlextResult with parsed LDIF data containing:
                 - entries: List of LDIF entries
@@ -80,10 +85,56 @@ class RfcLdifParserService(FlextService[dict]):
 
         """
         try:
-            # Extract parameters
+            # Check for content parameter first (direct string parsing)
+            content = self._params.get("content")
+            if content:
+                parse_changes = self._params.get("parse_changes", False)
+
+                self._logger.info(
+                    "Parsing LDIF content string (RFC 2849)",
+                    extra={
+                        "content_length": (
+                            len(content) if isinstance(content, str) else 0
+                        ),
+                        "parse_changes": parse_changes,
+                    },
+                )
+
+                # Use parse_content method for string parsing
+                parse_result = self.parse_content(content, parse_changes=parse_changes)
+
+                if parse_result.is_failure:
+                    return FlextResult[dict].fail(parse_result.error)
+
+                entries = parse_result.value
+
+                # Build result structure matching file parsing output
+                data = {
+                    "entries": entries,
+                    "changes": [],  # Changes tracked during parsing
+                    "comments": [],  # Comments tracked during parsing
+                    "stats": {
+                        "total_entries": len(entries),
+                        "total_changes": 0,
+                        "total_comments": 0,
+                    },
+                }
+
+                self._logger.info(
+                    "LDIF content parsed successfully",
+                    extra={
+                        "total_entries": len(entries),
+                    },
+                )
+
+                return FlextResult[dict].ok(data)
+
+            # Fall back to file-based parsing
             file_path_str = self._params.get("file_path", "")
             if not file_path_str:
-                return FlextResult[dict].fail("file_path parameter is required")
+                return FlextResult[dict].fail(
+                    "Either 'file_path' or 'content' parameter is required"
+                )
 
             file_path = Path(file_path_str)
             if not file_path.exists():
@@ -102,14 +153,14 @@ class RfcLdifParserService(FlextService[dict]):
             )
 
             # Parse LDIF file
-            parse_result = self._parse_ldif_file(
+            parse_result = self._parse_ldif_file(  # type: ignore[assignment]
                 file_path, parse_changes=parse_changes, encoding=encoding
             )
 
             if parse_result.is_failure:
                 return FlextResult[dict].fail(parse_result.error)
 
-            data = parse_result.value
+            data = parse_result.value  # type: ignore[assignment]
 
             self._logger.info(
                 "LDIF parsed successfully",
@@ -126,6 +177,97 @@ class RfcLdifParserService(FlextService[dict]):
             error_msg = f"Failed to execute RFC LDIF parser: {e}"
             self._logger.exception(error_msg)
             return FlextResult[dict].fail(error_msg)
+
+    def parse_content(
+        self, content: str, *, parse_changes: bool = False
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Parse LDIF content string.
+
+        Args:
+            content: LDIF content as string
+            parse_changes: Whether to parse change records
+
+        Returns:
+            FlextResult with list of parsed entries
+
+        """
+        try:
+            entries: list[FlextLdifModels.Entry] = []
+            changes: list[dict] = []
+            comments: list[str] = []
+
+            self._current_entry: dict[str, object] | None = None
+            self._current_dn: str = ""
+
+            lines = content.splitlines()
+            current_line = ""
+
+            for raw_line in lines:
+                line = raw_line.rstrip("\n\r")
+
+                # Handle line folding (RFC 2849: lines starting with single space)
+                if line.startswith(" "):
+                    current_line += line[1:]  # Remove leading space
+                    continue
+
+                # Process previous complete line
+                if current_line:
+                    self._process_ldif_line(
+                        current_line,
+                        entries,
+                        changes,
+                        comments,
+                        parse_changes=parse_changes,
+                    )
+
+                # Start new line
+                current_line = line
+
+            # Process last line
+            if current_line:
+                self._process_ldif_line(
+                    current_line,
+                    entries,
+                    changes,
+                    comments,
+                    parse_changes=parse_changes,
+                )
+
+            # Add last entry if exists
+            if self._current_entry:
+                entry_result = self._create_entry(self._current_entry)
+                if entry_result.is_success:
+                    entries.append(entry_result.value)
+
+            return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+
+        except Exception as e:
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                f"Failed to parse LDIF content: {e}"
+            )
+
+    def parse_ldif_file(
+        self, path: str | Path, *, parse_changes: bool = False, encoding: str = "utf-8"
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Parse LDIF file.
+
+        Args:
+            path: Path to LDIF file
+            parse_changes: Whether to parse change records
+            encoding: File encoding
+
+        Returns:
+            FlextResult with list of parsed entries
+
+        """
+        try:
+            file_path = Path(path)
+            content = file_path.read_text(encoding=encoding)
+            return self.parse_content(content, parse_changes=parse_changes)
+        except Exception as e:
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                f"Failed to parse LDIF file: {e}"
+            )
 
     def _parse_ldif_file(
         self, file_path: Path, *, parse_changes: bool, encoding: str
@@ -147,8 +289,8 @@ class RfcLdifParserService(FlextService[dict]):
             comments: list[str] = []
 
             # Use instance variables to track state across method calls
-            self._current_entry: dict[str, object] | None = None
-            self._current_dn: str = ""
+            self._current_entry: dict[str, object] | None = None  # type: ignore[no-redef]
+            self._current_dn: str = ""  # type: ignore[no-redef]
 
             with file_path.open("r", encoding=encoding) as f:
                 current_line = ""

@@ -1,4 +1,4 @@
-"""Real service factory for testing.
+"""Real service factory for testing - RFC-first architecture.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -7,54 +7,182 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextTypes
-from flext_ldif import FlextLdifAPI, FlextLdifConfig
+
+from flext_ldif.migration_pipeline import LdifMigrationPipelineService
+from flext_ldif.quirks.registry import QuirkRegistryService
+from flext_ldif.rfc.rfc_ldif_parser import RfcLdifParserService
+from flext_ldif.rfc.rfc_ldif_writer import RfcLdifWriterService
+from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
 
 
-class RealServiceFactory:
-    """Factory for creating real service instances for testing."""
+class FlextLdifTestServiceFactory:
+    """Unified test service factory - FLEXT pattern compliant.
 
-    @staticmethod
-    def create_api(config: FlextTypes.Core.Dict | None = None) -> FlextLdifAPI:
-        """Create a real LDIF API instance."""
+    Provides RFC-first parsers and services for testing with
+    various configuration options.
+    """
+
+    class _RfcParserFactory:
+        """Nested RFC parser factory."""
+
+        @staticmethod
+        def create_ldif_parser(
+            params: dict | None = None,
+        ) -> RfcLdifParserService:
+            """Create RFC LDIF parser."""
+            return RfcLdifParserService(params=params or {})
+
+        @staticmethod
+        def create_schema_parser(
+            params: dict | None = None,
+        ) -> RfcSchemaParserService:
+            """Create RFC schema parser."""
+            return RfcSchemaParserService(params=params or {})
+
+        @staticmethod
+        def create_ldif_writer(params: dict | None = None) -> RfcLdifWriterService:
+            """Create RFC LDIF writer."""
+            return RfcLdifWriterService(params=params or {})
+
+        @staticmethod
+        def create_migration_pipeline(
+            params: dict | None = None,
+            source_server_type: str = "oid",
+            target_server_type: str = "oud",
+        ) -> LdifMigrationPipelineService:
+            """Create migration pipeline service."""
+            return LdifMigrationPipelineService(
+                params=params or {},
+                source_server_type=source_server_type,
+                target_server_type=target_server_type,
+            )
+
+    class _ConfigFactory:
+        """Nested configuration factory."""
+
+        @staticmethod
+        def create_strict_config() -> dict:
+            """Create strict parsing configuration."""
+            return {
+                "strict_parsing": True,
+                "validate_dn": True,
+                "max_entries": 10000,
+                "encoding": "utf-8",
+                "max_line_length": 76,
+            }
+
+        @staticmethod
+        def create_lenient_config() -> dict:
+            """Create lenient parsing configuration."""
+            return {
+                "strict_parsing": False,
+                "validate_dn": False,
+                "max_entries": 100000,
+                "encoding": "utf-8",
+                "max_line_length": 1000,
+            }
+
+        @staticmethod
+        def create_performance_config(max_entries: int = 100000) -> dict:
+            """Create performance-optimized configuration."""
+            return {
+                "strict_parsing": False,
+                "validate_dn": False,
+                "max_entries": max_entries,
+                "encoding": "utf-8",
+                "max_line_length": 1000,
+            }
+
+        @staticmethod
+        def create_test_config(
+            *,
+            encoding: str = "utf-8",
+            strict_parsing: bool = True,
+            validate_dn: bool = True,
+            max_entries: int = 10000,
+            max_line_length: int = 76,
+        ) -> dict:
+            """Create custom test configuration."""
+            return {
+                "encoding": encoding,
+                "strict_parsing": strict_parsing,
+                "validate_dn": validate_dn,
+                "max_entries": max_entries,
+                "max_line_length": max_line_length,
+            }
+
+    @classmethod
+    def create_test_services(cls, config_type: str = "strict") -> dict:
+        """Create complete service set for testing.
+
+        Args:
+            config_type: 'strict', 'lenient', or 'performance'
+
+        Returns:
+            Dict with parsers, writers, and configuration
+
+        """
+        if config_type == "strict":
+            config = cls._ConfigFactory.create_strict_config()
+        elif config_type == "lenient":
+            config = cls._ConfigFactory.create_lenient_config()
+        elif config_type == "performance":
+            config = cls._ConfigFactory.create_performance_config()
+        else:
+            config = cls._ConfigFactory.create_strict_config()
+
+        return {
+            "ldif_parser": cls._RfcParserFactory.create_ldif_parser(config),
+            "schema_parser": cls._RfcParserFactory.create_schema_parser(config),
+            "ldif_writer": cls._RfcParserFactory.create_ldif_writer(config),
+            "config": config,
+        }
+
+    @classmethod
+    def create_api(cls, config: FlextTypes.Core.Dict | None = None) -> dict:
+        """Create unified service API for backward compatibility.
+
+        Returns:
+            Dict with all services (ldif_parser, schema_parser, writer)
+
+        """
         if config is None:
-            config = {}
+            config = cls._ConfigFactory.create_strict_config()
 
-        # Create proper config object with type casts
-        max_entries = config.get("max_entries")
-        max_line_length = config.get("max_line_length")
+        return {
+            "ldif_parser": cls._RfcParserFactory.create_ldif_parser(config),
+            "schema_parser": cls._RfcParserFactory.create_schema_parser(config),
+            "ldif_writer": cls._RfcParserFactory.create_ldif_writer(config),
+            "migration_pipeline": cls._RfcParserFactory.create_migration_pipeline(
+                config
+            ),
+            "quirk_registry": QuirkRegistryService(),
+            "config": config,
+        }
 
-        ldif_config = FlextLdifConfig(
-            ldif_encoding=str(config.get("encoding", "utf-8")),
-            ldif_strict_validation=bool(config.get("strict_parsing", True)),
-            ldif_validate_dn_format=bool(config.get("validate_dn", True)),
-            ldif_max_entries=max_entries if isinstance(max_entries, int) else 10000,
-            ldif_max_line_length=max_line_length
-            if isinstance(max_line_length, int)
-            else 76,
-        )
-
-        return FlextLdifAPI(config=ldif_config)
-
-    @staticmethod
+    @classmethod
     def create_parser(
+        cls,
         config: FlextTypes.Core.Dict | None = None,
-    ) -> FlextLdifAPI:
-        """Create a real parser service - returns unified API."""
-        return RealServiceFactory.create_api(config)
+    ) -> RfcLdifParserService:
+        """Create parser service."""
+        return cls._RfcParserFactory.create_ldif_parser(config)
 
-    @staticmethod
+    @classmethod
     def create_validator(
+        cls,
         config: FlextTypes.Core.Dict | None = None,
-    ) -> FlextLdifAPI:
-        """Create a real validator service - returns unified API."""
-        return RealServiceFactory.create_api(config)
+    ) -> RfcSchemaParserService:
+        """Create validator service (schema parser)."""
+        return cls._RfcParserFactory.create_schema_parser(config)
 
-    @staticmethod
+    @classmethod
     def create_writer(
+        cls,
         config: FlextTypes.Core.Dict | None = None,
-    ) -> FlextLdifAPI:
-        """Create a real writer service - returns unified API."""
-        return RealServiceFactory.create_api(config)
+    ) -> RfcLdifWriterService:
+        """Create writer service."""
+        return cls._RfcParserFactory.create_ldif_writer(config)
 
     @classmethod
     def create_configured_api(
@@ -65,58 +193,49 @@ class RealServiceFactory:
         max_entries: int = 10000,
         encoding: str = "utf-8",
         max_line_length: int = 76,
-    ) -> FlextLdifAPI:
+    ) -> dict:
         """Create API with specific configuration."""
-        config: FlextTypes.Core.Dict = {
-            "strict_parsing": strict_parsing,
-            "validate_dn": validate_dn,
-            "max_entries": max_entries,
-            "encoding": encoding,
-            "max_line_length": max_line_length,
-        }
+        config = cls._ConfigFactory.create_test_config(
+            encoding=encoding,
+            strict_parsing=strict_parsing,
+            validate_dn=validate_dn,
+            max_entries=max_entries,
+            max_line_length=max_line_length,
+        )
         return cls.create_api(config)
 
     @classmethod
-    def create_lenient_api(cls) -> FlextLdifAPI:
-        """Create API with lenient parsing for error testing."""
-        return cls.create_configured_api(
-            strict_parsing=False,
-            validate_dn=False,
-        )
+    def create_lenient_api(cls) -> dict:
+        """Create API with lenient parsing."""
+        return cls.create_api(cls._ConfigFactory.create_lenient_config())
 
     @classmethod
-    def create_strict_api(cls) -> FlextLdifAPI:
+    def create_strict_api(cls) -> dict:
         """Create API with strict parsing and validation."""
-        return cls.create_configured_api(
-            strict_parsing=True,
-            validate_dn=True,
-        )
+        return cls.create_api(cls._ConfigFactory.create_strict_config())
 
     @classmethod
-    def create_performance_api(cls, max_entries: int = 100000) -> FlextLdifAPI:
+    def create_performance_api(cls, max_entries: int = 100000) -> dict:
         """Create API optimized for performance testing."""
-        return cls.create_configured_api(
-            max_entries=max_entries,
-            strict_parsing=False,  # Faster parsing
-        )
+        return cls.create_api(cls._ConfigFactory.create_performance_config(max_entries))
 
-    @staticmethod
+    @classmethod
     def create_test_config(
+        cls,
         *,
         encoding: str = "utf-8",
         strict_parsing: bool = True,
         validate_dn: bool = True,
         max_entries: int = 10000,
         max_line_length: int = 76,
-    ) -> FlextLdifConfig:
-        """Create a test configuration object."""
-        # Map old parameter names to new FlextLdifConfig parameter names
-        return FlextLdifConfig(
-            ldif_encoding=encoding,
-            ldif_strict_validation=strict_parsing,
-            ldif_validate_dn_format=validate_dn,
-            ldif_max_entries=max_entries,
-            ldif_max_line_length=max_line_length,
+    ) -> dict:
+        """Create test configuration object."""
+        return cls._ConfigFactory.create_test_config(
+            encoding=encoding,
+            strict_parsing=strict_parsing,
+            validate_dn=validate_dn,
+            max_entries=max_entries,
+            max_line_length=max_line_length,
         )
 
     @classmethod
@@ -124,12 +243,11 @@ class RealServiceFactory:
         """Create all services configured for integration testing."""
         config = cls.create_test_config()
 
-        api = FlextLdifAPI(config=config)
         return {
-            "api": api,
-            "parser": api,
-            "validator": api,
-            "writer": api,
+            "api": cls.create_api(config),
+            "parser": cls.create_parser(config),
+            "validator": cls.create_validator(config),
+            "writer": cls.create_writer(config),
             "config": config,
         }
 
@@ -140,3 +258,7 @@ class RealServiceFactory:
             "api": cls.create_api(),
             "parser": cls.create_parser(),
         }
+
+
+# Backward compatibility: expose old name
+RealServiceFactory = FlextLdifTestServiceFactory

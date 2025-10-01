@@ -13,7 +13,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Final
 
-from flext_core import FlextResult, FlextUtilities
+from flext_core import FlextProcessors, FlextResult, FlextUtilities
+
 from flext_ldif.constants import FlextLdifConstants
 
 
@@ -431,3 +432,104 @@ class FlextLdifUtilities(FlextUtilities):
             return FlextResult[str].fail(
                 f"Attribute '{attribute_name}' not found in DN"
             )
+
+    # =========================================================================
+    # PROCESSORS - FlextProcessors integration for data transformations
+    # =========================================================================
+
+    class Processors:
+        """Processing utilities for LDIF data transformations using FlextProcessors.
+
+        Provides access to flext-core processing capabilities for batch operations,
+        parallel processing, and pipeline creation through processor registration.
+        """
+
+        @staticmethod
+        def create_processor(
+            config: dict[str, object] | None = None,
+        ) -> FlextProcessors:
+            """Create a FlextProcessors instance for LDIF processing.
+
+            Args:
+                config: Optional processor configuration
+
+            Returns:
+                FlextProcessors: Configured processor instance
+
+            """
+            processor_config: dict[str, object] = {}
+            if config:
+                processor_config = config
+            return FlextProcessors(config=processor_config)
+
+        @staticmethod
+        def process_entries_batch(
+            processor_name: str,
+            entries: list[object],
+            processors: FlextProcessors | None = None,
+        ) -> FlextResult[list[object]]:
+            """Process LDIF entries in batches using registered processor.
+
+            Args:
+                processor_name: Name of registered processor
+                entries: List of entry dictionaries to process
+                processors: Optional FlextProcessors instance (creates new if None)
+
+            Returns:
+                FlextResult[list[object]]: Processed entries or error
+
+            """
+            if processors is None:
+                processors = FlextLdifUtilities.Processors.create_processor()
+
+            return processors.process_batch(processor_name, entries)
+
+        @staticmethod
+        def process_entries_parallel(
+            processor_name: str,
+            entries: list[object],
+            processors: FlextProcessors | None = None,
+        ) -> FlextResult[list[object]]:
+            """Process LDIF entries in parallel using registered processor.
+
+            Args:
+                processor_name: Name of registered processor
+                entries: List of entry dictionaries to process
+                processors: Optional FlextProcessors instance (creates new if None)
+
+            Returns:
+                FlextResult[list[object]]: Processed entries or error
+
+            """
+            if processors is None:
+                processors = FlextLdifUtilities.Processors.create_processor()
+
+            return processors.process_parallel(processor_name, entries)
+
+        @staticmethod
+        def register_processor(
+            name: str,
+            processor_func: object,
+            processors: FlextProcessors | None = None,
+        ) -> FlextResult[FlextProcessors]:
+            """Register a processor function for batch/parallel processing.
+
+            Args:
+                name: Processor name for registration
+                processor_func: Callable to process entries
+                processors: Optional FlextProcessors instance (creates new if None)
+
+            Returns:
+                FlextResult[FlextProcessors]: Processors instance or error
+
+            """
+            if processors is None:
+                processors = FlextLdifUtilities.Processors.create_processor()
+
+            result = processors.register(name, processor_func)
+            if result.is_failure:
+                return FlextResult[FlextProcessors].fail(
+                    f"Processor registration failed: {result.error}"
+                )
+
+            return FlextResult[FlextProcessors].ok(processors)

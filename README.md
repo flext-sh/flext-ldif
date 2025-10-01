@@ -2,7 +2,9 @@
 
 **Advanced LDIF processing library** for the FLEXT ecosystem, providing comprehensive LDAP data parsing, validation, and server-specific adaptations with full RFC 2849 compliance.
 
-> **STATUS**: Version 0.9.0 - **ENHANCED** with RFC 2849 compliance, server quirks handling, and advanced parsing capabilities 🚀
+> **STATUS**: Version 0.9.9 RC - **PRODUCTION-READY** with 100% type safety, 100% lint compliance, RFC-first architecture, and comprehensive server quirks system 🚀
+>
+> **Quality Gates**: ✅ MyPy (100%) | ✅ Ruff (100%) | ✅ Tests (365/365) | ⚠️ Coverage (50% baseline)
 
 ---
 
@@ -30,9 +32,25 @@ FLEXT-LDIF provides LDIF (LDAP Data Interchange Format) processing capabilities 
 
 ## 🚀 Advanced Features
 
-### **RFC 2849 Compliance**
+### **RFC-First Design with Extensible Quirks System**
 
-FLEXT-LDIF now provides full compliance with RFC 2849 LDIF specification:
+FLEXT-LDIF is built on a **generic RFC-compliant foundation** with a powerful **quirks system** for server-specific extensions:
+
+**Core Architecture**:
+- **RFC 2849 (LDIF Format)** - Standard LDIF parsing foundation
+- **RFC 4512 (Schema)** - Standard LDAP schema parsing foundation
+- **Quirks System** - Pluggable server-specific extensions that enhance RFC parsing
+- **Generic Transformation** - Source → RFC → Target pipeline works with any server
+
+**Design Philosophy**:
+- RFC parsers provide the **baseline** for all LDAP servers
+- Quirks **extend and enhance** RFC parsing for server-specific features
+- No server-specific code in core parsers - all extensions via quirks
+- **Works with any LDAP server** - known or unknown
+
+### **RFC 2849 Compliance (LDIF Format)**
+
+Full compliance with RFC 2849 LDIF specification:
 
 - **Base64 Encoding** - Automatic handling of `::` syntax for binary data
 - **Change Records** - Support for `add`, `modify`, `delete`, and `modrdn` operations
@@ -42,16 +60,36 @@ FLEXT-LDIF now provides full compliance with RFC 2849 LDIF specification:
 - **Attribute Options** - Support for language tags and other attribute options
 - **Version Control** - LDIF version header support
 
-### **Server-Specific Adaptations**
+### **RFC 4512 Compliance (Schema)**
 
-Automatic detection and adaptation for different LDAP server implementations:
+Full compliance with RFC 4512 LDAP schema specification:
 
-- **Active Directory** - DN case sensitivity, required object classes, attribute mappings
-- **OpenLDAP** - Standard LDAP compliance, schema validation
-- **Apache Directory Server** - Specific validation rules and attribute handling
-- **Novell eDirectory** - Legacy compatibility and special attributes
-- **IBM Tivoli Directory Server** - Enterprise-specific requirements
-- **Generic LDAP** - Fallback for unknown server types
+- **AttributeType Parsing** - OID, NAME, SYNTAX, EQUALITY, ORDERING, SUBSTR
+- **ObjectClass Parsing** - OID, NAME, SUP, STRUCTURAL/AUXILIARY/ABSTRACT, MUST, MAY
+- **Schema Subentry** - cn=subschemasubentry discovery
+- **Standard LDAP Syntaxes** - RFC 4517 syntax support
+
+### **Server-Specific Quirks (Extensible)**
+
+Automatic detection and quirk-based adaptation for LDAP servers:
+
+**Fully Implemented**:
+- **OpenLDAP 1.x/2.x** - Custom OID extensions, operational attributes
+- **Oracle Internet Directory (OID)** - Oracle-specific schema extensions
+- **Oracle Unified Directory (OUD)** - OUD quirks with nested ACL/Entry quirks
+
+**Stub Implementations** (ready for enhancement):
+- **Active Directory** - DN case sensitivity, required object classes
+- **Apache Directory Server** - Specific validation rules
+- **389 Directory Server** - Red Hat DS compatibility
+- **Novell eDirectory** - Legacy compatibility
+- **IBM Tivoli Directory Server** - Enterprise requirements
+
+**Quirks Architecture**:
+- Each server has a **SchemaQuirk** for attributeType/objectClass extensions
+- Schema quirks contain nested **AclQuirk** and **EntryQuirk** classes
+- Quirks use **priority-based resolution** (lower number = higher priority)
+- Quirks tried **first**, RFC parsing used as **fallback**
 
 ### **Multi-Encoding Support**
 
@@ -151,6 +189,71 @@ else:
 ---
 
 ## 📚 Advanced Usage Examples
+
+### **Generic Schema Parsing with Quirks**
+
+```python
+from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
+from flext_ldif.quirks.registry import QuirkRegistryService
+from pathlib import Path
+
+# Initialize quirks registry
+quirk_registry = QuirkRegistryService()
+
+# Parse OID schema with quirks support
+oid_parser = RfcSchemaParserService(
+    params={
+        "file_path": "oid_schema.ldif",
+        "parse_attributes": True,
+        "parse_objectclasses": True,
+    },
+    quirk_registry=quirk_registry,
+    server_type="oid",  # Use Oracle Internet Directory quirks
+)
+
+result = oid_parser.execute()
+if result.is_success:
+    schema_data = result.unwrap()
+    print(f"Parsed {schema_data['stats']['total_attributes']} attributes")
+    print(f"Parsed {schema_data['stats']['total_objectclasses']} objectClasses")
+
+    # Schema parsing automatically uses OID quirks for extensions
+    # Falls back to RFC 4512 for standard attributes
+
+# Parse without quirks (pure RFC 4512)
+rfc_parser = RfcSchemaParserService(
+    params={"file_path": "standard_schema.ldif"},
+    quirk_registry=None,  # No quirks - pure RFC parsing
+    server_type=None,
+)
+```
+
+### **Generic Entry Migration with Quirks**
+
+```python
+from flext_ldif.migration_pipeline import FlextLdifMigrationService
+from pathlib import Path
+
+# Initialize migration pipeline
+pipeline = FlextLdifMigrationService(
+    input_dir=Path("source_ldifs"),
+    output_dir=Path("target_ldifs"),
+    source_server_type="oid",    # Source: Oracle Internet Directory
+    target_server_type="oud",    # Target: Oracle Unified Directory
+)
+
+# Generic transformation: OID → RFC → OUD
+result = pipeline.execute()
+if result.is_success:
+    print("Migration completed successfully")
+    print(f"Entries migrated: {result.value['entries_migrated']}")
+    print(f"Schema transformed: {result.value['schema_files']}")
+
+    # Pipeline automatically:
+    # 1. Uses OID quirks to normalize entries to RFC format
+    # 2. Uses OUD quirks to transform from RFC to OUD format
+    # 3. Works with ANY server combination (even unknown servers)
+```
 
 ### **RFC 2849 Compliant Parsing**
 

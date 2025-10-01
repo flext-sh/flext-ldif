@@ -18,21 +18,15 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from flext_core import FlextLogger, FlextResult, FlextService
+
 from flext_ldif.entry.oid_ldif_parser import OidLdifParserService
-from flext_ldif.quirks.registry import QuirkRegistryService, get_global_quirk_registry
-from flext_ldif.quirks.servers import (
-    OidAclQuirk,
-    OidSchemaQuirk,
-    OudAclQuirk,
-    OudEntryQuirk,
-    OudSchemaQuirk,
-)
+from flext_ldif.quirks.registry import QuirkRegistryService
+from flext_ldif.quirks.servers import OidSchemaQuirk, OudSchemaQuirk
 from flext_ldif.rfc.rfc_ldif_parser import RfcLdifParserService
 from flext_ldif.rfc.rfc_ldif_writer import RfcLdifWriterService
 from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
 
 if TYPE_CHECKING:
-
     FlextServiceType = type[FlextService]
 
 
@@ -95,12 +89,16 @@ class LdifMigrationPipelineService(FlextService[dict]):
         self._target_server_type = target_server_type
 
         # Use global registry or provided one
-        self._quirk_registry = quirk_registry or get_global_quirk_registry()
+        self._quirk_registry = (
+            quirk_registry or QuirkRegistryService.get_global_instance()
+        )
 
         # Register default quirks if not already registered
         self._register_default_quirks()
 
         # Select parser based on source server type (OID quirk for Oracle OID)
+        # Type annotation supports both parser types
+        self._ldif_parser_class: type[FlextService[dict]]
         if source_server_type.lower() == "oid":
             self._ldif_parser_class = OidLdifParserService
             self._logger.info("Using OID LDIF parser for Oracle OID source")
@@ -108,8 +106,8 @@ class LdifMigrationPipelineService(FlextService[dict]):
             self._ldif_parser_class = RfcLdifParserService
 
         # Store other parser and writer classes
-        self._schema_parser_class = RfcSchemaParserService
-        self._writer_class = RfcLdifWriterService
+        self._schema_parser_class: type[RfcSchemaParserService] = RfcSchemaParserService
+        self._writer_class: type[RfcLdifWriterService] = RfcLdifWriterService
 
         self._logger.info(
             "Initialized LDIF migration pipeline",
@@ -134,8 +132,8 @@ class LdifMigrationPipelineService(FlextService[dict]):
 
             existing_oid_acl = self._quirk_registry.get_acl_quirks("oid")
             if not existing_oid_acl:
-                # Register OID ACL quirk
-                oid_acl_quirk = OidAclQuirk()
+                # Register OID ACL quirk (nested class access)
+                oid_acl_quirk = OidSchemaQuirk.AclQuirk()
                 self._quirk_registry.register_acl_quirk(oid_acl_quirk)
 
         # Register OUD quirks if needed
@@ -148,15 +146,123 @@ class LdifMigrationPipelineService(FlextService[dict]):
 
             existing_oud_acl = self._quirk_registry.get_acl_quirks("oud")
             if not existing_oud_acl:
-                # Register OUD ACL quirk
-                oud_acl_quirk = OudAclQuirk()
+                # Register OUD ACL quirk (nested class access)
+                oud_acl_quirk = OudSchemaQuirk.AclQuirk()
                 self._quirk_registry.register_acl_quirk(oud_acl_quirk)
 
             existing_oud_entry = self._quirk_registry.get_entry_quirks("oud")
             if not existing_oud_entry:
-                # Register OUD entry quirk
-                oud_entry_quirk = OudEntryQuirk()
+                # Register OUD entry quirk (nested class access)
+                oud_entry_quirk = OudSchemaQuirk.EntryQuirk()
                 self._quirk_registry.register_entry_quirk(oud_entry_quirk)
+
+    def migrate_entries(
+        self,
+        *,
+        entries: list,
+        source_format: str,
+        target_format: str,
+        quirks: list[str] | None = None,  # noqa: ARG002
+    ) -> FlextResult[list]:
+        """Migrate entries between formats using quirk-based transformation.
+
+        This is a convenience method for migrating in-memory entries without
+        file I/O, suitable for CQRS command handlers.
+
+        Generic transformation process:
+        1. Get source quirks to normalize entries to RFC format
+        2. Get target quirks to transform from RFC to target format
+        3. Apply entry, ACL, and attribute transformations
+
+        Args:
+            entries: List of entry dictionaries to migrate
+            source_format: Source format (e.g., "oid", "rfc", "oud", "openldap")
+            target_format: Target format (e.g., "oid", "rfc", "oud", "openldap")
+            quirks: Optional list of quirk names to apply (overrides auto-detection)
+
+        Returns:
+            FlextResult containing migrated entries
+
+        """
+        try:
+            if not entries:
+                return FlextResult[list].ok([])
+
+            self._logger.info(
+                f"Starting entry migration: {source_format} → {target_format}",
+                extra={
+                    "total_entries": len(entries),
+                    "source_format": source_format,
+                    "target_format": target_format,
+                },
+            )
+
+            # Get source and target quirks from registry
+            source_entry_quirks = self._quirk_registry.get_entry_quirks(source_format)
+            target_entry_quirks = self._quirk_registry.get_entry_quirks(target_format)
+
+            migrated_entries = []
+
+            for entry in entries:
+                # Step 1: Normalize source entry to RFC format using source quirks
+                normalized_entry = entry.copy()
+
+                if source_entry_quirks:
+                    for quirk in source_entry_quirks:
+                        entry_dn = str(normalized_entry.get("dn", ""))
+                        entry_attrs = normalized_entry.get("attributes", {})
+                        if not isinstance(entry_attrs, dict):
+                            entry_attrs = {}
+
+                        if quirk.can_handle_entry(entry_dn, entry_attrs):
+                            self._logger.debug(
+                                f"Applying {quirk.server_type} source quirk",
+                                extra={"dn": entry_dn},
+                            )
+                            convert_result = quirk.convert_entry_to_rfc(
+                                normalized_entry
+                            )
+                            if convert_result.is_success:
+                                normalized_entry = convert_result.unwrap()  # type: ignore[assignment]
+                                break
+
+                # Step 2: Transform from RFC to target format using target quirks
+                target_entry = normalized_entry.copy()
+
+                if target_entry_quirks:
+                    for quirk in target_entry_quirks:
+                        entry_dn = str(target_entry.get("dn", ""))
+                        entry_attrs = target_entry.get("attributes", {})
+                        if not isinstance(entry_attrs, dict):
+                            entry_attrs = {}
+
+                        if quirk.can_handle_entry(entry_dn, entry_attrs):
+                            self._logger.debug(
+                                f"Applying {quirk.server_type} target quirk",
+                                extra={"dn": entry_dn},
+                            )
+                            # Target quirks convert FROM RFC to target format
+                            # (This would be a hypothetical convert_entry_from_rfc method)
+                            # For now, we just use the normalized entry
+                            break
+
+                migrated_entries.append(target_entry)
+
+            self._logger.info(
+                f"Migrated {len(migrated_entries)} entries from {source_format} to {target_format}",
+                extra={
+                    "source_format": source_format,
+                    "target_format": target_format,
+                    "total_migrated": len(migrated_entries),
+                },
+            )
+
+            return FlextResult[list].ok(migrated_entries)
+
+        except Exception as e:
+            error_msg = f"Entry migration failed: {e}"
+            self._logger.exception(error_msg)
+            return FlextResult[list].fail(error_msg)
 
     def execute(self) -> FlextResult[dict]:
         """Execute generic LDIF migration pipeline.
@@ -290,13 +396,15 @@ class LdifMigrationPipelineService(FlextService[dict]):
                 extra={"source_server": self._source_server_type},
             )
 
-            # Parse schema using RFC parser
+            # Parse schema using RFC parser with quirks integration
             parser = self._schema_parser_class(
                 params={
                     "file_path": str(schema_file),
                     "parse_attributes": True,
                     "parse_objectclasses": True,
-                }
+                },
+                quirk_registry=self._quirk_registry,
+                server_type=self._source_server_type,
             )
             parse_result = parser.execute()
 

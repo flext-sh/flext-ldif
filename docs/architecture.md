@@ -6,6 +6,22 @@ This document describes the architectural patterns and design decisions of FLEXT
 
 ## Architectural Principles
 
+### RFC-First Design with Extensible Quirks
+
+FLEXT-LDIF is built on a **generic RFC-compliant foundation** with a **pluggable quirks system** for server-specific extensions:
+
+**Core Design Philosophy**:
+- **RFC Compliance First**: RFC 2849 (LDIF) and RFC 4512 (Schema) provide the baseline
+- **Quirks for Extensions**: Server-specific behavior implemented as pluggable quirks
+- **Generic Transformation**: Source → RFC → Target pipeline works with any server
+- **No Server-Specific Core**: Core parsers are generic; all extensions via quirks
+
+**Benefits**:
+- Works with **any LDAP server** (known or unknown)
+- Easy to add support for new servers via quirks
+- Server-specific code isolated in quirk modules
+- Core parsers remain simple and maintainable
+
 ### Service-Oriented Architecture
 
 FLEXT-LDIF implements a service-oriented architecture with clear separation of concerns:
@@ -441,6 +457,184 @@ def test_complete_ldif_workflow():
     assert result.is_success
 ```
 
+## Quirks System Architecture
+
+### Design Overview
+
+The quirks system provides server-specific extensions while keeping core parsers generic:
+
+```mermaid
+graph TB
+    subgraph "RFC Layer (Generic)"
+        RfcLdifParser[RFC 2849 LDIF Parser]
+        RfcSchemaParser[RFC 4512 Schema Parser]
+    end
+
+    subgraph "Quirks Registry"
+        Registry[QuirkRegistryService]
+    end
+
+    subgraph "Server Quirks (Extensible)"
+        OIDQuirk[OID Schema Quirk]
+        OUDQuirk[OUD Schema Quirk]
+        OpenLDAPQuirk[OpenLDAP Schema Quirk]
+        ADQuirk[AD Schema Quirk - Stub]
+    end
+
+    subgraph "Nested Quirks"
+        OIDEntry[OID Entry Quirk]
+        OIDAcl[OID ACL Quirk]
+        OUDEntry[OUD Entry Quirk]
+        OUDAcl[OUD ACL Quirk]
+    end
+
+    RfcSchemaParser --> Registry
+    Registry --> OIDQuirk
+    Registry --> OUDQuirk
+    Registry --> OpenLDAPQuirk
+    Registry --> ADQuirk
+
+    OIDQuirk --> OIDEntry
+    OIDQuirk --> OIDAcl
+    OUDQuirk --> OUDEntry
+    OUDQuirk --> OUDAcl
+```
+
+### Quirk Hierarchy
+
+Each server has a three-level quirk hierarchy:
+
+1. **SchemaQuirk**: Handles attributeType and objectClass parsing extensions
+2. **EntryQuirk** (nested): Handles entry transformation and validation
+3. **AclQuirk** (nested): Handles ACL parsing and transformation
+
+```python
+class OidSchemaQuirk:
+    """Oracle Internet Directory schema quirk."""
+
+    server_type: str = "oid"
+    priority: int = 15  # Lower = higher priority
+
+    class OidEntryQuirk:
+        """Nested entry quirk for OID."""
+        def can_handle_entry(self, dn: str, attributes: dict) -> bool: ...
+        def convert_entry_to_rfc(self, entry: dict) -> FlextResult[dict]: ...
+
+    class OidAclQuirk:
+        """Nested ACL quirk for OID."""
+        def can_handle_acl(self, acl_string: str) -> bool: ...
+        def parse_acl(self, acl_string: str) -> FlextResult[dict]: ...
+```
+
+### Priority-Based Resolution
+
+Quirks use priority-based resolution:
+
+- **Lower number = higher priority** (10, 15, 20)
+- Registry sorts quirks by priority before returning
+- First matching quirk is used for transformation
+- RFC parser used as fallback if no quirk matches
+
+### Schema Parser Integration
+
+The RFC schema parser tries quirks first, then falls back to RFC:
+
+```python
+def _parse_attribute_type(self, definition: str) -> dict[str, object] | None:
+    # Try quirks first if available and server_type specified
+    if self._quirk_registry and self._server_type:
+        schema_quirks = self._quirk_registry.get_schema_quirks(self._server_type)
+        for quirk in schema_quirks:
+            if quirk.can_handle_attribute(definition):
+                quirk_result = quirk.parse_attribute(definition)
+                if quirk_result.is_success:
+                    return quirk_result.unwrap()
+
+    # Fall back to RFC 4512 standard parsing
+    match = self.ATTRIBUTE_TYPE_PATTERN.match(definition)
+    # ... RFC parsing logic
+```
+
+### Migration Pipeline Integration
+
+The migration pipeline uses generic transformation with quirks:
+
+```python
+def migrate_entries(
+    self,
+    *,
+    entries: list,
+    source_format: str,
+    target_format: str,
+) -> FlextResult[list]:
+    # Get source and target quirks from registry
+    source_entry_quirks = self._quirk_registry.get_entry_quirks(source_format)
+    target_entry_quirks = self._quirk_registry.get_entry_quirks(target_format)
+
+    for entry in entries:
+        # Step 1: Normalize source entry to RFC format using source quirks
+        normalized_entry = entry.copy()
+        if source_entry_quirks:
+            for quirk in source_entry_quirks:
+                if quirk.can_handle_entry(entry_dn, entry_attrs):
+                    convert_result = quirk.convert_entry_to_rfc(normalized_entry)
+                    if convert_result.is_success:
+                        normalized_entry = convert_result.unwrap()
+                        break
+
+        # Step 2: Transform from RFC to target format using target quirks
+        target_entry = normalized_entry.copy()
+        if target_entry_quirks:
+            for quirk in target_entry_quirks:
+                if quirk.can_handle_entry(entry_dn, entry_attrs):
+                    # Apply target quirk transformation
+                    break
+```
+
+### Adding New Server Support
+
+To add support for a new LDAP server:
+
+1. Create schema quirk in `src/flext_ldif/quirks/servers/{server}_quirks.py`
+2. Implement `can_handle_attribute()` and `parse_attribute()` methods
+3. Implement `can_handle_objectclass()` and `parse_objectclass()` methods
+4. Create nested `EntryQuirk` class if needed
+5. Create nested `AclQuirk` class if needed
+6. Set appropriate priority (10=high, 15=medium, 20=low)
+7. Register in quirks registry
+
+Example stub (ready for enhancement):
+
+```python
+class AdSchemaQuirk:
+    """Active Directory schema quirk - STUB."""
+    server_type: str = "ad"
+    priority: int = 15
+
+    def can_handle_attribute(self, definition: str) -> bool:
+        return False  # TODO: Implement AD detection
+
+    def parse_attribute(self, definition: str) -> FlextResult[dict]:
+        return FlextResult[dict].fail("AD attribute parsing not implemented")
+```
+
+### Quirk Protocol Interface
+
+All quirks implement the same Protocol interface:
+
+```python
+class SchemaQuirkProtocol(Protocol):
+    server_type: str
+    priority: int
+
+    def can_handle_attribute(self, definition: str) -> bool: ...
+    def parse_attribute(self, definition: str) -> FlextResult[dict]: ...
+    def can_handle_objectclass(self, definition: str) -> bool: ...
+    def parse_objectclass(self, definition: str) -> FlextResult[dict]: ...
+```
+
+This ensures consistent interface across all server implementations.
+
 ---
 
-This architecture provides a solid foundation for LDIF processing within the FLEXT ecosystem while maintaining clear separation of concerns and integration with established patterns.
+This architecture provides a solid foundation for LDIF processing within the FLEXT ecosystem while maintaining clear separation of concerns, generic RFC-based core, and extensible server-specific quirks system.

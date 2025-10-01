@@ -278,11 +278,35 @@ class FlextLdifConstants(FlextConstants):
 
         # Server types
         ACTIVE_DIRECTORY: Final[str] = "active_directory"
-        OPENLDAP: Final[str] = "openldap"
+        OPENLDAP: Final[str] = "openldap"  # Legacy catch-all
+        OPENLDAP_2: Final[str] = "openldap2"  # Modern cn=config based
+        OPENLDAP_1: Final[str] = "openldap1"  # Legacy slapd.conf based
         APACHE_DIRECTORY: Final[str] = "apache_directory"
         NOVELL_EDIRECTORY: Final[str] = "novell_edirectory"
         IBM_TIVOLI: Final[str] = "ibm_tivoli"
         GENERIC: Final[str] = "generic"
+        # Oracle server types
+        ORACLE_OID: Final[str] = "oracle_oid"
+        ORACLE_OUD: Final[str] = "oracle_oud"
+        # Additional server types
+        DS_389: Final[str] = "389ds"
+
+        # Supported server types list
+        SUPPORTED_TYPES: Final[frozenset[str]] = frozenset(
+            [
+                ACTIVE_DIRECTORY,
+                OPENLDAP,
+                OPENLDAP_2,
+                OPENLDAP_1,
+                APACHE_DIRECTORY,
+                NOVELL_EDIRECTORY,
+                IBM_TIVOLI,
+                GENERIC,
+                ORACLE_OID,
+                ORACLE_OUD,
+                DS_389,
+            ]
+        )
 
         # Server-specific DN patterns
         AD_DN_PATTERNS: Final[frozenset[str]] = frozenset(
@@ -307,6 +331,51 @@ class FlextLdifConstants(FlextConstants):
                 "st=",
                 "c=",
                 "uid=",
+            ]
+        )
+
+        # OpenLDAP 2.x detection patterns (cn=config based)
+        OPENLDAP_2_ATTRIBUTES: Final[frozenset[str]] = frozenset(
+            [
+                "olcAccess",
+                "olcAttributeTypes",
+                "olcObjectClasses",
+                "olcDatabase",
+                "olcBackend",
+                "olcOverlay",
+                "olcRootDN",
+                "olcRootPW",
+                "olcSuffix",
+            ]
+        )
+
+        OPENLDAP_2_OBJECTCLASSES: Final[frozenset[str]] = frozenset(
+            [
+                "olcConfig",
+                "olcDatabase",
+                "olcBackendConfig",
+                "olcOverlayConfig",
+                "olcSchemaConfig",
+            ]
+        )
+
+        OPENLDAP_2_DN_PATTERNS: Final[frozenset[str]] = frozenset(
+            [
+                "cn=config",
+                "olcDatabase=",
+                "olcOverlay=",
+            ]
+        )
+
+        # OpenLDAP 1.x detection patterns (traditional slapd.conf)
+        OPENLDAP_1_ATTRIBUTES: Final[frozenset[str]] = frozenset(
+            [
+                "attributetype",
+                "objectclass",
+                "access",
+                "rootdn",
+                "rootpw",
+                "suffix",
             ]
         )
 

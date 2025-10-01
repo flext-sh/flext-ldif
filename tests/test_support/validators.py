@@ -11,7 +11,8 @@ from pathlib import Path
 from typing import TypeVar
 
 from flext_core import FlextResult, FlextTypes
-from flext_ldif import FlextLdifModels
+
+from flext_ldif.models import FlextLdifModels
 
 T = TypeVar("T")
 
@@ -27,9 +28,9 @@ class TestValidators:
             "has_attributes": bool(
                 entry.attributes and len(entry.attributes.attributes) > 0
             ),
-            "has_object_class": "objectClass" in entry.attributes
-            if entry.attributes
-            else False,
+            "has_object_class": (
+                "objectClass" in entry.attributes if entry.attributes else False
+            ),
             "dn_format_valid": bool(
                 entry.dn and "=" in str(entry.dn) and "," in str(entry.dn),
             ),
@@ -93,9 +94,9 @@ class TestValidators:
             "has_error_code": result.error_code is not None,
             "has_error_data": bool(result.error_data),
             "error_code": result.error_code,
-            "error_data_keys": list(result.error_data.keys())
-            if result.error_data
-            else [],
+            "error_data_keys": (
+                list(result.error_data.keys()) if result.error_data else []
+            ),
         }
 
     @staticmethod
@@ -109,12 +110,12 @@ class TestValidators:
             "has_error_code": result.error_code is not None,
             "has_error_data": bool(result.error_data),
             "error_code": result.error_code,
-            "error_data_keys": list(result.error_data.keys())
-            if result.error_data
-            else [],
-            "error_data_values": list(result.error_data.values())
-            if result.error_data
-            else [],
+            "error_data_keys": (
+                list(result.error_data.keys()) if result.error_data else []
+            ),
+            "error_data_values": (
+                list(result.error_data.values()) if result.error_data else []
+            ),
         }
 
     @staticmethod
@@ -288,9 +289,9 @@ class TestValidators:
             "is_valid_chain": first_failure_index is None,
             "chain_length": len(results),
             "first_failure_index": first_failure_index,
-            "successful_operations": first_failure_index
-            if first_failure_index is not None
-            else len(results),
+            "successful_operations": (
+                first_failure_index if first_failure_index is not None else len(results)
+            ),
             "failed_operations": len(results)
             - (
                 first_failure_index if first_failure_index is not None else len(results)
@@ -327,10 +328,10 @@ class TestValidators:
         chain_info = TestValidators.validate_flext_result_chain(results)
 
         if expect_all_success:
-            assert chain_info["is_valid_chain"], (
-                f"Chain failed at index {chain_info['first_failure_index']}"
-            )
+            assert chain_info[
+                "is_valid_chain"
+            ], f"Chain failed at index {chain_info['first_failure_index']}"
         else:
-            assert not chain_info["is_valid_chain"], (
-                "Expected chain to have failures but all operations succeeded"
-            )
+            assert not chain_info[
+                "is_valid_chain"
+            ], "Expected chain to have failures but all operations succeeded"

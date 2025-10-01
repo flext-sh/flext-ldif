@@ -4,6 +4,14 @@
 
 Complete API documentation for FLEXT-LDIF, including all public classes, methods, and integration patterns with the FLEXT ecosystem.
 
+## Generic RFC-Based Architecture
+
+FLEXT-LDIF uses an **RFC-first design** with **extensible quirks system**:
+- RFC parsers provide baseline compliance for all LDAP servers
+- Quirks extend RFC parsing for server-specific features
+- Generic transformation pipeline works with any server combination
+- No server-specific code in core parsers
+
 ## Core API Classes
 
 ### FlextLdifAPI
@@ -595,6 +603,200 @@ def filter_by_custom_criteria(
         return FlextResult[list[FlextLdifModels.Entry]].fail(f"Filtering failed: {e}")
 ```
 
+## RFC Schema Parser API
+
+### RfcSchemaParserService
+
+Parse LDAP schema definitions with RFC 4512 compliance and quirks support.
+
+```python
+from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
+from flext_ldif.quirks.registry import QuirkRegistryService
+
+class RfcSchemaParserService:
+    """RFC 4512 compliant schema parser with quirks integration."""
+
+    def __init__(
+        self,
+        *,
+        params: dict,
+        quirk_registry: QuirkRegistryService | None = None,
+        server_type: str | None = None,
+    ) -> None:
+        """Initialize RFC schema parser.
+
+        Args:
+            params: Parsing parameters (file_path, parse_attributes, parse_objectclasses)
+            quirk_registry: Optional quirk registry for server-specific extensions
+            server_type: Optional server type to select specific quirks
+        """
+
+    def execute(self) -> FlextResult[dict]:
+        """Execute RFC-compliant schema parsing.
+
+        Returns:
+            FlextResult with parsed schema data containing:
+                - attributes: Dict of attribute definitions by name
+                - objectclasses: Dict of objectClass definitions by name
+                - source_dn: DN of schema subentry
+                - stats: Parsing statistics
+        """
+```
+
+**Example Usage**:
+
+```python
+# Parse with OID quirks
+quirk_registry = QuirkRegistryService()
+parser = RfcSchemaParserService(
+    params={
+        "file_path": "oid_schema.ldif",
+        "parse_attributes": True,
+        "parse_objectclasses": True,
+    },
+    quirk_registry=quirk_registry,
+    server_type="oid",
+)
+
+result = parser.execute()
+if result.is_success:
+    schema_data = result.unwrap()
+    print(f"Attributes: {len(schema_data['attributes'])}")
+    print(f"ObjectClasses: {len(schema_data['objectclasses'])}")
+
+# Parse without quirks (pure RFC 4512)
+rfc_parser = RfcSchemaParserService(
+    params={"file_path": "standard_schema.ldif"},
+    quirk_registry=None,
+    server_type=None,
+)
+```
+
+## Migration Pipeline API
+
+### FlextLdifMigrationService
+
+Generic LDIF migration between different LDAP servers.
+
+```python
+from flext_ldif.migration_pipeline import FlextLdifMigrationService
+from pathlib import Path
+
+class FlextLdifMigrationService:
+    """Generic LDIF migration pipeline using quirks-based transformation."""
+
+    def __init__(
+        self,
+        input_dir: Path,
+        output_dir: Path,
+        source_server_type: str,
+        target_server_type: str,
+    ) -> None:
+        """Initialize migration pipeline.
+
+        Args:
+            input_dir: Source LDIF directory
+            output_dir: Target LDIF directory
+            source_server_type: Source server type (e.g., "oid", "openldap")
+            target_server_type: Target server type (e.g., "oud", "openldap")
+        """
+
+    def execute(self) -> FlextResult[dict]:
+        """Execute migration pipeline.
+
+        Generic transformation process:
+        1. Parse source LDIF files
+        2. Migrate schema (source → RFC → target)
+        3. Migrate entries (source → RFC → target)
+        4. Write target LDIF files
+
+        Returns:
+            FlextResult with migration results containing:
+                - entries_migrated: Number of entries migrated
+                - schema_files: List of schema files processed
+                - output_files: List of generated output files
+        """
+```
+
+**Example Usage**:
+
+```python
+# OID to OUD migration
+pipeline = FlextLdifMigrationService(
+    input_dir=Path("source_oid"),
+    output_dir=Path("target_oud"),
+    source_server_type="oid",
+    target_server_type="oud",
+)
+
+result = pipeline.execute()
+if result.is_success:
+    data = result.unwrap()
+    print(f"Migrated {data['entries_migrated']} entries")
+    print(f"Schema files: {data['schema_files']}")
+
+# Works with any server combination
+# OpenLDAP to OUD, AD to 389 DS, etc.
+```
+
+## Quirks Registry API
+
+### QuirkRegistryService
+
+Central registry for managing server-specific quirks.
+
+```python
+from flext_ldif.quirks.registry import QuirkRegistryService
+
+class QuirkRegistryService:
+    """Registry for managing LDAP server quirks."""
+
+    def get_schema_quirks(self, server_type: str) -> list[SchemaQuirkProtocol]:
+        """Get schema quirks for server type.
+
+        Args:
+            server_type: Server type identifier
+
+        Returns:
+            List of schema quirks sorted by priority
+        """
+
+    def get_entry_quirks(self, server_type: str) -> list[EntryQuirkProtocol]:
+        """Get entry quirks for server type.
+
+        Args:
+            server_type: Server type identifier
+
+        Returns:
+            List of entry quirks sorted by priority
+        """
+
+    def get_acl_quirks(self, server_type: str) -> list[AclQuirkProtocol]:
+        """Get ACL quirks for server type.
+
+        Args:
+            server_type: Server type identifier
+
+        Returns:
+            List of ACL quirks sorted by priority
+        """
+```
+
+**Example Usage**:
+
+```python
+# Initialize registry
+registry = QuirkRegistryService()
+
+# Get quirks for different servers
+oid_schema_quirks = registry.get_schema_quirks("oid")
+oud_entry_quirks = registry.get_entry_quirks("oud")
+openldap_acl_quirks = registry.get_acl_quirks("openldap")
+
+# Quirks are automatically sorted by priority
+# Lower priority number = higher precedence
+```
+
 ## Integration with FLEXT Ecosystem
 
 ### FlextContainer Usage
@@ -638,4 +840,4 @@ logger.info("LDIF processing completed", extra={
 
 ---
 
-This API reference provides complete coverage of FLEXT-LDIF functionality while demonstrating integration with FLEXT ecosystem patterns and professional Python development practices.
+This API reference provides complete coverage of FLEXT-LDIF functionality, including the generic RFC-based schema parser, migration pipeline, and quirks system, while demonstrating integration with FLEXT ecosystem patterns and professional Python development practices.

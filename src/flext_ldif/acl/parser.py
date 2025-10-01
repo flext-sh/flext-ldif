@@ -9,8 +9,9 @@ from __future__ import annotations
 from typing import override
 
 from flext_core import FlextLogger, FlextResult, FlextService
+
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks import constants
 
 
 class FlextLdifAclParser(FlextService[dict[str, object]]):
@@ -95,7 +96,7 @@ class FlextLdifAclParser(FlextService[dict[str, object]]):
             target=target_result,
             subject=subject_result,
             permissions=perms_result,
-            server_type=constants.SERVER_TYPE_OPENLDAP,
+            server_type=FlextLdifConstants.LdapServers.OPENLDAP,
             raw_acl=acl_string,
         )
 
@@ -153,12 +154,14 @@ class FlextLdifAclParser(FlextService[dict[str, object]]):
             target=target_result,
             subject=subject_result,
             permissions=perms_result,
-            server_type=constants.SERVER_TYPE_389DS,
+            server_type=FlextLdifConstants.LdapServers.DS_389,
             raw_acl=acl_string,
         )
 
     def parse_oracle_acl(
-        self, acl_string: str, server_type: str = constants.SERVER_TYPE_ORACLE_OID
+        self,
+        acl_string: str,
+        server_type: str = FlextLdifConstants.LdapServers.ORACLE_OID,
     ) -> FlextResult[FlextLdifModels.UnifiedAcl]:
         """Parse Oracle OID/OUD ACL format.
 
@@ -229,15 +232,15 @@ class FlextLdifAclParser(FlextService[dict[str, object]]):
             FlextResult containing unified ACL
 
         """
-        if server_type == constants.SERVER_TYPE_OPENLDAP:
+        if server_type == FlextLdifConstants.LdapServers.OPENLDAP:
             return self.parse_openldap_acl(acl_string)
 
-        if server_type == constants.SERVER_TYPE_389DS:
+        if server_type == FlextLdifConstants.LdapServers.DS_389:
             return self.parse_389ds_acl(acl_string)
 
         if server_type in {
-            constants.SERVER_TYPE_ORACLE_OID,
-            constants.SERVER_TYPE_ORACLE_OUD,
+            FlextLdifConstants.LdapServers.ORACLE_OID,
+            FlextLdifConstants.LdapServers.ORACLE_OUD,
         }:
             return self.parse_oracle_acl(acl_string, server_type)
 
