@@ -1,16 +1,34 @@
 # FLEXT-LDIF API Reference
 
-**Version**: 0.9.9 RC | **Updated**: September 17, 2025
+**Version**: 0.9.9 RC | **Updated**: October 1, 2025
 
 Complete API documentation for FLEXT-LDIF, including all public classes, methods, and integration patterns with the FLEXT ecosystem.
 
-## Generic RFC-Based Architecture
+## 🎯 Library Overview
 
-FLEXT-LDIF uses an **RFC-first design** with **extensible quirks system**:
-- RFC parsers provide baseline compliance for all LDAP servers
-- Quirks extend RFC parsing for server-specific features
-- Generic transformation pipeline works with any server combination
-- No server-specific code in core parsers
+**FLEXT-LDIF** is a **library-only** LDIF processing package with NO CLI dependencies. All functionality is exposed through programmatic APIs.
+
+### Generic RFC-Based Architecture with ZERO Bypass Paths
+
+FLEXT-LDIF enforces a **strict RFC-first design** with **mandatory quirks system**:
+
+**Critical Architecture Principles**:
+1. ✅ **RFC-First Enforcement**: ALL parse/write/validate operations go through RFC parsers + quirks
+2. ✅ **MANDATORY quirk_registry**: All RFC parsers/writers REQUIRE quirk_registry parameter (not Optional)
+3. ✅ **Zero Bypass Paths**: NO direct usage of parsers/writers - ALL operations through handlers/facade
+4. ✅ **Generic Transformation**: Source → RFC → Target pipeline works with ANY LDAP server
+5. ✅ **Library-Only Interface**: NO CLI code, tools, or applications - API-only through FlextLdif facade
+
+**Architecture Benefits**:
+- Works with **any LDAP server** (known or unknown) without code changes
+- Easy to add support for new servers via quirks (no core changes needed)
+- Server-specific code isolated in quirk modules
+- Core parsers remain simple, maintainable, and generic
+- Guaranteed consistency: all code paths use same RFC + quirks logic
+
+**Supported Servers**:
+- ✅ **Complete Implementations** (4): OpenLDAP 1.x/2.x, OID, OUD
+- ⚠️ **Stub Implementations** (5): AD, Apache DS, 389DS, Novell, Tivoli (ready for enhancement)
 
 ## Core API Classes
 
@@ -491,31 +509,48 @@ except FlextLdifValidationError as e:
     print(f"Validation error: {e}")
 ```
 
-## Command Line Interface
+## ⚠️ Library-Only Usage
 
-### CLI Commands
+**IMPORTANT**: FLEXT-LDIF is a **library-only** package with NO CLI. All functionality must be accessed programmatically through the API.
 
-```bash
-# Parse and validate LDIF file
-python -m flext_ldif parse directory.ldif
-
-# Analyze LDIF file statistics
-python -m flext_ldif analyze directory.ldif
-
-# Filter entries by type
-python -m flext_ldif filter --type person directory.ldif --output persons.ldif
-
-# Validate LDIF format
-python -m flext_ldif validate directory.ldif
-```
-
-### Programmatic CLI Access
-
+**Migration from CLI to API**:
 ```python
-from flext_ldif import main
+# ❌ OLD (CLI - no longer available):
+# python -m flext_ldif parse directory.ldif
 
-# Access CLI functionality programmatically
-# main() function provides entry point
+# ✅ NEW (Library API):
+from flext_ldif import FlextLdifAPI
+from pathlib import Path
+
+api = FlextLdifAPI()
+result = api.parse_file(Path("directory.ldif"))
+if result.is_success:
+    entries = result.unwrap()
+    print(f"Parsed {len(entries)} entries")
+
+# ❌ OLD (CLI - no longer available):
+# python -m flext_ldif analyze directory.ldif
+
+# ✅ NEW (Library API):
+result = api.parse_file(Path("directory.ldif"))
+if result.is_success:
+    entries = result.unwrap()
+    stats_result = api.get_entry_statistics(entries)
+    if stats_result.is_success:
+        stats = stats_result.unwrap()
+        print(f"Statistics: {stats}")
+
+# ❌ OLD (CLI - no longer available):
+# python -m flext_ldif filter --type person directory.ldif
+
+# ✅ NEW (Library API):
+result = api.parse_file(Path("directory.ldif"))
+if result.is_success:
+    entries = result.unwrap()
+    persons_result = api.filter_persons(entries)
+    if persons_result.is_success:
+        persons = persons_result.unwrap()
+        print(f"Found {len(persons)} person entries")
 ```
 
 ## Advanced Usage Patterns
@@ -607,32 +642,32 @@ def filter_by_custom_criteria(
 
 ### RfcSchemaParserService
 
-Parse LDAP schema definitions with RFC 4512 compliance and quirks support.
+Parse LDAP schema definitions with RFC 4512 compliance and **MANDATORY quirks support**.
 
 ```python
 from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
 from flext_ldif.quirks.registry import QuirkRegistryService
 
 class RfcSchemaParserService:
-    """RFC 4512 compliant schema parser with quirks integration."""
+    """RFC 4512 compliant schema parser with MANDATORY quirks integration."""
 
     def __init__(
         self,
         *,
         params: dict,
-        quirk_registry: QuirkRegistryService | None = None,
+        quirk_registry: QuirkRegistryService,  # ⚠️ MANDATORY parameter
         server_type: str | None = None,
     ) -> None:
         """Initialize RFC schema parser.
 
         Args:
             params: Parsing parameters (file_path, parse_attributes, parse_objectclasses)
-            quirk_registry: Optional quirk registry for server-specific extensions
-            server_type: Optional server type to select specific quirks
+            quirk_registry: ⚠️ MANDATORY quirk registry for RFC-first architecture
+            server_type: Optional server type to select specific quirks (None = pure RFC)
         """
 
     def execute(self) -> FlextResult[dict]:
-        """Execute RFC-compliant schema parsing.
+        """Execute RFC-compliant schema parsing with quirks.
 
         Returns:
             FlextResult with parsed schema data containing:
@@ -643,34 +678,52 @@ class RfcSchemaParserService:
         """
 ```
 
+**⚠️ CRITICAL: quirk_registry is MANDATORY**
+
+The `quirk_registry` parameter is **MANDATORY** (not Optional) to enforce RFC-first architecture with zero bypass paths.
+
 **Example Usage**:
 
 ```python
-# Parse with OID quirks
+# ✅ CORRECT: Always provide quirk_registry (MANDATORY)
+from flext_ldif.quirks.registry import QuirkRegistryService
+
+# Initialize registry FIRST (auto-discovers all standard quirks)
 quirk_registry = QuirkRegistryService()
-parser = RfcSchemaParserService(
+
+# Parse with OID quirks
+oid_parser = RfcSchemaParserService(
     params={
         "file_path": "oid_schema.ldif",
         "parse_attributes": True,
         "parse_objectclasses": True,
     },
-    quirk_registry=quirk_registry,
-    server_type="oid",
+    quirk_registry=quirk_registry,  # ⚠️ MANDATORY parameter
+    server_type="oid",  # Selects OID-specific quirks
 )
 
-result = parser.execute()
+result = oid_parser.execute()
 if result.is_success:
     schema_data = result.unwrap()
     print(f"Attributes: {len(schema_data['attributes'])}")
     print(f"ObjectClasses: {len(schema_data['objectclasses'])}")
 
-# Parse without quirks (pure RFC 4512)
+# ✅ CORRECT: Parse pure RFC 4512 (still requires quirk_registry)
 rfc_parser = RfcSchemaParserService(
     params={"file_path": "standard_schema.ldif"},
-    quirk_registry=None,
-    server_type=None,
+    quirk_registry=quirk_registry,  # ⚠️ MANDATORY even for pure RFC
+    server_type=None,  # None = no server-specific quirks, pure RFC baseline
 )
+
+# ❌ INCORRECT: Omitting quirk_registry (will cause errors)
+# parser = RfcSchemaParserService(params={"file_path": "schema.ldif"})
 ```
+
+**Why quirk_registry is MANDATORY**:
+1. **Enforces RFC-first architecture** - Zero bypass paths guarantee
+2. **Enables generic transformation** - Source → RFC → Target pipeline requires registry
+3. **Auto-discovery** - QuirkRegistryService automatically discovers all standard quirks
+4. **Future-proof** - New servers can be added without API changes
 
 ## Migration Pipeline API
 
@@ -838,6 +891,199 @@ logger.info("LDIF processing completed", extra={
 })
 ```
 
+## 🚀 Quick Start Guide
+
+### Basic Usage - Parse, Validate, Write
+
+```python
+from flext_ldif import FlextLdifAPI
+from pathlib import Path
+
+# Initialize API (library-only, no CLI)
+api = FlextLdifAPI()
+
+# Parse LDIF file
+parse_result = api.parse_file(Path("directory.ldif"))
+if parse_result.is_failure:
+    print(f"Parse failed: {parse_result.error}")
+    exit(1)
+
+entries = parse_result.unwrap()
+print(f"✅ Parsed {len(entries)} entries")
+
+# Validate entries
+validation_result = api.validate_entries(entries)
+if validation_result.is_failure:
+    print(f"Validation failed: {validation_result.error}")
+    exit(1)
+
+print("✅ All entries valid")
+
+# Filter person entries
+persons_result = api.filter_persons(entries)
+if persons_result.is_success:
+    persons = persons_result.unwrap()
+    print(f"✅ Found {len(persons)} person entries")
+
+# Write filtered results
+write_result = api.write_file(persons, Path("persons_only.ldif"))
+if write_result.is_success:
+    print("✅ Written persons_only.ldif")
+```
+
+### Server-Specific Parsing with Quirks
+
+```python
+from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
+from flext_ldif.quirks.registry import QuirkRegistryService
+
+# ⚠️ MANDATORY: Initialize quirk registry first
+quirk_registry = QuirkRegistryService()
+
+# Parse OID schema with OID-specific quirks
+oid_parser = RfcSchemaParserService(
+    params={
+        "file_path": "oid_schema.ldif",
+        "parse_attributes": True,
+        "parse_objectclasses": True,
+    },
+    quirk_registry=quirk_registry,  # MANDATORY parameter
+    server_type="oid",  # Oracle Internet Directory quirks
+)
+
+result = oid_parser.execute()
+if result.is_success:
+    schema = result.unwrap()
+    print(f"✅ Parsed {len(schema['attributes'])} attributes")
+    print(f"✅ Parsed {len(schema['objectclasses'])} objectClasses")
+
+# Parse OpenLDAP schema with OpenLDAP quirks
+openldap_parser = RfcSchemaParserService(
+    params={"file_path": "openldap_schema.ldif"},
+    quirk_registry=quirk_registry,  # MANDATORY parameter
+    server_type="openldap",  # OpenLDAP 2.x quirks
+)
+
+# Parse pure RFC 4512 (no server-specific quirks)
+rfc_parser = RfcSchemaParserService(
+    params={"file_path": "standard_schema.ldif"},
+    quirk_registry=quirk_registry,  # MANDATORY even for pure RFC
+    server_type=None,  # None = pure RFC baseline
+)
+```
+
+### Generic Migration Pipeline
+
+```python
+from flext_ldif.migration_pipeline import FlextLdifMigrationService
+from pathlib import Path
+
+# Migrate OID → OUD using generic transformation pipeline
+migration = FlextLdifMigrationService(
+    input_dir=Path("source_oid_ldif"),
+    output_dir=Path("target_oud_ldif"),
+    source_server_type="oid",     # Oracle Internet Directory
+    target_server_type="oud",     # Oracle Unified Directory
+)
+
+# Execute migration: OID → RFC → OUD
+result = migration.execute()
+if result.is_success:
+    data = result.unwrap()
+    print(f"✅ Migrated {data['entries_migrated']} entries")
+    print(f"✅ Processed {len(data['schema_files'])} schema files")
+    print(f"✅ Generated {len(data['output_files'])} output files")
+else:
+    print(f"❌ Migration failed: {result.error}")
+
+# Works with ANY server combination (N implementations, not N²)
+# Examples: OID→OUD, OpenLDAP→389DS, AD→OUD, OUD→OpenLDAP, etc.
+```
+
+### Railway-Oriented Pipeline
+
+```python
+from flext_ldif import FlextLdifAPI
+from pathlib import Path
+
+api = FlextLdifAPI()
+
+# Composable pipeline with explicit error handling
+result = (
+    # Parse LDIF file
+    api.parse_file(Path("directory.ldif"))
+
+    # Validate all entries
+    .flat_map(lambda entries:
+        api.validate_entries(entries).map(lambda _: entries))
+
+    # Filter person entries
+    .flat_map(api.filter_persons)
+
+    # Generate statistics
+    .flat_map(lambda persons:
+        api.get_entry_statistics(persons)
+        .map(lambda stats: {"persons": persons, "stats": stats}))
+
+    # Write filtered entries
+    .flat_map(lambda data:
+        api.write_file(data["persons"], Path("persons.ldif"))
+        .map(lambda _: data["stats"]))
+
+    # Add error context
+    .map_error(lambda error: f"Processing failed: {error}")
+)
+
+# Handle final result
+if result.is_success:
+    stats = result.unwrap()
+    print(f"✅ Pipeline completed: {stats}")
+else:
+    print(f"❌ Pipeline failed: {result.error}")
+```
+
+### Supported LDAP Servers
+
+**Complete Implementations** (4 servers):
+```python
+# Oracle Internet Directory
+server_type="oid"
+
+# Oracle Unified Directory
+server_type="oud"
+
+# OpenLDAP 2.x
+server_type="openldap"
+
+# OpenLDAP 1.x
+server_type="openldap1"
+```
+
+**Stub Implementations** (5 servers - ready for enhancement):
+```python
+# Active Directory (stub - not implemented)
+server_type="ad"
+
+# Apache Directory Server (stub - not implemented)
+server_type="apache"
+
+# 389 Directory Server (stub - not implemented)
+server_type="389ds"
+
+# Novell eDirectory (stub - not implemented)
+server_type="novell"
+
+# IBM Tivoli Directory Server (stub - not implemented)
+server_type="tivoli"
+```
+
+**Generic/Unknown Servers**:
+```python
+# Works with ANY LDAP server using pure RFC baseline
+server_type=None  # Pure RFC 2849/4512 compliance
+server_type="my_custom_ldap_v5"  # Unknown server = RFC baseline
+```
+
 ---
 
-This API reference provides complete coverage of FLEXT-LDIF functionality, including the generic RFC-based schema parser, migration pipeline, and quirks system, while demonstrating integration with FLEXT ecosystem patterns and professional Python development practices.
+This API reference provides complete coverage of FLEXT-LDIF functionality, including the library-only interface, RFC-first architecture with MANDATORY quirk_registry, generic migration pipeline, and comprehensive quirks system, while demonstrating integration with FLEXT ecosystem patterns and professional Python development practices.

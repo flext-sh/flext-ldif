@@ -27,6 +27,7 @@ from flext_core import (
     FlextRegistry,
     FlextResult,
 )
+
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
 
@@ -204,18 +205,22 @@ class FlextLdifHandlers:
 
                 # Parse based on source type
                 if isinstance(message.source, (str, Path)):
-                    source_path = (
-                        Path(message.source)
-                        if isinstance(message.source, str)
-                        else message.source
-                    )
-                    if source_path.exists():
-                        result = parser.parse_ldif_file(
-                            source_path, encoding=message.encoding
-                        )
+                    # Handle empty string as empty content, not as path
+                    if isinstance(message.source, str) and not message.source:
+                        result = parser.parse_content("")
                     else:
-                        # Treat as content string
-                        result = parser.parse_content(str(message.source))
+                        source_path = (
+                            Path(message.source)
+                            if isinstance(message.source, str)
+                            else message.source
+                        )
+                        if source_path.exists():
+                            result = parser.parse_ldif_file(
+                                source_path, encoding=message.encoding
+                            )
+                        else:
+                            # Treat as content string
+                            result = parser.parse_content(str(message.source))
                 elif isinstance(message.source, bytes):
                     content = message.source.decode(message.encoding)
                     result = parser.parse_content(content)
