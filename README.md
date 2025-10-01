@@ -2,9 +2,9 @@
 
 **Advanced LDIF processing library** for the FLEXT ecosystem, providing comprehensive LDAP data parsing, validation, and server-specific adaptations with full RFC 2849 compliance.
 
-> **STATUS**: Version 0.9.9 RC - **PRODUCTION-READY** with 100% type safety, 100% lint compliance, RFC-first architecture, and comprehensive server quirks system 🚀
+> **STATUS**: Version 0.9.9 RC - **LIBRARY-ONLY** with 100% type safety, 100% lint compliance, RFC-first architecture, and comprehensive server quirks system 🚀
 >
-> **Quality Gates**: ✅ MyPy (100%) | ✅ Ruff (100%) | ✅ Tests (365/365) | ⚠️ Coverage (50% baseline)
+> **Quality Gates**: ✅ MyPy (100%) | ✅ Ruff (100%) | ✅ Tests (387/389 - 99%) | ⚠️ Coverage (52% baseline)
 
 ---
 
@@ -151,17 +151,17 @@ cd flext-ldif
 make setup
 
 # Verify installation
-python -c "from flext_ldif import FlextLdifAPI; print('FLEXT-LDIF ready')"
+python -c "from flext_ldif import FlextLdif; print('FLEXT-LDIF ready')"
 ```
 
-### **Basic Usage**
+### **Basic Usage (Library-Only API)**
 
 ```python
-from flext_ldif import FlextLdifAPI
+from flext_ldif import FlextLdif
 from pathlib import Path
 
-# Initialize API
-api = FlextLdifAPI()
+# Initialize FlextLdif facade (library-only interface)
+ldif = FlextLdif()
 
 # ⚠️ MEMORY CHECK: Verify file size before processing
 ldif_file = Path("directory.ldif")
@@ -170,14 +170,14 @@ if file_size_mb > 100:
     print(f"WARNING: File size ({file_size_mb:.1f}MB) exceeds recommended 100MB limit")
     print("Processing may fail due to memory-bound architecture - see Known Limitations")
 
-# Parse LDIF file
-result = api.parse_file(ldif_file)
+# Parse LDIF file or content string
+result = ldif.parse(ldif_file)  # Accepts Path, str (file path), or content string
 if result.is_success:
     entries = result.unwrap()
     print(f"Parsed {len(entries)} LDIF entries")
 
     # Validate entries
-    validation_result = api.validate_entries(entries)
+    validation_result = ldif.validate_entries(entries)
     if validation_result.is_success:
         print("LDIF validation successful")
     else:
@@ -190,14 +190,15 @@ else:
 
 ## 📚 Advanced Usage Examples
 
-### **Generic Schema Parsing with Quirks**
+### **Generic Schema Parsing with Quirks (MANDATORY)**
 
 ```python
 from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
 from flext_ldif.quirks.registry import QuirkRegistryService
 from pathlib import Path
 
-# Initialize quirks registry
+# ⚠️ MANDATORY: quirk_registry is REQUIRED for all RFC parsers/writers
+# QuirkRegistryService auto-discovers and registers all standard quirks
 quirk_registry = QuirkRegistryService()
 
 # Parse OID schema with quirks support
@@ -207,7 +208,7 @@ oid_parser = RfcSchemaParserService(
         "parse_attributes": True,
         "parse_objectclasses": True,
     },
-    quirk_registry=quirk_registry,
+    quirk_registry=quirk_registry,  # MANDATORY parameter
     server_type="oid",  # Use Oracle Internet Directory quirks
 )
 
@@ -220,11 +221,11 @@ if result.is_success:
     # Schema parsing automatically uses OID quirks for extensions
     # Falls back to RFC 4512 for standard attributes
 
-# Parse without quirks (pure RFC 4512)
+# Parse with RFC-only mode (quirks available but not used for this server)
 rfc_parser = RfcSchemaParserService(
     params={"file_path": "standard_schema.ldif"},
-    quirk_registry=None,  # No quirks - pure RFC parsing
-    server_type=None,
+    quirk_registry=quirk_registry,  # Still MANDATORY
+    server_type="rfc",  # Pure RFC mode - no server-specific quirks applied
 )
 ```
 

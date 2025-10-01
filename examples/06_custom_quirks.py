@@ -99,7 +99,7 @@ def main() -> None:
     # Create and register custom quirk
     custom_quirk = CustomLdapSchemaQuirk()
 
-    print(f"1. Custom quirk created:")
+    print("1. Custom quirk created:")
     print(f"   Server type: {custom_quirk.server_type}")
     print(f"   Priority: {custom_quirk.priority}")
 
@@ -125,12 +125,12 @@ attributeTypes: ( 1.2.3.4.5 NAME 'customAttr' DESC 'Custom attribute' X-CUSTOM-M
         server_type="my_custom_ldap",  # Uses our custom quirk
     )
 
-    print(f"\n3. Parsing with custom quirk:")
+    print("\n3. Parsing with custom quirk:")
     result = parser.execute()
 
     if result.is_success:
         schema = result.unwrap()
-        print(f"   ✅ Parsed with custom quirk")
+        print("   ✅ Parsed with custom quirk")
         print(f"      Attributes: {len(schema.get('attributes', {}))}")
     else:
         print(f"   ⚠️ Parse result: {result.error}")

@@ -154,12 +154,10 @@ class TestFlextLdifValidationMixin:
     def test_validate_attribute_values(self) -> None:
         """Test validating attribute values."""
         # Valid values
-        result = FlextLdifMixins.ValidationMixin.validate_attribute_values(
-            [
-                "value1",
-                "value2",
-            ]
-        )
+        result = FlextLdifMixins.ValidationMixin.validate_attribute_values([
+            "value1",
+            "value2",
+        ])
         assert result == ["value1", "value2"]
 
         # Invalid values - not a sequence

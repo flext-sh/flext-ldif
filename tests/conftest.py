@@ -15,6 +15,7 @@ from typing import cast
 import pytest
 
 from flext_core import FlextConstants, FlextResult, FlextTypes
+from flext_ldif.quirks.registry import QuirkRegistryService
 from flext_ldif.rfc.rfc_ldif_parser import RfcLdifParserService
 from flext_ldif.rfc.rfc_ldif_writer import RfcLdifWriterService
 from flext_tests import (
@@ -192,23 +193,21 @@ def ldif_binary_file(test_ldif_dir: Path, sample_ldif_with_binary: str) -> Path:
 
 # Quirk registry fixture for RFC-first architecture enforcement
 @pytest.fixture
-def quirk_registry() -> "QuirkRegistryService":
+def quirk_registry() -> QuirkRegistryService:
     """Provide quirk registry for RFC-first testing (MANDATORY)."""
-    from flext_ldif.quirks.registry import QuirkRegistryService
-
     # Registry auto-discovers and registers all standard quirks
     return QuirkRegistryService()
 
 
 # Real service fixtures for functional testing
 @pytest.fixture
-def real_parser_service(quirk_registry: "QuirkRegistryService") -> RfcLdifParserService:
+def real_parser_service(quirk_registry: QuirkRegistryService) -> RfcLdifParserService:
     """Real parser service for functional testing (RFC-first with quirks)."""
     return RealServiceFactory.create_parser(quirk_registry=quirk_registry)
 
 
 @pytest.fixture
-def real_writer_service(quirk_registry: "QuirkRegistryService") -> RfcLdifWriterService:
+def real_writer_service(quirk_registry: QuirkRegistryService) -> RfcLdifWriterService:
     """Real writer service for functional testing (RFC-first with quirks)."""
     return RealServiceFactory.create_writer(quirk_registry=quirk_registry)
 
@@ -270,9 +269,9 @@ def validate_flext_result_failure() -> Callable[[FlextResult[object]], dict[str,
 
 
 @pytest.fixture
-def flext_result_composition_helper() -> (
-    Callable[[list[FlextResult[object]]], dict[str, object]]
-):
+def flext_result_composition_helper() -> Callable[
+    [list[FlextResult[object]]], dict[str, object]
+]:
     """Helper for testing FlextResult composition patterns."""
 
     def helper(results: list[FlextResult[object]]) -> dict[str, object]:

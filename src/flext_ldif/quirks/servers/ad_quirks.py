@@ -74,7 +74,8 @@ class AdSchemaQuirk(BaseSchemaQuirk):
         return False
 
     def parse_attribute(
-        self, attr_definition: str  # noqa: ARG002
+        self,
+        attr_definition: str,  # noqa: ARG002
     ) -> FlextResult[dict[str, object]]:
         """Parse Active Directory attribute definition.
 
@@ -108,7 +109,8 @@ class AdSchemaQuirk(BaseSchemaQuirk):
         return False
 
     def parse_objectclass(
-        self, oc_definition: str  # noqa: ARG002
+        self,
+        oc_definition: str,  # noqa: ARG002
     ) -> FlextResult[dict[str, object]]:
         """Parse Active Directory objectClass definition.
 
@@ -211,7 +213,8 @@ class AdSchemaQuirk(BaseSchemaQuirk):
             return False
 
         def parse_acl(
-            self, acl_line: str  # noqa: ARG002
+            self,
+            acl_line: str,  # noqa: ARG002
         ) -> FlextResult[dict[str, object]]:
             """Parse Active Directory ACL definition.
 
@@ -299,7 +302,9 @@ class AdSchemaQuirk(BaseSchemaQuirk):
             self._logger = FlextLogger(__name__)
 
         def can_handle_entry(
-            self, entry_dn: str, attributes: dict  # noqa: ARG002
+            self,
+            entry_dn: str,
+            attributes: dict,  # noqa: ARG002
         ) -> bool:
             """Check if this quirk should handle the entry.
 

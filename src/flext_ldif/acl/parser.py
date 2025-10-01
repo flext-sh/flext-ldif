@@ -25,21 +25,17 @@ class FlextLdifAclParser(FlextService[dict[str, object]]):
     @override
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute parser service."""
-        return FlextResult[dict[str, object]].ok(
-            {
-                "service": FlextLdifAclParser,
-                "status": "ready",
-            }
-        )
+        return FlextResult[dict[str, object]].ok({
+            "service": FlextLdifAclParser,
+            "status": "ready",
+        })
 
     async def execute_async(self) -> FlextResult[dict[str, object]]:
         """Execute parser service asynchronously."""
-        return FlextResult[dict[str, object]].ok(
-            {
-                "service": FlextLdifAclParser,
-                "status": "ready",
-            }
-        )
+        return FlextResult[dict[str, object]].ok({
+            "service": FlextLdifAclParser,
+            "status": "ready",
+        })
 
     def parse_openldap_acl(
         self, acl_string: str
