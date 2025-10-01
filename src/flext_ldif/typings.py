@@ -13,10 +13,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Callable
+from collections.abc import Iterator
+from collections.abc import Mapping
+from collections.abc import Sequence
 from typing import Literal
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextResult
+from flext_core import FlextTypes
 
 # =============================================================================
 # LDIF-SPECIFIC TYPE VARIABLES - Domain-specific TypeVars for LDIF operations

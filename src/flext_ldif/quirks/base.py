@@ -11,9 +11,11 @@ Quirks allow extending the RFC base without modifying core parser logic.
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 
-from flext_core import FlextModels, FlextResult
+from flext_core import FlextModels
+from flext_core import FlextResult
 from pydantic import Field
 
 

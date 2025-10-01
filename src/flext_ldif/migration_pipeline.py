@@ -17,11 +17,14 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextLogger
+from flext_core import FlextResult
+from flext_core import FlextService
 
 from flext_ldif.entry.oid_ldif_parser import OidLdifParserService
 from flext_ldif.quirks.registry import QuirkRegistryService
-from flext_ldif.quirks.servers import OidSchemaQuirk, OudSchemaQuirk
+from flext_ldif.quirks.servers import OidSchemaQuirk
+from flext_ldif.quirks.servers import OudSchemaQuirk
 from flext_ldif.rfc.rfc_ldif_parser import RfcLdifParserService
 from flext_ldif.rfc.rfc_ldif_writer import RfcLdifWriterService
 from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService

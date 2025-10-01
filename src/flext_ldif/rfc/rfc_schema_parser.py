@@ -19,7 +19,9 @@ import re
 from pathlib import Path
 from typing import ClassVar
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextLogger
+from flext_core import FlextResult
+from flext_core import FlextService
 
 from flext_ldif.quirks.registry import QuirkRegistryService
 

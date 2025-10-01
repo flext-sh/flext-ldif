@@ -7,11 +7,19 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import Literal, Self, cast
+from typing import Literal
+from typing import Self
+from typing import cast
 
-from flext_core import FlextModels, FlextResult
-from pydantic import (ConfigDict, Field, SerializationInfo, computed_field,
-                      field_serializer, field_validator, model_validator)
+from flext_core import FlextModels
+from flext_core import FlextResult
+from pydantic import ConfigDict
+from pydantic import Field
+from pydantic import SerializationInfo
+from pydantic import computed_field
+from pydantic import field_serializer
+from pydantic import field_validator
+from pydantic import model_validator
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.typings import FlextLdifTypes
