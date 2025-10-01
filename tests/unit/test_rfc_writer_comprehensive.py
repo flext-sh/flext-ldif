@@ -48,7 +48,7 @@ class TestRfcLdifWriterService:
 
     def test_writer_initialization_basic(self) -> None:
         """Test basic writer initialization."""
-        params = {"entries": []}
+        params: dict[str, list] = {"entries": []}
         writer = RfcLdifWriterService(params=params)
 
         assert writer is not None
@@ -58,7 +58,7 @@ class TestRfcLdifWriterService:
         """Test writer initialization with quirk registry."""
         from flext_ldif.quirks.registry import QuirkRegistryService
 
-        params = {"entries": []}
+        params: dict[str, list] = {"entries": []}
         registry = QuirkRegistryService()
         writer = RfcLdifWriterService(
             params=params,
@@ -117,7 +117,7 @@ class TestRfcLdifWriterService:
 
     def test_write_empty_entries_list(self) -> None:
         """Test writing empty entries list."""
-        params = {"entries": []}
+        params: dict[str, list] = {"entries": []}
         writer = RfcLdifWriterService(params=params)
 
         result = writer.execute()
@@ -216,7 +216,7 @@ class TestRfcLdifWriterService:
 
     def test_write_with_schema_data(self, sample_entry: FlextLdifModels.Entry) -> None:
         """Test writing with schema information."""
-        schema_data = {
+        schema_data: dict[str, dict] = {
             "attributeTypes": {},
             "objectClasses": {},
         }
@@ -229,7 +229,7 @@ class TestRfcLdifWriterService:
 
     def test_write_with_acl_data(self, sample_entry: FlextLdifModels.Entry) -> None:
         """Test writing with ACL information."""
-        acl_data = {"acls": []}
+        acl_data: dict[str, list] = {"acls": []}
         params = {"entries": [sample_entry], "acls": acl_data}
         writer = RfcLdifWriterService(params=params)
 

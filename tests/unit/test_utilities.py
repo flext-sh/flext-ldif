@@ -317,8 +317,8 @@ class TestFlextLdifUtilities:
             temp_file.write(b"test")
 
         try:
-            result = utilities.FileUtilities.validate_file_path(temp_path)
-            assert isinstance(result, FlextResult)
+            validation_result = utilities.FileUtilities.validate_file_path(temp_path)
+            assert isinstance(validation_result, FlextResult)
         finally:
             temp_path.unlink()
 
@@ -330,8 +330,8 @@ class TestFlextLdifUtilities:
             temp_file.write("test\n")
 
         try:
-            result = utilities.FileUtilities.count_lines_in_file(temp_path)
-            assert isinstance(result, FlextResult)
+            count_result = utilities.FileUtilities.count_lines_in_file(temp_path)
+            assert isinstance(count_result, FlextResult)
         finally:
             temp_path.unlink()
 

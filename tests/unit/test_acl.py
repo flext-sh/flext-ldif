@@ -850,7 +850,7 @@ class TestFlextLdifAclService:
 
         # Add a rule that will cause evaluation to fail
         # We'll create a custom rule that returns failure
-        class FailingRule(service.AclRule):
+        class FailingRule(FlextLdifAclService.AclRule):
             def evaluate(self, context: dict[str, object]) -> FlextResult[bool]:
                 _ = context  # Suppress unused argument warning
                 return FlextResult[bool].fail("Test failure")
