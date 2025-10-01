@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.quirks.registry import QuirkRegistryService
 from flext_ldif.rfc.rfc_ldif_writer import RfcLdifWriterService
 
 
@@ -46,34 +47,31 @@ class TestRfcLdifWriterService:
         )
         return [sample_entry, entry2_result.unwrap()]
 
-    def test_writer_initialization_basic(self) -> None:
+    def test_writer_initialization_basic(self, quirk_registry: QuirkRegistryService) -> None:
         """Test basic writer initialization."""
         params: dict[str, list] = {"entries": []}
-        writer = RfcLdifWriterService(params=params)
+        writer = RfcLdifWriterService(params=params, quirk_registry=quirk_registry)
 
         assert writer is not None
         assert hasattr(writer, "execute")
 
-    def test_writer_initialization_with_quirks(self) -> None:
+    def test_writer_initialization_with_quirks(self, quirk_registry: QuirkRegistryService) -> None:
         """Test writer initialization with quirk registry."""
-        from flext_ldif.quirks.registry import QuirkRegistryService
-
         params: dict[str, list] = {"entries": []}
-        registry = QuirkRegistryService()
         writer = RfcLdifWriterService(
             params=params,
-            quirk_registry=registry,
+            quirk_registry=quirk_registry,
             target_server_type="oud",
         )
 
         assert writer is not None
 
     def test_write_single_entry_to_string(
-        self, sample_entry: FlextLdifModels.Entry
+        self, sample_entry: FlextLdifModels.Entry, quirk_registry: QuirkRegistryService
     ) -> None:
         """Test writing single entry returns LDIF string."""
         params = {"entries": [sample_entry]}
-        writer = RfcLdifWriterService(params=params)
+        writer = RfcLdifWriterService(params=params, quirk_registry=quirk_registry)
 
         result = writer.execute()
 
@@ -83,11 +81,11 @@ class TestRfcLdifWriterService:
         assert "cn=Test User,dc=example,dc=com" in data["content"]
 
     def test_write_multiple_entries_to_string(
-        self, sample_entries: list[FlextLdifModels.Entry]
+        self, sample_entries: list[FlextLdifModels.Entry], quirk_registry: QuirkRegistryService
     ) -> None:
         """Test writing multiple entries."""
         params = {"entries": sample_entries}
-        writer = RfcLdifWriterService(params=params)
+        writer = RfcLdifWriterService(params=params, quirk_registry=quirk_registry)
 
         result = writer.execute()
 
@@ -99,12 +97,12 @@ class TestRfcLdifWriterService:
         assert "cn=Another User,dc=example,dc=com" in content
 
     def test_write_to_file(
-        self, sample_entry: FlextLdifModels.Entry, tmp_path: Path
+        self, sample_entry: FlextLdifModels.Entry, tmp_path: Path, quirk_registry: QuirkRegistryService
     ) -> None:
         """Test writing LDIF to file."""
         output_file = tmp_path / "test_output.ldif"
         params = {"entries": [sample_entry], "output_file": str(output_file)}
-        writer = RfcLdifWriterService(params=params)
+        writer = RfcLdifWriterService(params=params, quirk_registry=quirk_registry)
 
         result = writer.execute()
 
@@ -115,17 +113,17 @@ class TestRfcLdifWriterService:
         assert "cn=Test User,dc=example,dc=com" in content
         assert "objectClass:" in content
 
-    def test_write_empty_entries_list(self) -> None:
+    def test_write_empty_entries_list(self, quirk_registry: QuirkRegistryService) -> None:
         """Test writing empty entries list."""
         params: dict[str, list] = {"entries": []}
-        writer = RfcLdifWriterService(params=params)
+        writer = RfcLdifWriterService(params=params, quirk_registry=quirk_registry)
 
         result = writer.execute()
 
         # Should succeed but produce minimal/empty output
         assert result.is_success or result.is_failure
 
-    def test_write_entry_with_multivalued_attributes(self) -> None:
+    def test_write_entry_with_multivalued_attributes(self, quirk_registry: QuirkRegistryService) -> None:
         """Test writing entry with multiple values per attribute."""
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=Multi Value,dc=example,dc=com",
@@ -143,7 +141,7 @@ class TestRfcLdifWriterService:
         entry = entry_result.unwrap()
 
         params = {"entries": [entry]}
-        writer = RfcLdifWriterService(params=params)
+        writer = RfcLdifWriterService(params=params, quirk_registry=quirk_registry)
 
         result = writer.execute()
 
@@ -155,7 +153,7 @@ class TestRfcLdifWriterService:
         assert content.count("mail:") == 3
         assert content.count("objectClass:") == 4
 
-    def test_write_with_special_characters(self) -> None:
+    def test_write_with_special_characters(self, quirk_registry: QuirkRegistryService) -> None:
         """Test writing entries with special characters."""
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=Special Char,dc=example,dc=com",
@@ -168,7 +166,7 @@ class TestRfcLdifWriterService:
         entry = entry_result.unwrap()
 
         params = {"entries": [entry]}
-        writer = RfcLdifWriterService(params=params)
+        writer = RfcLdifWriterService(params=params, quirk_registry=quirk_registry)
 
         result = writer.execute()
 
@@ -176,12 +174,13 @@ class TestRfcLdifWriterService:
         assert result.is_success or result.is_failure
 
     def test_write_with_target_server_type(
-        self, sample_entry: FlextLdifModels.Entry
+        self, sample_entry: FlextLdifModels.Entry, quirk_registry: QuirkRegistryService
     ) -> None:
         """Test writing with specific target server type."""
         params = {"entries": [sample_entry]}
         writer = RfcLdifWriterService(
             params=params,
+            quirk_registry=quirk_registry,
             target_server_type="oud",
         )
 
@@ -189,7 +188,7 @@ class TestRfcLdifWriterService:
 
         assert result.is_success
 
-    def test_line_wrapping_long_values(self) -> None:
+    def test_line_wrapping_long_values(self, quirk_registry: QuirkRegistryService) -> None:
         """Test RFC 2849 line wrapping for long attribute values."""
         long_value = "a" * 100  # Value longer than 76 chars
         entry_result = FlextLdifModels.Entry.create(
@@ -203,7 +202,7 @@ class TestRfcLdifWriterService:
         entry = entry_result.unwrap()
 
         params = {"entries": [entry]}
-        writer = RfcLdifWriterService(params=params)
+        writer = RfcLdifWriterService(params=params, quirk_registry=quirk_registry)
 
         result = writer.execute()
 
@@ -214,37 +213,37 @@ class TestRfcLdifWriterService:
         # RFC 2849 wraps lines starting with space on continuation
         assert " " in content or "\n " in content
 
-    def test_write_with_schema_data(self, sample_entry: FlextLdifModels.Entry) -> None:
+    def test_write_with_schema_data(self, sample_entry: FlextLdifModels.Entry, quirk_registry: QuirkRegistryService) -> None:
         """Test writing with schema information."""
         schema_data: dict[str, dict] = {
             "attributeTypes": {},
             "objectClasses": {},
         }
         params = {"entries": [sample_entry], "schema": schema_data}
-        writer = RfcLdifWriterService(params=params)
+        writer = RfcLdifWriterService(params=params, quirk_registry=quirk_registry)
 
         result = writer.execute()
 
         assert result.is_success or result.is_failure
 
-    def test_write_with_acl_data(self, sample_entry: FlextLdifModels.Entry) -> None:
+    def test_write_with_acl_data(self, sample_entry: FlextLdifModels.Entry, quirk_registry: QuirkRegistryService) -> None:
         """Test writing with ACL information."""
         acl_data: dict[str, list] = {"acls": []}
         params = {"entries": [sample_entry], "acls": acl_data}
-        writer = RfcLdifWriterService(params=params)
+        writer = RfcLdifWriterService(params=params, quirk_registry=quirk_registry)
 
         result = writer.execute()
 
         assert result.is_success or result.is_failure
 
     def test_execute_returns_flext_result(
-        self, sample_entry: FlextLdifModels.Entry
+        self, sample_entry: FlextLdifModels.Entry, quirk_registry: QuirkRegistryService
     ) -> None:
         """Test that execute returns FlextResult."""
         from flext_core import FlextResult
 
         params = {"entries": [sample_entry]}
-        writer = RfcLdifWriterService(params=params)
+        writer = RfcLdifWriterService(params=params, quirk_registry=quirk_registry)
 
         result = writer.execute()
 
@@ -253,11 +252,11 @@ class TestRfcLdifWriterService:
         assert hasattr(result, "is_failure")
 
     def test_write_preserves_dn_format(
-        self, sample_entry: FlextLdifModels.Entry
+        self, sample_entry: FlextLdifModels.Entry, quirk_registry: QuirkRegistryService
     ) -> None:
         """Test that DN format is preserved in output."""
         params = {"entries": [sample_entry]}
-        writer = RfcLdifWriterService(params=params)
+        writer = RfcLdifWriterService(params=params, quirk_registry=quirk_registry)
 
         result = writer.execute()
 
@@ -271,11 +270,11 @@ class TestRfcLdifWriterService:
         )
 
     def test_write_includes_entry_separator(
-        self, sample_entries: list[FlextLdifModels.Entry]
+        self, sample_entries: list[FlextLdifModels.Entry], quirk_registry: QuirkRegistryService
     ) -> None:
         """Test that entries are separated by blank lines."""
         params = {"entries": sample_entries}
-        writer = RfcLdifWriterService(params=params)
+        writer = RfcLdifWriterService(params=params, quirk_registry=quirk_registry)
 
         result = writer.execute()
 

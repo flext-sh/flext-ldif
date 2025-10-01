@@ -190,17 +190,27 @@ def ldif_binary_file(test_ldif_dir: Path, sample_ldif_with_binary: str) -> Path:
     return ldif_file
 
 
+# Quirk registry fixture for RFC-first architecture enforcement
+@pytest.fixture
+def quirk_registry() -> "QuirkRegistryService":
+    """Provide quirk registry for RFC-first testing (MANDATORY)."""
+    from flext_ldif.quirks.registry import QuirkRegistryService
+
+    # Registry auto-discovers and registers all standard quirks
+    return QuirkRegistryService()
+
+
 # Real service fixtures for functional testing
 @pytest.fixture
-def real_parser_service() -> RfcLdifParserService:
-    """Real parser service for functional testing (RFC-first)."""
-    return RealServiceFactory.create_parser()
+def real_parser_service(quirk_registry: "QuirkRegistryService") -> RfcLdifParserService:
+    """Real parser service for functional testing (RFC-first with quirks)."""
+    return RealServiceFactory.create_parser(quirk_registry=quirk_registry)
 
 
 @pytest.fixture
-def real_writer_service() -> RfcLdifWriterService:
-    """Real writer service for functional testing (RFC-first)."""
-    return RealServiceFactory.create_writer()
+def real_writer_service(quirk_registry: "QuirkRegistryService") -> RfcLdifWriterService:
+    """Real writer service for functional testing (RFC-first with quirks)."""
+    return RealServiceFactory.create_writer(quirk_registry=quirk_registry)
 
 
 @pytest.fixture

@@ -42,24 +42,27 @@ class RfcLdifParserService(FlextService[dict]):
     - Lenient parsing (accepts non-RFC extensions)
 
     **Example**:
-        # Basic RFC-compliant parsing
+        # RFC-compliant parsing with quirks (MANDATORY)
+        from flext_ldif.quirks.registry import QuirkRegistryService
+
+        registry = QuirkRegistryService()
         params = {"file_path": "entries.ldif", "parse_changes": False}
-        parser = RfcLdifParserService(params=params)
+        parser = RfcLdifParserService(params=params, quirk_registry=registry)
         result = parser.execute()
 
         # With quirks for OID-specific parsing
-        params = {"file_path": "oid.ldif", "quirk_registry": registry, "source_server": "oid"}
-        parser = RfcLdifParserService(params=params)
+        params = {"file_path": "oid.ldif", "source_server": "oid"}
+        parser = RfcLdifParserService(params=params, quirk_registry=registry)
         result = parser.execute()
 
     """
 
-    def __init__(self, *, params: dict, quirk_registry: object | None = None) -> None:
+    def __init__(self, *, params: dict, quirk_registry: object) -> None:
         """Initialize generic LDIF parser.
 
         Args:
             params: Parsing parameters (file_path, parse_changes, encoding, source_server)
-            quirk_registry: Optional quirk registry for server-specific extensions
+            quirk_registry: Quirk registry for server-specific extensions (MANDATORY)
 
         """
         super().__init__()
