@@ -13,23 +13,16 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-
 from flext_core import FlextConstants, FlextResult, FlextTypes
-from flext_ldif import FlextLdifAPI
-from flext_tests import (
-    FlextTestsBuilders,
-    FlextTestsDomains,
-    FlextTestsFactories,
-    FlextTestsMatchers,
-    FlextTestsUtilities,
-)
+from flext_tests import (FlextTestsBuilders, FlextTestsDomains,
+                         FlextTestsFactories, FlextTestsMatchers,
+                         FlextTestsUtilities)
 
-from .test_support import (
-    FileManager,
-    LdifTestData,
-    RealServiceFactory,
-    TestValidators,
-)
+from flext_ldif.rfc.rfc_ldif_parser import RfcLdifParserService
+from flext_ldif.rfc.rfc_ldif_writer import RfcLdifWriterService
+
+from .test_support import (FileManager, LdifTestData, RealServiceFactory,
+                           TestValidators)
 
 
 class TestFileManager:
@@ -95,20 +88,20 @@ def ldif_processor_config() -> FlextTypes.Core.Dict:
 
 
 @pytest.fixture
-def real_ldif_api() -> FlextLdifAPI:
-    """Real LDIF API instance for functional testing."""
+def real_ldif_api() -> dict:
+    """Real LDIF API services for functional testing (RFC-first)."""
     return RealServiceFactory.create_api()
 
 
 @pytest.fixture
-def strict_ldif_api() -> FlextLdifAPI:
-    """Strict LDIF API for validation testing."""
+def strict_ldif_api() -> dict:
+    """Strict LDIF API services for validation testing (RFC-first)."""
     return RealServiceFactory.create_strict_api()
 
 
 @pytest.fixture
-def lenient_ldif_api() -> FlextLdifAPI:
-    """Lenient LDIF API for error recovery testing."""
+def lenient_ldif_api() -> dict:
+    """Lenient LDIF API services for error recovery testing (RFC-first)."""
     return RealServiceFactory.create_lenient_api()
 
 
@@ -196,14 +189,14 @@ def ldif_binary_file(test_ldif_dir: Path, sample_ldif_with_binary: str) -> Path:
 
 # Real service fixtures for functional testing
 @pytest.fixture
-def real_parser_service() -> FlextLdifAPI:
-    """Real parser service for functional testing - using unified API."""
+def real_parser_service() -> RfcLdifParserService:
+    """Real parser service for functional testing (RFC-first)."""
     return RealServiceFactory.create_parser()
 
 
 @pytest.fixture
-def real_writer_service() -> FlextLdifAPI:
-    """Real writer service for functional testing - using unified API."""
+def real_writer_service() -> RfcLdifWriterService:
+    """Real writer service for functional testing (RFC-first)."""
     return RealServiceFactory.create_writer()
 
 
@@ -264,9 +257,9 @@ def validate_flext_result_failure() -> Callable[[FlextResult[object]], dict[str,
 
 
 @pytest.fixture
-def flext_result_composition_helper() -> Callable[
-    [list[FlextResult[object]]], dict[str, object]
-]:
+def flext_result_composition_helper() -> (
+    Callable[[list[FlextResult[object]]], dict[str, object]]
+):
     """Helper for testing FlextResult composition patterns."""
 
     def helper(results: list[FlextResult[object]]) -> dict[str, object]:
@@ -461,9 +454,11 @@ def ldif_test_entries() -> list[FlextTypes.Core.Dict]:
                 "objectClass": ["inetOrgPerson", "person"],
                 "cn": [user.get("name", "Test User")],
                 "sn": [
-                    user.get("name", "User").split()[-1]
-                    if " " in user.get("name", "")
-                    else "User",
+                    (
+                        user.get("name", "User").split()[-1]
+                        if " " in user.get("name", "")
+                        else "User"
+                    ),
                 ],
                 "mail": [user.get("email", f"test{i}@example.com")],
                 "uid": [f"testuser{i}"],

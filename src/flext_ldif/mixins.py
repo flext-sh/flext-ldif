@@ -10,6 +10,7 @@ from collections.abc import Callable, Iterator, Sequence
 from typing import override
 
 from flext_core import FlextMixins, FlextResult, T, U
+
 from flext_ldif.models import FlextLdifModels
 
 
@@ -28,7 +29,7 @@ class FlextLdifMixins(FlextMixins):
         """Mixin providing validation utilities with monadic composition.
 
         All validation now delegates to centralized Models with Pydantic validators.
-        Maintains backward compatibility while centralizing validation logic.
+        Centralizes validation logic through Pydantic v2 patterns.
         """
 
         @staticmethod
@@ -113,7 +114,7 @@ class FlextLdifMixins(FlextMixins):
             # Use Model normalization - centralized in FlextLdifModels.DistinguishedName
             try:
                 dn_model = FlextLdifModels.DistinguishedName(value=dn)
-                return dn_model.normalized_value
+                return dn_model.normalized_value  # type: ignore[return-value]
             except ValueError:
                 return dn
 
@@ -124,7 +125,7 @@ class FlextLdifMixins(FlextMixins):
             try:
                 dn_model = FlextLdifModels.DistinguishedName(value=dn)
                 pairs: list[tuple[str, str]] = []
-                for comp in dn_model.components:
+                for comp in dn_model.components:  # type: ignore[attr-defined]
                     if "=" in comp:
                         attr, value = comp.split("=", 1)
                         pairs.append((attr.strip(), value.strip()))
@@ -252,7 +253,7 @@ class FlextLdifMixins(FlextMixins):
                     # Use Model parsing - centralized in FlextLdifModels.DistinguishedName
                     try:
                         dn_model = FlextLdifModels.DistinguishedName(value=dn)
-                        for comp in dn_model.components:
+                        for comp in dn_model.components:  # type: ignore[attr-defined]
                             if "=" in comp:
                                 attr_name = comp.split("=")[0].strip().lower()
                                 pattern_counts[attr_name] = (

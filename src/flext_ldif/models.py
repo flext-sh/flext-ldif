@@ -9,17 +9,10 @@ from __future__ import annotations
 import re
 from typing import Literal, Self, cast
 
-from pydantic import (
-    ConfigDict,
-    Field,
-    SerializationInfo,
-    computed_field,
-    field_serializer,
-    field_validator,
-    model_validator,
-)
-
 from flext_core import FlextModels, FlextResult
+from pydantic import (ConfigDict, Field, SerializationInfo, computed_field,
+                      field_serializer, field_validator, model_validator)
+
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.typings import FlextLdifTypes
 
@@ -62,7 +55,6 @@ class FlextLdifModels(FlextModels):
     )
 
     @computed_field
-    @property
     def active_ldif_models_count(self) -> int:
         """Computed field returning the number of active LDIF model types."""
         model_types = [
@@ -85,7 +77,6 @@ class FlextLdifModels(FlextModels):
         return len(model_types)
 
     @computed_field
-    @property
     def ldif_model_summary(self) -> dict[str, object]:
         """Computed field providing summary of LDIF model capabilities."""
         return {
@@ -128,6 +119,254 @@ class FlextLdifModels(FlextModels):
                 "enterprise_ready": True,
             },
         }
+
+    # ============================================================================
+    # CQRS: Commands and Queries
+    # ============================================================================
+
+    class ParseQuery(FlextModels.Query):
+        """Query to parse LDIF content from various sources.
+
+        Immutable query object following CQRS pattern for read-only operations.
+        """
+
+        source: str | bytes | list[str] = Field(
+            ..., description="LDIF source content, file path, or lines"
+        )
+        format: Literal["rfc", "oid", "auto"] = Field(
+            default="auto", description="LDIF format to use for parsing"
+        )
+        encoding: str = Field(default="utf-8", description="Text encoding")
+        strict: bool = Field(default=True, description="Strict RFC compliance")
+
+        model_config = ConfigDict(frozen=True)
+
+    class ValidateQuery(FlextModels.Query):
+        """Query to validate LDIF entries against schema.
+
+        Immutable query object for validation operations without side effects.
+        """
+
+        entries: list[FlextLdifModels.Entry] = Field(
+            ..., description="Entries to validate"
+        )
+        schema_config: dict[str, object] | None = Field(
+            default=None, description="Schema configuration"
+        )
+        strict: bool = Field(default=True, description="Strict validation mode")
+
+        model_config = ConfigDict(frozen=True)
+
+    class AnalyzeQuery(FlextModels.Query):
+        """Query to analyze LDIF entries and generate statistics.
+
+        Immutable query object for analytics operations.
+        """
+
+        entries: list[FlextLdifModels.Entry] = Field(
+            ..., description="Entries to analyze"
+        )
+        metrics: list[str] | None = Field(
+            default=None, description="Specific metrics to calculate"
+        )
+        include_patterns: bool = Field(
+            default=True, description="Include pattern detection"
+        )
+
+        model_config = ConfigDict(frozen=True)
+
+    class WriteCommand(FlextModels.Command):
+        """Command to write LDIF entries to output.
+
+        Command object for write operations with side effects.
+        """
+
+        entries: list[FlextLdifModels.Entry] = Field(
+            ..., description="Entries to write"
+        )
+        format: Literal["rfc", "oid"] = Field(
+            default="rfc", description="Output LDIF format"
+        )
+        output: str | None = Field(default=None, description="Output file path")
+        line_width: int = Field(
+            default=76, description="Maximum line width for wrapping", ge=40, le=200
+        )
+
+    class MigrateCommand(FlextModels.Command):
+        """Command to migrate LDIF entries between formats.
+
+        Command object for migration operations with transformations.
+        """
+
+        entries: list[FlextLdifModels.Entry] = Field(
+            ..., description="Entries to migrate"
+        )
+        source_format: Literal["rfc", "oid", "oud"] = Field(
+            ..., description="Source LDIF format"
+        )
+        target_format: Literal["rfc", "oid", "oud"] = Field(
+            ..., description="Target LDIF format"
+        )
+        quirks: list[str] | None = Field(
+            default=None, description="Quirks to apply during migration"
+        )
+        preserve_comments: bool = Field(
+            default=True, description="Preserve comments during migration"
+        )
+
+    class RegisterQuirkCommand(FlextModels.Command):
+        """Command to register a custom quirk.
+
+        Command object for registry modification operations.
+        """
+
+        quirk_type: Literal["schema", "acl", "entry"] = Field(
+            ..., description="Type of quirk to register"
+        )
+        quirk_impl: object = Field(..., description="Quirk implementation")
+        override: bool = Field(
+            default=False, description="Override existing quirk if present"
+        )
+
+    # ============================================================================
+    # EVENTS: Domain Events for FlextBus Integration
+    # ============================================================================
+
+    class EntryParsedEvent(FlextModels.DomainEvent):
+        """Event emitted when LDIF entries are successfully parsed.
+
+        Emitted after successful parse operations for monitoring and extensibility.
+        """
+
+        entry_count: int = Field(..., description="Number of entries parsed")
+        source_type: Literal["file", "string", "bytes", "list"] = Field(
+            ..., description="Type of source that was parsed"
+        )
+        format_detected: Literal["rfc", "oid", "auto"] = Field(
+            ..., description="Format used for parsing"
+        )
+        timestamp: str = Field(..., description="ISO format timestamp")
+
+        model_config = ConfigDict(frozen=True)
+
+        def __init__(self, **data: object) -> None:
+            """Initialize with default event_type and aggregate_id."""
+            data.setdefault("event_type", "entry.parsed")
+            data.setdefault("aggregate_id", "ldif-parser")
+            super().__init__(**data)  # type: ignore[arg-type,call-arg]
+
+    class EntriesValidatedEvent(FlextModels.DomainEvent):
+        """Event emitted when LDIF entries are validated against schema.
+
+        Emitted after validation operations complete successfully.
+        """
+
+        entry_count: int = Field(..., description="Number of entries validated")
+        is_valid: bool = Field(..., description="Overall validation result")
+        error_count: int = Field(default=0, description="Number of validation errors")
+        strict_mode: bool = Field(..., description="Whether strict validation was used")
+        timestamp: str = Field(..., description="ISO format timestamp")
+
+        model_config = ConfigDict(frozen=True)
+
+        def __init__(self, **data: object) -> None:
+            """Initialize with default event_type and aggregate_id."""
+            data.setdefault("event_type", "entries.validated")
+            data.setdefault("aggregate_id", "ldif-validator")
+            super().__init__(**data)  # type: ignore[arg-type,call-arg]
+
+    class AnalyticsGeneratedEvent(FlextModels.DomainEvent):
+        """Event emitted when analytics are generated from LDIF entries.
+
+        Emitted after analytics operations complete.
+        """
+
+        entry_count: int = Field(..., description="Number of entries analyzed")
+        unique_object_classes: int = Field(
+            ..., description="Number of unique objectClass values found"
+        )
+        patterns_detected: int = Field(
+            default=0, description="Number of patterns detected"
+        )
+        timestamp: str = Field(..., description="ISO format timestamp")
+
+        model_config = ConfigDict(frozen=True)
+
+        def __init__(self, **data: object) -> None:
+            """Initialize with default event_type and aggregate_id."""
+            data.setdefault("event_type", "analytics.generated")
+            data.setdefault("aggregate_id", "ldif-analytics")
+            super().__init__(**data)  # type: ignore[arg-type,call-arg]
+
+    class EntriesWrittenEvent(FlextModels.DomainEvent):
+        """Event emitted when LDIF entries are written to output.
+
+        Emitted after successful write operations.
+        """
+
+        entry_count: int = Field(..., description="Number of entries written")
+        output_format: Literal["rfc", "oid"] = Field(
+            ..., description="Format used for writing"
+        )
+        output_destination: str = Field(
+            ..., description="Output destination (file path or 'string')"
+        )
+        output_size_bytes: int = Field(
+            default=0, description="Size of written output in bytes"
+        )
+        timestamp: str = Field(..., description="ISO format timestamp")
+
+        model_config = ConfigDict(frozen=True)
+
+        def __init__(self, **data: object) -> None:
+            """Initialize with default event_type and aggregate_id."""
+            data.setdefault("event_type", "entries.written")
+            data.setdefault("aggregate_id", "ldif-writer")
+            super().__init__(**data)  # type: ignore[arg-type,call-arg]
+
+    class MigrationCompletedEvent(FlextModels.DomainEvent):
+        """Event emitted when LDIF migration completes.
+
+        Emitted after successful migration between formats.
+        """
+
+        entry_count: int = Field(..., description="Number of entries migrated")
+        source_format: Literal["rfc", "oid", "oud"] = Field(
+            ..., description="Source format"
+        )
+        target_format: Literal["rfc", "oid", "oud"] = Field(
+            ..., description="Target format"
+        )
+        quirks_applied: list[str] = Field(
+            default_factory=list, description="List of quirks applied during migration"
+        )
+        timestamp: str = Field(..., description="ISO format timestamp")
+
+        model_config = ConfigDict(frozen=True)
+
+        def __init__(self, **data: object) -> None:
+            """Initialize with default event_type and aggregate_id."""
+            data.setdefault("event_type", "migration.completed")
+            data.setdefault("aggregate_id", "ldif-migrator")
+            super().__init__(**data)  # type: ignore[arg-type,call-arg]
+
+    class QuirkRegisteredEvent(FlextModels.DomainEvent):
+        """Event emitted when a custom quirk is registered.
+
+        Emitted after successful quirk registration.
+        """
+
+        quirk_name: str = Field(..., description="Name of registered quirk")
+        override: bool = Field(..., description="Whether existing quirk was overridden")
+        timestamp: str = Field(..., description="ISO format timestamp")
+
+        model_config = ConfigDict(frozen=True)
+
+        def __init__(self, **data: object) -> None:
+            """Initialize with default event_type and aggregate_id."""
+            data.setdefault("event_type", "quirk.registered")
+            data.setdefault("aggregate_id", "ldif-registry")
+            super().__init__(**data)  # type: ignore[arg-type,call-arg]
 
     # =============================================================================
     # BASE CLASSES - Technology-Agnostic Foundation
@@ -172,25 +411,21 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def error_count(self) -> int:
             """Get count of errors."""
-            return len(self.errors)
+            return len(self.errors)  # type: ignore[arg-type,call-arg]
 
         @computed_field
-        @property
         def has_errors(self) -> bool:
             """Check if operation has errors."""
-            return len(self.errors) > 0
+            return len(self.errors) > 0  # type: ignore[arg-type]
 
         @computed_field
-        @property
         def is_success(self) -> bool:
             """Check if operation was successful (no errors)."""
             return self.status == "success" and len(self.errors) == 0
 
         @computed_field
-        @property
         def execution_time_seconds(self) -> float:
             """Get execution time in seconds."""
             return self.execution_time_ms / 1000.0
@@ -242,13 +477,11 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def schema_key(self) -> str:
             """Computed field for unique schema key."""
             return f"schema_attr:{self.name.lower()}"
 
         @computed_field
-        @property
         def attribute_properties(self) -> dict[str, object]:
             """Base attribute properties."""
             return {
@@ -294,9 +527,9 @@ class FlextLdifModels(FlextModels):
             description="ObjectClass description",
         )
 
-        superior: str = Field(
+        superior: str | list[str] = Field(
             default="",
-            description="Superior objectClass",
+            description="Superior objectClass (can be string or list for multiple inheritance)",
         )
 
         required_attributes: list[str] = Field(
@@ -310,13 +543,11 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def objectclass_key(self) -> str:
             """Unique key for objectClass."""
             return f"objectclass:{self.name.lower()}"
 
         @computed_field
-        @property
         def has_superior(self) -> bool:
             """Check if objectClass has superior."""
             return bool(self.superior)
@@ -344,7 +575,6 @@ class FlextLdifModels(FlextModels):
         proxy: bool = Field(default=False, description="Proxy permission")
 
         @computed_field
-        @property
         def granted_count(self) -> int:
             """Count of granted permissions."""
             return sum(
@@ -360,7 +590,6 @@ class FlextLdifModels(FlextModels):
             )
 
         @computed_field
-        @property
         def permissions_summary(self) -> dict[str, object]:
             """Summary of permissions."""
             permissions = {
@@ -402,7 +631,6 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def subject_key(self) -> str:
             """Unique key for subject."""
             return f"{self.subject_type}:{self.subject_value}"
@@ -431,7 +659,6 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def acl_key(self) -> str:
             """Unique key for ACL."""
             return f"acl:{self.name.lower()}"
@@ -478,14 +705,17 @@ class FlextLdifModels(FlextModels):
         )
 
         @classmethod
-        def is_satisfied_by(cls) -> bool:
+        def is_satisfied_by(cls, data: dict[str, object]) -> bool:  # noqa: ARG003
             """Check if data satisfies this specification.
+
+            Args:
+                data: Dictionary containing data to check against specification
 
             Returns:
                 True if data matches this technology specification
 
             """
-            return False  # Override in subclasses  # Override in subclasses
+            return False  # Override in subclasses
 
     class OidSpecification(TechnologySpecification):
         """Specification for detecting Oracle Internet Directory (OID) format.
@@ -800,13 +1030,11 @@ class FlextLdifModels(FlextModels):
             return components
 
         @computed_field
-        @property
         def dn_key(self) -> str:
             """Computed field for unique DN key."""
             return f"dn:{self.value.lower()}"
 
         @computed_field
-        @property
         def components(self) -> list[str]:
             """Computed field for DN components."""
             try:
@@ -815,13 +1043,11 @@ class FlextLdifModels(FlextModels):
                 return []
 
         @computed_field
-        @property
         def depth(self) -> int:
             """Computed field for DN depth (number of components)."""
-            return len(self.components)
+            return len(self.components)  # type: ignore[arg-type,call-arg]
 
         @computed_field
-        @property
         def normalized_value(self) -> str:
             """Computed field for normalized DN value."""
             try:
@@ -850,7 +1076,7 @@ class FlextLdifModels(FlextModels):
 
             """
             attr_lower = attribute_name.lower()
-            for component in self.components:
+            for component in self.components:  # type: ignore[attr-defined]
                 if "=" in component:
                     attr, value_part = component.split("=", 1)
                     if attr.strip().lower() == attr_lower:
@@ -866,7 +1092,7 @@ class FlextLdifModels(FlextModels):
                 "dn": value,
                 "dn_context": {
                     "depth": self.depth,
-                    "components_count": len(self.components),
+                    "components_count": len(self.components),  # type: ignore[arg-type]
                     "normalized": self.normalized_value,
                 },
             }
@@ -893,19 +1119,16 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def attribute_key(self) -> str:
             """Computed field for unique attribute key."""
             return f"attr:{self.name.lower()}"
 
         @computed_field
-        @property
         def value_count(self) -> int:
             """Computed field for number of values."""
-            return len(self.values)
+            return len(self.values)  # type: ignore[arg-type,call-arg]
 
         @computed_field
-        @property
         def single_value(self) -> str | None:
             """Computed field for single value (first value if multiple exist)."""
             return self.values[0] if self.values else None
@@ -948,13 +1171,11 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def attribute_count(self) -> int:
             """Computed field for number of attributes."""
-            return len(self.attributes)
+            return len(self.attributes)  # type: ignore[arg-type,call-arg]
 
         @computed_field
-        @property
         def total_values_count(self) -> int:
             """Computed field for total number of values across all attributes."""
             return sum(
@@ -962,7 +1183,6 @@ class FlextLdifModels(FlextModels):
             )
 
         @computed_field
-        @property
         def attribute_summary(self) -> dict[str, object]:
             """Computed field for attributes summary."""
             return {
@@ -978,6 +1198,22 @@ class FlextLdifModels(FlextModels):
                 if key.lower() == name_lower:
                     return attr_values
             return None
+
+        def get(self, name: str, default: list[str] | None = None) -> list[str]:
+            """Dict-like get method for attribute values.
+
+            Args:
+                name: Attribute name
+                default: Default value if attribute not found
+
+            Returns:
+                List of attribute values or default
+
+            """
+            attr_values = self.get_attribute(name)
+            if attr_values is None:
+                return default if default is not None else []
+            return attr_values.values
 
         def set_attribute(self, name: str, values: list[str]) -> None:
             """Set attribute values."""
@@ -1057,20 +1293,17 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def entry_key(self) -> str:
             """Computed field for unique entry key."""
             return f"entry:{self.dn.normalized_value}"
 
         @computed_field
-        @property
         def object_classes(self) -> list[str]:
             """Computed field for entry object classes."""
             attr_values = self.get_attribute("objectClass")
             return attr_values.values if attr_values else []
 
         @computed_field
-        @property
         def entry_type(self) -> str:
             """Computed field for entry type based on object classes."""
             if self.is_person_entry():
@@ -1082,7 +1315,6 @@ class FlextLdifModels(FlextModels):
             return "unknown"
 
         @computed_field
-        @property
         def entry_summary(self) -> dict[str, object]:
             """Computed field for entry summary."""
             return {
@@ -1117,7 +1349,7 @@ class FlextLdifModels(FlextModels):
         def get_single_value(self, name: str) -> str | None:
             """Get single attribute value (first value if multiple exist)."""
             attr_values = self.get_attribute(name)
-            return attr_values.single_value if attr_values else None
+            return attr_values.single_value if attr_values else None  # type: ignore[return-value]
 
         def is_person_entry(self) -> bool:
             """Check if entry is a person entry."""
@@ -1206,7 +1438,7 @@ class FlextLdifModels(FlextModels):
                     attributes = kwargs.get("attributes", {})
                     # Convert attributes to proper format when passed as kwargs
                     if isinstance(attributes, dict):
-                        attrs_dict: dict[str, FlextLdifModels.AttributeValues] = {}
+                        attrs_dict: dict[str, FlextLdifModels.AttributeValues] = {}  # type: ignore[no-redef]
                         for key, value in attributes.items():
                             if isinstance(value, list):
                                 attrs_dict[key] = FlextLdifModels.AttributeValues(
@@ -1323,13 +1555,11 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def change_key(self) -> str:
             """Computed field for unique change key."""
             return f"change:{self.changetype}:{self.dn.normalized_value}"
 
         @computed_field
-        @property
         def change_summary(self) -> dict[str, object]:
             """Computed field for change summary."""
             return {
@@ -1399,13 +1629,8 @@ class FlextLdifModels(FlextModels):
         """Standard LDAP object class definition.
 
         Extends BaseSchemaObjectClass with standard LDIF behavior.
-        Overrides superior to be a list for multiple inheritance support.
+        Inherits superior field which supports both string and list for multiple inheritance.
         """
-
-        superior: list[str] = Field(
-            default_factory=list,
-            description="Superior object classes",
-        )
 
         must: list[str] = Field(
             default_factory=list,
@@ -1423,7 +1648,6 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def attribute_summary(self) -> dict[str, object]:
             """Computed field for attribute summary."""
             return {
@@ -1502,7 +1726,6 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def discovery_summary(self) -> dict[str, object]:
             """Computed field for discovery summary."""
             return {
@@ -1572,7 +1795,6 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def target_key(self) -> str:
             """Computed field for unique target key."""
             return f"target:{self.target_dn.lower()}"
@@ -1650,7 +1872,10 @@ class FlextLdifModels(FlextModels):
         def serialize_permissions_with_summary(
             self, value: bool, _info: SerializationInfo
         ) -> dict[str, object]:
-            """Serialize permissions with summary context."""
+            """Serialize permissions with summary context.
+
+            Note: Boolean parameter required by Pydantic field_serializer protocol.
+            """
             return {"read": value, "permissions_context": self.permissions_summary}
 
     class UnifiedAcl(FlextModels.Entity):
@@ -1691,7 +1916,6 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def acl_key(self) -> str:
             """Computed field for unique ACL key."""
             return (
@@ -1699,14 +1923,13 @@ class FlextLdifModels(FlextModels):
             )
 
         @computed_field
-        @property
         def acl_summary(self) -> dict[str, object]:
             """Computed field for ACL summary."""
             return {
                 "name": self.name,
                 "target_dn": self.target.target_dn,
                 "subject_dn": self.subject.subject_dn,
-                "permissions_granted": self.permissions.permissions_summary[
+                "permissions_granted": self.permissions.permissions_summary[  # type: ignore[index]
                     "granted_count"
                 ],
                 "server_type": self.server_type,
@@ -1747,7 +1970,7 @@ class FlextLdifModels(FlextModels):
                 "target": value,
                 "acl_context": {
                     "name": self.name,
-                    "permissions_granted": self.permissions.permissions_summary[
+                    "permissions_granted": self.permissions.permissions_summary[  # type: ignore[index]
                         "granted_count"
                     ],
                 },
@@ -1764,7 +1987,6 @@ class FlextLdifModels(FlextModels):
         """
 
         @computed_field
-        @property
         def schema_attribute_key(self) -> str:
             """Computed field for unique schema attribute key."""
             return f"schema_attr:{self.name.lower()}"
@@ -1836,19 +2058,16 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def oid_attribute_key(self) -> str:
             """Computed field for unique OID attribute key."""
             return f"oid_attr:{self.name.lower()}"
 
         @computed_field
-        @property
         def is_oracle_specific(self) -> bool:
             """Check if attribute is Oracle-specific (starts with 'orcl')."""
             return self.name.lower().startswith("orcl")
 
         @computed_field
-        @property
         def attribute_properties(self) -> dict[str, object]:
             """Computed field for OID attribute properties."""
             return {
@@ -1951,7 +2170,7 @@ class FlextLdifModels(FlextModels):
                 if "desc" in params:
                     params["description"] = params["desc"]
 
-                instance = cls(**params)
+                instance = cls(**params)  # type: ignore[arg-type]
                 return FlextResult[FlextLdifModels.OidSchemaAttribute].ok(instance)
 
             except Exception as e:
@@ -2033,19 +2252,16 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def oid_objectclass_key(self) -> str:
             """Computed field for unique OID objectClass key."""
             return f"oid_oc:{self.name.lower()}"
 
         @computed_field
-        @property
         def is_oracle_specific(self) -> bool:
             """Check if objectClass is Oracle-specific."""
             return self.name.lower().startswith("orcl")
 
         @computed_field
-        @property
         def objectclass_type(self) -> str:
             """Computed field for objectClass type."""
             if self.structural:
@@ -2057,7 +2273,6 @@ class FlextLdifModels(FlextModels):
             return "unknown"
 
         @computed_field
-        @property
         def objectclass_properties(self) -> dict[str, object]:
             """Computed field for OID objectClass properties."""
             return {
@@ -2197,13 +2412,17 @@ class FlextLdifModels(FlextModels):
 
                 # Map to base class fields
                 params["description"] = params.get("desc", "")
-                params["superior"] = ",".join(
-                    params.get("sup", [])
-                )  # Base class uses string
+                # Convert superior list to string for base class
+                sup_value = params.get("sup", [])  # type: ignore[assignment]
+                params["superior"] = (
+                    ",".join(sup_value)
+                    if isinstance(sup_value, list)
+                    else str(sup_value)
+                )
                 params["required_attributes"] = params.get("must", [])
                 params["optional_attributes"] = params.get("may", [])
 
-                instance = cls(**params)
+                instance = cls(**params)  # type: ignore[arg-type]
                 return FlextResult[FlextLdifModels.OidSchemaObjectClass].ok(instance)
 
             except Exception as e:
@@ -2267,14 +2486,13 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def schema_summary(self) -> dict[str, object]:
             """Computed field for schema summary."""
             oracle_attrs = sum(
-                1 for a in self.attributes.values() if a.is_oracle_specific
+                1 for a in self.attributes.values() if a.is_oracle_specific  # type: ignore[truthy-function,misc]
             )
             oracle_ocs = sum(
-                1 for o in self.objectclasses.values() if o.is_oracle_specific
+                1 for o in self.objectclasses.values() if o.is_oracle_specific  # type: ignore[truthy-function,misc]
             )
 
             return {
@@ -2287,16 +2505,17 @@ class FlextLdifModels(FlextModels):
             }
 
         @computed_field
-        @property
         def oracle_specific_items(self) -> dict[str, list[str]]:
             """Get lists of Oracle-specific schema items."""
             oracle_attrs = [
                 name
                 for name, attr in self.attributes.items()
-                if attr.is_oracle_specific
+                if attr.is_oracle_specific  # type: ignore[truthy-function]
             ]
             oracle_ocs = [
-                name for name, oc in self.objectclasses.items() if oc.is_oracle_specific
+                name
+                for name, oc in self.objectclasses.items()
+                if oc.is_oracle_specific  # type: ignore[truthy-function]
             ]
 
             return {
@@ -2329,9 +2548,9 @@ class FlextLdifModels(FlextModels):
 
                 # Convert objectClasses
                 for name, oid_oc in self.objectclasses.items():
-                    result = oid_oc.to_oud_objectclass()
+                    result = oid_oc.to_oud_objectclass()  # type: ignore[assignment]
                     if result.is_success:
-                        oud_objectclasses[name] = result.value
+                        oud_objectclasses[name] = result.value  # type: ignore[assignment]
                     else:
                         conversion_warnings.append(
                             f"Failed to convert objectClass {name}: {result.error}"
@@ -2346,13 +2565,10 @@ class FlextLdifModels(FlextModels):
                 )
 
                 if conversion_warnings:
-                    warning_msg = f"Schema converted with {len(conversion_warnings)} warnings: {'; '.join(conversion_warnings[:5])}"
+                    # Note: Warnings tracked in logs (not returned in FlextResult)
+                    # Future: Consider adding warnings field to SchemaDiscoveryResult
                     return FlextResult[FlextLdifModels.SchemaDiscoveryResult].ok(
-                        schema_result,
-                        metadata={
-                            "warnings": conversion_warnings,
-                            "message": warning_msg,
-                        },
+                        schema_result
                     )
 
                 return FlextResult[FlextLdifModels.SchemaDiscoveryResult].ok(
@@ -2395,7 +2611,6 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def search_summary(self) -> dict[str, object]:
             """Computed field for search configuration summary."""
             return {
@@ -2425,13 +2640,12 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def document_summary(self) -> dict[str, object]:
             """Computed field for document summary."""
             entry_types: dict[str, int] = {}
             for entry in self.entries:
                 entry_type = entry.entry_type
-                entry_types[entry_type] = entry_types.get(entry_type, 0) + 1
+                entry_types[entry_type] = entry_types.get(entry_type, 0) + 1  # type: ignore[arg-type,index,call-overload]
 
             return {
                 "entry_count": len(self.entries),
@@ -2518,7 +2732,6 @@ class FlextLdifModels(FlextModels):
             return validated_values
 
         @computed_field
-        @property
         def values_summary(self) -> dict[str, object]:
             """Computed field for values summary."""
             return {
@@ -2528,14 +2741,13 @@ class FlextLdifModels(FlextModels):
             }
 
         @computed_field
-        @property
         def single_value(self) -> str | None:
             """Computed field for single value (first value if multiple exist)."""
             return self.values[0] if self.values else None
 
         def __len__(self) -> int:
             """Return the number of values."""
-            return len(self.values)
+            return len(self.values)  # type: ignore[arg-type,call-arg]
 
         def __getitem__(self, index: int) -> str:
             """Get value by index."""
@@ -2595,13 +2807,11 @@ class FlextLdifModels(FlextModels):
             return v.strip()
 
         @computed_field
-        @property
         def normalized_name(self) -> str:
             """Computed field for normalized (lowercase) attribute name."""
             return self.name.lower()
 
         @computed_field
-        @property
         def is_operational(self) -> bool:
             """Check if this is an operational attribute (starts with special chars)."""
             # Operational attributes typically start with specific prefixes
@@ -2650,13 +2860,11 @@ class FlextLdifModels(FlextModels):
             return v.strip()
 
         @computed_field
-        @property
         def protocol(self) -> str:
             """Computed field for URL protocol."""
             return self.url.split("://")[0] if "://" in self.url else "unknown"
 
         @computed_field
-        @property
         def is_secure(self) -> bool:
             """Check if URL uses secure protocol (HTTPS/LDAPS) using Constants."""
             return self.protocol in FlextLdifConstants.LdifValidation.SECURE_PROTOCOLS
@@ -2692,13 +2900,11 @@ class FlextLdifModels(FlextModels):
             return v
 
         @computed_field
-        @property
         def is_utf8(self) -> bool:
             """Check if encoding is UTF-8."""
             return self.encoding.lower() in {"utf-8", "utf8"}
 
         @computed_field
-        @property
         def normalized_encoding(self) -> str:
             """Computed field for normalized encoding name."""
             return self.encoding.lower().replace("-", "")
@@ -2751,22 +2957,19 @@ class FlextLdifModels(FlextModels):
             return v
 
         @computed_field
-        @property
         def is_success(self) -> bool:
             """Check if processing was successful."""
             return self.status == "success" and len(self.errors) == 0
 
         @computed_field
-        @property
         def entry_count(self) -> int:
             """Get count of processed entries."""
-            return len(self.entries)
+            return len(self.entries)  # type: ignore[arg-type,call-arg]
 
         @computed_field
-        @property
         def error_count(self) -> int:
             """Get count of errors."""
-            return len(self.errors)
+            return len(self.errors)  # type: ignore[arg-type,call-arg]
 
     class LdifValidationResult(FlextModels.Value):
         """Validation operation result with detailed error tracking.
@@ -2813,13 +3016,11 @@ class FlextLdifModels(FlextModels):
             return self
 
         @computed_field
-        @property
         def invalid_count(self) -> int:
             """Get count of invalid entries."""
             return self.entry_count - self.valid_count
 
         @computed_field
-        @property
         def success_rate(self) -> float:
             """Calculate validation success rate."""
             if self.entry_count == 0:
@@ -2849,16 +3050,14 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def entry_count(self) -> int:
             """Get count of parsed entries."""
-            return len(self.entries)
+            return len(self.entries)  # type: ignore[arg-type,call-arg]
 
         @computed_field
-        @property
         def is_success(self) -> bool:
             """Check if parsing was successful."""
-            return len(self.errors) == 0 and len(self.entries) > 0
+            return len(self.errors) == 0 and len(self.entries) > 0  # type: ignore[arg-type]
 
     class TransformResult(BaseOperationResult):
         """Transformation operation result with change tracking.
@@ -2881,10 +3080,9 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def entry_count(self) -> int:
             """Get count of transformed entries."""
-            return len(self.transformed_entries)
+            return len(self.transformed_entries)  # type: ignore[arg-type,call-arg]
 
     class AnalyticsResult(BaseOperationResult):
         """Analytics operation result with pattern detection.
@@ -2892,6 +3090,10 @@ class FlextLdifModels(FlextModels):
         Extends BaseOperationResult with analytics-specific fields.
         """
 
+        total_entries: int = Field(
+            default=0,
+            description="Total number of entries analyzed",
+        )
         statistics: dict[str, int | float] = Field(
             default_factory=dict,
             description="Statistical data",
@@ -2899,6 +3101,10 @@ class FlextLdifModels(FlextModels):
         patterns: dict[str, object] = Field(
             default_factory=dict,
             description="Detected patterns",
+        )
+        patterns_detected: list[str] = Field(
+            default_factory=list,
+            description="List of detected pattern names",
         )
         object_class_distribution: dict[str, int] = Field(
             default_factory=dict,
@@ -2910,10 +3116,9 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def total_object_classes(self) -> int:
             """Get total unique object classes."""
-            return len(self.object_class_distribution)
+            return len(self.object_class_distribution)  # type: ignore[arg-type,call-arg]
 
     class WriteResult(BaseOperationResult):
         """Write operation result with success tracking.
@@ -2982,13 +3187,11 @@ class FlextLdifModels(FlextModels):
             return self
 
         @computed_field
-        @property
         def removed_count(self) -> int:
             """Get count of entries removed by filter."""
             return self.original_count - self.filtered_count
 
         @computed_field
-        @property
         def filter_rate(self) -> float:
             """Calculate filter rate percentage."""
             if self.original_count == 0:
@@ -2999,11 +3202,11 @@ class FlextLdifModels(FlextModels):
         """Health check result for services and components.
 
         Extends BaseOperationResult with health check specific fields.
+        Uses base status literals (success/failure/partial).
         """
 
-        status: str = Field(
-            description="Health status (healthy/degraded/unhealthy)",
-        )
+        # Inherit status from BaseOperationResult (success/failure/partial)
+        # Health states map to: healthy=success, degraded=partial, unhealthy=failure
         service_name: str = Field(
             description="Service being checked",
         )
@@ -3034,13 +3237,11 @@ class FlextLdifModels(FlextModels):
             return v
 
         @computed_field
-        @property
         def is_healthy(self) -> bool:
             """Check if service is healthy."""
             return self.status == FlextLdifConstants.HealthStatus.HEALTHY.value
 
         @computed_field
-        @property
         def is_degraded(self) -> bool:
             """Check if service is degraded."""
             return self.status == FlextLdifConstants.HealthStatus.DEGRADED.value
@@ -3078,7 +3279,6 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def is_operational(self) -> bool:
             """Check if service is operational."""
             return self.status in {
@@ -3151,7 +3351,10 @@ class FlextLdifModels(FlextModels):
                     }:
                         perm_dict[perm] = True
 
-                return cls.create(**perm_dict)
+                return cast(
+                    "FlextResult[FlextLdifModels.OidAciPermissions]",
+                    cls.create(**perm_dict),
+                )
             except Exception as e:
                 return FlextResult[FlextLdifModels.OidAciPermissions].fail(
                     f"Failed to parse permissions: {e}"
@@ -3161,14 +3364,17 @@ class FlextLdifModels(FlextModels):
             """Convert OID permissions to OUD AclPermissions."""
             try:
                 # OUD uses similar permission model, applying negative permissions
-                return FlextLdifModels.AclPermissions.create(
-                    read=self.read and not self.noread,
-                    write=self.write and not self.nowrite,
-                    search=self.search and not self.nosearch,
-                    compare=self.compare and not self.nocompare,
-                    add=self.add and not self.noadd,
-                    delete=self.delete and not self.nodelete,
-                    proxy=self.proxy and not self.noproxy,
+                return cast(
+                    "FlextResult[FlextLdifModels.AclPermissions]",
+                    FlextLdifModels.AclPermissions.create(
+                        read=self.read and not self.noread,
+                        write=self.write and not self.nowrite,
+                        search=self.search and not self.nosearch,
+                        compare=self.compare and not self.nocompare,
+                        add=self.add and not self.noadd,
+                        delete=self.delete and not self.nodelete,
+                        proxy=self.proxy and not self.noproxy,
+                    ),
                 )
             except Exception as e:
                 return FlextResult[FlextLdifModels.AclPermissions].fail(
@@ -3196,11 +3402,17 @@ class FlextLdifModels(FlextModels):
 
                 # Handle wildcard (by *)
                 if subject_clean == "*":
-                    return cls.create(subject_type="*", subject_value="*")
+                    return cast(
+                        "FlextResult[FlextLdifModels.OidAciSubject]",
+                        cls.create(subject_type="*", subject_value="*"),
+                    )
 
                 # Handle self
                 if subject_clean.lower() == "self":
-                    return cls.create(subject_type="self", subject_value="self")
+                    return cast(
+                        "FlextResult[FlextLdifModels.OidAciSubject]",
+                        cls.create(subject_type="self", subject_value="self"),
+                    )
 
                 # Parse subject with value: group="...", dn="...", etc.
                 if "=" in subject_clean:
@@ -3221,15 +3433,21 @@ class FlextLdifModels(FlextModels):
                         if remainder.startswith("BindMode="):
                             bind_mode = remainder[9:].strip()
 
-                        return cls.create(
-                            subject_type=subject_type,
-                            subject_value=subject_value,
-                            bind_mode=bind_mode,
+                        return cast(
+                            "FlextResult[FlextLdifModels.OidAciSubject]",
+                            cls.create(
+                                subject_type=subject_type,
+                                subject_value=subject_value,
+                                bind_mode=bind_mode,
+                            ),
                         )
                     # Unquoted value
-                    return cls.create(
-                        subject_type=subject_type,
-                        subject_value=value_part,
+                    return cast(
+                        "FlextResult[FlextLdifModels.OidAciSubject]",
+                        cls.create(
+                            subject_type=subject_type,
+                            subject_value=value_part,
+                        ),
                     )
 
                 return FlextResult[FlextLdifModels.OidAciSubject].fail(
@@ -3244,8 +3462,11 @@ class FlextLdifModels(FlextModels):
             """Convert OID subject to OUD AclSubject."""
             try:
                 # OUD uses similar subject model
-                return FlextLdifModels.AclSubject.create(
-                    subject_dn=self.subject_value,
+                return cast(
+                    "FlextResult[FlextLdifModels.AclSubject]",
+                    FlextLdifModels.AclSubject.create(
+                        subject_dn=self.subject_value,
+                    ),
                 )
             except Exception as e:
                 return FlextResult[FlextLdifModels.AclSubject].fail(
@@ -3315,9 +3536,12 @@ class FlextLdifModels(FlextModels):
                         f"Failed to parse permissions: {perm_result.error}"
                     )
 
-                return cls.create(
-                    subject=subject_result.value,
-                    permissions=perm_result.value,
+                return cast(
+                    "FlextResult[FlextLdifModels.OidAciRule]",
+                    cls.create(
+                        subject=subject_result.value,
+                        permissions=perm_result.value,
+                    ),
                 )
             except Exception as e:
                 return FlextResult[FlextLdifModels.OidAciRule].fail(
@@ -3467,12 +3691,15 @@ class FlextLdifModels(FlextModels):
                     if rule_result.is_success:
                         rules.append(rule_result.value)
 
-                return cls.create(
-                    access_type=access_type,
-                    target=target,
-                    filter=filter_str,
-                    rules=rules,
-                    raw_aci=raw_aci,
+                return cast(
+                    "FlextResult[FlextLdifModels.OidAci]",
+                    cls.create(
+                        access_type=access_type,
+                        target=target,
+                        filter=filter_str,
+                        rules=rules,
+                        raw_aci=raw_aci,
+                    ),
                 )
             except Exception as e:
                 return FlextResult[FlextLdifModels.OidAci].fail(
@@ -3519,7 +3746,7 @@ class FlextLdifModels(FlextModels):
 
                 return FlextLdifModels.UnifiedAcl.create(
                     name="converted_oid_aci",
-                    target=target_result.value,
+                    target=cast("FlextLdifModels.AclTarget", target_result.value),
                     subject=subject_result.value,
                     permissions=perm_result.value,
                     server_type="oracle_oud",
@@ -3658,12 +3885,15 @@ class FlextLdifModels(FlextModels):
                     if rule_result.is_success:
                         rules.append(rule_result.value)
 
-                return cls.create(
-                    access_type=access_type,
-                    target=target,
-                    constraint=constraint,
-                    rules=rules,
-                    raw_aci=raw_aci,
+                return cast(
+                    "FlextResult[FlextLdifModels.OidEntryLevelAci]",
+                    cls.create(
+                        access_type=access_type,
+                        target=target,
+                        constraint=constraint,
+                        rules=rules,
+                        raw_aci=raw_aci,
+                    ),
                 )
             except Exception as e:
                 return FlextResult[FlextLdifModels.OidEntryLevelAci].fail(
@@ -3704,7 +3934,7 @@ class FlextLdifModels(FlextModels):
 
                 return FlextLdifModels.UnifiedAcl.create(
                     name="converted_entry_level_aci",
-                    target=target_result.value,
+                    target=cast("FlextLdifModels.AclTarget", target_result.value),
                     subject=subject_result.value,
                     permissions=perm_result.value,
                     server_type="oracle_oud",

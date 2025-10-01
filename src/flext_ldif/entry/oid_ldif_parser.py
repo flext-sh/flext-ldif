@@ -13,6 +13,8 @@ import base64
 from pathlib import Path
 
 from flext_core import FlextLogger, FlextResult, FlextService
+from pydantic import ConfigDict
+
 from flext_ldif.models import FlextLdifModels
 
 
@@ -30,6 +32,8 @@ class OidLdifParserService(FlextService[dict]):
             entries = result.value["entries"]
 
     """
+
+    model_config = ConfigDict()
 
     def __init__(self, *, params: dict) -> None:
         """Initialize OID LDIF parser.

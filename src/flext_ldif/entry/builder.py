@@ -13,6 +13,7 @@ import json
 from typing import cast, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
+
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.schema import FlextLdifObjectClassManager
 

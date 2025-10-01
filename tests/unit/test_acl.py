@@ -13,12 +13,12 @@ import asyncio
 from typing import cast
 
 import pytest
-
 from flext_core import FlextResult
+
 from flext_ldif.acl.parser import FlextLdifAclParser
 from flext_ldif.acl.service import FlextLdifAclService
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks import constants
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
 
 
@@ -61,7 +61,7 @@ class TestFlextLdifAclParser:
         assert result.is_success
         acl = result.value
         assert acl.name == "openldap_acl"
-        assert acl.server_type == constants.SERVER_TYPE_OPENLDAP
+        assert acl.server_type == FlextLdifConstants.LdapServers.OPENLDAP
         assert acl.raw_acl == acl_string
         assert acl.target is not None
         assert acl.subject is not None
@@ -76,7 +76,7 @@ class TestFlextLdifAclParser:
         assert result.is_success
         acl = result.value
         assert acl.name == "openldap_acl"
-        assert acl.server_type == constants.SERVER_TYPE_OPENLDAP
+        assert acl.server_type == FlextLdifConstants.LdapServers.OPENLDAP
         assert not acl.raw_acl
 
     def test_parse_openldap_acl_complex(self) -> None:
@@ -92,7 +92,7 @@ class TestFlextLdifAclParser:
         assert result.is_success
         acl = result.value
         assert acl.name == "openldap_acl"
-        assert acl.server_type == constants.SERVER_TYPE_OPENLDAP
+        assert acl.server_type == FlextLdifConstants.LdapServers.OPENLDAP
         assert acl.raw_acl == acl_string
 
     def test_parse_389ds_acl_basic(self) -> None:
@@ -105,7 +105,7 @@ class TestFlextLdifAclParser:
         assert result.is_success
         acl = result.value
         assert acl.name == "389ds_acl"
-        assert acl.server_type == constants.SERVER_TYPE_389DS
+        assert acl.server_type == FlextLdifConstants.LdapServers.DS_389
         assert acl.raw_acl == acl_string
         assert acl.target is not None
         assert acl.subject is not None
@@ -120,7 +120,7 @@ class TestFlextLdifAclParser:
         assert result.is_success
         acl = result.value
         assert acl.name == "389ds_acl"
-        assert acl.server_type == constants.SERVER_TYPE_389DS
+        assert acl.server_type == FlextLdifConstants.LdapServers.DS_389
         assert not acl.raw_acl
 
     def test_parse_389ds_acl_complex(self) -> None:
@@ -137,7 +137,7 @@ class TestFlextLdifAclParser:
         assert result.is_success
         acl = result.value
         assert acl.name == "389ds_acl"
-        assert acl.server_type == constants.SERVER_TYPE_389DS
+        assert acl.server_type == FlextLdifConstants.LdapServers.DS_389
         assert acl.raw_acl == acl_string
 
     def test_parse_oracle_acl_basic(self) -> None:
@@ -150,7 +150,7 @@ class TestFlextLdifAclParser:
         assert result.is_success
         acl = result.value
         assert acl.name == "oracle_acl"
-        assert acl.server_type == constants.SERVER_TYPE_ORACLE_OID
+        assert acl.server_type == FlextLdifConstants.LdapServers.ORACLE_OID
         assert acl.raw_acl == acl_string
         assert acl.target is not None
         assert acl.subject is not None
@@ -161,12 +161,14 @@ class TestFlextLdifAclParser:
         parser = FlextLdifAclParser()
 
         acl_string = "cn=test,dc=example,dc=com:cn,sn:read:user"
-        result = parser.parse_oracle_acl(acl_string, constants.SERVER_TYPE_ORACLE_OUD)
+        result = parser.parse_oracle_acl(
+            acl_string, FlextLdifConstants.LdapServers.ORACLE_OUD
+        )
 
         assert result.is_success
         acl = result.value
         assert acl.name == "oracle_acl"
-        assert acl.server_type == constants.SERVER_TYPE_ORACLE_OUD
+        assert acl.server_type == FlextLdifConstants.LdapServers.ORACLE_OUD
         assert acl.raw_acl == acl_string
 
     def test_parse_oracle_acl_empty_string(self) -> None:
@@ -178,7 +180,7 @@ class TestFlextLdifAclParser:
         assert result.is_success
         acl = result.value
         assert acl.name == "oracle_acl"
-        assert acl.server_type == constants.SERVER_TYPE_ORACLE_OID
+        assert acl.server_type == FlextLdifConstants.LdapServers.ORACLE_OID
         assert not acl.raw_acl
 
     def test_parse_oracle_acl_complex(self) -> None:
@@ -193,7 +195,7 @@ class TestFlextLdifAclParser:
         assert result.is_success
         acl = result.value
         assert acl.name == "oracle_acl"
-        assert acl.server_type == constants.SERVER_TYPE_ORACLE_OID
+        assert acl.server_type == FlextLdifConstants.LdapServers.ORACLE_OID
         assert acl.raw_acl == acl_string
 
     def test_parse_acl_openldap(self) -> None:
@@ -201,48 +203,48 @@ class TestFlextLdifAclParser:
         parser = FlextLdifAclParser()
 
         acl_string = "to attrs=cn by * read"
-        result = parser.parse_acl(acl_string, constants.SERVER_TYPE_OPENLDAP)
+        result = parser.parse_acl(acl_string, FlextLdifConstants.LdapServers.OPENLDAP)
 
         assert result.is_success
         acl = result.value
         assert acl.name == "openldap_acl"
-        assert acl.server_type == constants.SERVER_TYPE_OPENLDAP
+        assert acl.server_type == FlextLdifConstants.LdapServers.OPENLDAP
 
     def test_parse_acl_389ds(self) -> None:
         """Test parse_acl method with 389DS server type."""
         parser = FlextLdifAclParser()
 
         acl_string = '(targetattr="cn")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
-        result = parser.parse_acl(acl_string, constants.SERVER_TYPE_389DS)
+        result = parser.parse_acl(acl_string, FlextLdifConstants.LdapServers.DS_389)
 
         assert result.is_success
         acl = result.value
         assert acl.name == "389ds_acl"
-        assert acl.server_type == constants.SERVER_TYPE_389DS
+        assert acl.server_type == FlextLdifConstants.LdapServers.DS_389
 
     def test_parse_acl_oracle_oid(self) -> None:
         """Test parse_acl method with Oracle OID server type."""
         parser = FlextLdifAclParser()
 
         acl_string = "cn=test,dc=example,dc=com:cn:read:user"
-        result = parser.parse_acl(acl_string, constants.SERVER_TYPE_ORACLE_OID)
+        result = parser.parse_acl(acl_string, FlextLdifConstants.LdapServers.ORACLE_OID)
 
         assert result.is_success
         acl = result.value
         assert acl.name == "oracle_acl"
-        assert acl.server_type == constants.SERVER_TYPE_ORACLE_OID
+        assert acl.server_type == FlextLdifConstants.LdapServers.ORACLE_OID
 
     def test_parse_acl_oracle_oud(self) -> None:
         """Test parse_acl method with Oracle OUD server type."""
         parser = FlextLdifAclParser()
 
         acl_string = "cn=test,dc=example,dc=com:cn:read:user"
-        result = parser.parse_acl(acl_string, constants.SERVER_TYPE_ORACLE_OUD)
+        result = parser.parse_acl(acl_string, FlextLdifConstants.LdapServers.ORACLE_OUD)
 
         assert result.is_success
         acl = result.value
         assert acl.name == "oracle_acl"
-        assert acl.server_type == constants.SERVER_TYPE_ORACLE_OUD
+        assert acl.server_type == FlextLdifConstants.LdapServers.ORACLE_OUD
 
     def test_parse_acl_unsupported_server_type(self) -> None:
         """Test parse_acl method with unsupported server type."""
@@ -346,25 +348,25 @@ class TestFlextLdifAclParser:
         parser = FlextLdifAclParser()
 
         # Test that constants are properly imported and used
-        assert constants.SERVER_TYPE_OPENLDAP is not None
-        assert constants.SERVER_TYPE_389DS is not None
-        assert constants.SERVER_TYPE_ORACLE_OID is not None
-        assert constants.SERVER_TYPE_ORACLE_OUD is not None
+        assert FlextLdifConstants.LdapServers.OPENLDAP is not None
+        assert FlextLdifConstants.LdapServers.DS_389 is not None
+        assert FlextLdifConstants.LdapServers.ORACLE_OID is not None
+        assert FlextLdifConstants.LdapServers.ORACLE_OUD is not None
 
         # Test that parser methods use these constants
         acl_string = "test acl"
 
         result = parser.parse_openldap_acl(acl_string)
         assert result.is_success
-        assert result.value.server_type == constants.SERVER_TYPE_OPENLDAP
+        assert result.value.server_type == FlextLdifConstants.LdapServers.OPENLDAP
 
         result = parser.parse_389ds_acl(acl_string)
         assert result.is_success
-        assert result.value.server_type == constants.SERVER_TYPE_389DS
+        assert result.value.server_type == FlextLdifConstants.LdapServers.DS_389
 
         result = parser.parse_oracle_acl(acl_string)
         assert result.is_success
-        assert result.value.server_type == constants.SERVER_TYPE_ORACLE_OID
+        assert result.value.server_type == FlextLdifConstants.LdapServers.ORACLE_OID
 
     def test_acl_parsing_consistency(self) -> None:
         """Test that ACL parsing is consistent across different methods."""
@@ -379,11 +381,13 @@ class TestFlextLdifAclParser:
 
         # Parse using generic method
         openldap_generic_result = parser.parse_acl(
-            acl_string, constants.SERVER_TYPE_OPENLDAP
+            acl_string, FlextLdifConstants.LdapServers.OPENLDAP
         )
-        ds389_generic_result = parser.parse_acl(acl_string, constants.SERVER_TYPE_389DS)
+        ds389_generic_result = parser.parse_acl(
+            acl_string, FlextLdifConstants.LdapServers.DS_389
+        )
         oracle_generic_result = parser.parse_acl(
-            acl_string, constants.SERVER_TYPE_ORACLE_OID
+            acl_string, FlextLdifConstants.LdapServers.ORACLE_OID
         )
 
         # Results should be equivalent

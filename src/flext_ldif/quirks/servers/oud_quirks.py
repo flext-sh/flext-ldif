@@ -11,11 +11,12 @@ from __future__ import annotations
 import re
 from typing import ClassVar
 
+from flext_core import FlextLogger, FlextResult
 from pydantic import Field
 
-from flext_core import FlextLogger, FlextResult
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
+from flext_ldif.quirks.base import (BaseAclQuirk, BaseEntryQuirk,
+                                    BaseSchemaQuirk)
 
 
 class OudSchemaQuirk(BaseSchemaQuirk):
@@ -46,7 +47,7 @@ class OudSchemaQuirk(BaseSchemaQuirk):
 
     def __init__(self, **data: object) -> None:
         """Initialize OUD schema quirk."""
-        super().__init__(**data)
+        super().__init__(**data)  # type: ignore[arg-type]
         self._logger = FlextLogger(__name__)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
@@ -217,212 +218,214 @@ class OudSchemaQuirk(BaseSchemaQuirk):
                 f"OUD→RFC conversion failed: {e}"
             )
 
+    class AclQuirk(BaseAclQuirk):
+        """Oracle OUD ACL quirk (nested).
 
-class OudAclQuirk(BaseAclQuirk):
-    """Oracle OUD ACL quirk.
+        Extends RFC ACL parsing with Oracle OUD-specific ACL formats:
+        - ds-cfg-access-control-handler: OUD access control
+        - OUD-specific ACL syntax (different from OID orclaci)
 
-    Extends RFC ACL parsing with Oracle OUD-specific ACL formats:
-    - ds-cfg-access-control-handler: OUD access control
-    - OUD-specific ACL syntax (different from OID orclaci)
-
-    Example:
-        quirk = OudAclQuirk(server_type="oud")
-        if quirk.can_handle_acl(acl_line):
-            result = quirk.parse_acl(acl_line)
-
-    """
-
-    server_type: str = Field(default="oud", description="Oracle OUD server type")
-    priority: int = Field(default=10, description="High priority for OUD ACL parsing")
-
-    def __init__(self, **data: object) -> None:
-        """Initialize OUD ACL quirk."""
-        super().__init__(**data)
-        self._logger = FlextLogger(__name__)
-
-    def can_handle_acl(self, acl_line: str) -> bool:
-        """Check if this is an Oracle OUD ACL.
-
-        Args:
-            acl_line: ACL definition line
-
-        Returns:
-            True if this is OUD ACL format
+        Example:
+            quirk = OudSchemaQuirk.AclQuirk(server_type="oud")
+            if quirk.can_handle_acl(acl_line):
+                result = quirk.parse_acl(acl_line)
 
         """
-        # OUD uses different ACL format than OID
-        return acl_line.startswith(("ds-cfg-", "aci:"))
 
-    def parse_acl(self, acl_line: str) -> FlextResult[dict[str, object]]:
-        """Parse Oracle OUD ACL definition.
+        server_type: str = Field(default="oud", description="Oracle OUD server type")
+        priority: int = Field(
+            default=10, description="High priority for OUD ACL parsing"
+        )
 
-        Args:
-            acl_line: ACL definition line
+        def __init__(self, **data: object) -> None:
+            """Initialize OUD ACL quirk."""
+            super().__init__(**data)  # type: ignore[arg-type]
+            self._logger = FlextLogger(__name__)
 
-        Returns:
-            FlextResult with parsed OUD ACL data
+        def can_handle_acl(self, acl_line: str) -> bool:
+            """Check if this is an Oracle OUD ACL.
 
-        """
-        try:
-            # OUD ACL format is different from OID
-            # Parse basic ACL structure
-            oud_acl_data: dict[str, object] = {
-                "type": "oud_acl",
-                "raw": acl_line,
-                "format": "ds-cfg" if acl_line.startswith("ds-cfg-") else "aci",
-            }
+            Args:
+                acl_line: ACL definition line
 
-            return FlextResult[dict[str, object]].ok(oud_acl_data)
+            Returns:
+                True if this is OUD ACL format
 
-        except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"OUD ACL parsing failed: {e}")
+            """
+            # OUD uses different ACL format than OID
+            return acl_line.startswith(("ds-cfg-", "aci:"))
 
-    def convert_acl_to_rfc(
-        self, acl_data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        """Convert OUD ACL to RFC-compliant format.
+        def parse_acl(self, acl_line: str) -> FlextResult[dict[str, object]]:
+            """Parse Oracle OUD ACL definition.
 
-        Args:
-            acl_data: OUD ACL data
+            Args:
+                acl_line: ACL definition line
 
-        Returns:
-            FlextResult with RFC-compliant ACL data
+            Returns:
+                FlextResult with parsed OUD ACL data
 
-        """
-        try:
-            # OUD ACLs don't have direct RFC equivalent
-            rfc_data: dict[str, object] = {
-                "type": "acl",
-                "format": "rfc_generic",
-                "source_format": "oracle_oud",
-                "data": acl_data,
-            }
+            """
+            try:
+                # OUD ACL format is different from OID
+                # Parse basic ACL structure
+                oud_acl_data: dict[str, object] = {
+                    "type": "oud_acl",
+                    "raw": acl_line,
+                    "format": "ds-cfg" if acl_line.startswith("ds-cfg-") else "aci",
+                }
 
-            return FlextResult[dict[str, object]].ok(rfc_data)
+                return FlextResult[dict[str, object]].ok(oud_acl_data)
 
-        except Exception as e:
-            return FlextResult[dict[str, object]].fail(
-                f"OUD ACL→RFC conversion failed: {e}"
-            )
+            except Exception as e:
+                return FlextResult[dict[str, object]].fail(
+                    f"OUD ACL parsing failed: {e}"
+                )
 
-    def convert_acl_from_rfc(
-        self, acl_data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        """Convert RFC ACL to OUD-specific format.
+        def convert_acl_to_rfc(
+            self, acl_data: dict[str, object]
+        ) -> FlextResult[dict[str, object]]:
+            """Convert OUD ACL to RFC-compliant format.
 
-        Args:
-            acl_data: RFC-compliant ACL data
+            Args:
+                acl_data: OUD ACL data
 
-        Returns:
-            FlextResult with OUD ACL data
+            Returns:
+                FlextResult with RFC-compliant ACL data
 
-        """
-        try:
-            # Convert RFC ACL to Oracle OUD format
-            oud_data: dict[str, object] = {
-                "format": "oracle_oud",
-                "target_format": "ds-cfg",
-                "data": acl_data,
-            }
+            """
+            try:
+                # OUD ACLs don't have direct RFC equivalent
+                rfc_data: dict[str, object] = {
+                    "type": "acl",
+                    "format": "rfc_generic",
+                    "source_format": "oracle_oud",
+                    "data": acl_data,
+                }
 
-            return FlextResult[dict[str, object]].ok(oud_data)
+                return FlextResult[dict[str, object]].ok(rfc_data)
 
-        except Exception as e:
-            return FlextResult[dict[str, object]].fail(
-                f"RFC→OUD ACL conversion failed: {e}"
-            )
+            except Exception as e:
+                return FlextResult[dict[str, object]].fail(
+                    f"OUD ACL→RFC conversion failed: {e}"
+                )
 
+        def convert_acl_from_rfc(
+            self, acl_data: dict[str, object]
+        ) -> FlextResult[dict[str, object]]:
+            """Convert RFC ACL to OUD-specific format.
 
-class OudEntryQuirk(BaseEntryQuirk):
-    """Oracle OUD entry quirk.
+            Args:
+                acl_data: RFC-compliant ACL data
 
-    Handles OUD-specific entry transformations:
-    - OUD-specific operational attributes
-    - OUD entry formatting
-    - Compatibility with OID entries
+            Returns:
+                FlextResult with OUD ACL data
 
-    Example:
-        quirk = OudEntryQuirk(server_type="oud")
-        if quirk.can_handle_entry(dn, attributes):
-            result = quirk.process_entry(dn, attributes)
+            """
+            try:
+                # Convert RFC ACL to Oracle OUD format
+                oud_data: dict[str, object] = {
+                    "format": "oracle_oud",
+                    "target_format": "ds-cfg",
+                    "data": acl_data,
+                }
 
-    """
+                return FlextResult[dict[str, object]].ok(oud_data)
 
-    server_type: str = Field(default="oud", description="Oracle OUD server type")
-    priority: int = Field(
-        default=10, description="High priority for OUD entry processing"
-    )
+            except Exception as e:
+                return FlextResult[dict[str, object]].fail(
+                    f"RFC→OUD ACL conversion failed: {e}"
+                )
 
-    def __init__(self, **data: object) -> None:
-        """Initialize OUD entry quirk."""
-        super().__init__(**data)
-        self._logger = FlextLogger(__name__)
+    class EntryQuirk(BaseEntryQuirk):
+        """Oracle OUD entry quirk (nested).
 
-    def can_handle_entry(self, entry_dn: str, attributes: dict) -> bool:
-        """Check if this quirk should handle the entry.
+        Handles OUD-specific entry transformations:
+        - OUD-specific operational attributes
+        - OUD entry formatting
+        - Compatibility with OID entries
 
-        Args:
-            entry_dn: Entry distinguished name
-            attributes: Entry attributes
-
-        Returns:
-            True if this is an OUD-specific entry
-
-        """
-        # Handle all entries for OUD target
-        # Can add specific OUD entry detection logic here
-        _ = entry_dn
-        _ = attributes
-        return True
-
-    def process_entry(
-        self, entry_dn: str, attributes: dict
-    ) -> FlextResult[dict[str, object]]:
-        """Process entry for OUD format.
-
-        Args:
-            entry_dn: Entry distinguished name
-            attributes: Entry attributes
-
-        Returns:
-            FlextResult with processed entry data
+        Example:
+            quirk = OudSchemaQuirk.EntryQuirk(server_type="oud")
+            if quirk.can_handle_entry(dn, attributes):
+                result = quirk.process_entry(dn, attributes)
 
         """
-        try:
-            # OUD entries are RFC-compliant
-            # Add OUD-specific processing if needed
-            processed_entry: dict[str, object] = {
-                "dn": entry_dn,
-                "server_type": "oud",
-            }
-            processed_entry.update(attributes)
 
-            return FlextResult[dict[str, object]].ok(processed_entry)
+        server_type: str = Field(default="oud", description="Oracle OUD server type")
+        priority: int = Field(
+            default=10, description="High priority for OUD entry processing"
+        )
 
-        except Exception as e:
-            return FlextResult[dict[str, object]].fail(
-                f"OUD entry processing failed: {e}"
-            )
+        def __init__(self, **data: object) -> None:
+            """Initialize OUD entry quirk."""
+            super().__init__(**data)  # type: ignore[arg-type]
+            self._logger = FlextLogger(__name__)
 
-    def convert_entry_to_rfc(
-        self, entry_data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        """Convert server-specific entry to RFC-compliant format.
+        def can_handle_entry(self, entry_dn: str, attributes: dict) -> bool:
+            """Check if this quirk should handle the entry.
 
-        Args:
-            entry_data: Server-specific entry data
+            Args:
+                entry_dn: Entry distinguished name
+                attributes: Entry attributes
 
-        Returns:
-            FlextResult with RFC-compliant entry data
+            Returns:
+                True if this is an OUD-specific entry
 
-        """
-        try:
-            # OUD entries are already RFC-compliant
-            return FlextResult[dict[str, object]].ok(entry_data)
-        except Exception as e:
-            return FlextResult[dict[str, object]].fail(
-                f"OUD entry→RFC conversion failed: {e}"
-            )
+            """
+            # Handle all entries for OUD target
+            # Can add specific OUD entry detection logic here
+            _ = entry_dn
+            _ = attributes
+            return True
+
+        def process_entry(
+            self, entry_dn: str, attributes: dict
+        ) -> FlextResult[dict[str, object]]:
+            """Process entry for OUD format.
+
+            Args:
+                entry_dn: Entry distinguished name
+                attributes: Entry attributes
+
+            Returns:
+                FlextResult with processed entry data
+
+            """
+            try:
+                # OUD entries are RFC-compliant
+                # Add OUD-specific processing if needed
+                processed_entry: dict[str, object] = {
+                    "dn": entry_dn,
+                    "server_type": "oud",
+                }
+                processed_entry.update(attributes)
+
+                return FlextResult[dict[str, object]].ok(processed_entry)
+
+            except Exception as e:
+                return FlextResult[dict[str, object]].fail(
+                    f"OUD entry processing failed: {e}"
+                )
+
+        def convert_entry_to_rfc(
+            self, entry_data: dict[str, object]
+        ) -> FlextResult[dict[str, object]]:
+            """Convert server-specific entry to RFC-compliant format.
+
+            Args:
+                entry_data: Server-specific entry data
+
+            Returns:
+                FlextResult with RFC-compliant entry data
+
+            """
+            try:
+                # OUD entries are already RFC-compliant
+                return FlextResult[dict[str, object]].ok(entry_data)
+            except Exception as e:
+                return FlextResult[dict[str, object]].fail(
+                    f"OUD entry→RFC conversion failed: {e}"
+                )
 
 
-__all__ = ["OudAclQuirk", "OudEntryQuirk", "OudSchemaQuirk"]
+__all__ = ["OudSchemaQuirk"]

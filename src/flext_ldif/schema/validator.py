@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import override
 
 from flext_core import FlextLogger, FlextResult, FlextService
+
 from flext_ldif.models import FlextLdifModels
 
 
@@ -35,6 +36,64 @@ class FlextLdifSchemaValidator(FlextService[dict[str, object]]):
                 "status": "ready",
             }
         )
+
+    def validate_entries(
+        self,
+        entries: list[FlextLdifModels.Entry],
+        *,
+        strict: bool = False,
+    ) -> FlextResult[FlextLdifModels.LdifValidationResult]:
+        """Validate multiple LDIF entries.
+
+        Args:
+            entries: List of entries to validate
+            strict: If True, apply strict validation rules
+
+        Returns:
+            FlextResult containing LdifValidationResult
+
+        """
+        errors: list[str] = []
+        warnings: list[str] = []
+
+        for idx, entry in enumerate(entries):
+            # Basic DN validation
+            if not entry.dn or not entry.dn.value:
+                errors.append(f"Entry {idx}: Missing or empty DN")
+                continue
+
+            # Validate objectClass presence
+            object_classes = entry.get_attribute_values("objectClass")
+            if not object_classes:
+                errors.append(
+                    f"Entry {idx} ({entry.dn.value}): Missing objectClass attribute"
+                )
+
+            # In strict mode, perform additional validation
+            if (
+                strict
+                and object_classes
+                and ("person" in object_classes or "inetOrgPerson" in object_classes)
+            ):
+                # Check for required attributes based on objectClass
+                # This is a simplified check - full schema validation would be more complex
+                if not entry.get_attribute_values("cn"):
+                    errors.append(
+                        f"Entry {idx} ({entry.dn.value}): Missing required attribute 'cn' for person objectClass"
+                    )
+                if not entry.get_attribute_values("sn"):
+                    errors.append(
+                        f"Entry {idx} ({entry.dn.value}): Missing required attribute 'sn' for person objectClass"
+                    )
+
+        # Build validation result
+        validation_result = FlextLdifModels.LdifValidationResult(
+            is_valid=len(errors) == 0,
+            errors=errors,
+            warnings=warnings,
+        )
+
+        return FlextResult[FlextLdifModels.LdifValidationResult].ok(validation_result)
 
     def validate_entry_against_schema(
         self,

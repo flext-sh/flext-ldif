@@ -10,17 +10,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.quirks import constants
-from flext_ldif.quirks.adapter import FlextLdifQuirksAdapter
 from flext_ldif.quirks.entry_quirks import FlextLdifEntryQuirks
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
-from flext_ldif.quirks.registry import QuirkRegistryService, get_global_quirk_registry
+from flext_ldif.quirks.registry import QuirkRegistryService
 
 __all__ = [
     "FlextLdifEntryQuirks",
-    "FlextLdifQuirksAdapter",
     "FlextLdifQuirksManager",
     "QuirkRegistryService",
-    "constants",
-    "get_global_quirk_registry",
 ]

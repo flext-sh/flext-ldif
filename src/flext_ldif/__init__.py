@@ -1,12 +1,64 @@
-"""FLEXT-LDIF - RFC-First LDIF Processing Library.
+r"""FLEXT-LDIF - RFC-First LDIF Processing Library with flext-core 1.0.0 Integration.
 
-This library provides RFC-compliant LDIF processing with composable server-specific quirks.
+This library provides RFC-compliant LDIF processing with a unified facade API,
+leveraging flext-core 1.0.0 patterns for enterprise-grade reliability.
 
-Architecture:
-- RFC Layer: Pure RFC 2849/4512 parsers and writers
-- Quirks System: Server-specific extensions (OID, OUD, OpenLDAP, etc.)
-- Migration Pipeline: Generic LDIF migration between any servers
-- Models: Pydantic data models for type safety
+Main Features:
+- Unified FlextLdif facade for all LDIF operations
+- RFC 2849/4512 compliant parsing and writing
+- Server-specific quirks system (OID, OUD, OpenLDAP, etc.)
+- Generic server-agnostic migration pipeline
+- Type-safe Pydantic v2 models
+- CQRS pattern with FlextDispatcher and FlextRegistry
+- FlextProcessors integration for batch and parallel processing
+- Railway-oriented error handling with FlextResult
+
+flext-core 1.0.0 Integration:
+- FlextResult for monadic error composition
+- FlextDispatcher for CQRS orchestration
+- FlextRegistry for handler registration
+- FlextProcessors for data transformations
+- FlextContainer for dependency injection
+- FlextBus for domain event emission
+- FlextLogger for structured logging
+
+Usage:
+    from flext_ldif import FlextLdif
+    from pathlib import Path
+
+    # Initialize facade
+    ldif = FlextLdif()
+
+    # Parse LDIF with FlextResult
+    result = ldif.parse("dn: cn=test,dc=example,dc=com\ncn: test\n")
+    if result.is_success:
+        entries = result.unwrap()
+
+    # Write LDIF
+    write_result = ldif.write(entries)
+
+    # Migrate between servers
+    migration_result = ldif.migrate(
+        input_dir=Path("data/oid"),
+        output_dir=Path("data/oud"),
+        from_server="oid",
+        to_server="oud"
+    )
+
+    # Access infrastructure
+    entry = ldif.Models.Entry(dn="cn=test", attributes={})
+    config = ldif.Config
+    constants = ldif.Constants
+
+    # FlextProcessors for batch processing
+    processors = ldif.Processors.create_processor()
+
+    def validate_entry(entry: dict) -> dict:
+        # Validation logic
+        return entry
+
+    reg_result = ldif.Processors.register_processor("validate", validate_entry, processors)
+    batch_result = ldif.Processors.process_entries_batch("validate", entries, processors)
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,58 +66,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-# Core Infrastructure
-from flext_ldif.config import FlextLdifConfig
-from flext_ldif.constants import FlextLdifConstants
-
-# OID-Specific Parser (Uses RFC + quirks)
-from flext_ldif.entry.oid_ldif_parser import OidLdifParserService
-from flext_ldif.exceptions import FlextLdifExceptions
-
-# Migration Pipeline (Generic server-agnostic migration)
-from flext_ldif.migration_pipeline import LdifMigrationPipelineService
+# Main API Facade - Single Entry Point
+from flext_ldif.api import FlextLdif
+from flext_ldif.handlers import FlextLdifHandlers
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.protocols import FlextLdifProtocols
-
-# Quirks System (Server-specific extensions)
-from flext_ldif.quirks.registry import QuirkRegistryService, get_global_quirk_registry
-from flext_ldif.quirks.servers.oid_quirks import OidAclQuirk, OidSchemaQuirk
-from flext_ldif.quirks.servers.oud_quirks import (
-    OudAclQuirk,
-    OudEntryQuirk,
-    OudSchemaQuirk,
-)
-
-# RFC Layer (Core LDIF/Schema parsers and writers)
-from flext_ldif.rfc.rfc_ldif_parser import RfcLdifParserService
-from flext_ldif.rfc.rfc_ldif_writer import RfcLdifWriterService
-from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
-from flext_ldif.typings import FlextLdifTypes
 
 __all__ = [
-    # Core Infrastructure
-    "FlextLdifConfig",
-    "FlextLdifConstants",
-    "FlextLdifExceptions",
+    "FlextLdif",
+    "FlextLdifHandlers",
     "FlextLdifModels",
-    "FlextLdifProtocols",
-    "FlextLdifTypes",
-    # Migration Pipeline
-    "LdifMigrationPipelineService",
-    # Quirks System
-    "OidAclQuirk",
-    "OidSchemaQuirk",
-    "OudAclQuirk",
-    "OudEntryQuirk",
-    "OudSchemaQuirk",
-    "QuirkRegistryService",
-    "get_global_quirk_registry",
-    # OID Parser
-    "OidLdifParserService",
-    # RFC Layer
-    "RfcLdifParserService",
-    "RfcLdifWriterService",
-    "RfcSchemaParserService",
 ]
 
 # Version information

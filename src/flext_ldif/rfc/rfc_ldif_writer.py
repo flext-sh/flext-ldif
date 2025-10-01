@@ -9,10 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TextIO
 
 from flext_core import FlextLogger, FlextResult, FlextService
+
 from flext_ldif.models import FlextLdifModels
 
 if TYPE_CHECKING:
@@ -77,20 +79,21 @@ class RfcLdifWriterService(FlextService[dict]):
     def execute(self) -> FlextResult[dict]:
         """Execute RFC LDIF writing.
 
+        Supports both file-based and string-based output:
+        - output_file: Write to file (traditional approach)
+        - If no output_file: Return LDIF string in result
+
         Returns:
             FlextResult with write results containing:
-                - output_file: Path to written file
+                - output_file: Path to written file (if output_file provided)
+                - content: LDIF string content (if no output_file)
                 - entries_written: Number of entries written
                 - lines_written: Total lines written
 
         """
         try:
-            # Validate parameters
+            # Check parameters
             output_file_str = self._params.get("output_file", "")
-            if not output_file_str:
-                return FlextResult[dict].fail("output_file parameter is required")
-
-            output_file = Path(output_file_str)
             entries = self._params.get("entries", [])
             schema = self._params.get("schema", {})
             acls = self._params.get("acls", [])
@@ -101,81 +104,173 @@ class RfcLdifWriterService(FlextService[dict]):
                     "At least one of entries, schema, or acls must be provided"
                 )
 
-            # Create output directory if needed
-            output_file.parent.mkdir(parents=True, exist_ok=True)
+            # Determine if writing to file or string
+            write_to_file = bool(output_file_str)
 
-            mode = "a" if append_mode else "w"
+            if write_to_file:
+                # File-based writing
+                output_file = Path(output_file_str)
+
+                # Create output directory if needed
+                output_file.parent.mkdir(parents=True, exist_ok=True)
+
+                mode = "a" if append_mode else "w"
+                total_entries = 0
+                total_lines = 0
+
+                with output_file.open(mode, encoding="utf-8") as f:
+                    # Write version header (RFC 2849)
+                    if not append_mode:
+                        f.write("version: 1\n")
+                        total_lines += 1
+
+                    # Write schema entries if provided
+                    if schema:
+                        schema_result = self._write_schema_entries(f, schema)  # type: ignore[arg-type]
+                        if schema_result.is_failure:
+                            return FlextResult[dict].fail(schema_result.error)
+                        total_entries += schema_result.unwrap().get(
+                            "entries_written", 0
+                        )
+                        total_lines += schema_result.unwrap().get("lines_written", 0)
+
+                    # Write regular entries if provided
+                    if entries:
+                        entries_result = self._write_entries(f, entries)  # type: ignore[arg-type]
+                        if entries_result.is_failure:
+                            return FlextResult[dict].fail(entries_result.error)
+                        total_entries += entries_result.unwrap().get(
+                            "entries_written", 0
+                        )
+                        total_lines += entries_result.unwrap().get("lines_written", 0)
+
+                    # Write ACL entries if provided
+                    if acls:
+                        acls_result = self._write_acl_entries(f, acls)  # type: ignore[arg-type]
+                        if acls_result.is_failure:
+                            return FlextResult[dict].fail(acls_result.error)
+                        total_entries += acls_result.unwrap().get("entries_written", 0)
+                        total_lines += acls_result.unwrap().get("lines_written", 0)
+
+                self._logger.info(
+                    f"LDIF file written: {output_file}",
+                    extra={
+                        "output_file": str(output_file),
+                        "entries_written": total_entries,
+                        "lines_written": total_lines,
+                    },
+                )
+
+                return FlextResult[dict].ok(
+                    {
+                        "output_file": str(output_file),
+                        "entries_written": total_entries,
+                        "lines_written": total_lines,
+                    }
+                )
+
+            # String-based writing using StringIO
             total_entries = 0
             total_lines = 0
+            output = StringIO()
 
-            with output_file.open(mode, encoding="utf-8") as f:
-                # Write version header (RFC 2849)
-                if not append_mode:
-                    f.write("version: 1\n")
-                    total_lines += 1
+            # Write version header (RFC 2849)
+            output.write("version: 1\n")
+            total_lines += 1
 
-                # Write schema entries if provided
-                if schema:
-                    schema_result = self._write_schema_entries(f, schema)
-                    if schema_result.is_failure:
-                        return FlextResult[dict].fail(
-                            f"Failed to write schema: {schema_result.error}"
-                        )
-                    stats = schema_result.unwrap()
-                    total_entries += stats["entries"]
-                    total_lines += stats["lines"]
+            # Write schema entries if provided
+            if schema:
+                schema_result = self._write_schema_entries(output, schema)
+                if schema_result.is_failure:
+                    return FlextResult[dict].fail(schema_result.error)
+                total_entries += schema_result.unwrap().get("entries_written", 0)
+                total_lines += schema_result.unwrap().get("lines_written", 0)
 
-                # Write regular entries if provided
-                if entries:
-                    entries_result = self._write_entries(f, entries)
-                    if entries_result.is_failure:
-                        return FlextResult[dict].fail(
-                            f"Failed to write entries: {entries_result.error}"
-                        )
-                    stats = entries_result.unwrap()
-                    total_entries += stats["entries"]
-                    total_lines += stats["lines"]
+            # Write regular entries if provided
+            if entries:
+                entries_result = self._write_entries(output, entries)
+                if entries_result.is_failure:
+                    return FlextResult[dict].fail(entries_result.error)
+                total_entries += entries_result.unwrap().get("entries_written", 0)
+                total_lines += entries_result.unwrap().get("lines_written", 0)
 
-                # Write ACL entries if provided
-                if acls:
-                    acl_result = self._write_acl_entries(f, acls)
-                    if acl_result.is_failure:
-                        return FlextResult[dict].fail(
-                            f"Failed to write ACLs: {acl_result.error}"
-                        )
-                    stats = acl_result.unwrap()
-                    total_entries += stats["entries"]
-                    total_lines += stats["lines"]
+            # Write ACL entries if provided
+            if acls:
+                acls_result = self._write_acl_entries(output, acls)
+                if acls_result.is_failure:
+                    return FlextResult[dict].fail(acls_result.error)
+                total_entries += acls_result.unwrap().get("entries_written", 0)
+                total_lines += acls_result.unwrap().get("lines_written", 0)
+
+            ldif_content = output.getvalue()
+            output.close()
 
             self._logger.info(
-                f"LDIF written successfully: {output_file}",
+                "LDIF content generated",
                 extra={
+                    "content_length": len(ldif_content),
                     "entries_written": total_entries,
                     "lines_written": total_lines,
-                    "target_server": self._target_server_type,
                 },
             )
 
             return FlextResult[dict].ok(
                 {
-                    "output_file": str(output_file),
+                    "content": ldif_content,
                     "entries_written": total_entries,
                     "lines_written": total_lines,
                 }
             )
 
         except Exception as e:
-            error_msg = f"LDIF writing failed: {e}"
-            self._logger.exception(error_msg)
-            return FlextResult[dict].fail(error_msg)
+            self._logger.exception("LDIF write failed")
+            return FlextResult[dict].fail(f"LDIF write failed: {e}")
+
+    def write_entries_to_string(
+        self,
+        entries: list[FlextLdifModels.Entry],
+    ) -> FlextResult[str]:
+        """Write entries to LDIF string format.
+
+        Args:
+            entries: List of LDIF entries to write
+
+        Returns:
+            FlextResult containing LDIF string or error
+
+        """
+        try:
+            output = StringIO()
+
+            for idx, entry in enumerate(entries):
+                # Write DN
+                dn_line = f"dn: {entry.dn.value}"
+                output.write(dn_line + "\n")
+
+                # Write attributes
+                for attr_name, attr_values_obj in entry.attributes.data.items():
+                    # attr_values_obj is always AttributeValues, access .values for list[str]
+                    for value in attr_values_obj.values:
+                        attr_line = f"{attr_name}: {value}"
+                        output.write(attr_line + "\n")
+
+                # Add blank line between entries (except after last entry)
+                if idx < len(entries) - 1:
+                    output.write("\n")
+
+            ldif_string = output.getvalue()
+            return FlextResult[str].ok(ldif_string)
+
+        except Exception as e:
+            return FlextResult[str].fail(f"Failed to write entries to string: {e}")
 
     def _write_schema_entries(
-        self, file_handle: object, schema: dict
+        self, file_handle: TextIO, schema: dict
     ) -> FlextResult[dict]:
         """Write schema entries to LDIF file.
 
         Args:
-            file_handle: Open file handle
+            file_handle: Open text file handle for writing
             schema: Schema dict with 'attributes' and 'objectclasses'
 
         Returns:
@@ -199,37 +294,30 @@ class RfcLdifWriterService(FlextService[dict]):
             if attributes or objectclasses:
                 # Write DN
                 dn_line = f"dn: {source_dn}\n"
-                if hasattr(file_handle, "write"):
-                    file_handle.write(dn_line)  # type: ignore[attr-defined]
+                file_handle.write(dn_line)
                 lines_written += 1
 
                 # Write objectClass
-                if hasattr(file_handle, "write"):
-                    file_handle.write("objectClass: top\n")  # type: ignore[attr-defined]
-                    file_handle.write("objectClass: subschema\n")  # type: ignore[attr-defined]
+                file_handle.write("objectClass: top\n")
+                file_handle.write("objectClass: subschema\n")
                 lines_written += 2
 
                 # Write attributeTypes
                 for attr_def in attributes.values():
                     attr_line = f"attributeTypes: {attr_def}\n"
                     wrapped_lines = self._wrap_line(attr_line)
-                    for line in wrapped_lines:
-                        if hasattr(file_handle, "write"):
-                            file_handle.write(line)  # type: ignore[attr-defined]
+                    file_handle.writelines(wrapped_lines)
                     lines_written += len(wrapped_lines)
 
                 # Write objectClasses
                 for oc_def in objectclasses.values():
                     oc_line = f"objectClasses: {oc_def}\n"
                     wrapped_lines = self._wrap_line(oc_line)
-                    for line in wrapped_lines:
-                        if hasattr(file_handle, "write"):
-                            file_handle.write(line)  # type: ignore[attr-defined]
+                    file_handle.writelines(wrapped_lines)
                     lines_written += len(wrapped_lines)
 
                 # Entry separator
-                if hasattr(file_handle, "write"):
-                    file_handle.write("\n")  # type: ignore[attr-defined]
+                file_handle.write("\n")
                 lines_written += 1
                 entries_written = 1
 
@@ -244,12 +332,12 @@ class RfcLdifWriterService(FlextService[dict]):
             return FlextResult[dict].fail(f"Schema writing failed: {e}")
 
     def _write_entries(
-        self, file_handle: object, entries: list[dict | FlextLdifModels.Entry]
+        self, file_handle: TextIO, entries: list[dict | FlextLdifModels.Entry]
     ) -> FlextResult[dict]:
         """Write regular entries to LDIF file.
 
         Args:
-            file_handle: Open file handle
+            file_handle: Open text file handle for writing
             entries: List of entry dicts or Entry objects
 
         Returns:
@@ -266,7 +354,7 @@ class RfcLdifWriterService(FlextService[dict]):
                     dn = entry.dn.value
                     # Convert Entry attributes to dict format for processing
                     attributes = {
-                        attr_name: attr_values.values
+                        attr_name: attr_values.values  # type: ignore[misc]
                         for attr_name, attr_values in entry.attributes.attributes.items()
                     }
                 else:
@@ -288,14 +376,15 @@ class RfcLdifWriterService(FlextService[dict]):
                                 processed = process_result.unwrap()
                                 if isinstance(processed, dict):
                                     dn = str(processed.get("dn", dn))
-                                    attributes = {  # type: ignore[misc]
-                                        k: v for k, v in processed.items() if k != "dn"
+                                    attributes = {
+                                        k: v  # type: ignore[misc]
+                                        for k, v in processed.items()
+                                        if k != "dn"
                                     }
 
                 # Write DN
                 dn_line = f"dn: {dn}\n"
-                if hasattr(file_handle, "write"):
-                    file_handle.write(dn_line)  # type: ignore[attr-defined]
+                file_handle.write(dn_line)
                 lines_written += 1
 
                 # Write attributes
@@ -308,14 +397,11 @@ class RfcLdifWriterService(FlextService[dict]):
                     for value in values:
                         attr_line = f"{attr_name}: {value}\n"
                         wrapped_lines = self._wrap_line(attr_line)
-                        for line in wrapped_lines:
-                            if hasattr(file_handle, "write"):
-                                file_handle.write(line)  # type: ignore[attr-defined]
+                        file_handle.writelines(wrapped_lines)
                         lines_written += len(wrapped_lines)
 
                 # Entry separator
-                if hasattr(file_handle, "write"):
-                    file_handle.write("\n")  # type: ignore[attr-defined]
+                file_handle.write("\n")
                 lines_written += 1
                 entries_written += 1
 
@@ -330,12 +416,12 @@ class RfcLdifWriterService(FlextService[dict]):
             return FlextResult[dict].fail(f"Entry writing failed: {e}")
 
     def _write_acl_entries(
-        self, file_handle: object, acls: list[dict]
+        self, file_handle: TextIO, acls: list[dict]
     ) -> FlextResult[dict]:
         """Write ACL entries to LDIF file.
 
         Args:
-            file_handle: Open file handle
+            file_handle: Open text file handle for writing
             acls: List of ACL entry dicts
 
         Returns:
@@ -380,22 +466,18 @@ class RfcLdifWriterService(FlextService[dict]):
 
                 # Write DN
                 dn_line = f"dn: {dn}\n"
-                if hasattr(file_handle, "write"):
-                    file_handle.write(dn_line)  # type: ignore[attr-defined]
+                file_handle.write(dn_line)
                 lines_written += 1
 
                 # Write ACL definitions
                 for acl_def in acl_definitions:
                     acl_line = f"acl: {acl_def}\n"
                     wrapped_lines = self._wrap_line(acl_line)
-                    for line in wrapped_lines:
-                        if hasattr(file_handle, "write"):
-                            file_handle.write(line)  # type: ignore[attr-defined]
+                    file_handle.writelines(wrapped_lines)
                     lines_written += len(wrapped_lines)
 
                 # Entry separator
-                if hasattr(file_handle, "write"):
-                    file_handle.write("\n")  # type: ignore[attr-defined]
+                file_handle.write("\n")
                 lines_written += 1
                 entries_written += 1
 

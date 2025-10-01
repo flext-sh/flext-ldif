@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
+from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_core import FlextProtocols, FlextResult
@@ -58,10 +59,22 @@ class FlextLdifProtocols(FlextProtocols):
 
     @runtime_checkable
     class LdifProcessorProtocol(Protocol):
-        """Protocol for LDIF processors."""
+        """Protocol for LDIF processors with file and content parsing."""
+
+        def parse_ldif_file(
+            self, path: Path, encoding: str = "utf-8"
+        ) -> FlextResult[list[FlextLdifModels.Entry]]:
+            """Parse LDIF file into entries."""
+            ...
+
+        def parse_content(
+            self, content: str
+        ) -> FlextResult[list[FlextLdifModels.Entry]]:
+            """Parse LDIF content string into entries."""
+            ...
 
         def parse(self, content: str) -> FlextResult[list[FlextLdifModels.Entry]]:
-            """Parse LDIF content string into entries."""
+            """Parse LDIF content string into entries (alias for parse_content)."""
             ...
 
         def validate_entries(
@@ -90,16 +103,16 @@ class FlextLdifProtocols(FlextProtocols):
 
     @runtime_checkable
     class LdifValidatorProtocol(Protocol):
-        """Protocol for LDIF validators."""
+        """Protocol for LDIF validators with strict mode support."""
 
         def validate_entry(self, entry: FlextLdifModels.Entry) -> FlextResult[bool]:
             """Validate a single LDIF entry."""
             ...
 
         def validate_entries(
-            self, entries: list[FlextLdifModels.Entry]
-        ) -> FlextResult[bool]:
-            """Validate multiple LDIF entries."""
+            self, entries: list[FlextLdifModels.Entry], *, strict: bool = False
+        ) -> FlextResult[FlextLdifModels.LdifValidationResult]:
+            """Validate multiple LDIF entries with optional strict mode."""
             ...
 
         def get_validation_errors(self: object) -> list[str]:
@@ -166,7 +179,7 @@ class FlextLdifProtocols(FlextProtocols):
             """Add object class to schema."""
             ...
 
-        def add_attribute(self, attribute: object) -> object:
+        def add_attribute(self, attr: object) -> object:
             """Add attribute to schema."""
             ...
 
@@ -208,6 +221,36 @@ class FlextLdifProtocols(FlextProtocols):
 
         def get_error_messages(self: object) -> list[str]:
             """Get validation error messages."""
+            ...
+
+    @runtime_checkable
+    class MigrationPipelineProtocol(Protocol):
+        """Protocol for LDIF migration pipeline."""
+
+        def migrate_entries(
+            self,
+            entries: list[FlextLdifModels.Entry],
+            source_format: str,
+            target_format: str,
+            quirks: list[object],
+        ) -> FlextResult[list[FlextLdifModels.Entry]]:
+            """Migrate LDIF entries between formats."""
+            ...
+
+    @runtime_checkable
+    class QuirkRegistryProtocol(Protocol):
+        """Protocol for quirk registry."""
+
+        def register_schema_quirk(self, quirk: object) -> FlextResult[None]:
+            """Register a schema quirk."""
+            ...
+
+        def register_acl_quirk(self, quirk: object) -> FlextResult[None]:
+            """Register an ACL quirk."""
+            ...
+
+        def register_entry_quirk(self, quirk: object) -> FlextResult[None]:
+            """Register an entry quirk."""
             ...
 
 

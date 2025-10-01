@@ -21,6 +21,8 @@ from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
+from flext_ldif.quirks.registry import QuirkRegistryService
+
 
 class RfcSchemaParserService(FlextService[dict]):
     """RFC 4512 compliant schema parser service.
@@ -81,16 +83,26 @@ class RfcSchemaParserService(FlextService[dict]):
         re.VERBOSE,
     )
 
-    def __init__(self, *, params: dict) -> None:
-        """Initialize RFC schema parser.
+    def __init__(
+        self,
+        *,
+        params: dict,
+        quirk_registry: QuirkRegistryService | None = None,
+        server_type: str | None = None,
+    ) -> None:
+        """Initialize RFC schema parser with optional quirks integration.
 
         Args:
             params: Parsing parameters (file_path, parse_attributes, parse_objectclasses)
+            quirk_registry: Optional quirk registry for server-specific extensions
+            server_type: Optional server type to select specific quirks
 
         """
         super().__init__()
         self._logger = FlextLogger(__name__)
         self._params = params
+        self._quirk_registry = quirk_registry
+        self._server_type = server_type
 
     def execute(self) -> FlextResult[dict]:
         """Execute RFC-compliant schema parsing.
@@ -268,7 +280,7 @@ class RfcSchemaParserService(FlextService[dict]):
             )
 
     def _parse_attribute_type(self, definition: str) -> dict[str, object] | None:
-        """Parse RFC 4512 AttributeType definition.
+        """Parse RFC 4512 AttributeType definition with quirks support.
 
         Args:
             definition: AttributeType definition string
@@ -277,6 +289,20 @@ class RfcSchemaParserService(FlextService[dict]):
             Dict with attribute metadata or None if parsing fails
 
         """
+        # Try quirks first if available and server_type specified
+        if self._quirk_registry and self._server_type:
+            schema_quirks = self._quirk_registry.get_schema_quirks(self._server_type)
+            for quirk in schema_quirks:
+                if quirk.can_handle_attribute(definition):
+                    self._logger.debug(
+                        f"Using {quirk.server_type} quirk for attribute parsing",
+                        extra={"definition": definition[:100]},
+                    )
+                    quirk_result = quirk.parse_attribute(definition)
+                    if quirk_result.is_success:
+                        return quirk_result.unwrap()  # type: ignore[return-value]
+
+        # Fall back to RFC 4512 standard parsing
         match = self.ATTRIBUTE_TYPE_PATTERN.match(definition)
         if not match:
             return None
@@ -295,7 +321,7 @@ class RfcSchemaParserService(FlextService[dict]):
         }
 
     def _parse_object_class(self, definition: str) -> dict[str, object] | None:
-        """Parse RFC 4512 ObjectClass definition.
+        """Parse RFC 4512 ObjectClass definition with quirks support.
 
         Args:
             definition: ObjectClass definition string
@@ -304,6 +330,20 @@ class RfcSchemaParserService(FlextService[dict]):
             Dict with objectClass metadata or None if parsing fails
 
         """
+        # Try quirks first if available and server_type specified
+        if self._quirk_registry and self._server_type:
+            schema_quirks = self._quirk_registry.get_schema_quirks(self._server_type)
+            for quirk in schema_quirks:
+                if quirk.can_handle_objectclass(definition):
+                    self._logger.debug(
+                        f"Using {quirk.server_type} quirk for objectClass parsing",
+                        extra={"definition": definition[:100]},
+                    )
+                    quirk_result = quirk.parse_objectclass(definition)
+                    if quirk_result.is_success:
+                        return quirk_result.unwrap()  # type: ignore[return-value]
+
+        # Fall back to RFC 4512 standard parsing
         match = self.OBJECT_CLASS_PATTERN.match(definition)
         if not match:
             return None

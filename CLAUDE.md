@@ -4,19 +4,36 @@
 **Version**: 0.9.9 RC | **Updated**: 2025-09-17
 **Status**: Functional LDIF processing with memory-bound operations · 1.0.0 Release Preparation
 
+## 📋 DOCUMENT STRUCTURE & REFERENCES
+
+**Quick Links**:
+- **[~/.claude/commands/flext.md](~/.claude/commands/flext.md)**: Optimization command for module refactoring (USE with `/flext` command)
+- **[../CLAUDE.md](../CLAUDE.md)**: FLEXT ecosystem standards and domain library rules
+- **[README.md](README.md)**: Project overview and usage documentation
+
+**Document Purpose**:
+- **This file (CLAUDE.md)**: Project-specific flext-ldif standards and LDIF processing patterns
+- **flext.md command**: Practical refactoring workflows and MCP tool usage patterns
+- **Workspace CLAUDE.md**: Domain library standards and ecosystem architectural principles
+
+**DO NOT DUPLICATE**: This file focuses on flext-ldif specifics. The `/flext` command provides HOW-TO workflows. The workspace CLAUDE.md provides ecosystem-wide standards.
+
 **References**: See [../CLAUDE.md](../CLAUDE.md) for FLEXT ecosystem standards and [README.md](README.md) for project overview.
 
 **Hierarchy**: This document provides project-specific standards based on workspace-level patterns defined in [../CLAUDE.md](../CLAUDE.md). For architectural principles, quality gates, and MCP server usage, reference the main workspace standards.
 
-## 🔗 MCP SERVER INTEGRATION
+## 🔗 MCP SERVER INTEGRATION (MANDATORY)
 
-| MCP Server              | Purpose                                                     | Status     |
-| ----------------------- | ----------------------------------------------------------- | ---------- |
-| **serena**              | LDIF processing codebase analysis and file parsing patterns | **ACTIVE** |
-| **sequential-thinking** | LDIF architecture and data processing problem solving       | **ACTIVE** |
-| **github**              | LDIF ecosystem integration and processing PRs               | **ACTIVE** |
+As defined in [../CLAUDE.md](../CLAUDE.md), all FLEXT development MUST use:
 
-**Usage**: `claude mcp list` for available servers, leverage for LDIF-specific development patterns and data processing analysis.
+| MCP Server              | Purpose                                                     | Status          |
+| ----------------------- | ----------------------------------------------------------- | --------------- |
+| **serena-flext**        | Semantic code analysis, symbol manipulation, refactoring    | **MANDATORY**   |
+| **sequential-thinking** | LDIF architecture and data processing problem decomposition | **RECOMMENDED** |
+| **context7**            | Third-party library documentation (LDIF, Pydantic)          | **RECOMMENDED** |
+| **github**              | Repository operations and LDIF ecosystem PRs                | **ACTIVE**      |
+
+**Usage**: Reference [~/.claude/commands/flext.md](~/.claude/commands/flext.md) for MCP workflows. Use `/flext` command for module optimization.
 
 ---
 

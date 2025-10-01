@@ -191,35 +191,92 @@ python -m flext_ldif parse --help
 
 ## Common Use Cases
 
-### Enterprise LDAP Migration
+### Generic Schema Parsing with Server Quirks
 
-Process large directory exports:
+Parse LDAP schema files with automatic server-specific handling:
 
 ```python
-from flext_ldif import FlextLdifAPI
+from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
+from flext_ldif.quirks.registry import QuirkRegistryService
 from pathlib import Path
 
-api = FlextLdifAPI()
+# Initialize quirks registry
+quirk_registry = QuirkRegistryService()
 
-# Process enterprise directory export
-export_file = Path("enterprise_directory.ldif")
-result = api.parse_file(export_file)
+# Parse OID schema with server-specific quirks
+parser = RfcSchemaParserService(
+    params={
+        "file_path": "oid_schema.ldif",
+        "parse_attributes": True,
+        "parse_objectclasses": True,
+    },
+    quirk_registry=quirk_registry,
+    server_type="oid",  # Oracle Internet Directory
+)
 
+result = parser.execute()
 if result.is_success:
-    entries = result.unwrap()
-    print(f"Processing {len(entries)} directory entries")
+    schema_data = result.unwrap()
+    attributes = schema_data["attributes"]
+    objectclasses = schema_data["objectclasses"]
 
-    # Filter person entries for user migration
-    persons_result = api.filter_persons(entries)
-    if persons_result.is_success:
-        persons = persons_result.unwrap()
-        print(f"Found {len(persons)} user accounts")
+    print(f"Parsed {len(attributes)} attributes")
+    print(f"Parsed {len(objectclasses)} objectClasses")
 
-        # Generate migration statistics
-        stats_result = api.get_entry_statistics(entries)
-        if stats_result.is_success:
-            stats = stats_result.unwrap()
-            print(f"Entry types: {stats}")
+    # Quirks automatically handle OID-specific extensions
+    # Falls back to RFC 4512 for standard attributes
+
+# Works with any LDAP server - OpenLDAP, OUD, AD, etc.
+```
+
+### Generic Entry Migration Between Servers
+
+Migrate entries between different LDAP servers using generic transformation:
+
+```python
+from flext_ldif.migration_pipeline import FlextLdifMigrationService
+from pathlib import Path
+
+# Initialize migration pipeline with source and target servers
+pipeline = FlextLdifMigrationService(
+    input_dir=Path("source_ldifs"),
+    output_dir=Path("target_ldifs"),
+    source_server_type="oid",    # Source: Oracle Internet Directory
+    target_server_type="oud",    # Target: Oracle Unified Directory
+)
+
+# Execute generic transformation: OID → RFC → OUD
+result = pipeline.execute()
+if result.is_success:
+    migration_data = result.unwrap()
+    print("Migration completed successfully")
+    print(f"Entries migrated: {migration_data.get('entries_migrated', 0)}")
+    print(f"Schema files: {migration_data.get('schema_files', [])}")
+
+# Generic transformation pipeline:
+# 1. Source quirks normalize entries to RFC format
+# 2. Target quirks transform from RFC to target format
+# 3. Works with ANY server combination (even unknown servers)
+```
+
+### Working with Multiple Server Types
+
+Handle entries from different LDAP servers in the same workflow:
+
+```python
+from flext_ldif.quirks.registry import QuirkRegistryService
+
+# Initialize registry once
+quirk_registry = QuirkRegistryService()
+
+# Get quirks for different servers
+openldap_quirks = quirk_registry.get_entry_quirks("openldap")
+oid_quirks = quirk_registry.get_entry_quirks("oid")
+oud_quirks = quirk_registry.get_entry_quirks("oud")
+
+# Each quirk knows how to handle server-specific extensions
+# All quirks follow the same Protocol interface
+# Quirks are tried in priority order (lower number = higher priority)
 ```
 
 ### Data Validation and Cleaning

@@ -9,8 +9,9 @@ from __future__ import annotations
 from typing import cast, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
+
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks import constants
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
 
 
@@ -84,7 +85,7 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
             adapted_values = self._adapt_attribute_values(
                 attr_name,
                 attr_values.values,
-                target_server or constants.SERVER_TYPE_GENERIC,
+                target_server or FlextLdifConstants.LdapServers.GENERIC,
             )
 
             adapted_attrs[mapped_name] = FlextLdifModels.AttributeValues(
@@ -138,7 +139,7 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
                     adapted_values.append(required_class)
 
         elif (
-            server_type == constants.SERVER_TYPE_ACTIVE_DIRECTORY
+            server_type == FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY
             and attr_name.lower()
             in {
                 "userprincipalname",
@@ -172,7 +173,7 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
 
         rules = quirks_result.value
         validation_report: dict[str, object] = {
-            "server_type": server_type or constants.SERVER_TYPE_GENERIC,
+            "server_type": server_type or FlextLdifConstants.LdapServers.GENERIC,
             "compliant": True,
             "issues": [],
             "warnings": [],
@@ -182,7 +183,7 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
         warnings: list[str] = []
 
         dn_validation = self._validate_dn_format(
-            entry.dn.value, server_type or constants.SERVER_TYPE_GENERIC
+            entry.dn.value, server_type or FlextLdifConstants.LdapServers.GENERIC
         )
         if not dn_validation["valid"]:
             dn_issues = dn_validation["issues"]
@@ -253,7 +254,7 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
             issues.append(f"Invalid DN format: {e}")
             return {"valid": False, "issues": issues}
 
-        for component in components:
+        for component in components:  # type: ignore[attr-defined]
             if "=" not in component:
                 issues.append(f"Invalid DN component format: {component}")
                 continue
