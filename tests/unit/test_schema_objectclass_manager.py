@@ -12,8 +12,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.schema.objectclass_manager import FlextLdifObjectClassManager
 
@@ -37,12 +35,14 @@ class TestObjectClassManagerInitialization:
         data = result.unwrap()
         assert data["status"] == "ready"
 
-    @pytest.mark.asyncio
-    async def test_manager_execute_async_returns_success(self) -> None:
-        """Test execute_async method returns success status."""
+    def test_manager_execute_returns_success_duplicate(self) -> None:
+        """Test execute method returns success status (duplicate test removed in async cleanup)."""
+        # NOTE: This was test_manager_execute_async_returns_success
+        # Converted to sync-only architecture - async method removed
+        # Keeping this as a duplicate of test_manager_execute_returns_success
         manager = FlextLdifObjectClassManager()
 
-        result = await manager.execute_async()
+        result = manager.execute()
 
         assert result.is_success
         data = result.unwrap()

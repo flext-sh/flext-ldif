@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import override
 
 from flext_core import FlextLogger, FlextResult, FlextService
+
 from flext_ldif.models import FlextLdifModels
 
 
@@ -20,17 +21,12 @@ class FlextLdifSchemaValidator(FlextService[dict[str, object]]):
     @override
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute schema validator service."""
-        return FlextResult[dict[str, object]].ok({
-            "service": FlextLdifSchemaValidator,
-            "status": "ready",
-        })
-
-    async def execute_async(self) -> FlextResult[dict[str, object]]:
-        """Execute schema validator service."""
-        return FlextResult[dict[str, object]].ok({
-            "service": FlextLdifSchemaValidator,
-            "status": "ready",
-        })
+        return FlextResult[dict[str, object]].ok(
+            {
+                "service": FlextLdifSchemaValidator,
+                "status": "ready",
+            }
+        )
 
     def validate_entries(
         self,

@@ -9,12 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_ldif.quirks.registry import QuirkRegistryService
 from flext_ldif.quirks.servers.oid_quirks import OidSchemaQuirk
-from flext_ldif.quirks.servers.oud_quirks import OudSchemaQuirk
 from flext_ldif.quirks.servers.openldap_quirks import OpenLdapSchemaQuirk
+from flext_ldif.quirks.servers.oud_quirks import OudSchemaQuirk
 
 
 class TestQuirkRegistryService:

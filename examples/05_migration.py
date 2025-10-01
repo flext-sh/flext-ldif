@@ -124,7 +124,9 @@ def main() -> None:
     print("  • OID ↔ OpenLDAP 1.x/2.x")
     print("  • OUD ↔ OpenLDAP 1.x/2.x")
     print("  • Any combination of 4 complete servers")
-    print("\nGeneric transformation works with ANY LDAP server (N implementations, not N²)")
+    print(
+        "\nGeneric transformation works with ANY LDAP server (N implementations, not N²)"
+    )
 
 
 if __name__ == "__main__":

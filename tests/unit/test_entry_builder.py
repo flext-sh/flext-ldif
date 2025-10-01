@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import asyncio
 import json
 
 from flext_ldif.entry.builder import FlextLdifEntryBuilder
@@ -33,10 +32,12 @@ class TestFlextLdifEntryBuilder:
         assert result.error is not None
         assert "Use specific build methods" in result.error
 
-    def test_execute_async_fails_with_message(self) -> None:
-        """Test that execute_async method fails with appropriate message."""
+    def test_execute_returns_failure_message(self) -> None:
+        """Test that execute method returns failure with helpful message."""
+        # NOTE: Converted from test_execute_async - async method removed
         builder = FlextLdifEntryBuilder()
-        result = asyncio.run(builder.execute_async())
+        result = builder.execute()
+        # Execute returns failure directing to use specific build methods
         assert result.is_failure
         assert result.error is not None
         assert "Use specific build methods" in result.error
@@ -277,24 +278,26 @@ class TestFlextLdifEntryBuilder:
         """Test building entries from valid JSON."""
         builder = FlextLdifEntryBuilder()
 
-        json_data = json.dumps([
-            {
-                "dn": "cn=user1,dc=example,dc=com",
-                "attributes": {
-                    "objectClass": ["person"],
-                    "cn": ["User 1"],
-                    "sn": ["One"],
+        json_data = json.dumps(
+            [
+                {
+                    "dn": "cn=user1,dc=example,dc=com",
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["User 1"],
+                        "sn": ["One"],
+                    },
                 },
-            },
-            {
-                "dn": "cn=user2,dc=example,dc=com",
-                "attributes": {
-                    "objectClass": ["person"],
-                    "cn": ["User 2"],
-                    "sn": ["Two"],
+                {
+                    "dn": "cn=user2,dc=example,dc=com",
+                    "attributes": {
+                        "objectClass": ["person"],
+                        "cn": ["User 2"],
+                        "sn": ["Two"],
+                    },
                 },
-            },
-        ])
+            ]
+        )
 
         result = builder.build_entries_from_json(json_data)
 
@@ -318,10 +321,12 @@ class TestFlextLdifEntryBuilder:
         """Test building entries from JSON that is not a list."""
         builder = FlextLdifEntryBuilder()
 
-        json_data = json.dumps({
-            "dn": "cn=user1,dc=example,dc=com",
-            "attributes": {"cn": ["User 1"]},
-        })
+        json_data = json.dumps(
+            {
+                "dn": "cn=user1,dc=example,dc=com",
+                "attributes": {"cn": ["User 1"]},
+            }
+        )
 
         result = builder.build_entries_from_json(json_data)
 
@@ -345,9 +350,9 @@ class TestFlextLdifEntryBuilder:
         """Test building entries from JSON with missing DN."""
         builder = FlextLdifEntryBuilder()
 
-        json_data = json.dumps([
-            {"attributes": {"objectClass": ["person"], "cn": ["User 1"]}}
-        ])
+        json_data = json.dumps(
+            [{"attributes": {"objectClass": ["person"], "cn": ["User 1"]}}]
+        )
 
         result = builder.build_entries_from_json(json_data)
 
@@ -359,15 +364,17 @@ class TestFlextLdifEntryBuilder:
         """Test building entries from JSON with string attribute values."""
         builder = FlextLdifEntryBuilder()
 
-        json_data = json.dumps([
-            {
-                "dn": "cn=user1,dc=example,dc=com",
-                "attributes": {
-                    "objectClass": "person",  # String instead of list
-                    "cn": "User 1",  # String instead of list
-                },
-            }
-        ])
+        json_data = json.dumps(
+            [
+                {
+                    "dn": "cn=user1,dc=example,dc=com",
+                    "attributes": {
+                        "objectClass": "person",  # String instead of list
+                        "cn": "User 1",  # String instead of list
+                    },
+                }
+            ]
+        )
 
         result = builder.build_entries_from_json(json_data)
 

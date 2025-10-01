@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import cast, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
+
 from flext_ldif.models import FlextLdifModels
 
 
@@ -20,14 +21,6 @@ class FlextLdifSchemaExtractor(FlextService[FlextLdifModels.SchemaDiscoveryResul
     @override
     def execute(self: object) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
         """Execute schema extractor service."""
-        return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(
-            "Use extract_from_entries() method instead"
-        )
-
-    async def execute_async(
-        self: object,
-    ) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
-        """Execute schema extractor service asynchronously."""
         return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(
             "Use extract_from_entries() method instead"
         )

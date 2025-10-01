@@ -89,9 +89,7 @@ mail: pipeline@example.com
         # Parse LDIF
         api.parse(ldif_content)
         # Validate entries
-        .flat_map(
-            lambda entries: api.validate_entries(entries).map(lambda _: entries)
-        )
+        .flat_map(lambda entries: api.validate_entries(entries).map(lambda _: entries))
         # Filter person entries
         .flat_map(api.filter_persons)
         # Generate statistics

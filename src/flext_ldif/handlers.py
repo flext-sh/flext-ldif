@@ -17,16 +17,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
 
-from flext_core import (
-    FlextBus,
-    FlextContainer,
-    FlextContext,
-    FlextDispatcher,
-    FlextHandlers,
-    FlextModels,
-    FlextRegistry,
-    FlextResult,
-)
+from flext_core import (FlextBus, FlextContainer, FlextContext,
+                        FlextDispatcher, FlextHandlers, FlextModels,
+                        FlextRegistry, FlextResult)
+
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
 

@@ -13,14 +13,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import cast, override
 
-from flext_core import (
-    FlextBus,
-    FlextContainer,
-    FlextContext,
-    FlextLogger,
-    FlextResult,
-    FlextService,
-)
+from flext_core import (FlextBus, FlextContainer, FlextContext, FlextLogger,
+                        FlextResult, FlextService)
+
 from flext_ldif.acl.service import FlextLdifAclService
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
@@ -32,17 +27,11 @@ from flext_ldif.mixins import FlextLdifMixins
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.quirks.registry import QuirkRegistryService
-from flext_ldif.quirks.servers import (
-    AdSchemaQuirk,
-    ApacheSchemaQuirk,
-    Ds389SchemaQuirk,
-    NovellSchemaQuirk,
-    OidSchemaQuirk,
-    OpenLdap1SchemaQuirk,
-    OpenLdapSchemaQuirk,
-    OudSchemaQuirk,
-    TivoliSchemaQuirk,
-)
+from flext_ldif.quirks.servers import (AdSchemaQuirk, ApacheSchemaQuirk,
+                                       Ds389SchemaQuirk, NovellSchemaQuirk,
+                                       OidSchemaQuirk, OpenLdap1SchemaQuirk,
+                                       OpenLdapSchemaQuirk, OudSchemaQuirk,
+                                       TivoliSchemaQuirk)
 from flext_ldif.rfc.rfc_ldif_parser import RfcLdifParserService
 from flext_ldif.rfc.rfc_ldif_writer import RfcLdifWriterService
 from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
@@ -131,11 +120,13 @@ class FlextLdif(FlextService[dict[str, object]]):
 
         """
         try:
-            return FlextResult[dict[str, object]].ok({
-                "status": "initialized",
-                "handlers": list(self._handlers.keys()),
-                "config": {"default_encoding": self._config.ldif_encoding},
-            })
+            return FlextResult[dict[str, object]].ok(
+                {
+                    "status": "initialized",
+                    "handlers": list(self._handlers.keys()),
+                    "config": {"default_encoding": self._config.ldif_encoding},
+                }
+            )
         except Exception as e:
             return FlextResult[dict[str, object]].fail(
                 f"Facade status check failed: {e}"
@@ -169,9 +160,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         # Register migration pipeline (params provided at call time by handlers)
         self._container.register(
             "migration_pipeline",
-            lambda params=None,
-            source="oid",
-            target="oud": LdifMigrationPipelineService(
+            lambda params=None, source="oid", target="oud": LdifMigrationPipelineService(
                 params=params or {},
                 source_server_type=source,
                 target_server_type=target,
@@ -399,13 +388,15 @@ class FlextLdif(FlextService[dict[str, object]]):
         # Return validation result as dictionary for consistent API
         if result.is_success:
             validation_result = result.unwrap()
-            return FlextResult[dict[str, object]].ok({
-                "is_valid": validation_result.is_valid,
-                "total_entries": len(entries),
-                "valid_entries": len(entries) - len(validation_result.errors),
-                "invalid_entries": len(validation_result.errors),
-                "errors": validation_result.errors,
-            })
+            return FlextResult[dict[str, object]].ok(
+                {
+                    "is_valid": validation_result.is_valid,
+                    "total_entries": len(entries),
+                    "valid_entries": len(entries) - len(validation_result.errors),
+                    "invalid_entries": len(validation_result.errors),
+                    "errors": validation_result.errors,
+                }
+            )
         return FlextResult[dict[str, object]].fail(result.error or "Validation failed")
 
     def migrate(
@@ -503,11 +494,13 @@ class FlextLdif(FlextService[dict[str, object]]):
         # Return analytics result as dictionary for consistent API
         if result.is_success:
             analytics = result.unwrap()
-            return FlextResult[dict[str, object]].ok({
-                "total_entries": analytics.total_entries,
-                "object_class_distribution": analytics.object_class_distribution,
-                "patterns_detected": analytics.patterns_detected,
-            })
+            return FlextResult[dict[str, object]].ok(
+                {
+                    "total_entries": analytics.total_entries,
+                    "object_class_distribution": analytics.object_class_distribution,
+                    "patterns_detected": analytics.patterns_detected,
+                }
+            )
         return FlextResult[dict[str, object]].fail(result.error or "Analysis failed")
 
     # =========================================================================
