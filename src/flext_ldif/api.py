@@ -25,7 +25,6 @@ from flext_ldif.acl.service import FlextLdifAclService
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.entry.builder import FlextLdifEntryBuilder
-from flext_ldif.entry.oid_ldif_parser import OidLdifParserService
 from flext_ldif.exceptions import FlextLdifExceptions
 from flext_ldif.handlers import FlextLdifHandlers
 from flext_ldif.migration_pipeline import LdifMigrationPipelineService
@@ -149,23 +148,49 @@ class FlextLdif(FlextService[dict[str, object]]):
     # =========================================================================
 
     def _setup_services(self) -> None:
-        """Register all services in the dependency injection container."""
-        # Register parsers
-        self._container.register("rfc_parser", RfcLdifParserService)
-        self._container.register("oid_parser", OidLdifParserService)
+        """Register all services in the dependency injection container using factory pattern."""
+        from typing import cast
 
-        # Register writer
-        self._container.register("rfc_writer", RfcLdifWriterService)
+        # Register quirk registry FIRST (required by RFC parsers/writers)
+        self._container.register("quirk_registry", lambda: QuirkRegistryService())
+
+        # Register RFC-first parser factory (quirks handle server-specific behavior)
+        self._container.register(
+            "rfc_parser",
+            lambda params=None: RfcLdifParserService(
+                params=params or {},
+                quirk_registry=cast("QuirkRegistryService", self._container.get("quirk_registry").unwrap())
+            )
+        )
+
+        # Register RFC writer factory
+        self._container.register(
+            "rfc_writer",
+            lambda params=None: RfcLdifWriterService(
+                params=params or {},
+                quirk_registry=cast("QuirkRegistryService", self._container.get("quirk_registry").unwrap())
+            )
+        )
 
         # Register schema services
-        self._container.register("rfc_schema_parser", RfcSchemaParserService)
-        self._container.register("schema_validator", FlextLdifSchemaValidator)
+        self._container.register(
+            "rfc_schema_parser",
+            lambda params=None: RfcSchemaParserService(
+                params=params or {},
+                quirk_registry=cast("QuirkRegistryService", self._container.get("quirk_registry").unwrap())
+            )
+        )
+        self._container.register("schema_validator", lambda: FlextLdifSchemaValidator())
 
-        # Register quirk registry
-        self._container.register("quirk_registry", QuirkRegistryService)
-
-        # Register migration pipeline
-        self._container.register("migration_pipeline", LdifMigrationPipelineService)
+        # Register migration pipeline (params provided at call time by handlers)
+        self._container.register(
+            "migration_pipeline",
+            lambda params=None, source="oid", target="oud": LdifMigrationPipelineService(
+                params=params or {},
+                source_server_type=source,
+                target_server_type=target
+            )
+        )
 
     def _register_default_quirks(self) -> None:
         """Auto-register all default server quirks."""

@@ -69,12 +69,18 @@ from __future__ import annotations
 # Main API Facade - Single Entry Point
 from flext_ldif.api import FlextLdif
 from flext_ldif.handlers import FlextLdifHandlers
+
+# RFC-First Architecture Components
+from flext_ldif.migration_pipeline import LdifMigrationPipelineService
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.quirks.registry import QuirkRegistryService
 
 __all__ = [
     "FlextLdif",
     "FlextLdifHandlers",
     "FlextLdifModels",
+    "LdifMigrationPipelineService",
+    "QuirkRegistryService",
 ]
 
 # Version information

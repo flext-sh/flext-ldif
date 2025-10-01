@@ -27,21 +27,32 @@ class FlextLdifTestServiceFactory:
         @staticmethod
         def create_ldif_parser(
             params: dict | None = None,
+            quirk_registry: QuirkRegistryService | None = None,
         ) -> RfcLdifParserService:
-            """Create RFC LDIF parser."""
-            return RfcLdifParserService(params=params or {})
+            """Create RFC LDIF parser with mandatory quirk registry."""
+            if quirk_registry is None:
+                quirk_registry = QuirkRegistryService()
+            return RfcLdifParserService(params=params or {}, quirk_registry=quirk_registry)
 
         @staticmethod
         def create_schema_parser(
             params: dict | None = None,
+            quirk_registry: QuirkRegistryService | None = None,
         ) -> RfcSchemaParserService:
-            """Create RFC schema parser."""
-            return RfcSchemaParserService(params=params or {})
+            """Create RFC schema parser with mandatory quirk registry."""
+            if quirk_registry is None:
+                quirk_registry = QuirkRegistryService()
+            return RfcSchemaParserService(params=params or {}, quirk_registry=quirk_registry)
 
         @staticmethod
-        def create_ldif_writer(params: dict | None = None) -> RfcLdifWriterService:
-            """Create RFC LDIF writer."""
-            return RfcLdifWriterService(params=params or {})
+        def create_ldif_writer(
+            params: dict | None = None,
+            quirk_registry: QuirkRegistryService | None = None,
+        ) -> RfcLdifWriterService:
+            """Create RFC LDIF writer with mandatory quirk registry."""
+            if quirk_registry is None:
+                quirk_registry = QuirkRegistryService()
+            return RfcLdifWriterService(params=params or {}, quirk_registry=quirk_registry)
 
         @staticmethod
         def create_migration_pipeline(
@@ -111,11 +122,12 @@ class FlextLdifTestServiceFactory:
             }
 
     @classmethod
-    def create_test_services(cls, config_type: str = "strict") -> dict:
+    def create_test_services(cls, config_type: str = "strict", quirk_registry: QuirkRegistryService | None = None) -> dict:
         """Create complete service set for testing.
 
         Args:
             config_type: 'strict', 'lenient', or 'performance'
+            quirk_registry: Quirk registry for RFC-first architecture (auto-created if None)
 
         Returns:
             Dict with parsers, writers, and configuration
@@ -130,16 +142,24 @@ class FlextLdifTestServiceFactory:
         else:
             config = cls._ConfigFactory.create_strict_config()
 
+        if quirk_registry is None:
+            quirk_registry = QuirkRegistryService()
+
         return {
-            "ldif_parser": cls._RfcParserFactory.create_ldif_parser(config),
-            "schema_parser": cls._RfcParserFactory.create_schema_parser(config),
-            "ldif_writer": cls._RfcParserFactory.create_ldif_writer(config),
+            "ldif_parser": cls._RfcParserFactory.create_ldif_parser(config, quirk_registry),
+            "schema_parser": cls._RfcParserFactory.create_schema_parser(config, quirk_registry),
+            "ldif_writer": cls._RfcParserFactory.create_ldif_writer(config, quirk_registry),
             "config": config,
+            "quirk_registry": quirk_registry,
         }
 
     @classmethod
-    def create_api(cls, config: FlextTypes.Core.Dict | None = None) -> dict:
+    def create_api(cls, config: FlextTypes.Core.Dict | None = None, quirk_registry: QuirkRegistryService | None = None) -> dict:
         """Create unified service API for backward compatibility.
+
+        Args:
+            config: Configuration dict (auto-created if None)
+            quirk_registry: Quirk registry for RFC-first architecture (auto-created if None)
 
         Returns:
             Dict with all services (ldif_parser, schema_parser, writer)
@@ -148,14 +168,17 @@ class FlextLdifTestServiceFactory:
         if config is None:
             config = cls._ConfigFactory.create_strict_config()
 
+        if quirk_registry is None:
+            quirk_registry = QuirkRegistryService()
+
         return {
-            "ldif_parser": cls._RfcParserFactory.create_ldif_parser(config),
-            "schema_parser": cls._RfcParserFactory.create_schema_parser(config),
-            "ldif_writer": cls._RfcParserFactory.create_ldif_writer(config),
+            "ldif_parser": cls._RfcParserFactory.create_ldif_parser(config, quirk_registry),
+            "schema_parser": cls._RfcParserFactory.create_schema_parser(config, quirk_registry),
+            "ldif_writer": cls._RfcParserFactory.create_ldif_writer(config, quirk_registry),
             "migration_pipeline": cls._RfcParserFactory.create_migration_pipeline(
                 config
             ),
-            "quirk_registry": QuirkRegistryService(),
+            "quirk_registry": quirk_registry,
             "config": config,
         }
 
@@ -163,25 +186,28 @@ class FlextLdifTestServiceFactory:
     def create_parser(
         cls,
         config: FlextTypes.Core.Dict | None = None,
+        quirk_registry: QuirkRegistryService | None = None,
     ) -> RfcLdifParserService:
-        """Create parser service."""
-        return cls._RfcParserFactory.create_ldif_parser(config)
+        """Create parser service with quirk registry."""
+        return cls._RfcParserFactory.create_ldif_parser(config, quirk_registry)
 
     @classmethod
     def create_validator(
         cls,
         config: FlextTypes.Core.Dict | None = None,
+        quirk_registry: QuirkRegistryService | None = None,
     ) -> RfcSchemaParserService:
-        """Create validator service (schema parser)."""
-        return cls._RfcParserFactory.create_schema_parser(config)
+        """Create validator service (schema parser) with quirk registry."""
+        return cls._RfcParserFactory.create_schema_parser(config, quirk_registry)
 
     @classmethod
     def create_writer(
         cls,
         config: FlextTypes.Core.Dict | None = None,
+        quirk_registry: QuirkRegistryService | None = None,
     ) -> RfcLdifWriterService:
-        """Create writer service."""
-        return cls._RfcParserFactory.create_ldif_writer(config)
+        """Create writer service with quirk registry."""
+        return cls._RfcParserFactory.create_ldif_writer(config, quirk_registry)
 
     @classmethod
     def create_configured_api(
@@ -204,19 +230,19 @@ class FlextLdifTestServiceFactory:
         return cls.create_api(config)
 
     @classmethod
-    def create_lenient_api(cls) -> dict:
+    def create_lenient_api(cls, quirk_registry: QuirkRegistryService | None = None) -> dict:
         """Create API with lenient parsing."""
-        return cls.create_api(cls._ConfigFactory.create_lenient_config())
+        return cls.create_api(cls._ConfigFactory.create_lenient_config(), quirk_registry)
 
     @classmethod
-    def create_strict_api(cls) -> dict:
+    def create_strict_api(cls, quirk_registry: QuirkRegistryService | None = None) -> dict:
         """Create API with strict parsing and validation."""
-        return cls.create_api(cls._ConfigFactory.create_strict_config())
+        return cls.create_api(cls._ConfigFactory.create_strict_config(), quirk_registry)
 
     @classmethod
-    def create_performance_api(cls, max_entries: int = 100000) -> dict:
+    def create_performance_api(cls, max_entries: int = 100000, quirk_registry: QuirkRegistryService | None = None) -> dict:
         """Create API optimized for performance testing."""
-        return cls.create_api(cls._ConfigFactory.create_performance_config(max_entries))
+        return cls.create_api(cls._ConfigFactory.create_performance_config(max_entries), quirk_registry)
 
     @classmethod
     def create_test_config(
@@ -238,24 +264,32 @@ class FlextLdifTestServiceFactory:
         )
 
     @classmethod
-    def services_for_integration_test(cls) -> FlextTypes.Core.Dict:
+    def services_for_integration_test(cls, quirk_registry: QuirkRegistryService | None = None) -> FlextTypes.Core.Dict:
         """Create all services configured for integration testing."""
         config = cls.create_test_config()
 
+        if quirk_registry is None:
+            quirk_registry = QuirkRegistryService()
+
         return {
-            "api": cls.create_api(config),
-            "parser": cls.create_parser(config),
-            "validator": cls.create_validator(config),
-            "writer": cls.create_writer(config),
+            "api": cls.create_api(config, quirk_registry),
+            "parser": cls.create_parser(config, quirk_registry),
+            "validator": cls.create_validator(config, quirk_registry),
+            "writer": cls.create_writer(config, quirk_registry),
             "config": config,
+            "quirk_registry": quirk_registry,
         }
 
     @classmethod
-    def minimal_services(cls) -> FlextTypes.Core.Dict:
+    def minimal_services(cls, quirk_registry: QuirkRegistryService | None = None) -> FlextTypes.Core.Dict:
         """Create minimal service set for basic testing."""
+        if quirk_registry is None:
+            quirk_registry = QuirkRegistryService()
+
         return {
-            "api": cls.create_api(),
-            "parser": cls.create_parser(),
+            "api": cls.create_api(quirk_registry=quirk_registry),
+            "parser": cls.create_parser(quirk_registry=quirk_registry),
+            "quirk_registry": quirk_registry,
         }
 
 

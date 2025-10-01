@@ -38,8 +38,11 @@ class RfcSchemaParserService(FlextService[dict]):
     - Schema subentry discovery
 
     Example:
+        from flext_ldif.quirks.registry import QuirkRegistryService
+
+        registry = QuirkRegistryService()
         params = {"file_path": "schema.ldif", "parse_attributes": True}
-        parser = RfcSchemaParserService(params=params)
+        parser = RfcSchemaParserService(params=params, quirk_registry=registry)
         result = parser.execute()
         if result.is_success:
             attrs = result.value["attributes"]
@@ -86,14 +89,14 @@ class RfcSchemaParserService(FlextService[dict]):
         self,
         *,
         params: dict,
-        quirk_registry: QuirkRegistryService | None = None,
+        quirk_registry: QuirkRegistryService,
         server_type: str | None = None,
     ) -> None:
-        """Initialize RFC schema parser with optional quirks integration.
+        """Initialize RFC schema parser with quirks integration.
 
         Args:
             params: Parsing parameters (file_path, parse_attributes, parse_objectclasses)
-            quirk_registry: Optional quirk registry for server-specific extensions
+            quirk_registry: Quirk registry for server-specific extensions (MANDATORY)
             server_type: Optional server type to select specific quirks
 
         """

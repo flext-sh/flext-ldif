@@ -18,7 +18,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from flext_core import FlextLogger, FlextResult, FlextService
-from flext_ldif.entry.oid_ldif_parser import OidLdifParserService
 from flext_ldif.quirks.registry import QuirkRegistryService
 from flext_ldif.quirks.servers import OidSchemaQuirk, OudSchemaQuirk
 from flext_ldif.rfc.rfc_ldif_parser import RfcLdifParserService
@@ -95,18 +94,15 @@ class LdifMigrationPipelineService(FlextService[dict]):
         # Register default quirks if not already registered
         self._register_default_quirks()
 
-        # Select parser based on source server type (OID quirk for Oracle OID)
-        # Type annotation supports both parser types
-        self._ldif_parser_class: type[FlextService[dict]]
-        if source_server_type.lower() == "oid":
-            self._ldif_parser_class = OidLdifParserService
-            self._logger.info("Using OID LDIF parser for Oracle OID source")
-        else:
-            self._ldif_parser_class = RfcLdifParserService
-
-        # Store other parser and writer classes
+        # RFC-First Architecture: ALWAYS use RFC parser with quirks
+        # Quirks handle server-specific behavior (OID, OUD, OpenLDAP, etc.)
+        self._ldif_parser_class: type[FlextService[dict]] = RfcLdifParserService
         self._schema_parser_class: type[RfcSchemaParserService] = RfcSchemaParserService
         self._writer_class: type[RfcLdifWriterService] = RfcLdifWriterService
+
+        self._logger.info(
+            f"Using RFC-first parsers with {source_server_type} → {target_server_type} quirks"
+        )
 
         self._logger.info(
             "Initialized LDIF migration pipeline",
@@ -134,6 +130,12 @@ class LdifMigrationPipelineService(FlextService[dict]):
                 # Register OID ACL quirk (nested class access)
                 oid_acl_quirk = OidSchemaQuirk.AclQuirk()
                 self._quirk_registry.register_acl_quirk(oid_acl_quirk)
+
+            existing_oid_entry = self._quirk_registry.get_entry_quirks("oid")
+            if not existing_oid_entry:
+                # Register OID entry quirk (nested class access) - RFC-First Architecture
+                oid_entry_quirk = OidSchemaQuirk.EntryQuirk()
+                self._quirk_registry.register_entry_quirk(oid_entry_quirk)
 
         # Register OUD quirks if needed
         if self._source_server_type == "oud" or self._target_server_type == "oud":

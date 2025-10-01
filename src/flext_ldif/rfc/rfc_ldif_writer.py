@@ -58,14 +58,14 @@ class RfcLdifWriterService(FlextService[dict]):
         self,
         *,
         params: dict,
-        quirk_registry: QuirkRegistryService | None = None,
+        quirk_registry: QuirkRegistryService,
         target_server_type: str | None = None,
     ) -> None:
         """Initialize RFC LDIF writer.
 
         Args:
             params: Writing parameters (output_file, entries, schema, acls)
-            quirk_registry: Optional quirk registry for transformations
+            quirk_registry: Quirk registry for transformations (MANDATORY)
             target_server_type: Target server type for quirk application
 
         """
