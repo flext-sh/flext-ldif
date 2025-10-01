@@ -13,8 +13,8 @@ import asyncio
 from typing import cast
 
 import pytest
-from flext_core import FlextResult
 
+from flext_core import FlextResult
 from flext_ldif.acl.parser import FlextLdifAclParser
 from flext_ldif.acl.service import FlextLdifAclService
 from flext_ldif.constants import FlextLdifConstants

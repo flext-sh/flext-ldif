@@ -8,12 +8,9 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING
-from typing import Protocol
-from typing import runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import FlextProtocols
-from flext_core import FlextResult
+from flext_core import FlextProtocols, FlextResult
 
 if TYPE_CHECKING:
     from flext_ldif.models import FlextLdifModels

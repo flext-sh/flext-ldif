@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextTypes
-
 from flext_ldif.migration_pipeline import LdifMigrationPipelineService
 from flext_ldif.quirks.registry import QuirkRegistryService
 from flext_ldif.rfc.rfc_ldif_parser import RfcLdifParserService

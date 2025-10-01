@@ -18,13 +18,10 @@ from __future__ import annotations
 import re
 from typing import ClassVar
 
-from flext_core import FlextLogger
-from flext_core import FlextResult
 from pydantic import Field
 
-from flext_ldif.quirks.base import BaseAclQuirk
-from flext_ldif.quirks.base import BaseEntryQuirk
-from flext_ldif.quirks.base import BaseSchemaQuirk
+from flext_core import FlextLogger, FlextResult
+from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
 
 
 class OpenLdap1SchemaQuirk(BaseSchemaQuirk):

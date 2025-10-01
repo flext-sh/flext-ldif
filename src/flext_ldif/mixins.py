@@ -6,16 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from collections.abc import Iterator
-from collections.abc import Sequence
+from collections.abc import Callable, Iterator, Sequence
 from typing import override
 
-from flext_core import FlextMixins
-from flext_core import FlextResult
-from flext_core import T
-from flext_core import U
-
+from flext_core import FlextMixins, FlextResult, T, U
 from flext_ldif.models import FlextLdifModels
 
 
