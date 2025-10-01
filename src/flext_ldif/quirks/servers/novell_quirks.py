@@ -19,11 +19,13 @@ When implementing, refer to:
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger
+from flext_core import FlextResult
 from pydantic import Field
 
-from flext_ldif.quirks.base import (BaseAclQuirk, BaseEntryQuirk,
-                                    BaseSchemaQuirk)
+from flext_ldif.quirks.base import BaseAclQuirk
+from flext_ldif.quirks.base import BaseEntryQuirk
+from flext_ldif.quirks.base import BaseSchemaQuirk
 
 
 class NovellSchemaQuirk(BaseSchemaQuirk):

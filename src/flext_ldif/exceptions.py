@@ -6,7 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextExceptions, FlextResult
+from flext_core import FlextExceptions
+from flext_core import FlextResult
 
 
 class FlextLdifExceptions(FlextExceptions):
