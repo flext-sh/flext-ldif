@@ -107,9 +107,7 @@ objectClass: person
         entries = result.unwrap()
         assert len(entries) == 0
 
-    def test_parse_nonexistent_file_treats_as_content(
-        self, api: FlextLdif
-    ) -> None:
+    def test_parse_nonexistent_file_treats_as_content(self, api: FlextLdif) -> None:
         """Test parsing non-existent file path treats it as content string."""
         result = api.parse("nonexistent.ldif")
 
@@ -282,7 +280,10 @@ class TestFlextLdifApiWrite:
         assert callable(api.write)
 
     def test_write_to_nonexistent_directory_creates_it(
-        self, api: FlextLdif, sample_entries: list[FlextLdifModels.Entry], tmp_path: Path
+        self,
+        api: FlextLdif,
+        sample_entries: list[FlextLdifModels.Entry],
+        tmp_path: Path,
     ) -> None:
         """Test writing to non-existent directory creates the directory."""
         output_file = tmp_path / "subdir" / "output.ldif"

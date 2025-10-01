@@ -33,7 +33,6 @@
         "pydantic-settings (>=2.10.1)",
         "ldif3 (>=3.2.2)",
         "ldap3 (>=2.9.1)",
-        "click (>=8.1.0)",
         "structlog (>=25.4.0,<26.0.0)",
         "flext-core @ file:///home/marlonsc/flext/flext-core",
         "colorlog (>=6.9.0,<7.0.0)",
@@ -53,9 +52,6 @@
     Homepage      = "https://github.com/flext-sh/flext"
     Repository    = "https://github.com/flext-sh/flext"
     Documentation = "https://github.com/flext-sh/flext/blob/main/README.md"
-
-[project.scripts]
-    flext-ldif = "flext_ldif.cli:main"
 
 [tool.ruff]
     extend = "../ruff-shared.toml"
@@ -85,7 +81,6 @@
     python = ">=3.13,<3.14"
     ldif3  = ">=3.2.2"
     ldap3  = ">=2.9.1"
-    click  = ">=8.1.0"
 
 [tool.pytest.ini_options]
     minversion = "8.0"

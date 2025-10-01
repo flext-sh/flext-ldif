@@ -131,13 +131,11 @@ class FlextLdif(FlextService[dict[str, object]]):
 
         """
         try:
-            return FlextResult[dict[str, object]].ok(
-                {
-                    "status": "initialized",
-                    "handlers": list(self._handlers.keys()),
-                    "config": {"default_encoding": self._config.ldif_encoding},
-                }
-            )
+            return FlextResult[dict[str, object]].ok({
+                "status": "initialized",
+                "handlers": list(self._handlers.keys()),
+                "config": {"default_encoding": self._config.ldif_encoding},
+            })
         except Exception as e:
             return FlextResult[dict[str, object]].fail(
                 f"Facade status check failed: {e}"
@@ -148,48 +146,36 @@ class FlextLdif(FlextService[dict[str, object]]):
     # =========================================================================
 
     def _setup_services(self) -> None:
-        """Register all services in the dependency injection container using factory pattern."""
-        from typing import cast
-
+        """Register all services in the dependency injection container with instances."""
         # Register quirk registry FIRST (required by RFC parsers/writers)
-        self._container.register("quirk_registry", lambda: QuirkRegistryService())
+        quirk_registry = QuirkRegistryService()
+        self._container.register("quirk_registry", quirk_registry)
 
-        # Register RFC-first parser factory (quirks handle server-specific behavior)
-        self._container.register(
-            "rfc_parser",
-            lambda params=None: RfcLdifParserService(
-                params=params or {},
-                quirk_registry=cast("QuirkRegistryService", self._container.get("quirk_registry").unwrap())
-            )
-        )
+        # Register RFC-first parser instance (quirks handle server-specific behavior)
+        rfc_parser = RfcLdifParserService(params={}, quirk_registry=quirk_registry)
+        self._container.register("rfc_parser", rfc_parser)
 
-        # Register RFC writer factory
-        self._container.register(
-            "rfc_writer",
-            lambda params=None: RfcLdifWriterService(
-                params=params or {},
-                quirk_registry=cast("QuirkRegistryService", self._container.get("quirk_registry").unwrap())
-            )
-        )
+        # Register RFC writer instance
+        rfc_writer = RfcLdifWriterService(params={}, quirk_registry=quirk_registry)
+        self._container.register("rfc_writer", rfc_writer)
 
         # Register schema services
-        self._container.register(
-            "rfc_schema_parser",
-            lambda params=None: RfcSchemaParserService(
-                params=params or {},
-                quirk_registry=cast("QuirkRegistryService", self._container.get("quirk_registry").unwrap())
-            )
+        rfc_schema_parser = RfcSchemaParserService(
+            params={}, quirk_registry=quirk_registry
         )
-        self._container.register("schema_validator", lambda: FlextLdifSchemaValidator())
+        self._container.register("rfc_schema_parser", rfc_schema_parser)
+        self._container.register("schema_validator", FlextLdifSchemaValidator())
 
         # Register migration pipeline (params provided at call time by handlers)
         self._container.register(
             "migration_pipeline",
-            lambda params=None, source="oid", target="oud": LdifMigrationPipelineService(
+            lambda params=None,
+            source="oid",
+            target="oud": LdifMigrationPipelineService(
                 params=params or {},
                 source_server_type=source,
-                target_server_type=target
-            )
+                target_server_type=target,
+            ),
         )
 
     def _register_default_quirks(self) -> None:
@@ -336,8 +322,10 @@ class FlextLdif(FlextService[dict[str, object]]):
 
         """
         # Create query and delegate to handler
+        # Convert Path to string if necessary
+        source_str = str(source) if isinstance(source, Path) else source
         query = FlextLdifModels.ParseQuery(
-            source=source,  # type: ignore[arg-type]
+            source=source_str,  # type: ignore[arg-type]
             format=server_type if server_type in {"rfc", "oid", "auto"} else "auto",  # type: ignore[arg-type]
             encoding="utf-8",
             strict=True,
@@ -411,15 +399,13 @@ class FlextLdif(FlextService[dict[str, object]]):
         # Return validation result as dictionary for consistent API
         if result.is_success:
             validation_result = result.unwrap()
-            return FlextResult[dict[str, object]].ok(
-                {
-                    "is_valid": validation_result.is_valid,
-                    "total_entries": len(entries),
-                    "valid_entries": len(entries) - len(validation_result.errors),
-                    "invalid_entries": len(validation_result.errors),
-                    "errors": validation_result.errors,
-                }
-            )
+            return FlextResult[dict[str, object]].ok({
+                "is_valid": validation_result.is_valid,
+                "total_entries": len(entries),
+                "valid_entries": len(entries) - len(validation_result.errors),
+                "invalid_entries": len(validation_result.errors),
+                "errors": validation_result.errors,
+            })
         return FlextResult[dict[str, object]].fail(result.error or "Validation failed")
 
     def migrate(
@@ -517,13 +503,11 @@ class FlextLdif(FlextService[dict[str, object]]):
         # Return analytics result as dictionary for consistent API
         if result.is_success:
             analytics = result.unwrap()
-            return FlextResult[dict[str, object]].ok(
-                {
-                    "total_entries": analytics.total_entries,
-                    "object_class_distribution": analytics.object_class_distribution,
-                    "patterns_detected": analytics.patterns_detected,
-                }
-            )
+            return FlextResult[dict[str, object]].ok({
+                "total_entries": analytics.total_entries,
+                "object_class_distribution": analytics.object_class_distribution,
+                "patterns_detected": analytics.patterns_detected,
+            })
         return FlextResult[dict[str, object]].fail(result.error or "Analysis failed")
 
     # =========================================================================

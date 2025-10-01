@@ -265,17 +265,15 @@ class OidSchemaQuirk(BaseSchemaQuirk):
                 if result.is_success:
                     # Convert model to dict for quirk system
                     acl_obj = result.value
-                    return FlextResult[dict[str, object]].ok(
-                        {
-                            "type": "entry_level" if is_entry_level else "standard",
-                            "raw": acl_line,
-                            "parsed": (
-                                acl_obj.model_dump()
-                                if hasattr(acl_obj, "model_dump")
-                                else {}
-                            ),
-                        }
-                    )
+                    return FlextResult[dict[str, object]].ok({
+                        "type": "entry_level" if is_entry_level else "standard",
+                        "raw": acl_line,
+                        "parsed": (
+                            acl_obj.model_dump()
+                            if hasattr(acl_obj, "model_dump")
+                            else {}
+                        ),
+                    })
 
                 return FlextResult[dict[str, object]].fail(
                     result.error or "Parse failed"
@@ -369,7 +367,9 @@ class OidSchemaQuirk(BaseSchemaQuirk):
             self._logger = FlextLogger(__name__)
 
         def can_handle_entry(
-            self, entry_dn: str, attributes: dict  # noqa: ARG002
+            self,
+            entry_dn: str,
+            attributes: dict,
         ) -> bool:
             """Check if this quirk should handle the entry.
 

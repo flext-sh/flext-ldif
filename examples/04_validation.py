@@ -68,7 +68,7 @@ def main() -> None:
 
     if stats_result.is_success:
         stats = stats_result.unwrap()
-        print(f"   ✅ Statistics:")
+        print("   ✅ Statistics:")
         print(f"      Total entries: {stats.get('total_entries', 0)}")
         print(f"      Object classes: {stats.get('object_classes', {})}")
 

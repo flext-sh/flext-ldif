@@ -226,17 +226,15 @@ class RfcSchemaParserService(FlextService[dict]):
                         parse_objectclasses=parse_objectclasses,
                     )
 
-            return FlextResult[dict].ok(
-                {
-                    "attributes": attributes,
-                    "objectclasses": objectclasses,
-                    "source_dn": source_dn,
-                    "stats": {
-                        "total_attributes": len(attributes),
-                        "total_objectclasses": len(objectclasses),
-                    },
-                }
-            )
+            return FlextResult[dict].ok({
+                "attributes": attributes,
+                "objectclasses": objectclasses,
+                "source_dn": source_dn,
+                "stats": {
+                    "total_attributes": len(attributes),
+                    "total_objectclasses": len(objectclasses),
+                },
+            })
 
         except Exception as e:
             return FlextResult[dict].fail(f"Failed to parse schema file: {e}")

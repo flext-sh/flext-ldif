@@ -99,7 +99,7 @@ cn: schema
 
     if result.is_success:
         data = result.unwrap()
-        print(f"\n✅ Migration completed:")
+        print("\n✅ Migration completed:")
         print(f"   Entries migrated: {data.get('entries_migrated', 0)}")
         print(f"   Schema files: {len(data.get('schema_files', []))}")
         print(f"   Output files: {len(data.get('output_files', []))}")

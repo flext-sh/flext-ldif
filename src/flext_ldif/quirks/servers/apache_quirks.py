@@ -58,7 +58,8 @@ class ApacheSchemaQuirk(BaseSchemaQuirk):
         return False
 
     def parse_attribute(
-        self, attr_definition: str  # noqa: ARG002
+        self,
+        attr_definition: str,  # noqa: ARG002
     ) -> FlextResult[dict[str, object]]:
         """Parse Apache DS attribute definition - STUB."""
         return FlextResult[dict[str, object]].fail(
@@ -71,7 +72,8 @@ class ApacheSchemaQuirk(BaseSchemaQuirk):
         return False
 
     def parse_objectclass(
-        self, oc_definition: str  # noqa: ARG002
+        self,
+        oc_definition: str,  # noqa: ARG002
     ) -> FlextResult[dict[str, object]]:
         """Parse Apache DS objectClass definition - STUB."""
         return FlextResult[dict[str, object]].fail(
@@ -117,7 +119,8 @@ class ApacheSchemaQuirk(BaseSchemaQuirk):
             return False
 
         def parse_acl(
-            self, acl_line: str  # noqa: ARG002
+            self,
+            acl_line: str,  # noqa: ARG002
         ) -> FlextResult[dict[str, object]]:
             """Parse Apache DS ACL definition - STUB."""
             return FlextResult[dict[str, object]].fail(
@@ -159,7 +162,9 @@ class ApacheSchemaQuirk(BaseSchemaQuirk):
             self._logger = FlextLogger(__name__)
 
         def can_handle_entry(
-            self, entry_dn: str, attributes: dict  # noqa: ARG002
+            self,
+            entry_dn: str,
+            attributes: dict,  # noqa: ARG002
         ) -> bool:
             """Check if this quirk should handle the entry - STUB."""
             return False

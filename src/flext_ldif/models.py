@@ -584,17 +584,15 @@ class FlextLdifModels(FlextModels):
         @computed_field
         def granted_count(self) -> int:
             """Count of granted permissions."""
-            return sum(
-                [
-                    self.read,
-                    self.write,
-                    self.add,
-                    self.delete,
-                    self.search,
-                    self.compare,
-                    self.proxy,
-                ]
-            )
+            return sum([
+                self.read,
+                self.write,
+                self.add,
+                self.delete,
+                self.search,
+                self.compare,
+                self.proxy,
+            ])
 
         @computed_field
         def permissions_summary(self) -> dict[str, object]:
@@ -2496,10 +2494,14 @@ class FlextLdifModels(FlextModels):
         def schema_summary(self) -> dict[str, object]:
             """Computed field for schema summary."""
             oracle_attrs = sum(
-                1 for a in self.attributes.values() if a.is_oracle_specific  # type: ignore[truthy-function,misc]
+                1
+                for a in self.attributes.values()
+                if a.is_oracle_specific  # type: ignore[truthy-function,misc]
             )
             oracle_ocs = sum(
-                1 for o in self.objectclasses.values() if o.is_oracle_specific  # type: ignore[truthy-function,misc]
+                1
+                for o in self.objectclasses.values()
+                if o.is_oracle_specific  # type: ignore[truthy-function,misc]
             )
 
             return {

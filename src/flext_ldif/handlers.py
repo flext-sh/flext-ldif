@@ -27,7 +27,6 @@ from flext_core import (
     FlextRegistry,
     FlextResult,
 )
-
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
 

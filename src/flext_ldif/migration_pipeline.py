@@ -488,7 +488,8 @@ class LdifMigrationPipelineService(FlextService[dict]):
                     params={
                         "file_path": str(entry_file),
                         "parse_changes": False,
-                    }
+                    },
+                    quirk_registry=self._quirk_registry,
                 )
                 parse_result = parser.execute()
 
