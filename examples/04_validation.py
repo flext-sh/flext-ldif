@@ -95,7 +95,7 @@ mail: pipeline@example.com
         # Filter person entries
         .flat_map(api.filter_persons)
         # Generate statistics
-        .flat_map(lambda persons: api.analyze(persons))
+        .flat_map(api.analyze)
         # Add error context
         .map_error(lambda error: f"Pipeline failed: {error}")
     )
