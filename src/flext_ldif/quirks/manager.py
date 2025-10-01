@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import override
 
 from flext_core import FlextLogger, FlextResult, FlextService
+
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
@@ -95,19 +96,13 @@ class FlextLdifQuirksManager(FlextService[dict[str, object]]):
     @override
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute quirks manager service."""
-        return FlextResult[dict[str, object]].ok({
-            "service": FlextLdifQuirksManager,
-            "server_type": self._server_type,
-            "quirks_loaded": len(self._quirks_registry),
-        })
-
-    async def execute_async(self) -> FlextResult[dict[str, object]]:
-        """Execute quirks manager service asynchronously."""
-        return FlextResult[dict[str, object]].ok({
-            "service": FlextLdifQuirksManager,
-            "server_type": self._server_type,
-            "quirks_loaded": len(self._quirks_registry),
-        })
+        return FlextResult[dict[str, object]].ok(
+            {
+                "service": FlextLdifQuirksManager,
+                "server_type": self._server_type,
+                "quirks_loaded": len(self._quirks_registry),
+            }
+        )
 
     def detect_server_type(
         self, entries: list[FlextLdifModels.Entry]

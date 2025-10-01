@@ -12,8 +12,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 
 from flext_ldif.quirks.registry import QuirkRegistryService
@@ -510,7 +508,9 @@ cn: test
         )
 
         # Mix of CRLF and LF line endings
-        ldif_content = "dn: cn=test,dc=example,dc=com\r\nobjectClass: person\ncn: test\r\n\n"
+        ldif_content = (
+            "dn: cn=test,dc=example,dc=com\r\nobjectClass: person\ncn: test\r\n\n"
+        )
 
         result = parser.parse_content(ldif_content)
         # Should handle mixed line endings

@@ -42,7 +42,9 @@ attributeTypes: ( 1.2.3.4.5 NAME 'customAttr' DESC 'OID custom attribute' SYNTAX
     oid_result = oid_parser.execute()
     if oid_result.is_success:
         schema = oid_result.unwrap()
-        print(f"  ✅ Parsed {len(schema.get('attributes', {}))} attributes with OID quirks")
+        print(
+            f"  ✅ Parsed {len(schema.get('attributes', {}))} attributes with OID quirks"
+        )
     else:
         print(f"  ⚠️ OID parsing: {oid_result.error}")
 

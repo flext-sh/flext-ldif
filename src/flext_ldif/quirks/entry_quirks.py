@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import cast, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
+
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
@@ -32,17 +33,12 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
     @override
     def execute(self: object) -> FlextResult[dict[str, object]]:
         """Execute entry quirks service."""
-        return FlextResult[dict[str, object]].ok({
-            "service": FlextLdifEntryQuirks,
-            "status": "ready",
-        })
-
-    async def execute_async(self: object) -> FlextResult[dict[str, object]]:
-        """Execute entry quirks service."""
-        return FlextResult[dict[str, object]].ok({
-            "service": FlextLdifEntryQuirks,
-            "status": "ready",
-        })
+        return FlextResult[dict[str, object]].ok(
+            {
+                "service": FlextLdifEntryQuirks,
+                "status": "ready",
+            }
+        )
 
     def adapt_entry(
         self, entry: FlextLdifModels.Entry, target_server: str | None = None

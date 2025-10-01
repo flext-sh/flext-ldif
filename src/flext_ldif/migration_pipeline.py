@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from flext_core import FlextLogger, FlextResult, FlextService
+
 from flext_ldif.quirks.registry import QuirkRegistryService
 from flext_ldif.quirks.servers import OidSchemaQuirk, OudSchemaQuirk
 from flext_ldif.rfc.rfc_ldif_parser import RfcLdifParserService

@@ -13,20 +13,17 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-
 from flext_core import FlextConstants, FlextResult, FlextTypes
+from flext_tests import (FlextTestsBuilders, FlextTestsDomains,
+                         FlextTestsFactories, FlextTestsMatchers,
+                         FlextTestsUtilities)
+
 from flext_ldif.quirks.registry import QuirkRegistryService
 from flext_ldif.rfc.rfc_ldif_parser import RfcLdifParserService
 from flext_ldif.rfc.rfc_ldif_writer import RfcLdifWriterService
-from flext_tests import (
-    FlextTestsBuilders,
-    FlextTestsDomains,
-    FlextTestsFactories,
-    FlextTestsMatchers,
-    FlextTestsUtilities,
-)
 
-from .test_support import FileManager, LdifTestData, RealServiceFactory, TestValidators
+from .test_support import (FileManager, LdifTestData, RealServiceFactory,
+                           TestValidators)
 
 
 class TestFileManager:
@@ -269,9 +266,9 @@ def validate_flext_result_failure() -> Callable[[FlextResult[object]], dict[str,
 
 
 @pytest.fixture
-def flext_result_composition_helper() -> Callable[
-    [list[FlextResult[object]]], dict[str, object]
-]:
+def flext_result_composition_helper() -> (
+    Callable[[list[FlextResult[object]]], dict[str, object]]
+):
     """Helper for testing FlextResult composition patterns."""
 
     def helper(results: list[FlextResult[object]]) -> dict[str, object]:

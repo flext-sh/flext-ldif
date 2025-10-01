@@ -9,11 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
+from flext_core import FlextBus, FlextContainer, FlextContext
 
-from flext_core import FlextBus, FlextContainer, FlextContext, FlextResult
 from flext_ldif.handlers import FlextLdifHandlers
 from flext_ldif.models import FlextLdifModels
 
@@ -262,13 +260,15 @@ class TestAnalyzeQueryHandler:
         bus = FlextBus()
         handler = FlextLdifHandlers.AnalyzeQueryHandler(context, container, bus)
 
-        entry_result = FlextLdifModels.Entry.create({
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": {
-                "cn": ["test"],
-                "objectClass": ["person"],
-            },
-        })
+        entry_result = FlextLdifModels.Entry.create(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {
+                    "cn": ["test"],
+                    "objectClass": ["person"],
+                },
+            }
+        )
         entry = entry_result.unwrap()
 
         query = FlextLdifModels.AnalyzeQuery(
@@ -292,13 +292,15 @@ class TestAnalyzeQueryHandler:
         handler = FlextLdifHandlers.AnalyzeQueryHandler(context, container, bus)
 
         entries = [
-            FlextLdifModels.Entry.create({
-                "dn": f"cn=test{i},dc=example,dc=com",
-                "attributes": {
-                    "cn": [f"test{i}"],
-                    "objectClass": ["person", "organizationalPerson"],
-                },
-            }).unwrap()
+            FlextLdifModels.Entry.create(
+                {
+                    "dn": f"cn=test{i},dc=example,dc=com",
+                    "attributes": {
+                        "cn": [f"test{i}"],
+                        "objectClass": ["person", "organizationalPerson"],
+                    },
+                }
+            ).unwrap()
             for i in range(3)
         ]
 
@@ -322,13 +324,15 @@ class TestAnalyzeQueryHandler:
         bus = FlextBus()
         handler = FlextLdifHandlers.AnalyzeQueryHandler(context, container, bus)
 
-        entry_result = FlextLdifModels.Entry.create({
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": {
-                "cn": ["test"],
-                "objectClass": ["person"],
-            },
-        })
+        entry_result = FlextLdifModels.Entry.create(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {
+                    "cn": ["test"],
+                    "objectClass": ["person"],
+                },
+            }
+        )
         entry = entry_result.unwrap()
 
         query = FlextLdifModels.AnalyzeQuery(
@@ -401,13 +405,15 @@ class TestWriteCommandHandler:
         handler = FlextLdifHandlers.WriteCommandHandler(context, container, bus)
 
         # Use factory method to create entry
-        entry_result = FlextLdifModels.Entry.create({
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": {
-                "cn": ["test"],
-                "objectClass": ["person"],
-            },
-        })
+        entry_result = FlextLdifModels.Entry.create(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {
+                    "cn": ["test"],
+                    "objectClass": ["person"],
+                },
+            }
+        )
         entry = entry_result.unwrap()
 
         command = FlextLdifModels.WriteCommand(
@@ -446,6 +452,7 @@ class TestMigrateCommandHandler:
 
         # Register migration pipeline
         from flext_ldif.migration_pipeline import LdifMigrationPipelineService
+
         pipeline = LdifMigrationPipelineService(
             params={"input_dir": "/tmp", "output_dir": "/tmp"},
             source_server_type="oid",
@@ -489,6 +496,7 @@ class TestRegisterQuirkCommandHandler:
 
         # Create a mock quirk implementation
         from flext_ldif.quirks.servers.oid_quirks import OidSchemaQuirk
+
         quirk = OidSchemaQuirk()
 
         command = FlextLdifModels.RegisterQuirkCommand(
@@ -531,18 +539,26 @@ class TestHandlerIntegration:
 
         # Create each handler type
         parse_handler = FlextLdifHandlers.ParseQueryHandler(context, container, bus)
-        validate_handler = FlextLdifHandlers.ValidateQueryHandler(context, container, bus)
+        validate_handler = FlextLdifHandlers.ValidateQueryHandler(
+            context, container, bus
+        )
         analyze_handler = FlextLdifHandlers.AnalyzeQueryHandler(context, container, bus)
         write_handler = FlextLdifHandlers.WriteCommandHandler(context, container, bus)
-        migrate_handler = FlextLdifHandlers.MigrateCommandHandler(context, container, bus)
-        quirk_handler = FlextLdifHandlers.RegisterQuirkCommandHandler(context, container, bus)
+        migrate_handler = FlextLdifHandlers.MigrateCommandHandler(
+            context, container, bus
+        )
+        quirk_handler = FlextLdifHandlers.RegisterQuirkCommandHandler(
+            context, container, bus
+        )
 
         # Verify all handlers initialized
-        assert all([
-            parse_handler,
-            validate_handler,
-            analyze_handler,
-            write_handler,
-            migrate_handler,
-            quirk_handler,
-        ])
+        assert all(
+            [
+                parse_handler,
+                validate_handler,
+                analyze_handler,
+                write_handler,
+                migrate_handler,
+                quirk_handler,
+            ]
+        )

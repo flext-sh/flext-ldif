@@ -13,6 +13,7 @@ import json
 from typing import cast, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
+
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.schema import FlextLdifObjectClassManager
 
@@ -66,12 +67,6 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
 
         # Create entry
         return FlextLdifModels.Entry.create(data={"dn": dn, "attributes": attributes})
-
-    async def execute_async(self) -> FlextResult[FlextLdifModels.Entry]:
-        """Execute entry builder service."""
-        return FlextResult[FlextLdifModels.Entry].fail(
-            "Use specific build methods (build_person_entry, etc.)"
-        )
 
     def build_group_entry(
         self,

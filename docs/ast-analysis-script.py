@@ -200,55 +200,63 @@ class ASTAnalyzer:
                 if isinstance(node, ast.Import):
                     # Handle 'import module' statements
                     for alias in node.names:
-                        analysis["imports"].append({
-                            "type": "import",
-                            "module": alias.name,
-                            "alias": alias.asname,
-                            "line": node.lineno,
-                        })
+                        analysis["imports"].append(
+                            {
+                                "type": "import",
+                                "module": alias.name,
+                                "alias": alias.asname,
+                                "line": node.lineno,
+                            }
+                        )
 
                 elif isinstance(node, ast.ImportFrom):
                     # Handle 'from module import name' statements
                     module = node.module or ""
                     for alias in node.names:
-                        analysis["imports"].append({
-                            "type": "from_import",
-                            "module": module,
-                            "name": alias.name,
-                            "alias": alias.asname,
-                            "line": node.lineno,
-                        })
+                        analysis["imports"].append(
+                            {
+                                "type": "from_import",
+                                "module": module,
+                                "name": alias.name,
+                                "alias": alias.asname,
+                                "line": node.lineno,
+                            }
+                        )
 
                 elif isinstance(node, ast.ClassDef):
                     # Extract class information
-                    analysis["classes"].append({
-                        "name": node.name,
-                        "bases": [
-                            base.id if isinstance(base, ast.Name) else str(base)
-                            for base in node.bases
-                        ],
-                        "methods": len([
-                            n for n in node.body if isinstance(n, ast.FunctionDef)
-                        ]),
-                        "line": node.lineno,
-                        "decorators": [
-                            d.id if isinstance(d, ast.Name) else str(d)
-                            for d in node.decorator_list
-                        ],
-                    })
+                    analysis["classes"].append(
+                        {
+                            "name": node.name,
+                            "bases": [
+                                base.id if isinstance(base, ast.Name) else str(base)
+                                for base in node.bases
+                            ],
+                            "methods": len(
+                                [n for n in node.body if isinstance(n, ast.FunctionDef)]
+                            ),
+                            "line": node.lineno,
+                            "decorators": [
+                                d.id if isinstance(d, ast.Name) else str(d)
+                                for d in node.decorator_list
+                            ],
+                        }
+                    )
 
                 elif isinstance(node, ast.FunctionDef):
                     # Extract function information
-                    analysis["functions"].append({
-                        "name": node.name,
-                        "args": len(node.args.args),
-                        "line": node.lineno,
-                        "decorators": [
-                            d.id if isinstance(d, ast.Name) else str(d)
-                            for d in node.decorator_list
-                        ],
-                        "is_async": isinstance(node, ast.AsyncFunctionDef),
-                    })
+                    analysis["functions"].append(
+                        {
+                            "name": node.name,
+                            "args": len(node.args.args),
+                            "line": node.lineno,
+                            "decorators": [
+                                d.id if isinstance(d, ast.Name) else str(d)
+                                for d in node.decorator_list
+                            ],
+                            "is_async": isinstance(node, ast.AsyncFunctionDef),
+                        }
+                    )
 
                 elif isinstance(node, ast.Call):
                     # Extract function call information
@@ -374,26 +382,30 @@ class ASTAnalyzer:
                     # Categorize imports by library type
                     if module.startswith("flext_core"):
                         for alias in node.names:
-                            analysis["flext_core_usage"].append({
-                                "module": module,
-                                "name": alias.name,
-                                "alias": alias.asname,
-                                "line": node.lineno,
-                                "impact_level": self._assess_flext_core_impact(
-                                    alias.name
-                                ),
-                            })
+                            analysis["flext_core_usage"].append(
+                                {
+                                    "module": module,
+                                    "name": alias.name,
+                                    "alias": alias.asname,
+                                    "line": node.lineno,
+                                    "impact_level": self._assess_flext_core_impact(
+                                        alias.name
+                                    ),
+                                }
+                            )
                     elif module.startswith("pydantic"):
                         for alias in node.names:
-                            analysis["pydantic_usage"].append({
-                                "module": module,
-                                "name": alias.name,
-                                "alias": alias.asname,
-                                "line": node.lineno,
-                                "impact_level": self._assess_pydantic_impact(
-                                    alias.name
-                                ),
-                            })
+                            analysis["pydantic_usage"].append(
+                                {
+                                    "module": module,
+                                    "name": alias.name,
+                                    "alias": alias.asname,
+                                    "line": node.lineno,
+                                    "impact_level": self._assess_pydantic_impact(
+                                        alias.name
+                                    ),
+                                }
+                            )
                     elif module in {
                         "os",
                         "re",
@@ -403,15 +415,17 @@ class ASTAnalyzer:
                         "collections",
                     }:
                         for alias in node.names:
-                            analysis["standard_lib_usage"].append({
-                                "module": module,
-                                "name": alias.name,
-                                "alias": alias.asname,
-                                "line": node.lineno,
-                                "impact_level": self._assess_standard_lib_impact(
-                                    alias.name
-                                ),
-                            })
+                            analysis["standard_lib_usage"].append(
+                                {
+                                    "module": module,
+                                    "name": alias.name,
+                                    "alias": alias.asname,
+                                    "line": node.lineno,
+                                    "impact_level": self._assess_standard_lib_impact(
+                                        alias.name
+                                    ),
+                                }
+                            )
 
                 elif isinstance(node, ast.Call):
                     # Analyze function calls for performance impact
@@ -578,11 +592,13 @@ class ASTAnalyzer:
 
                         # Check for method chains
                         if self._is_method_chain(node):
-                            analysis["method_chains"].append({
-                                "chain": call_info.get("function", "unknown"),
-                                "line": node.lineno,
-                                "complexity": "high",
-                            })
+                            analysis["method_chains"].append(
+                                {
+                                    "chain": call_info.get("function", "unknown"),
+                                    "line": node.lineno,
+                                    "complexity": "high",
+                                }
+                            )
 
             # Calculate complexity score
             analysis["complexity_score"] = (
@@ -732,15 +748,15 @@ class ASTAnalyzer:
 
             # Update aggregate statistics
             if "error" not in module_analysis:
-                report["aggregate_statistics"]["total_complexity"] += (
-                    module_analysis.get("complexity", 0)
-                )
-                report["aggregate_statistics"]["total_lines_of_code"] += (
-                    module_analysis.get("lines_of_code", 0)
-                )
-                report["aggregate_statistics"]["total_ast_nodes"] += (
-                    module_analysis.get("ast_nodes", 0)
-                )
+                report["aggregate_statistics"][
+                    "total_complexity"
+                ] += module_analysis.get("complexity", 0)
+                report["aggregate_statistics"][
+                    "total_lines_of_code"
+                ] += module_analysis.get("lines_of_code", 0)
+                report["aggregate_statistics"][
+                    "total_ast_nodes"
+                ] += module_analysis.get("ast_nodes", 0)
                 report["aggregate_statistics"]["total_function_calls"] += len(
                     module_analysis.get("calls", [])
                 )

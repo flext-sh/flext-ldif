@@ -11,11 +11,12 @@ from __future__ import annotations
 import re
 from typing import ClassVar
 
+from flext_core import FlextLogger, FlextResult
 from pydantic import Field
 
-from flext_core import FlextLogger, FlextResult
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
+from flext_ldif.quirks.base import (BaseAclQuirk, BaseEntryQuirk,
+                                    BaseSchemaQuirk)
 
 
 class OudSchemaQuirk(BaseSchemaQuirk):
@@ -87,10 +88,12 @@ class OudSchemaQuirk(BaseSchemaQuirk):
                 base_data = (
                     attr_obj.model_dump() if hasattr(attr_obj, "model_dump") else {}
                 )
-                return FlextResult[dict[str, object]].ok({
-                    **base_data,
-                    "server_type": "oud",
-                })
+                return FlextResult[dict[str, object]].ok(
+                    {
+                        **base_data,
+                        "server_type": "oud",
+                    }
+                )
 
             return FlextResult[dict[str, object]].fail(
                 attr_result.error or "Failed to parse OUD attribute"
@@ -135,10 +138,12 @@ class OudSchemaQuirk(BaseSchemaQuirk):
                 oc_obj = oc_result.value
                 # Convert to dict with OUD metadata
                 base_data = oc_obj.model_dump() if hasattr(oc_obj, "model_dump") else {}
-                return FlextResult[dict[str, object]].ok({
-                    **base_data,
-                    "server_type": "oud",
-                })
+                return FlextResult[dict[str, object]].ok(
+                    {
+                        **base_data,
+                        "server_type": "oud",
+                    }
+                )
 
             return FlextResult[dict[str, object]].fail(
                 oc_result.error or "Failed to parse OUD objectClass"

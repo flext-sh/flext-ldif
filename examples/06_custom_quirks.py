@@ -11,6 +11,7 @@ Demonstrates:
 from __future__ import annotations
 
 from flext_core import FlextResult
+
 from flext_ldif.quirks.registry import QuirkRegistryService
 from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
 
@@ -134,7 +135,9 @@ attributeTypes: ( 1.2.3.4.5 NAME 'customAttr' DESC 'Custom attribute' X-CUSTOM-M
         print(f"      Attributes: {len(schema.get('attributes', {}))}")
     else:
         print(f"   ⚠️ Parse result: {result.error}")
-        print("   Note: Custom quirk registration requires QuirkRegistryService extension")
+        print(
+            "   Note: Custom quirk registration requires QuirkRegistryService extension"
+        )
 
     print("\n=== Custom Quirk Development Guide ===")
     print("1. Implement SchemaQuirkProtocol:")

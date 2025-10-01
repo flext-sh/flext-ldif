@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import TypeVar
 
 from flext_core import FlextResult, FlextTypes
+
 from flext_ldif.models import FlextLdifModels
 
 T = TypeVar("T")
@@ -327,10 +328,10 @@ class TestValidators:
         chain_info = TestValidators.validate_flext_result_chain(results)
 
         if expect_all_success:
-            assert chain_info["is_valid_chain"], (
-                f"Chain failed at index {chain_info['first_failure_index']}"
-            )
+            assert chain_info[
+                "is_valid_chain"
+            ], f"Chain failed at index {chain_info['first_failure_index']}"
         else:
-            assert not chain_info["is_valid_chain"], (
-                "Expected chain to have failures but all operations succeeded"
-            )
+            assert not chain_info[
+                "is_valid_chain"
+            ], "Expected chain to have failures but all operations succeeded"
