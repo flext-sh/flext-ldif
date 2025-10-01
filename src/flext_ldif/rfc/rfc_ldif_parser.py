@@ -18,10 +18,7 @@ from __future__ import annotations
 import base64
 from pathlib import Path
 
-from flext_core import FlextLogger
-from flext_core import FlextResult
-from flext_core import FlextService
-
+from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif.models import FlextLdifModels
 
 
