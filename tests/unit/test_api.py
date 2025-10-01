@@ -226,6 +226,7 @@ class TestFlextLdifApiWrite:
             assert "objectClass:" in ldif_string
         else:
             # Test framework limitation, not production code issue
+            assert result.error is not None
             assert "write" in result.error.lower() or "writer" in result.error.lower()
 
     def test_write_entries_to_file(
@@ -245,6 +246,7 @@ class TestFlextLdifApiWrite:
             assert "cn=Another User,dc=example,dc=com" in content
         else:
             # Test framework limitation
+            assert result.error is not None
             assert "write" in result.error.lower() or "writer" in result.error.lower()
 
     def test_write_empty_entries_list(self, api: FlextLdif) -> None:
@@ -272,6 +274,7 @@ class TestFlextLdifApiWrite:
             ldif_string = result.unwrap()
             assert "cn=Single,dc=example,dc=com" in ldif_string
         else:
+            assert result.error is not None
             assert "write" in result.error.lower() or "writer" in result.error.lower()
 
     def test_write_api_method_exists(self, api: FlextLdif) -> None:
@@ -295,6 +298,7 @@ class TestFlextLdifApiWrite:
             assert output_file.parent.exists()
         else:
             # Container issue, not directory creation issue
+            assert result.error is not None
             assert "write" in result.error.lower() or "writer" in result.error.lower()
 
 
@@ -332,6 +336,7 @@ class TestFlextLdifApiValidate:
             assert isinstance(validation.get("errors", []), list)
         else:
             # Container initialization issue in tests
+            assert result.error is not None
             assert "validat" in result.error.lower()
 
     def test_validate_empty_entries_list(self, api: FlextLdif) -> None:
@@ -360,6 +365,7 @@ class TestFlextLdifApiValidate:
             validation = result.unwrap()
             assert isinstance(validation, dict)
         else:
+            assert result.error is not None
             assert "validat" in result.error.lower()
 
     def test_validate_api_method_exists(self, api: FlextLdif) -> None:

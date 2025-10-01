@@ -154,7 +154,7 @@ class TivoliSchemaQuirk(BaseSchemaQuirk):
 
         def can_handle_entry(
             self,
-            entry_dn: str,
+            entry_dn: str,  # noqa: ARG002
             attributes: dict,  # noqa: ARG002
         ) -> bool:
             """Check if this quirk should handle the entry - STUB."""
