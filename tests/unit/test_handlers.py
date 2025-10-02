@@ -10,8 +10,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_core import FlextBus, FlextContainer, FlextContext
 
+from flext_core import FlextBus, FlextContainer, FlextContext
 from flext_ldif.handlers import FlextLdifHandlers
 from flext_ldif.models import FlextLdifModels
 
@@ -102,6 +102,7 @@ class TestParseQueryHandler:
 
         # Should fail without parser
         assert result.is_failure
+        assert result.error is not None
         assert "parser" in result.error.lower()
 
     def test_handle_parse_with_content(self) -> None:
@@ -127,6 +128,7 @@ objectClass: person
 
         # Should fail without parser
         assert result.is_failure
+        assert result.error is not None
         assert "parser" in result.error.lower()
 
     @pytest.mark.parametrize("format_type", ["rfc", "auto"])
@@ -147,6 +149,7 @@ objectClass: person
 
         # Should fail without parser
         assert result.is_failure
+        assert result.error is not None
         assert "parser" in result.error.lower()
 
 
@@ -180,6 +183,7 @@ class TestValidateQueryHandler:
         result = handler.handle(query)
 
         assert result.is_failure
+        assert result.error is not None
         assert "validator" in result.error.lower()
 
     def test_handle_empty_entries_without_validator(self) -> None:
@@ -198,6 +202,7 @@ class TestValidateQueryHandler:
 
         # Should fail without validator
         assert result.is_failure
+        assert result.error is not None
         assert "validator" in result.error.lower()
 
     @pytest.mark.parametrize("strict_mode", [True, False])
@@ -216,6 +221,7 @@ class TestValidateQueryHandler:
         result = handler.handle(query)
 
         assert result.is_failure
+        assert result.error is not None
         assert "validator" in result.error.lower()
 
 
@@ -260,15 +266,13 @@ class TestAnalyzeQueryHandler:
         bus = FlextBus()
         handler = FlextLdifHandlers.AnalyzeQueryHandler(context, container, bus)
 
-        entry_result = FlextLdifModels.Entry.create(
-            {
-                "dn": "cn=test,dc=example,dc=com",
-                "attributes": {
-                    "cn": ["test"],
-                    "objectClass": ["person"],
-                },
-            }
-        )
+        entry_result = FlextLdifModels.Entry.create({
+            "dn": "cn=test,dc=example,dc=com",
+            "attributes": {
+                "cn": ["test"],
+                "objectClass": ["person"],
+            },
+        })
         entry = entry_result.unwrap()
 
         query = FlextLdifModels.AnalyzeQuery(
@@ -292,15 +296,13 @@ class TestAnalyzeQueryHandler:
         handler = FlextLdifHandlers.AnalyzeQueryHandler(context, container, bus)
 
         entries = [
-            FlextLdifModels.Entry.create(
-                {
-                    "dn": f"cn=test{i},dc=example,dc=com",
-                    "attributes": {
-                        "cn": [f"test{i}"],
-                        "objectClass": ["person", "organizationalPerson"],
-                    },
-                }
-            ).unwrap()
+            FlextLdifModels.Entry.create({
+                "dn": f"cn=test{i},dc=example,dc=com",
+                "attributes": {
+                    "cn": [f"test{i}"],
+                    "objectClass": ["person", "organizationalPerson"],
+                },
+            }).unwrap()
             for i in range(3)
         ]
 
@@ -324,15 +326,13 @@ class TestAnalyzeQueryHandler:
         bus = FlextBus()
         handler = FlextLdifHandlers.AnalyzeQueryHandler(context, container, bus)
 
-        entry_result = FlextLdifModels.Entry.create(
-            {
-                "dn": "cn=test,dc=example,dc=com",
-                "attributes": {
-                    "cn": ["test"],
-                    "objectClass": ["person"],
-                },
-            }
-        )
+        entry_result = FlextLdifModels.Entry.create({
+            "dn": "cn=test,dc=example,dc=com",
+            "attributes": {
+                "cn": ["test"],
+                "objectClass": ["person"],
+            },
+        })
         entry = entry_result.unwrap()
 
         query = FlextLdifModels.AnalyzeQuery(
@@ -377,6 +377,7 @@ class TestWriteCommandHandler:
         result = handler.handle(command)
 
         assert result.is_failure
+        assert result.error is not None
         assert "writer" in result.error.lower()
 
     def test_handle_empty_entries(self) -> None:
@@ -395,6 +396,7 @@ class TestWriteCommandHandler:
 
         # Should fail without writer
         assert result.is_failure
+        assert result.error is not None
         assert "writer" in result.error.lower()
 
     def test_handle_write_without_writer(self) -> None:
@@ -405,15 +407,13 @@ class TestWriteCommandHandler:
         handler = FlextLdifHandlers.WriteCommandHandler(context, container, bus)
 
         # Use factory method to create entry
-        entry_result = FlextLdifModels.Entry.create(
-            {
-                "dn": "cn=test,dc=example,dc=com",
-                "attributes": {
-                    "cn": ["test"],
-                    "objectClass": ["person"],
-                },
-            }
-        )
+        entry_result = FlextLdifModels.Entry.create({
+            "dn": "cn=test,dc=example,dc=com",
+            "attributes": {
+                "cn": ["test"],
+                "objectClass": ["person"],
+            },
+        })
         entry = entry_result.unwrap()
 
         command = FlextLdifModels.WriteCommand(
@@ -425,6 +425,7 @@ class TestWriteCommandHandler:
 
         # Should fail without writer
         assert result.is_failure
+        assert result.error is not None
         assert "writer" in result.error.lower()
 
 
@@ -552,13 +553,11 @@ class TestHandlerIntegration:
         )
 
         # Verify all handlers initialized
-        assert all(
-            [
-                parse_handler,
-                validate_handler,
-                analyze_handler,
-                write_handler,
-                migrate_handler,
-                quirk_handler,
-            ]
-        )
+        assert all([
+            parse_handler,
+            validate_handler,
+            analyze_handler,
+            write_handler,
+            migrate_handler,
+            quirk_handler,
+        ])

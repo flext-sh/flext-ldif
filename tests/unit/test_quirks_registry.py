@@ -246,10 +246,12 @@ class TestRegistryStats:
         stats = registry.get_registry_stats()
 
         assert stats["total_servers"] == 2
-        assert "oid" in stats["schema_quirks_by_server"]
-        assert "oud" in stats["schema_quirks_by_server"]
-        assert stats["schema_quirks_by_server"]["oid"] == 1
-        assert stats["schema_quirks_by_server"]["oud"] == 1
+        schema_quirks = stats["schema_quirks_by_server"]
+        assert isinstance(schema_quirks, dict)
+        assert "oid" in schema_quirks
+        assert "oud" in schema_quirks
+        assert schema_quirks["oid"] == 1
+        assert schema_quirks["oud"] == 1
 
     def test_list_registered_servers(self) -> None:
         """Test listing all registered server types."""

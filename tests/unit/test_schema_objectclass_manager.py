@@ -269,7 +269,9 @@ class TestObjectClassCombinationValidation:
         validation = result.unwrap()
         assert validation["valid"] is True
         assert validation["structural_count"] == 1
-        assert len(validation["issues"]) == 0
+        issues = validation["issues"]
+        assert isinstance(issues, list)
+        assert len(issues) == 0
 
     def test_validate_multiple_structural_objectclasses(self) -> None:
         """Test validation fails with multiple structural objectClasses."""
@@ -305,7 +307,9 @@ class TestObjectClassCombinationValidation:
         validation = result.unwrap()
         assert validation["valid"] is False
         assert validation["structural_count"] == 2
-        assert len(validation["issues"]) > 0
+        issues = validation["issues"]
+        assert isinstance(issues, list)
+        assert len(issues) > 0
 
     def test_validate_auxiliary_objectclasses(self) -> None:
         """Test validation with auxiliary objectClasses."""
