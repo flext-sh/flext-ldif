@@ -20,9 +20,9 @@ When implementing, refer to:
 
 from __future__ import annotations
 
+from flext_core import FlextLogger, FlextResult
 from pydantic import Field
 
-from flext_core import FlextLogger, FlextResult
 from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
 
 
@@ -54,7 +54,7 @@ class AdSchemaQuirk(BaseSchemaQuirk):
         super().__init__(**data)
         self._logger = FlextLogger(__name__)
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:
+    def can_handle_attribute(self, attr_definition: str) -> bool:  # noqa: ARG002
         """Check if this is an Active Directory attribute.
 
         TODO: Add AD-specific detection logic.
@@ -67,7 +67,6 @@ class AdSchemaQuirk(BaseSchemaQuirk):
             False (stub - not implemented yet)
 
         """
-        # TODO(flext-team): Implement AD attribute detection
         # Check for AD-specific patterns:
         # - AD namespace patterns
         # - AD-specific attribute names
@@ -75,7 +74,7 @@ class AdSchemaQuirk(BaseSchemaQuirk):
 
     def parse_attribute(
         self,
-        attr_definition: str,
+        _attr_definition: str,
     ) -> FlextResult[dict[str, object]]:
         """Parse Active Directory attribute definition.
 
@@ -93,7 +92,7 @@ class AdSchemaQuirk(BaseSchemaQuirk):
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:
+    def can_handle_objectclass(self, oc_definition: str) -> bool:  # noqa: ARG002
         """Check if this is an Active Directory objectClass.
 
         TODO: Add AD-specific detection logic.
@@ -105,12 +104,11 @@ class AdSchemaQuirk(BaseSchemaQuirk):
             False (stub - not implemented yet)
 
         """
-        # TODO(flext-team): Implement AD objectClass detection
         return False
 
     def parse_objectclass(
         self,
-        oc_definition: str,
+        _oc_definition: str,
     ) -> FlextResult[dict[str, object]]:
         """Parse Active Directory objectClass definition.
 
@@ -130,7 +128,7 @@ class AdSchemaQuirk(BaseSchemaQuirk):
 
     def convert_attribute_to_rfc(
         self,
-        attr_data: dict[str, object],
+        _attr_data: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Convert AD attribute to RFC-compliant format.
 
@@ -150,7 +148,7 @@ class AdSchemaQuirk(BaseSchemaQuirk):
 
     def convert_objectclass_to_rfc(
         self,
-        oc_data: dict[str, object],
+        _oc_data: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Convert AD objectClass to RFC-compliant format.
 
@@ -196,7 +194,7 @@ class AdSchemaQuirk(BaseSchemaQuirk):
             super().__init__(**data)
             self._logger = FlextLogger(__name__)
 
-        def can_handle_acl(self, acl_line: str) -> bool:
+        def can_handle_acl(self, acl_line: str) -> bool:  # noqa: ARG002
             """Check if this is an Active Directory ACL.
 
             TODO: Add AD ACL detection logic.
@@ -208,13 +206,12 @@ class AdSchemaQuirk(BaseSchemaQuirk):
                 False (stub - not implemented yet)
 
             """
-            # TODO(flext-team): Implement AD ACL detection
             # Check for nTSecurityDescriptor or SDDL format
             return False
 
         def parse_acl(
             self,
-            acl_line: str,
+            _acl_line: str,
         ) -> FlextResult[dict[str, object]]:
             """Parse Active Directory ACL definition.
 
@@ -234,7 +231,7 @@ class AdSchemaQuirk(BaseSchemaQuirk):
 
         def convert_acl_to_rfc(
             self,
-            acl_data: dict[str, object],
+            _acl_data: dict[str, object],
         ) -> FlextResult[dict[str, object]]:
             """Convert AD ACL to RFC-compliant format.
 
@@ -254,7 +251,7 @@ class AdSchemaQuirk(BaseSchemaQuirk):
 
         def convert_acl_from_rfc(
             self,
-            acl_data: dict[str, object],
+            _acl_data: dict[str, object],
         ) -> FlextResult[dict[str, object]]:
             """Convert RFC ACL to AD-specific format.
 
@@ -303,8 +300,8 @@ class AdSchemaQuirk(BaseSchemaQuirk):
 
         def can_handle_entry(
             self,
-            entry_dn: str,
-            attributes: dict,
+            _entry_dn: str,
+            _attributes: dict,
         ) -> bool:
             """Check if this quirk should handle the entry.
 
@@ -318,14 +315,13 @@ class AdSchemaQuirk(BaseSchemaQuirk):
                 False (stub - not implemented yet)
 
             """
-            # TODO(flext-team): Implement AD entry detection
             # Check for AD-specific DNs or attributes
             return False
 
         def process_entry(
             self,
-            entry_dn: str,
-            attributes: dict,
+            _entry_dn: str,
+            _attributes: dict,
         ) -> FlextResult[dict[str, object]]:
             """Process entry for AD format.
 
@@ -346,7 +342,7 @@ class AdSchemaQuirk(BaseSchemaQuirk):
 
         def convert_entry_to_rfc(
             self,
-            entry_data: dict[str, object],
+            _entry_data: dict[str, object],
         ) -> FlextResult[dict[str, object]]:
             """Convert AD entry to RFC-compliant format.
 

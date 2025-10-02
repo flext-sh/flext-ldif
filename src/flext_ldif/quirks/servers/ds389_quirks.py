@@ -19,9 +19,9 @@ When implementing, refer to:
 
 from __future__ import annotations
 
+from flext_core import FlextLogger, FlextResult
 from pydantic import Field
 
-from flext_core import FlextLogger, FlextResult
 from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
 
 
@@ -36,7 +36,7 @@ class Ds389SchemaQuirk(BaseSchemaQuirk):
         super().__init__(**data)
         self._logger = FlextLogger(__name__)
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:
+    def can_handle_attribute(self, attr_definition: str) -> bool:  # noqa: ARG002
         """Check if this is a 389 DS attribute - STUB."""
         return False
 
@@ -50,7 +50,7 @@ class Ds389SchemaQuirk(BaseSchemaQuirk):
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:
+    def can_handle_objectclass(self, oc_definition: str) -> bool:  # noqa: ARG002
         """Check if this is a 389 DS objectClass - STUB."""
         return False
 
@@ -97,7 +97,7 @@ class Ds389SchemaQuirk(BaseSchemaQuirk):
             super().__init__(**data)
             self._logger = FlextLogger(__name__)
 
-        def can_handle_acl(self, acl_line: str) -> bool:
+        def can_handle_acl(self, acl_line: str) -> bool:  # noqa: ARG002
             """Check if this is a 389 DS ACL - STUB."""
             return False
 

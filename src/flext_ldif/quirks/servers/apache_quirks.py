@@ -19,9 +19,9 @@ When implementing, refer to:
 
 from __future__ import annotations
 
+from flext_core import FlextLogger, FlextResult
 from pydantic import Field
 
-from flext_core import FlextLogger, FlextResult
 from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
 
 
@@ -53,13 +53,13 @@ class ApacheSchemaQuirk(BaseSchemaQuirk):
         super().__init__(**data)
         self._logger = FlextLogger(__name__)
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:
+    def can_handle_attribute(self, attr_definition: str) -> bool:  # noqa: ARG002
         """Check if this is an Apache DS attribute - STUB."""
         return False
 
     def parse_attribute(
         self,
-        attr_definition: str,
+        _attr_definition: str,
     ) -> FlextResult[dict[str, object]]:
         """Parse Apache DS attribute definition - STUB."""
         return FlextResult[dict[str, object]].fail(
@@ -67,13 +67,13 @@ class ApacheSchemaQuirk(BaseSchemaQuirk):
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:
+    def can_handle_objectclass(self, oc_definition: str) -> bool:  # noqa: ARG002
         """Check if this is an Apache DS objectClass - STUB."""
         return False
 
     def parse_objectclass(
         self,
-        oc_definition: str,
+        _oc_definition: str,
     ) -> FlextResult[dict[str, object]]:
         """Parse Apache DS objectClass definition - STUB."""
         return FlextResult[dict[str, object]].fail(
@@ -83,7 +83,7 @@ class ApacheSchemaQuirk(BaseSchemaQuirk):
 
     def convert_attribute_to_rfc(
         self,
-        attr_data: dict[str, object],
+        _attr_data: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Convert ADS attribute to RFC-compliant format - STUB."""
         return FlextResult[dict[str, object]].fail(
@@ -93,7 +93,7 @@ class ApacheSchemaQuirk(BaseSchemaQuirk):
 
     def convert_objectclass_to_rfc(
         self,
-        oc_data: dict[str, object],
+        _oc_data: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Convert ADS objectClass to RFC-compliant format - STUB."""
         return FlextResult[dict[str, object]].fail(
@@ -114,13 +114,13 @@ class ApacheSchemaQuirk(BaseSchemaQuirk):
             super().__init__(**data)
             self._logger = FlextLogger(__name__)
 
-        def can_handle_acl(self, acl_line: str) -> bool:
+        def can_handle_acl(self, acl_line: str) -> bool:  # noqa: ARG002
             """Check if this is an Apache DS ACL - STUB."""
             return False
 
         def parse_acl(
             self,
-            acl_line: str,
+            _acl_line: str,
         ) -> FlextResult[dict[str, object]]:
             """Parse Apache DS ACL definition - STUB."""
             return FlextResult[dict[str, object]].fail(
@@ -130,7 +130,7 @@ class ApacheSchemaQuirk(BaseSchemaQuirk):
 
         def convert_acl_to_rfc(
             self,
-            acl_data: dict[str, object],
+            _acl_data: dict[str, object],
         ) -> FlextResult[dict[str, object]]:
             """Convert ADS ACL to RFC-compliant format - STUB."""
             return FlextResult[dict[str, object]].fail(
@@ -140,7 +140,7 @@ class ApacheSchemaQuirk(BaseSchemaQuirk):
 
         def convert_acl_from_rfc(
             self,
-            acl_data: dict[str, object],
+            _acl_data: dict[str, object],
         ) -> FlextResult[dict[str, object]]:
             """Convert RFC ACL to ADS-specific format - STUB."""
             return FlextResult[dict[str, object]].fail(
@@ -163,16 +163,16 @@ class ApacheSchemaQuirk(BaseSchemaQuirk):
 
         def can_handle_entry(
             self,
-            entry_dn: str,
-            attributes: dict,
+            _entry_dn: str,
+            _attributes: dict,
         ) -> bool:
             """Check if this quirk should handle the entry - STUB."""
             return False
 
         def process_entry(
             self,
-            entry_dn: str,
-            attributes: dict,
+            _entry_dn: str,
+            _attributes: dict,
         ) -> FlextResult[dict[str, object]]:
             """Process entry for ADS format - STUB."""
             return FlextResult[dict[str, object]].fail(
@@ -182,7 +182,7 @@ class ApacheSchemaQuirk(BaseSchemaQuirk):
 
         def convert_entry_to_rfc(
             self,
-            entry_data: dict[str, object],
+            _entry_data: dict[str, object],
         ) -> FlextResult[dict[str, object]]:
             """Convert ADS entry to RFC-compliant format - STUB."""
             return FlextResult[dict[str, object]].fail(

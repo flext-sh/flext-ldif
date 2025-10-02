@@ -109,7 +109,7 @@ class TestMigrationPipelineValidation:
 
         assert result.is_failure
         assert result.error is not None
-        assert "input_dir" in result.error.lower()
+        assert result.error is not None and "input_dir" in result.error.lower()
 
     def test_execute_fails_without_output_dir(self, tmp_path: Path) -> None:
         """Test pipeline fails when output_dir parameter is missing."""
@@ -128,7 +128,7 @@ class TestMigrationPipelineValidation:
 
         assert result.is_failure
         assert result.error is not None
-        assert "output_dir" in result.error.lower()
+        assert result.error is not None and "output_dir" in result.error.lower()
 
     def test_execute_fails_with_nonexistent_input_dir(self, tmp_path: Path) -> None:
         """Test pipeline fails when input directory doesn't exist."""
@@ -150,7 +150,7 @@ class TestMigrationPipelineValidation:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not found" in result.error.lower()
+        assert result.error is not None and "not found" in result.error.lower()
 
 
 class TestMigrationPipelineExecution:

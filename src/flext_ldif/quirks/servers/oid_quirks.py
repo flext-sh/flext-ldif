@@ -18,9 +18,9 @@ from __future__ import annotations
 import re
 from typing import ClassVar
 
+from flext_core import FlextLogger, FlextResult
 from pydantic import Field
 
-from flext_core import FlextLogger, FlextResult
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
 
@@ -368,8 +368,8 @@ class OidSchemaQuirk(BaseSchemaQuirk):
 
         def can_handle_entry(
             self,
-            entry_dn: str,
-            attributes: dict,
+            _entry_dn: str,
+            _attributes: dict,
         ) -> bool:
             """Check if this quirk should handle the entry.
 

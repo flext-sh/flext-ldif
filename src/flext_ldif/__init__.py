@@ -26,18 +26,14 @@ Usage:
     from flext_ldif import FlextLdif
     from pathlib import Path
 
-    # Initialize facade
     ldif = FlextLdif()
 
-    # Parse LDIF with FlextResult
     result = ldif.parse("dn: cn=test,dc=example,dc=com\ncn: test\n")
     if result.is_success:
         entries = result.unwrap()
 
-    # Write LDIF
     write_result = ldif.write(entries)
 
-    # Migrate between servers
     migration_result = ldif.migrate(
         input_dir=Path("data/oid"),
         output_dir=Path("data/oud"),
@@ -45,16 +41,13 @@ Usage:
         to_server="oud"
     )
 
-    # Access infrastructure
     entry = ldif.Models.Entry(dn="cn=test", attributes={})
-    config = ldif.Config
+    config = ldif.config
     constants = ldif.Constants
 
-    # FlextProcessors for batch processing
     processors = ldif.Processors.create_processor()
 
     def validate_entry(entry: dict) -> dict:
-        # Validation logic
         return entry
 
     reg_result = ldif.Processors.register_processor("validate", validate_entry, processors)
@@ -66,6 +59,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Final
+
 from flext_ldif.api import FlextLdif
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
@@ -74,20 +69,27 @@ from flext_ldif.handlers import FlextLdifHandlers
 from flext_ldif.migration_pipeline import LdifMigrationPipelineService
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.registry import QuirkRegistryService
+from flext_ldif.version import VERSION, FlextLdifVersion
+
+PROJECT_VERSION: Final[FlextLdifVersion] = VERSION
+
+__version__: str = VERSION.version
+__version_info__: tuple[int | str, ...] = VERSION.version_info
 
 __all__ = [
+    "PROJECT_VERSION",
+    "VERSION",
     "FlextLdif",
     "FlextLdifConfig",
     "FlextLdifConstants",
     "FlextLdifExceptions",
     "FlextLdifHandlers",
     "FlextLdifModels",
+    "FlextLdifVersion",
     "LdifMigrationPipelineService",
     "QuirkRegistryService",
+    "__version__",
+    "__version_info__",
 ]
 
-# Version information
-__version__ = "0.9.0"
-__author__ = "FLEXT Development Team"
 __email__ = "dev@flext.com"
-__license__ = "MIT"

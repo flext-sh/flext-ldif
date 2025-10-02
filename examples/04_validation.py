@@ -92,7 +92,7 @@ mail: pipeline@example.com
 
     # For this example, we'll just demonstrate the validation concept
     print("   ✅ LDIF parsed successfully")
-    print("   ℹ️  Railway-oriented pipeline example (simplified for compatibility)")
+    print("   INFO: Railway-oriented pipeline example (simplified for compatibility)")
 
     if parse_result.is_success:
         print("   ✅ Validation example completed successfully")

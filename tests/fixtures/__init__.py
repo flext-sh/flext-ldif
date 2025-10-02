@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-# Use centralized fixtures from flext_tests (no fallback)
 from flext_tests.fixtures import ldap_container as shared_ldap_container
 
 __all__ = ["shared_ldap_container"]

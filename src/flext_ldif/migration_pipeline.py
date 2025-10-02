@@ -43,7 +43,7 @@ class LdifMigrationPipelineService(FlextService[dict]):
     - OID → OUD (Oracle Internet Directory to Unified Directory)
     - OID → OpenLDAP
     - OpenLDAP → OUD
-    - Any future server combination via quirk registration
+    - object future server combination via quirk registration
 
     Example usage:
         params = {
@@ -163,7 +163,7 @@ class LdifMigrationPipelineService(FlextService[dict]):
         entries: list,
         source_format: str,
         target_format: str,
-        quirks: list[str] | None = None,
+        _quirks: list[str] | None = None,
     ) -> FlextResult[list]:
         """Migrate entries between formats using quirk-based transformation.
 

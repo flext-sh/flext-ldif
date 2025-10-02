@@ -19,9 +19,9 @@ When implementing, refer to:
 
 from __future__ import annotations
 
+from flext_core import FlextLogger, FlextResult
 from pydantic import Field
 
-from flext_core import FlextLogger, FlextResult
 from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
 
 
@@ -40,13 +40,13 @@ class TivoliSchemaQuirk(BaseSchemaQuirk):
         super().__init__(**data)
         self._logger = FlextLogger(__name__)
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:
+    def can_handle_attribute(self, attr_definition: str) -> bool:  # noqa: ARG002
         """Check if this is a Tivoli DS attribute - STUB."""
         return False
 
     def parse_attribute(
         self,
-        attr_definition: str,
+        _attr_definition: str,
     ) -> FlextResult[dict[str, object]]:
         """Parse Tivoli DS attribute definition - STUB."""
         return FlextResult[dict[str, object]].fail(
@@ -54,13 +54,13 @@ class TivoliSchemaQuirk(BaseSchemaQuirk):
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:
+    def can_handle_objectclass(self, oc_definition: str) -> bool:  # noqa: ARG002
         """Check if this is a Tivoli DS objectClass - STUB."""
         return False
 
     def parse_objectclass(
         self,
-        oc_definition: str,
+        _oc_definition: str,
     ) -> FlextResult[dict[str, object]]:
         """Parse Tivoli DS objectClass definition - STUB."""
         return FlextResult[dict[str, object]].fail(
@@ -103,7 +103,7 @@ class TivoliSchemaQuirk(BaseSchemaQuirk):
             super().__init__(**data)
             self._logger = FlextLogger(__name__)
 
-        def can_handle_acl(self, acl_line: str) -> bool:
+        def can_handle_acl(self, acl_line: str) -> bool:  # noqa: ARG002
             """Check if this is a Tivoli DS ACL - STUB."""
             return False
 
