@@ -122,7 +122,7 @@ Future development includes:
 - Streaming architecture for large file processing
 - Security features and input sanitization
 - Migration tools and schema intelligence
-- Performance optimizations and async support
+- Performance optimizations and support
 
 These represent development goals rather than current capabilities.
 

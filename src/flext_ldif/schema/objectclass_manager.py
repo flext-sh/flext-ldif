@@ -9,7 +9,6 @@ from __future__ import annotations
 from typing import override
 
 from flext_core import FlextLogger, FlextResult, FlextService
-
 from flext_ldif.models import FlextLdifModels
 
 
@@ -25,12 +24,10 @@ class FlextLdifObjectClassManager(FlextService[dict[str, object]]):
     @override
     def execute(self: object) -> FlextResult[dict[str, object]]:
         """Execute objectClass manager service."""
-        return FlextResult[dict[str, object]].ok(
-            {
-                "service": FlextLdifObjectClassManager,
-                "status": "ready",
-            }
-        )
+        return FlextResult[dict[str, object]].ok({
+            "service": FlextLdifObjectClassManager,
+            "status": "ready",
+        })
 
     def resolve_objectclass_hierarchy(
         self,

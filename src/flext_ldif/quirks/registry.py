@@ -10,9 +10,7 @@ server-specific quirks with RFC-compliant base parsers.
 from __future__ import annotations
 
 from flext_core import FlextLogger, FlextModels, FlextResult
-
-from flext_ldif.quirks.base import (BaseAclQuirk, BaseEntryQuirk,
-                                    BaseSchemaQuirk)
+from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
 
 
 class QuirkRegistryService(FlextModels.Entity):

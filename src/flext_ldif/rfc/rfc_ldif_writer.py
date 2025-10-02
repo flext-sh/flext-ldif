@@ -14,7 +14,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, TextIO
 
 from flext_core import FlextLogger, FlextResult, FlextService
-
 from flext_ldif.models import FlextLdifModels
 
 if TYPE_CHECKING:
@@ -161,13 +160,11 @@ class RfcLdifWriterService(FlextService[dict]):
                     },
                 )
 
-                return FlextResult[dict].ok(
-                    {
-                        "output_file": str(output_file),
-                        "entries_written": total_entries,
-                        "lines_written": total_lines,
-                    }
-                )
+                return FlextResult[dict].ok({
+                    "output_file": str(output_file),
+                    "entries_written": total_entries,
+                    "lines_written": total_lines,
+                })
 
             # String-based writing using StringIO
             total_entries = 0
@@ -214,13 +211,11 @@ class RfcLdifWriterService(FlextService[dict]):
                 },
             )
 
-            return FlextResult[dict].ok(
-                {
-                    "content": ldif_content,
-                    "entries_written": total_entries,
-                    "lines_written": total_lines,
-                }
-            )
+            return FlextResult[dict].ok({
+                "content": ldif_content,
+                "entries_written": total_entries,
+                "lines_written": total_lines,
+            })
 
         except Exception as e:
             self._logger.exception("LDIF write failed")
@@ -321,12 +316,10 @@ class RfcLdifWriterService(FlextService[dict]):
                 lines_written += 1
                 entries_written = 1
 
-            return FlextResult[dict].ok(
-                {
-                    "entries": entries_written,
-                    "lines": lines_written,
-                }
-            )
+            return FlextResult[dict].ok({
+                "entries": entries_written,
+                "lines": lines_written,
+            })
 
         except Exception as e:
             return FlextResult[dict].fail(f"Schema writing failed: {e}")
@@ -405,12 +398,10 @@ class RfcLdifWriterService(FlextService[dict]):
                 lines_written += 1
                 entries_written += 1
 
-            return FlextResult[dict].ok(
-                {
-                    "entries": entries_written,
-                    "lines": lines_written,
-                }
-            )
+            return FlextResult[dict].ok({
+                "entries": entries_written,
+                "lines": lines_written,
+            })
 
         except Exception as e:
             return FlextResult[dict].fail(f"Entry writing failed: {e}")
@@ -481,12 +472,10 @@ class RfcLdifWriterService(FlextService[dict]):
                 lines_written += 1
                 entries_written += 1
 
-            return FlextResult[dict].ok(
-                {
-                    "entries": entries_written,
-                    "lines": lines_written,
-                }
-            )
+            return FlextResult[dict].ok({
+                "entries": entries_written,
+                "lines": lines_written,
+            })
 
         except Exception as e:
             return FlextResult[dict].fail(f"ACL writing failed: {e}")

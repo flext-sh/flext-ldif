@@ -13,8 +13,9 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from flext_core import FlextModels, FlextResult
 from pydantic import Field
+
+from flext_core import FlextModels, FlextResult
 
 
 class BaseSchemaQuirk(ABC, FlextModels.Value):

@@ -264,7 +264,7 @@ src/flext_ldif/
 ### Python Performance
 
 - Memory profiling techniques and tools
-- Streaming and async processing patterns
+- Streaming and processing patterns
 - Type safety optimization strategies
 - Error handling best practices
 

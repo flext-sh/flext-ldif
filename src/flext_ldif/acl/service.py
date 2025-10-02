@@ -9,7 +9,6 @@ from __future__ import annotations
 from typing import cast, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
-
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
 
@@ -247,16 +246,14 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
             FlextResult containing service status and available patterns
 
         """
-        return FlextResult[dict[str, object]].ok(
-            {
-                "service": FlextLdifAclService,
-                "status": "ready",
-                "patterns": {
-                    "composite": "Composite ACL rule evaluation",
-                    "rule_evaluation": "Individual ACL rule processing",
-                },
-            }
-        )
+        return FlextResult[dict[str, object]].ok({
+            "service": FlextLdifAclService,
+            "status": "ready",
+            "patterns": {
+                "composite": "Composite ACL rule evaluation",
+                "rule_evaluation": "Individual ACL rule processing",
+            },
+        })
 
 
 __all__ = ["FlextLdifAclService"]

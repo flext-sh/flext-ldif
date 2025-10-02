@@ -14,7 +14,6 @@ from pathlib import Path
 from typing import Final
 
 from flext_core import FlextProcessors, FlextResult, FlextUtilities
-
 from flext_ldif.constants import FlextLdifConstants
 
 
