@@ -227,7 +227,9 @@ class TestFlextLdifApiWrite:
         else:
             # Test framework limitation, not production code issue
             assert result.error is not None
-            assert "write" in result.error.lower() or "writer" in result.error.lower()
+            assert (
+                result.error is not None and "write" in result.error.lower()
+            ) or "writer" in result.error.lower()
 
     def test_write_entries_to_file(
         self,
@@ -247,7 +249,9 @@ class TestFlextLdifApiWrite:
         else:
             # Test framework limitation
             assert result.error is not None
-            assert "write" in result.error.lower() or "writer" in result.error.lower()
+            assert (
+                result.error is not None and "write" in result.error.lower()
+            ) or "writer" in result.error.lower()
 
     def test_write_empty_entries_list(self, api: FlextLdif) -> None:
         """Test writing empty entries list."""
@@ -275,7 +279,9 @@ class TestFlextLdifApiWrite:
             assert "cn=Single,dc=example,dc=com" in ldif_string
         else:
             assert result.error is not None
-            assert "write" in result.error.lower() or "writer" in result.error.lower()
+            assert (
+                result.error is not None and "write" in result.error.lower()
+            ) or "writer" in result.error.lower()
 
     def test_write_api_method_exists(self, api: FlextLdif) -> None:
         """Test that write method exists on API."""
@@ -299,7 +305,9 @@ class TestFlextLdifApiWrite:
         else:
             # Container issue, not directory creation issue
             assert result.error is not None
-            assert "write" in result.error.lower() or "writer" in result.error.lower()
+            assert (
+                result.error is not None and "write" in result.error.lower()
+            ) or "writer" in result.error.lower()
 
 
 class TestFlextLdifApiValidate:
@@ -337,7 +345,7 @@ class TestFlextLdifApiValidate:
         else:
             # Container initialization issue in tests
             assert result.error is not None
-            assert "validat" in result.error.lower()
+            assert result.error is not None and "validat" in result.error.lower()
 
     def test_validate_empty_entries_list(self, api: FlextLdif) -> None:
         """Test validating empty entries list."""
@@ -366,7 +374,7 @@ class TestFlextLdifApiValidate:
             assert isinstance(validation, dict)
         else:
             assert result.error is not None
-            assert "validat" in result.error.lower()
+            assert result.error is not None and "validat" in result.error.lower()
 
     def test_validate_api_method_exists(self, api: FlextLdif) -> None:
         """Test that validate_entries method exists on API."""

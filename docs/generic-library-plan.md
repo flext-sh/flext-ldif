@@ -363,7 +363,7 @@ pyrefly check src/          # Zero type errors in src/
 ```
 - Complete type annotations
 - No `# type: ignore` without error codes
-- No `Any` types (use proper annotations)
+- No `object` types (use proper annotations)
 
 **Testing**:
 ```bash

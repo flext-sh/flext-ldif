@@ -125,7 +125,7 @@ def main() -> None:
     print("  • OID ↔ OUD")
     print("  • OID ↔ OpenLDAP 1.x/2.x")
     print("  • OUD ↔ OpenLDAP 1.x/2.x")
-    print("  • Any combination of 4 complete servers")
+    print("  • object combination of 4 complete servers")
     print(
         "\nGeneric transformation works with ANY LDAP server (N implementations, not N²)"
     )

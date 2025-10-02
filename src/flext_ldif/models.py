@@ -23,6 +23,12 @@ from flext_core import FlextModels, FlextResult
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.typings import FlextLdifTypes
 
+# LDIF format constants
+rfc = "rfc"
+oid = "oid"
+auto = "auto"
+oud = "oud"
+
 
 def _default_ldif_attributes() -> FlextLdifModels.LdifAttributes:
     """Factory function for default LDIF attributes."""
@@ -140,7 +146,7 @@ class FlextLdifModels(FlextModels):
         source: str | bytes | list[str] = Field(
             ..., description="LDIF source content, file path, or lines"
         )
-        format: Literal["rfc", "oid", "auto"] = Field(
+        format: Literal[rfc, oid, auto] = Field(
             default="auto", description="LDIF format to use for parsing"
         )
         encoding: str = Field(default="utf-8", description="Text encoding")
@@ -191,7 +197,7 @@ class FlextLdifModels(FlextModels):
         entries: list[FlextLdifModels.Entry] = Field(
             ..., description="Entries to write"
         )
-        format: Literal["rfc", "oid"] = Field(
+        format: Literal[rfc, oid] = Field(
             default="rfc", description="Output LDIF format"
         )
         output: str | None = Field(default=None, description="Output file path")
@@ -208,10 +214,10 @@ class FlextLdifModels(FlextModels):
         entries: list[FlextLdifModels.Entry] = Field(
             ..., description="Entries to migrate"
         )
-        source_format: Literal["rfc", "oid", "oud"] = Field(
+        source_format: Literal[rfc, oid, oud] = Field(
             ..., description="Source LDIF format"
         )
-        target_format: Literal["rfc", "oid", "oud"] = Field(
+        target_format: Literal[rfc, oid, oud] = Field(
             ..., description="Target LDIF format"
         )
         quirks: list[str] | None = Field(
@@ -312,7 +318,7 @@ class FlextLdifModels(FlextModels):
         """
 
         entry_count: int = Field(..., description="Number of entries written")
-        output_format: Literal["rfc", "oid"] = Field(
+        output_format: Literal[rfc, oid] = Field(
             ..., description="Format used for writing"
         )
         output_destination: str = Field(
@@ -338,12 +344,8 @@ class FlextLdifModels(FlextModels):
         """
 
         entry_count: int = Field(..., description="Number of entries migrated")
-        source_format: Literal["rfc", "oid", "oud"] = Field(
-            ..., description="Source format"
-        )
-        target_format: Literal["rfc", "oid", "oud"] = Field(
-            ..., description="Target format"
-        )
+        source_format: Literal[rfc, oid, oud] = Field(..., description="Source format")
+        target_format: Literal[rfc, oid, oud] = Field(..., description="Target format")
         quirks_applied: list[str] = Field(
             default_factory=list, description="List of quirks applied during migration"
         )
@@ -710,7 +712,7 @@ class FlextLdifModels(FlextModels):
         )
 
         @classmethod
-        def is_satisfied_by(cls, data: dict[str, object]) -> bool:
+        def is_satisfied_by(cls, data: dict[str, object]) -> bool:  # noqa: ARG003
             """Check if data satisfies this specification.
 
             Args:

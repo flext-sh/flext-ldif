@@ -30,7 +30,7 @@ class TestFlextLdifEntryBuilder:
         result = builder.execute()
         assert result.is_failure
         assert result.error is not None
-        assert "Use specific build methods" in result.error
+        assert result.error is not None and "Use specific build methods" in result.error
 
     def test_execute_returns_failure_message(self) -> None:
         """Test that execute method returns failure with helpful message."""
@@ -40,7 +40,7 @@ class TestFlextLdifEntryBuilder:
         # Execute returns failure directing to use specific build methods
         assert result.is_failure
         assert result.error is not None
-        assert "Use specific build methods" in result.error
+        assert result.error is not None and "Use specific build methods" in result.error
 
     def test_build_person_entry_basic(self) -> None:
         """Test building a basic person entry."""
@@ -313,7 +313,7 @@ class TestFlextLdifEntryBuilder:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid JSON" in result.error
+        assert result.error is not None and "Invalid JSON" in result.error
 
     def test_build_entries_from_json_not_list(self) -> None:
         """Test building entries from JSON that is not a list."""
@@ -328,7 +328,7 @@ class TestFlextLdifEntryBuilder:
 
         assert result.is_failure
         assert result.error is not None
-        assert "JSON data must be a list" in result.error
+        assert result.error is not None and "JSON data must be a list" in result.error
 
     def test_build_entries_from_json_item_not_dict(self) -> None:
         """Test building entries from JSON with non-dict items."""
@@ -340,7 +340,10 @@ class TestFlextLdifEntryBuilder:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Each item must be a dictionary" in result.error
+        assert (
+            result.error is not None
+            and "Each item must be a dictionary" in result.error
+        )
 
     def test_build_entries_from_json_missing_dn(self) -> None:
         """Test building entries from JSON with missing DN."""
@@ -354,7 +357,10 @@ class TestFlextLdifEntryBuilder:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Each entry must have a 'dn' field" in result.error
+        assert (
+            result.error is not None
+            and "Each entry must have a 'dn' field" in result.error
+        )
 
     def test_build_entries_from_json_string_values(self) -> None:
         """Test building entries from JSON with string attribute values."""
@@ -426,7 +432,10 @@ class TestFlextLdifEntryBuilder:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Each entry must have a 'dn' field" in result.error
+        assert (
+            result.error is not None
+            and "Each entry must have a 'dn' field" in result.error
+        )
 
     def test_build_entries_from_dict_non_dict_attributes(self) -> None:
         """Test building entries from dictionary with non-dict attributes."""

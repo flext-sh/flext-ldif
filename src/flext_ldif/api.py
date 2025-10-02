@@ -84,7 +84,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         )
 
         # Access infrastructure
-        config = ldif.Config
+        config = ldif.config
         models = ldif.Models
         entry = ldif.Models.Entry(dn="cn=test", attributes={})
 
@@ -595,7 +595,7 @@ class FlextLdif(FlextService[dict[str, object]]):
     # =========================================================================
 
     @property
-    def EntryBuilder(self) -> type[FlextLdifEntryBuilder]:
+    def EntryBuilder(self) -> type[FlextLdifEntryBuilder]:  # noqa: N802
         """Access to LDIF entry builder for constructing entries.
 
         Returns:
@@ -614,7 +614,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         return FlextLdifEntryBuilder
 
     @property
-    def SchemaBuilder(self) -> type[FlextLdifSchemaBuilder]:
+    def SchemaBuilder(self) -> type[FlextLdifSchemaBuilder]:  # noqa: N802
         """Access to LDIF schema builder for constructing schemas.
 
         Returns:
@@ -629,7 +629,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         return FlextLdifSchemaBuilder
 
     @property
-    def AclService(self) -> type[FlextLdifAclService]:
+    def AclService(self) -> type[FlextLdifAclService]:  # noqa: N802
         """Access to ACL service for extracting and processing ACLs.
 
         Returns:
@@ -643,7 +643,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         return FlextLdifAclService
 
     @property
-    def SchemaValidator(self) -> type[FlextLdifSchemaValidator]:
+    def SchemaValidator(self) -> type[FlextLdifSchemaValidator]:  # noqa: N802
         """Access to schema validator for validating entries.
 
         Returns:
@@ -661,7 +661,7 @@ class FlextLdif(FlextService[dict[str, object]]):
     # =========================================================================
 
     @property
-    def Models(self) -> type[FlextLdifModels]:
+    def Models(self) -> type[FlextLdifModels]:  # noqa: N802
         """Access to all LDIF Pydantic models.
 
         Returns:
@@ -675,21 +675,21 @@ class FlextLdif(FlextService[dict[str, object]]):
         return FlextLdifModels
 
     @property
-    def Config(self) -> FlextLdifConfig:
+    def config(self) -> FlextLdifConfig:
         """Access to LDIF configuration instance.
 
         Returns:
             Current FlextLdifConfig instance
 
         Example:
-            encoding = ldif.Config.ldif_encoding
-            max_workers = ldif.Config.max_workers
+            encoding = ldif.config.ldif_encoding
+            max_workers = ldif.config.max_workers
 
         """
         return self._config
 
     @property
-    def Constants(self) -> type[FlextLdifConstants]:
+    def Constants(self) -> type[FlextLdifConstants]:  # noqa: N802
         """Access to LDIF constants.
 
         Returns:
@@ -703,7 +703,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         return FlextLdifConstants
 
     @property
-    def Types(self) -> type[FlextLdifTypes]:
+    def Types(self) -> type[FlextLdifTypes]:  # noqa: N802
         """Access to LDIF type definitions.
 
         Returns:
@@ -717,7 +717,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         return FlextLdifTypes
 
     @property
-    def Protocols(self) -> type[FlextLdifProtocols]:
+    def Protocols(self) -> type[FlextLdifProtocols]:  # noqa: N802
         """Access to LDIF protocols for duck typing.
 
         Returns:
@@ -731,7 +731,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         return FlextLdifProtocols
 
     @property
-    def Exceptions(self) -> type[FlextLdifExceptions]:
+    def Exceptions(self) -> type[FlextLdifExceptions]:  # noqa: N802
         """Access to LDIF exception factory methods.
 
         Returns:
@@ -745,7 +745,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         return FlextLdifExceptions
 
     @property
-    def Mixins(self) -> type[FlextLdifMixins]:
+    def Mixins(self) -> type[FlextLdifMixins]:  # noqa: N802
         """Access to LDIF mixins for reusable functionality.
 
         Returns:
@@ -759,7 +759,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         return FlextLdifMixins
 
     @property
-    def Utilities(self) -> type[FlextLdifUtilities]:
+    def Utilities(self) -> type[FlextLdifUtilities]:  # noqa: N802
         """Access to LDIF utility functions.
 
         Returns:
@@ -773,7 +773,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         return FlextLdifUtilities
 
     @property
-    def Processors(self) -> type[FlextLdifUtilities.Processors]:
+    def Processors(self) -> type[FlextLdifUtilities.Processors]:  # noqa: N802
         """Access to LDIF processing utilities using FlextProcessors.
 
         Returns:

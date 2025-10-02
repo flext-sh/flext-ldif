@@ -115,7 +115,7 @@ class TestFlextLdifAnalyticsMixin:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Analysis error" in result.error
+        assert result.error is not None and "Analysis error" in result.error
 
 
 class TestFlextLdifValidationMixin:
@@ -251,7 +251,7 @@ class TestFlextLdifProcessingMixin:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Test error" in result.error
+        assert result.error is not None and "Test error" in result.error
 
     def test_normalize_dn_components_invalid_dn(self) -> None:
         """Test normalize_dn_components with invalid DN (error path lines 117-118)."""
@@ -281,7 +281,7 @@ class TestFlextLdifProcessingMixin:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Batch processing error" in result.error
+        assert result.error is not None and "Batch processing error" in result.error
 
 
 class TestFlextLdifTransformationMixin:
@@ -344,7 +344,7 @@ class TestFlextLdifTransformationMixin:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Transform error" in result.error
+        assert result.error is not None and "Transform error" in result.error
 
 
 class TestFlextLdifCachingMixin:

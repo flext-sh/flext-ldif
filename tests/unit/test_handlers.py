@@ -103,7 +103,7 @@ class TestParseQueryHandler:
         # Should fail without parser
         assert result.is_failure
         assert result.error is not None
-        assert "parser" in result.error.lower()
+        assert result.error is not None and "parser" in result.error.lower()
 
     def test_handle_parse_with_content(self) -> None:
         """Test parsing LDIF content without parser."""
@@ -129,7 +129,7 @@ objectClass: person
         # Should fail without parser
         assert result.is_failure
         assert result.error is not None
-        assert "parser" in result.error.lower()
+        assert result.error is not None and "parser" in result.error.lower()
 
     @pytest.mark.parametrize("format_type", ["rfc", "auto"])
     def test_handle_different_formats_without_parser(self, format_type: str) -> None:
@@ -150,7 +150,7 @@ objectClass: person
         # Should fail without parser
         assert result.is_failure
         assert result.error is not None
-        assert "parser" in result.error.lower()
+        assert result.error is not None and "parser" in result.error.lower()
 
 
 class TestValidateQueryHandler:
@@ -184,7 +184,7 @@ class TestValidateQueryHandler:
 
         assert result.is_failure
         assert result.error is not None
-        assert "validator" in result.error.lower()
+        assert result.error is not None and "validator" in result.error.lower()
 
     def test_handle_empty_entries_without_validator(self) -> None:
         """Test validating empty entry list without validator."""
@@ -203,7 +203,7 @@ class TestValidateQueryHandler:
         # Should fail without validator
         assert result.is_failure
         assert result.error is not None
-        assert "validator" in result.error.lower()
+        assert result.error is not None and "validator" in result.error.lower()
 
     @pytest.mark.parametrize("strict_mode", [True, False])
     def test_handle_strict_mode_without_validator(self, strict_mode: bool) -> None:
@@ -222,7 +222,7 @@ class TestValidateQueryHandler:
 
         assert result.is_failure
         assert result.error is not None
-        assert "validator" in result.error.lower()
+        assert result.error is not None and "validator" in result.error.lower()
 
 
 class TestAnalyzeQueryHandler:
@@ -378,7 +378,7 @@ class TestWriteCommandHandler:
 
         assert result.is_failure
         assert result.error is not None
-        assert "writer" in result.error.lower()
+        assert result.error is not None and "writer" in result.error.lower()
 
     def test_handle_empty_entries(self) -> None:
         """Test writing empty entry list without registered writer."""
@@ -397,7 +397,7 @@ class TestWriteCommandHandler:
         # Should fail without writer
         assert result.is_failure
         assert result.error is not None
-        assert "writer" in result.error.lower()
+        assert result.error is not None and "writer" in result.error.lower()
 
     def test_handle_write_without_writer(self) -> None:
         """Test writing fails without registered writer."""
@@ -426,7 +426,7 @@ class TestWriteCommandHandler:
         # Should fail without writer
         assert result.is_failure
         assert result.error is not None
-        assert "writer" in result.error.lower()
+        assert result.error is not None and "writer" in result.error.lower()
 
 
 class TestMigrateCommandHandler:
