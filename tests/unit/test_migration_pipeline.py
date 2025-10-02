@@ -61,7 +61,7 @@ class TestMigrationPipelineInitialization:
         assert pipeline is not None
 
     @pytest.mark.parametrize(
-        "source,target",
+        ("source", "target"),
         [
             ("oid", "oud"),
             ("oid", "openldap"),
@@ -330,7 +330,7 @@ class TestMigrateEntriesMethod:
         assert len(migrated) == 5
 
     @pytest.mark.parametrize(
-        "source,target",
+        ("source", "target"),
         [
             ("oid", "oud"),
             ("oud", "oid"),

@@ -29,7 +29,7 @@ class TestSchemaParserAttributeTypes:
             quirk_registry=registry,
         )
 
-        schema_content = """attributeTypes: ( 2.5.4.3 NAME 'cn'
+        _schema_content = """attributeTypes: ( 2.5.4.3 NAME 'cn'
   DESC 'commonName' SUP name )
 """
 
@@ -45,7 +45,7 @@ class TestSchemaParserAttributeTypes:
             quirk_registry=registry,
         )
 
-        schema_content = """attributeTypes: ( 1.2.3.4.5.6.7.8.9 NAME 'customAttr'
+        _schema_content = """attributeTypes: ( 1.2.3.4.5.6.7.8.9 NAME 'customAttr'
   DESC 'Custom attribute' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
 """
 
@@ -60,7 +60,7 @@ class TestSchemaParserAttributeTypes:
             quirk_registry=registry,
         )
 
-        schema_content = """attributeTypes: ( 2.5.4.35 NAME 'userPassword'
+        _schema_content = """attributeTypes: ( 2.5.4.35 NAME 'userPassword'
   DESC 'Password' EQUALITY octetStringMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.40{128} )
 """
@@ -76,7 +76,7 @@ class TestSchemaParserAttributeTypes:
             quirk_registry=registry,
         )
 
-        schema_content = """attributeTypes: ( 2.5.4.4 NAME ( 'sn' 'surname' )
+        _schema_content = """attributeTypes: ( 2.5.4.4 NAME ( 'sn' 'surname' )
   DESC 'Surname' SUP name )
 """
 
@@ -91,7 +91,7 @@ class TestSchemaParserAttributeTypes:
             quirk_registry=registry,
         )
 
-        schema_content = """attributeTypes: ( 2.5.4.10 NAME 'o'
+        _schema_content = """attributeTypes: ( 2.5.4.10 NAME 'o'
   DESC 'Organization' SUP name )
 """
 
@@ -110,7 +110,7 @@ class TestSchemaParserObjectClasses:
             quirk_registry=registry,
         )
 
-        schema_content = """objectClasses: ( 2.5.6.6 NAME 'person'
+        _schema_content = """objectClasses: ( 2.5.6.6 NAME 'person'
   DESC 'Person' SUP top STRUCTURAL
   MUST ( sn $ cn ) MAY ( userPassword $ telephoneNumber ) )
 """
@@ -126,7 +126,7 @@ class TestSchemaParserObjectClasses:
             quirk_registry=registry,
         )
 
-        schema_content = """objectClasses: ( 2.16.840.1.113730.3.2.2 NAME 'inetOrgPerson'
+        _schema_content = """objectClasses: ( 2.16.840.1.113730.3.2.2 NAME 'inetOrgPerson'
   DESC 'Internet Organizational Person' SUP person AUXILIARY
   MAY ( mail $ displayName ) )
 """
@@ -142,7 +142,7 @@ class TestSchemaParserObjectClasses:
             quirk_registry=registry,
         )
 
-        schema_content = """objectClasses: ( 2.5.6.0 NAME 'top'
+        _schema_content = """objectClasses: ( 2.5.6.0 NAME 'top'
   DESC 'Top of the tree' ABSTRACT
   MUST objectClass )
 """
@@ -158,7 +158,7 @@ class TestSchemaParserObjectClasses:
             quirk_registry=registry,
         )
 
-        schema_content = """objectClasses: ( 2.5.6.7 NAME 'organizationalPerson'
+        _schema_content = """objectClasses: ( 2.5.6.7 NAME 'organizationalPerson'
   DESC 'Organizational Person' SUP person STRUCTURAL
   MAY ( title $ x121Address ) )
 """
@@ -174,7 +174,7 @@ class TestSchemaParserObjectClasses:
             quirk_registry=registry,
         )
 
-        schema_content = """objectClasses: ( 2.5.6.6 NAME 'person'
+        _schema_content = """objectClasses: ( 2.5.6.6 NAME 'person'
   DESC 'Person' SUP top STRUCTURAL
   MUST ( sn $ cn )
   MAY ( userPassword $ telephoneNumber $ description ) )
@@ -196,7 +196,7 @@ class TestSchemaParserQuirksIntegration:
             quirk_registry=registry,
         )
 
-        schema_content = """attributeTypes: ( 2.5.4.3 NAME 'cn'
+        _schema_content = """attributeTypes: ( 2.5.4.3 NAME 'cn'
   DESC 'commonName' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
 """
 
@@ -212,7 +212,7 @@ class TestSchemaParserQuirksIntegration:
             quirk_registry=registry,
         )
 
-        schema_content = """attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclNetDescString'
+        _schema_content = """attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclNetDescString'
   DESC 'Oracle Net Description String'
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
 """
@@ -228,7 +228,7 @@ class TestSchemaParserQuirksIntegration:
             quirk_registry=registry,
         )
 
-        schema_content = """attributeTypes: ( 1.3.6.1.4.1.42.2.27.9.1.1 NAME 'ds-pwp-account-disabled'
+        _schema_content = """attributeTypes: ( 1.3.6.1.4.1.42.2.27.9.1.1 NAME 'ds-pwp-account-disabled'
   DESC 'Password Policy Account Disabled'
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )
 """
@@ -248,7 +248,7 @@ class TestSchemaParserErrorHandling:
             quirk_registry=registry,
         )
 
-        schema_content = """attributeTypes: ( invalid-oid NAME 'broken'
+        _schema_content = """attributeTypes: ( invalid-oid NAME 'broken'
   DESC 'Broken attribute' )
 """
 
@@ -265,7 +265,7 @@ class TestSchemaParserErrorHandling:
         )
 
         # Missing NAME field
-        schema_content = """attributeTypes: ( 2.5.4.3
+        _schema_content = """attributeTypes: ( 2.5.4.3
   DESC 'Missing name attribute' )
 """
 
@@ -293,7 +293,7 @@ class TestSchemaParserErrorHandling:
             quirk_registry=registry,
         )
 
-        schema_content = """objectClasses: ( not a valid object class definition )
+        _schema_content = """objectClasses: ( not a valid object class definition )
 """
 
         result = parser.execute()
@@ -312,7 +312,7 @@ class TestSchemaParserSpecialCases:
             quirk_registry=registry,
         )
 
-        schema_content = """# This is a comment
+        _schema_content = """# This is a comment
 attributeTypes: ( 2.5.4.3 NAME 'cn'
   # Another comment
   DESC 'commonName' )
@@ -330,7 +330,7 @@ attributeTypes: ( 2.5.4.3 NAME 'cn'
             quirk_registry=registry,
         )
 
-        schema_content = """attributeTypes: ( 2.5.4.3
+        _schema_content = """attributeTypes: ( 2.5.4.3
   NAME 'cn'
   DESC 'commonName'
   SUP name
@@ -350,7 +350,7 @@ attributeTypes: ( 2.5.4.3 NAME 'cn'
             quirk_registry=registry,
         )
 
-        schema_content = """attributeTypes: ( 2.5.4.3 NAME 'cn'
+        _schema_content = """attributeTypes: ( 2.5.4.3 NAME 'cn'
   DESC 'commonName' )
 
 objectClasses: ( 2.5.6.6 NAME 'person'
