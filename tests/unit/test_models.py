@@ -478,3 +478,251 @@ cn: test2
         assert status.is_operational is True
         assert "max_entries" in status.configuration
         assert status.capabilities == ["parse", "validate"]
+
+    def test_parse_query_creation(self) -> None:
+        """Test ParseQuery model creation."""
+        query = FlextLdifModels.ParseQuery(
+            source="dn: cn=test,dc=example,dc=com\ncn: test",
+            format="rfc",
+            encoding="utf-8",
+            strict=True,
+        )
+        assert query.source == "dn: cn=test,dc=example,dc=com\ncn: test"
+        assert query.format == "rfc"
+        assert query.encoding == "utf-8"
+        assert query.strict is True
+
+    def test_validate_query_creation(self) -> None:
+        """Test ValidateQuery model creation."""
+        query = FlextLdifModels.ValidateQuery(
+            entries=[
+                FlextLdifModels.Entry(
+                    dn=FlextLdifModels.DistinguishedName(
+                        value="cn=test,dc=example,dc=com"
+                    ),
+                    attributes=FlextLdifModels.LdifAttributes(attributes={}),
+                )
+            ],
+            schema_validation=True,
+        )
+        assert len(query.entries) == 1
+        assert query.schema_validation is True
+
+    def test_analyze_query_creation(self) -> None:
+        """Test AnalyzeQuery model creation."""
+        query = FlextLdifModels.AnalyzeQuery(
+            ldif_content="dn: cn=test,dc=example,dc=com\ncn: test",
+            analysis_types=["statistics", "validation"],
+        )
+        assert query.ldif_content == "dn: cn=test,dc=example,dc=com\ncn: test"
+        assert query.analysis_types == ["statistics", "validation"]
+
+    def test_write_command_creation(self) -> None:
+        """Test WriteCommand model creation."""
+        command = FlextLdifModels.WriteCommand(
+            entries=[
+                FlextLdifModels.Entry(
+                    dn=FlextLdifModels.DistinguishedName(
+                        value="cn=test,dc=example,dc=com"
+                    ),
+                    attributes=FlextLdifModels.LdifAttributes(attributes={}),
+                )
+            ],
+            output_path="/tmp/test.ldif",
+            format_options={"indent": 2},
+        )
+        assert len(command.entries) == 1
+        assert command.output_path == "/tmp/test.ldif"
+        assert command.format_options == {"indent": 2}
+
+    def test_migrate_command_creation(self) -> None:
+        """Test MigrateCommand model creation."""
+        command = FlextLdifModels.MigrateCommand(
+            source_entries=[
+                FlextLdifModels.Entry(
+                    dn=FlextLdifModels.DistinguishedName(
+                        value="cn=test,dc=example,dc=com"
+                    ),
+                    attributes=FlextLdifModels.LdifAttributes(attributes={}),
+                )
+            ],
+            target_format="ldif",
+            migration_options={"validate": True},
+        )
+        assert len(command.source_entries) == 1
+        assert command.target_format == "ldif"
+        assert command.migration_options == {"validate": True}
+
+    def test_register_quirk_command_creation(self) -> None:
+        """Test RegisterQuirkCommand model creation."""
+        command = FlextLdifModels.RegisterQuirkCommand(
+            server_type="openldap",
+            quirk_name="test_quirk",
+            quirk_config={"enabled": True},
+        )
+        assert command.server_type == "openldap"
+        assert command.quirk_name == "test_quirk"
+        assert command.quirk_config == {"enabled": True}
+
+    def test_entry_parsed_event_creation(self) -> None:
+        """Test EntryParsedEvent creation."""
+        event = FlextLdifModels.EntryParsedEvent(
+            entry_count=5,
+            source_type="file",
+            format_detected="rfc",
+            timestamp="2025-01-01T00:00:00Z",
+        )
+        assert event.entry_count == 5
+        assert event.source_type == "file"
+        assert event.format_detected == "rfc"
+        assert event.event_type == "entry.parsed"
+        assert event.aggregate_id == "ldif-parser"
+
+    def test_entries_validated_event_creation(self) -> None:
+        """Test EntriesValidatedEvent creation."""
+        event = FlextLdifModels.EntriesValidatedEvent(
+            entry_count=10,
+            is_valid=True,
+            error_count=0,
+            strict_mode=True,
+            timestamp="2025-01-01T00:00:00Z",
+        )
+        assert event.entry_count == 10
+        assert event.is_valid is True
+        assert event.error_count == 0
+        assert event.strict_mode is True
+        assert event.event_type == "entries.validated"
+        assert event.aggregate_id == "ldif-validator"
+
+    def test_analytics_generated_event_creation(self) -> None:
+        """Test AnalyticsGeneratedEvent creation."""
+        event = FlextLdifModels.AnalyticsGeneratedEvent(
+            entry_count=20,
+            statistics={"total_attrs": 100, "unique_dns": 15},
+            timestamp="2025-01-01T00:00:00Z",
+        )
+        assert event.entry_count == 20
+        assert event.statistics == {"total_attrs": 100, "unique_dns": 15}
+        assert event.event_type == "analytics.generated"
+        assert event.aggregate_id == "ldif-analytics"
+
+    def test_entries_written_event_creation(self) -> None:
+        """Test EntriesWrittenEvent creation."""
+        event = FlextLdifModels.EntriesWrittenEvent(
+            entry_count=8,
+            output_path="/tmp/output.ldif",
+            format_used="rfc",
+            timestamp="2025-01-01T00:00:00Z",
+        )
+        assert event.entry_count == 8
+        assert event.output_path == "/tmp/output.ldif"
+        assert event.format_used == "rfc"
+        assert event.event_type == "entries.written"
+        assert event.aggregate_id == "ldif-writer"
+
+    def test_migration_completed_event_creation(self) -> None:
+        """Test MigrationCompletedEvent creation."""
+        event = FlextLdifModels.MigrationCompletedEvent(
+            source_entries=15,
+            target_entries=15,
+            migration_type="format_conversion",
+            timestamp="2025-01-01T00:00:00Z",
+        )
+        assert event.source_entries == 15
+        assert event.target_entries == 15
+        assert event.migration_type == "format_conversion"
+        assert event.event_type == "migration.completed"
+        assert event.aggregate_id == "ldif-migration"
+
+    def test_quirk_registered_event_creation(self) -> None:
+        """Test QuirkRegisteredEvent creation."""
+        event = FlextLdifModels.QuirkRegisteredEvent(
+            server_type="openldap",
+            quirk_name="special_handling",
+            timestamp="2025-01-01T00:00:00Z",
+        )
+        assert event.server_type == "openldap"
+        assert event.quirk_name == "special_handling"
+        assert event.event_type == "quirk.registered"
+        assert event.aggregate_id == "ldif-quirks"
+
+    def test_schema_object_class_creation(self) -> None:
+        """Test SchemaObjectClass model creation."""
+        obj_class = FlextLdifModels.SchemaObjectClass(
+            name="person",
+            oid="2.5.6.6",
+            description="Person object class",
+            required_attributes=["cn", "sn"],
+            optional_attributes=["telephoneNumber", "seeAlso"],
+            must=["cn", "sn"],
+            may=["telephoneNumber", "seeAlso"],
+            structural=True,
+        )
+        assert obj_class.name == "person"
+        assert obj_class.oid == "2.5.6.6"
+        assert obj_class.description == "Person object class"
+        assert obj_class.required_attributes == ["cn", "sn"]
+        assert obj_class.optional_attributes == ["telephoneNumber", "seeAlso"]
+        assert obj_class.must == ["cn", "sn"]
+        assert obj_class.may == ["telephoneNumber", "seeAlso"]
+        assert obj_class.structural is True
+        assert obj_class.attribute_summary["required_count"] == 2
+        assert obj_class.attribute_summary["is_structural"] is True
+
+    def test_schema_object_class_create_method(self) -> None:
+        """Test SchemaObjectClass.create method."""
+        result = FlextLdifModels.SchemaObjectClass.create(
+            name="organizationalUnit",
+            oid="2.5.6.5",
+            description="Organizational unit",
+            required_attributes=["ou"],
+        )
+        assert result.is_success
+        obj_class = result.value
+        assert obj_class.name == "organizationalUnit"
+        assert obj_class.oid == "2.5.6.5"
+        assert obj_class.required_attributes == ["ou"]
+
+    def test_schema_discovery_result_creation(self) -> None:
+        """Test SchemaDiscoveryResult model creation."""
+        result = FlextLdifModels.SchemaDiscoveryResult(
+            object_classes={
+                "person": FlextLdifModels.SchemaObjectClass(
+                    name="person",
+                    oid="2.5.6.6",
+                    description="Person class",
+                    required_attributes=["cn"],
+                )
+            },
+            attributes={
+                "cn": FlextLdifModels.SchemaAttribute(
+                    name="cn",
+                    oid="2.5.4.3",
+                    description="Common name",
+                    syntax="1.3.6.1.4.1.1466.115.121.1.15",
+                )
+            },
+            server_type="openldap",
+            entry_count=100,
+        )
+        assert len(result.object_classes) == 1
+        assert len(result.attributes) == 1
+        assert result.server_type == "openldap"
+        assert result.entry_count == 100
+
+    def test_schema_attribute_creation(self) -> None:
+        """Test SchemaAttribute model creation."""
+        attr = FlextLdifModels.SchemaAttribute(
+            name="cn",
+            oid="2.5.4.3",
+            description="Common name attribute",
+            syntax="1.3.6.1.4.1.1466.115.121.1.15",
+            single_valued=False,
+            user_modifiable=True,
+        )
+        assert attr.name == "cn"
+        assert attr.oid == "2.5.4.3"
+        assert attr.description == "Common name attribute"
+        assert attr.syntax == "1.3.6.1.4.1.1466.115.121.1.15"
+        assert attr.single_valued is False
+        assert attr.user_modifiable is True
