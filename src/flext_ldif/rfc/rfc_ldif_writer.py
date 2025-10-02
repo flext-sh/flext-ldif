@@ -125,7 +125,7 @@ class RfcLdifWriterService(FlextService[dict]):
 
                     # Write schema entries if provided
                     if schema:
-                        schema_result = self._write_schema_entries(f, schema)  # type: ignore[arg-type]
+                        schema_result = self._write_schema_entries(f, schema)
                         if schema_result.is_failure:
                             return FlextResult[dict].fail(schema_result.error)
                         total_entries += schema_result.unwrap().get(
@@ -135,7 +135,7 @@ class RfcLdifWriterService(FlextService[dict]):
 
                     # Write regular entries if provided
                     if entries:
-                        entries_result = self._write_entries(f, entries)  # type: ignore[arg-type]
+                        entries_result = self._write_entries(f, entries)
                         if entries_result.is_failure:
                             return FlextResult[dict].fail(entries_result.error)
                         total_entries += entries_result.unwrap().get(
@@ -145,7 +145,7 @@ class RfcLdifWriterService(FlextService[dict]):
 
                     # Write ACL entries if provided
                     if acls:
-                        acls_result = self._write_acl_entries(f, acls)  # type: ignore[arg-type]
+                        acls_result = self._write_acl_entries(f, acls)
                         if acls_result.is_failure:
                             return FlextResult[dict].fail(acls_result.error)
                         total_entries += acls_result.unwrap().get("entries_written", 0)
@@ -347,7 +347,7 @@ class RfcLdifWriterService(FlextService[dict]):
                     dn = entry.dn.value
                     # Convert Entry attributes to dict format for processing
                     attributes = {
-                        attr_name: attr_values.values  # type: ignore[misc]
+                        attr_name: attr_values.values
                         for attr_name, attr_values in entry.attributes.attributes.items()
                     }
                 else:
@@ -370,9 +370,7 @@ class RfcLdifWriterService(FlextService[dict]):
                                 if isinstance(processed, dict):
                                     dn = str(processed.get("dn", dn))
                                     attributes = {
-                                        k: v  # type: ignore[misc]
-                                        for k, v in processed.items()
-                                        if k != "dn"
+                                        k: v for k, v in processed.items() if k != "dn"
                                     }
 
                 # Write DN

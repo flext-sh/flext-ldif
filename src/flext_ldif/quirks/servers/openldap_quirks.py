@@ -60,7 +60,7 @@ class OpenLdapSchemaQuirk(BaseSchemaQuirk):
 
     def __init__(self, **data: object) -> None:
         """Initialize OpenLDAP 2.x schema quirk."""
-        super().__init__(**data)  # type: ignore[arg-type]
+        super().__init__(**data)
         self._logger = FlextLogger(__name__)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
@@ -291,7 +291,7 @@ class OpenLdapSchemaQuirk(BaseSchemaQuirk):
 
         def __init__(self, **data: object) -> None:
             """Initialize OpenLDAP 2.x ACL quirk."""
-            super().__init__(**data)  # type: ignore[arg-type]
+            super().__init__(**data)
             self._logger = FlextLogger(__name__)
 
         def can_handle_acl(self, acl_line: str) -> bool:
@@ -447,7 +447,7 @@ class OpenLdapSchemaQuirk(BaseSchemaQuirk):
 
         def __init__(self, **data: object) -> None:
             """Initialize OpenLDAP 2.x entry quirk."""
-            super().__init__(**data)  # type: ignore[arg-type]
+            super().__init__(**data)
             self._logger = FlextLogger(__name__)
 
         def can_handle_entry(self, entry_dn: str, attributes: dict) -> bool:

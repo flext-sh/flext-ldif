@@ -41,8 +41,8 @@ class TestFlextLdifAclParser:
         assert data["status"] == "ready"
 
     def test_execute_sync_success(self) -> None:
-        """Test execute method returns success (converted from async)."""
-        # NOTE: Converted from test_execute_async - method removed
+        """Test execute method returns success (converted from )."""
+        # NOTE: Converted from test_execute - method removed
         parser = FlextLdifAclParser()
         result = parser.execute()
 
@@ -450,8 +450,8 @@ class TestFlextLdifAclService:
         assert "rule_evaluation" in patterns
 
     def test_execute_sync_service_success(self) -> None:
-        """Test service execute method returns success (converted from async)."""
-        # NOTE: Converted from test_execute_async - method removed
+        """Test service execute method returns success (converted from )."""
+        # NOTE: Converted from test_execute - method removed
         service = FlextLdifAclService()
         result = service.execute()
 
@@ -883,7 +883,7 @@ class TestFlextLdifAclService:
 
     def test_execute_returns_consistent_results(self) -> None:
         """Test that execute returns consistent results (converted from test)."""
-        # NOTE: Converted from test_async_execute_consistency - method removed
+        # NOTE: Converted from test_execute_consistency - method removed
         service = FlextLdifAclService()
 
         # Call execute twice to verify consistency

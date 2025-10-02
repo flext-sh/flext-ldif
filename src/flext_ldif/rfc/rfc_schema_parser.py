@@ -300,7 +300,7 @@ class RfcSchemaParserService(FlextService[dict]):
                     )
                     quirk_result = quirk.parse_attribute(definition)
                     if quirk_result.is_success:
-                        return quirk_result.unwrap()  # type: ignore[return-value]
+                        return quirk_result.unwrap()
 
         # Fall back to RFC 4512 standard parsing
         match = self.ATTRIBUTE_TYPE_PATTERN.match(definition)
@@ -341,7 +341,7 @@ class RfcSchemaParserService(FlextService[dict]):
                     )
                     quirk_result = quirk.parse_objectclass(definition)
                     if quirk_result.is_success:
-                        return quirk_result.unwrap()  # type: ignore[return-value]
+                        return quirk_result.unwrap()
 
         # Fall back to RFC 4512 standard parsing
         match = self.OBJECT_CLASS_PATTERN.match(definition)

@@ -536,7 +536,7 @@ api = FlextLdifAPI(config=config)
 
 - Suitable for files up to 100MB
 - Processing speed depends on entry complexity
-- No async/support for concurrent operations
+- No /support for concurrent operations
 
 **Feature Completeness**:
 

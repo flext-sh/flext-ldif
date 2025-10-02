@@ -3,7 +3,7 @@
 
 Demonstrates:
 - Library-only usage (NO CLI)
-- Basic parsing with FlextLdifAPI facade
+- Basic parsing with FlextLdif facade
 - FlextResult error handling
 - Entry inspection
 """
@@ -12,13 +12,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_ldif import FlextLdifAPI
+from flext_ldif import FlextLdif
 
 
 def main() -> None:
     """Basic LDIF parsing example."""
     # Initialize API (library-only, no CLI)
-    api = FlextLdifAPI()
+    api = FlextLdif()
 
     # Sample LDIF content
     ldif_content = """

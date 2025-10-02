@@ -113,7 +113,7 @@ class FlextLdifMixins(FlextMixins):
             # Use Model normalization - centralized in FlextLdifModels.DistinguishedName
             try:
                 dn_model = FlextLdifModels.DistinguishedName(value=dn)
-                return dn_model.normalized_value  # type: ignore[return-value]
+                return dn_model.normalized_value
             except ValueError:
                 return dn
 
@@ -124,7 +124,7 @@ class FlextLdifMixins(FlextMixins):
             try:
                 dn_model = FlextLdifModels.DistinguishedName(value=dn)
                 pairs: list[tuple[str, str]] = []
-                for comp in dn_model.components:  # type: ignore[attr-defined]
+                for comp in dn_model.components:
                     if "=" in comp:
                         attr, value = comp.split("=", 1)
                         pairs.append((attr.strip(), value.strip()))
@@ -252,7 +252,7 @@ class FlextLdifMixins(FlextMixins):
                     # Use Model parsing - centralized in FlextLdifModels.DistinguishedName
                     try:
                         dn_model = FlextLdifModels.DistinguishedName(value=dn)
-                        for comp in dn_model.components:  # type: ignore[attr-defined]
+                        for comp in dn_model.components:
                             if "=" in comp:
                                 attr_name = comp.split("=")[0].strip().lower()
                                 pattern_counts[attr_name] = (

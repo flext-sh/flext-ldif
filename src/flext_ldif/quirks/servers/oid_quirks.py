@@ -52,7 +52,7 @@ class OidSchemaQuirk(BaseSchemaQuirk):
 
     def __init__(self, **data: object) -> None:
         """Initialize OID schema quirk."""
-        super().__init__(**data)  # type: ignore[arg-type]
+        super().__init__(**data)
         self._logger = FlextLogger(__name__)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
@@ -227,7 +227,7 @@ class OidSchemaQuirk(BaseSchemaQuirk):
 
         def __init__(self, **data: object) -> None:
             """Initialize OID ACL quirk."""
-            super().__init__(**data)  # type: ignore[arg-type]
+            super().__init__(**data)
             self._logger = FlextLogger(__name__)
 
         def can_handle_acl(self, acl_line: str) -> bool:
@@ -260,7 +260,7 @@ class OidSchemaQuirk(BaseSchemaQuirk):
                 if is_entry_level:
                     result = FlextLdifModels.OidEntryLevelAci.from_ldif_line(acl_line)
                 else:
-                    result = FlextLdifModels.OidAci.from_ldif_line(acl_line)  # type: ignore[assignment]
+                    result = FlextLdifModels.OidAci.from_ldif_line(acl_line)
 
                 if result.is_success:
                     # Convert model to dict for quirk system
@@ -363,12 +363,12 @@ class OidSchemaQuirk(BaseSchemaQuirk):
 
         def __init__(self, **data: object) -> None:
             """Initialize OID entry quirk."""
-            super().__init__(**data)  # type: ignore[arg-type]
+            super().__init__(**data)
             self._logger = FlextLogger(__name__)
 
         def can_handle_entry(
             self,
-            entry_dn: str,  # noqa: ARG002
+            entry_dn: str,
             attributes: dict,
         ) -> bool:
             """Check if this quirk should handle the entry.

@@ -247,7 +247,7 @@ class ASTAnalyzer:
                             d.id if isinstance(d, ast.Name) else str(d)
                             for d in node.decorator_list
                         ],
-                        "is_async": isinstance(node, ast.AsyncFunctionDef),
+                        "is": isinstance(node, ast.FunctionDef),
                     })
 
                 elif isinstance(node, ast.Call):
