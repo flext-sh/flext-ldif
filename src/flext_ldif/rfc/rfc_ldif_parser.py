@@ -155,14 +155,14 @@ class RfcLdifParserService(FlextService[dict]):
             )
 
             # Parse LDIF file
-            parse_result = self._parse_ldif_file(  # type: ignore[assignment]
+            parse_result = self._parse_ldif_file(
                 file_path, parse_changes=parse_changes, encoding=encoding
             )
 
             if parse_result.is_failure:
                 return FlextResult[dict].fail(parse_result.error)
 
-            data = parse_result.value  # type: ignore[assignment]
+            data = parse_result.value
 
             self._logger.info(
                 "LDIF parsed successfully",
@@ -291,8 +291,8 @@ class RfcLdifParserService(FlextService[dict]):
             comments: list[str] = []
 
             # Use instance variables to track state across method calls
-            self._current_entry: dict[str, object] | None = None  # type: ignore[no-redef]
-            self._current_dn: str = ""  # type: ignore[no-redef]
+            self._current_entry: dict[str, object] | None = None
+            self._current_dn: str = ""
 
             with file_path.open("r", encoding=encoding) as f:
                 current_line = ""

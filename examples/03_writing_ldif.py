@@ -12,13 +12,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_ldif import FlextLdifAPI, FlextLdifModels
+from flext_ldif import FlextLdif, FlextLdifModels
 
 
 def main() -> None:
     """LDIF writing example."""
     # Initialize API
-    api = FlextLdifAPI()
+    api = FlextLdif()
 
     print("=== Creating LDIF Entries ===\n")
 

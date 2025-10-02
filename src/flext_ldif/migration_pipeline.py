@@ -163,7 +163,7 @@ class LdifMigrationPipelineService(FlextService[dict]):
         entries: list,
         source_format: str,
         target_format: str,
-        quirks: list[str] | None = None,  # noqa: ARG002
+        quirks: list[str] | None = None,
     ) -> FlextResult[list]:
         """Migrate entries between formats using quirk-based transformation.
 
@@ -224,7 +224,7 @@ class LdifMigrationPipelineService(FlextService[dict]):
                                 normalized_entry
                             )
                             if convert_result.is_success:
-                                normalized_entry = convert_result.unwrap()  # type: ignore[assignment]
+                                normalized_entry = convert_result.unwrap()
                                 break
 
                 # Step 2: Transform from RFC to target format using target quirks

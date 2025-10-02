@@ -12,8 +12,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_ldif import FlextLdifAPI, FlextLdifModels
-from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
+from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif.migration_pipeline import LdifMigrationPipelineService
 from flext_ldif.quirks.registry import QuirkRegistryService
 
 
@@ -21,7 +21,7 @@ def simple_migration_example() -> None:
     """Simple migration using API."""
     print("=== Simple Migration Example ===\n")
 
-    api = FlextLdifAPI()
+    api = FlextLdif()
 
     # Create OID-specific entry
     oid_entry = FlextLdifModels.Entry(
@@ -37,7 +37,7 @@ def simple_migration_example() -> None:
 
     print("1. Source entry (OID format):")
     print(f"   DN: {oid_entry.dn}")
-    print(f"   Attributes: {len(oid_entry.attributes)}")
+    print(f"   Attributes: {oid_entry.attributes.attribute_count}")
 
     # Write OID entry
     write_result = api.write([oid_entry])
@@ -84,9 +84,11 @@ cn: schema
     print(f"   Target: {oud_dir}")
 
     # Initialize migration pipeline
-    migration = FlextLdifMigrationPipeline(
-        input_dir=oid_dir,
-        output_dir=oud_dir,
+    migration = LdifMigrationPipelineService(
+        params={
+            "input_dir": str(oid_dir),
+            "output_dir": str(oud_dir),
+        },
         source_server_type="oid",  # Oracle Internet Directory
         target_server_type="oud",  # Oracle Unified Directory
         quirk_registry=quirk_registry,

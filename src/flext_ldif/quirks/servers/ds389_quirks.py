@@ -33,16 +33,16 @@ class Ds389SchemaQuirk(BaseSchemaQuirk):
 
     def __init__(self, **data: object) -> None:
         """Initialize 389 DS schema quirk stub."""
-        super().__init__(**data)  # type: ignore[arg-type]
+        super().__init__(**data)
         self._logger = FlextLogger(__name__)
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:  # noqa: ARG002
+    def can_handle_attribute(self, attr_definition: str) -> bool:
         """Check if this is a 389 DS attribute - STUB."""
         return False
 
     def parse_attribute(
         self,
-        attr_definition: str,  # noqa: ARG002
+        attr_definition: str,
     ) -> FlextResult[dict[str, object]]:
         """Parse 389 DS attribute definition - STUB."""
         return FlextResult[dict[str, object]].fail(
@@ -50,13 +50,13 @@ class Ds389SchemaQuirk(BaseSchemaQuirk):
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:  # noqa: ARG002
+    def can_handle_objectclass(self, oc_definition: str) -> bool:
         """Check if this is a 389 DS objectClass - STUB."""
         return False
 
     def parse_objectclass(
         self,
-        oc_definition: str,  # noqa: ARG002
+        oc_definition: str,
     ) -> FlextResult[dict[str, object]]:
         """Parse 389 DS objectClass definition - STUB."""
         return FlextResult[dict[str, object]].fail(
@@ -66,7 +66,7 @@ class Ds389SchemaQuirk(BaseSchemaQuirk):
 
     def convert_attribute_to_rfc(
         self,
-        attr_data: dict[str, object],  # noqa: ARG002
+        attr_data: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Convert 389DS attribute to RFC-compliant format - STUB."""
         return FlextResult[dict[str, object]].fail(
@@ -76,7 +76,7 @@ class Ds389SchemaQuirk(BaseSchemaQuirk):
 
     def convert_objectclass_to_rfc(
         self,
-        oc_data: dict[str, object],  # noqa: ARG002
+        oc_data: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Convert 389DS objectClass to RFC-compliant format - STUB."""
         return FlextResult[dict[str, object]].fail(
@@ -94,16 +94,16 @@ class Ds389SchemaQuirk(BaseSchemaQuirk):
 
         def __init__(self, **data: object) -> None:
             """Initialize 389 DS ACL quirk stub."""
-            super().__init__(**data)  # type: ignore[arg-type]
+            super().__init__(**data)
             self._logger = FlextLogger(__name__)
 
-        def can_handle_acl(self, acl_line: str) -> bool:  # noqa: ARG002
+        def can_handle_acl(self, acl_line: str) -> bool:
             """Check if this is a 389 DS ACL - STUB."""
             return False
 
         def parse_acl(
             self,
-            acl_line: str,  # noqa: ARG002
+            acl_line: str,
         ) -> FlextResult[dict[str, object]]:
             """Parse 389 DS ACL definition - STUB."""
             return FlextResult[dict[str, object]].fail(
@@ -113,7 +113,7 @@ class Ds389SchemaQuirk(BaseSchemaQuirk):
 
         def convert_acl_to_rfc(
             self,
-            acl_data: dict[str, object],  # noqa: ARG002
+            acl_data: dict[str, object],
         ) -> FlextResult[dict[str, object]]:
             """Convert 389DS ACL to RFC-compliant format - STUB."""
             return FlextResult[dict[str, object]].fail(
@@ -123,7 +123,7 @@ class Ds389SchemaQuirk(BaseSchemaQuirk):
 
         def convert_acl_from_rfc(
             self,
-            acl_data: dict[str, object],  # noqa: ARG002
+            acl_data: dict[str, object],
         ) -> FlextResult[dict[str, object]]:
             """Convert RFC ACL to 389DS-specific format - STUB."""
             return FlextResult[dict[str, object]].fail(
@@ -143,21 +143,21 @@ class Ds389SchemaQuirk(BaseSchemaQuirk):
 
         def __init__(self, **data: object) -> None:
             """Initialize 389 DS entry quirk stub."""
-            super().__init__(**data)  # type: ignore[arg-type]
+            super().__init__(**data)
             self._logger = FlextLogger(__name__)
 
         def can_handle_entry(
             self,
-            entry_dn: str,  # noqa: ARG002
-            attributes: dict,  # noqa: ARG002
+            entry_dn: str,
+            attributes: dict,
         ) -> bool:
             """Check if this quirk should handle the entry - STUB."""
             return False
 
         def process_entry(
             self,
-            entry_dn: str,  # noqa: ARG002
-            attributes: dict,  # noqa: ARG002
+            entry_dn: str,
+            attributes: dict,
         ) -> FlextResult[dict[str, object]]:
             """Process entry for 389DS format - STUB."""
             return FlextResult[dict[str, object]].fail(
@@ -167,7 +167,7 @@ class Ds389SchemaQuirk(BaseSchemaQuirk):
 
         def convert_entry_to_rfc(
             self,
-            entry_data: dict[str, object],  # noqa: ARG002
+            entry_data: dict[str, object],
         ) -> FlextResult[dict[str, object]]:
             """Convert 389DS entry to RFC-compliant format - STUB."""
             return FlextResult[dict[str, object]].fail(

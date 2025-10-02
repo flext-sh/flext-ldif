@@ -37,16 +37,16 @@ class NovellSchemaQuirk(BaseSchemaQuirk):
 
     def __init__(self, **data: object) -> None:
         """Initialize eDirectory schema quirk stub."""
-        super().__init__(**data)  # type: ignore[arg-type]
+        super().__init__(**data)
         self._logger = FlextLogger(__name__)
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:  # noqa: ARG002
+    def can_handle_attribute(self, attr_definition: str) -> bool:
         """Check if this is an eDirectory attribute - STUB."""
         return False
 
     def parse_attribute(
         self,
-        attr_definition: str,  # noqa: ARG002
+        attr_definition: str,
     ) -> FlextResult[dict[str, object]]:
         """Parse eDirectory attribute definition - STUB."""
         return FlextResult[dict[str, object]].fail(
@@ -54,13 +54,13 @@ class NovellSchemaQuirk(BaseSchemaQuirk):
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:  # noqa: ARG002
+    def can_handle_objectclass(self, oc_definition: str) -> bool:
         """Check if this is an eDirectory objectClass - STUB."""
         return False
 
     def parse_objectclass(
         self,
-        oc_definition: str,  # noqa: ARG002
+        oc_definition: str,
     ) -> FlextResult[dict[str, object]]:
         """Parse eDirectory objectClass definition - STUB."""
         return FlextResult[dict[str, object]].fail(
@@ -70,7 +70,7 @@ class NovellSchemaQuirk(BaseSchemaQuirk):
 
     def convert_attribute_to_rfc(
         self,
-        attr_data: dict[str, object],  # noqa: ARG002
+        attr_data: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Convert eDirectory attribute to RFC-compliant format - STUB."""
         return FlextResult[dict[str, object]].fail(
@@ -80,7 +80,7 @@ class NovellSchemaQuirk(BaseSchemaQuirk):
 
     def convert_objectclass_to_rfc(
         self,
-        oc_data: dict[str, object],  # noqa: ARG002
+        oc_data: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Convert eDirectory objectClass to RFC-compliant format - STUB."""
         return FlextResult[dict[str, object]].fail(
@@ -100,16 +100,16 @@ class NovellSchemaQuirk(BaseSchemaQuirk):
 
         def __init__(self, **data: object) -> None:
             """Initialize eDirectory ACL quirk stub."""
-            super().__init__(**data)  # type: ignore[arg-type]
+            super().__init__(**data)
             self._logger = FlextLogger(__name__)
 
-        def can_handle_acl(self, acl_line: str) -> bool:  # noqa: ARG002
+        def can_handle_acl(self, acl_line: str) -> bool:
             """Check if this is an eDirectory ACL - STUB."""
             return False
 
         def parse_acl(
             self,
-            acl_line: str,  # noqa: ARG002
+            acl_line: str,
         ) -> FlextResult[dict[str, object]]:
             """Parse eDirectory ACL definition - STUB."""
             return FlextResult[dict[str, object]].fail(
@@ -119,7 +119,7 @@ class NovellSchemaQuirk(BaseSchemaQuirk):
 
         def convert_acl_to_rfc(
             self,
-            acl_data: dict[str, object],  # noqa: ARG002
+            acl_data: dict[str, object],
         ) -> FlextResult[dict[str, object]]:
             """Convert eDirectory ACL to RFC-compliant format - STUB."""
             return FlextResult[dict[str, object]].fail(
@@ -129,7 +129,7 @@ class NovellSchemaQuirk(BaseSchemaQuirk):
 
         def convert_acl_from_rfc(
             self,
-            acl_data: dict[str, object],  # noqa: ARG002
+            acl_data: dict[str, object],
         ) -> FlextResult[dict[str, object]]:
             """Convert RFC ACL to eDirectory-specific format - STUB."""
             return FlextResult[dict[str, object]].fail(
@@ -149,21 +149,21 @@ class NovellSchemaQuirk(BaseSchemaQuirk):
 
         def __init__(self, **data: object) -> None:
             """Initialize eDirectory entry quirk stub."""
-            super().__init__(**data)  # type: ignore[arg-type]
+            super().__init__(**data)
             self._logger = FlextLogger(__name__)
 
         def can_handle_entry(
             self,
-            entry_dn: str,  # noqa: ARG002
-            attributes: dict,  # noqa: ARG002
+            entry_dn: str,
+            attributes: dict,
         ) -> bool:
             """Check if this quirk should handle the entry - STUB."""
             return False
 
         def process_entry(
             self,
-            entry_dn: str,  # noqa: ARG002
-            attributes: dict,  # noqa: ARG002
+            entry_dn: str,
+            attributes: dict,
         ) -> FlextResult[dict[str, object]]:
             """Process entry for eDirectory format - STUB."""
             return FlextResult[dict[str, object]].fail(
@@ -173,7 +173,7 @@ class NovellSchemaQuirk(BaseSchemaQuirk):
 
         def convert_entry_to_rfc(
             self,
-            entry_data: dict[str, object],  # noqa: ARG002
+            entry_data: dict[str, object],
         ) -> FlextResult[dict[str, object]]:
             """Convert eDirectory entry to RFC-compliant format - STUB."""
             return FlextResult[dict[str, object]].fail(

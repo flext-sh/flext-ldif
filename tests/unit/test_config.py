@@ -373,13 +373,13 @@ class TestFlextLdifConfig:
         """Test that configuration values are properly validated."""
         # Test that invalid values are rejected
         with pytest.raises(ValidationError):
-            FlextLdifConfig(ldif_max_line_length="invalid")  # type: ignore[arg-type]
+            FlextLdifConfig(ldif_max_line_length="invalid")
 
         with pytest.raises(ValidationError):
-            FlextLdifConfig(max_workers="invalid")  # type: ignore[arg-type]
+            FlextLdifConfig(max_workers="invalid")
 
         with pytest.raises(ValidationError):
-            FlextLdifConfig(ldif_encoding=123)  # type: ignore[arg-type]
+            FlextLdifConfig(ldif_encoding=123)
 
     # =========================================================================
     # VALIDATOR EDGE CASES - Complete coverage for all validators
@@ -408,7 +408,7 @@ class TestFlextLdifConfig:
     def test_validate_validation_level_invalid(self) -> None:
         """Test validation_level validator with invalid value."""
         with pytest.raises(ValidationError) as exc_info:
-            FlextLdifConfig(validation_level="invalid")  # type: ignore[arg-type]
+            FlextLdifConfig(validation_level="invalid")
         # Pydantic v2 error message format
         assert "Input should be" in str(exc_info.value) or "validation_level" in str(
             exc_info.value
@@ -417,7 +417,7 @@ class TestFlextLdifConfig:
     def test_validate_server_type_invalid(self) -> None:
         """Test server_type validator with invalid value."""
         with pytest.raises(ValidationError) as exc_info:
-            FlextLdifConfig(server_type="unknown_server")  # type: ignore[arg-type]
+            FlextLdifConfig(server_type="unknown_server")
         assert "Input should be" in str(exc_info.value) or "server_type" in str(
             exc_info.value
         )

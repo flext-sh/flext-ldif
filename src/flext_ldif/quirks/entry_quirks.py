@@ -242,7 +242,7 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
             issues.append(f"Invalid DN format: {e}")
             return {"valid": False, "issues": issues}
 
-        for component in components:  # type: ignore[attr-defined]
+        for component in components:
             if "=" not in component:
                 issues.append(f"Invalid DN component format: {component}")
                 continue

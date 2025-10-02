@@ -34,7 +34,7 @@ class TestFlextLdifEntryBuilder:
 
     def test_execute_returns_failure_message(self) -> None:
         """Test that execute method returns failure with helpful message."""
-        # NOTE: Converted from test_execute_async - method removed
+        # NOTE: Converted from test_execute - method removed
         builder = FlextLdifEntryBuilder()
         result = builder.execute()
         # Execute returns failure directing to use specific build methods
