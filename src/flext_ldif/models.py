@@ -9,10 +9,17 @@ from __future__ import annotations
 import re
 from typing import Literal, Self, cast
 
-from flext_core import FlextModels, FlextResult
-from pydantic import (ConfigDict, Field, SerializationInfo, computed_field,
-                      field_serializer, field_validator, model_validator)
+from pydantic import (
+    ConfigDict,
+    Field,
+    SerializationInfo,
+    computed_field,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 
+from flext_core import FlextModels, FlextResult
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.typings import FlextLdifTypes
 
