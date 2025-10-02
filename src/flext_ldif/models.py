@@ -9,17 +9,10 @@ from __future__ import annotations
 import re
 from typing import Literal, Self, cast
 
-from pydantic import (
-    ConfigDict,
-    Field,
-    SerializationInfo,
-    computed_field,
-    field_serializer,
-    field_validator,
-    model_validator,
-)
-
 from flext_core import FlextModels, FlextResult
+from pydantic import (ConfigDict, Field, SerializationInfo, computed_field,
+                      field_serializer, field_validator, model_validator)
+
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.typings import FlextLdifTypes
 
@@ -584,15 +577,17 @@ class FlextLdifModels(FlextModels):
         @computed_field
         def granted_count(self) -> int:
             """Count of granted permissions."""
-            return sum([
-                self.read,
-                self.write,
-                self.add,
-                self.delete,
-                self.search,
-                self.compare,
-                self.proxy,
-            ])
+            return sum(
+                [
+                    self.read,
+                    self.write,
+                    self.add,
+                    self.delete,
+                    self.search,
+                    self.compare,
+                    self.proxy,
+                ]
+            )
 
         @computed_field
         def permissions_summary(self) -> dict[str, object]:
@@ -2493,16 +2488,20 @@ class FlextLdifModels(FlextModels):
         @computed_field
         def schema_summary(self) -> dict[str, object]:
             """Computed field for schema summary."""
-            oracle_attrs = len([
-                a
-                for a in self.attributes.values()
-                if a.is_oracle_specific  # type: ignore[truthy-function]
-            ])
-            oracle_ocs = len([
-                o
-                for o in self.objectclasses.values()
-                if o.is_oracle_specific  # type: ignore[truthy-function]
-            ])
+            oracle_attrs = len(
+                [
+                    a
+                    for a in self.attributes.values()
+                    if a.is_oracle_specific  # type: ignore[truthy-function]
+                ]
+            )
+            oracle_ocs = len(
+                [
+                    o
+                    for o in self.objectclasses.values()
+                    if o.is_oracle_specific  # type: ignore[truthy-function]
+                ]
+            )
 
             return {
                 "total_attributes": len(self.attributes),

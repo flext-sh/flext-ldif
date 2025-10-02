@@ -10,8 +10,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-
 from flext_core import FlextBus, FlextContainer, FlextContext
+
 from flext_ldif.handlers import FlextLdifHandlers
 from flext_ldif.models import FlextLdifModels
 
@@ -266,13 +266,15 @@ class TestAnalyzeQueryHandler:
         bus = FlextBus()
         handler = FlextLdifHandlers.AnalyzeQueryHandler(context, container, bus)
 
-        entry_result = FlextLdifModels.Entry.create({
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": {
-                "cn": ["test"],
-                "objectClass": ["person"],
-            },
-        })
+        entry_result = FlextLdifModels.Entry.create(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {
+                    "cn": ["test"],
+                    "objectClass": ["person"],
+                },
+            }
+        )
         entry = entry_result.unwrap()
 
         query = FlextLdifModels.AnalyzeQuery(
@@ -296,13 +298,15 @@ class TestAnalyzeQueryHandler:
         handler = FlextLdifHandlers.AnalyzeQueryHandler(context, container, bus)
 
         entries = [
-            FlextLdifModels.Entry.create({
-                "dn": f"cn=test{i},dc=example,dc=com",
-                "attributes": {
-                    "cn": [f"test{i}"],
-                    "objectClass": ["person", "organizationalPerson"],
-                },
-            }).unwrap()
+            FlextLdifModels.Entry.create(
+                {
+                    "dn": f"cn=test{i},dc=example,dc=com",
+                    "attributes": {
+                        "cn": [f"test{i}"],
+                        "objectClass": ["person", "organizationalPerson"],
+                    },
+                }
+            ).unwrap()
             for i in range(3)
         ]
 
@@ -326,13 +330,15 @@ class TestAnalyzeQueryHandler:
         bus = FlextBus()
         handler = FlextLdifHandlers.AnalyzeQueryHandler(context, container, bus)
 
-        entry_result = FlextLdifModels.Entry.create({
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": {
-                "cn": ["test"],
-                "objectClass": ["person"],
-            },
-        })
+        entry_result = FlextLdifModels.Entry.create(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {
+                    "cn": ["test"],
+                    "objectClass": ["person"],
+                },
+            }
+        )
         entry = entry_result.unwrap()
 
         query = FlextLdifModels.AnalyzeQuery(
@@ -407,13 +413,15 @@ class TestWriteCommandHandler:
         handler = FlextLdifHandlers.WriteCommandHandler(context, container, bus)
 
         # Use factory method to create entry
-        entry_result = FlextLdifModels.Entry.create({
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": {
-                "cn": ["test"],
-                "objectClass": ["person"],
-            },
-        })
+        entry_result = FlextLdifModels.Entry.create(
+            {
+                "dn": "cn=test,dc=example,dc=com",
+                "attributes": {
+                    "cn": ["test"],
+                    "objectClass": ["person"],
+                },
+            }
+        )
         entry = entry_result.unwrap()
 
         command = FlextLdifModels.WriteCommand(
@@ -553,11 +561,13 @@ class TestHandlerIntegration:
         )
 
         # Verify all handlers initialized
-        assert all([
-            parse_handler,
-            validate_handler,
-            analyze_handler,
-            write_handler,
-            migrate_handler,
-            quirk_handler,
-        ])
+        assert all(
+            [
+                parse_handler,
+                validate_handler,
+                analyze_handler,
+                write_handler,
+                migrate_handler,
+                quirk_handler,
+            ]
+        )

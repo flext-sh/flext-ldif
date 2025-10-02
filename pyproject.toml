@@ -109,7 +109,7 @@
         "complexity: Complexity tests",
         "memory_limit: Memory limit tests",
         "timeout: Timeout tests",
-        "asyncio: Async tests",
+        " tests",
     ]
     filterwarnings = [
         "ignore::DeprecationWarning:pyasn1(.*|$)",

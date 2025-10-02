@@ -9,7 +9,6 @@ from __future__ import annotations
 from typing import override
 
 from flext_core import FlextLogger, FlextResult, FlextService
-
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
@@ -26,12 +25,10 @@ class FlextLdifAclParser(FlextService[dict[str, object]]):
     @override
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute parser service."""
-        return FlextResult[dict[str, object]].ok(
-            {
-                "service": FlextLdifAclParser,
-                "status": "ready",
-            }
-        )
+        return FlextResult[dict[str, object]].ok({
+            "service": FlextLdifAclParser,
+            "status": "ready",
+        })
 
     def parse_openldap_acl(
         self, acl_string: str

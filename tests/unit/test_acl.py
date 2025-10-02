@@ -12,8 +12,8 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from flext_core import FlextResult
 
+from flext_core import FlextResult
 from flext_ldif.acl.parser import FlextLdifAclParser
 from flext_ldif.acl.service import FlextLdifAclService
 from flext_ldif.constants import FlextLdifConstants
@@ -42,7 +42,7 @@ class TestFlextLdifAclParser:
 
     def test_execute_sync_success(self) -> None:
         """Test execute method returns success (converted from async)."""
-        # NOTE: Converted from test_execute_async - async method removed
+        # NOTE: Converted from test_execute_async - method removed
         parser = FlextLdifAclParser()
         result = parser.execute()
 
@@ -451,7 +451,7 @@ class TestFlextLdifAclService:
 
     def test_execute_sync_service_success(self) -> None:
         """Test service execute method returns success (converted from async)."""
-        # NOTE: Converted from test_execute_async - async method removed
+        # NOTE: Converted from test_execute_async - method removed
         service = FlextLdifAclService()
         result = service.execute()
 
@@ -882,8 +882,8 @@ class TestFlextLdifAclService:
         assert patterns["rule_evaluation"] == "Individual ACL rule processing"
 
     def test_execute_returns_consistent_results(self) -> None:
-        """Test that execute returns consistent results (converted from async test)."""
-        # NOTE: Converted from test_async_execute_consistency - async method removed
+        """Test that execute returns consistent results (converted from test)."""
+        # NOTE: Converted from test_async_execute_consistency - method removed
         service = FlextLdifAclService()
 
         # Call execute twice to verify consistency

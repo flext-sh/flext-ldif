@@ -17,10 +17,16 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
 
-from flext_core import (FlextBus, FlextContainer, FlextContext,
-                        FlextDispatcher, FlextHandlers, FlextModels,
-                        FlextRegistry, FlextResult)
-
+from flext_core import (
+    FlextBus,
+    FlextContainer,
+    FlextContext,
+    FlextDispatcher,
+    FlextHandlers,
+    FlextModels,
+    FlextRegistry,
+    FlextResult,
+)
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
 
@@ -115,14 +121,12 @@ class FlextLdifHandlers:
                 f"Handler registration failed: {registration_result.error}"
             )
 
-        return FlextResult[dict[str, object]].ok(
-            {
-                "handlers_registered": len(handlers),
-                "handler_names": list(handlers.keys()),
-                "registry_summary": registration_result.unwrap(),
-                "dispatcher": dispatcher,
-            }
-        )
+        return FlextResult[dict[str, object]].ok({
+            "handlers_registered": len(handlers),
+            "handler_names": list(handlers.keys()),
+            "registry_summary": registration_result.unwrap(),
+            "dispatcher": dispatcher,
+        })
 
     class ParseQueryHandler(
         FlextHandlers[FlextLdifModels.ParseQuery, list[FlextLdifModels.Entry]]

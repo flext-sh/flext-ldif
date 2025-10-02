@@ -11,7 +11,6 @@ Demonstrates:
 from __future__ import annotations
 
 from flext_core import FlextResult
-
 from flext_ldif.quirks.registry import QuirkRegistryService
 from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
 

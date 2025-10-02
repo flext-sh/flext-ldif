@@ -10,7 +10,6 @@ from collections.abc import Callable, Iterator, Sequence
 from typing import override
 
 from flext_core import FlextMixins, FlextResult, T, U
-
 from flext_ldif.models import FlextLdifModels
 
 

@@ -36,9 +36,9 @@ class TestObjectClassManagerInitialization:
         assert data["status"] == "ready"
 
     def test_manager_execute_returns_success_duplicate(self) -> None:
-        """Test execute method returns success status (duplicate test removed in async cleanup)."""
+        """Test execute method returns success status (duplicate test removed in cleanup)."""
         # NOTE: This was test_manager_execute_async_returns_success
-        # Converted to sync-only architecture - async method removed
+        # Converted to sync-only architecture - method removed
         # Keeping this as a duplicate of test_manager_execute_returns_success
         manager = FlextLdifObjectClassManager()
 

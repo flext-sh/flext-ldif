@@ -9,10 +9,10 @@ from __future__ import annotations
 import threading
 from typing import ClassVar, Literal, cast
 
-from flext_core import FlextConfig, FlextConstants
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
+from flext_core import FlextConfig, FlextConstants
 from flext_ldif.constants import FlextLdifConstants
 
 
@@ -405,19 +405,15 @@ class FlextLdifConfig(FlextConfig):
 
         # Server-specific optimizations
         if server_type == "openldap":
-            config_data.update(
-                {
-                    "ldif_strict_validation": True,
-                    "ldif_validate_dn_format": True,
-                }
-            )
+            config_data.update({
+                "ldif_strict_validation": True,
+                "ldif_validate_dn_format": True,
+            })
         elif server_type == "active_directory":
-            config_data.update(
-                {
-                    "ldif_strict_validation": False,
-                    "ldif_validate_dn_format": False,
-                }
-            )
+            config_data.update({
+                "ldif_strict_validation": False,
+                "ldif_validate_dn_format": False,
+            })
 
         instance = cls.get_or_create_shared_instance(
             project_name="flext-ldif", **config_data
