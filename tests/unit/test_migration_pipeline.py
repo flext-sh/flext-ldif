@@ -229,6 +229,116 @@ class TestMigrationPipelineExecution:
         assert result.is_success or result.is_failure  # Either is acceptable
 
 
+class TestDefaultQuirkRegistration:
+    """Test suite for default quirk registration."""
+
+    def test_oid_quirks_auto_registered(self, tmp_path: Path) -> None:
+        """Test OID quirks are automatically registered when needed."""
+        input_dir = tmp_path / "input"
+        output_dir = tmp_path / "output"
+        input_dir.mkdir()
+
+        params = {
+            "input_dir": str(input_dir),
+            "output_dir": str(output_dir),
+        }
+
+        # Create pipeline with OID as source - should trigger registration
+        registry = QuirkRegistryService()
+        pipeline = LdifMigrationPipelineService(
+            params=params,
+            source_server_type="oid",
+            target_server_type="openldap",
+            quirk_registry=registry,
+        )
+
+        # Check quirks were registered
+        schema_quirks = registry.get_schema_quirks("oid")
+        acl_quirks = registry.get_acl_quirks("oid")
+        entry_quirks = registry.get_entry_quirks("oid")
+
+        assert schema_quirks is not None
+        assert acl_quirks is not None
+        assert entry_quirks is not None
+        assert pipeline is not None
+
+    def test_oud_quirks_auto_registered(self, tmp_path: Path) -> None:
+        """Test OUD quirks are automatically registered when needed."""
+        input_dir = tmp_path / "input"
+        output_dir = tmp_path / "output"
+        input_dir.mkdir()
+
+        params = {
+            "input_dir": str(input_dir),
+            "output_dir": str(output_dir),
+        }
+
+        # Create pipeline with OUD as target - should trigger registration
+        registry = QuirkRegistryService()
+        pipeline = LdifMigrationPipelineService(
+            params=params,
+            source_server_type="openldap",
+            target_server_type="oud",
+            quirk_registry=registry,
+        )
+
+        # Check quirks were registered
+        schema_quirks = registry.get_schema_quirks("oud")
+        acl_quirks = registry.get_acl_quirks("oud")
+        entry_quirks = registry.get_entry_quirks("oud")
+
+        assert schema_quirks is not None
+        assert acl_quirks is not None
+        assert entry_quirks is not None
+        assert pipeline is not None
+
+    def test_no_duplicate_registration(self, tmp_path: Path) -> None:
+        """Test quirks aren't registered multiple times."""
+        input_dir = tmp_path / "input"
+        output_dir = tmp_path / "output"
+        input_dir.mkdir()
+
+        params = {
+            "input_dir": str(input_dir),
+            "output_dir": str(output_dir),
+        }
+
+        registry = QuirkRegistryService()
+
+        # Create first pipeline - registers quirks
+        LdifMigrationPipelineService(
+            params=params,
+            source_server_type="oid",
+            target_server_type="oud",
+            quirk_registry=registry,
+        )
+
+        # Get initial quirk counts
+        oid_schema_quirks = registry.get_schema_quirks("oid")
+        oud_schema_quirks = registry.get_schema_quirks("oud")
+        assert oid_schema_quirks is not None
+        assert oud_schema_quirks is not None
+
+        oid_schema_count = len(oid_schema_quirks)
+        oud_schema_count = len(oud_schema_quirks)
+
+        # Create second pipeline with same types - should not duplicate
+        LdifMigrationPipelineService(
+            params=params,
+            source_server_type="oid",
+            target_server_type="oud",
+            quirk_registry=registry,
+        )
+
+        # Counts should be the same (no duplicates)
+        oid_schema_quirks_after = registry.get_schema_quirks("oid")
+        oud_schema_quirks_after = registry.get_schema_quirks("oud")
+        assert oid_schema_quirks_after is not None
+        assert oud_schema_quirks_after is not None
+        assert len(oid_schema_quirks_after) == oid_schema_count
+        assert len(oud_schema_quirks_after) == oud_schema_count
+
+
 class TestMigrateEntriesMethod:
     """Test suite for migrate_entries convenience method."""
 

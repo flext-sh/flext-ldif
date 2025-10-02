@@ -4,11 +4,10 @@ from collections.abc import Sequence
 from typing import cast
 
 import pytest
-from flext_core import FlextResult
+from tests.test_support.ldif_data import LdifTestData  # type: ignore[import-not-found]
 
+from flext_core import FlextResult
 from flext_ldif.mixins import FlextLdifMixins
-from tests.test_support.ldif_data import \
-    LdifTestData  # type: ignore[import-not-found]
 
 
 class TestFlextLdifAnalyticsMixin:
