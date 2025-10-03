@@ -169,7 +169,6 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                field=field,
                 code=error_code or "LDIF_VALIDATION_ERROR",
                 context=context,
                 correlation_id=correlation_id,
@@ -217,7 +216,6 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                operation="LDIF_PARSE",
                 code=error_code or "LDIF_PARSE_ERROR",
                 context=context,
                 correlation_id=correlation_id,
@@ -265,7 +263,6 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                operation=operation or "LDIF_PROCESSING",
                 code=error_code or "LDIF_PROCESSING_ERROR",
                 context=context,
                 correlation_id=correlation_id,
@@ -313,7 +310,6 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                operation=operation or "LDIF_FILE_OPERATION",
                 code=error_code or "LDIF_FILE_ERROR",
                 context=context,
                 correlation_id=correlation_id,
@@ -361,7 +357,6 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                config_key=config_key,
                 code=error_code or "LDIF_CONFIGURATION_ERROR",
                 context=context,
                 correlation_id=correlation_id,
@@ -405,7 +400,6 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                field="dn",
                 code=error_code or "LDIF_DN_VALIDATION_ERROR",
                 context=context,
                 correlation_id=correlation_id,
@@ -453,7 +447,6 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                field=attribute_name,
                 code=error_code or "LDIF_ATTRIBUTE_VALIDATION_ERROR",
                 context=context,
                 correlation_id=correlation_id,
@@ -497,7 +490,6 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                operation="LDIF_ENCODING",
                 code=error_code or "LDIF_ENCODING_ERROR",
                 context=context,
                 correlation_id=correlation_id,
@@ -541,7 +533,6 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                field="url",
                 code=error_code or "LDIF_URL_VALIDATION_ERROR",
                 context=context,
                 correlation_id=correlation_id,
@@ -585,7 +576,6 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                field="schema",
                 code=error_code or "LDIF_SCHEMA_VALIDATION_ERROR",
                 context=context,
                 correlation_id=correlation_id,
@@ -629,7 +619,6 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                field="objectClass",
                 code=error_code or "LDIF_OBJECTCLASS_ERROR",
                 context=context,
                 correlation_id=correlation_id,
@@ -673,7 +662,6 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                operation="LDIF_FORMAT_VALIDATION",
                 code=error_code or "LDIF_FORMAT_ERROR",
                 context=context,
                 correlation_id=correlation_id,
@@ -717,7 +705,6 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                field="rfc_compliance",
                 code=error_code or "LDIF_RFC_COMPLIANCE_ERROR",
                 context=context,
                 correlation_id=correlation_id,
@@ -761,7 +748,6 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                operation="LDIF_ENTRY_PROCESSING",
                 code=error_code or "LDIF_ENTRY_ERROR",
                 context=context,
                 correlation_id=correlation_id,

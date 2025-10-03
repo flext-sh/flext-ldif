@@ -164,7 +164,7 @@ class ApacheSchemaQuirk(BaseSchemaQuirk):
         def can_handle_entry(
             self,
             entry_dn: str,
-            _attributes: dict,
+            attributes: dict,
         ) -> bool:
             """Check if this quirk should handle the entry - STUB."""
             return False
@@ -172,7 +172,7 @@ class ApacheSchemaQuirk(BaseSchemaQuirk):
         def process_entry(
             self,
             entry_dn: str,
-            _attributes: dict,
+            attributes: dict,
         ) -> FlextResult[FlextTypes.Dict]:
             """Process entry for ADS format - STUB."""
             return FlextResult[FlextTypes.Dict].fail(

@@ -282,12 +282,15 @@ class FlextLdifProtocols:
 
         def register_schema_quirk(self, quirk: object) -> FlextResult[None]:
             """Register a schema quirk handler."""
+            return FlextResult[None].fail("Not implemented")
 
         def register_acl_quirk(self, quirk: object) -> FlextResult[None]:
             """Register an ACL quirk handler."""
+            return FlextResult[None].fail("Not implemented")
 
         def register_entry_quirk(self, quirk: object) -> FlextResult[None]:
             """Register an entry quirk handler."""
+            return FlextResult[None].fail("Not implemented")
 
     # =========================================================================
     # BACKWARD COMPATIBILITY ALIASES

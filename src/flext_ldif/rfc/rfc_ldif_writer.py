@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING, TextIO
+from typing import TYPE_CHECKING, TextIO, cast
 
 from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from flext_ldif.models import FlextLdifModels
@@ -357,21 +357,26 @@ class RfcLdifWriterService(FlextService[dict]):
                 if not dn:
                     continue
 
+                # Cast attributes to consistent type for quirk processing
+                attributes_normalized: dict[str, object] = cast(dict[str, object], attributes)
+
                 # Apply target entry quirks if available (convert FROM RFC to target format)
                 if self._quirk_registry and self._target_server_type:
                     entry_quirks = self._quirk_registry.get_entry_quirks(
                         self._target_server_type
                     )
                     for quirk in entry_quirks:
-                        if quirk.can_handle_entry(dn, attributes):
-                            process_result = quirk.process_entry(dn, attributes)
+                        if quirk.can_handle_entry(dn, attributes_normalized):
+                            process_result = quirk.process_entry(dn, attributes_normalized)
                             if process_result.is_success:
                                 processed = process_result.unwrap()
                                 if isinstance(processed, dict):
                                     dn = str(processed.get("dn", dn))
-                                    attributes = {
-                                        k: v for k, v in processed.items() if k != "dn"
-                                    }
+                                    # Type cast for pyrefly - processed dict is dict[str, object]
+                                    attributes_normalized = cast(
+                                        dict[str, object],
+                                        {k: v for k, v in processed.items() if k != "dn"},
+                                    )
 
                 # Write DN
                 dn_line = f"dn: {dn}\n"
@@ -379,7 +384,7 @@ class RfcLdifWriterService(FlextService[dict]):
                 lines_written += 1
 
                 # Write attributes
-                for attr_name, attr_values in attributes.items():
+                for attr_name, attr_values in attributes_normalized.items():
                     # Handle both single values and lists
                     values = (
                         attr_values if isinstance(attr_values, list) else [attr_values]
