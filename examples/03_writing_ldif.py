@@ -20,8 +20,6 @@ def main() -> None:
     # Initialize API
     api = FlextLdif()
 
-    print("=== Creating LDIF Entries ===\n")
-
     # Create entries using domain models
     entries = [
         FlextLdifModels.Entry(
@@ -57,43 +55,30 @@ def main() -> None:
         ),
     ]
 
-    print(f"Created {len(entries)} entries\n")
-
     # Write to LDIF string
-    print("=== Writing to String ===")
     write_result = api.write(entries)
 
     if write_result.is_failure:
-        print(f"❌ Write failed: {write_result.error}")
         return
 
-    ldif_string = write_result.unwrap()
-    print(ldif_string)
+    write_result.unwrap()
 
     # Write to file
-    print("\n=== Writing to File ===")
     output_file = Path("examples/output_basic.ldif")
 
     file_result = api.write(entries, output_path=output_file)
 
     if file_result.is_success:
-        print(f"✅ Written {len(entries)} entries to {output_file}")
-        print(f"   File size: {output_file.stat().st_size} bytes")
-    else:
-        print(f"❌ File write failed: {file_result.error}")
+        pass
 
     # Verify by reading back
-    print("\n=== Verifying Written File ===")
     verify_result = api.parse(output_file)
 
     if verify_result.is_success:
         verified_entries = verify_result.unwrap()
-        print(f"✅ Verified: read {len(verified_entries)} entries from file")
 
-        for entry in verified_entries:
-            print(f"   - {entry.dn}")
-    else:
-        print(f"❌ Verification failed: {verify_result.error}")
+        for _entry in verified_entries:
+            pass
 
 
 if __name__ == "__main__":

@@ -683,7 +683,7 @@ graph TB
 
 **File**: `src/flext_ldif/quirks/servers/oid_quirks.py`
 
-- ✅ SchemaQuirk with can_handle_*, parse_*, convert_*_to_rfc methods
+- ✅ SchemaQuirk with can*handle*_, parse\__, convert\_\*\_to_rfc methods
 - ✅ Nested AclQuirk (134 lines, lines 208-341)
 - ✅ Nested EntryQuirk (135 lines, lines 343-477)
 - ✅ Priority: 10 (high priority)
@@ -710,7 +710,7 @@ graph TB
 
 **File**: `src/flext_ldif/quirks/servers/openldap1_quirks.py`
 
-- ✅ SchemaQuirk with can_handle_*, parse_*, convert_*_to_rfc methods
+- ✅ SchemaQuirk with can*handle*_, parse\__, convert\_\*\_to_rfc methods
 - ✅ Nested AclQuirk (143 lines, lines 284-426)
 - ✅ Nested EntryQuirk (93 lines, lines 428-520)
 - ✅ Priority: 20 (lower priority than OpenLDAP 2.x)

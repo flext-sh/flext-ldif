@@ -10,11 +10,10 @@ server-specific quirks with RFC-compliant base parsers.
 from __future__ import annotations
 
 from flext_core import FlextLogger, FlextModels, FlextResult, FlextTypes
-from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
 
 
-class QuirkRegistryService(FlextModels.Entity, FlextLdifProtocols.QuirkRegistryProtocol):
+class QuirkRegistryService(FlextModels.Entity):
     """Centralized registry for LDIF/LDAP quirks.
 
     Manages discovery, registration, and composition of server-specific quirks.

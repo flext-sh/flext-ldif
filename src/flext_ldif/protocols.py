@@ -280,11 +280,14 @@ class FlextLdifProtocols:
         class QuirkRegistryProtocol(Protocol):
             """Protocol for quirk registry."""
 
-        def register_schema_quirk(self, quirk: object) -> FlextResult[None]: ...
+        def register_schema_quirk(self, quirk: object) -> FlextResult[None]:
+            """Register a schema quirk handler."""
 
-        def register_acl_quirk(self, quirk: object) -> FlextResult[None]: ...
+        def register_acl_quirk(self, quirk: object) -> FlextResult[None]:
+            """Register an ACL quirk handler."""
 
-        def register_entry_quirk(self, quirk: object) -> FlextResult[None]: ...
+        def register_entry_quirk(self, quirk: object) -> FlextResult[None]:
+            """Register an entry quirk handler."""
 
     # =========================================================================
     # BACKWARD COMPATIBILITY ALIASES

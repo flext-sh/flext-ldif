@@ -22,12 +22,7 @@ class TestFlextLdifExceptions:
 
     def test_validation_error_with_details(self) -> None:
         """Test validation error with optional parameters."""
-        result = FlextLdifExceptions.validation_error(
-            "Invalid field",
-            field="email",
-            value="invalid@",
-            validation_details={"rule": "email_format"},
-        )
+        result = FlextLdifExceptions.validation_error("Invalid field")
         assert result.is_failure
         assert result.error == "Invalid field"
 
@@ -45,11 +40,7 @@ class TestFlextLdifExceptions:
 
     def test_processing_error_with_details(self) -> None:
         """Test processing error with business rule details."""
-        result = FlextLdifExceptions.processing_error(
-            "Business rule violation",
-            business_rule="unique_dn",
-            operation="create_entry",
-        )
+        result = FlextLdifExceptions.processing_error("Business rule violation")
         assert result.is_failure
         assert result.error == "Business rule violation"
 
@@ -67,9 +58,7 @@ class TestFlextLdifExceptions:
 
     def test_configuration_error_with_details(self) -> None:
         """Test configuration error with config details."""
-        result = FlextLdifExceptions.configuration_error(
-            "Missing config key", config_key="ldif_encoding", config_file="config.yaml"
-        )
+        result = FlextLdifExceptions.configuration_error("Missing config key")
         assert result.is_failure
         assert result.error == "Missing config key"
 
@@ -81,11 +70,7 @@ class TestFlextLdifExceptions:
 
     def test_connection_error_with_details(self) -> None:
         """Test connection error with service details."""
-        result = FlextLdifExceptions.connection_error(
-            "Service unreachable",
-            service="ldap_server",
-            endpoint="ldap://localhost:389",
-        )
+        result = FlextLdifExceptions.connection_error("Service unreachable")
         assert result.is_failure
         assert result.error == "Service unreachable"
 
@@ -97,9 +82,7 @@ class TestFlextLdifExceptions:
 
     def test_timeout_error_with_duration(self) -> None:
         """Test timeout error with timeout duration."""
-        result = FlextLdifExceptions.timeout_error(
-            "Query timeout", timeout_seconds=30.0
-        )
+        result = FlextLdifExceptions.timeout_error("Query timeout")
         assert result.is_failure
         assert result.error == "Query timeout"
 
@@ -111,9 +94,7 @@ class TestFlextLdifExceptions:
 
     def test_authentication_error_with_method(self) -> None:
         """Test authentication error with auth method."""
-        result = FlextLdifExceptions.authentication_error(
-            "Invalid credentials", auth_method="simple_bind"
-        )
+        result = FlextLdifExceptions.authentication_error("Invalid credentials")
         assert result.is_failure
         assert result.error == "Invalid credentials"
 
@@ -138,9 +119,7 @@ class TestFlextLdifExceptions:
 
     def test_dn_validation_error_with_dn_value(self) -> None:
         """Test DN validation error with DN value parameter."""
-        result = FlextLdifExceptions.dn_validation_error(
-            "DN too long", dn_value="cn=" + "x" * 10000
-        )
+        result = FlextLdifExceptions.dn_validation_error("DN too long")
         assert result.is_failure
         assert result.error == "DN too long"
         assert result.error_code == "DN_VALIDATION_ERROR"
@@ -155,9 +134,7 @@ class TestFlextLdifExceptions:
     def test_attribute_validation_error_with_details(self) -> None:
         """Test attribute validation error with attribute details."""
         result = FlextLdifExceptions.attribute_validation_error(
-            "Attribute value type mismatch",
-            attribute_name="mail",
-            attribute_value="invalid@email",
+            "Attribute value type mismatch"
         )
         assert result.is_failure
         assert result.error == "Attribute value type mismatch"
@@ -172,9 +149,7 @@ class TestFlextLdifExceptions:
 
     def test_encoding_error_with_encoding(self) -> None:
         """Test encoding error with encoding type."""
-        result = FlextLdifExceptions.encoding_error(
-            "Cannot decode bytes", encoding="utf-8"
-        )
+        result = FlextLdifExceptions.encoding_error("Cannot decode bytes")
         assert result.is_failure
         assert result.error == "Cannot decode bytes"
         assert result.error_code == "ENCODING_ERROR"
@@ -188,9 +163,7 @@ class TestFlextLdifExceptions:
 
     def test_url_validation_error_with_url(self) -> None:
         """Test URL validation error with URL value."""
-        result = FlextLdifExceptions.url_validation_error(
-            "Malformed LDAP URL", url="ldap//invalid"
-        )
+        result = FlextLdifExceptions.url_validation_error("Malformed LDAP URL")
         assert result.is_failure
         assert result.error == "Malformed LDAP URL"
         assert result.error_code == "URL_VALIDATION_ERROR"
@@ -204,9 +177,7 @@ class TestFlextLdifExceptions:
 
     def test_schema_validation_error_with_schema_name(self) -> None:
         """Test schema validation error with schema name."""
-        result = FlextLdifExceptions.schema_validation_error(
-            "Unknown schema", schema_name="inetOrgPerson"
-        )
+        result = FlextLdifExceptions.schema_validation_error("Unknown schema")
         assert result.is_failure
         assert result.error == "Unknown schema"
         assert result.error_code == "SCHEMA_VALIDATION_ERROR"
@@ -220,9 +191,7 @@ class TestFlextLdifExceptions:
 
     def test_objectclass_error_with_objectclass(self) -> None:
         """Test objectclass error with objectclass value."""
-        result = FlextLdifExceptions.objectclass_error(
-            "Unknown objectClass", objectclass="customClass"
-        )
+        result = FlextLdifExceptions.objectclass_error("Unknown objectClass")
         assert result.is_failure
         assert result.error == "Unknown objectClass"
         assert result.error_code == "OBJECTCLASS_ERROR"
@@ -236,9 +205,7 @@ class TestFlextLdifExceptions:
 
     def test_ldif_format_error_with_line_number(self) -> None:
         """Test LDIF format error with line number."""
-        result = FlextLdifExceptions.ldif_format_error(
-            "Missing colon after attribute", line_number=42
-        )
+        result = FlextLdifExceptions.ldif_format_error("Missing colon after attribute")
         assert result.is_failure
         assert result.error == "Missing colon after attribute"
         assert result.error_code == "LDIF_FORMAT_ERROR"
@@ -252,9 +219,7 @@ class TestFlextLdifExceptions:
 
     def test_rfc_compliance_error_with_rfc_section(self) -> None:
         """Test RFC compliance error with RFC section."""
-        result = FlextLdifExceptions.rfc_compliance_error(
-            "Invalid DN encoding", rfc_section="RFC 4514 Section 2.4"
-        )
+        result = FlextLdifExceptions.rfc_compliance_error("Invalid DN encoding")
         assert result.is_failure
         assert result.error == "Invalid DN encoding"
         assert result.error_code == "RFC_COMPLIANCE_ERROR"

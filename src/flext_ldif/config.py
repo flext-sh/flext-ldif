@@ -381,7 +381,8 @@ class FlextLdifConfig(FlextConfig):
             verbose_logging=True,
             enable_performance_optimizations=False,
             max_workers=FlextLdifConstants.Processing.DEBUG_MAX_WORKERS,
-            ldif_chunk_size=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE // 10,
+            ldif_chunk_size=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE
+            // 10,
             memory_limit_mb=FlextLdifConstants.Processing.MIN_MEMORY_MB,
             ldif_strict_validation=False,
             ldif_enable_analytics=True,
@@ -455,8 +456,7 @@ class FlextLdifConfig(FlextConfig):
             return 1
         if entry_count < FlextLdifConstants.Processing.MEDIUM_ENTRY_COUNT_THRESHOLD:
             return min(
-                FlextLdifConstants.Processing.MIN_WORKERS_FOR_PARALLEL,
-                self.max_workers
+                FlextLdifConstants.Processing.MIN_WORKERS_FOR_PARALLEL, self.max_workers
             )
         return self.max_workers
 

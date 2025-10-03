@@ -5,6 +5,7 @@
 ## 🎯 Overview
 
 These examples demonstrate the **library-only, RFC-first architecture** of flext-ldif with:
+
 - ✅ **ZERO CLI** - All functionality through programmatic APIs
 - ✅ **RFC-First** - ALL operations through RFC parsers + quirks
 - ✅ **MANDATORY quirk_registry** - Zero bypass paths enforcement
@@ -14,7 +15,9 @@ These examples demonstrate the **library-only, RFC-first architecture** of flext
 ## 📚 Examples
 
 ### 01_basic_parsing.py - Basic LDIF Parsing
+
 **Demonstrates:**
+
 - Library-only usage (NO CLI)
 - Basic parsing with FlextLdifAPI facade
 - FlextResult error handling
@@ -25,13 +28,16 @@ poetry run python examples/01_basic_parsing.py
 ```
 
 **Concepts:**
+
 - Parse LDIF from string or file
 - Access entry attributes
 - Inspect object classes
 - Handle parse errors with FlextResult
 
 ### 02_server_specific_quirks.py - Server-Specific Quirks
+
 **Demonstrates:**
+
 - RFC-first architecture with quirks
 - MANDATORY quirk_registry parameter
 - Server-specific parsing (OID, OUD, OpenLDAP)
@@ -42,13 +48,16 @@ poetry run python examples/02_server_specific_quirks.py
 ```
 
 **Concepts:**
+
 - Initialize QuirkRegistryService (auto-discovers all quirks)
 - Parse with server_type="oid" for OID quirks
 - Parse with server_type=None for pure RFC
 - Unknown servers fall back to RFC baseline
 
 ### 03_writing_ldif.py - Writing LDIF
+
 **Demonstrates:**
+
 - Creating entries programmatically
 - Writing LDIF to string
 - Writing LDIF to file
@@ -59,13 +68,16 @@ poetry run python examples/03_writing_ldif.py
 ```
 
 **Concepts:**
+
 - Create FlextLdifModels.Entry objects
 - Write entries to LDIF string
 - Write entries to file
 - Verify written files by reading back
 
 ### 04_validation.py - Entry Validation
+
 **Demonstrates:**
+
 - RFC 2849 validation
 - Entry filtering
 - Statistics generation
@@ -76,13 +88,16 @@ poetry run python examples/04_validation.py
 ```
 
 **Concepts:**
+
 - Validate entries against RFC 2849
 - Filter by object class (person, group, etc.)
 - Generate entry statistics
 - Composable pipeline with flat_map
 
 ### 05_migration.py - Server Migration
+
 **Demonstrates:**
+
 - Generic transformation pipeline (Source → RFC → Target)
 - OID to OUD migration
 - MANDATORY quirk_registry usage
@@ -93,13 +108,16 @@ poetry run python examples/05_migration.py
 ```
 
 **Concepts:**
+
 - FlextLdifMigrationPipeline for migrations
 - Source → RFC → Target transformation
 - Works with ANY server (N implementations, not N²)
 - Migration paths: OID↔OUD, OID↔OpenLDAP, OUD↔OpenLDAP, etc.
 
 ### 06_custom_quirks.py - Custom Quirks
+
 **Demonstrates:**
+
 - Creating custom server quirks
 - Registering custom quirks with registry
 - Extending RFC parsers for custom LDAP servers
@@ -110,9 +128,10 @@ poetry run python examples/06_custom_quirks.py
 ```
 
 **Concepts:**
+
 - Implement SchemaQuirkProtocol
 - Define server_type and priority
-- Implement can_handle_* and parse_* methods
+- Implement can*handle*_and parse\__ methods
 - Register custom quirk with QuirkRegistryService
 
 ## 🚀 Running All Examples
@@ -138,6 +157,7 @@ The examples directory includes sample LDIF files:
 ## 🎓 Key Concepts Demonstrated
 
 ### 1. Library-Only Usage (NO CLI)
+
 ```python
 # ❌ OLD (CLI - no longer available):
 # python -m flext_ldif parse file.ldif
@@ -149,6 +169,7 @@ result = api.parse("file.ldif")
 ```
 
 ### 2. RFC-First Architecture
+
 ```python
 from flext_ldif.quirks.registry import QuirkRegistryService
 from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
@@ -164,6 +185,7 @@ parser = RfcSchemaParserService(
 ```
 
 ### 3. FlextResult Pattern
+
 ```python
 # Railway-oriented error handling
 result = (
@@ -180,6 +202,7 @@ else:
 ```
 
 ### 4. Generic Transformation
+
 ```python
 # Works with ANY LDAP server (N implementations, not N²)
 migration = FlextLdifMigrationPipeline(
@@ -197,12 +220,14 @@ result = migration.execute()
 ## 🌍 Supported LDAP Servers
 
 ### Complete Implementations (4 servers)
+
 - ✅ Oracle Internet Directory (OID)
 - ✅ Oracle Unified Directory (OUD)
 - ✅ OpenLDAP 2.x
 - ✅ OpenLDAP 1.x
 
 ### Stub Implementations (5 servers)
+
 - ⚠️ Active Directory (AD) - stub
 - ⚠️ Apache Directory Server - stub
 - ⚠️ 389 Directory Server - stub
@@ -210,6 +235,7 @@ result = migration.execute()
 - ⚠️ IBM Tivoli Directory Server - stub
 
 ### Generic/Unknown Servers
+
 - ✅ ANY unknown server uses pure RFC baseline
 
 ## 🔗 Integration with FLEXT Ecosystem
