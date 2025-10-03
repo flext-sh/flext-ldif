@@ -360,13 +360,13 @@ class OidSchemaQuirk(BaseSchemaQuirk):
 
         def can_handle_entry(
             self,
-            _entry_dn: str,
+            entry_dn: str,
             attributes: dict,
         ) -> bool:
             """Check if this quirk should handle the entry.
 
             Args:
-                _entry_dn: Entry distinguished name
+                entry_dn: Entry distinguished name
                 attributes: Entry attributes
 
             Returns:

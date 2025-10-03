@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from collections.abc import ItemsView
 from typing import Literal, Self, cast
 
 from pydantic import (
@@ -1220,7 +1221,7 @@ class FlextLdifModels(FlextModels):
                     return attr_values
             return None
 
-        def items(self) -> dict[str, object]:
+        def items(self) -> ItemsView[str, FlextLdifModels.AttributeValues]:
             """Dict-like items method for attribute iteration."""
             return self.attributes.items()
 

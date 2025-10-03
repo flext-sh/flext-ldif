@@ -113,7 +113,8 @@ class FlextLdifMixins(FlextMixins):
             # Use Model normalization - centralized in FlextLdifModels.DistinguishedName
             try:
                 dn_model = FlextLdifModels.DistinguishedName(value=dn)
-                return dn_model.normalized_value
+                # computed_field property access - pyrefly needs explicit str() cast
+                return str(dn_model.normalized_value)
             except ValueError:
                 return dn
 
