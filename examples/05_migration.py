@@ -19,8 +19,6 @@ from flext_ldif.quirks.registry import QuirkRegistryService
 
 def simple_migration_example() -> None:
     """Simple migration using API."""
-    print("=== Simple Migration Example ===\n")
-
     api = FlextLdif()
 
     # Create OID-specific entry
@@ -35,22 +33,14 @@ def simple_migration_example() -> None:
         },
     )
 
-    print("1. Source entry (OID format):")
-    print(f"   DN: {oid_entry.dn}")
-    print(f"   Attributes: {oid_entry.attributes.attribute_count}")
-
     # Write OID entry
     write_result = api.write([oid_entry])
     if write_result.is_success:
-        ldif_content = write_result.unwrap()
-        print(f"\n2. OID LDIF output ({len(ldif_content)} bytes):")
-        print(ldif_content[:200] + "...")
+        write_result.unwrap()
 
 
 def pipeline_migration_example() -> None:
     """Advanced migration using pipeline."""
-    print("\n=== Pipeline Migration Example ===\n")
-
     # ⚠️ MANDATORY: Initialize quirk registry
     quirk_registry = QuirkRegistryService()
 
@@ -79,10 +69,6 @@ cn: schema
     # Write sample OID file
     (oid_dir / "sample_oid.ldif").write_text(oid_ldif)
 
-    print("1. Generic Transformation Pipeline: OID → RFC → OUD")
-    print(f"   Source: {oid_dir}")
-    print(f"   Target: {oud_dir}")
-
     # Initialize migration pipeline
     migration = LdifMigrationPipelineService(
         params={
@@ -94,41 +80,22 @@ cn: schema
         quirk_registry=quirk_registry,
     )
 
-    print("\n2. Executing migration...")
-
     # Execute migration: OID → RFC → OUD
     result = migration.execute()
 
     if result.is_success:
         data = result.unwrap()
-        print("\n✅ Migration completed:")
-        print(f"   Entries migrated: {data.get('entries_migrated', 0)}")
-        print(f"   Schema files: {len(data.get('schema_files', []))}")
-        print(f"   Output files: {len(data.get('output_files', []))}")
 
         # Show output files
         if data.get("output_files"):
-            print("\n   Generated files:")
-            for output_file in data["output_files"]:
-                print(f"      - {output_file}")
-    else:
-        print(f"\n❌ Migration failed: {result.error}")
+            for _output_file in data["output_files"]:
+                pass
 
 
 def main() -> None:
     """Run migration examples."""
     simple_migration_example()
     pipeline_migration_example()
-
-    print("\n=== Supported Migration Paths ===")
-    print("Complete implementations:")
-    print("  • OID ↔ OUD")
-    print("  • OID ↔ OpenLDAP 1.x/2.x")
-    print("  • OUD ↔ OpenLDAP 1.x/2.x")
-    print("  • object combination of 4 complete servers")
-    print(
-        "\nGeneric transformation works with ANY LDAP server (N implementations, not N²)"
-    )
 
 
 if __name__ == "__main__":

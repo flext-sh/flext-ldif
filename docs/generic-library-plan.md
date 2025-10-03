@@ -55,18 +55,21 @@ This document defines the comprehensive plan for transforming flext-ldif into a 
 ### Design Philosophy
 
 **RFC Parsers Provide**:
+
 - Baseline LDIF/Schema parsing for ALL LDAP servers
 - RFC 2849 compliant LDIF processing (entries, attributes, change records)
 - RFC 4512 compliant schema parsing (attributeTypes, objectClasses)
 - Works with **any** LDAP server (known or unknown)
 
 **Quirks System Provides**:
+
 - Server-specific extensions (custom OIDs, syntaxes, formats)
 - Priority-based resolution (lower number = higher priority)
 - Tried **first**, RFC parsing used as **fallback**
 - Easy addition of new server support
 
 **Benefits**:
+
 - No server-specific code in core parsers
 - Works with unknown/new LDAP servers out of the box
 - Easy to extend for new servers via quirks
@@ -80,26 +83,27 @@ This document defines the comprehensive plan for transforming flext-ldif into a 
 
 Full SchemaQuirk + AclQuirk + EntryQuirk implementations with comprehensive testing:
 
-| Server            | Version      | Lines | Schema | ACL | Entry | Priority | Status      |
-| ----------------- | ------------ | ----- | ------ | --- | ----- | -------- | ----------- |
-| **OpenLDAP**      | 2.x (cn=config) | 537   | ✅      | ✅   | ✅     | 10       | **COMPLETE** |
-| **OpenLDAP**      | 1.x (slapd.conf) | 530   | ✅      | ✅   | ✅     | 10       | **COMPLETE** |
-| **Oracle OID**    | 11g+         | 347   | ✅      | ✅   | ✅     | 10       | **COMPLETE** |
-| **Oracle OUD**    | 11g+         | 426   | ✅      | ✅   | ✅     | 10       | **COMPLETE** |
+| Server         | Version          | Lines | Schema | ACL | Entry | Priority | Status       |
+| -------------- | ---------------- | ----- | ------ | --- | ----- | -------- | ------------ |
+| **OpenLDAP**   | 2.x (cn=config)  | 537   | ✅     | ✅  | ✅    | 10       | **COMPLETE** |
+| **OpenLDAP**   | 1.x (slapd.conf) | 530   | ✅     | ✅  | ✅    | 10       | **COMPLETE** |
+| **Oracle OID** | 11g+             | 347   | ✅     | ✅  | ✅    | 10       | **COMPLETE** |
+| **Oracle OUD** | 11g+             | 426   | ✅     | ✅  | ✅    | 10       | **COMPLETE** |
 
 ### Stub Implementations
 
 Placeholder implementations with TODO comments and NotImplementedError:
 
-| Server                  | Lines | Schema | ACL | Entry | Priority | Status       |
-| ----------------------- | ----- | ------ | --- | ----- | -------- | ------------ |
-| **Active Directory**    | 348   | 📝      | 📝   | 📝     | 15       | **STUB**     |
-| **Apache DS**           | 174   | 📝      | 📝   | 📝     | 20       | **STUB**     |
-| **389 Directory Server**| 153   | 📝      | 📝   | 📝     | 20       | **STUB**     |
-| **Novell eDirectory**   | 161   | 📝      | 📝   | 📝     | 25       | **STUB**     |
-| **IBM Tivoli DS**       | 153   | 📝      | 📝   | 📝     | 25       | **STUB**     |
+| Server                   | Lines | Schema | ACL | Entry | Priority | Status   |
+| ------------------------ | ----- | ------ | --- | ----- | -------- | -------- |
+| **Active Directory**     | 348   | 📝     | 📝  | 📝    | 15       | **STUB** |
+| **Apache DS**            | 174   | 📝     | 📝  | 📝    | 20       | **STUB** |
+| **389 Directory Server** | 153   | 📝     | 📝  | 📝    | 20       | **STUB** |
+| **Novell eDirectory**    | 161   | 📝     | 📝  | 📝    | 25       | **STUB** |
+| **IBM Tivoli DS**        | 153   | 📝     | 📝  | 📝    | 25       | **STUB** |
 
 **Stub Implementation Pattern**:
+
 - Extends BaseSchemaQuirk/BaseAclQuirk/BaseEntryQuirk
 - All abstract methods implemented with NotImplementedError
 - Comprehensive docstrings explaining what needs implementation
@@ -281,6 +285,7 @@ def migrate_entries(entries, source_format, target_format):
 ```
 
 **Key Features**:
+
 - Works with **any** source/target combination
 - RFC format is lingua franca
 - No direct source→target conversions needed
@@ -293,12 +298,14 @@ def migrate_entries(entries, source_format, target_format):
 ### No CLI Dependencies
 
 **Removed**:
+
 - ❌ No CLI code in src/
 - ❌ No CLI tests
 - ❌ No CLI documentation
 - ❌ No command-line entry points
 
 **API-Only Interface**:
+
 - ✅ FlextLdif facade class
 - ✅ All operations via API methods
 - ✅ Programmable interface for tools
@@ -347,35 +354,42 @@ constants = ldif.Constants
 ### Zero Tolerance Policy
 
 **Linting**:
+
 ```bash
 make lint                    # Must pass with ZERO violations
 ruff check src/ --fix        # Auto-fix where possible
 ```
+
 - Zero F821 (undefined names)
 - Zero E501 (line too long)
 - Zero ARG (unused arguments)
 - Zero violations in src/
 
 **Type Checking**:
+
 ```bash
 make type-check              # Must pass with ZERO errors
 pyrefly check src/          # Zero type errors in src/
 ```
+
 - Complete type annotations
 - No `# type: ignore` without error codes
 - No `object` types (use proper annotations)
 
 **Testing**:
+
 ```bash
 make test                    # Must achieve 75%+ coverage
 pytest --cov=src/flext_ldif --cov-report=term-missing --cov-fail-under=75
 ```
+
 - 75% minimum coverage (proven achievable)
 - Unit tests for all quirks
 - Integration tests for pipelines
 - RFC fallback behavior tested
 
 **Complete Validation**:
+
 ```bash
 make validate                # lint + type + security + test
 ```
@@ -383,6 +397,7 @@ make validate                # lint + type + security + test
 ### Quality Gates
 
 Every phase must pass:
+
 1. ✅ Ruff linting (zero violations)
 2. ✅ Pyrefly type checking (zero errors)
 3. ✅ Pytest with 75%+ coverage
@@ -450,6 +465,7 @@ Every phase must pass:
 **Output**: This document
 
 **Deliverables**:
+
 - ✅ Architecture overview
 - ✅ Server support matrix
 - ✅ Quirks system design
@@ -461,6 +477,7 @@ Every phase must pass:
 **Duration**: 2-3 hours
 
 **Tasks**:
+
 1. Audit complete implementations (OpenLDAP 1.x/2.x, OID, OUD)
 2. Verify SchemaQuirk + AclQuirk + EntryQuirk completeness
 3. Validate stub implementations (AD, Apache, 389DS, Novell, Tivoli)
@@ -469,6 +486,7 @@ Every phase must pass:
 6. Reference vendor documentation
 
 **Validation**:
+
 - All complete servers have all three quirk types
 - All stubs follow consistent pattern
 - All abstract methods implemented
@@ -478,12 +496,14 @@ Every phase must pass:
 **Duration**: 30 minutes
 
 **Tasks**:
+
 1. Verify no CLI code in src/
 2. Verify no CLI tests
 3. Remove CLI references from documentation
 4. Ensure API-only interface in pyproject.toml
 
 **Validation**:
+
 - No CLI entry points
 - Documentation has no CLI references
 - FlextLdif API is only interface
@@ -493,12 +513,14 @@ Every phase must pass:
 **Duration**: 2-3 hours
 
 **Tasks**:
+
 1. Fix all ruff violations (make lint)
 2. Fix all type errors (make type-check)
 3. Achieve 75%+ test coverage (make test)
 4. Pass complete validation (make validate)
 
 **Validation**:
+
 - ✅ Zero lint violations
 - ✅ Zero type errors
 - ✅ 75%+ coverage
@@ -509,6 +531,7 @@ Every phase must pass:
 **Duration**: 2-3 hours
 
 **Tasks**:
+
 1. Update README.md (remove CLI, add generic patterns)
 2. Update docs/architecture.md (RFC-first quirks)
 3. Update docs/api-reference.md (API-only)
@@ -518,6 +541,7 @@ Every phase must pass:
 7. Create docs/extending-quirks.md (guide)
 
 **Validation**:
+
 - All docs reflect actual implementation
 - No CLI references
 - Complete API documentation
@@ -528,12 +552,14 @@ Every phase must pass:
 **Duration**: 1 hour
 
 **Tasks**:
+
 1. Run complete QA validation
 2. Update serena memory
 3. Verify all documentation
 4. Confirm 100% compliance
 
 **Validation**:
+
 - ✅ All quality gates pass
 - ✅ Documentation accurate
 - ✅ Memory updated
@@ -542,15 +568,15 @@ Every phase must pass:
 
 ## 📊 Timeline & Milestones
 
-| Phase                     | Duration | Milestone                        |
-| ------------------------- | -------- | -------------------------------- |
-| Phase 1: Master Plan      | 0.5h     | ✅ Documentation created          |
-| Phase 2: Quirks Validation| 2-3h     | All quirks validated/enhanced    |
-| Phase 3: CLI Elimination  | 0.5h     | Zero CLI dependencies            |
-| Phase 4: QA Compliance    | 2-3h     | 100% quality standards met       |
-| Phase 5: Documentation    | 2-3h     | Complete docs overhaul           |
-| Phase 6: Final Validation | 1h       | All gates pass, memory updated   |
-| **TOTAL**                 | **8-11h**| **Generic library complete**     |
+| Phase                      | Duration  | Milestone                      |
+| -------------------------- | --------- | ------------------------------ |
+| Phase 1: Master Plan       | 0.5h      | ✅ Documentation created       |
+| Phase 2: Quirks Validation | 2-3h      | All quirks validated/enhanced  |
+| Phase 3: CLI Elimination   | 0.5h      | Zero CLI dependencies          |
+| Phase 4: QA Compliance     | 2-3h      | 100% quality standards met     |
+| Phase 5: Documentation     | 2-3h      | Complete docs overhaul         |
+| Phase 6: Final Validation  | 1h        | All gates pass, memory updated |
+| **TOTAL**                  | **8-11h** | **Generic library complete**   |
 
 ---
 
@@ -596,18 +622,21 @@ Every phase must pass:
 ### Design Decisions
 
 **Why RFC-First?**
+
 - Works with ANY LDAP server out of the box
 - Clean baseline without vendor pollution
 - Easy to understand and maintain
 - Follows standards-first principle
 
 **Why Quirks System?**
+
 - Clean separation of concerns
 - Easy to add new servers
 - Priority-based flexible resolution
 - No core code changes needed
 
 **Why No CLI?**
+
 - Library-first design principle
 - Better reusability in tools
 - Simpler maintenance
@@ -616,6 +645,7 @@ Every phase must pass:
 ### Future Enhancements
 
 **Potential Additions**:
+
 - More server implementations (contribute stubs!)
 - Performance optimizations
 - Advanced transformation rules
@@ -623,6 +653,7 @@ Every phase must pass:
 - ACL transformation library
 
 **Community Contributions**:
+
 - Stub implementations ready for community
 - Clear extension guide
 - Comprehensive testing patterns

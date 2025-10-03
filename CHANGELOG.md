@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🚨 BREAKING CHANGES
 
 #### CLI Removal - Library-Only Interface
+
 - **REMOVED**: All CLI functionality and command-line interface
 - **REMOVED**: `click` dependency from project
 - **REMOVED**: CLI entry point (`flext-ldif` command)
@@ -17,10 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **MIGRATION**: See `examples/01_basic_parsing.py` through `examples/06_custom_quirks.py` for library usage
 
 #### MANDATORY quirk_registry Parameter
+
 - **CHANGED**: All RFC parsers now REQUIRE `quirk_registry` parameter (not Optional)
 - **IMPACT**: `RfcLdifParserService`, `RfcLdifWriterService`, and `RfcSchemaParserService` require `QuirkRegistryService` instance
 - **MIGRATION**: Initialize `quirk_registry = QuirkRegistryService()` before creating parsers/writers
 - **Example**:
+
   ```python
   from flext_ldif.quirks.registry import QuirkRegistryService
   from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
@@ -39,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ✨ Added
 
 #### RFC-First Architecture
+
 - **NEW**: Zero bypass paths - ALL LDIF operations through RFC parsers + quirks
 - **NEW**: Generic transformation pipeline: `Source → RFC → Target`
 - **NEW**: Works with ANY LDAP server combination (not N² implementations)
@@ -46,12 +50,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **NEW**: Nested quirks pattern (SchemaQuirk contains AclQuirk and EntryQuirk)
 
 #### Complete Server Implementations (4 servers)
+
 - **OpenLDAP 1.x** (`openldap1_quirks.py`) - Priority 20
 - **OpenLDAP 2.x** (`openldap_quirks.py`) - Priority 10
 - **Oracle Internet Directory (OID)** (`oid_quirks.py`) - Priority 10
 - **Oracle Unified Directory (OUD)** (`oud_quirks.py`) - Priority 10
 
 #### Stub Implementations (5 servers)
+
 - **Active Directory** (`ad_quirks.py`) - Stub with protocol compliance
 - **Apache Directory Server** (`apache_quirks.py`) - Stub
 - **389 Directory Server** (`ds389_quirks.py`) - Stub
@@ -59,12 +65,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **IBM Tivoli Directory Server** (`tivoli_quirks.py`) - Stub
 
 #### Comprehensive Documentation
+
 - **NEW**: `docs/architecture.md` - RFC-first architecture with diagrams
 - **NEW**: `docs/api-reference.md` - Complete library-only API reference
 - **NEW**: `docs/COMPLETION_SUMMARY.md` - Project completion assessment
 - **NEW**: `docs/RFC_FIRST_REFACTORING_PLAN.md` - 13-point refactoring plan
 
 #### Practical Examples (6 examples)
+
 - **NEW**: `examples/01_basic_parsing.py` - Basic LDIF parsing with FlextResult
 - **NEW**: `examples/02_server_specific_quirks.py` - RFC-first with quirks (OID/OUD/OpenLDAP)
 - **NEW**: `examples/03_writing_ldif.py` - Creating and writing LDIF programmatically
@@ -73,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **NEW**: `examples/06_custom_quirks.py` - Creating custom server quirks
 
 #### Migration Pipeline
+
 - **NEW**: `FlextLdifMigrationPipeline` - Automated server-to-server migration
 - **NEW**: Generic transformation supporting ANY LDAP server combination
 - **NEW**: Directory-based batch processing
@@ -87,17 +96,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🔧 Changed
 
 #### Architecture
+
 - **CHANGED**: Enforced RFC-first architecture with ZERO bypass paths
 - **CHANGED**: All operations MUST go through `handlers.py` → RFC parsers + quirks
 - **CHANGED**: Removed all direct parser/writer usage outside handlers
 - **CHANGED**: CQRS pattern in handlers (Command/Query Responsibility Segregation)
 
 #### API Design
+
 - **CHANGED**: Library-only interface (no CLI dependencies)
 - **CHANGED**: FlextResult pattern for all operations (railway-oriented error handling)
 - **CHANGED**: Simplified facade (`FlextLdif`, `FlextLdifAPI`) exposing all functionality
 
 #### Dependencies
+
 - **REMOVED**: `click >= 8.1.0`
 - **MAINTAINED**: All other dependencies unchanged
 
@@ -114,11 +126,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### From CLI to API
 
 **Before (v0.9.8 with CLI)**:
+
 ```bash
 flext-ldif parse input.ldif --server-type oid
 ```
 
 **After (v0.9.9 library-only)**:
+
 ```python
 from pathlib import Path
 from flext_ldif import FlextLdifAPI
@@ -136,6 +150,7 @@ else:
 #### Adding quirk_registry Parameter
 
 **Before (v0.9.8 - Optional parameter)**:
+
 ```python
 parser = RfcSchemaParserService(
     params={"content": schema_content},
@@ -144,6 +159,7 @@ parser = RfcSchemaParserService(
 ```
 
 **After (v0.9.9 - MANDATORY parameter)**:
+
 ```python
 from flext_ldif.quirks.registry import QuirkRegistryService
 

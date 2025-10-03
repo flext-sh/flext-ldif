@@ -52,6 +52,7 @@ tests/
 ### Priority 1: Critical Path (Highest Impact)
 
 #### 1. `src/flext_ldif/handlers.py` - CQRS Handlers
+
 - **Lines**: ~350 lines
 - **Current Tests**: Indirectly tested via `test_api.py`
 - **Missing**: Direct unit tests for handler methods
@@ -59,6 +60,7 @@ tests/
 - **Estimated Tests**: 15-20 tests
 
 **What to Test**:
+
 ```python
 # Test command handlers
 - LdifParseMessageHandler.execute() - various input types
@@ -78,6 +80,7 @@ tests/
 ```
 
 #### 2. `src/flext_ldif/migration_pipeline.py` - Generic Transformation
+
 - **Lines**: ~200 lines
 - **Current Tests**: None (only indirectly via e2e)
 - **Missing**: Unit tests for pipeline stages
@@ -85,6 +88,7 @@ tests/
 - **Estimated Tests**: 10-15 tests
 
 **What to Test**:
+
 ```python
 # Test pipeline initialization
 - FlextLdifMigrationPipeline.__init__() - various server combinations
@@ -109,6 +113,7 @@ tests/
 ```
 
 #### 3. `src/flext_ldif/quirks/registry.py` - Quirk Management
+
 - **Lines**: ~150 lines
 - **Current Tests**: None (indirectly via RFC parser tests)
 - **Missing**: Direct unit tests for registry operations
@@ -116,6 +121,7 @@ tests/
 - **Estimated Tests**: 10-12 tests
 
 **What to Test**:
+
 ```python
 # Test quirk registration
 - QuirkRegistryService.__init__() - loads all quirks
@@ -141,6 +147,7 @@ tests/
 ### Priority 2: RFC Processing (High Impact)
 
 #### 4. `src/flext_ldif/rfc/rfc_ldif_parser.py` - RFC 2849 Parser
+
 - **Lines**: ~300 lines
 - **Current Tests**: Basic tests in `test_rfc.py`
 - **Missing**: Comprehensive edge case tests
@@ -148,6 +155,7 @@ tests/
 - **Estimated Tests**: 15-20 tests
 
 **What to Test**:
+
 ```python
 # Test basic parsing
 - Single entry parsing
@@ -176,6 +184,7 @@ tests/
 ```
 
 #### 5. `src/flext_ldif/rfc/rfc_ldif_writer.py` - RFC 2849 Writer
+
 - **Lines**: ~200 lines
 - **Current Tests**: Comprehensive tests in `test_rfc_writer_comprehensive.py` ✅
 - **Missing**: Few additional quirks integration tests
@@ -183,6 +192,7 @@ tests/
 - **Estimated Tests**: 5-10 additional tests
 
 **What to Test**:
+
 ```python
 # Test quirks integration (not yet covered)
 - Writing with server-specific quirks
@@ -196,6 +206,7 @@ tests/
 ```
 
 #### 6. `src/flext_ldif/rfc/rfc_schema_parser.py` - RFC 4512 Schema Parser
+
 - **Lines**: ~250 lines
 - **Current Tests**: Basic tests in `test_rfc.py` (some skipped)
 - **Missing**: Complete implementation tests
@@ -203,6 +214,7 @@ tests/
 - **Estimated Tests**: 10-15 tests
 
 **What to Test**:
+
 ```python
 # Test attribute type parsing
 - Basic attribute types
@@ -230,21 +242,25 @@ tests/
 ### Priority 3: Schema Processing (Medium Impact)
 
 #### 7. `src/flext_ldif/schema/objectclass_manager.py`
+
 - **Current Tests**: None
 - **Estimated Tests**: 8-10 tests
 - **What to Test**: Object class registration, inheritance, validation
 
 #### 8. `src/flext_ldif/schema/validator.py`
+
 - **Current Tests**: Indirectly via API
 - **Estimated Tests**: 10-12 tests
 - **What to Test**: Entry validation against schema, required attributes, allowed attributes
 
 #### 9. `src/flext_ldif/schema/builder.py`
+
 - **Current Tests**: None
 - **Estimated Tests**: 6-8 tests
 - **What to Test**: Schema building, attribute type creation, object class definition
 
 #### 10. `src/flext_ldif/schema/extractor.py`
+
 - **Current Tests**: None
 - **Estimated Tests**: 6-8 tests
 - **What to Test**: Schema extraction from entries, cn=schema parsing
@@ -252,18 +268,22 @@ tests/
 ### Priority 4: Support Modules (Lower Impact)
 
 #### 11. `src/flext_ldif/quirks/manager.py`
+
 - **Estimated Tests**: 6-8 tests
 - **What to Test**: Quirk selection, priority resolution, nested quirk access
 
 #### 12. `src/flext_ldif/quirks/base.py`
+
 - **Estimated Tests**: 5-7 tests
 - **What to Test**: Base quirk protocol compliance, default methods
 
 #### 13. `src/flext_ldif/quirks/entry_quirks.py`
+
 - **Estimated Tests**: 8-10 tests
 - **What to Test**: Entry transformation, attribute mapping, DN manipulation
 
 #### 14. `src/flext_ldif/protocols.py`
+
 - **Current Tests**: None (protocol definitions)
 - **Estimated Tests**: 3-5 tests (if testable)
 - **What to Test**: Protocol compliance checks
@@ -353,6 +373,7 @@ def test_parse_invalid_dn():
 ## 🔄 Test Development Workflow
 
 ### Step 1: Impact Analysis
+
 ```bash
 # Find largest uncovered modules
 pytest --cov=src/flext_ldif --cov-report=term-missing | \
@@ -362,12 +383,14 @@ pytest --cov=src/flext_ldif --cov-report=term-missing | \
 ```
 
 ### Step 2: Create Test File
+
 ```bash
 # Create test file for target module
 touch tests/unit/test_[module_name].py
 ```
 
 ### Step 3: Write Tests Incrementally
+
 ```bash
 # Run tests for specific module
 pytest tests/unit/test_[module_name].py -v
@@ -377,6 +400,7 @@ pytest tests/unit/test_[module_name].py --cov=src/flext_ldif/[module_name].py --
 ```
 
 ### Step 4: Validate
+
 ```bash
 # Run full test suite
 pytest tests/ -v
@@ -391,14 +415,14 @@ pytest tests/ --cov=src/flext_ldif --cov-report=term | grep TOTAL
 
 ### Coverage Milestones
 
-| Milestone | Coverage | Tests Added | Estimated Effort |
-|-----------|----------|-------------|------------------|
-| Current   | 52%      | 0           | 0 hours          |
-| Phase 1   | 60%      | ~30 tests   | 1.5-2 hours      |
-| Phase 2   | 65%      | ~50 tests   | 2.5-3 hours      |
-| Phase 3   | 70%      | ~75 tests   | 3.5-4.5 hours    |
-| **Target**| **75%**  | **~100 tests** | **4-6 hours** |
-| Aspirational | 100% | ~200 tests  | 10-15 hours      |
+| Milestone    | Coverage | Tests Added    | Estimated Effort |
+| ------------ | -------- | -------------- | ---------------- |
+| Current      | 52%      | 0              | 0 hours          |
+| Phase 1      | 60%      | ~30 tests      | 1.5-2 hours      |
+| Phase 2      | 65%      | ~50 tests      | 2.5-3 hours      |
+| Phase 3      | 70%      | ~75 tests      | 3.5-4.5 hours    |
+| **Target**   | **75%**  | **~100 tests** | **4-6 hours**    |
+| Aspirational | 100%     | ~200 tests     | 10-15 hours      |
 
 ### Test File Checklist
 
@@ -446,8 +470,8 @@ pytest tests/ --cov=src/flext_ldif --cov-report=html
 
 ## 📚 Resources
 
-- **Pytest Documentation**: https://docs.pytest.org/
-- **Coverage.py Documentation**: https://coverage.readthedocs.io/
+- **Pytest Documentation**: <https://docs.pytest.org/>
+- **Coverage.py Documentation**: <https://coverage.readthedocs.io/>
 - **FlextResult Pattern**: `flext-core` documentation
 - **Existing Tests**: `tests/unit/test_api.py` - Good example of API testing
 - **Existing Tests**: `tests/unit/test_rfc_writer_comprehensive.py` - Good example of comprehensive testing

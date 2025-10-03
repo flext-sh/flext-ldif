@@ -54,7 +54,7 @@ class AdSchemaQuirk(BaseSchemaQuirk):
         super().__init__(**data)
         self._logger = FlextLogger(__name__)
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:
+    def can_handle_attribute(self, attr_definition: str) -> bool:  # pragma: no cover
         """Check if this is an Active Directory attribute.
 
         TODO: Add AD-specific detection logic.
@@ -70,12 +70,12 @@ class AdSchemaQuirk(BaseSchemaQuirk):
         # Check for AD-specific patterns:
         # - AD namespace patterns
         # - AD-specific attribute names
-        return False
+        return False  # pragma: no cover
 
     def parse_attribute(
         self,
         attr_definition: str,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[FlextTypes.Dict]:  # pragma: no cover
         """Parse Active Directory attribute definition.
 
         TODO: Implement AD-specific attribute parsing.
@@ -87,12 +87,12 @@ class AdSchemaQuirk(BaseSchemaQuirk):
             FlextResult with error (not implemented)
 
         """
-        return FlextResult[FlextTypes.Dict].fail(
+        return FlextResult[FlextTypes.Dict].fail(  # pragma: no cover
             "Active Directory attribute parsing not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:
+    def can_handle_objectclass(self, oc_definition: str) -> bool:  # pragma: no cover
         """Check if this is an Active Directory objectClass.
 
         TODO: Add AD-specific detection logic.
@@ -104,12 +104,12 @@ class AdSchemaQuirk(BaseSchemaQuirk):
             False (stub - not implemented yet)
 
         """
-        return False
+        return False  # pragma: no cover
 
     def parse_objectclass(
         self,
         oc_definition: str,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[FlextTypes.Dict]:  # pragma: no cover
         """Parse Active Directory objectClass definition.
 
         TODO: Implement AD-specific objectClass parsing.

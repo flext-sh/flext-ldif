@@ -16,6 +16,13 @@ class FlextLdifVersion:
     """Simple version class for flext-ldif."""
 
     def __init__(self, version: str, version_info: tuple[int | str, ...]) -> None:
+        """Initialize version object.
+
+        Args:
+            version: Version string (e.g., "1.0.0")
+            version_info: Tuple of version components
+
+        """
         self.version = version
         self.version_info = version_info
 

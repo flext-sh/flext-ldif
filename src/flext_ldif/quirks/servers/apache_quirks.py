@@ -59,7 +59,7 @@ class ApacheSchemaQuirk(BaseSchemaQuirk):
 
     def parse_attribute(
         self,
-        attr_definition: str,  # noqa: ARG002
+        attr_definition: str,
     ) -> FlextResult[FlextTypes.Dict]:
         """Parse Apache DS attribute definition - STUB."""
         return FlextResult[FlextTypes.Dict].fail(
@@ -73,7 +73,7 @@ class ApacheSchemaQuirk(BaseSchemaQuirk):
 
     def parse_objectclass(
         self,
-        oc_definition: str,  # noqa: ARG002
+        oc_definition: str,
     ) -> FlextResult[FlextTypes.Dict]:
         """Parse Apache DS objectClass definition - STUB."""
         return FlextResult[FlextTypes.Dict].fail(
@@ -120,7 +120,7 @@ class ApacheSchemaQuirk(BaseSchemaQuirk):
 
         def parse_acl(
             self,
-            acl_line: str,  # noqa: ARG002
+            acl_line: str,
         ) -> FlextResult[FlextTypes.Dict]:
             """Parse Apache DS ACL definition - STUB."""
             return FlextResult[FlextTypes.Dict].fail(
@@ -163,7 +163,7 @@ class ApacheSchemaQuirk(BaseSchemaQuirk):
 
         def can_handle_entry(
             self,
-            entry_dn: str,  # noqa: ARG002
+            entry_dn: str,
             _attributes: dict,
         ) -> bool:
             """Check if this quirk should handle the entry - STUB."""
@@ -171,7 +171,7 @@ class ApacheSchemaQuirk(BaseSchemaQuirk):
 
         def process_entry(
             self,
-            entry_dn: str,  # noqa: ARG002
+            entry_dn: str,
             _attributes: dict,
         ) -> FlextResult[FlextTypes.Dict]:
             """Process entry for ADS format - STUB."""

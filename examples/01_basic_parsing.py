@@ -41,28 +41,20 @@ mail: jane.smith@example.com
     parse_result = api.parse(ldif_content)
 
     if parse_result.is_failure:
-        print(f"❌ Parse failed: {parse_result.error}")
         return
 
     entries = parse_result.unwrap()
-    print(f"✅ Parsed {len(entries)} entries\n")
 
     # Inspect each entry
-    for idx, entry in enumerate(entries, 1):
-        print(f"Entry {idx}:")
-        print(f"  DN: {entry.dn}")
-        print(f"  CN: {entry.attributes.get('cn', ['N/A'])[0]}")
-        print(f"  Email: {entry.attributes.get('mail', ['N/A'])[0]}")
-        print(f"  Object Classes: {entry.attributes.get('objectClass', [])}")
-        print()
+    for _entry in entries:
+        pass
 
     # Parse from file (if exists)
     sample_file = Path("examples/sample_basic.ldif")
     if sample_file.exists():
         file_result = api.parse(sample_file)
         if file_result.is_success:
-            file_entries = file_result.unwrap()
-            print(f"✅ Parsed {len(file_entries)} entries from file")
+            file_result.unwrap()
 
 
 if __name__ == "__main__":

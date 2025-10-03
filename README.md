@@ -37,12 +37,14 @@ FLEXT-LDIF provides LDIF (LDAP Data Interchange Format) processing capabilities 
 FLEXT-LDIF is built on a **generic RFC-compliant foundation** with a powerful **quirks system** for server-specific extensions:
 
 **Core Architecture**:
+
 - **RFC 2849 (LDIF Format)** - Standard LDIF parsing foundation
 - **RFC 4512 (Schema)** - Standard LDAP schema parsing foundation
 - **Quirks System** - Pluggable server-specific extensions that enhance RFC parsing
 - **Generic Transformation** - Source → RFC → Target pipeline works with any server
 
 **Design Philosophy**:
+
 - RFC parsers provide the **baseline** for all LDAP servers
 - Quirks **extend and enhance** RFC parsing for server-specific features
 - No server-specific code in core parsers - all extensions via quirks
@@ -74,11 +76,13 @@ Full compliance with RFC 4512 LDAP schema specification:
 Automatic detection and quirk-based adaptation for LDAP servers:
 
 **Fully Implemented**:
+
 - **OpenLDAP 1.x/2.x** - Custom OID extensions, operational attributes
 - **Oracle Internet Directory (OID)** - Oracle-specific schema extensions
 - **Oracle Unified Directory (OUD)** - OUD quirks with nested ACL/Entry quirks
 
 **Stub Implementations** (ready for enhancement):
+
 - **Active Directory** - DN case sensitivity, required object classes
 - **Apache Directory Server** - Specific validation rules
 - **389 Directory Server** - Red Hat DS compatibility
@@ -86,6 +90,7 @@ Automatic detection and quirk-based adaptation for LDAP servers:
 - **IBM Tivoli Directory Server** - Enterprise requirements
 
 **Quirks Architecture**:
+
 - Each server has a **SchemaQuirk** for attributeType/objectClass extensions
 - Schema quirks contain nested **AclQuirk** and **EntryQuirk** classes
 - Quirks use **priority-based resolution** (lower number = higher priority)

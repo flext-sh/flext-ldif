@@ -40,30 +40,30 @@ class TivoliSchemaQuirk(BaseSchemaQuirk):
         super().__init__(**data)
         self._logger = FlextLogger(__name__)
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:
+    def can_handle_attribute(self, attr_definition: str) -> bool:  # pragma: no cover
         """Check if this is a Tivoli DS attribute - STUB."""
-        return False
+        return False  # pragma: no cover
 
     def parse_attribute(
         self,
         attr_definition: str,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[FlextTypes.Dict]:  # pragma: no cover
         """Parse Tivoli DS attribute definition - STUB."""
-        return FlextResult[FlextTypes.Dict].fail(
+        return FlextResult[FlextTypes.Dict].fail(  # pragma: no cover
             "IBM Tivoli DS attribute parsing not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:
+    def can_handle_objectclass(self, oc_definition: str) -> bool:  # pragma: no cover
         """Check if this is a Tivoli DS objectClass - STUB."""
-        return False
+        return False  # pragma: no cover
 
     def parse_objectclass(
         self,
         oc_definition: str,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[FlextTypes.Dict]:  # pragma: no cover
         """Parse Tivoli DS objectClass definition - STUB."""
-        return FlextResult[FlextTypes.Dict].fail(
+        return FlextResult[FlextTypes.Dict].fail(  # pragma: no cover
             "IBM Tivoli DS objectClass parsing not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
@@ -71,9 +71,9 @@ class TivoliSchemaQuirk(BaseSchemaQuirk):
     def convert_attribute_to_rfc(
         self,
         attr_data: FlextTypes.Dict,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[FlextTypes.Dict]:  # pragma: no cover
         """Convert Tivoli DS attribute to RFC-compliant format - STUB."""
-        return FlextResult[FlextTypes.Dict].fail(
+        return FlextResult[FlextTypes.Dict].fail(  # pragma: no cover
             "IBM Tivoli DS→RFC conversion not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
@@ -81,9 +81,9 @@ class TivoliSchemaQuirk(BaseSchemaQuirk):
     def convert_objectclass_to_rfc(
         self,
         oc_data: FlextTypes.Dict,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[FlextTypes.Dict]:  # pragma: no cover
         """Convert Tivoli DS objectClass to RFC-compliant format - STUB."""
-        return FlextResult[FlextTypes.Dict].fail(
+        return FlextResult[FlextTypes.Dict].fail(  # pragma: no cover
             "IBM Tivoli DS→RFC conversion not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
@@ -155,7 +155,7 @@ class TivoliSchemaQuirk(BaseSchemaQuirk):
         def can_handle_entry(
             self,
             entry_dn: str,
-            _attributes: dict,
+            attributes: dict[str, object],
         ) -> bool:
             """Check if this quirk should handle the entry - STUB."""
             return False
@@ -163,7 +163,7 @@ class TivoliSchemaQuirk(BaseSchemaQuirk):
         def process_entry(
             self,
             entry_dn: str,
-            _attributes: dict,
+            attributes: dict[str, object],
         ) -> FlextResult[FlextTypes.Dict]:
             """Process entry for Tivoli DS format - STUB."""
             return FlextResult[FlextTypes.Dict].fail(

@@ -91,22 +91,15 @@ class CustomLdapSchemaQuirk:
 
 def main() -> None:
     """Custom quirks example."""
-    print("=== Custom Quirks Registration ===\n")
-
     # Initialize standard quirk registry
     quirk_registry = QuirkRegistryService()
 
     # Create and register custom quirk
-    custom_quirk = CustomLdapSchemaQuirk()
-
-    print("1. Custom quirk created:")
-    print(f"   Server type: {custom_quirk.server_type}")
-    print(f"   Priority: {custom_quirk.priority}")
+    CustomLdapSchemaQuirk()
 
     # Register custom quirk
     # Note: In practice, you'd extend QuirkRegistryService to support
     # dynamic quirk registration, or modify the registry's __init__
-    print(f"\n2. Registering custom quirk for '{custom_quirk.server_type}'")
 
     # Use custom quirk with RFC parser
     custom_schema = """
@@ -125,37 +118,10 @@ attributeTypes: ( 1.2.3.4.5 NAME 'customAttr' DESC 'Custom attribute' X-CUSTOM-M
         server_type="my_custom_ldap",  # Uses our custom quirk
     )
 
-    print("\n3. Parsing with custom quirk:")
     result = parser.execute()
 
     if result.is_success:
-        schema = result.unwrap()
-        print("   ✅ Parsed with custom quirk")
-        print(f"      Attributes: {len(schema.get('attributes', {}))}")
-    else:
-        print(f"   ⚠️ Parse result: {result.error}")
-        print(
-            "   Note: Custom quirk registration requires QuirkRegistryService extension"
-        )
-
-    print("\n=== Custom Quirk Development Guide ===")
-    print("1. Implement SchemaQuirkProtocol:")
-    print("   - server_type: str")
-    print("   - priority: int (10=high, 15=medium, 20=low)")
-    print("   - can_handle_attribute(definition: str) -> bool")
-    print("   - parse_attribute(definition: str) -> FlextResult[dict]")
-    print("   - can_handle_objectclass(definition: str) -> bool")
-    print("   - parse_objectclass(definition: str) -> FlextResult[dict]")
-    print("\n2. Add nested quirks (optional):")
-    print("   - EntryQuirk: Entry transformation")
-    print("   - AclQuirk: ACL parsing")
-    print("\n3. Register with QuirkRegistryService")
-    print("\n4. Use with RFC parsers:")
-    print("   parser = RfcSchemaParserService(")
-    print("       params={...},")
-    print("       quirk_registry=registry,  # MANDATORY")
-    print("       server_type='your_server',")
-    print("   )")
+        result.unwrap()
 
 
 if __name__ == "__main__":

@@ -594,7 +594,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
     # =========================================================================
 
     @property
-    def EntryBuilder(self) -> type[FlextLdifEntryBuilder]:
+    def entry_builder(self) -> type[FlextLdifEntryBuilder]:
         """Access to LDIF entry builder for constructing entries.
 
         Returns:
@@ -613,7 +613,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
         return FlextLdifEntryBuilder
 
     @property
-    def SchemaBuilder(self) -> type[FlextLdifSchemaBuilder]:
+    def schema_builder(self) -> type[FlextLdifSchemaBuilder]:
         """Access to LDIF schema builder for constructing schemas.
 
         Returns:
@@ -628,7 +628,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
         return FlextLdifSchemaBuilder
 
     @property
-    def AclService(self) -> type[FlextLdifAclService]:
+    def acl_service(self) -> type[FlextLdifAclService]:
         """Access to ACL service for extracting and processing ACLs.
 
         Returns:
@@ -642,7 +642,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
         return FlextLdifAclService
 
     @property
-    def SchemaValidator(self) -> type[FlextLdifSchemaValidator]:
+    def schema_validator(self) -> type[FlextLdifSchemaValidator]:
         """Access to schema validator for validating entries.
 
         Returns:
@@ -660,7 +660,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
     # =========================================================================
 
     @property
-    def Models(self) -> type[FlextLdifModels]:
+    def models(self) -> type[FlextLdifModels]:
         """Access to all LDIF Pydantic models.
 
         Returns:
@@ -688,7 +688,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
         return self._config
 
     @property
-    def Constants(self) -> type[FlextLdifConstants]:
+    def constants(self) -> type[FlextLdifConstants]:
         """Access to LDIF constants.
 
         Returns:
@@ -702,7 +702,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
         return FlextLdifConstants
 
     @property
-    def Types(self) -> type[FlextLdifTypes]:
+    def types(self) -> type[FlextLdifTypes]:
         """Access to LDIF type definitions.
 
         Returns:
@@ -716,7 +716,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
         return FlextLdifTypes
 
     @property
-    def Protocols(self) -> type[FlextLdifProtocols]:
+    def protocols(self) -> type[FlextLdifProtocols]:
         """Access to LDIF protocols for duck typing.
 
         Returns:
@@ -730,7 +730,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
         return FlextLdifProtocols
 
     @property
-    def Exceptions(self) -> type[FlextLdifExceptions]:
+    def exceptions(self) -> type[FlextLdifExceptions]:
         """Access to LDIF exception factory methods.
 
         Returns:
@@ -744,7 +744,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
         return FlextLdifExceptions
 
     @property
-    def Mixins(self) -> type[FlextLdifMixins]:
+    def mixins(self) -> type[FlextLdifMixins]:
         """Access to LDIF mixins for reusable functionality.
 
         Returns:
@@ -758,7 +758,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
         return FlextLdifMixins
 
     @property
-    def Utilities(self) -> type[FlextLdifUtilities]:
+    def utilities(self) -> type[FlextLdifUtilities]:
         """Access to LDIF utility functions.
 
         Returns:
@@ -772,7 +772,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
         return FlextLdifUtilities
 
     @property
-    def Processors(self) -> type[FlextLdifUtilities.Processors]:
+    def processors(self) -> type[FlextLdifUtilities.Processors]:
         """Access to LDIF processing utilities using FlextProcessors.
 
         Returns:
