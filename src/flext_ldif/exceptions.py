@@ -40,8 +40,7 @@ class FlextLdifExceptions:
         **kwargs: object,
     ) -> FlextResult[object]:
         """Create validation error result."""
-        error = FlextLdifExceptions.LdifValidationError(message, field=field, value=value, **kwargs)
-        return FlextResult[object].fail(error)
+        return FlextResult[object].fail(message)
 
     @staticmethod
     def parse_error(
@@ -52,8 +51,7 @@ class FlextLdifExceptions:
         **kwargs: object,
     ) -> FlextResult[object]:
         """Create parse error result."""
-        error = FlextLdifExceptions.LdifParseError(message, line_number=line_number, line_content=line_content, **kwargs)
-        return FlextResult[object].fail(error)
+        return FlextResult[object].fail(message)
 
     @staticmethod
     def processing_error(
@@ -64,8 +62,7 @@ class FlextLdifExceptions:
         **kwargs: object,
     ) -> FlextResult[object]:
         """Create processing error result."""
-        error = FlextLdifExceptions.LdifProcessingError(message, operation=operation, entry_dn=entry_dn, **kwargs)
-        return FlextResult[object].fail(error)
+        return FlextResult[object].fail(message)
 
     @staticmethod
     def file_error(
@@ -76,8 +73,7 @@ class FlextLdifExceptions:
         **kwargs: object,
     ) -> FlextResult[object]:
         """Create file error result."""
-        error = FlextLdifExceptions.LdifFileError(message, file_path=file_path, operation=operation, **kwargs)
-        return FlextResult[object].fail(error)
+        return FlextResult[object].fail(message)
 
     @staticmethod
     def configuration_error(
@@ -88,33 +84,27 @@ class FlextLdifExceptions:
         **kwargs: object,
     ) -> FlextResult[object]:
         """Create configuration error result."""
-        error = FlextLdifExceptions.LdifConfigurationError(message, config_key=config_key, config_file=config_file, **kwargs)
-        return FlextResult[object].fail(error)
+        return FlextResult[object].fail(message)
 
     @staticmethod
     def connection_error(message: str, **kwargs: object) -> FlextResult[object]:
         """Create connection error result."""
-        # Use generic operation error for connection issues
-        error = FlextExceptions._OperationError(message, operation="CONNECTION", code="CONNECTION_ERROR", **kwargs)
-        return FlextResult[object].fail(error)
+        return FlextResult[object].fail(message)
 
     @staticmethod
     def timeout_error(message: str, **kwargs: object) -> FlextResult[object]:
         """Create timeout error result."""
-        error = FlextExceptions._OperationError(message, operation="TIMEOUT", code="TIMEOUT_ERROR", **kwargs)
-        return FlextResult[object].fail(error)
+        return FlextResult[object].fail(message)
 
     @staticmethod
     def authentication_error(message: str, **kwargs: object) -> FlextResult[object]:
         """Create authentication error result."""
-        error = FlextExceptions._ValidationError(message, field="authentication", code="AUTHENTICATION_ERROR", **kwargs)
-        return FlextResult[object].fail(error)
+        return FlextResult[object].fail(message)
 
     @staticmethod
     def error(message: str, **kwargs: object) -> FlextResult[object]:
         """Create generic error result."""
-        error = FlextExceptions._OperationError(message, operation="GENERIC", code="GENERIC_ERROR", **kwargs)
-        return FlextResult[object].fail(error)
+        return FlextResult[object].fail(message)
 
     @staticmethod
     def entry_error(
@@ -124,8 +114,7 @@ class FlextLdifExceptions:
         **kwargs: object,
     ) -> FlextResult[object]:
         """Create entry error result."""
-        error = FlextLdifExceptions.LdifEntryError(message, entry_dn=entry_dn, **kwargs)
-        return FlextResult[object].fail(error)
+        return FlextResult[object].fail(message)
 
     @staticmethod
     def dn_validation_error(
@@ -135,8 +124,7 @@ class FlextLdifExceptions:
         **kwargs: object,
     ) -> FlextResult[object]:
         """Create DN validation error result."""
-        error = FlextLdifExceptions.LdifDnValidationError(message, dn_value=dn_value, **kwargs)
-        return FlextResult[object].fail(error)
+        return FlextResult[object].fail(message)
 
     @staticmethod
     def attribute_validation_error(
@@ -147,8 +135,7 @@ class FlextLdifExceptions:
         **kwargs: object,
     ) -> FlextResult[object]:
         """Create attribute validation error result."""
-        error = FlextLdifExceptions.LdifAttributeValidationError(message, attribute_name=attribute_name, attribute_value=attribute_value, **kwargs)
-        return FlextResult[object].fail(error)
+        return FlextResult[object].fail(message)
 
     @staticmethod
     def encoding_error(
@@ -158,8 +145,7 @@ class FlextLdifExceptions:
         **kwargs: object,
     ) -> FlextResult[object]:
         """Create encoding error result."""
-        error = FlextLdifExceptions.LdifEncodingError(message, encoding=encoding, **kwargs)
-        return FlextResult[object].fail(error)
+        return FlextResult[object].fail(message)
 
     @staticmethod
     def url_validation_error(
@@ -169,8 +155,7 @@ class FlextLdifExceptions:
         **kwargs: object,
     ) -> FlextResult[object]:
         """Create URL validation error result."""
-        error = FlextLdifExceptions.LdifUrlValidationError(message, url=url, **kwargs)
-        return FlextResult[object].fail(error)
+        return FlextResult[object].fail(message)
 
     @staticmethod
     def schema_validation_error(
@@ -180,8 +165,7 @@ class FlextLdifExceptions:
         **kwargs: object,
     ) -> FlextResult[object]:
         """Create schema validation error result."""
-        error = FlextLdifExceptions.LdifSchemaValidationError(message, schema_name=schema_name, **kwargs)
-        return FlextResult[object].fail(error)
+        return FlextResult[object].fail(message)
 
     @staticmethod
     def objectclass_error(
@@ -191,8 +175,7 @@ class FlextLdifExceptions:
         **kwargs: object,
     ) -> FlextResult[object]:
         """Create objectClass error result."""
-        error = FlextLdifExceptions.LdifObjectClassError(message, objectclass=objectclass, **kwargs)
-        return FlextResult[object].fail(error)
+        return FlextResult[object].fail(message)
 
     @staticmethod
     def ldif_format_error(
@@ -202,8 +185,7 @@ class FlextLdifExceptions:
         **kwargs: object,
     ) -> FlextResult[object]:
         """Create LDIF format error result."""
-        error = FlextLdifExceptions.LdifFormatError(message, line_number=line_number, **kwargs)
-        return FlextResult[object].fail(error)
+        return FlextResult[object].fail(message)
 
     @staticmethod
     def rfc_compliance_error(
@@ -213,8 +195,7 @@ class FlextLdifExceptions:
         **kwargs: object,
     ) -> FlextResult[object]:
         """Create RFC compliance error result."""
-        error = FlextLdifExceptions.LdifRfcComplianceError(message, rfc_section=rfc_section, **kwargs)
-        return FlextResult[object].fail(error)
+        return FlextResult[object].fail(message)
 
     # =========================================================================
     # EXCEPTION CLASSES
