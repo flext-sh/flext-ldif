@@ -19,9 +19,9 @@ When implementing, refer to:
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextResult
 from pydantic import Field
 
+from flext_core import FlextLogger, FlextResult, FlextTypes
 from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
 
 
@@ -40,50 +40,50 @@ class NovellSchemaQuirk(BaseSchemaQuirk):
         super().__init__(**data)
         self._logger = FlextLogger(__name__)
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:  # noqa: ARG002
+    def can_handle_attribute(self, attr_definition: str) -> bool:
         """Check if this is an eDirectory attribute - STUB."""
         return False
 
     def parse_attribute(
         self,
-        _attr_definition: str,
-    ) -> FlextResult[dict[str, object]]:
+        attr_definition: str,
+    ) -> FlextResult[FlextTypes.Dict]:
         """Parse eDirectory attribute definition - STUB."""
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Dict].fail(
             "Novell eDirectory attribute parsing not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:  # noqa: ARG002
+    def can_handle_objectclass(self, oc_definition: str) -> bool:
         """Check if this is an eDirectory objectClass - STUB."""
         return False
 
     def parse_objectclass(
         self,
-        _oc_definition: str,
-    ) -> FlextResult[dict[str, object]]:
+        oc_definition: str,
+    ) -> FlextResult[FlextTypes.Dict]:
         """Parse eDirectory objectClass definition - STUB."""
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Dict].fail(
             "Novell eDirectory objectClass parsing not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
     def convert_attribute_to_rfc(
         self,
-        _attr_data: dict[str, object],
-    ) -> FlextResult[dict[str, object]]:
+        attr_data: FlextTypes.Dict,
+    ) -> FlextResult[FlextTypes.Dict]:
         """Convert eDirectory attribute to RFC-compliant format - STUB."""
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Dict].fail(
             "Novell eDirectory→RFC conversion not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
     def convert_objectclass_to_rfc(
         self,
-        _oc_data: dict[str, object],
-    ) -> FlextResult[dict[str, object]]:
+        oc_data: FlextTypes.Dict,
+    ) -> FlextResult[FlextTypes.Dict]:
         """Convert eDirectory objectClass to RFC-compliant format - STUB."""
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Dict].fail(
             "Novell eDirectory→RFC conversion not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
@@ -103,36 +103,36 @@ class NovellSchemaQuirk(BaseSchemaQuirk):
             super().__init__(**data)
             self._logger = FlextLogger(__name__)
 
-        def can_handle_acl(self, acl_line: str) -> bool:  # noqa: ARG002
+        def can_handle_acl(self, acl_line: str) -> bool:
             """Check if this is an eDirectory ACL - STUB."""
             return False
 
         def parse_acl(
             self,
-            _acl_line: str,
-        ) -> FlextResult[dict[str, object]]:
+            acl_line: str,
+        ) -> FlextResult[FlextTypes.Dict]:
             """Parse eDirectory ACL definition - STUB."""
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 "Novell eDirectory ACL parsing not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
 
         def convert_acl_to_rfc(
             self,
-            _acl_data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            acl_data: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
             """Convert eDirectory ACL to RFC-compliant format - STUB."""
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 "Novell eDirectory ACL→RFC conversion not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
 
         def convert_acl_from_rfc(
             self,
-            _acl_data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            acl_data: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
             """Convert RFC ACL to eDirectory-specific format - STUB."""
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 "RFC→Novell eDirectory ACL conversion not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
@@ -154,7 +154,7 @@ class NovellSchemaQuirk(BaseSchemaQuirk):
 
         def can_handle_entry(
             self,
-            _entry_dn: str,
+            entry_dn: str,
             _attributes: dict,
         ) -> bool:
             """Check if this quirk should handle the entry - STUB."""
@@ -162,21 +162,21 @@ class NovellSchemaQuirk(BaseSchemaQuirk):
 
         def process_entry(
             self,
-            _entry_dn: str,
+            entry_dn: str,
             _attributes: dict,
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextResult[FlextTypes.Dict]:
             """Process entry for eDirectory format - STUB."""
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 "Novell eDirectory entry processing not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
 
         def convert_entry_to_rfc(
             self,
-            _entry_data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            entry_data: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
             """Convert eDirectory entry to RFC-compliant format - STUB."""
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 "Novell eDirectory entry→RFC conversion not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )

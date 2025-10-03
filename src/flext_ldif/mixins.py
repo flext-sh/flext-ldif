@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterator, Sequence
 from typing import override
 
-from flext_core import FlextMixins, FlextResult, T, U
+from flext_core import FlextMixins, FlextResult, FlextTypes, T, U
 from flext_ldif.models import FlextLdifModels
 
 
@@ -54,7 +54,7 @@ class FlextLdifMixins(FlextMixins):
                 raise ValueError(msg) from e
 
         @staticmethod
-        def validate_attribute_values(values: Sequence[str]) -> list[str]:
+        def validate_attribute_values(values: Sequence[str]) -> FlextTypes.StringList:
             """Validate attribute values using AttributeValues Model."""
             # Check if input is a string (which is iterable but not valid)
             if isinstance(values, str):
@@ -172,14 +172,14 @@ class FlextLdifMixins(FlextMixins):
         @staticmethod
         def transform_attribute_values(
             values: Sequence[str], transformer: Callable[[str], str]
-        ) -> list[str]:
+        ) -> FlextTypes.StringList:
             """Transform attribute values using transformer function."""
             return [transformer(value) for value in values]
 
         @staticmethod
         def transform_dn_case(dn: str, case_func: Callable[[str], str]) -> str:
             """Transform DN case using case function."""
-            components: list[str] = []
+            components: FlextTypes.StringList = []
             for comp in dn.split(","):
                 stripped_comp = comp.strip()
                 if "=" in stripped_comp:
@@ -265,15 +265,15 @@ class FlextLdifMixins(FlextMixins):
         @classmethod
         def analyze_with_result(
             cls,
-            analyzer_func: Callable[[Sequence[T]], dict[str, object]],
+            analyzer_func: Callable[[Sequence[T]], FlextTypes.Dict],
             data: Sequence[T],
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextResult[FlextTypes.Dict]:
             """Analyze data using analyzer function with FlextResult."""
             try:
                 result = analyzer_func(data)
-                return FlextResult[dict[str, object]].ok(result)
+                return FlextResult[FlextTypes.Dict].ok(result)
             except Exception as e:
-                return FlextResult[dict[str, object]].fail(str(e))
+                return FlextResult[FlextTypes.Dict].fail(str(e))
 
     # =============================================================================
     # CACHING MIXINS - Caching and Performance Utilities
@@ -285,7 +285,7 @@ class FlextLdifMixins(FlextMixins):
         @override
         def __init__(self) -> None:
             """Initialize caching mixin with empty cache and statistics."""
-            self._cache: dict[str, object] = {}
+            self._cache: FlextTypes.Dict = {}
             self._cache_stats: dict[str, int] = {"hits": 0, "misses": 0}
 
         def get_from_cache(self, key: str) -> FlextResult[object]:

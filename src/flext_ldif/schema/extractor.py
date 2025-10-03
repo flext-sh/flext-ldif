@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import cast, override
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from flext_ldif.models import FlextLdifModels
 
 
@@ -100,7 +100,7 @@ class FlextLdifSchemaExtractor(FlextService[FlextLdifModels.SchemaDiscoveryResul
 
     def extract_attribute_usage(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[dict[str, dict[str, object]]]:
+    ) -> FlextResult[FlextTypes.NestedDict]:
         """Extract attribute usage statistics from entries.
 
         Args:
@@ -111,9 +111,9 @@ class FlextLdifSchemaExtractor(FlextService[FlextLdifModels.SchemaDiscoveryResul
 
         """
         if not entries:
-            return FlextResult[dict[str, dict[str, object]]].ok({})
+            return FlextResult[FlextTypes.NestedDict].ok({})
 
-        usage_stats: dict[str, dict[str, object]] = {}
+        usage_stats: FlextTypes.NestedDict = {}
 
         for entry in entries:
             for attr_name, attr_values in entry.attributes.data.items():
@@ -134,7 +134,7 @@ class FlextLdifSchemaExtractor(FlextService[FlextLdifModels.SchemaDiscoveryResul
                 if value_count > 1:
                     stats["single_valued"] = False
 
-        return FlextResult[dict[str, dict[str, object]]].ok(usage_stats)
+        return FlextResult[FlextTypes.NestedDict].ok(usage_stats)
 
 
 __all__ = ["FlextLdifSchemaExtractor"]

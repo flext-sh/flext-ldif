@@ -19,9 +19,9 @@ When implementing, refer to:
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextResult
 from pydantic import Field
 
+from flext_core import FlextLogger, FlextResult, FlextTypes
 from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
 
 
@@ -36,50 +36,50 @@ class Ds389SchemaQuirk(BaseSchemaQuirk):
         super().__init__(**data)
         self._logger = FlextLogger(__name__)
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:  # noqa: ARG002
+    def can_handle_attribute(self, attr_definition: str) -> bool:
         """Check if this is a 389 DS attribute - STUB."""
         return False
 
     def parse_attribute(
         self,
         attr_definition: str,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextTypes.Dict]:
         """Parse 389 DS attribute definition - STUB."""
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Dict].fail(
             "389 Directory Server attribute parsing not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:  # noqa: ARG002
+    def can_handle_objectclass(self, oc_definition: str) -> bool:
         """Check if this is a 389 DS objectClass - STUB."""
         return False
 
     def parse_objectclass(
         self,
         oc_definition: str,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextTypes.Dict]:
         """Parse 389 DS objectClass definition - STUB."""
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Dict].fail(
             "389 Directory Server objectClass parsing not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
     def convert_attribute_to_rfc(
         self,
-        attr_data: dict[str, object],
-    ) -> FlextResult[dict[str, object]]:
+        attr_data: FlextTypes.Dict,
+    ) -> FlextResult[FlextTypes.Dict]:
         """Convert 389DS attribute to RFC-compliant format - STUB."""
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Dict].fail(
             "389 Directory Server→RFC conversion not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
     def convert_objectclass_to_rfc(
         self,
-        oc_data: dict[str, object],
-    ) -> FlextResult[dict[str, object]]:
+        oc_data: FlextTypes.Dict,
+    ) -> FlextResult[FlextTypes.Dict]:
         """Convert 389DS objectClass to RFC-compliant format - STUB."""
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Dict].fail(
             "389 Directory Server→RFC conversion not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
@@ -97,36 +97,36 @@ class Ds389SchemaQuirk(BaseSchemaQuirk):
             super().__init__(**data)
             self._logger = FlextLogger(__name__)
 
-        def can_handle_acl(self, acl_line: str) -> bool:  # noqa: ARG002
+        def can_handle_acl(self, acl_line: str) -> bool:
             """Check if this is a 389 DS ACL - STUB."""
             return False
 
         def parse_acl(
             self,
             acl_line: str,
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextResult[FlextTypes.Dict]:
             """Parse 389 DS ACL definition - STUB."""
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 "389 Directory Server ACL parsing not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
 
         def convert_acl_to_rfc(
             self,
-            acl_data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            acl_data: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
             """Convert 389DS ACL to RFC-compliant format - STUB."""
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 "389 Directory Server ACL→RFC conversion not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
 
         def convert_acl_from_rfc(
             self,
-            acl_data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            acl_data: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
             """Convert RFC ACL to 389DS-specific format - STUB."""
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 "RFC→389 Directory Server ACL conversion not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
@@ -158,19 +158,19 @@ class Ds389SchemaQuirk(BaseSchemaQuirk):
             self,
             entry_dn: str,
             attributes: dict,
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextResult[FlextTypes.Dict]:
             """Process entry for 389DS format - STUB."""
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 "389 Directory Server entry processing not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
 
         def convert_entry_to_rfc(
             self,
-            entry_data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            entry_data: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
             """Convert 389DS entry to RFC-compliant format - STUB."""
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 "389 Directory Server entry→RFC conversion not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )

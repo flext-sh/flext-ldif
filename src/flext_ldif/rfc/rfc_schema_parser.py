@@ -19,7 +19,7 @@ import re
 from pathlib import Path
 from typing import ClassVar
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from flext_ldif.quirks.registry import QuirkRegistryService
 
 
@@ -185,8 +185,8 @@ class RfcSchemaParserService(FlextService[dict]):
 
         """
         try:
-            attributes: dict[str, dict[str, object]] = {}
-            objectclasses: dict[str, dict[str, object]] = {}
+            attributes: FlextTypes.NestedDict = {}
+            objectclasses: FlextTypes.NestedDict = {}
             source_dn = "cn=subschemasubentry"
 
             with file_path.open("r", encoding="utf-8") as f:
@@ -242,8 +242,8 @@ class RfcSchemaParserService(FlextService[dict]):
     def _process_schema_line(
         self,
         line: str,
-        attributes: dict[str, dict[str, object]],
-        objectclasses: dict[str, dict[str, object]],
+        attributes: FlextTypes.NestedDict,
+        objectclasses: FlextTypes.NestedDict,
         *,
         parse_attributes: bool,
         parse_objectclasses: bool,
@@ -279,7 +279,7 @@ class RfcSchemaParserService(FlextService[dict]):
                 extra={"line": line[:100]},
             )
 
-    def _parse_attribute_type(self, definition: str) -> dict[str, object] | None:
+    def _parse_attribute_type(self, definition: str) -> FlextTypes.Dict | None:
         """Parse RFC 4512 AttributeType definition with quirks support.
 
         Args:
@@ -320,7 +320,7 @@ class RfcSchemaParserService(FlextService[dict]):
             "usage": match.group("usage"),
         }
 
-    def _parse_object_class(self, definition: str) -> dict[str, object] | None:
+    def _parse_object_class(self, definition: str) -> FlextTypes.Dict | None:
         """Parse RFC 4512 ObjectClass definition with quirks support.
 
         Args:

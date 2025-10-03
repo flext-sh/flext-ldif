@@ -15,7 +15,7 @@ from abc import ABC, abstractmethod
 
 from pydantic import Field
 
-from flext_core import FlextModels, FlextResult
+from flext_core import FlextModels, FlextResult, FlextTypes
 
 
 class BaseSchemaQuirk(ABC, FlextModels.Value):
@@ -50,7 +50,7 @@ class BaseSchemaQuirk(ABC, FlextModels.Value):
         """
 
     @abstractmethod
-    def parse_attribute(self, attr_definition: str) -> FlextResult[dict[str, object]]:
+    def parse_attribute(self, attr_definition: str) -> FlextResult[FlextTypes.Dict]:
         """Parse server-specific attribute definition.
 
         Args:
@@ -74,7 +74,7 @@ class BaseSchemaQuirk(ABC, FlextModels.Value):
         """
 
     @abstractmethod
-    def parse_objectclass(self, oc_definition: str) -> FlextResult[dict[str, object]]:
+    def parse_objectclass(self, oc_definition: str) -> FlextResult[FlextTypes.Dict]:
         """Parse server-specific objectClass definition.
 
         Args:
@@ -87,8 +87,8 @@ class BaseSchemaQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def convert_attribute_to_rfc(
-        self, attr_data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+        self, attr_data: FlextTypes.Dict
+    ) -> FlextResult[FlextTypes.Dict]:
         """Convert server-specific attribute to RFC-compliant format.
 
         Args:
@@ -101,8 +101,8 @@ class BaseSchemaQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def convert_objectclass_to_rfc(
-        self, oc_data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+        self, oc_data: FlextTypes.Dict
+    ) -> FlextResult[FlextTypes.Dict]:
         """Convert server-specific objectClass to RFC-compliant format.
 
         Args:
@@ -142,7 +142,7 @@ class BaseAclQuirk(ABC, FlextModels.Value):
         """
 
     @abstractmethod
-    def parse_acl(self, acl_line: str) -> FlextResult[dict[str, object]]:
+    def parse_acl(self, acl_line: str) -> FlextResult[FlextTypes.Dict]:
         """Parse server-specific ACL definition.
 
         Args:
@@ -155,8 +155,8 @@ class BaseAclQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def convert_acl_to_rfc(
-        self, acl_data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+        self, acl_data: FlextTypes.Dict
+    ) -> FlextResult[FlextTypes.Dict]:
         """Convert server-specific ACL to RFC-compliant format.
 
         Args:
@@ -169,8 +169,8 @@ class BaseAclQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def convert_acl_from_rfc(
-        self, acl_data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+        self, acl_data: FlextTypes.Dict
+    ) -> FlextResult[FlextTypes.Dict]:
         """Convert RFC-compliant ACL to server-specific format.
 
         Args:
@@ -198,7 +198,7 @@ class BaseEntryQuirk(ABC, FlextModels.Value):
     priority: int = Field(default=100, description="Quirk priority")
 
     @abstractmethod
-    def can_handle_entry(self, entry_dn: str, attributes: dict) -> bool:
+    def can_handle_entry(self, entry_dn: str, attributes: dict[str, object]) -> bool:
         """Check if this quirk can handle the entry.
 
         Args:
@@ -212,8 +212,8 @@ class BaseEntryQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def process_entry(
-        self, entry_dn: str, attributes: dict
-    ) -> FlextResult[dict[str, object]]:
+        self, entry_dn: str, attributes: dict[str, object]
+    ) -> FlextResult[FlextTypes.Dict]:
         """Process entry with server-specific logic.
 
         Args:
@@ -227,8 +227,8 @@ class BaseEntryQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def convert_entry_to_rfc(
-        self, entry_data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+        self, entry_data: FlextTypes.Dict
+    ) -> FlextResult[FlextTypes.Dict]:
         """Convert server-specific entry to RFC-compliant format.
 
         Args:

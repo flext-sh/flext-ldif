@@ -9,7 +9,7 @@ server-specific quirks with RFC-compliant base parsers.
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextModels, FlextResult
+from flext_core import FlextLogger, FlextModels, FlextResult, FlextTypes
 from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
 
 
@@ -270,7 +270,7 @@ class QuirkRegistryService(FlextModels.Entity):
                 return quirk
         return None
 
-    def list_registered_servers(self) -> list[str]:
+    def list_registered_servers(self) -> FlextTypes.StringList:
         """List all server types that have registered quirks.
 
         Returns:
@@ -283,7 +283,7 @@ class QuirkRegistryService(FlextModels.Entity):
         server_types.update(self._entry_quirks.keys())
         return sorted(server_types)
 
-    def get_registry_stats(self) -> dict[str, object]:
+    def get_registry_stats(self) -> FlextTypes.Dict:
         """Get statistics about registered quirks.
 
         Returns:

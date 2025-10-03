@@ -172,7 +172,7 @@ class FlextLdifTestServiceFactory:
     @classmethod
     def create_api(
         cls,
-        config: FlextTypes.Core.Dict | None = None,
+        config: FlextTypes.Dict | None = None,
         quirk_registry: QuirkRegistryService | None = None,
     ) -> dict:
         """Create unified service API for backward compatibility.
@@ -211,7 +211,7 @@ class FlextLdifTestServiceFactory:
     @classmethod
     def create_parser(
         cls,
-        config: FlextTypes.Core.Dict | None = None,
+        config: FlextTypes.Dict | None = None,
         quirk_registry: QuirkRegistryService | None = None,
     ) -> RfcLdifParserService:
         """Create parser service with quirk registry."""
@@ -220,7 +220,7 @@ class FlextLdifTestServiceFactory:
     @classmethod
     def create_validator(
         cls,
-        config: FlextTypes.Core.Dict | None = None,
+        config: FlextTypes.Dict | None = None,
         quirk_registry: QuirkRegistryService | None = None,
     ) -> RfcSchemaParserService:
         """Create validator service (schema parser) with quirk registry."""
@@ -229,7 +229,7 @@ class FlextLdifTestServiceFactory:
     @classmethod
     def create_writer(
         cls,
-        config: FlextTypes.Core.Dict | None = None,
+        config: FlextTypes.Dict | None = None,
         quirk_registry: QuirkRegistryService | None = None,
     ) -> RfcLdifWriterService:
         """Create writer service with quirk registry."""
@@ -304,7 +304,7 @@ class FlextLdifTestServiceFactory:
     @classmethod
     def services_for_integration_test(
         cls, quirk_registry: QuirkRegistryService | None = None
-    ) -> FlextTypes.Core.Dict:
+    ) -> FlextTypes.Dict:
         """Create all services configured for integration testing."""
         config = cls.create_test_config()
 
@@ -323,7 +323,7 @@ class FlextLdifTestServiceFactory:
     @classmethod
     def minimal_services(
         cls, quirk_registry: QuirkRegistryService | None = None
-    ) -> FlextTypes.Core.Dict:
+    ) -> FlextTypes.Dict:
         """Create minimal service set for basic testing."""
         if quirk_registry is None:
             quirk_registry = QuirkRegistryService()

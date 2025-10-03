@@ -5,7 +5,6 @@ for handler registration. All handlers follow FLEXT 1.0.0 patterns with:
 - FlextResult for railway-oriented error handling
 - FlextBus integration for domain events
 - FlextContainer for dependency injection
-- FlextCqrs ready (FlextCqrs.Results available for enhanced result creation)
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -26,6 +25,7 @@ from flext_core import (
     FlextModels,
     FlextRegistry,
     FlextResult,
+    FlextTypes,
 )
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
@@ -40,7 +40,7 @@ class FlextLdifHandlers:
 
     @classmethod
     def get_dispatcher(
-        cls, bus: FlextBus, config: dict[str, object] | None = None
+        cls, bus: FlextBus, config: FlextTypes.Dict | None = None
     ) -> FlextDispatcher:
         """Get or create the CQRS dispatcher.
 
@@ -74,7 +74,7 @@ class FlextLdifHandlers:
     @classmethod
     def register_all_handlers(
         cls, context: FlextContext, container: FlextContainer, bus: FlextBus
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextTypes.Dict]:
         """Register all LDIF handlers with the registry using FlextDispatcher.
 
         Args:
@@ -117,11 +117,11 @@ class FlextLdifHandlers:
         registration_result = registry.register_handlers(handlers_iterable)
 
         if registration_result.is_failure:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 f"Handler registration failed: {registration_result.error}"
             )
 
-        return FlextResult[dict[str, object]].ok({
+        return FlextResult[FlextTypes.Dict].ok({
             "handlers_registered": len(handlers),
             "handler_names": list(handlers.keys()),
             "registry_summary": registration_result.unwrap(),
@@ -470,8 +470,8 @@ class FlextLdifHandlers:
                 # Create and emit event
                 event = FlextLdifModels.EntriesWrittenEvent(
                     entry_count=len(message.entries),
-                    output_format=message.format,
-                    output_destination=message.output or "string",
+                    output_path=message.output or "string",
+                    format_used=message.format,
                     output_size_bytes=len(ldif_string.encode("utf-8")),
                     timestamp=datetime.now(UTC).isoformat(),
                 )
@@ -479,7 +479,7 @@ class FlextLdifHandlers:
                 # NOTE: FlextBus.publish_event() will be implemented in flext-core 1.0.0
                 # For now, log the event
                 self.logger.info(
-                    f"EntriesWrittenEvent: {event.entry_count} entries to {event.output_destination} ({event.output_size_bytes} bytes)"
+                    f"EntriesWrittenEvent: {event.entry_count} entries to {event.output_path} ({event.output_size_bytes} bytes)"
                 )
 
                 return FlextResult[str].ok(ldif_string)
@@ -532,7 +532,7 @@ class FlextLdifHandlers:
                 )
 
                 # Perform migration
-                quirks_list: list[object] = (
+                quirks_list: FlextTypes.List = (
                     list(message.quirks) if message.quirks else []
                 )
                 result = pipeline.migrate_entries(

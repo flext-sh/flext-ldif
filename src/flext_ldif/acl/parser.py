@@ -8,12 +8,12 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
 
-class FlextLdifAclParser(FlextService[dict[str, object]]):
+class FlextLdifAclParser(FlextService[FlextTypes.Dict]):
     """Multi-server ACL parser for different LDAP implementations."""
 
     @override
@@ -23,9 +23,9 @@ class FlextLdifAclParser(FlextService[dict[str, object]]):
         self._logger = FlextLogger(__name__)
 
     @override
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute parser service."""
-        return FlextResult[dict[str, object]].ok({
+        return FlextResult[FlextTypes.Dict].ok({
             "service": FlextLdifAclParser,
             "status": "ready",
         })

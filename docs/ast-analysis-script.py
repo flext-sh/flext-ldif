@@ -16,6 +16,8 @@ from collections import Counter
 from pathlib import Path
 from typing import TypedDict
 
+from flext_core import FlextTypes
+
 # Configure logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
@@ -25,10 +27,10 @@ class ModuleAnalysis(TypedDict, total=False):
     """Type definition for module analysis results."""
 
     file: str
-    imports: list[dict[str, object]]
-    classes: list[dict[str, object]]
-    functions: list[dict[str, object]]
-    calls: list[dict[str, object]]
+    imports: list[FlextTypes.Dict]
+    classes: list[FlextTypes.Dict]
+    functions: list[FlextTypes.Dict]
+    calls: list[FlextTypes.Dict]
     complexity: int
     lines_of_code: int
     ast_nodes: int
@@ -39,13 +41,13 @@ class LibraryAnalysis(TypedDict, total=False):
     """Type definition for library usage analysis results."""
 
     file: str
-    flext_core_usage: list[dict[str, object]]
-    pydantic_usage: list[dict[str, object]]
-    standard_lib_usage: list[dict[str, object]]
-    external_calls: list[dict[str, object]]
-    performance_impact: dict[str, object]
-    memory_impact: dict[str, object]
-    dependency_graph: list[dict[str, object]]
+    flext_core_usage: list[FlextTypes.Dict]
+    pydantic_usage: list[FlextTypes.Dict]
+    standard_lib_usage: list[FlextTypes.Dict]
+    external_calls: list[FlextTypes.Dict]
+    performance_impact: FlextTypes.Dict
+    memory_impact: FlextTypes.Dict
+    dependency_graph: list[FlextTypes.Dict]
     error: str  # Optional error field
 
 
@@ -53,10 +55,10 @@ class CallGraphAnalysis(TypedDict, total=False):
     """Type definition for call graph analysis results."""
 
     file: str
-    internal_calls: list[dict[str, object]]
-    external_calls: list[dict[str, object]]
-    method_chains: list[dict[str, object]]
-    dependency_chain: list[dict[str, object]]
+    internal_calls: list[FlextTypes.Dict]
+    external_calls: list[FlextTypes.Dict]
+    method_chains: list[FlextTypes.Dict]
+    dependency_chain: list[FlextTypes.Dict]
     complexity_score: int
     error: str  # Optional error field
 
@@ -101,12 +103,12 @@ class ComprehensiveReport(TypedDict):
 
     source_directory: str
     total_files: int
-    module_analyses: dict[str, dict[str, object]]
+    module_analyses: FlextTypes.NestedDict
     aggregate_statistics: AggregateStatistics
     library_usage_summary: LibraryUsageSummary
     performance_summary: PerformanceSummary
     call_graph_summary: CallGraphSummary
-    recommendations: list[str]
+    recommendations: FlextTypes.StringList
 
 
 class ASTAnalyzer:
@@ -120,7 +122,7 @@ class ASTAnalyzer:
     - Dependency analysis
 
     Attributes:
-        analysis_results (Dict[str, object]): Storage for analysis results
+        analysis_results (FlextTypes.Dict): Storage for analysis results
         performance_critical_ops (List[str]): List of performance-critical operations
         library_usage_patterns (Dict[str, int]): Library usage frequency tracking
 
@@ -128,8 +130,8 @@ class ASTAnalyzer:
 
     def __init__(self) -> None:
         """Initialize the AST analyzer with default configuration."""
-        self.analysis_results: dict[str, object] = {}
-        self.performance_critical_ops: list[str] = [
+        self.analysis_results: FlextTypes.Dict = {}
+        self.performance_critical_ops: FlextTypes.StringList = [
             "read_text",
             "write_text",
             "read",
@@ -159,7 +161,7 @@ class ASTAnalyzer:
             file_path (Union[str, Path]): Path to the Python file to analyze
 
         Returns:
-            Dict[str, object]: Comprehensive analysis results including:
+            FlextTypes.Dict: Comprehensive analysis results including:
                 - file: File path
                 - imports: List of import statements
                 - classes: List of class definitions
@@ -264,14 +266,14 @@ class ASTAnalyzer:
         except Exception as e:
             return {"error": str(e), "file": str(file_path)}
 
-    def _extract_call_info(self, node: ast.Call) -> dict[str, object] | None:
+    def _extract_call_info(self, node: ast.Call) -> FlextTypes.Dict | None:
         """Extract detailed information from a function call node.
 
         Args:
             node (ast.Call): The AST call node to analyze
 
         Returns:
-            Optional[Dict[str, object]]: Call information or None if extraction fails
+            Optional[FlextTypes.Dict]: Call information or None if extraction fails
 
         """
         try:
@@ -313,7 +315,7 @@ class ASTAnalyzer:
         - Number of imports (weight: 2)
 
         Args:
-            analysis (Dict[str, object]): Analysis results to score
+            analysis (FlextTypes.Dict): Analysis results to score
 
         Returns:
             int: Calculated complexity score
@@ -336,7 +338,7 @@ class ASTAnalyzer:
             file_path (Union[str, Path]): Path to the Python file to analyze
 
         Returns:
-            Dict[str, object]: Library usage analysis including:
+            FlextTypes.Dict: Library usage analysis including:
                 - flext_core_usage: Flext-core library usage
                 - pydantic_usage: Pydantic library usage
                 - standard_lib_usage: Standard library usage
@@ -481,14 +483,14 @@ class ASTAnalyzer:
             return "medium"
         return "low"
 
-    def _analyze_call_performance(self, node: ast.Call) -> dict[str, object] | None:
+    def _analyze_call_performance(self, node: ast.Call) -> FlextTypes.Dict | None:
         """Analyze the performance impact of a function call.
 
         Args:
             node (ast.Call): The AST call node to analyze
 
         Returns:
-            Optional[Dict[str, object]]: Performance analysis or None
+            Optional[FlextTypes.Dict]: Performance analysis or None
 
         """
         if isinstance(node.func, ast.Attribute) and isinstance(
@@ -538,7 +540,7 @@ class ASTAnalyzer:
             file_path (Union[str, Path]): Path to the Python file to analyze
 
         Returns:
-            Dict[str, object]: Call graph analysis including:
+            FlextTypes.Dict: Call graph analysis including:
                 - internal_calls: Self-referential method calls
                 - external_calls: External library calls
                 - method_chains: Complex method chaining
@@ -596,14 +598,14 @@ class ASTAnalyzer:
         except Exception as e:
             return {"error": str(e), "file": str(file_path)}
 
-    def _extract_call_graph_info(self, node: ast.Call) -> dict[str, object] | None:
+    def _extract_call_graph_info(self, node: ast.Call) -> FlextTypes.Dict | None:
         """Extract call graph information from an AST call node.
 
         Args:
             node (ast.Call): The AST call node to analyze
 
         Returns:
-            Optional[Dict[str, object]]: Call graph information or None
+            Optional[FlextTypes.Dict]: Call graph information or None
 
         """
         try:
@@ -667,7 +669,7 @@ class ASTAnalyzer:
             source_directory (Union[str, Path]): Directory containing Python files
 
         Returns:
-            Dict[str, object]: Comprehensive analysis report including:
+            FlextTypes.Dict: Comprehensive analysis report including:
                 - module_analyses: Individual module analyses
                 - aggregate_statistics: Overall project statistics
                 - library_usage_summary: Library usage patterns
@@ -818,17 +820,19 @@ class ASTAnalyzer:
 
         return report
 
-    def _generate_recommendations(self, report: ComprehensiveReport) -> list[str]:
+    def _generate_recommendations(
+        self, report: ComprehensiveReport
+    ) -> FlextTypes.StringList:
         """Generate recommendations based on the analysis results.
 
         Args:
-            report (Dict[str, object]): The comprehensive analysis report
+            report (FlextTypes.Dict): The comprehensive analysis report
 
         Returns:
             List[str]: List of recommendations
 
         """
-        recommendations: list[str] = []
+        recommendations: FlextTypes.StringList = []
 
         # Analyze complexity distribution
         total_complexity = report["aggregate_statistics"]["total_complexity"]

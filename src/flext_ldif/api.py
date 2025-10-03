@@ -20,6 +20,7 @@ from flext_core import (
     FlextLogger,
     FlextResult,
     FlextService,
+    FlextTypes,
 )
 from flext_ldif.acl.service import FlextLdifAclService
 from flext_ldif.config import FlextLdifConfig
@@ -52,7 +53,7 @@ from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdif(FlextService[dict[str, object]]):
+class FlextLdif(FlextService[FlextTypes.Dict]):
     r"""Main facade for all LDIF processing operations.
 
     Provides unified access to:
@@ -99,7 +100,7 @@ class FlextLdif(FlextService[dict[str, object]]):
 
         """
         super().__init__()
-        self._config = config or FlextLdifConfig.get_global_instance()
+        self._config = config or FlextLdifConfig()
         self._container = FlextContainer.get_global()
         # FlextContext expects dict, not FlextLdifConfig directly
         self._context = FlextContext({"config": self._config})
@@ -120,7 +121,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         )
 
     @override
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute facade self-check and return status.
 
         FlextLdif is a facade, not a typical service. This execute method
@@ -131,15 +132,13 @@ class FlextLdif(FlextService[dict[str, object]]):
 
         """
         try:
-            return FlextResult[dict[str, object]].ok({
+            return FlextResult[FlextTypes.Dict].ok({
                 "status": "initialized",
                 "handlers": list(self._handlers.keys()),
                 "config": {"default_encoding": self._config.ldif_encoding},
             })
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(
-                f"Facade status check failed: {e}"
-            )
+            return FlextResult[FlextTypes.Dict].fail(f"Facade status check failed: {e}")
 
     # =========================================================================
     # PRIVATE: Service Setup and Handler Initialization
@@ -258,7 +257,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             f"Registered {len(complete_quirks)} complete quirks and {len(stub_quirks)} stub quirks"
         )
 
-    def _initialize_handlers(self) -> dict[str, object]:
+    def _initialize_handlers(self) -> FlextTypes.Dict:
         """Initialize CQRS handlers using FlextRegistry.
 
         Returns:
@@ -370,7 +369,7 @@ class FlextLdif(FlextService[dict[str, object]]):
 
     def validate_entries(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextTypes.Dict]:
         """Validate LDIF entries against RFC and business rules.
 
         Args:
@@ -399,14 +398,14 @@ class FlextLdif(FlextService[dict[str, object]]):
         # Return validation result as dictionary for consistent API
         if result.is_success:
             validation_result = result.unwrap()
-            return FlextResult[dict[str, object]].ok({
+            return FlextResult[FlextTypes.Dict].ok({
                 "is_valid": validation_result.is_valid,
                 "total_entries": len(entries),
                 "valid_entries": len(entries) - len(validation_result.errors),
                 "invalid_entries": len(validation_result.errors),
                 "errors": validation_result.errors,
             })
-        return FlextResult[dict[str, object]].fail(result.error or "Validation failed")
+        return FlextResult[FlextTypes.Dict].fail(result.error or "Validation failed")
 
     def migrate(
         self,
@@ -417,7 +416,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         *,
         process_schema: bool = True,
         process_entries: bool = True,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextTypes.Dict]:
         """Migrate LDIF data between different LDAP server types.
 
         Args:
@@ -462,19 +461,19 @@ class FlextLdif(FlextService[dict[str, object]]):
             migration_result = pipeline.execute()
 
             if migration_result.is_failure:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextTypes.Dict].fail(
                     migration_result.error or "Migration failed"
                 )
 
-            return FlextResult[dict[str, object]].ok(migration_result.unwrap())
+            return FlextResult[FlextTypes.Dict].ok(migration_result.unwrap())
 
         except Exception as e:
             self._logger.exception("Migration failed")
-            return FlextResult[dict[str, object]].fail(f"Migration failed: {e}")
+            return FlextResult[FlextTypes.Dict].fail(f"Migration failed: {e}")
 
     def analyze(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextTypes.Dict]:
         """Analyze LDIF entries and generate statistics.
 
         Args:
@@ -503,12 +502,12 @@ class FlextLdif(FlextService[dict[str, object]]):
         # Return analytics result as dictionary for consistent API
         if result.is_success:
             analytics = result.unwrap()
-            return FlextResult[dict[str, object]].ok({
+            return FlextResult[FlextTypes.Dict].ok({
                 "total_entries": analytics.total_entries,
                 "object_class_distribution": analytics.object_class_distribution,
                 "patterns_detected": analytics.patterns_detected,
             })
-        return FlextResult[dict[str, object]].fail(result.error or "Analysis failed")
+        return FlextResult[FlextTypes.Dict].fail(result.error or "Analysis failed")
 
     def filter_by_objectclass(
         self, entries: list[FlextLdifModels.Entry], objectclass: str
@@ -595,7 +594,7 @@ class FlextLdif(FlextService[dict[str, object]]):
     # =========================================================================
 
     @property
-    def EntryBuilder(self) -> type[FlextLdifEntryBuilder]:  # noqa: N802
+    def EntryBuilder(self) -> type[FlextLdifEntryBuilder]:
         """Access to LDIF entry builder for constructing entries.
 
         Returns:
@@ -614,7 +613,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         return FlextLdifEntryBuilder
 
     @property
-    def SchemaBuilder(self) -> type[FlextLdifSchemaBuilder]:  # noqa: N802
+    def SchemaBuilder(self) -> type[FlextLdifSchemaBuilder]:
         """Access to LDIF schema builder for constructing schemas.
 
         Returns:
@@ -629,7 +628,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         return FlextLdifSchemaBuilder
 
     @property
-    def AclService(self) -> type[FlextLdifAclService]:  # noqa: N802
+    def AclService(self) -> type[FlextLdifAclService]:
         """Access to ACL service for extracting and processing ACLs.
 
         Returns:
@@ -643,7 +642,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         return FlextLdifAclService
 
     @property
-    def SchemaValidator(self) -> type[FlextLdifSchemaValidator]:  # noqa: N802
+    def SchemaValidator(self) -> type[FlextLdifSchemaValidator]:
         """Access to schema validator for validating entries.
 
         Returns:
@@ -661,7 +660,7 @@ class FlextLdif(FlextService[dict[str, object]]):
     # =========================================================================
 
     @property
-    def Models(self) -> type[FlextLdifModels]:  # noqa: N802
+    def Models(self) -> type[FlextLdifModels]:
         """Access to all LDIF Pydantic models.
 
         Returns:
@@ -689,7 +688,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         return self._config
 
     @property
-    def Constants(self) -> type[FlextLdifConstants]:  # noqa: N802
+    def Constants(self) -> type[FlextLdifConstants]:
         """Access to LDIF constants.
 
         Returns:
@@ -703,7 +702,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         return FlextLdifConstants
 
     @property
-    def Types(self) -> type[FlextLdifTypes]:  # noqa: N802
+    def Types(self) -> type[FlextLdifTypes]:
         """Access to LDIF type definitions.
 
         Returns:
@@ -717,7 +716,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         return FlextLdifTypes
 
     @property
-    def Protocols(self) -> type[FlextLdifProtocols]:  # noqa: N802
+    def Protocols(self) -> type[FlextLdifProtocols]:
         """Access to LDIF protocols for duck typing.
 
         Returns:
@@ -731,7 +730,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         return FlextLdifProtocols
 
     @property
-    def Exceptions(self) -> type[FlextLdifExceptions]:  # noqa: N802
+    def Exceptions(self) -> type[FlextLdifExceptions]:
         """Access to LDIF exception factory methods.
 
         Returns:
@@ -745,7 +744,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         return FlextLdifExceptions
 
     @property
-    def Mixins(self) -> type[FlextLdifMixins]:  # noqa: N802
+    def Mixins(self) -> type[FlextLdifMixins]:
         """Access to LDIF mixins for reusable functionality.
 
         Returns:
@@ -759,7 +758,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         return FlextLdifMixins
 
     @property
-    def Utilities(self) -> type[FlextLdifUtilities]:  # noqa: N802
+    def Utilities(self) -> type[FlextLdifUtilities]:
         """Access to LDIF utility functions.
 
         Returns:
@@ -773,7 +772,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         return FlextLdifUtilities
 
     @property
-    def Processors(self) -> type[FlextLdifUtilities.Processors]:  # noqa: N802
+    def Processors(self) -> type[FlextLdifUtilities.Processors]:
         """Access to LDIF processing utilities using FlextProcessors.
 
         Returns:

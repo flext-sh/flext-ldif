@@ -20,7 +20,7 @@ class TestValidators:
     """Validators for testing LDIF functionality."""
 
     @staticmethod
-    def validate_ldif_entry(entry: FlextLdifModels.Entry) -> dict[str, bool]:
+    def validate_ldif_entry(entry: FlextLdifModels.Entry) -> FlextTypes.BoolDict:
         """Validate a real LDIF entry object."""
         validations = {
             "has_dn": bool(entry.dn and str(entry.dn).strip()),
@@ -39,7 +39,9 @@ class TestValidators:
         if validations["has_object_class"] and entry.attributes:
             attr_values = entry.get_attribute("objectClass")
             # Convert AttributeValues to list of strings
-            object_classes_list: list[str] = attr_values.values if attr_values else []
+            object_classes_list: FlextTypes.StringList = (
+                attr_values.values if attr_values else []
+            )
             if "person" in object_classes_list:
                 validations["person_has_cn"] = "cn" in entry.attributes
                 validations["person_has_sn"] = "sn" in entry.attributes
@@ -74,7 +76,7 @@ class TestValidators:
         return bool(re.match(attr_pattern, attr_name))
 
     @staticmethod
-    def validate_result_success(result: FlextResult[T]) -> FlextTypes.Core.Dict:
+    def validate_result_success(result: FlextResult[T]) -> FlextTypes.Dict:
         """Validate FlextResult success characteristics using flext-core patterns."""
         has_value = False
         value_type_name = None
@@ -99,7 +101,7 @@ class TestValidators:
         }
 
     @staticmethod
-    def validate_result_failure(result: FlextResult[T]) -> FlextTypes.Core.Dict:
+    def validate_result_failure(result: FlextResult[T]) -> FlextTypes.Dict:
         """Validate FlextResult failure characteristics using flext-core patterns."""
         return {
             "is_failure": result.is_failure,
@@ -118,7 +120,7 @@ class TestValidators:
         }
 
     @staticmethod
-    def validate_ldif_content(content: str) -> FlextTypes.Core.Dict:
+    def validate_ldif_content(content: str) -> FlextTypes.Dict:
         """Validate raw LDIF content format."""
         if not content:
             return {"is_valid": False, "reason": "Empty or non-string content"}
@@ -164,7 +166,7 @@ class TestValidators:
     def validate_file_operations(
         file_path: Path,
         expected_content: str,
-    ) -> dict[str, bool]:
+    ) -> FlextTypes.BoolDict:
         """Validate file operations for LDIF files."""
         validations = {
             "file_exists": file_path.exists(),
@@ -193,7 +195,7 @@ class TestValidators:
         cls,
         result: FlextResult[list[FlextLdifModels.Entry]],
         expected_count: int,
-    ) -> FlextTypes.Core.Dict:
+    ) -> FlextTypes.Dict:
         """Validate parsing result comprehensively."""
         base_validation = cls.validate_result_success(result)
 
@@ -249,7 +251,7 @@ class TestValidators:
     @staticmethod
     def validate_flext_result_composition(
         results: list[FlextResult[object]],
-    ) -> FlextTypes.Core.Dict:
+    ) -> FlextTypes.Dict:
         """Validate FlextResult composition patterns."""
         successes = [r for r in results if r.is_success]
         failures = [r for r in results if r.is_failure]
@@ -269,7 +271,7 @@ class TestValidators:
     @staticmethod
     def validate_flext_result_chain(
         results: list[FlextResult[object]],
-    ) -> FlextTypes.Core.Dict:
+    ) -> FlextTypes.Dict:
         """Validate FlextResult chain operations."""
         if not results:
             return {

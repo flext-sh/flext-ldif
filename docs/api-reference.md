@@ -13,6 +13,7 @@ Complete API documentation for FLEXT-LDIF, including all public classes, methods
 FLEXT-LDIF enforces a **strict RFC-first design** with **mandatory quirks system**:
 
 **Critical Architecture Principles**:
+
 1. ✅ **RFC-First Enforcement**: ALL parse/write/validate operations go through RFC parsers + quirks
 2. ✅ **MANDATORY quirk_registry**: All RFC parsers/writers REQUIRE quirk_registry parameter (not Optional)
 3. ✅ **Zero Bypass Paths**: NO direct usage of parsers/writers - ALL operations through handlers/facade
@@ -20,6 +21,7 @@ FLEXT-LDIF enforces a **strict RFC-first design** with **mandatory quirks system
 5. ✅ **Library-Only Interface**: NO CLI code, tools, or applications - API-only through FlextLdif facade
 
 **Architecture Benefits**:
+
 - Works with **any LDAP server** (known or unknown) without code changes
 - Easy to add support for new servers via quirks (no core changes needed)
 - Server-specific code isolated in quirk modules
@@ -27,6 +29,7 @@ FLEXT-LDIF enforces a **strict RFC-first design** with **mandatory quirks system
 - Guaranteed consistency: all code paths use same RFC + quirks logic
 
 **Supported Servers**:
+
 - ✅ **Complete Implementations** (4): OpenLDAP 1.x/2.x, OID, OUD
 - ⚠️ **Stub Implementations** (5): AD, Apache DS, 389DS, Novell, Tivoli (ready for enhancement)
 
@@ -291,15 +294,15 @@ class Entry(BaseModel):
     """LDIF entry domain model."""
 
     dn: str = Field(..., description="Distinguished Name")
-    attributes: dict[str, list[str]] = Field(
+    attributes: dict[str, FlextTypes.StringList] = Field(
         default_factory=dict,
         description="Entry attributes as key-value pairs"
     )
 
-    def get_object_classes(self) -> list[str]:
+    def get_object_classes(self) -> FlextTypes.StringList:
         """Get object class values for this entry."""
 
-    def get_attribute_values(self, attr_name: str) -> list[str]:
+    def get_attribute_values(self, attr_name: str) -> FlextTypes.StringList:
         """Get values for specific attribute."""
 
     def has_object_class(self, object_class: str) -> bool:
@@ -383,7 +386,7 @@ class Factory:
     """Factory for creating LDIF domain objects."""
 
     @staticmethod
-    def create(data: dict[str, object] | str, attributes: dict[str, list[str]] | None = None) -> Entry:
+    def create(data: FlextTypes.Dict | str, attributes: dict[str, FlextTypes.StringList] | None = None) -> Entry:
         """Create LDIF entry with validation."""
 
     @staticmethod
@@ -403,7 +406,7 @@ class Factory:
     def create_group_entry(
         dn: str,
         cn: str,
-        members: list[str],
+        members: FlextTypes.StringList,
         **additional_attrs
     ) -> Entry:
         """Create group entry with members."""
@@ -514,6 +517,7 @@ except FlextLdifValidationError as e:
 **IMPORTANT**: FLEXT-LDIF is a **library-only** package with NO CLI. All functionality must be accessed programmatically through the API.
 
 **Migration from CLI to API**:
+
 ```python
 # ❌ OLD (CLI - no longer available):
 # python -m flext_ldif parse directory.ldif
@@ -720,6 +724,7 @@ rfc_parser = RfcSchemaParserService(
 ```
 
 **Why quirk_registry is MANDATORY**:
+
 1. **Enforces RFC-first architecture** - Zero bypass paths guarantee
 2. **Enables generic transformation** - Source → RFC → Target pipeline requires registry
 3. **Auto-discovery** - QuirkRegistryService automatically discovers all standard quirks
@@ -1045,6 +1050,7 @@ else:
 ### Supported LDAP Servers
 
 **Complete Implementations** (4 servers):
+
 ```python
 # Oracle Internet Directory
 server_type="oid"
@@ -1060,6 +1066,7 @@ server_type="openldap1"
 ```
 
 **Stub Implementations** (5 servers - ready for enhancement):
+
 ```python
 # Active Directory (stub - not implemented)
 server_type="ad"
@@ -1078,6 +1085,7 @@ server_type="tivoli"
 ```
 
 **Generic/Unknown Servers**:
+
 ```python
 # Works with ANY LDAP server using pure RFC baseline
 server_type=None  # Pure RFC 2849/4512 compliance

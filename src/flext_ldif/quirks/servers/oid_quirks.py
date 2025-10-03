@@ -18,9 +18,9 @@ from __future__ import annotations
 import re
 from typing import ClassVar
 
-from flext_core import FlextLogger, FlextResult
 from pydantic import Field
 
+from flext_core import FlextLogger, FlextResult, FlextTypes
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
 
@@ -67,7 +67,7 @@ class OidSchemaQuirk(BaseSchemaQuirk):
         """
         return bool(self.ORACLE_OID_PATTERN.search(attr_definition))
 
-    def parse_attribute(self, attr_definition: str) -> FlextResult[dict[str, object]]:
+    def parse_attribute(self, attr_definition: str) -> FlextResult[FlextTypes.Dict]:
         """Parse Oracle OID attribute definition.
 
         Args:
@@ -87,16 +87,16 @@ class OidSchemaQuirk(BaseSchemaQuirk):
             if attr_result.is_success:
                 attr_obj = attr_result.value
                 # Convert to dict for quirk system
-                return FlextResult[dict[str, object]].ok(
+                return FlextResult[FlextTypes.Dict].ok(
                     attr_obj.model_dump() if hasattr(attr_obj, "model_dump") else {}
                 )
 
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 attr_result.error or "Failed to parse OID attribute"
             )
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 f"OID attribute parsing failed: {e}"
             )
 
@@ -112,7 +112,7 @@ class OidSchemaQuirk(BaseSchemaQuirk):
         """
         return bool(self.ORACLE_OID_PATTERN.search(oc_definition))
 
-    def parse_objectclass(self, oc_definition: str) -> FlextResult[dict[str, object]]:
+    def parse_objectclass(self, oc_definition: str) -> FlextResult[FlextTypes.Dict]:
         """Parse Oracle OID objectClass definition.
 
         Args:
@@ -132,22 +132,22 @@ class OidSchemaQuirk(BaseSchemaQuirk):
             if oc_result.is_success:
                 oc_obj = oc_result.value
                 # Convert to dict for quirk system
-                return FlextResult[dict[str, object]].ok(
+                return FlextResult[FlextTypes.Dict].ok(
                     oc_obj.model_dump() if hasattr(oc_obj, "model_dump") else {}
                 )
 
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 oc_result.error or "Failed to parse OID objectClass"
             )
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 f"OID objectClass parsing failed: {e}"
             )
 
     def convert_attribute_to_rfc(
-        self, attr_data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+        self, attr_data: FlextTypes.Dict
+    ) -> FlextResult[FlextTypes.Dict]:
         """Convert OID attribute to RFC-compliant format.
 
         Args:
@@ -168,16 +168,14 @@ class OidSchemaQuirk(BaseSchemaQuirk):
                 "equality": attr_data.get("equality"),
             }
 
-            return FlextResult[dict[str, object]].ok(rfc_data)
+            return FlextResult[FlextTypes.Dict].ok(rfc_data)
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(
-                f"OID→RFC conversion failed: {e}"
-            )
+            return FlextResult[FlextTypes.Dict].fail(f"OID→RFC conversion failed: {e}")
 
     def convert_objectclass_to_rfc(
-        self, oc_data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+        self, oc_data: FlextTypes.Dict
+    ) -> FlextResult[FlextTypes.Dict]:
         """Convert OID objectClass to RFC-compliant format.
 
         Args:
@@ -199,12 +197,10 @@ class OidSchemaQuirk(BaseSchemaQuirk):
                 "may": oc_data.get("may"),
             }
 
-            return FlextResult[dict[str, object]].ok(rfc_data)
+            return FlextResult[FlextTypes.Dict].ok(rfc_data)
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(
-                f"OID→RFC conversion failed: {e}"
-            )
+            return FlextResult[FlextTypes.Dict].fail(f"OID→RFC conversion failed: {e}")
 
     class AclQuirk(BaseAclQuirk):
         """Oracle OID ACL quirk (nested).
@@ -242,7 +238,7 @@ class OidSchemaQuirk(BaseSchemaQuirk):
             """
             return acl_line.startswith(("orclaci:", "orclentrylevelaci:"))
 
-        def parse_acl(self, acl_line: str) -> FlextResult[dict[str, object]]:
+        def parse_acl(self, acl_line: str) -> FlextResult[FlextTypes.Dict]:
             """Parse Oracle OID ACL definition.
 
             Args:
@@ -265,7 +261,7 @@ class OidSchemaQuirk(BaseSchemaQuirk):
                 if result.is_success:
                     # Convert model to dict for quirk system
                     acl_obj = result.value
-                    return FlextResult[dict[str, object]].ok({
+                    return FlextResult[FlextTypes.Dict].ok({
                         "type": "entry_level" if is_entry_level else "standard",
                         "raw": acl_line,
                         "parsed": (
@@ -275,18 +271,14 @@ class OidSchemaQuirk(BaseSchemaQuirk):
                         ),
                     })
 
-                return FlextResult[dict[str, object]].fail(
-                    result.error or "Parse failed"
-                )
+                return FlextResult[FlextTypes.Dict].fail(result.error or "Parse failed")
 
             except Exception as e:
-                return FlextResult[dict[str, object]].fail(
-                    f"OID ACL parsing failed: {e}"
-                )
+                return FlextResult[FlextTypes.Dict].fail(f"OID ACL parsing failed: {e}")
 
         def convert_acl_to_rfc(
-            self, acl_data: dict[str, object]
-        ) -> FlextResult[dict[str, object]]:
+            self, acl_data: FlextTypes.Dict
+        ) -> FlextResult[FlextTypes.Dict]:
             """Convert OID ACL to RFC-compliant format.
 
             Args:
@@ -299,23 +291,23 @@ class OidSchemaQuirk(BaseSchemaQuirk):
             try:
                 # Oracle OID ACLs don't have direct RFC equivalent
                 # Return generic ACL representation
-                rfc_data: dict[str, object] = {
+                rfc_data: FlextTypes.Dict = {
                     "type": "acl",
                     "format": "rfc_generic",
                     "source_format": "oracle_oid",
                     "data": acl_data,
                 }
 
-                return FlextResult[dict[str, object]].ok(rfc_data)
+                return FlextResult[FlextTypes.Dict].ok(rfc_data)
 
             except Exception as e:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextTypes.Dict].fail(
                     f"OID ACL→RFC conversion failed: {e}"
                 )
 
         def convert_acl_from_rfc(
-            self, acl_data: dict[str, object]
-        ) -> FlextResult[dict[str, object]]:
+            self, acl_data: FlextTypes.Dict
+        ) -> FlextResult[FlextTypes.Dict]:
             """Convert RFC ACL to OID-specific format.
 
             Args:
@@ -328,16 +320,16 @@ class OidSchemaQuirk(BaseSchemaQuirk):
             try:
                 # Convert RFC ACL to Oracle OID format
                 # This is target-specific conversion for migrations
-                oid_data: dict[str, object] = {
+                oid_data: FlextTypes.Dict = {
                     "format": "oracle_oid",
                     "target_format": "orclaci",
                     "data": acl_data,
                 }
 
-                return FlextResult[dict[str, object]].ok(oid_data)
+                return FlextResult[FlextTypes.Dict].ok(oid_data)
 
             except Exception as e:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextTypes.Dict].fail(
                     f"RFC→OID ACL conversion failed: {e}"
                 )
 
@@ -368,8 +360,8 @@ class OidSchemaQuirk(BaseSchemaQuirk):
 
         def can_handle_entry(
             self,
-            _entry_dn: str,
-            _attributes: dict,
+            entry_dn: str,
+            attributes: dict,
         ) -> bool:
             """Check if this quirk should handle the entry.
 
@@ -409,7 +401,7 @@ class OidSchemaQuirk(BaseSchemaQuirk):
 
         def process_entry(
             self, entry_dn: str, attributes: dict
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextResult[FlextTypes.Dict]:
             """Process entry for Oracle OID format.
 
             Args:
@@ -423,7 +415,7 @@ class OidSchemaQuirk(BaseSchemaQuirk):
             try:
                 # Oracle OID entries are RFC-compliant
                 # Add OID-specific metadata
-                processed_entry: dict[str, object] = {
+                processed_entry: FlextTypes.Dict = {
                     "dn": entry_dn,
                     "server_type": "oid",
                     "has_oid_acls": any(
@@ -432,16 +424,16 @@ class OidSchemaQuirk(BaseSchemaQuirk):
                 }
                 processed_entry.update(attributes)
 
-                return FlextResult[dict[str, object]].ok(processed_entry)
+                return FlextResult[FlextTypes.Dict].ok(processed_entry)
 
             except Exception as e:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextTypes.Dict].fail(
                     f"OID entry processing failed: {e}"
                 )
 
         def convert_entry_to_rfc(
-            self, entry_data: dict[str, object]
-        ) -> FlextResult[dict[str, object]]:
+            self, entry_data: FlextTypes.Dict
+        ) -> FlextResult[FlextTypes.Dict]:
             """Convert Oracle OID entry to RFC-compliant format.
 
             Args:
@@ -470,10 +462,10 @@ class OidSchemaQuirk(BaseSchemaQuirk):
                 for attr in oid_operational_attrs:
                     rfc_data.pop(attr, None)
 
-                return FlextResult[dict[str, object]].ok(rfc_data)
+                return FlextResult[FlextTypes.Dict].ok(rfc_data)
 
             except Exception as e:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextTypes.Dict].fail(
                     f"OID entry→RFC conversion failed: {e}"
                 )
 
