@@ -6,8 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import threading
-from typing import ClassVar, Literal
+from typing import Literal
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
@@ -299,7 +298,6 @@ class FlextLdifConfig(FlextConfig):
 
         return self
 
-
     # =========================================================================
     # ENVIRONMENT-SPECIFIC CONFIGURATION METHODS
     # =========================================================================
@@ -316,6 +314,7 @@ class FlextLdifConfig(FlextConfig):
 
         Returns:
             FlextLdifConfig instance configured for the environment
+
         """
         base_config: FlextTypes.Dict = {"environment": environment}
 
@@ -355,6 +354,7 @@ class FlextLdifConfig(FlextConfig):
 
         Returns:
             FlextLdifConfig instance with performance optimizations enabled
+
         """
         return cls(
             debug_mode=False,
@@ -374,6 +374,7 @@ class FlextLdifConfig(FlextConfig):
 
         Returns:
             FlextLdifConfig instance with development-friendly settings
+
         """
         return cls(
             debug_mode=True,
@@ -395,6 +396,7 @@ class FlextLdifConfig(FlextConfig):
 
         Returns:
             FlextLdifConfig instance configured for the server type
+
         """
         base_config: FlextTypes.Dict = {"server_type": server_type}
 
@@ -429,6 +431,7 @@ class FlextLdifConfig(FlextConfig):
 
         Returns:
             Effective character encoding to use
+
         """
         # Server-specific encoding preferences
         if self.server_type == "active_directory":
@@ -443,19 +446,19 @@ class FlextLdifConfig(FlextConfig):
 
         Returns:
             Effective number of workers to use
+
         """
         if not self.enable_parallel_processing:
             return 1
 
         if entry_count < self.parallel_threshold:
             return 1
-        elif entry_count < FlextLdifConstants.Processing.MEDIUM_ENTRY_COUNT_THRESHOLD:
+        if entry_count < FlextLdifConstants.Processing.MEDIUM_ENTRY_COUNT_THRESHOLD:
             return min(
                 FlextLdifConstants.Processing.MIN_WORKERS_FOR_PARALLEL,
                 self.max_workers
             )
-        else:
-            return self.max_workers
+        return self.max_workers
 
     def is_performance_optimized(self) -> bool:
         """Check if configuration is optimized for performance."""
@@ -476,5 +479,6 @@ class FlextLdifConfig(FlextConfig):
             and self.verbose_logging
             and self.max_workers <= FlextLdifConstants.Processing.DEBUG_MAX_WORKERS
         )
+
 
 __all__ = ["FlextLdifConfig"]

@@ -605,9 +605,7 @@ class FlextLdifHandlers:
                     return FlextResult[None].fail(
                         f"Failed to get quirk registry: {registry_result.error}"
                     )
-                registry = cast(
-                    "FlextLdifProtocols.QuirkRegistryProtocol", registry_result.unwrap()
-                )
+                registry = registry_result.unwrap()
 
                 # Register quirk based on type
                 if message.quirk_type == "schema":
