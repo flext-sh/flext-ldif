@@ -507,7 +507,7 @@ def parse_string(self, content: str) -> FlextResult[list[FlextLdifModels.Entry]]
     processed_content = self._ParseHelper.process_line_continuation(content)
 
     # Split into entry blocks
-    entry_blocks: list[str] = [
+    entry_blocks: FlextTypes.StringList = [
         block.strip() for block in processed_content.split("\n\n") if block.strip()
     ]
 ```
@@ -824,12 +824,12 @@ class DistinguishedName(BaseModel):
 class LdifAttributes(BaseModel):
     @field_validator("data")
     @classmethod
-    def validate_attributes(cls, v: object) -> dict[str, list[str]]:
+    def validate_attributes(cls, v: object) -> dict[str, FlextTypes.StringList]:
         """Validate attribute data structure."""
         if not isinstance(v, dict):
             raise TypeError(FlextLdifConstants.ErrorMessages.ATTRIBUTES_TYPE_ERROR)
         # All attribute validation logic here
-        return cast("dict[str, list[str]]", v)
+        return cast("dict[str, FlextTypes.StringList]", v)
 ```
 
 **Config Validation (FlextLdifConfig)**:

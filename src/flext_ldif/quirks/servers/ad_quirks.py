@@ -20,9 +20,9 @@ When implementing, refer to:
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextResult
 from pydantic import Field
 
+from flext_core import FlextLogger, FlextResult, FlextTypes
 from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
 
 
@@ -54,7 +54,7 @@ class AdSchemaQuirk(BaseSchemaQuirk):
         super().__init__(**data)
         self._logger = FlextLogger(__name__)
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:  # noqa: ARG002
+    def can_handle_attribute(self, attr_definition: str) -> bool:
         """Check if this is an Active Directory attribute.
 
         TODO: Add AD-specific detection logic.
@@ -74,8 +74,8 @@ class AdSchemaQuirk(BaseSchemaQuirk):
 
     def parse_attribute(
         self,
-        _attr_definition: str,
-    ) -> FlextResult[dict[str, object]]:
+        attr_definition: str,
+    ) -> FlextResult[FlextTypes.Dict]:
         """Parse Active Directory attribute definition.
 
         TODO: Implement AD-specific attribute parsing.
@@ -87,12 +87,12 @@ class AdSchemaQuirk(BaseSchemaQuirk):
             FlextResult with error (not implemented)
 
         """
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Dict].fail(
             "Active Directory attribute parsing not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:  # noqa: ARG002
+    def can_handle_objectclass(self, oc_definition: str) -> bool:
         """Check if this is an Active Directory objectClass.
 
         TODO: Add AD-specific detection logic.
@@ -108,8 +108,8 @@ class AdSchemaQuirk(BaseSchemaQuirk):
 
     def parse_objectclass(
         self,
-        _oc_definition: str,
-    ) -> FlextResult[dict[str, object]]:
+        oc_definition: str,
+    ) -> FlextResult[FlextTypes.Dict]:
         """Parse Active Directory objectClass definition.
 
         TODO: Implement AD-specific objectClass parsing.
@@ -121,15 +121,15 @@ class AdSchemaQuirk(BaseSchemaQuirk):
             FlextResult with error (not implemented)
 
         """
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Dict].fail(
             "Active Directory objectClass parsing not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
     def convert_attribute_to_rfc(
         self,
-        _attr_data: dict[str, object],
-    ) -> FlextResult[dict[str, object]]:
+        attr_data: FlextTypes.Dict,
+    ) -> FlextResult[FlextTypes.Dict]:
         """Convert AD attribute to RFC-compliant format.
 
         TODO: Implement AD→RFC conversion.
@@ -141,15 +141,15 @@ class AdSchemaQuirk(BaseSchemaQuirk):
             FlextResult with error (not implemented)
 
         """
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Dict].fail(
             "Active Directory→RFC conversion not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
     def convert_objectclass_to_rfc(
         self,
-        _oc_data: dict[str, object],
-    ) -> FlextResult[dict[str, object]]:
+        oc_data: FlextTypes.Dict,
+    ) -> FlextResult[FlextTypes.Dict]:
         """Convert AD objectClass to RFC-compliant format.
 
         TODO: Implement AD→RFC conversion.
@@ -161,7 +161,7 @@ class AdSchemaQuirk(BaseSchemaQuirk):
             FlextResult with error (not implemented)
 
         """
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Dict].fail(
             "Active Directory→RFC conversion not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
@@ -194,7 +194,7 @@ class AdSchemaQuirk(BaseSchemaQuirk):
             super().__init__(**data)
             self._logger = FlextLogger(__name__)
 
-        def can_handle_acl(self, acl_line: str) -> bool:  # noqa: ARG002
+        def can_handle_acl(self, acl_line: str) -> bool:
             """Check if this is an Active Directory ACL.
 
             TODO: Add AD ACL detection logic.
@@ -211,8 +211,8 @@ class AdSchemaQuirk(BaseSchemaQuirk):
 
         def parse_acl(
             self,
-            _acl_line: str,
-        ) -> FlextResult[dict[str, object]]:
+            acl_line: str,
+        ) -> FlextResult[FlextTypes.Dict]:
             """Parse Active Directory ACL definition.
 
             TODO: Implement AD ACL parsing (SDDL format).
@@ -224,15 +224,15 @@ class AdSchemaQuirk(BaseSchemaQuirk):
                 FlextResult with error (not implemented)
 
             """
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 "Active Directory ACL parsing not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
 
         def convert_acl_to_rfc(
             self,
-            _acl_data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            acl_data: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
             """Convert AD ACL to RFC-compliant format.
 
             TODO: Implement AD ACL→RFC conversion.
@@ -244,15 +244,15 @@ class AdSchemaQuirk(BaseSchemaQuirk):
                 FlextResult with error (not implemented)
 
             """
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 "Active Directory ACL→RFC conversion not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
 
         def convert_acl_from_rfc(
             self,
-            _acl_data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            acl_data: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
             """Convert RFC ACL to AD-specific format.
 
             TODO: Implement RFC→AD ACL conversion.
@@ -264,7 +264,7 @@ class AdSchemaQuirk(BaseSchemaQuirk):
                 FlextResult with error (not implemented)
 
             """
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 "RFC→Active Directory ACL conversion not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
@@ -300,8 +300,8 @@ class AdSchemaQuirk(BaseSchemaQuirk):
 
         def can_handle_entry(
             self,
-            _entry_dn: str,
-            _attributes: dict,
+            entry_dn: str,
+            attributes: dict,
         ) -> bool:
             """Check if this quirk should handle the entry.
 
@@ -320,9 +320,9 @@ class AdSchemaQuirk(BaseSchemaQuirk):
 
         def process_entry(
             self,
-            _entry_dn: str,
-            _attributes: dict,
-        ) -> FlextResult[dict[str, object]]:
+            entry_dn: str,
+            attributes: dict,
+        ) -> FlextResult[FlextTypes.Dict]:
             """Process entry for AD format.
 
             TODO: Implement AD entry processing.
@@ -335,15 +335,15 @@ class AdSchemaQuirk(BaseSchemaQuirk):
                 FlextResult with error (not implemented)
 
             """
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 "Active Directory entry processing not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
 
         def convert_entry_to_rfc(
             self,
-            _entry_data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            entry_data: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
             """Convert AD entry to RFC-compliant format.
 
             TODO: Implement AD entry→RFC conversion.
@@ -355,7 +355,7 @@ class AdSchemaQuirk(BaseSchemaQuirk):
                 FlextResult with error (not implemented)
 
             """
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 "Active Directory entry→RFC conversion not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )

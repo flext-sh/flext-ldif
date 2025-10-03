@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Self, override
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from flext_ldif.models import FlextLdifModels
 
 
@@ -88,7 +88,7 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifModels.SchemaDiscoveryResult]
         return self
 
     def add_object_class(
-        self, name: str, description: str, required_attributes: list[str]
+        self, name: str, description: str, required_attributes: FlextTypes.StringList
     ) -> FlextLdifSchemaBuilder:
         """Add object class to schema (Fluent Builder pattern).
 

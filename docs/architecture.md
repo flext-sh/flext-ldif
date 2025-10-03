@@ -21,6 +21,7 @@ This document describes the architectural patterns and design decisions of FLEXT
 FLEXT-LDIF enforces a **strict RFC-first architecture** where ALL LDIF operations MUST go through RFC parsers/writers with the quirks system:
 
 **Core Design Philosophy**:
+
 - **RFC Compliance First**: RFC 2849 (LDIF) and RFC 4512 (Schema) provide the baseline
 - **MANDATORY quirk_registry**: All RFC parsers/writers REQUIRE quirk_registry parameter (not Optional)
 - **Zero Bypass Paths**: NO direct usage of parsers/writers - ALL operations through handlers/facade
@@ -28,6 +29,7 @@ FLEXT-LDIF enforces a **strict RFC-first architecture** where ALL LDIF operation
 - **No Server-Specific Core**: Core parsers are generic; all extensions via quirks
 
 **Critical Architecture Rules**:
+
 1. **Handlers delegate to RFC parsers**: CQRS handlers in `handlers.py` ONLY use RFC parsers
 2. **API delegates to Handlers**: `api.py` facade ONLY delegates to handlers
 3. **Migration uses RFC pipeline**: Migration pipeline ONLY uses RFC parsers + quirks
@@ -35,6 +37,7 @@ FLEXT-LDIF enforces a **strict RFC-first architecture** where ALL LDIF operation
 5. **No direct parser imports**: Tools/apps MUST use FlextLdif facade, NEVER direct parsers
 
 **Benefits**:
+
 - Works with **any LDAP server** (known or unknown) without code changes
 - Easy to add support for new servers via quirks (no core changes needed)
 - Server-specific code isolated in quirk modules
@@ -143,6 +146,7 @@ graph TB
 FLEXT-LDIF uses CQRS (Command Query Responsibility Segregation) pattern in `src/flext_ldif/handlers.py` to enforce RFC-first architecture:
 
 **Handler Types**:
+
 1. **Query Handlers**: Read operations (ParseQueryHandler, ValidateQueryHandler, SchemaQueryHandler)
 2. **Command Handlers**: Write operations (WriteCommandHandler, MigrationCommandHandler)
 
@@ -180,6 +184,7 @@ class ParseQueryHandler(FlextMessageHandler):
 ```
 
 **Handler Guarantees**:
+
 - Uses container to get RFC parser (not direct import)
 - Delegates to RFC parser methods (parse_ldif_file, parse_content)
 - Quirks applied automatically inside RFC parser
@@ -242,6 +247,7 @@ class SchemaQueryHandler(FlextMessageHandler):
    - Lines 163-165: Passes quirk_registry to all RFC parsers
 
 **Verification Methods Used**:
+
 - `grep` for RFC parser usage patterns
 - `Read` tool to inspect code
 - `mcp__serena-flext__find_symbol` for structure analysis
@@ -421,12 +427,12 @@ class FlextLdifModels:
     class Entry(BaseModel):
         """LDIF entry domain entity."""
         dn: str = Field(..., description="Distinguished Name")
-        attributes: dict[str, list[str]] = Field(
+        attributes: dict[str, FlextTypes.StringList] = Field(
             default_factory=dict,
             description="Entry attributes"
         )
 
-        def get_object_classes(self) -> list[str]:
+        def get_object_classes(self) -> FlextTypes.StringList:
             """Get object class values."""
             return self.attributes.get('objectClass', [])
 
@@ -441,7 +447,7 @@ class FlextLdifModels:
         """Factory for creating domain entities."""
 
         @staticmethod
-        def create(data: dict[str, object] | str, attributes: dict[str, list[str]] | None = None) -> Entry:
+        def create(data: FlextTypes.Dict | str, attributes: dict[str, FlextTypes.StringList] | None = None) -> Entry:
             """Create LDIF entry with validation."""
             return FlextLdifModels.Entry(dn=dn, attributes=attributes)
 ```
@@ -674,28 +680,36 @@ graph TB
 ### Complete Implementations (Verified)
 
 #### 1. Oracle Internet Directory (OID) - 477 Lines
+
 **File**: `src/flext_ldif/quirks/servers/oid_quirks.py`
+
 - ✅ SchemaQuirk with can_handle_*, parse_*, convert_*_to_rfc methods
 - ✅ Nested AclQuirk (134 lines, lines 208-341)
 - ✅ Nested EntryQuirk (135 lines, lines 343-477)
 - ✅ Priority: 10 (high priority)
 
 #### 2. Oracle Unified Directory (OUD) - 422 Lines
+
 **File**: `src/flext_ldif/quirks/servers/oud_quirks.py`
+
 - ✅ SchemaQuirk with OUD-specific parsing
 - ✅ Nested AclQuirk (117 lines, lines 215-331)
 - ✅ Nested EntryQuirk (90 lines, lines 333-422)
 - ✅ Priority: 10 (high priority)
 
 #### 3. OpenLDAP 2.x - 529 Lines
+
 **File**: `src/flext_ldif/quirks/servers/openldap_quirks.py`
+
 - ✅ SchemaQuirk with full method implementation
 - ✅ Nested AclQuirk (154 lines, lines 270-423)
 - ✅ Nested EntryQuirk (105 lines, lines 425-529)
 - ✅ Priority: 10 (high priority)
 
 #### 4. OpenLDAP 1.x - 520 Lines
+
 **File**: `src/flext_ldif/quirks/servers/openldap1_quirks.py`
+
 - ✅ SchemaQuirk with can_handle_*, parse_*, convert_*_to_rfc methods
 - ✅ Nested AclQuirk (143 lines, lines 284-426)
 - ✅ Nested EntryQuirk (93 lines, lines 428-520)
@@ -704,7 +718,9 @@ graph TB
 ### Stub Implementations (Ready for Enhancement)
 
 #### 5. Active Directory (AD) - 364 Lines STUB
+
 **File**: `src/flext_ldif/quirks/servers/ad_quirks.py`
+
 - ✅ Complete stub structure with SchemaQuirk
 - ✅ Nested AclQuirk (103 lines, lines 170-272)
 - ✅ Nested EntryQuirk (91 lines, lines 274-364)
@@ -712,12 +728,14 @@ graph TB
 - ⚠️ All methods return `FlextResult.fail("not yet implemented")`
 
 #### 6-9. Additional Stubs
+
 - **Apache Directory Server**: Complete stub with proper error messages
 - **389 Directory Server**: Complete stub with proper error messages
 - **Novell eDirectory**: Complete stub with proper error messages
 - **IBM Tivoli Directory Server**: Complete stub with proper error messages
 
 **Stub Pattern**:
+
 ```python
 def can_handle_attribute(self, definition: str) -> bool:
     return False  # Stub - not implemented
@@ -769,7 +787,7 @@ Quirks use priority-based resolution:
 The RFC schema parser tries quirks first, then falls back to RFC:
 
 ```python
-def _parse_attribute_type(self, definition: str) -> dict[str, object] | None:
+def _parse_attribute_type(self, definition: str) -> FlextTypes.Dict | None:
     # Try quirks first if available and server_type specified
     if self._quirk_registry and self._server_type:
         schema_quirks = self._quirk_registry.get_schema_quirks(self._server_type)
@@ -789,6 +807,7 @@ def _parse_attribute_type(self, definition: str) -> dict[str, object] | None:
 **Critical Insight**: By using RFC as the universal intermediate format, flext-ldif can transform between ANY two LDAP servers without N² implementations.
 
 **Migration Architecture**:
+
 ```mermaid
 graph LR
     subgraph "Source LDAP Server"
@@ -814,12 +833,14 @@ graph LR
 ```
 
 **Algorithm**:
+
 1. **Parse source LDIF** using source quirk (e.g., OID → RFC)
 2. **Normalize to RFC** using source quirk's `convert_entry_to_rfc()`
 3. **Transform to target** using target quirk's `convert_entry_from_rfc()`
 4. **Write target LDIF** using target quirk
 
 **Example - OID to OUD Migration**:
+
 ```python
 # Migration pipeline automatically handles transformation
 migration_pipeline = FlextLdifMigrationPipeline(
@@ -837,6 +858,7 @@ result = migration_pipeline.migrate_entries(
 ```
 
 **Benefits of Generic Pipeline**:
+
 - **N implementations, not N²**: Only need one quirk per server, not per server pair
 - **Universal compatibility**: Works with ANY LDAP server (including unknown ones)
 - **RFC fallback**: If no quirk available, uses pure RFC 2849
@@ -888,6 +910,7 @@ def migrate_entries(
 ```
 
 **Verified Implementation** (lines 46-48 in migration_pipeline.py):
+
 - Uses `RfcLdifParserService` for parsing
 - Uses `RfcSchemaParserService` for schema parsing
 - Uses `RfcLdifWriterService` for writing

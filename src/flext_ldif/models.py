@@ -19,7 +19,7 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import FlextModels, FlextResult
+from flext_core import FlextModels, FlextResult, FlextTypes
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.typings import FlextLdifTypes
 
@@ -90,7 +90,7 @@ class FlextLdifModels(FlextModels):
         return len(model_types)
 
     @computed_field
-    def ldif_model_summary(self) -> dict[str, object]:
+    def ldif_model_summary(self) -> FlextTypes.Dict:
         """Computed field providing summary of LDIF model capabilities."""
         return {
             "entry_models": 4,
@@ -116,7 +116,7 @@ class FlextLdifModels(FlextModels):
     @field_serializer("model_config", when_used="json")
     def serialize_with_ldif_metadata(
         self, value: object, _info: object
-    ) -> dict[str, object]:
+    ) -> FlextTypes.Dict:
         """Serialize with LDIF metadata for processing context."""
         return {
             "config": value,
@@ -143,10 +143,10 @@ class FlextLdifModels(FlextModels):
         Immutable query object following CQRS pattern for read-only operations.
         """
 
-        source: str | bytes | list[str] = Field(
+        source: str | bytes | FlextTypes.StringList = Field(
             ..., description="LDIF source content, file path, or lines"
         )
-        format: Literal[rfc, oid, auto] = Field(
+        format: Literal["rfc", "oid", "auto"] = Field(
             default="auto", description="LDIF format to use for parsing"
         )
         encoding: str = Field(default="utf-8", description="Text encoding")
@@ -163,7 +163,7 @@ class FlextLdifModels(FlextModels):
         entries: list[FlextLdifModels.Entry] = Field(
             ..., description="Entries to validate"
         )
-        schema_config: dict[str, object] | None = Field(
+        schema_config: FlextTypes.Dict | None = Field(
             default=None, description="Schema configuration"
         )
         strict: bool = Field(default=True, description="Strict validation mode")
@@ -179,7 +179,7 @@ class FlextLdifModels(FlextModels):
         entries: list[FlextLdifModels.Entry] = Field(
             ..., description="Entries to analyze"
         )
-        metrics: list[str] | None = Field(
+        metrics: FlextTypes.StringList | None = Field(
             default=None, description="Specific metrics to calculate"
         )
         include_patterns: bool = Field(
@@ -197,7 +197,7 @@ class FlextLdifModels(FlextModels):
         entries: list[FlextLdifModels.Entry] = Field(
             ..., description="Entries to write"
         )
-        format: Literal[rfc, oid] = Field(
+        format: Literal["rfc", "oid"] = Field(
             default="rfc", description="Output LDIF format"
         )
         output: str | None = Field(default=None, description="Output file path")
@@ -214,13 +214,13 @@ class FlextLdifModels(FlextModels):
         entries: list[FlextLdifModels.Entry] = Field(
             ..., description="Entries to migrate"
         )
-        source_format: Literal[rfc, oid, oud] = Field(
+        source_format: Literal["rfc", "oid", "oud"] = Field(
             ..., description="Source LDIF format"
         )
-        target_format: Literal[rfc, oid, oud] = Field(
+        target_format: Literal["rfc", "oid", "oud"] = Field(
             ..., description="Target LDIF format"
         )
-        quirks: list[str] | None = Field(
+        quirks: FlextTypes.StringList | None = Field(
             default=None, description="Quirks to apply during migration"
         )
         preserve_comments: bool = Field(
@@ -301,6 +301,9 @@ class FlextLdifModels(FlextModels):
         patterns_detected: int = Field(
             default=0, description="Number of patterns detected"
         )
+        statistics: dict[str, int | float] = Field(
+            default_factory=dict, description="Additional statistics"
+        )
         timestamp: str = Field(..., description="ISO format timestamp")
 
         model_config = ConfigDict(frozen=True)
@@ -318,11 +321,9 @@ class FlextLdifModels(FlextModels):
         """
 
         entry_count: int = Field(..., description="Number of entries written")
-        output_format: Literal[rfc, oid] = Field(
+        output_path: str = Field(..., description="Output file path")
+        format_used: Literal["rfc", "oid"] = Field(
             ..., description="Format used for writing"
-        )
-        output_destination: str = Field(
-            ..., description="Output destination (file path or 'string')"
         )
         output_size_bytes: int = Field(
             default=0, description="Size of written output in bytes"
@@ -343,10 +344,17 @@ class FlextLdifModels(FlextModels):
         Emitted after successful migration between formats.
         """
 
+        source_entries: int = Field(..., description="Number of source entries")
+        target_entries: int = Field(..., description="Number of target entries")
+        migration_type: str = Field(..., description="Type of migration performed")
         entry_count: int = Field(..., description="Number of entries migrated")
-        source_format: Literal[rfc, oid, oud] = Field(..., description="Source format")
-        target_format: Literal[rfc, oid, oud] = Field(..., description="Target format")
-        quirks_applied: list[str] = Field(
+        source_format: Literal["rfc", "oid", "oud"] = Field(
+            ..., description="Source format"
+        )
+        target_format: Literal["rfc", "oid", "oud"] = Field(
+            ..., description="Target format"
+        )
+        quirks_applied: FlextTypes.StringList = Field(
             default_factory=list, description="List of quirks applied during migration"
         )
         timestamp: str = Field(..., description="ISO format timestamp")
@@ -365,7 +373,11 @@ class FlextLdifModels(FlextModels):
         Emitted after successful quirk registration.
         """
 
+        server_type: str = Field(..., description="Server type for the quirk")
         quirk_name: str = Field(..., description="Name of registered quirk")
+        quirk_config: dict[str, object] = Field(
+            default_factory=dict, description="Quirk configuration"
+        )
         override: bool = Field(..., description="Whether existing quirk was overridden")
         timestamp: str = Field(..., description="ISO format timestamp")
 
@@ -491,7 +503,7 @@ class FlextLdifModels(FlextModels):
             return f"schema_attr:{self.name.lower()}"
 
         @computed_field
-        def attribute_properties(self) -> dict[str, object]:
+        def attribute_properties(self) -> FlextTypes.Dict:
             """Base attribute properties."""
             return {
                 "name": self.name,
@@ -536,17 +548,17 @@ class FlextLdifModels(FlextModels):
             description="ObjectClass description",
         )
 
-        superior: str | list[str] = Field(
+        superior: str | FlextTypes.StringList = Field(
             default="",
             description="Superior objectClass (can be string or list for multiple inheritance)",
         )
 
-        required_attributes: list[str] = Field(
+        required_attributes: FlextTypes.StringList = Field(
             default_factory=list,
             description="Required (MUST) attributes",
         )
 
-        optional_attributes: list[str] = Field(
+        optional_attributes: FlextTypes.StringList = Field(
             default_factory=list,
             description="Optional (MAY) attributes",
         )
@@ -596,8 +608,8 @@ class FlextLdifModels(FlextModels):
                 self.proxy,
             ])
 
-        @computed_field
-        def permissions_summary(self) -> dict[str, object]:
+        @property
+        def permissions_summary(self) -> FlextTypes.Dict:
             """Summary of permissions."""
             permissions = {
                 "read": self.read,
@@ -696,23 +708,23 @@ class FlextLdifModels(FlextModels):
             description="Technology name (e.g., 'OID', 'OUD', 'Standard')",
         )
 
-        patterns: list[str] = Field(
+        patterns: FlextTypes.StringList = Field(
             default_factory=list,
             description="Regex patterns that indicate this technology",
         )
 
-        attribute_markers: list[str] = Field(
+        attribute_markers: FlextTypes.StringList = Field(
             default_factory=list,
             description="Attribute names that indicate this technology",
         )
 
-        syntax_markers: list[str] = Field(
+        syntax_markers: FlextTypes.StringList = Field(
             default_factory=list,
             description="Syntax patterns that indicate this technology",
         )
 
         @classmethod
-        def is_satisfied_by(cls, data: dict[str, object]) -> bool:  # noqa: ARG003
+        def is_satisfied_by(cls, data: FlextTypes.Dict) -> bool:  # noqa: ARG003
             """Check if data satisfies this specification.
 
             Args:
@@ -765,7 +777,7 @@ class FlextLdifModels(FlextModels):
             )
 
         @classmethod
-        def is_satisfied_by(cls, data: dict[str, object]) -> bool:
+        def is_satisfied_by(cls, data: FlextTypes.Dict) -> bool:
             """Check if data uses OID format.
 
             Args:
@@ -830,7 +842,7 @@ class FlextLdifModels(FlextModels):
             )
 
         @classmethod
-        def is_satisfied_by(cls, data: dict[str, object]) -> bool:
+        def is_satisfied_by(cls, data: FlextTypes.Dict) -> bool:
             """Check if data contains OUD quirks.
 
             Args:
@@ -899,7 +911,7 @@ class FlextLdifModels(FlextModels):
             )
 
         @classmethod
-        def is_satisfied_by(cls, data: dict[str, object]) -> bool:
+        def is_satisfied_by(cls, data: FlextTypes.Dict) -> bool:
             """Check if data is standard LDIF format.
 
             Args:
@@ -1003,12 +1015,12 @@ class FlextLdifModels(FlextModels):
             return v.strip()
 
         @staticmethod
-        def _parse_dn_components(dn: str) -> list[str]:
+        def _parse_dn_components(dn: str) -> FlextTypes.StringList:
             r"""Parse DN into components handling escaped commas (\,).
 
             Internal helper for DN component parsing following RFC 4514.
             """
-            components: list[str] = []
+            components: FlextTypes.StringList = []
             current_component = ""
             i = 0
             while i < len(dn):
@@ -1041,9 +1053,9 @@ class FlextLdifModels(FlextModels):
             """Computed field for unique DN key."""
             return f"dn:{self.value.lower()}"
 
-        @computed_field
-        def components(self) -> list[str]:
-            """Computed field for DN components."""
+        @property
+        def components(self) -> FlextTypes.StringList:
+            """Property for DN components."""
             try:
                 return self._parse_dn_components(self.value)
             except ValueError:
@@ -1059,7 +1071,7 @@ class FlextLdifModels(FlextModels):
             """Computed field for normalized DN value."""
             try:
                 components = self._parse_dn_components(self.value)
-                normalized_components: list[str] = []
+                normalized_components: FlextTypes.StringList = []
                 for component in components:
                     attr, value_part = component.split("=", 1)
                     # Normalize: lowercase attribute, trim spaces from value
@@ -1093,7 +1105,7 @@ class FlextLdifModels(FlextModels):
         @field_serializer("value", when_used="json")
         def serialize_dn_with_metadata(
             self, value: str, _info: object
-        ) -> dict[str, object]:
+        ) -> FlextTypes.Dict:
             """Serialize DN with metadata for processing context."""
             return {
                 "dn": value,
@@ -1120,7 +1132,7 @@ class FlextLdifModels(FlextModels):
             description="Attribute name",
         )
 
-        values: list[str] = Field(
+        values: FlextTypes.StringList = Field(
             default_factory=list,
             description="Attribute values",
         )
@@ -1130,14 +1142,14 @@ class FlextLdifModels(FlextModels):
             """Computed field for unique attribute key."""
             return f"attr:{self.name.lower()}"
 
-        @computed_field
+        @property
         def value_count(self) -> int:
-            """Computed field for number of values."""
+            """Property for number of values."""
             return len(self.values)
 
-        @computed_field
+        @property
         def single_value(self) -> str | None:
-            """Computed field for single value (first value if multiple exist)."""
+            """Property for single value (first value if multiple exist)."""
             return self.values[0] if self.values else None
 
         @field_validator("name")
@@ -1151,7 +1163,9 @@ class FlextLdifModels(FlextModels):
             return v.strip().lower()
 
         @field_serializer("values", when_used="json")
-        def serialize_values_with_context(self, value: list[str]) -> dict[str, object]:
+        def serialize_values_with_context(
+            self, value: FlextTypes.StringList
+        ) -> FlextTypes.Dict:
             """Serialize values with attribute context."""
             return {
                 "values": value,
@@ -1190,7 +1204,7 @@ class FlextLdifModels(FlextModels):
             )
 
         @computed_field
-        def attribute_summary(self) -> dict[str, object]:
+        def attribute_summary(self) -> FlextTypes.Dict:
             """Computed field for attributes summary."""
             return {
                 "attribute_count": self.attribute_count,
@@ -1206,7 +1220,13 @@ class FlextLdifModels(FlextModels):
                     return attr_values
             return None
 
-        def get(self, name: str, default: list[str] | None = None) -> list[str]:
+        def items(self) -> dict[str, object]:
+            """Dict-like items method for attribute iteration."""
+            return self.attributes.items()
+
+        def get(
+            self, name: str, default: FlextTypes.StringList | None = None
+        ) -> FlextTypes.StringList:
             """Dict-like get method for attribute values.
 
             Args:
@@ -1222,7 +1242,7 @@ class FlextLdifModels(FlextModels):
                 return default if default is not None else []
             return attr_values.values
 
-        def set_attribute(self, name: str, values: list[str]) -> None:
+        def set_attribute(self, name: str, values: FlextTypes.StringList) -> None:
             """Set attribute values."""
             self.attributes[name.lower()] = FlextLdifModels.AttributeValues(
                 values=values
@@ -1242,7 +1262,7 @@ class FlextLdifModels(FlextModels):
             """Dictionary-like access to attributes."""
             return self.get_attribute(name)
 
-        def __setitem__(self, name: str, values: list[str]) -> None:
+        def __setitem__(self, name: str, values: FlextTypes.StringList) -> None:
             """Dictionary-like setting of attributes."""
             # Since the model is frozen, we need to use object.__setattr__
             if hasattr(self, "attributes"):
@@ -1260,7 +1280,7 @@ class FlextLdifModels(FlextModels):
             """Dictionary-like 'in' check."""
             return self.has_attribute(name)
 
-        def add_attribute(self, name: str, values: str | list[str]) -> None:
+        def add_attribute(self, name: str, values: str | FlextTypes.StringList) -> None:
             """Add attribute with values."""
             if isinstance(values, str):
                 values = [values]
@@ -1278,7 +1298,7 @@ class FlextLdifModels(FlextModels):
         @field_serializer("attributes", when_used="json")
         def serialize_attributes_with_summary(
             self, value: dict[str, FlextLdifModels.AttributeValues], _info: object
-        ) -> dict[str, object]:
+        ) -> FlextTypes.Dict:
             """Serialize attributes with collection summary."""
             return {"attributes": value, "collection_summary": self.attribute_summary}
 
@@ -1305,7 +1325,7 @@ class FlextLdifModels(FlextModels):
             return f"entry:{self.dn.normalized_value}"
 
         @computed_field
-        def object_classes(self) -> list[str]:
+        def object_classes(self) -> FlextTypes.StringList:
             """Computed field for entry object classes."""
             attr_values = self.get_attribute("objectClass")
             return attr_values.values if attr_values else []
@@ -1322,7 +1342,7 @@ class FlextLdifModels(FlextModels):
             return "unknown"
 
         @computed_field
-        def entry_summary(self) -> dict[str, object]:
+        def entry_summary(self) -> FlextTypes.Dict:
             """Computed field for entry summary."""
             return {
                 "dn": self.dn.value,
@@ -1348,7 +1368,7 @@ class FlextLdifModels(FlextModels):
             """Check if attribute exists."""
             return self.attributes.has_attribute(name)
 
-        def get_attribute_values(self, name: str) -> list[str]:
+        def get_attribute_values(self, name: str) -> FlextTypes.StringList:
             """Get attribute values as a list of strings."""
             attr_values = self.get_attribute(name)
             return attr_values.values if attr_values else []
@@ -1413,7 +1433,7 @@ class FlextLdifModels(FlextModels):
             """Create a new Entry instance.
 
             Args:
-                data: Dictionary containing 'dn' (str) and 'attributes' (dict[str, list[str] | str])
+                data: Dictionary containing 'dn' (str) and 'attributes' (dict[str, FlextTypes.StringList | str])
                 **kwargs: Alternative parameter format
 
             """
@@ -1528,7 +1548,7 @@ class FlextLdifModels(FlextModels):
         @field_serializer("dn", when_used="json")
         def serialize_dn_with_entry_context(
             self, value: FlextLdifModels.DistinguishedName, _info: object
-        ) -> dict[str, object]:
+        ) -> FlextTypes.Dict:
             """Serialize DN with entry context."""
             return {
                 "dn": value.value,
@@ -1567,7 +1587,7 @@ class FlextLdifModels(FlextModels):
             return f"change:{self.changetype}:{self.dn.normalized_value}"
 
         @computed_field
-        def change_summary(self) -> dict[str, object]:
+        def change_summary(self) -> FlextTypes.Dict:
             """Computed field for change summary."""
             return {
                 "dn": self.dn.value,
@@ -1589,7 +1609,7 @@ class FlextLdifModels(FlextModels):
             cls,
             dn: str,
             changetype: str,
-            attributes: dict[str, list[str]] | None = None,
+            attributes: dict[str, FlextTypes.StringList] | None = None,
         ) -> FlextResult[FlextLdifModels.ChangeRecord]:
             """Create a new ChangeRecord instance."""
             try:
@@ -1622,7 +1642,7 @@ class FlextLdifModels(FlextModels):
         @field_serializer("changetype", when_used="json")
         def serialize_changetype_with_metadata(
             self, value: str, _info: object
-        ) -> dict[str, object]:
+        ) -> FlextTypes.Dict:
             """Serialize changetype with change metadata."""
             return {
                 "changetype": value,
@@ -1639,12 +1659,12 @@ class FlextLdifModels(FlextModels):
         Inherits superior field which supports both string and list for multiple inheritance.
         """
 
-        must: list[str] = Field(
+        must: FlextTypes.StringList = Field(
             default_factory=list,
             description="Required attributes (MUST)",
         )
 
-        may: list[str] = Field(
+        may: FlextTypes.StringList = Field(
             default_factory=list,
             description="Optional attributes (MAY)",
         )
@@ -1655,7 +1675,7 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        def attribute_summary(self) -> dict[str, object]:
+        def attribute_summary(self) -> FlextTypes.Dict:
             """Computed field for attribute summary."""
             return {
                 "required_count": len(self.required_attributes),
@@ -1690,8 +1710,8 @@ class FlextLdifModels(FlextModels):
 
         @field_serializer("must", when_used="json")
         def serialize_must_with_schema_context(
-            self, value: list[str], _info: object
-        ) -> dict[str, object]:
+            self, value: FlextTypes.StringList, _info: object
+        ) -> FlextTypes.Dict:
             """Serialize required attributes with schema context."""
             return {
                 "must": value,
@@ -1733,7 +1753,7 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        def discovery_summary(self) -> dict[str, object]:
+        def discovery_summary(self) -> FlextTypes.Dict:
             """Computed field for discovery summary."""
             return {
                 "objectclass_count": len(self.object_classes),
@@ -1775,7 +1795,7 @@ class FlextLdifModels(FlextModels):
         @field_serializer("object_classes", when_used="json")
         def serialize_objectclasses_with_discovery_context(
             self, value: dict[str, FlextLdifModels.SchemaObjectClass], _info: object
-        ) -> dict[str, object]:
+        ) -> FlextTypes.Dict:
             """Serialize object classes with discovery context."""
             return {
                 "object_classes": value,
@@ -1878,7 +1898,7 @@ class FlextLdifModels(FlextModels):
         @field_serializer("read", when_used="json")
         def serialize_permissions_with_summary(
             self, value: bool, _info: SerializationInfo
-        ) -> dict[str, object]:
+        ) -> FlextTypes.Dict:
             """Serialize permissions with summary context.
 
             Note: Boolean parameter required by Pydantic field_serializer protocol.
@@ -1930,7 +1950,7 @@ class FlextLdifModels(FlextModels):
             )
 
         @computed_field
-        def acl_summary(self) -> dict[str, object]:
+        def acl_summary(self) -> FlextTypes.Dict:
             """Computed field for ACL summary."""
             return {
                 "name": self.name,
@@ -1971,7 +1991,7 @@ class FlextLdifModels(FlextModels):
         @field_serializer("target", when_used="json")
         def serialize_target_with_acl_context(
             self, value: FlextLdifModels.AclTarget, _info: object
-        ) -> dict[str, object]:
+        ) -> FlextTypes.Dict:
             """Serialize target with ACL context."""
             return {
                 "target": value,
@@ -1992,6 +2012,16 @@ class FlextLdifModels(FlextModels):
 
         Extends BaseSchemaAttribute with standard LDIF behavior.
         """
+
+        single_valued: bool = Field(
+            default=False,
+            description="Whether attribute is single-valued",
+        )
+
+        user_modifiable: bool = Field(
+            default=True,
+            description="Whether attribute can be modified by users",
+        )
 
         @computed_field
         def schema_attribute_key(self) -> str:
@@ -2075,7 +2105,7 @@ class FlextLdifModels(FlextModels):
             return self.name.lower().startswith("orcl")
 
         @computed_field
-        def attribute_properties(self) -> dict[str, object]:
+        def attribute_properties(self) -> FlextTypes.Dict:
             """Computed field for OID attribute properties."""
             return {
                 "name": self.name,
@@ -2223,7 +2253,7 @@ class FlextLdifModels(FlextModels):
             description="ObjectClass DESC (description) - OID uses 'desc'",
         )
 
-        sup: list[str] = Field(
+        sup: FlextTypes.StringList = Field(
             default_factory=list,
             description="SUP (superior/parent objectClasses)",
         )
@@ -2243,12 +2273,12 @@ class FlextLdifModels(FlextModels):
             description="ABSTRACT type flag",
         )
 
-        must: list[str] = Field(
+        must: FlextTypes.StringList = Field(
             default_factory=list,
             description="MUST attributes (required)",
         )
 
-        may: list[str] = Field(
+        may: FlextTypes.StringList = Field(
             default_factory=list,
             description="MAY attributes (optional)",
         )
@@ -2280,7 +2310,7 @@ class FlextLdifModels(FlextModels):
             return "unknown"
 
         @computed_field
-        def objectclass_properties(self) -> dict[str, object]:
+        def objectclass_properties(self) -> FlextTypes.Dict:
             """Computed field for OID objectClass properties."""
             return {
                 "name": self.name,
@@ -2326,7 +2356,7 @@ class FlextLdifModels(FlextModels):
                 oid_value = tokens[0].strip()
 
                 # Parse key-value pairs
-                params: dict[str, str | bool | list[str]] = {
+                params: dict[str, str | bool | FlextTypes.StringList] = {
                     "oid": oid_value,
                     "raw_definition": ldif_line,
                     "sup": [],
@@ -2493,13 +2523,13 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        def schema_summary(self) -> dict[str, object]:
+        def schema_summary(self) -> FlextTypes.Dict:
             """Computed field for schema summary."""
             oracle_attrs = len([
-                a for a in self.attributes.values() if a.is_oracle_specific
+                a for a in self.attributes.values() if a.is_oracle_specific()
             ])
             oracle_ocs = len([
-                o for o in self.objectclasses.values() if o.is_oracle_specific
+                o for o in self.objectclasses.values() if o.is_oracle_specific()
             ])
 
             return {
@@ -2512,15 +2542,17 @@ class FlextLdifModels(FlextModels):
             }
 
         @computed_field
-        def oracle_specific_items(self) -> dict[str, list[str]]:
+        def oracle_specific_items(self) -> dict[str, FlextTypes.StringList]:
             """Get lists of Oracle-specific schema items."""
             oracle_attrs = [
                 name
                 for name, attr in self.attributes.items()
-                if attr.is_oracle_specific
+                if attr.is_oracle_specific()
             ]
             oracle_ocs = [
-                name for name, oc in self.objectclasses.items() if oc.is_oracle_specific
+                name
+                for name, oc in self.objectclasses.items()
+                if oc.is_oracle_specific()
             ]
 
             return {
@@ -2539,7 +2571,7 @@ class FlextLdifModels(FlextModels):
                 oud_attributes: dict[str, FlextLdifModels.SchemaAttribute] = {}
                 oud_objectclasses: dict[str, FlextLdifModels.SchemaObjectClass] = {}
 
-                conversion_warnings: list[str] = []
+                conversion_warnings: FlextTypes.StringList = []
 
                 # Convert attributes
                 for name, oid_attr in self.attributes.items():
@@ -2610,13 +2642,13 @@ class FlextLdifModels(FlextModels):
             description="LDAP search filter",
         )
 
-        attributes: list[str] = Field(
+        attributes: FlextTypes.StringList = Field(
             default_factory=list,
             description="Attributes to return",
         )
 
         @computed_field
-        def search_summary(self) -> dict[str, object]:
+        def search_summary(self) -> FlextTypes.Dict:
             """Computed field for search configuration summary."""
             return {
                 "base_dn": self.base_dn,
@@ -2645,11 +2677,11 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        def document_summary(self) -> dict[str, object]:
+        def document_summary(self) -> FlextTypes.Dict:
             """Computed field for document summary."""
             entry_types: dict[str, int] = {}
             for entry in self.entries:
-                entry_type = entry.entry_type
+                entry_type = entry.entry_type()
                 entry_types[entry_type] = entry_types.get(entry_type, 0) + 1
 
             return {
@@ -2696,7 +2728,7 @@ class FlextLdifModels(FlextModels):
         @field_serializer("entries", when_used="json")
         def serialize_entries_with_document_context(
             self, value: list[FlextLdifModels.Entry], _info: object
-        ) -> dict[str, object]:
+        ) -> FlextTypes.Dict:
             """Serialize entries with document context."""
             return {"entries": value, "document_context": self.document_summary}
 
@@ -2714,20 +2746,20 @@ class FlextLdifModels(FlextModels):
             hide_input_in_errors=True,
         )
 
-        values: list[str] = Field(
+        values: FlextTypes.StringList = Field(
             default_factory=list,
             description="Attribute values",
         )
 
         @field_validator("values")
         @classmethod
-        def validate_values(cls, v: list[str]) -> list[str]:
+        def validate_values(cls, v: FlextTypes.StringList) -> FlextTypes.StringList:
             """Validate attribute values - centralized validation in Model."""
             if not isinstance(v, list):
                 msg = FlextLdifConstants.ErrorMessages.ATTRIBUTE_VALUES_ERROR
                 raise TypeError(msg)
 
-            validated_values: list[str] = []
+            validated_values: FlextTypes.StringList = []
             for value in v:
                 if not isinstance(value, str):
                     msg = FlextLdifConstants.ErrorMessages.ATTRIBUTE_VALUE_TYPE_ERROR
@@ -2736,18 +2768,18 @@ class FlextLdifModels(FlextModels):
 
             return validated_values
 
-        @computed_field
-        def values_summary(self) -> dict[str, object]:
-            """Computed field for values summary."""
+        @property
+        def values_summary(self) -> FlextTypes.Dict:
+            """Property for values summary."""
             return {
                 "count": len(self.values),
                 "has_values": len(self.values) > 0,
                 "is_multi_valued": len(self.values) > 1,
             }
 
-        @computed_field
+        @property
         def single_value(self) -> str | None:
-            """Computed field for single value (first value if multiple exist)."""
+            """Property for single value (first value if multiple exist)."""
             return self.values[0] if self.values else None
 
         def __len__(self) -> int:
@@ -2764,8 +2796,8 @@ class FlextLdifModels(FlextModels):
 
         @field_serializer("values", when_used="json")
         def serialize_values_with_summary(
-            self, value: list[str], _info: object
-        ) -> dict[str, object]:
+            self, value: FlextTypes.StringList, _info: object
+        ) -> FlextTypes.Dict:
             """Serialize values with summary context."""
             return {"values": value, "values_context": self.values_summary}
 
@@ -2938,11 +2970,11 @@ class FlextLdifModels(FlextModels):
             default_factory=list,
             description="Processed entries",
         )
-        errors: list[str] = Field(
+        errors: FlextTypes.StringList = Field(
             default_factory=list,
             description="Processing errors encountered",
         )
-        warnings: list[str] = Field(
+        warnings: FlextTypes.StringList = Field(
             default_factory=list,
             description="Processing warnings",
         )
@@ -2992,11 +3024,11 @@ class FlextLdifModels(FlextModels):
         is_valid: bool = Field(
             description="Whether validation passed",
         )
-        errors: list[str] = Field(
+        errors: FlextTypes.StringList = Field(
             default_factory=list,
             description="Validation errors",
         )
-        warnings: list[str] = Field(
+        warnings: FlextTypes.StringList = Field(
             default_factory=list,
             description="Validation warnings",
         )
@@ -3074,7 +3106,7 @@ class FlextLdifModels(FlextModels):
             default_factory=list,
             description="Transformed entries",
         )
-        transformation_log: list[str] = Field(
+        transformation_log: FlextTypes.StringList = Field(
             default_factory=list,
             description="Log of transformations applied",
         )
@@ -3103,11 +3135,11 @@ class FlextLdifModels(FlextModels):
             default_factory=dict,
             description="Statistical data",
         )
-        patterns: dict[str, object] = Field(
+        patterns: FlextTypes.Dict = Field(
             default_factory=dict,
             description="Detected patterns",
         )
-        patterns_detected: list[str] = Field(
+        patterns_detected: FlextTypes.StringList = Field(
             default_factory=list,
             description="List of detected pattern names",
         )
@@ -3115,7 +3147,7 @@ class FlextLdifModels(FlextModels):
             default_factory=dict,
             description="Distribution of object classes",
         )
-        dn_patterns: list[str] = Field(
+        dn_patterns: FlextTypes.StringList = Field(
             default_factory=list,
             description="Distinguished name patterns",
         )
@@ -3175,7 +3207,7 @@ class FlextLdifModels(FlextModels):
             ge=0,
             description="Count after filtering",
         )
-        criteria: dict[str, object] = Field(
+        criteria: FlextTypes.Dict = Field(
             default_factory=dict,
             description="Filter criteria used",
         )
@@ -3218,11 +3250,11 @@ class FlextLdifModels(FlextModels):
         timestamp: str = Field(
             description="Check timestamp",
         )
-        details: dict[str, object] = Field(
+        details: FlextTypes.Dict = Field(
             default_factory=dict,
             description="Additional health details",
         )
-        metrics: dict[str, object] = Field(
+        metrics: FlextTypes.Dict = Field(
             default_factory=dict,
             description="Health metrics",
         )
@@ -3270,15 +3302,15 @@ class FlextLdifModels(FlextModels):
         status: str = Field(
             description="Current status",
         )
-        configuration: dict[str, object] = Field(
+        configuration: FlextTypes.Dict = Field(
             default_factory=dict,
             description="Service configuration",
         )
-        statistics: dict[str, object] = Field(
+        statistics: FlextTypes.Dict = Field(
             default_factory=dict,
             description="Service statistics",
         )
-        capabilities: list[str] = Field(
+        capabilities: FlextTypes.StringList = Field(
             default_factory=list,
             description="Service capabilities",
         )

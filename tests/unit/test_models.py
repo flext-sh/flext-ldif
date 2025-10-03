@@ -538,7 +538,7 @@ cn: test2
     def test_migrate_command_creation(self) -> None:
         """Test MigrateCommand model creation."""
         command = FlextLdifModels.MigrateCommand(
-            source_entries=[
+            entries=[
                 FlextLdifModels.Entry(
                     dn=FlextLdifModels.DistinguishedName(
                         value="cn=test,dc=example,dc=com"
@@ -546,23 +546,21 @@ cn: test2
                     attributes=FlextLdifModels.LdifAttributes(attributes={}),
                 )
             ],
-            target_format="ldif",
-            migration_options={"validate": True},
+            source_format="rfc",
+            target_format="oid",
         )
-        assert len(command.source_entries) == 1
-        assert command.target_format == "ldif"
-        assert command.migration_options == {"validate": True}
+        assert len(command.entries) == 1
+        assert command.source_format == "rfc"
+        assert command.target_format == "oid"
 
     def test_register_quirk_command_creation(self) -> None:
         """Test RegisterQuirkCommand model creation."""
         command = FlextLdifModels.RegisterQuirkCommand(
-            server_type="openldap",
-            quirk_name="test_quirk",
-            quirk_config={"enabled": True},
+            quirk_type="schema",
+            quirk_impl=lambda x: x,
         )
-        assert command.server_type == "openldap"
-        assert command.quirk_name == "test_quirk"
-        assert command.quirk_config == {"enabled": True}
+        assert command.quirk_type == "schema"
+        assert callable(command.quirk_impl)
 
     def test_entry_parsed_event_creation(self) -> None:
         """Test EntryParsedEvent creation."""

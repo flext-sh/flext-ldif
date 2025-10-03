@@ -134,7 +134,7 @@ class FileManager:
 
     def create_file_set(
         self,
-        samples: dict[str, str],
+        samples: FlextTypes.StringDict,
         directory: Path | None = None,
     ) -> dict[str, Path]:
         """Create multiple files from content dictionary."""
@@ -182,7 +182,7 @@ class FileManager:
     @contextmanager
     def temporary_files(
         cls,
-        samples: dict[str, str],
+        samples: FlextTypes.StringDict,
     ) -> Generator[dict[str, Path]]:
         """Context manager for temporary files."""
         with cls() as manager:
@@ -197,7 +197,7 @@ class FileManager:
             files = manager.create_all_samples()
             yield files
 
-    def get_file_info(self, file_path: Path) -> FlextTypes.Core.Dict:
+    def get_file_info(self, file_path: Path) -> FlextTypes.Dict:
         """Get information about a test file."""
         if not file_path.exists():
             return {"exists": False}

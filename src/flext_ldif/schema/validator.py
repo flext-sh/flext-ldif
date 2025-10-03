@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from flext_ldif.models import FlextLdifModels
 
 
-class FlextLdifSchemaValidator(FlextService[dict[str, object]]):
+class FlextLdifSchemaValidator(FlextService[FlextTypes.Dict]):
     """Schema validation service for LDIF entries."""
 
     @override
@@ -18,9 +18,9 @@ class FlextLdifSchemaValidator(FlextService[dict[str, object]]):
         self._logger = FlextLogger(__name__)
 
     @override
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute schema validator service."""
-        return FlextResult[dict[str, object]].ok({
+        return FlextResult[FlextTypes.Dict].ok({
             "service": FlextLdifSchemaValidator,
             "status": "ready",
         })
@@ -41,8 +41,8 @@ class FlextLdifSchemaValidator(FlextService[dict[str, object]]):
             FlextResult containing LdifValidationResult
 
         """
-        errors: list[str] = []
-        warnings: list[str] = []
+        errors: FlextTypes.StringList = []
+        warnings: FlextTypes.StringList = []
 
         for idx, entry in enumerate(entries):
             # Basic DN validation
@@ -87,7 +87,7 @@ class FlextLdifSchemaValidator(FlextService[dict[str, object]]):
         self,
         entry: FlextLdifModels.Entry,
         schema: FlextLdifModels.SchemaDiscoveryResult,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextTypes.Dict]:
         """Validate entry against discovered schema.
 
         Args:
@@ -98,33 +98,35 @@ class FlextLdifSchemaValidator(FlextService[dict[str, object]]):
             FlextResult containing validation report
 
         """
-        warnings: list[str] = [
+        warnings: FlextTypes.StringList = [
             f"Attribute '{attr_name}' not in discovered schema"
             for attr_name in entry.attributes.data
             if attr_name not in schema.attributes
         ]
 
-        entry_object_classes: list[str] = entry.get_attribute_values("objectClass")
-        issues: list[str] = [
+        entry_object_classes: FlextTypes.StringList = entry.get_attribute_values(
+            "objectClass"
+        )
+        issues: FlextTypes.StringList = [
             f"ObjectClass '{oc}' not in discovered schema"
             for oc in entry_object_classes
             if oc not in schema.object_classes
         ]
 
-        validation_result: dict[str, object] = {
+        validation_result: FlextTypes.Dict = {
             "valid": len(issues) == 0,
             "issues": issues,
             "warnings": warnings,
             "dn": entry.dn.value,
         }
 
-        return FlextResult[dict[str, object]].ok(validation_result)
+        return FlextResult[FlextTypes.Dict].ok(validation_result)
 
     def validate_objectclass_requirements(
         self,
         entry: FlextLdifModels.Entry,
         schema: FlextLdifModels.SchemaDiscoveryResult,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextTypes.Dict]:
         """Validate objectClass requirements for entry.
 
         Args:
@@ -135,9 +137,11 @@ class FlextLdifSchemaValidator(FlextService[dict[str, object]]):
             FlextResult containing validation report
 
         """
-        issues: list[str] = []
+        issues: FlextTypes.StringList = []
         entry_attrs = set(entry.attributes.data.keys())
-        entry_object_classes: list[str] = entry.get_attribute_values("objectClass")
+        entry_object_classes: FlextTypes.StringList = entry.get_attribute_values(
+            "objectClass"
+        )
 
         for oc_name in entry_object_classes:
             if oc_name in schema.object_classes:
@@ -150,13 +154,13 @@ class FlextLdifSchemaValidator(FlextService[dict[str, object]]):
                     if req_attr not in entry_attrs
                 )
 
-        validation_result: dict[str, object] = {
+        validation_result: FlextTypes.Dict = {
             "valid": len(issues) == 0,
             "issues": issues,
             "dn": entry.dn.value,
         }
 
-        return FlextResult[dict[str, object]].ok(validation_result)
+        return FlextResult[FlextTypes.Dict].ok(validation_result)
 
 
 __all__ = ["FlextLdifSchemaValidator"]

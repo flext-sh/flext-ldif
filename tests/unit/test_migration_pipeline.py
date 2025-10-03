@@ -13,6 +13,7 @@ from pathlib import Path
 
 import pytest
 
+from flext_core import FlextTypes
 from flext_ldif.migration_pipeline import LdifMigrationPipelineService
 from flext_ldif.quirks.registry import QuirkRegistryService
 
@@ -97,7 +98,7 @@ class TestMigrationPipelineValidation:
 
     def test_execute_fails_without_input_dir(self, tmp_path: Path) -> None:
         """Test pipeline fails when input_dir parameter is missing."""
-        params: dict[str, str] = {"output_dir": str(tmp_path / "output")}
+        params: FlextTypes.StringDict = {"output_dir": str(tmp_path / "output")}
 
         pipeline = LdifMigrationPipelineService(
             params=params,
@@ -116,7 +117,7 @@ class TestMigrationPipelineValidation:
         input_dir = tmp_path / "input"
         input_dir.mkdir()
 
-        params: dict[str, str] = {"input_dir": str(input_dir)}
+        params: FlextTypes.StringDict = {"input_dir": str(input_dir)}
 
         pipeline = LdifMigrationPipelineService(
             params=params,

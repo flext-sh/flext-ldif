@@ -6,7 +6,7 @@ from typing import cast
 import pytest
 from tests.test_support.ldif_data import LdifTestData
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextTypes
 from flext_ldif.mixins import FlextLdifMixins
 
 
@@ -90,7 +90,7 @@ class TestFlextLdifAnalyticsMixin:
     def test_analyze_with_result_success(self) -> None:
         """Test analyze_with_result with successful analysis (lines 272-274)."""
 
-        def analyzer(data: Sequence[int]) -> dict[str, object]:
+        def analyzer(data: Sequence[int]) -> FlextTypes.Dict:
             return {"sum": sum(data), "count": len(data)}
 
         result = FlextLdifMixins.AnalyticsMixin.analyze_with_result(
@@ -105,7 +105,7 @@ class TestFlextLdifAnalyticsMixin:
     def test_analyze_with_result_error(self) -> None:
         """Test analyze_with_result with error (lines 272, 275-276)."""
 
-        def error_analyzer(data: Sequence[int]) -> dict[str, object]:
+        def error_analyzer(data: Sequence[int]) -> FlextTypes.Dict:
             error_msg = "Analysis error"
             raise ValueError(error_msg)
 

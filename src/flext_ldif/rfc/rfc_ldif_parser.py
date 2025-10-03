@@ -18,7 +18,7 @@ from __future__ import annotations
 import base64
 from pathlib import Path
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from flext_ldif.models import FlextLdifModels
 
 
@@ -196,9 +196,9 @@ class RfcLdifParserService(FlextService[dict]):
         try:
             entries: list[FlextLdifModels.Entry] = []
             changes: list[dict] = []
-            comments: list[str] = []
+            comments: FlextTypes.StringList = []
 
-            self._current_entry: dict[str, object] | None = None
+            self._current_entry: FlextTypes.Dict | None = None
             self._current_dn: str = ""
 
             lines = content.splitlines()
@@ -288,10 +288,10 @@ class RfcLdifParserService(FlextService[dict]):
         try:
             entries: list[FlextLdifModels.Entry] = []
             changes: list[dict] = []
-            comments: list[str] = []
+            comments: FlextTypes.StringList = []
 
             # Use instance variables to track state across method calls
-            self._current_entry: dict[str, object] | None = None
+            self._current_entry: FlextTypes.Dict | None = None
             self._current_dn: str = ""
 
             with file_path.open("r", encoding=encoding) as f:
@@ -353,7 +353,7 @@ class RfcLdifParserService(FlextService[dict]):
         line: str,
         entries: list[FlextLdifModels.Entry],
         changes: list[dict],
-        comments: list[str],
+        comments: FlextTypes.StringList,
         *,
         parse_changes: bool,
     ) -> None:
@@ -478,7 +478,7 @@ class RfcLdifParserService(FlextService[dict]):
         return value
 
     def _create_entry(
-        self, entry_data: dict[str, object]
+        self, entry_data: FlextTypes.Dict
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Create LDIF entry from parsed data.
 

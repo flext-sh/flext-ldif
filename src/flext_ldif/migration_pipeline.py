@@ -17,7 +17,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from flext_ldif.quirks.registry import QuirkRegistryService
 from flext_ldif.quirks.servers import OidSchemaQuirk, OudSchemaQuirk
 from flext_ldif.rfc.rfc_ldif_parser import RfcLdifParserService
@@ -87,9 +87,7 @@ class LdifMigrationPipelineService(FlextService[dict]):
         self._target_server_type = target_server_type
 
         # Use global registry or provided one
-        self._quirk_registry = (
-            quirk_registry or QuirkRegistryService.get_global_instance()
-        )
+        self._quirk_registry = quirk_registry or QuirkRegistryService()
 
         # Register default quirks if not already registered
         self._register_default_quirks()
@@ -163,7 +161,7 @@ class LdifMigrationPipelineService(FlextService[dict]):
         entries: list,
         source_format: str,
         target_format: str,
-        _quirks: list[str] | None = None,
+        _quirks: FlextTypes.StringList | None = None,
     ) -> FlextResult[list]:
         """Migrate entries between formats using quirk-based transformation.
 
@@ -311,7 +309,7 @@ class LdifMigrationPipelineService(FlextService[dict]):
             )
 
             # Initialize result data
-            result_data: dict[str, object] = {
+            result_data: FlextTypes.Dict = {
                 "schema": {},
                 "entries": [],
                 "stats": {

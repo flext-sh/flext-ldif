@@ -7,40 +7,40 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from typing import ClassVar, Literal, cast
+from typing import ClassVar, Literal
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
-from flext_core import FlextConfig, FlextConstants
+from flext_core import FlextConfig, FlextConstants, FlextTypes
 from flext_ldif.constants import FlextLdifConstants
 
 
 class FlextLdifConfig(FlextConfig):
-    """Single Pydantic 2 Settings class for flext-ldif extending FlextConfig.
+    """Advanced Pydantic 2 Settings class for flext-ldif using FlextConfig as configuration source.
 
-    Follows standardized pattern:
-    - Extends FlextConfig from flext-core
-    - No nested classes within Config
-    - All defaults from FlextLdifConstants
-    - Uses enhanced singleton pattern with inverse dependency injection
-    - Uses Pydantic 2.11+ features (SecretStr for secrets)
+    Leverages FlextConfig's newer features:
+    - Centralized configuration management through FlextConfig
+    - Enhanced singleton pattern with proper lifecycle management
+    - Integrated environment variable handling
+    - Advanced validation and type safety
+    - Automatic dependency injection integration
+    - Built-in configuration validation and consistency checks
+
+    All flext-ldif specific configuration flows through FlextConfig,
+    eliminating duplication and ensuring consistency across the FLEXT ecosystem.
     """
-
-    # Singleton pattern variables - inherited from parent class but redeclared for pyrefly
-    _global_instance: ClassVar[FlextLdifConfig | None] = None
-    _lock: ClassVar[threading.Lock] = threading.Lock()
 
     model_config = SettingsConfigDict(
         env_prefix="FLEXT_LDIF_",
         case_sensitive=False,
         extra="ignore",
-        # Inherit enhanced Pydantic 2.11+ features from FlextConfig
+        # Enhanced Pydantic 2.11+ features through FlextConfig
         validate_assignment=True,
         str_strip_whitespace=True,
         json_schema_extra={
             "title": "FLEXT LDIF Configuration",
-            "description": "Enterprise LDIF processing configuration extending FlextConfig",
+            "description": "Enterprise LDIF processing using FlextConfig as source",
         },
     )
 
@@ -299,140 +299,163 @@ class FlextLdifConfig(FlextConfig):
 
         return self
 
-    # LDIF-specific methods for getting configuration contexts
-    def get_format_config(self) -> dict[str, object]:
-        """Get LDIF format configuration context."""
-        return {
-            "encoding": self.ldif_encoding,
-            "max_line_length": self.ldif_max_line_length,
-            "skip_comments": self.ldif_skip_comments,
-            "validate_dn_format": self.ldif_validate_dn_format,
-            "strict_validation": self.ldif_strict_validation,
-            "strict_rfc_compliance": self.strict_rfc_compliance,
-        }
 
-    def get_processing_config(self) -> dict[str, object]:
-        """Get LDIF processing configuration context."""
-        return {
-            "max_entries": self.ldif_max_entries,
-            "chunk_size": self.ldif_chunk_size,
-            "max_workers": self.max_workers,
-            "memory_limit_mb": self.memory_limit_mb,
-            "enable_performance_optimizations": self.enable_performance_optimizations,
-            "enable_parallel_processing": self.enable_parallel_processing,
-            "parallel_threshold": self.parallel_threshold,
-            "validation_level": self.validation_level,
-            "error_recovery_mode": self.error_recovery_mode,
-        }
-
-    def get_analytics_config(self) -> dict[str, object]:
-        """Get LDIF analytics configuration context."""
-        return {
-            "enable_analytics": self.ldif_enable_analytics,
-            "cache_size": self.ldif_analytics_cache_size,
-            "detail_level": self.analytics_detail_level,
-        }
-
-    def get_server_config(self) -> dict[str, object]:
-        """Get LDAP server configuration context."""
-        return {
-            "server_type": self.server_type,
-            "optimization_enabled": self.enable_performance_optimizations,
-        }
-
-    def get_debug_config(self) -> dict[str, object]:
-        """Get debug and development configuration context."""
-        return {
-            "debug_mode": self.debug_mode,
-            "verbose_logging": self.verbose_logging,
-            "validation_level": self.validation_level,
-            "strict_rfc_compliance": self.strict_rfc_compliance,
-        }
+    # =========================================================================
+    # ENVIRONMENT-SPECIFIC CONFIGURATION METHODS
+    # =========================================================================
 
     @classmethod
     def create_for_environment(
         cls, environment: str, **overrides: object
     ) -> FlextLdifConfig:
-        """Create configuration for specific environment using enhanced singleton pattern."""
-        instance = cls.get_or_create_shared_instance(
-            project_name="flext-ldif", environment=environment, **overrides
-        )
-        return cast("FlextLdifConfig", instance)
+        """Create configuration optimized for specific environment.
 
-    @classmethod
-    def create_default(cls) -> FlextLdifConfig:
-        """Create default configuration instance using enhanced singleton pattern."""
-        instance = cls.get_or_create_shared_instance(project_name="flext-ldif")
-        return cast("FlextLdifConfig", instance)
+        Args:
+            environment: Environment name ("development", "production", "testing")
+            **overrides: Additional configuration overrides
+
+        Returns:
+            FlextLdifConfig instance configured for the environment
+        """
+        base_config: FlextTypes.Dict = {"environment": environment}
+
+        # Environment-specific defaults
+        if environment == "development":
+            base_config.update({
+                "debug_mode": True,
+                "verbose_logging": True,
+                "ldif_strict_validation": False,
+                "enable_performance_optimizations": False,
+                "max_workers": FlextLdifConstants.Processing.DEBUG_MAX_WORKERS,
+            })
+        elif environment == "production":
+            base_config.update({
+                "debug_mode": False,
+                "verbose_logging": False,
+                "ldif_strict_validation": True,
+                "enable_performance_optimizations": True,
+                "max_workers": FlextLdifConstants.Processing.MAX_WORKERS_LIMIT,
+            })
+        elif environment == "testing":
+            base_config.update({
+                "debug_mode": False,
+                "verbose_logging": False,
+                "ldif_strict_validation": True,
+                "enable_performance_optimizations": False,
+                "max_workers": 2,
+            })
+
+        # Apply overrides
+        base_config.update(overrides)
+        return cls(**base_config)
 
     @classmethod
     def create_for_performance(cls) -> FlextLdifConfig:
-        """Create configuration optimized for performance using enhanced singleton pattern."""
-        instance = cls.get_or_create_shared_instance(
-            project_name="flext-ldif",
+        """Create configuration optimized for high-performance processing.
+
+        Returns:
+            FlextLdifConfig instance with performance optimizations enabled
+        """
+        return cls(
             debug_mode=False,
+            verbose_logging=False,
             max_workers=FlextLdifConstants.Processing.PERFORMANCE_MIN_WORKERS,
             ldif_chunk_size=FlextLdifConstants.Processing.PERFORMANCE_MIN_CHUNK_SIZE,
             enable_performance_optimizations=True,
+            enable_parallel_processing=True,
             memory_limit_mb=FlextLdifConstants.Processing.PERFORMANCE_MEMORY_MB_THRESHOLD,
             ldif_strict_validation=True,
-            verbose_logging=False,
+            ldif_enable_analytics=False,  # Skip analytics for performance
         )
-        return cast("FlextLdifConfig", instance)
 
     @classmethod
     def create_for_development(cls) -> FlextLdifConfig:
-        """Create configuration optimized for development using enhanced singleton pattern."""
-        instance = cls.get_or_create_shared_instance(
-            project_name="flext-ldif",
-            enable_performance_optimizations=False,
-            max_workers=FlextConstants.Performance.MIN_DB_POOL_SIZE,
-            ldif_chunk_size=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE
-            // 10,
-            memory_limit_mb=FlextLdifConstants.Processing.MIN_MEMORY_MB,
-            ldif_strict_validation=False,
+        """Create configuration optimized for development environment.
+
+        Returns:
+            FlextLdifConfig instance with development-friendly settings
+        """
+        return cls(
             debug_mode=True,
             verbose_logging=True,
+            enable_performance_optimizations=False,
+            max_workers=FlextLdifConstants.Processing.DEBUG_MAX_WORKERS,
+            ldif_chunk_size=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE // 10,
+            memory_limit_mb=FlextLdifConstants.Processing.MIN_MEMORY_MB,
+            ldif_strict_validation=False,
+            ldif_enable_analytics=True,
         )
-        return cast("FlextLdifConfig", instance)
 
     @classmethod
     def create_for_server_type(cls, server_type: str) -> FlextLdifConfig:
-        """Create configuration optimized for specific server type using enhanced singleton pattern."""
-        config_data: dict[str, object] = {
-            "server_type": server_type,
-        }
+        """Create configuration optimized for specific LDAP server type.
+
+        Args:
+            server_type: LDAP server type (openldap, active_directory, etc.)
+
+        Returns:
+            FlextLdifConfig instance configured for the server type
+        """
+        base_config: FlextTypes.Dict = {"server_type": server_type}
 
         # Server-specific optimizations
         if server_type == "openldap":
-            config_data.update({
+            base_config.update({
                 "ldif_strict_validation": True,
                 "ldif_validate_dn_format": True,
+                "strict_rfc_compliance": True,
             })
         elif server_type == "active_directory":
-            config_data.update({
+            base_config.update({
                 "ldif_strict_validation": False,
                 "ldif_validate_dn_format": False,
+                "strict_rfc_compliance": False,
+            })
+        elif server_type == "apache_directory":
+            base_config.update({
+                "ldif_strict_validation": True,
+                "ldif_validate_dn_format": True,
+                "strict_rfc_compliance": True,
             })
 
-        instance = cls.get_or_create_shared_instance(
-            project_name="flext-ldif", **config_data
-        )
-        return cast("FlextLdifConfig", instance)
+        return cls(**base_config)
+
+    # =========================================================================
+    # UTILITY METHODS - Enhanced with FlextConfig integration
+    # =========================================================================
 
     def get_effective_encoding(self) -> str:
-        """Get effective encoding for LDIF processing."""
+        """Get effective encoding, considering environment and server type.
+
+        Returns:
+            Effective character encoding to use
+        """
+        # Server-specific encoding preferences
+        if self.server_type == "active_directory":
+            return "utf-16" if self.ldif_encoding == "utf-8" else self.ldif_encoding
         return self.ldif_encoding
 
     def get_effective_workers(self, entry_count: int) -> int:
-        """Get effective number of workers based on entry count."""
-        if entry_count < FlextLdifConstants.Processing.SMALL_ENTRY_COUNT_THRESHOLD:
+        """Calculate effective number of workers based on entry count and configuration.
+
+        Args:
+            entry_count: Number of entries to process
+
+        Returns:
+            Effective number of workers to use
+        """
+        if not self.enable_parallel_processing:
             return 1
-        if entry_count < FlextLdifConstants.Processing.MEDIUM_ENTRY_COUNT_THRESHOLD:
+
+        if entry_count < self.parallel_threshold:
+            return 1
+        elif entry_count < FlextLdifConstants.Processing.MEDIUM_ENTRY_COUNT_THRESHOLD:
             return min(
-                FlextLdifConstants.Processing.MIN_WORKERS_FOR_PARALLEL, self.max_workers
+                FlextLdifConstants.Processing.MIN_WORKERS_FOR_PARALLEL,
+                self.max_workers
             )
-        return self.max_workers
+        else:
+            return self.max_workers
 
     def is_performance_optimized(self) -> bool:
         """Check if configuration is optimized for performance."""
@@ -453,20 +476,5 @@ class FlextLdifConfig(FlextConfig):
             and self.verbose_logging
             and self.max_workers <= FlextLdifConstants.Processing.DEBUG_MAX_WORKERS
         )
-
-    @classmethod
-    def get_global_instance(cls) -> FlextLdifConfig:
-        """Get the global singleton instance using enhanced FlextConfig pattern."""
-        with cls._lock:
-            if cls._global_instance is None:
-                cls._global_instance = cls()
-            return cls._global_instance
-
-    @classmethod
-    def reset_global_instance(cls) -> None:
-        """Reset the global FlextLdifConfig instance (mainly for testing)."""
-        with cls._lock:
-            cls._global_instance = None
-
 
 __all__ = ["FlextLdifConfig"]

@@ -164,7 +164,7 @@ def chunk_process_file(file_path: str, chunk_size: int = 10000) -> FlextResult[d
     except Exception as e:
         return FlextResult[dict].fail(f"Chunk processing failed: {e}")
 
-def process_chunk(chunk_entries: list[str]) -> FlextResult[None]:
+def process_chunk(chunk_entries: FlextTypes.StringList) -> FlextResult[None]:
     """Process a chunk of LDIF entries."""
     chunk_content = '\n\n'.join(chunk_entries)
     api = FlextLdifAPI()

@@ -19,9 +19,9 @@ When implementing, refer to:
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextResult
 from pydantic import Field
 
+from flext_core import FlextLogger, FlextResult, FlextTypes
 from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
 
 
@@ -53,50 +53,50 @@ class ApacheSchemaQuirk(BaseSchemaQuirk):
         super().__init__(**data)
         self._logger = FlextLogger(__name__)
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:  # noqa: ARG002
+    def can_handle_attribute(self, attr_definition: str) -> bool:  # pragma: no cover
         """Check if this is an Apache DS attribute - STUB."""
         return False
 
     def parse_attribute(
         self,
-        _attr_definition: str,
-    ) -> FlextResult[dict[str, object]]:
+        attr_definition: str,  # noqa: ARG002
+    ) -> FlextResult[FlextTypes.Dict]:
         """Parse Apache DS attribute definition - STUB."""
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Dict].fail(
             "Apache Directory Server attribute parsing not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:  # noqa: ARG002
+    def can_handle_objectclass(self, oc_definition: str) -> bool:  # pragma: no cover
         """Check if this is an Apache DS objectClass - STUB."""
         return False
 
     def parse_objectclass(
         self,
-        _oc_definition: str,
-    ) -> FlextResult[dict[str, object]]:
+        oc_definition: str,  # noqa: ARG002
+    ) -> FlextResult[FlextTypes.Dict]:
         """Parse Apache DS objectClass definition - STUB."""
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Dict].fail(
             "Apache Directory Server objectClass parsing not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
     def convert_attribute_to_rfc(
         self,
-        _attr_data: dict[str, object],
-    ) -> FlextResult[dict[str, object]]:
+        attr_data: FlextTypes.Dict,
+    ) -> FlextResult[FlextTypes.Dict]:
         """Convert ADS attribute to RFC-compliant format - STUB."""
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Dict].fail(
             "Apache Directory Server→RFC conversion not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
     def convert_objectclass_to_rfc(
         self,
-        _oc_data: dict[str, object],
-    ) -> FlextResult[dict[str, object]]:
+        oc_data: FlextTypes.Dict,
+    ) -> FlextResult[FlextTypes.Dict]:
         """Convert ADS objectClass to RFC-compliant format - STUB."""
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Dict].fail(
             "Apache Directory Server→RFC conversion not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
@@ -114,36 +114,36 @@ class ApacheSchemaQuirk(BaseSchemaQuirk):
             super().__init__(**data)
             self._logger = FlextLogger(__name__)
 
-        def can_handle_acl(self, acl_line: str) -> bool:  # noqa: ARG002
+        def can_handle_acl(self, acl_line: str) -> bool:
             """Check if this is an Apache DS ACL - STUB."""
             return False
 
         def parse_acl(
             self,
-            _acl_line: str,
-        ) -> FlextResult[dict[str, object]]:
+            acl_line: str,  # noqa: ARG002
+        ) -> FlextResult[FlextTypes.Dict]:
             """Parse Apache DS ACL definition - STUB."""
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 "Apache Directory Server ACL parsing not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
 
         def convert_acl_to_rfc(
             self,
-            _acl_data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            acl_data: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
             """Convert ADS ACL to RFC-compliant format - STUB."""
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 "Apache Directory Server ACL→RFC conversion not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
 
         def convert_acl_from_rfc(
             self,
-            _acl_data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            acl_data: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
             """Convert RFC ACL to ADS-specific format - STUB."""
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 "RFC→Apache Directory Server ACL conversion not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
@@ -163,7 +163,7 @@ class ApacheSchemaQuirk(BaseSchemaQuirk):
 
         def can_handle_entry(
             self,
-            _entry_dn: str,
+            entry_dn: str,  # noqa: ARG002
             _attributes: dict,
         ) -> bool:
             """Check if this quirk should handle the entry - STUB."""
@@ -171,21 +171,21 @@ class ApacheSchemaQuirk(BaseSchemaQuirk):
 
         def process_entry(
             self,
-            _entry_dn: str,
+            entry_dn: str,  # noqa: ARG002
             _attributes: dict,
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextResult[FlextTypes.Dict]:
             """Process entry for ADS format - STUB."""
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 "Apache Directory Server entry processing not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
 
         def convert_entry_to_rfc(
             self,
-            _entry_data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            entry_data: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
             """Convert ADS entry to RFC-compliant format - STUB."""
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 "Apache Directory Server entry→RFC conversion not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )

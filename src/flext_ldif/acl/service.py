@@ -8,12 +8,12 @@ from __future__ import annotations
 
 from typing import cast, override
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
 
 
-class FlextLdifAclService(FlextService[dict[str, object]]):
+class FlextLdifAclService(FlextService[FlextTypes.Dict]):
     """Unified ACL management service using Composite pattern for rule composition."""
 
     class AclRule:
@@ -25,7 +25,7 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
             self._rule_type = rule_type
             self._logger = FlextLogger(__name__)
 
-        def evaluate(self, context: dict[str, object]) -> FlextResult[bool]:
+        def evaluate(self, context: FlextTypes.Dict) -> FlextResult[bool]:
             """Evaluate ACL rule against context."""
             # Placeholder: ACL evaluation logic will be implemented in future version
             _ = context  # Suppress unused argument warning
@@ -50,12 +50,12 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
             """Add sub-rule to composite."""
             self._rules.append(rule)
 
-        def evaluate(self, context: dict[str, object]) -> FlextResult[bool]:
+        def evaluate(self, context: FlextTypes.Dict) -> FlextResult[bool]:
             """Evaluate all rules with operator logic."""
             if not self._rules:
                 return FlextResult[bool].ok(True)
 
-            results: list[bool] = []
+            results: FlextTypes.BoolList = []
             for rule in self._rules:
                 eval_result = rule.evaluate(context)
                 if eval_result.is_failure:
@@ -81,9 +81,9 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
             self._permission = permission
             self._required = required
 
-        def evaluate(self, context: dict[str, object]) -> FlextResult[bool]:
+        def evaluate(self, context: FlextTypes.Dict) -> FlextResult[bool]:
             """Evaluate permission requirement."""
-            perms = cast("dict[str, bool]", context.get("permissions", {}))
+            perms = cast("FlextTypes.BoolDict", context.get("permissions", {}))
             has_perm = perms.get(self._permission, False)
             result = has_perm == self._required
             return FlextResult[bool].ok(result)
@@ -97,7 +97,7 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
             super().__init__(rule_type="subject")
             self._subject_dn = subject_dn
 
-        def evaluate(self, context: dict[str, object]) -> FlextResult[bool]:
+        def evaluate(self, context: FlextTypes.Dict) -> FlextResult[bool]:
             """Evaluate subject match."""
             subject = context.get("subject_dn", "")
             result = subject == self._subject_dn
@@ -152,7 +152,7 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
             return FlextResult[list[FlextLdifModels.UnifiedAcl]].fail(error_msg)
 
         acl_attribute = acl_attr_result.value
-        acl_values: list[str] = entry.get_attribute_values(acl_attribute)
+        acl_values: FlextTypes.StringList = entry.get_attribute_values(acl_attribute)
 
         if not acl_values:
             return FlextResult[list[FlextLdifModels.UnifiedAcl]].ok([])
@@ -227,7 +227,7 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
         )
 
     def evaluate_acl_rules(
-        self, rules: list[AclRule], context: dict[str, object]
+        self, rules: list[AclRule], context: FlextTypes.Dict
     ) -> FlextResult[bool]:
         """Evaluate ACL rules against context using composite pattern."""
         if context is None:
@@ -239,14 +239,14 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
         return composite.evaluate(context)
 
     @override
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute ACL service health check.
 
         Returns:
             FlextResult containing service status and available patterns
 
         """
-        return FlextResult[dict[str, object]].ok({
+        return FlextResult[FlextTypes.Dict].ok({
             "service": FlextLdifAclService,
             "status": "ready",
             "patterns": {

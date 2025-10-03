@@ -61,7 +61,7 @@ class _ParserHelper:
         self._content = content
         self._lines = content.splitlines()  # Loads all lines into memory
 
-    def parse(self) -> Iterator[tuple[str, dict[str, list[str]]]]:
+    def parse(self) -> Iterator[tuple[str, dict[str, FlextTypes.StringList]]]:
         """Parse LDIF content and yield (dn, attributes) tuples."""
         # Process all lines already in memory
         pass

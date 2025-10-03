@@ -13,7 +13,7 @@ from io import StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING, TextIO
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 from flext_ldif.models import FlextLdifModels
 
 if TYPE_CHECKING:
@@ -244,7 +244,7 @@ class RfcLdifWriterService(FlextService[dict]):
 
                 # Write attributes
                 for attr_name, attr_values_obj in entry.attributes.data.items():
-                    # attr_values_obj is always AttributeValues, access .values for list[str]
+                    # attr_values_obj is always AttributeValues, access .values for FlextTypes.StringList
                     for value in attr_values_obj.values:
                         attr_line = f"{attr_name}: {value}"
                         output.write(attr_line + "\n")
@@ -478,7 +478,7 @@ class RfcLdifWriterService(FlextService[dict]):
         except Exception as e:
             return FlextResult[dict].fail(f"ACL writing failed: {e}")
 
-    def _wrap_line(self, line: str) -> list[str]:
+    def _wrap_line(self, line: str) -> FlextTypes.StringList:
         """Wrap LDIF line at 76 characters per RFC 2849.
 
         Args:
