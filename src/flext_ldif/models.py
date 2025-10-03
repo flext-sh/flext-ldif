@@ -49,7 +49,7 @@ class FlextLdifModels(FlextModels):
         validate_assignment=True,
         use_enum_values=True,
         arbitrary_types_allowed=True,
-        extra="forbid",
+        extra="allow",  # Allow extra fields for backward compatibility
         frozen=False,
         validate_return=True,
         ser_json_timedelta="iso8601",
@@ -178,7 +178,7 @@ class FlextLdifModels(FlextModels):
         """
 
         entries: list[FlextLdifModels.Entry] = Field(
-            ..., description="Entries to analyze"
+            default_factory=list, description="Entries to analyze"
         )
         metrics: FlextTypes.StringList | None = Field(
             default=None, description="Specific metrics to calculate"
@@ -187,7 +187,15 @@ class FlextLdifModels(FlextModels):
             default=True, description="Include pattern detection"
         )
 
-        model_config = ConfigDict(frozen=True)
+        # Legacy compatibility fields
+        ldif_content: str | None = Field(
+            default=None, description="Legacy LDIF content field"
+        )
+        analysis_types: FlextTypes.StringList | None = Field(
+            default=None, description="Legacy analysis types field"
+        )
+
+        model_config = ConfigDict(frozen=True, extra="allow")
 
     class WriteCommand(FlextModels.Command):
         """Command to write LDIF entries to output.
