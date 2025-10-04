@@ -169,6 +169,12 @@ class FlextLdifModels(FlextModels):
         )
         strict: bool = Field(default=True, description="Strict validation mode")
 
+        # Legacy compatibility alias
+        @property
+        def schema_validation(self) -> bool:
+            """Legacy alias for strict validation mode."""
+            return self.strict
+
         model_config = ConfigDict(frozen=True)
 
     class AnalyzeQuery(FlextModels.Query):
@@ -212,6 +218,14 @@ class FlextLdifModels(FlextModels):
         output: str | None = Field(default=None, description="Output file path")
         line_width: int = Field(
             default=76, description="Maximum line width for wrapping", ge=40, le=200
+        )
+
+        # Legacy compatibility fields
+        output_path: str | None = Field(
+            default=None, description="Legacy output path field"
+        )
+        format_options: FlextTypes.Dict = Field(
+            default_factory=dict, description="Legacy format options field"
         )
 
     class MigrateCommand(FlextModels.Command):
