@@ -607,15 +607,21 @@ class FlextLdifHandlers:
                     return FlextResult[None].fail(
                         f"Failed to get quirk registry: {registry_result.error}"
                     )
-                registry = cast(QuirkRegistryService, registry_result.unwrap())
+                registry = cast("QuirkRegistryService", registry_result.unwrap())
 
                 # Register quirk based on type
                 if message.quirk_type == "schema":
-                    result = registry.register_schema_quirk(cast(BaseSchemaQuirk, message.quirk_impl))
+                    result = registry.register_schema_quirk(
+                        cast("BaseSchemaQuirk", message.quirk_impl)
+                    )
                 elif message.quirk_type == "acl":
-                    result = registry.register_acl_quirk(cast(BaseAclQuirk, message.quirk_impl))
+                    result = registry.register_acl_quirk(
+                        cast("BaseAclQuirk", message.quirk_impl)
+                    )
                 elif message.quirk_type == "entry":
-                    result = registry.register_entry_quirk(cast(BaseEntryQuirk, message.quirk_impl))
+                    result = registry.register_entry_quirk(
+                        cast("BaseEntryQuirk", message.quirk_impl)
+                    )
                 else:
                     return FlextResult[None].fail(
                         f"Unknown quirk type: {message.quirk_type}"

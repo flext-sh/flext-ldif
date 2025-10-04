@@ -358,7 +358,9 @@ class RfcLdifWriterService(FlextService[dict]):
                     continue
 
                 # Cast attributes to consistent type for quirk processing
-                attributes_normalized: dict[str, object] = cast(dict[str, object], attributes)
+                attributes_normalized: dict[str, object] = cast(
+                    "dict[str, object]", attributes
+                )
 
                 # Apply target entry quirks if available (convert FROM RFC to target format)
                 if self._quirk_registry and self._target_server_type:
@@ -367,15 +369,21 @@ class RfcLdifWriterService(FlextService[dict]):
                     )
                     for quirk in entry_quirks:
                         if quirk.can_handle_entry(dn, attributes_normalized):
-                            process_result = quirk.process_entry(dn, attributes_normalized)
+                            process_result = quirk.process_entry(
+                                dn, attributes_normalized
+                            )
                             if process_result.is_success:
                                 processed = process_result.unwrap()
                                 if isinstance(processed, dict):
                                     dn = str(processed.get("dn", dn))
                                     # Type cast for pyrefly - processed dict is dict[str, object]
                                     attributes_normalized = cast(
-                                        dict[str, object],
-                                        {k: v for k, v in processed.items() if k != "dn"},
+                                        "dict[str, object]",
+                                        {
+                                            k: v
+                                            for k, v in processed.items()
+                                            if k != "dn"
+                                        },
                                     )
 
                 # Write DN

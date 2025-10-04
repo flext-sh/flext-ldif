@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Literal, cast
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
@@ -346,7 +346,7 @@ class FlextLdifConfig(FlextConfig):
 
         # Apply overrides
         base_config.update(overrides)
-        return cls(**base_config)
+        return FlextLdifConfig(**base_config)
 
     @classmethod
     def create_for_performance(cls) -> FlextLdifConfig:
@@ -356,7 +356,7 @@ class FlextLdifConfig(FlextConfig):
             FlextLdifConfig instance with performance optimizations enabled
 
         """
-        return cls(
+        return FlextLdifConfig(
             debug_mode=False,
             verbose_logging=False,
             max_workers=FlextLdifConstants.Processing.PERFORMANCE_MIN_WORKERS,
@@ -376,16 +376,19 @@ class FlextLdifConfig(FlextConfig):
             FlextLdifConfig instance with development-friendly settings
 
         """
-        return cls(
-            debug_mode=True,
-            verbose_logging=True,
-            enable_performance_optimizations=False,
-            max_workers=FlextLdifConstants.Processing.DEBUG_MAX_WORKERS,
-            ldif_chunk_size=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE
-            // 10,
-            memory_limit_mb=FlextLdifConstants.Processing.MIN_MEMORY_MB,
-            ldif_strict_validation=False,
-            ldif_enable_analytics=True,
+        return cast(
+            "FlextLdifConfig",
+            cls(
+                debug_mode=True,
+                verbose_logging=True,
+                enable_performance_optimizations=False,
+                max_workers=FlextLdifConstants.Processing.DEBUG_MAX_WORKERS,
+                ldif_chunk_size=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE
+                // 10,
+                memory_limit_mb=FlextLdifConstants.Processing.MIN_MEMORY_MB,
+                ldif_strict_validation=False,
+                ldif_enable_analytics=True,
+            ),
         )
 
     @classmethod
@@ -421,7 +424,7 @@ class FlextLdifConfig(FlextConfig):
                 "strict_rfc_compliance": True,
             })
 
-        return cls(**base_config)
+        return FlextLdifConfig(**base_config)
 
     # =========================================================================
     # UTILITY METHODS - Enhanced with FlextConfig integration
