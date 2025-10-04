@@ -22,6 +22,7 @@ from flext_core import (
     FlextService,
     FlextTypes,
 )
+
 from flext_ldif.acl.service import FlextLdifAclService
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
@@ -107,6 +108,12 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
         self._bus = FlextBus()
         self._logger = FlextLogger(__name__)
 
+        # Ensure components are not None for type safety
+        assert self._container is not None, "FlextContainer must be initialized"
+        assert self._context is not None, "FlextContext must be initialized"
+        assert self._bus is not None, "FlextBus must be initialized"
+        assert self._logger is not None, "FlextLogger must be initialized"
+
         # Register services in container for DI
         self._setup_services()
 
@@ -116,7 +123,8 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
         # Initialize CQRS handlers
         self._handlers = self._initialize_handlers()
 
-        self._logger.info(
+        logger = cast("FlextLogger", self._logger)
+        logger.info(
             "Initialized FlextLdif facade with CQRS handlers and default quirks"
         )
 
@@ -132,10 +140,11 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
 
         """
         try:
+            config = cast("FlextLdifConfig", self._config)
             return FlextResult[FlextTypes.Dict].ok({
                 "status": "initialized",
                 "handlers": list(self._handlers.keys()),
-                "config": {"default_encoding": self._config.ldif_encoding},
+                "config": {"default_encoding": config.ldif_encoding},
             })
         except Exception as e:
             return FlextResult[FlextTypes.Dict].fail(f"Facade status check failed: {e}")
@@ -146,27 +155,29 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
 
     def _setup_services(self) -> None:
         """Register all services in the dependency injection container with instances."""
+        container = cast("FlextContainer", self._container)
+
         # Register quirk registry FIRST (required by RFC parsers/writers)
         quirk_registry = QuirkRegistryService()
-        self._container.register("quirk_registry", quirk_registry)
+        container.register("quirk_registry", quirk_registry)
 
         # Register RFC-first parser instance (quirks handle server-specific behavior)
         rfc_parser = RfcLdifParserService(params={}, quirk_registry=quirk_registry)
-        self._container.register("rfc_parser", rfc_parser)
+        container.register("rfc_parser", rfc_parser)
 
         # Register RFC writer instance
         rfc_writer = RfcLdifWriterService(params={}, quirk_registry=quirk_registry)
-        self._container.register("rfc_writer", rfc_writer)
+        container.register("rfc_writer", rfc_writer)
 
         # Register schema services
         rfc_schema_parser = RfcSchemaParserService(
             params={}, quirk_registry=quirk_registry
         )
-        self._container.register("rfc_schema_parser", rfc_schema_parser)
-        self._container.register("schema_validator", FlextLdifSchemaValidator())
+        container.register("rfc_schema_parser", rfc_schema_parser)
+        container.register("schema_validator", FlextLdifSchemaValidator())
 
         # Register migration pipeline (params provided at call time by handlers)
-        self._container.register(
+        container.register(
             "migration_pipeline",
             lambda params=None,
             source="oid",
@@ -179,17 +190,20 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
 
     def _register_default_quirks(self) -> None:
         """Auto-register all default server quirks."""
+        container = cast("FlextContainer", self._container)
+        logger = cast("FlextLogger", self._logger)
+
         # Get quirk registry from container
-        registry_result = self._container.get("quirk_registry")
+        registry_result = container.get("quirk_registry")
         if registry_result.is_failure:
-            self._logger.warning(
+            logger.warning(
                 "Quirk registry not available, skipping default quirk registration"
             )
             return
 
         registry = registry_result.unwrap()
         if not isinstance(registry, QuirkRegistryService):
-            self._logger.warning(
+            logger.warning(
                 "Quirk registry not available, skipping default quirk registration"
             )
             return
@@ -218,9 +232,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
             # Register schema quirk
             schema_result = registry.register_schema_quirk(schema_quirk)
             if schema_result.is_failure:
-                self._logger.error(
-                    f"Failed to register schema quirk: {schema_result.error}"
-                )
+                logger.error(f"Failed to register schema quirk: {schema_result.error}")
                 continue
 
             # Register nested ACL quirk if it exists
@@ -232,11 +244,11 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
                     )
                     acl_result = registry.register_acl_quirk(acl_quirk)
                     if acl_result.is_failure:
-                        self._logger.error(
+                        logger.error(
                             f"Failed to register ACL quirk: {acl_result.error}"
                         )
                 except Exception:
-                    self._logger.exception("Failed to instantiate ACL quirk")
+                    logger.exception("Failed to instantiate ACL quirk")
 
             # Register nested Entry quirk if it exists
             if hasattr(schema_quirk, "EntryQuirk"):
@@ -247,13 +259,13 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
                     )
                     entry_result = registry.register_entry_quirk(entry_quirk)
                     if entry_result.is_failure:
-                        self._logger.error(
+                        logger.error(
                             f"Failed to register entry quirk: {entry_result.error}"
                         )
                 except Exception:
-                    self._logger.exception("Failed to instantiate entry quirk")
+                    logger.exception("Failed to instantiate entry quirk")
 
-        self._logger.info(
+        logger.info(
             f"Registered {len(complete_quirks)} complete quirks and {len(stub_quirks)} stub quirks"
         )
 
@@ -264,36 +276,31 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
             Dictionary mapping operation names to handler instances
 
         """
+        context = cast("FlextContext", self._context)
+        container = cast("FlextContainer", self._container)
+        bus = cast("FlextBus", self._bus)
+        logger = cast("FlextLogger", self._logger)
+
         # Register all handlers using FlextRegistry
         registration_result = FlextLdifHandlers.register_all_handlers(
-            self._context, self._container, self._bus
+            context, container, bus
         )
 
         if registration_result.is_success:
             summary = registration_result.unwrap()
-            self._logger.info(
+            logger.info(
                 f"Registered {summary['handlers_registered']} CQRS handlers via FlextRegistry"
             )
 
         # Return initialized handler instances
         return {
-            "parse": FlextLdifHandlers.ParseQueryHandler(
-                self._context, self._container, self._bus
-            ),
-            "validate": FlextLdifHandlers.ValidateQueryHandler(
-                self._context, self._container, self._bus
-            ),
-            "analyze": FlextLdifHandlers.AnalyzeQueryHandler(
-                self._context, self._container, self._bus
-            ),
-            "write": FlextLdifHandlers.WriteCommandHandler(
-                self._context, self._container, self._bus
-            ),
-            "migrate": FlextLdifHandlers.MigrateCommandHandler(
-                self._context, self._container, self._bus
-            ),
+            "parse": FlextLdifHandlers.ParseQueryHandler(context, container, bus),
+            "validate": FlextLdifHandlers.ValidateQueryHandler(context, container, bus),
+            "analyze": FlextLdifHandlers.AnalyzeQueryHandler(context, container, bus),
+            "write": FlextLdifHandlers.WriteCommandHandler(context, container, bus),
+            "migrate": FlextLdifHandlers.MigrateCommandHandler(context, container, bus),
             "register_quirk": FlextLdifHandlers.RegisterQuirkCommandHandler(
-                self._context, self._container, self._bus
+                context, container, bus
             ),
         }
 
@@ -468,7 +475,8 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
             return FlextResult[FlextTypes.Dict].ok(migration_result.unwrap())
 
         except Exception as e:
-            self._logger.exception("Migration failed")
+            logger = cast("FlextLogger", self._logger)
+            logger.exception("Migration failed")
             return FlextResult[FlextTypes.Dict].fail(f"Migration failed: {e}")
 
     def analyze(
@@ -685,7 +693,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
             max_workers = ldif.config.max_workers
 
         """
-        return self._config
+        return cast("FlextLdifConfig", self._config)
 
     @property
     def constants(self) -> type[FlextLdifConstants]:

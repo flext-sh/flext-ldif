@@ -266,7 +266,7 @@ def get_entry_statistics(self, entries: list[FlextLdifModels.Entry]) -> FlextRes
 Perform comprehensive analysis of LDIF entries.
 
 ```python
-def analyze_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[dict]:
+def analyze_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[FlextTypes.Dict]:
     """Perform comprehensive entry analysis.
 
     Args:
@@ -562,7 +562,7 @@ if result.is_success:
 ### Pipeline Processing
 
 ```python
-def process_enterprise_directory(input_file: Path, output_file: Path) -> FlextResult[dict]:
+def process_enterprise_directory(input_file: Path, output_file: Path) -> FlextResult[FlextTypes.Dict]:
     """Process enterprise directory with complete pipeline."""
     api = FlextLdifAPI(FlextLdifModels.Config(strict_validation=True))
 
@@ -596,7 +596,7 @@ def process_enterprise_directory(input_file: Path, output_file: Path) -> FlextRe
 ### Batch Processing
 
 ```python
-def process_multiple_files(file_paths: list[Path]) -> FlextResult[dict]:
+def process_multiple_files(file_paths: list[Path]) -> FlextResult[FlextTypes.Dict]:
     """Process multiple LDIF files in batch."""
     api = FlextLdifAPI()
     all_entries = []
@@ -609,9 +609,9 @@ def process_multiple_files(file_paths: list[Path]) -> FlextResult[dict]:
             all_entries.extend(entries)
             processing_stats[str(file_path)] = len(entries)
         else:
-            return FlextResult[dict].fail(f"Failed to process {file_path}: {result.error}")
+            return FlextResult[FlextTypes.Dict].fail(f"Failed to process {file_path}: {result.error}")
 
-    return FlextResult[dict].ok({
+    return FlextResult[FlextTypes.Dict].ok({
         'total_entries': len(all_entries),
         'file_stats': processing_stats,
         'entries': all_entries
@@ -670,7 +670,7 @@ class RfcSchemaParserService:
             server_type: Optional server type to select specific quirks (None = pure RFC)
         """
 
-    def execute(self) -> FlextResult[dict]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute RFC-compliant schema parsing with quirks.
 
         Returns:
@@ -759,7 +759,7 @@ class FlextLdifMigrationService:
             target_server_type: Target server type (e.g., "oud", "openldap")
         """
 
-    def execute(self) -> FlextResult[dict]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute migration pipeline.
 
         Generic transformation process:

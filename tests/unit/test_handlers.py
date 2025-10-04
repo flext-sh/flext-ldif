@@ -10,8 +10,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-
 from flext_core import FlextBus, FlextContainer, FlextContext
+
 from flext_ldif.handlers import FlextLdifHandlers
 from flext_ldif.models import FlextLdifModels
 

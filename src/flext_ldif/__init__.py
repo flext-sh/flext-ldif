@@ -62,6 +62,7 @@ from __future__ import annotations
 from typing import Final
 
 from flext_core import FlextTypes
+
 from flext_ldif.api import FlextLdif
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants

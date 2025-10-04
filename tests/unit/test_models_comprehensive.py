@@ -5,11 +5,8 @@ Tests all model classes and their methods with real validation.
 
 from __future__ import annotations
 
-from typing import cast
+from flext_core import FlextResult
 
-import pytest
-
-from flext_core import FlextResult, FlextTypes
 from flext_ldif.models import FlextLdifModels
 
 
@@ -24,7 +21,7 @@ class TestFlextLdifModelsEntry:
                 "objectClass": ["inetOrgPerson", "person"],
                 "cn": ["Test User"],
                 "sn": ["User"],
-            }
+            },
         }
 
         result = FlextLdifModels.Entry.create(entry_data)
@@ -44,7 +41,7 @@ class TestFlextLdifModelsEntry:
                 "objectClass": ["inetOrgPerson"],
                 "cn": ["Test User"],
                 "userCertificate;binary": [binary_data],
-            }
+            },
         }
 
         result = FlextLdifModels.Entry.create(entry_data)
@@ -108,7 +105,7 @@ class TestFlextLdifModelsDistinguishedName:
         dn = result.unwrap()
 
         # Test computed field access
-        assert hasattr(dn, 'dn_components')
+        assert hasattr(dn, "dn_components")
 
     def test_invalid_dn(self) -> None:
         """Test invalid DN handling."""
@@ -254,9 +251,9 @@ class TestFlextLdifModelsSchemaObjectClass:
         oc = result.unwrap()
 
         # Test computed fields exist
-        assert hasattr(oc, 'required_count')
-        assert hasattr(oc, 'optional_count')
-        assert hasattr(oc, 'total_attributes')
+        assert hasattr(oc, "required_count")
+        assert hasattr(oc, "optional_count")
+        assert hasattr(oc, "total_attributes")
 
 
 class TestFlextLdifModelsAclTarget:
@@ -419,21 +416,21 @@ class TestFlextLdifModelsNamespace:
     def test_models_namespace_access(self) -> None:
         """Test accessing models through namespace."""
         # Test that all expected model classes are available
-        assert hasattr(FlextLdifModels, 'Entry')
-        assert hasattr(FlextLdifModels, 'DistinguishedName')
-        assert hasattr(FlextLdifModels, 'LdifAttribute')
-        assert hasattr(FlextLdifModels, 'LdifAttributes')
-        assert hasattr(FlextLdifModels, 'SchemaObjectClass')
-        assert hasattr(FlextLdifModels, 'AclTarget')
-        assert hasattr(FlextLdifModels, 'AclSubject')
-        assert hasattr(FlextLdifModels, 'AclPermissions')
-        assert hasattr(FlextLdifModels, 'UnifiedAcl')
+        assert hasattr(FlextLdifModels, "Entry")
+        assert hasattr(FlextLdifModels, "DistinguishedName")
+        assert hasattr(FlextLdifModels, "LdifAttribute")
+        assert hasattr(FlextLdifModels, "LdifAttributes")
+        assert hasattr(FlextLdifModels, "SchemaObjectClass")
+        assert hasattr(FlextLdifModels, "AclTarget")
+        assert hasattr(FlextLdifModels, "AclSubject")
+        assert hasattr(FlextLdifModels, "AclPermissions")
+        assert hasattr(FlextLdifModels, "UnifiedAcl")
 
     def test_computed_fields(self) -> None:
         """Test namespace-level computed fields."""
         # Test that computed fields exist
-        assert hasattr(FlextLdifModels, 'active_ldif_models_count')
-        assert hasattr(FlextLdifModels, 'ldif_model_summary')
+        assert hasattr(FlextLdifModels, "active_ldif_models_count")
+        assert hasattr(FlextLdifModels, "ldif_model_summary")
 
         # Test computed field values
         count = FlextLdifModels.active_ldif_models_count

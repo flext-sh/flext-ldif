@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import cast
 
 import pytest
+from flext_core import FlextConstants, FlextResult, FlextTypes
 from flext_tests import (
     FlextTestsBuilders,
     FlextTestsDomains,
@@ -21,7 +22,6 @@ from flext_tests import (
     FlextTestsUtilities,
 )
 
-from flext_core import FlextConstants, FlextResult, FlextTypes
 from flext_ldif.quirks.registry import QuirkRegistryService
 from flext_ldif.rfc.rfc_ldif_parser import RfcLdifParserService
 from flext_ldif.rfc.rfc_ldif_writer import RfcLdifWriterService

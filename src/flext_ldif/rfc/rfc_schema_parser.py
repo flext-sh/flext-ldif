@@ -20,10 +20,11 @@ from pathlib import Path
 from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
+
 from flext_ldif.quirks.registry import QuirkRegistryService
 
 
-class RfcSchemaParserService(FlextService[dict]):
+class RfcSchemaParserService(FlextService[FlextTypes.Dict]):
     """RFC 4512 compliant schema parser service.
 
     Parses LDAP schema definitions strictly according to RFC 4512 specification.
@@ -106,7 +107,7 @@ class RfcSchemaParserService(FlextService[dict]):
         self._quirk_registry = quirk_registry
         self._server_type = server_type
 
-    def execute(self) -> FlextResult[dict]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute RFC-compliant schema parsing.
 
         Returns:
@@ -121,11 +122,15 @@ class RfcSchemaParserService(FlextService[dict]):
             # Extract parameters
             file_path_str = self._params.get("file_path", "")
             if not file_path_str:
-                return FlextResult[dict].fail("file_path parameter is required")
+                return FlextResult[FlextTypes.Dict].fail(
+                    "file_path parameter is required"
+                )
 
             file_path = Path(file_path_str)
             if not file_path.exists():
-                return FlextResult[dict].fail(f"Schema file not found: {file_path}")
+                return FlextResult[FlextTypes.Dict].fail(
+                    f"Schema file not found: {file_path}"
+                )
 
             parse_attributes = self._params.get("parse_attributes", True)
             parse_objectclasses = self._params.get("parse_objectclasses", True)
@@ -147,7 +152,7 @@ class RfcSchemaParserService(FlextService[dict]):
             )
 
             if parse_result.is_failure:
-                return FlextResult[dict].fail(parse_result.error)
+                return FlextResult[FlextTypes.Dict].fail(parse_result.error)
 
             data = parse_result.value
 
@@ -159,12 +164,12 @@ class RfcSchemaParserService(FlextService[dict]):
                 },
             )
 
-            return FlextResult[dict].ok(data)
+            return FlextResult[FlextTypes.Dict].ok(data)
 
         except Exception as e:
             error_msg = f"Failed to execute RFC schema parser: {e}"
             self._logger.exception(error_msg)
-            return FlextResult[dict].fail(error_msg)
+            return FlextResult[FlextTypes.Dict].fail(error_msg)
 
     def _parse_schema_file(
         self,
@@ -172,7 +177,7 @@ class RfcSchemaParserService(FlextService[dict]):
         *,
         parse_attributes: bool,
         parse_objectclasses: bool,
-    ) -> FlextResult[dict]:
+    ) -> FlextResult[FlextTypes.Dict]:
         """Parse schema file according to RFC 4512.
 
         Args:
@@ -226,7 +231,7 @@ class RfcSchemaParserService(FlextService[dict]):
                         parse_objectclasses=parse_objectclasses,
                     )
 
-            return FlextResult[dict].ok({
+            return FlextResult[FlextTypes.Dict].ok({
                 "attributes": attributes,
                 "objectclasses": objectclasses,
                 "source_dn": source_dn,
@@ -237,7 +242,9 @@ class RfcSchemaParserService(FlextService[dict]):
             })
 
         except Exception as e:
-            return FlextResult[dict].fail(f"Failed to parse schema file: {e}")
+            return FlextResult[FlextTypes.Dict].fail(
+                f"Failed to parse schema file: {e}"
+            )
 
     def _process_schema_line(
         self,

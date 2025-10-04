@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 
 from flext_core import FlextTypes
+
 from flext_ldif.entry.builder import FlextLdifEntryBuilder
 
 

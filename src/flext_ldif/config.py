@@ -8,10 +8,10 @@ from __future__ import annotations
 
 from typing import Literal, cast
 
+from flext_core import FlextConfig, FlextConstants, FlextTypes
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
-from flext_core import FlextConfig, FlextConstants, FlextTypes
 from flext_ldif.constants import FlextLdifConstants
 
 

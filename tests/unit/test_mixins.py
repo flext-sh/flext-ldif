@@ -4,9 +4,9 @@ from collections.abc import Sequence
 from typing import cast
 
 import pytest
+from flext_core import FlextResult, FlextTypes
 from tests.test_support.ldif_data import LdifTestData
 
-from flext_core import FlextResult, FlextTypes
 from flext_ldif.mixins import FlextLdifMixins
 
 

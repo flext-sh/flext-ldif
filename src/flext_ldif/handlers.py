@@ -27,6 +27,7 @@ from flext_core import (
     FlextResult,
     FlextTypes,
 )
+
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk

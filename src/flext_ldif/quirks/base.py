@@ -13,9 +13,8 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from pydantic import Field
-
 from flext_core import FlextModels, FlextResult, FlextTypes
+from pydantic import Field
 
 
 class BaseSchemaQuirk(ABC, FlextModels.Value):
@@ -198,7 +197,7 @@ class BaseEntryQuirk(ABC, FlextModels.Value):
     priority: int = Field(default=100, description="Quirk priority")
 
     @abstractmethod
-    def can_handle_entry(self, entry_dn: str, attributes: dict[str, object]) -> bool:
+    def can_handle_entry(self, entry_dn: str, attributes: FlextTypes.Dict) -> bool:
         """Check if this quirk can handle the entry.
 
         Args:
@@ -212,7 +211,7 @@ class BaseEntryQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def process_entry(
-        self, entry_dn: str, attributes: dict[str, object]
+        self, entry_dn: str, attributes: FlextTypes.Dict
     ) -> FlextResult[FlextTypes.Dict]:
         """Process entry with server-specific logic.
 

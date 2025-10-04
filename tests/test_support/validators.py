@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import TypeVar
 
 from flext_core import FlextResult, FlextTypes
+
 from flext_ldif.models import FlextLdifModels
 
 T = TypeVar("T")

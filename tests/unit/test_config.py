@@ -188,9 +188,9 @@ class TestFlextLdifConfig:
         """Test creating configuration for specific environment."""
         config = FlextLdifConfig.create_for_environment("test")
         # Check that config has expected FlextLdifConfig attributes
-        assert hasattr(config, 'ldif_encoding')
-        assert hasattr(config, 'ldif_max_line_length')
-        assert hasattr(config, 'ldif_strict_validation')
+        assert hasattr(config, "ldif_encoding")
+        assert hasattr(config, "ldif_max_line_length")
+        assert hasattr(config, "ldif_strict_validation")
 
         # Test with overrides
         config = FlextLdifConfig.create_for_environment(
@@ -206,18 +206,18 @@ class TestFlextLdifConfig:
         """Test creating default configuration."""
         config = FlextLdifConfig.create_default()
         # Check that config has expected FlextLdifConfig attributes
-        assert hasattr(config, 'ldif_encoding')
-        assert hasattr(config, 'ldif_max_line_length')
-        assert hasattr(config, 'ldif_strict_validation')
+        assert hasattr(config, "ldif_encoding")
+        assert hasattr(config, "ldif_max_line_length")
+        assert hasattr(config, "ldif_strict_validation")
         assert config.ldif_max_line_length == 78
 
     def test_get_global_instance(self) -> None:
         """Test getting global singleton instance."""
         config = FlextLdifConfig.get_global_instance()
         # Check that config has expected FlextLdifConfig attributes
-        assert hasattr(config, 'ldif_encoding')
-        assert hasattr(config, 'ldif_max_line_length')
-        assert hasattr(config, 'ldif_strict_validation')
+        assert hasattr(config, "ldif_encoding")
+        assert hasattr(config, "ldif_max_line_length")
+        assert hasattr(config, "ldif_strict_validation")
 
         # Should return the same instance
         config2 = FlextLdifConfig.get_global_instance()
@@ -267,9 +267,9 @@ class TestFlextLdifConfig:
 
         config = FlextLdifConfig.create_for_performance()
         # Check that config has expected FlextLdifConfig attributes
-        assert hasattr(config, 'ldif_encoding')
-        assert hasattr(config, 'ldif_max_line_length')
-        assert hasattr(config, 'ldif_strict_validation')
+        assert hasattr(config, "ldif_encoding")
+        assert hasattr(config, "ldif_max_line_length")
+        assert hasattr(config, "ldif_strict_validation")
         assert config.enable_performance_optimizations is True
         assert config.max_workers >= 4  # Should meet performance minimum
 
@@ -279,7 +279,7 @@ class TestFlextLdifConfig:
         # Check that a config object is returned
         assert config is not None
         # Check that it has some expected attributes
-        assert hasattr(config, 'max_workers')
+        assert hasattr(config, "max_workers")
 
     def test_create_for_server_type(self) -> None:
         """Test creating configuration for specific server type."""
@@ -287,9 +287,9 @@ class TestFlextLdifConfig:
         FlextLdifConfig.reset_global_instance()
         config = FlextLdifConfig.create_for_server_type("openldap")
         # Check that config has expected FlextLdifConfig attributes
-        assert hasattr(config, 'ldif_encoding')
-        assert hasattr(config, 'ldif_max_line_length')
-        assert hasattr(config, 'ldif_strict_validation')
+        assert hasattr(config, "ldif_encoding")
+        assert hasattr(config, "ldif_max_line_length")
+        assert hasattr(config, "ldif_strict_validation")
         assert config.server_type == "openldap"
 
     def test_model_dump(self) -> None:
@@ -459,9 +459,9 @@ class TestFlextLdifConfig:
         """Test create_default factory method."""
         config = FlextLdifConfig.create_default()
         # Check that config has expected FlextLdifConfig attributes
-        assert hasattr(config, 'ldif_encoding')
-        assert hasattr(config, 'ldif_max_line_length')
-        assert hasattr(config, 'ldif_strict_validation')
+        assert hasattr(config, "ldif_encoding")
+        assert hasattr(config, "ldif_max_line_length")
+        assert hasattr(config, "ldif_strict_validation")
         assert config.ldif_encoding == "utf-8"
         # Default environment may have debug mode limiting workers
         assert config.max_workers >= 1
@@ -470,9 +470,9 @@ class TestFlextLdifConfig:
         """Test create_for_performance factory method."""
         config = FlextLdifConfig.create_for_performance()
         # Check that config has expected FlextLdifConfig attributes
-        assert hasattr(config, 'ldif_encoding')
-        assert hasattr(config, 'ldif_max_line_length')
-        assert hasattr(config, 'ldif_strict_validation')
+        assert hasattr(config, "ldif_encoding")
+        assert hasattr(config, "ldif_max_line_length")
+        assert hasattr(config, "ldif_strict_validation")
         assert config.enable_performance_optimizations is True
         assert config.enable_parallel_processing is True
 
@@ -480,9 +480,9 @@ class TestFlextLdifConfig:
         """Test create_for_development factory method."""
         config = FlextLdifConfig.create_for_development()
         # Check that config has expected FlextLdifConfig attributes
-        assert hasattr(config, 'ldif_encoding')
-        assert hasattr(config, 'ldif_max_line_length')
-        assert hasattr(config, 'ldif_strict_validation')
+        assert hasattr(config, "ldif_encoding")
+        assert hasattr(config, "ldif_max_line_length")
+        assert hasattr(config, "ldif_strict_validation")
         assert config.debug_mode is True
         assert config.verbose_logging is True
 
@@ -490,9 +490,9 @@ class TestFlextLdifConfig:
         """Test create_for_server_type factory method."""
         config = FlextLdifConfig.create_for_server_type("active_directory")
         # Check that config has expected FlextLdifConfig attributes
-        assert hasattr(config, 'ldif_encoding')
-        assert hasattr(config, 'ldif_max_line_length')
-        assert hasattr(config, 'ldif_strict_validation')
+        assert hasattr(config, "ldif_encoding")
+        assert hasattr(config, "ldif_max_line_length")
+        assert hasattr(config, "ldif_strict_validation")
         assert config.server_type == "active_directory"
 
     # =========================================================================
@@ -580,9 +580,9 @@ class TestFlextLdifConfig:
         # Get global instance
         instance1 = FlextLdifConfig.get_global_instance()
         # Check that instance has expected FlextLdifConfig attributes
-        assert hasattr(instance1, 'ldif_encoding')
-        assert hasattr(instance1, 'ldif_max_line_length')
-        assert hasattr(instance1, 'ldif_strict_validation')
+        assert hasattr(instance1, "ldif_encoding")
+        assert hasattr(instance1, "ldif_max_line_length")
+        assert hasattr(instance1, "ldif_strict_validation")
 
         # Should return same instance
         instance2 = FlextLdifConfig.get_global_instance()
@@ -594,8 +594,8 @@ class TestFlextLdifConfig:
         # Should create new instance after reset
         instance3 = FlextLdifConfig.get_global_instance()
         # Check that instance has expected FlextLdifConfig attributes
-        assert hasattr(instance3, 'ldif_encoding')
-        assert hasattr(instance3, 'ldif_max_line_length')
-        assert hasattr(instance3, 'ldif_strict_validation')
+        assert hasattr(instance3, "ldif_encoding")
+        assert hasattr(instance3, "ldif_max_line_length")
+        assert hasattr(instance3, "ldif_strict_validation")
         # After reset, it's a new instance
         assert instance3 is not instance1

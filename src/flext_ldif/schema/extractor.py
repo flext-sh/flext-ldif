@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import cast, override
 
 from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
+
 from flext_ldif.models import FlextLdifModels
 
 
