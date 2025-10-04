@@ -6,10 +6,10 @@ from typing import cast, override
 
 from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 
-from flext_ldif.models import FlextLdifModels
+# from flext_ldif.models import FlextLdifModels  # Temporarily removed to fix circular import
 
 
-class FlextLdifSchemaExtractor(FlextService[FlextLdifModels.SchemaDiscoveryResult]):
+class FlextLdifSchemaExtractor(FlextService):
     """Schema extraction service for LDIF entries."""
 
     @override

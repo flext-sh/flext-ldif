@@ -14,12 +14,7 @@ from typing import Self
 from flext_core import FlextTypes
 from pydantic import Field, computed_field, model_validator
 
-from typing import TYPE_CHECKING
-
 # from flext_ldif.models import FlextLdifModels  # Temporarily removed to fix circular import
-
-if TYPE_CHECKING:
-    pass
 
 
 class FlextLdifResults:
