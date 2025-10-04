@@ -5,16 +5,13 @@ Tests all handler classes and their methods with real validation.
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
-from typing import cast
 
-import pytest
+from flext_core import FlextResult
+from tests.test_support.ldif_data import LdifTestData
 
-from flext_core import FlextResult, FlextTypes
 from flext_ldif.handlers import FlextLdifHandlers
 from flext_ldif.models import FlextLdifModels
-from tests.test_support.ldif_data import LdifTestData
 
 
 class TestFlextLdifHandlersParseQueryHandler:
@@ -104,7 +101,9 @@ class TestFlextLdifHandlersWriteCommandHandler:
         assert len(content) > 0
         assert "dn:" in content
 
-    def test_handle_write_to_file(self, ldif_test_data: LdifTestData, test_ldif_dir: Path) -> None:
+    def test_handle_write_to_file(
+        self, ldif_test_data: LdifTestData, test_ldif_dir: Path
+    ) -> None:
         """Test writing entries to file."""
         handler = FlextLdifHandlers.WriteCommandHandler()
 
@@ -272,11 +271,11 @@ class TestFlextLdifHandlersNamespace:
     def test_handlers_namespace_access(self) -> None:
         """Test accessing handlers through namespace."""
         # Test that all expected handler classes are available
-        assert hasattr(FlextLdifHandlers, 'ParseQueryHandler')
-        assert hasattr(FlextLdifHandlers, 'WriteCommandHandler')
-        assert hasattr(FlextLdifHandlers, 'ValidateQueryHandler')
-        assert hasattr(FlextLdifHandlers, 'AnalyzeQueryHandler')
-        assert hasattr(FlextLdifHandlers, 'MigrateCommandHandler')
+        assert hasattr(FlextLdifHandlers, "ParseQueryHandler")
+        assert hasattr(FlextLdifHandlers, "WriteCommandHandler")
+        assert hasattr(FlextLdifHandlers, "ValidateQueryHandler")
+        assert hasattr(FlextLdifHandlers, "AnalyzeQueryHandler")
+        assert hasattr(FlextLdifHandlers, "MigrateCommandHandler")
 
     def test_handler_instantiation(self) -> None:
         """Test that handlers can be instantiated."""

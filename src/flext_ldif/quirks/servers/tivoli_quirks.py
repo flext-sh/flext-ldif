@@ -19,9 +19,9 @@ When implementing, refer to:
 
 from __future__ import annotations
 
+from flext_core import FlextLogger, FlextResult, FlextTypes
 from pydantic import Field
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
 from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
 
 
@@ -155,7 +155,7 @@ class TivoliSchemaQuirk(BaseSchemaQuirk):
         def can_handle_entry(
             self,
             entry_dn: str,
-            attributes: dict[str, object],
+            attributes: FlextTypes.Dict,
         ) -> bool:
             """Check if this quirk should handle the entry - STUB."""
             return False
@@ -163,7 +163,7 @@ class TivoliSchemaQuirk(BaseSchemaQuirk):
         def process_entry(
             self,
             entry_dn: str,
-            attributes: dict[str, object],
+            attributes: FlextTypes.Dict,
         ) -> FlextResult[FlextTypes.Dict]:
             """Process entry for Tivoli DS format - STUB."""
             return FlextResult[FlextTypes.Dict].fail(

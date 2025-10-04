@@ -12,7 +12,7 @@ LDIF-specific integration patterns for using FLEXT-LDIF within the FLEXT ecosyst
 from flext_core import FlextResult
 from flext_ldif import FlextLdifAPI
 
-def process_directory_export(file_path: str) -> FlextResult[dict]:
+def process_directory_export(file_path: str) -> FlextResult[FlextTypes.Dict]:
     """Process LDIF directory export with railway programming."""
     api = FlextLdifAPI()
 
@@ -43,7 +43,7 @@ def process_directory_export(file_path: str) -> FlextResult[dict]:
 import os
 from pathlib import Path
 
-def process_ldif_with_memory_check(file_path: Path) -> FlextResult[dict]:
+def process_ldif_with_memory_check(file_path: Path) -> FlextResult[FlextTypes.Dict]:
     """Process LDIF with memory size validation."""
     api = FlextLdifAPI()
 
@@ -52,7 +52,7 @@ def process_ldif_with_memory_check(file_path: Path) -> FlextResult[dict]:
     max_size = 100 * 1024 * 1024  # 100MB limit for memory-bound parser
 
     if file_size > max_size:
-        return FlextResult[dict].fail(
+        return FlextResult[FlextTypes.Dict].fail(
             f"File too large ({file_size} bytes). "
             f"Current implementation limited to {max_size} bytes."
         )
@@ -85,7 +85,7 @@ class ALGAROUDMigrationService:
 
         self._ldif_api = FlextLdifAPI(config=migration_config)
 
-    def process_oud_export(self, export_file: Path) -> FlextResult[dict]:
+    def process_oud_export(self, export_file: Path) -> FlextResult[FlextTypes.Dict]:
         """Process Oracle Unified Directory LDIF export."""
         self._logger.info("Starting OUD LDIF processing", extra={
             'export_file': str(export_file),
@@ -109,7 +109,7 @@ class ALGAROUDMigrationService:
             .map(self._log_ldif_completion)
         )
 
-    def _categorize_ldif_entries(self, entries) -> FlextResult[dict]:
+    def _categorize_ldif_entries(self, entries) -> FlextResult[FlextTypes.Dict]:
         """Categorize LDIF entries for migration processing."""
         try:
             users = []
@@ -127,7 +127,7 @@ class ALGAROUDMigrationService:
                 else:
                     other.append(entry)
 
-            return FlextResult[dict].ok({
+            return FlextResult[FlextTypes.Dict].ok({
                 'users': users,
                 'groups': groups,
                 'organizational_units': organizational_units,
@@ -135,9 +135,9 @@ class ALGAROUDMigrationService:
                 'total': len(entries)
             })
         except Exception as e:
-            return FlextResult[dict].fail(f"LDIF entry categorization failed: {e}")
+            return FlextResult[FlextTypes.Dict].fail(f"LDIF entry categorization failed: {e}")
 
-    def _apply_migration_transformations(self, categorized: dict) -> FlextResult[dict]:
+    def _apply_migration_transformations(self, categorized: dict) -> FlextResult[FlextTypes.Dict]:
         """Apply ALGAR-specific LDIF entry transformations."""
         # LDIF-specific transformations for OUD migration
 
@@ -152,7 +152,7 @@ class ALGAROUDMigrationService:
         transformed_users = self._transform_user_entries(categorized['users'])
         transformed_groups = self._transform_group_entries(categorized['groups'])
 
-        return FlextResult[dict].ok({
+        return FlextResult[FlextTypes.Dict].ok({
             'users': transformed_users,
             'groups': transformed_groups,
             'organizational_units': categorized['organizational_units'],
@@ -209,14 +209,14 @@ class LdifAPIService(FlextAPIService):
         super().__init__()
         self._ldif_api = FlextLdifAPI()
 
-    def parse_ldif_endpoint(self, file_content: str) -> FlextResult[dict]:
+    def parse_ldif_endpoint(self, file_content: str) -> FlextResult[FlextTypes.Dict]:
         """API endpoint for LDIF parsing with memory awareness."""
         # Check content size before processing
         content_size = len(file_content.encode('utf-8'))
         max_size = 50 * 1024 * 1024  # 50MB for API operations
 
         if content_size > max_size:
-            return FlextResult[dict].fail({
+            return FlextResult[FlextTypes.Dict].fail({
                 'status': 'error',
                 'message': f'LDIF content too large ({content_size} bytes). Maximum: {max_size} bytes.',
                 'error_type': 'memory_limit_exceeded'
@@ -331,7 +331,7 @@ from pathlib import Path
 import psutil
 import os
 
-def process_multiple_ldif_files(file_paths: list[Path]) -> FlextResult[dict]:
+def process_multiple_ldif_files(file_paths: list[Path]) -> FlextResult[FlextTypes.Dict]:
     """Process multiple LDIF files with memory monitoring."""
     api = FlextLdifAPI()
     all_entries = []
@@ -346,7 +346,7 @@ def process_multiple_ldif_files(file_paths: list[Path]) -> FlextResult[dict]:
         memory_increase = current_memory - initial_memory
 
         if memory_increase > 500 * 1024 * 1024:  # 500MB increase limit
-            return FlextResult[dict].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 f"Memory usage too high ({memory_increase} bytes). "
                 f"Processed {len(processing_stats)} files before limit."
             )
@@ -360,12 +360,12 @@ def process_multiple_ldif_files(file_paths: list[Path]) -> FlextResult[dict]:
                 'memory_after': current_memory
             }
         else:
-            return FlextResult[dict].fail(f"Failed to process {file_path}: {result.error}")
+            return FlextResult[FlextTypes.Dict].fail(f"Failed to process {file_path}: {result.error}")
 
     final_memory = process.memory_info().rss
     total_memory_used = final_memory - initial_memory
 
-    return FlextResult[dict].ok({
+    return FlextResult[FlextTypes.Dict].ok({
         'total_entries': len(all_entries),
         'files_processed': len(processing_stats),
         'file_stats': processing_stats,
@@ -404,7 +404,7 @@ def safe_ldif_processing(file_path: Path) -> FlextResult[list]:
 Handle LDIF format errors specifically:
 
 ```python
-def robust_ldif_processing(content: str) -> FlextResult[dict]:
+def robust_ldif_processing(content: str) -> FlextResult[FlextTypes.Dict]:
     """Process LDIF with format-specific error handling."""
     api = FlextLdifAPI()
 
@@ -412,11 +412,11 @@ def robust_ldif_processing(content: str) -> FlextResult[dict]:
     if result.is_failure:
         error_msg = result.error
         if "LDIF" in error_msg or "parse" in error_msg.lower():
-            return FlextResult[dict].fail(f"LDIF format error: {error_msg}")
+            return FlextResult[FlextTypes.Dict].fail(f"LDIF format error: {error_msg}")
         else:
-            return FlextResult[dict].fail(f"Processing error: {error_msg}")
+            return FlextResult[FlextTypes.Dict].fail(f"Processing error: {error_msg}")
 
-    return FlextResult[dict].ok({'entries': result.unwrap()})
+    return FlextResult[FlextTypes.Dict].ok({'entries': result.unwrap()})
 ```
 
 ### 3. LDIF Entry Type Processing
@@ -453,10 +453,10 @@ def categorize_ldif_entries(entries) -> dict:
 
 ```python
 # ✅ Good: Small to medium LDIF files
-def process_small_ldif(file_path: Path) -> FlextResult[dict]:
+def process_small_ldif(file_path: Path) -> FlextResult[FlextTypes.Dict]:
     """Process LDIF files under 100MB."""
     if file_path.stat().st_size > 100 * 1024 * 1024:
-        return FlextResult[dict].fail("File too large for current implementation")
+        return FlextResult[FlextTypes.Dict].fail("File too large for current implementation")
 
     api = FlextLdifAPI()
     return api.parse_file(file_path)

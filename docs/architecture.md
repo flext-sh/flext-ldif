@@ -215,11 +215,11 @@ class WriteCommandHandler(FlextMessageHandler):
 class SchemaQueryHandler(FlextMessageHandler):
     """Handles schema parsing queries through RFC schema parser."""
 
-    def handle(self, message: FlextLdifModels.SchemaQuery) -> FlextResult[dict]:
+    def handle(self, message: FlextLdifModels.SchemaQuery) -> FlextResult[FlextTypes.Dict]:
         # ✅ CORRECT: Gets RFC schema parser from container
         parser_result = self._container.get("rfc_schema_parser")
         if parser_result.is_failure:
-            return FlextResult[dict].fail("RFC schema parser not registered")
+            return FlextResult[FlextTypes.Dict].fail("RFC schema parser not registered")
 
         parser = parser_result.unwrap()
 
@@ -388,7 +388,7 @@ sequenceDiagram
 All operations use FlextResult for composable error handling:
 
 ```python
-def process_ldif_pipeline(file_path: Path) -> FlextResult[dict]:
+def process_ldif_pipeline(file_path: Path) -> FlextResult[FlextTypes.Dict]:
     """Complete LDIF processing pipeline using railway patterns."""
     api = FlextLdifAPI()
 
@@ -740,8 +740,8 @@ graph TB
 def can_handle_attribute(self, definition: str) -> bool:
     return False  # Stub - not implemented
 
-def parse_attribute(self, definition: str) -> FlextResult[dict]:
-    return FlextResult[dict].fail(
+def parse_attribute(self, definition: str) -> FlextResult[FlextTypes.Dict]:
+    return FlextResult[FlextTypes.Dict].fail(
         "AD attribute parsing not yet implemented. "
         "Contributions welcome: https://github.com/flext-sh/flext/issues"
     )
@@ -765,12 +765,12 @@ class OidSchemaQuirk:
     class OidEntryQuirk:
         """Nested entry quirk for OID."""
         def can_handle_entry(self, dn: str, attributes: dict) -> bool: ...
-        def convert_entry_to_rfc(self, entry: dict) -> FlextResult[dict]: ...
+        def convert_entry_to_rfc(self, entry: dict) -> FlextResult[FlextTypes.Dict]: ...
 
     class OidAclQuirk:
         """Nested ACL quirk for OID."""
         def can_handle_acl(self, acl_string: str) -> bool: ...
-        def parse_acl(self, acl_string: str) -> FlextResult[dict]: ...
+        def parse_acl(self, acl_string: str) -> FlextResult[FlextTypes.Dict]: ...
 ```
 
 ### Priority-Based Resolution
@@ -939,8 +939,8 @@ class AdSchemaQuirk:
     def can_handle_attribute(self, definition: str) -> bool:
         return False  # TODO: Implement AD detection
 
-    def parse_attribute(self, definition: str) -> FlextResult[dict]:
-        return FlextResult[dict].fail("AD attribute parsing not implemented")
+    def parse_attribute(self, definition: str) -> FlextResult[FlextTypes.Dict]:
+        return FlextResult[FlextTypes.Dict].fail("AD attribute parsing not implemented")
 ```
 
 ### Quirk Protocol Interface
@@ -953,9 +953,9 @@ class SchemaQuirkProtocol(Protocol):
     priority: int
 
     def can_handle_attribute(self, definition: str) -> bool: ...
-    def parse_attribute(self, definition: str) -> FlextResult[dict]: ...
+    def parse_attribute(self, definition: str) -> FlextResult[FlextTypes.Dict]: ...
     def can_handle_objectclass(self, definition: str) -> bool: ...
-    def parse_objectclass(self, definition: str) -> FlextResult[dict]: ...
+    def parse_objectclass(self, definition: str) -> FlextResult[FlextTypes.Dict]: ...
 ```
 
 This ensures consistent interface across all server implementations.

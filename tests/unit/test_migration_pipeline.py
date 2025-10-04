@@ -12,8 +12,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from flext_core import FlextTypes
+
 from flext_ldif.migration_pipeline import LdifMigrationPipelineService
 from flext_ldif.quirks.registry import QuirkRegistryService
 

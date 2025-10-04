@@ -5,8 +5,6 @@ Tests all constant definitions and their usage.
 
 from __future__ import annotations
 
-import pytest
-
 from flext_ldif.constants import FlextLdifConstants
 
 
@@ -27,8 +25,8 @@ class TestFlextLdifConstantsEncoding:
 
     def test_encoding_constants_exist(self) -> None:
         """Test that all encoding constants exist."""
-        assert hasattr(FlextLdifConstants.Encoding, 'DEFAULT_ENCODING')
-        assert hasattr(FlextLdifConstants.Encoding, 'SUPPORTED_ENCODINGS')
+        assert hasattr(FlextLdifConstants.Encoding, "DEFAULT_ENCODING")
+        assert hasattr(FlextLdifConstants.Encoding, "SUPPORTED_ENCODINGS")
 
 
 class TestFlextLdifConstantsFormat:
@@ -46,10 +44,10 @@ class TestFlextLdifConstantsFormat:
 
     def test_format_constants_exist(self) -> None:
         """Test that all format constants exist."""
-        assert hasattr(FlextLdifConstants.Format, 'MAX_LINE_LENGTH')
-        assert hasattr(FlextLdifConstants.Format, 'LINE_CONTINUATION_CHAR')
-        assert hasattr(FlextLdifConstants.Format, 'DN_SEPARATOR')
-        assert hasattr(FlextLdifConstants.Format, 'ATTRIBUTE_SEPARATOR')
+        assert hasattr(FlextLdifConstants.Format, "MAX_LINE_LENGTH")
+        assert hasattr(FlextLdifConstants.Format, "LINE_CONTINUATION_CHAR")
+        assert hasattr(FlextLdifConstants.Format, "DN_SEPARATOR")
+        assert hasattr(FlextLdifConstants.Format, "ATTRIBUTE_SEPARATOR")
 
 
 class TestFlextLdifConstantsProcessing:
@@ -72,10 +70,10 @@ class TestFlextLdifConstantsProcessing:
 
     def test_processing_constants_exist(self) -> None:
         """Test that all processing constants exist."""
-        assert hasattr(FlextLdifConstants.Processing, 'MAX_WORKERS_LIMIT')
-        assert hasattr(FlextLdifConstants.Processing, 'DEBUG_MAX_WORKERS')
-        assert hasattr(FlextLdifConstants.Processing, 'PERFORMANCE_MIN_WORKERS')
-        assert hasattr(FlextLdifConstants.Processing, 'PERFORMANCE_MEMORY_MB_THRESHOLD')
+        assert hasattr(FlextLdifConstants.Processing, "MAX_WORKERS_LIMIT")
+        assert hasattr(FlextLdifConstants.Processing, "DEBUG_MAX_WORKERS")
+        assert hasattr(FlextLdifConstants.Processing, "PERFORMANCE_MIN_WORKERS")
+        assert hasattr(FlextLdifConstants.Processing, "PERFORMANCE_MEMORY_MB_THRESHOLD")
 
 
 class TestFlextLdifConstantsValidation:
@@ -88,10 +86,10 @@ class TestFlextLdifConstantsValidation:
 
     def test_validation_constants_exist(self) -> None:
         """Test that all validation constants exist."""
-        assert hasattr(FlextLdifConstants.Validation, 'STRICT_MODE_DEFAULT')
-        assert hasattr(FlextLdifConstants.Validation, 'TIMEOUT_MS_DEFAULT')
-        assert hasattr(FlextLdifConstants.Validation, 'NAME_LENGTH_MIN')
-        assert hasattr(FlextLdifConstants.Validation, 'NAME_LENGTH_MAX')
+        assert hasattr(FlextLdifConstants.Validation, "STRICT_MODE_DEFAULT")
+        assert hasattr(FlextLdifConstants.Validation, "TIMEOUT_MS_DEFAULT")
+        assert hasattr(FlextLdifConstants.Validation, "NAME_LENGTH_MIN")
+        assert hasattr(FlextLdifConstants.Validation, "NAME_LENGTH_MAX")
 
 
 class TestFlextLdifConstantsAcl:
@@ -104,10 +102,10 @@ class TestFlextLdifConstantsAcl:
 
     def test_acl_constants_exist(self) -> None:
         """Test that all ACL constants exist."""
-        assert hasattr(FlextLdifConstants.Acl, 'DEFAULT_ACL_VERSION')
-        assert hasattr(FlextLdifConstants.Acl, 'SUPPORTED_VERSIONS')
-        assert hasattr(FlextLdifConstants.Acl, 'PERMISSION_READ')
-        assert hasattr(FlextLdifConstants.Acl, 'PERMISSION_WRITE')
+        assert hasattr(FlextLdifConstants.Acl, "DEFAULT_ACL_VERSION")
+        assert hasattr(FlextLdifConstants.Acl, "SUPPORTED_VERSIONS")
+        assert hasattr(FlextLdifConstants.Acl, "PERMISSION_READ")
+        assert hasattr(FlextLdifConstants.Acl, "PERMISSION_WRITE")
 
 
 class TestFlextLdifConstantsSchema:
@@ -120,10 +118,10 @@ class TestFlextLdifConstantsSchema:
 
     def test_schema_constants_exist(self) -> None:
         """Test that all schema constants exist."""
-        assert hasattr(FlextLdifConstants.Schema, 'DEFAULT_SCHEMA_VERSION')
-        assert hasattr(FlextLdifConstants.Schema, 'SUPPORTED_VERSIONS')
-        assert hasattr(FlextLdifConstants.Schema, 'OBJECT_CLASS_STRUCTURAL')
-        assert hasattr(FlextLdifConstants.Schema, 'OBJECT_CLASS_AUXILIARY')
+        assert hasattr(FlextLdifConstants.Schema, "DEFAULT_SCHEMA_VERSION")
+        assert hasattr(FlextLdifConstants.Schema, "SUPPORTED_VERSIONS")
+        assert hasattr(FlextLdifConstants.Schema, "OBJECT_CLASS_STRUCTURAL")
+        assert hasattr(FlextLdifConstants.Schema, "OBJECT_CLASS_AUXILIARY")
 
 
 class TestFlextLdifConstantsNamespace:
@@ -132,12 +130,12 @@ class TestFlextLdifConstantsNamespace:
     def test_constants_namespace_access(self) -> None:
         """Test accessing constants through namespace."""
         # Test that all expected constant groups are available
-        assert hasattr(FlextLdifConstants, 'Encoding')
-        assert hasattr(FlextLdifConstants, 'Format')
-        assert hasattr(FlextLdifConstants, 'Processing')
-        assert hasattr(FlextLdifConstants, 'Validation')
-        assert hasattr(FlextLdifConstants, 'Acl')
-        assert hasattr(FlextLdifConstants, 'Schema')
+        assert hasattr(FlextLdifConstants, "Encoding")
+        assert hasattr(FlextLdifConstants, "Format")
+        assert hasattr(FlextLdifConstants, "Processing")
+        assert hasattr(FlextLdifConstants, "Validation")
+        assert hasattr(FlextLdifConstants, "Acl")
+        assert hasattr(FlextLdifConstants, "Schema")
 
     def test_constant_groups_are_classes(self) -> None:
         """Test that constant groups are classes."""
@@ -151,7 +149,10 @@ class TestFlextLdifConstantsNamespace:
     def test_constant_values_are_reasonable(self) -> None:
         """Test that constant values are reasonable."""
         # Encoding
-        assert FlextLdifConstants.Encoding.DEFAULT_ENCODING in FlextLdifConstants.Encoding.SUPPORTED_ENCODINGS
+        assert (
+            FlextLdifConstants.Encoding.DEFAULT_ENCODING
+            in FlextLdifConstants.Encoding.SUPPORTED_ENCODINGS
+        )
 
         # Format
         assert FlextLdifConstants.Format.MAX_LINE_LENGTH > 40
@@ -159,9 +160,15 @@ class TestFlextLdifConstantsNamespace:
 
         # Processing
         assert FlextLdifConstants.Processing.MAX_WORKERS_LIMIT > 0
-        assert FlextLdifConstants.Processing.DEBUG_MAX_WORKERS <= FlextLdifConstants.Processing.MAX_WORKERS_LIMIT
+        assert (
+            FlextLdifConstants.Processing.DEBUG_MAX_WORKERS
+            <= FlextLdifConstants.Processing.MAX_WORKERS_LIMIT
+        )
         assert FlextLdifConstants.Processing.PERFORMANCE_MIN_WORKERS > 0
 
         # Validation
         assert FlextLdifConstants.Validation.NAME_LENGTH_MIN >= 0
-        assert FlextLdifConstants.Validation.NAME_LENGTH_MAX > FlextLdifConstants.Validation.NAME_LENGTH_MIN
+        assert (
+            FlextLdifConstants.Validation.NAME_LENGTH_MAX
+            > FlextLdifConstants.Validation.NAME_LENGTH_MIN
+        )

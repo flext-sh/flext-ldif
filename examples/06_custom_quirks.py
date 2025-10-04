@@ -11,6 +11,7 @@ Demonstrates:
 from __future__ import annotations
 
 from flext_core import FlextResult
+
 from flext_ldif.quirks.registry import QuirkRegistryService
 from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
 
@@ -35,7 +36,7 @@ class CustomLdapSchemaQuirk:
         # Custom logic to detect if this is our server's format
         return "X-CUSTOM-" in definition
 
-    def parse_attribute(self, definition: str) -> FlextResult[dict]:
+    def parse_attribute(self, definition: str) -> FlextResult[FlextTypes.Dict]:
         """Parse custom attribute format to RFC 4512 format."""
         try:
             # Custom parsing logic
@@ -55,17 +56,17 @@ class CustomLdapSchemaQuirk:
                         "syntax": "1.3.6.1.4.1.1466.115.121.1.15",  # DirectoryString
                         "description": f"Custom {name} attribute",
                     }
-                    return FlextResult[dict].ok(rfc_attr)
+                    return FlextResult[FlextTypes.Dict].ok(rfc_attr)
 
-            return FlextResult[dict].fail("Not a custom attribute format")
+            return FlextResult[FlextTypes.Dict].fail("Not a custom attribute format")
         except Exception as e:
-            return FlextResult[dict].fail(f"Parse error: {e}")
+            return FlextResult[FlextTypes.Dict].fail(f"Parse error: {e}")
 
     def can_handle_objectclass(self, definition: str) -> bool:
         """Check if this quirk can handle the objectClass definition."""
         return "X-CUSTOM-CLASS-" in definition
 
-    def parse_objectclass(self, definition: str) -> FlextResult[dict]:
+    def parse_objectclass(self, definition: str) -> FlextResult[FlextTypes.Dict]:
         """Parse custom objectClass format to RFC 4512 format."""
         try:
             if "X-CUSTOM-CLASS-" in definition:
@@ -82,11 +83,11 @@ class CustomLdapSchemaQuirk:
                         "description": f"Custom {name} objectClass",
                         "structural": True,
                     }
-                    return FlextResult[dict].ok(rfc_class)
+                    return FlextResult[FlextTypes.Dict].ok(rfc_class)
 
-            return FlextResult[dict].fail("Not a custom objectClass format")
+            return FlextResult[FlextTypes.Dict].fail("Not a custom objectClass format")
         except Exception as e:
-            return FlextResult[dict].fail(f"Parse error: {e}")
+            return FlextResult[FlextTypes.Dict].fail(f"Parse error: {e}")
 
 
 def main() -> None:
