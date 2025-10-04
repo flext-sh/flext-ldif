@@ -6,10 +6,10 @@ from typing import Self, override
 
 from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
 
-from flext_ldif.models import FlextLdifModels
+# from flext_ldif.models import FlextLdifModels  # Temporarily removed to fix circular import
 
 
-class FlextLdifSchemaBuilder(FlextService[FlextLdifModels.SchemaDiscoveryResult]):
+class FlextLdifSchemaBuilder(FlextService):
     """Schema builder for standard LDAP schemas using Builder pattern.
 
     Provides fluent interface for building schemas step-by-step following
@@ -18,8 +18,8 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifModels.SchemaDiscoveryResult]
 
     # Type annotations for instance variables
     _logger: FlextLogger
-    _attributes: dict[str, FlextLdifModels.SchemaAttribute]
-    _object_classes: dict[str, FlextLdifModels.SchemaObjectClass]
+    _attributes: dict[str, dict]
+    _object_classes: dict[str, dict]
     _server_type: str
     _entry_count: int
 
@@ -39,12 +39,12 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifModels.SchemaDiscoveryResult]
         return self._logger
 
     @property
-    def attributes(self) -> dict[str, FlextLdifModels.SchemaAttribute]:
+    def attributes(self) -> dict[str, dict]:
         """Get the attributes dictionary."""
         return self._attributes
 
     @property
-    def object_classes(self) -> dict[str, FlextLdifModels.SchemaObjectClass]:
+    def object_classes(self) -> dict[str, dict]:
         """Get the object classes dictionary."""
         return self._object_classes
 
@@ -59,7 +59,7 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifModels.SchemaDiscoveryResult]
         return self._entry_count
 
     @override
-    def execute(self) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
+    def execute(self) -> FlextResult[dict]:
         """Execute schema builder service."""
         return self.build_standard_person_schema()
 
@@ -77,14 +77,12 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifModels.SchemaDiscoveryResult]
             Self for method chaining
 
         """
-        attr_result = FlextLdifModels.SchemaAttribute.create(
-            name=name,
-            description=description,
-            single_value=single_value,
-        )
-        if attr_result.is_success and isinstance(
-            attr_result.value, FlextLdifModels.SchemaAttribute
-        ):
+        attr_result = {
+            "name": name,
+            "description": description,
+            "single_value": single_value,
+        }
+        if attr_result:
             self._attributes[name] = attr_result.value
         return self
 
@@ -102,14 +100,13 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifModels.SchemaDiscoveryResult]
             Self for method chaining
 
         """
-        oc_result = FlextLdifModels.SchemaObjectClass.create(
-            name=name,
-            description=description,
-            required_attributes=required_attributes,
-        )
-        if oc_result.is_success and isinstance(
-            oc_result.value, FlextLdifModels.SchemaObjectClass
-        ):
+        oc_result = {
+            "name": name,
+            "description": description,
+            "required_attributes": required_attributes,
+            "optional_attributes": optional_attributes,
+        }
+        if oc_result:
             self._object_classes[name] = oc_result.value
         return self
 
@@ -126,26 +123,22 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifModels.SchemaDiscoveryResult]
         self._server_type = server_type
         return self
 
-    def build(self) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
+    def build(self) -> FlextResult[dict]:
         """Build final schema (Builder pattern).
 
         Returns:
             FlextResult containing built schema
 
         """
-        result = FlextLdifModels.SchemaDiscoveryResult.create(
-            attributes=self._attributes,
-            object_classes=self._object_classes,
-            server_type=self._server_type,
-            entry_count=self._entry_count,
-        )
-        if result.is_success and isinstance(
-            result.value, FlextLdifModels.SchemaDiscoveryResult
-        ):
-            return FlextResult[FlextLdifModels.SchemaDiscoveryResult].ok(result.value)
-        return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(
-            result.error or "Failed to create schema"
-        )
+        result = {
+            "attributes": self._attributes,
+            "object_classes": self._object_classes,
+            "server_type": self._server_type,
+            "entry_count": self._entry_count,
+        }
+        if result:
+            return FlextResult[dict].ok(result)
+        return FlextResult[dict].fail(result.error or "Failed to create schema")
 
     def reset(self) -> Self:
         """Reset builder to initial state.
@@ -162,7 +155,7 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifModels.SchemaDiscoveryResult]
 
     def build_standard_person_schema(
         self,
-    ) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
+    ) -> FlextResult[dict]:
         """Build standard person schema using fluent builder.
 
         Returns:
@@ -188,7 +181,7 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifModels.SchemaDiscoveryResult]
 
     def build_standard_group_schema(
         self,
-    ) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
+    ) -> FlextResult[dict]:
         """Build standard group schema using fluent builder.
 
         Returns:
