@@ -91,7 +91,7 @@ class FlextLdifSchemaBuilder(FlextService):
         name: str,
         description: str,
         required_attributes: FlextTypes.StringList,
-        optional_attributes: FlextTypes.StringList | None = None
+        optional_attributes: FlextTypes.StringList | None = None,
     ) -> FlextLdifSchemaBuilder:
         """Add object class to schema (Fluent Builder pattern).
 
