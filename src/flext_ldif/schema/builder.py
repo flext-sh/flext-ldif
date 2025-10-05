@@ -87,7 +87,11 @@ class FlextLdifSchemaBuilder(FlextService):
         return self
 
     def add_object_class(
-        self, name: str, description: str, required_attributes: FlextTypes.StringList
+        self,
+        name: str,
+        description: str,
+        required_attributes: FlextTypes.StringList,
+        optional_attributes: FlextTypes.StringList | None = None
     ) -> FlextLdifSchemaBuilder:
         """Add object class to schema (Fluent Builder pattern).
 
@@ -95,6 +99,7 @@ class FlextLdifSchemaBuilder(FlextService):
             name: Object class name
             description: Object class description
             required_attributes: List of required attribute names
+            optional_attributes: List of optional attribute names
 
         Returns:
             Self for method chaining
@@ -104,7 +109,7 @@ class FlextLdifSchemaBuilder(FlextService):
             "name": name,
             "description": description,
             "required_attributes": required_attributes,
-            "optional_attributes": optional_attributes,
+            "optional_attributes": optional_attributes or [],
         }
         if oc_result:
             self._object_classes[name] = oc_result.value

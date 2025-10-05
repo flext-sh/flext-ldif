@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Literal, cast
 
-from flext_core import FlextConfig, FlextConstants, FlextTypes
+from flext_core import FlextConfig, FlextConstants
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
@@ -316,37 +316,34 @@ class FlextLdifConfig(FlextConfig):
             FlextLdifConfig instance configured for the environment
 
         """
-        base_config: FlextTypes.Dict = {"environment": environment}
+        config = cast("FlextLdifConfig", cls())
 
         # Environment-specific defaults
         if environment == "development":
-            base_config.update({
-                "debug_mode": True,
-                "verbose_logging": True,
-                "ldif_strict_validation": False,
-                "enable_performance_optimizations": False,
-                "max_workers": FlextLdifConstants.Processing.DEBUG_MAX_WORKERS,
-            })
+            config.debug = True
+            config.trace = True
+            config.ldif_strict_validation = False
+            config.enable_performance_optimizations = False
+            config.max_workers = FlextLdifConstants.Processing.DEBUG_MAX_WORKERS
         elif environment == "production":
-            base_config.update({
-                "debug_mode": False,
-                "verbose_logging": False,
-                "ldif_strict_validation": True,
-                "enable_performance_optimizations": True,
-                "max_workers": FlextLdifConstants.Processing.MAX_WORKERS_LIMIT,
-            })
+            config.debug = False
+            config.trace = False
+            config.ldif_strict_validation = True
+            config.enable_performance_optimizations = True
+            config.max_workers = FlextLdifConstants.Processing.MAX_WORKERS_LIMIT
         elif environment == "testing":
-            base_config.update({
-                "debug_mode": False,
-                "verbose_logging": False,
-                "ldif_strict_validation": True,
-                "enable_performance_optimizations": False,
-                "max_workers": 2,
-            })
+            config.debug = False
+            config.trace = False
+            config.ldif_strict_validation = True
+            config.enable_performance_optimizations = False
+            config.max_workers = 2
 
-        # Apply overrides
-        base_config.update(overrides)
-        return FlextLdifConfig(**base_config)
+        # Apply overrides (handle as attributes if they exist)
+        for key, value in overrides.items():
+            if hasattr(config, key):
+                setattr(config, key, value)
+
+        return config
 
     @classmethod
     def create_for_performance(cls) -> FlextLdifConfig:
@@ -356,17 +353,22 @@ class FlextLdifConfig(FlextConfig):
             FlextLdifConfig instance with performance optimizations enabled
 
         """
-        return FlextLdifConfig(
-            debug_mode=False,
-            verbose_logging=False,
-            max_workers=FlextLdifConstants.Processing.PERFORMANCE_MIN_WORKERS,
-            ldif_chunk_size=FlextLdifConstants.Processing.PERFORMANCE_MIN_CHUNK_SIZE,
-            enable_performance_optimizations=True,
-            enable_parallel_processing=True,
-            memory_limit_mb=FlextLdifConstants.Processing.PERFORMANCE_MEMORY_MB_THRESHOLD,
-            ldif_strict_validation=True,
-            ldif_enable_analytics=False,  # Skip analytics for performance
+        # Create base config and override specific values
+        config = cast("FlextLdifConfig", cls())
+        config.debug = False
+        config.trace = False
+        config.max_workers = FlextLdifConstants.Processing.PERFORMANCE_MIN_WORKERS
+        config.ldif_chunk_size = (
+            FlextLdifConstants.Processing.PERFORMANCE_MIN_CHUNK_SIZE
         )
+        config.enable_performance_optimizations = True
+        config.enable_parallel_processing = True
+        config.memory_limit_mb = (
+            FlextLdifConstants.Processing.PERFORMANCE_MEMORY_MB_THRESHOLD
+        )
+        config.ldif_strict_validation = True
+        config.ldif_enable_analytics = False  # Skip analytics for performance
+        return config
 
     @classmethod
     def create_for_development(cls) -> FlextLdifConfig:
@@ -376,20 +378,18 @@ class FlextLdifConfig(FlextConfig):
             FlextLdifConfig instance with development-friendly settings
 
         """
-        return cast(
-            "FlextLdifConfig",
-            cls(
-                debug_mode=True,
-                verbose_logging=True,
-                enable_performance_optimizations=False,
-                max_workers=FlextLdifConstants.Processing.DEBUG_MAX_WORKERS,
-                ldif_chunk_size=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE
-                // 10,
-                memory_limit_mb=FlextLdifConstants.Processing.MIN_MEMORY_MB,
-                ldif_strict_validation=False,
-                ldif_enable_analytics=True,
-            ),
+        config = cast("FlextLdifConfig", cls())
+        config.debug = True
+        config.trace = True
+        config.enable_performance_optimizations = False
+        config.max_workers = FlextLdifConstants.Processing.DEBUG_MAX_WORKERS
+        config.ldif_chunk_size = (
+            FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE // 10
         )
+        config.memory_limit_mb = FlextLdifConstants.Processing.MIN_MEMORY_MB
+        config.ldif_strict_validation = False
+        config.ldif_enable_analytics = True
+        return config
 
     @classmethod
     def create_for_server_type(cls, server_type: str) -> FlextLdifConfig:
@@ -402,29 +402,23 @@ class FlextLdifConfig(FlextConfig):
             FlextLdifConfig instance configured for the server type
 
         """
-        base_config: FlextTypes.Dict = {"server_type": server_type}
+        config = cast("FlextLdifConfig", cls())
 
         # Server-specific optimizations
         if server_type == "openldap":
-            base_config.update({
-                "ldif_strict_validation": True,
-                "ldif_validate_dn_format": True,
-                "strict_rfc_compliance": True,
-            })
+            config.ldif_strict_validation = True
+            config.ldif_validate_dn_format = True
+            config.strict_rfc_compliance = True
         elif server_type == "active_directory":
-            base_config.update({
-                "ldif_strict_validation": False,
-                "ldif_validate_dn_format": False,
-                "strict_rfc_compliance": False,
-            })
+            config.ldif_strict_validation = False
+            config.ldif_validate_dn_format = False
+            config.strict_rfc_compliance = False
         elif server_type == "apache_directory":
-            base_config.update({
-                "ldif_strict_validation": True,
-                "ldif_validate_dn_format": True,
-                "strict_rfc_compliance": True,
-            })
+            config.ldif_strict_validation = True
+            config.ldif_validate_dn_format = True
+            config.strict_rfc_compliance = True
 
-        return FlextLdifConfig(**base_config)
+        return config
 
     # =========================================================================
     # UTILITY METHODS - Enhanced with FlextConfig integration

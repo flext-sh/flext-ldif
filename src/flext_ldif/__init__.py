@@ -64,6 +64,7 @@ from typing import Final
 from flext_core import FlextTypes
 
 from flext_ldif.api import FlextLdif
+from flext_ldif.client import FlextLdifClient
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.exceptions import FlextLdifExceptions
@@ -82,6 +83,7 @@ __all__ = [
     "PROJECT_VERSION",
     "VERSION",
     "FlextLdif",
+    "FlextLdifClient",
     "FlextLdifConfig",
     "FlextLdifConstants",
     "FlextLdifExceptions",

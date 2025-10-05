@@ -10,15 +10,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextModels, FlextTypes
-from pydantic import ConfigDict, Field, computed_field
+from typing import Any
 
-from flext_ldif.commands import FlextLdifCommands
-from flext_ldif.core import FlextLdifCore
-from flext_ldif.events import FlextLdifEvents
-from flext_ldif.results import FlextLdifResults
-from flext_ldif.schema import FlextLdifSchema
-from flext_ldif.specifications import FlextLdifSpecifications
+from flext_core import FlextModels, FlextResult, FlextTypes
+from pydantic import ConfigDict, Field, computed_field
 
 # LDIF format constants (legacy compatibility)
 rfc = "rfc"
@@ -67,78 +62,169 @@ class FlextLdifModels(FlextModels):
     )
 
     # =========================================================================
-    # CQRS MODELS - Commands and Queries
-    # =========================================================================
-
-    # Import CQRS models from commands module
-    ParseQuery = FlextLdifCommands.ParseQuery
-    ValidateQuery = FlextLdifCommands.ValidateQuery
-    AnalyzeQuery = FlextLdifCommands.AnalyzeQuery
-    WriteCommand = FlextLdifCommands.WriteCommand
-    MigrateCommand = FlextLdifCommands.MigrateCommand
-    RegisterQuirkCommand = FlextLdifCommands.RegisterQuirkCommand
-
-    # =========================================================================
-    # EVENT MODELS - Domain Events
-    # =========================================================================
-
-    # Import event models from events module
-    EntryParsedEvent = FlextLdifEvents.EntryParsedEvent
-    EntriesValidatedEvent = FlextLdifEvents.EntriesValidatedEvent
-    AnalyticsGeneratedEvent = FlextLdifEvents.AnalyticsGeneratedEvent
-    EntriesWrittenEvent = FlextLdifEvents.EntriesWrittenEvent
-    MigrationCompletedEvent = FlextLdifEvents.MigrationCompletedEvent
-    QuirkRegisteredEvent = FlextLdifEvents.QuirkRegisteredEvent
-
-    # =========================================================================
     # CORE DOMAIN MODELS - Fundamental LDIF Entities
     # =========================================================================
 
-    # Import core models from core module
-    DistinguishedName = FlextLdifCore.DistinguishedName
-    LdifAttribute = FlextLdifCore.LdifAttribute
-    LdifAttributes = FlextLdifCore.LdifAttributes
-    Entry = FlextLdifCore.Entry
-    ChangeRecord = FlextLdifCore.ChangeRecord
+    class DistinguishedName(FlextModels.Value):
+        """Distinguished Name value object."""
+
+        value: str = Field(..., description="DN string value")
+
+    class Entry(FlextModels.Entity):
+        """LDIF entry domain model."""
+
+        dn: FlextLdifModels.DistinguishedName = Field(
+            ..., description="Distinguished Name of the entry"
+        )
+        attributes: FlextLdifModels.LdifAttributes = Field(
+            ..., description="Entry attributes container"
+        )
+
+        @classmethod
+        def create(
+            cls,
+            data: dict[str, object] | None = None,
+            **kwargs: object
+        ) -> FlextResult[FlextLdifModels.Entry]:
+            """Create Entry instance with validation, returns FlextResult."""
+            try:
+                if data is None:
+                    data = {}
+                data.update(kwargs)
+                instance = cls(**data)
+                return FlextResult["FlextLdifModels.Entry"].ok(instance)
+            except Exception as e:
+                return FlextResult["FlextLdifModels.Entry"].fail(
+                    f"Failed to create Entry: {e}"
+                )
+
+        def get_attribute(self, name: str) -> list[str] | None:
+            """Get attribute value(s) by name.
+
+            Args:
+                name: Attribute name to retrieve
+
+            Returns:
+                List of attribute values, or None if attribute doesn't exist
+
+            """
+            return self.attributes.get(name)
+
+    class AttributeValues(FlextModels.Value):
+        """LDIF attribute values container."""
+
+        values: list[str] = Field(default_factory=list, description="Attribute values")
+
+    class LdifAttributes(FlextModels.Value):
+        """LDIF attributes container."""
+
+        attributes: dict[str, list[str]] = Field(
+            default_factory=dict, description="Attribute name to values mapping"
+        )
+
+    class ChangeRecord(FlextModels.Value):
+        """LDIF change record for modifications."""
+
+        dn: str = Field(..., description="Distinguished Name")
+        changetype: str = Field(..., description="Type of change")
+        changes: list[dict[str, Any]] = Field(
+            default_factory=list, description="List of changes"
+        )
+
+    class LdifValidationResult(FlextModels.Value):
+        """Result of LDIF validation operations."""
+
+        is_valid: bool = Field(default=False, description="Whether validation passed")
+        errors: list[str] = Field(
+            default_factory=list, description="List of validation errors"
+        )
+        warnings: list[str] = Field(
+            default_factory=list, description="List of validation warnings"
+        )
+
+    class AnalyticsResult(FlextModels.Value):
+        """Result of LDIF analytics operations."""
+
+        total_entries: int = Field(
+            default=0, description="Total number of entries analyzed"
+        )
+        object_class_distribution: dict[str, int] = Field(
+            default_factory=dict, description="Distribution of object classes"
+        )
+        patterns_detected: list[str] = Field(
+            default_factory=list, description="Detected patterns in the data"
+        )
 
     # =========================================================================
-    # SPECIFICATION MODELS - Technology Detection
+    # CQRS MODELS - Commands and Queries
     # =========================================================================
 
-    # Import specification models from specifications module
-    TechnologySpecification = FlextLdifSpecifications.TechnologySpecification
-    OidSpecification = FlextLdifSpecifications.OidSpecification
-    OudSpecification = FlextLdifSpecifications.OudSpecification
-    StandardLdifSpecification = FlextLdifSpecifications.StandardLdifSpecification
+    class ParseQuery(FlextModels.Query):
+        """Query for parsing LDIF content."""
 
-    # =========================================================================
-    # SCHEMA MODELS - LDAP Schema Definitions
-    # =========================================================================
+        source: str = Field(..., description="LDIF source content, file path, or lines")
+        format: str = Field(
+            default="auto", description="LDIF format to use for parsing"
+        )
+        encoding: str = Field(
+            default="utf-8", description="Character encoding for LDIF content"
+        )
+        strict: bool = Field(
+            default=True, description="Whether to use strict validation during parsing"
+        )
 
-    # Import schema models from schema module
-    SchemaObjectClass = FlextLdifSchema.SchemaObjectClass
-    SchemaDiscoveryResult = FlextLdifSchema.SchemaDiscoveryResult
+    class ValidateQuery(FlextModels.Query):
+        """Query for validating LDIF entries."""
 
-    # =========================================================================
-    # ACL MODELS - Access Control Lists
-    # =========================================================================
+        entries: list[Any] = Field(..., description="Entries to validate")
+        schema_config: FlextTypes.Dict | None = Field(
+            default=None, description="Schema configuration for validation"
+        )
+        strict: bool = Field(
+            default=True, description="Whether to use strict validation"
+        )
 
-    # Import ACL models from acl module
-    AclTarget = FlextLdifAcl.AclTarget
-    AclSubject = FlextLdifAcl.AclSubject
-    AclPermissions = FlextLdifAcl.AclPermissions
-    UnifiedAcl = FlextLdifAcl.UnifiedAcl
+    class AnalyzeQuery(FlextModels.Query):
+        """Query for analyzing LDIF entries."""
 
-    # =========================================================================
-    # RESULT MODELS - Operation Results
-    # =========================================================================
+        entries: list[Any] = Field(..., description="Entries to analyze")
+        metrics: FlextTypes.Dict | None = Field(
+            default=None, description="Metrics configuration"
+        )
+        include_patterns: bool = Field(
+            default=True, description="Whether to include pattern detection"
+        )
 
-    # Import result models from results module
-    ParseResult = FlextLdifResults.ParseResult
-    TransformResult = FlextLdifResults.TransformResult
-    AnalyticsResult = FlextLdifResults.AnalyticsResult
-    WriteResult = FlextLdifResults.WriteResult
-    FilterResult = FlextLdifResults.FilterResult
+    class WriteCommand(FlextModels.Command):
+        """Command for writing entries to LDIF format."""
+
+        entries: list[Any] = Field(..., description="Entries to write")
+        format: str = Field(default="rfc", description="Output LDIF format")
+        output: str | None = Field(
+            default=None, description="Output path (None for string return)"
+        )
+        line_width: int = Field(
+            default=76, ge=40, le=120, description="Maximum line width"
+        )
+
+    class MigrateCommand(FlextModels.Command):
+        """Command for migrating LDIF entries between server types."""
+
+        entries: list[Any] = Field(..., description="Entries to migrate")
+        source_format: str = Field(..., description="Source LDIF format")
+        target_format: str = Field(..., description="Target LDIF format")
+        options: FlextTypes.Dict | None = Field(
+            default=None, description="Migration options"
+        )
+
+    class RegisterQuirkCommand(FlextModels.Command):
+        """Command for registering server-specific quirks."""
+
+        quirk_type: str = Field(..., description="Type of quirk to register")
+        quirk_impl: Any = Field(..., description="Quirk implementation instance")
+        override: bool = Field(
+            default=False, description="Whether to override existing quirk"
+        )
 
     # =========================================================================
     # BASE CLASSES - Shared Foundations (for backward compatibility)
@@ -216,6 +302,9 @@ class FlextLdifModels(FlextModels):
     class BaseAclPermissions(FlextModels.Value):
         """Base class for ACL permissions."""
 
+        # Permission constants
+        TOTAL_PERMISSIONS: int = 7
+
         read: bool = Field(default=False, description="Read permission")
         write: bool = Field(default=False, description="Write permission")
         add: bool = Field(default=False, description="Add permission")
@@ -230,9 +319,9 @@ class FlextLdifModels(FlextModels):
             granted = [k for k, v in self.__dict__.items() if isinstance(v, bool) and v]
             return {
                 "granted_count": len(granted),
-                "total_permissions": 7,
+                "total_permissions": self.TOTAL_PERMISSIONS,
                 "granted_permissions": granted,
-                "all_granted": len(granted) == 7,
+                "all_granted": len(granted) == self.TOTAL_PERMISSIONS,
             }
 
     class BaseAclSubject(FlextModels.Value):
@@ -246,6 +335,43 @@ class FlextLdifModels(FlextModels):
         def subject_key(self) -> str:
             """Unique key for the subject."""
             return f"{self.subject_type}:{self.subject_value}"
+
+    class AclTarget(FlextModels.Value):
+        """ACL target specification."""
+
+        target_type: str = Field(
+            default="dn", description="Type of target (dn, filter, etc.)"
+        )
+        target_value: str = Field(..., description="Target value")
+
+    class AclSubject(FlextModels.Value):
+        """ACL subject specification."""
+
+        subject_type: str = Field(
+            default="user", description="Type of subject (user, group, etc.)"
+        )
+        subject_value: str = Field(..., description="Subject identifier")
+
+    class AclPermissions(FlextModels.Value):
+        """ACL permissions specification."""
+
+        read: bool = Field(default=False, description="Read permission")
+        write: bool = Field(default=False, description="Write permission")
+        search: bool = Field(default=False, description="Search permission")
+        compare: bool = Field(default=False, description="Compare permission")
+        add: bool = Field(default=False, description="Add permission")
+        delete: bool = Field(default=False, description="Delete permission")
+        modify: bool = Field(default=False, description="Modify permission")
+
+    class UnifiedAcl(FlextModels.Value):
+        """Unified ACL representation across different LDAP servers."""
+
+        target: FlextLdifModels.AclTarget = Field(..., description="ACL target")
+        subject: FlextLdifModels.AclSubject = Field(..., description="ACL subject")
+        permissions: FlextLdifModels.AclPermissions = Field(
+            ..., description="ACL permissions"
+        )
+        scope: str = Field(default="subtree", description="ACL scope")
 
     # =========================================================================
     # COMPUTED FIELDS - Metadata and Statistics
