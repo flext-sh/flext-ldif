@@ -82,9 +82,7 @@ class FlextLdifModels(FlextModels):
 
         @classmethod
         def create(
-            cls,
-            data: dict[str, object] | None = None,
-            **kwargs: object
+            cls, data: dict[str, object] | None = None, **kwargs: object
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Create Entry instance with validation, returns FlextResult."""
             try:
