@@ -9,12 +9,15 @@ server-specific quirks with RFC-compliant base parsers.
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextModels, FlextResult, FlextTypes
+from flext_core import FlextLogger, FlextModels, FlextResult
 
-from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
+from flext_ldif.quirks.base import (
+    FlextLdifQuirksBase,
+)
+from flext_ldif.typings import FlextLdifTypes
 
 
-class QuirkRegistryService(FlextModels.Entity):
+class FlextLdifQuirksRegistry(FlextModels.Entity):
     """Centralized registry for LDIF/LDAP quirks.
 
     Manages discovery, registration, and composition of server-specific quirks.
@@ -27,8 +30,8 @@ class QuirkRegistryService(FlextModels.Entity):
     - Server type detection and auto-quirk loading
 
     Example:
-        registry = QuirkRegistryService()
-        registry.register_quirk(OidSchemaQuirk(server_type="oid"))
+        registry = FlextLdifQuirksRegistry()
+        registry.register_quirk(FlextLdifQuirksServersOid(server_type="oid"))
         quirks = registry.get_quirks_for_server("oid")
 
     """
@@ -36,12 +39,14 @@ class QuirkRegistryService(FlextModels.Entity):
     def __init__(self) -> None:
         """Initialize quirk registry."""
         super().__init__()
-        self._schema_quirks: dict[str, list[BaseSchemaQuirk]] = {}
-        self._acl_quirks: dict[str, list[BaseAclQuirk]] = {}
-        self._entry_quirks: dict[str, list[BaseEntryQuirk]] = {}
+        self._schema_quirks: dict[str, list[FlextLdifQuirksBase.BaseSchemaQuirk]] = {}
+        self._acl_quirks: dict[str, list[FlextLdifQuirksBase.BaseAclQuirk]] = {}
+        self._entry_quirks: dict[str, list[FlextLdifQuirksBase.BaseEntryQuirk]] = {}
         self._logger = FlextLogger(__name__)
 
-    def register_schema_quirk(self, quirk: BaseSchemaQuirk) -> FlextResult[None]:
+    def register_schema_quirk(
+        self, quirk: FlextLdifQuirksBase.BaseSchemaQuirk
+    ) -> FlextResult[None]:
         """Register a schema quirk for a server type.
 
         Args:
@@ -76,7 +81,9 @@ class QuirkRegistryService(FlextModels.Entity):
         except Exception as e:
             return FlextResult[None].fail(f"Failed to register schema quirk: {e}")
 
-    def register_acl_quirk(self, quirk: BaseAclQuirk) -> FlextResult[None]:
+    def register_acl_quirk(
+        self, quirk: FlextLdifQuirksBase.BaseAclQuirk
+    ) -> FlextResult[None]:
         """Register an ACL quirk for a server type.
 
         Args:
@@ -111,7 +118,9 @@ class QuirkRegistryService(FlextModels.Entity):
         except Exception as e:
             return FlextResult[None].fail(f"Failed to register ACL quirk: {e}")
 
-    def register_entry_quirk(self, quirk: BaseEntryQuirk) -> FlextResult[None]:
+    def register_entry_quirk(
+        self, quirk: FlextLdifQuirksBase.BaseEntryQuirk
+    ) -> FlextResult[None]:
         """Register an entry quirk for a server type.
 
         Args:
@@ -146,7 +155,9 @@ class QuirkRegistryService(FlextModels.Entity):
         except Exception as e:
             return FlextResult[None].fail(f"Failed to register entry quirk: {e}")
 
-    def get_schema_quirks(self, server_type: str) -> list[BaseSchemaQuirk]:
+    def get_schema_quirks(
+        self, server_type: str
+    ) -> list[FlextLdifQuirksBase.BaseSchemaQuirk]:
         """Get all schema quirks for a server type.
 
         Args:
@@ -158,7 +169,9 @@ class QuirkRegistryService(FlextModels.Entity):
         """
         return self._schema_quirks.get(server_type, [])
 
-    def get_acl_quirks(self, server_type: str) -> list[BaseAclQuirk]:
+    def get_acl_quirks(
+        self, server_type: str
+    ) -> list[FlextLdifQuirksBase.BaseAclQuirk]:
         """Get all ACL quirks for a server type.
 
         Args:
@@ -170,7 +183,9 @@ class QuirkRegistryService(FlextModels.Entity):
         """
         return self._acl_quirks.get(server_type, [])
 
-    def get_entry_quirks(self, server_type: str) -> list[BaseEntryQuirk]:
+    def get_entry_quirks(
+        self, server_type: str
+    ) -> list[FlextLdifQuirksBase.BaseEntryQuirk]:
         """Get all entry quirks for a server type.
 
         Args:
@@ -184,7 +199,12 @@ class QuirkRegistryService(FlextModels.Entity):
 
     def get_all_quirks_for_server(
         self, server_type: str
-    ) -> dict[str, list[BaseSchemaQuirk] | list[BaseAclQuirk] | list[BaseEntryQuirk]]:
+    ) -> dict[
+        str,
+        list[FlextLdifQuirksBase.BaseSchemaQuirk]
+        | list[FlextLdifQuirksBase.BaseAclQuirk]
+        | list[FlextLdifQuirksBase.BaseEntryQuirk],
+    ]:
         """Get all quirks (schema, ACL, entry) for a server type.
 
         Args:
@@ -202,7 +222,7 @@ class QuirkRegistryService(FlextModels.Entity):
 
     def find_schema_quirk_for_attribute(
         self, server_type: str, attr_definition: str
-    ) -> BaseSchemaQuirk | None:
+    ) -> FlextLdifQuirksBase.BaseSchemaQuirk | None:
         """Find the first schema quirk that can handle an attribute definition.
 
         Args:
@@ -220,7 +240,7 @@ class QuirkRegistryService(FlextModels.Entity):
 
     def find_schema_quirk_for_objectclass(
         self, server_type: str, oc_definition: str
-    ) -> BaseSchemaQuirk | None:
+    ) -> FlextLdifQuirksBase.BaseSchemaQuirk | None:
         """Find the first schema quirk that can handle an objectClass definition.
 
         Args:
@@ -236,7 +256,9 @@ class QuirkRegistryService(FlextModels.Entity):
                 return quirk
         return None
 
-    def find_acl_quirk(self, server_type: str, acl_line: str) -> BaseAclQuirk | None:
+    def find_acl_quirk(
+        self, server_type: str, acl_line: str
+    ) -> FlextLdifQuirksBase.BaseAclQuirk | None:
         """Find the first ACL quirk that can handle an ACL line.
 
         Args:
@@ -254,7 +276,7 @@ class QuirkRegistryService(FlextModels.Entity):
 
     def find_entry_quirk(
         self, server_type: str, entry_dn: str, attributes: dict
-    ) -> BaseEntryQuirk | None:
+    ) -> FlextLdifQuirksBase.BaseEntryQuirk | None:
         """Find the first entry quirk that can handle an entry.
 
         Args:
@@ -271,7 +293,7 @@ class QuirkRegistryService(FlextModels.Entity):
                 return quirk
         return None
 
-    def list_registered_servers(self) -> FlextTypes.StringList:
+    def list_registered_servers(self) -> FlextLdifTypes.StringList:
         """List all server types that have registered quirks.
 
         Returns:
@@ -284,7 +306,7 @@ class QuirkRegistryService(FlextModels.Entity):
         server_types.update(self._entry_quirks.keys())
         return sorted(server_types)
 
-    def get_registry_stats(self) -> FlextTypes.Dict:
+    def get_registry_stats(self) -> FlextLdifTypes.Dict:
         """Get statistics about registered quirks.
 
         Returns:
@@ -307,26 +329,26 @@ class QuirkRegistryService(FlextModels.Entity):
     class _GlobalAccess:
         """Nested singleton management for global quirk registry."""
 
-        _instance: QuirkRegistryService | None = None
+        _instance: FlextLdifQuirksRegistry | None = None
 
         @classmethod
-        def get_instance(cls) -> QuirkRegistryService:
+        def get_instance(cls) -> FlextLdifQuirksRegistry:
             """Get or create the global registry instance."""
             if cls._instance is None:
-                cls._instance = QuirkRegistryService()
+                cls._instance = FlextLdifQuirksRegistry()
             return cls._instance
 
     @classmethod
-    def get_global_instance(cls) -> QuirkRegistryService:
+    def get_global_instance(cls) -> FlextLdifQuirksRegistry:
         """Get or create the global quirk registry instance.
 
         Returns:
-            Global QuirkRegistryService instance
+            Global FlextLdifQuirksRegistry instance
 
         """
         return cls._GlobalAccess.get_instance()
 
 
 __all__ = [
-    "QuirkRegistryService",
+    "FlextLdifQuirksRegistry",
 ]

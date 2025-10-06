@@ -15,7 +15,7 @@ from typing import override
 from flext_core import FlextExceptions, FlextResult
 
 
-class FlextLdifExceptions:
+class FlextLdifExceptions(FlextExceptions):
     """LDIF-specific exceptions extending FlextExceptions.
 
     Provides LDIF domain-specific exception classes for all LDIF processing
@@ -50,6 +50,29 @@ class FlextLdifExceptions:
     def file_error(message: str) -> FlextResult[object]:
         """Create file error result."""
         return FlextResult[object].fail(message, error_code="LDIF_FILE_ERROR")
+
+    @staticmethod
+    def _extract_common_kwargs(
+        kwargs: dict[str, object],
+    ) -> tuple[dict[str, object], str | None, str | None]:
+        """Extract common keyword arguments from kwargs."""
+        context = kwargs.get("context", {})
+        correlation_id = kwargs.get("correlation_id")
+        error_code = kwargs.get("error_code")
+        return (
+            context if isinstance(context, dict) else {},
+            correlation_id if isinstance(correlation_id, str) else None,
+            error_code if isinstance(error_code, str) else None,
+        )
+
+    @staticmethod
+    def _build_context(
+        base_context: dict[str, object], **ldif_fields: object
+    ) -> dict[str, object]:
+        """Build context with LDIF-specific fields."""
+        context = base_context.copy()
+        context.update(ldif_fields)
+        return context
 
     @staticmethod
     def configuration_error(message: str) -> FlextResult[object]:
@@ -155,12 +178,12 @@ class FlextLdifExceptions:
             self.invalid_value = value
 
             # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
+            base_context, correlation_id, error_code = (
+                FlextLdifExceptions._extract_common_kwargs(kwargs)
             )
 
             # Build context with LDIF-specific fields
-            context = self._build_context(
+            context = FlextLdifExceptions._build_context(
                 base_context,
                 ldif_field=field,
                 invalid_value=value,
@@ -169,8 +192,8 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                code=error_code or "LDIF_VALIDATION_ERROR",
-                context=context,
+                error_code=error_code or "LDIF_VALIDATION_ERROR",
+                metadata=context,
                 correlation_id=correlation_id,
             )
 
@@ -202,12 +225,12 @@ class FlextLdifExceptions:
             self.line_content = line_content
 
             # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
+            base_context, correlation_id, error_code = (
+                FlextLdifExceptions._extract_common_kwargs(kwargs)
             )
 
             # Build context with LDIF-specific fields
-            context = self._build_context(
+            context = FlextLdifExceptions._build_context(
                 base_context,
                 line_number=line_number,
                 line_content=line_content,
@@ -216,8 +239,8 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                code=error_code or "LDIF_PARSE_ERROR",
-                context=context,
+                error_code=error_code or "LDIF_PARSE_ERROR",
+                metadata=context,
                 correlation_id=correlation_id,
             )
 
@@ -249,12 +272,12 @@ class FlextLdifExceptions:
             self.entry_dn = entry_dn
 
             # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
+            base_context, correlation_id, error_code = (
+                FlextLdifExceptions._extract_common_kwargs(kwargs)
             )
 
             # Build context with LDIF-specific fields
-            context = self._build_context(
+            context = FlextLdifExceptions._build_context(
                 base_context,
                 ldif_operation=operation,
                 entry_dn=entry_dn,
@@ -263,8 +286,8 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                code=error_code or "LDIF_PROCESSING_ERROR",
-                context=context,
+                error_code=error_code or "LDIF_PROCESSING_ERROR",
+                metadata=context,
                 correlation_id=correlation_id,
             )
 
@@ -296,12 +319,12 @@ class FlextLdifExceptions:
             self.file_operation = operation
 
             # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
+            base_context, correlation_id, error_code = (
+                FlextLdifExceptions._extract_common_kwargs(kwargs)
             )
 
             # Build context with LDIF-specific fields
-            context = self._build_context(
+            context = FlextLdifExceptions._build_context(
                 base_context,
                 file_path=file_path,
                 file_operation=operation,
@@ -310,8 +333,8 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                code=error_code or "LDIF_FILE_ERROR",
-                context=context,
+                error_code=error_code or "LDIF_FILE_ERROR",
+                metadata=context,
                 correlation_id=correlation_id,
             )
 
@@ -343,12 +366,12 @@ class FlextLdifExceptions:
             self.config_file = config_file
 
             # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
+            base_context, correlation_id, error_code = (
+                FlextLdifExceptions._extract_common_kwargs(kwargs)
             )
 
             # Build context with LDIF-specific fields
-            context = self._build_context(
+            context = FlextLdifExceptions._build_context(
                 base_context,
                 ldif_config_key=config_key,
                 config_file=config_file,
@@ -357,8 +380,8 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                code=error_code or "LDIF_CONFIGURATION_ERROR",
-                context=context,
+                error_code=error_code or "LDIF_CONFIGURATION_ERROR",
+                metadata=context,
                 correlation_id=correlation_id,
             )
 
@@ -387,12 +410,12 @@ class FlextLdifExceptions:
             self.dn_value = dn_value
 
             # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
+            base_context, correlation_id, error_code = (
+                FlextLdifExceptions._extract_common_kwargs(kwargs)
             )
 
             # Build context with LDIF-specific fields
-            context = self._build_context(
+            context = FlextLdifExceptions._build_context(
                 base_context,
                 dn_value=dn_value,
             )
@@ -400,8 +423,8 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                code=error_code or "LDIF_DN_VALIDATION_ERROR",
-                context=context,
+                error_code=error_code or "LDIF_DN_VALIDATION_ERROR",
+                metadata=context,
                 correlation_id=correlation_id,
             )
 
@@ -433,12 +456,12 @@ class FlextLdifExceptions:
             self.attribute_value = attribute_value
 
             # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
+            base_context, correlation_id, error_code = (
+                FlextLdifExceptions._extract_common_kwargs(kwargs)
             )
 
             # Build context with LDIF-specific fields
-            context = self._build_context(
+            context = FlextLdifExceptions._build_context(
                 base_context,
                 attribute_name=attribute_name,
                 attribute_value=attribute_value,
@@ -447,8 +470,8 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                code=error_code or "LDIF_ATTRIBUTE_VALIDATION_ERROR",
-                context=context,
+                error_code=error_code or "LDIF_ATTRIBUTE_VALIDATION_ERROR",
+                metadata=context,
                 correlation_id=correlation_id,
             )
 
@@ -477,12 +500,12 @@ class FlextLdifExceptions:
             self.encoding = encoding
 
             # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
+            base_context, correlation_id, error_code = (
+                FlextLdifExceptions._extract_common_kwargs(kwargs)
             )
 
             # Build context with LDIF-specific fields
-            context = self._build_context(
+            context = FlextLdifExceptions._build_context(
                 base_context,
                 encoding=encoding,
             )
@@ -490,8 +513,8 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                code=error_code or "LDIF_ENCODING_ERROR",
-                context=context,
+                error_code=error_code or "LDIF_ENCODING_ERROR",
+                metadata=context,
                 correlation_id=correlation_id,
             )
 
@@ -520,12 +543,12 @@ class FlextLdifExceptions:
             self.url_value = url
 
             # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
+            base_context, correlation_id, error_code = (
+                FlextLdifExceptions._extract_common_kwargs(kwargs)
             )
 
             # Build context with LDIF-specific fields
-            context = self._build_context(
+            context = FlextLdifExceptions._build_context(
                 base_context,
                 url_value=url,
             )
@@ -533,8 +556,8 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                code=error_code or "LDIF_URL_VALIDATION_ERROR",
-                context=context,
+                error_code=error_code or "LDIF_URL_VALIDATION_ERROR",
+                metadata=context,
                 correlation_id=correlation_id,
             )
 
@@ -563,12 +586,12 @@ class FlextLdifExceptions:
             self.schema_name = schema_name
 
             # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
+            base_context, correlation_id, error_code = (
+                FlextLdifExceptions._extract_common_kwargs(kwargs)
             )
 
             # Build context with LDIF-specific fields
-            context = self._build_context(
+            context = FlextLdifExceptions._build_context(
                 base_context,
                 schema_name=schema_name,
             )
@@ -576,8 +599,8 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                code=error_code or "LDIF_SCHEMA_VALIDATION_ERROR",
-                context=context,
+                error_code=error_code or "LDIF_SCHEMA_VALIDATION_ERROR",
+                metadata=context,
                 correlation_id=correlation_id,
             )
 
@@ -606,12 +629,12 @@ class FlextLdifExceptions:
             self.objectclass = objectclass
 
             # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
+            base_context, correlation_id, error_code = (
+                FlextLdifExceptions._extract_common_kwargs(kwargs)
             )
 
             # Build context with LDIF-specific fields
-            context = self._build_context(
+            context = FlextLdifExceptions._build_context(
                 base_context,
                 objectclass=objectclass,
             )
@@ -619,8 +642,8 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                code=error_code or "LDIF_OBJECTCLASS_ERROR",
-                context=context,
+                error_code=error_code or "LDIF_OBJECTCLASS_ERROR",
+                metadata=context,
                 correlation_id=correlation_id,
             )
 
@@ -649,12 +672,12 @@ class FlextLdifExceptions:
             self.line_number = line_number
 
             # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
+            base_context, correlation_id, error_code = (
+                FlextLdifExceptions._extract_common_kwargs(kwargs)
             )
 
             # Build context with LDIF-specific fields
-            context = self._build_context(
+            context = FlextLdifExceptions._build_context(
                 base_context,
                 line_number=line_number,
             )
@@ -662,8 +685,8 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                code=error_code or "LDIF_FORMAT_ERROR",
-                context=context,
+                error_code=error_code or "LDIF_FORMAT_ERROR",
+                metadata=context,
                 correlation_id=correlation_id,
             )
 
@@ -692,12 +715,12 @@ class FlextLdifExceptions:
             self.rfc_section = rfc_section
 
             # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
+            base_context, correlation_id, error_code = (
+                FlextLdifExceptions._extract_common_kwargs(kwargs)
             )
 
             # Build context with LDIF-specific fields
-            context = self._build_context(
+            context = FlextLdifExceptions._build_context(
                 base_context,
                 rfc_section=rfc_section,
             )
@@ -705,8 +728,8 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                code=error_code or "LDIF_RFC_COMPLIANCE_ERROR",
-                context=context,
+                error_code=error_code or "LDIF_RFC_COMPLIANCE_ERROR",
+                metadata=context,
                 correlation_id=correlation_id,
             )
 
@@ -735,12 +758,12 @@ class FlextLdifExceptions:
             self.entry_dn = entry_dn
 
             # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
+            base_context, correlation_id, error_code = (
+                FlextLdifExceptions._extract_common_kwargs(kwargs)
             )
 
             # Build context with LDIF-specific fields
-            context = self._build_context(
+            context = FlextLdifExceptions._build_context(
                 base_context,
                 entry_dn=entry_dn,
             )
@@ -748,42 +771,12 @@ class FlextLdifExceptions:
             # Call parent with complete error information
             super().__init__(
                 message,
-                code=error_code or "LDIF_ENTRY_ERROR",
-                context=context,
+                error_code=error_code or "LDIF_ENTRY_ERROR",
+                metadata=context,
                 correlation_id=correlation_id,
             )
 
 
-# Export nested exception classes for easier importing
-LdifValidationError = FlextLdifExceptions.LdifValidationError
-LdifParseError = FlextLdifExceptions.LdifParseError
-LdifProcessingError = FlextLdifExceptions.LdifProcessingError
-LdifFileError = FlextLdifExceptions.LdifFileError
-LdifConfigurationError = FlextLdifExceptions.LdifConfigurationError
-LdifDnValidationError = FlextLdifExceptions.LdifDnValidationError
-LdifAttributeValidationError = FlextLdifExceptions.LdifAttributeValidationError
-LdifEncodingError = FlextLdifExceptions.LdifEncodingError
-LdifUrlValidationError = FlextLdifExceptions.LdifUrlValidationError
-LdifSchemaValidationError = FlextLdifExceptions.LdifSchemaValidationError
-LdifObjectClassError = FlextLdifExceptions.LdifObjectClassError
-LdifFormatError = FlextLdifExceptions.LdifFormatError
-LdifRfcComplianceError = FlextLdifExceptions.LdifRfcComplianceError
-LdifEntryError = FlextLdifExceptions.LdifEntryError
-
 __all__ = [
     "FlextLdifExceptions",
-    "LdifAttributeValidationError",
-    "LdifConfigurationError",
-    "LdifDnValidationError",
-    "LdifEncodingError",
-    "LdifEntryError",
-    "LdifFileError",
-    "LdifFormatError",
-    "LdifObjectClassError",
-    "LdifParseError",
-    "LdifProcessingError",
-    "LdifRfcComplianceError",
-    "LdifSchemaValidationError",
-    "LdifUrlValidationError",
-    "LdifValidationError",
 ]

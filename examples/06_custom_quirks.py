@@ -10,10 +10,10 @@ Demonstrates:
 
 from __future__ import annotations
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextTypes
 
-from flext_ldif.quirks.registry import QuirkRegistryService
-from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
+from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
+from flext_ldif.rfc.rfc_schema_parser import FlextLdifRfcSchemaParser
 
 
 class CustomLdapSchemaQuirk:
@@ -93,13 +93,13 @@ class CustomLdapSchemaQuirk:
 def main() -> None:
     """Custom quirks example."""
     # Initialize standard quirk registry
-    quirk_registry = QuirkRegistryService()
+    quirk_registry = FlextLdifQuirksRegistry()
 
     # Create and register custom quirk
     CustomLdapSchemaQuirk()
 
     # Register custom quirk
-    # Note: In practice, you'd extend QuirkRegistryService to support
+    # Note: In practice, you'd extend FlextLdifQuirksRegistry to support
     # dynamic quirk registration, or modify the registry's __init__
 
     # Use custom quirk with RFC parser
@@ -113,7 +113,7 @@ attributeTypes: ( 1.2.3.4.5 NAME 'customAttr' DESC 'Custom attribute' X-CUSTOM-M
 """
 
     # Parse with custom quirk
-    parser = RfcSchemaParserService(
+    parser = FlextLdifRfcSchemaParser(
         params={"content": custom_schema},
         quirk_registry=quirk_registry,  # MANDATORY parameter
         server_type="my_custom_ldap",  # Uses our custom quirk

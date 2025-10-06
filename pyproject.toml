@@ -17,12 +17,12 @@
     ]
     dependencies = [
         "colorlog (>=6.9.0)",
-        "flext-core @ file:///home/marlonsc/flext/flext-core",
         "ldap3 (>=2.9.1)",
         "ldif3 (>=3.2.2)",
         "pydantic (>=2.11.7)",
         "pydantic-settings (>=2.10.1)",
         "structlog (>=25.4.0)",
+        "flext-core @ file:///home/marlonsc/flext/flext-core/dist/flext_core-0.9.9-py3-none-any.whl",
     ]
     description = "FLEXT LDIF - Enterprise LDIF Processing Library"
     keywords = [
@@ -177,19 +177,15 @@
             "flext_ldif",
         ]
 
-        [tool.poetry.dependencies.flext-core]
-            develop = true
-            path    = "../flext-core"
-
-        [tool.poetry.dependencies.flext-cli]
+                        [tool.poetry.dependencies.flext-cli]
             develop = true
             path    = "../flext-cli"
 
-        [tool.poetry.dependencies.flext-ldap]
+                                                                [tool.poetry.dependencies.flext-ldap]
             develop = true
             path    = "../flext-ldap"
 
-        [tool.poetry.dependencies.flext-observability]
+                                                                                                        [tool.poetry.dependencies.flext-observability]
             develop = true
             path    = "../flext-observability"
 

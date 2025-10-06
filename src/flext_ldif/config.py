@@ -6,13 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal, cast
-
 from flext_core import FlextConfig, FlextConstants
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifConfig(FlextConfig):
@@ -136,8 +135,8 @@ class FlextLdifConfig(FlextConfig):
     )
 
     # Validation Configuration using FlextLdifConstants for defaults
-    validation_level: Literal["strict", "moderate", "lenient"] = Field(
-        default="strict",
+    validation_level: FlextLdifTypes.ValidationLevel = Field(
+        default=FlextLdifConstants.LiteralTypes.VALIDATION_LEVELS[0],  # "strict"
         description="Validation strictness level",
     )
 
@@ -147,14 +146,7 @@ class FlextLdifConfig(FlextConfig):
     )
 
     # Server Configuration using FlextLdifConstants for defaults
-    server_type: Literal[
-        "active_directory",
-        "openldap",
-        "apache_directory",
-        "novell_edirectory",
-        "ibm_tivoli",
-        "generic",
-    ] = Field(
+    server_type: FlextLdifTypes.ServerType = Field(
         default="generic",
         description="Target LDAP server type",
     )
@@ -316,7 +308,7 @@ class FlextLdifConfig(FlextConfig):
             FlextLdifConfig instance configured for the environment
 
         """
-        config = cast("FlextLdifConfig", cls())
+        config = cls()
 
         # Environment-specific defaults
         if environment == "development":
@@ -354,7 +346,7 @@ class FlextLdifConfig(FlextConfig):
 
         """
         # Create base config and override specific values
-        config = cast("FlextLdifConfig", cls())
+        config = cls()
         config.debug = False
         config.trace = False
         config.max_workers = FlextLdifConstants.Processing.PERFORMANCE_MIN_WORKERS
@@ -378,7 +370,7 @@ class FlextLdifConfig(FlextConfig):
             FlextLdifConfig instance with development-friendly settings
 
         """
-        config = cast("FlextLdifConfig", cls())
+        config = cls()
         config.debug = True
         config.trace = True
         config.enable_performance_optimizations = False
@@ -402,7 +394,7 @@ class FlextLdifConfig(FlextConfig):
             FlextLdifConfig instance configured for the server type
 
         """
-        config = cast("FlextLdifConfig", cls())
+        config = cls()
 
         # Server-specific optimizations
         if server_type == "openldap":

@@ -1,0 +1,676 @@
+ERROR Expected 1 positional argument, got 2 in function `flext_ldif.client.FlextLdifClient.parse_ldif` [bad-argument-count]
+   --> src/flext_ldif/api.py:116:48
+    |
+116 |         return self._client.parse_ldif(source, server_type)
+    |                                                ^^^^^^^^^^^
+    |
+ERROR Keyword argument `context` with type `dict[str, object]` is not assignable to parameter `**kwargs` with type `bool | float | int | str | None` in function `flext_core.exceptions.BaseError.__init__` [bad-argument-type]
+   --> src/flext_ldif/exceptions.py:192:25
+    |
+192 |                 context=context,
+    |                         ^^^^^^^
+    |
+ERROR Keyword argument `context` with type `dict[str, object]` is not assignable to parameter `**kwargs` with type `bool | float | int | str | None` in function `flext_core.exceptions.BaseError.__init__` [bad-argument-type]
+   --> src/flext_ldif/exceptions.py:239:25
+    |
+239 |                 context=context,
+    |                         ^^^^^^^
+    |
+ERROR Keyword argument `context` with type `dict[str, object]` is not assignable to parameter `**kwargs` with type `bool | float | int | str | None` in function `flext_core.exceptions.BaseError.__init__` [bad-argument-type]
+   --> src/flext_ldif/exceptions.py:286:25
+    |
+286 |                 context=context,
+    |                         ^^^^^^^
+    |
+ERROR Keyword argument `context` with type `dict[str, object]` is not assignable to parameter `**kwargs` with type `bool | float | int | str | None` in function `flext_core.exceptions.BaseError.__init__` [bad-argument-type]
+   --> src/flext_ldif/exceptions.py:333:25
+    |
+333 |                 context=context,
+    |                         ^^^^^^^
+    |
+ERROR Keyword argument `context` with type `dict[str, object]` is not assignable to parameter `**kwargs` with type `bool | float | int | str | None` in function `flext_core.exceptions.BaseError.__init__` [bad-argument-type]
+   --> src/flext_ldif/exceptions.py:380:25
+    |
+380 |                 context=context,
+    |                         ^^^^^^^
+    |
+ERROR Keyword argument `context` with type `dict[str, object]` is not assignable to parameter `**kwargs` with type `bool | float | int | str | None` in function `flext_core.exceptions.BaseError.__init__` [bad-argument-type]
+   --> src/flext_ldif/exceptions.py:423:25
+    |
+423 |                 context=context,
+    |                         ^^^^^^^
+    |
+ERROR Keyword argument `context` with type `dict[str, object]` is not assignable to parameter `**kwargs` with type `bool | float | int | str | None` in function `flext_core.exceptions.BaseError.__init__` [bad-argument-type]
+   --> src/flext_ldif/exceptions.py:470:25
+    |
+470 |                 context=context,
+    |                         ^^^^^^^
+    |
+ERROR Keyword argument `context` with type `dict[str, object]` is not assignable to parameter `**kwargs` with type `bool | float | int | str | None` in function `flext_core.exceptions.BaseError.__init__` [bad-argument-type]
+   --> src/flext_ldif/exceptions.py:513:25
+    |
+513 |                 context=context,
+    |                         ^^^^^^^
+    |
+ERROR Keyword argument `context` with type `dict[str, object]` is not assignable to parameter `**kwargs` with type `bool | float | int | str | None` in function `flext_core.exceptions.BaseError.__init__` [bad-argument-type]
+   --> src/flext_ldif/exceptions.py:556:25
+    |
+556 |                 context=context,
+    |                         ^^^^^^^
+    |
+ERROR Keyword argument `context` with type `dict[str, object]` is not assignable to parameter `**kwargs` with type `bool | float | int | str | None` in function `flext_core.exceptions.BaseError.__init__` [bad-argument-type]
+   --> src/flext_ldif/exceptions.py:599:25
+    |
+599 |                 context=context,
+    |                         ^^^^^^^
+    |
+ERROR Keyword argument `context` with type `dict[str, object]` is not assignable to parameter `**kwargs` with type `bool | float | int | str | None` in function `flext_core.exceptions.BaseError.__init__` [bad-argument-type]
+   --> src/flext_ldif/exceptions.py:642:25
+    |
+642 |                 context=context,
+    |                         ^^^^^^^
+    |
+ERROR Keyword argument `context` with type `dict[str, object]` is not assignable to parameter `**kwargs` with type `bool | float | int | str | None` in function `flext_core.exceptions.BaseError.__init__` [bad-argument-type]
+   --> src/flext_ldif/exceptions.py:685:25
+    |
+685 |                 context=context,
+    |                         ^^^^^^^
+    |
+ERROR Keyword argument `context` with type `dict[str, object]` is not assignable to parameter `**kwargs` with type `bool | float | int | str | None` in function `flext_core.exceptions.BaseError.__init__` [bad-argument-type]
+   --> src/flext_ldif/exceptions.py:728:25
+    |
+728 |                 context=context,
+    |                         ^^^^^^^
+    |
+ERROR Keyword argument `context` with type `dict[str, object]` is not assignable to parameter `**kwargs` with type `bool | float | int | str | None` in function `flext_core.exceptions.BaseError.__init__` [bad-argument-type]
+   --> src/flext_ldif/exceptions.py:771:25
+    |
+771 |                 context=context,
+    |                         ^^^^^^^
+    |
+ERROR Argument `object` is not assignable to parameter `obj` with type `Sized` in function `len` [bad-argument-type]
+   --> src/flext_ldif/migration_pipeline.py:452:45
+    |
+452 |                     "attributes_count": len(schema_data.get("attributes", {})),
+    |                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Argument `object` is not assignable to parameter `obj` with type `Sized` in function `len` [bad-argument-type]
+   --> src/flext_ldif/migration_pipeline.py:453:48
+    |
+453 |                     "objectclasses_count": len(schema_data.get("objectclasses", {})),
+    |                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Expected a type form, got instance of `Literal['FlextLdifModels.Entry']` [not-a-type]
+   --> src/flext_ldif/models.py:105:36
+    |
+105 |                 return FlextResult["FlextLdifModels.Entry"].ok(instance)
+    |                                    ^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Expected a type form, got instance of `Literal['FlextLdifModels.Entry']` [not-a-type]
+   --> src/flext_ldif/models.py:107:36
+    |
+107 |                 return FlextResult["FlextLdifModels.Entry"].fail(
+    |                                    ^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Object of class `NoneType` has no attribute `error` [missing-attribute]
+  --> src/flext_ldif/quirks/entry_quirks.py:95:13
+   |
+95 |             self._logger.error(error_msg)
+   |             ^^^^^^^^^^^^^^^^^^
+   |
+ERROR Object of class `Entry` has no attribute `has_attribute` [missing-attribute]
+   --> src/flext_ldif/quirks/entry_quirks.py:205:20
+    |
+205 |             if not entry.has_attribute(special_attr)
+    |                    ^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Class `FlextLdifModels` has no class attribute `OidSchemaAttribute` [missing-attribute]
+  --> src/flext_ldif/quirks/servers/oid_quirks.py:84:27
+   |
+84 |             attr_result = FlextLdifModels.OidSchemaAttribute.from_ldif_line(
+   |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+ERROR Class `FlextLdifModels` has no class attribute `OidSchemaObjectClass` [missing-attribute]
+   --> src/flext_ldif/quirks/servers/oid_quirks.py:129:25
+    |
+129 |             oc_result = FlextLdifModels.OidSchemaObjectClass.from_ldif_line(
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Class `FlextLdifModels` has no class attribute `OidEntryLevelAci` [missing-attribute]
+   --> src/flext_ldif/quirks/servers/oid_quirks.py:262:30
+    |
+262 |                     result = FlextLdifModels.OidEntryLevelAci.from_ldif_line(acl_line)
+    |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Class `FlextLdifModels` has no class attribute `OidAci` [missing-attribute]
+   --> src/flext_ldif/quirks/servers/oid_quirks.py:264:30
+    |
+264 |                     result = FlextLdifModels.OidAci.from_ldif_line(acl_line)
+    |                              ^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Class member `EntryQuirk.can_handle_entry` overrides parent class `BaseEntryQuirk` in an inconsistent manner [bad-param-name-override]
+   --> src/flext_ldif/quirks/servers/oid_quirks.py:370:13
+    |
+370 |         def can_handle_entry(
+    |             ^^^^^^^^^^^^^^^^
+    |
+  Got parameter name `_entry_dn`, expected `entry_dn`
+ERROR Class `FlextLdifModels` has no class attribute `OidSchemaAttribute` [missing-attribute]
+  --> src/flext_ldif/quirks/servers/oud_quirks.py:81:27
+   |
+81 |             attr_result = FlextLdifModels.OidSchemaAttribute.from_ldif_line(
+   |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+ERROR Class `FlextLdifModels` has no class attribute `OidSchemaObjectClass` [missing-attribute]
+   --> src/flext_ldif/quirks/servers/oud_quirks.py:131:25
+    |
+131 |             oc_result = FlextLdifModels.OidSchemaObjectClass.from_ldif_line(
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Could not find name `FlextLdifTypes` [unknown-name]
+  --> src/flext_ldif/rfc/rfc_ldif_parser.py:26:41
+   |
+26 | class RfcLdifParserService(FlextService[FlextLdifTypes.Dict]):
+   |                                         ^^^^^^^^^^^^^^
+   |
+ERROR Could not find name `FlextLdifTypes` [unknown-name]
+  --> src/flext_ldif/rfc/rfc_ldif_parser.py:75:38
+   |
+75 |     def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
+   |                                      ^^^^^^^^^^^^^^
+   |
+ERROR Object of class `NoneType` has no attribute `info` [missing-attribute]
+  --> src/flext_ldif/rfc/rfc_ldif_parser.py:96:17
+   |
+96 |                 self._logger.info(
+   |                 ^^^^^^^^^^^^^^^^^
+   |
+ERROR Could not find name `FlextLdifTypes` [unknown-name]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:110:40
+    |
+110 |                     return FlextResult[FlextLdifTypes.Dict].fail(parse_result.error)
+    |                                        ^^^^^^^^^^^^^^
+    |
+ERROR Object of class `NoneType` has no attribute `info` [missing-attribute]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:126:17
+    |
+126 |                 self._logger.info(
+    |                 ^^^^^^^^^^^^^^^^^
+    |
+ERROR Could not find name `FlextLdifTypes` [unknown-name]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:133:36
+    |
+133 |                 return FlextResult[FlextLdifTypes.Dict].ok(data)
+    |                                    ^^^^^^^^^^^^^^
+    |
+ERROR Could not find name `FlextLdifTypes` [unknown-name]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:138:36
+    |
+138 |                 return FlextResult[FlextLdifTypes.Dict].fail(
+    |                                    ^^^^^^^^^^^^^^
+    |
+ERROR Could not find name `FlextLdifTypes` [unknown-name]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:144:36
+    |
+144 |                 return FlextResult[FlextLdifTypes.Dict].fail(
+    |                                    ^^^^^^^^^^^^^^
+    |
+ERROR Object of class `NoneType` has no attribute `info` [missing-attribute]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:151:13
+    |
+151 |             self._logger.info(
+    |             ^^^^^^^^^^^^^^^^^
+    |
+ERROR Could not find name `FlextLdifTypes` [unknown-name]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:166:36
+    |
+166 |                 return FlextResult[FlextLdifTypes.Dict].fail(parse_result.error)
+    |                                    ^^^^^^^^^^^^^^
+    |
+ERROR Object of class `NoneType` has no attribute `info` [missing-attribute]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:170:13
+    |
+170 |             self._logger.info(
+    |             ^^^^^^^^^^^^^^^^^
+    |
+ERROR Could not find name `FlextLdifTypes` [unknown-name]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:179:32
+    |
+179 |             return FlextResult[FlextLdifTypes.Dict].ok(data)
+    |                                ^^^^^^^^^^^^^^
+    |
+ERROR Object of class `NoneType` has no attribute `exception` [missing-attribute]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:183:13
+    |
+183 |             self._logger.exception(error_msg)
+    |             ^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Could not find name `FlextLdifTypes` [unknown-name]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:184:32
+    |
+184 |             return FlextResult[FlextLdifTypes.Dict].fail(error_msg)
+    |                                ^^^^^^^^^^^^^^
+    |
+ERROR Could not find name `FlextLdifTypes` [unknown-name]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:201:27
+    |
+201 |             changes: list[FlextLdifTypes.Dict] = []
+    |                           ^^^^^^^^^^^^^^
+    |
+ERROR Could not find name `FlextLdifTypes` [unknown-name]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:202:23
+    |
+202 |             comments: FlextLdifTypes.StringList = []
+    |                       ^^^^^^^^^^^^^^
+    |
+ERROR Could not find name `FlextLdifTypes` [unknown-name]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:204:34
+    |
+204 |             self._current_entry: FlextLdifTypes.Dict | None = None
+    |                                  ^^^^^^^^^^^^^^
+    |
+ERROR Could not find name `FlextLdifTypes` [unknown-name]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:279:22
+    |
+279 |     ) -> FlextResult[FlextLdifTypes.Dict]:
+    |                      ^^^^^^^^^^^^^^
+    |
+ERROR Could not find name `FlextLdifTypes` [unknown-name]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:293:27
+    |
+293 |             changes: list[FlextLdifTypes.Dict] = []
+    |                           ^^^^^^^^^^^^^^
+    |
+ERROR Could not find name `FlextLdifTypes` [unknown-name]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:294:23
+    |
+294 |             comments: FlextLdifTypes.StringList = []
+    |                       ^^^^^^^^^^^^^^
+    |
+ERROR Could not find name `FlextLdifTypes` [unknown-name]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:297:34
+    |
+297 |             self._current_entry: FlextLdifTypes.Dict | None = None
+    |                                  ^^^^^^^^^^^^^^
+    |
+ERROR Could not find name `FlextLdifTypes` [unknown-name]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:340:32
+    |
+340 |             return FlextResult[FlextLdifTypes.Dict].ok({
+    |                                ^^^^^^^^^^^^^^
+    |
+ERROR Could not find name `FlextLdifTypes` [unknown-name]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:352:32
+    |
+352 |             return FlextResult[FlextLdifTypes.Dict].fail(
+    |                                ^^^^^^^^^^^^^^
+    |
+ERROR Could not find name `FlextLdifTypes` [unknown-name]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:360:23
+    |
+360 |         changes: list[FlextLdifTypes.Dict],
+    |                       ^^^^^^^^^^^^^^
+    |
+ERROR Could not find name `FlextLdifTypes` [unknown-name]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:361:19
+    |
+361 |         comments: FlextLdifTypes.StringList,
+    |                   ^^^^^^^^^^^^^^
+    |
+ERROR Cannot set item in `None` [unsupported-operation]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:406:17
+    |
+406 |                 self._current_entry["changetype"] = changetype
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+  Object of class `NoneType` has no attribute `__setitem__`
+ERROR Object of class `NoneType` has no attribute `get` [missing-attribute]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:415:25
+    |
+415 |                 attrs = self._current_entry.get("attributes", {})
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Cannot set item in `None` [unsupported-operation]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:421:17
+    |
+421 |                 self._current_entry["attributes"] = attrs
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+  Object of class `NoneType` has no attribute `__setitem__`
+ERROR Could not find name `FlextLdifTypes` [unknown-name]
+   --> src/flext_ldif/rfc/rfc_ldif_parser.py:486:27
+    |
+486 |         self, entry_data: FlextLdifTypes.Dict
+    |                           ^^^^^^^^^^^^^^
+    |
+ERROR `+=` is not supported between `Literal[0]` and `object` [unsupported-operation]
+   --> src/flext_ldif/rfc/rfc_ldif_writer.py:135:25
+    |
+135 | /                         total_entries += schema_result.unwrap().get(
+136 | |                             "entries_written", 0
+137 | |                         )
+    | |_________________________^
+    |
+  Argument `object` is not assignable to parameter `value` with type `int` in function `int.__add__`
+ERROR `+=` is not supported between `int` and `object` [unsupported-operation]
+   --> src/flext_ldif/rfc/rfc_ldif_writer.py:138:25
+    |
+138 |                         total_lines += schema_result.unwrap().get("lines_written", 0)
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+  Argument `object` is not assignable to parameter `value` with type `int` in function `int.__add__`
+ERROR `+=` is not supported between `int` and `object` [unsupported-operation]
+   --> src/flext_ldif/rfc/rfc_ldif_writer.py:147:25
+    |
+147 | /                         total_entries += entries_result.unwrap().get(
+148 | |                             "entries_written", 0
+149 | |                         )
+    | |_________________________^
+    |
+  Argument `object` is not assignable to parameter `value` with type `int` in function `int.__add__`
+ERROR `+=` is not supported between `int` and `object` [unsupported-operation]
+   --> src/flext_ldif/rfc/rfc_ldif_writer.py:150:25
+    |
+150 |                         total_lines += entries_result.unwrap().get("lines_written", 0)
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+  Argument `object` is not assignable to parameter `value` with type `int` in function `int.__add__`
+ERROR `+=` is not supported between `int` and `object` [unsupported-operation]
+   --> src/flext_ldif/rfc/rfc_ldif_writer.py:159:25
+    |
+159 |                         total_entries += acls_result.unwrap().get("entries_written", 0)
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+  Argument `object` is not assignable to parameter `value` with type `int` in function `int.__add__`
+ERROR `+=` is not supported between `int` and `object` [unsupported-operation]
+   --> src/flext_ldif/rfc/rfc_ldif_writer.py:160:25
+    |
+160 |                         total_lines += acls_result.unwrap().get("lines_written", 0)
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+  Argument `object` is not assignable to parameter `value` with type `int` in function `int.__add__`
+ERROR Object of class `NoneType` has no attribute `info` [missing-attribute]
+   --> src/flext_ldif/rfc/rfc_ldif_writer.py:162:17
+    |
+162 |                 self._logger.info(
+    |                 ^^^^^^^^^^^^^^^^^
+    |
+ERROR `+=` is not supported between `Literal[0]` and `object` [unsupported-operation]
+   --> src/flext_ldif/rfc/rfc_ldif_writer.py:191:17
+    |
+191 |                 total_entries += schema_result.unwrap().get("entries_written", 0)
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+  Argument `object` is not assignable to parameter `value` with type `int` in function `int.__add__`
+ERROR `+=` is not supported between `int` and `object` [unsupported-operation]
+   --> src/flext_ldif/rfc/rfc_ldif_writer.py:192:17
+    |
+192 |                 total_lines += schema_result.unwrap().get("lines_written", 0)
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+  Argument `object` is not assignable to parameter `value` with type `int` in function `int.__add__`
+ERROR `+=` is not supported between `int` and `object` [unsupported-operation]
+   --> src/flext_ldif/rfc/rfc_ldif_writer.py:199:17
+    |
+199 |                 total_entries += entries_result.unwrap().get("entries_written", 0)
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+  Argument `object` is not assignable to parameter `value` with type `int` in function `int.__add__`
+ERROR `+=` is not supported between `int` and `object` [unsupported-operation]
+   --> src/flext_ldif/rfc/rfc_ldif_writer.py:200:17
+    |
+200 |                 total_lines += entries_result.unwrap().get("lines_written", 0)
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+  Argument `object` is not assignable to parameter `value` with type `int` in function `int.__add__`
+ERROR `+=` is not supported between `int` and `object` [unsupported-operation]
+   --> src/flext_ldif/rfc/rfc_ldif_writer.py:207:17
+    |
+207 |                 total_entries += acls_result.unwrap().get("entries_written", 0)
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+  Argument `object` is not assignable to parameter `value` with type `int` in function `int.__add__`
+ERROR `+=` is not supported between `int` and `object` [unsupported-operation]
+   --> src/flext_ldif/rfc/rfc_ldif_writer.py:208:17
+    |
+208 |                 total_lines += acls_result.unwrap().get("lines_written", 0)
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+  Argument `object` is not assignable to parameter `value` with type `int` in function `int.__add__`
+ERROR Object of class `NoneType` has no attribute `info` [missing-attribute]
+   --> src/flext_ldif/rfc/rfc_ldif_writer.py:213:13
+    |
+213 |             self._logger.info(
+    |             ^^^^^^^^^^^^^^^^^
+    |
+ERROR Object of class `NoneType` has no attribute `exception` [missing-attribute]
+   --> src/flext_ldif/rfc/rfc_ldif_writer.py:229:13
+    |
+229 |             self._logger.exception("LDIF write failed")
+    |             ^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Object of class `list` has no attribute `values` [missing-attribute]
+   --> src/flext_ldif/rfc/rfc_ldif_writer.py:256:34
+    |
+256 |                     for value in attr_values_obj.values:
+    |                                  ^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Object of class `list` has no attribute `values` [missing-attribute]
+   --> src/flext_ldif/rfc/rfc_ldif_writer.py:358:36
+    |
+358 |                         attr_name: attr_values.values
+    |                                    ^^^^^^^^^^^^^^^^^^
+    |
+ WARN Redundant cast: `dict[str, object]` is the same type as `dict[str, object]` [redundant-cast]
+   --> src/flext_ldif/rfc/rfc_ldif_writer.py:388:65
+    |
+388 |   ...                   attributes_normalized = cast(
+    |  ___________________________________________________-
+389 | | ...                       "FlextLdifTypes.Dict",
+390 | | ...                       {
+391 | | ...                           k: v
+392 | | ...                           for k, v in processed.items()
+393 | | ...                           if k != "dn"
+    | |___________________________________________-
+    |
+ERROR `Iterable[Unknown] | object` is not assignable to `Iterable[Unknown]` (caused by inconsistent types when breaking cycles) [bad-assignment]
+   --> src/flext_ldif/rfc/rfc_ldif_writer.py:457:21
+    |
+457 | /                     for quirk in acl_quirks:
+458 | |                         for i, acl_def in enumerate(acl_definitions):
+459 | |                             if quirk.can_handle_acl(str(acl_def)):
+460 | |                                 parse_result = quirk.parse_acl(str(acl_def))
+461 | |                                 if parse_result.is_success:
+462 | |                                     acl_data = parse_result.unwrap()
+    | |_____________________________________________________________________^
+    |
+ERROR Cannot set item in `object` [unsupported-operation]
+   --> src/flext_ldif/rfc/rfc_ldif_writer.py:473:45
+    |
+473 | ...                   acl_definitions[i] = str(
+    |                       ^^^^^^^^^^^^^^^^^^
+    |
+  Object of class `object` has no attribute `__setitem__`
+ERROR Type `object` is not iterable [not-iterable]
+   --> src/flext_ldif/rfc/rfc_ldif_writer.py:483:32
+    |
+483 |                 for acl_def in acl_definitions:
+    |                                ^^^^^^^^^^^^^^^
+    |
+ERROR Object of class `NoneType` has no attribute `info` [missing-attribute]
+   --> src/flext_ldif/rfc/rfc_schema_parser.py:139:13
+    |
+139 |             self._logger.info(
+    |             ^^^^^^^^^^^^^^^^^
+    |
+ERROR Object of class `NoneType` has no attribute `info` [missing-attribute]
+   --> src/flext_ldif/rfc/rfc_schema_parser.py:160:13
+    |
+160 |             self._logger.info(
+    |             ^^^^^^^^^^^^^^^^^
+    |
+ERROR Argument `object` is not assignable to parameter `obj` with type `Sized` in function `len` [bad-argument-type]
+   --> src/flext_ldif/rfc/rfc_schema_parser.py:163:45
+    |
+163 |                     "total_attributes": len(data["attributes"]),
+    |                                             ^^^^^^^^^^^^^^^^^^
+    |
+ERROR Argument `object` is not assignable to parameter `obj` with type `Sized` in function `len` [bad-argument-type]
+   --> src/flext_ldif/rfc/rfc_schema_parser.py:164:48
+    |
+164 |                     "total_objectclasses": len(data["objectclasses"]),
+    |                                                ^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Object of class `NoneType` has no attribute `exception` [missing-attribute]
+   --> src/flext_ldif/rfc/rfc_schema_parser.py:172:13
+    |
+172 |             self._logger.exception(error_msg)
+    |             ^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Object of class `NoneType` has no attribute `warning` [missing-attribute]
+   --> src/flext_ldif/rfc/rfc_schema_parser.py:285:13
+    |
+285 |             self._logger.warning(
+    |             ^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Object of class `NoneType` has no attribute `debug` [missing-attribute]
+   --> src/flext_ldif/rfc/rfc_schema_parser.py:305:21
+    |
+305 |                     self._logger.debug(
+    |                     ^^^^^^^^^^^^^^^^^^
+    |
+ERROR Object of class `NoneType` has no attribute `debug` [missing-attribute]
+   --> src/flext_ldif/rfc/rfc_schema_parser.py:346:21
+    |
+346 |                     self._logger.debug(
+    |                     ^^^^^^^^^^^^^^^^^^
+    |
+ERROR Class member `FlextLdifSchemaBuilder._logger` overrides parent class `FlextService` in an inconsistent manner [bad-override]
+  --> src/flext_ldif/schema/builder.py:22:5
+   |
+22 |     _logger: FlextLogger
+   |     ^^^^^^^
+   |
+  `FlextLdifSchemaBuilder._logger` has type `FlextLogger`, which is not consistent with `FlextLogger | None` in `FlextService._logger` (the type of read-write attributes cannot be changed)
+ERROR Object of class `dict` has no attribute `value` [missing-attribute]
+  --> src/flext_ldif/schema/builder.py:88:38
+   |
+88 |             self._attributes[name] = attr_result.value
+   |                                      ^^^^^^^^^^^^^^^^^
+   |
+ERROR Object of class `dict` has no attribute `error` [missing-attribute]
+   --> src/flext_ldif/schema/builder.py:147:39
+    |
+147 |         return FlextResult[dict].fail(result.error or "Failed to create schema")
+    |                                       ^^^^^^^^^^^^
+    |
+ERROR Expected a type form, got instance of `Literal['FlextLdifModels.SchemaDiscoveryResult']` [not-a-type]
+  --> src/flext_ldif/schema/extractor.py:41:32
+   |
+41 |             return FlextResult["FlextLdifModels.SchemaDiscoveryResult"].fail(
+   |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+ERROR Object of class `object` has no attribute `attributes` [missing-attribute]
+  --> src/flext_ldif/schema/extractor.py:50:47
+   |
+50 |                 for attr_name, attr_values in entry.attributes.data.items():
+   |                                               ^^^^^^^^^^^^^^^^
+   |
+ERROR Object of class `NoneType` has no attribute `info` [missing-attribute]
+  --> src/flext_ldif/schema/extractor.py:75:13
+   |
+75 |             self._logger.info(
+   |             ^^^^^^^^^^^^^^^^^
+   |
+ERROR Argument `dict[str, dict[str, dict[str, str]]]` is not assignable to parameter `data` with type `dict[str, object]` in function `flext_core.result.FlextResult.ok` [bad-argument-type]
+  --> src/flext_ldif/schema/extractor.py:81:56
+   |
+81 |             return FlextResult[FlextLdifTypes.Dict].ok(schema_data)
+   |                                                        ^^^^^^^^^^^
+   |
+ERROR Object of class `object` has no attribute `attributes` [missing-attribute]
+   --> src/flext_ldif/schema/extractor.py:106:43
+    |
+106 |             for attr_name, attr_values in entry.attributes.data.items():
+    |                                           ^^^^^^^^^^^^^^^^
+    |
+ERROR Class `FlextLdifModels` has no class attribute `SchemaDiscoveryResult` [missing-attribute]
+  --> src/flext_ldif/schema/objectclass_manager.py:37:17
+   |
+37 |         schema: FlextLdifModels.SchemaDiscoveryResult,
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+ERROR Class `FlextLdifModels` has no class attribute `SchemaDiscoveryResult` [missing-attribute]
+  --> src/flext_ldif/schema/objectclass_manager.py:60:17
+   |
+60 |         schema: FlextLdifModels.SchemaDiscoveryResult,
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+ERROR Class `FlextLdifModels` has no class attribute `SchemaDiscoveryResult` [missing-attribute]
+  --> src/flext_ldif/schema/objectclass_manager.py:84:17
+   |
+84 |         schema: FlextLdifModels.SchemaDiscoveryResult,
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+ERROR Class `FlextLdifModels` has no class attribute `SchemaDiscoveryResult` [missing-attribute]
+   --> src/flext_ldif/schema/objectclass_manager.py:108:17
+    |
+108 |         schema: FlextLdifModels.SchemaDiscoveryResult,
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Object of class `Entry` has no attribute `get_attribute_values` [missing-attribute]
+  --> src/flext_ldif/schema/validator.py:56:30
+   |
+56 |             object_classes = entry.get_attribute_values("objectClass")
+   |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+ERROR Object of class `Entry` has no attribute `get_attribute_values` [missing-attribute]
+  --> src/flext_ldif/schema/validator.py:70:24
+   |
+70 |                 if not entry.get_attribute_values("cn"):
+   |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+ERROR Object of class `Entry` has no attribute `get_attribute_values` [missing-attribute]
+  --> src/flext_ldif/schema/validator.py:74:24
+   |
+74 |                 if not entry.get_attribute_values("sn"):
+   |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+ERROR Class `FlextLdifModels` has no class attribute `SchemaDiscoveryResult` [missing-attribute]
+  --> src/flext_ldif/schema/validator.py:91:17
+   |
+91 |         schema: FlextLdifModels.SchemaDiscoveryResult,
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+ERROR Object of class `Entry` has no attribute `get_attribute_values` [missing-attribute]
+   --> src/flext_ldif/schema/validator.py:109:59
+    |
+109 |         entry_object_classes: FlextLdifTypes.StringList = entry.get_attribute_values(
+    |                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Class `FlextLdifModels` has no class attribute `SchemaDiscoveryResult` [missing-attribute]
+   --> src/flext_ldif/schema/validator.py:130:17
+    |
+130 |         schema: FlextLdifModels.SchemaDiscoveryResult,
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Object of class `Entry` has no attribute `get_attribute_values` [missing-attribute]
+   --> src/flext_ldif/schema/validator.py:144:59
+    |
+144 |         entry_object_classes: FlextLdifTypes.StringList = entry.get_attribute_values(
+    |                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Class `FlextLdifTypes.Project` inheriting from `FlextLdifTypes.Project` creates a cycle [invalid-inheritance]
+   --> src/flext_ldif/typings.py:309:11
+    |
+309 |     class Project(FlextLdifTypes.Project):
+    |           ^^^^^^^
+    |
+ERROR Class member `FlextLdifTypes.Project` overrides parent class `FlextTypes` in an inconsistent manner [bad-override]
+   --> src/flext_ldif/typings.py:309:11
+    |
+309 |     class Project(FlextLdifTypes.Project):
+    |           ^^^^^^^
+    |
+  `FlextLdifTypes.Project` has type `type[FlextLdifTypes.Project]`, which is not assignable to `type[FlextTypes.Project]`, the type of `FlextTypes.Project`
+ INFO 106 errors (2 ignored)

@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from typing import Self, override
 
-from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
+from flext_core import FlextLogger, FlextResult, FlextService
+
+from flext_ldif.typings import FlextLdifTypes
 
 # from flext_ldif.models import FlextLdifModels  # Temporarily removed to fix circular import
 
@@ -17,7 +19,7 @@ class FlextLdifSchemaBuilder(FlextService):
     """
 
     # Type annotations for instance variables
-    _logger: FlextLogger
+    _logger: FlextLogger | None
     _attributes: dict[str, dict]
     _object_classes: dict[str, dict]
     _server_type: str
@@ -36,6 +38,8 @@ class FlextLdifSchemaBuilder(FlextService):
     @property
     def logger(self) -> FlextLogger:
         """Get the logger instance."""
+        if self._logger is None:
+            self._logger = FlextLogger(type(self).__name__)
         return self._logger
 
     @property
@@ -83,15 +87,15 @@ class FlextLdifSchemaBuilder(FlextService):
             "single_value": single_value,
         }
         if attr_result:
-            self._attributes[name] = attr_result.value
+            self._attributes[name] = attr_result
         return self
 
     def add_object_class(
         self,
         name: str,
         description: str,
-        required_attributes: FlextTypes.StringList,
-        optional_attributes: FlextTypes.StringList | None = None,
+        required_attributes: FlextLdifTypes.StringList,
+        optional_attributes: FlextLdifTypes.StringList | None = None,
     ) -> FlextLdifSchemaBuilder:
         """Add object class to schema (Fluent Builder pattern).
 
@@ -105,14 +109,13 @@ class FlextLdifSchemaBuilder(FlextService):
             Self for method chaining
 
         """
-        oc_result = {
+        object_class_data = {
             "name": name,
             "description": description,
             "required_attributes": required_attributes,
             "optional_attributes": optional_attributes or [],
         }
-        if oc_result:
-            self._object_classes[name] = oc_result.value
+        self._object_classes[name] = object_class_data
         return self
 
     def set_server_type(self, server_type: str) -> FlextLdifSchemaBuilder:
@@ -143,7 +146,7 @@ class FlextLdifSchemaBuilder(FlextService):
         }
         if result:
             return FlextResult[dict].ok(result)
-        return FlextResult[dict].fail(result.error or "Failed to create schema")
+        return FlextResult[dict].fail("Failed to create schema")
 
     def reset(self) -> Self:
         """Reset builder to initial state.

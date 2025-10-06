@@ -15,14 +15,11 @@ from typing import cast
 import pytest
 from flext_core import FlextConstants, FlextResult, FlextTypes
 from flext_tests import (
-    FlextTestsBuilders,
     FlextTestsDomains,
-    FlextTestsFactories,
     FlextTestsMatchers,
-    FlextTestsUtilities,
 )
 
-from flext_ldif.quirks.registry import QuirkRegistryService
+from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.rfc.rfc_ldif_parser import RfcLdifParserService
 from flext_ldif.rfc.rfc_ldif_writer import RfcLdifWriterService
 
@@ -193,21 +190,25 @@ def ldif_binary_file(test_ldif_dir: Path, sample_ldif_with_binary: str) -> Path:
 
 # Quirk registry fixture for RFC-first architecture enforcement
 @pytest.fixture
-def quirk_registry() -> QuirkRegistryService:
+def quirk_registry() -> FlextLdifQuirksRegistry:
     """Provide quirk registry for RFC-first testing (MANDATORY)."""
     # Registry auto-discovers and registers all standard quirks
-    return QuirkRegistryService()
+    return FlextLdifQuirksRegistry()
 
 
 # Real service fixtures for functional testing
 @pytest.fixture
-def real_parser_service(quirk_registry: QuirkRegistryService) -> RfcLdifParserService:
+def real_parser_service(
+    quirk_registry: FlextLdifQuirksRegistry,
+) -> RfcLdifParserService:
     """Real parser service for functional testing (RFC-first with quirks)."""
     return RealServiceFactory.create_parser(quirk_registry=quirk_registry)
 
 
 @pytest.fixture
-def real_writer_service(quirk_registry: QuirkRegistryService) -> RfcLdifWriterService:
+def real_writer_service(
+    quirk_registry: FlextLdifQuirksRegistry,
+) -> RfcLdifWriterService:
     """Real writer service for functional testing (RFC-first with quirks)."""
     return RealServiceFactory.create_writer(quirk_registry=quirk_registry)
 
@@ -421,33 +422,15 @@ def large_ldif_config() -> FlextTypes.Dict:
 
 # FlextTests* Integration Fixtures
 @pytest.fixture
-def flext_builders() -> FlextTestsBuilders:
-    """FlextTests builders for complex test object creation."""
-    return FlextTestsBuilders()
-
-
-@pytest.fixture
 def flext_domains() -> FlextTestsDomains:
     """FlextTests domain-specific test data generator."""
     return FlextTestsDomains()
 
 
 @pytest.fixture
-def flext_fixtures() -> FlextTestsFactories:
-    """FlextTests factories and utilities."""
-    return FlextTestsFactories()
-
-
-@pytest.fixture
 def flext_matchers() -> FlextTestsMatchers:
     """FlextTests matchers for assertions."""
     return FlextTestsMatchers()
-
-
-@pytest.fixture
-def flext_utilities() -> FlextTestsUtilities:
-    """FlextTests utilities and helpers."""
-    return FlextTestsUtilities()
 
 
 # LDIF-specific test data using FlextTests patterns

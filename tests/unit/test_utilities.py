@@ -751,3 +751,338 @@ class TestFlextLdifUtilities:
             finally:
                 # Restore permissions for cleanup
                 parent_path.chmod(0o755)
+
+
+class TestFlextLdifUtilitiesDnUtilities:
+    """Test suite for DN utilities."""
+
+    def test_parse_dn_components_valid(self) -> None:
+        """Test parsing valid DN components."""
+        dn = "cn=test,ou=users,dc=example,dc=com"
+
+        result = FlextLdifUtilities.DnUtilities.parse_dn_components(dn)
+
+        assert result.is_success
+        components = result.unwrap()
+        assert isinstance(components, list)
+        assert len(components) > 0
+
+    def test_parse_dn_components_invalid(self) -> None:
+        """Test parsing invalid DN components."""
+        invalid_dn = "invalid-dn-format"
+
+        result = FlextLdifUtilities.DnUtilities.parse_dn_components(invalid_dn)
+
+        # Should handle gracefully
+        assert isinstance(result, FlextResult)
+
+    def test_normalize_dn_components(self) -> None:
+        """Test normalizing DN components."""
+        dn = "CN=test,OU=users,DC=example,DC=com"
+
+        result = FlextLdifUtilities.DnUtilities.normalize_dn_components(dn)
+
+        assert result.is_success
+        normalized = result.unwrap()
+        assert isinstance(normalized, str)
+        # Should be lowercase
+        assert normalized == dn.lower()
+
+    def test_extract_dn_components(self) -> None:
+        """Test extracting DN components as tuples."""
+        dn = "cn=test,ou=users,dc=example,dc=com"
+
+        result = FlextLdifUtilities.DnUtilities.extract_dn_components(dn)
+
+        assert result.is_success
+        components = result.unwrap()
+        assert isinstance(components, list)
+        assert len(components) > 0
+        # Each component should be a tuple of (attribute, value)
+        for comp in components:
+            assert isinstance(comp, tuple)
+            assert len(comp) == 2
+
+
+class TestFlextLdifUtilitiesEncodingUtilities:
+    """Test suite for encoding utilities."""
+
+    def test_detect_encoding_utf8(self) -> None:
+        """Test detecting UTF-8 encoding."""
+        content = "dn: cn=test,dc=example,dc=com\ncn: test"
+
+        result = FlextLdifUtilities.EncodingUtilities.detect_encoding(
+            content.encode("utf-8")
+        )
+
+        assert result.is_success
+        encoding = result.unwrap()
+        assert encoding == "utf-8"
+
+    def test_detect_encoding_latin1(self) -> None:
+        """Test detecting Latin-1 encoding."""
+        content = "dn: cn=test,dc=example,dc=com\ncn: test"
+        latin1_content = content.encode("latin-1")
+
+        result = FlextLdifUtilities.EncodingUtilities.detect_encoding(latin1_content)
+
+        assert result.is_success
+        encoding = result.unwrap()
+        assert encoding in {"latin-1", "utf-8"}  # May detect as either
+
+    def test_validate_encoding_supported(self) -> None:
+        """Test validating supported encoding."""
+        result = FlextLdifUtilities.EncodingUtilities.validate_encoding("utf-8")
+
+        assert result.is_success
+        valid_encoding = result.unwrap()
+        assert valid_encoding == "utf-8"
+
+    def test_validate_encoding_unsupported(self) -> None:
+        """Test validating unsupported encoding."""
+        result = FlextLdifUtilities.EncodingUtilities.validate_encoding(
+            "unsupported-encoding"
+        )
+
+        assert result.is_failure
+
+
+class TestFlextLdifUtilitiesTextUtilities:
+    """Test suite for text utilities."""
+
+    def test_format_byte_size_bytes(self) -> None:
+        """Test formatting bytes."""
+        result = FlextLdifUtilities.TextUtilities.format_byte_size(512)
+
+        assert result == "512 B"
+
+    def test_format_byte_size_kilobytes(self) -> None:
+        """Test formatting kilobytes."""
+        result = FlextLdifUtilities.TextUtilities.format_byte_size(1536)
+
+        assert "1.5 KB" in result
+
+    def test_format_byte_size_megabytes(self) -> None:
+        """Test formatting megabytes."""
+        result = FlextLdifUtilities.TextUtilities.format_byte_size(1048576)
+
+        assert "1.0 MB" in result
+
+    def test_format_byte_size_zero(self) -> None:
+        """Test formatting zero bytes."""
+        result = FlextLdifUtilities.TextUtilities.format_byte_size(0)
+
+        assert result == "0 B"
+
+    def test_format_byte_size_negative(self) -> None:
+        """Test formatting negative bytes."""
+        result = FlextLdifUtilities.TextUtilities.format_byte_size(-100)
+
+        assert result == "0 B"
+
+
+class TestFlextLdifUtilitiesTimeUtilities:
+    """Test suite for time utilities."""
+
+    def test_get_timestamp(self) -> None:
+        """Test getting current timestamp."""
+        timestamp = FlextLdifUtilities.TimeUtilities.get_timestamp()
+
+        assert isinstance(timestamp, str)
+        assert len(timestamp) > 0
+        # Should be ISO format
+        assert "T" in timestamp
+
+    def test_get_formatted_timestamp(self) -> None:
+        """Test getting formatted timestamp."""
+        format_string = "%Y-%m-%d %H:%M:%S"
+        timestamp = FlextLdifUtilities.TimeUtilities.get_formatted_timestamp(
+            format_string
+        )
+
+        assert isinstance(timestamp, str)
+        assert len(timestamp) > 0
+        # Should match format
+        assert len(timestamp.split("-")) == 3  # YYYY-MM-DD
+        assert len(timestamp.split(":")) == 3  # HH:MM:SS
+
+
+class TestFlextLdifUtilitiesFileUtilities:
+    """Test suite for file utilities."""
+
+    def test_get_file_info_existing_file(self, tmp_path: Path) -> None:
+        """Test getting info for existing file."""
+        test_file = tmp_path / "test.txt"
+        test_file.write_text("test content", encoding="utf-8")
+
+        result = FlextLdifUtilities.FileUtilities.get_file_info(test_file)
+
+        assert result.is_success
+        info = result.unwrap()
+        assert isinstance(info, dict)
+        assert "size" in info
+        assert "modified" in info
+        assert "encoding" in info
+
+    def test_get_file_info_nonexistent_file(self) -> None:
+        """Test getting info for non-existent file."""
+        nonexistent_file = Path("/non/existent/file.txt")
+
+        result = FlextLdifUtilities.FileUtilities.get_file_info(nonexistent_file)
+
+        assert result.is_failure
+
+    def test_validate_directory_path_existing(self, tmp_path: Path) -> None:
+        """Test validating existing directory path."""
+        result = FlextLdifUtilities.FileUtilities.validate_directory_path(tmp_path)
+
+        assert result.is_success
+        validated_path = result.unwrap()
+        assert validated_path == tmp_path
+
+    def test_validate_directory_path_nonexistent(self) -> None:
+        """Test validating non-existent directory path."""
+        nonexistent_dir = Path("/non/existent/directory")
+
+        result = FlextLdifUtilities.FileUtilities.validate_directory_path(
+            nonexistent_dir
+        )
+
+        assert result.is_failure
+
+
+class TestFlextLdifUtilitiesValidationUtilities:
+    """Test suite for validation utilities."""
+
+    def test_validate_object_class_name_valid(self) -> None:
+        """Test validating valid object class name."""
+        result = FlextLdifUtilities.ValidationUtilities.validate_object_class_name(
+            "inetOrgPerson"
+        )
+
+        assert result.is_success
+        valid_name = result.unwrap()
+        assert valid_name == "inetOrgPerson"
+
+    def test_validate_object_class_name_invalid(self) -> None:
+        """Test validating invalid object class name."""
+        result = FlextLdifUtilities.ValidationUtilities.validate_object_class_name(
+            "invalid-class-name!"
+        )
+
+        assert result.is_failure
+
+    def test_validate_attribute_name_valid(self) -> None:
+        """Test validating valid attribute name."""
+        result = FlextLdifUtilities.ValidationUtilities.validate_attribute_name("cn")
+
+        assert result.is_success
+        valid_name = result.unwrap()
+        assert valid_name == "cn"
+
+    def test_validate_attribute_name_invalid(self) -> None:
+        """Test validating invalid attribute name."""
+        result = FlextLdifUtilities.ValidationUtilities.validate_attribute_name(
+            "invalid-attr!"
+        )
+
+        assert result.is_failure
+
+
+class TestFlextLdifUtilitiesLdifUtilities:
+    """Test suite for LDIF-specific utilities."""
+
+    def test_count_ldif_entries(self) -> None:
+        """Test counting LDIF entries."""
+        ldif_content = """dn: cn=test1,dc=example,dc=com
+cn: test1
+
+dn: cn=test2,dc=example,dc=com
+cn: test2
+"""
+
+        result = FlextLdifUtilities.LdifUtilities.count_ldif_entries(ldif_content)
+
+        assert result.is_success
+        count = result.unwrap()
+        assert count == 2
+
+    def test_count_ldif_entries_empty(self) -> None:
+        """Test counting entries in empty LDIF."""
+        result = FlextLdifUtilities.LdifUtilities.count_ldif_entries("")
+
+        assert result.is_success
+        count = result.unwrap()
+        assert count == 0
+
+    def test_validate_ldif_syntax_valid(self) -> None:
+        """Test validating valid LDIF syntax."""
+        ldif_content = """dn: cn=test,dc=example,dc=com
+cn: test
+objectClass: person
+"""
+
+        result = FlextLdifUtilities.LdifUtilities.validate_ldif_syntax(ldif_content)
+
+        assert result.is_success
+        validation = result.unwrap()
+        assert isinstance(validation, dict)
+
+    def test_validate_ldif_syntax_invalid(self) -> None:
+        """Test validating invalid LDIF syntax."""
+        invalid_content = "invalid ldif content without proper format"
+
+        result = FlextLdifUtilities.LdifUtilities.validate_ldif_syntax(invalid_content)
+
+        assert result.is_failure
+
+
+class TestFlextLdifUtilitiesNamespace:
+    """Test suite for the FlextLdifUtilities namespace class."""
+
+    def test_utilities_namespace_access(self) -> None:
+        """Test accessing utilities through namespace."""
+        # Test that all expected utility classes are available
+        assert hasattr(FlextLdifUtilities, "DnUtilities")
+        assert hasattr(FlextLdifUtilities, "EncodingUtilities")
+        assert hasattr(FlextLdifUtilities, "TextUtilities")
+        assert hasattr(FlextLdifUtilities, "TimeUtilities")
+        assert hasattr(FlextLdifUtilities, "FileUtilities")
+        assert hasattr(FlextLdifUtilities, "ValidationUtilities")
+        assert hasattr(FlextLdifUtilities, "LdifUtilities")
+
+    def test_utilities_are_classes(self) -> None:
+        """Test that utility groups are classes."""
+        assert isinstance(FlextLdifUtilities.DnUtilities, type)
+        assert isinstance(FlextLdifUtilities.EncodingUtilities, type)
+        assert isinstance(FlextLdifUtilities.TextUtilities, type)
+        assert isinstance(FlextLdifUtilities.TimeUtilities, type)
+        assert isinstance(FlextLdifUtilities.FileUtilities, type)
+        assert isinstance(FlextLdifUtilities.ValidationUtilities, type)
+        assert isinstance(FlextLdifUtilities.LdifUtilities, type)
+
+    def test_utility_methods_exist(self) -> None:
+        """Test that key utility methods exist."""
+        # DnUtilities
+        assert hasattr(FlextLdifUtilities.DnUtilities, "parse_dn_components")
+        assert hasattr(FlextLdifUtilities.DnUtilities, "validate_dn_format")
+
+        # TextUtilities
+        assert hasattr(FlextLdifUtilities.TextUtilities, "format_byte_size")
+
+        # TimeUtilities
+        assert hasattr(FlextLdifUtilities.TimeUtilities, "get_timestamp")
+
+        # FileUtilities
+        assert hasattr(FlextLdifUtilities.FileUtilities, "validate_file_path")
+
+        # EncodingUtilities
+        assert hasattr(FlextLdifUtilities.EncodingUtilities, "detect_encoding")
+
+        # ValidationUtilities
+        assert hasattr(
+            FlextLdifUtilities.ValidationUtilities, "validate_attribute_name"
+        )
+
+        # LdifUtilities
+        assert hasattr(FlextLdifUtilities.LdifUtilities, "count_ldif_entries")

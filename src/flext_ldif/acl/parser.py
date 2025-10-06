@@ -8,14 +8,123 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
+from flext_core import FlextLogger, FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifAclParser(FlextService[FlextTypes.Dict]):
+class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
     """Multi-server ACL parser for different LDAP implementations."""
+
+    class AclComponentHelper:
+        """Helper class for creating and validating ACL components."""
+
+        @staticmethod
+        def create_acl_components() -> FlextResult[
+            tuple[
+                FlextLdifModels.AclTarget,
+                FlextLdifModels.AclSubject,
+                FlextLdifModels.AclPermissions,
+            ]
+        ]:
+            """Create ACL components with proper validation."""
+            # Create ACL components
+            target_creation = FlextLdifModels.AclTarget.create()
+            subject_creation = FlextLdifModels.AclSubject.create()
+            perms_creation = FlextLdifModels.AclPermissions.create(read=True)
+
+            # Validate and extract values
+            if not target_creation.is_success:
+                return FlextResult[
+                    tuple[
+                        FlextLdifModels.AclTarget,
+                        FlextLdifModels.AclSubject,
+                        FlextLdifModels.AclPermissions,
+                    ]
+                ].fail("Failed to create AclTarget")
+            if not isinstance(target_creation.value, FlextLdifModels.AclTarget):
+                return FlextResult[
+                    tuple[
+                        FlextLdifModels.AclTarget,
+                        FlextLdifModels.AclSubject,
+                        FlextLdifModels.AclPermissions,
+                    ]
+                ].fail("Invalid AclTarget type")
+
+            if not subject_creation.is_success:
+                return FlextResult[
+                    tuple[
+                        FlextLdifModels.AclTarget,
+                        FlextLdifModels.AclSubject,
+                        FlextLdifModels.AclPermissions,
+                    ]
+                ].fail("Failed to create AclSubject")
+            if not isinstance(subject_creation.value, FlextLdifModels.AclSubject):
+                return FlextResult[
+                    tuple[
+                        FlextLdifModels.AclTarget,
+                        FlextLdifModels.AclSubject,
+                        FlextLdifModels.AclPermissions,
+                    ]
+                ].fail("Invalid AclSubject type")
+
+            if not perms_creation.is_success:
+                return FlextResult[
+                    tuple[
+                        FlextLdifModels.AclTarget,
+                        FlextLdifModels.AclSubject,
+                        FlextLdifModels.AclPermissions,
+                    ]
+                ].fail("Failed to create AclPermissions")
+            if not isinstance(perms_creation.value, FlextLdifModels.AclPermissions):
+                return FlextResult[
+                    tuple[
+                        FlextLdifModels.AclTarget,
+                        FlextLdifModels.AclSubject,
+                        FlextLdifModels.AclPermissions,
+                    ]
+                ].fail("Invalid AclPermissions type")
+
+            return FlextResult[
+                tuple[
+                    FlextLdifModels.AclTarget,
+                    FlextLdifModels.AclSubject,
+                    FlextLdifModels.AclPermissions,
+                ]
+            ].ok((
+                target_creation.value,
+                subject_creation.value,
+                perms_creation.value,
+            ))
+
+        @staticmethod
+        def create_unified_acl(
+            name: str,
+            target: FlextLdifModels.AclTarget,
+            subject: FlextLdifModels.AclSubject,
+            permissions: FlextLdifModels.AclPermissions,
+            server_type: str,
+            raw_acl: str,
+        ) -> FlextResult[FlextLdifModels.UnifiedAcl]:
+            """Create unified ACL with proper validation."""
+            acl_result = FlextLdifModels.UnifiedAcl.create(
+                name=name,
+                target=target,
+                subject=subject,
+                permissions=permissions,
+                server_type=server_type,
+                raw_acl=raw_acl,
+            )
+
+            if acl_result.is_success and isinstance(
+                acl_result.value, FlextLdifModels.UnifiedAcl
+            ):
+                return FlextResult[FlextLdifModels.UnifiedAcl].ok(acl_result.value)
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                acl_result.error or "Failed to create UnifiedAcl"
+            )
 
     @override
     def __init__(self) -> None:
@@ -24,9 +133,9 @@ class FlextLdifAclParser(FlextService[FlextTypes.Dict]):
         self._logger = FlextLogger(__name__)
 
     @override
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
+    def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
         """Execute parser service."""
-        return FlextResult[FlextTypes.Dict].ok({
+        return FlextResult[FlextLdifTypes.Dict].ok({
             "service": FlextLdifAclParser,
             "status": "ready",
         })
@@ -43,44 +152,15 @@ class FlextLdifAclParser(FlextService[FlextTypes.Dict]):
             FlextResult containing unified ACL
 
         """
-        # Create ACL components and extract values safely
-        target_creation = FlextLdifModels.AclTarget.create()
-        subject_creation = FlextLdifModels.AclSubject.create()
-        perms_creation = FlextLdifModels.AclPermissions.create(read=True)
+        # Create ACL components using helper
+        components_result = self.AclComponentHelper.create_acl_components()
+        if components_result.is_failure:
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(components_result.error)
 
-        # Extract values with proper type checking
-        if not target_creation.is_success:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                "Failed to create AclTarget"
-            )
-        if not isinstance(target_creation.value, FlextLdifModels.AclTarget):
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                "Invalid AclTarget type"
-            )
+        target_result, subject_result, perms_result = components_result.value
 
-        if not subject_creation.is_success:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                "Failed to create AclSubject"
-            )
-        if not isinstance(subject_creation.value, FlextLdifModels.AclSubject):
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                "Invalid AclSubject type"
-            )
-
-        if not perms_creation.is_success:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                "Failed to create AclPermissions"
-            )
-        if not isinstance(perms_creation.value, FlextLdifModels.AclPermissions):
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                "Invalid AclPermissions type"
-            )
-
-        target_result = target_creation.value
-        subject_result = subject_creation.value
-        perms_result = perms_creation.value
-
-        return FlextLdifModels.UnifiedAcl.create(
+        # Create unified ACL using helper
+        return self.AclComponentHelper.create_unified_acl(
             name="openldap_acl",
             target=target_result,
             subject=subject_result,
@@ -101,44 +181,15 @@ class FlextLdifAclParser(FlextService[FlextTypes.Dict]):
             FlextResult containing unified ACL
 
         """
-        # Create ACL components and extract values safely
-        target_creation = FlextLdifModels.AclTarget.create()
-        subject_creation = FlextLdifModels.AclSubject.create()
-        perms_creation = FlextLdifModels.AclPermissions.create(read=True)
+        # Create ACL components using helper
+        components_result = self.AclComponentHelper.create_acl_components()
+        if components_result.is_failure:
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(components_result.error)
 
-        # Extract values with proper type checking
-        if not target_creation.is_success:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                "Failed to create AclTarget"
-            )
-        if not isinstance(target_creation.value, FlextLdifModels.AclTarget):
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                "Invalid AclTarget type"
-            )
+        target_result, subject_result, perms_result = components_result.value
 
-        if not subject_creation.is_success:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                "Failed to create AclSubject"
-            )
-        if not isinstance(subject_creation.value, FlextLdifModels.AclSubject):
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                "Invalid AclSubject type"
-            )
-
-        if not perms_creation.is_success:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                "Failed to create AclPermissions"
-            )
-        if not isinstance(perms_creation.value, FlextLdifModels.AclPermissions):
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                "Invalid AclPermissions type"
-            )
-
-        target_result = target_creation.value
-        subject_result = subject_creation.value
-        perms_result = perms_creation.value
-
-        return FlextLdifModels.UnifiedAcl.create(
+        # Create unified ACL using helper
+        return self.AclComponentHelper.create_unified_acl(
             name="389ds_acl",
             target=target_result,
             subject=subject_result,
@@ -162,44 +213,15 @@ class FlextLdifAclParser(FlextService[FlextTypes.Dict]):
             FlextResult containing unified ACL
 
         """
-        # Create ACL components and extract values safely
-        target_creation = FlextLdifModels.AclTarget.create()
-        subject_creation = FlextLdifModels.AclSubject.create()
-        perms_creation = FlextLdifModels.AclPermissions.create(read=True)
+        # Create ACL components using helper
+        components_result = self.AclComponentHelper.create_acl_components()
+        if components_result.is_failure:
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(components_result.error)
 
-        # Extract values with proper type checking
-        if not target_creation.is_success:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                "Failed to create AclTarget"
-            )
-        if not isinstance(target_creation.value, FlextLdifModels.AclTarget):
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                "Invalid AclTarget type"
-            )
+        target_result, subject_result, perms_result = components_result.value
 
-        if not subject_creation.is_success:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                "Failed to create AclSubject"
-            )
-        if not isinstance(subject_creation.value, FlextLdifModels.AclSubject):
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                "Invalid AclSubject type"
-            )
-
-        if not perms_creation.is_success:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                "Failed to create AclPermissions"
-            )
-        if not isinstance(perms_creation.value, FlextLdifModels.AclPermissions):
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                "Invalid AclPermissions type"
-            )
-
-        target_result = target_creation.value
-        subject_result = subject_creation.value
-        perms_result = perms_creation.value
-
-        return FlextLdifModels.UnifiedAcl.create(
+        # Create unified ACL using helper
+        return self.AclComponentHelper.create_unified_acl(
             name="oracle_acl",
             target=target_result,
             subject=subject_result,

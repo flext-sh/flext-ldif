@@ -13,9 +13,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Final
 
-from flext_core import FlextProcessors, FlextResult, FlextTypes, FlextUtilities
+from flext_core import FlextProcessors, FlextResult, FlextUtilities
 
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifUtilities(FlextUtilities):
@@ -243,7 +244,7 @@ class FlextLdifUtilities(FlextUtilities):
         """
 
         @staticmethod
-        def parse_dn_components(dn: str) -> FlextResult[FlextTypes.StringList]:
+        def parse_dn_components(dn: str) -> FlextResult[FlextLdifTypes.StringList]:
             r"""Parse DN into components - SINGLE SOURCE OF TRUTH for DN splitting.
 
             Handles escaped commas (\,) properly according to RFC 4514.
@@ -252,16 +253,16 @@ class FlextLdifUtilities(FlextUtilities):
                 dn: Distinguished Name string
 
             Returns:
-                FlextResult[FlextTypes.StringList]: List of DN components or error
+                FlextResult[FlextLdifTypes.StringList]: List of DN components or error
 
             """
             if not dn or not dn.strip():
-                return FlextResult[FlextTypes.StringList].fail("DN cannot be empty")
+                return FlextResult[FlextLdifTypes.StringList].fail("DN cannot be empty")
 
             try:
                 # Split by comma but respect escaped commas (\\,)
                 # RFC 4514: Commas can be escaped with backslash
-                components: FlextTypes.StringList = []
+                components: FlextLdifTypes.StringList = []
                 current_component = ""
                 i = 0
                 while i < len(dn):
@@ -284,12 +285,12 @@ class FlextLdifUtilities(FlextUtilities):
                     components.append(current_component.strip())
 
                 if not components:
-                    return FlextResult[FlextTypes.StringList].fail(
+                    return FlextResult[FlextLdifTypes.StringList].fail(
                         "DN has no valid components"
                     )
-                return FlextResult[FlextTypes.StringList].ok(components)
+                return FlextResult[FlextLdifTypes.StringList].ok(components)
             except Exception as e:
-                return FlextResult[FlextTypes.StringList].fail(
+                return FlextResult[FlextLdifTypes.StringList].fail(
                     f"Failed to parse DN components: {e}"
                 )
 
@@ -376,7 +377,7 @@ class FlextLdifUtilities(FlextUtilities):
             components = components_result.unwrap()
 
             # Normalize each component
-            normalized_components: FlextTypes.StringList = []
+            normalized_components: FlextLdifTypes.StringList = []
             for component in components:
                 attr, value = component.split("=", 1)
                 # Normalize: lowercase attribute, trim spaces from value
@@ -448,7 +449,7 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def create_processor(
-            config: FlextTypes.Dict | None = None,
+            config: FlextLdifTypes.Dict | None = None,
         ) -> FlextProcessors:
             """Create a FlextProcessors instance for LDIF processing.
 
@@ -459,7 +460,7 @@ class FlextLdifUtilities(FlextUtilities):
                 FlextProcessors: Configured processor instance
 
             """
-            processor_config: FlextTypes.Dict = {}
+            processor_config: FlextLdifTypes.Dict = {}
             if config:
                 processor_config = config
             return FlextProcessors(config=processor_config)
@@ -467,9 +468,9 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         def process_entries_batch(
             processor_name: str,
-            entries: FlextTypes.List,
+            entries: FlextLdifTypes.List,
             processors: FlextProcessors | None = None,
-        ) -> FlextResult[FlextTypes.List]:
+        ) -> FlextResult[FlextLdifTypes.List]:
             """Process LDIF entries in batches using registered processor.
 
             Args:
@@ -478,7 +479,7 @@ class FlextLdifUtilities(FlextUtilities):
                 processors: Optional FlextProcessors instance (creates new if None)
 
             Returns:
-                FlextResult[FlextTypes.List]: Processed entries or error
+                FlextResult[FlextLdifTypes.List]: Processed entries or error
 
             """
             if processors is None:
@@ -489,9 +490,9 @@ class FlextLdifUtilities(FlextUtilities):
         @staticmethod
         def process_entries_parallel(
             processor_name: str,
-            entries: FlextTypes.List,
+            entries: FlextLdifTypes.List,
             processors: FlextProcessors | None = None,
-        ) -> FlextResult[FlextTypes.List]:
+        ) -> FlextResult[FlextLdifTypes.List]:
             """Process LDIF entries in parallel using registered processor.
 
             Args:
@@ -500,7 +501,7 @@ class FlextLdifUtilities(FlextUtilities):
                 processors: Optional FlextProcessors instance (creates new if None)
 
             Returns:
-                FlextResult[FlextTypes.List]: Processed entries or error
+                FlextResult[FlextLdifTypes.List]: Processed entries or error
 
             """
             if processors is None:

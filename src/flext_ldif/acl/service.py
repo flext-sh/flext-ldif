@@ -8,14 +8,123 @@ from __future__ import annotations
 
 from typing import cast, override
 
-from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
+from flext_core import FlextLogger, FlextResult, FlextService
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
+from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifAclService(FlextService[FlextTypes.Dict]):
+class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
     """Unified ACL management service using Composite pattern for rule composition."""
+
+    class AclComponentHelper:
+        """Helper class for creating and validating ACL components."""
+
+        @staticmethod
+        def create_acl_components() -> FlextResult[
+            tuple[
+                FlextLdifModels.AclTarget,
+                FlextLdifModels.AclSubject,
+                FlextLdifModels.AclPermissions,
+            ]
+        ]:
+            """Create ACL components with proper validation."""
+            # Create ACL components
+            target_creation = FlextLdifModels.AclTarget.create()
+            subject_creation = FlextLdifModels.AclSubject.create()
+            perms_creation = FlextLdifModels.AclPermissions.create(read=True)
+
+            # Validate and extract values
+            if not target_creation.is_success:
+                return FlextResult[
+                    tuple[
+                        FlextLdifModels.AclTarget,
+                        FlextLdifModels.AclSubject,
+                        FlextLdifModels.AclPermissions,
+                    ]
+                ].fail("Failed to create AclTarget")
+            if not isinstance(target_creation.value, FlextLdifModels.AclTarget):
+                return FlextResult[
+                    tuple[
+                        FlextLdifModels.AclTarget,
+                        FlextLdifModels.AclSubject,
+                        FlextLdifModels.AclPermissions,
+                    ]
+                ].fail("Invalid AclTarget type")
+
+            if not subject_creation.is_success:
+                return FlextResult[
+                    tuple[
+                        FlextLdifModels.AclTarget,
+                        FlextLdifModels.AclSubject,
+                        FlextLdifModels.AclPermissions,
+                    ]
+                ].fail("Failed to create AclSubject")
+            if not isinstance(subject_creation.value, FlextLdifModels.AclSubject):
+                return FlextResult[
+                    tuple[
+                        FlextLdifModels.AclTarget,
+                        FlextLdifModels.AclSubject,
+                        FlextLdifModels.AclPermissions,
+                    ]
+                ].fail("Invalid AclSubject type")
+
+            if not perms_creation.is_success:
+                return FlextResult[
+                    tuple[
+                        FlextLdifModels.AclTarget,
+                        FlextLdifModels.AclSubject,
+                        FlextLdifModels.AclPermissions,
+                    ]
+                ].fail("Failed to create AclPermissions")
+            if not isinstance(perms_creation.value, FlextLdifModels.AclPermissions):
+                return FlextResult[
+                    tuple[
+                        FlextLdifModels.AclTarget,
+                        FlextLdifModels.AclSubject,
+                        FlextLdifModels.AclPermissions,
+                    ]
+                ].fail("Invalid AclPermissions type")
+
+            return FlextResult[
+                tuple[
+                    FlextLdifModels.AclTarget,
+                    FlextLdifModels.AclSubject,
+                    FlextLdifModels.AclPermissions,
+                ]
+            ].ok((
+                target_creation.value,
+                subject_creation.value,
+                perms_creation.value,
+            ))
+
+        @staticmethod
+        def create_unified_acl(
+            name: str,
+            target: FlextLdifModels.AclTarget,
+            subject: FlextLdifModels.AclSubject,
+            permissions: FlextLdifModels.AclPermissions,
+            server_type: str,
+            raw_acl: str,
+        ) -> FlextResult[FlextLdifModels.UnifiedAcl]:
+            """Create unified ACL with proper validation."""
+            acl_result = FlextLdifModels.UnifiedAcl.create(
+                name=name,
+                target=target,
+                subject=subject,
+                permissions=permissions,
+                server_type=server_type,
+                raw_acl=raw_acl,
+            )
+
+            if acl_result.is_success and isinstance(
+                acl_result.value, FlextLdifModels.UnifiedAcl
+            ):
+                return FlextResult[FlextLdifModels.UnifiedAcl].ok(acl_result.value)
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                acl_result.error or "Failed to create UnifiedAcl"
+            )
 
     class AclRule:
         """Base ACL rule following AclRuleProtocol - Composite pattern."""
@@ -26,7 +135,7 @@ class FlextLdifAclService(FlextService[FlextTypes.Dict]):
             self._rule_type = rule_type
             self._logger = FlextLogger(__name__)
 
-        def evaluate(self, context: FlextTypes.Dict) -> FlextResult[bool]:
+        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextResult[bool]:
             """Evaluate ACL rule against context."""
             # Placeholder: ACL evaluation logic will be implemented in future version
             _ = context  # Suppress unused argument warning
@@ -51,12 +160,12 @@ class FlextLdifAclService(FlextService[FlextTypes.Dict]):
             """Add sub-rule to composite."""
             self._rules.append(rule)
 
-        def evaluate(self, context: FlextTypes.Dict) -> FlextResult[bool]:
+        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextResult[bool]:
             """Evaluate all rules with operator logic."""
             if not self._rules:
                 return FlextResult[bool].ok(True)
 
-            results: FlextTypes.BoolList = []
+            results: FlextLdifTypes.BoolList = []
             for rule in self._rules:
                 eval_result = rule.evaluate(context)
                 if eval_result.is_failure:
@@ -82,9 +191,9 @@ class FlextLdifAclService(FlextService[FlextTypes.Dict]):
             self._permission = permission
             self._required = required
 
-        def evaluate(self, context: FlextTypes.Dict) -> FlextResult[bool]:
+        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextResult[bool]:
             """Evaluate permission requirement."""
-            perms = cast("FlextTypes.BoolDict", context.get("permissions", {}))
+            perms = cast("FlextLdifTypes.BoolDict", context.get("permissions", {}))
             has_perm = perms.get(self._permission, False)
             result = has_perm == self._required
             return FlextResult[bool].ok(result)
@@ -98,7 +207,7 @@ class FlextLdifAclService(FlextService[FlextTypes.Dict]):
             super().__init__(rule_type="subject")
             self._subject_dn = subject_dn
 
-        def evaluate(self, context: FlextTypes.Dict) -> FlextResult[bool]:
+        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextResult[bool]:
             """Evaluate subject match."""
             subject = context.get("subject_dn", "")
             result = subject == self._subject_dn
@@ -153,7 +262,7 @@ class FlextLdifAclService(FlextService[FlextTypes.Dict]):
             return FlextResult[list[FlextLdifModels.UnifiedAcl]].fail(error_msg)
 
         acl_attribute = acl_attr_result.value
-        acl_values: FlextTypes.StringList = entry.get_attribute_values(acl_attribute)
+        acl_values: FlextLdifTypes.StringList = entry.get_attribute(acl_attribute) or []
 
         if not acl_values:
             return FlextResult[list[FlextLdifModels.UnifiedAcl]].ok([])
@@ -181,44 +290,15 @@ class FlextLdifAclService(FlextService[FlextTypes.Dict]):
             FlextResult containing unified ACL with composite rules
 
         """
-        # Create ACL components and extract values safely
-        target_creation = FlextLdifModels.AclTarget.create()
-        subject_creation = FlextLdifModels.AclSubject.create()
-        perms_creation = FlextLdifModels.AclPermissions.create(read=True)
+        # Create ACL components using helper
+        components_result = self.AclComponentHelper.create_acl_components()
+        if components_result.is_failure:
+            return FlextResult[FlextLdifModels.UnifiedAcl].fail(components_result.error)
 
-        # Extract values with proper type checking
-        if not target_creation.is_success:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                "Failed to create AclTarget"
-            )
-        if not isinstance(target_creation.value, FlextLdifModels.AclTarget):
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                "Invalid AclTarget type"
-            )
+        target_result, subject_result, perms_result = components_result.value
 
-        if not subject_creation.is_success:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                "Failed to create AclSubject"
-            )
-        if not isinstance(subject_creation.value, FlextLdifModels.AclSubject):
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                "Invalid AclSubject type"
-            )
-
-        if not perms_creation.is_success:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                "Failed to create AclPermissions"
-            )
-        if not isinstance(perms_creation.value, FlextLdifModels.AclPermissions):
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                "Invalid AclPermissions type"
-            )
-
-        target_result = target_creation.value
-        subject_result = subject_creation.value
-        perms_result = perms_creation.value
-
-        return FlextLdifModels.UnifiedAcl.create(
+        # Create unified ACL using helper
+        return self.AclComponentHelper.create_unified_acl(
             name="parsed_acl",
             target=target_result,
             subject=subject_result,
@@ -228,7 +308,7 @@ class FlextLdifAclService(FlextService[FlextTypes.Dict]):
         )
 
     def evaluate_acl_rules(
-        self, rules: list[AclRule], context: FlextTypes.Dict
+        self, rules: list[AclRule], context: FlextLdifTypes.Dict
     ) -> FlextResult[bool]:
         """Evaluate ACL rules against context using composite pattern."""
         if context is None:
@@ -240,14 +320,14 @@ class FlextLdifAclService(FlextService[FlextTypes.Dict]):
         return composite.evaluate(context)
 
     @override
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
+    def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
         """Execute ACL service health check.
 
         Returns:
             FlextResult containing service status and available patterns
 
         """
-        return FlextResult[FlextTypes.Dict].ok({
+        return FlextResult[FlextLdifTypes.Dict].ok({
             "service": FlextLdifAclService,
             "status": "ready",
             "patterns": {

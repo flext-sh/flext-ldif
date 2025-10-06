@@ -10,13 +10,15 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import FlextProtocols, FlextResult, FlextTypes
+from flext_core import FlextProtocols, FlextResult
+
+from flext_ldif.typings import FlextLdifTypes
 
 if TYPE_CHECKING:
     from flext_ldif.models import FlextLdifModels
 
 
-class FlextLdifProtocols:
+class FlextLdifProtocols(FlextProtocols):
     """Unified LDIF protocols following FLEXT domain extension pattern.
 
     This class consolidates LDIF processing protocols while explicitly
@@ -72,11 +74,11 @@ class FlextLdifProtocols:
                 ...
 
             @property
-            def attributes(self: object) -> dict[str, FlextTypes.StringList]:
+            def attributes(self: object) -> dict[str, FlextLdifTypes.StringList]:
                 """Get the attributes of the entry."""
                 ...
 
-            def get_attribute(self, name: str) -> FlextTypes.StringList | None:
+            def get_attribute(self, name: str) -> FlextLdifTypes.StringList | None:
                 """Get attribute values by name."""
                 ...
 
@@ -136,7 +138,7 @@ class FlextLdifProtocols:
 
             def analyze_entries(
                 self, entries: list[FlextLdifModels.Entry]
-            ) -> FlextResult[FlextTypes.Dict]:
+            ) -> FlextResult[FlextLdifTypes.Dict]:
                 """Analyze entries and provide statistics."""
                 ...
 
@@ -154,7 +156,7 @@ class FlextLdifProtocols:
                 """Validate multiple LDIF entries with optional strict mode."""
                 ...
 
-            def get_validation_errors(self: object) -> FlextTypes.StringList:
+            def get_validation_errors(self: object) -> FlextLdifTypes.StringList:
                 """Get list of validation errors."""
                 ...
 
@@ -180,7 +182,7 @@ class FlextLdifProtocols:
 
             def analyze_entries(
                 self, entries: list[FlextLdifModels.Entry]
-            ) -> FlextResult[FlextTypes.Dict]:
+            ) -> FlextResult[FlextLdifTypes.Dict]:
                 """Analyze LDIF entries and generate analytics."""
                 ...
 
@@ -190,7 +192,7 @@ class FlextLdifProtocols:
 
             def detect_patterns(
                 self, entries: list[FlextLdifModels.Entry]
-            ) -> FlextTypes.Dict:
+            ) -> FlextLdifTypes.Dict:
                 """Detect patterns in LDIF entries."""
                 ...
 
@@ -230,7 +232,7 @@ class FlextLdifProtocols:
         class AclRuleProtocol(Protocol):
             """Protocol for ACL rules (Composite pattern)."""
 
-            def evaluate(self, context: FlextTypes.Dict) -> FlextResult[bool]:
+            def evaluate(self, context: FlextLdifTypes.Dict) -> FlextResult[bool]:
                 """Evaluate ACL rule against context."""
                 ...
 
@@ -258,7 +260,7 @@ class FlextLdifProtocols:
                 """Validate data against custom rules."""
                 ...
 
-            def get_error_messages(self: object) -> FlextTypes.StringList:
+            def get_error_messages(self: object) -> FlextLdifTypes.StringList:
                 """Get validation error messages."""
                 ...
 
@@ -271,7 +273,7 @@ class FlextLdifProtocols:
                 entries: list[FlextLdifModels.Entry],
                 source_format: str,
                 target_format: str,
-                quirks: FlextTypes.List,
+                quirks: FlextLdifTypes.List,
             ) -> FlextResult[list[FlextLdifModels.Entry]]:
                 """Migrate LDIF entries between formats."""
                 ...

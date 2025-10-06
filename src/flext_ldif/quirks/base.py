@@ -17,7 +17,7 @@ from flext_core import FlextModels, FlextResult, FlextTypes
 from pydantic import Field
 
 
-class BaseSchemaQuirk(ABC, FlextModels.Value):
+class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
     """Base class for schema quirks.
 
     Schema quirks extend RFC 4512 schema parsing with server-specific features.
@@ -113,7 +113,7 @@ class BaseSchemaQuirk(ABC, FlextModels.Value):
         """
 
 
-class BaseAclQuirk(ABC, FlextModels.Value):
+class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
     """Base class for ACL quirks.
 
     ACL quirks extend RFC 4516 ACL parsing with server-specific formats.
@@ -181,7 +181,7 @@ class BaseAclQuirk(ABC, FlextModels.Value):
         """
 
 
-class BaseEntryQuirk(ABC, FlextModels.Value):
+class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
     """Base class for entry processing quirks.
 
     Entry quirks handle server-specific entry attributes and transformations.
@@ -239,8 +239,24 @@ class BaseEntryQuirk(ABC, FlextModels.Value):
         """
 
 
+class FlextLdifQuirksBase:
+    """Main container class for all LDIF quirk functionality.
+
+    Provides unified access to base quirk classes and server-specific implementations.
+    Follows FLEXT pattern: one main class per module named FlextLdif[ModuleName].
+    """
+
+    # Direct access to base classes (no aliases - direct signatures only)
+    SchemaQuirk = FlextLdifQuirksBaseSchemaQuirk
+    # Aliases for backward compatibility
+    BaseAclQuirk = FlextLdifQuirksBaseAclQuirk
+    BaseEntryQuirk = FlextLdifQuirksBaseEntryQuirk
+    BaseSchemaQuirk = FlextLdifQuirksBaseSchemaQuirk
+
+    AclQuirk = FlextLdifQuirksBaseAclQuirk
+    EntryQuirk = FlextLdifQuirksBaseEntryQuirk
+
+
 __all__ = [
-    "BaseAclQuirk",
-    "BaseEntryQuirk",
-    "BaseSchemaQuirk",
+    "FlextLdifQuirksBase",
 ]
