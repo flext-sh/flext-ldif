@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 from typing import cast, override
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextResult, FlextService
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.schema import FlextLdifObjectClassManager
@@ -22,21 +22,11 @@ from flext_ldif.typings import FlextLdifTypes
 class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
     """Entry builder service for creating LDIF entries."""
 
-    # Type annotation for logger instance variable
-    logger: FlextLogger | None
-
     @override
     def __init__(self) -> None:
         """Initialize entry builder."""
         super().__init__()
         self._objectclass_manager = FlextLdifObjectClassManager()
-
-    @property
-    def logger(self) -> FlextLogger:
-        """Get the logger instance."""
-        if self.logger is None:
-            self.logger = FlextLogger(__name__)
-        return self.logger
 
     @override
     def execute(self) -> FlextResult[FlextLdifModels.Entry]:

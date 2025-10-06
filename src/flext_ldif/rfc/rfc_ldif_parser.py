@@ -19,7 +19,7 @@ import base64
 from pathlib import Path
 from typing import cast
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextResult, FlextService
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
@@ -69,7 +69,6 @@ class FlextLdifRfcLdifParser(FlextService[FlextLdifTypes.Dict]):
 
         """
         super().__init__()
-        self.logger: FlextLogger | None = FlextLogger(__name__)
         self._params = params
         self._quirk_registry = quirk_registry
         self._source_server = params.get("source_server", "rfc")

@@ -36,13 +36,6 @@ class FlextLdifSchemaBuilder(FlextService):
         self._entry_count = 0
 
     @property
-    def logger(self) -> FlextLogger:
-        """Get the logger instance."""
-        if self.logger is None:
-            self.logger = FlextLogger(type(self).__name__)
-        return self.logger
-
-    @property
     def attributes(self) -> dict[str, dict]:
         """Get the attributes dictionary."""
         return self._attributes

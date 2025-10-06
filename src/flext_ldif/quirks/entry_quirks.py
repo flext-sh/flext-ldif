@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import cast, override
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -18,9 +18,6 @@ from flext_ldif.typings import FlextLdifTypes
 
 class FlextLdifEntryQuirks(FlextService[FlextLdifTypes.Dict]):
     """Entry adaptation and validation for server-specific quirks."""
-
-    # Type annotation for logger instance variable
-    logger: FlextLogger | None
 
     @override
     def __init__(self, quirks_manager: FlextLdifQuirksManager | None = None) -> None:
@@ -32,13 +29,6 @@ class FlextLdifEntryQuirks(FlextService[FlextLdifTypes.Dict]):
         """
         super().__init__()
         self._quirks = quirks_manager or FlextLdifQuirksManager()
-
-    @property
-    def logger(self) -> FlextLogger:
-        """Get the logger instance."""
-        if self.logger is None:
-            self.logger = FlextLogger(__name__)
-        return self.logger
 
     @override
     def execute(self: object) -> FlextResult[FlextLdifTypes.Dict]:
