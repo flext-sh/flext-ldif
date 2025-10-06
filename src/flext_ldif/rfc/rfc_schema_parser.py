@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
@@ -136,7 +136,7 @@ class FlextLdifRfcSchemaParser(FlextService[FlextLdifTypes.Dict]):
             parse_attributes = self._params.get("parse_attributes", True)
             parse_objectclasses = self._params.get("parse_objectclasses", True)
 
-            self.logger.info(
+            self.logger.info(  # type: ignore[attr-defined]
                 f"Parsing LDAP schema (RFC 4512): {file_path}",
                 extra={
                     "file_path": str(file_path),
@@ -157,11 +157,13 @@ class FlextLdifRfcSchemaParser(FlextService[FlextLdifTypes.Dict]):
 
             data = parse_result.value
 
-            self.logger.info(
+            self.logger.info(  # type: ignore[attr-defined]
                 "LDAP schema parsed successfully",
                 extra={
-                    "total_attributes": len(data.get("attributes", {})),
-                    "total_objectclasses": len(data.get("objectclasses", {})),
+                    "total_attributes": len(cast("dict", data.get("attributes", {}))),
+                    "total_objectclasses": len(
+                        cast("dict", data.get("objectclasses", {}))
+                    ),
                 },
             )
 
@@ -169,7 +171,7 @@ class FlextLdifRfcSchemaParser(FlextService[FlextLdifTypes.Dict]):
 
         except Exception as e:
             error_msg = f"Failed to execute RFC schema parser: {e}"
-            self.logger.exception(error_msg)
+            self.logger.exception(error_msg)  # type: ignore[attr-defined]
             return FlextResult[FlextLdifTypes.Dict].fail(error_msg)
 
     def _parse_schema_file(
@@ -282,7 +284,7 @@ class FlextLdifRfcSchemaParser(FlextService[FlextLdifTypes.Dict]):
                     objectclasses[str(oc_data["name"])] = oc_data
 
         except Exception as e:
-            self.logger.warning(
+            self.logger.warning(  # type: ignore[attr-defined]
                 f"Error processing schema line: {e}",
                 extra={"line": line[:100]},
             )
@@ -302,7 +304,7 @@ class FlextLdifRfcSchemaParser(FlextService[FlextLdifTypes.Dict]):
             schema_quirks = self._quirk_registry.get_schema_quirks(self._server_type)
             for quirk in schema_quirks:
                 if quirk.can_handle_attribute(definition):
-                    self.logger.debug(
+                    self.logger.debug(  # type: ignore[attr-defined]
                         f"Using {quirk.server_type} quirk for attribute parsing",
                         extra={"definition": definition[:100]},
                     )
@@ -343,7 +345,7 @@ class FlextLdifRfcSchemaParser(FlextService[FlextLdifTypes.Dict]):
             schema_quirks = self._quirk_registry.get_schema_quirks(self._server_type)
             for quirk in schema_quirks:
                 if quirk.can_handle_objectclass(definition):
-                    self.logger.debug(
+                    self.logger.debug(  # type: ignore[attr-defined]
                         f"Using {quirk.server_type} quirk for objectClass parsing",
                         extra={"definition": definition[:100]},
                     )

@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_core import FlextConfig, FlextConstants
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
@@ -134,9 +136,59 @@ class FlextLdifConfig(FlextConfig):
         description="Analytics detail level (low, medium, high)",
     )
 
+    # Additional LDIF processing configuration
+    ldif_line_separator: str = Field(
+        default="\n",
+        description="Line separator for LDIF output",
+    )
+
+    ldif_version_string: str = Field(
+        default="version: 1",
+        description="LDIF version string",
+    )
+
+    ldif_batch_size: int = Field(
+        default=FlextLdifConstants.Processing.DEFAULT_BATCH_SIZE,
+        ge=1,
+        le=FlextLdifConstants.Processing.MAX_BATCH_SIZE,
+        description="Batch size for LDIF processing",
+    )
+
+    ldif_fail_on_warnings: bool = Field(
+        default=False,
+        description="Fail processing on warnings",
+    )
+
+    ldif_analytics_sample_rate: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=1.0,
+        description="Analytics sampling rate (0.0 to 1.0)",
+    )
+
+    ldif_analytics_max_entries: int = Field(
+        default=10000,
+        ge=1,
+        le=100000,
+        description="Maximum entries for analytics processing",
+    )
+
+    ldif_default_server_type: str = Field(
+        default="rfc",
+        description="Default server type for LDIF processing",
+    )
+
+    ldif_server_specific_quirks: bool = Field(
+        default=True,
+        description="Enable server-specific quirk handling",
+    )
+
     # Validation Configuration using FlextLdifConstants for defaults
     validation_level: FlextLdifTypes.ValidationLevel = Field(
-        default=FlextLdifConstants.LiteralTypes.VALIDATION_LEVELS[0],  # "strict"
+        default=cast(
+            "FlextLdifTypes.ValidationLevel",
+            FlextLdifConstants.LiteralTypes.VALIDATION_LEVELS[0],
+        ),  # "strict"
         description="Validation strictness level",
     )
 
@@ -468,6 +520,52 @@ class FlextLdifConfig(FlextConfig):
             and self.verbose_logging
             and self.max_workers <= FlextLdifConstants.Processing.DEBUG_MAX_WORKERS
         )
+
+    @classmethod
+    def create_default(cls) -> FlextLdifConfig:
+        """Create default configuration instance."""
+        return cls()
+
+    def get_format_config(self) -> FlextLdifTypes.Dict:
+        """Get LDIF format-related configuration."""
+        return {
+            "encoding": self.ldif_encoding,
+            "max_line_length": self.ldif_max_line_length,
+            "line_separator": self.ldif_line_separator,
+            "version_string": self.ldif_version_string,
+        }
+
+    def get_processing_config(self) -> FlextLdifTypes.Dict:
+        """Get LDIF processing-related configuration."""
+        return {
+            "max_entries": self.ldif_max_entries,
+            "batch_size": self.ldif_batch_size,
+            "strict_validation": self.ldif_strict_validation,
+            "fail_on_warnings": self.ldif_fail_on_warnings,
+        }
+
+    def get_analytics_config(self) -> FlextLdifTypes.Dict:
+        """Get LDIF analytics-related configuration."""
+        return {
+            "enable_analytics": self.ldif_enable_analytics,
+            "analytics_sample_rate": self.ldif_analytics_sample_rate,
+            "analytics_max_entries": self.ldif_analytics_max_entries,
+        }
+
+    def get_server_config(self) -> FlextLdifTypes.Dict:
+        """Get server-related configuration."""
+        return {
+            "default_server_type": self.ldif_default_server_type,
+            "server_specific_quirks": self.ldif_server_specific_quirks,
+        }
+
+    def get_debug_config(self) -> FlextLdifTypes.Dict:
+        """Get debug-related configuration."""
+        return {
+            "debug_mode": self.debug_mode,
+            "verbose_logging": self.verbose_logging,
+            "trace": self.trace,
+        }
 
 
 __all__ = ["FlextLdifConfig"]

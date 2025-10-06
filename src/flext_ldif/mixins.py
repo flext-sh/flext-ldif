@@ -292,7 +292,7 @@ class FlextLdifMixins(FlextMixins):
         """Mixin providing caching utilities with monadic composition."""
 
         @override
-        def __init__(self) -> None:  # type: ignore[override]
+        def __init__(self) -> None:
             """Initialize caching mixin with empty cache and statistics."""
             self._cache: FlextLdifTypes.Dict = {}
             self._cache_stats: dict[str, int] = {"hits": 0, "misses": 0}
@@ -428,7 +428,7 @@ class FlextLdifMixins(FlextMixins):
         """Unified mixin coordinator managing all mixin functionality."""
 
         @override
-        def __init__(self) -> None:  # type: ignore[override]
+        def __init__(self) -> None:
             """Initialize mixin coordinator with all available mixins."""
             self._validation_mixin = FlextLdifMixins.ValidationMixin()
             self._processing_mixin = FlextLdifMixins.ProcessingMixin()

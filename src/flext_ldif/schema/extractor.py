@@ -27,8 +27,8 @@ class FlextLdifSchemaExtractor(FlextService):
         )
 
     def extract_from_entries(
-        self, entries: list[object]
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
         """Extract schema from LDIF entries.
 
         Args:
@@ -65,29 +65,30 @@ class FlextLdifSchemaExtractor(FlextService):
                             "oid": f"1.3.6.1.4.1.{hash(attr_name) % 1000000}",
                             "description": "Discovered from LDIF entries",
                             "syntax": "1.3.6.1.4.1.1466.115.121.1.15",  # Directory String
-                            "single_value": str(len(attr_values.values) <= 1),
+                            "single_value": str(len(attr_values) <= 1),
                         }
 
-            schema_data = {
-                "object_classes": object_classes,
-                "attributes": attributes,
-            }
+            result = FlextLdifModels.SchemaDiscoveryResult(
+                attributes=attributes,
+                objectclasses=object_classes,
+                total_attributes=len(attributes),
+                total_objectclasses=len(object_classes),
+            )
 
-            self.logger.info(
+            self.logger.info(  # type: ignore[attr-defined]
                 f"Extracted schema: {len(attributes)} attributes, "
                 f"{len(object_classes)} objectClasses from {len(entries)} entries"
             )
 
-            # Return as FlextResult with dict data - models will be created by caller
-            return FlextResult[FlextLdifTypes.Dict].ok(schema_data)
+            return FlextResult[FlextLdifModels.SchemaDiscoveryResult].ok(result)
 
         except Exception as e:
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(
                 f"Schema extraction failed: {e}"
             )
 
     def extract_attribute_usage(
-        self, entries: list[object]
+        self, entries: list[FlextLdifModels.Entry]
     ) -> FlextResult[FlextLdifTypes.NestedDict]:
         """Extract attribute usage statistics from entries.
 
@@ -115,7 +116,7 @@ class FlextLdifSchemaExtractor(FlextService):
                 stats = usage_stats[attr_name]
                 stats["count"] = cast("int", stats["count"]) + 1
 
-                value_count = len(attr_values.values)
+                value_count = len(attr_values)
                 if value_count > cast("int", stats["max_values"]):
                     stats["max_values"] = value_count
 

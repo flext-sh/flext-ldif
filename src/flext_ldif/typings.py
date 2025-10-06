@@ -18,8 +18,6 @@ from typing import Literal
 
 from flext_core import FlextResult, FlextTypes
 
-from flext_ldif.constants import FlextLdifConstants
-
 # =============================================================================
 # LDIF-SPECIFIC TYPE VARIABLES - Domain-specific TypeVars for LDIF operations
 # =============================================================================
@@ -33,6 +31,12 @@ class FlextLdifTypes(FlextTypes):
     Contains ONLY complex LDIF-specific types, no simple aliases.
     Uses Python 3.13+ type syntax and patterns.
     """
+
+    # =========================================================================
+    # BASIC LDIF TYPES - Fundamental type aliases
+    # =========================================================================
+
+    # Core type aliases inherited from FlextTypes
 
     # =========================================================================
     # LDIF ENTRY TYPES - Complex LDIF entry handling types
@@ -242,20 +246,34 @@ class FlextLdifTypes(FlextTypes):
     # =========================================================================
 
     # Processing stage literals
-    type ProcessingStage = Literal[*FlextLdifConstants.LiteralTypes.PROCESSING_STAGES]
-    type HealthStatus = Literal[*FlextLdifConstants.LiteralTypes.HEALTH_STATUS]
+    type ProcessingStage = Literal["parsing", "validation", "analytics", "writing"]
+    type HealthStatus = Literal["healthy", "degraded", "unhealthy"]
     type HealthStatusDict = dict[str, HealthStatus | str | int | bool]
-    type EntryType = Literal[*FlextLdifConstants.LiteralTypes.ENTRY_TYPES]
-    type ModificationType = Literal[*FlextLdifConstants.LiteralTypes.MODIFICATION_TYPES]
+    type EntryType = Literal["person", "group", "organizationalunit", "domain", "other"]
+    type ModificationType = Literal["add", "modify", "delete", "modrdn"]
 
     # Server type literals
-    type ServerType = Literal[*FlextLdifConstants.LiteralTypes.SERVER_TYPES]
+    type ServerType = Literal[
+        "active_directory",
+        "openldap",
+        "openldap2",
+        "openldap1",
+        "apache_directory",
+        "novell_edirectory",
+        "ibm_tivoli",
+        "generic",
+        "oracle_oid",
+        "oracle_oud",
+        "389ds",
+    ]
 
     # Encoding type literals
-    type EncodingType = Literal[*FlextLdifConstants.LiteralTypes.ENCODING_TYPES]
+    type EncodingType = Literal[
+        "utf-8", "latin-1", "ascii", "utf-16", "utf-32", "cp1252", "iso-8859-1"
+    ]
 
     # Validation level literals
-    type ValidationLevel = Literal[*FlextLdifConstants.LiteralTypes.VALIDATION_LEVELS]
+    type ValidationLevel = Literal["strict", "moderate", "lenient"]
 
     # =========================================================================
     # FUNCTIONAL PROGRAMMING TYPES - Advanced composition patterns

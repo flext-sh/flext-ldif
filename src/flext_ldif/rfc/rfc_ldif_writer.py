@@ -186,7 +186,7 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Dict]):
                             else 0
                         )
 
-                self.logger.info(
+                self.logger.info(  # type: ignore[attr-defined]
                     f"LDIF file written: {output_file}",
                     extra={
                         "output_file": str(output_file),
@@ -261,7 +261,7 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Dict]):
             ldif_content = output.getvalue()
             output.close()
 
-            self.logger.info(
+            self.logger.info(  # type: ignore[attr-defined]
                 "LDIF content generated",
                 extra={
                     "content_length": len(ldif_content),
@@ -277,7 +277,7 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Dict]):
             })
 
         except Exception as e:
-            self.logger.exception("LDIF write failed")
+            self.logger.exception("LDIF write failed")  # type: ignore[attr-defined]
             return FlextResult[FlextLdifTypes.Dict].fail(f"LDIF write failed: {e}")
 
     def write_entries_to_string(
@@ -317,6 +317,50 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Dict]):
 
         except Exception as e:
             return FlextResult[str].fail(f"Failed to write entries to string: {e}")
+
+    def write_entries_to_file(
+        self,
+        entries: list[FlextLdifModels.Entry],
+        output_file: Path,
+    ) -> FlextResult[None]:
+        """Write entries to LDIF file.
+
+        Args:
+            entries: List of LDIF entries to write
+            output_file: Path to output file
+
+        Returns:
+            FlextResult indicating success or failure
+
+        """
+        try:
+            # Create output directory if needed
+            output_file.parent.mkdir(parents=True, exist_ok=True)
+
+            with output_file.open("w", encoding="utf-8") as f:
+                # Write version header (RFC 2849)
+                f.write("version: 1\n")
+
+                for idx, entry in enumerate(entries):
+                    # Write DN
+                    dn_line = f"dn: {entry.dn.value}"
+                    f.write(dn_line + "\n")
+
+                    # Write attributes
+                    for attr_name, attr_values in entry.attributes.data.items():
+                        # attr_values is list[str]
+                        for value in attr_values:
+                            attr_line = f"{attr_name}: {value}"
+                            f.write(attr_line + "\n")
+
+                    # Add blank line between entries (except after last entry)
+                    if idx < len(entries) - 1:
+                        f.write("\n")
+
+            return FlextResult[None].ok(None)
+
+        except Exception as e:
+            return FlextResult[None].fail(f"Failed to write entries to file: {e}")
 
     def _write_schema_entries(
         self, file_handle: TextIO, schema: dict
@@ -490,7 +534,8 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Dict]):
                 if not dn:
                     continue
 
-                acl_definitions = acl_entry.get("acl", [])
+                raw_acl = acl_entry.get("acl", [])
+                acl_definitions = self._extract_acl_definitions(raw_acl)
 
                 # Apply target ACL quirks if available (convert FROM RFC to target format)
                 if self._quirk_registry and self._target_server_type:
@@ -498,7 +543,7 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Dict]):
                         self._target_server_type
                     )
                     for quirk in acl_quirks:
-                        for i, acl_def in enumerate(acl_definitions):
+                        for i, acl_def in enumerate(acl_definitions):  # type: ignore[assignment]
                             if quirk.can_handle_acl(str(acl_def)):
                                 parse_result = quirk.parse_acl(str(acl_def))
                                 if parse_result.is_success:
@@ -573,6 +618,20 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Dict]):
             ]
 
         return lines
+
+    def _extract_acl_definitions(self, raw_acl: object) -> list[str]:
+        """Extract ACL definitions from raw ACL data.
+
+        Args:
+            raw_acl: Raw ACL data from entry
+
+        Returns:
+            List of ACL definition strings
+
+        """
+        if isinstance(raw_acl, list):
+            return [str(item) for item in raw_acl]
+        return []
 
 
 __all__ = ["FlextLdifRfcLdifWriter"]

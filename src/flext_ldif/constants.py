@@ -89,6 +89,9 @@ class FlextLdifConstants(FlextConstants):
             0.7  # Minimum confidence for encoding detection
         )
 
+        DEFAULT_BATCH_SIZE: Final[int] = 100
+        MAX_BATCH_SIZE: Final[int] = 10000
+
         # Additional constants for config validation
         PERFORMANCE_MEMORY_MB_THRESHOLD: Final[int] = (
             512  # Memory threshold for performance
@@ -225,7 +228,7 @@ class FlextLdifConstants(FlextConstants):
         ANALYTICS = "analytics"
         WRITING = "writing"
 
-    class HealthStatus(StrEnum):
+    class LdifHealthStatus(StrEnum):
         """Health status for LDIF services."""
 
         HEALTHY = "healthy"
@@ -257,17 +260,33 @@ class FlextLdifConstants(FlextConstants):
         """Literal type constants for type annotations."""
 
         # Processing stages
-        PROCESSING_STAGES: Final[tuple[str, ...]] = ("parsing", "validation", "analytics", "writing")
-        
+        PROCESSING_STAGES: Final[tuple[str, ...]] = (
+            "parsing",
+            "validation",
+            "analytics",
+            "writing",
+        )
+
         # Health status
         HEALTH_STATUS: Final[tuple[str, ...]] = ("healthy", "degraded", "unhealthy")
-        
+
         # Entry types
-        ENTRY_TYPES: Final[tuple[str, ...]] = ("person", "group", "organizationalunit", "domain", "other")
-        
+        ENTRY_TYPES: Final[tuple[str, ...]] = (
+            "person",
+            "group",
+            "organizationalunit",
+            "domain",
+            "other",
+        )
+
         # Modification types
-        MODIFICATION_TYPES: Final[tuple[str, ...]] = ("add", "modify", "delete", "modrdn")
-        
+        MODIFICATION_TYPES: Final[tuple[str, ...]] = (
+            "add",
+            "modify",
+            "delete",
+            "modrdn",
+        )
+
         # Server types
         SERVER_TYPES: Final[tuple[str, ...]] = (
             "active_directory",
@@ -282,15 +301,21 @@ class FlextLdifConstants(FlextConstants):
             "oracle_oud",
             "389ds",
         )
-        
+
         # Encoding types
         ENCODING_TYPES: Final[tuple[str, ...]] = (
-            "utf-8", "latin-1", "ascii", "utf-16", "utf-32", "cp1252", "iso-8859-1"
+            "utf-8",
+            "latin-1",
+            "ascii",
+            "utf-16",
+            "utf-32",
+            "cp1252",
+            "iso-8859-1",
         )
-        
+
         # Validation levels
         VALIDATION_LEVELS: Final[tuple[str, ...]] = ("strict", "moderate", "lenient")
-        
+
         # Project types
         PROJECT_TYPES: Final[tuple[str, ...]] = (
             "library",
@@ -469,6 +494,46 @@ class FlextLdifConstants(FlextConstants):
         STRICT: Final[str] = "strict"
         MODERATE: Final[str] = "moderate"
         LENIENT: Final[str] = "lenient"
+
+    class Acl:
+        """ACL-related constants."""
+
+        # ACL operation types
+        GRANT: Final[str] = "grant"
+        DENY: Final[str] = "deny"
+        ALLOW: Final[str] = "allow"
+
+        # ACL scope types
+        SUBTREE: Final[str] = "subtree"
+        ONELEVEL: Final[str] = "onelevel"
+        BASE: Final[str] = "base"
+
+        # ACL permissions
+        READ: Final[str] = "read"
+        WRITE: Final[str] = "write"
+        SEARCH: Final[str] = "search"
+        COMPARE: Final[str] = "compare"
+        ADD: Final[str] = "add"
+        DELETE: Final[str] = "delete"
+        MODIFY: Final[str] = "modify"
+
+    class Schema:
+        """Schema-related constants."""
+
+        # Schema object types
+        OBJECTCLASS: Final[str] = "objectclass"
+        ATTRIBUTE: Final[str] = "attribute"
+        SYNTAX: Final[str] = "syntax"
+        MATCHINGRULE: Final[str] = "matchingrule"
+
+        # Schema validation levels
+        STRICT: Final[str] = "strict"
+        LENIENT: Final[str] = "lenient"
+
+        # Schema status
+        ACTIVE: Final[str] = "active"
+        DEPRECATED: Final[str] = "deprecated"
+        OBSOLETE: Final[str] = "obsolete"
 
 
 __all__ = [

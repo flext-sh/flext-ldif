@@ -30,7 +30,7 @@ from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifAPI(FlextService[FlextLdifTypes.Dict]):
+class FlextLdif(FlextService[FlextLdifTypes.Dict]):
     r"""Thin facade for all LDIF processing operations.
 
     Provides unified access to:
@@ -45,7 +45,7 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.Dict]):
 
     Example:
         # Basic usage
-        ldif = FlextLdifAPI()
+        ldif = FlextLdif()
 
         # Parse LDIF content
         result = ldif.parse("dn: cn=test,dc=example,dc=com\ncn: test\n")
@@ -501,4 +501,4 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.Dict]):
     # =========================================================================
 
 
-__all__ = ["FlextLdifAPI"]
+__all__ = ["FlextLdif"]

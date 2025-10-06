@@ -30,74 +30,29 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
             ]
         ]:
             """Create ACL components with proper validation."""
-            # Create ACL components
-            target_creation = FlextLdifModels.AclTarget.create()
-            subject_creation = FlextLdifModels.AclSubject.create()
-            perms_creation = FlextLdifModels.AclPermissions.create(read=True)
+            try:
+                # Create ACL components with default values
+                target = FlextLdifModels.AclTarget(target_dn="*", attributes=[])
+                subject = FlextLdifModels.AclSubject(
+                    subject_type="*", subject_value="*"
+                )
+                perms = FlextLdifModels.AclPermissions(read=True)
 
-            # Validate and extract values
-            if not target_creation.is_success:
                 return FlextResult[
                     tuple[
                         FlextLdifModels.AclTarget,
                         FlextLdifModels.AclSubject,
                         FlextLdifModels.AclPermissions,
                     ]
-                ].fail("Failed to create AclTarget")
-            if not isinstance(target_creation.value, FlextLdifModels.AclTarget):
+                ].ok((target, subject, perms))
+            except Exception as e:
                 return FlextResult[
                     tuple[
                         FlextLdifModels.AclTarget,
                         FlextLdifModels.AclSubject,
                         FlextLdifModels.AclPermissions,
                     ]
-                ].fail("Invalid AclTarget type")
-
-            if not subject_creation.is_success:
-                return FlextResult[
-                    tuple[
-                        FlextLdifModels.AclTarget,
-                        FlextLdifModels.AclSubject,
-                        FlextLdifModels.AclPermissions,
-                    ]
-                ].fail("Failed to create AclSubject")
-            if not isinstance(subject_creation.value, FlextLdifModels.AclSubject):
-                return FlextResult[
-                    tuple[
-                        FlextLdifModels.AclTarget,
-                        FlextLdifModels.AclSubject,
-                        FlextLdifModels.AclPermissions,
-                    ]
-                ].fail("Invalid AclSubject type")
-
-            if not perms_creation.is_success:
-                return FlextResult[
-                    tuple[
-                        FlextLdifModels.AclTarget,
-                        FlextLdifModels.AclSubject,
-                        FlextLdifModels.AclPermissions,
-                    ]
-                ].fail("Failed to create AclPermissions")
-            if not isinstance(perms_creation.value, FlextLdifModels.AclPermissions):
-                return FlextResult[
-                    tuple[
-                        FlextLdifModels.AclTarget,
-                        FlextLdifModels.AclSubject,
-                        FlextLdifModels.AclPermissions,
-                    ]
-                ].fail("Invalid AclPermissions type")
-
-            return FlextResult[
-                tuple[
-                    FlextLdifModels.AclTarget,
-                    FlextLdifModels.AclSubject,
-                    FlextLdifModels.AclPermissions,
-                ]
-            ].ok((
-                target_creation.value,
-                subject_creation.value,
-                perms_creation.value,
-            ))
+                ].fail(f"Failed to create ACL components: {e}")
 
         @staticmethod
         def create_unified_acl(
@@ -109,22 +64,20 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
             raw_acl: str,
         ) -> FlextResult[FlextLdifModels.UnifiedAcl]:
             """Create unified ACL with proper validation."""
-            acl_result = FlextLdifModels.UnifiedAcl.create(
-                name=name,
-                target=target,
-                subject=subject,
-                permissions=permissions,
-                server_type=server_type,
-                raw_acl=raw_acl,
-            )
-
-            if acl_result.is_success and isinstance(
-                acl_result.value, FlextLdifModels.UnifiedAcl
-            ):
-                return FlextResult[FlextLdifModels.UnifiedAcl].ok(acl_result.value)
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                acl_result.error or "Failed to create UnifiedAcl"
-            )
+            try:
+                acl = FlextLdifModels.UnifiedAcl(
+                    name=name,
+                    target=target,
+                    subject=subject,
+                    permissions=permissions,
+                    server_type=server_type,
+                    raw_acl=raw_acl,
+                )
+                return FlextResult[FlextLdifModels.UnifiedAcl].ok(acl)
+            except Exception as e:
+                return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+                    f"Failed to create UnifiedAcl: {e}"
+                )
 
     @override
     def __init__(self) -> None:
@@ -190,11 +143,11 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
 
         # Create unified ACL using helper
         return self.AclComponentHelper.create_unified_acl(
-            name="389ds_acl",
+            name="openldap_acl",
             target=target_result,
             subject=subject_result,
             permissions=perms_result,
-            server_type=FlextLdifConstants.LdapServers.DS_389,
+            server_type=FlextLdifConstants.LdapServers.OPENLDAP,
             raw_acl=acl_string,
         )
 

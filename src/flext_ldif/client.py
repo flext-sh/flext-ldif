@@ -100,7 +100,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         # Register default quirks for all servers
         self._register_default_quirks()
 
-        self.logger.info(
+        self.logger.info(  # type: ignore[attr-defined]  # type: ignore[attr-defined]
             "Initialized FlextLdif client with CQRS handlers and default quirks"
         )
 
@@ -522,10 +522,11 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             filtered = [
                 entry
                 for entry in entries
-                if any(
-                    attr.lower() == "objectclass" and objectclass.lower() in values
-                    for attr, values in entry.attributes.attributes.items()
-                )
+                if objectclass.lower()
+                in [
+                    obj_class.lower()
+                    for obj_class in (entry.get_attribute("objectClass") or [])
+                ]
             ]
             return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
         except Exception as e:
@@ -626,3 +627,6 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
     def logger(self) -> FlextLogger:
         """Access to logger."""
         return cast("FlextLogger", self._logger)
+
+
+__all__ = ["FlextLdifClient"]
