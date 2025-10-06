@@ -133,7 +133,7 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
         def __init__(self, rule_type: str = "base") -> None:
             """Initialize ACL rule."""
             self._rule_type = rule_type
-            self._logger = FlextLogger(__name__)
+            self.logger = FlextLogger(__name__)
 
         def evaluate(self, context: FlextLdifTypes.Dict) -> FlextResult[bool]:
             """Evaluate ACL rule against context."""

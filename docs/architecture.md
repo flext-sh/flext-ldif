@@ -265,7 +265,7 @@ class FlextLdifAPI:
     """Unified LDIF Processing API with nested operation handlers."""
 
     def __init__(self, config: FlextLdifModels.Config | None = None) -> None:
-        self._logger = FlextLogger(__name__)
+        self.logger = FlextLogger(__name__)
         self._container = FlextContainer.get_global()
         self._config = config or FlextLdifModels.Config()
 

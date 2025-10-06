@@ -73,7 +73,7 @@ class ALGAROUDMigrationService:
     """ALGAR Oracle Unified Directory LDIF processing."""
 
     def __init__(self) -> None:
-        self._logger = FlextLogger(__name__)
+        self.logger = FlextLogger(__name__)
 
         # Configure for enterprise migration with legacy data accommodation
         migration_config = FlextLdifModels.Config(
@@ -87,7 +87,7 @@ class ALGAROUDMigrationService:
 
     def process_oud_export(self, export_file: Path) -> FlextResult[FlextTypes.Dict]:
         """Process Oracle Unified Directory LDIF export."""
-        self._logger.info("Starting OUD LDIF processing", extra={
+        self.logger.info("Starting OUD LDIF processing", extra={
             'export_file': str(export_file),
             'migration_phase': 'ldif_processing'
         })
@@ -141,7 +141,7 @@ class ALGAROUDMigrationService:
         """Apply ALGAR-specific LDIF entry transformations."""
         # LDIF-specific transformations for OUD migration
 
-        self._logger.info("Applying LDIF migration transformations", extra={
+        self.logger.info("Applying LDIF migration transformations", extra={
             'user_count': len(categorized['users']),
             'group_count': len(categorized['groups']),
             'ou_count': len(categorized['organizational_units']),
@@ -186,7 +186,7 @@ class ALGAROUDMigrationService:
 
     def _log_ldif_completion(self, report: dict) -> dict:
         """Log LDIF migration processing completion."""
-        self._logger.info("OUD LDIF processing completed", extra={
+        self.logger.info("OUD LDIF processing completed", extra={
             'ldif_summary': report['ldif_migration_summary'],
             'migration_phase': 'ldif_processing_complete'
         })

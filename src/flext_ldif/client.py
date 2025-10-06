@@ -63,6 +63,9 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
     """
 
+    # Type annotation for logger instance variable
+    logger: FlextLogger | None
+
     def __init__(self, config: FlextLdifConfig | None = None) -> None:
         """Initialize LDIF client with optional configuration.
 
@@ -77,7 +80,6 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         # FlextContext expects dict, not FlextLdifConfig directly
         self._context = FlextContext({"config": self._config})
         self._bus = FlextBus()
-        self._logger: FlextLogger | None = FlextLogger(__name__)
         self._handlers: FlextLdifTypes.Dict = {}
 
         # Ensure components are not None for type safety
@@ -89,9 +91,6 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             raise RuntimeError(msg)
         if self._bus is None:
             msg = "FlextBus must be initialized"
-            raise RuntimeError(msg)
-        if self._logger is None:
-            msg = "FlextLogger must be initialized"
             raise RuntimeError(msg)
 
         # Register services in container for DI
@@ -163,7 +162,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
     def _register_default_quirks(self) -> None:
         """Auto-register all default server quirks."""
         container = cast("FlextContainer", self._container)
-        logger = cast("FlextLogger", self._logger)
+        logger = cast("FlextLogger", self.logger)
 
         # Get quirk registry from container
         registry_result = container.get("quirk_registry")
@@ -469,7 +468,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             return FlextResult[FlextLdifTypes.Dict].ok(migration_result.unwrap())
 
         except Exception as e:
-            logger = cast("FlextLogger", self._logger)
+            logger = cast("FlextLogger", self.logger)
             logger.exception("Migration failed")
             return FlextResult[FlextLdifTypes.Dict].fail(f"Migration failed: {e}")
 
@@ -626,7 +625,9 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
     @property
     def logger(self) -> FlextLogger:
         """Access to logger."""
-        return cast("FlextLogger", self._logger)
+        if self.logger is None:
+            self.logger = FlextLogger(__name__)
+        return self.logger
 
 
 __all__ = ["FlextLdifClient"]

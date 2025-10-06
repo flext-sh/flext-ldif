@@ -39,7 +39,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
     def __init__(self, **data: object) -> None:
         """Initialize 389 DS schema quirk stub."""
         super().__init__(**data)
-        self._logger = FlextLogger(__name__)
+        self.logger = FlextLogger(__name__)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
         """Check if this is a 389 DS attribute - STUB."""
@@ -100,7 +100,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
         def __init__(self, **data: object) -> None:
             """Initialize 389 DS ACL quirk stub."""
             super().__init__(**data)
-            self._logger = FlextLogger(__name__)
+            self.logger = FlextLogger(__name__)
 
         def can_handle_acl(self, acl_line: str) -> bool:
             """Check if this is a 389 DS ACL - STUB."""
@@ -149,7 +149,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
         def __init__(self, **data: object) -> None:
             """Initialize 389 DS entry quirk stub."""
             super().__init__(**data)
-            self._logger = FlextLogger(__name__)
+            self.logger = FlextLogger(__name__)
 
         def can_handle_entry(
             self,

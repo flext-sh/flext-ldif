@@ -17,7 +17,7 @@ class FlextLdifSchemaExtractor(FlextService):
     def __init__(self) -> None:
         """Initialize schema extractor."""
         super().__init__()
-        self._logger: FlextLogger | None = FlextLogger(__name__)
+        self.logger: FlextLogger | None = FlextLogger(__name__)
 
     @override
     def execute(self: object) -> FlextResult[FlextLdifTypes.Dict]:
