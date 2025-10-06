@@ -77,7 +77,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         # FlextContext expects dict, not FlextLdifConfig directly
         self._context = FlextContext({"config": self._config})
         self._bus = FlextBus()
-        self._logger = FlextLogger(__name__)
+        self._logger: FlextLogger | None = FlextLogger(__name__)
         self._handlers: FlextLdifTypes.Dict = {}
 
         # Ensure components are not None for type safety
@@ -100,7 +100,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         # Register default quirks for all servers
         self._register_default_quirks()
 
-        self.logger.info(  # type: ignore[attr-defined]  # type: ignore[attr-defined]
+        self.logger.info(
             "Initialized FlextLdif client with CQRS handlers and default quirks"
         )
 

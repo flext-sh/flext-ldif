@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextResult, FlextService
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
@@ -19,9 +19,9 @@ class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
 
     @override
     def __init__(self) -> None:
-        """Initialize objectClass manager."""
+        """Initialize objectClass manager with Phase 1 context enrichment."""
         super().__init__()
-        self._logger = FlextLogger(__name__)
+        # Logger and container inherited from FlextService via FlextMixins
 
     @override
     def execute(self: object) -> FlextResult[FlextLdifTypes.Dict]:

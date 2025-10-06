@@ -69,7 +69,7 @@ class FlextLdifRfcLdifParser(FlextService[FlextLdifTypes.Dict]):
 
         """
         super().__init__()
-        self._logger = FlextLogger(__name__)
+        self._logger: FlextLogger | None = FlextLogger(__name__)
         self._params = params
         self._quirk_registry = quirk_registry
         self._source_server = params.get("source_server", "rfc")
@@ -95,7 +95,7 @@ class FlextLdifRfcLdifParser(FlextService[FlextLdifTypes.Dict]):
             if content:
                 parse_changes = self._params.get("parse_changes", False)
 
-                self.logger.info(  # type: ignore[attr-defined]
+                self.logger.info(
                     "Parsing LDIF content string (RFC 2849)",
                     extra={
                         "content_length": (
@@ -125,7 +125,7 @@ class FlextLdifRfcLdifParser(FlextService[FlextLdifTypes.Dict]):
                     },
                 }
 
-                self.logger.info(  # type: ignore[attr-defined]
+                self.logger.info(
                     "LDIF content parsed successfully",
                     extra={
                         "total_entries": len(entries),
@@ -150,7 +150,7 @@ class FlextLdifRfcLdifParser(FlextService[FlextLdifTypes.Dict]):
             parse_changes = self._params.get("parse_changes", False)
             encoding = self._params.get("encoding", "utf-8")
 
-            self.logger.info(  # type: ignore[attr-defined]
+            self.logger.info(
                 f"Parsing LDIF file (RFC 2849): {file_path}",
                 extra={
                     "file_path": str(file_path),
@@ -169,7 +169,7 @@ class FlextLdifRfcLdifParser(FlextService[FlextLdifTypes.Dict]):
 
             data = parse_result.value
 
-            self.logger.info(  # type: ignore[attr-defined]
+            self.logger.info(
                 "LDIF parsed successfully",
                 extra={
                     "total_entries": len(cast("list", data.get("entries", []))),
@@ -182,7 +182,7 @@ class FlextLdifRfcLdifParser(FlextService[FlextLdifTypes.Dict]):
 
         except Exception as e:
             error_msg = f"Failed to execute RFC LDIF parser: {e}"
-            self.logger.exception(error_msg)  # type: ignore[attr-defined]
+            self.logger.exception(error_msg)
             return FlextResult[FlextLdifTypes.Dict].fail(error_msg)
 
     def parse_content(

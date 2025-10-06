@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any, cast
 
 from flext_core import FlextModels, FlextResult
@@ -113,6 +114,27 @@ class FlextLdifModels(FlextModels):
                         }
                     )
                     data["attributes"] = ldif_attrs
+                else:
+                    # Handle raw LDIF format where attributes are at top level
+                    raw_attrs = {}
+                    keys_to_remove = []
+                    for key, value in data.items():
+                        if key != "dn":
+                            if isinstance(value, list):
+                                raw_attrs[key] = value
+                            else:
+                                raw_attrs[key] = [value]
+                            keys_to_remove.append(key)
+                    for key in keys_to_remove:
+                        del data[key]
+                    if raw_attrs:
+                        ldif_attrs = FlextLdifModels.LdifAttributes(
+                            attributes={
+                                name: FlextLdifModels.AttributeValues(values=values)
+                                for name, values in raw_attrs.items()
+                            }
+                        )
+                        data["attributes"] = ldif_attrs
 
                 instance = cls(**data)
                 return FlextResult[FlextLdifModels.Entry].ok(instance)
@@ -161,6 +183,11 @@ class FlextLdifModels(FlextModels):
         """LDIF attribute values container."""
 
         values: list[str] = Field(default_factory=list, description="Attribute values")
+
+        @property
+        def single_value(self) -> str | None:
+            """Get single value if list has exactly one element."""
+            return self.values[0] if len(self.values) == 1 else None
 
     class AttributeName(FlextModels.Value):
         """LDIF attribute name value object."""
@@ -216,6 +243,23 @@ class FlextLdifModels(FlextModels):
             attr_values = self.attributes.get(name)
             return attr_values.values if attr_values else default
 
+        def get_attribute(self, name: str) -> FlextLdifModels.AttributeValues | None:
+            """Get attribute by name."""
+            return self.attributes.get(name)
+
+        def add_attribute(self, name: str, value: str | list[str]) -> None:
+            """Add attribute value(s)."""
+            if isinstance(value, str):
+                value = [value]
+            if name in self.attributes:
+                self.attributes[name].values.extend(value)
+            else:
+                self.attributes[name] = FlextLdifModels.AttributeValues(values=value)
+
+        def remove_attribute(self, name: str) -> None:
+            """Remove attribute by name."""
+            self.attributes.pop(name, None)
+
     class ChangeRecord(FlextModels.Value):
         """LDIF change record for modifications."""
 
@@ -247,6 +291,24 @@ class FlextLdifModels(FlextModels):
         )
         patterns_detected: list[str] = Field(
             default_factory=list, description="Detected patterns in the data"
+        )
+
+    class SearchConfig(FlextModels.Value):
+        """Configuration for LDAP search operations."""
+
+        base_dn: str = Field(..., description="Base DN for the search")
+        search_filter: str = Field(
+            default="(objectClass=*)", description="LDAP search filter"
+        )
+        attributes: list[str] = Field(
+            default_factory=list, description="Attributes to retrieve"
+        )
+        scope: str = Field(default="sub", description="Search scope (base, one, sub)")
+        time_limit: int = Field(
+            default=30, description="Time limit for search in seconds"
+        )
+        size_limit: int = Field(
+            default=0, description="Size limit for search results (0 = no limit)"
         )
 
     # =========================================================================
@@ -373,6 +435,14 @@ class FlextLdifModels(FlextModels):
             """Optional attributes (for compatibility)."""
             return [self.name]
 
+    class SchemaAttribute(FlextModels.Value):
+        """Schema attribute model."""
+
+        name: str = Field(..., description="Attribute name")
+        oid: str = Field(default="", description="Attribute OID")
+        description: str = Field(default="", description="Attribute description")
+        syntax: str = Field(default="", description="Attribute syntax")
+
     class BaseSchemaObjectClass(FlextModels.Value):
         """Base class for schema object classes."""
 
@@ -423,6 +493,18 @@ class FlextLdifModels(FlextModels):
         def may(self) -> list[str]:
             """MAY attributes (alias for optional_attributes)."""
             return self.optional_attributes
+
+        @computed_field
+        @property
+        def attribute_summary(self) -> FlextLdifTypes.Dict:
+            """Summary of attribute requirements."""
+            return {
+                "required_count": len(self.required_attributes),
+                "optional_count": len(self.optional_attributes),
+                "total_count": len(self.required_attributes)
+                + len(self.optional_attributes),
+                "is_structural": self.structural,
+            }
 
     class BaseAclPermissions(FlextModels.Value):
         """Base class for ACL permissions."""
@@ -538,6 +620,13 @@ class FlextLdifModels(FlextModels):
         total_objectclasses: int = Field(
             default=0, description="Total object classes found"
         )
+        server_type: str = Field(default="", description="Server type")
+        entry_count: int = Field(default=0, description="Number of entries processed")
+
+        @property
+        def object_classes(self) -> dict[str, dict[str, str]]:
+            """Alias for objectclasses."""
+            return self.objectclasses
 
     class OidSchemaAttribute(FlextModels.Value):
         """OID schema attribute model."""
@@ -656,6 +745,52 @@ class FlextLdifModels(FlextModels):
                 return FlextResult[FlextLdifModels.OidAci].fail(f"Failed to parse: {e}")
 
     # =========================================================================
+    # EVENT MODELS - Domain Events
+    # =========================================================================
+
+    class EntryParsedEvent(FlextModels.DomainEvent):
+        """Event emitted when an entry is successfully parsed."""
+
+        entry: FlextLdifModels.Entry = Field(..., description="Parsed entry")
+        source: str = Field(..., description="Source of the entry")
+
+    class EntriesValidatedEvent(FlextModels.DomainEvent):
+        """Event emitted when entries are validated."""
+
+        entries: list[FlextLdifModels.Entry] = Field(
+            ..., description="Validated entries"
+        )
+        validation_result: FlextLdifModels.LdifValidationResult = Field(
+            ..., description="Validation result"
+        )
+
+    class AnalyticsGeneratedEvent(FlextModels.DomainEvent):
+        """Event emitted when analytics are generated."""
+
+        analytics: FlextLdifModels.AnalyticsResult = Field(
+            ..., description="Generated analytics"
+        )
+
+    class EntriesWrittenEvent(FlextModels.DomainEvent):
+        """Event emitted when entries are written."""
+
+        entries: list[FlextLdifModels.Entry] = Field(..., description="Written entries")
+        output_path: Path | None = Field(default=None, description="Output path")
+
+    class MigrationCompletedEvent(FlextModels.DomainEvent):
+        """Event emitted when migration is completed."""
+
+        source_server: str = Field(..., description="Source server type")
+        target_server: str = Field(..., description="Target server type")
+        statistics: FlextLdifTypes.Dict = Field(..., description="Migration statistics")
+
+    class QuirkRegisteredEvent(FlextModels.DomainEvent):
+        """Event emitted when a quirk is registered."""
+
+        quirk_type: str = Field(..., description="Type of quirk")
+        server_type: str = Field(..., description="Server type")
+
+    # =========================================================================
     # COMPUTED FIELDS - Metadata and Statistics
     # =========================================================================
 
@@ -692,6 +827,99 @@ class FlextLdifModels(FlextModels):
             "OudSpecification",
         ]
         return len(model_types)
+
+    class LdifDocument(FlextModels.Entity):
+        """LDIF document model containing entries and domain events."""
+
+        entries: list[FlextLdifModels.Entry] = Field(
+            default_factory=list, description="LDIF entries in the document"
+        )
+        domain_events: list[FlextModels.DomainEvent] = Field(
+            default_factory=list,
+            description="Domain events associated with the document",
+        )
+
+        @classmethod
+        def from_ldif_string(
+            cls, ldif_string: str
+        ) -> FlextResult[FlextLdifModels.LdifDocument]:
+            """Create LdifDocument from LDIF string."""
+            try:
+                # Simple implementation - parse basic LDIF
+                lines = ldif_string.strip().split("\n")
+                entries = []
+                current_entry = {}
+                in_entry = False
+
+                for line in lines:
+                    stripped_line = line.rstrip()
+                    if not stripped_line or stripped_line.startswith("#"):
+                        continue
+                    if stripped_line.lower().startswith("dn:"):
+                        if in_entry and current_entry:
+                            # Create previous entry
+                            entry_result = FlextLdifModels.Entry.create(
+                                cast("dict[str, object]", current_entry)
+                            )
+                            if entry_result.is_success:
+                                entries.append(entry_result.unwrap())
+                        current_entry = {"dn": stripped_line[3:].strip()}
+                        in_entry = True
+                    elif ":" in stripped_line and in_entry:
+                        key, value = stripped_line.split(":", 1)
+                        key = key.strip()
+                        value = value.strip()
+                        if key in current_entry:
+                            if not isinstance(current_entry[key], list):
+                                current_entry[key] = [current_entry[key]]
+                            current_entry[key].append(value)
+                        else:
+                            current_entry[key] = [value] if key != "dn" else value
+
+                if current_entry:
+                    entry_result = FlextLdifModels.Entry.create(
+                        cast("dict[str, object]", current_entry)
+                    )
+                    if entry_result.is_success:
+                        entries.append(entry_result.unwrap())
+
+                return FlextResult[FlextLdifModels.LdifDocument].ok(
+                    cls(entries=entries, domain_events=[])
+                )
+            except Exception as e:
+                return FlextResult[FlextLdifModels.LdifDocument].fail(
+                    f"Failed to parse LDIF: {e}"
+                )
+
+        def to_ldif_string(self) -> str:
+            """Convert LdifDocument to LDIF string."""
+            lines = []
+            for entry in self.entries:
+                lines.append(f"dn: {entry.dn.value}")
+                for attr_name, attr_values in entry.attributes.attributes.items():
+                    lines.extend(
+                        f"{attr_name}: {value}" for value in attr_values.values
+                    )
+                lines.append("")
+            return "\n".join(lines)
+
+    class LdifProcessingResult(FlextModels.Value):
+        """Result of LDIF processing operations."""
+
+        success: bool = Field(..., description="Whether processing succeeded")
+        entries_processed: int = Field(..., description="Number of entries processed")
+        errors: list[str] = Field(default_factory=list, description="Processing errors")
+        warnings: list[str] = Field(
+            default_factory=list, description="Processing warnings"
+        )
+
+    class ServiceStatus(FlextModels.Value):
+        """Status information for LDIF services."""
+
+        service_name: str = Field(..., description="Name of the service")
+        status: str = Field(..., description="Current status")
+        version: str = Field(..., description="Service version")
+        uptime: float = Field(..., description="Service uptime in seconds")
 
     @computed_field
     def ldif_model_summary(self) -> FlextLdifTypes.Dict:

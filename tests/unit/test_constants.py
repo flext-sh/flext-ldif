@@ -207,7 +207,7 @@ class TestFlextLdifConstantsNamespace:
         assert hasattr(FlextLdifConstants, "Encoding")
         assert hasattr(FlextLdifConstants, "Format")
         assert hasattr(FlextLdifConstants, "Processing")
-        assert hasattr(FlextLdifConstants, "Validation")
+        assert hasattr(FlextLdifConstants, "LdifGeneralValidation")
         assert hasattr(FlextLdifConstants, "Acl")
         assert hasattr(FlextLdifConstants, "Schema")
 
@@ -216,7 +216,7 @@ class TestFlextLdifConstantsNamespace:
         assert isinstance(FlextLdifConstants.Encoding, type)
         assert isinstance(FlextLdifConstants.Format, type)
         assert isinstance(FlextLdifConstants.Processing, type)
-        assert isinstance(FlextLdifConstants.Validation, type)
+        assert isinstance(FlextLdifConstants.LdifGeneralValidation, type)
         assert isinstance(FlextLdifConstants.Acl, type)
         assert isinstance(FlextLdifConstants.Schema, type)
 
@@ -241,8 +241,8 @@ class TestFlextLdifConstantsNamespace:
         assert FlextLdifConstants.Processing.PERFORMANCE_MIN_WORKERS > 0
 
         # Validation
-        assert FlextLdifConstants.Validation.NAME_LENGTH_MIN >= 0
+        assert FlextLdifConstants.LdifGeneralValidation.NAME_LENGTH_MIN >= 0
         assert (
-            FlextLdifConstants.Validation.NAME_LENGTH_MAX
-            > FlextLdifConstants.Validation.NAME_LENGTH_MIN
+            FlextLdifConstants.LdifGeneralValidation.NAME_LENGTH_MAX
+            > FlextLdifConstants.LdifGeneralValidation.NAME_LENGTH_MIN
         )

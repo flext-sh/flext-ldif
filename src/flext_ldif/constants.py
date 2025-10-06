@@ -128,6 +128,12 @@ class FlextLdifConstants(FlextConstants):
     # VALIDATION CONSTANTS
     # =============================================================================
 
+    class LdifGeneralValidation:
+        """General validation constants."""
+
+        NAME_LENGTH_MIN: Final[int] = 1
+        NAME_LENGTH_MAX: Final[int] = 255
+
     class LdifValidation:
         """LDIF-specific validation rules and constraints."""
 

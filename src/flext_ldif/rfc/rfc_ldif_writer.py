@@ -69,7 +69,7 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Dict]):
 
         """
         super().__init__()
-        self._logger = FlextLogger(__name__)
+        self._logger: FlextLogger | None = FlextLogger(__name__)
         self._params = params
         self._quirk_registry = quirk_registry
         self._target_server_type = target_server_type
@@ -186,7 +186,7 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Dict]):
                             else 0
                         )
 
-                self.logger.info(  # type: ignore[attr-defined]
+                self.logger.info(
                     f"LDIF file written: {output_file}",
                     extra={
                         "output_file": str(output_file),
@@ -261,7 +261,7 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Dict]):
             ldif_content = output.getvalue()
             output.close()
 
-            self.logger.info(  # type: ignore[attr-defined]
+            self.logger.info(
                 "LDIF content generated",
                 extra={
                     "content_length": len(ldif_content),
@@ -277,7 +277,7 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Dict]):
             })
 
         except Exception as e:
-            self.logger.exception("LDIF write failed")  # type: ignore[attr-defined]
+            self.logger.exception("LDIF write failed")
             return FlextResult[FlextLdifTypes.Dict].fail(f"LDIF write failed: {e}")
 
     def write_entries_to_string(
@@ -543,7 +543,7 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Dict]):
                         self._target_server_type
                     )
                     for quirk in acl_quirks:
-                        for i, acl_def in enumerate(acl_definitions):  # type: ignore[assignment]
+                        for i, acl_def in enumerate(acl_definitions):
                             if quirk.can_handle_acl(str(acl_def)):
                                 parse_result = quirk.parse_acl(str(acl_def))
                                 if parse_result.is_success:

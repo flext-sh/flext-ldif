@@ -215,9 +215,9 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
 
     @override
     def __init__(self, quirks_manager: FlextLdifQuirksManager | None = None) -> None:
-        """Initialize ACL service with composite pattern support."""
+        """Initialize ACL service with composite pattern support and Phase 1 context enrichment."""
         super().__init__()
-        self._logger = FlextLogger(__name__)
+        # Logger and container inherited from FlextService via FlextMixins
         self._quirks = quirks_manager or FlextLdifQuirksManager()
 
     def create_composite_rule(

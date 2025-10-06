@@ -28,7 +28,7 @@ class FlextLdifEntryQuirks(FlextService[FlextLdifTypes.Dict]):
 
         """
         super().__init__()
-        self._logger = FlextLogger(__name__)
+        self._logger: FlextLogger | None = FlextLogger(__name__)
         self._quirks = quirks_manager or FlextLdifQuirksManager()
 
     @override
@@ -92,7 +92,7 @@ class FlextLdifEntryQuirks(FlextService[FlextLdifTypes.Dict]):
         )
         if adapted_entry_result.is_failure:
             error_msg = f"Failed to create adapted entry: {adapted_entry_result.error}"
-            self.logger.error(error_msg)  # type: ignore[attr-defined]
+            self.logger.error(error_msg)
             return FlextResult[FlextLdifModels.Entry].fail(error_msg)
 
         return adapted_entry_result

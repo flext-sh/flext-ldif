@@ -27,9 +27,9 @@ class FlextLdifSchemaBuilder(FlextService):
 
     @override
     def __init__(self) -> None:
-        """Initialize schema builder."""
+        """Initialize schema builder with Phase 1 context enrichment."""
         super().__init__()
-        self._logger = FlextLogger(__name__)
+        # Logger and container inherited from FlextService via FlextMixins
         self._attributes = {}
         self._object_classes = {}
         self._server_type = "generic"
