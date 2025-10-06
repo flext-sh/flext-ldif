@@ -57,7 +57,7 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
     def __init__(self, **data: object) -> None:
         """Initialize Active Directory schema quirk stub."""
         super().__init__(**data)
-        self._logger = FlextLogger(__name__)
+        self.logger = FlextLogger(__name__)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:  # pragma: no cover
         """Check if this is an Active Directory attribute.
@@ -197,7 +197,7 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
         def __init__(self, **data: object) -> None:
             """Initialize Active Directory ACL quirk stub."""
             super().__init__(**data)
-            self._logger = FlextLogger(__name__)
+            self.logger = FlextLogger(__name__)
 
         def can_handle_acl(self, acl_line: str) -> bool:
             """Check if this is an Active Directory ACL.
@@ -301,7 +301,7 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
         def __init__(self, **data: object) -> None:
             """Initialize Active Directory entry quirk stub."""
             super().__init__(**data)
-            self._logger = FlextLogger(__name__)
+            self.logger = FlextLogger(__name__)
 
         def can_handle_entry(
             self,

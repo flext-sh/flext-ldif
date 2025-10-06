@@ -58,7 +58,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
     def __init__(self, **data: object) -> None:
         """Initialize OID schema quirk."""
         super().__init__(**data)
-        self._logger = FlextLogger(__name__)
+        self.logger = FlextLogger(__name__)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
         """Check if this is an Oracle OID attribute.
@@ -233,7 +233,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         def __init__(self, **data: object) -> None:
             """Initialize OID ACL quirk."""
             super().__init__(**data)
-            self._logger = FlextLogger(__name__)
+            self.logger = FlextLogger(__name__)
 
         def can_handle_acl(self, acl_line: str) -> bool:
             """Check if this is an Oracle OID ACL.
@@ -369,7 +369,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         def __init__(self, **data: object) -> None:
             """Initialize OID entry quirk."""
             super().__init__(**data)
-            self._logger = FlextLogger(__name__)
+            self.logger = FlextLogger(__name__)
 
         def can_handle_entry(
             self,

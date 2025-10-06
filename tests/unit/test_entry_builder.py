@@ -23,7 +23,7 @@ class TestFlextLdifEntryBuilder:
         """Test entry builder initialization."""
         builder = FlextLdifEntryBuilder()
         assert builder is not None
-        assert builder._logger is not None
+        assert builder.logger is not None
         assert builder._objectclass_manager is not None
 
     def test_execute_fails_with_message(self) -> None:

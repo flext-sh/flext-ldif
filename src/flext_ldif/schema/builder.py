@@ -19,7 +19,7 @@ class FlextLdifSchemaBuilder(FlextService):
     """
 
     # Type annotations for instance variables
-    _logger: FlextLogger | None
+    logger: FlextLogger | None
     _attributes: dict[str, dict]
     _object_classes: dict[str, dict]
     _server_type: str
@@ -38,9 +38,9 @@ class FlextLdifSchemaBuilder(FlextService):
     @property
     def logger(self) -> FlextLogger:
         """Get the logger instance."""
-        if self._logger is None:
-            self._logger = FlextLogger(type(self).__name__)
-        return self._logger
+        if self.logger is None:
+            self.logger = FlextLogger(type(self).__name__)
+        return self.logger
 
     @property
     def attributes(self) -> dict[str, dict]:

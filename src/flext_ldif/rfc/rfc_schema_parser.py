@@ -103,7 +103,7 @@ class FlextLdifRfcSchemaParser(FlextService[FlextLdifTypes.Dict]):
 
         """
         super().__init__()
-        self._logger: FlextLogger | None = FlextLogger(__name__)
+        self.logger: FlextLogger | None = FlextLogger(__name__)
         self._params = params
         self._quirk_registry = quirk_registry
         self._server_type = server_type

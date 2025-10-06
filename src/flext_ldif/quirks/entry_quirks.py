@@ -19,6 +19,9 @@ from flext_ldif.typings import FlextLdifTypes
 class FlextLdifEntryQuirks(FlextService[FlextLdifTypes.Dict]):
     """Entry adaptation and validation for server-specific quirks."""
 
+    # Type annotation for logger instance variable
+    logger: FlextLogger | None
+
     @override
     def __init__(self, quirks_manager: FlextLdifQuirksManager | None = None) -> None:
         """Initialize entry quirks handler.
@@ -28,8 +31,14 @@ class FlextLdifEntryQuirks(FlextService[FlextLdifTypes.Dict]):
 
         """
         super().__init__()
-        self._logger: FlextLogger | None = FlextLogger(__name__)
         self._quirks = quirks_manager or FlextLdifQuirksManager()
+
+    @property
+    def logger(self) -> FlextLogger:
+        """Get the logger instance."""
+        if self.logger is None:
+            self.logger = FlextLogger(__name__)
+        return self.logger
 
     @override
     def execute(self: object) -> FlextResult[FlextLdifTypes.Dict]:

@@ -28,7 +28,7 @@ class TestFlextLdifAclParser:
         """Test ACL parser initialization."""
         parser = FlextLdifAclParser()
         assert parser is not None
-        assert parser._logger is not None
+        assert parser.logger is not None
 
     def test_execute_success(self) -> None:
         """Test execute method returns success."""
@@ -423,7 +423,7 @@ class TestFlextLdifAclService:
         """Test ACL service initialization with default quirks manager."""
         service = FlextLdifAclService()
         assert service is not None
-        assert service._logger is not None
+        assert service.logger is not None
         assert service._quirks is not None
         assert isinstance(service._quirks, FlextLdifQuirksManager)
 

@@ -56,7 +56,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
     def __init__(self, **data: object) -> None:
         """Initialize Apache DS schema quirk stub."""
         super().__init__(**data)
-        self._logger = FlextLogger(__name__)
+        self.logger = FlextLogger(__name__)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:  # pragma: no cover
         """Check if this is an Apache DS attribute - STUB."""
@@ -117,7 +117,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
         def __init__(self, **data: object) -> None:
             """Initialize Apache DS ACL quirk stub."""
             super().__init__(**data)
-            self._logger = FlextLogger(__name__)
+            self.logger = FlextLogger(__name__)
 
         def can_handle_acl(self, acl_line: str) -> bool:
             """Check if this is an Apache DS ACL - STUB."""
@@ -164,7 +164,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
         def __init__(self, **data: object) -> None:
             """Initialize Apache DS entry quirk stub."""
             super().__init__(**data)
-            self._logger = FlextLogger(__name__)
+            self.logger = FlextLogger(__name__)
 
         def can_handle_entry(
             self,

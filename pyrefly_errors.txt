@@ -115,7 +115,7 @@ ERROR Expected a type form, got instance of `Literal['FlextLdifModels.Entry']` [
 ERROR Object of class `NoneType` has no attribute `error` [missing-attribute]
   --> src/flext_ldif/quirks/entry_quirks.py:95:13
    |
-95 |             self._logger.error(error_msg)
+95 |             self.logger.error(error_msg)
    |             ^^^^^^^^^^^^^^^^^^
    |
 ERROR Object of class `Entry` has no attribute `has_attribute` [missing-attribute]
@@ -182,7 +182,7 @@ ERROR Could not find name `FlextLdifTypes` [unknown-name]
 ERROR Object of class `NoneType` has no attribute `info` [missing-attribute]
   --> src/flext_ldif/rfc/rfc_ldif_parser.py:96:17
    |
-96 |                 self._logger.info(
+96 |                 self.logger.info(
    |                 ^^^^^^^^^^^^^^^^^
    |
 ERROR Could not find name `FlextLdifTypes` [unknown-name]
@@ -194,7 +194,7 @@ ERROR Could not find name `FlextLdifTypes` [unknown-name]
 ERROR Object of class `NoneType` has no attribute `info` [missing-attribute]
    --> src/flext_ldif/rfc/rfc_ldif_parser.py:126:17
     |
-126 |                 self._logger.info(
+126 |                 self.logger.info(
     |                 ^^^^^^^^^^^^^^^^^
     |
 ERROR Could not find name `FlextLdifTypes` [unknown-name]
@@ -218,7 +218,7 @@ ERROR Could not find name `FlextLdifTypes` [unknown-name]
 ERROR Object of class `NoneType` has no attribute `info` [missing-attribute]
    --> src/flext_ldif/rfc/rfc_ldif_parser.py:151:13
     |
-151 |             self._logger.info(
+151 |             self.logger.info(
     |             ^^^^^^^^^^^^^^^^^
     |
 ERROR Could not find name `FlextLdifTypes` [unknown-name]
@@ -230,7 +230,7 @@ ERROR Could not find name `FlextLdifTypes` [unknown-name]
 ERROR Object of class `NoneType` has no attribute `info` [missing-attribute]
    --> src/flext_ldif/rfc/rfc_ldif_parser.py:170:13
     |
-170 |             self._logger.info(
+170 |             self.logger.info(
     |             ^^^^^^^^^^^^^^^^^
     |
 ERROR Could not find name `FlextLdifTypes` [unknown-name]
@@ -242,7 +242,7 @@ ERROR Could not find name `FlextLdifTypes` [unknown-name]
 ERROR Object of class `NoneType` has no attribute `exception` [missing-attribute]
    --> src/flext_ldif/rfc/rfc_ldif_parser.py:183:13
     |
-183 |             self._logger.exception(error_msg)
+183 |             self.logger.exception(error_msg)
     |             ^^^^^^^^^^^^^^^^^^^^^^
     |
 ERROR Could not find name `FlextLdifTypes` [unknown-name]
@@ -392,7 +392,7 @@ ERROR `+=` is not supported between `int` and `object` [unsupported-operation]
 ERROR Object of class `NoneType` has no attribute `info` [missing-attribute]
    --> src/flext_ldif/rfc/rfc_ldif_writer.py:162:17
     |
-162 |                 self._logger.info(
+162 |                 self.logger.info(
     |                 ^^^^^^^^^^^^^^^^^
     |
 ERROR `+=` is not supported between `Literal[0]` and `object` [unsupported-operation]
@@ -440,13 +440,13 @@ ERROR `+=` is not supported between `int` and `object` [unsupported-operation]
 ERROR Object of class `NoneType` has no attribute `info` [missing-attribute]
    --> src/flext_ldif/rfc/rfc_ldif_writer.py:213:13
     |
-213 |             self._logger.info(
+213 |             self.logger.info(
     |             ^^^^^^^^^^^^^^^^^
     |
 ERROR Object of class `NoneType` has no attribute `exception` [missing-attribute]
    --> src/flext_ldif/rfc/rfc_ldif_writer.py:229:13
     |
-229 |             self._logger.exception("LDIF write failed")
+229 |             self.logger.exception("LDIF write failed")
     |             ^^^^^^^^^^^^^^^^^^^^^^
     |
 ERROR Object of class `list` has no attribute `values` [missing-attribute]
@@ -500,13 +500,13 @@ ERROR Type `object` is not iterable [not-iterable]
 ERROR Object of class `NoneType` has no attribute `info` [missing-attribute]
    --> src/flext_ldif/rfc/rfc_schema_parser.py:139:13
     |
-139 |             self._logger.info(
+139 |             self.logger.info(
     |             ^^^^^^^^^^^^^^^^^
     |
 ERROR Object of class `NoneType` has no attribute `info` [missing-attribute]
    --> src/flext_ldif/rfc/rfc_schema_parser.py:160:13
     |
-160 |             self._logger.info(
+160 |             self.logger.info(
     |             ^^^^^^^^^^^^^^^^^
     |
 ERROR Argument `object` is not assignable to parameter `obj` with type `Sized` in function `len` [bad-argument-type]
@@ -524,34 +524,34 @@ ERROR Argument `object` is not assignable to parameter `obj` with type `Sized` i
 ERROR Object of class `NoneType` has no attribute `exception` [missing-attribute]
    --> src/flext_ldif/rfc/rfc_schema_parser.py:172:13
     |
-172 |             self._logger.exception(error_msg)
+172 |             self.logger.exception(error_msg)
     |             ^^^^^^^^^^^^^^^^^^^^^^
     |
 ERROR Object of class `NoneType` has no attribute `warning` [missing-attribute]
    --> src/flext_ldif/rfc/rfc_schema_parser.py:285:13
     |
-285 |             self._logger.warning(
+285 |             self.logger.warning(
     |             ^^^^^^^^^^^^^^^^^^^^
     |
 ERROR Object of class `NoneType` has no attribute `debug` [missing-attribute]
    --> src/flext_ldif/rfc/rfc_schema_parser.py:305:21
     |
-305 |                     self._logger.debug(
+305 |                     self.logger.debug(
     |                     ^^^^^^^^^^^^^^^^^^
     |
 ERROR Object of class `NoneType` has no attribute `debug` [missing-attribute]
    --> src/flext_ldif/rfc/rfc_schema_parser.py:346:21
     |
-346 |                     self._logger.debug(
+346 |                     self.logger.debug(
     |                     ^^^^^^^^^^^^^^^^^^
     |
-ERROR Class member `FlextLdifSchemaBuilder._logger` overrides parent class `FlextService` in an inconsistent manner [bad-override]
+ERROR Class member `FlextLdifSchemaBuilder.logger` overrides parent class `FlextService` in an inconsistent manner [bad-override]
   --> src/flext_ldif/schema/builder.py:22:5
    |
-22 |     _logger: FlextLogger
+22 |     logger: FlextLogger
    |     ^^^^^^^
    |
-  `FlextLdifSchemaBuilder._logger` has type `FlextLogger`, which is not consistent with `FlextLogger | None` in `FlextService._logger` (the type of read-write attributes cannot be changed)
+  `FlextLdifSchemaBuilder.logger` has type `FlextLogger`, which is not consistent with `FlextLogger | None` in `FlextService.logger` (the type of read-write attributes cannot be changed)
 ERROR Object of class `dict` has no attribute `value` [missing-attribute]
   --> src/flext_ldif/schema/builder.py:88:38
    |
@@ -579,7 +579,7 @@ ERROR Object of class `object` has no attribute `attributes` [missing-attribute]
 ERROR Object of class `NoneType` has no attribute `info` [missing-attribute]
   --> src/flext_ldif/schema/extractor.py:75:13
    |
-75 |             self._logger.info(
+75 |             self.logger.info(
    |             ^^^^^^^^^^^^^^^^^
    |
 ERROR Argument `dict[str, dict[str, dict[str, str]]]` is not assignable to parameter `data` with type `dict[str, object]` in function `flext_core.result.FlextResult.ok` [bad-argument-type]
