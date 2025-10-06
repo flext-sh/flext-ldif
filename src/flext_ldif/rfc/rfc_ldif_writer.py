@@ -13,7 +13,7 @@ from io import StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING, TextIO, cast
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -69,7 +69,6 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Dict]):
 
         """
         super().__init__()
-        self.logger: FlextLogger | None = FlextLogger(__name__)
         self._params = params
         self._quirk_registry = quirk_registry
         self._target_server_type = target_server_type

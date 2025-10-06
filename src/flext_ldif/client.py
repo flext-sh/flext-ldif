@@ -63,9 +63,6 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
     """
 
-    # Type annotation for logger instance variable
-    logger: FlextLogger | None
-
     def __init__(self, config: FlextLdifConfig | None = None) -> None:
         """Initialize LDIF client with optional configuration.
 
@@ -111,7 +108,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
         """
         try:
-            config = cast("FlextLdifConfig", self._config)
+            config = self._config
             return FlextResult[FlextLdifTypes.Dict].ok({
                 "status": "initialized",
                 "services": ["parser", "writer", "validator", "migration"],
@@ -128,7 +125,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
     def _setup_services(self) -> None:
         """Register all services in the dependency injection container with instances."""
-        container = cast("FlextContainer", self._container)
+        container = self._container
 
         # Register quirk registry FIRST (required by RFC parsers/writers)
         quirk_registry = FlextLdifQuirksRegistry()
@@ -161,8 +158,8 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
     def _register_default_quirks(self) -> None:
         """Auto-register all default server quirks."""
-        container = cast("FlextContainer", self._container)
-        logger = cast("FlextLogger", self.logger)
+        container = self._container
+        logger = self.logger
 
         # Get quirk registry from container
         registry_result = container.get("quirk_registry")
@@ -259,7 +256,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             FlextResult with list of parsed Entry models
 
         """
-        container = cast("FlextContainer", self._container)
+        container = self._container
 
         # Get the RFC parser from container
         parser_result = container.get("rfc_parser")
@@ -292,7 +289,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             or success message (if output_path provided)
 
         """
-        container = cast("FlextContainer", self._container)
+        container = self._container
 
         # Get the RFC writer from container
         writer_result = container.get("rfc_writer")
@@ -337,7 +334,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             FlextResult containing validation report with details
 
         """
-        container = cast("FlextContainer", self._container)
+        container = self._container
 
         # Get the schema validator from container
         validator_result = container.get("schema_validator")
@@ -381,7 +378,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             FlextResult containing migration statistics
 
         """
-        container = cast("FlextContainer", self._container)
+        container = self._container
 
         # Get migration pipeline from container
         pipeline_result = container.get("migration_pipeline")
@@ -468,7 +465,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             return FlextResult[FlextLdifTypes.Dict].ok(migration_result.unwrap())
 
         except Exception as e:
-            logger = cast("FlextLogger", self.logger)
+            logger = self.logger
             logger.exception("Migration failed")
             return FlextResult[FlextLdifTypes.Dict].fail(f"Migration failed: {e}")
 
@@ -568,7 +565,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         if quirk_type not in {"schema", "acl", "entry"}:
             return FlextResult[None].fail(f"Invalid quirk type: {quirk_type}")
 
-        container = cast("FlextContainer", self._container)
+        container = self._container
 
         # Get quirk registry from container
         registry_result = container.get("quirk_registry")
@@ -600,7 +597,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
     @property
     def config(self) -> FlextLdifConfig:
         """Access to LDIF configuration instance."""
-        return cast("FlextLdifConfig", self._config)
+        return self._config
 
     @property
     def handlers(self) -> FlextLdifTypes.Dict:
@@ -610,24 +607,17 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
     @property
     def container(self) -> FlextContainer:
         """Access to dependency injection container."""
-        return cast("FlextContainer", self._container)
+        return self._container
 
     @property
     def context(self) -> FlextContext:
         """Access to execution context."""
-        return cast("FlextContext", self._context)
+        return self._context
 
     @property
     def bus(self) -> FlextBus:
         """Access to event bus."""
         return cast("FlextBus", self._bus)
-
-    @property
-    def logger(self) -> FlextLogger:
-        """Access to logger."""
-        if self.logger is None:
-            self.logger = FlextLogger(__name__)
-        return self.logger
 
 
 __all__ = ["FlextLdifClient"]

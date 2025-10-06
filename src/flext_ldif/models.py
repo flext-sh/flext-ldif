@@ -893,7 +893,7 @@ class FlextLdifModels(FlextModels):
 
         def to_ldif_string(self) -> str:
             """Convert LdifDocument to LDIF string."""
-            lines = []
+            lines: list[str] = []
             for entry in self.entries:
                 lines.append(f"dn: {entry.dn.value}")
                 for attr_name, attr_values in entry.attributes.attributes.items():
