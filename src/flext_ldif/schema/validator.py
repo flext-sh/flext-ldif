@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextResult, FlextService
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
@@ -15,9 +15,9 @@ class FlextLdifSchemaValidator(FlextService[FlextLdifTypes.Dict]):
 
     @override
     def __init__(self) -> None:
-        """Initialize schema validator."""
+        """Initialize schema validator with Phase 1 context enrichment."""
         super().__init__()
-        self._logger = FlextLogger(__name__)
+        # Logger and container inherited from FlextService via FlextMixins
 
     @override
     def execute(self) -> FlextResult[FlextLdifTypes.Dict]:

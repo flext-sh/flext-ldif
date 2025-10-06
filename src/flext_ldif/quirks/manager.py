@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -24,14 +24,14 @@ class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
 
     @override
     def __init__(self, server_type: str | None = None) -> None:
-        """Initialize quirks manager.
+        """Initialize quirks manager with Phase 1 context enrichment.
 
         Args:
             server_type: LDAP server type (defaults to generic)
 
         """
         super().__init__()
-        self._logger = FlextLogger(__name__)
+        # Logger and container inherited from FlextService via FlextMixins
         self._server_type = server_type or FlextLdifConstants.LdapServers.GENERIC
         self._quirks_registry: FlextLdifTypes.NestedDict = {}
         self._setup_quirks()

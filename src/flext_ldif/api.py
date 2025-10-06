@@ -1,7 +1,7 @@
 """FLEXT-LDIF API - Thin Facade for LDIF Operations.
 
 This module provides the primary entry point for all LDIF processing operations.
-The FlextLdif class serves as a thin facade exposing all functionality through
+The FlextLdifAPI class serves as a thin facade exposing all functionality through
 a clean, unified interface that delegates to the FlextLdifClient implementation.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import override
+from typing import ClassVar, override
 
 from flext_core import FlextResult, FlextService
 
@@ -30,7 +30,7 @@ from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdif(FlextService[FlextLdifTypes.Dict]):
+class FlextLdifAPI(FlextService[FlextLdifTypes.Dict]):
     r"""Thin facade for all LDIF processing operations.
 
     Provides unified access to:
@@ -45,7 +45,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
 
     Example:
         # Basic usage
-        ldif = FlextLdif()
+        ldif = FlextLdifAPI()
 
         # Parse LDIF content
         result = ldif.parse("dn: cn=test,dc=example,dc=com\ncn: test\n")
@@ -68,6 +68,12 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
         entry = ldif.Models.Entry(dn="cn=test", attributes={})
 
     """
+
+    # Direct class access for builders and services (no wrappers)
+    EntryBuilder: ClassVar[type[FlextLdifEntryBuilder]] = FlextLdifEntryBuilder
+    SchemaBuilder: ClassVar[type[FlextLdifSchemaBuilder]] = FlextLdifSchemaBuilder
+    AclService: ClassVar[type[FlextLdifAclService]] = FlextLdifAclService
+    SchemaValidator: ClassVar[type[FlextLdifSchemaValidator]] = FlextLdifSchemaValidator
 
     def __init__(self, config: FlextLdifConfig | None = None) -> None:
         """Initialize LDIF facade with optional configuration.
@@ -501,4 +507,4 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
     # =========================================================================
 
 
-__all__ = ["FlextLdif"]
+__all__ = ["FlextLdifAPI"]

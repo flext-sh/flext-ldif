@@ -17,7 +17,7 @@ class FlextLdifSchemaExtractor(FlextService):
     def __init__(self) -> None:
         """Initialize schema extractor."""
         super().__init__()
-        self._logger = FlextLogger(__name__)
+        self._logger: FlextLogger | None = FlextLogger(__name__)
 
     @override
     def execute(self: object) -> FlextResult[FlextLdifTypes.Dict]:
@@ -75,7 +75,7 @@ class FlextLdifSchemaExtractor(FlextService):
                 total_objectclasses=len(object_classes),
             )
 
-            self.logger.info(  # type: ignore[attr-defined]
+            self.logger.info(
                 f"Extracted schema: {len(attributes)} attributes, "
                 f"{len(object_classes)} objectClasses from {len(entries)} entries"
             )
