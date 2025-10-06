@@ -780,7 +780,7 @@ class TestFlextLdifUtilitiesDnUtilities:
         """Test normalizing DN components."""
         dn = "CN=test,OU=users,DC=example,DC=com"
 
-        result = FlextLdifUtilities.DnUtilities.normalize_dn_components(dn)
+        result = FlextLdifUtilities.DnUtilities.normalize_dn(dn)
 
         assert result.is_success
         normalized = result.unwrap()
@@ -789,10 +789,10 @@ class TestFlextLdifUtilitiesDnUtilities:
         assert normalized == dn.lower()
 
     def test_extract_dn_components(self) -> None:
-        """Test extracting DN components as tuples."""
+        """Test parsing DN components."""
         dn = "cn=test,ou=users,dc=example,dc=com"
 
-        result = FlextLdifUtilities.DnUtilities.extract_dn_components(dn)
+        result = FlextLdifUtilities.DnUtilities.parse_dn_components(dn)
 
         assert result.is_success
         components = result.unwrap()

@@ -10,8 +10,8 @@ from flext_core import FlextTypes
 
 from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
-from flext_ldif.rfc.rfc_ldif_parser import RfcLdifParserService
-from flext_ldif.rfc.rfc_ldif_writer import RfcLdifWriterService
+from flext_ldif.rfc.rfc_ldif_parser import FlextLdifRfcLdifParser
+from flext_ldif.rfc.rfc_ldif_writer import FlextLdifRfcLdifWriter
 from flext_ldif.rfc.rfc_schema_parser import FlextLdifRfcSchemaParser
 
 
@@ -29,11 +29,11 @@ class FlextLdifTestServiceFactory:
         def create_ldif_parser(
             params: dict | None = None,
             quirk_registry: FlextLdifQuirksRegistry | None = None,
-        ) -> RfcLdifParserService:
+        ) -> FlextLdifRfcLdifParser:
             """Create RFC LDIF parser with mandatory quirk registry."""
             if quirk_registry is None:
                 quirk_registry = FlextLdifQuirksRegistry()
-            return RfcLdifParserService(
+            return FlextLdifRfcLdifParser(
                 params=params or {}, quirk_registry=quirk_registry
             )
 
@@ -53,11 +53,11 @@ class FlextLdifTestServiceFactory:
         def create_ldif_writer(
             params: dict | None = None,
             quirk_registry: FlextLdifQuirksRegistry | None = None,
-        ) -> RfcLdifWriterService:
+        ) -> FlextLdifRfcLdifWriter:
             """Create RFC LDIF writer with mandatory quirk registry."""
             if quirk_registry is None:
                 quirk_registry = FlextLdifQuirksRegistry()
-            return RfcLdifWriterService(
+            return FlextLdifRfcLdifWriter(
                 params=params or {}, quirk_registry=quirk_registry
             )
 
@@ -214,7 +214,7 @@ class FlextLdifTestServiceFactory:
         cls,
         config: FlextTypes.Dict | None = None,
         quirk_registry: FlextLdifQuirksRegistry | None = None,
-    ) -> RfcLdifParserService:
+    ) -> FlextLdifRfcLdifParser:
         """Create parser service with quirk registry."""
         return cls._RfcParserFactory.create_ldif_parser(config, quirk_registry)
 
@@ -232,7 +232,7 @@ class FlextLdifTestServiceFactory:
         cls,
         config: FlextTypes.Dict | None = None,
         quirk_registry: FlextLdifQuirksRegistry | None = None,
-    ) -> RfcLdifWriterService:
+    ) -> FlextLdifRfcLdifWriter:
         """Create writer service with quirk registry."""
         return cls._RfcParserFactory.create_ldif_writer(config, quirk_registry)
 

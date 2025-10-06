@@ -88,8 +88,10 @@ cn: schema
 
         # Show output files
         if data.get("output_files"):
-            for _output_file in data["output_files"]:
-                pass
+            output_files = data["output_files"]
+            if isinstance(output_files, list):
+                for _output_file in output_files:
+                    pass
 
 
 def main() -> None:

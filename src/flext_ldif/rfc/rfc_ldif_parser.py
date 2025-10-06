@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import base64
 from pathlib import Path
+from typing import cast
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
@@ -94,7 +95,7 @@ class FlextLdifRfcLdifParser(FlextService[FlextLdifTypes.Dict]):
             if content:
                 parse_changes = self._params.get("parse_changes", False)
 
-                self.logger.info(
+                self.logger.info(  # type: ignore[attr-defined]
                     "Parsing LDIF content string (RFC 2849)",
                     extra={
                         "content_length": (
@@ -124,7 +125,7 @@ class FlextLdifRfcLdifParser(FlextService[FlextLdifTypes.Dict]):
                     },
                 }
 
-                self.logger.info(
+                self.logger.info(  # type: ignore[attr-defined]
                     "LDIF content parsed successfully",
                     extra={
                         "total_entries": len(entries),
@@ -149,7 +150,7 @@ class FlextLdifRfcLdifParser(FlextService[FlextLdifTypes.Dict]):
             parse_changes = self._params.get("parse_changes", False)
             encoding = self._params.get("encoding", "utf-8")
 
-            self.logger.info(
+            self.logger.info(  # type: ignore[attr-defined]
                 f"Parsing LDIF file (RFC 2849): {file_path}",
                 extra={
                     "file_path": str(file_path),
@@ -168,12 +169,12 @@ class FlextLdifRfcLdifParser(FlextService[FlextLdifTypes.Dict]):
 
             data = parse_result.value
 
-            self.logger.info(
+            self.logger.info(  # type: ignore[attr-defined]
                 "LDIF parsed successfully",
                 extra={
-                    "total_entries": len(data.get("entries", [])),
-                    "total_changes": len(data.get("changes", [])),
-                    "total_comments": len(data.get("comments", [])),
+                    "total_entries": len(cast("list", data.get("entries", []))),
+                    "total_changes": len(cast("list", data.get("changes", []))),
+                    "total_comments": len(cast("list", data.get("comments", []))),
                 },
             )
 
@@ -181,7 +182,7 @@ class FlextLdifRfcLdifParser(FlextService[FlextLdifTypes.Dict]):
 
         except Exception as e:
             error_msg = f"Failed to execute RFC LDIF parser: {e}"
-            self.logger.exception(error_msg)
+            self.logger.exception(error_msg)  # type: ignore[attr-defined]
             return FlextResult[FlextLdifTypes.Dict].fail(error_msg)
 
     def parse_content(

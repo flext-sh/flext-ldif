@@ -9,9 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Final
+from typing import Final, cast
 
 from flext_core import FlextProcessors, FlextResult, FlextUtilities
 
@@ -91,146 +92,6 @@ class FlextLdifUtilities(FlextUtilities):
                 unit_index += 1
 
             return f"{size:.1f} {units[unit_index]}"
-
-    # =========================================================================
-    # FILE UTILITIES - File and path-related operations
-    # =========================================================================
-
-    class FileUtilities:
-        """File-related utility methods for LDIF operations."""
-
-        @staticmethod
-        def validate_file_path(
-            file_path: Path, *, check_writable: bool = False
-        ) -> FlextResult[Path]:
-            """Validate file path for read/write operations.
-
-            Args:
-                file_path: Path to validate
-                check_writable: If True, check if file/parent directory is writable
-
-            Returns:
-                FlextResult[Path]: Success with validated path (resolved), failure with error message
-
-            """
-            try:
-                # Resolve the path to absolute
-                resolved_path = file_path.resolve()
-
-                # Check if path exists
-                if not resolved_path.exists():
-                    # If file doesn't exist, check if we can create it
-                    if check_writable:
-                        # Check if parent directory exists and is writable
-                        parent_dir = resolved_path.parent
-                        if not parent_dir.exists():
-                            return FlextResult[Path].fail(
-                                f"Parent directory does not exist: {parent_dir}"
-                            )
-
-                        if (
-                            not parent_dir.stat().st_mode & 0o200
-                        ):  # Check write permission
-                            return FlextResult[Path].fail(
-                                f"Parent directory is not writable: {parent_dir}"
-                            )
-
-                        # For write operations, allow creating new files
-                        return FlextResult[Path].ok(resolved_path)
-                    # For read operations, file must exist
-                    return FlextResult[Path].fail(
-                        f"Path does not exist: {resolved_path}"
-                    )
-
-                # Check if it's a directory
-                if resolved_path.is_dir():
-                    return FlextResult[Path].fail(
-                        f"Path is a directory: {resolved_path}"
-                    )
-
-                # Check if it's a file
-                if not resolved_path.is_file():
-                    return FlextResult[Path].fail(
-                        f"Path exists but is not a file: {resolved_path}"
-                    )
-
-                # Check writable permissions if requested
-                if check_writable:
-                    # Check if file is writable
-                    if (
-                        not resolved_path.stat().st_mode & 0o200
-                    ):  # Check write permission
-                        return FlextResult[Path].fail(
-                            f"File is not writable: {resolved_path}"
-                        )
-
-                    # Check if parent directory is writable
-                    parent_dir = resolved_path.parent
-                    if not parent_dir.stat().st_mode & 0o200:
-                        return FlextResult[Path].fail(
-                            f"Parent directory is not writable: {parent_dir}"
-                        )
-
-                return FlextResult[Path].ok(resolved_path)
-            except Exception as e:  # pragma: no cover
-                return FlextResult[Path].fail(f"File path validation failed: {e}")
-
-        @staticmethod
-        def ensure_file_extension(file_path: Path, extension: str) -> Path:
-            """Ensure file has the specified extension.
-
-            Args:
-                file_path: File path to check
-                extension: Extension to ensure (with or without dot)
-
-            Returns:
-                Path: File path with correct extension
-
-            """
-            if not extension.startswith("."):
-                extension = f".{extension}"
-
-            if file_path.suffix.lower() != extension.lower():
-                return file_path.with_suffix(extension)
-            return file_path
-
-        @staticmethod
-        def count_lines_in_file(file_path: Path) -> FlextResult[int]:
-            """Count lines in a text file.
-
-            Args:
-                file_path: Path to the file to count lines in
-
-            Returns:
-                FlextResult[int]: Success with line count, failure with error message
-
-            """
-            try:
-                # Check if file exists
-                if not file_path.exists():
-                    return FlextResult[int].fail(f"File does not exist: {file_path}")
-
-                # Check if it's a file
-                if not file_path.is_file():
-                    return FlextResult[int].fail(f"Path is not a file: {file_path}")
-
-                # Count lines
-                line_count = 0
-                with Path(file_path).open(
-                    "r", encoding=FlextLdifConstants.Encoding.DEFAULT_ENCODING
-                ) as file:
-                    for _ in file:
-                        line_count += 1
-
-                return FlextResult[int].ok(line_count)
-            except UnicodeDecodeError as e:
-                return FlextResult[int].fail(
-                    f"Encoding error reading file {file_path}: {e}"
-                )
-            except Exception as e:  # pragma: no cover
-                return FlextResult[int].fail(
-                    f"Error counting lines in file {file_path}: {e}"
-                )
 
     # =========================================================================
     # DN UTILITIES - Distinguished Name operations (SINGLE SOURCE OF TRUTH)
@@ -509,30 +370,303 @@ class FlextLdifUtilities(FlextUtilities):
 
             return processors.process_parallel(processor_name, entries)
 
+    # =========================================================================
+    # VALIDATION UTILITIES - LDIF validation operations
+    # =========================================================================
+
+    class ValidationUtilities:
+        """Validation utility methods for LDIF operations."""
+
         @staticmethod
-        def register_processor(
-            name: str,
-            processor_func: object,
-            processors: FlextProcessors | None = None,
-        ) -> FlextResult[FlextProcessors]:
-            """Register a processor function for batch/parallel processing.
+        def validate_object_class_name(name: str) -> FlextResult[str]:
+            """Validate object class name.
 
             Args:
-                name: Processor name for registration
-                processor_func: Callable to process entries
-                processors: Optional FlextProcessors instance (creates new if None)
+                name: Object class name to validate
 
             Returns:
-                FlextResult[FlextProcessors]: Processors instance or error
+                FlextResult containing validated name if valid
 
             """
-            if processors is None:
-                processors = FlextLdifUtilities.Processors.create_processor()
+            if not name:
+                return FlextResult[str].fail("Object class name cannot be empty")
+            if not re.match(
+                FlextLdifConstants.LdifValidation.ATTRIBUTE_NAME_PATTERN, name
+            ):
+                return FlextResult[str].fail(
+                    f"Invalid object class name format: {name}"
+                )
+            return FlextResult[str].ok(name)
 
-            result = processors.register(name, processor_func)
-            if result.is_failure:
-                return FlextResult[FlextProcessors].fail(
-                    f"Processor registration failed: {result.error}"
+        @staticmethod
+        def validate_attribute_name(name: str) -> FlextResult[str]:
+            """Validate attribute name.
+
+            Args:
+                name: Attribute name to validate
+
+            Returns:
+                FlextResult containing validated name if valid
+
+            """
+            if not name:
+                return FlextResult[str].fail("Attribute name cannot be empty")
+            if not re.match(
+                FlextLdifConstants.LdifValidation.ATTRIBUTE_NAME_PATTERN, name
+            ):
+                return FlextResult[str].fail(f"Invalid attribute name format: {name}")
+            return FlextResult[str].ok(name)
+
+    # =========================================================================
+    # LDIF UTILITIES - Core LDIF operations
+    # =========================================================================
+
+    class LdifUtilities:
+        """Core LDIF utility methods."""
+
+        @staticmethod
+        def count_ldif_entries(content: str) -> FlextResult[int]:
+            """Count number of LDIF entries in content.
+
+            Args:
+                content: LDIF content string
+
+            Returns:
+                FlextResult containing number of entries
+
+            """
+            try:
+                if not content.strip():
+                    return FlextResult[int].ok(0)
+                # Simple count based on dn: lines
+                count = content.count("\ndn: ") + (
+                    1 if content.startswith("dn:") else 0
+                )
+                return FlextResult[int].ok(count)
+            except Exception as e:
+                return FlextResult[int].fail(f"Failed to count entries: {e}")
+
+        @staticmethod
+        def validate_ldif_syntax(content: str) -> FlextResult[dict[str, object]]:
+            """Validate basic LDIF syntax.
+
+            Args:
+                content: LDIF content to validate
+
+            Returns:
+                FlextResult containing validation results dict
+
+            """
+            try:
+                if not content.strip():
+                    return FlextResult[dict[str, object]].ok({
+                        "valid": False,
+                        "reason": "Empty content",
+                    })
+
+                has_dn = "dn:" in content
+                result = {
+                    "valid": has_dn,
+                    "has_dn": has_dn,
+                    "length": len(content),
+                }
+                return FlextResult[dict[str, object]].ok(
+                    cast("dict[str, object]", result)
+                )
+            except Exception as e:
+                return FlextResult[dict[str, object]].fail(
+                    f"Failed to validate syntax: {e}"
                 )
 
-            return FlextResult[FlextProcessors].ok(processors)
+    # =========================================================================
+    # ENCODING UTILITIES - Character encoding detection
+    # =========================================================================
+
+    class EncodingUtilities:
+        """Character encoding utility methods."""
+
+        @staticmethod
+        def detect_encoding(content: bytes) -> FlextResult[str]:
+            """Detect character encoding of content.
+
+            Args:
+                content: Content bytes to analyze
+
+            Returns:
+                FlextResult containing detected encoding
+
+            """
+            try:
+                # Simple detection - try UTF-8 first
+                try:
+                    content.decode("utf-8")
+                    return FlextResult[str].ok("utf-8")
+                except UnicodeDecodeError:
+                    pass
+
+                # Try Latin-1
+                try:
+                    content.decode("latin-1")
+                    return FlextResult[str].ok("latin-1")
+                except UnicodeDecodeError:
+                    pass
+
+                # Default to UTF-8
+                return FlextResult[str].ok("utf-8")
+            except Exception as e:
+                return FlextResult[str].fail(f"Failed to detect encoding: {e}")
+
+    # =========================================================================
+    # FILE UTILITIES - File system operations
+    # =========================================================================
+
+    class FileUtilities:
+        """File system utility methods."""
+
+        @staticmethod
+        def get_file_info(file_path: Path) -> FlextResult[dict[str, object]]:
+            """Get file information.
+
+            Args:
+                file_path: Path to the file
+
+            Returns:
+                FlextResult containing file info dict
+
+            """
+            try:
+                if not file_path.exists():
+                    return FlextResult[dict[str, object]].fail(
+                        f"File does not exist: {file_path}"
+                    )
+
+                stat = file_path.stat()
+                # Read first 1024 bytes to detect encoding
+                with Path(file_path).open("rb") as f:
+                    sample = f.read(1024)
+                encoding_result = FlextLdifUtilities.EncodingUtilities.detect_encoding(
+                    sample
+                )
+                encoding = (
+                    encoding_result.unwrap()
+                    if encoding_result.is_success
+                    else "unknown"
+                )
+
+                info = {
+                    "size": stat.st_size,
+                    "modified": stat.st_mtime,
+                    "encoding": encoding,
+                }
+                return FlextResult[dict[str, object]].ok(
+                    cast("dict[str, object]", info)
+                )
+            except Exception as e:
+                return FlextResult[dict[str, object]].fail(
+                    f"Failed to get file info: {e}"
+                )
+
+        @staticmethod
+        def validate_directory_path(path: str | Path) -> FlextResult[str]:
+            """Validate directory path.
+
+            Args:
+                path: Directory path to validate
+
+            Returns:
+                FlextResult containing validated path string
+
+            """
+            try:
+                dir_path = Path(path)
+                if not dir_path.exists():
+                    return FlextResult[str].fail(f"Directory does not exist: {path}")
+                if not dir_path.is_dir():
+                    return FlextResult[str].fail(f"Path is not a directory: {path}")
+                return FlextResult[str].ok(str(dir_path))
+            except Exception as e:
+                return FlextResult[str].fail(f"Invalid directory path: {e}")
+
+        @staticmethod
+        def validate_file_path(file_path: str | Path) -> FlextResult[str]:
+            """Validate file path.
+
+            Args:
+                file_path: Path to validate
+
+            Returns:
+                FlextResult containing validated path or error
+
+            """
+            try:
+                path = Path(file_path)
+                if not path.exists():
+                    return FlextResult[str].fail(f"File does not exist: {file_path}")
+                if not path.is_file():
+                    return FlextResult[str].fail(f"Path is not a file: {file_path}")
+                return FlextResult[str].ok(str(path))
+            except Exception as e:
+                return FlextResult[str].fail(f"Invalid file path: {e}")
+
+        @staticmethod
+        def count_lines_in_file(file_path: str | Path) -> FlextResult[int]:
+            """Count lines in a file.
+
+            Args:
+                file_path: Path to the file
+
+            Returns:
+                FlextResult containing line count or error
+
+            """
+            try:
+                path = Path(file_path)
+                if not path.exists():
+                    return FlextResult[int].fail(f"File does not exist: {file_path}")
+
+                with path.open("r", encoding="utf-8") as f:
+                    return FlextResult[int].ok(sum(1 for _ in f))
+            except Exception as e:
+                return FlextResult[int].fail(f"Failed to count lines: {e}")
+
+        @staticmethod
+        def ensure_file_extension(file_path: str | Path, extension: str) -> str:
+            """Ensure file has the specified extension.
+
+            Args:
+                file_path: File path to check/modify
+                extension: Extension to ensure (without leading dot)
+
+            Returns:
+                File path with ensured extension
+
+            """
+            path = Path(file_path)
+            if path.suffix != f".{extension}":
+                path = path.with_suffix(f".{extension}")
+            return str(path)
+
+        @staticmethod
+        def validate_encoding(encoding: str) -> FlextResult[str]:
+            """Validate character encoding.
+
+            Args:
+                encoding: Encoding to validate
+
+            Returns:
+                FlextResult containing validated encoding or error
+
+            """
+            try:
+                # Test encoding by encoding/decoding a test string
+                test_string = "test encoding validation"
+                encoded = test_string.encode(encoding)
+                decoded = encoded.decode(encoding)
+                if decoded == test_string:
+                    return FlextResult[str].ok(encoding)
+                return FlextResult[str].fail(f"Encoding validation failed: {encoding}")
+            except (UnicodeError, LookupError) as e:
+                return FlextResult[str].fail(f"Invalid encoding: {e}")
+
+
+__all__ = ["FlextLdifUtilities"]

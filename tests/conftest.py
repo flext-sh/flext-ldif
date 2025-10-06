@@ -14,14 +14,10 @@ from typing import cast
 
 import pytest
 from flext_core import FlextConstants, FlextResult, FlextTypes
-from flext_tests import (
-    FlextTestsDomains,
-    FlextTestsMatchers,
-)
 
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
-from flext_ldif.rfc.rfc_ldif_parser import RfcLdifParserService
-from flext_ldif.rfc.rfc_ldif_writer import RfcLdifWriterService
+from flext_ldif.rfc.rfc_ldif_parser import FlextLdifRfcLdifParser
+from flext_ldif.rfc.rfc_ldif_writer import FlextLdifRfcLdifWriter
 
 from .test_support import FileManager, LdifTestData, RealServiceFactory, TestValidators
 
@@ -200,7 +196,7 @@ def quirk_registry() -> FlextLdifQuirksRegistry:
 @pytest.fixture
 def real_parser_service(
     quirk_registry: FlextLdifQuirksRegistry,
-) -> RfcLdifParserService:
+) -> FlextLdifRfcLdifParser:
     """Real parser service for functional testing (RFC-first with quirks)."""
     return RealServiceFactory.create_parser(quirk_registry=quirk_registry)
 
@@ -208,7 +204,7 @@ def real_parser_service(
 @pytest.fixture
 def real_writer_service(
     quirk_registry: FlextLdifQuirksRegistry,
-) -> RfcLdifWriterService:
+) -> FlextLdifRfcLdifWriter:
     """Real writer service for functional testing (RFC-first with quirks)."""
     return RealServiceFactory.create_writer(quirk_registry=quirk_registry)
 
@@ -222,17 +218,17 @@ def integration_services() -> FlextTypes.Dict:
 # FlextTests integration for result validation
 @pytest.fixture
 def assert_result_success(
-    flext_matchers: FlextTestsMatchers,
+    flext_matchers: LocalTestMatchers,
 ) -> Callable[[FlextResult[object]], None]:
-    """Fixture providing FlextTests result success assertion."""
+    """Fixture providing result success assertion."""
     return flext_matchers.assert_result_success
 
 
 @pytest.fixture
 def assert_result_failure(
-    flext_matchers: FlextTestsMatchers,
+    flext_matchers: LocalTestMatchers,
 ) -> Callable[[FlextResult[object]], None]:
-    """Fixture providing FlextTests result failure assertion."""
+    """Fixture providing result failure assertion."""
     return flext_matchers.assert_result_failure
 
 
@@ -421,16 +417,39 @@ def large_ldif_config() -> FlextTypes.Dict:
 
 
 # FlextTests* Integration Fixtures
-@pytest.fixture
-def flext_domains() -> FlextTestsDomains:
-    """FlextTests domain-specific test data generator."""
-    return FlextTestsDomains()
+# Local test utilities to replace flext_tests dependency
+class LocalTestMatchers:
+    """Local test matchers to replace FlextTestsMatchers."""
+
+    @staticmethod
+    def assert_result_success(result: FlextResult[object]) -> None:
+        """Assert that a FlextResult is successful."""
+        assert result.is_success, f"Expected success but got failure: {result.error}"
+
+    @staticmethod
+    def assert_result_failure(result: FlextResult[object]) -> None:
+        """Assert that a FlextResult is a failure."""
+        assert result.is_failure, f"Expected failure but got success: {result.value}"
+
+
+class LocalTestDomains:
+    """Local test domains to replace FlextTestsDomains."""
+
+    def create_configuration(self, **kwargs: object) -> FlextTypes.Dict:
+        """Create a test configuration dictionary."""
+        return kwargs
 
 
 @pytest.fixture
-def flext_matchers() -> FlextTestsMatchers:
-    """FlextTests matchers for assertions."""
-    return FlextTestsMatchers()
+def flext_domains() -> LocalTestDomains:
+    """Local domain-specific test data generator."""
+    return LocalTestDomains()
+
+
+@pytest.fixture
+def flext_matchers() -> LocalTestMatchers:
+    """Local matchers for assertions."""
+    return LocalTestMatchers()
 
 
 # LDIF-specific test data using FlextTests patterns
@@ -526,7 +545,7 @@ def ldif_error_scenarios() -> FlextTypes.StringDict:
 
 
 @pytest.fixture
-def ldif_performance_config(flext_domains: FlextTestsDomains) -> FlextTypes.Dict:
+def ldif_performance_config(flext_domains: LocalTestDomains) -> FlextTypes.Dict:
     """Performance testing configuration using FlextTests patterns."""
     config = flext_domains.create_configuration(
         batch_size=1000,

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from flext_core import FlextModels, FlextResult
 from pydantic import ConfigDict, Field, computed_field
@@ -98,6 +98,22 @@ class FlextLdifModels(FlextModels):
                 if data is None:
                     data = {}
                 data.update(kwargs)
+
+                # Handle DN conversion if needed
+                if "dn" in data and isinstance(data["dn"], str):
+                    data["dn"] = FlextLdifModels.DistinguishedName(value=data["dn"])
+
+                # Handle attributes conversion if needed
+                if "attributes" in data and isinstance(data["attributes"], dict):
+                    raw_attrs = cast("dict[str, list[str]]", data["attributes"])
+                    ldif_attrs = FlextLdifModels.LdifAttributes(
+                        attributes={
+                            name: FlextLdifModels.AttributeValues(values=values)
+                            for name, values in raw_attrs.items()
+                        }
+                    )
+                    data["attributes"] = ldif_attrs
+
                 instance = cls(**data)
                 return FlextResult[FlextLdifModels.Entry].ok(instance)
             except Exception as e:
@@ -161,21 +177,44 @@ class FlextLdifModels(FlextModels):
 
         encoding: str = Field(..., description="Character encoding")
 
+    class LdifAttribute(FlextModels.Value):
+        """LDIF attribute model."""
+
+        name: str = Field(..., description="Attribute name")
+        values: list[str] = Field(default_factory=list, description="Attribute values")
+
+        @classmethod
+        def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
+            """Create LdifAttribute instance with validation."""
+            try:
+                data = {}
+                if args:
+                    if isinstance(args[0], dict):
+                        data = args[0]
+                    else:
+                        return FlextResult[object].fail("First argument must be a dict")
+                data.update(kwargs)
+                instance = cls(**data)
+                return FlextResult[object].ok(instance)
+            except Exception as e:
+                return FlextResult[object].fail(f"Failed to create LdifAttribute: {e}")
+
     class LdifAttributes(FlextModels.Value):
         """LDIF attributes container."""
 
-        attributes: dict[str, list[str]] = Field(
+        attributes: dict[str, FlextLdifModels.AttributeValues] = Field(
             default_factory=dict, description="Attribute name to values mapping"
         )
 
         @property
         def data(self) -> dict[str, list[str]]:
-            """Get attributes data."""
-            return self.attributes
+            """Get attributes data as dict of lists."""
+            return {name: attr.values for name, attr in self.attributes.items()}
 
         def get(self, name: str, default: list[str] | None = None) -> list[str] | None:
             """Get attribute values by name."""
-            return self.attributes.get(name, default)
+            attr_values = self.attributes.get(name)
+            return attr_values.values if attr_values else default
 
     class ChangeRecord(FlextModels.Value):
         """LDIF change record for modifications."""
@@ -354,6 +393,37 @@ class FlextLdifModels(FlextModels):
             """Optional attributes (MAY)."""
             return []
 
+    class SchemaObjectClass(FlextModels.Value):
+        """Schema object class model for LDIF schema definitions."""
+
+        name: str = Field(..., description="Object class name")
+        oid: str = Field(default="", description="Object class OID")
+        description: str = Field(default="", description="Object class description")
+        required_attributes: list[str] = Field(
+            default_factory=list, description="Required attributes (MUST)"
+        )
+        optional_attributes: list[str] = Field(
+            default_factory=list, description="Optional attributes (MAY)"
+        )
+        structural: bool = Field(
+            default=True, description="Whether this is a structural object class"
+        )
+        superior: str | list[str] | None = Field(
+            default=None, description="Superior object classes"
+        )
+
+        @computed_field
+        @property
+        def must(self) -> list[str]:
+            """MUST attributes (alias for required_attributes)."""
+            return self.required_attributes
+
+        @computed_field
+        @property
+        def may(self) -> list[str]:
+            """MAY attributes (alias for optional_attributes)."""
+            return self.optional_attributes
+
     class BaseAclPermissions(FlextModels.Value):
         """Base class for ACL permissions."""
 
@@ -394,10 +464,10 @@ class FlextLdifModels(FlextModels):
     class AclTarget(FlextModels.Value):
         """ACL target specification."""
 
-        target_type: str = Field(
-            default="dn", description="Type of target (dn, filter, etc.)"
+        target_dn: str = Field(..., description="Target DN")
+        attributes: list[str] = Field(
+            default_factory=list, description="Target attributes"
         )
-        target_value: str = Field(..., description="Target value")
 
     class AclSubject(FlextModels.Value):
         """ACL subject specification."""
@@ -418,15 +488,38 @@ class FlextLdifModels(FlextModels):
         delete: bool = Field(default=False, description="Delete permission")
         modify: bool = Field(default=False, description="Modify permission")
 
+        @property
+        def permissions(self) -> list[str]:
+            """Get list of granted permissions."""
+            granted = []
+            if self.read:
+                granted.append("read")
+            if self.write:
+                granted.append("write")
+            if self.search:
+                granted.append("search")
+            if self.compare:
+                granted.append("compare")
+            if self.add:
+                granted.append("add")
+            if self.delete:
+                granted.append("delete")
+            if self.modify:
+                granted.append("modify")
+            return granted
+
     class UnifiedAcl(FlextModels.Value):
         """Unified ACL representation across different LDAP servers."""
 
+        name: str = Field(..., description="ACL name")
         target: FlextLdifModels.AclTarget = Field(..., description="ACL target")
         subject: FlextLdifModels.AclSubject = Field(..., description="ACL subject")
         permissions: FlextLdifModels.AclPermissions = Field(
             ..., description="ACL permissions"
         )
         scope: str = Field(default="subtree", description="ACL scope")
+        server_type: str = Field(..., description="Server type this ACL is for")
+        raw_acl: str = Field(..., description="Raw ACL string")
 
     # =========================================================================
     # SCHEMA MODELS - Schema discovery and validation

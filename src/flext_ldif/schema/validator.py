@@ -149,12 +149,14 @@ class FlextLdifSchemaValidator(FlextService[FlextLdifTypes.Dict]):
             if oc_name in schema.objectclasses:
                 oc_def = schema.objectclasses[oc_name]
 
-                issues.extend(
-                    f"Missing required attribute '{req_attr}' "
-                    f"for objectClass '{oc_name}'"
-                    for req_attr in oc_def.required_attributes
-                    if req_attr not in entry_attrs
-                )
+                req_attrs = oc_def.get("required_attributes", [])
+                if isinstance(req_attrs, list):
+                    issues.extend(
+                        f"Missing required attribute '{req_attr}' "
+                        f"for objectClass '{oc_name}'"
+                        for req_attr in req_attrs
+                        if req_attr not in entry_attrs
+                    )
 
         validation_result: FlextLdifTypes.Dict = {
             "valid": len(issues) == 0,

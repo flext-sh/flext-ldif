@@ -103,7 +103,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
         )
 
         if result.is_success and self._logger is not None:
-            self.logger.info(f"Created group entry: {dn}")
+            self.logger.info(f"Created group entry: {dn}")  # type: ignore[attr-defined]
 
         return result
 
@@ -135,7 +135,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
         )
 
         if result.is_success and self._logger is not None:
-            self.logger.info(f"Created organizational unit entry: {dn}")
+            self.logger.info(f"Created organizational unit entry: {dn}")  # type: ignore[attr-defined]
 
         return result
 
@@ -152,7 +152,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
         entry_attrs["objectClass"] = objectclasses
 
         if validate and self._logger is not None:
-            self.logger.debug(
+            self.logger.debug(  # type: ignore[attr-defined]
                 f"Validation requested for objectClasses: {objectclasses}"
             )
 
@@ -165,7 +165,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
         )
 
         if result.is_success and self._logger is not None:
-            self.logger.info(f"Created custom entry: {dn}")
+            self.logger.info(f"Created custom entry: {dn}")  # type: ignore[attr-defined]
 
         return result
 
@@ -219,7 +219,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
                 entries.append(entry_result.value)
 
             if self._logger is not None:
-                self.logger.info(f"Created {len(entries)} entries from JSON")
+                self.logger.info(f"Created {len(entries)} entries from JSON")  # type: ignore[attr-defined]
             return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
         except json.JSONDecodeError as e:
@@ -270,16 +270,16 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
             entries.append(entry_result.value)
 
         if self._logger is not None:
-            self.logger.info(f"Created {len(entries)} entries from dictionary")
+            self.logger.info(f"Created {len(entries)} entries from dictionary")  # type: ignore[attr-defined]
         return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
     def convert_entry_to_dict(
         self, entry: FlextLdifModels.Entry
     ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert an entry to dictionary format."""
-        attributes_dict: dict[str, FlextLdifTypes.StringList] = dict(
-            entry.attributes.attributes.items()
-        )
+        attributes_dict: dict[str, FlextLdifTypes.StringList] = {
+            name: attr.values for name, attr in entry.attributes.attributes.items()
+        }
 
         entry_dict: FlextLdifTypes.Dict = {
             "dn": entry.dn.value,
@@ -307,7 +307,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
 
             json_str = json.dumps(entries_data, indent=indent)
             if self._logger is not None:
-                self.logger.info(f"Converted {len(entries)} entries to JSON")
+                self.logger.info(f"Converted {len(entries)} entries to JSON")  # type: ignore[attr-defined]
             return FlextResult[str].ok(json_str)
 
         except Exception as e:

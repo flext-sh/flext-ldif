@@ -50,7 +50,11 @@ class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
 
         if object_class in schema.objectclasses:
             oc_def = schema.objectclasses[object_class]
-            hierarchy.extend(oc_def.superior)
+            superior = oc_def.get("superior", [])
+            if isinstance(superior, str):
+                hierarchy.append(superior)
+            elif isinstance(superior, list):
+                hierarchy.extend(superior)
 
         return FlextResult[FlextLdifTypes.StringList].ok(hierarchy)
 
@@ -74,7 +78,9 @@ class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
         for oc_name in object_classes:
             if oc_name in schema.objectclasses:
                 oc_def = schema.objectclasses[oc_name]
-                required_attrs.update(oc_def.required_attributes)
+                req_attrs = oc_def.get("required_attributes", [])
+                if isinstance(req_attrs, list):
+                    required_attrs.update(req_attrs)
 
         return FlextResult[FlextLdifTypes.StringList].ok(list(required_attrs))
 
@@ -98,7 +104,9 @@ class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
         for oc_name in object_classes:
             if oc_name in schema.objectclasses:
                 oc_def = schema.objectclasses[oc_name]
-                optional_attrs.update(oc_def.optional_attributes)
+                opt_attrs = oc_def.get("optional_attributes", [])
+                if isinstance(opt_attrs, list):
+                    optional_attrs.update(opt_attrs)
 
         return FlextResult[FlextLdifTypes.StringList].ok(list(optional_attrs))
 
@@ -123,7 +131,7 @@ class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
         for oc_name in object_classes:
             if oc_name in schema.objectclasses:
                 oc_def = schema.objectclasses[oc_name]
-                if oc_def.structural:
+                if oc_def.get("structural", False):
                     structural_count += 1
 
         if structural_count > 1:
