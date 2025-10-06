@@ -15,12 +15,14 @@ Server-specific extensions should be implemented as quirks, not in this base lay
 
 from __future__ import annotations
 
-from flext_ldif.rfc.rfc_ldif_parser import RfcLdifParserService
-from flext_ldif.rfc.rfc_ldif_writer import RfcLdifWriterService
-from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
+from flext_ldif.rfc.rfc_ldif_parser import FlextLdifRfcLdifParser, RfcLdifParserService
+from flext_ldif.rfc.rfc_ldif_writer import FlextLdifRfcLdifWriter, RfcLdifWriterService
+from flext_ldif.rfc.rfc_schema_parser import FlextLdifRfcSchemaParser
 
 __all__ = [
+    "FlextLdifRfcLdifParser",
+    "FlextLdifRfcLdifWriter",
+    "FlextLdifRfcSchemaParser",
     "RfcLdifParserService",
     "RfcLdifWriterService",
-    "RfcSchemaParserService",
 ]

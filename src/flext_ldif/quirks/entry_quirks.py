@@ -8,14 +8,15 @@ from __future__ import annotations
 
 from typing import cast, override
 
-from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
+from flext_core import FlextLogger, FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
+from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifEntryQuirks(FlextService[FlextTypes.Dict]):
+class FlextLdifEntryQuirks(FlextService[FlextLdifTypes.Dict]):
     """Entry adaptation and validation for server-specific quirks."""
 
     @override
@@ -31,9 +32,9 @@ class FlextLdifEntryQuirks(FlextService[FlextTypes.Dict]):
         self._quirks = quirks_manager or FlextLdifQuirksManager()
 
     @override
-    def execute(self: object) -> FlextResult[FlextTypes.Dict]:
+    def execute(self: object) -> FlextResult[FlextLdifTypes.Dict]:
         """Execute entry quirks service."""
-        return FlextResult[FlextTypes.Dict].ok({
+        return FlextResult[FlextLdifTypes.Dict].ok({
             "service": FlextLdifEntryQuirks,
             "status": "ready",
         })
@@ -51,8 +52,8 @@ class FlextLdifEntryQuirks(FlextService[FlextTypes.Dict]):
             FlextResult containing adapted entry
 
         """
-        quirks_result: FlextResult[FlextTypes.Dict] = self._quirks.get_server_quirks(
-            target_server
+        quirks_result: FlextResult[FlextLdifTypes.Dict] = (
+            self._quirks.get_server_quirks(target_server)
         )
         if quirks_result.is_failure:
             return FlextResult[FlextLdifModels.Entry].fail(
@@ -62,10 +63,10 @@ class FlextLdifEntryQuirks(FlextService[FlextTypes.Dict]):
         rules = quirks_result.value
 
         # Create adapted entry data - FlextResult handles errors explicitly
-        adapted_data: FlextTypes.Dict = {"dn": entry.dn.value, "attributes": {}}
+        adapted_data: FlextLdifTypes.Dict = {"dn": entry.dn.value, "attributes": {}}
 
         attribute_mappings_raw = rules.get("attribute_mappings", {})
-        attribute_mappings = cast("FlextTypes.StringDict", attribute_mappings_raw)
+        attribute_mappings = cast("FlextLdifTypes.StringDict", attribute_mappings_raw)
         adapted_attrs: dict[str, FlextLdifModels.AttributeValues] = {}
 
         for attr_name, attr_values in entry.attributes.data.items():
@@ -73,7 +74,7 @@ class FlextLdifEntryQuirks(FlextService[FlextTypes.Dict]):
 
             adapted_values = self._adapt_attribute_values(
                 attr_name,
-                attr_values.values,
+                attr_values,
                 target_server or FlextLdifConstants.LdapServers.GENERIC,
             )
 
@@ -91,14 +92,14 @@ class FlextLdifEntryQuirks(FlextService[FlextTypes.Dict]):
         )
         if adapted_entry_result.is_failure:
             error_msg = f"Failed to create adapted entry: {adapted_entry_result.error}"
-            self._logger.error(error_msg)
+            self.logger.error(error_msg)
             return FlextResult[FlextLdifModels.Entry].fail(error_msg)
 
         return adapted_entry_result
 
     def _adapt_attribute_values(
-        self, attr_name: str, attr_values: FlextTypes.StringList, server_type: str
-    ) -> FlextTypes.StringList:
+        self, attr_name: str, attr_values: FlextLdifTypes.StringList, server_type: str
+    ) -> FlextLdifTypes.StringList:
         """Adapt attribute values for specific server type.
 
         Args:
@@ -112,8 +113,8 @@ class FlextLdifEntryQuirks(FlextService[FlextTypes.Dict]):
         """
         adapted_values = attr_values.copy()
 
-        quirks_result: FlextResult[FlextTypes.Dict] = self._quirks.get_server_quirks(
-            server_type
+        quirks_result: FlextResult[FlextLdifTypes.Dict] = (
+            self._quirks.get_server_quirks(server_type)
         )
         if quirks_result.is_failure:
             return adapted_values
@@ -122,7 +123,7 @@ class FlextLdifEntryQuirks(FlextService[FlextTypes.Dict]):
 
         if attr_name.lower() == "objectclass":
             required_classes_raw = rules.get("required_object_classes", [])
-            required_classes = cast("FlextTypes.StringList", required_classes_raw)
+            required_classes = cast("FlextLdifTypes.StringList", required_classes_raw)
             for required_class in required_classes:
                 if required_class not in adapted_values:
                     adapted_values.append(required_class)
@@ -141,7 +142,7 @@ class FlextLdifEntryQuirks(FlextService[FlextTypes.Dict]):
 
     def validate_entry(
         self, entry: FlextLdifModels.Entry, server_type: str | None = None
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Validate entry compliance with server-specific rules.
 
         Args:
@@ -152,24 +153,24 @@ class FlextLdifEntryQuirks(FlextService[FlextTypes.Dict]):
             FlextResult containing validation report
 
         """
-        quirks_result: FlextResult[FlextTypes.Dict] = self._quirks.get_server_quirks(
-            server_type
+        quirks_result: FlextResult[FlextLdifTypes.Dict] = (
+            self._quirks.get_server_quirks(server_type)
         )
         if quirks_result.is_failure:
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 quirks_result.error or "Failed to get server quirks"
             )
 
         rules = quirks_result.value
-        validation_report: FlextTypes.Dict = {
+        validation_report: FlextLdifTypes.Dict = {
             "server_type": server_type or FlextLdifConstants.LdapServers.GENERIC,
             "compliant": True,
             "issues": [],
             "warnings": [],
         }
 
-        issues: FlextTypes.StringList = []
-        warnings: FlextTypes.StringList = []
+        issues: FlextLdifTypes.StringList = []
+        warnings: FlextLdifTypes.StringList = []
 
         dn_validation = self._validate_dn_format(
             entry.dn.value, server_type or FlextLdifConstants.LdapServers.GENERIC
@@ -180,12 +181,12 @@ class FlextLdifEntryQuirks(FlextService[FlextTypes.Dict]):
                 issues.extend(dn_issues)
 
         obj_classes_raw: object = entry.get_attribute("objectClass") or []
-        obj_classes: FlextTypes.StringList = (
+        obj_classes: FlextLdifTypes.StringList = (
             obj_classes_raw if isinstance(obj_classes_raw, list) else []
         )
         required_classes_raw = rules.get("required_object_classes", [])
-        required_classes: FlextTypes.StringList = cast(
-            "FlextTypes.StringList", required_classes_raw
+        required_classes: FlextLdifTypes.StringList = cast(
+            "FlextLdifTypes.StringList", required_classes_raw
         )
 
         issues.extend(
@@ -195,8 +196,8 @@ class FlextLdifEntryQuirks(FlextService[FlextTypes.Dict]):
         )
 
         special_attrs_raw = rules.get("special_attributes", [])
-        special_attrs: FlextTypes.StringList = cast(
-            "FlextTypes.StringList", special_attrs_raw
+        special_attrs: FlextLdifTypes.StringList = cast(
+            "FlextLdifTypes.StringList", special_attrs_raw
         )
         warnings.extend(
             f"Missing recommended attribute: {special_attr}"
@@ -208,9 +209,9 @@ class FlextLdifEntryQuirks(FlextService[FlextTypes.Dict]):
         validation_report["warnings"] = warnings
         validation_report["compliant"] = len(issues) == 0
 
-        return FlextResult[FlextTypes.Dict].ok(validation_report)
+        return FlextResult[FlextLdifTypes.Dict].ok(validation_report)
 
-    def _validate_dn_format(self, dn: str, server_type: str) -> FlextTypes.Dict:
+    def _validate_dn_format(self, dn: str, server_type: str) -> FlextLdifTypes.Dict:
         """Validate DN format for specific server type.
 
         Args:
@@ -221,23 +222,23 @@ class FlextLdifEntryQuirks(FlextService[FlextTypes.Dict]):
             Validation result dictionary
 
         """
-        quirks_result: FlextResult[FlextTypes.Dict] = self._quirks.get_server_quirks(
-            server_type
+        quirks_result: FlextResult[FlextLdifTypes.Dict] = (
+            self._quirks.get_server_quirks(server_type)
         )
         if quirks_result.is_failure:
             return {"valid": True, "issues": []}
 
         rules = quirks_result.value
         dn_patterns_raw = rules.get("dn_patterns", [])
-        dn_patterns: FlextTypes.StringList = (
-            cast("FlextTypes.StringList", dn_patterns_raw)
+        dn_patterns: FlextLdifTypes.StringList = (
+            cast("FlextLdifTypes.StringList", dn_patterns_raw)
             if isinstance(dn_patterns_raw, list)
             else []
         )
         case_sensitive_raw = rules.get("dn_case_sensitive", False)
         case_sensitive = cast("bool", case_sensitive_raw)
 
-        issues: FlextTypes.StringList = []
+        issues: FlextLdifTypes.StringList = []
 
         # Use DistinguishedName Model for DN parsing
         try:

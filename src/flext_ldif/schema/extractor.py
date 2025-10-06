@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast, override
+from typing import cast, override
 
-from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
+from flext_core import FlextLogger, FlextResult, FlextService
 
-if TYPE_CHECKING:
-    from flext_ldif.models import FlextLdifModels
+from flext_ldif.models import FlextLdifModels
+from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifSchemaExtractor(FlextService):
@@ -20,15 +20,15 @@ class FlextLdifSchemaExtractor(FlextService):
         self._logger = FlextLogger(__name__)
 
     @override
-    def execute(self: object) -> FlextResult[FlextTypes.Dict]:
+    def execute(self: object) -> FlextResult[FlextLdifTypes.Dict]:
         """Execute schema extractor service."""
-        return FlextResult[FlextTypes.Dict].fail(
+        return FlextResult[FlextLdifTypes.Dict].fail(
             "Use extract_from_entries() method instead"
         )
 
     def extract_from_entries(
-        self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[FlextTypes.Dict]:
+        self, entries: list[object]
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Extract schema from LDIF entries.
 
         Args:
@@ -39,7 +39,7 @@ class FlextLdifSchemaExtractor(FlextService):
 
         """
         if not entries:
-            return FlextResult["FlextLdifModels.SchemaDiscoveryResult"].fail(
+            return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(
                 "No entries provided for schema extraction"
             )
 
@@ -51,7 +51,7 @@ class FlextLdifSchemaExtractor(FlextService):
                 for attr_name, attr_values in entry.attributes.data.items():
                     if attr_name.lower() == "objectclass":
                         # Handle object classes specially
-                        for oc_name in attr_values.values:
+                        for oc_name in attr_values:
                             if oc_name not in object_classes:
                                 object_classes[str(oc_name)] = {
                                     "name": str(oc_name),
@@ -73,20 +73,22 @@ class FlextLdifSchemaExtractor(FlextService):
                 "attributes": attributes,
             }
 
-            self._logger.info(
+            self.logger.info(
                 f"Extracted schema: {len(attributes)} attributes, "
                 f"{len(object_classes)} objectClasses from {len(entries)} entries"
             )
 
             # Return as FlextResult with dict data - models will be created by caller
-            return FlextResult[FlextTypes.Dict].ok(schema_data)
+            return FlextResult[FlextLdifTypes.Dict].ok(schema_data)
 
         except Exception as e:
-            return FlextResult[FlextTypes.Dict].fail(f"Schema extraction failed: {e}")
+            return FlextResult[FlextLdifTypes.Dict].fail(
+                f"Schema extraction failed: {e}"
+            )
 
     def extract_attribute_usage(
-        self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[FlextTypes.NestedDict]:
+        self, entries: list[object]
+    ) -> FlextResult[FlextLdifTypes.NestedDict]:
         """Extract attribute usage statistics from entries.
 
         Args:
@@ -97,9 +99,9 @@ class FlextLdifSchemaExtractor(FlextService):
 
         """
         if not entries:
-            return FlextResult[FlextTypes.NestedDict].ok({})
+            return FlextResult[FlextLdifTypes.NestedDict].ok({})
 
-        usage_stats: FlextTypes.NestedDict = {}
+        usage_stats: FlextLdifTypes.NestedDict = {}
 
         for entry in entries:
             for attr_name, attr_values in entry.attributes.data.items():
@@ -120,7 +122,7 @@ class FlextLdifSchemaExtractor(FlextService):
                 if value_count > 1:
                     stats["single_valued"] = False
 
-        return FlextResult[FlextTypes.NestedDict].ok(usage_stats)
+        return FlextResult[FlextLdifTypes.NestedDict].ok(usage_stats)
 
 
 __all__ = ["FlextLdifSchemaExtractor"]

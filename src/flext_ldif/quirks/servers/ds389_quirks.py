@@ -19,13 +19,18 @@ When implementing, refer to:
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_core import FlextLogger, FlextResult
 from pydantic import Field
 
-from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
+from flext_ldif.quirks.base import (
+    FlextLdifQuirksBaseAclQuirk,
+    FlextLdifQuirksBaseEntryQuirk,
+    FlextLdifQuirksBaseSchemaQuirk,
+)
+from flext_ldif.typings import FlextLdifTypes
 
 
-class Ds389SchemaQuirk(BaseSchemaQuirk):
+class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
     """389 Directory Server schema quirk - STUB."""
 
     server_type: str = Field(default="389ds", description="389 Directory Server type")
@@ -43,9 +48,9 @@ class Ds389SchemaQuirk(BaseSchemaQuirk):
     def parse_attribute(
         self,
         attr_definition: str,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Parse 389 DS attribute definition - STUB."""
-        return FlextResult[FlextTypes.Dict].fail(
+        return FlextResult[FlextLdifTypes.Dict].fail(
             "389 Directory Server attribute parsing not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
@@ -57,34 +62,34 @@ class Ds389SchemaQuirk(BaseSchemaQuirk):
     def parse_objectclass(
         self,
         oc_definition: str,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Parse 389 DS objectClass definition - STUB."""
-        return FlextResult[FlextTypes.Dict].fail(
+        return FlextResult[FlextLdifTypes.Dict].fail(
             "389 Directory Server objectClass parsing not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
     def convert_attribute_to_rfc(
         self,
-        attr_data: FlextTypes.Dict,
-    ) -> FlextResult[FlextTypes.Dict]:
+        attr_data: FlextLdifTypes.Dict,
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert 389DS attribute to RFC-compliant format - STUB."""
-        return FlextResult[FlextTypes.Dict].fail(
+        return FlextResult[FlextLdifTypes.Dict].fail(
             "389 Directory Server→RFC conversion not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
     def convert_objectclass_to_rfc(
         self,
-        oc_data: FlextTypes.Dict,
-    ) -> FlextResult[FlextTypes.Dict]:
+        oc_data: FlextLdifTypes.Dict,
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert 389DS objectClass to RFC-compliant format - STUB."""
-        return FlextResult[FlextTypes.Dict].fail(
+        return FlextResult[FlextLdifTypes.Dict].fail(
             "389 Directory Server→RFC conversion not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
-    class AclQuirk(BaseAclQuirk):
+    class AclQuirk(FlextLdifQuirksBaseAclQuirk):
         """389 Directory Server ACL quirk - STUB."""
 
         server_type: str = Field(
@@ -104,34 +109,34 @@ class Ds389SchemaQuirk(BaseSchemaQuirk):
         def parse_acl(
             self,
             acl_line: str,
-        ) -> FlextResult[FlextTypes.Dict]:
+        ) -> FlextResult[FlextLdifTypes.Dict]:
             """Parse 389 DS ACL definition - STUB."""
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 "389 Directory Server ACL parsing not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
 
         def convert_acl_to_rfc(
             self,
-            acl_data: FlextTypes.Dict,
-        ) -> FlextResult[FlextTypes.Dict]:
+            acl_data: FlextLdifTypes.Dict,
+        ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert 389DS ACL to RFC-compliant format - STUB."""
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 "389 Directory Server ACL→RFC conversion not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
 
         def convert_acl_from_rfc(
             self,
-            acl_data: FlextTypes.Dict,
-        ) -> FlextResult[FlextTypes.Dict]:
+            acl_data: FlextLdifTypes.Dict,
+        ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert RFC ACL to 389DS-specific format - STUB."""
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 "RFC→389 Directory Server ACL conversion not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
 
-    class EntryQuirk(BaseEntryQuirk):
+    class EntryQuirk(FlextLdifQuirksBaseEntryQuirk):
         """389 Directory Server entry quirk - STUB."""
 
         server_type: str = Field(
@@ -158,22 +163,22 @@ class Ds389SchemaQuirk(BaseSchemaQuirk):
             self,
             entry_dn: str,
             attributes: dict,
-        ) -> FlextResult[FlextTypes.Dict]:
+        ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for 389DS format - STUB."""
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 "389 Directory Server entry processing not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
 
         def convert_entry_to_rfc(
             self,
-            entry_data: FlextTypes.Dict,
-        ) -> FlextResult[FlextTypes.Dict]:
+            entry_data: FlextLdifTypes.Dict,
+        ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert 389DS entry to RFC-compliant format - STUB."""
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 "389 Directory Server entry→RFC conversion not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
 
 
-__all__ = ["Ds389SchemaQuirk"]
+__all__ = ["FlextLdifQuirksServersDs389"]

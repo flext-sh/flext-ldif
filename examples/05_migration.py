@@ -13,8 +13,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from flext_ldif import FlextLdif, FlextLdifModels
-from flext_ldif.migration_pipeline import LdifMigrationPipelineService
-from flext_ldif.quirks.registry import QuirkRegistryService
+from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
+from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 
 
 def simple_migration_example() -> None:
@@ -42,7 +42,7 @@ def simple_migration_example() -> None:
 def pipeline_migration_example() -> None:
     """Advanced migration using pipeline."""
     # ⚠️ MANDATORY: Initialize quirk registry
-    quirk_registry = QuirkRegistryService()
+    quirk_registry = FlextLdifQuirksRegistry()
 
     # Create sample OID LDIF files
     oid_dir = Path("examples/oid_source")
@@ -70,7 +70,7 @@ cn: schema
     (oid_dir / "sample_oid.ldif").write_text(oid_ldif)
 
     # Initialize migration pipeline
-    migration = LdifMigrationPipelineService(
+    migration = FlextLdifMigrationPipeline(
         params={
             "input_dir": str(oid_dir),
             "output_dir": str(oud_dir),

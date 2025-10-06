@@ -1,6 +1,6 @@
 """Test suite for LDIF migration pipeline.
 
-This module provides comprehensive testing for LdifMigrationPipelineService which
+This module provides comprehensive testing for FlextLdifMigrationPipeline which
 handles generic server-to-server LDIF migrations using RFC parsers with quirks.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -14,8 +14,8 @@ from pathlib import Path
 import pytest
 from flext_core import FlextTypes
 
-from flext_ldif.migration_pipeline import LdifMigrationPipelineService
-from flext_ldif.quirks.registry import QuirkRegistryService
+from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
+from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 
 
 class TestMigrationPipelineInitialization:
@@ -32,7 +32,7 @@ class TestMigrationPipelineInitialization:
             "output_dir": str(output_dir),
         }
 
-        pipeline = LdifMigrationPipelineService(
+        pipeline = FlextLdifMigrationPipeline(
             params=params,
             source_server_type="oid",
             target_server_type="oud",
@@ -51,8 +51,8 @@ class TestMigrationPipelineInitialization:
             "output_dir": str(output_dir),
         }
 
-        registry = QuirkRegistryService()
-        pipeline = LdifMigrationPipelineService(
+        registry = FlextLdifQuirksRegistry()
+        pipeline = FlextLdifMigrationPipeline(
             params=params,
             source_server_type="oid",
             target_server_type="oud",
@@ -84,7 +84,7 @@ class TestMigrationPipelineInitialization:
             "output_dir": str(output_dir),
         }
 
-        pipeline = LdifMigrationPipelineService(
+        pipeline = FlextLdifMigrationPipeline(
             params=params,
             source_server_type=source,
             target_server_type=target,
@@ -100,7 +100,7 @@ class TestMigrationPipelineValidation:
         """Test pipeline fails when input_dir parameter is missing."""
         params: FlextTypes.StringDict = {"output_dir": str(tmp_path / "output")}
 
-        pipeline = LdifMigrationPipelineService(
+        pipeline = FlextLdifMigrationPipeline(
             params=params,
             source_server_type="oid",
             target_server_type="oud",
@@ -119,7 +119,7 @@ class TestMigrationPipelineValidation:
 
         params: FlextTypes.StringDict = {"input_dir": str(input_dir)}
 
-        pipeline = LdifMigrationPipelineService(
+        pipeline = FlextLdifMigrationPipeline(
             params=params,
             source_server_type="oid",
             target_server_type="oud",
@@ -141,7 +141,7 @@ class TestMigrationPipelineValidation:
             "output_dir": str(output_dir),
         }
 
-        pipeline = LdifMigrationPipelineService(
+        pipeline = FlextLdifMigrationPipeline(
             params=params,
             source_server_type="oid",
             target_server_type="oud",
@@ -170,7 +170,7 @@ class TestMigrationPipelineExecution:
             "process_entries": True,
         }
 
-        pipeline = LdifMigrationPipelineService(
+        pipeline = FlextLdifMigrationPipeline(
             params=params,
             source_server_type="oid",
             target_server_type="oud",
@@ -194,7 +194,7 @@ class TestMigrationPipelineExecution:
             "process_entries": False,
         }
 
-        pipeline = LdifMigrationPipelineService(
+        pipeline = FlextLdifMigrationPipeline(
             params=params,
             source_server_type="oid",
             target_server_type="oud",
@@ -218,7 +218,7 @@ class TestMigrationPipelineExecution:
             "process_entries": False,
         }
 
-        pipeline = LdifMigrationPipelineService(
+        pipeline = FlextLdifMigrationPipeline(
             params=params,
             source_server_type="oid",
             target_server_type="oud",
@@ -245,8 +245,8 @@ class TestDefaultQuirkRegistration:
         }
 
         # Create pipeline with OID as source - should trigger registration
-        registry = QuirkRegistryService()
-        pipeline = LdifMigrationPipelineService(
+        registry = FlextLdifQuirksRegistry()
+        pipeline = FlextLdifMigrationPipeline(
             params=params,
             source_server_type="oid",
             target_server_type="openldap",
@@ -275,8 +275,8 @@ class TestDefaultQuirkRegistration:
         }
 
         # Create pipeline with OUD as target - should trigger registration
-        registry = QuirkRegistryService()
-        pipeline = LdifMigrationPipelineService(
+        registry = FlextLdifQuirksRegistry()
+        pipeline = FlextLdifMigrationPipeline(
             params=params,
             source_server_type="openldap",
             target_server_type="oud",
@@ -304,10 +304,10 @@ class TestDefaultQuirkRegistration:
             "output_dir": str(output_dir),
         }
 
-        registry = QuirkRegistryService()
+        registry = FlextLdifQuirksRegistry()
 
         # Create first pipeline - registers quirks
-        LdifMigrationPipelineService(
+        FlextLdifMigrationPipeline(
             params=params,
             source_server_type="oid",
             target_server_type="oud",
@@ -324,7 +324,7 @@ class TestDefaultQuirkRegistration:
         oud_schema_count = len(oud_schema_quirks)
 
         # Create second pipeline with same types - should not duplicate
-        LdifMigrationPipelineService(
+        FlextLdifMigrationPipeline(
             params=params,
             source_server_type="oid",
             target_server_type="oud",
@@ -354,7 +354,7 @@ class TestMigrateEntriesMethod:
             "output_dir": str(output_dir),
         }
 
-        pipeline = LdifMigrationPipelineService(
+        pipeline = FlextLdifMigrationPipeline(
             params=params,
             source_server_type="oid",
             target_server_type="oud",
@@ -381,7 +381,7 @@ class TestMigrateEntriesMethod:
             "output_dir": str(output_dir),
         }
 
-        pipeline = LdifMigrationPipelineService(
+        pipeline = FlextLdifMigrationPipeline(
             params=params,
             source_server_type="oid",
             target_server_type="oud",
@@ -416,7 +416,7 @@ class TestMigrateEntriesMethod:
             "output_dir": str(output_dir),
         }
 
-        pipeline = LdifMigrationPipelineService(
+        pipeline = FlextLdifMigrationPipeline(
             params=params,
             source_server_type="oid",
             target_server_type="oud",
@@ -465,7 +465,7 @@ class TestMigrateEntriesMethod:
             "output_dir": str(output_dir),
         }
 
-        pipeline = LdifMigrationPipelineService(
+        pipeline = FlextLdifMigrationPipeline(
             params=params,
             source_server_type=source,
             target_server_type=target,
@@ -503,9 +503,9 @@ class TestQuirkRegistration:
             "output_dir": str(output_dir),
         }
 
-        registry = QuirkRegistryService()
+        registry = FlextLdifQuirksRegistry()
 
-        LdifMigrationPipelineService(
+        FlextLdifMigrationPipeline(
             params=params,
             source_server_type="oid",
             target_server_type="oud",
@@ -527,9 +527,9 @@ class TestQuirkRegistration:
             "output_dir": str(output_dir),
         }
 
-        registry = QuirkRegistryService()
+        registry = FlextLdifQuirksRegistry()
 
-        LdifMigrationPipelineService(
+        FlextLdifMigrationPipeline(
             params=params,
             source_server_type="openldap",
             target_server_type="oud",
@@ -551,10 +551,10 @@ class TestQuirkRegistration:
             "output_dir": str(output_dir),
         }
 
-        registry = QuirkRegistryService()
+        registry = FlextLdifQuirksRegistry()
 
         # Create two pipelines with same registry
-        LdifMigrationPipelineService(
+        FlextLdifMigrationPipeline(
             params=params,
             source_server_type="oid",
             target_server_type="oud",
@@ -563,7 +563,7 @@ class TestQuirkRegistration:
 
         initial_quirks_count = len(registry.get_schema_quirks("oid"))
 
-        LdifMigrationPipelineService(
+        FlextLdifMigrationPipeline(
             params=params,
             source_server_type="oid",
             target_server_type="oud",

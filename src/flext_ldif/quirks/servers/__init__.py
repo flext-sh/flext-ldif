@@ -20,24 +20,24 @@ Available server quirks:
 
 from __future__ import annotations
 
-from flext_ldif.quirks.servers.ad_quirks import AdSchemaQuirk
-from flext_ldif.quirks.servers.apache_quirks import ApacheSchemaQuirk
-from flext_ldif.quirks.servers.ds389_quirks import Ds389SchemaQuirk
-from flext_ldif.quirks.servers.novell_quirks import NovellSchemaQuirk
-from flext_ldif.quirks.servers.oid_quirks import OidSchemaQuirk
-from flext_ldif.quirks.servers.openldap1_quirks import OpenLdap1SchemaQuirk
-from flext_ldif.quirks.servers.openldap_quirks import OpenLdapSchemaQuirk
-from flext_ldif.quirks.servers.oud_quirks import OudSchemaQuirk
-from flext_ldif.quirks.servers.tivoli_quirks import TivoliSchemaQuirk
+from flext_ldif.quirks.servers.ad_quirks import FlextLdifQuirksServersAd
+from flext_ldif.quirks.servers.apache_quirks import FlextLdifQuirksServersApache
+from flext_ldif.quirks.servers.ds389_quirks import FlextLdifQuirksServersDs389
+from flext_ldif.quirks.servers.novell_quirks import FlextLdifQuirksServersNovell
+from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
+from flext_ldif.quirks.servers.openldap1_quirks import FlextLdifQuirksServersOpenldap1
+from flext_ldif.quirks.servers.openldap_quirks import FlextLdifQuirksServersOpenldap
+from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
+from flext_ldif.quirks.servers.tivoli_quirks import FlextLdifQuirksServersTivoli
 
 __all__ = [
-    "AdSchemaQuirk",
-    "ApacheSchemaQuirk",
-    "Ds389SchemaQuirk",
-    "NovellSchemaQuirk",
-    "OidSchemaQuirk",
-    "OpenLdap1SchemaQuirk",
-    "OpenLdapSchemaQuirk",
-    "OudSchemaQuirk",
-    "TivoliSchemaQuirk",
+    "FlextLdifQuirksServersAd",
+    "FlextLdifQuirksServersApache",
+    "FlextLdifQuirksServersDs389",
+    "FlextLdifQuirksServersNovell",
+    "FlextLdifQuirksServersOid",
+    "FlextLdifQuirksServersOpenldap",
+    "FlextLdifQuirksServersOpenldap1",
+    "FlextLdifQuirksServersOud",
+    "FlextLdifQuirksServersTivoli",
 ]

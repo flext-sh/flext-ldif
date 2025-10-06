@@ -19,12 +19,13 @@ import re
 from pathlib import Path
 from typing import ClassVar
 
-from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
+from flext_core import FlextLogger, FlextResult, FlextService
 
-from flext_ldif.quirks.registry import QuirkRegistryService
+from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
+from flext_ldif.typings import FlextLdifTypes
 
 
-class RfcSchemaParserService(FlextService[FlextTypes.Dict]):
+class FlextLdifRfcSchemaParser(FlextService[FlextLdifTypes.Dict]):
     """RFC 4512 compliant schema parser service.
 
     Parses LDAP schema definitions strictly according to RFC 4512 specification.
@@ -39,11 +40,11 @@ class RfcSchemaParserService(FlextService[FlextTypes.Dict]):
     - Schema subentry discovery
 
     Example:
-        from flext_ldif.quirks.registry import QuirkRegistryService
+        from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 
-        registry = QuirkRegistryService()
+        registry = FlextLdifQuirksRegistry()
         params = {"file_path": "schema.ldif", "parse_attributes": True}
-        parser = RfcSchemaParserService(params=params, quirk_registry=registry)
+        parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
         result = parser.execute()
         if result.is_success:
             attrs = result.value["attributes"]
@@ -90,7 +91,7 @@ class RfcSchemaParserService(FlextService[FlextTypes.Dict]):
         self,
         *,
         params: dict,
-        quirk_registry: QuirkRegistryService,
+        quirk_registry: FlextLdifQuirksRegistry,
         server_type: str | None = None,
     ) -> None:
         """Initialize RFC schema parser with quirks integration.
@@ -107,7 +108,7 @@ class RfcSchemaParserService(FlextService[FlextTypes.Dict]):
         self._quirk_registry = quirk_registry
         self._server_type = server_type
 
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
+    def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
         """Execute RFC-compliant schema parsing.
 
         Returns:
@@ -122,20 +123,20 @@ class RfcSchemaParserService(FlextService[FlextTypes.Dict]):
             # Extract parameters
             file_path_str = self._params.get("file_path", "")
             if not file_path_str:
-                return FlextResult[FlextTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     "file_path parameter is required"
                 )
 
             file_path = Path(file_path_str)
             if not file_path.exists():
-                return FlextResult[FlextTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     f"Schema file not found: {file_path}"
                 )
 
             parse_attributes = self._params.get("parse_attributes", True)
             parse_objectclasses = self._params.get("parse_objectclasses", True)
 
-            self._logger.info(
+            self.logger.info(
                 f"Parsing LDAP schema (RFC 4512): {file_path}",
                 extra={
                     "file_path": str(file_path),
@@ -152,24 +153,24 @@ class RfcSchemaParserService(FlextService[FlextTypes.Dict]):
             )
 
             if parse_result.is_failure:
-                return FlextResult[FlextTypes.Dict].fail(parse_result.error)
+                return FlextResult[FlextLdifTypes.Dict].fail(parse_result.error)
 
             data = parse_result.value
 
-            self._logger.info(
+            self.logger.info(
                 "LDAP schema parsed successfully",
                 extra={
-                    "total_attributes": len(data["attributes"]),
-                    "total_objectclasses": len(data["objectclasses"]),
+                    "total_attributes": len(data.get("attributes", {})),
+                    "total_objectclasses": len(data.get("objectclasses", {})),
                 },
             )
 
-            return FlextResult[FlextTypes.Dict].ok(data)
+            return FlextResult[FlextLdifTypes.Dict].ok(data)
 
         except Exception as e:
             error_msg = f"Failed to execute RFC schema parser: {e}"
-            self._logger.exception(error_msg)
-            return FlextResult[FlextTypes.Dict].fail(error_msg)
+            self.logger.exception(error_msg)
+            return FlextResult[FlextLdifTypes.Dict].fail(error_msg)
 
     def _parse_schema_file(
         self,
@@ -177,7 +178,7 @@ class RfcSchemaParserService(FlextService[FlextTypes.Dict]):
         *,
         parse_attributes: bool,
         parse_objectclasses: bool,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Parse schema file according to RFC 4512.
 
         Args:
@@ -190,8 +191,8 @@ class RfcSchemaParserService(FlextService[FlextTypes.Dict]):
 
         """
         try:
-            attributes: FlextTypes.NestedDict = {}
-            objectclasses: FlextTypes.NestedDict = {}
+            attributes: FlextLdifTypes.NestedDict = {}
+            objectclasses: FlextLdifTypes.NestedDict = {}
             source_dn = "cn=subschemasubentry"
 
             with file_path.open("r", encoding="utf-8") as f:
@@ -231,7 +232,7 @@ class RfcSchemaParserService(FlextService[FlextTypes.Dict]):
                         parse_objectclasses=parse_objectclasses,
                     )
 
-            return FlextResult[FlextTypes.Dict].ok({
+            return FlextResult[FlextLdifTypes.Dict].ok({
                 "attributes": attributes,
                 "objectclasses": objectclasses,
                 "source_dn": source_dn,
@@ -242,15 +243,15 @@ class RfcSchemaParserService(FlextService[FlextTypes.Dict]):
             })
 
         except Exception as e:
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 f"Failed to parse schema file: {e}"
             )
 
     def _process_schema_line(
         self,
         line: str,
-        attributes: FlextTypes.NestedDict,
-        objectclasses: FlextTypes.NestedDict,
+        attributes: FlextLdifTypes.NestedDict,
+        objectclasses: FlextLdifTypes.NestedDict,
         *,
         parse_attributes: bool,
         parse_objectclasses: bool,
@@ -281,12 +282,12 @@ class RfcSchemaParserService(FlextService[FlextTypes.Dict]):
                     objectclasses[str(oc_data["name"])] = oc_data
 
         except Exception as e:
-            self._logger.warning(
+            self.logger.warning(
                 f"Error processing schema line: {e}",
                 extra={"line": line[:100]},
             )
 
-    def _parse_attribute_type(self, definition: str) -> FlextTypes.Dict | None:
+    def _parse_attribute_type(self, definition: str) -> FlextLdifTypes.Dict | None:
         """Parse RFC 4512 AttributeType definition with quirks support.
 
         Args:
@@ -301,7 +302,7 @@ class RfcSchemaParserService(FlextService[FlextTypes.Dict]):
             schema_quirks = self._quirk_registry.get_schema_quirks(self._server_type)
             for quirk in schema_quirks:
                 if quirk.can_handle_attribute(definition):
-                    self._logger.debug(
+                    self.logger.debug(
                         f"Using {quirk.server_type} quirk for attribute parsing",
                         extra={"definition": definition[:100]},
                     )
@@ -327,7 +328,7 @@ class RfcSchemaParserService(FlextService[FlextTypes.Dict]):
             "usage": match.group("usage"),
         }
 
-    def _parse_object_class(self, definition: str) -> FlextTypes.Dict | None:
+    def _parse_object_class(self, definition: str) -> FlextLdifTypes.Dict | None:
         """Parse RFC 4512 ObjectClass definition with quirks support.
 
         Args:
@@ -342,7 +343,7 @@ class RfcSchemaParserService(FlextService[FlextTypes.Dict]):
             schema_quirks = self._quirk_registry.get_schema_quirks(self._server_type)
             for quirk in schema_quirks:
                 if quirk.can_handle_objectclass(definition):
-                    self._logger.debug(
+                    self.logger.debug(
                         f"Using {quirk.server_type} quirk for objectClass parsing",
                         extra={"definition": definition[:100]},
                     )
@@ -379,4 +380,4 @@ class RfcSchemaParserService(FlextService[FlextTypes.Dict]):
         }
 
 
-__all__ = ["RfcSchemaParserService"]
+__all__ = ["FlextLdifRfcSchemaParser"]

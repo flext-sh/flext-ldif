@@ -19,13 +19,18 @@ When implementing, refer to:
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_core import FlextLogger, FlextResult
 from pydantic import Field
 
-from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
+from flext_ldif.quirks.base import (
+    FlextLdifQuirksBaseAclQuirk,
+    FlextLdifQuirksBaseEntryQuirk,
+    FlextLdifQuirksBaseSchemaQuirk,
+)
+from flext_ldif.typings import FlextLdifTypes
 
 
-class NovellSchemaQuirk(BaseSchemaQuirk):
+class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
     """Novell eDirectory schema quirk - STUB."""
 
     server_type: str = Field(
@@ -47,9 +52,9 @@ class NovellSchemaQuirk(BaseSchemaQuirk):
     def parse_attribute(
         self,
         attr_definition: str,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Parse eDirectory attribute definition - STUB."""
-        return FlextResult[FlextTypes.Dict].fail(
+        return FlextResult[FlextLdifTypes.Dict].fail(
             "Novell eDirectory attribute parsing not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
@@ -61,34 +66,34 @@ class NovellSchemaQuirk(BaseSchemaQuirk):
     def parse_objectclass(
         self,
         oc_definition: str,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Parse eDirectory objectClass definition - STUB."""
-        return FlextResult[FlextTypes.Dict].fail(
+        return FlextResult[FlextLdifTypes.Dict].fail(
             "Novell eDirectory objectClass parsing not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
     def convert_attribute_to_rfc(
         self,
-        attr_data: FlextTypes.Dict,
-    ) -> FlextResult[FlextTypes.Dict]:
+        attr_data: FlextLdifTypes.Dict,
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert eDirectory attribute to RFC-compliant format - STUB."""
-        return FlextResult[FlextTypes.Dict].fail(
+        return FlextResult[FlextLdifTypes.Dict].fail(
             "Novell eDirectory→RFC conversion not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
     def convert_objectclass_to_rfc(
         self,
-        oc_data: FlextTypes.Dict,
-    ) -> FlextResult[FlextTypes.Dict]:
+        oc_data: FlextLdifTypes.Dict,
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert eDirectory objectClass to RFC-compliant format - STUB."""
-        return FlextResult[FlextTypes.Dict].fail(
+        return FlextResult[FlextLdifTypes.Dict].fail(
             "Novell eDirectory→RFC conversion not yet implemented. "
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
-    class AclQuirk(BaseAclQuirk):
+    class AclQuirk(FlextLdifQuirksBaseAclQuirk):
         """Novell eDirectory ACL quirk - STUB."""
 
         server_type: str = Field(
@@ -110,34 +115,34 @@ class NovellSchemaQuirk(BaseSchemaQuirk):
         def parse_acl(
             self,
             acl_line: str,
-        ) -> FlextResult[FlextTypes.Dict]:
+        ) -> FlextResult[FlextLdifTypes.Dict]:
             """Parse eDirectory ACL definition - STUB."""
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 "Novell eDirectory ACL parsing not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
 
         def convert_acl_to_rfc(
             self,
-            acl_data: FlextTypes.Dict,
-        ) -> FlextResult[FlextTypes.Dict]:
+            acl_data: FlextLdifTypes.Dict,
+        ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert eDirectory ACL to RFC-compliant format - STUB."""
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 "Novell eDirectory ACL→RFC conversion not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
 
         def convert_acl_from_rfc(
             self,
-            acl_data: FlextTypes.Dict,
-        ) -> FlextResult[FlextTypes.Dict]:
+            acl_data: FlextLdifTypes.Dict,
+        ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert RFC ACL to eDirectory-specific format - STUB."""
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 "RFC→Novell eDirectory ACL conversion not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
 
-    class EntryQuirk(BaseEntryQuirk):
+    class EntryQuirk(FlextLdifQuirksBaseEntryQuirk):
         """Novell eDirectory entry quirk - STUB."""
 
         server_type: str = Field(
@@ -164,22 +169,22 @@ class NovellSchemaQuirk(BaseSchemaQuirk):
             self,
             entry_dn: str,
             attributes: dict,
-        ) -> FlextResult[FlextTypes.Dict]:
+        ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for eDirectory format - STUB."""
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 "Novell eDirectory entry processing not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
 
         def convert_entry_to_rfc(
             self,
-            entry_data: FlextTypes.Dict,
-        ) -> FlextResult[FlextTypes.Dict]:
+            entry_data: FlextLdifTypes.Dict,
+        ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert eDirectory entry to RFC-compliant format - STUB."""
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 "Novell eDirectory entry→RFC conversion not yet implemented. "
                 "Contribute at: https://github.com/flext/flext-ldif"
             )
 
 
-__all__ = ["NovellSchemaQuirk"]
+__all__ = ["FlextLdifQuirksServersNovell"]

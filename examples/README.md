@@ -131,7 +131,7 @@ poetry run python examples/06_custom_quirks.py
 
 - Implement SchemaQuirkProtocol
 - Define server_type and priority
-- Implement can*handle*_and parse\__ methods
+- Implement can*handle*\_and parse\_\_ methods
 - Register custom quirk with QuirkRegistryService
 
 ## 🚀 Running All Examples

@@ -13,7 +13,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextResult, FlextService, FlextTypes
+from flext_core import FlextResult, FlextService
 
 from flext_ldif.acl.service import FlextLdifAclService
 from flext_ldif.client import FlextLdifClient
@@ -30,7 +30,7 @@ from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdif(FlextService[FlextTypes.Dict]):
+class FlextLdifAPI(FlextService[FlextLdifTypes.Dict]):
     r"""Thin facade for all LDIF processing operations.
 
     Provides unified access to:
@@ -45,7 +45,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
 
     Example:
         # Basic usage
-        ldif = FlextLdif()
+        ldif = FlextLdifAPI()
 
         # Parse LDIF content
         result = ldif.parse("dn: cn=test,dc=example,dc=com\ncn: test\n")
@@ -81,7 +81,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
         self._client = FlextLdifClient(config)
 
     @override
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
+    def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
         """Execute facade self-check and return status.
 
         Returns:
@@ -144,7 +144,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
 
     def validate_entries(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Validate LDIF entries against RFC and business rules.
 
         Args:
@@ -172,7 +172,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
         *,
         process_schema: bool = True,
         process_entries: bool = True,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Migrate LDIF data between different LDAP server types.
 
         Args:
@@ -211,7 +211,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
 
     def analyze(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Analyze LDIF entries and generate statistics.
 
         Args:
@@ -499,3 +499,6 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
         return FlextLdifUtilities.Processors
 
     # =========================================================================
+
+
+__all__ = ["FlextLdifAPI"]

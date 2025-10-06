@@ -32,6 +32,12 @@ class FlextLdifConstants(FlextConstants):
     # FORMAT CONSTANTS
     # =============================================================================
 
+    # LDIF format constants (moved from models.py for proper organization)
+    RFC_FORMAT: Final[str] = "rfc"
+    OID_FORMAT: Final[str] = "oid"
+    AUTO_FORMAT: Final[str] = "auto"
+    OUD_FORMAT: Final[str] = "oud"
+
     class Format:
         """LDIF format specifications."""
 
@@ -147,6 +153,9 @@ class FlextLdifConstants(FlextConstants):
         MIN_ENCODING_LENGTH: Final[int] = 1
         MAX_ENCODING_LENGTH: Final[int] = 50
 
+        # LDIF line parsing constraints
+        MIN_LDIF_LINE_PARTS: Final[int] = 2
+
     # =============================================================================
     # OBJECTCLASS CONSTANTS
     # =============================================================================
@@ -239,6 +248,59 @@ class FlextLdifConstants(FlextConstants):
         MODIFY = "modify"
         DELETE = "delete"
         MODRDN = "modrdn"
+
+    # =============================================================================
+    # LITERAL TYPE CONSTANTS - All Literal types MUST be declared here
+    # =============================================================================
+
+    class LiteralTypes:
+        """Literal type constants for type annotations."""
+
+        # Processing stages
+        PROCESSING_STAGES: Final[tuple[str, ...]] = ("parsing", "validation", "analytics", "writing")
+        
+        # Health status
+        HEALTH_STATUS: Final[tuple[str, ...]] = ("healthy", "degraded", "unhealthy")
+        
+        # Entry types
+        ENTRY_TYPES: Final[tuple[str, ...]] = ("person", "group", "organizationalunit", "domain", "other")
+        
+        # Modification types
+        MODIFICATION_TYPES: Final[tuple[str, ...]] = ("add", "modify", "delete", "modrdn")
+        
+        # Server types
+        SERVER_TYPES: Final[tuple[str, ...]] = (
+            "active_directory",
+            "openldap",
+            "openldap2",
+            "openldap1",
+            "apache_directory",
+            "novell_edirectory",
+            "ibm_tivoli",
+            "generic",
+            "oracle_oid",
+            "oracle_oud",
+            "389ds",
+        )
+        
+        # Encoding types
+        ENCODING_TYPES: Final[tuple[str, ...]] = (
+            "utf-8", "latin-1", "ascii", "utf-16", "utf-32", "cp1252", "iso-8859-1"
+        )
+        
+        # Validation levels
+        VALIDATION_LEVELS: Final[tuple[str, ...]] = ("strict", "moderate", "lenient")
+        
+        # Project types
+        PROJECT_TYPES: Final[tuple[str, ...]] = (
+            "library",
+            "application",
+            "service",
+            "tool",
+            "migration",
+            "validation",
+            "analysis",
+        )
 
     # =============================================================================
     # ENCODING CONSTANTS
@@ -380,6 +442,10 @@ class FlextLdifConstants(FlextConstants):
 
     class RfcCompliance:
         """RFC 2849 compliance validation constants."""
+
+        # RFC 2849 format constants
+        LINE_LENGTH_LIMIT: Final[int] = 76
+        LINE_WITH_NEWLINE: Final[int] = LINE_LENGTH_LIMIT + 1  # 77
 
         # Required RFC 2849 features
         REQUIRED_FEATURES: Final[frozenset[str]] = frozenset([

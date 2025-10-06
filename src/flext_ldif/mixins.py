@@ -7,11 +7,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Iterator, Sequence
-from typing import override
+from typing import TypeVar, override
 
-from flext_core import FlextMixins, FlextResult, FlextTypes, T, U
+from flext_core import FlextMixins, FlextResult
 
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.typings import FlextLdifTypes
+
+T = TypeVar("T")
+
+U = TypeVar("U")
 
 
 class FlextLdifMixins(FlextMixins):
@@ -55,7 +60,9 @@ class FlextLdifMixins(FlextMixins):
                 raise ValueError(msg) from e
 
         @staticmethod
-        def validate_attribute_values(values: Sequence[str]) -> FlextTypes.StringList:
+        def validate_attribute_values(
+            values: Sequence[str],
+        ) -> FlextLdifTypes.StringList:
             """Validate attribute values using AttributeValues Model."""
             # Check if input is a string (which is iterable but not valid)
             if isinstance(values, str):
@@ -174,14 +181,14 @@ class FlextLdifMixins(FlextMixins):
         @staticmethod
         def transform_attribute_values(
             values: Sequence[str], transformer: Callable[[str], str]
-        ) -> FlextTypes.StringList:
+        ) -> FlextLdifTypes.StringList:
             """Transform attribute values using transformer function."""
             return [transformer(value) for value in values]
 
         @staticmethod
         def transform_dn_case(dn: str, case_func: Callable[[str], str]) -> str:
             """Transform DN case using case function."""
-            components: FlextTypes.StringList = []
+            components: FlextLdifTypes.StringList = []
             for comp in dn.split(","):
                 stripped_comp = comp.strip()
                 if "=" in stripped_comp:
@@ -267,15 +274,15 @@ class FlextLdifMixins(FlextMixins):
         @classmethod
         def analyze_with_result(
             cls,
-            analyzer_func: Callable[[Sequence[T]], FlextTypes.Dict],
+            analyzer_func: Callable[[Sequence[T]], FlextLdifTypes.Dict],
             data: Sequence[T],
-        ) -> FlextResult[FlextTypes.Dict]:
+        ) -> FlextResult[FlextLdifTypes.Dict]:
             """Analyze data using analyzer function with FlextResult."""
             try:
                 result = analyzer_func(data)
-                return FlextResult[FlextTypes.Dict].ok(result)
+                return FlextResult[FlextLdifTypes.Dict].ok(result)
             except Exception as e:
-                return FlextResult[FlextTypes.Dict].fail(str(e))
+                return FlextResult[FlextLdifTypes.Dict].fail(str(e))
 
     # =============================================================================
     # CACHING MIXINS - Caching and Performance Utilities
@@ -285,9 +292,9 @@ class FlextLdifMixins(FlextMixins):
         """Mixin providing caching utilities with monadic composition."""
 
         @override
-        def __init__(self) -> None:
+        def __init__(self) -> None:  # type: ignore[override]
             """Initialize caching mixin with empty cache and statistics."""
-            self._cache: FlextTypes.Dict = {}
+            self._cache: FlextLdifTypes.Dict = {}
             self._cache_stats: dict[str, int] = {"hits": 0, "misses": 0}
 
         def get_from_cache(self, key: str) -> FlextResult[object]:
@@ -421,7 +428,7 @@ class FlextLdifMixins(FlextMixins):
         """Unified mixin coordinator managing all mixin functionality."""
 
         @override
-        def __init__(self) -> None:
+        def __init__(self) -> None:  # type: ignore[override]
             """Initialize mixin coordinator with all available mixins."""
             self._validation_mixin = FlextLdifMixins.ValidationMixin()
             self._processing_mixin = FlextLdifMixins.ProcessingMixin()

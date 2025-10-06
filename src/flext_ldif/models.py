@@ -12,14 +12,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from flext_core import FlextModels, FlextResult, FlextTypes
+from flext_core import FlextModels, FlextResult
 from pydantic import ConfigDict, Field, computed_field
 
-# LDIF format constants (legacy compatibility)
-rfc = "rfc"
-oid = "oid"
-auto = "auto"
-oud = "oud"
+from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.typings import FlextLdifTypes
+
+# LDIF format constants moved to FlextLdifConstants for proper organization
 
 
 def _default_ldif_attributes() -> FlextLdifModels.LdifAttributes:
@@ -70,6 +69,16 @@ class FlextLdifModels(FlextModels):
 
         value: str = Field(..., description="DN string value")
 
+        @property
+        def normalized_value(self) -> str:
+            """Get normalized DN value."""
+            return self.value.lower().strip()
+
+        @property
+        def components(self) -> list[str]:
+            """Get DN components."""
+            return [comp.strip() for comp in self.value.split(",") if comp.strip()]
+
     class Entry(FlextModels.Entity):
         """LDIF entry domain model."""
 
@@ -90,9 +99,9 @@ class FlextLdifModels(FlextModels):
                     data = {}
                 data.update(kwargs)
                 instance = cls(**data)
-                return FlextResult["FlextLdifModels.Entry"].ok(instance)
+                return FlextResult[FlextLdifModels.Entry].ok(instance)
             except Exception as e:
-                return FlextResult["FlextLdifModels.Entry"].fail(
+                return FlextResult[FlextLdifModels.Entry].fail(
                     f"Failed to create Entry: {e}"
                 )
 
@@ -108,10 +117,49 @@ class FlextLdifModels(FlextModels):
             """
             return self.attributes.get(name)
 
+        def has_attribute(self, name: str) -> bool:
+            """Check if entry has attribute with given name.
+
+            Args:
+                name: Attribute name to check
+
+            Returns:
+                True if attribute exists, False otherwise
+
+            """
+            return name in self.attributes.attributes
+
+        def get_attribute_values(self, name: str) -> list[str]:
+            """Get attribute values by name, returning empty list if not found.
+
+            Args:
+                name: Attribute name to retrieve
+
+            Returns:
+                List of attribute values, empty list if attribute doesn't exist
+
+            """
+            return self.attributes.get(name) or []
+
     class AttributeValues(FlextModels.Value):
         """LDIF attribute values container."""
 
         values: list[str] = Field(default_factory=list, description="Attribute values")
+
+    class AttributeName(FlextModels.Value):
+        """LDIF attribute name value object."""
+
+        name: str = Field(..., description="Attribute name")
+
+    class LdifUrl(FlextModels.Value):
+        """LDIF URL value object."""
+
+        url: str = Field(..., description="LDIF URL")
+
+    class Encoding(FlextModels.Value):
+        """LDIF encoding value object."""
+
+        encoding: str = Field(..., description="Character encoding")
 
     class LdifAttributes(FlextModels.Value):
         """LDIF attributes container."""
@@ -119,6 +167,15 @@ class FlextLdifModels(FlextModels):
         attributes: dict[str, list[str]] = Field(
             default_factory=dict, description="Attribute name to values mapping"
         )
+
+        @property
+        def data(self) -> dict[str, list[str]]:
+            """Get attributes data."""
+            return self.attributes
+
+        def get(self, name: str, default: list[str] | None = None) -> list[str] | None:
+            """Get attribute values by name."""
+            return self.attributes.get(name, default)
 
     class ChangeRecord(FlextModels.Value):
         """LDIF change record for modifications."""
@@ -175,7 +232,7 @@ class FlextLdifModels(FlextModels):
         """Query for validating LDIF entries."""
 
         entries: list[Any] = Field(..., description="Entries to validate")
-        schema_config: FlextTypes.Dict | None = Field(
+        schema_config: FlextLdifTypes.Dict | None = Field(
             default=None, description="Schema configuration for validation"
         )
         strict: bool = Field(
@@ -186,7 +243,7 @@ class FlextLdifModels(FlextModels):
         """Query for analyzing LDIF entries."""
 
         entries: list[Any] = Field(..., description="Entries to analyze")
-        metrics: FlextTypes.Dict | None = Field(
+        metrics: FlextLdifTypes.Dict | None = Field(
             default=None, description="Metrics configuration"
         )
         include_patterns: bool = Field(
@@ -211,7 +268,7 @@ class FlextLdifModels(FlextModels):
         entries: list[Any] = Field(..., description="Entries to migrate")
         source_format: str = Field(..., description="Source LDIF format")
         target_format: str = Field(..., description="Target LDIF format")
-        options: FlextTypes.Dict | None = Field(
+        options: FlextLdifTypes.Dict | None = Field(
             default=None, description="Migration options"
         )
 
@@ -312,7 +369,7 @@ class FlextLdifModels(FlextModels):
         proxy: bool = Field(default=False, description="Proxy permission")
 
         @computed_field
-        def permissions_summary(self) -> FlextTypes.Dict:
+        def permissions_summary(self) -> FlextLdifTypes.Dict:
             """Summary of granted permissions."""
             granted = [k for k, v in self.__dict__.items() if isinstance(v, bool) and v]
             return {
@@ -372,6 +429,140 @@ class FlextLdifModels(FlextModels):
         scope: str = Field(default="subtree", description="ACL scope")
 
     # =========================================================================
+    # SCHEMA MODELS - Schema discovery and validation
+    # =========================================================================
+
+    class SchemaDiscoveryResult(FlextModels.Value):
+        """Result of schema discovery operations."""
+
+        attributes: dict[str, dict[str, str]] = Field(
+            default_factory=dict, description="Discovered attributes"
+        )
+        objectclasses: dict[str, dict[str, str]] = Field(
+            default_factory=dict, description="Discovered object classes"
+        )
+        total_attributes: int = Field(default=0, description="Total attributes found")
+        total_objectclasses: int = Field(
+            default=0, description="Total object classes found"
+        )
+
+    class OidSchemaAttribute(FlextModels.Value):
+        """OID schema attribute model."""
+
+        name: str = Field(..., description="Attribute name")
+        oid: str = Field(..., description="Attribute OID")
+        syntax: str = Field(default="", description="Attribute syntax")
+        description: str = Field(default="", description="Attribute description")
+
+        @classmethod
+        def from_ldif_line(
+            cls, line: str
+        ) -> FlextResult[FlextLdifModels.OidSchemaAttribute]:
+            """Create from LDIF line."""
+            try:
+                # Simple parsing - in real implementation this would be more complex
+                parts = line.split(":", 1)
+                if len(parts) != FlextLdifConstants.LdifValidation.MIN_LDIF_LINE_PARTS:
+                    return FlextResult[FlextLdifModels.OidSchemaAttribute].fail(
+                        "Invalid LDIF line format"
+                    )
+
+                name = parts[0].strip()
+                value = parts[1].strip()
+
+                instance = cls(name=name, oid=value)
+                return FlextResult[FlextLdifModels.OidSchemaAttribute].ok(instance)
+            except Exception as e:
+                return FlextResult[FlextLdifModels.OidSchemaAttribute].fail(
+                    f"Failed to parse: {e}"
+                )
+
+    class OidSchemaObjectClass(FlextModels.Value):
+        """OID schema object class model."""
+
+        name: str = Field(..., description="Object class name")
+        oid: str = Field(..., description="Object class OID")
+        superior: str = Field(default="", description="Superior object class")
+        description: str = Field(default="", description="Object class description")
+
+        @classmethod
+        def from_ldif_line(
+            cls, line: str
+        ) -> FlextResult[FlextLdifModels.OidSchemaObjectClass]:
+            """Create from LDIF line."""
+            try:
+                # Simple parsing - in real implementation this would be more complex
+                parts = line.split(":", 1)
+                if len(parts) != FlextLdifConstants.LdifValidation.MIN_LDIF_LINE_PARTS:
+                    return FlextResult[FlextLdifModels.OidSchemaObjectClass].fail(
+                        "Invalid LDIF line format"
+                    )
+
+                name = parts[0].strip()
+                value = parts[1].strip()
+
+                instance = cls(name=name, oid=value)
+                return FlextResult[FlextLdifModels.OidSchemaObjectClass].ok(instance)
+            except Exception as e:
+                return FlextResult[FlextLdifModels.OidSchemaObjectClass].fail(
+                    f"Failed to parse: {e}"
+                )
+
+    class OidEntryLevelAci(FlextModels.Value):
+        """OID entry-level ACI model."""
+
+        dn: str = Field(..., description="Entry DN")
+        aci: str = Field(..., description="ACI value")
+
+        @classmethod
+        def from_ldif_line(
+            cls, line: str
+        ) -> FlextResult[FlextLdifModels.OidEntryLevelAci]:
+            """Create from LDIF line."""
+            try:
+                # Simple parsing - in real implementation this would be more complex
+                parts = line.split(":", 1)
+                if len(parts) != FlextLdifConstants.LdifValidation.MIN_LDIF_LINE_PARTS:
+                    return FlextResult[FlextLdifModels.OidEntryLevelAci].fail(
+                        "Invalid LDIF line format"
+                    )
+
+                dn = parts[0].strip()
+                aci = parts[1].strip()
+
+                instance = cls(dn=dn, aci=aci)
+                return FlextResult[FlextLdifModels.OidEntryLevelAci].ok(instance)
+            except Exception as e:
+                return FlextResult[FlextLdifModels.OidEntryLevelAci].fail(
+                    f"Failed to parse: {e}"
+                )
+
+    class OidAci(FlextModels.Value):
+        """OID ACI model."""
+
+        aci: str = Field(..., description="ACI value")
+        target: str = Field(default="", description="ACI target")
+        subject: str = Field(default="", description="ACI subject")
+
+        @classmethod
+        def from_ldif_line(cls, line: str) -> FlextResult[FlextLdifModels.OidAci]:
+            """Create from LDIF line."""
+            try:
+                # Simple parsing - in real implementation this would be more complex
+                parts = line.split(":", 1)
+                if len(parts) != FlextLdifConstants.LdifValidation.MIN_LDIF_LINE_PARTS:
+                    return FlextResult[FlextLdifModels.OidAci].fail(
+                        "Invalid LDIF line format"
+                    )
+
+                aci = parts[1].strip()
+
+                instance = cls(aci=aci)
+                return FlextResult[FlextLdifModels.OidAci].ok(instance)
+            except Exception as e:
+                return FlextResult[FlextLdifModels.OidAci].fail(f"Failed to parse: {e}")
+
+    # =========================================================================
     # COMPUTED FIELDS - Metadata and Statistics
     # =========================================================================
 
@@ -410,7 +601,7 @@ class FlextLdifModels(FlextModels):
         return len(model_types)
 
     @computed_field
-    def ldif_model_summary(self) -> FlextTypes.Dict:
+    def ldif_model_summary(self) -> FlextLdifTypes.Dict:
         """Computed field providing summary of LDIF model capabilities."""
         return {
             "entry_models": 4,

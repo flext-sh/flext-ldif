@@ -13,23 +13,21 @@ from io import StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING, TextIO, cast
 
-from flext_core import FlextLogger, FlextResult, FlextService, FlextTypes
+from flext_core import FlextLogger, FlextResult, FlextService
 
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.typings import FlextLdifTypes
 
 if TYPE_CHECKING:
-    from flext_ldif.quirks.registry import QuirkRegistryService
-
-# RFC 2849 Constants
-RFC_LDIF_LINE_LENGTH_LIMIT = 76
-RFC_LDIF_LINE_WITH_NEWLINE = RFC_LDIF_LINE_LENGTH_LIMIT + 1  # 77
+    from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 
 
-class RfcLdifWriterService(FlextService[FlextTypes.Dict]):
+class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Dict]):
     """RFC 2849 compliant LDIF writer with quirk support.
 
     Writes LDIF files according to RFC 2849 specification with support
-    for server-specific quirks via QuirkRegistryService.
+    for server-specific quirks via FlextLdifQuirksRegistry.
 
     Features:
     - RFC 2849 compliant LDIF format
@@ -59,7 +57,7 @@ class RfcLdifWriterService(FlextService[FlextTypes.Dict]):
         self,
         *,
         params: dict,
-        quirk_registry: QuirkRegistryService,
+        quirk_registry: FlextLdifQuirksRegistry,
         target_server_type: str | None = None,
     ) -> None:
         """Initialize RFC LDIF writer.
@@ -76,7 +74,7 @@ class RfcLdifWriterService(FlextService[FlextTypes.Dict]):
         self._quirk_registry = quirk_registry
         self._target_server_type = target_server_type
 
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
+    def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
         """Execute RFC LDIF writing.
 
         Supports both file-based and string-based output:
@@ -100,7 +98,7 @@ class RfcLdifWriterService(FlextService[FlextTypes.Dict]):
             append_mode = self._params.get("append", False)
 
             if not entries and not schema and not acls:
-                return FlextResult[FlextTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     "At least one of entries, schema, or acls must be provided"
                 )
 
@@ -128,35 +126,67 @@ class RfcLdifWriterService(FlextService[FlextTypes.Dict]):
                     if schema:
                         schema_result = self._write_schema_entries(f, schema)
                         if schema_result.is_failure:
-                            return FlextResult[FlextTypes.Dict].fail(
+                            return FlextResult[FlextLdifTypes.Dict].fail(
                                 schema_result.error
                             )
-                        total_entries += schema_result.unwrap().get(
+                        entries_written = schema_result.unwrap().get(
                             "entries_written", 0
                         )
-                        total_lines += schema_result.unwrap().get("lines_written", 0)
+                        total_entries += (
+                            int(entries_written)
+                            if isinstance(entries_written, (int, str))
+                            else 0
+                        )
+                        lines_written = schema_result.unwrap().get("lines_written", 0)
+                        total_lines += (
+                            int(lines_written)
+                            if isinstance(lines_written, (int, str))
+                            else 0
+                        )
 
                     # Write regular entries if provided
                     if entries:
                         entries_result = self._write_entries(f, entries)
                         if entries_result.is_failure:
-                            return FlextResult[FlextTypes.Dict].fail(
+                            return FlextResult[FlextLdifTypes.Dict].fail(
                                 entries_result.error
                             )
-                        total_entries += entries_result.unwrap().get(
+                        entries_written = entries_result.unwrap().get(
                             "entries_written", 0
                         )
-                        total_lines += entries_result.unwrap().get("lines_written", 0)
+                        total_entries += (
+                            int(entries_written)
+                            if isinstance(entries_written, (int, str))
+                            else 0
+                        )
+                        lines_written = entries_result.unwrap().get("lines_written", 0)
+                        total_lines += (
+                            int(lines_written)
+                            if isinstance(lines_written, (int, str))
+                            else 0
+                        )
 
                     # Write ACL entries if provided
                     if acls:
                         acls_result = self._write_acl_entries(f, acls)
                         if acls_result.is_failure:
-                            return FlextResult[FlextTypes.Dict].fail(acls_result.error)
-                        total_entries += acls_result.unwrap().get("entries_written", 0)
-                        total_lines += acls_result.unwrap().get("lines_written", 0)
+                            return FlextResult[FlextLdifTypes.Dict].fail(
+                                acls_result.error
+                            )
+                        entries_written = acls_result.unwrap().get("entries_written", 0)
+                        total_entries += (
+                            int(entries_written)
+                            if isinstance(entries_written, (int, str))
+                            else 0
+                        )
+                        lines_written = acls_result.unwrap().get("lines_written", 0)
+                        total_lines += (
+                            int(lines_written)
+                            if isinstance(lines_written, (int, str))
+                            else 0
+                        )
 
-                self._logger.info(
+                self.logger.info(
                     f"LDIF file written: {output_file}",
                     extra={
                         "output_file": str(output_file),
@@ -165,7 +195,7 @@ class RfcLdifWriterService(FlextService[FlextTypes.Dict]):
                     },
                 )
 
-                return FlextResult[FlextTypes.Dict].ok({
+                return FlextResult[FlextLdifTypes.Dict].ok({
                     "output_file": str(output_file),
                     "entries_written": total_entries,
                     "lines_written": total_lines,
@@ -184,30 +214,54 @@ class RfcLdifWriterService(FlextService[FlextTypes.Dict]):
             if schema:
                 schema_result = self._write_schema_entries(output, schema)
                 if schema_result.is_failure:
-                    return FlextResult[FlextTypes.Dict].fail(schema_result.error)
-                total_entries += schema_result.unwrap().get("entries_written", 0)
-                total_lines += schema_result.unwrap().get("lines_written", 0)
+                    return FlextResult[FlextLdifTypes.Dict].fail(schema_result.error)
+                entries_written = schema_result.unwrap().get("entries_written", 0)
+                total_entries += (
+                    int(entries_written)
+                    if isinstance(entries_written, (int, str))
+                    else 0
+                )
+                lines_written = schema_result.unwrap().get("lines_written", 0)
+                total_lines += (
+                    int(lines_written) if isinstance(lines_written, (int, str)) else 0
+                )
 
             # Write regular entries if provided
             if entries:
                 entries_result = self._write_entries(output, entries)
                 if entries_result.is_failure:
-                    return FlextResult[FlextTypes.Dict].fail(entries_result.error)
-                total_entries += entries_result.unwrap().get("entries_written", 0)
-                total_lines += entries_result.unwrap().get("lines_written", 0)
+                    return FlextResult[FlextLdifTypes.Dict].fail(entries_result.error)
+                entries_written = entries_result.unwrap().get("entries_written", 0)
+                total_entries += (
+                    int(entries_written)
+                    if isinstance(entries_written, (int, str))
+                    else 0
+                )
+                lines_written = entries_result.unwrap().get("lines_written", 0)
+                total_lines += (
+                    int(lines_written) if isinstance(lines_written, (int, str)) else 0
+                )
 
             # Write ACL entries if provided
             if acls:
                 acls_result = self._write_acl_entries(output, acls)
                 if acls_result.is_failure:
-                    return FlextResult[FlextTypes.Dict].fail(acls_result.error)
-                total_entries += acls_result.unwrap().get("entries_written", 0)
-                total_lines += acls_result.unwrap().get("lines_written", 0)
+                    return FlextResult[FlextLdifTypes.Dict].fail(acls_result.error)
+                entries_written = acls_result.unwrap().get("entries_written", 0)
+                total_entries += (
+                    int(entries_written)
+                    if isinstance(entries_written, (int, str))
+                    else 0
+                )
+                lines_written = acls_result.unwrap().get("lines_written", 0)
+                total_lines += (
+                    int(lines_written) if isinstance(lines_written, (int, str)) else 0
+                )
 
             ldif_content = output.getvalue()
             output.close()
 
-            self._logger.info(
+            self.logger.info(
                 "LDIF content generated",
                 extra={
                     "content_length": len(ldif_content),
@@ -216,15 +270,15 @@ class RfcLdifWriterService(FlextService[FlextTypes.Dict]):
                 },
             )
 
-            return FlextResult[FlextTypes.Dict].ok({
+            return FlextResult[FlextLdifTypes.Dict].ok({
                 "content": ldif_content,
                 "entries_written": total_entries,
                 "lines_written": total_lines,
             })
 
         except Exception as e:
-            self._logger.exception("LDIF write failed")
-            return FlextResult[FlextTypes.Dict].fail(f"LDIF write failed: {e}")
+            self.logger.exception("LDIF write failed")
+            return FlextResult[FlextLdifTypes.Dict].fail(f"LDIF write failed: {e}")
 
     def write_entries_to_string(
         self,
@@ -248,9 +302,9 @@ class RfcLdifWriterService(FlextService[FlextTypes.Dict]):
                 output.write(dn_line + "\n")
 
                 # Write attributes
-                for attr_name, attr_values_obj in entry.attributes.data.items():
-                    # attr_values_obj is always AttributeValues, access .values for FlextTypes.StringList
-                    for value in attr_values_obj.values:
+                for attr_name, attr_values in entry.attributes.data.items():
+                    # attr_values is list[str]
+                    for value in attr_values:
                         attr_line = f"{attr_name}: {value}"
                         output.write(attr_line + "\n")
 
@@ -266,7 +320,7 @@ class RfcLdifWriterService(FlextService[FlextTypes.Dict]):
 
     def _write_schema_entries(
         self, file_handle: TextIO, schema: dict
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Write schema entries to LDIF file.
 
         Args:
@@ -321,17 +375,17 @@ class RfcLdifWriterService(FlextService[FlextTypes.Dict]):
                 lines_written += 1
                 entries_written = 1
 
-            return FlextResult[FlextTypes.Dict].ok({
+            return FlextResult[FlextLdifTypes.Dict].ok({
                 "entries": entries_written,
                 "lines": lines_written,
             })
 
         except Exception as e:
-            return FlextResult[FlextTypes.Dict].fail(f"Schema writing failed: {e}")
+            return FlextResult[FlextLdifTypes.Dict].fail(f"Schema writing failed: {e}")
 
     def _write_entries(
         self, file_handle: TextIO, entries: list[dict | FlextLdifModels.Entry]
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Write regular entries to LDIF file.
 
         Args:
@@ -351,10 +405,7 @@ class RfcLdifWriterService(FlextService[FlextTypes.Dict]):
                 if isinstance(entry, FlextLdifModels.Entry):
                     dn = entry.dn.value
                     # Convert Entry attributes to dict format for processing
-                    attributes = {
-                        attr_name: attr_values.values
-                        for attr_name, attr_values in entry.attributes.attributes.items()
-                    }
+                    attributes = dict(entry.attributes.attributes.items())
                 else:
                     dn = entry.get("dn", "")
                     attributes = {k: v for k, v in entry.items() if k != "dn"}
@@ -363,8 +414,8 @@ class RfcLdifWriterService(FlextService[FlextTypes.Dict]):
                     continue
 
                 # Cast attributes to consistent type for quirk processing
-                attributes_normalized: FlextTypes.Dict = cast(
-                    "FlextTypes.Dict", attributes
+                attributes_normalized: FlextLdifTypes.Dict = cast(
+                    "FlextLdifTypes.Dict", attributes
                 )
 
                 # Apply target entry quirks if available (convert FROM RFC to target format)
@@ -381,15 +432,10 @@ class RfcLdifWriterService(FlextService[FlextTypes.Dict]):
                                 processed = process_result.unwrap()
                                 if isinstance(processed, dict):
                                     dn = str(processed.get("dn", dn))
-                                    # Type cast for pyrefly - processed dict is FlextTypes.Dict
-                                    attributes_normalized = cast(
-                                        "FlextTypes.Dict",
-                                        {
-                                            k: v
-                                            for k, v in processed.items()
-                                            if k != "dn"
-                                        },
-                                    )
+                                    # Extract attributes (everything except dn)
+                                    attributes_normalized = {
+                                        k: v for k, v in processed.items() if k != "dn"
+                                    }
 
                 # Write DN
                 dn_line = f"dn: {dn}\n"
@@ -414,17 +460,17 @@ class RfcLdifWriterService(FlextService[FlextTypes.Dict]):
                 lines_written += 1
                 entries_written += 1
 
-            return FlextResult[FlextTypes.Dict].ok({
+            return FlextResult[FlextLdifTypes.Dict].ok({
                 "entries": entries_written,
                 "lines": lines_written,
             })
 
         except Exception as e:
-            return FlextResult[FlextTypes.Dict].fail(f"Entry writing failed: {e}")
+            return FlextResult[FlextLdifTypes.Dict].fail(f"Entry writing failed: {e}")
 
     def _write_acl_entries(
-        self, file_handle: TextIO, acls: list[FlextTypes.Dict]
-    ) -> FlextResult[FlextTypes.Dict]:
+        self, file_handle: TextIO, acls: list[FlextLdifTypes.Dict]
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Write ACL entries to LDIF file.
 
         Args:
@@ -488,15 +534,15 @@ class RfcLdifWriterService(FlextService[FlextTypes.Dict]):
                 lines_written += 1
                 entries_written += 1
 
-            return FlextResult[FlextTypes.Dict].ok({
+            return FlextResult[FlextLdifTypes.Dict].ok({
                 "entries": entries_written,
                 "lines": lines_written,
             })
 
         except Exception as e:
-            return FlextResult[FlextTypes.Dict].fail(f"ACL writing failed: {e}")
+            return FlextResult[FlextLdifTypes.Dict].fail(f"ACL writing failed: {e}")
 
-    def _wrap_line(self, line: str) -> FlextTypes.StringList:
+    def _wrap_line(self, line: str) -> FlextLdifTypes.StringList:
         """Wrap LDIF line at 76 characters per RFC 2849.
 
         Args:
@@ -506,24 +552,27 @@ class RfcLdifWriterService(FlextService[FlextTypes.Dict]):
             List of wrapped lines
 
         """
-        if len(line) <= RFC_LDIF_LINE_WITH_NEWLINE:
+        if len(line) <= FlextLdifConstants.RfcCompliance.LINE_WITH_NEWLINE:
             return [line]
 
         lines = []
         current = line.rstrip("\n")
-        first_line = current[:RFC_LDIF_LINE_LENGTH_LIMIT]
+        first_line = current[: FlextLdifConstants.RfcCompliance.LINE_LENGTH_LIMIT]
         lines.append(first_line + "\n")
 
-        remaining = current[RFC_LDIF_LINE_LENGTH_LIMIT:]
+        remaining = current[FlextLdifConstants.RfcCompliance.LINE_LENGTH_LIMIT :]
         while remaining:
             # Continuation lines start with a space (RFC 2849)
             chunk = (
-                " " + remaining[: RFC_LDIF_LINE_LENGTH_LIMIT - 1]
+                " "
+                + remaining[: FlextLdifConstants.RfcCompliance.LINE_LENGTH_LIMIT - 1]
             )  # Space + 75 chars = 76 total
             lines.append(chunk + "\n")
-            remaining = remaining[RFC_LDIF_LINE_LENGTH_LIMIT - 1 :]
+            remaining = remaining[
+                FlextLdifConstants.RfcCompliance.LINE_LENGTH_LIMIT - 1 :
+            ]
 
         return lines
 
 
-__all__ = ["RfcLdifWriterService"]
+__all__ = ["FlextLdifRfcLdifWriter"]
