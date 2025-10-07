@@ -85,6 +85,7 @@ class FlextLdifConstants(FlextConstants):
         MAX_ANALYTICS_CACHE_SIZE: Final[int] = 10000
         MIN_PRODUCTION_ENTRIES: Final[int] = 1000
         MIN_MEMORY_MB: Final[int] = 64  # Minimum memory limit in MB
+        MAX_MEMORY_MB: Final[int] = 8192  # Maximum memory limit in MB
         ENCODING_CONFIDENCE_THRESHOLD: Final[float] = (
             0.7  # Minimum confidence for encoding detection
         )
@@ -104,6 +105,46 @@ class FlextLdifConstants(FlextConstants):
             1000  # Threshold for medium entry counts
         )
         MIN_ATTRIBUTE_PARTS: Final[int] = 2  # Minimum parts for attribute parsing
+
+    # =============================================================================
+    # CONFIGURATION DEFAULTS
+    # =============================================================================
+
+    class ConfigDefaults:
+        """Default values for FlextLdifConfig fields.
+
+        ZERO TOLERANCE: All Field(default=...) values MUST be defined here.
+        """
+
+        # Format Configuration Defaults
+        LDIF_SKIP_COMMENTS: Final[bool] = False
+        LDIF_VALIDATE_DN_FORMAT: Final[bool] = True
+        LDIF_STRICT_VALIDATION: Final[bool] = True
+        LDIF_LINE_SEPARATOR: Final[str] = "\n"
+        LDIF_VERSION_STRING: Final[str] = "version: 1"
+
+        # Processing Configuration Defaults
+        LDIF_MAX_ENTRIES: Final[int] = 1000000
+        ENABLE_PERFORMANCE_OPTIMIZATIONS: Final[bool] = True
+        ENABLE_PARALLEL_PROCESSING: Final[bool] = True
+
+        # Analytics Configuration Defaults
+        LDIF_ENABLE_ANALYTICS: Final[bool] = True
+        LDIF_FAIL_ON_WARNINGS: Final[bool] = False
+        LDIF_ANALYTICS_SAMPLE_RATE: Final[float] = 1.0
+        LDIF_ANALYTICS_MAX_ENTRIES: Final[int] = 10000
+        ANALYTICS_DETAIL_LEVEL_LOW: Final[str] = "low"
+
+        # Server Configuration Defaults
+        LDIF_SERVER_SPECIFIC_QUIRKS: Final[bool] = True
+        STRICT_RFC_COMPLIANCE: Final[bool] = True
+
+        # Error Handling Defaults
+        ERROR_RECOVERY_MODE_CONTINUE: Final[str] = "continue"
+
+        # Development Defaults
+        DEBUG_MODE: Final[bool] = False
+        VERBOSE_LOGGING: Final[bool] = False
 
     # =============================================================================
     # QUALITY ANALYSIS CONSTANTS
@@ -341,8 +382,12 @@ class FlextLdifConstants(FlextConstants):
         """Character encoding constants for LDIF processing."""
 
         UTF8: Final[str] = "utf-8"
+        UTF16: Final[str] = "utf-16"
+        UTF32: Final[str] = "utf-32"
         LATIN1: Final[str] = "latin-1"
         ASCII: Final[str] = "ascii"
+        CP1252: Final[str] = "cp1252"
+        ISO_8859_1: Final[str] = "iso-8859-1"
         DEFAULT_ENCODING: Final[str] = UTF8
 
         # Supported encodings for LDIF processing
@@ -350,10 +395,10 @@ class FlextLdifConstants(FlextConstants):
             UTF8,
             LATIN1,
             ASCII,
-            "utf-16",
-            "utf-32",
-            "cp1252",
-            "iso-8859-1",
+            UTF16,
+            UTF32,
+            CP1252,
+            ISO_8859_1,
         ])
 
     # =============================================================================
@@ -540,6 +585,307 @@ class FlextLdifConstants(FlextConstants):
         ACTIVE: Final[str] = "active"
         DEPRECATED: Final[str] = "deprecated"
         OBSOLETE: Final[str] = "obsolete"
+
+    # =============================================================================
+    # DICTIONARY KEYS - Standardize all dict key strings
+    # =============================================================================
+
+    class DictKeys:
+        """Standard dictionary keys used throughout flext-ldif.
+
+        ZERO TOLERANCE: All dict key strings MUST be defined here.
+        DO NOT use hard-coded strings as dict keys anywhere in the codebase.
+        """
+
+        # Server type keys
+        SERVER_TYPE: Final[str] = "server_type"
+        SOURCE_SERVER: Final[str] = "source_server"
+        TARGET_SERVER: Final[str] = "target_server"
+        FROM_SERVER: Final[str] = "from_server"
+        TO_SERVER: Final[str] = "to_server"
+
+        # Entry/Data keys
+        DN: Final[str] = "dn"
+        ATTRIBUTES: Final[str] = "attributes"
+        OBJECTCLASS: Final[str] = "objectClass"
+        ENTRIES: Final[str] = "entries"
+        ENTRY: Final[str] = "entry"
+        ENTRY_TYPES: Final[str] = "entry_types"
+
+        # Schema keys
+        SCHEMA: Final[str] = "schema"
+        OID: Final[str] = "oid"
+        NAME: Final[str] = "name"
+        DESC: Final[str] = "desc"
+        SUP: Final[str] = "sup"
+        SYNTAX: Final[str] = "syntax"
+        EQUALITY: Final[str] = "equality"
+        ORDERING: Final[str] = "ordering"
+        SUBSTR: Final[str] = "substr"
+        MUST: Final[str] = "must"
+        MAY: Final[str] = "may"
+        KIND: Final[str] = "kind"
+        SINGLE_VALUE: Final[str] = "single_value"
+
+        # ACL keys
+        ACL: Final[str] = "acl"
+        ACL_FORMAT: Final[str] = "acl_format"
+        ACL_ATTRIBUTE: Final[str] = "acl_attribute"
+        ACI: Final[str] = "aci"
+        ACCESS: Final[str] = "access"
+        RAW: Final[str] = "raw"
+        PARSED: Final[str] = "parsed"
+        TYPE: Final[str] = "type"
+        FORMAT: Final[str] = "format"
+        DATA: Final[str] = "data"
+
+        # Statistics/Analytics keys
+        STATS: Final[str] = "stats"
+        TOTAL_ENTRIES: Final[str] = "total_entries"
+        TOTAL_CHANGES: Final[str] = "total_changes"
+        TOTAL_COMMENTS: Final[str] = "total_comments"
+        TOTAL_MIGRATED: Final[str] = "total_migrated"
+        TOTAL_SCHEMA_ATTRIBUTES: Final[str] = "total_schema_attributes"
+        TOTAL_SCHEMA_OBJECTCLASSES: Final[str] = "total_schema_objectclasses"
+        ENTRIES_WRITTEN: Final[str] = "entries_written"
+        LINES_WRITTEN: Final[str] = "lines_written"
+
+        # Processing keys
+        VALID: Final[str] = "valid"
+        IS_VALID: Final[str] = "is_valid"
+        READY: Final[str] = "ready"
+        ISSUES: Final[str] = "issues"
+        ERRORS: Final[str] = "errors"
+        CHANGES: Final[str] = "changes"
+        COMMENTS: Final[str] = "comments"
+
+        # Configuration keys
+        CONFIG: Final[str] = "config"
+        DEFAULT_ENCODING: Final[str] = "default_encoding"
+        ENCODING: Final[str] = "encoding"
+        DESCRIPTION: Final[str] = "description"
+        QUIRK_REGISTRY: Final[str] = "quirk_registry"
+
+        # File operation keys
+        FILE_PATH: Final[str] = "file_path"
+        INPUT_DIR: Final[str] = "input_dir"
+        OUTPUT_DIR: Final[str] = "output_dir"
+        OUTPUT_FILE: Final[str] = "output_file"
+
+        # Quirks keys
+        SUPPORTS_OPERATIONAL_ATTRS: Final[str] = "supports_operational_attrs"
+        SCHEMA_SUBENTRY: Final[str] = "schema_subentry"
+        SOURCE_FORMAT: Final[str] = "source_format"
+        TARGET_FORMAT: Final[str] = "target_format"
+        RFC_GENERIC: Final[str] = "rfc_generic"
+
+        # Service/Component keys
+        SERVICES: Final[str] = "services"
+        PARSER: Final[str] = "parser"
+        WRITER: Final[str] = "writer"
+        VALIDATOR: Final[str] = "validator"
+        INITIALIZED: Final[str] = "initialized"
+
+        # Process/Operations keys
+        PROCESS_SCHEMA: Final[str] = "process_schema"
+        PROCESS_ENTRIES: Final[str] = "process_entries"
+        PARSE_CHANGES: Final[str] = "parse_changes"
+        PARSE_ATTRIBUTES: Final[str] = "parse_attributes"
+
+        # OpenLDAP-specific keys
+        OLCACCESS: Final[str] = "olcAccess"
+        WHAT: Final[str] = "what"
+        BY_CLAUSES: Final[str] = "by_clauses"
+        INDEX: Final[str] = "index"
+        IS_CONFIG_ENTRY: Final[str] = "is_config_entry"
+        IS_TRADITIONAL_DIT: Final[str] = "is_traditional_dit"
+
+        # Oracle OID/OUD-specific keys
+        ORCLACI: Final[str] = "orclaci"
+        ORCLENTRYLEVELACI: Final[str] = "orclentrylevelaci"
+        ENTRY_LEVEL: Final[str] = "entry_level"
+        STANDARD: Final[str] = "standard"
+        HAS_OID_ACLS: Final[str] = "has_oid_acls"
+        MODEL_DUMP: Final[str] = "model_dump"
+
+        # LDAP Attribute keys
+        MEMBER: Final[str] = "member"
+        UNIQUE_MEMBER: Final[str] = "uniqueMember"
+        CN: Final[str] = "cn"
+        SN: Final[str] = "sn"
+        OU: Final[str] = "ou"
+        DC: Final[str] = "dc"
+        UID: Final[str] = "uid"
+        MAIL: Final[str] = "mail"
+        TELEPHONE_NUMBER: Final[str] = "telephoneNumber"
+        SURNAME: Final[str] = "Surname"
+
+        # ObjectClass values
+        TOP: Final[str] = "top"
+        PERSON: Final[str] = "person"
+        GROUP_OF_NAMES: Final[str] = "groupOfNames"
+        GROUP_OF_UNIQUE_NAMES: Final[str] = "groupOfUniqueNames"
+        ORGANIZATIONAL_UNIT: Final[str] = "organizationalUnit"
+
+        # ACL service keys
+        PATTERNS: Final[str] = "patterns"
+        COMPOSITE: Final[str] = "composite"
+        RULE_EVALUATION: Final[str] = "rule_evaluation"
+
+        # Validation/Check keys
+        HAS_DN: Final[str] = "has_dn"
+        LENGTH: Final[str] = "length"
+        BOOL: Final[str] = "bool"
+        STR: Final[str] = "str"
+
+        # Feature flags
+        LDIF_FEATURES: Final[str] = "ldif_features"
+        RFC_2849_PARSING: Final[str] = "rfc_2849_parsing"
+        RFC_4512_COMPLIANCE: Final[str] = "rfc_4512_compliance"
+        SERVER_QUIRKS: Final[str] = "server_quirks"
+        GENERIC_MIGRATION: Final[str] = "generic_migration"
+        SCHEMA_VALIDATION: Final[str] = "schema_validation"
+        ACL_PROCESSING: Final[str] = "acl_processing"
+        ENTRY_BUILDING: Final[str] = "entry_building"
+
+        # Status/State keys
+        UNKNOWN: Final[str] = "unknown"
+        HIGH: Final[str] = "high"
+        STOP: Final[str] = "stop"
+        SKIP: Final[str] = "skip"
+        AFTER: Final[str] = "after"
+        MEDIUM: Final[str] = "medium"
+
+        # Class/Component name keys
+        FLEXT_LDIF_QUIRKS_REGISTRY: Final[str] = "FlextLdifQuirksRegistry"
+        FLEXT_LDIF_QUIRKS_MANAGER: Final[str] = "FlextLdifQuirksManager"
+        FLEXT_LDIF_ACL_SERVICE: Final[str] = "FlextLdifAclService"
+        FLEXT_LDIF_SCHEMA_BUILDER: Final[str] = "FlextLdifSchemaBuilder"
+
+    # =============================================================================
+    # DN PATTERNS - Standard DN patterns for schema and configuration
+    # =============================================================================
+
+    class DnPatterns:
+        """Standard DN patterns used in LDAP/LDIF processing.
+
+        ZERO TOLERANCE: All DN pattern strings MUST be defined here.
+        DO NOT use hard-coded DN strings anywhere in the codebase.
+        """
+
+        # Schema subentry DNs (server-specific)
+        CN_SCHEMA: Final[str] = "cn=schema"
+        CN_SUBSCHEMA: Final[str] = "cn=subschema"
+        CN_SUBSCHEMA_SUBENTRY: Final[str] = "cn=subschemasubentry"
+        CN_SCHEMA_CN_CONFIG: Final[str] = "cn=schema,cn=configuration"
+
+        # Configuration DNs
+        CN_CONFIG: Final[str] = "cn=config"
+
+        # Oracle-specific DNs
+        CN_ORCL: Final[str] = "cn=orcl"
+        OU_ORACLE: Final[str] = "ou=oracle"
+        DC_ORACLE: Final[str] = "dc=oracle"
+
+        # DN component patterns
+        DN_EQUALS: Final[str] = "="
+        DN_COMMA: Final[str] = ","
+        DN_PLUS: Final[str] = "+"
+
+        # Common DN prefix patterns
+        CN_PREFIX: Final[str] = "cn="
+        OU_PREFIX: Final[str] = "ou="
+        DC_PREFIX: Final[str] = "dc="
+        UID_PREFIX: Final[str] = "uid="
+        O_PREFIX: Final[str] = "o="
+        L_PREFIX: Final[str] = "l="
+        ST_PREFIX: Final[str] = "st="
+        C_PREFIX: Final[str] = "c="
+
+        # OpenLDAP config-specific patterns
+        OLCDATABASE_PREFIX: Final[str] = "olcDatabase="
+        OLCOVERLAY_PREFIX: Final[str] = "olcOverlay="
+
+        # All schema subentry patterns
+        SCHEMA_SUBENTRY_PATTERNS: Final[frozenset[str]] = frozenset([
+            CN_SCHEMA,
+            CN_SUBSCHEMA,
+            CN_SUBSCHEMA_SUBENTRY,
+            CN_SCHEMA_CN_CONFIG,
+        ])
+
+        # All config DN patterns
+        CONFIG_DN_PATTERNS: Final[frozenset[str]] = frozenset([
+            CN_CONFIG,
+            CN_SCHEMA_CN_CONFIG,
+        ])
+
+        # All Oracle DN patterns
+        ORACLE_DN_PATTERNS: Final[frozenset[str]] = frozenset([
+            CN_ORCL,
+            OU_ORACLE,
+            DC_ORACLE,
+        ])
+
+    # =============================================================================
+    # ACL FORMATS - ACL format identifiers
+    # =============================================================================
+
+    class AclFormats:
+        """ACL format identifier constants.
+
+        ZERO TOLERANCE: All ACL format strings MUST be defined here.
+        """
+
+        # OpenLDAP ACL formats
+        OPENLDAP1_ACL: Final[str] = "openldap1_acl"
+        OPENLDAP2_ACL: Final[str] = "openldap2_acl"
+
+        # Oracle ACL formats
+        OID_ACL: Final[str] = "oracle_oid"
+        OUD_ACL: Final[str] = "oracle_oud"
+        OUD_DS_CFG: Final[str] = "ds-cfg"
+
+        # Generic/RFC ACL formats
+        RFC_GENERIC: Final[str] = "rfc_generic"
+        ACI: Final[str] = "aci"
+
+        # Active Directory ACL format
+        AD_NTSECURITY: Final[str] = "nTSecurityDescriptor"
+
+    # =============================================================================
+    # SERVER TYPE SHORTCUTS - Short server type identifiers
+    # =============================================================================
+
+    class ServerTypes:
+        """Server type identifiers (short forms).
+
+        ZERO TOLERANCE: All server type identifier strings MUST be defined here.
+        These are the SHORT identifiers used in quirks, config, and processing.
+        Long names are in LdapServers class.
+        """
+
+        # Short identifiers (used in code)
+        OID: Final[str] = "oid"
+        OUD: Final[str] = "oud"
+        OPENLDAP: Final[str] = "openldap"
+        OPENLDAP1: Final[str] = "openldap1"
+        OPENLDAP2: Final[str] = "openldap2"
+        AD: Final[str] = "active_directory"
+        APACHE: Final[str] = "apache_directory"
+        GENERIC: Final[str] = "generic"
+        RFC: Final[str] = "rfc"
+        DS_389: Final[str] = "389ds"
+        ORACLE: Final[str] = "oracle"
+
+        # Mapping between short and long server types
+        ORACLE_OID_VARIANTS: Final[frozenset[str]] = frozenset(["oid", "oracle_oid"])
+        ORACLE_OUD_VARIANTS: Final[frozenset[str]] = frozenset(["oud", "oracle_oud"])
+        OPENLDAP_VARIANTS: Final[frozenset[str]] = frozenset([
+            "openldap",
+            "openldap1",
+            "openldap2",
+        ])
 
 
 __all__ = [

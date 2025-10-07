@@ -75,10 +75,11 @@ class FlextLdifSchemaExtractor(FlextService["FlextLdifConfig"]):
                 total_objectclasses=len(object_classes),
             )
 
-            self.logger.info(
-                f"Extracted schema: {len(attributes)} attributes, "
-                f"{len(object_classes)} objectClasses from {len(entries)} entries"
-            )
+            if self.logger:
+                self.logger.info(
+                    f"Extracted schema: {len(attributes)} attributes, "
+                    f"{len(object_classes)} objectClasses from {len(entries)} entries"
+                )
 
             return FlextResult[FlextLdifModels.SchemaDiscoveryResult].ok(result)
 

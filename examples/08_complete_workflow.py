@@ -7,11 +7,20 @@ Demonstrates comprehensive FlextLdif integration with direct methods:
 - Real-world LDIF processing scenarios
 - Error handling and recovery patterns
 - Access to all namespace classes
+- Configuration via .env environment variables
 
 This example shows how to combine all FlextLdif features
 in production-ready workflows using the streamlined direct method API.
 
 All functionality accessed through FlextLdif facade with zero boilerplate.
+
+Configuration:
+    Set environment variables in .env file:
+    - FLEXT_LDIF_MAX_WORKERS=4
+    - FLEXT_LDIF_STRICT_VALIDATION=true
+    - FLEXT_LDIF_DEBUG_MODE=false
+    - LDAP_HOST=localhost
+    - LDAP_PORT=3390
 """
 
 from __future__ import annotations
@@ -19,6 +28,73 @@ from __future__ import annotations
 from pathlib import Path
 
 from flext_ldif import FlextLdif
+
+
+def railway_oriented_composition() -> None:
+    """Demonstrate railway-oriented programming with FlextResult composition.
+
+    Shows elegant chaining of operations with automatic error propagation.
+    Uses .env configuration automatically via FlextLdifConfig.
+    """
+    api = FlextLdif.get_instance()
+
+    ldif_content = """dn: cn=Railway User,ou=People,dc=example,dc=com
+objectClass: person
+objectClass: inetOrgPerson
+cn: Railway User
+sn: User
+mail: railway@example.com
+"""
+
+    # Railway-oriented composition - errors propagate automatically
+    # Each operation returns FlextResult, enabling fluent chaining
+    result = (
+        api.parse(ldif_content)
+        .flat_map(lambda entries: api.validate_entries(entries).map(lambda _: entries))
+        .flat_map(
+            lambda entries: api.analyze(entries).map(lambda stats: (entries, stats))
+        )
+        .flat_map(lambda data: api.write(data[0]).map(lambda ldif: (ldif, data[1])))
+    )
+
+    # Handle final result
+    if result.is_success:
+        ldif_output, stats = result.unwrap()
+        print(f"✓ Processed {stats.get('total_entries', 0)} entries")
+        print(f"✓ LDIF output: {len(ldif_output)} characters")
+    else:
+        print(f"✗ Processing failed: {result.error}")
+
+
+def configuration_from_env_example() -> None:
+    """Demonstrate automatic configuration loading from .env file.
+
+    FlextLdifConfig automatically loads from environment variables:
+    - FLEXT_LDIF_MAX_WORKERS
+    - FLEXT_LDIF_STRICT_VALIDATION
+    - FLEXT_LDIF_ENCODING
+    - And all other FlextLdifConfig fields
+
+    No manual configuration needed - set values in .env file!
+    """
+    api = FlextLdif.get_instance()
+
+    # Configuration loaded automatically from .env
+    print(f"Encoding (from .env): {api.config.ldif_encoding}")
+    print(f"Max Workers (from .env): {api.config.max_workers}")
+    print(f"Strict Validation (from .env): {api.config.ldif_strict_validation}")
+    print(f"Debug Mode (from .env): {api.config.debug_mode}")
+
+    # Configuration affects behavior automatically
+    entries_count = 1000
+    effective_workers = api.config.get_effective_workers(entries_count)
+    print(f"Effective workers for {entries_count} entries: {effective_workers}")
+
+    # Performance optimization based on config
+    if api.config.is_performance_optimized():
+        print("✓ Running in performance-optimized mode")
+    elif api.config.is_development_optimized():
+        print("✓ Running in development-optimized mode")
 
 
 def complete_ldif_processing_workflow() -> None:

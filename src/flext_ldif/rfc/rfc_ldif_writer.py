@@ -196,14 +196,15 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Dict]):
                             else 0
                         )
 
-                self.logger.info(
-                    f"LDIF file written: {output_file}",
-                    extra={
-                        "output_file": str(output_file),
-                        "entries_written": total_entries,
-                        "lines_written": total_lines,
-                    },
-                )
+                if self.logger:
+                    self.logger.info(
+                        f"LDIF file written: {output_file}",
+                        extra={
+                            "output_file": str(output_file),
+                            "entries_written": total_entries,
+                            "lines_written": total_lines,
+                        },
+                    )
 
                 return FlextResult[FlextLdifTypes.Dict].ok({
                     "output_file": str(output_file),
@@ -278,14 +279,15 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Dict]):
             ldif_content = output.getvalue()
             output.close()
 
-            self.logger.info(
-                "LDIF content generated",
-                extra={
-                    "content_length": len(ldif_content),
-                    "entries_written": total_entries,
-                    "lines_written": total_lines,
-                },
-            )
+            if self.logger:
+                self.logger.info(
+                    "LDIF content generated",
+                    extra={
+                        "content_length": len(ldif_content),
+                        "entries_written": total_entries,
+                        "lines_written": total_lines,
+                    },
+                )
 
             return FlextResult[FlextLdifTypes.Dict].ok({
                 "content": ldif_content,
@@ -294,7 +296,8 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Dict]):
             })
 
         except Exception as e:
-            self.logger.exception("LDIF write failed")
+            if self.logger:
+                self.logger.exception("LDIF write failed")
             return FlextResult[FlextLdifTypes.Dict].fail(f"LDIF write failed: {e}")
 
     def write_entries_to_string(

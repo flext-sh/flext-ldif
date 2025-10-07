@@ -50,52 +50,52 @@ class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
         """Setup server-specific quirks registry."""
         self.quirks_registry = {
             FlextLdifConstants.LdapServers.OPENLDAP_2: {
-                "acl_attribute": "olcAccess",
-                "acl_format": "openldap2",
-                "schema_subentry": "cn=subschema",
-                "supports_operational_attrs": True,
+                FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: FlextLdifConstants.DictKeys.OLCACCESS,
+                FlextLdifConstants.DictKeys.ACL_FORMAT: FlextLdifConstants.AclFormats.OPENLDAP2_ACL,
+                FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SUBSCHEMA,
+                FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: True,
             },
             FlextLdifConstants.LdapServers.OPENLDAP_1: {
-                "acl_attribute": "access",
-                "acl_format": "openldap1",
-                "schema_subentry": "cn=subschema",
-                "supports_operational_attrs": True,
+                FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: FlextLdifConstants.DictKeys.ACCESS,
+                FlextLdifConstants.DictKeys.ACL_FORMAT: FlextLdifConstants.AclFormats.OPENLDAP1_ACL,
+                FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SUBSCHEMA,
+                FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: True,
             },
             FlextLdifConstants.LdapServers.OPENLDAP: {
-                "acl_attribute": "olcAccess",
-                "acl_format": "openldap",
-                "schema_subentry": "cn=subschema",
-                "supports_operational_attrs": True,
+                FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: FlextLdifConstants.DictKeys.OLCACCESS,
+                FlextLdifConstants.DictKeys.ACL_FORMAT: FlextLdifConstants.AclFormats.OPENLDAP2_ACL,
+                FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SUBSCHEMA,
+                FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: True,
             },
             FlextLdifConstants.LdapServers.DS_389: {
-                "acl_attribute": "aci",
-                "acl_format": "389ds",
-                "schema_subentry": "cn=schema",
-                "supports_operational_attrs": True,
+                FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: FlextLdifConstants.DictKeys.ACI,
+                FlextLdifConstants.DictKeys.ACL_FORMAT: FlextLdifConstants.AclFormats.DS389_ACL,
+                FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SCHEMA,
+                FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: True,
             },
             FlextLdifConstants.LdapServers.ORACLE_OID: {
-                "acl_attribute": "orclaci",
-                "acl_format": "oracle",
-                "schema_subentry": "cn=subschemasubentry",
-                "supports_operational_attrs": True,
+                FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: FlextLdifConstants.DictKeys.ORCLACI,
+                FlextLdifConstants.DictKeys.ACL_FORMAT: FlextLdifConstants.AclFormats.OID_ACL,
+                FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SUBSCHEMASUBENTRY,
+                FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: True,
             },
             FlextLdifConstants.LdapServers.ORACLE_OUD: {
-                "acl_attribute": "ds-privilege-name",
-                "acl_format": "oracle",
-                "schema_subentry": "cn=schema",
-                "supports_operational_attrs": True,
+                FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: FlextLdifConstants.DictKeys.DS_PRIVILEGE_NAME,
+                FlextLdifConstants.DictKeys.ACL_FORMAT: FlextLdifConstants.AclFormats.OID_ACL,
+                FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SCHEMA,
+                FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: True,
             },
             FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY: {
-                "acl_attribute": "nTSecurityDescriptor",
-                "acl_format": "ad",
-                "schema_subentry": "cn=schema,cn=configuration",
-                "supports_operational_attrs": False,
+                FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: FlextLdifConstants.DictKeys.NTSECURITYDESCRIPTOR,
+                FlextLdifConstants.DictKeys.ACL_FORMAT: FlextLdifConstants.AclFormats.AD_ACL,
+                FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SCHEMA_CN_CONFIGURATION,
+                FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: False,
             },
             FlextLdifConstants.LdapServers.GENERIC: {
-                "acl_attribute": "aci",
-                "acl_format": "generic",
-                "schema_subentry": "cn=subschema",
-                "supports_operational_attrs": True,
+                FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: FlextLdifConstants.DictKeys.ACI,
+                FlextLdifConstants.DictKeys.ACL_FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
+                FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SUBSCHEMA,
+                FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: True,
             },
         }
 
@@ -147,7 +147,7 @@ class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
                 return FlextResult[str].ok(FlextLdifConstants.LdapServers.DS_389)
 
             if "top" in object_classes and entry.dn.value.lower().startswith(
-                "cn=schema"
+                FlextLdifConstants.DnPatterns.CN_SCHEMA
             ):
                 if "olc" in entry.dn.value.lower():
                     return FlextResult[str].ok(
@@ -198,7 +198,9 @@ class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
             )
 
         quirks_data = quirks_result.value
-        acl_attr = quirks_data.get("acl_attribute", "aci")
+        acl_attr = quirks_data.get(
+            FlextLdifConstants.DictKeys.ACL_ATTRIBUTE, FlextLdifConstants.DictKeys.ACI
+        )
         return FlextResult[str].ok(str(acl_attr))
 
     def get_acl_format(self, server_type: str | None = None) -> FlextResult[str]:
@@ -212,7 +214,10 @@ class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
             )
 
         quirks_data = quirks_result.value
-        acl_format = quirks_data.get("acl_format", "generic")
+        acl_format = quirks_data.get(
+            FlextLdifConstants.DictKeys.ACL_FORMAT,
+            FlextLdifConstants.AclFormats.RFC_GENERIC,
+        )
         return FlextResult[str].ok(str(acl_format))
 
 

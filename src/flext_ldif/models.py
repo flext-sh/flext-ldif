@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 from flext_core import FlextModels, FlextResult
 from pydantic import ConfigDict, Field, computed_field

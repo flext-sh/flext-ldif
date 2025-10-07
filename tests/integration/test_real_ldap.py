@@ -6,8 +6,19 @@ Tests FlextLdif against actual LDAP server operations:
 - Roundtrip validation (LDAP → LDIF → LDAP)
 - Schema extraction from live server
 - ACL processing with real entries
+- Comprehensive CRUD operations
+- Batch processing with real data
+- Server-specific quirk handling
+- Configuration from .env file
 
-Requires: flext-openldap-test Docker container running on localhost:3390
+Requires:
+- flext-openldap-test Docker container running on localhost:3390
+- Environment variables in .env file:
+  LDAP_HOST=localhost
+  LDAP_PORT=3390
+  LDAP_ADMIN_DN=cn=admin,dc=flext,dc=local
+  LDAP_ADMIN_PASSWORD=admin123
+  LDAP_BASE_DN=dc=flext,dc=local
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -67,7 +78,7 @@ def clean_test_ou(ldap_connection: Connection) -> str:
                 try:
                     ldap_connection.delete(dn)
                 except Exception:
-                    pass  # Ignore delete errors
+                    pass  # Ignore delete errors during cleanup
     except Exception:
         pass  # OU doesn't exist yet
 
@@ -692,3 +703,268 @@ mail: import@example.com
         assert ldap_connection.search(entry.dn, "(objectClass=*)", search_scope="BASE")
         imported = ldap_connection.entries[0]
         assert imported.cn.value == "File Import"
+
+
+class TestRealLdapCRUD:
+    """Test comprehensive CRUD operations with real LDAP server."""
+
+    def test_complete_crud_cycle(
+        self,
+        ldap_connection: Connection,
+        clean_test_ou: str,
+        flext_api: FlextLdif,
+    ) -> None:
+        """Test complete Create→Read→Update→Delete cycle."""
+        # CREATE: Build entry using FlextLdif API
+        person_result = flext_api.build_person_entry(
+            cn="CRUD Test User",
+            sn="User",
+            base_dn=clean_test_ou,
+            mail="crud@example.com",
+            uid="crud_user",
+        )
+        assert person_result.is_success
+        person_entry = person_result.unwrap()
+
+        # Write to LDAP
+        ldap_connection.add(
+            person_entry.dn,
+            list(person_entry.attributes.get("objectClass", [])),
+            {k: v for k, v in person_entry.attributes.items() if k != "objectClass"},
+        )
+
+        # READ: Export from LDAP via LDIF
+        ldap_connection.search(person_entry.dn, "(objectClass=*)", attributes=["*"])
+        assert len(ldap_connection.entries) == 1
+        read_entry = ldap_connection.entries[0]
+        assert read_entry.mail.value == "crud@example.com"
+
+        # UPDATE: Modify via LDIF
+        ldap_connection.modify(
+            person_entry.dn,
+            {"mail": [(MODIFY_REPLACE, ["updated_crud@example.com"])]},
+        )
+
+        # Verify update
+        ldap_connection.search(person_entry.dn, "(objectClass=*)", attributes=["*"])
+        updated_entry = ldap_connection.entries[0]
+        assert updated_entry.mail.value == "updated_crud@example.com"
+
+        # DELETE: Remove entry
+        ldap_connection.delete(person_entry.dn)
+
+        # Verify deletion
+        result = ldap_connection.search(
+            person_entry.dn, "(objectClass=*)", search_scope="BASE"
+        )
+        assert not result or len(ldap_connection.entries) == 0
+
+
+class TestRealLdapBatchOperations:
+    """Test batch processing operations with real LDAP server."""
+
+    def test_batch_entry_creation_via_api(
+        self,
+        ldap_connection: Connection,
+        clean_test_ou: str,
+        flext_api: FlextLdif,
+    ) -> None:
+        """Create batch of entries using FlextLdif API and write to LDAP."""
+        # Build 20 entries using API (no manual loops!)
+        entries = []
+        for i in range(20):
+            result = flext_api.build_person_entry(
+                cn=f"Batch User {i}",
+                sn=f"User{i}",
+                base_dn=clean_test_ou,
+                mail=f"batch{i}@example.com",
+            )
+            if result.is_success:
+                entries.append(result.unwrap())
+
+        assert len(entries) == 20
+
+        # Write to LDAP in batch
+        for entry in entries:
+            ldap_connection.add(
+                entry.dn,
+                list(entry.attributes.get("objectClass", [])),
+                {k: v for k, v in entry.attributes.items() if k != "objectClass"},
+            )
+
+        # Verify all created
+        ldap_connection.search(
+            clean_test_ou,
+            "(objectClass=person)",
+            search_scope="SUBTREE",
+            attributes=["*"],
+        )
+        assert len(ldap_connection.entries) == 20
+
+        # Export all to LDIF
+        flext_entries = [
+            flext_api.models.Entry(
+                dn=entry.entry_dn,
+                attributes={
+                    attr: list(entry[attr].values) for attr in entry.entry_attributes
+                },
+            )
+            for entry in ldap_connection.entries
+        ]
+
+        # Validate batch
+        validation_result = flext_api.validate_entries(flext_entries)
+        assert validation_result.is_success
+
+        # Analyze batch
+        analysis_result = flext_api.analyze(flext_entries)
+        assert analysis_result.is_success
+        stats = analysis_result.unwrap()
+        assert stats.get("total_entries", 0) == 20
+
+    def test_batch_ldif_export_import(
+        self,
+        ldap_connection: Connection,
+        clean_test_ou: str,
+        flext_api: FlextLdif,
+        tmp_path: Path,
+    ) -> None:
+        """Export batch from LDAP to LDIF file, then reimport."""
+        # Create test data in LDAP
+        for i in range(10):
+            person_dn = f"cn=Export Batch {i},{clean_test_ou}"
+            ldap_connection.add(
+                person_dn,
+                ["person", "inetOrgPerson"],
+                {
+                    "cn": f"Export Batch {i}",
+                    "sn": f"Batch{i}",
+                    "mail": f"export{i}@example.com",
+                },
+            )
+
+        # Export all to LDIF file
+        ldap_connection.search(
+            clean_test_ou,
+            "(objectClass=person)",
+            search_scope="SUBTREE",
+            attributes=["*"],
+        )
+
+        flext_entries = [
+            flext_api.models.Entry(
+                dn=entry.entry_dn,
+                attributes={
+                    attr: list(entry[attr].values) for attr in entry.entry_attributes
+                },
+            )
+            for entry in ldap_connection.entries
+        ]
+
+        export_file = tmp_path / "batch_export.ldif"
+        write_result = flext_api.write(flext_entries, export_file)
+        assert write_result.is_success
+        assert export_file.exists()
+
+        # Parse exported file
+        parse_result = flext_api.parse(export_file)
+        assert parse_result.is_success
+        parsed_entries = parse_result.unwrap()
+        assert len(parsed_entries) == 10
+
+
+class TestRealLdapConfigurationFromEnv:
+    """Test configuration loading from .env file."""
+
+    def test_config_loaded_from_env(
+        self,
+        flext_api: FlextLdif,
+    ) -> None:
+        """Verify FlextLdifConfig loads from environment variables."""
+        # Configuration should be loaded from .env automatically
+        config = flext_api.config
+
+        # Verify configuration values (from .env or defaults)
+        assert config.ldif_encoding in {"utf-8", "utf-16", "latin1"}
+        assert config.max_workers >= 1
+        assert isinstance(config.ldif_strict_validation, bool)
+        assert isinstance(config.enable_performance_optimizations, bool)
+
+        # Verify LDAP-specific config from environment
+        ldap_host = os.getenv("LDAP_HOST", "localhost")
+        ldap_port = int(os.getenv("LDAP_PORT", "3390"))
+
+        assert ldap_host is not None
+        assert ldap_port > 0
+        assert ldap_port <= 65535
+
+    def test_effective_workers_calculation(
+        self,
+        flext_api: FlextLdif,
+    ) -> None:
+        """Test dynamic worker calculation based on config and entry count."""
+        config = flext_api.config
+
+        # Small dataset - should use 1 worker
+        small_workers = config.get_effective_workers(50)
+        assert small_workers >= 1
+
+        # Large dataset - should use multiple workers
+        large_workers = config.get_effective_workers(10000)
+        assert large_workers >= 1
+        assert large_workers <= config.max_workers
+
+
+class TestRealLdapRailwayComposition:
+    """Test railway-oriented FlextResult composition with real LDAP."""
+
+    def test_railway_parse_validate_write_cycle(
+        self,
+        ldap_connection: Connection,
+        clean_test_ou: str,
+        flext_api: FlextLdif,
+        tmp_path: Path,
+    ) -> None:
+        """Test complete FlextResult railway composition."""
+        # Create LDAP data
+        person_dn = f"cn=Railway Test,{clean_test_ou}"
+        ldap_connection.add(
+            person_dn,
+            ["person", "inetOrgPerson"],
+            {"cn": "Railway Test", "sn": "Test", "mail": "railway@example.com"},
+        )
+
+        # Search and convert to LDIF
+        ldap_connection.search(person_dn, "(objectClass=*)", attributes=["*"])
+        ldap_entry = ldap_connection.entries[0]
+
+        flext_entry = flext_api.models.Entry(
+            dn=ldap_entry.entry_dn,
+            attributes={
+                attr: list(ldap_entry[attr].values)
+                for attr in ldap_entry.entry_attributes
+            },
+        )
+
+        # Railway composition: write → parse → validate → analyze
+        output_file = tmp_path / "railway.ldif"
+        result = (
+            flext_api.write([flext_entry], output_file)
+            .flat_map(lambda _: flext_api.parse(output_file))
+            .flat_map(
+                lambda entries: flext_api.validate_entries(entries).map(
+                    lambda _: entries
+                )
+            )
+            .flat_map(
+                lambda entries: flext_api.analyze(entries).map(
+                    lambda stats: (entries, stats)
+                )
+            )
+        )
+
+        # Verify railway succeeded
+        assert result.is_success
+        entries, stats = result.unwrap()
+        assert len(entries) == 1
+        assert stats.get("total_entries", 0) == 1

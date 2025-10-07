@@ -117,9 +117,10 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         # Register default quirks for all servers
         self._register_default_quirks()
 
-        self.logger.info(
-            "Initialized FlextLdif client with CQRS handlers and default quirks"
-        )
+        if self.logger:
+            self.logger.info(
+                "Initialized FlextLdif client with CQRS handlers and default quirks"
+            )
 
     def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
         """Execute client self-check and return status.

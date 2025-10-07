@@ -318,16 +318,16 @@ class FlextLdifTypes(FlextTypes):
     # =========================================================================
 
     class Project(FlextTypes.Project):
-        """LDIF-specific project types extending FlextLdifTypes.Project.
+        """LDIF-specific project types extending FlextTypes.Project.
 
         Adds LDIF/directory data processing-specific project types while inheriting
-        generic types from FlextLdifTypes. Follows domain separation principle:
+        generic types from FlextTypes. Follows domain separation principle:
         LDIF domain owns directory data processing-specific types.
         """
 
         # LDIF-specific project types extending the generic ones
         type LdifProjectType = Literal[
-            # Generic types inherited from FlextLdifTypes.Project
+            # Generic types inherited from FlextTypes.Project
             "library",
             "application",
             "service",

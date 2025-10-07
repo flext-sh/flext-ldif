@@ -49,7 +49,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
 
     def parse_attribute(
         self,
-        attr_definition: str,
+        _attr_definition: str,
     ) -> FlextResult[FlextLdifTypes.Dict]:
         """Parse eDirectory attribute definition - STUB."""
         return FlextResult[FlextLdifTypes.Dict].fail(
@@ -63,7 +63,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
 
     def parse_objectclass(
         self,
-        oc_definition: str,
+        _oc_definition: str,
     ) -> FlextResult[FlextLdifTypes.Dict]:
         """Parse eDirectory objectClass definition - STUB."""
         return FlextResult[FlextLdifTypes.Dict].fail(
@@ -73,7 +73,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
 
     def convert_attribute_to_rfc(
         self,
-        attr_data: FlextLdifTypes.Dict,
+        _attr_data: FlextLdifTypes.Dict,
     ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert eDirectory attribute to RFC-compliant format - STUB."""
         return FlextResult[FlextLdifTypes.Dict].fail(
@@ -83,7 +83,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
 
     def convert_objectclass_to_rfc(
         self,
-        oc_data: FlextLdifTypes.Dict,
+        _oc_data: FlextLdifTypes.Dict,
     ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert eDirectory objectClass to RFC-compliant format - STUB."""
         return FlextResult[FlextLdifTypes.Dict].fail(
@@ -110,7 +110,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
 
         def parse_acl(
             self,
-            acl_line: str,
+            _acl_line: str,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Parse eDirectory ACL definition - STUB."""
             return FlextResult[FlextLdifTypes.Dict].fail(
@@ -120,7 +120,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
 
         def convert_acl_to_rfc(
             self,
-            acl_data: FlextLdifTypes.Dict,
+            _acl_data: FlextLdifTypes.Dict,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert eDirectory ACL to RFC-compliant format - STUB."""
             return FlextResult[FlextLdifTypes.Dict].fail(
@@ -130,7 +130,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
 
         def convert_acl_from_rfc(
             self,
-            acl_data: FlextLdifTypes.Dict,
+            _acl_data: FlextLdifTypes.Dict,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert RFC ACL to eDirectory-specific format - STUB."""
             return FlextResult[FlextLdifTypes.Dict].fail(
@@ -153,16 +153,16 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
 
         def can_handle_entry(
             self,
-            entry_dn: str,
-            attributes: dict[str, object],
+            _entry_dn: str,
+            _attributes: dict[str, object],
         ) -> bool:
             """Check if this quirk should handle the entry - STUB."""
             return False
 
         def process_entry(
             self,
-            entry_dn: str,
-            attributes: dict[str, object],
+            _entry_dn: str,
+            _attributes: dict[str, object],
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for eDirectory format - STUB."""
             return FlextResult[FlextLdifTypes.Dict].fail(
@@ -172,7 +172,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
 
         def convert_entry_to_rfc(
             self,
-            entry_data: FlextLdifTypes.Dict,
+            _entry_data: FlextLdifTypes.Dict,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert eDirectory entry to RFC-compliant format - STUB."""
             return FlextResult[FlextLdifTypes.Dict].fail(
