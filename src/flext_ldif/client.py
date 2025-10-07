@@ -42,13 +42,13 @@ from flext_ldif.quirks.servers import (
     FlextLdifQuirksServersTivoli,
 )
 from flext_ldif.rfc.rfc_ldif_parser import FlextLdifRfcLdifParser
-
-# Constants
-MAX_PATH_LENGTH_CHECK = 500
 from flext_ldif.rfc.rfc_ldif_writer import FlextLdifRfcLdifWriter
 from flext_ldif.rfc.rfc_schema_parser import FlextLdifRfcSchemaParser
 from flext_ldif.schema.validator import FlextLdifSchemaValidator
 from flext_ldif.typings import FlextLdifTypes
+
+# Constants
+MAX_PATH_LENGTH_CHECK = 500
 
 
 class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
@@ -294,7 +294,9 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             return parser.parse_ldif_file(source)
 
         # If source is a string that looks like a file path, convert to Path
-        if isinstance(source, str) and ("\n" not in source and len(source) < MAX_PATH_LENGTH_CHECK):
+        if isinstance(source, str) and (
+            "\n" not in source and len(source) < MAX_PATH_LENGTH_CHECK
+        ):
             # Check if it's a valid file path
             potential_path = Path(source)
             if potential_path.exists() and potential_path.is_file():

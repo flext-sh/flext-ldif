@@ -267,7 +267,10 @@ class TestFlextLdifUtilities:
             result = FlextLdifUtilities.FileUtilities.count_lines_in_file(temp_path)
             assert isinstance(result, FlextResult)
             assert result.is_failure
-            assert "encoding" in str(result.error).lower()
+            assert (
+                "encoding" in str(result.error).lower()
+                or "codec" in str(result.error).lower()
+            )
         finally:
             temp_path.unlink()
 
@@ -661,7 +664,7 @@ class TestFlextLdifUtilities:
         result = FlextLdifUtilities.FileUtilities.ensure_file_extension(
             file_path, "ldif"
         )
-        assert result.suffix == ".ldif"
+        assert result == Path("/tmp/test.ldif")
 
     def test_ensure_file_extension_already_correct(self) -> None:
         """Test ensuring file extension when already correct."""

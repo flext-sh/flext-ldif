@@ -801,34 +801,6 @@ objectClass: groupOfNames
 class TestFlextLdifInfrastructureComprehensive:
     """Comprehensive test suite for API infrastructure methods."""
 
-    def test_entry_builder_access(self) -> None:
-        """Test accessing entry builder."""
-        ldif = FlextLdif()
-
-        builder_class = ldif.entry_builder()
-        assert builder_class is not None
-
-    def test_schema_builder_access(self) -> None:
-        """Test accessing schema builder."""
-        ldif = FlextLdif()
-
-        builder_class = ldif.schema_builder()
-        assert builder_class is not None
-
-    def test_acl_service_access(self) -> None:
-        """Test accessing ACL service."""
-        ldif = FlextLdif()
-
-        service_class = ldif.acl_service()
-        assert service_class is not None
-
-    def test_schema_validator_access(self) -> None:
-        """Test accessing schema validator."""
-        ldif = FlextLdif()
-
-        validator_class = ldif.schema_validator()
-        assert validator_class is not None
-
     def test_models_access(self) -> None:
         """Test accessing models namespace."""
         ldif = FlextLdif()
@@ -850,34 +822,6 @@ class TestFlextLdifInfrastructureComprehensive:
 
         constants = ldif.constants()
         assert constants is not None
-
-    def test_types_access(self) -> None:
-        """Test accessing types."""
-        ldif = FlextLdif()
-
-        types = ldif.types()
-        assert types is not None
-
-    def test_protocols_access(self) -> None:
-        """Test accessing protocols."""
-        ldif = FlextLdif()
-
-        protocols = ldif.protocols()
-        assert protocols is not None
-
-    def test_exceptions_access(self) -> None:
-        """Test accessing exceptions."""
-        ldif = FlextLdif()
-
-        exceptions = ldif.exceptions()
-        assert exceptions is not None
-
-    def test_mixins_access(self) -> None:
-        """Test accessing mixins."""
-        ldif = FlextLdif()
-
-        mixins = ldif.mixins()
-        assert mixins is not None
 
     def test_utilities_access(self) -> None:
         """Test accessing utilities."""

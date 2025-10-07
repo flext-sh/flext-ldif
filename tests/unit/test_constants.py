@@ -143,9 +143,9 @@ class TestFlextLdifConstantsEncoding:
         assert isinstance(FlextLdifConstants.Encoding.DEFAULT_ENCODING, str)
 
     def test_supported_encodings(self) -> None:
-        """Test supported encodings list."""
+        """Test supported encodings set."""
         encodings = FlextLdifConstants.Encoding.SUPPORTED_ENCODINGS
-        assert isinstance(encodings, list)
+        assert isinstance(encodings, frozenset)
         assert "utf-8" in encodings
         assert "utf-16" in encodings
 
@@ -168,7 +168,7 @@ class TestFlextLdifConstantsFormat:
     def test_format_constants_exist(self) -> None:
         """Test that all format constants exist."""
         assert hasattr(FlextLdifConstants.Format, "MAX_LINE_LENGTH")
-        assert hasattr(FlextLdifConstants.Format, "DN_SEPARATOR")
+        assert hasattr(FlextLdifConstants.Format, "DN_ATTRIBUTE")
         assert hasattr(FlextLdifConstants.Format, "ATTRIBUTE_SEPARATOR")
 
 

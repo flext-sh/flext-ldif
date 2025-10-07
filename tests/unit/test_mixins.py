@@ -128,29 +128,31 @@ class TestFlextLdifValidationMixin:
         result = FlextLdifMixins.ValidationMixin.validate_dn_format(
             "cn=test,dc=example,dc=com"
         )
-        assert result == "cn=test,dc=example,dc=com"
+        assert result.is_success
+        assert result.unwrap() == "cn=test,dc=example,dc=com"
 
         # Invalid DN - empty
-        with pytest.raises(ValueError):
-            FlextLdifMixins.ValidationMixin.validate_dn_format("")
+        result = FlextLdifMixins.ValidationMixin.validate_dn_format("")
+        assert result.is_failure
 
         # Invalid DN - bad format
-        with pytest.raises(ValueError):
-            FlextLdifMixins.ValidationMixin.validate_dn_format("invalid-dn")
+        result = FlextLdifMixins.ValidationMixin.validate_dn_format("invalid-dn")
+        assert result.is_failure
 
     def test_validate_attribute_name(self) -> None:
         """Test validating attribute name."""
         # Valid attribute name
         result = FlextLdifMixins.ValidationMixin.validate_attribute_name("cn")
-        assert result == "cn"
+        assert result.is_success
+        assert result.unwrap() == "cn"
 
         # Invalid attribute name - empty
-        with pytest.raises(ValueError):
-            FlextLdifMixins.ValidationMixin.validate_attribute_name("")
+        result = FlextLdifMixins.ValidationMixin.validate_attribute_name("")
+        assert result.is_failure
 
         # Invalid attribute name - bad format
-        with pytest.raises(ValueError):
-            FlextLdifMixins.ValidationMixin.validate_attribute_name("1cn")
+        result = FlextLdifMixins.ValidationMixin.validate_attribute_name("1cn")
+        assert result.is_failure
 
     def test_validate_attribute_values(self) -> None:
         """Test validating attribute values."""
@@ -159,14 +161,15 @@ class TestFlextLdifValidationMixin:
             "value1",
             "value2",
         ])
-        assert result == ["value1", "value2"]
+        assert result.is_success
+        assert result.unwrap() == ["value1", "value2"]
 
         # Invalid values - not a sequence
-        with pytest.raises(TypeError):
-            FlextLdifMixins.ValidationMixin.validate_attribute_values("not a list")
+        result = FlextLdifMixins.ValidationMixin.validate_attribute_values("not a list")
+        assert result.is_failure
 
         # Invalid values - non-string value
-        with pytest.raises(ValueError):
+        result =
             FlextLdifMixins.ValidationMixin.validate_attribute_values(
                 cast("Sequence[str]", [123])
             )
@@ -207,17 +210,20 @@ class TestFlextLdifProcessingMixin:
 
         for input_dn, expected in test_cases:
             result = FlextLdifMixins.ProcessingMixin.normalize_dn_components(input_dn)
-            assert result == expected
+            assert result.is_success
+            assert result.unwrap() == expected
 
     def test_extract_dn_components(self) -> None:
         """Test extracting DN components."""
         dn = "cn=test,dc=example,dc=com"
         result = FlextLdifMixins.ProcessingMixin.extract_dn_components(dn)
 
-        assert len(result) == 3
-        assert result[0] == ("cn", "test")
-        assert result[1] == ("dc", "example")
-        assert result[2] == ("dc", "com")
+        assert result.is_success
+        components = result.unwrap()
+        assert len(components) == 3
+        assert components[0] == ("cn", "test")
+        assert components[1] == ("dc", "example")
+        assert components[2] == ("dc", "com")
 
     def test_build_dn_from_components(self) -> None:
         """Test building DN from components."""
@@ -260,14 +266,16 @@ class TestFlextLdifProcessingMixin:
         # Invalid DN that will trigger ValueError and return original
         invalid_dn = "invalid<>DN"
         result = FlextLdifMixins.ProcessingMixin.normalize_dn_components(invalid_dn)
-        assert result == invalid_dn  # Should return original on error
+        assert result.is_success
+        assert result.unwrap() == invalid_dn  # Should return original on error
 
     def test_extract_dn_components_invalid_dn(self) -> None:
         """Test extract_dn_components with invalid DN (error path lines 132-133)."""
         # Invalid DN that will trigger ValueError and return empty list
         invalid_dn = "invalid<>DN"
         result = FlextLdifMixins.ProcessingMixin.extract_dn_components(invalid_dn)
-        assert result == []  # Should return empty list on error
+        assert result.is_success
+        assert result.unwrap() == []  # Should return empty list on error
 
     def test_process_batch_with_result_error(self) -> None:
         """Test process_batch_with_result with error (lines 156-163)."""

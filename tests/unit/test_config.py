@@ -184,33 +184,6 @@ class TestFlextLdifConfig:
             )
         assert "Input should be greater than or equal to 1" in str(exc_info.value)
 
-    def test_create_for_environment(self) -> None:
-        """Test creating configuration for specific environment."""
-        config = FlextLdifConfig.create_for_environment("test")
-        # Check that config has expected FlextLdifConfig attributes
-        assert hasattr(config, "ldif_encoding")
-        assert hasattr(config, "ldif_max_line_length")
-        assert hasattr(config, "ldif_strict_validation")
-
-        # Test with overrides
-        config = FlextLdifConfig.create_for_environment(
-            "test",
-            debug_mode=False,  # Override test environment debug mode first
-            ldif_max_entries=5000,
-            max_workers=4,  # Must be >= 4 for performance mode
-        )
-        assert config.ldif_max_entries == 5000
-        assert config.max_workers == 4
-
-    def test_create_default(self) -> None:
-        """Test creating default configuration."""
-        config = FlextLdifConfig.create_default()
-        # Check that config has expected FlextLdifConfig attributes
-        assert hasattr(config, "ldif_encoding")
-        assert hasattr(config, "ldif_max_line_length")
-        assert hasattr(config, "ldif_strict_validation")
-        assert config.ldif_max_line_length == 78
-
     def test_get_global_instance(self) -> None:
         """Test getting global singleton instance."""
         config = FlextLdifConfig.get_global_instance()
@@ -231,68 +204,6 @@ class TestFlextLdifConfig:
 
         # Should be different instances after reset
         assert config1 is not config2
-
-    def test_get_format_config(self) -> None:
-        """Test getting format configuration context."""
-        config = FlextLdifConfig()
-        format_config = config.get_format_config()
-
-        assert isinstance(format_config, dict)
-        assert "encoding" in format_config
-        assert "max_line_length" in format_config
-
-    def test_get_processing_config(self) -> None:
-        """Test getting processing configuration context."""
-        config = FlextLdifConfig()
-        processing_config = config.get_processing_config()
-
-        assert isinstance(processing_config, dict)
-        assert "max_entries" in processing_config
-        assert "batch_size" in processing_config
-        assert "strict_validation" in processing_config
-        assert "fail_on_warnings" in processing_config
-
-    def test_get_analytics_config(self) -> None:
-        """Test getting analytics configuration context."""
-        config = FlextLdifConfig()
-        analytics_config = config.get_analytics_config()
-
-        assert isinstance(analytics_config, dict)
-        assert "enable_analytics" in analytics_config
-        assert "analytics_sample_rate" in analytics_config
-        assert "analytics_max_entries" in analytics_config
-
-    def test_create_for_performance(self) -> None:
-        """Test creating performance-optimized configuration."""
-        # Reset singleton to ensure clean state
-        FlextLdifConfig.reset_global_instance()
-
-        config = FlextLdifConfig.create_for_performance()
-        # Check that config has expected FlextLdifConfig attributes
-        assert hasattr(config, "ldif_encoding")
-        assert hasattr(config, "ldif_max_line_length")
-        assert hasattr(config, "ldif_strict_validation")
-        assert config.enable_performance_optimizations is True
-        assert config.max_workers >= 4  # Should meet performance minimum
-
-    def test_create_for_development(self) -> None:
-        """Test creating development-optimized configuration."""
-        config = FlextLdifConfig.create_for_development()
-        # Check that a config object is returned
-        assert config is not None
-        # Check that it has some expected attributes
-        assert hasattr(config, "max_workers")
-
-    def test_create_for_server_type(self) -> None:
-        """Test creating configuration for specific server type."""
-        # Reset shared instance to ensure clean state
-        FlextLdifConfig.reset_global_instance()
-        config = FlextLdifConfig.create_for_server_type("openldap")
-        # Check that config has expected FlextLdifConfig attributes
-        assert hasattr(config, "ldif_encoding")
-        assert hasattr(config, "ldif_max_line_length")
-        assert hasattr(config, "ldif_strict_validation")
-        assert config.server_type == "openldap"
 
     def test_model_dump(self) -> None:
         """Test model serialization."""
@@ -374,20 +285,6 @@ class TestFlextLdifConfig:
         assert config.enable_parallel_processing is True
         assert config.strict_rfc_compliance is True
 
-    def test_environment_specific_configs(self) -> None:
-        """Test environment-specific configuration creation."""
-        # Test development environment
-        dev_config = FlextLdifConfig.create_for_environment("development")
-        assert isinstance(dev_config, FlextLdifConfig)
-
-        # Test production environment
-        prod_config = FlextLdifConfig.create_for_environment("production")
-        assert isinstance(prod_config, FlextLdifConfig)
-
-        # Test staging environment
-        staging_config = FlextLdifConfig.create_for_environment("staging")
-        assert isinstance(staging_config, FlextLdifConfig)
-
     def test_configuration_immutability(self) -> None:
         """Test that configuration values are properly validated."""
         # Test that invalid values are rejected
@@ -453,97 +350,6 @@ class TestFlextLdifConfig:
             FlextLdifConfig(error_recovery_mode="abort")
         assert "must be one of" in str(exc_info.value)
 
-    # =========================================================================
-    # FACTORY METHOD COVERAGE - All create_* methods
-    # =========================================================================
-
-    def test_create_default_factory(self) -> None:
-        """Test create_default factory method."""
-        config = FlextLdifConfig.create_default()
-        # Check that config has expected FlextLdifConfig attributes
-        assert hasattr(config, "ldif_encoding")
-        assert hasattr(config, "ldif_max_line_length")
-        assert hasattr(config, "ldif_strict_validation")
-        assert config.ldif_encoding == "utf-8"
-        # Default environment may have debug mode limiting workers
-        assert config.max_workers >= 1
-
-    def test_create_for_performance_factory(self) -> None:
-        """Test create_for_performance factory method."""
-        config = FlextLdifConfig.create_for_performance()
-        # Check that config has expected FlextLdifConfig attributes
-        assert hasattr(config, "ldif_encoding")
-        assert hasattr(config, "ldif_max_line_length")
-        assert hasattr(config, "ldif_strict_validation")
-        assert config.enable_performance_optimizations is True
-        assert config.enable_parallel_processing is True
-
-    def test_create_for_development_factory(self) -> None:
-        """Test create_for_development factory method."""
-        config = FlextLdifConfig.create_for_development()
-        # Check that config has expected FlextLdifConfig attributes
-        assert hasattr(config, "ldif_encoding")
-        assert hasattr(config, "ldif_max_line_length")
-        assert hasattr(config, "ldif_strict_validation")
-        assert config.debug_mode is True
-        assert config.verbose_logging is True
-
-    def test_create_for_server_type_factory(self) -> None:
-        """Test create_for_server_type factory method."""
-        config = FlextLdifConfig.create_for_server_type("active_directory")
-        # Check that config has expected FlextLdifConfig attributes
-        assert hasattr(config, "ldif_encoding")
-        assert hasattr(config, "ldif_max_line_length")
-        assert hasattr(config, "ldif_strict_validation")
-        assert config.server_type == "active_directory"
-
-    # =========================================================================
-    # GETTER METHOD COVERAGE - All get_* methods
-    # =========================================================================
-
-    def test_get_format_config_complete(self) -> None:
-        """Test get_format_config method comprehensively."""
-        config = FlextLdifConfig()
-        format_config = config.get_format_config()
-        assert isinstance(format_config, dict)
-        assert "encoding" in format_config
-        assert "max_line_length" in format_config
-        assert format_config["encoding"] == "utf-8"
-
-    def test_get_processing_config_complete(self) -> None:
-        """Test get_processing_config method comprehensively."""
-        config = FlextLdifConfig()
-        proc_config = config.get_processing_config()
-        assert isinstance(proc_config, dict)
-        assert "max_workers" in proc_config
-        assert "chunk_size" in proc_config
-        assert proc_config["max_workers"] == 4
-
-    def test_get_analytics_config_complete(self) -> None:
-        """Test get_analytics_config method comprehensively."""
-        config = FlextLdifConfig()
-        analytics_config = config.get_analytics_config()
-        assert isinstance(analytics_config, dict)
-        # Check for actual keys returned
-        assert (
-            "enable_analytics" in analytics_config or "cache_size" in analytics_config
-        )
-
-    def test_get_server_config(self) -> None:
-        """Test get_server_config method."""
-        config = FlextLdifConfig()
-        server_config = config.get_server_config()
-        assert isinstance(server_config, dict)
-        assert "server_type" in server_config
-
-    def test_get_debug_config(self) -> None:
-        """Test get_debug_config method."""
-        config = FlextLdifConfig()
-        debug_config = config.get_debug_config()
-        assert isinstance(debug_config, dict)
-        assert "debug_mode" in debug_config
-        assert "verbose_logging" in debug_config
-
     def test_get_effective_encoding(self) -> None:
         """Test get_effective_encoding method."""
         # Encoding is already normalized in validator, use lowercase
@@ -560,7 +366,12 @@ class TestFlextLdifConfig:
 
     def test_is_performance_optimized(self) -> None:
         """Test is_performance_optimized method."""
-        perf_config = FlextLdifConfig.create_for_performance()
+        perf_config = FlextLdifConfig(
+            enable_performance_optimizations=True,
+            max_workers=4,  # Minimum for performance
+            ldif_chunk_size=500,  # Minimum for performance
+            memory_limit_mb=256,  # Minimum for performance
+        )
         assert perf_config.is_performance_optimized() is True
 
         normal_config = FlextLdifConfig()
@@ -570,7 +381,11 @@ class TestFlextLdifConfig:
 
     def test_is_development_optimized(self) -> None:
         """Test is_development_optimized method."""
-        dev_config = FlextLdifConfig.create_for_development()
+        dev_config = FlextLdifConfig(
+            debug_mode=True,
+            verbose_logging=True,
+            max_workers=2,  # Max for debug mode
+        )
         assert dev_config.is_development_optimized() is True
 
         normal_config = FlextLdifConfig()

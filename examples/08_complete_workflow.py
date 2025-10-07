@@ -402,7 +402,10 @@ cn: test
         # Handle validation errors and attempt recovery by fixing entries
         for entry in entries:
             # Add missing required attribute
-            if "person" in entry.attributes.get("objectClass", []) and "sn" not in entry.attributes:
+            if (
+                "person" in entry.attributes.get("objectClass", [])
+                and "sn" not in entry.attributes
+            ):
                 entry.attributes["sn"] = ["recovered"]
 
         # Retry validation
