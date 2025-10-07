@@ -63,9 +63,8 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
         r"cn=config", re.IGNORECASE
     )
 
-    def __init__(self, **data: object) -> None:
+    def model_post_init(self, _context: object, /) -> None:
         """Initialize OpenLDAP 2.x schema quirk."""
-        super().__init__(**data)
         self.logger = FlextLogger(__name__)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
@@ -294,9 +293,8 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
             default=10, description="High priority for OpenLDAP 2.x ACL parsing"
         )
 
-        def __init__(self, **data: object) -> None:
+        def model_post_init(self, _context: object, /) -> None:
             """Initialize OpenLDAP 2.x ACL quirk."""
-            super().__init__(**data)
             self.logger = FlextLogger(__name__)
 
         def can_handle_acl(self, acl_line: str) -> bool:
@@ -450,12 +448,13 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
             default=10, description="High priority for OpenLDAP 2.x entry processing"
         )
 
-        def __init__(self, **data: object) -> None:
+        def model_post_init(self, _context: object, /) -> None:
             """Initialize OpenLDAP 2.x entry quirk."""
-            super().__init__(**data)
             self.logger = FlextLogger(__name__)
 
-        def can_handle_entry(self, entry_dn: str, attributes: dict) -> bool:
+        def can_handle_entry(
+            self, entry_dn: str, attributes: dict[str, object]
+        ) -> bool:
             """Check if this quirk should handle the entry.
 
             Args:
@@ -485,7 +484,7 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
             return is_config_dn or has_olc_attrs or has_olc_classes
 
         def process_entry(
-            self, entry_dn: str, attributes: dict
+            self, entry_dn: str, attributes: dict[str, object]
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for OpenLDAP 2.x format.
 

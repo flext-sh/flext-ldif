@@ -40,9 +40,8 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
         default=15, description="Standard priority for eDirectory parsing"
     )
 
-    def __init__(self, **data: object) -> None:
+    def model_post_init(self, _context: object, /) -> None:
         """Initialize eDirectory schema quirk stub."""
-        super().__init__(**data)
         self.logger = FlextLogger(__name__)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
@@ -103,9 +102,8 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
             default=15, description="Standard priority for eDirectory ACL"
         )
 
-        def __init__(self, **data: object) -> None:
+        def model_post_init(self, _context: object, /) -> None:
             """Initialize eDirectory ACL quirk stub."""
-            super().__init__(**data)
             self.logger = FlextLogger(__name__)
 
         def can_handle_acl(self, acl_line: str) -> bool:
@@ -152,15 +150,14 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
             default=15, description="Standard priority for eDirectory entry"
         )
 
-        def __init__(self, **data: object) -> None:
+        def model_post_init(self, _context: object, /) -> None:
             """Initialize eDirectory entry quirk stub."""
-            super().__init__(**data)
             self.logger = FlextLogger(__name__)
 
         def can_handle_entry(
             self,
             entry_dn: str,
-            attributes: dict,
+            attributes: dict[str, object],
         ) -> bool:
             """Check if this quirk should handle the entry - STUB."""
             return False
@@ -168,7 +165,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
         def process_entry(
             self,
             entry_dn: str,
-            attributes: dict,
+            attributes: dict[str, object],
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for eDirectory format - STUB."""
             return FlextResult[FlextLdifTypes.Dict].fail(

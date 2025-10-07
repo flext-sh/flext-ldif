@@ -19,14 +19,6 @@ from pydantic import ConfigDict, Field, computed_field
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.typings import FlextLdifTypes
 
-# LDIF format constants moved to FlextLdifConstants for proper organization
-
-
-def _default_ldif_attributes() -> FlextLdifModels.LdifAttributes:
-    """Factory function for default LDIF attributes."""
-    # Returns empty LdifAttributes instance
-    return FlextLdifModels.LdifAttributes(attributes={})
-
 
 class FlextLdifModels(FlextModels):
     """LDIF domain models extending flext-core FlextModels.
@@ -106,6 +98,7 @@ class FlextLdifModels(FlextModels):
 
                 # Handle attributes conversion if needed
                 if "attributes" in data and isinstance(data["attributes"], dict):
+                    # Raw attributes mapping from keys to list of values
                     raw_attrs = cast("dict[str, list[str]]", data["attributes"])
                     ldif_attrs = FlextLdifModels.LdifAttributes(
                         attributes={
@@ -116,27 +109,29 @@ class FlextLdifModels(FlextModels):
                     data["attributes"] = ldif_attrs
                 else:
                     # Handle raw LDIF format where attributes are at top level
-                    raw_attrs = {}
-                    keys_to_remove = []
+                    raw_attrs_else: dict[str, list[str]] = {}
+                    keys_to_remove: list[str] = []
                     for key, value in data.items():
                         if key != "dn":
                             if isinstance(value, list):
-                                raw_attrs[key] = value
+                                existing_values = cast("list[str]", value)
+                                raw_attrs_else[key] = existing_values
                             else:
-                                raw_attrs[key] = [value]
+                                raw_attrs_else[key] = [str(value)]
                             keys_to_remove.append(key)
                     for key in keys_to_remove:
                         del data[key]
-                    if raw_attrs:
+                    if raw_attrs_else:
                         ldif_attrs = FlextLdifModels.LdifAttributes(
                             attributes={
                                 name: FlextLdifModels.AttributeValues(values=values)
-                                for name, values in raw_attrs.items()
+                                for name, values in raw_attrs_else.items()
                             }
                         )
                         data["attributes"] = ldif_attrs
 
-                instance = cls(**data)
+                # Use model_validate for proper Pydantic validation with type coercion
+                instance = cls.model_validate(data)
                 return FlextResult[FlextLdifModels.Entry].ok(instance)
             except Exception as e:
                 return FlextResult[FlextLdifModels.Entry].fail(
@@ -214,7 +209,7 @@ class FlextLdifModels(FlextModels):
         def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
             """Create LdifAttribute instance with validation."""
             try:
-                data = {}
+                data: dict[str, Any] = {}
                 if args:
                     if isinstance(args[0], dict):
                         data = args[0]
@@ -377,7 +372,7 @@ class FlextLdifModels(FlextModels):
         """Command for registering server-specific quirks."""
 
         quirk_type: str = Field(..., description="Type of quirk to register")
-        quirk_impl: Any = Field(..., description="Quirk implementation instance")
+        quirk_impl: object = Field(..., description="Quirk implementation instance")
         override: bool = Field(
             default=False, description="Whether to override existing quirk"
         )
@@ -483,19 +478,16 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def must(self) -> list[str]:
             """MUST attributes (alias for required_attributes)."""
             return self.required_attributes
 
         @computed_field
-        @property
         def may(self) -> list[str]:
             """MAY attributes (alias for optional_attributes)."""
             return self.optional_attributes
 
         @computed_field
-        @property
         def attribute_summary(self) -> FlextLdifTypes.Dict:
             """Summary of attribute requirements."""
             return {
@@ -848,7 +840,7 @@ class FlextLdifModels(FlextModels):
                 # Simple implementation - parse basic LDIF
                 lines = ldif_string.strip().split("\n")
                 entries = []
-                current_entry = {}
+                current_entry: dict[str, object] = {}
                 in_entry = False
 
                 for line in lines:
@@ -858,9 +850,7 @@ class FlextLdifModels(FlextModels):
                     if stripped_line.lower().startswith("dn:"):
                         if in_entry and current_entry:
                             # Create previous entry
-                            entry_result = FlextLdifModels.Entry.create(
-                                cast("dict[str, object]", current_entry)
-                            )
+                            entry_result = FlextLdifModels.Entry.create(current_entry)
                             if entry_result.is_success:
                                 entries.append(entry_result.unwrap())
                         current_entry = {"dn": stripped_line[3:].strip()}
@@ -870,16 +860,17 @@ class FlextLdifModels(FlextModels):
                         key = key.strip()
                         value = value.strip()
                         if key in current_entry:
-                            if not isinstance(current_entry[key], list):
-                                current_entry[key] = [current_entry[key]]
-                            current_entry[key].append(value)
+                            existing = current_entry[key]
+                            if not isinstance(existing, list):
+                                current_entry[key] = [str(existing), value]
+                            else:
+                                existing_list = cast("list[str]", existing)
+                                existing_list.append(value)
                         else:
                             current_entry[key] = [value] if key != "dn" else value
 
                 if current_entry:
-                    entry_result = FlextLdifModels.Entry.create(
-                        cast("dict[str, object]", current_entry)
-                    )
+                    entry_result = FlextLdifModels.Entry.create(current_entry)
                     if entry_result.is_success:
                         entries.append(entry_result.unwrap())
 

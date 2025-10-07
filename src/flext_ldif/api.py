@@ -31,12 +31,21 @@ from flext_ldif.utilities import FlextLdifUtilities
 
 
 class FlextLdifAPI(FlextService[FlextLdifTypes.Dict]):
-    r"""Thin facade for all LDIF processing operations.
+    r"""Unified LDIF processing facade with FlextMixins.Service infrastructure.
+
+    This service inherits from Flext.Service to demonstrate:
+    - Inherited container property (FlextContainer singleton)
+    - Inherited logger property (FlextLogger with service context - LDIF PROCESSING FOCUS!)
+    - Inherited context property (FlextContext for request/correlation tracking)
+    - Inherited config property (FlextConfig with LDIF processing settings)
+    - Inherited metrics property (FlextMetrics for LDIF observability)
 
     Provides unified access to:
-    - RFC-compliant LDIF parsing and writing
-    - Server-specific quirks and migrations
-    - Validation and analytics
+    - RFC-compliant LDIF parsing and writing (RFC 2849/4512)
+    - Server-specific quirks and migrations (OID, OUD, OpenLDAP)
+    - Generic server-agnostic migration pipeline
+    - Schema validation and ACL processing
+    - Entry building and transformation
     - All infrastructure (Models, Config, Constants, etc.)
 
     This class follows the Facade pattern, providing a simplified interface
@@ -44,7 +53,7 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.Dict]):
     all operations to the FlextLdifClient implementation.
 
     Example:
-        # Basic usage
+        # Basic usage with inherited infrastructure
         ldif = FlextLdifAPI()
 
         # Parse LDIF content
@@ -76,7 +85,14 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.Dict]):
     SchemaValidator: ClassVar[type[FlextLdifSchemaValidator]] = FlextLdifSchemaValidator
 
     def __init__(self, config: FlextLdifConfig | None = None) -> None:
-        """Initialize LDIF facade with optional configuration.
+        """Initialize LDIF facade with inherited FlextMixins.Service infrastructure.
+
+        Inherited properties (no manual instantiation needed):
+        - self.logger: FlextLogger with service context (LDIF processing operations)
+        - self.container: FlextContainer singleton (for service dependencies)
+        - self.context: FlextContext (for correlation tracking)
+        - self.config: FlextConfig (for LDIF configuration)
+        - self.metrics: FlextMetrics (for LDIF observability)
 
         Args:
             config: Optional LDIF configuration. If not provided,
@@ -85,6 +101,23 @@ class FlextLdifAPI(FlextService[FlextLdifTypes.Dict]):
         """
         super().__init__()
         self._client = FlextLdifClient(config)
+
+        # Demonstrate inherited logger (no manual instantiation needed!)
+        self.logger.info(
+            "FlextLdifAPI initialized with inherited infrastructure",
+            extra={
+                "service_type": "LDIF Processing Facade",
+                "ldif_features": [
+                    "rfc_2849_parsing",
+                    "rfc_4512_compliance",
+                    "server_quirks",
+                    "generic_migration",
+                    "schema_validation",
+                    "acl_processing",
+                    "entry_building",
+                ],
+            },
+        )
 
     @override
     def execute(self) -> FlextResult[FlextLdifTypes.Dict]:

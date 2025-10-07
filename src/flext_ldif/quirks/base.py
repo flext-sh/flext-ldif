@@ -246,15 +246,15 @@ class FlextLdifQuirksBase:
     Follows FLEXT pattern: one main class per module named FlextLdif[ModuleName].
     """
 
-    # Direct access to base classes (no aliases - direct signatures only)
-    SchemaQuirk = FlextLdifQuirksBaseSchemaQuirk
+    # Direct access to base classes using TypeAlias for MyPy compliance
+    type SchemaQuirk = FlextLdifQuirksBaseSchemaQuirk
     # Aliases for backward compatibility
-    BaseAclQuirk = FlextLdifQuirksBaseAclQuirk
-    BaseEntryQuirk = FlextLdifQuirksBaseEntryQuirk
-    BaseSchemaQuirk = FlextLdifQuirksBaseSchemaQuirk
+    type BaseAclQuirk = FlextLdifQuirksBaseAclQuirk
+    type BaseEntryQuirk = FlextLdifQuirksBaseEntryQuirk
+    type BaseSchemaQuirk = FlextLdifQuirksBaseSchemaQuirk
 
-    AclQuirk = FlextLdifQuirksBaseAclQuirk
-    EntryQuirk = FlextLdifQuirksBaseEntryQuirk
+    type AclQuirk = FlextLdifQuirksBaseAclQuirk
+    type EntryQuirk = FlextLdifQuirksBaseEntryQuirk
 
 
 __all__ = [

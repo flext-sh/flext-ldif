@@ -49,9 +49,8 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         r"2\.16\.840\.1\.113894\."
     )
 
-    def __init__(self, **data: object) -> None:
+    def model_post_init(self, _context: object, /) -> None:
         """Initialize OUD schema quirk."""
-        super().__init__(**data)
         self.logger = FlextLogger(__name__)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
@@ -237,9 +236,8 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             default=10, description="High priority for OUD ACL parsing"
         )
 
-        def __init__(self, **data: object) -> None:
+        def model_post_init(self, _context: object, /) -> None:
             """Initialize OUD ACL quirk."""
-            super().__init__(**data)
             self.logger = FlextLogger(__name__)
 
         def can_handle_acl(self, acl_line: str) -> bool:
@@ -356,12 +354,13 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             default=10, description="High priority for OUD entry processing"
         )
 
-        def __init__(self, **data: object) -> None:
+        def model_post_init(self, _context: object, /) -> None:
             """Initialize OUD entry quirk."""
-            super().__init__(**data)
             self.logger = FlextLogger(__name__)
 
-        def can_handle_entry(self, entry_dn: str, attributes: dict) -> bool:
+        def can_handle_entry(
+            self, entry_dn: str, attributes: dict[str, object]
+        ) -> bool:
             """Check if this quirk should handle the entry.
 
             Args:
@@ -379,7 +378,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             return True
 
         def process_entry(
-            self, entry_dn: str, attributes: dict
+            self, entry_dn: str, attributes: dict[str, object]
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for OUD format.
 

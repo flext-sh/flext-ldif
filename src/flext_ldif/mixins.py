@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Iterator, Sequence
-from typing import TypeVar, override
+from typing import TypeVar, cast, override
 
 from flext_core import FlextMixins, FlextResult
 
@@ -38,64 +38,109 @@ class FlextLdifMixins(FlextMixins):
         """
 
         @staticmethod
-        def validate_dn_format(dn_value: str) -> str:
-            """Validate DN format using DistinguishedName Model validation."""
+        def validate_dn_format(dn_value: str) -> FlextResult[str]:
+            """Validate DN format using DistinguishedName Model validation.
+
+            Returns:
+                FlextResult[str]: Success with normalized DN or failure with validation error
+
+            """
             # Use Model validation - centralized in FlextLdifModels.DistinguishedName
-            try:
-                dn_model = FlextLdifModels.DistinguishedName(value=dn_value)
-                return dn_model.value
-            except ValueError as e:
-                msg = f"Invalid DN format: {e}"
-                raise ValueError(msg) from e
+            # Explicit FlextResult error handling - NO try/except
+            dn_model_result = FlextLdifModels.DistinguishedName.create(value=dn_value)
+            if dn_model_result.is_failure:
+                return FlextResult[str].fail(
+                    f"Invalid DN format: {dn_model_result.error}"
+                )
+
+            dn_model: FlextLdifModels.DistinguishedName = dn_model_result.unwrap()
+            return FlextResult[str].ok(dn_model.value)
 
         @staticmethod
-        def validate_attribute_name(attr_name: str) -> str:
-            """Validate attribute name format using AttributeName Model."""
+        def validate_attribute_name(attr_name: str) -> FlextResult[str]:
+            """Validate attribute name format using AttributeName Model.
+
+            Returns:
+                FlextResult[str]: Success with validated attribute name or failure with validation error
+
+            """
             # Use Model validation - centralized in FlextLdifModels.AttributeName
-            try:
-                attr_model = FlextLdifModels.AttributeName(name=attr_name)
-                return attr_model.name
-            except Exception as e:
-                msg = f"Invalid attribute name: {e}"
-                raise ValueError(msg) from e
+            # Explicit FlextResult error handling - NO try/except
+            attr_model_result = FlextLdifModels.AttributeName.create(name=attr_name)
+            if attr_model_result.is_failure:
+                return FlextResult[str].fail(
+                    f"Invalid attribute name: {attr_model_result.error}"
+                )
+
+            attr_model: FlextLdifModels.AttributeName = attr_model_result.unwrap()
+            return FlextResult[str].ok(attr_model.name)
 
         @staticmethod
         def validate_attribute_values(
             values: Sequence[str],
-        ) -> FlextLdifTypes.StringList:
-            """Validate attribute values using AttributeValues Model."""
+        ) -> FlextResult[FlextLdifTypes.StringList]:
+            """Validate attribute values using AttributeValues Model.
+
+            Returns:
+                FlextResult[StringList]: Success with validated values or failure with validation error
+
+            """
             # Check if input is a string (which is iterable but not valid)
             if isinstance(values, str):
-                msg = "Attribute values must be a sequence, not a string"
-                raise TypeError(msg)
+                return FlextResult[FlextLdifTypes.StringList].fail(
+                    "Attribute values must be a sequence, not a string"
+                )
 
             # Use Model validation - centralized in FlextLdifModels.AttributeValues
-            try:
-                values_model = FlextLdifModels.AttributeValues(values=list(values))
-                return values_model.values
-            except Exception as e:
-                msg = f"Invalid attribute values: {e}"
-                raise ValueError(msg) from e
+            # Explicit FlextResult error handling - NO try/except
+            values_model_result = FlextLdifModels.AttributeValues.create(
+                values=list(values)
+            )
+            if values_model_result.is_failure:
+                return FlextResult[FlextLdifTypes.StringList].fail(
+                    f"Invalid attribute values: {values_model_result.error}"
+                )
+
+            values_model: FlextLdifModels.AttributeValues = values_model_result.unwrap()
+            return FlextResult[FlextLdifTypes.StringList].ok(values_model.values)
 
         @staticmethod
-        def validate_url_format(url: str) -> str:
-            """Validate URL format using LdifUrl Model."""
+        def validate_url_format(url: str) -> FlextResult[str]:
+            """Validate URL format using LdifUrl Model.
+
+            Returns:
+                FlextResult[str]: Success with validated URL or failure with validation error
+
+            """
             # Use Model validation - centralized in FlextLdifModels.LdifUrl
-            try:
-                url_model = FlextLdifModels.LdifUrl(url=url)
-                return url_model.url
-            except ValueError as e:
-                raise ValueError(str(e)) from e
+            # Explicit FlextResult error handling - NO try/except
+            url_model_result = FlextLdifModels.LdifUrl.create(url=url)
+            if url_model_result.is_failure:
+                return FlextResult[str].fail(
+                    url_model_result.error or "Invalid URL format"
+                )
+
+            url_model: FlextLdifModels.LdifUrl = url_model_result.unwrap()
+            return FlextResult[str].ok(url_model.url)
 
         @staticmethod
-        def validate_encoding(encoding: str) -> str:
-            """Validate character encoding using Encoding Model."""
+        def validate_encoding(encoding: str) -> FlextResult[str]:
+            """Validate character encoding using Encoding Model.
+
+            Returns:
+                FlextResult[str]: Success with validated encoding or failure with validation error
+
+            """
             # Use Model validation - centralized in FlextLdifModels.Encoding
-            try:
-                encoding_model = FlextLdifModels.Encoding(encoding=encoding)
-                return encoding_model.encoding
-            except ValueError as e:
-                raise ValueError(str(e)) from e
+            # Explicit FlextResult error handling - NO try/except
+            encoding_model_result = FlextLdifModels.Encoding.create(encoding=encoding)
+            if encoding_model_result.is_failure:
+                return FlextResult[str].fail(
+                    encoding_model_result.error or "Invalid encoding"
+                )
+
+            encoding_model: FlextLdifModels.Encoding = encoding_model_result.unwrap()
+            return FlextResult[str].ok(encoding_model.encoding)
 
         @classmethod
         def validate_with_result(
@@ -116,30 +161,46 @@ class FlextLdifMixins(FlextMixins):
         """Mixin providing processing utilities with monadic composition."""
 
         @staticmethod
-        def normalize_dn_components(dn: str) -> str:
-            """Normalize DN components using DistinguishedName Model."""
+        def normalize_dn_components(dn: str) -> FlextResult[str]:
+            """Normalize DN components using DistinguishedName Model.
+
+            Returns:
+                FlextResult[str]: Success with normalized DN or failure with validation error
+
+            """
             # Use Model normalization - centralized in FlextLdifModels.DistinguishedName
-            try:
-                dn_model = FlextLdifModels.DistinguishedName(value=dn)
-                # computed_field property access - pyrefly needs explicit str() cast
-                return str(dn_model.normalized_value)
-            except ValueError:
-                return dn
+            # Explicit FlextResult error handling - NO try/except
+            dn_model_result = FlextLdifModels.DistinguishedName.create(value=dn)
+            if dn_model_result.is_failure:
+                # Return original DN on validation failure (fallback behavior)
+                return FlextResult[str].ok(dn)
+
+            dn_model: FlextLdifModels.DistinguishedName = dn_model_result.unwrap()
+            # computed_field property access - pyrefly needs explicit str() cast
+            return FlextResult[str].ok(str(dn_model.normalized_value))
 
         @staticmethod
-        def extract_dn_components(dn: str) -> list[tuple[str, str]]:
-            """Extract DN components as (attribute, value) pairs using DistinguishedName Model."""
+        def extract_dn_components(dn: str) -> FlextResult[list[tuple[str, str]]]:
+            """Extract DN components as (attribute, value) pairs using DistinguishedName Model.
+
+            Returns:
+                FlextResult[list[tuple[str, str]]]: Success with component pairs or empty list on failure
+
+            """
             # Use Model parsing - centralized in FlextLdifModels.DistinguishedName
-            try:
-                dn_model = FlextLdifModels.DistinguishedName(value=dn)
-                pairs: list[tuple[str, str]] = []
-                for comp in dn_model.components:
-                    if "=" in comp:
-                        attr, value = comp.split("=", 1)
-                        pairs.append((attr.strip(), value.strip()))
-                return pairs
-            except ValueError:
-                return []
+            # Explicit FlextResult error handling - NO try/except
+            dn_model_result = FlextLdifModels.DistinguishedName.create(value=dn)
+            if dn_model_result.is_failure:
+                # Return empty list on validation failure (fallback behavior)
+                return FlextResult[list[tuple[str, str]]].ok([])
+
+            dn_model: FlextLdifModels.DistinguishedName = dn_model_result.unwrap()
+            pairs: list[tuple[str, str]] = []
+            for comp in dn_model.components:
+                if "=" in comp:
+                    attr, value = comp.split("=", 1)
+                    pairs.append((attr.strip(), value.strip()))
+            return FlextResult[list[tuple[str, str]]].ok(pairs)
 
         @staticmethod
         def build_dn_from_components(components: Sequence[tuple[str, str]]) -> str:
@@ -259,16 +320,22 @@ class FlextLdifMixins(FlextMixins):
                 dn = getattr(entry, "dn", "")
                 if isinstance(dn, str):
                     # Use Model parsing - centralized in FlextLdifModels.DistinguishedName
-                    try:
-                        dn_model = FlextLdifModels.DistinguishedName(value=dn)
-                        for comp in dn_model.components:
-                            if "=" in comp:
-                                attr_name = comp.split("=")[0].strip().lower()
-                                pattern_counts[attr_name] = (
-                                    pattern_counts.get(attr_name, 0) + 1
-                                )
-                    except ValueError:
+                    # Explicit FlextResult error handling - NO try/except
+                    dn_model_result = cast(
+                        "FlextResult[FlextLdifModels.DistinguishedName]",
+                        FlextLdifModels.DistinguishedName.create(value=dn),
+                    )
+                    if dn_model_result.is_failure:
+                        # Skip invalid DNs (fallback behavior)
                         continue
+
+                    dn_model = dn_model_result.unwrap()
+                    for comp in dn_model.components:
+                        if "=" in comp:
+                            attr_name = comp.split("=")[0].strip().lower()
+                            pattern_counts[attr_name] = (
+                                pattern_counts.get(attr_name, 0) + 1
+                            )
             return pattern_counts
 
         @classmethod
@@ -298,32 +365,41 @@ class FlextLdifMixins(FlextMixins):
             self._cache_stats: dict[str, int] = {"hits": 0, "misses": 0}
 
         def get_from_cache(self, key: str) -> FlextResult[object]:
-            """Get value from cache with FlextResult."""
-            try:
-                if key in self._cache:
-                    self._cache_stats["hits"] += 1
-                    return FlextResult[object].ok(self._cache[key])
-                self._cache_stats["misses"] += 1
-                return FlextResult[object].fail("Cache miss")
-            except Exception as e:
-                return FlextResult[object].fail(f"Cache error: {e}")
+            """Get value from cache with FlextResult.
+
+            Returns:
+                FlextResult[object]: Success with cached value or failure for cache miss
+
+            """
+            # Explicit FlextResult handling - NO try/except for simple dict operations
+            if key in self._cache:
+                self._cache_stats["hits"] += 1
+                return FlextResult[object].ok(self._cache[key])
+            self._cache_stats["misses"] += 1
+            return FlextResult[object].fail("Cache miss")
 
         def set_in_cache(self, key: str, value: object) -> FlextResult[None]:
-            """Set value in cache with FlextResult."""
-            try:
-                self._cache[key] = value
-                return FlextResult[None].ok(None)
-            except Exception as e:
-                return FlextResult[None].fail(f"Cache error: {e}")
+            """Set value in cache with FlextResult.
+
+            Returns:
+                FlextResult[None]: Success confirmation
+
+            """
+            # Explicit FlextResult handling - NO try/except for simple dict operations
+            self._cache[key] = value
+            return FlextResult[None].ok(None)
 
         def clear_cache(self) -> FlextResult[None]:
-            """Clear cache with FlextResult."""
-            try:
-                self._cache.clear()
-                self._cache_stats = {"hits": 0, "misses": 0}
-                return FlextResult[None].ok(None)
-            except Exception as e:
-                return FlextResult[None].fail(f"Cache error: {e}")
+            """Clear cache with FlextResult.
+
+            Returns:
+                FlextResult[None]: Success confirmation
+
+            """
+            # Explicit FlextResult handling - NO try/except for simple dict operations
+            self._cache.clear()
+            self._cache_stats = {"hits": 0, "misses": 0}
+            return FlextResult[None].ok(None)
 
         def get_cache_stats(self) -> dict[str, int]:
             """Get cache statistics."""
@@ -462,13 +538,16 @@ class FlextLdifMixins(FlextMixins):
             return self._iterator_mixin
 
         def combine_mixins(self, *mixins: type) -> FlextResult[type]:
-            """Combine multiple mixins into a single class."""
-            try:
-                # Create a new class that inherits from all mixins
-                combined_class = type("CombinedMixin", tuple(mixins), {})
-                return FlextResult[type].ok(combined_class)
-            except Exception as e:
-                return FlextResult[type].fail(f"Mixin combination error: {e}")
+            """Combine multiple mixins into a single class.
+
+            Returns:
+                FlextResult[type]: Success with combined class or failure
+
+            """
+            # Explicit FlextResult handling - NO try/except for type() builtin
+            # The type() builtin with valid arguments doesn't raise exceptions
+            combined_class = type("CombinedMixin", tuple(mixins), {})
+            return FlextResult[type].ok(combined_class)
 
 
 __all__ = ["FlextLdifMixins"]

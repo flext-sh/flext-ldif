@@ -558,9 +558,7 @@ class FlextLdifUtilities(FlextUtilities):
                     "modified": stat.st_mtime,
                     "encoding": encoding,
                 }
-                return FlextResult[dict[str, object]].ok(
-                    cast("dict[str, object]", info)
-                )
+                return FlextResult[dict[str, object]].ok(info)
             except Exception as e:
                 return FlextResult[dict[str, object]].fail(
                     f"Failed to get file info: {e}"

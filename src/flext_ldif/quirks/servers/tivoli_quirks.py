@@ -40,9 +40,8 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
         default=15, description="Standard priority for Tivoli parsing"
     )
 
-    def __init__(self, **data: object) -> None:
-        """Initialize Tivoli DS schema quirk stub."""
-        super().__init__(**data)
+    def model_post_init(self, _context: object, /) -> None:
+        """Initialize logger after Pydantic model initialization."""
         self.logger = FlextLogger(__name__)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:  # pragma: no cover
@@ -103,9 +102,8 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
             default=15, description="Standard priority for Tivoli ACL"
         )
 
-        def __init__(self, **data: object) -> None:
+        def model_post_init(self, _context: object, /) -> None:
             """Initialize Tivoli DS ACL quirk stub."""
-            super().__init__(**data)
             self.logger = FlextLogger(__name__)
 
         def can_handle_acl(self, acl_line: str) -> bool:
@@ -152,9 +150,8 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
             default=15, description="Standard priority for Tivoli entry"
         )
 
-        def __init__(self, **data: object) -> None:
+        def model_post_init(self, _context: object, /) -> None:
             """Initialize Tivoli DS entry quirk stub."""
-            super().__init__(**data)
             self.logger = FlextLogger(__name__)
 
         def can_handle_entry(

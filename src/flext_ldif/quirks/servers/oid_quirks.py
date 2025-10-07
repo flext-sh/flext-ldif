@@ -55,9 +55,8 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         r"2\.16\.840\.1\.113894\."
     )
 
-    def __init__(self, **data: object) -> None:
+    def model_post_init(self, _context: object, /) -> None:
         """Initialize OID schema quirk."""
-        super().__init__(**data)
         self.logger = FlextLogger(__name__)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
@@ -230,9 +229,8 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             default=10, description="High priority for OID ACL parsing"
         )
 
-        def __init__(self, **data: object) -> None:
+        def model_post_init(self, _context: object, /) -> None:
             """Initialize OID ACL quirk."""
-            super().__init__(**data)
             self.logger = FlextLogger(__name__)
 
         def can_handle_acl(self, acl_line: str) -> bool:
@@ -262,27 +260,29 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 is_entry_level = acl_line.startswith("orclentrylevelaci:")
 
                 # Parse using existing OID ACI parser models
+                acl_obj: FlextLdifModels.OidEntryLevelAci | FlextLdifModels.OidAci
                 if is_entry_level:
-                    result = FlextLdifModels.OidEntryLevelAci.from_ldif_line(acl_line)
+                    entry_result = FlextLdifModels.OidEntryLevelAci.from_ldif_line(
+                        acl_line
+                    )
+                    if entry_result.is_failure:
+                        return FlextResult[FlextLdifTypes.Dict].fail(entry_result.error)
+                    acl_obj = entry_result.value
                 else:
-                    result = FlextLdifModels.OidAci.from_ldif_line(acl_line)
+                    standard_result = FlextLdifModels.OidAci.from_ldif_line(acl_line)
+                    if standard_result.is_failure:
+                        return FlextResult[FlextLdifTypes.Dict].fail(
+                            standard_result.error
+                        )
+                    acl_obj = standard_result.value
 
-                if result.is_success:
-                    # Convert model to dict for quirk system
-                    acl_obj = result.value
-                    return FlextResult[FlextLdifTypes.Dict].ok({
-                        "type": "entry_level" if is_entry_level else "standard",
-                        "raw": acl_line,
-                        "parsed": (
-                            acl_obj.model_dump()
-                            if hasattr(acl_obj, "model_dump")
-                            else {}
-                        ),
-                    })
-
-                return FlextResult[FlextLdifTypes.Dict].fail(
-                    result.error or "Parse failed"
-                )
+                return FlextResult[FlextLdifTypes.Dict].ok({
+                    "type": "entry_level" if is_entry_level else "standard",
+                    "raw": acl_line,
+                    "parsed": (
+                        acl_obj.model_dump() if hasattr(acl_obj, "model_dump") else {}
+                    ),
+                })
 
             except Exception as e:
                 return FlextResult[FlextLdifTypes.Dict].fail(
@@ -366,15 +366,14 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             default=10, description="High priority for OID entry processing"
         )
 
-        def __init__(self, **data: object) -> None:
+        def model_post_init(self, _context: object, /) -> None:
             """Initialize OID entry quirk."""
-            super().__init__(**data)
             self.logger = FlextLogger(__name__)
 
         def can_handle_entry(
             self,
             entry_dn: str,
-            attributes: dict,
+            attributes: dict[str, object],
         ) -> bool:
             """Check if this quirk should handle the entry.
 
@@ -407,7 +406,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 object_classes = [object_classes]
 
             has_oid_classes = any(
-                oc.lower().startswith("orcl") for oc in object_classes
+                str(oc).lower().startswith("orcl") for oc in object_classes
             )
 
             # Also check DN patterns for OID entries
@@ -419,7 +418,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             return has_oid_attrs or has_oid_classes or has_oid_dn_pattern
 
         def process_entry(
-            self, entry_dn: str, attributes: dict
+            self, entry_dn: str, attributes: dict[str, object]
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for Oracle OID format.
 

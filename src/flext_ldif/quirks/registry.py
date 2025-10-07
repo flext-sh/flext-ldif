@@ -9,12 +9,23 @@ server-specific quirks with RFC-compliant base parsers.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_core import FlextLogger, FlextModels, FlextResult
 
 from flext_ldif.quirks.base import (
     FlextLdifQuirksBase,
+    FlextLdifQuirksBaseAclQuirk,
+    FlextLdifQuirksBaseEntryQuirk,
+    FlextLdifQuirksBaseSchemaQuirk,
 )
 from flext_ldif.typings import FlextLdifTypes
+
+if TYPE_CHECKING:
+    # Type aliases for quirk types
+    SchemaQuirkType = FlextLdifQuirksBaseSchemaQuirk
+    AclQuirkType = FlextLdifQuirksBaseAclQuirk
+    EntryQuirkType = FlextLdifQuirksBaseEntryQuirk
 
 
 class FlextLdifQuirksRegistry(FlextModels.Entity):
@@ -39,14 +50,12 @@ class FlextLdifQuirksRegistry(FlextModels.Entity):
     def __init__(self) -> None:
         """Initialize quirk registry."""
         super().__init__()
-        self._schema_quirks: dict[str, list[FlextLdifQuirksBase.BaseSchemaQuirk]] = {}
-        self._acl_quirks: dict[str, list[FlextLdifQuirksBase.BaseAclQuirk]] = {}
-        self._entry_quirks: dict[str, list[FlextLdifQuirksBase.BaseEntryQuirk]] = {}
+        self._schema_quirks: dict[str, list[SchemaQuirkType]] = {}
+        self._acl_quirks: dict[str, list[AclQuirkType]] = {}
+        self._entry_quirks: dict[str, list[EntryQuirkType]] = {}
         self.logger = FlextLogger(__name__)
 
-    def register_schema_quirk(
-        self, quirk: FlextLdifQuirksBase.BaseSchemaQuirk
-    ) -> FlextResult[None]:
+    def register_schema_quirk(self, quirk: SchemaQuirkType) -> FlextResult[None]:
         """Register a schema quirk for a server type.
 
         Args:
@@ -275,7 +284,7 @@ class FlextLdifQuirksRegistry(FlextModels.Entity):
         return None
 
     def find_entry_quirk(
-        self, server_type: str, entry_dn: str, attributes: dict
+        self, server_type: str, entry_dn: str, attributes: dict[str, object]
     ) -> FlextLdifQuirksBase.BaseEntryQuirk | None:
         """Find the first entry quirk that can handle an entry.
 

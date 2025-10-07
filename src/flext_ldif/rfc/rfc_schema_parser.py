@@ -19,7 +19,7 @@ import re
 from pathlib import Path
 from typing import ClassVar, cast
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextResult, FlextService
 
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.typings import FlextLdifTypes
@@ -90,7 +90,7 @@ class FlextLdifRfcSchemaParser(FlextService[FlextLdifTypes.Dict]):
     def __init__(
         self,
         *,
-        params: dict,
+        params: dict[str, object],
         quirk_registry: FlextLdifQuirksRegistry,
         server_type: str | None = None,
     ) -> None:
@@ -126,7 +126,7 @@ class FlextLdifRfcSchemaParser(FlextService[FlextLdifTypes.Dict]):
                     "file_path parameter is required"
                 )
 
-            file_path = Path(file_path_str)
+            file_path = Path(cast("str", file_path_str))
             if not file_path.exists():
                 return FlextResult[FlextLdifTypes.Dict].fail(
                     f"Schema file not found: {file_path}"
@@ -147,8 +147,8 @@ class FlextLdifRfcSchemaParser(FlextService[FlextLdifTypes.Dict]):
             # Parse schema file
             parse_result = self._parse_schema_file(
                 file_path,
-                parse_attributes=parse_attributes,
-                parse_objectclasses=parse_objectclasses,
+                parse_attributes=cast("bool", parse_attributes),
+                parse_objectclasses=cast("bool", parse_objectclasses),
             )
 
             if parse_result.is_failure:
@@ -159,9 +159,11 @@ class FlextLdifRfcSchemaParser(FlextService[FlextLdifTypes.Dict]):
             self.logger.info(
                 "LDAP schema parsed successfully",
                 extra={
-                    "total_attributes": len(cast("dict", data.get("attributes", {}))),
+                    "total_attributes": len(
+                        cast("dict[str, object]", data.get("attributes", {}))
+                    ),
                     "total_objectclasses": len(
-                        cast("dict", data.get("objectclasses", {}))
+                        cast("dict[str, object]", data.get("objectclasses", {}))
                     ),
                 },
             )

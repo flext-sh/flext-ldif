@@ -56,29 +56,6 @@
 [tool.ruff]
     extend = "../ruff-shared.toml"
 
-    [tool.ruff.lint.per-file-ignores]
-        "examples/**/*.py" = [
-            "EXE001",  # shebang - examples are meant to be executable
-            "T201",    # print - examples demonstrate output
-        ]
-        "src/flext_ldif/quirks/servers/{ad,apache,ds389,novell,tivoli}_quirks.py" = ["ARG002"]
-        "src/flext_ldif/models.py" = [
-            "FBT001", # Boolean positional argument - required by Pydantic field serializers
-        ]
-        "tests/**/*.py" = [
-            "S101",    # Allow assert statements in tests
-            "SLF001",  # Allow private member access in tests
-            "PLR2004", # Allow magic values in tests
-            "PT018",   # Allow complex assertions in tests
-            "S108",    # Allow /tmp paths in tests
-            "INP001",  # Allow implicit namespace packages in tests
-            "PLC0415", # Allow local imports in tests
-            "ARG001",  # Allow unused function arguments in tests (error handlers)
-            "ARG002",  # Allow unused method arguments in tests (fixtures)
-            "FBT001",  # Allow boolean positional arguments in parametrized tests
-            "PT011",   # Allow broad pytest.raises in tests
-        ]
-
 [tool.bandit]
     exclude_dirs = [
         "build",
@@ -177,15 +154,15 @@
             "flext_ldif",
         ]
 
-                        [tool.poetry.dependencies.flext-cli]
-            develop = true
-            path    = "../flext-cli"
+    [tool.poetry.dependencies.flext-cli]
+        develop = true
+        path    = "../flext-cli"
 
-                                                                [tool.poetry.dependencies.flext-ldap]
-            develop = true
-            path    = "../flext-ldap"
+    [tool.poetry.dependencies.flext-ldap]
+    develop = true
+    path    = "../flext-ldap"
 
-                                                                                                        [tool.poetry.dependencies.flext-observability]
+                                                                        [tool.poetry.dependencies.flext-observability]
             develop = true
             path    = "../flext-observability"
 

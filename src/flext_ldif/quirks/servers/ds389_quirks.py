@@ -36,9 +36,8 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
     server_type: str = Field(default="389ds", description="389 Directory Server type")
     priority: int = Field(default=15, description="Standard priority for 389DS parsing")
 
-    def __init__(self, **data: object) -> None:
+    def model_post_init(self, _context: object, /) -> None:
         """Initialize 389 DS schema quirk stub."""
-        super().__init__(**data)
         self.logger = FlextLogger(__name__)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
@@ -97,9 +96,8 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
         )
         priority: int = Field(default=15, description="Standard priority for 389DS ACL")
 
-        def __init__(self, **data: object) -> None:
+        def model_post_init(self, _context: object, /) -> None:
             """Initialize 389 DS ACL quirk stub."""
-            super().__init__(**data)
             self.logger = FlextLogger(__name__)
 
         def can_handle_acl(self, acl_line: str) -> bool:
@@ -146,15 +144,14 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
             default=15, description="Standard priority for 389DS entry"
         )
 
-        def __init__(self, **data: object) -> None:
+        def model_post_init(self, _context: object, /) -> None:
             """Initialize 389 DS entry quirk stub."""
-            super().__init__(**data)
             self.logger = FlextLogger(__name__)
 
         def can_handle_entry(
             self,
             entry_dn: str,
-            attributes: dict,
+            attributes: dict[str, object],
         ) -> bool:
             """Check if this quirk should handle the entry - STUB."""
             return False
@@ -162,7 +159,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
         def process_entry(
             self,
             entry_dn: str,
-            attributes: dict,
+            attributes: dict[str, object],
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for 389DS format - STUB."""
             return FlextResult[FlextLdifTypes.Dict].fail(
