@@ -33,7 +33,7 @@ class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
         super().__init__()
         # Logger and container inherited from FlextService via FlextMixins
         self._server_type = server_type or FlextLdifConstants.LdapServers.GENERIC
-        self._quirks_registry: FlextLdifTypes.NestedDict = {}
+        self.quirks_registry: FlextLdifTypes.NestedDict = {}
         self._setup_quirks()
 
     @property
@@ -43,7 +43,7 @@ class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
 
     def _setup_quirks(self) -> None:
         """Setup server-specific quirks registry."""
-        self._quirks_registry = {
+        self.quirks_registry = {
             FlextLdifConstants.LdapServers.OPENLDAP_2: {
                 "acl_attribute": "olcAccess",
                 "acl_format": "openldap2",
@@ -100,7 +100,7 @@ class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
         return FlextResult[FlextLdifTypes.Dict].ok({
             "service": FlextLdifQuirksManager,
             "server_type": self._server_type,
-            "quirks_loaded": len(self._quirks_registry),
+            "quirks_loaded": len(self.quirks_registry),
         })
 
     def detect_server_type(
@@ -173,12 +173,12 @@ class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
         """
         target_server = server_type or self._server_type
 
-        if target_server not in self._quirks_registry:
+        if target_server not in self.quirks_registry:
             return FlextResult[FlextLdifTypes.Dict].fail(
                 f"Unknown server type: {target_server}"
             )
 
-        return FlextResult[FlextLdifTypes.Dict].ok(self._quirks_registry[target_server])
+        return FlextResult[FlextLdifTypes.Dict].ok(self.quirks_registry[target_server])
 
     def get_acl_attribute_name(
         self, server_type: str | None = None

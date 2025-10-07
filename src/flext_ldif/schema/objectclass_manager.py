@@ -50,7 +50,7 @@ class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
 
         if object_class in schema.objectclasses:
             oc_def = schema.objectclasses[object_class]
-            superior = oc_def.get("superior", [])
+            superior: object = oc_def.get("superior", [])
             if isinstance(superior, str):
                 hierarchy.append(superior)
             elif isinstance(superior, list):
@@ -78,7 +78,7 @@ class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
         for oc_name in object_classes:
             if oc_name in schema.objectclasses:
                 oc_def = schema.objectclasses[oc_name]
-                req_attrs = oc_def.get("required_attributes", [])
+                req_attrs: object = oc_def.get("required_attributes", [])
                 if isinstance(req_attrs, list):
                     required_attrs.update(req_attrs)
 
@@ -104,7 +104,7 @@ class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
         for oc_name in object_classes:
             if oc_name in schema.objectclasses:
                 oc_def = schema.objectclasses[oc_name]
-                opt_attrs = oc_def.get("optional_attributes", [])
+                opt_attrs: object = oc_def.get("optional_attributes", [])
                 if isinstance(opt_attrs, list):
                     optional_attrs.update(opt_attrs)
 

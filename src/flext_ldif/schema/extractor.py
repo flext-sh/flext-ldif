@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from typing import cast, override
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextResult, FlextService
 
+from flext_ldif.config import FlextLdifConfig
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifSchemaExtractor(FlextService):
+class FlextLdifSchemaExtractor(FlextService["FlextLdifConfig"]):
     """Schema extraction service for LDIF entries."""
 
     @override
@@ -19,9 +20,9 @@ class FlextLdifSchemaExtractor(FlextService):
         super().__init__()
 
     @override
-    def execute(self: object) -> FlextResult[FlextLdifTypes.Dict]:
+    def execute(self) -> FlextResult[FlextLdifConfig]:
         """Execute schema extractor service."""
-        return FlextResult[FlextLdifTypes.Dict].fail(
+        return FlextResult[FlextLdifConfig].fail(
             "Use extract_from_entries() method instead"
         )
 

@@ -53,9 +53,8 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
     )
     priority: int = Field(default=15, description="Standard priority for ADS parsing")
 
-    def __init__(self, **data: object) -> None:
+    def model_post_init(self, _context: object, /) -> None:
         """Initialize Apache DS schema quirk stub."""
-        super().__init__(**data)
         self.logger = FlextLogger(__name__)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:  # pragma: no cover
@@ -114,9 +113,8 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
         )
         priority: int = Field(default=15, description="Standard priority for ADS ACL")
 
-        def __init__(self, **data: object) -> None:
+        def model_post_init(self, _context: object, /) -> None:
             """Initialize Apache DS ACL quirk stub."""
-            super().__init__(**data)
             self.logger = FlextLogger(__name__)
 
         def can_handle_acl(self, acl_line: str) -> bool:
@@ -161,15 +159,14 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
         )
         priority: int = Field(default=15, description="Standard priority for ADS entry")
 
-        def __init__(self, **data: object) -> None:
+        def model_post_init(self, _context: object, /) -> None:
             """Initialize Apache DS entry quirk stub."""
-            super().__init__(**data)
             self.logger = FlextLogger(__name__)
 
         def can_handle_entry(
             self,
             entry_dn: str,
-            attributes: dict,
+            attributes: dict[str, object],
         ) -> bool:
             """Check if this quirk should handle the entry - STUB."""
             return False
@@ -177,7 +174,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
         def process_entry(
             self,
             entry_dn: str,
-            attributes: dict,
+            attributes: dict[str, object],
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for ADS format - STUB."""
             return FlextResult[FlextLdifTypes.Dict].fail(

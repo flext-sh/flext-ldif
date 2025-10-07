@@ -18,10 +18,10 @@ from flext_core import (
     FlextBus,
     FlextContainer,
     FlextContext,
-    FlextLogger,
     FlextResult,
     FlextService,
 )
+from pydantic import PrivateAttr
 
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
@@ -63,6 +63,14 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
     """
 
+    # Pydantic v2 private attributes (CRITICAL for Pydantic model initialization)
+    # These MUST be declared at class level for Pydantic to handle them correctly
+    _container: FlextContainer | None = PrivateAttr(default=None)
+    _context: FlextContext | None = PrivateAttr(default=None)
+    _bus: object | None = PrivateAttr(default=None)
+    _handlers: FlextLdifTypes.Dict = PrivateAttr(default_factory=dict)
+    _config: FlextLdifConfig | None = PrivateAttr(default=None)
+
     def __init__(self, config: FlextLdifConfig | None = None) -> None:
         """Initialize LDIF client with optional configuration.
 
@@ -71,15 +79,25 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
                    uses global singleton instance.
 
         """
+        # Store config for lazy initialization in properties
+        object.__setattr__(self, "_init_config_value", config)
+
+        # Call Pydantic/FlextService initialization
         super().__init__()
-        self._config = config or FlextLdifConfig()
+
+    def model_post_init(self, __context: object, /) -> None:
+        """Initialize private attributes after Pydantic initialization.
+
+        This hook is called by Pydantic after __init__ completes.
+        """
+        # Initialize private attributes that parent's __init__ may access
+        self._config = getattr(self, "_init_config_value", None) or FlextLdifConfig()
         self._container = FlextContainer.get_global()
-        # FlextContext expects dict, not FlextLdifConfig directly
         self._context = FlextContext({"config": self._config})
         self._bus = FlextBus()
-        self._handlers: FlextLdifTypes.Dict = {}
+        self._handlers = {}
 
-        # Ensure components are not None for type safety
+        # Ensure components are initialized
         if self._container is None:
             msg = "FlextContainer must be initialized"
             raise RuntimeError(msg)
@@ -108,7 +126,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
         """
         try:
-            config = self._config
+            config = self.config
             return FlextResult[FlextLdifTypes.Dict].ok({
                 "status": "initialized",
                 "services": ["parser", "writer", "validator", "migration"],
@@ -125,7 +143,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
     def _setup_services(self) -> None:
         """Register all services in the dependency injection container with instances."""
-        container = self._container
+        container = self.container
 
         # Register quirk registry FIRST (required by RFC parsers/writers)
         quirk_registry = FlextLdifQuirksRegistry()
@@ -158,7 +176,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
     def _register_default_quirks(self) -> None:
         """Auto-register all default server quirks."""
-        container = self._container
+        container = self.container
         logger = self.logger
 
         # Get quirk registry from container
@@ -256,7 +274,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             FlextResult with list of parsed Entry models
 
         """
-        container = self._container
+        container = self.container
 
         # Get the RFC parser from container
         parser_result = container.get("rfc_parser")
@@ -289,7 +307,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             or success message (if output_path provided)
 
         """
-        container = self._container
+        container = self.container
 
         # Get the RFC writer from container
         writer_result = container.get("rfc_writer")
@@ -334,7 +352,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             FlextResult containing validation report with details
 
         """
-        container = self._container
+        container = self.container
 
         # Get the schema validator from container
         validator_result = container.get("schema_validator")
@@ -378,7 +396,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             FlextResult containing migration statistics
 
         """
-        container = self._container
+        container = self.container
 
         # Get migration pipeline from container
         pipeline_result = container.get("migration_pipeline")
@@ -389,7 +407,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
         # The container.get returns a lambda, so we need to call it with params
         pipeline_factory = cast(
-            "Callable[[dict | None], FlextLdifMigrationPipeline]",
+            "Callable[[dict[str, str] | None], FlextLdifMigrationPipeline]",
             pipeline_result.unwrap(),
         )
         pipeline = pipeline_factory({
@@ -399,7 +417,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
         # Call migrate_entries directly
         migration_result = pipeline.migrate_entries(
-            entries=entries, source_format=from_server, target_format=to_server
+            entries=list(entries), source_format=from_server, target_format=to_server
         )
 
         if migration_result.is_failure:
@@ -482,7 +500,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
         """
         # Simple analysis - count object classes
-        object_class_distribution = {}
+        object_class_distribution: dict[str, int] = {}
         total_entries = len(entries)
 
         for entry in entries:
@@ -565,7 +583,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         if quirk_type not in {"schema", "acl", "entry"}:
             return FlextResult[None].fail(f"Invalid quirk type: {quirk_type}")
 
-        container = self._container
+        container = self.container
 
         # Get quirk registry from container
         registry_result = container.get("quirk_registry")
@@ -596,7 +614,11 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
     @property
     def config(self) -> FlextLdifConfig:
-        """Access to LDIF configuration instance."""
+        """Access to LDIF configuration instance with lazy initialization."""
+        if self._config is None:
+            self._config = (
+                getattr(self, "_init_config_value", None) or FlextLdifConfig()
+            )
         return self._config
 
     @property
@@ -606,17 +628,23 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
     @property
     def container(self) -> FlextContainer:
-        """Access to dependency injection container."""
+        """Access to dependency injection container with lazy initialization."""
+        if self._container is None:
+            self._container = FlextContainer.get_global()
         return self._container
 
     @property
     def context(self) -> FlextContext:
-        """Access to execution context."""
+        """Access to execution context with lazy initialization."""
+        if self._context is None:
+            self._context = FlextContext({"config": self.config})
         return self._context
 
     @property
     def bus(self) -> FlextBus:
-        """Access to event bus."""
+        """Access to event bus with lazy initialization."""
+        if self._bus is None:
+            self._bus = FlextBus()
         return cast("FlextBus", self._bus)
 
 
