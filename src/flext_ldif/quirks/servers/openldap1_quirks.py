@@ -18,7 +18,7 @@ from __future__ import annotations
 import re
 from typing import ClassVar
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextResult
 from pydantic import Field
 
 from flext_ldif.quirks.base import (
@@ -64,7 +64,6 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
 
     def model_post_init(self, _context: object, /) -> None:
         """Initialize OpenLDAP 1.x schema quirk."""
-        self.logger = FlextLogger(__name__)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
         """Check if this is an OpenLDAP 1.x attribute.
@@ -309,7 +308,6 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
 
         def model_post_init(self, _context: object, /) -> None:
             """Initialize OpenLDAP 1.x ACL quirk."""
-            self.logger = FlextLogger(__name__)
 
         def can_handle_acl(self, acl_line: str) -> bool:
             """Check if this is an OpenLDAP 1.x ACL.
@@ -453,7 +451,6 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
 
         def model_post_init(self, _context: object, /) -> None:
             """Initialize OpenLDAP 1.x entry quirk."""
-            self.logger = FlextLogger(__name__)
 
         def can_handle_entry(
             self, entry_dn: str, attributes: dict[str, object]

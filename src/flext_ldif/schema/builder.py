@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Self, override
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import FlextResult, FlextService
 
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.typings import FlextLdifTypes
@@ -20,7 +20,7 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
     """
 
     # Type annotations for instance variables
-    logger: FlextLogger
+    # Note: logger is inherited from FlextService, no need to annotate
     _attributes: dict[str, dict[str, Any]]
     _object_classes: dict[str, dict[str, Any]]
     _server_type: str

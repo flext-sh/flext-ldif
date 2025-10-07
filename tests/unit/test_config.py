@@ -248,8 +248,9 @@ class TestFlextLdifConfig:
 
         assert isinstance(processing_config, dict)
         assert "max_entries" in processing_config
-        assert "chunk_size" in processing_config
-        assert "max_workers" in processing_config
+        assert "batch_size" in processing_config
+        assert "strict_validation" in processing_config
+        assert "fail_on_warnings" in processing_config
 
     def test_get_analytics_config(self) -> None:
         """Test getting analytics configuration context."""
@@ -258,7 +259,8 @@ class TestFlextLdifConfig:
 
         assert isinstance(analytics_config, dict)
         assert "enable_analytics" in analytics_config
-        assert "cache_size" in analytics_config
+        assert "analytics_sample_rate" in analytics_config
+        assert "analytics_max_entries" in analytics_config
 
     def test_create_for_performance(self) -> None:
         """Test creating performance-optimized configuration."""

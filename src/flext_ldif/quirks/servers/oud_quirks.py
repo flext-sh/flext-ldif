@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from typing import ClassVar
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextResult
 from pydantic import Field
 
 from flext_ldif.models import FlextLdifModels
@@ -51,7 +51,6 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
     def model_post_init(self, _context: object, /) -> None:
         """Initialize OUD schema quirk."""
-        self.logger = FlextLogger(__name__)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
         """Check if this is an Oracle OUD attribute.
@@ -238,7 +237,6 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
         def model_post_init(self, _context: object, /) -> None:
             """Initialize OUD ACL quirk."""
-            self.logger = FlextLogger(__name__)
 
         def can_handle_acl(self, acl_line: str) -> bool:
             """Check if this is an Oracle OUD ACL.
@@ -356,7 +354,6 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
         def model_post_init(self, _context: object, /) -> None:
             """Initialize OUD entry quirk."""
-            self.logger = FlextLogger(__name__)
 
         def can_handle_entry(
             self, entry_dn: str, attributes: dict[str, object]

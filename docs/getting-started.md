@@ -33,7 +33,7 @@ cd flext-ldif
 make setup
 
 # Verify installation
-python -c "from flext_ldif import FlextLdifAPI; print('FLEXT-LDIF installed successfully')"
+python -c "from flext_ldif import FlextLdif; print('FLEXT-LDIF installed successfully')"
 ```
 
 ### Development Commands
@@ -58,11 +58,11 @@ pytest --cov=src/flext_ldif     # Coverage report
 Create your first LDIF processing script:
 
 ```python
-from flext_ldif import FlextLdifAPI
+from flext_ldif import FlextLdif
 from pathlib import Path
 
 # Initialize the LDIF API
-api = FlextLdifAPI()
+api = FlextLdif()
 
 # Sample LDIF content
 sample_ldif = """dn: cn=John Doe,ou=People,dc=example,dc=com
@@ -98,10 +98,10 @@ else:
 Process LDIF files with error handling:
 
 ```python
-from flext_ldif import FlextLdifAPI
+from flext_ldif import FlextLdif
 from pathlib import Path
 
-api = FlextLdifAPI()
+api = FlextLdif()
 
 # Parse LDIF file
 ldif_path = Path("directory.ldif")
@@ -133,7 +133,7 @@ else:
 Configure LDIF processing behavior:
 
 ```python
-from flext_ldif import FlextLdifAPI, FlextLdifModels
+from flext_ldif import FlextLdif, FlextLdifModels
 
 # Create configuration
 config = FlextLdifModels.Config(
@@ -144,7 +144,7 @@ config = FlextLdifModels.Config(
 )
 
 # Initialize API with configuration
-api = FlextLdifAPI(config=config)
+api = FlextLdif(config=config)
 ```
 
 ### Advanced Configuration
@@ -284,7 +284,7 @@ oud_quirks = quirk_registry.get_entry_quirks("oud")
 Validate and clean LDIF data:
 
 ```python
-api = FlextLdifAPI(FlextLdifModels.Config(strict_validation=True))
+api = FlextLdif(FlextLdifModels.Config(strict_validation=True))
 
 # Parse with strict validation
 result = api.parse_string(ldif_content)

@@ -149,7 +149,7 @@ build-clean: clean build ## Clean and build
 
 .PHONY: ldif-parse
 ldif-parse: ## Test LDIF parsing
-	PYTHONPATH=$(SRC_DIR) $(POETRY) run python -c "from flext_ldif import FlextLdifAPI; api = FlextLdifAPI(); print('LDIF parser test passed')"
+	PYTHONPATH=$(SRC_DIR) $(POETRY) run python -c "from flext_ldif import FlextLdif; api = FlextLdif(); print('LDIF parser test passed')"
 
 .PHONY: ldif-validate
 ldif-validate: ## Validate LDIF files

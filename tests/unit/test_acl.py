@@ -255,7 +255,8 @@ class TestFlextLdifAclParser:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "Unsupported server type" in result.error
+        assert result.error is not None
+        assert "Unsupported server type" in result.error
 
     def test_parse_acl_empty_server_type(self) -> None:
         """Test parse_acl method with empty server type."""
@@ -266,7 +267,8 @@ class TestFlextLdifAclParser:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "Unsupported server type" in result.error
+        assert result.error is not None
+        assert "Unsupported server type" in result.error
 
     def test_acl_components_creation(self) -> None:
         """Test that ACL components are created correctly."""
@@ -618,7 +620,8 @@ class TestFlextLdifAclService:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "Unknown operator" in result.error
+        assert result.error is not None
+        assert "Unknown operator" in result.error
 
     def test_permission_rule_evaluate_required_true(self) -> None:
         """Test permission rule evaluation with required=True."""
@@ -692,9 +695,8 @@ class TestFlextLdifAclService:
 
         assert result.is_failure
         assert result.error is not None
-        assert (
-            result.error is not None and "Invalid entry: Entry is None" in result.error
-        )
+        assert result.error is not None
+        assert "Invalid entry: Entry is None" in result.error
 
     def test_extract_acls_from_entry_no_acl_attribute(self) -> None:
         """Test extracting ACLs from entry with no ACL attribute."""
@@ -727,10 +729,8 @@ class TestFlextLdifAclService:
 
         assert result.is_failure
         assert result.error is not None
-        assert (
-            result.error is not None
-            and "Invalid context: Context is None" in result.error
-        )
+        assert result.error is not None
+        assert "Invalid context: Context is None" in result.error
 
     def test_evaluate_acl_rules_empty_list(self) -> None:
         """Test evaluating empty ACL rules list."""
@@ -863,7 +863,8 @@ class TestFlextLdifAclService:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "Test failure" in result.error
+        assert result.error is not None
+        assert "Test failure" in result.error
 
     def test_service_patterns_in_execute(self) -> None:
         """Test that execute method returns correct patterns."""

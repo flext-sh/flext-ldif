@@ -19,7 +19,7 @@ When implementing, refer to:
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextResult
 from pydantic import Field
 
 from flext_ldif.quirks.base import (
@@ -38,7 +38,6 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
 
     def model_post_init(self, _context: object, /) -> None:
         """Initialize 389 DS schema quirk stub."""
-        self.logger = FlextLogger(__name__)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
         """Check if this is a 389 DS attribute - STUB."""
@@ -98,7 +97,6 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
 
         def model_post_init(self, _context: object, /) -> None:
             """Initialize 389 DS ACL quirk stub."""
-            self.logger = FlextLogger(__name__)
 
         def can_handle_acl(self, acl_line: str) -> bool:
             """Check if this is a 389 DS ACL - STUB."""
@@ -146,7 +144,6 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
 
         def model_post_init(self, _context: object, /) -> None:
             """Initialize 389 DS entry quirk stub."""
-            self.logger = FlextLogger(__name__)
 
         def can_handle_entry(
             self,

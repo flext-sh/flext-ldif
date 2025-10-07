@@ -19,7 +19,7 @@ When implementing, refer to:
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextResult
 from pydantic import Field
 
 from flext_ldif.quirks.base import (
@@ -42,7 +42,6 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
 
     def model_post_init(self, _context: object, /) -> None:
         """Initialize logger after Pydantic model initialization."""
-        self.logger = FlextLogger(__name__)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:  # pragma: no cover
         """Check if this is a Tivoli DS attribute - STUB."""
@@ -104,7 +103,6 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
 
         def model_post_init(self, _context: object, /) -> None:
             """Initialize Tivoli DS ACL quirk stub."""
-            self.logger = FlextLogger(__name__)
 
         def can_handle_acl(self, acl_line: str) -> bool:
             """Check if this is a Tivoli DS ACL - STUB."""
@@ -152,7 +150,6 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
 
         def model_post_init(self, _context: object, /) -> None:
             """Initialize Tivoli DS entry quirk stub."""
-            self.logger = FlextLogger(__name__)
 
         def can_handle_entry(
             self,

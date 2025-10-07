@@ -437,8 +437,8 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Dict]):
                 entries_written = 1
 
             return FlextResult[FlextLdifTypes.Dict].ok({
-                "entries": entries_written,
-                "lines": lines_written,
+                "entries_written": entries_written,
+                "lines_written": lines_written,
             })
 
         except Exception as e:
@@ -524,8 +524,8 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Dict]):
                 entries_written += 1
 
             return FlextResult[FlextLdifTypes.Dict].ok({
-                "entries": entries_written,
-                "lines": lines_written,
+                "entries_written": entries_written,
+                "lines_written": lines_written,
             })
 
         except Exception as e:
@@ -601,8 +601,8 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Dict]):
                 entries_written += 1
 
             return FlextResult[FlextLdifTypes.Dict].ok({
-                "entries": entries_written,
-                "lines": lines_written,
+                "entries_written": entries_written,
+                "lines_written": lines_written,
             })
 
         except Exception as e:

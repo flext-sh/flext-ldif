@@ -128,7 +128,7 @@ Automatic detection and quirk-based adaptation for LDAP servers:
 
 ```mermaid
 graph TB
-    API[FlextLdifAPI] --> Parser[ParserService]
+    API[FlextLdif] --> Parser[ParserService]
     API --> Validator[ValidatorService]
     API --> Writer[WriterService]
     API --> Repository[RepositoryService]

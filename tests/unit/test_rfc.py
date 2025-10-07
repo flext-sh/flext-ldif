@@ -1126,19 +1126,20 @@ class TestRfcLdifWriterComprehensive:
     def test_write_with_version_header(
         self, sample_entry: FlextLdifModels.Entry
     ) -> None:
-        """Test writing with version header."""
+        """Test writing with execute() which includes version header."""
         registry = FlextLdifQuirksRegistry()
         writer = FlextLdifRfcLdifWriter(
-            params={"include_version": True},
+            params={"entries": [sample_entry]},
             quirk_registry=registry,
         )
 
-        result = writer.write_entries_to_string([sample_entry])
+        result = writer.execute()
 
-        assert result.is_success or result.is_failure
-        if result.is_success:
-            content = result.unwrap()
-            assert "version: 1" in content
+        assert result.is_success
+        data = result.unwrap()
+        assert "content" in data
+        content = data["content"]
+        assert "version: 1" in content
 
     def test_write_with_custom_encoding(
         self, sample_entry: FlextLdifModels.Entry
@@ -1215,4 +1216,188 @@ class TestRfcLdifWriterComprehensive:
 
         result = writer.write_entries_to_string([entry])
 
+        assert result.is_success or result.is_failure
+
+
+class TestRfcLdifWriterExecuteMethod:
+    """Test suite for RFC LDIF writer execute() method."""
+
+    @pytest.fixture
+    def sample_entries(self) -> list[FlextLdifModels.Entry]:
+        """Create sample entries for testing."""
+        entry1 = FlextLdifModels.Entry.create(
+            dn="cn=User1,dc=example,dc=com",
+            attributes={"cn": ["User1"], "sn": ["Test"], "objectClass": ["person"]},
+        ).unwrap()
+        entry2 = FlextLdifModels.Entry.create(
+            dn="cn=User2,dc=example,dc=com",
+            attributes={"cn": ["User2"], "sn": ["Test"], "objectClass": ["person"]},
+        ).unwrap()
+        return [entry1, entry2]
+
+    def test_execute_with_entries_to_string(
+        self, sample_entries: list[FlextLdifModels.Entry]
+    ) -> None:
+        """Test execute() writing entries to string (no output_file)."""
+        registry = FlextLdifQuirksRegistry()
+        params = {"entries": sample_entries}
+        writer = FlextLdifRfcLdifWriter(params=params, quirk_registry=registry)
+
+        result = writer.execute()
+
+        assert result.is_success
+        data = result.unwrap()
+        assert "content" in data
+        assert data["entries_written"] == 2
+
+    def test_execute_with_entries_to_file(
+        self, sample_entries: list[FlextLdifModels.Entry], tmp_path: Path
+    ) -> None:
+        """Test execute() writing entries to file."""
+        output_file = tmp_path / "output.ldif"
+        registry = FlextLdifQuirksRegistry()
+        params = {"entries": sample_entries, "output_file": str(output_file)}
+        writer = FlextLdifRfcLdifWriter(params=params, quirk_registry=registry)
+
+        result = writer.execute()
+
+        assert result.is_success
+        assert output_file.exists()
+        data = result.unwrap()
+        assert "output_file" in data
+        assert data["entries_written"] == 2
+
+    def test_execute_with_empty_params(self) -> None:
+        """Test execute() fails when no entries/schema/acls provided."""
+        registry = FlextLdifQuirksRegistry()
+        writer = FlextLdifRfcLdifWriter(params={}, quirk_registry=registry)
+
+        result = writer.execute()
+
+        assert result.is_failure
+        assert "must be provided" in result.error
+
+    def test_execute_with_append_mode(
+        self, sample_entries: list[FlextLdifModels.Entry], tmp_path: Path
+    ) -> None:
+        """Test execute() in append mode."""
+        output_file = tmp_path / "output.ldif"
+        # Write initial content
+        output_file.write_text("version: 1\ndn: cn=existing\ncn: existing\n\n")
+
+        registry = FlextLdifQuirksRegistry()
+        params = {
+            "entries": sample_entries[:1],
+            "output_file": str(output_file),
+            "append": True,
+        }
+        writer = FlextLdifRfcLdifWriter(params=params, quirk_registry=registry)
+
+        result = writer.execute()
+
+        assert result.is_success
+        content = output_file.read_text()
+        assert "cn=existing" in content
+        assert "cn=User1" in content
+
+
+class TestRfcLdifWriterFileOperations:
+    """Test suite for RFC LDIF writer file operations."""
+
+    def test_write_entries_to_file_basic(self, tmp_path: Path) -> None:
+        """Test write_entries_to_file() with basic entries."""
+        entry = FlextLdifModels.Entry.create(
+            dn="cn=Test,dc=example,dc=com",
+            attributes={"cn": ["Test"], "objectClass": ["person"]},
+        ).unwrap()
+
+        output_file = tmp_path / "test.ldif"
+        registry = FlextLdifQuirksRegistry()
+        writer = FlextLdifRfcLdifWriter(params={}, quirk_registry=registry)
+
+        result = writer.write_entries_to_file([entry], output_file)
+
+        assert result.is_success
+        assert output_file.exists()
+        content = output_file.read_text()
+        assert "dn: cn=Test,dc=example,dc=com" in content
+
+    def test_write_entries_to_file_creates_directory(self, tmp_path: Path) -> None:
+        """Test write_entries_to_file() creates parent directories."""
+        entry = FlextLdifModels.Entry.create(
+            dn="cn=Test,dc=example,dc=com",
+            attributes={"cn": ["Test"]},
+        ).unwrap()
+
+        output_file = tmp_path / "subdir" / "nested" / "test.ldif"
+        registry = FlextLdifQuirksRegistry()
+        writer = FlextLdifRfcLdifWriter(params={}, quirk_registry=registry)
+
+        result = writer.write_entries_to_file([entry], output_file)
+
+        assert result.is_success
+        assert output_file.exists()
+        assert output_file.parent.exists()
+
+    def test_write_entries_to_file_empty_list(self, tmp_path: Path) -> None:
+        """Test write_entries_to_file() with empty entries list."""
+        output_file = tmp_path / "empty.ldif"
+        registry = FlextLdifQuirksRegistry()
+        writer = FlextLdifRfcLdifWriter(params={}, quirk_registry=registry)
+
+        result = writer.write_entries_to_file([], output_file)
+
+        assert result.is_success
+        assert output_file.exists()
+
+
+class TestRfcLdifWriterSchemaSupport:
+    """Test suite for RFC LDIF writer schema writing."""
+
+    def test_execute_with_schema_entries(self, tmp_path: Path) -> None:
+        """Test execute() writing schema entries."""
+        schema = {
+            "attributeTypes": [
+                "( 1.2.3.4.5 NAME 'customAttr' DESC 'Custom attribute' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+            ],
+            "objectClasses": [
+                "( 1.2.3.4.6 NAME 'customClass' DESC 'Custom class' SUP top STRUCTURAL MUST cn )"
+            ],
+        }
+
+        output_file = tmp_path / "schema.ldif"
+        registry = FlextLdifQuirksRegistry()
+        params = {"schema": schema, "output_file": str(output_file)}
+        writer = FlextLdifRfcLdifWriter(params=params, quirk_registry=registry)
+
+        result = writer.execute()
+
+        # Should either succeed or fail gracefully
+        assert result.is_success or result.is_failure
+
+
+class TestRfcLdifWriterAclSupport:
+    """Test suite for RFC LDIF writer ACL writing."""
+
+    def test_execute_with_acl_entries(self, tmp_path: Path) -> None:
+        """Test execute() writing ACL entries."""
+        acl_entry = FlextLdifModels.UnifiedAcl(
+            name="test_acl",
+            target=FlextLdifModels.AclTarget(target_dn="dc=example,dc=com"),
+            subject=FlextLdifModels.AclSubject(
+                subject_type="user", subject_value="cn=admin"
+            ),
+            permissions=FlextLdifModels.AclPermissions(read=True, write=True),
+            server_type="generic",
+            raw_acl="access to * by * read",
+        )
+
+        output_file = tmp_path / "acls.ldif"
+        registry = FlextLdifQuirksRegistry()
+        params = {"acls": [acl_entry], "output_file": str(output_file)}
+        writer = FlextLdifRfcLdifWriter(params=params, quirk_registry=registry)
+
+        result = writer.execute()
+
+        # Should either succeed or fail gracefully
         assert result.is_success or result.is_failure

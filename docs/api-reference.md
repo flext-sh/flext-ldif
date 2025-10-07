@@ -35,12 +35,12 @@ FLEXT-LDIF enforces a **strict RFC-first design** with **mandatory quirks system
 
 ## Core API Classes
 
-### FlextLdifAPI
+### FlextLdif
 
 Main unified interface for all LDIF processing operations.
 
 ```python
-class FlextLdifAPI:
+class FlextLdif:
     """Unified LDIF Processing API."""
 
     def __init__(self, config: FlextLdifModels.Config | None = None) -> None:
@@ -64,7 +64,7 @@ def parse_file(self, file_path: Path | str) -> FlextResult[list[FlextLdifModels.
         FlextResult containing list of parsed entries or error
 
     Example:
-        >>> api = FlextLdifAPI()
+        >>> api = FlextLdif()
         >>> result = api.parse_file("directory.ldif")
         >>> if result.is_success:
         ...     entries = result.unwrap()
@@ -374,7 +374,7 @@ config = FlextLdifModels.Config(
 )
 
 # Use configuration with API
-api = FlextLdifAPI(config=config)
+api = FlextLdif(config=config)
 ```
 
 ### FlextLdifModels.Factory
@@ -459,7 +459,7 @@ instance_config = FlextLdifModels.Config(
 )
 
 # Use with API instance
-api = FlextLdifAPI(config=instance_config)
+api = FlextLdif(config=instance_config)
 ```
 
 ## Error Handling
@@ -523,10 +523,10 @@ except FlextLdifValidationError as e:
 # python -m flext_ldif parse directory.ldif
 
 # ✅ NEW (Library API):
-from flext_ldif import FlextLdifAPI
+from flext_ldif import FlextLdif
 from pathlib import Path
 
-api = FlextLdifAPI()
+api = FlextLdif()
 result = api.parse_file(Path("directory.ldif"))
 if result.is_success:
     entries = result.unwrap()
@@ -564,7 +564,7 @@ if result.is_success:
 ```python
 def process_enterprise_directory(input_file: Path, output_file: Path) -> FlextResult[FlextTypes.Dict]:
     """Process enterprise directory with complete pipeline."""
-    api = FlextLdifAPI(FlextLdifModels.Config(strict_validation=True))
+    api = FlextLdif(FlextLdifModels.Config(strict_validation=True))
 
     return (
         # Parse directory export
@@ -598,7 +598,7 @@ def process_enterprise_directory(input_file: Path, output_file: Path) -> FlextRe
 ```python
 def process_multiple_files(file_paths: list[Path]) -> FlextResult[FlextTypes.Dict]:
     """Process multiple LDIF files in batch."""
-    api = FlextLdifAPI()
+    api = FlextLdif()
     all_entries = []
     processing_stats = {}
 
@@ -622,7 +622,7 @@ def process_multiple_files(file_paths: list[Path]) -> FlextResult[FlextTypes.Dic
 
 ```python
 def filter_by_custom_criteria(
-    api: FlextLdifAPI,
+    api: FlextLdif,
     entries: list[FlextLdifModels.Entry]
 ) -> FlextResult[list[FlextLdifModels.Entry]]:
     """Apply custom filtering logic."""
@@ -866,7 +866,7 @@ from flext_core import FlextContainer
 container = FlextContainer.get_global()
 
 # Register LDIF API as service
-api = FlextLdifAPI()
+api = FlextLdif()
 register_result = container.register("ldif_api", api)
 
 # Retrieve from container in other services
@@ -901,11 +901,11 @@ logger.info("LDIF processing completed", extra={
 ### Basic Usage - Parse, Validate, Write
 
 ```python
-from flext_ldif import FlextLdifAPI
+from flext_ldif import FlextLdif
 from pathlib import Path
 
 # Initialize API (library-only, no CLI)
-api = FlextLdifAPI()
+api = FlextLdif()
 
 # Parse LDIF file
 parse_result = api.parse_file(Path("directory.ldif"))
@@ -1008,10 +1008,10 @@ else:
 ### Railway-Oriented Pipeline
 
 ```python
-from flext_ldif import FlextLdifAPI
+from flext_ldif import FlextLdif
 from pathlib import Path
 
-api = FlextLdifAPI()
+api = FlextLdif()
 
 # Composable pipeline with explicit error handling
 result = (

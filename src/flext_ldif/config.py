@@ -425,8 +425,10 @@ class FlextLdifConfig(FlextConfig):
         config = cls()
         config.debug = True
         config.trace = True
+        config.verbose_logging = True
         config.enable_performance_optimizations = False
         config.max_workers = FlextLdifConstants.Processing.DEBUG_MAX_WORKERS
+        config.debug_mode = True  # Set after max_workers to pass validation
         config.ldif_chunk_size = (
             FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE // 10
         )
@@ -446,7 +448,7 @@ class FlextLdifConfig(FlextConfig):
             FlextLdifConfig instance configured for the server type
 
         """
-        config = cls()
+        config = cls(server_type=server_type)
 
         # Server-specific optimizations
         if server_type == "openldap":
@@ -540,6 +542,8 @@ class FlextLdifConfig(FlextConfig):
         return {
             "max_entries": self.ldif_max_entries,
             "batch_size": self.ldif_batch_size,
+            "max_workers": self.max_workers,
+            "chunk_size": self.ldif_chunk_size,
             "strict_validation": self.ldif_strict_validation,
             "fail_on_warnings": self.ldif_fail_on_warnings,
         }
@@ -555,6 +559,7 @@ class FlextLdifConfig(FlextConfig):
     def get_server_config(self) -> FlextLdifTypes.Dict:
         """Get server-related configuration."""
         return {
+            "server_type": self.server_type,
             "default_server_type": self.ldif_default_server_type,
             "server_specific_quirks": self.ldif_server_specific_quirks,
         }

@@ -19,7 +19,7 @@ When implementing, refer to:
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextResult
 from pydantic import Field
 
 from flext_ldif.quirks.base import (
@@ -55,7 +55,6 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
 
     def model_post_init(self, _context: object, /) -> None:
         """Initialize Apache DS schema quirk stub."""
-        self.logger = FlextLogger(__name__)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:  # pragma: no cover
         """Check if this is an Apache DS attribute - STUB."""
@@ -115,7 +114,6 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
 
         def model_post_init(self, _context: object, /) -> None:
             """Initialize Apache DS ACL quirk stub."""
-            self.logger = FlextLogger(__name__)
 
         def can_handle_acl(self, acl_line: str) -> bool:
             """Check if this is an Apache DS ACL - STUB."""
@@ -161,7 +159,6 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
 
         def model_post_init(self, _context: object, /) -> None:
             """Initialize Apache DS entry quirk stub."""
-            self.logger = FlextLogger(__name__)
 
         def can_handle_entry(
             self,
