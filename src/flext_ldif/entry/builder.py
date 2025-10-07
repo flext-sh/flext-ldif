@@ -101,7 +101,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
             entry_data
         )
 
-        if result.is_success:
+        if result.is_success and self.logger:
             self.logger.info(f"Created group entry: {dn}")
 
         return result
@@ -133,7 +133,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
             entry_data
         )
 
-        if result.is_success:
+        if result.is_success and self.logger:
             self.logger.info(f"Created organizational unit entry: {dn}")
 
         return result
@@ -150,7 +150,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
         entry_attrs = attributes.copy()
         entry_attrs["objectClass"] = objectclasses
 
-        if validate:
+        if validate and self.logger:
             self.logger.debug(
                 f"Validation requested for objectClasses: {objectclasses}"
             )
@@ -163,7 +163,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
             entry_data
         )
 
-        if result.is_success:
+        if result.is_success and self.logger:
             self.logger.info(f"Created custom entry: {dn}")
 
         return result
@@ -217,7 +217,8 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
 
                 entries.append(entry_result.value)
 
-            self.logger.info(f"Created {len(entries)} entries from JSON")
+            if self.logger:
+                self.logger.info(f"Created {len(entries)} entries from JSON")
             return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
         except json.JSONDecodeError as e:
@@ -267,7 +268,8 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
 
             entries.append(entry_result.value)
 
-        self.logger.info(f"Created {len(entries)} entries from dictionary")
+        if self.logger:
+            self.logger.info(f"Created {len(entries)} entries from dictionary")
         return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
     def convert_entry_to_dict(
@@ -303,7 +305,8 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
                 entries_data.append(entry_dict_result.value)
 
             json_str = json.dumps(entries_data, indent=indent)
-            self.logger.info(f"Converted {len(entries)} entries to JSON")
+            if self.logger:
+                self.logger.info(f"Converted {len(entries)} entries to JSON")
             return FlextResult[str].ok(json_str)
 
         except Exception as e:

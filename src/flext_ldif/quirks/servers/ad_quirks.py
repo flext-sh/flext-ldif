@@ -57,7 +57,7 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
     def model_post_init(self, _context: object, /) -> None:
         """Initialize Active Directory schema quirk stub."""
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:  # pragma: no cover
+    def can_handle_attribute(self, attr_definition: str) -> bool:
         """Check if this is an Active Directory attribute.
 
         TODO: Add AD-specific detection logic.
@@ -77,7 +77,7 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
 
     def parse_attribute(
         self,
-        attr_definition: str,
+        _attr_definition: str,
     ) -> FlextResult[FlextLdifTypes.Dict]:  # pragma: no cover
         """Parse Active Directory attribute definition.
 
@@ -95,7 +95,7 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:  # pragma: no cover
+    def can_handle_objectclass(self, oc_definition: str) -> bool:
         """Check if this is an Active Directory objectClass.
 
         TODO: Add AD-specific detection logic.
@@ -111,7 +111,7 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
 
     def parse_objectclass(
         self,
-        oc_definition: str,
+        _oc_definition: str,
     ) -> FlextResult[FlextLdifTypes.Dict]:  # pragma: no cover
         """Parse Active Directory objectClass definition.
 
@@ -131,14 +131,14 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
 
     def convert_attribute_to_rfc(
         self,
-        attr_data: FlextLdifTypes.Dict,
+        _attr_data: FlextLdifTypes.Dict,
     ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert AD attribute to RFC-compliant format.
 
         TODO: Implement AD→RFC conversion.
 
         Args:
-            attr_data: AD attribute data
+            _attr_data: AD attribute data
 
         Returns:
             FlextResult with error (not implemented)
@@ -151,14 +151,14 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
 
     def convert_objectclass_to_rfc(
         self,
-        oc_data: FlextLdifTypes.Dict,
+        _oc_data: FlextLdifTypes.Dict,
     ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert AD objectClass to RFC-compliant format.
 
         TODO: Implement AD→RFC conversion.
 
         Args:
-            oc_data: AD objectClass data
+            _oc_data: AD objectClass data
 
         Returns:
             FlextResult with error (not implemented)
@@ -182,8 +182,8 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
 
         Example (when implemented):
             quirk = FlextLdifQuirksServersAd.AclQuirk(server_type="active_directory")
-            if quirk.can_handle_acl(acl_line):
-                result = quirk.parse_acl(acl_line)
+            if quirk.can_handle_acl(_acl_line):
+                result = quirk.parse_acl(_acl_line)
 
         """
 
@@ -212,7 +212,7 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
 
         def parse_acl(
             self,
-            acl_line: str,
+            _acl_line: str,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Parse Active Directory ACL definition.
 
@@ -232,14 +232,14 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
 
         def convert_acl_to_rfc(
             self,
-            acl_data: FlextLdifTypes.Dict,
+            _acl_data: FlextLdifTypes.Dict,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert AD ACL to RFC-compliant format.
 
             TODO: Implement AD ACL→RFC conversion.
 
             Args:
-                acl_data: AD ACL data
+                _acl_data: AD ACL data
 
             Returns:
                 FlextResult with error (not implemented)
@@ -252,14 +252,14 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
 
         def convert_acl_from_rfc(
             self,
-            acl_data: FlextLdifTypes.Dict,
+            _acl_data: FlextLdifTypes.Dict,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert RFC ACL to AD-specific format.
 
             TODO: Implement RFC→AD ACL conversion.
 
             Args:
-                acl_data: RFC-compliant ACL data
+                _acl_data: RFC-compliant ACL data
 
             Returns:
                 FlextResult with error (not implemented)
@@ -299,36 +299,36 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
 
         def can_handle_entry(
             self,
-            entry_dn: str,
-            attributes: dict[str, object],
+            _entry_dn: str,
+            _attributes: dict[str, object],
         ) -> bool:
             """Check if this quirk should handle the entry.
 
             TODO: Add AD entry detection logic.
 
             Args:
-                entry_dn: Entry distinguished name
-                attributes: Entry attributes
+                _entry_dn: Entry distinguished name
+                _attributes: Entry _attributes
 
             Returns:
                 False (stub - not implemented yet)
 
             """
-            # Check for AD-specific DNs or attributes
+            # Check for AD-specific DNs or _attributes
             return False
 
         def process_entry(
             self,
-            entry_dn: str,
-            attributes: dict[str, object],
+            _entry_dn: str,
+            _attributes: dict[str, object],
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for AD format.
 
             TODO: Implement AD entry processing.
 
             Args:
-                entry_dn: Entry distinguished name
-                attributes: Entry attributes
+                _entry_dn: Entry distinguished name
+                _attributes: Entry _attributes
 
             Returns:
                 FlextResult with error (not implemented)
@@ -341,14 +341,14 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
 
         def convert_entry_to_rfc(
             self,
-            entry_data: FlextLdifTypes.Dict,
+            _entry_data: FlextLdifTypes.Dict,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert AD entry to RFC-compliant format.
 
             TODO: Implement AD entry→RFC conversion.
 
             Args:
-                entry_data: AD entry data
+                _entry_data: AD entry data
 
             Returns:
                 FlextResult with error (not implemented)

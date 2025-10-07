@@ -56,13 +56,13 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
     def model_post_init(self, _context: object, /) -> None:
         """Initialize Apache DS schema quirk stub."""
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:  # pragma: no cover
+    def can_handle_attribute(self, attr_definition: str) -> bool:
         """Check if this is an Apache DS attribute - STUB."""
         return False
 
     def parse_attribute(
         self,
-        attr_definition: str,
+        _attr_definition: str,
     ) -> FlextResult[FlextLdifTypes.Dict]:
         """Parse Apache DS attribute definition - STUB."""
         return FlextResult[FlextLdifTypes.Dict].fail(
@@ -70,13 +70,13 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
             "Contribute at: https://github.com/flext/flext-ldif"
         )
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:  # pragma: no cover
+    def can_handle_objectclass(self, oc_definition: str) -> bool:
         """Check if this is an Apache DS objectClass - STUB."""
         return False
 
     def parse_objectclass(
         self,
-        oc_definition: str,
+        _oc_definition: str,
     ) -> FlextResult[FlextLdifTypes.Dict]:
         """Parse Apache DS objectClass definition - STUB."""
         return FlextResult[FlextLdifTypes.Dict].fail(
@@ -86,7 +86,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
 
     def convert_attribute_to_rfc(
         self,
-        attr_data: FlextLdifTypes.Dict,
+        _attr_data: FlextLdifTypes.Dict,
     ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert ADS attribute to RFC-compliant format - STUB."""
         return FlextResult[FlextLdifTypes.Dict].fail(
@@ -96,7 +96,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
 
     def convert_objectclass_to_rfc(
         self,
-        oc_data: FlextLdifTypes.Dict,
+        _oc_data: FlextLdifTypes.Dict,
     ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert ADS objectClass to RFC-compliant format - STUB."""
         return FlextResult[FlextLdifTypes.Dict].fail(
@@ -121,7 +121,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
 
         def parse_acl(
             self,
-            acl_line: str,
+            _acl_line: str,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Parse Apache DS ACL definition - STUB."""
             return FlextResult[FlextLdifTypes.Dict].fail(
@@ -131,7 +131,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
 
         def convert_acl_to_rfc(
             self,
-            acl_data: FlextLdifTypes.Dict,
+            _acl_data: FlextLdifTypes.Dict,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert ADS ACL to RFC-compliant format - STUB."""
             return FlextResult[FlextLdifTypes.Dict].fail(
@@ -141,7 +141,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
 
         def convert_acl_from_rfc(
             self,
-            acl_data: FlextLdifTypes.Dict,
+            _acl_data: FlextLdifTypes.Dict,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert RFC ACL to ADS-specific format - STUB."""
             return FlextResult[FlextLdifTypes.Dict].fail(
@@ -162,16 +162,16 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
 
         def can_handle_entry(
             self,
-            entry_dn: str,
-            attributes: dict[str, object],
+            _entry_dn: str,
+            _attributes: dict[str, object],
         ) -> bool:
             """Check if this quirk should handle the entry - STUB."""
             return False
 
         def process_entry(
             self,
-            entry_dn: str,
-            attributes: dict[str, object],
+            _entry_dn: str,
+            _attributes: dict[str, object],
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for ADS format - STUB."""
             return FlextResult[FlextLdifTypes.Dict].fail(
@@ -181,7 +181,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
 
         def convert_entry_to_rfc(
             self,
-            entry_data: FlextLdifTypes.Dict,
+            _entry_data: FlextLdifTypes.Dict,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert ADS entry to RFC-compliant format - STUB."""
             return FlextResult[FlextLdifTypes.Dict].fail(

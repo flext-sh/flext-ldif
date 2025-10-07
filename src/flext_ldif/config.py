@@ -58,23 +58,23 @@ class FlextLdifConfig(FlextConfig):
     )
 
     ldif_skip_comments: bool = Field(
-        default=False,
+        default=FlextLdifConstants.ConfigDefaults.LDIF_SKIP_COMMENTS,
         description="Skip comment lines during parsing",
     )
 
     ldif_validate_dn_format: bool = Field(
-        default=True,
+        default=FlextLdifConstants.ConfigDefaults.LDIF_VALIDATE_DN_FORMAT,
         description="Validate DN format during parsing",
     )
 
     ldif_strict_validation: bool = Field(
-        default=True,
+        default=FlextLdifConstants.ConfigDefaults.LDIF_STRICT_VALIDATION,
         description="Enable strict LDIF validation",
     )
 
     # Processing Configuration using FlextLdifConstants for defaults
     ldif_max_entries: int = Field(
-        default=1000000,
+        default=FlextLdifConstants.ConfigDefaults.LDIF_MAX_ENTRIES,
         ge=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
         le=10000000,
         description="Maximum number of entries to process",
@@ -98,17 +98,17 @@ class FlextLdifConfig(FlextConfig):
     memory_limit_mb: int = Field(
         default=FlextLdifConstants.Processing.MIN_MEMORY_MB,
         ge=FlextLdifConstants.Processing.MIN_MEMORY_MB,
-        le=8192,
+        le=FlextLdifConstants.Processing.MAX_MEMORY_MB,
         description="Memory limit in MB",
     )
 
     enable_performance_optimizations: bool = Field(
-        default=True,
+        default=FlextLdifConstants.ConfigDefaults.ENABLE_PERFORMANCE_OPTIMIZATIONS,
         description="Enable performance optimizations",
     )
 
     enable_parallel_processing: bool = Field(
-        default=True,
+        default=FlextLdifConstants.ConfigDefaults.ENABLE_PARALLEL_PROCESSING,
         description="Enable parallel processing",
     )
 
@@ -120,7 +120,7 @@ class FlextLdifConfig(FlextConfig):
 
     # Analytics Configuration
     ldif_enable_analytics: bool = Field(
-        default=True,
+        default=FlextLdifConstants.ConfigDefaults.LDIF_ENABLE_ANALYTICS,
         description="Enable LDIF analytics collection",
     )
 
@@ -132,18 +132,18 @@ class FlextLdifConfig(FlextConfig):
     )
 
     analytics_detail_level: str = Field(
-        default="medium",
+        default=FlextLdifConstants.DictKeys.MEDIUM,
         description="Analytics detail level (low, medium, high)",
     )
 
     # Additional LDIF processing configuration
     ldif_line_separator: str = Field(
-        default="\n",
+        default=FlextLdifConstants.ConfigDefaults.LDIF_LINE_SEPARATOR,
         description="Line separator for LDIF output",
     )
 
     ldif_version_string: str = Field(
-        default="version: 1",
+        default=FlextLdifConstants.ConfigDefaults.LDIF_VERSION_STRING,
         description="LDIF version string",
     )
 
@@ -155,31 +155,31 @@ class FlextLdifConfig(FlextConfig):
     )
 
     ldif_fail_on_warnings: bool = Field(
-        default=False,
+        default=FlextLdifConstants.ConfigDefaults.LDIF_FAIL_ON_WARNINGS,
         description="Fail processing on warnings",
     )
 
     ldif_analytics_sample_rate: float = Field(
-        default=1.0,
+        default=FlextLdifConstants.ConfigDefaults.LDIF_ANALYTICS_SAMPLE_RATE,
         ge=0.0,
         le=1.0,
         description="Analytics sampling rate (0.0 to 1.0)",
     )
 
     ldif_analytics_max_entries: int = Field(
-        default=10000,
+        default=FlextLdifConstants.ConfigDefaults.LDIF_ANALYTICS_MAX_ENTRIES,
         ge=1,
         le=100000,
         description="Maximum entries for analytics processing",
     )
 
     ldif_default_server_type: str = Field(
-        default="rfc",
+        default=FlextLdifConstants.ServerTypes.RFC,
         description="Default server type for LDIF processing",
     )
 
     ldif_server_specific_quirks: bool = Field(
-        default=True,
+        default=FlextLdifConstants.ConfigDefaults.LDIF_SERVER_SPECIFIC_QUIRKS,
         description="Enable server-specific quirk handling",
     )
 
@@ -193,30 +193,30 @@ class FlextLdifConfig(FlextConfig):
     )
 
     strict_rfc_compliance: bool = Field(
-        default=True,
+        default=FlextLdifConstants.ConfigDefaults.STRICT_RFC_COMPLIANCE,
         description="Enable strict RFC 2849 compliance",
     )
 
     # Server Configuration using FlextLdifConstants for defaults
     server_type: FlextLdifTypes.ServerType = Field(
-        default="generic",
+        default=FlextLdifConstants.ServerTypes.GENERIC,
         description="Target LDAP server type",
     )
 
     # Error Handling Configuration
     error_recovery_mode: str = Field(
-        default="continue",
+        default=FlextLdifConstants.ConfigDefaults.ERROR_RECOVERY_MODE_CONTINUE,
         description="Error recovery mode (continue, stop, skip)",
     )
 
     # Development and Debug Configuration
     debug_mode: bool = Field(
-        default=False,
+        default=FlextLdifConstants.ConfigDefaults.DEBUG_MODE,
         description="Enable debug mode",
     )
 
     verbose_logging: bool = Field(
-        default=False,
+        default=FlextLdifConstants.ConfigDefaults.VERBOSE_LOGGING,
         description="Enable verbose logging",
     )
 
@@ -250,7 +250,11 @@ class FlextLdifConfig(FlextConfig):
     @classmethod
     def validate_validation_level(cls, v: str) -> str:
         """Validate validation level."""
-        valid_levels = {"strict", "moderate", "lenient"}
+        valid_levels = {
+            FlextLdifConstants.RfcCompliance.STRICT,
+            FlextLdifConstants.RfcCompliance.MODERATE,
+            FlextLdifConstants.RfcCompliance.LENIENT,
+        }
         if v not in valid_levels:
             msg = f"validation_level must be one of: {', '.join(valid_levels)}"
             raise ValueError(msg)
@@ -277,7 +281,11 @@ class FlextLdifConfig(FlextConfig):
     @classmethod
     def validate_analytics_detail_level(cls, v: str) -> str:
         """Validate analytics detail level."""
-        valid_levels = {"low", "medium", "high"}
+        valid_levels = {
+            FlextLdifConstants.ConfigDefaults.ANALYTICS_DETAIL_LEVEL_LOW,
+            FlextLdifConstants.DictKeys.MEDIUM,
+            FlextLdifConstants.DictKeys.HIGH,
+        }
         if v not in valid_levels:
             msg = f"analytics_detail_level must be one of: {', '.join(valid_levels)}"
             raise ValueError(msg)
@@ -287,7 +295,11 @@ class FlextLdifConfig(FlextConfig):
     @classmethod
     def validate_error_recovery_mode(cls, v: str) -> str:
         """Validate error recovery mode."""
-        valid_modes = {"continue", "stop", "skip"}
+        valid_modes = {
+            FlextLdifConstants.ConfigDefaults.ERROR_RECOVERY_MODE_CONTINUE,
+            FlextLdifConstants.DictKeys.STOP,
+            FlextLdifConstants.DictKeys.SKIP,
+        }
         if v not in valid_modes:
             msg = f"error_recovery_mode must be one of: {', '.join(valid_modes)}"
             raise ValueError(msg)
@@ -354,8 +366,12 @@ class FlextLdifConfig(FlextConfig):
 
         """
         # Server-specific encoding preferences
-        if self.server_type == "active_directory":
-            return "utf-16" if self.ldif_encoding == "utf-8" else self.ldif_encoding
+        if self.server_type == FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY:
+            return (
+                FlextLdifConstants.Encoding.UTF16
+                if self.ldif_encoding == FlextLdifConstants.Encoding.UTF8
+                else self.ldif_encoding
+            )
         return self.ldif_encoding
 
     def get_effective_workers(self, entry_count: int) -> int:

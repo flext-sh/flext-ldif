@@ -14,6 +14,7 @@ from typing import ClassVar
 from flext_core import FlextResult
 from pydantic import Field
 
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.base import (
     FlextLdifQuirksBaseAclQuirk,
@@ -39,7 +40,9 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
     """
 
-    server_type: str = Field(default="oud", description="Oracle OUD server type")
+    server_type: str = Field(
+        default=FlextLdifConstants.ServerTypes.OUD, description="Oracle OUD server type"
+    )
     priority: int = Field(
         default=10, description="High priority for OUD-specific parsing"
     )
@@ -92,7 +95,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 )
                 return FlextResult[FlextLdifTypes.Dict].ok({
                     **base_data,
-                    "server_type": "oud",
+                    FlextLdifConstants.DictKeys.SERVER_TYPE: "oud",
                 })
 
             return FlextResult[FlextLdifTypes.Dict].fail(
@@ -140,7 +143,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 base_data = oc_obj.model_dump() if hasattr(oc_obj, "model_dump") else {}
                 return FlextResult[FlextLdifTypes.Dict].ok({
                     **base_data,
-                    "server_type": "oud",
+                    FlextLdifConstants.DictKeys.SERVER_TYPE: "oud",
                 })
 
             return FlextResult[FlextLdifTypes.Dict].fail(
@@ -169,11 +172,11 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         try:
             # OUD attributes are RFC-compliant
             rfc_data = {
-                "oid": attr_data.get("oid"),
-                "name": attr_data.get("name"),
-                "desc": attr_data.get("desc"),
-                "syntax": attr_data.get("syntax"),
-                "equality": attr_data.get("equality"),
+                FlextLdifConstants.DictKeys.OID: attr_data.get("oid"),
+                FlextLdifConstants.DictKeys.NAME: attr_data.get("name"),
+                FlextLdifConstants.DictKeys.DESC: attr_data.get("desc"),
+                FlextLdifConstants.DictKeys.SYNTAX: attr_data.get("syntax"),
+                FlextLdifConstants.DictKeys.EQUALITY: attr_data.get("equality"),
             }
 
             return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
@@ -200,10 +203,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         try:
             # OUD objectClasses are RFC-compliant
             rfc_data = {
-                "oid": oc_data.get("oid"),
-                "name": oc_data.get("name"),
-                "desc": oc_data.get("desc"),
-                "sup": oc_data.get("sup"),
+                FlextLdifConstants.DictKeys.OID: oc_data.get("oid"),
+                FlextLdifConstants.DictKeys.NAME: oc_data.get("name"),
+                FlextLdifConstants.DictKeys.DESC: oc_data.get("desc"),
+                FlextLdifConstants.DictKeys.SUP: oc_data.get("sup"),
                 "kind": oc_data.get("kind"),
                 "must": oc_data.get("must"),
                 "may": oc_data.get("may"),
@@ -230,7 +233,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
         """
 
-        server_type: str = Field(default="oud", description="Oracle OUD server type")
+        server_type: str = Field(
+            default=FlextLdifConstants.ServerTypes.OUD,
+            description="Oracle OUD server type",
+        )
         priority: int = Field(
             default=10, description="High priority for OUD ACL parsing"
         )
@@ -264,13 +270,15 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             try:
                 # OUD ACL format is different from OID
                 # Parse basic ACL structure
-                oud_acl_data: FlextLdifTypes.Dict = {
-                    "type": "oud_acl",
-                    "raw": acl_line,
-                    "format": "ds-cfg" if acl_line.startswith("ds-cfg-") else "aci",
+                oudacl_data: FlextLdifTypes.Dict = {
+                    FlextLdifConstants.DictKeys.TYPE: "oud_acl",
+                    FlextLdifConstants.DictKeys.RAW: acl_line,
+                    FlextLdifConstants.DictKeys.FORMAT: "ds-cfg"
+                    if acl_line.startswith("ds-cfg-")
+                    else FlextLdifConstants.AclFormats.ACI,
                 }
 
-                return FlextResult[FlextLdifTypes.Dict].ok(oud_acl_data)
+                return FlextResult[FlextLdifTypes.Dict].ok(oudacl_data)
 
             except Exception as e:
                 return FlextResult[FlextLdifTypes.Dict].fail(
@@ -292,10 +300,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             try:
                 # OUD ACLs don't have direct RFC equivalent
                 rfc_data: FlextLdifTypes.Dict = {
-                    "type": "acl",
-                    "format": "rfc_generic",
-                    "source_format": "oracle_oud",
-                    "data": acl_data,
+                    FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
+                    FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
+                    FlextLdifConstants.DictKeys.SOURCE_FORMAT: FlextLdifConstants.AclFormats.OUD_ACL,
+                    FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
 
                 return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
@@ -320,9 +328,9 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             try:
                 # Convert RFC ACL to Oracle OUD format
                 oud_data: FlextLdifTypes.Dict = {
-                    "format": "oracle_oud",
-                    "target_format": "ds-cfg",
-                    "data": acl_data,
+                    FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.OUD_ACL,
+                    FlextLdifConstants.DictKeys.TARGET_FORMAT: "ds-cfg",
+                    FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
 
                 return FlextResult[FlextLdifTypes.Dict].ok(oud_data)
@@ -347,7 +355,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
         """
 
-        server_type: str = Field(default="oud", description="Oracle OUD server type")
+        server_type: str = Field(
+            default=FlextLdifConstants.ServerTypes.OUD,
+            description="Oracle OUD server type",
+        )
         priority: int = Field(
             default=10, description="High priority for OUD entry processing"
         )
@@ -356,13 +367,13 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             """Initialize OUD entry quirk."""
 
         def can_handle_entry(
-            self, entry_dn: str, attributes: dict[str, object]
+            self, _entry_dn: str, _attributes: dict[str, object]
         ) -> bool:
             """Check if this quirk should handle the entry.
 
             Args:
-                entry_dn: Entry distinguished name
-                attributes: Entry attributes
+                _entry_dn: Entry distinguished name
+                _attributes: Entry _attributes
 
             Returns:
                 True if this is an OUD-specific entry
@@ -370,18 +381,18 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             """
             # Handle all entries for OUD target
             # Can add specific OUD entry detection logic here
-            _ = entry_dn
-            _ = attributes
+            _ = _entry_dn
+            _ = _attributes
             return True
 
         def process_entry(
-            self, entry_dn: str, attributes: dict[str, object]
+            self, _entry_dn: str, _attributes: dict[str, object]
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for OUD format.
 
             Args:
-                entry_dn: Entry distinguished name
-                attributes: Entry attributes
+                _entry_dn: Entry distinguished name
+                _attributes: Entry _attributes
 
             Returns:
                 FlextResult with processed entry data
@@ -391,10 +402,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 # OUD entries are RFC-compliant
                 # Add OUD-specific processing if needed
                 processed_entry: FlextLdifTypes.Dict = {
-                    "dn": entry_dn,
-                    "server_type": "oud",
+                    "dn": _entry_dn,
+                    FlextLdifConstants.DictKeys.SERVER_TYPE: "oud",
                 }
-                processed_entry.update(attributes)
+                processed_entry.update(_attributes)
 
                 return FlextResult[FlextLdifTypes.Dict].ok(processed_entry)
 
@@ -404,12 +415,12 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 )
 
         def convert_entry_to_rfc(
-            self, entry_data: FlextLdifTypes.Dict
+            self, _entry_data: FlextLdifTypes.Dict
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert server-specific entry to RFC-compliant format.
 
             Args:
-                entry_data: Server-specific entry data
+                _entry_data: Server-specific entry data
 
             Returns:
                 FlextResult with RFC-compliant entry data
@@ -417,7 +428,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             """
             try:
                 # OUD entries are already RFC-compliant
-                return FlextResult[FlextLdifTypes.Dict].ok(entry_data)
+                return FlextResult[FlextLdifTypes.Dict].ok(_entry_data)
             except Exception as e:
                 return FlextResult[FlextLdifTypes.Dict].fail(
                     f"OUD entry→RFC conversion failed: {e}"

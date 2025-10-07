@@ -169,10 +169,10 @@ class TestFlextLdifValidationMixin:
         assert result.is_failure
 
         # Invalid values - non-string value
-        result =
-            FlextLdifMixins.ValidationMixin.validate_attribute_values(
-                cast("Sequence[str]", [123])
-            )
+        result = FlextLdifMixins.ValidationMixin.validate_attribute_values(
+            cast("Sequence[str]", [123])
+        )
+        assert result.is_failure
 
     def test_validate_url_format(self) -> None:
         """Test validating URL format."""
@@ -185,15 +185,16 @@ class TestFlextLdifValidationMixin:
 
         for url in valid_urls:
             result = FlextLdifMixins.ValidationMixin.validate_url_format(url)
-            assert result == url
+            assert result.is_success
+            assert result.unwrap() == url
 
         # Invalid URL - empty
-        with pytest.raises(ValueError):
-            FlextLdifMixins.ValidationMixin.validate_url_format("")
+        result = FlextLdifMixins.ValidationMixin.validate_url_format("")
+        assert result.is_failure
 
         # Invalid URL - bad format
-        with pytest.raises(ValueError):
-            FlextLdifMixins.ValidationMixin.validate_url_format("not-a-url")
+        result = FlextLdifMixins.ValidationMixin.validate_url_format("not-a-url")
+        assert result.is_failure
 
 
 class TestFlextLdifProcessingMixin:
@@ -516,16 +517,18 @@ class TestFlextLdifMixinsIntegration:
         assert analytics_result["group"] == 1
 
         # Use validation mixin
-        valid_dn = FlextLdifMixins.ValidationMixin.validate_dn_format(
+        valid_dn_result = FlextLdifMixins.ValidationMixin.validate_dn_format(
             "cn=test,dc=example,dc=com"
         )
-        assert valid_dn == "cn=test,dc=example,dc=com"
+        assert valid_dn_result.is_success
+        assert valid_dn_result.unwrap() == "cn=test,dc=example,dc=com"
 
         # Use processing mixin
-        normalized = FlextLdifMixins.ProcessingMixin.normalize_dn_components(
+        normalized_result = FlextLdifMixins.ProcessingMixin.normalize_dn_components(
             "CN=Test,DC=Example,DC=Com"
         )
-        assert normalized == "cn=Test,dc=Example,dc=Com"
+        assert normalized_result.is_success
+        assert normalized_result.unwrap() == "cn=Test,dc=Example,dc=Com"
 
     def test_instance_mixins_working_together(self) -> None:
         """Test instance mixins working together."""
@@ -557,9 +560,11 @@ class TestFlextLdifMixinsIntegration:
         dn_line = next((line for line in lines if line.startswith("dn:")), None)
         if dn_line:
             dn_value = dn_line[3:].strip()  # Remove 'dn:' prefix
-            normalized_dn = FlextLdifMixins.ProcessingMixin.normalize_dn_components(
+            normalized_result = FlextLdifMixins.ProcessingMixin.normalize_dn_components(
                 dn_value
             )
+            assert normalized_result.is_success
+            normalized_dn = normalized_result.unwrap()
             assert isinstance(normalized_dn, str)
 
         # Use validation mixin to validate DN format
@@ -568,7 +573,9 @@ class TestFlextLdifMixinsIntegration:
         dn_line = next((line for line in lines if line.startswith("dn:")), None)
         if dn_line:
             dn_value = dn_line[3:].strip()  # Remove 'dn:' prefix
-            valid_dn = FlextLdifMixins.ValidationMixin.validate_dn_format(dn_value)
+            valid_result = FlextLdifMixins.ValidationMixin.validate_dn_format(dn_value)
+            assert valid_result.is_success
+            valid_dn = valid_result.unwrap()
             assert valid_dn == dn_value
 
         # Use analytics mixin to analyze content

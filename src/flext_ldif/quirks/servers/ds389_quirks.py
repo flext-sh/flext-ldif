@@ -22,6 +22,7 @@ from __future__ import annotations
 from flext_core import FlextResult
 from pydantic import Field
 
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.base import (
     FlextLdifQuirksBaseAclQuirk,
     FlextLdifQuirksBaseEntryQuirk,
@@ -33,7 +34,10 @@ from flext_ldif.typings import FlextLdifTypes
 class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
     """389 Directory Server schema quirk - STUB."""
 
-    server_type: str = Field(default="389ds", description="389 Directory Server type")
+    server_type: str = Field(
+        default=FlextLdifConstants.ServerTypes.DS_389.upper(),
+        description="389 Directory Server type",
+    )
     priority: int = Field(default=15, description="Standard priority for 389DS parsing")
 
     def model_post_init(self, _context: object, /) -> None:
@@ -45,7 +49,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
 
     def parse_attribute(
         self,
-        attr_definition: str,
+        _attr_definition: str,
     ) -> FlextResult[FlextLdifTypes.Dict]:
         """Parse 389 DS attribute definition - STUB."""
         return FlextResult[FlextLdifTypes.Dict].fail(
@@ -59,7 +63,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
 
     def parse_objectclass(
         self,
-        oc_definition: str,
+        _oc_definition: str,
     ) -> FlextResult[FlextLdifTypes.Dict]:
         """Parse 389 DS objectClass definition - STUB."""
         return FlextResult[FlextLdifTypes.Dict].fail(
@@ -69,7 +73,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
 
     def convert_attribute_to_rfc(
         self,
-        attr_data: FlextLdifTypes.Dict,
+        _attr_data: FlextLdifTypes.Dict,
     ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert 389DS attribute to RFC-compliant format - STUB."""
         return FlextResult[FlextLdifTypes.Dict].fail(
@@ -79,7 +83,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
 
     def convert_objectclass_to_rfc(
         self,
-        oc_data: FlextLdifTypes.Dict,
+        _oc_data: FlextLdifTypes.Dict,
     ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert 389DS objectClass to RFC-compliant format - STUB."""
         return FlextResult[FlextLdifTypes.Dict].fail(
@@ -104,7 +108,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
 
         def parse_acl(
             self,
-            acl_line: str,
+            _acl_line: str,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Parse 389 DS ACL definition - STUB."""
             return FlextResult[FlextLdifTypes.Dict].fail(
@@ -114,7 +118,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
 
         def convert_acl_to_rfc(
             self,
-            acl_data: FlextLdifTypes.Dict,
+            _acl_data: FlextLdifTypes.Dict,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert 389DS ACL to RFC-compliant format - STUB."""
             return FlextResult[FlextLdifTypes.Dict].fail(
@@ -124,7 +128,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
 
         def convert_acl_from_rfc(
             self,
-            acl_data: FlextLdifTypes.Dict,
+            _acl_data: FlextLdifTypes.Dict,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert RFC ACL to 389DS-specific format - STUB."""
             return FlextResult[FlextLdifTypes.Dict].fail(
@@ -147,16 +151,16 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
 
         def can_handle_entry(
             self,
-            entry_dn: str,
-            attributes: dict[str, object],
+            _entry_dn: str,
+            _attributes: dict[str, object],
         ) -> bool:
             """Check if this quirk should handle the entry - STUB."""
             return False
 
         def process_entry(
             self,
-            entry_dn: str,
-            attributes: dict[str, object],
+            _entry_dn: str,
+            _attributes: dict[str, object],
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for 389DS format - STUB."""
             return FlextResult[FlextLdifTypes.Dict].fail(
@@ -166,7 +170,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
 
         def convert_entry_to_rfc(
             self,
-            entry_data: FlextLdifTypes.Dict,
+            _entry_data: FlextLdifTypes.Dict,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert 389DS entry to RFC-compliant format - STUB."""
             return FlextResult[FlextLdifTypes.Dict].fail(

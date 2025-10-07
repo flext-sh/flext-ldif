@@ -50,7 +50,11 @@ class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
 
         if object_class in schema.objectclasses:
             oc_def = schema.objectclasses[object_class]
-            superior: object = oc_def.get("superior", [])
+            if isinstance(oc_def, dict):
+                superior: object = oc_def.get("superior", [])
+            else:
+                # Assume it's a SchemaObjectClass model
+                superior = getattr(oc_def, "superior", [])
             if isinstance(superior, str):
                 hierarchy.append(superior)
             elif isinstance(superior, list):
@@ -78,7 +82,11 @@ class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
         for oc_name in object_classes:
             if oc_name in schema.objectclasses:
                 oc_def = schema.objectclasses[oc_name]
-                req_attrs: object = oc_def.get("required_attributes", [])
+                if isinstance(oc_def, dict):
+                    req_attrs: object = oc_def.get("required_attributes", [])
+                else:
+                    # Assume it's a SchemaObjectClass model
+                    req_attrs = getattr(oc_def, "required_attributes", [])
                 if isinstance(req_attrs, list):
                     required_attrs.update(req_attrs)
 
@@ -104,7 +112,11 @@ class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
         for oc_name in object_classes:
             if oc_name in schema.objectclasses:
                 oc_def = schema.objectclasses[oc_name]
-                opt_attrs: object = oc_def.get("optional_attributes", [])
+                if isinstance(oc_def, dict):
+                    opt_attrs: object = oc_def.get("optional_attributes", [])
+                else:
+                    # Assume it's a SchemaObjectClass model
+                    opt_attrs = getattr(oc_def, "optional_attributes", [])
                 if isinstance(opt_attrs, list):
                     optional_attrs.update(opt_attrs)
 
@@ -131,7 +143,12 @@ class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
         for oc_name in object_classes:
             if oc_name in schema.objectclasses:
                 oc_def = schema.objectclasses[oc_name]
-                if oc_def.get("structural", False):
+                if isinstance(oc_def, dict):
+                    is_structural = oc_def.get("structural", False)
+                else:
+                    # Assume it's a SchemaObjectClass model
+                    is_structural = getattr(oc_def, "structural", False)
+                if is_structural:
                     structural_count += 1
 
         if structural_count > 1:

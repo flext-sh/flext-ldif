@@ -193,6 +193,12 @@
 [tool.ruff]
     extend = "../ruff-shared.toml"
 
+    [tool.ruff.lint]
+        ignore = [
+            "ARG002",  # Unused method arguments in protocol stub implementations
+            "S110",    # try-except-pass in test cleanup code is intentional
+        ]
+
     [tool.ruff.lint.isort]
         known-first-party = [
             "flext_ldif",

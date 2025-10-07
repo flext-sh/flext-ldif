@@ -67,8 +67,8 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
         # Migrate between servers
         migration_result = ldif.migrate(
             entries=entries,
-            from_server="oid",
-            to_server="oud"
+            from_server=FlextLdifConstants.ServerTypes.OID,
+            to_server=FlextLdifConstants.ServerTypes.OUD
         )
 
         # Access infrastructure
@@ -136,21 +136,22 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
         # This reduces memory footprint for unused services
 
         # Demonstrate inherited logger (no manual instantiation needed!)
-        self.logger.info(
-            "FlextLdif initialized with inherited infrastructure",
-            extra={
-                "service_type": "LDIF Processing Facade",
-                "ldif_features": [
-                    "rfc_2849_parsing",
-                    "rfc_4512_compliance",
-                    "server_quirks",
-                    "generic_migration",
-                    "schema_validation",
-                    "acl_processing",
-                    "entry_building",
-                ],
-            },
-        )
+        if self.logger:
+            self.logger.info(
+                "FlextLdif initialized with inherited infrastructure",
+                extra={
+                    "service_type": "LDIF Processing Facade",
+                    "ldif_features": [
+                        "rfc_2849_parsing",
+                        "rfc_4512_compliance",
+                        "server_quirks",
+                        "generic_migration",
+                        "schema_validation",
+                        "acl_processing",
+                        "entry_building",
+                    ],
+                },
+            )
 
     @override
     def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
@@ -182,7 +183,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
             result = ldif.parse(Path("data.ldif"))
 
             # Parse with server-specific quirks
-            result = ldif.parse(Path("oid.ldif"), server_type="oid")
+            result = ldif.parse(Path("oid.ldif"), server_type=FlextLdifConstants.ServerTypes.OID)
 
         """
         return self._client.parse_ldif(source, server_type)
@@ -262,8 +263,8 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
             result = ldif.migrate(
                 input_dir=Path("data/oid"),
                 output_dir=Path("data/oud"),
-                from_server="oid",
-                to_server="oud",
+                from_server=FlextLdifConstants.ServerTypes.OID,
+                to_server=FlextLdifConstants.ServerTypes.OUD,
                 process_schema=True,
                 process_entries=True
             )
@@ -450,11 +451,11 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
         Example:
             result = api.build_custom_entry(
                 dn="cn=test,dc=example,dc=com",
-                attributes={"objectClass": ["top", "person"], "cn": ["test"]}
+                attributes={FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "person"], "cn": ["test"]}
             )
 
         """
-        objectclasses = attributes.get("objectClass", ["top"])
+        objectclasses = attributes.get(FlextLdifConstants.DictKeys.OBJECTCLASS, ["top"])
         return self._entry_builder.build_custom_entry(dn, objectclasses, attributes)
 
     def entry_to_dict(
@@ -592,13 +593,13 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
     def validate_with_schema(
         self,
         entries: list[FlextLdifModels.Entry],
-        schema: dict[str, object],  # noqa: ARG002
+        schema: dict[str, object],
     ) -> FlextResult[FlextLdifModels.LdifValidationResult]:
         """Validate entries against schema definition.
 
         Args:
             entries: List of entries to validate
-            schema: Schema definition to validate against
+            schema: Schema definition to validate against (not yet implemented)
 
         Returns:
             FlextResult containing validation report
@@ -644,14 +645,14 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
 
     def evaluate_acl_rules(
         self,
-        acls: list[FlextLdifModels.UnifiedAcl],  # noqa: ARG002
-        context: FlextLdifTypes.Dict | None = None,  # noqa: ARG002
+        acls: list[FlextLdifModels.UnifiedAcl],
+        context: FlextLdifTypes.Dict | None = None,
     ) -> FlextResult[bool]:
         """Evaluate ACL rules and return evaluation result.
 
         Args:
-            acls: List of ACL rules to evaluate
-            context: Evaluation context (optional, uses empty dict if not provided)
+            acls: List of ACL rules to evaluate (not yet implemented)
+            context: Evaluation context (not yet implemented)
 
         Returns:
             FlextResult containing evaluation result (True if allowed)
@@ -676,13 +677,13 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
 
     def process_batch(
         self,
-        processor_name: str,  # noqa: ARG002
+        processor_name: str,
         entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifTypes.Dict]]:
         """Process entries in batch mode using FlextProcessors.
 
         Args:
-            processor_name: Name of processor to use
+            processor_name: Name of processor to use (not yet implemented)
             entries: List of entries to process
 
         Returns:
@@ -704,13 +705,13 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
 
     def process_parallel(
         self,
-        processor_name: str,  # noqa: ARG002
+        processor_name: str,
         entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifTypes.Dict]]:
         """Process entries in parallel mode using FlextProcessors.
 
         Args:
-            processor_name: Name of processor to use
+            processor_name: Name of processor to use (not yet implemented)
             entries: List of entries to process
 
         Returns:

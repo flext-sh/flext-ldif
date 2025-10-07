@@ -33,6 +33,7 @@ if TYPE_CHECKING:
     from flext_ldif.config import FlextLdifConfig
 
     FlextServiceType = type[FlextService[FlextLdifConfig]]
+from flext_ldif.constants import FlextLdifConstants
 
 
 class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
@@ -54,19 +55,19 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
 
     Example usage:
         params = {
-            "input_dir": "data/input",
-            "output_dir": "data/output",
-            "process_schema": True,
-            "process_entries": True,
+            FlextLdifConstants.DictKeys.INPUT_DIR: "data/input",
+            FlextLdifConstants.DictKeys.OUTPUT_DIR: "data/output",
+            FlextLdifConstants.DictKeys.PROCESS_SCHEMA: True,
+            FlextLdifConstants.DictKeys.PROCESS_ENTRIES: True,
         }
         pipeline = FlextLdifMigrationPipeline(
             params=params,
-            source_server_type="oid",
-            target_server_type="oud"
+            source_server_type=FlextLdifConstants.ServerTypes.OID,
+            target_server_type=FlextLdifConstants.ServerTypes.OUD
         )
         result = pipeline.execute()
         if result.is_success:
-            stats = result.value["stats"]
+            stats = result.value[FlextLdifConstants.DictKeys.STATS]
             print(f"Migrated {stats['total_entries']} entries")
     """
 
@@ -108,17 +109,19 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
         )
         self._writer_class: type[FlextLdifRfcLdifWriter] = FlextLdifRfcLdifWriter
 
-        self.logger.info(
-            f"Using RFC-first parsers with {source_server_type} → {target_server_type} quirks"
-        )
+        if self.logger:
+            self.logger.info(
+                f"Using RFC-first parsers with {source_server_type} → {target_server_type} quirks"
+            )
 
-        self.logger.info(
-            "Initialized LDIF migration pipeline",
-            extra={
-                "source_server": source_server_type,
-                "target_server": target_server_type,
-            },
-        )
+        if self.logger:
+            self.logger.info(
+                "Initialized LDIF migration pipeline",
+                extra={
+                    FlextLdifConstants.DictKeys.SOURCE_SERVER: source_server_type,
+                    FlextLdifConstants.DictKeys.TARGET_SERVER: target_server_type,
+                },
+            )
 
     def _register_default_quirks(self) -> None:
         """Register default quirks for known server types.
@@ -126,40 +129,58 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
         Registers OID and OUD quirks if source or target uses them.
         """
         # Register OID quirks if needed
-        if self._source_server_type == "oid" or self._target_server_type == "oid":
-            existing_oid_schema = self._quirk_registry.get_schema_quirks("oid")
+        if FlextLdifConstants.ServerTypes.OID in {
+            self._source_server_type,
+            self._target_server_type,
+        }:
+            existing_oid_schema = self._quirk_registry.get_schema_quirks(
+                FlextLdifConstants.ServerTypes.OID
+            )
             if not existing_oid_schema:
                 # Register OID schema quirk
                 oid_schema_quirk = FlextLdifQuirksServersOid()
                 self._quirk_registry.register_schema_quirk(oid_schema_quirk)
 
-            existing_oid_acl = self._quirk_registry.get_acl_quirks("oid")
+            existing_oid_acl = self._quirk_registry.get_acl_quirks(
+                FlextLdifConstants.ServerTypes.OID
+            )
             if not existing_oid_acl:
                 # Register OID ACL quirk (nested class access)
                 oid_acl_quirk = FlextLdifQuirksServersOid.AclQuirk()
                 self._quirk_registry.register_acl_quirk(oid_acl_quirk)
 
-            existing_oid_entry = self._quirk_registry.get_entry_quirks("oid")
+            existing_oid_entry = self._quirk_registry.get_entry_quirks(
+                FlextLdifConstants.ServerTypes.OID
+            )
             if not existing_oid_entry:
                 # Register OID entry quirk (nested class access) - RFC-First Architecture
                 oid_entry_quirk = FlextLdifQuirksServersOid.EntryQuirk()
                 self._quirk_registry.register_entry_quirk(oid_entry_quirk)
 
         # Register OUD quirks if needed
-        if self._source_server_type == "oud" or self._target_server_type == "oud":
-            existing_oud_schema = self._quirk_registry.get_schema_quirks("oud")
+        if FlextLdifConstants.ServerTypes.OUD in {
+            self._source_server_type,
+            self._target_server_type,
+        }:
+            existing_oud_schema = self._quirk_registry.get_schema_quirks(
+                FlextLdifConstants.ServerTypes.OUD
+            )
             if not existing_oud_schema:
                 # Register OUD schema quirk
                 oud_schema_quirk = FlextLdifQuirksServersOud()
                 self._quirk_registry.register_schema_quirk(oud_schema_quirk)
 
-            existing_oud_acl = self._quirk_registry.get_acl_quirks("oud")
+            existing_oud_acl = self._quirk_registry.get_acl_quirks(
+                FlextLdifConstants.ServerTypes.OUD
+            )
             if not existing_oud_acl:
                 # Register OUD ACL quirk (nested class access)
                 oud_acl_quirk = FlextLdifQuirksServersOud.AclQuirk()
                 self._quirk_registry.register_acl_quirk(oud_acl_quirk)
 
-            existing_oud_entry = self._quirk_registry.get_entry_quirks("oud")
+            existing_oud_entry = self._quirk_registry.get_entry_quirks(
+                FlextLdifConstants.ServerTypes.OUD
+            )
             if not existing_oud_entry:
                 # Register OUD entry quirk (nested class access)
                 oud_entry_quirk = FlextLdifQuirksServersOud.EntryQuirk()
@@ -197,14 +218,15 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
             if not entries:
                 return FlextResult[list[object]].ok([])
 
-            self.logger.info(
-                f"Starting entry migration: {source_format} → {target_format}",
-                extra={
-                    "total_entries": len(entries),
-                    "source_format": source_format,
-                    "target_format": target_format,
-                },
-            )
+            if self.logger:
+                self.logger.info(
+                    f"Starting entry migration: {source_format} → {target_format}",
+                    extra={
+                        FlextLdifConstants.DictKeys.TOTAL_ENTRIES: len(entries),
+                        FlextLdifConstants.DictKeys.SOURCE_FORMAT: source_format,
+                        FlextLdifConstants.DictKeys.TARGET_FORMAT: target_format,
+                    },
+                )
 
             # Get source and target quirks from registry
             source_entry_quirks = self._quirk_registry.get_entry_quirks(source_format)
@@ -220,15 +242,18 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
                 if source_entry_quirks:
                     for quirk in source_entry_quirks:
                         entry_dn = str(normalized_entry.get("dn", ""))
-                        entry_attrs = normalized_entry.get("attributes", {})
+                        entry_attrs = normalized_entry.get(
+                            FlextLdifConstants.DictKeys.ATTRIBUTES, {}
+                        )
                         if not isinstance(entry_attrs, dict):
                             entry_attrs = {}
 
                         if quirk.can_handle_entry(entry_dn, entry_attrs):
-                            self.logger.debug(
-                                f"Applying {quirk.server_type} source quirk",
-                                extra={"dn": entry_dn},
-                            )
+                            if self.logger:
+                                self.logger.debug(
+                                    f"Applying {quirk.server_type} source quirk",
+                                    extra={"dn": entry_dn},
+                                )
                             convert_result = quirk.convert_entry_to_rfc(
                                 normalized_entry
                             )
@@ -242,15 +267,18 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
                 if target_entry_quirks:
                     for quirk in target_entry_quirks:
                         entry_dn = str(target_entry.get("dn", ""))
-                        entry_attrs = target_entry.get("attributes", {})
+                        entry_attrs = target_entry.get(
+                            FlextLdifConstants.DictKeys.ATTRIBUTES, {}
+                        )
                         if not isinstance(entry_attrs, dict):
                             entry_attrs = {}
 
                         if quirk.can_handle_entry(entry_dn, entry_attrs):
-                            self.logger.debug(
-                                f"Applying {quirk.server_type} target quirk",
-                                extra={"dn": entry_dn},
-                            )
+                            if self.logger:
+                                self.logger.debug(
+                                    f"Applying {quirk.server_type} target quirk",
+                                    extra={"dn": entry_dn},
+                                )
                             # Target quirks convert FROM RFC to target format
                             # (This would be a hypothetical convert_entry_from_rfc method)
                             # For now, we just use the normalized entry
@@ -258,20 +286,24 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
 
                 migrated_entries.append(target_entry)
 
-            self.logger.info(
-                f"Migrated {len(migrated_entries)} entries from {source_format} to {target_format}",
-                extra={
-                    "source_format": source_format,
-                    "target_format": target_format,
-                    "total_migrated": len(migrated_entries),
-                },
-            )
+            if self.logger:
+                self.logger.info(
+                    f"Migrated {len(migrated_entries)} entries from {source_format} to {target_format}",
+                    extra={
+                        FlextLdifConstants.DictKeys.SOURCE_FORMAT: source_format,
+                        FlextLdifConstants.DictKeys.TARGET_FORMAT: target_format,
+                        FlextLdifConstants.DictKeys.TOTAL_MIGRATED: len(
+                            migrated_entries
+                        ),
+                    },
+                )
 
             return FlextResult[list[object]].ok(cast("list[object]", migrated_entries))
 
         except Exception as e:
             error_msg = f"Entry migration failed: {e}"
-            self.logger.exception(error_msg)
+            if self.logger:
+                self.logger.exception(error_msg)
             return FlextResult[list[object]].fail(error_msg)
 
     def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
@@ -287,13 +319,15 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
         """
         try:
             # Validate parameters
-            input_dir_str = self._params.get("input_dir", "")
+            input_dir_str = self._params.get(FlextLdifConstants.DictKeys.INPUT_DIR, "")
             if not input_dir_str:
                 return FlextResult[FlextLdifTypes.Dict].fail(
                     "input_dir parameter is required"
                 )
 
-            output_dir_str = self._params.get("output_dir", "")
+            output_dir_str = self._params.get(
+                FlextLdifConstants.DictKeys.OUTPUT_DIR, ""
+            )
             if not output_dir_str:
                 return FlextResult[FlextLdifTypes.Dict].fail(
                     "output_dir parameter is required"
@@ -310,29 +344,34 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
             # Create output directory
             output_dir.mkdir(parents=True, exist_ok=True)
 
-            process_schema = self._params.get("process_schema", True)
-            process_entries = self._params.get("process_entries", True)
-
-            self.logger.info(
-                "Starting generic LDIF migration",
-                extra={
-                    "input_dir": str(input_dir),
-                    "output_dir": str(output_dir),
-                    "source_server": self._source_server_type,
-                    "target_server": self._target_server_type,
-                    "process_schema": process_schema,
-                    "process_entries": process_entries,
-                },
+            process_schema = self._params.get(
+                FlextLdifConstants.DictKeys.PROCESS_SCHEMA, True
             )
+            process_entries = self._params.get(
+                FlextLdifConstants.DictKeys.PROCESS_ENTRIES, True
+            )
+
+            if self.logger:
+                self.logger.info(
+                    "Starting generic LDIF migration",
+                    extra={
+                        FlextLdifConstants.DictKeys.INPUT_DIR: str(input_dir),
+                        FlextLdifConstants.DictKeys.OUTPUT_DIR: str(output_dir),
+                        FlextLdifConstants.DictKeys.SOURCE_SERVER: self._source_server_type,
+                        FlextLdifConstants.DictKeys.TARGET_SERVER: self._target_server_type,
+                        FlextLdifConstants.DictKeys.PROCESS_SCHEMA: process_schema,
+                        FlextLdifConstants.DictKeys.PROCESS_ENTRIES: process_entries,
+                    },
+                )
 
             # Initialize result data
             result_data: FlextLdifTypes.Dict = {
                 "schema": {},
                 "entries": [],
-                "stats": {
+                FlextLdifConstants.DictKeys.STATS: {
                     "total_schema_attributes": 0,
                     "total_schema_objectclasses": 0,
-                    "total_entries": 0,
+                    FlextLdifConstants.DictKeys.TOTAL_ENTRIES: 0,
                 },
                 "output_files": [],
             }
@@ -347,17 +386,19 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
 
                 schema_data = schema_result.unwrap()
                 result_data["schema"] = schema_data
-                if isinstance(result_data["stats"], dict):
-                    attributes = schema_data.get("attributes", {})
+                if isinstance(result_data[FlextLdifConstants.DictKeys.STATS], dict):
+                    attributes = schema_data.get(
+                        FlextLdifConstants.DictKeys.ATTRIBUTES, {}
+                    )
                     objectclasses = schema_data.get("objectclasses", {})
                     if isinstance(attributes, dict):
-                        result_data["stats"]["total_schema_attributes"] = len(
-                            attributes
-                        )
+                        result_data[FlextLdifConstants.DictKeys.STATS][
+                            "total_schema_attributes"
+                        ] = len(attributes)
                     if isinstance(objectclasses, dict):
-                        result_data["stats"]["total_schema_objectclasses"] = len(
-                            objectclasses
-                        )
+                        result_data[FlextLdifConstants.DictKeys.STATS][
+                            "total_schema_objectclasses"
+                        ] = len(objectclasses)
 
             # Phase 2: Process entries if requested
             if process_entries:
@@ -369,23 +410,29 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
 
                 entries_data = entries_result.unwrap()
                 result_data["entries"] = entries_data
-                if isinstance(result_data["stats"], dict):
-                    result_data["stats"]["total_entries"] = len(entries_data)
+                if isinstance(result_data[FlextLdifConstants.DictKeys.STATS], dict):
+                    result_data[FlextLdifConstants.DictKeys.STATS][
+                        FlextLdifConstants.DictKeys.TOTAL_ENTRIES
+                    ] = len(entries_data)
 
-            self.logger.info(
-                "LDIF migration completed successfully",
-                extra={
-                    "source_server": self._source_server_type,
-                    "target_server": self._target_server_type,
-                    "stats": result_data["stats"],
-                },
-            )
+            if self.logger:
+                self.logger.info(
+                    "LDIF migration completed successfully",
+                    extra={
+                        FlextLdifConstants.DictKeys.SOURCE_SERVER: self._source_server_type,
+                        FlextLdifConstants.DictKeys.TARGET_SERVER: self._target_server_type,
+                        FlextLdifConstants.DictKeys.STATS: result_data[
+                            FlextLdifConstants.DictKeys.STATS
+                        ],
+                    },
+                )
 
             return FlextResult[FlextLdifTypes.Dict].ok(result_data)
 
         except Exception as e:
             error_msg = f"LDIF migration pipeline failed: {e}"
-            self.logger.exception(error_msg)
+            if self.logger:
+                self.logger.exception(error_msg)
             return FlextResult[FlextLdifTypes.Dict].fail(error_msg)
 
     def _process_schema_migration(
@@ -405,19 +452,23 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
             # Find schema files in input directory
             schema_files = list(input_dir.glob("*schema*.ldif"))
             if not schema_files:
-                self.logger.warning("No schema files found in input directory")
+                if self.logger:
+                    self.logger.warning("No schema files found in input directory")
                 return FlextResult[FlextLdifTypes.Dict].ok({
-                    "attributes": {},
+                    FlextLdifConstants.DictKeys.ATTRIBUTES: {},
                     "objectclasses": {},
                 })
 
             # Use the first schema file found
             schema_file = schema_files[0]
 
-            self.logger.info(
-                f"Processing schema file: {schema_file.name}",
-                extra={"source_server": self._source_server_type},
-            )
+            if self.logger:
+                self.logger.info(
+                    f"Processing schema file: {schema_file.name}",
+                    extra={
+                        FlextLdifConstants.DictKeys.SOURCE_SERVER: self._source_server_type
+                    },
+                )
 
             # Parse schema using RFC parser with quirks integration
             parser = self._schema_parser_class(
@@ -458,18 +509,22 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
                     f"Schema writing failed: {write_result.error}"
                 )
 
-            self.logger.info(
-                "Schema migration completed",
-                extra={
-                    "attributes_count": len(
-                        cast("dict[str, object]", schema_data.get("attributes", {}))
-                    ),
-                    "objectclasses_count": len(
-                        cast("dict[str, object]", schema_data.get("objectclasses", {}))
-                    ),
-                    "output_file": str(output_schema_file),
-                },
-            )
+            if self.logger:
+                attributes: dict[str, object] = cast(
+                    "dict[str, object]",
+                    schema_data.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {}),
+                )
+                objectclasses: dict[str, object] = cast(
+                    "dict[str, object]", schema_data.get("objectclasses", {})
+                )
+                self.logger.info(
+                    "Schema migration completed",
+                    extra={
+                        "attributes_count": len(attributes),
+                        "objectclasses_count": len(objectclasses),
+                        "output_file": str(output_schema_file),
+                    },
+                )
 
             return FlextResult[FlextLdifTypes.Dict].ok(schema_data)
 
@@ -500,16 +555,20 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
             ]
 
             if not entry_files:
-                self.logger.warning("No entry files found in input directory")
+                if self.logger:
+                    self.logger.warning("No entry files found in input directory")
                 return FlextResult[list[object]].ok([])
 
             all_entries: list[FlextLdifTypes.Dict] = []
 
             for entry_file in entry_files:
-                self.logger.info(
-                    f"Processing entry file: {entry_file.name}",
-                    extra={"source_server": self._source_server_type},
-                )
+                if self.logger:
+                    self.logger.info(
+                        f"Processing entry file: {entry_file.name}",
+                        extra={
+                            FlextLdifConstants.DictKeys.SOURCE_SERVER: self._source_server_type
+                        },
+                    )
 
                 # Parse entries using RFC LDIF parser
                 parser = self._ldif_parser_class(
@@ -551,13 +610,14 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
                     f"Entries writing failed: {write_result.error}"
                 )
 
-            self.logger.info(
-                "Entries migration completed",
-                extra={
-                    "total_entries": len(all_entries),
-                    "output_file": str(output_entries_file),
-                },
-            )
+            if self.logger:
+                self.logger.info(
+                    "Entries migration completed",
+                    extra={
+                        FlextLdifConstants.DictKeys.TOTAL_ENTRIES: len(all_entries),
+                        "output_file": str(output_entries_file),
+                    },
+                )
 
             return FlextResult[list[object]].ok(cast("list[object]", all_entries))
 

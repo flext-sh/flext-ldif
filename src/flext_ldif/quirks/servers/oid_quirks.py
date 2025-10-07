@@ -21,6 +21,7 @@ from typing import ClassVar
 from flext_core import FlextResult
 from pydantic import Field
 
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.base import (
     FlextLdifQuirksBaseAclQuirk,
@@ -45,7 +46,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
     """
 
-    server_type: str = Field(default="oid", description="Oracle OID server type")
+    server_type: str = Field(
+        default=FlextLdifConstants.ServerTypes.OID,
+        description="Oracle OID server type",
+    )
     priority: int = Field(
         default=10, description="High priority for OID-specific parsing"
     )
@@ -91,7 +95,9 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 attr_obj = attr_result.value
                 # Convert to dict for quirk system
                 return FlextResult[FlextLdifTypes.Dict].ok(
-                    attr_obj.model_dump() if hasattr(attr_obj, "model_dump") else {}
+                    attr_obj.model_dump()
+                    if hasattr(attr_obj, FlextLdifConstants.DictKeys.MODEL_DUMP)
+                    else {}
                 )
 
             return FlextResult[FlextLdifTypes.Dict].fail(
@@ -136,7 +142,9 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 oc_obj = oc_result.value
                 # Convert to dict for quirk system
                 return FlextResult[FlextLdifTypes.Dict].ok(
-                    oc_obj.model_dump() if hasattr(oc_obj, "model_dump") else {}
+                    oc_obj.model_dump()
+                    if hasattr(oc_obj, FlextLdifConstants.DictKeys.MODEL_DUMP)
+                    else {}
                 )
 
             return FlextResult[FlextLdifTypes.Dict].fail(
@@ -164,11 +172,21 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             # Oracle OID attributes can be represented in RFC format
             # by removing Oracle-specific extensions
             rfc_data = {
-                "oid": attr_data.get("oid"),
-                "name": attr_data.get("name"),
-                "desc": attr_data.get("desc"),
-                "syntax": attr_data.get("syntax"),
-                "equality": attr_data.get("equality"),
+                FlextLdifConstants.DictKeys.OID: attr_data.get(
+                    FlextLdifConstants.DictKeys.OID
+                ),
+                FlextLdifConstants.DictKeys.NAME: attr_data.get(
+                    FlextLdifConstants.DictKeys.NAME
+                ),
+                FlextLdifConstants.DictKeys.DESC: attr_data.get(
+                    FlextLdifConstants.DictKeys.DESC
+                ),
+                FlextLdifConstants.DictKeys.SYNTAX: attr_data.get(
+                    FlextLdifConstants.DictKeys.SYNTAX
+                ),
+                FlextLdifConstants.DictKeys.EQUALITY: attr_data.get(
+                    FlextLdifConstants.DictKeys.EQUALITY
+                ),
             }
 
             return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
@@ -193,13 +211,27 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         try:
             # Convert Oracle OID objectClass to RFC format
             rfc_data = {
-                "oid": oc_data.get("oid"),
-                "name": oc_data.get("name"),
-                "desc": oc_data.get("desc"),
-                "sup": oc_data.get("sup"),
-                "kind": oc_data.get("kind"),
-                "must": oc_data.get("must"),
-                "may": oc_data.get("may"),
+                FlextLdifConstants.DictKeys.OID: oc_data.get(
+                    FlextLdifConstants.DictKeys.OID
+                ),
+                FlextLdifConstants.DictKeys.NAME: oc_data.get(
+                    FlextLdifConstants.DictKeys.NAME
+                ),
+                FlextLdifConstants.DictKeys.DESC: oc_data.get(
+                    FlextLdifConstants.DictKeys.DESC
+                ),
+                FlextLdifConstants.DictKeys.SUP: oc_data.get(
+                    FlextLdifConstants.DictKeys.SUP
+                ),
+                FlextLdifConstants.DictKeys.KIND: oc_data.get(
+                    FlextLdifConstants.DictKeys.KIND
+                ),
+                FlextLdifConstants.DictKeys.MUST: oc_data.get(
+                    FlextLdifConstants.DictKeys.MUST
+                ),
+                FlextLdifConstants.DictKeys.MAY: oc_data.get(
+                    FlextLdifConstants.DictKeys.MAY
+                ),
             }
 
             return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
@@ -223,7 +255,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
         """
 
-        server_type: str = Field(default="oid", description="Oracle OID server type")
+        server_type: str = Field(
+            default=FlextLdifConstants.ServerTypes.OID,
+            description="Oracle OID server type",
+        )
         priority: int = Field(
             default=10, description="High priority for OID ACL parsing"
         )
@@ -275,10 +310,16 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     acl_obj = standard_result.value
 
                 return FlextResult[FlextLdifTypes.Dict].ok({
-                    "type": "entry_level" if is_entry_level else "standard",
-                    "raw": acl_line,
-                    "parsed": (
-                        acl_obj.model_dump() if hasattr(acl_obj, "model_dump") else {}
+                    FlextLdifConstants.DictKeys.TYPE: (
+                        FlextLdifConstants.DictKeys.ENTRY_LEVEL
+                        if is_entry_level
+                        else FlextLdifConstants.DictKeys.STANDARD
+                    ),
+                    FlextLdifConstants.DictKeys.RAW: acl_line,
+                    FlextLdifConstants.DictKeys.PARSED: (
+                        acl_obj.model_dump()
+                        if hasattr(acl_obj, FlextLdifConstants.DictKeys.MODEL_DUMP)
+                        else {}
                     ),
                 })
 
@@ -303,10 +344,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 # Oracle OID ACLs don't have direct RFC equivalent
                 # Return generic ACL representation
                 rfc_data: FlextLdifTypes.Dict = {
-                    "type": "acl",
-                    "format": "rfc_generic",
-                    "source_format": "oracle_oid",
-                    "data": acl_data,
+                    FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
+                    FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
+                    FlextLdifConstants.DictKeys.SOURCE_FORMAT: FlextLdifConstants.AclFormats.OID_ACL,
+                    FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
 
                 return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
@@ -332,9 +373,9 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 # Convert RFC ACL to Oracle OID format
                 # This is target-specific conversion for migrations
                 oid_data: FlextLdifTypes.Dict = {
-                    "format": "oracle_oid",
-                    "target_format": "orclaci",
-                    "data": acl_data,
+                    FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.OID_ACL,
+                    FlextLdifConstants.DictKeys.TARGET_FORMAT: FlextLdifConstants.DictKeys.ORCLACI,
+                    FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
 
                 return FlextResult[FlextLdifTypes.Dict].ok(oid_data)
@@ -359,7 +400,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
         """
 
-        server_type: str = Field(default="oid", description="Oracle OID server type")
+        server_type: str = Field(
+            default=FlextLdifConstants.ServerTypes.OID,
+            description="Oracle OID server type",
+        )
         priority: int = Field(
             default=10, description="High priority for OID entry processing"
         )
@@ -369,20 +413,20 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
         def can_handle_entry(
             self,
-            entry_dn: str,
-            attributes: dict[str, object],
+            _entry_dn: str,
+            _attributes: dict[str, object],
         ) -> bool:
             """Check if this quirk should handle the entry.
 
             Args:
-                entry_dn: Entry distinguished name
-                attributes: Entry attributes
+                _entry_dn: Entry distinguished name
+                _attributes: Entry _attributes
 
             Returns:
                 True if this is an Oracle OID-specific entry
 
             """
-            # Check for Oracle OID-specific attributes
+            # Check for Oracle OID-specific _attributes
             oid_attrs = [
                 "orclguid",
                 "orclobjectguid",
@@ -394,11 +438,11 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             ]
 
             has_oid_attrs = any(
-                attr.lower() in [a.lower() for a in attributes] for attr in oid_attrs
+                attr.lower() in [a.lower() for a in _attributes] for attr in oid_attrs
             )
 
             # Check for Oracle OID object classes
-            object_classes = attributes.get("objectClass", [])
+            object_classes = _attributes.get("objectClass", [])
             if not isinstance(object_classes, list):
                 object_classes = [object_classes]
 
@@ -408,20 +452,20 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
             # Also check DN patterns for OID entries
             has_oid_dn_pattern = any(
-                pattern in entry_dn.lower()
+                pattern in _entry_dn.lower()
                 for pattern in ["cn=orcl", "ou=oracle", "dc=oracle"]
             )
 
             return has_oid_attrs or has_oid_classes or has_oid_dn_pattern
 
         def process_entry(
-            self, entry_dn: str, attributes: dict[str, object]
+            self, _entry_dn: str, _attributes: dict[str, object]
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for Oracle OID format.
 
             Args:
-                entry_dn: Entry distinguished name
-                attributes: Entry attributes
+                _entry_dn: Entry distinguished name
+                _attributes: Entry _attributes
 
             Returns:
                 FlextResult with processed entry data
@@ -431,13 +475,17 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 # Oracle OID entries are RFC-compliant
                 # Add OID-specific metadata
                 processed_entry: FlextLdifTypes.Dict = {
-                    "dn": entry_dn,
-                    "server_type": "oid",
-                    "has_oid_acls": any(
-                        attr in attributes for attr in ["orclaci", "orclentrylevelaci"]
+                    "dn": _entry_dn,
+                    FlextLdifConstants.DictKeys.SERVER_TYPE: FlextLdifConstants.ServerTypes.OID,
+                    FlextLdifConstants.DictKeys.HAS_OID_ACLS: any(
+                        attr in _attributes
+                        for attr in [
+                            FlextLdifConstants.DictKeys.ORCLACI,
+                            FlextLdifConstants.DictKeys.ORCLENTRYLEVELACI,
+                        ]
                     ),
                 }
-                processed_entry.update(attributes)
+                processed_entry.update(_attributes)
 
                 return FlextResult[FlextLdifTypes.Dict].ok(processed_entry)
 
@@ -447,12 +495,12 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 )
 
         def convert_entry_to_rfc(
-            self, entry_data: FlextLdifTypes.Dict
+            self, _entry_data: FlextLdifTypes.Dict
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert Oracle OID entry to RFC-compliant format.
 
             Args:
-                entry_data: Oracle OID entry data
+                _entry_data: Oracle OID entry data
 
             Returns:
                 FlextResult with RFC-compliant entry data
@@ -461,7 +509,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             try:
                 # Oracle OID entries are already RFC-compliant
                 # Remove Oracle-specific operational attributes if needed
-                rfc_data = dict(entry_data)
+                rfc_data = dict(_entry_data)
 
                 # Optional: Remove OID-specific operational attributes
                 # that don't exist in standard LDAP

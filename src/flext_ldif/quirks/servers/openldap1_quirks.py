@@ -21,6 +21,7 @@ from typing import ClassVar
 from flext_core import FlextResult
 from pydantic import Field
 
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.base import (
     FlextLdifQuirksBaseAclQuirk,
     FlextLdifQuirksBaseEntryQuirk,
@@ -115,13 +116,21 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
                 )
 
             attr_data: FlextLdifTypes.Dict = {
-                "oid": oid_match.group(1),
-                "name": name_match.group(1) if name_match else None,
-                "desc": desc_match.group(1) if desc_match else None,
-                "syntax": syntax_match.group(1) if syntax_match else None,
-                "equality": equality_match.group(1) if equality_match else None,
+                FlextLdifConstants.DictKeys.OID: oid_match.group(1),
+                FlextLdifConstants.DictKeys.NAME: name_match.group(1)
+                if name_match
+                else None,
+                FlextLdifConstants.DictKeys.DESC: desc_match.group(1)
+                if desc_match
+                else None,
+                FlextLdifConstants.DictKeys.SYNTAX: syntax_match.group(1)
+                if syntax_match
+                else None,
+                FlextLdifConstants.DictKeys.EQUALITY: equality_match.group(1)
+                if equality_match
+                else None,
                 "single_value": single_value,
-                "server_type": "openldap1",
+                FlextLdifConstants.DictKeys.SERVER_TYPE: "openldap1",
             }
 
             return FlextResult[FlextLdifTypes.Dict].ok(attr_data)
@@ -203,14 +212,20 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
                 )
 
             oc_data: FlextLdifTypes.Dict = {
-                "oid": oid_match.group(1),
-                "name": name_match.group(1) if name_match else None,
-                "desc": desc_match.group(1) if desc_match else None,
-                "sup": sup_match.group(1) if sup_match else None,
+                FlextLdifConstants.DictKeys.OID: oid_match.group(1),
+                FlextLdifConstants.DictKeys.NAME: name_match.group(1)
+                if name_match
+                else None,
+                FlextLdifConstants.DictKeys.DESC: desc_match.group(1)
+                if desc_match
+                else None,
+                FlextLdifConstants.DictKeys.SUP: sup_match.group(1)
+                if sup_match
+                else None,
                 "kind": kind,
                 "must": must_attrs,
                 "may": may_attrs,
-                "server_type": "openldap1",
+                FlextLdifConstants.DictKeys.SERVER_TYPE: "openldap1",
             }
 
             return FlextResult[FlextLdifTypes.Dict].ok(oc_data)
@@ -237,11 +252,11 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
         try:
             # OpenLDAP 1.x attributes are RFC-compliant
             rfc_data = {
-                "oid": attr_data.get("oid"),
-                "name": attr_data.get("name"),
-                "desc": attr_data.get("desc"),
-                "syntax": attr_data.get("syntax"),
-                "equality": attr_data.get("equality"),
+                FlextLdifConstants.DictKeys.OID: attr_data.get("oid"),
+                FlextLdifConstants.DictKeys.NAME: attr_data.get("name"),
+                FlextLdifConstants.DictKeys.DESC: attr_data.get("desc"),
+                FlextLdifConstants.DictKeys.SYNTAX: attr_data.get("syntax"),
+                FlextLdifConstants.DictKeys.EQUALITY: attr_data.get("equality"),
                 "single_value": attr_data.get("single_value"),
             }
 
@@ -269,10 +284,10 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
         try:
             # OpenLDAP 1.x objectClasses are RFC-compliant
             rfc_data = {
-                "oid": oc_data.get("oid"),
-                "name": oc_data.get("name"),
-                "desc": oc_data.get("desc"),
-                "sup": oc_data.get("sup"),
+                FlextLdifConstants.DictKeys.OID: oc_data.get("oid"),
+                FlextLdifConstants.DictKeys.NAME: oc_data.get("name"),
+                FlextLdifConstants.DictKeys.DESC: oc_data.get("desc"),
+                FlextLdifConstants.DictKeys.SUP: oc_data.get("sup"),
                 "kind": oc_data.get("kind"),
                 "must": oc_data.get("must"),
                 "may": oc_data.get("may"),
@@ -336,10 +351,12 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
 
             """
             try:
-                # Remove "access" prefix
+                # Remove FlextLdifConstants.DictKeys.ACCESS prefix
                 acl_content = acl_line
-                if acl_line.lower().startswith("access"):
-                    acl_content = acl_line[len("access") :].strip()
+                if acl_line.lower().startswith(FlextLdifConstants.DictKeys.ACCESS):
+                    acl_content = acl_line[
+                        len(FlextLdifConstants.DictKeys.ACCESS) :
+                    ].strip()
 
                 # Parse "to <what>" clause
                 to_match = re.match(r"^to\s+(.+?)\s+by\s+", acl_content, re.IGNORECASE)
@@ -353,19 +370,22 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
                 # Parse "by <who> <access>" clauses
                 by_pattern = re.compile(r"by\s+([^\s]+)\s+([^\s]+)", re.IGNORECASE)
                 by_clauses = [
-                    {"who": match.group(1), "access": match.group(2)}
+                    {
+                        "who": match.group(1),
+                        FlextLdifConstants.DictKeys.ACCESS: match.group(2),
+                    }
                     for match in by_pattern.finditer(acl_content)
                 ]
 
-                openldap1_acl_data: FlextLdifTypes.Dict = {
-                    "type": "openldap1_acl",
-                    "format": "access",
+                openldap1acl_data: FlextLdifTypes.Dict = {
+                    FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.AclFormats.OPENLDAP1_ACL,
+                    FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.DictKeys.ACCESS,
                     "what": what,
                     "by_clauses": by_clauses,
-                    "raw": acl_line,
+                    FlextLdifConstants.DictKeys.RAW: acl_line,
                 }
 
-                return FlextResult[FlextLdifTypes.Dict].ok(openldap1_acl_data)
+                return FlextResult[FlextLdifTypes.Dict].ok(openldap1acl_data)
 
             except Exception as e:
                 return FlextResult[FlextLdifTypes.Dict].fail(
@@ -387,10 +407,10 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
             try:
                 # OpenLDAP ACLs don't have direct RFC equivalent
                 rfc_data: FlextLdifTypes.Dict = {
-                    "type": "acl",
-                    "format": "rfc_generic",
-                    "source_format": "openldap1",
-                    "data": acl_data,
+                    FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
+                    FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
+                    FlextLdifConstants.DictKeys.SOURCE_FORMAT: "openldap1",
+                    FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
 
                 return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
@@ -415,9 +435,9 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
             try:
                 # Convert RFC ACL to OpenLDAP 1.x format
                 openldap1_data: FlextLdifTypes.Dict = {
-                    "format": "openldap1",
-                    "target_format": "access",
-                    "data": acl_data,
+                    FlextLdifConstants.DictKeys.FORMAT: "openldap1",
+                    FlextLdifConstants.DictKeys.TARGET_FORMAT: FlextLdifConstants.DictKeys.ACCESS,
+                    FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
 
                 return FlextResult[FlextLdifTypes.Dict].ok(openldap1_data)
@@ -453,33 +473,33 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
             """Initialize OpenLDAP 1.x entry quirk."""
 
         def can_handle_entry(
-            self, entry_dn: str, attributes: dict[str, object]
+            self, _entry_dn: str, _attributes: dict[str, object]
         ) -> bool:
             """Check if this quirk should handle the entry.
 
             Args:
-                entry_dn: Entry distinguished name
-                attributes: Entry attributes
+                _entry_dn: Entry distinguished name
+                _attributes: Entry _attributes
 
             Returns:
                 True if this is an OpenLDAP 1.x-specific entry
 
             """
-            # OpenLDAP 1.x entries do NOT have cn=config or olc* attributes
-            is_config_dn = "cn=config" in entry_dn.lower()
-            has_olc_attrs = any(attr.startswith("olc") for attr in attributes)
+            # OpenLDAP 1.x entries do NOT have cn=config or olc* _attributes
+            is_config_dn = "cn=config" in _entry_dn.lower()
+            has_olc_attrs = any(attr.startswith("olc") for attr in _attributes)
 
             # Handle traditional entries (not config, not olc)
             return not is_config_dn and not has_olc_attrs
 
         def process_entry(
-            self, entry_dn: str, attributes: dict[str, object]
+            self, _entry_dn: str, _attributes: dict[str, object]
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for OpenLDAP 1.x format.
 
             Args:
-                entry_dn: Entry distinguished name
-                attributes: Entry attributes
+                _entry_dn: Entry distinguished name
+                _attributes: Entry _attributes
 
             Returns:
                 FlextResult with processed entry data
@@ -488,11 +508,11 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
             try:
                 # OpenLDAP 1.x entries are RFC-compliant
                 processed_entry: FlextLdifTypes.Dict = {
-                    "dn": entry_dn,
-                    "server_type": "openldap1",
+                    "dn": _entry_dn,
+                    FlextLdifConstants.DictKeys.SERVER_TYPE: "openldap1",
                     "is_traditional_dit": True,
                 }
-                processed_entry.update(attributes)
+                processed_entry.update(_attributes)
 
                 return FlextResult[FlextLdifTypes.Dict].ok(processed_entry)
 
@@ -502,12 +522,12 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
                 )
 
         def convert_entry_to_rfc(
-            self, entry_data: FlextLdifTypes.Dict
+            self, _entry_data: FlextLdifTypes.Dict
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert server-specific entry to RFC-compliant format.
 
             Args:
-                entry_data: Server-specific entry data
+                _entry_data: Server-specific entry data
 
             Returns:
                 FlextResult with RFC-compliant entry data
@@ -515,7 +535,7 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
             """
             try:
                 # OpenLDAP 1.x entries are already RFC-compliant
-                return FlextResult[FlextLdifTypes.Dict].ok(entry_data)
+                return FlextResult[FlextLdifTypes.Dict].ok(_entry_data)
             except Exception as e:
                 return FlextResult[FlextLdifTypes.Dict].fail(
                     f"OpenLDAP 1.x entry→RFC conversion failed: {e}"
