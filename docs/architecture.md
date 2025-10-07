@@ -67,7 +67,7 @@ The library integrates deeply with FLEXT ecosystem patterns:
 ```mermaid
 graph TB
     subgraph "Application Layer"
-        API[FlextLdifAPI<br/>Unified Interface]
+        API[FlextLdif<br/>Unified Interface]
     end
 
     subgraph "CQRS Handler Layer"
@@ -132,7 +132,7 @@ graph TB
 
 ### Architecture Layers Explained
 
-1. **Application Layer**: `FlextLdifAPI` facade providing unified interface to all operations
+1. **Application Layer**: `FlextLdif` facade providing unified interface to all operations
 2. **CQRS Handler Layer**: Command/Query handlers in `handlers.py` delegating to RFC services
 3. **RFC Service Layer**: RFC parsers/writers that ALWAYS use quirk_registry (MANDATORY)
 4. **Quirks System**: Priority-based quirks for server-specific extensions
@@ -256,12 +256,12 @@ class SchemaQueryHandler(FlextMessageHandler):
 
 ## Core Components
 
-### FlextLdifAPI - Application Service
+### FlextLdif - Application Service
 
 The main entry point providing a unified interface to all LDIF operations:
 
 ```python
-class FlextLdifAPI:
+class FlextLdif:
     """Unified LDIF Processing API with nested operation handlers."""
 
     def __init__(self, config: FlextLdifModels.Config | None = None) -> None:
@@ -354,7 +354,7 @@ class FlextLdifWriterService:
 ```mermaid
 sequenceDiagram
     participant Client
-    participant API as FlextLdifAPI
+    participant API as FlextLdif
     participant Parser as ParserService
     participant Validator as ValidatorService
     participant Repository as RepositoryService
@@ -390,7 +390,7 @@ All operations use FlextResult for composable error handling:
 ```python
 def process_ldif_pipeline(file_path: Path) -> FlextResult[FlextTypes.Dict]:
     """Complete LDIF processing pipeline using railway patterns."""
-    api = FlextLdifAPI()
+    api = FlextLdif()
 
     return (
         # Parse the LDIF file
@@ -496,7 +496,7 @@ config = FlextLdifModels.Config(
     encoding='utf-8'
 )
 
-api = FlextLdifAPI(config=config)
+api = FlextLdif(config=config)
 ```
 
 ## Current Implementation Status
@@ -506,7 +506,7 @@ api = FlextLdifAPI(config=config)
 **✅ Core Architecture**:
 
 - Service-oriented design with clear separation
-- FlextLdifAPI unified interface with nested handlers
+- FlextLdif unified interface with nested handlers
 - Complete FlextResult integration
 - Dependency injection through FlextContainer
 
@@ -604,7 +604,7 @@ Tests complete workflows through the unified API:
 ```python
 def test_complete_ldif_workflow():
     """Test end-to-end LDIF processing workflow."""
-    api = FlextLdifAPI()
+    api = FlextLdif()
 
     # Test complete pipeline with real LDIF data
     result = (

@@ -143,11 +143,11 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
 
         # Create unified ACL using helper
         return self.AclComponentHelper.create_unified_acl(
-            name="openldap_acl",
+            name="389ds_acl",
             target=target_result,
             subject=subject_result,
             permissions=perms_result,
-            server_type=FlextLdifConstants.LdapServers.OPENLDAP,
+            server_type=FlextLdifConstants.LdapServers.DS_389,
             raw_acl=acl_string,
         )
 

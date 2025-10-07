@@ -185,13 +185,13 @@ def test_large_file_processing_performance():
 ```python
 @pytest.fixture
 def flext_ldif_api():
-    """Configured FlextLdifAPI instance for testing."""
+    """Configured FlextLdif instance for testing."""
     config = FlextLdifConfig(
         max_entries=1000,
         strict_validation=True,
         enable_observability=False  # Disable for testing
     )
-    return FlextLdifAPI(config)
+    return FlextLdif(config)
 
 @pytest.fixture
 def sample_entries():
@@ -367,7 +367,7 @@ pytest --tb=long                  # Detailed traceback
 def test_new_feature_specification():
     """Test specification for new feature (TDD)."""
     # Arrange - Set up test conditions
-    api = FlextLdifAPI()
+    api = FlextLdif()
     test_data = create_test_ldif()
 
     # Act - Execute the feature

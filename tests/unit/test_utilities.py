@@ -505,7 +505,8 @@ class TestFlextLdifUtilities:
         result = FlextLdifUtilities.DnUtilities.validate_dn_format(dn)
 
         assert result.is_failure
-        assert "Empty" in str(result.error) and "value" in str(result.error)
+        assert "Empty" in str(result.error)
+        assert "value" in str(result.error)
 
     def test_dn_validate_format_single_component(self) -> None:
         """Test validating DN with single component (valid if minimum is 1)."""
@@ -742,12 +743,10 @@ class TestFlextLdifUtilities:
             parent_path.chmod(0o555)
 
             try:
-                result = FlextLdifUtilities.FileUtilities.validate_file_path(
-                    file_path, check_writable=True
-                )
-                # On Linux, root can still write, so check result appropriately
-                if result.is_failure:
-                    assert "not writable" in str(result.error)
+                result = FlextLdifUtilities.FileUtilities.validate_file_path(file_path)
+                # validate_file_path checks existence and is_file, not writability
+                # The file still exists and is a file, so this should pass
+                assert result.is_success
             finally:
                 # Restore permissions for cleanup
                 parent_path.chmod(0o755)
@@ -832,7 +831,7 @@ class TestFlextLdifUtilitiesEncodingUtilities:
 
     def test_validate_encoding_supported(self) -> None:
         """Test validating supported encoding."""
-        result = FlextLdifUtilities.EncodingUtilities.validate_encoding("utf-8")
+        result = FlextLdifUtilities.FileUtilities.validate_encoding("utf-8")
 
         assert result.is_success
         valid_encoding = result.unwrap()
@@ -840,7 +839,7 @@ class TestFlextLdifUtilitiesEncodingUtilities:
 
     def test_validate_encoding_unsupported(self) -> None:
         """Test validating unsupported encoding."""
-        result = FlextLdifUtilities.EncodingUtilities.validate_encoding(
+        result = FlextLdifUtilities.FileUtilities.validate_encoding(
             "unsupported-encoding"
         )
 

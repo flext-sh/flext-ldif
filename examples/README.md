@@ -1,258 +1,263 @@
 # FLEXT-LDIF Examples
 
-**Library-Only Examples** - Demonstrating RFC-first architecture with ZERO CLI dependencies.
+This directory contains comprehensive examples demonstrating all functionality of the flext-ldif library.
 
-## 🎯 Overview
+## 📚 Library-Only Examples
 
-These examples demonstrate the **library-only, RFC-first architecture** of flext-ldif with:
+All examples showcase **library usage only** - no CLI patterns, no `main()` functions, no print statements. Each example demonstrates specific FlextLdif functionality through clean, reusable function patterns.
 
-- ✅ **ZERO CLI** - All functionality through programmatic APIs
-- ✅ **RFC-First** - ALL operations through RFC parsers + quirks
-- ✅ **MANDATORY quirk_registry** - Zero bypass paths enforcement
-- ✅ **Generic Transformation** - Works with ANY LDAP server
-- ✅ **FlextResult Pattern** - Railway-oriented error handling
+## 🎯 Example Overview
 
-## 📚 Examples
+### 01_basic_usage.py - Core API Operations
+**Demonstrates**: `parse()`, `write()`, FlextResult error handling
 
-### 01_basic_parsing.py - Basic LDIF Parsing
+Learn the fundamentals:
+- Parse LDIF from strings and files
+- Write LDIF to strings and files
+- Railway-oriented programming with FlextResult
+- Entry model inspection
 
-**Demonstrates:**
+**Key Functions**:
+- `parse_ldif_string()` - Parse LDIF content
+- `parse_ldif_file()` - Parse from file
+- `write_ldif_string()` - Write to string
+- `write_ldif_file()` - Write to file
+- `railway_oriented_pipeline()` - Error handling chains
 
-- Library-only usage (NO CLI)
-- Basic parsing with FlextLdifAPI facade
-- FlextResult error handling
-- Entry inspection
+### 02_entry_operations.py - Entry Building & Manipulation
+**Demonstrates**: EntryBuilder, models, filtering operations
 
-```bash
-poetry run python examples/01_basic_parsing.py
-```
+Master entry operations:
+- Build person, group, OU, and custom entries
+- Filter entries by objectClass
+- Convert entries to/from JSON and dict
+- Work with Entry models
 
-**Concepts:**
+**Key Functions**:
+- `build_person_entries()` - Create person entries
+- `build_group_entries()` - Create group entries
+- `build_organizational_unit()` - Create OU entries
+- `filter_entries_by_objectclass()` - Filter by objectClass
+- `convert_entries_json_dict()` - Format conversions
 
-- Parse LDIF from string or file
-- Access entry attributes
-- Inspect object classes
-- Handle parse errors with FlextResult
+### 03_validation_analysis.py - Validation & Analytics
+**Demonstrates**: `validate_entries()`, `analyze()`
 
-### 02_server_specific_quirks.py - Server-Specific Quirks
+Ensure data quality:
+- Validate entries against RFC 2849 rules
+- Generate comprehensive statistics
+- Create validation pipelines
+- Filter and analyze by objectClass
 
-**Demonstrates:**
+**Key Functions**:
+- `validate_entries()` - RFC validation
+- `analyze_entries()` - Generate statistics
+- `railway_validation_pipeline()` - Validation chains
+- `validate_and_filter_valid_entries()` - Filter valid entries
 
-- RFC-first architecture with quirks
-- MANDATORY quirk_registry parameter
-- Server-specific parsing (OID, OUD, OpenLDAP)
-- Generic transformation pipeline
+### 04_server_migration.py - Server-Specific Operations
+**Demonstrates**: `migrate()`, server_type parameter, quirks handling
 
-```bash
-poetry run python examples/02_server_specific_quirks.py
-```
+Handle server differences:
+- Parse with server-specific quirks (OID, OUD, OpenLDAP, RFC)
+- Migrate between different LDAP servers
+- Server-agnostic migration pipeline
+- Compare server parsing behavior
 
-**Concepts:**
+**Key Functions**:
+- `parse_with_server_quirks()` - Server-specific parsing
+- `migrate_between_servers()` - Full migration workflow
+- `migrate_openldap_to_oud()` - OpenLDAP → OUD migration
+- `migrate_to_rfc_compliant()` - Normalize to RFC format
 
-- Initialize QuirkRegistryService (auto-discovers all quirks)
-- Parse with server_type="oid" for OID quirks
-- Parse with server_type=None for pure RFC
-- Unknown servers fall back to RFC baseline
+### 05_schema_operations.py - Schema Building & Validation
+**Demonstrates**: SchemaBuilder, SchemaValidator
 
-### 03_writing_ldif.py - Writing LDIF
+Work with LDAP schemas:
+- Build custom schema definitions
+- Use standard schemas (person, group)
+- Validate entries against schemas
+- Schema-driven entry creation
 
-**Demonstrates:**
+**Key Functions**:
+- `build_basic_schema()` - Custom schema definition
+- `build_standard_person_schema()` - Standard person schema
+- `validate_entries_with_schema()` - Schema validation
+- `schema_building_pipeline()` - End-to-end schema workflow
 
-- Creating entries programmatically
-- Writing LDIF to string
-- Writing LDIF to file
-- FlextResult error handling
+### 06_acl_processing.py - ACL Operations
+**Demonstrates**: AclService, ACL extraction and processing
 
-```bash
-poetry run python examples/03_writing_ldif.py
-```
+Process access control lists:
+- Extract ACLs from LDIF entries
+- Create ACL rules (composite, permission, subject)
+- Evaluate ACL rules
+- Filter entries with ACLs
 
-**Concepts:**
+**Key Functions**:
+- `extract_acls_from_entry()` - Extract ACL information
+- `create_acl_rules()` - Build ACL rules
+- `parse_and_evaluate_acls()` - Parse and evaluate
+- `filter_entries_with_acls()` - Find ACL-enabled entries
 
-- Create FlextLdifModels.Entry objects
-- Write entries to LDIF string
-- Write entries to file
-- Verify written files by reading back
+### 07_advanced_processing.py - Processors & Utilities
+**Demonstrates**: FlextProcessors, utility functions
 
-### 04_validation.py - Entry Validation
+Advanced processing capabilities:
+- Batch processing with FlextProcessors
+- Parallel processing for performance
+- DN, text, time, validation utilities
+- Encoding and file utilities
 
-**Demonstrates:**
+**Key Functions**:
+- `basic_batch_processing()` - Batch operations
+- `parallel_processing()` - Parallel execution
+- `use_dn_utilities()` - DN parsing and validation
+- `use_validation_utilities()` - Validation helpers
+- `access_all_utilities()` - Complete utility access
 
-- RFC 2849 validation
-- Entry filtering
-- Statistics generation
-- Railway-oriented pipeline
+### 08_complete_workflow.py - Real-World Integration
+**Demonstrates**: Complete API integration, production patterns
 
-```bash
-poetry run python examples/04_validation.py
-```
+Production-ready workflows:
+- End-to-end LDIF processing pipelines
+- Multi-step validation and transformation
+- Error handling and recovery
+- Access to all namespace classes (Models, Constants, Types, Protocols, Exceptions, Mixins, Utilities)
 
-**Concepts:**
+**Key Functions**:
+- `complete_ldif_processing_workflow()` - Full pipeline
+- `server_migration_workflow()` - Migration with validation
+- `schema_driven_workflow()` - Schema-first approach
+- `batch_processing_workflow()` - Large-scale processing
+- `access_all_namespace_classes()` - Complete API surface
+- `error_handling_and_recovery()` - Error patterns
 
-- Validate entries against RFC 2849
-- Filter by object class (person, group, etc.)
-- Generate entry statistics
-- Composable pipeline with flat_map
+## 🚀 Usage Patterns
 
-### 05_migration.py - Server Migration
-
-**Demonstrates:**
-
-- Generic transformation pipeline (Source → RFC → Target)
-- OID to OUD migration
-- MANDATORY quirk_registry usage
-- Works with ANY LDAP server combination
-
-```bash
-poetry run python examples/05_migration.py
-```
-
-**Concepts:**
-
-- FlextLdifMigrationPipeline for migrations
-- Source → RFC → Target transformation
-- Works with ANY server (N implementations, not N²)
-- Migration paths: OID↔OUD, OID↔OpenLDAP, OUD↔OpenLDAP, etc.
-
-### 06_custom_quirks.py - Custom Quirks
-
-**Demonstrates:**
-
-- Creating custom server quirks
-- Registering custom quirks with registry
-- Extending RFC parsers for custom LDAP servers
-- Protocol-based quirk interface
-
-```bash
-poetry run python examples/06_custom_quirks.py
-```
-
-**Concepts:**
-
-- Implement SchemaQuirkProtocol
-- Define server_type and priority
-- Implement can*handle*\_and parse\_\_ methods
-- Register custom quirk with QuirkRegistryService
-
-## 🚀 Running All Examples
-
-```bash
-# Run all examples in sequence
-for example in examples/0*.py; do
-    echo "=== Running $example ==="
-    poetry run python "$example"
-    echo
-done
-```
-
-## 📊 Sample LDIF Files
-
-The examples directory includes sample LDIF files:
-
-- **`sample_basic.ldif`** - Simple person entries for basic parsing
-- **`sample_complex.ldif`** - Complex directory structure with groups
-- **`sample_invalid.ldif`** - Invalid LDIF for error handling
-- **`output_basic.ldif`** - Generated by writing examples
-
-## 🎓 Key Concepts Demonstrated
-
-### 1. Library-Only Usage (NO CLI)
+All examples follow library-only patterns:
 
 ```python
-# ❌ OLD (CLI - no longer available):
-# python -m flext_ldif parse file.ldif
+from flext_ldif import FlextLdif
 
-# ✅ NEW (Library API):
-from flext_ldif import FlextLdifAPI
-api = FlextLdifAPI()
-result = api.parse("file.ldif")
-```
+# Initialize API
+api = FlextLdif()
 
-### 2. RFC-First Architecture
-
-```python
-from flext_ldif.quirks.registry import QuirkRegistryService
-from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
-
-# ⚠️ MANDATORY: quirk_registry parameter
-quirk_registry = QuirkRegistryService()
-
-parser = RfcSchemaParserService(
-    params={"file_path": "schema.ldif"},
-    quirk_registry=quirk_registry,  # MANDATORY - enforces RFC-first
-    server_type="oid",  # Optional - None = pure RFC
-)
-```
-
-### 3. FlextResult Pattern
-
-```python
-# Railway-oriented error handling
-result = (
-    api.parse("file.ldif")
-    .flat_map(api.validate_entries)
-    .flat_map(api.filter_persons)
-    .map_error(lambda error: f"Processing failed: {error}")
-)
+# Use functionality
+result = api.parse("dn: cn=test,dc=example,dc=com\ncn: test\n")
 
 if result.is_success:
     entries = result.unwrap()
+    # Process entries
 else:
-    print(result.error)
+    error = result.error
+    # Handle error
 ```
 
-### 4. Generic Transformation
+## 📖 Learning Path
 
-```python
-# Works with ANY LDAP server (N implementations, not N²)
-migration = FlextLdifMigrationPipeline(
-    input_dir="source_oid",
-    output_dir="target_oud",
-    source_server_type="oid",     # Oracle Internet Directory
-    target_server_type="oud",     # Oracle Unified Directory
-    quirk_registry=quirk_registry,
-)
+**Beginners**: Start with 01 → 02 → 03
+- Learn core parsing, writing, and validation
 
-# Transforms: OID → RFC → OUD
-result = migration.execute()
-```
+**Intermediate**: Continue with 04 → 05 → 06
+- Master server migration, schemas, and ACLs
 
-## 🌍 Supported LDAP Servers
+**Advanced**: Complete with 07 → 08
+- Explore processors, utilities, and integration patterns
 
-### Complete Implementations (4 servers)
+## 🎓 Example Features
 
-- ✅ Oracle Internet Directory (OID)
-- ✅ Oracle Unified Directory (OUD)
-- ✅ OpenLDAP 2.x
-- ✅ OpenLDAP 1.x
+### ✅ What These Examples Are
+- **Library demonstrations** - Pure library API usage
+- **Reusable patterns** - Copy-paste friendly code
+- **Complete coverage** - All FlextLdif functionality
+- **Production-ready** - FlextResult error handling
 
-### Stub Implementations (5 servers)
+### ❌ What These Examples Are NOT
+- **CLI applications** - No command-line interfaces
+- **Standalone scripts** - No `if __name__ == "__main__"`
+- **Interactive tools** - No user input prompts
+- **Over-engineered** - Clean, focused demonstrations
 
-- ⚠️ Active Directory (AD) - stub
-- ⚠️ Apache Directory Server - stub
-- ⚠️ 389 Directory Server - stub
-- ⚠️ Novell eDirectory - stub
-- ⚠️ IBM Tivoli Directory Server - stub
+## 📝 Sample LDIF Files
 
-### Generic/Unknown Servers
+- `sample_basic.ldif` - Basic person entries
+- `sample_complex.ldif` - Complex multi-entry LDIF
+- `sample_invalid.ldif` - Invalid LDIF for testing
+- `output_basic.ldif` - Generated output (from examples)
 
-- ✅ ANY unknown server uses pure RFC baseline
+## 🔍 Finding Functionality
 
-## 🔗 Integration with FLEXT Ecosystem
+Looking for specific features? Use this quick reference:
 
-These examples demonstrate integration with:
+- **Parsing**: Example 01, 04
+- **Writing**: Example 01, 02
+- **Validation**: Example 03, 05
+- **Filtering**: Example 02, 03
+- **Migration**: Example 04
+- **Schemas**: Example 05
+- **ACLs**: Example 06
+- **Batch Processing**: Example 07
+- **Utilities**: Example 07
+- **Integration**: Example 08
 
-- **flext-core**: FlextResult, FlextLogger, FlextService, FlextContainer
-- **Railway Pattern**: Composable error handling with flat_map
-- **Domain Models**: Pydantic v2 models with type annotations
-- **Type Safety**: Complete type hints with Python 3.13+
+## 🛠️ API Surface Coverage
 
-## 📖 Further Reading
+### Core Operations (Example 01)
+- `api.parse()` - Parse LDIF
+- `api.write()` - Write LDIF
 
-- **docs/architecture.md** - RFC-first architecture details
-- **docs/api-reference.md** - Complete API documentation
-- **README.md** - Library overview and quick start
+### Entry Operations (Example 02)
+- `api.EntryBuilder` - Build entries
+- `api.filter_by_objectclass()` - Filter entries
+- `api.filter_persons()` - Filter persons
+- `api.models.Entry` - Entry model
+
+### Validation & Analysis (Example 03)
+- `api.validate_entries()` - Validate entries
+- `api.analyze()` - Generate statistics
+
+### Server Operations (Example 04)
+- `api.parse(server_type=...)` - Server-specific parsing
+- `api.migrate()` - Server migration
+
+### Schema Operations (Example 05)
+- `api.SchemaBuilder` - Build schemas
+- `api.SchemaValidator` - Validate against schemas
+
+### ACL Operations (Example 06)
+- `api.AclService` - ACL processing
+
+### Advanced Operations (Example 07)
+- `api.processors` - Batch/parallel processing
+- `api.utilities` - Helper functions
+
+### Namespace Access (Example 08)
+- `api.models` - Domain models
+- `api.config` - Configuration
+- `api.constants` - Constants
+- `api.types` - Type definitions
+- `api.protocols` - Protocol definitions
+- `api.exceptions` - Exception factory
+- `api.mixins` - Reusable mixins
+- `api.utilities` - Utility functions
+
+## 💡 Tips
+
+1. **Always use FlextResult** - Check `is_success` before `unwrap()`
+2. **Access through API** - Use `api.*` properties, not direct imports
+3. **Railway-oriented** - Chain operations with early returns on failure
+4. **Type hints** - Examples show proper typing patterns
+
+## 🤝 Contributing
+
+When adding examples:
+- Use FlextLdif (api.py) exclusively
+- No CLI patterns (main, print, argparse)
+- Include FlextResult error handling
+- Demonstrate specific functionality
+- Add clear docstrings
 
 ---
 
-**Note**: All examples use library-only APIs. flext-ldif has NO CLI dependencies.
+**FLEXT-LDIF** - RFC-compliant LDIF processing for the FLEXT ecosystem

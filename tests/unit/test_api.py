@@ -350,7 +350,8 @@ class TestFlextLdifValidate:
         else:
             # Container initialization issue in tests
             assert result.error is not None
-            assert result.error is not None and "validat" in result.error.lower()
+            assert result.error is not None
+            assert "validat" in result.error.lower()
 
     def test_validate_empty_entries_list(self, api: FlextLdif) -> None:
         """Test validating empty entries list."""
@@ -379,7 +380,8 @@ class TestFlextLdifValidate:
             assert isinstance(validation, dict)
         else:
             assert result.error is not None
-            assert result.error is not None and "validat" in result.error.lower()
+            assert result.error is not None
+            assert "validat" in result.error.lower()
 
     def test_validate_api_method_exists(self, api: FlextLdif) -> None:
         """Test that validate_entries method exists on API."""

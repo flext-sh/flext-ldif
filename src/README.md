@@ -105,7 +105,7 @@ src/flext_ldif/
 from flext_ldif.models import FlextLdifModels
 
 # Application service usage
-from flext_ldif.api import FlextLdifAPI
+from flext_ldif.api import FlextLdif
 
 # Configuration management
 from flext_ldif.config import FlextLdifConfig
@@ -119,7 +119,7 @@ from flext_ldif.core import TLdif
 ```python
 # Simplified public interface
 from flext_ldif import (
-    FlextLdifAPI,           # Main application service
+    FlextLdif,           # Main application service
     FlextLdifConfig,        # Configuration management
     FlextLdifModels,        # Unified domain models
 )

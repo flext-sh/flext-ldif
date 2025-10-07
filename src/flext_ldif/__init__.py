@@ -87,7 +87,7 @@ from typing import Final
 
 from flext_core import FlextTypes
 
-from flext_ldif.api import FlextLdifAPI
+from flext_ldif.api import FlextLdif
 from flext_ldif.client import FlextLdifClient
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
@@ -99,8 +99,7 @@ from flext_ldif.version import VERSION, FlextLdifVersion
 
 PROJECT_VERSION: Final[FlextLdifVersion] = VERSION
 
-# Main facade alias for backward compatibility
-FlextLdif = FlextLdifAPI
+# Main facade already exported above via: from flext_ldif.api import FlextLdif
 
 __version__: str = VERSION.version
 __version_info__: tuple[int | str, ...] = VERSION.version_info
@@ -109,7 +108,6 @@ __all__ = [
     "PROJECT_VERSION",
     "VERSION",
     "FlextLdif",
-    "FlextLdifAPI",
     "FlextLdifClient",
     "FlextLdifConfig",
     "FlextLdifConstants",

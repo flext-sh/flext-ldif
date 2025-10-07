@@ -56,6 +56,14 @@
 [tool.ruff]
     extend = "../ruff-shared.toml"
 
+    [tool.ruff.lint.per-file-ignores]
+        # Stub implementations have intentionally unused method arguments
+        "src/flext_ldif/quirks/servers/ad_quirks.py" = ["ARG002"]
+        "src/flext_ldif/quirks/servers/apache_quirks.py" = ["ARG002"]
+        "src/flext_ldif/quirks/servers/ds389_quirks.py" = ["ARG002"]
+        "src/flext_ldif/quirks/servers/novell_quirks.py" = ["ARG002"]
+        "src/flext_ldif/quirks/servers/tivoli_quirks.py" = ["ARG002"]
+
 [tool.bandit]
     exclude_dirs = [
         "build",

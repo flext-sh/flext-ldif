@@ -50,7 +50,7 @@ docs/
 
 **[api-reference.md](api-reference.md)** - Complete API documentation:
 
-- **FlextLdifAPI**: Unified interface for all LDIF operations
+- **FlextLdif**: Unified interface for all LDIF operations
 - **Service Classes**: Parser, validator, writer, repository, analytics services
 - **Models**: Entry, DN, Config, and other domain models
 - **Error Handling**: Exception hierarchy and FlextResult patterns

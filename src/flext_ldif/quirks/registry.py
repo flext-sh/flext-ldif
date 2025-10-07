@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import FlextLogger, FlextModels, FlextResult
+from flext_core import FlextModels, FlextResult
 
 from flext_ldif.quirks.base import (
     FlextLdifQuirksBase,
@@ -53,7 +53,6 @@ class FlextLdifQuirksRegistry(FlextModels.Entity):
         self._schema_quirks: dict[str, list[SchemaQuirkType]] = {}
         self._acl_quirks: dict[str, list[AclQuirkType]] = {}
         self._entry_quirks: dict[str, list[EntryQuirkType]] = {}
-        self.logger = FlextLogger(__name__)
 
     def register_schema_quirk(self, quirk: SchemaQuirkType) -> FlextResult[None]:
         """Register a schema quirk for a server type.
@@ -75,7 +74,7 @@ class FlextLdifQuirksRegistry(FlextModels.Entity):
             # Sort by priority (lower number = higher priority)
             self._schema_quirks[server_type].sort(key=lambda q: q.priority)
 
-            if self.logger:
+            if hasattr(self, "logger") and self.logger:
                 self.logger.info(
                     f"Registered schema quirk for {server_type}",
                     extra={
@@ -112,7 +111,7 @@ class FlextLdifQuirksRegistry(FlextModels.Entity):
             # Sort by priority
             self._acl_quirks[server_type].sort(key=lambda q: q.priority)
 
-            if self.logger:
+            if hasattr(self, "logger") and self.logger:
                 self.logger.info(
                     f"Registered ACL quirk for {server_type}",
                     extra={
@@ -149,7 +148,7 @@ class FlextLdifQuirksRegistry(FlextModels.Entity):
             # Sort by priority
             self._entry_quirks[server_type].sort(key=lambda q: q.priority)
 
-            if self.logger:
+            if hasattr(self, "logger") and self.logger:
                 self.logger.info(
                     f"Registered entry quirk for {server_type}",
                     extra={
