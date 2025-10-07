@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Self, override
+from typing import Self, override
 
 from flext_core import FlextResult, FlextService
 
@@ -21,8 +21,8 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
 
     # Type annotations for instance variables
     # Note: logger is inherited from FlextService, no need to annotate
-    _attributes: dict[str, dict[str, Any]]
-    _object_classes: dict[str, dict[str, Any]]
+    _attributes: dict[str, dict[str, object]]
+    _object_classes: dict[str, dict[str, object]]
     _server_type: str
     _entry_count: int
 
@@ -37,12 +37,12 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
         self._entry_count = 0
 
     @property
-    def attributes(self) -> dict[str, dict[str, Any]]:
+    def attributes(self) -> dict[str, dict[str, object]]:
         """Get the attributes dictionary."""
         return self._attributes
 
     @property
-    def object_classes(self) -> dict[str, dict[str, Any]]:
+    def object_classes(self) -> dict[str, dict[str, object]]:
         """Get the object classes dictionary."""
         return self._object_classes
 
@@ -127,7 +127,7 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
         self._server_type = server_type
         return self
 
-    def build(self) -> FlextResult[dict[str, Any]]:
+    def build(self) -> FlextResult[dict[str, object]]:
         """Build final schema (Builder pattern).
 
         Returns:
@@ -141,8 +141,8 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
             "entry_count": self._entry_count,
         }
         if result:
-            return FlextResult[dict[str, Any]].ok(result)
-        return FlextResult[dict[str, Any]].fail("Failed to create schema")
+            return FlextResult[dict[str, object]].ok(result)
+        return FlextResult[dict[str, object]].fail("Failed to create schema")
 
     def reset(self) -> Self:
         """Reset builder to initial state.
@@ -159,7 +159,7 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
 
     def build_standard_person_schema(
         self,
-    ) -> FlextResult[dict[str, Any]]:
+    ) -> FlextResult[dict[str, object]]:
         """Build standard person schema using fluent builder.
 
         Returns:
@@ -185,7 +185,7 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
 
     def build_standard_group_schema(
         self,
-    ) -> FlextResult[dict[str, Any]]:
+    ) -> FlextResult[dict[str, object]]:
         """Build standard group schema using fluent builder.
 
         Returns:

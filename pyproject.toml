@@ -17,12 +17,12 @@
     ]
     dependencies = [
         "colorlog (>=6.9.0)",
+        "flext-core @ file:///home/marlonsc/flext/flext-core/dist/flext_core-0.9.9-py3-none-any.whl",
         "ldap3 (>=2.9.1)",
         "ldif3 (>=3.2.2)",
         "pydantic (>=2.11.7)",
         "pydantic-settings (>=2.10.1)",
         "structlog (>=25.4.0)",
-        "flext-core @ file:///home/marlonsc/flext/flext-core/dist/flext_core-0.9.9-py3-none-any.whl",
     ]
     description = "FLEXT LDIF - Enterprise LDIF Processing Library"
     keywords = [
@@ -53,17 +53,6 @@
         Homepage      = "https://github.com/flext-sh/flext"
         Repository    = "https://github.com/flext-sh/flext"
 
-[tool.ruff]
-    extend = "../ruff-shared.toml"
-
-    [tool.ruff.lint.per-file-ignores]
-        # Stub implementations have intentionally unused method arguments
-        "src/flext_ldif/quirks/servers/ad_quirks.py" = ["ARG002"]
-        "src/flext_ldif/quirks/servers/apache_quirks.py" = ["ARG002"]
-        "src/flext_ldif/quirks/servers/ds389_quirks.py" = ["ARG002"]
-        "src/flext_ldif/quirks/servers/novell_quirks.py" = ["ARG002"]
-        "src/flext_ldif/quirks/servers/tivoli_quirks.py" = ["ARG002"]
-
 [tool.bandit]
     exclude_dirs = [
         "build",
@@ -75,102 +64,30 @@
         "B601",
     ]
 
-[tool.poetry]
-    [[tool.poetry.packages]]
-        from    = "src"
-        include = "flext_ldif"
-
 [tool.deptry]
     known_first_party = [
         "flext_ldif",
     ]
+
+[tool.poetry]
+    [[tool.poetry.packages]]
+        from    = "src"
+        include = "flext_ldif"
 
     [tool.poetry.dependencies]
         ldap3  = ">=2.9.1"
         ldif3  = ">=3.2.2"
         python = ">=3.13,<3.14"
 
-[tool.pytest.ini_options]
-    addopts = [
-        "--maxfail=1",
-        "--strict-config",
-        "--strict-markers",
-        "--tb=short",
-        "-ra",
-    ]
-    filterwarnings = [
-        "ignore::DeprecationWarning:pyasn1(.*|$)",
-        "ignore::UserWarning:flext_core.loggings",
-    ]
-    markers = [
-        " tests",
-        "benchmark: Benchmark tests",
-        "complexity: Complexity tests",
-        "concurrency: Concurrency tests",
-        "e2e: End-to-end tests",
-        "integration: Integration tests",
-        "memory: Memory tests",
-        "memory_limit: Memory limit tests",
-        "performance: Performance tests",
-        "race_condition: Race condition tests",
-        "regression: Regression tests",
-        "slow: Slow tests",
-        "smoke: Smoke tests",
-        "timeout: Timeout tests",
-        "unit: Unit tests",
-    ]
-    minversion = "8.0"
-    testpaths = [
-        "tests",
-    ]
+        [tool.poetry.dependencies.flext-cli]
+            develop = true
+            path    = "../flext-cli"
 
-[tool.coverage.run]
-    branch = true
-    omit = [
-        "*/.venv/*",
-        "*/__pycache__/*",
-        "*/test_*",
-        "*/tests/*",
-        "*/venv/*",
-    ]
-    source = [
-        "src",
-    ]
+        [tool.poetry.dependencies.flext-ldap]
+            develop = true
+            path    = "../flext-ldap"
 
-[tool.coverage.report]
-    exclude_lines = [
-        "@(abc\\.)?abstractmethod",
-        "class .*\\bProtocol\\):",
-        "def __repr__",
-        "if 0:",
-        "if __name__ == .__main__.:",
-        "if self.debug:",
-        "if settings.DEBUG",
-        "pragma: no cover",
-        "raise AssertionError",
-        "raise NotImplementedError",
-    ]
-
-[tool.coverage.html]
-    directory = "reports/coverage"
-
-[tool.coverage.xml]
-    output = "reports/coverage.xml"
-
-    [tool.ruff.lint.isort]
-        known-first-party = [
-            "flext_ldif",
-        ]
-
-    [tool.poetry.dependencies.flext-cli]
-        develop = true
-        path    = "../flext-cli"
-
-    [tool.poetry.dependencies.flext-ldap]
-    develop = true
-    path    = "../flext-ldap"
-
-                                                                        [tool.poetry.dependencies.flext-observability]
+        [tool.poetry.dependencies.flext-observability]
             develop = true
             path    = "../flext-observability"
 
@@ -224,14 +141,59 @@
         bandit    = ">=1.8.0"
         pip-audit = ">=2.7.3"
 
+
+[tool.pytest.ini_options]
+    addopts = [
+        "--maxfail=1",
+        "--strict-config",
+        "--strict-markers",
+        "--tb=short",
+        "-ra",
+    ]
+    filterwarnings = [
+        "ignore::DeprecationWarning:pyasn1(.*|$)",
+        "ignore::UserWarning:flext_core.loggings",
+    ]
+    markers = [
+        " tests",
+        "benchmark: Benchmark tests",
+        "complexity: Complexity tests",
+        "concurrency: Concurrency tests",
+        "e2e: End-to-end tests",
+        "integration: Integration tests",
+        "memory: Memory tests",
+        "memory_limit: Memory limit tests",
+        "performance: Performance tests",
+        "race_condition: Race condition tests",
+        "regression: Regression tests",
+        "slow: Slow tests",
+        "smoke: Smoke tests",
+        "timeout: Timeout tests",
+        "unit: Unit tests",
+    ]
+    minversion = "8.0"
+    testpaths = [
+        "tests",
+    ]
+
+
 [tool.pyrefly]
     python-version = "3.13"
     search-path = [
-        "../flext-core/src",
         "../flext-cli/src",
+        "../flext-core/src",
         "../flext-ldap/src",
         "../flext-observability/src",
         "examples",
         "src",
         "tests",
     ]
+
+
+[tool.ruff]
+    extend = "../ruff-shared.toml"
+
+    [tool.ruff.lint.isort]
+        known-first-party = [
+            "flext_ldif",
+        ]

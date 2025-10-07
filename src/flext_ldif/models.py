@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, cast
+from typing import cast
 
 from flext_core import FlextModels, FlextResult
 from pydantic import ConfigDict, Field, computed_field
@@ -260,7 +260,7 @@ class FlextLdifModels(FlextModels):
 
         dn: str = Field(..., description="Distinguished Name")
         changetype: str = Field(..., description="Type of change")
-        changes: list[dict[str, Any]] = Field(
+        changes: list[dict[str, object]] = Field(
             default_factory=list, description="List of changes"
         )
 
@@ -327,7 +327,7 @@ class FlextLdifModels(FlextModels):
     class ValidateQuery(FlextModels.Query):
         """Query for validating LDIF entries."""
 
-        entries: list[Any] = Field(..., description="Entries to validate")
+        entries: list[object] = Field(..., description="Entries to validate")
         schema_config: FlextLdifTypes.Dict | None = Field(
             default=None, description="Schema configuration for validation"
         )
@@ -338,7 +338,7 @@ class FlextLdifModels(FlextModels):
     class AnalyzeQuery(FlextModels.Query):
         """Query for analyzing LDIF entries."""
 
-        entries: list[Any] = Field(..., description="Entries to analyze")
+        entries: list[object] = Field(..., description="Entries to analyze")
         metrics: FlextLdifTypes.Dict | None = Field(
             default=None, description="Metrics configuration"
         )
@@ -349,7 +349,7 @@ class FlextLdifModels(FlextModels):
     class WriteCommand(FlextModels.Command):
         """Command for writing entries to LDIF format."""
 
-        entries: list[Any] = Field(..., description="Entries to write")
+        entries: list[object] = Field(..., description="Entries to write")
         format: str = Field(default="rfc", description="Output LDIF format")
         output: str | None = Field(
             default=None, description="Output path (None for string return)"
@@ -361,7 +361,7 @@ class FlextLdifModels(FlextModels):
     class MigrateCommand(FlextModels.Command):
         """Command for migrating LDIF entries between server types."""
 
-        entries: list[Any] = Field(..., description="Entries to migrate")
+        entries: list[object] = Field(..., description="Entries to migrate")
         source_format: str = Field(..., description="Source LDIF format")
         target_format: str = Field(..., description="Target LDIF format")
         options: FlextLdifTypes.Dict | None = Field(
