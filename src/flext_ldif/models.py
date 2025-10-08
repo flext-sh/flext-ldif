@@ -64,14 +64,32 @@ class FlextLdifModels(FlextModels):
         @field_validator("value", mode="before")
         @classmethod
         def normalize_dn(cls, v: str) -> str:
-            """Normalize DN value to lowercase."""
-            return v.lower().strip()
+            """Normalize DN value using RFC 4514 compliant normalization.
 
-        @property
-        def normalized_value(self) -> str:
-            """Get normalized DN value."""
-            return self.value
+            Uses ldap3.utils.dn.safe_dn for proper DN normalization:
+            - Lowercases attribute names (cn, dc, ou, etc.)
+            - Preserves case in attribute values (user names, etc.)
+            - Normalizes spaces and escaping per RFC 4514
 
+            Args:
+                v: DN string to normalize
+
+            Returns:
+                Normalized DN string
+
+            Raises:
+                ValueError: If DN format is invalid
+
+            """
+            from flext_ldif.utilities import FlextLdifUtilities
+
+            result = FlextLdifUtilities.DnUtilities.normalize_dn(v)
+            if result.is_failure:
+                msg = result.error or "Invalid DN format"
+                raise ValueError(msg)
+            return result.unwrap()
+
+        @computed_field
         @property
         def components(self) -> list[str]:
             """Get DN components."""
@@ -87,6 +105,33 @@ class FlextLdifModels(FlextModels):
             ..., description="Entry attributes container"
         )
 
+        @field_validator("dn", mode="before")
+        @classmethod
+        def validate_dn(
+            cls, v: FlextLdifModels.DistinguishedName | str
+        ) -> FlextLdifModels.DistinguishedName:
+            """Convert string DN to DistinguishedName object."""
+            if isinstance(v, str):
+                return FlextLdifModels.DistinguishedName(value=v)
+            return v
+
+        @field_validator("attributes", mode="before")
+        @classmethod
+        def validate_attributes(
+            cls, v: FlextLdifModels.LdifAttributes | dict
+        ) -> FlextLdifModels.LdifAttributes:
+            """Convert dict attributes to LdifAttributes object."""
+            if isinstance(v, dict):
+                # Convert raw attributes dict to LdifAttributes
+                raw_attrs = cast("dict[str, list[str]]", v)
+                return FlextLdifModels.LdifAttributes(
+                    attributes={
+                        name: FlextLdifModels.AttributeValues(values=values)
+                        for name, values in raw_attrs.items()
+                    }
+                )
+            return v
+
         @classmethod
         def create(
             cls, data: dict[str, object] | None = None, **kwargs: object
@@ -98,26 +143,37 @@ class FlextLdifModels(FlextModels):
                 data.update(kwargs)
 
                 # Handle DN conversion if needed
-                if "dn" in data and isinstance(data["dn"], str):
-                    data["dn"] = FlextLdifModels.DistinguishedName(value=data["dn"])
+                if FlextLdifConstants.DictKeys.DN in data and isinstance(
+                    data[FlextLdifConstants.DictKeys.DN], str
+                ):
+                    data[FlextLdifConstants.DictKeys.DN] = (
+                        FlextLdifModels.DistinguishedName(
+                            value=data[FlextLdifConstants.DictKeys.DN]
+                        )
+                    )
 
                 # Handle attributes conversion if needed
-                if "attributes" in data and isinstance(data["attributes"], dict):
+                if FlextLdifConstants.DictKeys.ATTRIBUTES in data and isinstance(
+                    data[FlextLdifConstants.DictKeys.ATTRIBUTES], dict
+                ):
                     # Raw attributes mapping from keys to list of values
-                    raw_attrs = cast("dict[str, list[str]]", data["attributes"])
+                    raw_attrs = cast(
+                        "dict[str, list[str]]",
+                        data[FlextLdifConstants.DictKeys.ATTRIBUTES],
+                    )
                     ldif_attrs = FlextLdifModels.LdifAttributes(
                         attributes={
                             name: FlextLdifModels.AttributeValues(values=values)
                             for name, values in raw_attrs.items()
                         }
                     )
-                    data["attributes"] = ldif_attrs
+                    data[FlextLdifConstants.DictKeys.ATTRIBUTES] = ldif_attrs
                 else:
                     # Handle raw LDIF format where attributes are at top level
                     raw_attrs_else: dict[str, list[str]] = {}
                     keys_to_remove: list[str] = []
                     for key, value in data.items():
-                        if key != "dn":
+                        if key != FlextLdifConstants.DictKeys.DN:
                             if isinstance(value, list):
                                 existing_values = cast("list[str]", value)
                                 raw_attrs_else[key] = existing_values
@@ -133,7 +189,7 @@ class FlextLdifModels(FlextModels):
                                 for name, values in raw_attrs_else.items()
                             }
                         )
-                        data["attributes"] = ldif_attrs
+                        data[FlextLdifConstants.DictKeys.ATTRIBUTES] = ldif_attrs
 
                 # Use model_validate for proper Pydantic validation with type coercion
                 instance = cls.model_validate(data)
@@ -240,7 +296,7 @@ class FlextLdifModels(FlextModels):
                     raise FlextLdifExceptions.LdifProcessingError(
                         error_msg,
                         operation="write_entry_to_ldif",
-                        entry_dn=self.dn,
+                        entry_dn=self.dn.value,
                         context={"entry_attributes": list(self.attributes.keys())},
                     )
 
@@ -309,7 +365,7 @@ class FlextLdifModels(FlextModels):
                 return FlextResult[object].fail(f"Failed to create LdifAttribute: {e}")
 
     class LdifAttributes(FlextModels.Value):
-        """LDIF attributes container."""
+        """LDIF attributes container with dict-like interface."""
 
         attributes: dict[str, FlextLdifModels.AttributeValues] = Field(
             default_factory=dict, description="Attribute name to values mapping"
@@ -319,6 +375,36 @@ class FlextLdifModels(FlextModels):
         def data(self) -> dict[str, list[str]]:
             """Get attributes data as dict of lists."""
             return {name: attr.values for name, attr in self.attributes.items()}
+
+        def keys(self) -> list[str]:
+            """Get attribute names (dict-like interface)."""
+            return list(self.attributes.keys())
+
+        def values(self) -> list[FlextLdifModels.AttributeValues]:
+            """Get attribute values (dict-like interface)."""
+            return list(self.attributes.values())
+
+        def items(self) -> list[tuple[str, FlextLdifModels.AttributeValues]]:
+            """Get attribute items (dict-like interface)."""
+            return list(self.attributes.items())
+
+        def __contains__(self, name: str) -> bool:
+            """Check if attribute exists."""
+            return name in self.attributes
+
+        def __getitem__(self, name: str) -> FlextLdifModels.AttributeValues:
+            """Get attribute by name."""
+            return self.attributes[name]
+
+        def __setitem__(
+            self, name: str, value: FlextLdifModels.AttributeValues
+        ) -> None:
+            """Set attribute value."""
+            self.attributes[name] = value
+
+        def __delitem__(self, name: str) -> None:
+            """Delete attribute."""
+            del self.attributes[name]
 
         def get(self, name: str, default: list[str] | None = None) -> list[str] | None:
             """Get attribute values by name."""
@@ -959,7 +1045,9 @@ class FlextLdifModels(FlextModels):
                             entry_result = FlextLdifModels.Entry.create(current_entry)
                             if entry_result.is_success:
                                 entries.append(entry_result.unwrap())
-                        current_entry = {"dn": stripped_line[3:].strip()}
+                        current_entry = {
+                            FlextLdifConstants.DictKeys.DN: stripped_line[3:].strip()
+                        }
                         in_entry = True
                     elif ":" in stripped_line and in_entry:
                         key, value = stripped_line.split(":", 1)
@@ -973,7 +1061,11 @@ class FlextLdifModels(FlextModels):
                                 existing_list = cast("list[str]", existing)
                                 existing_list.append(value)
                         else:
-                            current_entry[key] = [value] if key != "dn" else value
+                            current_entry[key] = (
+                                [value]
+                                if key != FlextLdifConstants.DictKeys.DN
+                                else value
+                            )
 
                 if current_entry:
                     entry_result = FlextLdifModels.Entry.create(current_entry)

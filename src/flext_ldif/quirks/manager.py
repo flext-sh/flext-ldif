@@ -67,11 +67,60 @@ class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
                 FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SUBSCHEMA,
                 FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: True,
             },
+            FlextLdifConstants.LdapServers.APACHE_DIRECTORY: {
+                FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: "ads-aci",
+                FlextLdifConstants.DictKeys.ACL_FORMAT: FlextLdifConstants.AclFormats.ACI,
+                FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SUBSCHEMA,
+                FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: True,
+                "dn_patterns": ["ou=config", "ou=services"],
+                "required_object_classes": ["top", "ads-directoryService"],
+                "special_attributes": [
+                    "ads-directoryServiceId",
+                    "ads-enabled",
+                    "ads-aci",
+                ],
+                "dn_case_sensitive": False,
+            },
             FlextLdifConstants.LdapServers.DS_389: {
                 FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: FlextLdifConstants.DictKeys.ACI,
                 FlextLdifConstants.DictKeys.ACL_FORMAT: FlextLdifConstants.AclFormats.DS389_ACL,
                 FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SCHEMA,
                 FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: True,
+                "dn_patterns": ["cn=config", "cn=monitor"],
+                "required_object_classes": ["top", "nsContainer"],
+                "special_attributes": [
+                    "nsslapd-rootdn",
+                    "nsslapd-suffix",
+                    FlextLdifConstants.DictKeys.ACI,
+                ],
+                "dn_case_sensitive": False,
+            },
+            FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY: {
+                FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: "acl",
+                FlextLdifConstants.DictKeys.ACL_FORMAT: FlextLdifConstants.AclFormats.ACI,
+                FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SUBSCHEMA,
+                FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: True,
+                "dn_patterns": ["ou=services", "ou=system"],
+                "required_object_classes": ["top", "ndsperson"],
+                "special_attributes": [
+                    "nspmPasswordPolicyDN",
+                    "loginDisabled",
+                    "nspmPasswordPolicy",
+                ],
+                "dn_case_sensitive": False,
+            },
+            FlextLdifConstants.LdapServers.IBM_TIVOLI: {
+                FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: "ibm-slapdAccessControl",
+                FlextLdifConstants.DictKeys.ACL_FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
+                FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SCHEMA,
+                FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: True,
+                "dn_patterns": ["cn=ibm", "cn=configuration"],
+                "required_object_classes": ["top", "ibm-LDAPServer"],
+                "special_attributes": [
+                    "ibm-slapdAccessControl",
+                    "ibm-slapdBackend",
+                ],
+                "dn_case_sensitive": False,
             },
             FlextLdifConstants.LdapServers.ORACLE_OID: {
                 FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: FlextLdifConstants.DictKeys.ORCLACI,
@@ -90,6 +139,17 @@ class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
                 FlextLdifConstants.DictKeys.ACL_FORMAT: FlextLdifConstants.AclFormats.AD_ACL,
                 FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SCHEMA_CN_CONFIGURATION,
                 FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: False,
+                "dn_patterns": list(FlextLdifConstants.LdapServers.AD_DN_PATTERNS),
+                "required_object_classes": list(
+                    FlextLdifConstants.LdapServers.AD_REQUIRED_CLASSES
+                ),
+                "special_attributes": [
+                    "memberOf",
+                    "userPrincipalName",
+                    "sAMAccountName",
+                    FlextLdifConstants.DictKeys.NTSECURITYDESCRIPTOR,
+                ],
+                "dn_case_sensitive": False,
             },
             FlextLdifConstants.LdapServers.GENERIC: {
                 FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: FlextLdifConstants.DictKeys.ACI,
@@ -124,10 +184,13 @@ class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
             return FlextResult[str].ok(FlextLdifConstants.LdapServers.GENERIC)
 
         for entry in entries:
-            object_classes_raw: object = entry.get_attribute("objectClass") or []
+            object_classes_raw: object = (
+                entry.get_attribute(FlextLdifConstants.DictKeys.OBJECTCLASS) or []
+            )
             object_classes: FlextLdifTypes.StringList = (
                 object_classes_raw if isinstance(object_classes_raw, list) else []
             )
+            dn_lower = entry.dn.value.lower()
 
             if "orclContainer" in object_classes or "orclUserV2" in object_classes:
                 return FlextResult[str].ok(FlextLdifConstants.LdapServers.ORACLE_OID)
@@ -146,17 +209,82 @@ class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
             if "nsContainer" in object_classes or "nsPerson" in object_classes:
                 return FlextResult[str].ok(FlextLdifConstants.LdapServers.DS_389)
 
-            if "top" in object_classes and entry.dn.value.lower().startswith(
+            if any(
+                attr.startswith(("nsslapd-", "nsds"))
+                for attr in entry.attributes.attributes
+            ):
+                return FlextResult[str].ok(FlextLdifConstants.LdapServers.DS_389)
+
+            if (
+                any(
+                    attr.startswith(("ads-", "apacheds"))
+                    for attr in entry.attributes.attributes
+                )
+                or any(oc.lower() == "ads-directoryservice" for oc in object_classes)
+                or any(marker in dn_lower for marker in ("ou=config", "ou=services"))
+            ):
+                return FlextResult[str].ok(
+                    FlextLdifConstants.LdapServers.APACHE_DIRECTORY
+                )
+
+            if "top" in object_classes and dn_lower.startswith(
                 FlextLdifConstants.DnPatterns.CN_SCHEMA
             ):
-                if "olc" in entry.dn.value.lower():
+                if "olc" in dn_lower:
                     return FlextResult[str].ok(
                         FlextLdifConstants.LdapServers.OPENLDAP_2
                     )
-                if "ds-cfg" in entry.dn.value.lower():
+                if "ds-cfg" in dn_lower:
                     return FlextResult[str].ok(
                         FlextLdifConstants.LdapServers.ORACLE_OUD
                     )
+
+            if (
+                entry.has_attribute("nspmPasswordPolicyDN")
+                or entry.has_attribute("loginDisabled")
+                or any(
+                    oc.lower() in {"ndsperson", "nspmpasswordpolicy"}
+                    for oc in object_classes
+                )
+            ):
+                return FlextResult[str].ok(
+                    FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY
+                )
+
+            if any(
+                attr.startswith(("ibm-", "ids-"))
+                for attr in entry.attributes.attributes
+            ) or any(oc.lower().startswith("ibm-") for oc in object_classes):
+                return FlextResult[str].ok(FlextLdifConstants.LdapServers.IBM_TIVOLI)
+
+            # Active Directory detection heuristics
+            ad_attr_present = any(
+                entry.has_attribute(attr_name)
+                for attr_name in (
+                    "objectGUID",
+                    "objectSid",
+                    "sAMAccountName",
+                    "userPrincipalName",
+                    FlextLdifConstants.DictKeys.NTSECURITYDESCRIPTOR,
+                )
+            )
+            ad_object_classes = {
+                cls.lower()
+                for cls in FlextLdifConstants.LdapServers.AD_REQUIRED_CLASSES
+            }
+            has_ad_classes = any(
+                oc.lower() in ad_object_classes for oc in object_classes
+            )
+            ad_dn_markers = {
+                marker.lower()
+                for marker in FlextLdifConstants.LdapServers.AD_DN_PATTERNS
+            }
+            dn_matches_ad = any(marker in dn_lower for marker in ad_dn_markers)
+
+            if ad_attr_present or has_ad_classes or dn_matches_ad:
+                return FlextResult[str].ok(
+                    FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY
+                )
 
             # OpenLDAP 1.x detection (traditional attributes, no olc* prefix)
             if "attributetype" in str(entry.attributes).lower() and not has_olc_attrs:

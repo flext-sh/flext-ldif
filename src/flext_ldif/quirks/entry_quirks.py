@@ -62,7 +62,10 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
         rules = quirks_result.value
 
         # Create adapted entry data - FlextResult handles errors explicitly
-        adapted_data: dict[str, object] = {"dn": entry.dn.value, "attributes": {}}
+        adapted_data: dict[str, object] = {
+            FlextLdifConstants.DictKeys.DN: entry.dn.value,
+            FlextLdifConstants.DictKeys.ATTRIBUTES: {},
+        }
 
         attribute_mappings_raw = rules.get("attribute_mappings", {})
         attribute_mappings = cast("FlextLdifTypes.StringDict", attribute_mappings_raw)
@@ -81,12 +84,13 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
                 values=adapted_values
             )
 
-        adapted_data["attributes"] = adapted_attrs
+        adapted_data[FlextLdifConstants.DictKeys.ATTRIBUTES] = adapted_attrs
 
         # Create adapted entry - FlextResult pattern with explicit error handling
         adapted_entry_result: FlextResult[FlextLdifModels.Entry] = (
             FlextLdifModels.Entry.create(
-                dn=adapted_data["dn"], attributes=adapted_data["attributes"]
+                dn=adapted_data[FlextLdifConstants.DictKeys.DN],
+                attributes=adapted_data[FlextLdifConstants.DictKeys.ATTRIBUTES],
             )
         )
         if adapted_entry_result.is_failure:
@@ -180,7 +184,9 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
             if isinstance(dn_issues, list):
                 issues.extend(dn_issues)
 
-        obj_classes_raw: object = entry.get_attribute("objectClass") or []
+        obj_classes_raw: object = (
+            entry.get_attribute(FlextLdifConstants.DictKeys.OBJECTCLASS) or []
+        )
         obj_classes: FlextLdifTypes.StringList = (
             obj_classes_raw if isinstance(obj_classes_raw, list) else []
         )

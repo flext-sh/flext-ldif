@@ -18,67 +18,6 @@ from flext_ldif.typings import FlextLdifTypes
 class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
     """Multi-server ACL parser for different LDAP implementations."""
 
-    class AclComponentHelper:
-        """Helper class for creating and validating ACL components."""
-
-        @staticmethod
-        def create_acl_components() -> FlextResult[
-            tuple[
-                FlextLdifModels.AclTarget,
-                FlextLdifModels.AclSubject,
-                FlextLdifModels.AclPermissions,
-            ]
-        ]:
-            """Create ACL components with proper validation."""
-            try:
-                # Create ACL components with default values
-                target = FlextLdifModels.AclTarget(target_dn="*", attributes=[])
-                subject = FlextLdifModels.AclSubject(
-                    subject_type="*", subject_value="*"
-                )
-                perms = FlextLdifModels.AclPermissions(read=True)
-
-                return FlextResult[
-                    tuple[
-                        FlextLdifModels.AclTarget,
-                        FlextLdifModels.AclSubject,
-                        FlextLdifModels.AclPermissions,
-                    ]
-                ].ok((target, subject, perms))
-            except Exception as e:
-                return FlextResult[
-                    tuple[
-                        FlextLdifModels.AclTarget,
-                        FlextLdifModels.AclSubject,
-                        FlextLdifModels.AclPermissions,
-                    ]
-                ].fail(f"Failed to create ACL components: {e}")
-
-        @staticmethod
-        def create_unified_acl(
-            name: str,
-            target: FlextLdifModels.AclTarget,
-            subject: FlextLdifModels.AclSubject,
-            permissions: FlextLdifModels.AclPermissions,
-            server_type: str,
-            raw_acl: str,
-        ) -> FlextResult[FlextLdifModels.UnifiedAcl]:
-            """Create unified ACL with proper validation."""
-            try:
-                acl = FlextLdifModels.UnifiedAcl(
-                    name=name,
-                    target=target,
-                    subject=subject,
-                    permissions=permissions,
-                    server_type=server_type,
-                    raw_acl=raw_acl,
-                )
-                return FlextResult[FlextLdifModels.UnifiedAcl].ok(acl)
-            except Exception as e:
-                return FlextResult[FlextLdifModels.UnifiedAcl].fail(
-                    f"Failed to create UnifiedAcl: {e}"
-                )
-
     @override
     def __init__(self) -> None:
         """Initialize ACL parser with Phase 1 context enrichment."""
@@ -105,22 +44,21 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
             FlextResult containing unified ACL
 
         """
-        # Create ACL components using helper
-        components_result = self.AclComponentHelper.create_acl_components()
-        if components_result.is_failure:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(components_result.error)
+        # Create ACL components directly - Pydantic handles validation
+        target = FlextLdifModels.AclTarget(target_dn="*", attributes=[])
+        subject = FlextLdifModels.AclSubject(subject_type="*", subject_value="*")
+        perms = FlextLdifModels.AclPermissions(read=True)
 
-        target_result, subject_result, perms_result = components_result.value
-
-        # Create unified ACL using helper
-        return self.AclComponentHelper.create_unified_acl(
+        # Create unified ACL directly
+        acl = FlextLdifModels.UnifiedAcl(
             name="openldap_acl",
-            target=target_result,
-            subject=subject_result,
-            permissions=perms_result,
+            target=target,
+            subject=subject,
+            permissions=perms,
             server_type=FlextLdifConstants.LdapServers.OPENLDAP,
             raw_acl=acl_string,
         )
+        return FlextResult[FlextLdifModels.UnifiedAcl].ok(acl)
 
     def parse_389ds_acl(
         self, acl_string: str
@@ -134,22 +72,21 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
             FlextResult containing unified ACL
 
         """
-        # Create ACL components using helper
-        components_result = self.AclComponentHelper.create_acl_components()
-        if components_result.is_failure:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(components_result.error)
+        # Create ACL components directly - Pydantic handles validation
+        target = FlextLdifModels.AclTarget(target_dn="*", attributes=[])
+        subject = FlextLdifModels.AclSubject(subject_type="*", subject_value="*")
+        perms = FlextLdifModels.AclPermissions(read=True)
 
-        target_result, subject_result, perms_result = components_result.value
-
-        # Create unified ACL using helper
-        return self.AclComponentHelper.create_unified_acl(
+        # Create unified ACL directly
+        acl = FlextLdifModels.UnifiedAcl(
             name="389ds_acl",
-            target=target_result,
-            subject=subject_result,
-            permissions=perms_result,
+            target=target,
+            subject=subject,
+            permissions=perms,
             server_type=FlextLdifConstants.LdapServers.DS_389,
             raw_acl=acl_string,
         )
+        return FlextResult[FlextLdifModels.UnifiedAcl].ok(acl)
 
     def parse_oracle_acl(
         self,
@@ -166,22 +103,21 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
             FlextResult containing unified ACL
 
         """
-        # Create ACL components using helper
-        components_result = self.AclComponentHelper.create_acl_components()
-        if components_result.is_failure:
-            return FlextResult[FlextLdifModels.UnifiedAcl].fail(components_result.error)
+        # Create ACL components directly - Pydantic handles validation
+        target = FlextLdifModels.AclTarget(target_dn="*", attributes=[])
+        subject = FlextLdifModels.AclSubject(subject_type="*", subject_value="*")
+        perms = FlextLdifModels.AclPermissions(read=True)
 
-        target_result, subject_result, perms_result = components_result.value
-
-        # Create unified ACL using helper
-        return self.AclComponentHelper.create_unified_acl(
+        # Create unified ACL directly
+        acl = FlextLdifModels.UnifiedAcl(
             name="oracle_acl",
-            target=target_result,
-            subject=subject_result,
-            permissions=perms_result,
+            target=target,
+            subject=subject,
+            permissions=perms,
             server_type=server_type,
             raw_acl=acl_string,
         )
+        return FlextResult[FlextLdifModels.UnifiedAcl].ok(acl)
 
     def parse_acl(
         self, acl_string: str, server_type: str

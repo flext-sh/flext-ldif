@@ -7,16 +7,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Iterator, Sequence
-from typing import TypeVar, cast, override
+from typing import cast, override
 
 from flext_core import FlextMixins, FlextResult
 
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.typings import FlextLdifTypes
-
-T = TypeVar("T")
-
-U = TypeVar("U")
+from flext_ldif.typings import FlextLdifTypes, T, U
 
 
 class FlextLdifMixins(FlextMixins):
@@ -187,7 +184,7 @@ class FlextLdifMixins(FlextMixins):
                 "FlextLdifModels.DistinguishedName", dn_model_result.unwrap()
             )
             # computed_field property access - pyrefly needs explicit str() cast
-            return FlextResult[str].ok(str(dn_model.normalized_value))
+            return FlextResult[str].ok(str(dn_model.value))
 
         @staticmethod
         def extract_dn_components(dn: str) -> FlextResult[list[tuple[str, str]]]:
@@ -319,7 +316,7 @@ class FlextLdifMixins(FlextMixins):
             """Calculate attribute frequency across entries."""
             attribute_counts: dict[str, int] = {}
             for entry in entries:
-                attributes = getattr(entry, "attributes", {})
+                attributes = getattr(entry, FlextLdifConstants.DictKeys.ATTRIBUTES, {})
                 for attr_name in attributes:
                     attribute_counts[attr_name] = attribute_counts.get(attr_name, 0) + 1
             return attribute_counts
@@ -329,7 +326,7 @@ class FlextLdifMixins(FlextMixins):
             """Analyze DN patterns using DistinguishedName Model."""
             pattern_counts: dict[str, int] = {}
             for entry in entries:
-                dn = getattr(entry, "dn", "")
+                dn = getattr(entry, FlextLdifConstants.DictKeys.DN, "")
                 if isinstance(dn, str):
                     # Use Model parsing - centralized in FlextLdifModels.DistinguishedName
                     # Explicit FlextResult error handling - NO try/except
@@ -373,6 +370,7 @@ class FlextLdifMixins(FlextMixins):
         @override
         def __init__(self) -> None:
             """Initialize caching mixin with empty cache and statistics."""
+            super().__init__()
             self._cache: FlextLdifTypes.Dict = {}
             self._cache_stats: dict[str, int] = {"hits": 0, "misses": 0}
 

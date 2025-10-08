@@ -91,10 +91,15 @@ from flext_ldif.api import FlextLdif
 from flext_ldif.client import FlextLdifClient
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.containers import (
+    FlextLdifContainer,
+    flext_ldif_container,
+)
 from flext_ldif.exceptions import FlextLdifExceptions
 from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
+from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.version import VERSION, FlextLdifVersion
 
 PROJECT_VERSION: Final[FlextLdifVersion] = VERSION
@@ -111,14 +116,17 @@ __all__ = [
     "FlextLdifClient",
     "FlextLdifConfig",
     "FlextLdifConstants",
+    "FlextLdifContainer",
     "FlextLdifExceptions",
     "FlextLdifMigrationPipeline",
     "FlextLdifModels",
     "FlextLdifQuirksRegistry",
+    "FlextLdifTypes",
     "FlextLdifVersion",
     "FlextTypes",
     "__version__",
     "__version_info__",
+    "flext_ldif_container",
 ]
 
 __email__ = "dev@flext.com"

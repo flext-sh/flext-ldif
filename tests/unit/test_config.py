@@ -369,8 +369,8 @@ class TestFlextLdifConfig:
         perf_config = FlextLdifConfig(
             enable_performance_optimizations=True,
             max_workers=4,  # Minimum for performance
-            ldif_chunk_size=500,  # Minimum for performance
-            memory_limit_mb=256,  # Minimum for performance
+            ldif_chunk_size=1000,  # Actual minimum for performance (PERFORMANCE_MIN_CHUNK_SIZE)
+            memory_limit_mb=512,  # Minimum for performance (PERFORMANCE_MEMORY_MB_THRESHOLD)
         )
         assert perf_config.is_performance_optimized() is True
 
@@ -385,6 +385,7 @@ class TestFlextLdifConfig:
             debug_mode=True,
             verbose_logging=True,
             max_workers=2,  # Max for debug mode
+            enable_performance_optimizations=False,  # Debug mode conflicts with performance mode
         )
         assert dev_config.is_development_optimized() is True
 

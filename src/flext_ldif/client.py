@@ -24,6 +24,7 @@ from flext_core import (
 from pydantic import PrivateAttr
 
 from flext_ldif.config import FlextLdifConfig
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.base import (
@@ -46,9 +47,6 @@ from flext_ldif.rfc.rfc_ldif_writer import FlextLdifRfcLdifWriter
 from flext_ldif.rfc.rfc_schema_parser import FlextLdifRfcSchemaParser
 from flext_ldif.schema.validator import FlextLdifSchemaValidator
 from flext_ldif.typings import FlextLdifTypes
-
-# Constants
-MAX_PATH_LENGTH_CHECK = 500
 
 
 class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
@@ -204,16 +202,30 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             FlextLdifQuirksServersOud(server_type="oud", priority=10),
             FlextLdifQuirksServersOpenldap(server_type="openldap2", priority=10),
             FlextLdifQuirksServersOpenldap1(server_type="openldap1", priority=20),
+            FlextLdifQuirksServersAd(
+                server_type=FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY,
+                priority=15,
+            ),
+            FlextLdifQuirksServersApache(
+                server_type=FlextLdifConstants.LdapServers.APACHE_DIRECTORY,
+                priority=15,
+            ),
+            FlextLdifQuirksServersDs389(
+                server_type=FlextLdifConstants.LdapServers.DS_389,
+                priority=15,
+            ),
+            FlextLdifQuirksServersNovell(
+                server_type=FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY,
+                priority=15,
+            ),
+            FlextLdifQuirksServersTivoli(
+                server_type=FlextLdifConstants.LdapServers.IBM_TIVOLI,
+                priority=15,
+            ),
         ]
 
         # Register stub implementations (for future completion)
-        stub_quirks = [
-            FlextLdifQuirksServersAd(server_type="active_directory", priority=15),
-            FlextLdifQuirksServersApache(server_type="apache_directory", priority=15),
-            FlextLdifQuirksServersDs389(server_type="389ds", priority=15),
-            FlextLdifQuirksServersNovell(server_type="novell_edirectory", priority=15),
-            FlextLdifQuirksServersTivoli(server_type="ibm_tivoli", priority=15),
-        ]
+        stub_quirks: list[FlextLdifQuirksBase.BaseSchemaQuirk] = []
 
         all_quirks = complete_quirks + stub_quirks
 
@@ -296,7 +308,8 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
         # If source is a string that looks like a file path, convert to Path
         if isinstance(source, str) and (
-            "\n" not in source and len(source) < MAX_PATH_LENGTH_CHECK
+            "\n" not in source
+            and len(source) < FlextLdifConstants.MAX_PATH_LENGTH_CHECK
         ):
             # Check if it's a valid file path
             potential_path = Path(source)
@@ -518,7 +531,9 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         total_entries = len(entries)
 
         for entry in entries:
-            object_classes = entry.attributes.get("objectClass", [])
+            object_classes = entry.attributes.get(
+                FlextLdifConstants.DictKeys.OBJECTCLASS, []
+            )
             if object_classes:
                 for obj_class in object_classes:
                     obj_class_str = str(obj_class)
@@ -553,7 +568,10 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
                 if objectclass.lower()
                 in [
                     obj_class.lower()
-                    for obj_class in (entry.get_attribute("objectClass") or [])
+                    for obj_class in (
+                        entry.get_attribute(FlextLdifConstants.DictKeys.OBJECTCLASS)
+                        or []
+                    )
                 ]
             ]
             return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)

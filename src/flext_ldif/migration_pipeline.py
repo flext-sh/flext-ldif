@@ -241,7 +241,9 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
 
                 if source_entry_quirks:
                     for quirk in source_entry_quirks:
-                        entry_dn = str(normalized_entry.get("dn", ""))
+                        entry_dn = str(
+                            normalized_entry.get(FlextLdifConstants.DictKeys.DN, "")
+                        )
                         entry_attrs = normalized_entry.get(
                             FlextLdifConstants.DictKeys.ATTRIBUTES, {}
                         )
@@ -252,7 +254,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
                             if self.logger:
                                 self.logger.debug(
                                     f"Applying {quirk.server_type} source quirk",
-                                    extra={"dn": entry_dn},
+                                    extra={FlextLdifConstants.DictKeys.DN: entry_dn},
                                 )
                             convert_result = quirk.convert_entry_to_rfc(
                                 normalized_entry
@@ -266,7 +268,9 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
 
                 if target_entry_quirks:
                     for quirk in target_entry_quirks:
-                        entry_dn = str(target_entry.get("dn", ""))
+                        entry_dn = str(
+                            target_entry.get(FlextLdifConstants.DictKeys.DN, "")
+                        )
                         entry_attrs = target_entry.get(
                             FlextLdifConstants.DictKeys.ATTRIBUTES, {}
                         )
@@ -277,7 +281,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
                             if self.logger:
                                 self.logger.debug(
                                     f"Applying {quirk.server_type} target quirk",
-                                    extra={"dn": entry_dn},
+                                    extra={FlextLdifConstants.DictKeys.DN: entry_dn},
                                 )
                             # Target quirks convert FROM RFC to target format
                             # (This would be a hypothetical convert_entry_from_rfc method)

@@ -7,6 +7,7 @@ from typing import Self, override
 from flext_core import FlextResult, FlextService
 
 from flext_ldif.config import FlextLdifConfig
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.typings import FlextLdifTypes
 
 # from flext_ldif.models import FlextLdifModels  # Temporarily removed to fix circular import
@@ -135,9 +136,9 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
 
         """
         result = {
-            "attributes": self._attributes,
+            FlextLdifConstants.DictKeys.ATTRIBUTES: self._attributes,
             "object_classes": self._object_classes,
-            "server_type": self._server_type,
+            FlextLdifConstants.DictKeys.SERVER_TYPE: self._server_type,
             "entry_count": self._entry_count,
         }
         if result:
@@ -169,13 +170,23 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
         # Use fluent builder pattern
         return (
             self.reset()
-            .add_attribute("cn", "Common Name", single_value=True)
-            .add_attribute("sn", "Surname", single_value=True)
-            .add_attribute("uid", "User ID", single_value=True)
-            .add_attribute("mail", "Email Address")
-            .add_attribute("telephoneNumber", "Telephone Number")
-            .add_attribute("objectClass", "Object Class")
-            .add_object_class("top", "Top LDAP class", ["objectClass"])
+            .add_attribute(
+                FlextLdifConstants.DictKeys.CN, "Common Name", single_value=True
+            )
+            .add_attribute(FlextLdifConstants.DictKeys.SN, "Surname", single_value=True)
+            .add_attribute(
+                FlextLdifConstants.DictKeys.UID, "User ID", single_value=True
+            )
+            .add_attribute(FlextLdifConstants.DictKeys.MAIL, "Email Address")
+            .add_attribute(
+                FlextLdifConstants.DictKeys.TELEPHONE_NUMBER, "Telephone Number"
+            )
+            .add_attribute(FlextLdifConstants.DictKeys.OBJECTCLASS, "Object Class")
+            .add_object_class(
+                FlextLdifConstants.DictKeys.TOP,
+                "Top LDAP class",
+                [FlextLdifConstants.DictKeys.OBJECTCLASS],
+            )
             .add_object_class("person", "Person class", ["cn", "sn"])
             .add_object_class("organizationalPerson", "Organizational Person", ["cn"])
             .add_object_class("inetOrgPerson", "Internet Organizational Person", ["cn"])
@@ -195,11 +206,19 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
         # Use fluent builder pattern
         return (
             self.reset()
-            .add_attribute("cn", "Common Name", single_value=True)
-            .add_attribute("member", "Group Member")
-            .add_attribute("uniqueMember", "Unique Group Member")
-            .add_attribute("objectClass", "Object Class")
-            .add_object_class("top", "Top LDAP class", ["objectClass"])
+            .add_attribute(
+                FlextLdifConstants.DictKeys.CN, "Common Name", single_value=True
+            )
+            .add_attribute(FlextLdifConstants.DictKeys.MEMBER, "Group Member")
+            .add_attribute(
+                FlextLdifConstants.DictKeys.UNIQUE_MEMBER, "Unique Group Member"
+            )
+            .add_attribute(FlextLdifConstants.DictKeys.OBJECTCLASS, "Object Class")
+            .add_object_class(
+                FlextLdifConstants.DictKeys.TOP,
+                "Top LDAP class",
+                [FlextLdifConstants.DictKeys.OBJECTCLASS],
+            )
             .add_object_class("groupOfNames", "Group of Names", ["cn", "member"])
             .add_object_class(
                 "groupOfUniqueNames", "Group of Unique Names", ["cn", "uniqueMember"]

@@ -95,14 +95,32 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
         try:
             # OpenLDAP 2.x attributes are RFC 4512 compliant
             # Parse basic structure using regex
-            oid_match = re.search(r"^\s*\(\s*([\d.]+)", attr_definition)
-            name_match = re.search(r"NAME\s+'([^']+)'", attr_definition, re.IGNORECASE)
-            desc_match = re.search(r"DESC\s+'([^']+)'", attr_definition, re.IGNORECASE)
-            syntax_match = re.search(r"SYNTAX\s+([\d.]+)", attr_definition)
-            equality_match = re.search(
-                r"EQUALITY\s+(\w+)", attr_definition, re.IGNORECASE
+            oid_match = re.search(
+                FlextLdifConstants.LdifPatterns.SCHEMA_OID, attr_definition
             )
-            single_value = bool(re.search(r"\bSINGLE-VALUE\b", attr_definition))
+            name_match = re.search(
+                FlextLdifConstants.LdifPatterns.SCHEMA_NAME,
+                attr_definition,
+                re.IGNORECASE,
+            )
+            desc_match = re.search(
+                FlextLdifConstants.LdifPatterns.SCHEMA_DESC,
+                attr_definition,
+                re.IGNORECASE,
+            )
+            syntax_match = re.search(
+                FlextLdifConstants.LdifPatterns.SCHEMA_SYNTAX, attr_definition
+            )
+            equality_match = re.search(
+                FlextLdifConstants.LdifPatterns.SCHEMA_EQUALITY,
+                attr_definition,
+                re.IGNORECASE,
+            )
+            single_value = bool(
+                re.search(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_SINGLE_VALUE, attr_definition
+                )
+            )
 
             if not oid_match:
                 return FlextResult[FlextLdifTypes.Dict].fail(
@@ -160,13 +178,29 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
         """
         try:
             # Parse RFC 4512 compliant objectClass
-            oid_match = re.search(r"^\s*\(\s*([\d.]+)", oc_definition)
-            name_match = re.search(r"NAME\s+'([^']+)'", oc_definition, re.IGNORECASE)
-            desc_match = re.search(r"DESC\s+'([^']+)'", oc_definition, re.IGNORECASE)
-            sup_match = re.search(r"SUP\s+(\w+)", oc_definition, re.IGNORECASE)
+            oid_match = re.search(
+                FlextLdifConstants.LdifPatterns.SCHEMA_OID, oc_definition
+            )
+            name_match = re.search(
+                FlextLdifConstants.LdifPatterns.SCHEMA_NAME,
+                oc_definition,
+                re.IGNORECASE,
+            )
+            desc_match = re.search(
+                FlextLdifConstants.LdifPatterns.SCHEMA_DESC,
+                oc_definition,
+                re.IGNORECASE,
+            )
+            sup_match = re.search(
+                FlextLdifConstants.LdifPatterns.SCHEMA_SUP, oc_definition, re.IGNORECASE
+            )
 
             # Extract MUST attributes
-            must_match = re.search(r"MUST\s+\(([^)]+)\)", oc_definition, re.IGNORECASE)
+            must_match = re.search(
+                FlextLdifConstants.LdifPatterns.SCHEMA_MUST,
+                oc_definition,
+                re.IGNORECASE,
+            )
             must_attrs = (
                 [attr.strip() for attr in must_match.group(1).split("$")]
                 if must_match
@@ -486,7 +520,7 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
             has_olc_attrs = any(attr.startswith("olc") for attr in attributes)
 
             # Check for OpenLDAP 2.x object classes
-            object_classes = attributes.get("objectClass", [])
+            object_classes = attributes.get(FlextLdifConstants.DictKeys.OBJECTCLASS, [])
             if not isinstance(object_classes, list):
                 object_classes = [object_classes]
 
@@ -514,9 +548,10 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
                 # OpenLDAP 2.x entries are RFC-compliant
                 # Add OpenLDAP-specific processing if needed
                 processed_entry: FlextLdifTypes.Dict = {
-                    "dn": entry_dn,
+                    FlextLdifConstants.DictKeys.DN: entry_dn,
                     FlextLdifConstants.DictKeys.SERVER_TYPE: "openldap2",
-                    "is_config_entry": "cn=config" in entry_dn.lower(),
+                    FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY: "cn=config"
+                    in entry_dn.lower(),
                 }
                 processed_entry.update(attributes)
 
@@ -528,12 +563,12 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
                 )
 
         def convert_entry_to_rfc(
-            self, _entry_data: FlextLdifTypes.Dict
+            self, entry_data: FlextLdifTypes.Dict
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert server-specific entry to RFC-compliant format.
 
             Args:
-                _entry_data: Server-specific entry data
+                entry_data: Server-specific entry data
 
             Returns:
                 FlextResult with RFC-compliant entry data
@@ -541,7 +576,7 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
             """
             try:
                 # OpenLDAP 2.x entries are already RFC-compliant
-                return FlextResult[FlextLdifTypes.Dict].ok(_entry_data)
+                return FlextResult[FlextLdifTypes.Dict].ok(entry_data)
             except Exception as e:
                 return FlextResult[FlextLdifTypes.Dict].fail(
                     f"OpenLDAP 2.x entry→RFC conversion failed: {e}"

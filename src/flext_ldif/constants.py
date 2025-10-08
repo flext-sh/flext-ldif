@@ -17,7 +17,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Final
+from typing import Final, Literal
 
 from flext_core import FlextConstants
 
@@ -47,7 +47,12 @@ class FlextLdifConstants(FlextConstants):
 
         # LDIF ObjectClass constants
         LDIF_OBJECTCLASS_GROUPOFNAMES: Final[str] = "groupOfNames"
-        MAX_LINE_LENGTH: Final[int] = 78
+
+        # Line length constraints (RFC 2849 compliance)
+        MIN_LINE_LENGTH: Final[int] = 40  # Minimum allowed line length
+        MAX_LINE_LENGTH: Final[int] = 78  # RFC 2849 standard
+        MAX_LINE_LENGTH_EXTENDED: Final[int] = 200  # Extended for non-strict mode
+
         MIN_BUFFER_SIZE: Final[int] = 1024
         CONTENT_PREVIEW_LENGTH: Final[int] = 100
         MAX_ATTRIBUTES_DISPLAY: Final[int] = 10
@@ -70,24 +75,43 @@ class FlextLdifConstants(FlextConstants):
     # PROCESSING CONSTANTS
     # =============================================================================
 
-    # Processing constants (moved to top level to avoid override issues)
-    MIN_WORKERS_FOR_PARALLEL: Final[int] = 2
-    MAX_WORKERS_LIMIT: Final[int] = 16  # Maximum allowed workers
-    PERFORMANCE_MIN_WORKERS: Final[int] = (
-        4  # Minimum workers for performance optimization
-    )
-    PERFORMANCE_MIN_CHUNK_SIZE: Final[int] = 1000  # Minimum chunk size for performance
+    # Processing constants organized in LdifProcessing class
+    class LdifProcessing:
+        """LDIF processing-related constants."""
+
+        # Worker configuration
+        MIN_WORKERS: Final[int] = 1  # Minimum workers allowed
+        MIN_WORKERS_FOR_PARALLEL: Final[int] = 2  # Minimum for parallel processing
+        MAX_WORKERS_LIMIT: Final[int] = 16  # Maximum allowed workers
+        PERFORMANCE_MIN_WORKERS: Final[int] = 4  # Minimum workers for performance
+
+        # Chunk size configuration
+        MIN_CHUNK_SIZE: Final[int] = 100  # Minimum chunk size
+        MAX_CHUNK_SIZE: Final[int] = 10000  # Maximum chunk size
+        PERFORMANCE_MIN_CHUNK_SIZE: Final[int] = 1000  # Minimum for performance
+
+    # Entry limits
+    MIN_ENTRIES: Final[int] = 1000
+    MAX_ENTRIES_ABSOLUTE: Final[int] = 10000000  # 10 million entry hard limit
+
+    # Analytics configuration
     MIN_ANALYTICS_CACHE_SIZE: Final[int] = 100
     MAX_ANALYTICS_CACHE_SIZE: Final[int] = 10000
-    MIN_ENTRIES: Final[int] = 1000
+    MIN_SAMPLE_RATE: Final[float] = 0.0  # Minimum analytics sample rate
+    MAX_SAMPLE_RATE: Final[float] = 1.0  # Maximum analytics sample rate (100%)
+    MAX_ANALYTICS_ENTRIES_ABSOLUTE: Final[int] = 100000  # Maximum analytics entries
+
+    # Memory configuration
     MIN_MEMORY_MB: Final[int] = 64  # Minimum memory limit in MB
     MAX_MEMORY_MB: Final[int] = 8192  # Maximum memory limit in MB
-    ENCODING_CONFIDENCE_THRESHOLD: Final[float] = (
-        0.7  # Minimum confidence for encoding detection
-    )
 
-    DEFAULT_BATCH_SIZE: Final[int] = 100
-    MAX_BATCH_SIZE: Final[int] = 10000
+    # Other thresholds
+    ENCODING_CONFIDENCE_THRESHOLD: Final[float] = 0.7  # Encoding detection confidence
+
+    # Batch size configuration
+    DEFAULT_BATCH_SIZE: Final[int] = 1000  # Must be >= PERFORMANCE_MIN_CHUNK_SIZE
+    MIN_BATCH_SIZE: Final[int] = 1  # Minimum batch size
+    MAX_BATCH_SIZE: Final[int] = 10000  # Maximum batch size
 
     # Additional constants for config validation
     PERFORMANCE_MEMORY_MB_THRESHOLD: Final[int] = (
@@ -97,6 +121,9 @@ class FlextLdifConstants(FlextConstants):
     SMALL_ENTRY_COUNT_THRESHOLD: Final[int] = 100  # Threshold for small entry counts
     MEDIUM_ENTRY_COUNT_THRESHOLD: Final[int] = 1000  # Threshold for medium entry counts
     MIN_ATTRIBUTE_PARTS: Final[int] = 2  # Minimum parts for attribute parsing
+
+    # Client operation constants
+    MAX_PATH_LENGTH_CHECK: Final[int] = 500  # Maximum path length for file operations
 
     # =============================================================================
     # CONFIGURATION DEFAULTS
@@ -366,6 +393,96 @@ class FlextLdifConstants(FlextConstants):
             "analysis",
         )
 
+        # Processing stage literals
+
+        # Health status literals
+        HEALTH_STATUSES: Final[tuple[str, ...]] = ("healthy", "degraded", "unhealthy")
+
+        # Entry type literals
+
+        # Modification type literals
+
+        # Server type literals
+
+        # Encoding type literals
+
+        # Validation level literals
+
+        # LDIF-specific project types
+        LDIF_PROJECT_TYPES: Final[tuple[str, ...]] = (
+            "library",
+            "application",
+            "service",
+            "ldif-processor",
+            "directory-converter",
+            "ldif-validator",
+            "ldif-analyzer",
+            "ldif-parser",
+            "directory-migrator",
+            "ldap-data-processor",
+            "ldif-transformer",
+            "directory-sync",
+            "ldif-exporter",
+            "ldif-importer",
+            "data-migration",
+            "ldif-etl",
+            "directory-backup",
+            "ldif-merger",
+            "ldif-splitter",
+            "directory-validator",
+            "ldif-normalizer",
+            "ldap-directory-tool",
+        )
+
+        # Literal type definitions for type annotations
+        type ProcessingStage = Literal["parsing", "validation", "analytics", "writing"]
+        type HealthStatus = Literal["healthy", "degraded", "unhealthy"]
+        type EntryType = Literal[
+            "person", "group", "organizationalunit", "domain", "other"
+        ]
+        type ModificationType = Literal["add", "modify", "delete", "modrdn"]
+        type ServerType = Literal[
+            "active_directory",
+            "openldap",
+            "openldap2",
+            "openldap1",
+            "apache_directory",
+            "novell_edirectory",
+            "ibm_tivoli",
+            "generic",
+            "oracle_oid",
+            "oracle_oud",
+            "389ds",
+        ]
+        type EncodingType = Literal[
+            "utf-8", "latin-1", "ascii", "utf-16", "utf-32", "cp1252", "iso-8859-1"
+        ]
+        type ValidationLevel = Literal["strict", "moderate", "lenient"]
+        type ProjectType = Literal[
+            "library",
+            "application",
+            "service",
+            "ldif-processor",
+            "directory-converter",
+            "ldif-validator",
+            "ldif-analyzer",
+            "ldif-parser",
+            "directory-migrator",
+            "ldap-data-processor",
+            "ldif-transformer",
+            "directory-sync",
+            "ldif-exporter",
+            "ldif-importer",
+            "data-migration",
+            "ldif-etl",
+            "directory-backup",
+            "ldif-merger",
+            "ldif-splitter",
+            "directory-validator",
+            "ldif-normalizer",
+            "ldap-directory-tool",
+        ]
+
     # =============================================================================
     # ENCODING CONSTANTS
     # =============================================================================
@@ -381,6 +498,36 @@ class FlextLdifConstants(FlextConstants):
         CP1252: Final[str] = "cp1252"
         ISO_8859_1: Final[str] = "iso-8859-1"
         DEFAULT_ENCODING: Final[str] = UTF8
+
+        # Encoding detection constants
+        MIN_BOM_LENGTH: Final[int] = 2
+        MIN_UTF32_LENGTH: Final[int] = 4
+        MIN_STATISTICAL_LENGTH: Final[int] = 10
+
+        # Encoding detection thresholds
+        UTF32_NULL_RATIO_THRESHOLD: Final[float] = 0.3
+        UTF16_NULL_RATIO_THRESHOLD: Final[float] = 0.1
+        CP1252_RATIO_THRESHOLD: Final[float] = 0.01  # 1% CP1252 chars
+        HIGH_BYTES_RATIO_THRESHOLD: Final[float] = 0.05  # 5% high bytes
+
+        # UTF-8 byte pattern constants (for statistical detection)
+        UTF8_HIGH_BIT_MASK: Final[int] = 0x80
+        UTF8_2BYTE_LEAD_MASK: Final[int] = 0xE0
+        UTF8_2BYTE_LEAD_VALUE: Final[int] = 0xC0
+        UTF8_3BYTE_LEAD_MASK: Final[int] = 0xF0
+        UTF8_3BYTE_LEAD_VALUE: Final[int] = 0xE0
+        UTF8_4BYTE_LEAD_MASK: Final[int] = 0xF8
+        UTF8_4BYTE_LEAD_VALUE: Final[int] = 0xF0
+        UTF8_CONTINUATION_MASK: Final[int] = 0xC0
+        UTF8_CONTINUATION_VALUE: Final[int] = 0x80
+
+        # Character range constants
+        CP1252_RANGE_START: Final[int] = 0x80
+        CP1252_RANGE_END: Final[int] = 0x9F
+        ASCII_MAX: Final[int] = 127
+
+        # Byte size for file sampling
+        ENCODING_SAMPLE_SIZE: Final[int] = 1024
 
         # Supported encodings for LDIF processing
         SUPPORTED_ENCODINGS: Final[frozenset[str]] = frozenset([
@@ -559,6 +706,10 @@ class FlextLdifConstants(FlextConstants):
         ADD: Final[str] = "add"
         DELETE: Final[str] = "delete"
         MODIFY: Final[str] = "modify"
+
+        # Novell ACL parsing indices
+        NOVELL_SEGMENT_INDEX_TRUSTEE: Final[int] = 2
+        NOVELL_SEGMENT_INDEX_RIGHTS: Final[int] = 3
 
     class Schema:
         """Schema-related constants."""
@@ -892,6 +1043,131 @@ class FlextLdifConstants(FlextConstants):
             "openldap1",
             "openldap2",
         ])
+
+    # =============================================================================
+    # REGEX PATTERNS - All regex patterns centralized
+    # =============================================================================
+
+    class LdifPatterns:
+        """Regex pattern constants for LDIF processing.
+
+        ZERO TOLERANCE: ALL regex patterns MUST be defined here.
+        NO re.compile() or pattern strings outside this namespace.
+        """
+
+        # Encoding detection patterns (from utilities.py)
+        XML_ENCODING: Final[str] = r'<\?xml[^>]*encoding=["\']([^"\']+)["\']'
+        HTML_CHARSET: Final[str] = r'<meta[^>]*charset=["\']([^"\']+)["\']'
+        PYTHON_CODING: Final[str] = r"#.*-\*-.*coding:\s*([^\s;]+)"
+        LDIF_ENCODING: Final[str] = r"#\s*encoding:\s*([^\s\n]+)"
+
+        # DN validation patterns
+        DN_COMPONENT: Final[str] = r"^[a-zA-Z][a-zA-Z0-9-]*="
+        DN_SEPARATOR: Final[str] = r"(?<!\\),"
+
+        # Attribute name patterns (RFC 4512)
+        ATTRIBUTE_NAME: Final[str] = r"^[a-zA-Z][a-zA-Z0-9-]*$"
+        ATTRIBUTE_OPTION: Final[str] = r";[a-zA-Z][a-zA-Z0-9-]*"
+
+        # OID patterns
+        OID_NUMERIC: Final[str] = r"^\d+(\.\d+)*$"
+        OID_DESCRIPTOR: Final[str] = r"^[a-zA-Z][a-zA-Z0-9-]*$"
+
+        # Schema parsing patterns
+        SCHEMA_OID: Final[str] = r"^\s*\(\s*([\d.]+)"
+        SCHEMA_NAME: Final[str] = r"NAME\s+\(?\s*'([^']+)'"
+        SCHEMA_DESC: Final[str] = r"DESC\s+'([^']+)'"
+        SCHEMA_SYNTAX: Final[str] = r"SYNTAX\s+([\d.]+)"
+        SCHEMA_EQUALITY: Final[str] = r"EQUALITY\s+([^\s)]+)"
+        SCHEMA_SINGLE_VALUE: Final[str] = r"\bSINGLE-VALUE\b"
+        SCHEMA_SUP: Final[str] = r"SUP\s+(\w+)"
+        SCHEMA_MUST: Final[str] = r"MUST\s+\(([^)]+)\)"
+        SCHEMA_MAY: Final[str] = r"MAY\s+\(([^)]+)\)"
+
+        # Oracle OID/OUD patterns
+        ORACLE_OID_PATTERN: Final[str] = r"\b1\.2\.840\.113556\."
+        ORACLE_OUD_PATTERN: Final[str] = r"\boracle[_-]?oud\b"
+
+        # OpenLDAP patterns
+        OPENLDAP_OLC: Final[str] = r"\bolc[A-Z][a-zA-Z]+\b"
+        OPENLDAP_CONFIG_DN: Final[str] = r"\bcn=config\b"
+
+        # Active Directory patterns
+        AD_OID: Final[str] = r"\b1\.2\.840\.113556\."
+        AD_ATTRIBUTE: Final[str] = r"\b(samAccountName|objectGUID|objectSid)\b"
+
+        # URL patterns
+        URL_SCHEME: Final[str] = r"^(https?|ldaps?)://"
+        URL_FULL: Final[str] = r"^(https?|ldap)://[^\s/$.?#].[^\s]*$"
+
+        # Base64 detection
+        BASE64_CHARS: Final[str] = r"^[A-Za-z0-9+/=\s]+$"
+
+        # Change type patterns
+        CHANGETYPE: Final[str] = r"^changetype:\s*(add|delete|modify|modrdn)$"
+
+        # Comment patterns
+        COMMENT_LINE: Final[str] = r"^\s*#"
+        VERSION_LINE: Final[str] = r"^version:\s*\d+"
+
+    # =============================================================================
+    # VALIDATION RULES - Validation logic constants
+    # =============================================================================
+
+    class ValidationRules:
+        """Validation rule constants.
+
+        ZERO TOLERANCE: All validation logic constants MUST be defined here.
+        NO hard-coded validation strings in validators.
+        """
+
+        # String validation rules
+        VALID_ENCODINGS_RULE: Final[frozenset[str]] = frozenset([
+            "utf-8",
+            "latin-1",
+            "ascii",
+            "utf-16",
+            "utf-32",
+            "cp1252",
+            "iso-8859-1",
+        ])
+
+        VALID_VALIDATION_LEVELS_RULE: Final[frozenset[str]] = frozenset([
+            "strict",
+            "moderate",
+            "lenient",
+        ])
+
+        VALID_SERVER_TYPES_RULE: Final[frozenset[str]] = frozenset([
+            "active_directory",
+            "openldap",
+            "apache_directory",
+            "novell_edirectory",
+            "ibm_tivoli",
+            "generic",
+            "oracle_oid",
+            "oracle_oud",
+            "389ds",
+        ])
+
+        VALID_ANALYTICS_LEVELS_RULE: Final[frozenset[str]] = frozenset([
+            "low",
+            "medium",
+            "high",
+        ])
+
+        VALID_ERROR_MODES_RULE: Final[frozenset[str]] = frozenset([
+            "continue",
+            "stop",
+            "skip",
+        ])
+
+        # Numeric validation rules
+        MIN_WORKERS_PERFORMANCE_RULE: Final[int] = 4
+        MIN_CHUNK_SIZE_PERFORMANCE_RULE: Final[int] = 1000
+        MAX_WORKERS_DEBUG_RULE: Final[int] = 2
+        MIN_ANALYTICS_CACHE_RULE: Final[int] = 1
+        MIN_PARALLEL_THRESHOLD_RULE: Final[int] = 1
 
 
 __all__ = [
