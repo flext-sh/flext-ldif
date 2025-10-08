@@ -42,7 +42,7 @@ class TestFlextLdifConstants:
         assert FlextLdifConstants.PERFORMANCE_MIN_CHUNK_SIZE == 1000
         assert FlextLdifConstants.MIN_ANALYTICS_CACHE_SIZE == 100
         assert FlextLdifConstants.MAX_ANALYTICS_CACHE_SIZE == 10000
-        assert FlextLdifConstants.MIN_PRODUCTION_ENTRIES == 1000
+        assert FlextLdifConstants.MIN_ENTRIES == 1000
         assert FlextLdifConstants.MIN_MEMORY_MB == 64
         assert FlextLdifConstants.PERFORMANCE_MEMORY_MB_THRESHOLD == 512
         assert FlextLdifConstants.DEBUG_MAX_WORKERS == 2

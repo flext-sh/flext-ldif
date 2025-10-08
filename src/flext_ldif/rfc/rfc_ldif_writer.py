@@ -197,7 +197,7 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                         )
 
                 if self.logger is not None:
-                    self.logger.info(  # type: ignore[attr-defined]
+                    self.logger.info(
                         f"LDIF file written: {output_file}",
                         extra={
                             "output_file": str(output_file),
@@ -280,7 +280,7 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
             output.close()
 
             if self.logger is not None:
-                self.logger.info(  # type: ignore
+                self.logger.info(
                     "LDIF content generated",
                     extra={
                         "content_length": len(ldif_content),
@@ -297,7 +297,7 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
 
         except Exception as e:
             if self.logger is not None:
-                self.logger.exception("LDIF write failed")  # type: ignore[attr-defined]
+                self.logger.exception("LDIF write failed")
             return FlextResult[dict[str, object]].fail(f"LDIF write failed: {e}")
 
     def write_entries_to_string(

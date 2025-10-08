@@ -136,7 +136,7 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
             parse_objectclasses = self._params.get("parse_objectclasses", True)
 
             if self.logger is not None:
-                self.logger.info(  # type: ignore[attr-defined]
+                self.logger.info(
                     f"Parsing LDAP schema (RFC 4512): {file_path}",
                     extra={
                         "file_path": str(file_path),
@@ -158,7 +158,7 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
             data = parse_result.value
 
             if self.logger is not None:
-                self.logger.info(  # type: ignore[attr-defined]
+                self.logger.info(
                     "LDAP schema parsed successfully",
                     extra={
                         "total_attributes": len(
@@ -175,7 +175,7 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
         except Exception as e:
             error_msg = f"Failed to execute RFC schema parser: {e}"
             if self.logger is not None:
-                self.logger.exception(error_msg)  # type: ignore[attr-defined]
+                self.logger.exception(error_msg)
             return FlextResult[dict[str, object]].fail(error_msg)
 
     def _parse_schema_file(
@@ -289,7 +289,7 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
 
         except Exception as e:
             if self.logger is not None:
-                self.logger.warning(  # type: ignore[attr-defined]
+                self.logger.warning(
                     f"Error processing schema line: {e}",
                     extra={"line": line[:100]},
                 )
@@ -310,7 +310,7 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
             for quirk in schema_quirks:
                 if quirk.can_handle_attribute(definition):
                     if self.logger:
-                        self.logger.debug(  # type: ignore
+                        self.logger.debug(
                             f"Using {quirk.server_type} quirk for attribute parsing",
                             extra={"definition": definition[:100]},
                         )
@@ -352,7 +352,7 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
             for quirk in schema_quirks:
                 if quirk.can_handle_objectclass(definition):
                     if self.logger:
-                        self.logger.debug(  # type: ignore
+                        self.logger.debug(
                             f"Using {quirk.server_type} quirk for objectClass parsing",
                             extra={"definition": definition[:100]},
                         )

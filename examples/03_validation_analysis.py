@@ -23,7 +23,7 @@ def validate_entries_example() -> None:
 
     # Create entries - library handles Pydantic v2 validation
     entries = [
-        api.models.Entry(
+        api.models.Entry.create(
             dn="cn=Valid User,ou=People,dc=example,dc=com",
             attributes={
                 "objectClass": ["person", "inetOrgPerson"],
@@ -31,23 +31,23 @@ def validate_entries_example() -> None:
                 "sn": ["User"],
                 "mail": ["valid@example.com"],
             },
-        ),
-        api.models.Entry(
+        ).unwrap(),
+        api.models.Entry.create(
             dn="cn=Test,ou=People,dc=example,dc=com",
             attributes={
                 "objectClass": ["person"],
                 "cn": ["Test"],
                 # May be missing 'sn' required by person objectClass
             },
-        ),
+        ).unwrap(),
     ]
 
     # Validate - library handles RFC 2849 compliance
     result = api.validate_entries(entries).map(
         lambda report: (
-            f"Valid: {report.get('is_valid', False)}, "
-            f"Errors: {len(report.get('errors', [])) if report.get('errors') else 0}, "  # type: ignore[arg-type]
-            f"Warnings: {len(report.get('warnings', [])) if report.get('warnings') else 0}"  # type: ignore[arg-type]
+            f"Valid: {report.get('is_valid', False)}, "  # type: ignore[attr-defined]
+            f"Errors: {len(report.get('errors', [])) if report.get('errors') else 0}, "  # type: ignore[attr-defined]
+            f"Warnings: {len(report.get('warnings', [])) if report.get('warnings') else 0}"  # type: ignore[attr-defined]
         )
     )
 
@@ -108,7 +108,7 @@ mail: pipeline@example.com
         .flat_map(api.validate_entries)
         .flat_map(
             lambda report: (
-                api.parse(ldif_content).flat_map(api.analyze)  # type: ignore[return-value]
+                api.parse(ldif_content).flat_map(api.analyze)
                 if report.get("is_valid", False)
                 else FlextResult[dict[str, object]].fail(f"Validation failed: {report}")
             )
@@ -127,22 +127,22 @@ def validate_and_filter_pipeline() -> None:
     api = FlextLdif.get_instance()
 
     entries = [
-        api.models.Entry(
+        api.models.Entry.create(
             dn="cn=Valid1,ou=People,dc=example,dc=com",
             attributes={"objectClass": ["person"], "cn": ["Valid1"], "sn": ["One"]},
-        ),
-        api.models.Entry(
+        ).unwrap(),
+        api.models.Entry.create(
             dn="cn=Valid2,ou=People,dc=example,dc=com",
             attributes={"objectClass": ["person"], "cn": ["Valid2"], "sn": ["Two"]},
-        ),
-        api.models.Entry(
+        ).unwrap(),
+        api.models.Entry.create(
             dn="cn=MaybeInvalid,ou=People,dc=example,dc=com",
             attributes={
                 "objectClass": ["person"],
                 "cn": ["MaybeInvalid"],
                 # Potentially missing required 'sn'
             },
-        ),
+        ).unwrap(),
     ]
 
     # Validate - library provides detailed report
@@ -154,7 +154,8 @@ def validate_and_filter_pipeline() -> None:
             print(f"All {len(entries)} entries are valid")
         else:
             errors = report.get("errors", [])
-            print(f"Found {len(errors) if errors else 0} validation errors")
+            errors_list: list[object] = errors if isinstance(errors, list) else []
+            print(f"Found {len(errors_list)} validation errors")
 
 
 def analyze_by_objectclass_pipeline() -> None:
@@ -188,9 +189,10 @@ member: cn=Person1,ou=People,dc=example,dc=com
 
         # Parse once, filter multiple times - library handles iteration
         entries = api.parse(ldif_content).unwrap_or([])
-        for objectclass in objectclass_dist:
-            filtered = api.filter_by_objectclass(entries, objectclass).unwrap_or([])
-            print(f"{objectclass}: {len(filtered)} entries")
+        for objectclass in objectclass_dist:  # type: ignore[union-attr]
+            objectclass_str = str(objectclass)
+            filtered = api.filter_by_objectclass(entries, objectclass_str).unwrap_or([])
+            print(f"{objectclass_str}: {len(filtered)} entries")
 
 
 if __name__ == "__main__":
