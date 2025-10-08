@@ -474,7 +474,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
         """
         try:
-            params = {
+            params: dict[str, object] = {
                 "input_dir": str(input_dir),
                 "output_dir": str(output_dir),
                 "process_schema": process_schema,

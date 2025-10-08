@@ -1,7 +1,7 @@
-"""Test fixtures module - Use centralized flext_tests.fixtures.
+"""Test fixtures module.
 
-All Docker fixtures consolidated to flext_tests.fixtures.
-Direct import from flext_tests - no fallback needed.
+Docker fixtures are handled directly in conftest.py with local replacements.
+No external dependencies on flext_tests.fixtures.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_tests.fixtures import ldap_container as shared_ldap_container
+# Docker fixtures are now handled in conftest.py
+# No imports needed here
 
-__all__ = ["shared_ldap_container"]
+__all__ = []

@@ -53,7 +53,9 @@ class FlextLdifMixins(FlextMixins):
                     f"Invalid DN format: {dn_model_result.error}"
                 )
 
-            dn_model: FlextLdifModels.DistinguishedName = dn_model_result.unwrap()
+            dn_model = cast(
+                "FlextLdifModels.DistinguishedName", dn_model_result.unwrap()
+            )
             return FlextResult[str].ok(dn_model.value)
 
         @staticmethod
@@ -72,7 +74,9 @@ class FlextLdifMixins(FlextMixins):
                     f"Invalid attribute name: {attr_model_result.error}"
                 )
 
-            attr_model: FlextLdifModels.AttributeName = attr_model_result.unwrap()
+            attr_model = cast(
+                "FlextLdifModels.AttributeName", attr_model_result.unwrap()
+            )
             return FlextResult[str].ok(attr_model.name)
 
         @staticmethod
@@ -101,7 +105,9 @@ class FlextLdifMixins(FlextMixins):
                     f"Invalid attribute values: {values_model_result.error}"
                 )
 
-            values_model: FlextLdifModels.AttributeValues = values_model_result.unwrap()
+            values_model = cast(
+                "FlextLdifModels.AttributeValues", values_model_result.unwrap()
+            )
             return FlextResult[FlextLdifTypes.StringList].ok(values_model.values)
 
         @staticmethod
@@ -120,7 +126,7 @@ class FlextLdifMixins(FlextMixins):
                     url_model_result.error or "Invalid URL format"
                 )
 
-            url_model: FlextLdifModels.LdifUrl = url_model_result.unwrap()
+            url_model = cast("FlextLdifModels.LdifUrl", url_model_result.unwrap())
             return FlextResult[str].ok(url_model.url)
 
         @staticmethod
@@ -139,7 +145,9 @@ class FlextLdifMixins(FlextMixins):
                     encoding_model_result.error or "Invalid encoding"
                 )
 
-            encoding_model: FlextLdifModels.Encoding = encoding_model_result.unwrap()
+            encoding_model = cast(
+                "FlextLdifModels.Encoding", encoding_model_result.unwrap()
+            )
             return FlextResult[str].ok(encoding_model.encoding)
 
         @classmethod
@@ -175,7 +183,9 @@ class FlextLdifMixins(FlextMixins):
                 # Return original DN on validation failure (fallback behavior)
                 return FlextResult[str].ok(dn)
 
-            dn_model: FlextLdifModels.DistinguishedName = dn_model_result.unwrap()
+            dn_model = cast(
+                "FlextLdifModels.DistinguishedName", dn_model_result.unwrap()
+            )
             # computed_field property access - pyrefly needs explicit str() cast
             return FlextResult[str].ok(str(dn_model.normalized_value))
 
@@ -194,7 +204,9 @@ class FlextLdifMixins(FlextMixins):
                 # Return empty list on validation failure (fallback behavior)
                 return FlextResult[list[tuple[str, str]]].ok([])
 
-            dn_model: FlextLdifModels.DistinguishedName = dn_model_result.unwrap()
+            dn_model = cast(
+                "FlextLdifModels.DistinguishedName", dn_model_result.unwrap()
+            )
             pairs: list[tuple[str, str]] = []
             for comp in dn_model.components:
                 if "=" in comp:

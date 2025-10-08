@@ -367,13 +367,13 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             """Initialize OUD entry quirk."""
 
         def can_handle_entry(
-            self, _entry_dn: str, _attributes: dict[str, object]
+            self, entry_dn: str, attributes: dict[str, object]
         ) -> bool:
             """Check if this quirk should handle the entry.
 
             Args:
-                _entry_dn: Entry distinguished name
-                _attributes: Entry _attributes
+                entry_dn: Entry distinguished name
+                attributes: Entry attributes
 
             Returns:
                 True if this is an OUD-specific entry
@@ -381,18 +381,18 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             """
             # Handle all entries for OUD target
             # Can add specific OUD entry detection logic here
-            _ = _entry_dn
-            _ = _attributes
+            _ = entry_dn
+            _ = attributes
             return True
 
         def process_entry(
-            self, _entry_dn: str, _attributes: dict[str, object]
+            self, entry_dn: str, attributes: dict[str, object]
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for OUD format.
 
             Args:
-                _entry_dn: Entry distinguished name
-                _attributes: Entry _attributes
+                entry_dn: Entry distinguished name
+                attributes: Entry attributes
 
             Returns:
                 FlextResult with processed entry data
@@ -402,10 +402,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 # OUD entries are RFC-compliant
                 # Add OUD-specific processing if needed
                 processed_entry: FlextLdifTypes.Dict = {
-                    "dn": _entry_dn,
+                    "dn": entry_dn,
                     FlextLdifConstants.DictKeys.SERVER_TYPE: "oud",
                 }
-                processed_entry.update(_attributes)
+                processed_entry.update(attributes)
 
                 return FlextResult[FlextLdifTypes.Dict].ok(processed_entry)
 

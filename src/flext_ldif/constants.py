@@ -71,8 +71,6 @@ class FlextLdifConstants(FlextConstants):
     # =============================================================================
 
     class Processing:
-        """Processing behavior configuration constants."""
-
         MIN_WORKERS_FOR_PARALLEL: Final[int] = 2
         MAX_WORKERS_LIMIT: Final[int] = 16  # Maximum allowed workers
         PERFORMANCE_MIN_WORKERS: Final[int] = (
@@ -694,6 +692,12 @@ class FlextLdifConstants(FlextConstants):
 
         # OpenLDAP-specific keys
         OLCACCESS: Final[str] = "olcAccess"
+
+        # 389 Directory Server-specific keys
+        DS_PRIVILEGE_NAME: Final[str] = "ds-privilege-name"
+
+        # Active Directory-specific keys
+        NTSECURITYDESCRIPTOR: Final[str] = "nTSecurityDescriptor"
         WHAT: Final[str] = "what"
         BY_CLAUSES: Final[str] = "by_clauses"
         INDEX: Final[str] = "index"
@@ -779,6 +783,10 @@ class FlextLdifConstants(FlextConstants):
         CN_SUBSCHEMA_SUBENTRY: Final[str] = "cn=subschemasubentry"
         CN_SCHEMA_CN_CONFIG: Final[str] = "cn=schema,cn=configuration"
 
+        CN_SUBSCHEMASUBENTRY: Final[str] = "cn=subschemasubentry"
+
+        CN_SCHEMA_CN_CONFIGURATION: Final[str] = "cn=schema,cn=configuration"
+
         # Configuration DNs
         CN_CONFIG: Final[str] = "cn=config"
 
@@ -841,6 +849,9 @@ class FlextLdifConstants(FlextConstants):
         OPENLDAP1_ACL: Final[str] = "openldap1_acl"
         OPENLDAP2_ACL: Final[str] = "openldap2_acl"
 
+        # 389 Directory Server ACL format
+        DS389_ACL: Final[str] = "ds389_acl"
+
         # Oracle ACL formats
         OID_ACL: Final[str] = "oracle_oid"
         OUD_ACL: Final[str] = "oracle_oud"
@@ -851,6 +862,7 @@ class FlextLdifConstants(FlextConstants):
         ACI: Final[str] = "aci"
 
         # Active Directory ACL format
+        AD_ACL: Final[str] = "active_directory_acl"
         AD_NTSECURITY: Final[str] = "nTSecurityDescriptor"
 
     # =============================================================================

@@ -473,33 +473,33 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
             """Initialize OpenLDAP 1.x entry quirk."""
 
         def can_handle_entry(
-            self, _entry_dn: str, _attributes: dict[str, object]
+            self, entry_dn: str, attributes: dict[str, object]
         ) -> bool:
             """Check if this quirk should handle the entry.
 
             Args:
-                _entry_dn: Entry distinguished name
-                _attributes: Entry _attributes
+                entry_dn: Entry distinguished name
+                attributes: Entry attributes
 
             Returns:
                 True if this is an OpenLDAP 1.x-specific entry
 
             """
-            # OpenLDAP 1.x entries do NOT have cn=config or olc* _attributes
-            is_config_dn = "cn=config" in _entry_dn.lower()
-            has_olc_attrs = any(attr.startswith("olc") for attr in _attributes)
+            # OpenLDAP 1.x entries do NOT have cn=config or olc* attributes
+            is_config_dn = "cn=config" in entry_dn.lower()
+            has_olc_attrs = any(attr.startswith("olc") for attr in attributes)
 
             # Handle traditional entries (not config, not olc)
             return not is_config_dn and not has_olc_attrs
 
         def process_entry(
-            self, _entry_dn: str, _attributes: dict[str, object]
+            self, entry_dn: str, attributes: dict[str, object]
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for OpenLDAP 1.x format.
 
             Args:
-                _entry_dn: Entry distinguished name
-                _attributes: Entry _attributes
+                entry_dn: Entry distinguished name
+                attributes: Entry attributes
 
             Returns:
                 FlextResult with processed entry data
@@ -508,11 +508,11 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
             try:
                 # OpenLDAP 1.x entries are RFC-compliant
                 processed_entry: FlextLdifTypes.Dict = {
-                    "dn": _entry_dn,
+                    "dn": entry_dn,
                     FlextLdifConstants.DictKeys.SERVER_TYPE: "openldap1",
                     "is_traditional_dit": True,
                 }
-                processed_entry.update(_attributes)
+                processed_entry.update(attributes)
 
                 return FlextResult[FlextLdifTypes.Dict].ok(processed_entry)
 

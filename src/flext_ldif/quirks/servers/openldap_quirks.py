@@ -467,26 +467,26 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
             """Initialize OpenLDAP 2.x entry quirk."""
 
         def can_handle_entry(
-            self, _entry_dn: str, _attributes: dict[str, object]
+            self, entry_dn: str, attributes: dict[str, object]
         ) -> bool:
             """Check if this quirk should handle the entry.
 
             Args:
-                _entry_dn: Entry distinguished name
-                _attributes: Entry _attributes
+                entry_dn: Entry distinguished name
+                attributes: Entry attributes
 
             Returns:
                 True if this is an OpenLDAP 2.x-specific entry
 
             """
-            # Check for cn=config DN or olc* _attributes
-            is_config_dn = "cn=config" in _entry_dn.lower()
+            # Check for cn=config DN or olc* attributes
+            is_config_dn = "cn=config" in entry_dn.lower()
 
-            # Check for olc* _attributes
-            has_olc_attrs = any(attr.startswith("olc") for attr in _attributes)
+            # Check for olc* attributes
+            has_olc_attrs = any(attr.startswith("olc") for attr in attributes)
 
             # Check for OpenLDAP 2.x object classes
-            object_classes = _attributes.get("objectClass", [])
+            object_classes = attributes.get("objectClass", [])
             if not isinstance(object_classes, list):
                 object_classes = [object_classes]
 
@@ -498,13 +498,13 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
             return is_config_dn or has_olc_attrs or has_olc_classes
 
         def process_entry(
-            self, _entry_dn: str, _attributes: dict[str, object]
+            self, entry_dn: str, attributes: dict[str, object]
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for OpenLDAP 2.x format.
 
             Args:
-                _entry_dn: Entry distinguished name
-                _attributes: Entry _attributes
+                entry_dn: Entry distinguished name
+                attributes: Entry attributes
 
             Returns:
                 FlextResult with processed entry data
@@ -514,11 +514,11 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
                 # OpenLDAP 2.x entries are RFC-compliant
                 # Add OpenLDAP-specific processing if needed
                 processed_entry: FlextLdifTypes.Dict = {
-                    "dn": _entry_dn,
+                    "dn": entry_dn,
                     FlextLdifConstants.DictKeys.SERVER_TYPE: "openldap2",
-                    "is_config_entry": "cn=config" in _entry_dn.lower(),
+                    "is_config_entry": "cn=config" in entry_dn.lower(),
                 }
-                processed_entry.update(_attributes)
+                processed_entry.update(attributes)
 
                 return FlextResult[FlextLdifTypes.Dict].ok(processed_entry)
 

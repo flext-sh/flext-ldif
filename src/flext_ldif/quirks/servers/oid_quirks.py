@@ -413,20 +413,20 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
         def can_handle_entry(
             self,
-            _entry_dn: str,
-            _attributes: dict[str, object],
+            entry_dn: str,
+            attributes: dict[str, object],
         ) -> bool:
             """Check if this quirk should handle the entry.
 
             Args:
-                _entry_dn: Entry distinguished name
-                _attributes: Entry _attributes
+                entry_dn: Entry distinguished name
+                attributes: Entry attributes
 
             Returns:
                 True if this is an Oracle OID-specific entry
 
             """
-            # Check for Oracle OID-specific _attributes
+            # Check for Oracle OID-specific attributes
             oid_attrs = [
                 "orclguid",
                 "orclobjectguid",
@@ -438,11 +438,11 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             ]
 
             has_oid_attrs = any(
-                attr.lower() in [a.lower() for a in _attributes] for attr in oid_attrs
+                attr.lower() in [a.lower() for a in attributes] for attr in oid_attrs
             )
 
             # Check for Oracle OID object classes
-            object_classes = _attributes.get("objectClass", [])
+            object_classes = attributes.get("objectClass", [])
             if not isinstance(object_classes, list):
                 object_classes = [object_classes]
 
@@ -452,20 +452,20 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
             # Also check DN patterns for OID entries
             has_oid_dn_pattern = any(
-                pattern in _entry_dn.lower()
+                pattern in entry_dn.lower()
                 for pattern in ["cn=orcl", "ou=oracle", "dc=oracle"]
             )
 
             return has_oid_attrs or has_oid_classes or has_oid_dn_pattern
 
         def process_entry(
-            self, _entry_dn: str, _attributes: dict[str, object]
+            self, entry_dn: str, attributes: dict[str, object]
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for Oracle OID format.
 
             Args:
-                _entry_dn: Entry distinguished name
-                _attributes: Entry _attributes
+                entry_dn: Entry distinguished name
+                attributes: Entry attributes
 
             Returns:
                 FlextResult with processed entry data
@@ -475,17 +475,17 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 # Oracle OID entries are RFC-compliant
                 # Add OID-specific metadata
                 processed_entry: FlextLdifTypes.Dict = {
-                    "dn": _entry_dn,
+                    "dn": entry_dn,
                     FlextLdifConstants.DictKeys.SERVER_TYPE: FlextLdifConstants.ServerTypes.OID,
                     FlextLdifConstants.DictKeys.HAS_OID_ACLS: any(
-                        attr in _attributes
+                        attr in attributes
                         for attr in [
                             FlextLdifConstants.DictKeys.ORCLACI,
                             FlextLdifConstants.DictKeys.ORCLENTRYLEVELACI,
                         ]
                     ),
                 }
-                processed_entry.update(_attributes)
+                processed_entry.update(attributes)
 
                 return FlextResult[FlextLdifTypes.Dict].ok(processed_entry)
 

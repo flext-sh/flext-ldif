@@ -386,19 +386,16 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
 
                 schema_data = schema_result.unwrap()
                 result_data["schema"] = schema_data
-                if isinstance(result_data[FlextLdifConstants.DictKeys.STATS], dict):
+                stats_dict = result_data[FlextLdifConstants.DictKeys.STATS]
+                if isinstance(stats_dict, dict):
                     attributes = schema_data.get(
                         FlextLdifConstants.DictKeys.ATTRIBUTES, {}
                     )
                     objectclasses = schema_data.get("objectclasses", {})
                     if isinstance(attributes, dict):
-                        result_data[FlextLdifConstants.DictKeys.STATS][
-                            "total_schema_attributes"
-                        ] = len(attributes)
+                        stats_dict["total_schema_attributes"] = len(attributes)
                     if isinstance(objectclasses, dict):
-                        result_data[FlextLdifConstants.DictKeys.STATS][
-                            "total_schema_objectclasses"
-                        ] = len(objectclasses)
+                        stats_dict["total_schema_objectclasses"] = len(objectclasses)
 
             # Phase 2: Process entries if requested
             if process_entries:
@@ -410,10 +407,11 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
 
                 entries_data = entries_result.unwrap()
                 result_data["entries"] = entries_data
-                if isinstance(result_data[FlextLdifConstants.DictKeys.STATS], dict):
-                    result_data[FlextLdifConstants.DictKeys.STATS][
-                        FlextLdifConstants.DictKeys.TOTAL_ENTRIES
-                    ] = len(entries_data)
+                stats_dict = result_data[FlextLdifConstants.DictKeys.STATS]
+                if isinstance(stats_dict, dict):
+                    stats_dict[FlextLdifConstants.DictKeys.TOTAL_ENTRIES] = len(
+                        entries_data
+                    )
 
             if self.logger:
                 self.logger.info(

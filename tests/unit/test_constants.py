@@ -36,19 +36,19 @@ class TestFlextLdifConstants:
 
     def test_processing_constants(self) -> None:
         """Test Processing constants."""
-        assert FlextLdifConstants.Processing.MIN_WORKERS_FOR_PARALLEL == 2
-        assert FlextLdifConstants.Processing.MAX_WORKERS_LIMIT == 16
+        assert FlextLdifConstants.MIN_WORKERS_FOR_PARALLEL == 2
+        assert FlextLdifConstants.MAX_WORKERS_LIMIT == 16
         assert FlextLdifConstants.Processing.PERFORMANCE_MIN_WORKERS == 4
-        assert FlextLdifConstants.Processing.PERFORMANCE_MIN_CHUNK_SIZE == 1000
-        assert FlextLdifConstants.Processing.MIN_ANALYTICS_CACHE_SIZE == 100
-        assert FlextLdifConstants.Processing.MAX_ANALYTICS_CACHE_SIZE == 10000
-        assert FlextLdifConstants.Processing.MIN_PRODUCTION_ENTRIES == 1000
-        assert FlextLdifConstants.Processing.MIN_MEMORY_MB == 64
-        assert FlextLdifConstants.Processing.PERFORMANCE_MEMORY_MB_THRESHOLD == 512
-        assert FlextLdifConstants.Processing.DEBUG_MAX_WORKERS == 2
-        assert FlextLdifConstants.Processing.SMALL_ENTRY_COUNT_THRESHOLD == 100
-        assert FlextLdifConstants.Processing.MEDIUM_ENTRY_COUNT_THRESHOLD == 1000
-        assert FlextLdifConstants.Processing.MIN_ATTRIBUTE_PARTS == 2
+        assert FlextLdifConstants.PERFORMANCE_MIN_CHUNK_SIZE == 1000
+        assert FlextLdifConstants.MIN_ANALYTICS_CACHE_SIZE == 100
+        assert FlextLdifConstants.MAX_ANALYTICS_CACHE_SIZE == 10000
+        assert FlextLdifConstants.MIN_PRODUCTION_ENTRIES == 1000
+        assert FlextLdifConstants.MIN_MEMORY_MB == 64
+        assert FlextLdifConstants.PERFORMANCE_MEMORY_MB_THRESHOLD == 512
+        assert FlextLdifConstants.DEBUG_MAX_WORKERS == 2
+        assert FlextLdifConstants.SMALL_ENTRY_COUNT_THRESHOLD == 100
+        assert FlextLdifConstants.MEDIUM_ENTRY_COUNT_THRESHOLD == 1000
+        assert FlextLdifConstants.MIN_ATTRIBUTE_PARTS == 2
 
     def test_quality_analysis_constants(self) -> None:
         """Test QualityAnalysis constants."""
@@ -177,13 +177,13 @@ class TestFlextLdifConstantsProcessing:
 
     def test_max_workers_limit(self) -> None:
         """Test maximum workers limit."""
-        assert FlextLdifConstants.Processing.MAX_WORKERS_LIMIT == 16
-        assert isinstance(FlextLdifConstants.Processing.MAX_WORKERS_LIMIT, int)
+        assert FlextLdifConstants.MAX_WORKERS_LIMIT == 16
+        assert isinstance(FlextLdifConstants.MAX_WORKERS_LIMIT, int)
 
     def test_debug_max_workers(self) -> None:
         """Test debug maximum workers."""
-        assert FlextLdifConstants.Processing.DEBUG_MAX_WORKERS == 2
-        assert isinstance(FlextLdifConstants.Processing.DEBUG_MAX_WORKERS, int)
+        assert FlextLdifConstants.DEBUG_MAX_WORKERS == 2
+        assert isinstance(FlextLdifConstants.DEBUG_MAX_WORKERS, int)
 
     def test_performance_min_workers(self) -> None:
         """Test performance minimum workers."""
@@ -233,10 +233,9 @@ class TestFlextLdifConstantsNamespace:
         assert FlextLdifConstants.Format.MAX_LINE_LENGTH < 200
 
         # Processing
-        assert FlextLdifConstants.Processing.MAX_WORKERS_LIMIT > 0
+        assert FlextLdifConstants.MAX_WORKERS_LIMIT > 0
         assert (
-            FlextLdifConstants.Processing.DEBUG_MAX_WORKERS
-            <= FlextLdifConstants.Processing.MAX_WORKERS_LIMIT
+            FlextLdifConstants.DEBUG_MAX_WORKERS <= FlextLdifConstants.MAX_WORKERS_LIMIT
         )
         assert FlextLdifConstants.Processing.PERFORMANCE_MIN_WORKERS > 0
 
