@@ -417,7 +417,7 @@ class TestFlextLdifUtilities:
         result = FlextLdifUtilities.DnUtilities.parse_dn_components(dn)
 
         assert result.is_success
-        components = result.unwrap()  # type: ignore[assignment]
+        components = result.unwrap()
         assert len(components) == 4
         assert components[0] == "cn=test"
         assert components[1] == "ou=users"
@@ -430,7 +430,7 @@ class TestFlextLdifUtilities:
         result = FlextLdifUtilities.DnUtilities.parse_dn_components(dn)
 
         assert result.is_success
-        components = result.unwrap()  # type: ignore[assignment]
+        components = result.unwrap()
         assert len(components) == 4
         assert components[0] == r"cn=Smith\, John"
 
@@ -440,7 +440,7 @@ class TestFlextLdifUtilities:
         result = FlextLdifUtilities.DnUtilities.parse_dn_components(dn)
 
         assert result.is_success
-        components = result.unwrap()  # type: ignore[assignment]
+        components = result.unwrap()
         assert len(components) == 4
         assert components[0] == "cn=John Doe"
         assert components[1] == "ou=Engineering Department"
@@ -684,7 +684,7 @@ class TestFlextLdifUtilities:
         result = FlextLdifUtilities.DnUtilities.parse_dn_components(dn)
 
         assert result.is_success
-        components = result.unwrap()  # type: ignore[assignment]
+        components = result.unwrap()
         assert len(components) == 4
 
     def test_dn_validate_format_all_components_validation(self) -> None:
@@ -703,7 +703,7 @@ class TestFlextLdifUtilities:
 
         # Should succeed, empty components are stripped
         assert result.is_success
-        components = result.unwrap()  # type: ignore[assignment]
+        components = result.unwrap()
         assert len(components) == 4  # Empty component should be ignored
 
     def test_dn_parse_components_only_commas(self) -> None:
@@ -755,7 +755,7 @@ class TestFlextLdifUtilitiesDnUtilities:
         result = FlextLdifUtilities.DnUtilities.parse_dn_components(dn)
 
         assert result.is_success
-        components = result.unwrap()  # type: ignore[assignment]
+        components = result.unwrap()
         assert isinstance(components, list)
         assert len(components) > 0
 
@@ -791,7 +791,7 @@ class TestFlextLdifUtilitiesDnUtilities:
         assert isinstance(components, list)
         assert len(components) > 0
         # Each component should be a tuple of (attribute, value)
-        for comp in components:  # type: ignore[misc]
+        for comp in components:
             assert isinstance(comp, tuple)
             assert len(comp) == 2
 

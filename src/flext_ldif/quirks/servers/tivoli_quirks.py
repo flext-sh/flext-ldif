@@ -172,7 +172,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
 
         def convert_entry_to_rfc(
             self,
-            _entry_data: FlextLdifTypes.Dict,
+            entry_data: FlextLdifTypes.Dict,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert Tivoli DS entry to RFC-compliant format - STUB."""
             return FlextResult[FlextLdifTypes.Dict].fail(

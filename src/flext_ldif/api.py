@@ -13,29 +13,43 @@ from __future__ import annotations
 from pathlib import Path
 from typing import ClassVar, override
 
-from flext_core import FlextResult, FlextService
+from flext_core import (
+    FlextBus,
+    FlextContainer,
+    FlextDispatcher,
+    FlextLogger,
+    FlextProcessors,
+    FlextRegistry,
+    FlextResult,
+    FlextService,
+)
 
 from flext_ldif.acl.service import FlextLdifAclService
 from flext_ldif.client import FlextLdifClient
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.entry.builder import FlextLdifEntryBuilder
+from flext_ldif.exceptions import FlextLdifExceptions
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.schema.builder import FlextLdifSchemaBuilder
 from flext_ldif.schema.validator import FlextLdifSchemaValidator
-from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdif(FlextService[FlextLdifTypes.Dict]):
-    r"""Unified LDIF processing facade with FlextMixins.Service infrastructure.
+class FlextLdif(FlextService[dict[str, object]]):
+    r"""Unified LDIF processing facade with complete Flext ecosystem integration.
 
-    This service inherits from Flext.Service to demonstrate:
-    - Inherited container property (FlextContainer singleton)
-    - Inherited logger property (FlextLogger with service context)
-    - Inherited context property (FlextContext for request/correlation)
-    - Inherited config property (FlextConfig with LDIF settings)
-    - Inherited metrics property (FlextMetrics for observability)
+    This service inherits from FlextService and integrates the complete Flext ecosystem:
+    - FlextContainer: Dependency injection and service management
+    - FlextLogger: Structured logging with correlation tracking
+    - FlextContext: Request context and correlation ID management
+    - FlextConfig: Configuration management with validation
+    - FlextBus: Event publishing for domain events
+    - FlextDispatcher: Message dispatching for CQRS patterns
+    - FlextRegistry: Component registration and discovery
+    - FlextProcessors: Batch and parallel processing utilities
+    - FlextExceptions: Structured error handling with correlation
+    - FlextProtocols: Type-safe interfaces and contracts
 
     Provides unified access to:
     - RFC-compliant LDIF parsing and writing (RFC 2849/4512)
@@ -56,25 +70,26 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
         # Alternative: Create new instance
         ldif = FlextLdif()
 
-        # Parse LDIF content
-        result = ldif.parse("dn: cn=test,dc=example,dc=com\ncn: test\n")
-        if result.is_success:
-            entries = result.unwrap()
+        # Parse LDIF content with context tracking
+        with ldif.context.set_correlation_id("req-123"):
+            result = ldif.parse("dn: cn=test,dc=example,dc=com\ncn: test\n")
+            if result.is_success:
+                entries = result.unwrap()
 
-        # Write LDIF entries
+        # Write LDIF entries with structured error handling
         write_result = ldif.write(entries)
 
-        # Migrate between servers
+        # Migrate between servers with event publishing
         migration_result = ldif.migrate(
             entries=entries,
             from_server=FlextLdifConstants.ServerTypes.OID,
             to_server=FlextLdifConstants.ServerTypes.OUD
         )
 
-        # Access infrastructure
+        # Access complete infrastructure
         config = ldif.config
-        models = ldif.Models
-        entry = ldif.Models.Entry(dn="cn=test", attributes={})
+        models = ldif.models
+        entry = ldif.models.Entry(dn="cn=test", attributes={})
 
     """
 
@@ -111,14 +126,18 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
         return cls._instance
 
     def __init__(self, config: FlextLdifConfig | None = None) -> None:
-        """Initialize LDIF facade with inherited FlextMixins.Service infrastructure.
+        """Initialize LDIF facade with complete Flext ecosystem integration.
 
-        Inherited properties (no manual instantiation needed):
-        - self.logger: FlextLogger with service context (LDIF processing operations)
-        - self.container: FlextContainer singleton (for service dependencies)
-        - self.context: FlextContext (for correlation tracking)
-        - self.config: FlextConfig (for LDIF configuration)
-        - self.metrics: FlextMetrics (for LDIF observability)
+        Integrates all Flext components for comprehensive infrastructure support:
+        - FlextContainer: Global dependency injection container
+        - FlextLogger: Structured logging with correlation tracking
+        - FlextContext: Request context and correlation ID management
+        - FlextConfig: Configuration management with validation
+        - FlextBus: Event publishing for domain events
+        - FlextDispatcher: Message dispatching for CQRS patterns
+        - FlextRegistry: Component registration and discovery
+        - FlextProcessors: Batch and parallel processing utilities
+        - FlextExceptions: Structured error handling with correlation
 
         Args:
             config: Optional LDIF configuration. If not provided,
@@ -126,35 +145,122 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
 
         """
         super().__init__()
+
+        # Initialize Flext ecosystem components
+        self._container = FlextContainer.get_global()
+        self._bus = FlextBus()
+        self._dispatcher = FlextDispatcher()
+        self._registry = FlextRegistry(dispatcher=self._dispatcher)
+        self._processors = FlextProcessors()
+        self._logger = FlextLogger(__name__)
+
+        # Initialize LDIF-specific components
         self._client = FlextLdifClient(config)
 
         # Initialize frequently-used services (entry builder used in many methods)
         self._entry_builder = FlextLdifEntryBuilder()
         self._schema_builder = FlextLdifSchemaBuilder()
 
+        # Register LDIF components with FlextRegistry
+        self._register_components()
+
         # Other services instantiated on-demand in methods that use them
         # This reduces memory footprint for unused services
 
-        # Demonstrate inherited logger (no manual instantiation needed!)
-        if self.logger:
-            self.logger.info(
-                "FlextLdif initialized with inherited infrastructure",
+    def _register_components(self) -> None:
+        """Register LDIF components with FlextRegistry for dependency injection."""
+        try:
+            # Register core LDIF services
+            self._registry.register(
+                "ldif_client",
+                self._client,
+                metadata={"type": "client", "domain": "ldif"},
+            )
+            self._registry.register(
+                "entry_builder",
+                self._entry_builder,
+                metadata={"type": "builder", "domain": "entry"},
+            )
+            self._registry.register(
+                "schema_builder",
+                self._schema_builder,
+                metadata={"type": "builder", "domain": "schema"},
+            )
+
+            # Register configuration and constants
+            self._registry.register(
+                "ldif_config",
+                self._client.config,
+                metadata={"type": "config", "domain": "ldif"},
+            )
+            self._registry.register(
+                "ldif_constants",
+                FlextLdifConstants,
+                metadata={"type": "constants", "domain": "ldif"},
+            )
+
+            self._logger.debug(
+                "LDIF components registered with FlextRegistry",
                 extra={
-                    "service_type": "LDIF Processing Facade",
-                    "ldif_features": [
-                        "rfc_2849_parsing",
-                        "rfc_4512_compliance",
-                        "server_quirks",
-                        "generic_migration",
-                        "schema_validation",
-                        "acl_processing",
-                        "entry_building",
+                    "correlation_id": getattr(self.context, "correlation_id", None),
+                    "registered_components": [
+                        "ldif_client",
+                        "entry_builder",
+                        "schema_builder",
+                        "ldif_config",
+                        "ldif_constants",
                     ],
                 },
             )
 
+        except Exception as e:
+            # Use FlextExceptions for error handling
+            error = FlextLdifExceptions.LdifConfigurationError(
+                f"Failed to register LDIF components: {e}",
+                correlation_id=getattr(self.context, "correlation_id", None),
+                context={"component": "FlextLdif", "operation": "_register_components"},
+            )
+            self._logger.exception(
+                str(error),
+                extra={
+                    "correlation_id": error.correlation_id,
+                    "error_code": error.error_code,
+                    "metadata": error.metadata,
+                },
+            )
+            raise error
+
+        # Log initialization with structured context
+        self._logger.info(
+            "FlextLdif initialized with complete Flext ecosystem integration",
+            extra={
+                "service_type": "LDIF Processing Facade",
+                "correlation_id": getattr(self.context, "correlation_id", None),
+                "flext_components": [
+                    "FlextContainer",
+                    "FlextLogger",
+                    "FlextContext",
+                    "FlextBus",
+                    "FlextDispatcher",
+                    "FlextRegistry",
+                    "FlextProcessors",
+                    "FlextExceptions",
+                    "FlextProtocols",
+                ],
+                "ldif_features": [
+                    "rfc_2849_parsing",
+                    "rfc_4512_compliance",
+                    "server_quirks",
+                    "generic_migration",
+                    "schema_validation",
+                    "acl_processing",
+                    "entry_building",
+                ],
+            },
+        )
+
     @override
-    def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Execute facade self-check and return status.
 
         Returns:
@@ -166,7 +272,9 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
     def parse(
         self, source: str | Path, server_type: str = "rfc"
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        r"""Parse LDIF from file or content string.
+        r"""Parse LDIF from file or content string with FlextContext tracking.
+
+        Uses FlextContext for correlation tracking and FlextExceptions for structured error handling.
 
         Args:
             source: Either a file path (Path object) or LDIF content string
@@ -176,8 +284,11 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
             FlextResult with list of parsed Entry models
 
         Example:
-            # Parse from string
-            result = ldif.parse("dn: cn=test\ncn: test\n")
+            # Parse from string with context tracking
+            with ldif.context.set_correlation_id("parse-123"):
+                result = ldif.parse("dn: cn=test\ncn: test\n")
+                if result.is_success:
+                    entries = result.unwrap()
 
             # Parse from file
             result = ldif.parse(Path("data.ldif"))
@@ -186,7 +297,90 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
             result = ldif.parse(Path("oid.ldif"), server_type=FlextLdifConstants.ServerTypes.OID)
 
         """
-        return self._client.parse_ldif(source, server_type)
+        # Set correlation ID for this operation
+        correlation_id = (
+            getattr(self.context, "correlation_id", None) or f"parse-{id(source)}"
+        )
+
+        try:
+            # Log operation start
+            self._logger.info(
+                "Starting LDIF parsing operation",
+                extra={
+                    "correlation_id": correlation_id,
+                    "operation": "parse",
+                    "server_type": server_type,
+                    "source_type": "file" if isinstance(source, Path) else "content",
+                },
+            )
+
+            # Execute parsing with client
+            result = self._client.parse_ldif(source, server_type)
+
+            if result.is_success:
+                entries = result.unwrap()
+                # Publish domain event for successful parsing
+                self._bus.publish(
+                    "ldif.parsed",
+                    {
+                        "correlation_id": correlation_id,
+                        "entry_count": len(entries),
+                        "server_type": server_type,
+                        "source_info": str(source)[:100]
+                        if isinstance(source, str)
+                        else str(source),
+                    },
+                )
+
+                self._logger.info(
+                    "LDIF parsing completed successfully",
+                    extra={
+                        "correlation_id": correlation_id,
+                        "entry_count": len(entries),
+                        "server_type": server_type,
+                    },
+                )
+            else:
+                # Log parsing failure
+                self._logger.error(
+                    f"LDIF parsing failed: {result.error}",
+                    extra={
+                        "correlation_id": correlation_id,
+                        "error_code": getattr(result, "error_code", "UNKNOWN_ERROR"),
+                        "server_type": server_type,
+                    },
+                )
+
+            return result
+
+        except Exception as e:
+            # Use FlextExceptions for structured error handling
+            error = FlextLdifExceptions.LdifParseError(
+                f"Unexpected error during LDIF parsing: {e}",
+                correlation_id=correlation_id,
+                context={
+                    "operation": "parse",
+                    "server_type": server_type,
+                    "source_info": str(source)[:100]
+                    if isinstance(source, str)
+                    else str(source),
+                },
+            )
+
+            self._logger.exception(
+                str(error),
+                extra={
+                    "correlation_id": error.correlation_id,
+                    "error_code": error.error_code,
+                    "metadata": error.metadata,
+                },
+            )
+
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                str(error),
+                error_code=error.error_code,
+                correlation_id=error.correlation_id,
+            )
 
     def write(
         self,
@@ -217,7 +411,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
 
     def validate_entries(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Validate LDIF entries against RFC and business rules.
 
         Args:
@@ -245,7 +439,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
         *,
         process_schema: bool = True,
         process_entries: bool = True,
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Migrate LDIF data between different LDAP server types.
 
         Args:
@@ -284,7 +478,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
 
     def analyze(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Analyze LDIF entries and generate statistics.
 
         Args:
@@ -646,7 +840,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
     def evaluate_acl_rules(
         self,
         acls: list[FlextLdifModels.UnifiedAcl],
-        context: FlextLdifTypes.Dict | None = None,
+        context: dict[str, object] | None = None,
     ) -> FlextResult[bool]:
         """Evaluate ACL rules and return evaluation result.
 
@@ -679,7 +873,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
         self,
         processor_name: str,
         entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[list[FlextLdifTypes.Dict]]:
+    ) -> FlextResult[list[dict[str, object]]]:
         """Process entries in batch mode using FlextProcessors.
 
         Args:
@@ -701,13 +895,13 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
         """
         entry_dicts = self.entries_to_dicts(entries)
         # For now, return the dicts without processing
-        return FlextResult[list[FlextLdifTypes.Dict]].ok(entry_dicts)
+        return FlextResult[list[dict[str, object]]].ok(entry_dicts)
 
     def process_parallel(
         self,
         processor_name: str,
         entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[list[FlextLdifTypes.Dict]]:
+    ) -> FlextResult[list[dict[str, object]]]:
         """Process entries in parallel mode using FlextProcessors.
 
         Args:
@@ -729,7 +923,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
         """
         entry_dicts = self.entries_to_dicts(entries)
         # For now, return the dicts without processing
-        return FlextResult[list[FlextLdifTypes.Dict]].ok(entry_dicts)
+        return FlextResult[list[dict[str, object]]].ok(entry_dicts)
 
     # =========================================================================
     # INFRASTRUCTURE ACCESS (Properties)
@@ -743,8 +937,8 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
             FlextLdifModels class containing all LDIF domain models
 
         Example:
-            entry = ldif.Models.Entry(dn="cn=test", attributes={})
-            schema = ldif.Models.SchemaObjectClass(name="person")
+            entry = ldif.models.Entry(dn="cn=test", attributes={})
+            schema = ldif.models.SchemaObjectClass(name="person")
 
         """
         return FlextLdifModels
@@ -771,8 +965,8 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
             FlextLdifConstants class containing all constant values
 
         Example:
-            max_line = ldif.Constants.Format.MAX_LINE_LENGTH
-            encoding = ldif.Constants.Encoding.UTF8
+            max_line = ldif.constants.Format.MAX_LINE_LENGTH
+            encoding = ldif.constants.Encoding.UTF8
 
         """
         return FlextLdifConstants
@@ -785,43 +979,76 @@ class FlextLdif(FlextService[FlextLdifTypes.Dict]):
             FlextLdifUtilities class containing all utility methods
 
         Example:
-            timestamp = ldif.Utilities.TimeUtilities.get_timestamp()
-            size = ldif.Utilities.TextUtilities.format_byte_size(1024)
+            timestamp = ldif.utilities.TimeUtilities.get_timestamp()
+            size = ldif.utilities.TextUtilities.format_byte_size(1024)
 
         """
         return FlextLdifUtilities
 
     @property
-    def processors(self) -> type[FlextLdifUtilities.Processors]:
-        """Access to LDIF processing utilities using FlextProcessors.
+    def container(self) -> FlextContainer:
+        """Access to global FlextContainer for dependency injection.
 
         Returns:
-            FlextLdifUtilities.Processors class with processing methods
+            Global FlextContainer singleton instance
 
         Example:
-            # Create processor and register function
-            processors = ldif.Processors.create_processor()
-
-            def validate_entry(entry: dict) -> dict:
-                # Validation logic
-                return entry
-
-            result = ldif.Processors.register_processor(
-                "validate", validate_entry, processors
-            )
-
-            # Batch processing with registered processor
-            batch_result = ldif.Processors.process_entries_batch(
-                "validate", entries, processors
-            )
-
-            # Parallel processing with registered processor
-            parallel_result = ldif.Processors.process_entries_parallel(
-                "validate", entries, processors
-            )
+            service = ldif.container.resolve("my_service")
 
         """
-        return FlextLdifUtilities.Processors
+        return self._container
+
+    @property
+    def bus(self) -> FlextBus:
+        """Access to FlextBus for event publishing.
+
+        Returns:
+            FlextBus instance for publishing domain events
+
+        Example:
+            ldif.bus.publish("ldif.parsed", {"entry_count": 10})
+
+        """
+        return self._bus
+
+    @property
+    def dispatcher(self) -> FlextDispatcher:
+        """Access to FlextDispatcher for message dispatching.
+
+        Returns:
+            FlextDispatcher instance for CQRS message routing
+
+        Example:
+            result = ldif.dispatcher.dispatch(command)
+
+        """
+        return self._dispatcher
+
+    @property
+    def registry(self) -> FlextRegistry:
+        """Access to FlextRegistry for component management.
+
+        Returns:
+            FlextRegistry instance for component registration and discovery
+
+        Example:
+            component = ldif.registry.get("my_component")
+
+        """
+        return self._registry
+
+    @property
+    def processors(self) -> FlextProcessors:
+        """Access to FlextProcessors for batch and parallel processing.
+
+        Returns:
+            FlextProcessors instance for processing utilities
+
+        Example:
+            result = ldif.processors.process_batch(entries, processor_func)
+
+        """
+        return self._processors
 
     # =========================================================================
 

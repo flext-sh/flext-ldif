@@ -172,7 +172,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
 
         def convert_entry_to_rfc(
             self,
-            _entry_data: FlextLdifTypes.Dict,
+            entry_data: FlextLdifTypes.Dict,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert eDirectory entry to RFC-compliant format - STUB."""
             return FlextResult[FlextLdifTypes.Dict].fail(

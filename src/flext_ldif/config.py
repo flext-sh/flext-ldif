@@ -241,10 +241,7 @@ class FlextLdifConfig(FlextConfig):
             msg = "max_workers must be at least 1"
             raise ValueError(msg)
         if v > FlextLdifConstants.MAX_WORKERS_LIMIT:
-            msg = (
-                f"max_workers cannot exceed "
-                f"{FlextLdifConstants.MAX_WORKERS_LIMIT}"
-            )
+            msg = f"max_workers cannot exceed {FlextLdifConstants.MAX_WORKERS_LIMIT}"
             raise ValueError(msg)
         return v
 
@@ -319,10 +316,7 @@ class FlextLdifConfig(FlextConfig):
                 )
                 raise ValueError(msg)
 
-            if (
-                self.ldif_chunk_size
-                < FlextLdifConstants.PERFORMANCE_MIN_CHUNK_SIZE
-            ):
+            if self.ldif_chunk_size < FlextLdifConstants.PERFORMANCE_MIN_CHUNK_SIZE:
                 msg = (
                     f"Performance mode requires chunk size >= "
                     f"{FlextLdifConstants.PERFORMANCE_MIN_CHUNK_SIZE}"
@@ -330,10 +324,7 @@ class FlextLdifConfig(FlextConfig):
                 raise ValueError(msg)
 
         # Validate debug mode consistency
-        if (
-            self.debug_mode
-            and self.max_workers > FlextLdifConstants.DEBUG_MAX_WORKERS
-        ):
+        if self.debug_mode and self.max_workers > FlextLdifConstants.DEBUG_MAX_WORKERS:
             msg = (
                 f"Debug mode should use <= "
                 f"{FlextLdifConstants.DEBUG_MAX_WORKERS} workers "
@@ -392,19 +383,15 @@ class FlextLdifConfig(FlextConfig):
         if entry_count < self.parallel_threshold:
             return 1
         if entry_count < FlextLdifConstants.MEDIUM_ENTRY_COUNT_THRESHOLD:
-            return min(
-                FlextLdifConstants.MIN_WORKERS_FOR_PARALLEL, self.max_workers
-            )
+            return min(FlextLdifConstants.MIN_WORKERS_FOR_PARALLEL, self.max_workers)
         return self.max_workers
 
     def is_performance_optimized(self) -> bool:
         """Check if configuration is optimized for performance."""
         return (
             self.enable_performance_optimizations
-            and self.max_workers
-            >= FlextLdifConstants.PERFORMANCE_MIN_WORKERS
-            and self.ldif_chunk_size
-            >= FlextLdifConstants.PERFORMANCE_MIN_CHUNK_SIZE
+            and self.max_workers >= FlextLdifConstants.PERFORMANCE_MIN_WORKERS
+            and self.ldif_chunk_size >= FlextLdifConstants.PERFORMANCE_MIN_CHUNK_SIZE
             and self.memory_limit_mb
             >= FlextLdifConstants.PERFORMANCE_MEMORY_MB_THRESHOLD
         )
