@@ -402,7 +402,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 # OUD entries are RFC-compliant
                 # Add OUD-specific processing if needed
                 processed_entry: FlextLdifTypes.Dict = {
-                    "dn": entry_dn,
+                    FlextLdifConstants.DictKeys.DN: entry_dn,
                     FlextLdifConstants.DictKeys.SERVER_TYPE: "oud",
                 }
                 processed_entry.update(attributes)

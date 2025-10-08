@@ -14,13 +14,19 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Iterator, Mapping, Sequence
-from typing import Literal
+from typing import TypeVar
 
 from flext_core import FlextResult, FlextTypes
+
+from flext_ldif.constants import FlextLdifConstants
 
 # =============================================================================
 # LDIF-SPECIFIC TYPE VARIABLES - Domain-specific TypeVars for LDIF operations
 # =============================================================================
+
+# Generic TypeVars for mixins and functional operations
+T = TypeVar("T")
+U = TypeVar("U")
 
 
 # LDIF domain TypeVars
@@ -33,14 +39,9 @@ class FlextLdifTypes(FlextTypes):
     """
 
     # =========================================================================
-    # BASIC LDIF TYPES - Explicit definitions for type checker compatibility
-    # =========================================================================
-
-    type BoolDict = dict[str, bool]
-
-    # =========================================================================
     # LDIF ENTRY TYPES - Complex LDIF entry handling types
     # =========================================================================
+    # REMOVED: Simple type aliases like BoolDict - use FlextTypes.Dict directly
 
     class Entry:
         """LDIF entry complex types."""
@@ -157,46 +158,12 @@ class FlextLdifTypes(FlextTypes):
             str, float | int | bool | FlextLdifTypes.FloatDict
         ]
 
-    # Missing type needed by api.py
-    type LdifStatistics = dict[str, object]
-    # =========================================================================
-    # CORE LDIF TYPES - Commonly used LDIF type aliases extending FlextTypes
-    # =========================================================================
-
-    class LdifCore:
-        """Core LDIF types extending FlextLdifTypes."""
-
-        # Service and management types
-        type ServiceDict = dict[str, object]
-        type ManagementDict = dict[str, object]
-        type ConfigDict = dict[str, object]
-        type StatusDict = dict[str, object]
-        type ResultDict = dict[str, object]
-
-        # Processing and validation types
-        type ProcessingDict = dict[str, object]
-        type ValidationDict = dict[str, object]
-        type AnalysisDict = dict[str, object]
-        type ReportDict = dict[str, object]
-
-        # Entry and data types
-        type EntryDict = dict[str, object]
-        type AttributesDict = dict[str, object]
-        type MetadataDict = dict[str, object]
-        type ContextDict = dict[str, object]
-
-        # Health and monitoring types
-        type HealthDict = dict[str, object]
-        type MetricsDict = dict[str, object]
-        type StatisticsDict = dict[str, object]
-        type InfoDict = dict[str, object]
-
-        # Specialized LDIF types
-        type QuirksDict = dict[str, object]
-        type AclDict = dict[str, object]
-        type SchemaDict = dict[str, object]
-        type ParserDict = dict[str, object]
-        type ProcessorDict = dict[str, object]
+    # REMOVED: Simple dict[str, object] aliases - use FlextTypes.Dict directly
+    # LdifStatistics, ServiceDict, ManagementDict, ConfigDict, StatusDict, ResultDict,
+    # ProcessingDict, ValidationDict, AnalysisDict, ReportDict, EntryDict, AttributesDict,
+    # MetadataDict, ContextDict, HealthDict, MetricsDict, StatisticsDict, InfoDict,
+    # QuirksDict, AclDict, SchemaDict, ParserDict, ProcessorDict
+    # ALL replaced with FlextTypes.Dict for direct usage
 
     # =========================================================================
     # LDIF WRITING TYPES - Complex LDIF output generation types
@@ -242,38 +209,10 @@ class FlextLdifTypes(FlextTypes):
         ]
 
     # =========================================================================
-    # LDIF LITERALS AND ENUMS - Domain-specific literal types
+    # LDIF LITERALS AND ENUMS - Domain-specific literal types from constants
     # =========================================================================
 
-    # Processing stage literals
-    type ProcessingStage = Literal["parsing", "validation", "analytics", "writing"]
-    type HealthStatus = Literal["healthy", "degraded", "unhealthy"]
-    type HealthStatusDict = dict[str, HealthStatus | str | int | bool]
-    type EntryType = Literal["person", "group", "organizationalunit", "domain", "other"]
-    type ModificationType = Literal["add", "modify", "delete", "modrdn"]
-
-    # Server type literals
-    type ServerType = Literal[
-        "active_directory",
-        "openldap",
-        "openldap2",
-        "openldap1",
-        "apache_directory",
-        "novell_edirectory",
-        "ibm_tivoli",
-        "generic",
-        "oracle_oid",
-        "oracle_oud",
-        "389ds",
-    ]
-
-    # Encoding type literals
-    type EncodingType = Literal[
-        "utf-8", "latin-1", "ascii", "utf-16", "utf-32", "cp1252", "iso-8859-1"
-    ]
-
-    # Validation level literals
-    type ValidationLevel = Literal["strict", "moderate", "lenient"]
+    # Literal types moved to FlextLdifConstants.LiteralTypes for centralization
 
     # =========================================================================
     # FUNCTIONAL PROGRAMMING TYPES - Advanced composition patterns
@@ -317,7 +256,7 @@ class FlextLdifTypes(FlextTypes):
     # LDIF PROJECT TYPES - Domain-specific project types extending FlextTypes
     # =========================================================================
 
-    class Project:
+    class Project(FlextTypes.Project):
         """LDIF-specific project types extending FlextTypes.Project.
 
         Adds LDIF/directory data processing-specific project types while inheriting
@@ -325,36 +264,22 @@ class FlextLdifTypes(FlextTypes):
         LDIF domain owns directory data processing-specific types.
         """
 
-        # LDIF-specific project types extending the generic ones
-        type LdifProjectType = Literal[
-            # Generic types inherited from FlextTypes.Project
-            "library",
-            "application",
-            "service",
-            # LDIF-specific types
-            "ldif-processor",
-            "directory-converter",
-            "ldif-validator",
-            "ldif-analyzer",
-            "ldif-parser",
-            "directory-migrator",
-            "ldap-data-processor",
-            "ldif-transformer",
-            "directory-sync",
-            "ldif-exporter",
-            "ldif-importer",
-            "data-migration",
-            "ldif-etl",
-            "directory-backup",
-            "ldif-merger",
-            "schema-converter",
-        ]
+        # Project types moved to FlextLdifConstants.LiteralTypes for centralization
 
-        # LDIF-specific project configurations
-        type LdifProjectConfig = dict[str, FlextLdifTypes.ConfigValue | object]
-        type ProcessingConfig = dict[str, str | int | bool | FlextLdifTypes.StringList]
-        type ValidationConfig = dict[str, bool | str | dict[str, object]]
-        type TransformationConfig = dict[str, FlextLdifTypes.ConfigValue | object]
+    # =========================================================================
+    # LITERAL TYPES - Import from constants for Pydantic compatibility
+    # =========================================================================
+
+    # Import literal types from constants for use in Pydantic models
+    # ZERO TOLERANCE: ALL Literal type definitions MUST be in FlextLdifConstants.LiteralTypes
+    type ProcessingStage = FlextLdifConstants.LiteralTypes.ProcessingStage
+    type HealthStatus = FlextLdifConstants.LiteralTypes.HealthStatus
+    type EntryType = FlextLdifConstants.LiteralTypes.EntryType
+    type ModificationType = FlextLdifConstants.LiteralTypes.ModificationType
+    type ServerType = FlextLdifConstants.LiteralTypes.ServerType
+    type EncodingType = FlextLdifConstants.LiteralTypes.EncodingType
+    type ValidationLevel = FlextLdifConstants.LiteralTypes.ValidationLevel
+    type ProjectType = FlextLdifConstants.LiteralTypes.ProjectType
 
 
 # =============================================================================

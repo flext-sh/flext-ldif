@@ -45,9 +45,9 @@ def validate_entries_example() -> None:
     # Validate - library handles RFC 2849 compliance
     result = api.validate_entries(entries).map(
         lambda report: (
-            f"Valid: {report.get('is_valid', False)}, "  # type: ignore[attr-defined]
-            f"Errors: {len(report.get('errors', [])) if report.get('errors') else 0}, "  # type: ignore[attr-defined]
-            f"Warnings: {len(report.get('warnings', [])) if report.get('warnings') else 0}"  # type: ignore[attr-defined]
+            f"Valid: {report.get('is_valid', False)}, "
+            f"Errors: {len(report.get('errors', [])) if report.get('errors') else 0}, "
+            f"Warnings: {len(report.get('warnings', [])) if report.get('warnings') else 0}"
         )
     )
 
@@ -189,7 +189,7 @@ member: cn=Person1,ou=People,dc=example,dc=com
 
         # Parse once, filter multiple times - library handles iteration
         entries = api.parse(ldif_content).unwrap_or([])
-        for objectclass in objectclass_dist:  # type: ignore[union-attr]
+        for objectclass in objectclass_dist:
             objectclass_str = str(objectclass)
             filtered = api.filter_by_objectclass(entries, objectclass_str).unwrap_or([])
             print(f"{objectclass_str}: {len(filtered)} entries")

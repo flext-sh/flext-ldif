@@ -6,6 +6,7 @@ from typing import override
 
 from flext_core import FlextResult, FlextService
 
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
 
@@ -53,7 +54,9 @@ class FlextLdifSchemaValidator(FlextService[FlextLdifTypes.Dict]):
                 continue
 
             # Validate objectClass presence
-            object_classes = entry.get_attribute_values("objectClass")
+            object_classes = entry.get_attribute_values(
+                FlextLdifConstants.DictKeys.OBJECTCLASS
+            )
             if not object_classes:
                 errors.append(
                     f"Entry {idx} ({entry.dn.value}): Missing objectClass attribute"
@@ -107,7 +110,7 @@ class FlextLdifSchemaValidator(FlextService[FlextLdifTypes.Dict]):
         ]
 
         entry_object_classes: FlextLdifTypes.StringList = entry.get_attribute_values(
-            "objectClass"
+            FlextLdifConstants.DictKeys.OBJECTCLASS
         )
         issues: FlextLdifTypes.StringList = [
             f"ObjectClass '{oc}' not in discovered schema"
@@ -116,10 +119,10 @@ class FlextLdifSchemaValidator(FlextService[FlextLdifTypes.Dict]):
         ]
 
         validation_result: FlextLdifTypes.Dict = {
-            "valid": len(issues) == 0,
-            "issues": issues,
+            FlextLdifConstants.DictKeys.VALID: len(issues) == 0,
+            FlextLdifConstants.DictKeys.ISSUES: issues,
             "warnings": warnings,
-            "dn": entry.dn.value,
+            FlextLdifConstants.DictKeys.DN: entry.dn.value,
         }
 
         return FlextResult[FlextLdifTypes.Dict].ok(validation_result)
@@ -142,7 +145,7 @@ class FlextLdifSchemaValidator(FlextService[FlextLdifTypes.Dict]):
         issues: FlextLdifTypes.StringList = []
         entry_attrs = set(entry.attributes.data.keys())
         entry_object_classes: FlextLdifTypes.StringList = entry.get_attribute_values(
-            "objectClass"
+            FlextLdifConstants.DictKeys.OBJECTCLASS
         )
 
         for oc_name in entry_object_classes:
@@ -159,9 +162,9 @@ class FlextLdifSchemaValidator(FlextService[FlextLdifTypes.Dict]):
                     )
 
         validation_result: FlextLdifTypes.Dict = {
-            "valid": len(issues) == 0,
-            "issues": issues,
-            "dn": entry.dn.value,
+            FlextLdifConstants.DictKeys.VALID: len(issues) == 0,
+            FlextLdifConstants.DictKeys.ISSUES: issues,
+            FlextLdifConstants.DictKeys.DN: entry.dn.value,
         }
 
         return FlextResult[FlextLdifTypes.Dict].ok(validation_result)

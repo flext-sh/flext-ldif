@@ -35,11 +35,11 @@ class TestFlextLdifConstants:
         )
 
     def test_processing_constants(self) -> None:
-        """Test Processing constants."""
-        assert FlextLdifConstants.MIN_WORKERS_FOR_PARALLEL == 2
-        assert FlextLdifConstants.MAX_WORKERS_LIMIT == 16
-        assert FlextLdifConstants.Processing.PERFORMANCE_MIN_WORKERS == 4
-        assert FlextLdifConstants.PERFORMANCE_MIN_CHUNK_SIZE == 1000
+        """Test LdifProcessing constants."""
+        assert FlextLdifConstants.LdifProcessing.MIN_WORKERS_FOR_PARALLEL == 2
+        assert FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT == 16
+        assert FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_WORKERS == 4
+        assert FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_CHUNK_SIZE == 1000
         assert FlextLdifConstants.MIN_ANALYTICS_CACHE_SIZE == 100
         assert FlextLdifConstants.MAX_ANALYTICS_CACHE_SIZE == 10000
         assert FlextLdifConstants.MIN_ENTRIES == 1000
@@ -113,10 +113,10 @@ class TestFlextLdifConstants:
         assert FlextLdifConstants.ProcessingStage.WRITING == "writing"
 
     def test_health_status_enum(self) -> None:
-        """Test HealthStatus enum."""
-        assert FlextLdifConstants.HealthStatus.HEALTHY == "healthy"
-        assert FlextLdifConstants.HealthStatus.DEGRADED == "degraded"
-        assert FlextLdifConstants.HealthStatus.UNHEALTHY == "unhealthy"
+        """Test LdifHealthStatus enum."""
+        assert FlextLdifConstants.LdifHealthStatus.HEALTHY == "healthy"
+        assert FlextLdifConstants.LdifHealthStatus.DEGRADED == "degraded"
+        assert FlextLdifConstants.LdifHealthStatus.UNHEALTHY == "unhealthy"
 
     def test_entry_type_enum(self) -> None:
         """Test EntryType enum."""
@@ -177,8 +177,8 @@ class TestFlextLdifConstantsProcessing:
 
     def test_max_workers_limit(self) -> None:
         """Test maximum workers limit."""
-        assert FlextLdifConstants.MAX_WORKERS_LIMIT == 16
-        assert isinstance(FlextLdifConstants.MAX_WORKERS_LIMIT, int)
+        assert FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT == 16
+        assert isinstance(FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT, int)
 
     def test_debug_max_workers(self) -> None:
         """Test debug maximum workers."""
@@ -187,15 +187,17 @@ class TestFlextLdifConstantsProcessing:
 
     def test_performance_min_workers(self) -> None:
         """Test performance minimum workers."""
-        assert FlextLdifConstants.Processing.PERFORMANCE_MIN_WORKERS == 4
-        assert isinstance(FlextLdifConstants.Processing.PERFORMANCE_MIN_WORKERS, int)
+        assert FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_WORKERS == 4
+        assert isinstance(
+            FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_WORKERS, int
+        )
 
     def test_processing_constants_exist(self) -> None:
         """Test that all processing constants exist."""
-        assert hasattr(FlextLdifConstants.Processing, "MAX_WORKERS_LIMIT")
-        assert hasattr(FlextLdifConstants.Processing, "DEBUG_MAX_WORKERS")
-        assert hasattr(FlextLdifConstants.Processing, "PERFORMANCE_MIN_WORKERS")
-        assert hasattr(FlextLdifConstants.Processing, "PERFORMANCE_MEMORY_MB_THRESHOLD")
+        assert hasattr(FlextLdifConstants.LdifProcessing, "MAX_WORKERS_LIMIT")
+        assert hasattr(FlextLdifConstants, "DEBUG_MAX_WORKERS")
+        assert hasattr(FlextLdifConstants.LdifProcessing, "PERFORMANCE_MIN_WORKERS")
+        assert hasattr(FlextLdifConstants, "PERFORMANCE_MEMORY_MB_THRESHOLD")
 
 
 class TestFlextLdifConstantsNamespace:
@@ -233,11 +235,12 @@ class TestFlextLdifConstantsNamespace:
         assert FlextLdifConstants.Format.MAX_LINE_LENGTH < 200
 
         # Processing
-        assert FlextLdifConstants.MAX_WORKERS_LIMIT > 0
+        assert FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT > 0
         assert (
-            FlextLdifConstants.DEBUG_MAX_WORKERS <= FlextLdifConstants.MAX_WORKERS_LIMIT
+            FlextLdifConstants.DEBUG_MAX_WORKERS
+            <= FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT
         )
-        assert FlextLdifConstants.Processing.PERFORMANCE_MIN_WORKERS > 0
+        assert FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_WORKERS > 0
 
         # Validation
         assert FlextLdifConstants.LdifGeneralValidation.NAME_LENGTH_MIN >= 0

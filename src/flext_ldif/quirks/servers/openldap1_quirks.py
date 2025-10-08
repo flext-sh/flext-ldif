@@ -508,9 +508,9 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
             try:
                 # OpenLDAP 1.x entries are RFC-compliant
                 processed_entry: FlextLdifTypes.Dict = {
-                    "dn": entry_dn,
+                    FlextLdifConstants.DictKeys.DN: entry_dn,
                     FlextLdifConstants.DictKeys.SERVER_TYPE: "openldap1",
-                    "is_traditional_dit": True,
+                    FlextLdifConstants.DictKeys.IS_TRADITIONAL_DIT: True,
                 }
                 processed_entry.update(attributes)
 
@@ -522,12 +522,12 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
                 )
 
         def convert_entry_to_rfc(
-            self, _entry_data: FlextLdifTypes.Dict
+            self, entry_data: FlextLdifTypes.Dict
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert server-specific entry to RFC-compliant format.
 
             Args:
-                _entry_data: Server-specific entry data
+                entry_data: Server-specific entry data
 
             Returns:
                 FlextResult with RFC-compliant entry data
@@ -535,7 +535,7 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
             """
             try:
                 # OpenLDAP 1.x entries are already RFC-compliant
-                return FlextResult[FlextLdifTypes.Dict].ok(_entry_data)
+                return FlextResult[FlextLdifTypes.Dict].ok(entry_data)
             except Exception as e:
                 return FlextResult[FlextLdifTypes.Dict].fail(
                     f"OpenLDAP 1.x entry→RFC conversion failed: {e}"

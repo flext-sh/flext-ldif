@@ -21,6 +21,7 @@ from typing import cast
 
 from flext_core import FlextResult, FlextService
 
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
 
@@ -416,7 +417,10 @@ class FlextLdifRfcLdifParser(FlextService[dict[str, object]]):
                     entries.append(entry_result.value)
 
             self._current_dn = self._parse_attribute_value(line[3:])
-            self._current_entry = {"dn": self._current_dn, "attributes": {}}
+            self._current_entry = {
+                FlextLdifConstants.DictKeys.DN: self._current_dn,
+                FlextLdifConstants.DictKeys.ATTRIBUTES: {},
+            }
             return
 
         # RFC 2849: Change records
@@ -425,20 +429,25 @@ class FlextLdifRfcLdifParser(FlextService[dict[str, object]]):
             if self._current_entry:
                 self._current_entry["changetype"] = changetype
                 # Add to changes list for change tracking
-                changes.append({"dn": self._current_dn, "changetype": changetype})
+                changes.append({
+                    FlextLdifConstants.DictKeys.DN: self._current_dn,
+                    "changetype": changetype,
+                })
             return
 
         # RFC 2849: Attribute-value pair
         if ":" in line:
             attr_name, attr_value = self._parse_attribute_line(line)
             if self._current_entry and attr_name:
-                attrs = self._current_entry.get("attributes", {})
+                attrs = self._current_entry.get(
+                    FlextLdifConstants.DictKeys.ATTRIBUTES, {}
+                )
                 if not isinstance(attrs, dict):
                     attrs = {}
                 if attr_name not in attrs:
                     attrs[attr_name] = []
                 attrs[attr_name].append(attr_value)
-                self._current_entry["attributes"] = attrs
+                self._current_entry[FlextLdifConstants.DictKeys.ATTRIBUTES] = attrs
 
     def _parse_attribute_line(self, line: str) -> tuple[str, str]:
         """Parse attribute-value line according to RFC 2849.

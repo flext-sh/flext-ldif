@@ -32,10 +32,13 @@ class FlextLdifConfig(FlextConfig):
     """
 
     model_config = SettingsConfigDict(
-        env_prefix="FLEXT_LDIF_",
+        env_prefix="FLEXT_",  # Field names have "ldif_" prefix, so FLEXT_ + ldif_encoding = FLEXT_LDIF_ENCODING
         case_sensitive=False,
         extra="ignore",
-        # Enhanced Pydantic 2.11+ features through FlextConfig
+        # Pydantic 2.11+ Settings - Must include env_file (not inherited from parent)
+        env_file=FlextConstants.Platform.ENV_FILE_DEFAULT,
+        env_file_encoding=FlextConstants.Mixins.DEFAULT_ENCODING,
+        env_nested_delimiter=FlextConstants.Platform.ENV_NESTED_DELIMITER,
         validate_assignment=True,
         str_strip_whitespace=True,
         json_schema_extra={
@@ -52,8 +55,8 @@ class FlextLdifConfig(FlextConfig):
 
     ldif_max_line_length: int = Field(
         default=FlextLdifConstants.Format.MAX_LINE_LENGTH,
-        ge=40,
-        le=200,
+        ge=FlextLdifConstants.Format.MIN_LINE_LENGTH,
+        le=FlextLdifConstants.Format.MAX_LINE_LENGTH_EXTENDED,
         description="Maximum LDIF line length (RFC 2849 compliance)",
     )
 
@@ -76,22 +79,22 @@ class FlextLdifConfig(FlextConfig):
     ldif_max_entries: int = Field(
         default=FlextLdifConstants.ConfigDefaults.LDIF_MAX_ENTRIES,
         ge=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
-        le=10000000,
+        le=FlextLdifConstants.MAX_ENTRIES_ABSOLUTE,
         description="Maximum number of entries to process",
     )
 
     ldif_chunk_size: int = Field(
-        default=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
-        ge=100,
-        le=10000,
+        default=FlextLdifConstants.DEFAULT_BATCH_SIZE,
+        ge=FlextLdifConstants.LdifProcessing.MIN_CHUNK_SIZE,
+        le=FlextLdifConstants.LdifProcessing.MAX_CHUNK_SIZE,
         description="Chunk size for LDIF processing",
     )
 
     max_workers: int = Field(
-        default=FlextLdifConstants.PERFORMANCE_MIN_WORKERS,
-        ge=1,
-        le=FlextLdifConstants.MAX_WORKERS_LIMIT,
-        description="Maximum number of worker threads",
+        default=FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_WORKERS,
+        ge=FlextLdifConstants.LdifProcessing.MIN_WORKERS,
+        le=FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT,
+        description="Maximum number of worker threads (inherited from FlextConfig, uses FLEXT_MAX_WORKERS)",
     )
 
     # Memory and Performance Configuration - Fix default value
@@ -114,7 +117,7 @@ class FlextLdifConfig(FlextConfig):
 
     parallel_threshold: int = Field(
         default=FlextLdifConstants.SMALL_ENTRY_COUNT_THRESHOLD,
-        ge=1,
+        ge=FlextLdifConstants.LdifProcessing.MIN_WORKERS,
         description="Threshold for enabling parallel processing",
     )
 
@@ -125,7 +128,7 @@ class FlextLdifConfig(FlextConfig):
     )
 
     ldif_analytics_cache_size: int = Field(
-        default=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
+        default=FlextLdifConstants.DEFAULT_BATCH_SIZE,
         ge=FlextLdifConstants.MIN_ANALYTICS_CACHE_SIZE,
         le=FlextLdifConstants.MAX_ANALYTICS_CACHE_SIZE,
         description="Cache size for LDIF analytics",
@@ -149,7 +152,7 @@ class FlextLdifConfig(FlextConfig):
 
     ldif_batch_size: int = Field(
         default=FlextLdifConstants.DEFAULT_BATCH_SIZE,
-        ge=1,
+        ge=FlextLdifConstants.MIN_BATCH_SIZE,
         le=FlextLdifConstants.MAX_BATCH_SIZE,
         description="Batch size for LDIF processing",
     )
@@ -161,15 +164,15 @@ class FlextLdifConfig(FlextConfig):
 
     ldif_analytics_sample_rate: float = Field(
         default=FlextLdifConstants.ConfigDefaults.LDIF_ANALYTICS_SAMPLE_RATE,
-        ge=0.0,
-        le=1.0,
+        ge=FlextLdifConstants.MIN_SAMPLE_RATE,
+        le=FlextLdifConstants.MAX_SAMPLE_RATE,
         description="Analytics sampling rate (0.0 to 1.0)",
     )
 
     ldif_analytics_max_entries: int = Field(
         default=FlextLdifConstants.ConfigDefaults.LDIF_ANALYTICS_MAX_ENTRIES,
-        ge=1,
-        le=100000,
+        ge=FlextLdifConstants.LdifProcessing.MIN_WORKERS,
+        le=FlextLdifConstants.MAX_ANALYTICS_ENTRIES_ABSOLUTE,
         description="Maximum entries for analytics processing",
     )
 
@@ -227,8 +230,10 @@ class FlextLdifConfig(FlextConfig):
     @classmethod
     def validate_ldif_encoding(cls, v: str) -> str:
         """Validate LDIF encoding is supported."""
-        if v not in FlextLdifConstants.Encoding.SUPPORTED_ENCODINGS:
-            supported = ", ".join(FlextLdifConstants.Encoding.SUPPORTED_ENCODINGS)
+        if v not in FlextLdifConstants.ValidationRules.VALID_ENCODINGS_RULE:
+            supported = ", ".join(
+                FlextLdifConstants.ValidationRules.VALID_ENCODINGS_RULE
+            )
             msg = f"Invalid encoding: {v}. Supported encodings: {supported}"
             raise ValueError(msg)
         return v.lower()
@@ -237,11 +242,11 @@ class FlextLdifConfig(FlextConfig):
     @classmethod
     def validate_max_workers(cls, v: int) -> int:
         """Validate max workers configuration."""
-        if v < 1:
-            msg = "max_workers must be at least 1"
+        if v < FlextLdifConstants.LdifProcessing.MIN_WORKERS:
+            msg = f"max_workers must be at least {FlextLdifConstants.LdifProcessing.MIN_WORKERS}"
             raise ValueError(msg)
-        if v > FlextLdifConstants.MAX_WORKERS_LIMIT:
-            msg = f"max_workers cannot exceed {FlextLdifConstants.MAX_WORKERS_LIMIT}"
+        if v > FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT:
+            msg = f"max_workers cannot exceed {FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT}"
             raise ValueError(msg)
         return v
 
@@ -249,13 +254,8 @@ class FlextLdifConfig(FlextConfig):
     @classmethod
     def validate_validation_level(cls, v: str) -> str:
         """Validate validation level."""
-        valid_levels = {
-            FlextLdifConstants.RfcCompliance.STRICT,
-            FlextLdifConstants.RfcCompliance.MODERATE,
-            FlextLdifConstants.RfcCompliance.LENIENT,
-        }
-        if v not in valid_levels:
-            msg = f"validation_level must be one of: {', '.join(valid_levels)}"
+        if v not in FlextLdifConstants.ValidationRules.VALID_VALIDATION_LEVELS_RULE:
+            msg = f"validation_level must be one of: {', '.join(FlextLdifConstants.ValidationRules.VALID_VALIDATION_LEVELS_RULE)}"
             raise ValueError(msg)
         return v
 
@@ -263,16 +263,8 @@ class FlextLdifConfig(FlextConfig):
     @classmethod
     def validate_server_type(cls, v: str) -> str:
         """Validate server type."""
-        valid_types = {
-            FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY,
-            FlextLdifConstants.LdapServers.OPENLDAP,
-            FlextLdifConstants.LdapServers.APACHE_DIRECTORY,
-            FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY,
-            FlextLdifConstants.LdapServers.IBM_TIVOLI,
-            FlextLdifConstants.LdapServers.GENERIC,
-        }
-        if v not in valid_types:
-            msg = f"Invalid server_type: {v}. Must be one of: {', '.join(valid_types)}"
+        if v not in FlextLdifConstants.ValidationRules.VALID_SERVER_TYPES_RULE:
+            msg = f"Invalid server_type: {v}. Must be one of: {', '.join(FlextLdifConstants.ValidationRules.VALID_SERVER_TYPES_RULE)}"
             raise ValueError(msg)
         return v
 
@@ -280,13 +272,8 @@ class FlextLdifConfig(FlextConfig):
     @classmethod
     def validate_analytics_detail_level(cls, v: str) -> str:
         """Validate analytics detail level."""
-        valid_levels = {
-            FlextLdifConstants.ConfigDefaults.ANALYTICS_DETAIL_LEVEL_LOW,
-            FlextLdifConstants.DictKeys.MEDIUM,
-            FlextLdifConstants.DictKeys.HIGH,
-        }
-        if v not in valid_levels:
-            msg = f"analytics_detail_level must be one of: {', '.join(valid_levels)}"
+        if v not in FlextLdifConstants.ValidationRules.VALID_ANALYTICS_LEVELS_RULE:
+            msg = f"analytics_detail_level must be one of: {', '.join(FlextLdifConstants.ValidationRules.VALID_ANALYTICS_LEVELS_RULE)}"
             raise ValueError(msg)
         return v
 
@@ -294,13 +281,8 @@ class FlextLdifConfig(FlextConfig):
     @classmethod
     def validate_error_recovery_mode(cls, v: str) -> str:
         """Validate error recovery mode."""
-        valid_modes = {
-            FlextLdifConstants.ConfigDefaults.ERROR_RECOVERY_MODE_CONTINUE,
-            FlextLdifConstants.DictKeys.STOP,
-            FlextLdifConstants.DictKeys.SKIP,
-        }
-        if v not in valid_modes:
-            msg = f"error_recovery_mode must be one of: {', '.join(valid_modes)}"
+        if v not in FlextLdifConstants.ValidationRules.VALID_ERROR_MODES_RULE:
+            msg = f"error_recovery_mode must be one of: {', '.join(FlextLdifConstants.ValidationRules.VALID_ERROR_MODES_RULE)}"
             raise ValueError(msg)
         return v
 
@@ -309,36 +291,54 @@ class FlextLdifConfig(FlextConfig):
         """Validate LDIF configuration consistency."""
         # Validate performance configuration consistency
         if self.enable_performance_optimizations:
-            if self.max_workers < FlextLdifConstants.PERFORMANCE_MIN_WORKERS:
+            if (
+                self.max_workers
+                < FlextLdifConstants.ValidationRules.MIN_WORKERS_PERFORMANCE_RULE
+            ):
                 msg = (
                     f"Performance mode requires at least "
-                    f"{FlextLdifConstants.PERFORMANCE_MIN_WORKERS} workers"
+                    f"{FlextLdifConstants.ValidationRules.MIN_WORKERS_PERFORMANCE_RULE} workers"
                 )
                 raise ValueError(msg)
 
-            if self.ldif_chunk_size < FlextLdifConstants.PERFORMANCE_MIN_CHUNK_SIZE:
+            if (
+                self.ldif_chunk_size
+                < FlextLdifConstants.ValidationRules.MIN_CHUNK_SIZE_PERFORMANCE_RULE
+            ):
                 msg = (
                     f"Performance mode requires chunk size >= "
-                    f"{FlextLdifConstants.PERFORMANCE_MIN_CHUNK_SIZE}"
+                    f"{FlextLdifConstants.ValidationRules.MIN_CHUNK_SIZE_PERFORMANCE_RULE}"
                 )
                 raise ValueError(msg)
 
         # Validate debug mode consistency
-        if self.debug_mode and self.max_workers > FlextLdifConstants.DEBUG_MAX_WORKERS:
+        if (
+            self.debug_mode
+            and self.max_workers
+            > FlextLdifConstants.ValidationRules.MAX_WORKERS_DEBUG_RULE
+        ):
             msg = (
                 f"Debug mode should use <= "
-                f"{FlextLdifConstants.DEBUG_MAX_WORKERS} workers "
+                f"{FlextLdifConstants.ValidationRules.MAX_WORKERS_DEBUG_RULE} workers "
                 f"for better debugging"
             )
             raise ValueError(msg)
 
         # Validate analytics configuration
-        if self.ldif_enable_analytics and self.ldif_analytics_cache_size <= 0:
+        if (
+            self.ldif_enable_analytics
+            and self.ldif_analytics_cache_size
+            <= FlextLdifConstants.ValidationRules.MIN_ANALYTICS_CACHE_RULE - 1
+        ):
             msg = "Analytics cache size must be positive when analytics is enabled"
             raise ValueError(msg)
 
         # Validate parallel processing threshold
-        if self.enable_parallel_processing and self.parallel_threshold <= 0:
+        if (
+            self.enable_parallel_processing
+            and self.parallel_threshold
+            < FlextLdifConstants.ValidationRules.MIN_PARALLEL_THRESHOLD_RULE
+        ):
             msg = (
                 "Parallel threshold must be positive when parallel processing "
                 "is enabled"
@@ -383,15 +383,20 @@ class FlextLdifConfig(FlextConfig):
         if entry_count < self.parallel_threshold:
             return 1
         if entry_count < FlextLdifConstants.MEDIUM_ENTRY_COUNT_THRESHOLD:
-            return min(FlextLdifConstants.MIN_WORKERS_FOR_PARALLEL, self.max_workers)
+            return min(
+                FlextLdifConstants.LdifProcessing.MIN_WORKERS_FOR_PARALLEL,
+                self.max_workers,
+            )
         return self.max_workers
 
     def is_performance_optimized(self) -> bool:
         """Check if configuration is optimized for performance."""
         return (
             self.enable_performance_optimizations
-            and self.max_workers >= FlextLdifConstants.PERFORMANCE_MIN_WORKERS
-            and self.ldif_chunk_size >= FlextLdifConstants.PERFORMANCE_MIN_CHUNK_SIZE
+            and self.max_workers
+            >= FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_WORKERS
+            and self.ldif_chunk_size
+            >= FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_CHUNK_SIZE
             and self.memory_limit_mb
             >= FlextLdifConstants.PERFORMANCE_MEMORY_MB_THRESHOLD
         )

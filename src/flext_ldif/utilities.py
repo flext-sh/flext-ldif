@@ -16,6 +16,9 @@ from typing import Final, cast
 
 from flext_core import FlextProcessors, FlextResult, FlextUtilities
 
+# MANDATORY ldap3 imports - flext-ldif OWNS ldap3 wrapping
+from ldap3.utils.dn import parse_dn, safe_dn  # type: ignore[import-untyped]
+
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.typings import FlextLdifTypes
 
@@ -102,13 +105,16 @@ class FlextLdifUtilities(FlextUtilities):
 
         This is the SINGLE SOURCE OF TRUTH for all DN operations in flext-ldif.
         All DN parsing, validation, and normalization should use these methods.
+
+        Uses ldap3.utils.dn for RFC 4514 compliant DN parsing (zero duplication).
         """
 
         @staticmethod
         def parse_dn_components(dn: str) -> FlextResult[FlextLdifTypes.StringList]:
-            r"""Parse DN into components - SINGLE SOURCE OF TRUTH for DN splitting.
+            r"""Parse DN into components using ldap3.utils.dn.
 
             Handles escaped commas (\,) properly according to RFC 4514.
+            Uses ldap3 library to avoid reimplementing DN parsing.
 
             Args:
                 dn: Distinguished Name string
@@ -121,34 +127,20 @@ class FlextLdifUtilities(FlextUtilities):
                 return FlextResult[FlextLdifTypes.StringList].fail("DN cannot be empty")
 
             try:
-                # Split by comma but respect escaped commas (\\,)
-                # RFC 4514: Commas can be escaped with backslash
-                components: FlextLdifTypes.StringList = []
-                current_component = ""
-                i = 0
-                while i < len(dn):
-                    if dn[i] == "\\" and i + 1 < len(dn):
-                        # Escaped character - include backslash and next char
-                        current_component += dn[i : i + 2]
-                        i += 2
-                    elif dn[i] == ",":
-                        # Unescaped comma - component boundary
-                        if current_component.strip():
-                            components.append(current_component.strip())
-                        current_component = ""
-                        i += 1
-                    else:
-                        current_component += dn[i]
-                        i += 1
+                # Use ldap3.utils.dn.parse_dn for RFC 4514 compliant parsing
+                # parse_dn returns list of (attr, value, separator) tuples
+                parsed = parse_dn(dn)
 
-                # Add last component
-                if current_component.strip():
-                    components.append(current_component.strip())
-
-                if not components:
+                if not parsed:
                     return FlextResult[FlextLdifTypes.StringList].fail(
                         "DN has no valid components"
                     )
+
+                # Convert to "attr=value" format for compatibility
+                components: FlextLdifTypes.StringList = [
+                    f"{attr}={value}" for attr, value, _ in parsed
+                ]
+
                 return FlextResult[FlextLdifTypes.StringList].ok(components)
             except Exception as e:
                 return FlextResult[FlextLdifTypes.StringList].fail(
@@ -214,7 +206,9 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def normalize_dn(dn: str) -> FlextResult[str]:
-            """Normalize DN to canonical form - SINGLE SOURCE OF TRUTH.
+            """Normalize DN to canonical form using ldap3.utils.dn.
+
+            Uses ldap3.safe_dn for RFC 4514 compliant normalization.
 
             Args:
                 dn: Distinguished Name string to normalize
@@ -228,25 +222,36 @@ class FlextLdifUtilities(FlextUtilities):
             if validation_result.is_failure:
                 return FlextResult[str].fail(validation_result.error or "Invalid DN")
 
-            # Parse components
-            components_result = FlextLdifUtilities.DnUtilities.parse_dn_components(dn)
-            if components_result.is_failure:
-                return FlextResult[str].fail(
-                    components_result.error or "Failed to parse DN"
+            try:
+                # Use ldap3.utils.dn.safe_dn for RFC 4514 compliant normalization
+                # safe_dn normalizes the DN to canonical form (returns str)
+                normalized_dn: str = str(
+                    safe_dn(dn)
+                )  # Type assertion for untyped ldap3
+
+                # Additional normalization: lowercase attributes, normalize spaces
+                components_result = FlextLdifUtilities.DnUtilities.parse_dn_components(
+                    normalized_dn
                 )
+                if components_result.is_failure:
+                    return FlextResult[str].fail(
+                        components_result.error or "Failed to parse normalized DN"
+                    )
 
-            components = components_result.unwrap()
+                components = components_result.unwrap()
+                normalized_components: FlextLdifTypes.StringList = []
+                for component in components:
+                    attr, value = component.split("=", 1)
+                    # Normalize: lowercase attribute, trim and normalize spaces in value
+                    attr_normalized = attr.strip().lower()
+                    value_normalized = " ".join(value.strip().split())
+                    normalized_components.append(
+                        f"{attr_normalized}={value_normalized}"
+                    )
 
-            # Normalize each component
-            normalized_components: FlextLdifTypes.StringList = []
-            for component in components:
-                attr, value = component.split("=", 1)
-                # Normalize: lowercase attribute, trim spaces from value
-                attr_normalized = attr.strip().lower()
-                value_normalized = " ".join(value.strip().split())
-                normalized_components.append(f"{attr_normalized}={value_normalized}")
-
-            return FlextResult[str].ok(",".join(normalized_components))
+                return FlextResult[str].ok(",".join(normalized_components))
+            except Exception as e:
+                return FlextResult[str].fail(f"Failed to normalize DN: {e}")
 
         @staticmethod
         def get_dn_depth(dn: str) -> FlextResult[int]:
@@ -487,7 +492,13 @@ class FlextLdifUtilities(FlextUtilities):
 
         @staticmethod
         def detect_encoding(content: bytes) -> FlextResult[str]:
-            """Detect character encoding of content.
+            """Detect character encoding of content using comprehensive analysis.
+
+            Uses multiple detection strategies:
+            1. BOM (Byte Order Mark) detection
+            2. Charset declaration in content
+            3. Statistical analysis of byte patterns
+            4. Fallback to common encodings
 
             Args:
                 content: Content bytes to analyze
@@ -496,23 +507,220 @@ class FlextLdifUtilities(FlextUtilities):
                 FlextResult containing detected encoding
 
             """
+
+            # Nested helper function: BOM detection
+            def _detect_bom_encoding(data: bytes) -> str | None:
+                """Detect encoding from Byte Order Mark (BOM)."""
+                if len(data) < FlextLdifConstants.Encoding.MIN_BOM_LENGTH:
+                    return None
+                # UTF-32 BOMs (BE/LE)
+                if len(data) >= FlextLdifConstants.Encoding.MIN_UTF32_LENGTH:
+                    if data.startswith(b"\x00\x00\xfe\xff"):
+                        return "utf-32-be"
+                    if data.startswith(b"\xff\xfe\x00\x00"):
+                        return "utf-32-le"
+                # UTF-16 BOMs (BE/LE)
+                if data.startswith(b"\xfe\xff"):
+                    return "utf-16-be"
+                if data.startswith(b"\xff\xfe"):
+                    return "utf-16-le"
+                # UTF-8 BOM
+                if data.startswith(b"\xef\xbb\xbf"):
+                    return "utf-8"
+                return None
+
+            # Nested helper function: Charset declaration detection
+            def _detect_charset_declaration(data: bytes) -> str | None:
+                """Detect encoding from charset declaration in content."""
+                try:
+                    # Try to decode as ASCII first to find declarations
+                    text_sample = data[:1024].decode("ascii", errors="ignore")
+                    # XML declaration
+                    xml_match = re.search(
+                        FlextLdifConstants.LdifPatterns.XML_ENCODING,
+                        text_sample,
+                        re.IGNORECASE,
+                    )
+                    if xml_match:
+                        return xml_match.group(1).lower()
+                    # HTML meta charset
+                    html_match = re.search(
+                        FlextLdifConstants.LdifPatterns.HTML_CHARSET,
+                        text_sample,
+                        re.IGNORECASE,
+                    )
+                    if html_match:
+                        return html_match.group(1).lower()
+                    # Python coding declaration
+                    coding_match = re.search(
+                        FlextLdifConstants.LdifPatterns.PYTHON_CODING,
+                        text_sample,
+                        re.IGNORECASE,
+                    )
+                    if coding_match:
+                        return coding_match.group(1).lower()
+                    # LDIF-specific patterns
+                    ldif_match = re.search(
+                        FlextLdifConstants.LdifPatterns.LDIF_ENCODING,
+                        text_sample,
+                        re.IGNORECASE,
+                    )
+                    if ldif_match:
+                        return ldif_match.group(1).lower()
+                except Exception:
+                    pass
+                return None
+
+            # Nested helper function: Statistical analysis
+            def _detect_encoding_statistically(data: bytes) -> str | None:
+                """Detect encoding using statistical analysis of byte patterns."""
+                if len(data) < FlextLdifConstants.Encoding.MIN_STATISTICAL_LENGTH:
+                    return None
+                # Count null bytes (indicates UTF-16/32)
+                null_count = data.count(0)
+                null_ratio = null_count / len(data)
+                # UTF-32 typically has many null bytes
+                if null_ratio > FlextLdifConstants.Encoding.UTF32_NULL_RATIO_THRESHOLD:
+                    if len(data) >= FlextLdifConstants.Encoding.MIN_UTF32_LENGTH:
+                        if data[0] == 0 and data[1] == 0:
+                            return (
+                                "utf-32-be" if data[2:4] != b"\xfe\xff" else "utf-32-le"
+                            )
+                        if data[1] == 0 and data[3] == 0:
+                            return (
+                                "utf-16-be" if data[0:2] != b"\xfe\xff" else "utf-16-le"
+                            )
+                    return "utf-32"
+                # UTF-16 has null bytes in even positions
+                if null_ratio > FlextLdifConstants.Encoding.UTF16_NULL_RATIO_THRESHOLD:
+                    return "utf-16"
+                # Check for Latin-1 vs UTF-8 patterns
+                utf8_sequences = 0
+                i = 0
+                while i < len(data) - 1:
+                    byte = data[i]
+                    if (
+                        byte & FlextLdifConstants.Encoding.UTF8_HIGH_BIT_MASK
+                    ):  # High bit set
+                        if (
+                            byte & FlextLdifConstants.Encoding.UTF8_2BYTE_LEAD_MASK
+                            == FlextLdifConstants.Encoding.UTF8_2BYTE_LEAD_VALUE
+                            and i < len(data) - 1
+                        ):  # 2-byte sequence
+                            if (
+                                data[i + 1]
+                                & FlextLdifConstants.Encoding.UTF8_CONTINUATION_MASK
+                                == FlextLdifConstants.Encoding.UTF8_CONTINUATION_VALUE
+                            ):
+                                utf8_sequences += 1
+                                i += 2
+                                continue
+                        elif (
+                            byte & FlextLdifConstants.Encoding.UTF8_3BYTE_LEAD_MASK
+                            == FlextLdifConstants.Encoding.UTF8_3BYTE_LEAD_VALUE
+                            and i < len(data) - 2
+                            and (
+                                data[i + 1]
+                                & FlextLdifConstants.Encoding.UTF8_CONTINUATION_MASK
+                                == FlextLdifConstants.Encoding.UTF8_CONTINUATION_VALUE
+                                and data[i + 2]
+                                & FlextLdifConstants.Encoding.UTF8_CONTINUATION_MASK
+                                == FlextLdifConstants.Encoding.UTF8_CONTINUATION_VALUE
+                            )
+                        ):  # 3-byte sequence
+                            utf8_sequences += 1
+                            i += 3
+                            continue
+                        elif (
+                            byte & FlextLdifConstants.Encoding.UTF8_4BYTE_LEAD_MASK
+                            == FlextLdifConstants.Encoding.UTF8_4BYTE_LEAD_VALUE
+                            and i < len(data) - 3
+                            and (
+                                data[i + 1]
+                                & FlextLdifConstants.Encoding.UTF8_CONTINUATION_MASK
+                                == FlextLdifConstants.Encoding.UTF8_CONTINUATION_VALUE
+                                and data[i + 2]
+                                & FlextLdifConstants.Encoding.UTF8_CONTINUATION_MASK
+                                == FlextLdifConstants.Encoding.UTF8_CONTINUATION_VALUE
+                                and data[i + 3]
+                                & FlextLdifConstants.Encoding.UTF8_CONTINUATION_MASK
+                                == FlextLdifConstants.Encoding.UTF8_CONTINUATION_VALUE
+                            )
+                        ):  # 4-byte sequence
+                            utf8_sequences += 1
+                            i += 4
+                            continue
+                    i += 1
+                # If we found UTF-8 sequences, likely UTF-8
+                if utf8_sequences > 0:
+                    return "utf-8"
+                # Check for Windows-1252 specific characters
+                cp1252_chars = sum(
+                    1
+                    for byte in data
+                    if FlextLdifConstants.Encoding.CP1252_RANGE_START
+                    <= byte
+                    <= FlextLdifConstants.Encoding.CP1252_RANGE_END
+                )
+                if (
+                    cp1252_chars
+                    > len(data) * FlextLdifConstants.Encoding.CP1252_RATIO_THRESHOLD
+                ):
+                    return "cp1252"
+                # Default to Latin-1 for high bytes
+                high_bytes = sum(
+                    1 for byte in data if byte > FlextLdifConstants.Encoding.ASCII_MAX
+                )
+                if (
+                    high_bytes
+                    > len(data) * FlextLdifConstants.Encoding.HIGH_BYTES_RATIO_THRESHOLD
+                ):
+                    return "iso-8859-1"
+                return None
+
             try:
-                # Simple detection - try UTF-8 first
-                try:
-                    content.decode("utf-8")
-                    return FlextResult[str].ok("utf-8")
-                except UnicodeDecodeError:
-                    pass
+                if not content:
+                    return FlextResult[str].ok("utf-8")  # Default for empty content
 
-                # Try Latin-1
-                try:
-                    content.decode("latin-1")
-                    return FlextResult[str].ok("latin-1")
-                except UnicodeDecodeError:
-                    pass
+                # Strategy 1: Check for BOM (Byte Order Mark)
+                bom_encoding = _detect_bom_encoding(content)
+                if bom_encoding:
+                    return FlextResult[str].ok(bom_encoding)
 
-                # Default to UTF-8
+                # Strategy 2: Look for charset declarations in content
+                charset_encoding = _detect_charset_declaration(content)
+                if charset_encoding:
+                    return FlextResult[str].ok(charset_encoding)
+
+                # Strategy 3: Statistical analysis of byte patterns
+                statistical_encoding = _detect_encoding_statistically(content)
+                if statistical_encoding:
+                    return FlextResult[str].ok(statistical_encoding)
+
+                # Strategy 4: Try common encodings in order of preference
+                common_encodings = [
+                    "utf-8",
+                    "utf-16",
+                    "utf-32",
+                    "ascii",
+                    "iso-8859-1",
+                    "latin-1",
+                    "cp1252",
+                    "iso-8859-15",
+                    "mac_roman",
+                    "cp437",
+                ]
+
+                for encoding in common_encodings:
+                    try:
+                        content.decode(encoding)
+                        return FlextResult[str].ok(encoding)
+                    except (UnicodeDecodeError, LookupError):
+                        continue
+
+                # Final fallback - assume UTF-8
                 return FlextResult[str].ok("utf-8")
+
             except Exception as e:
                 return FlextResult[str].fail(f"Failed to detect encoding: {e}")
 
@@ -541,9 +749,9 @@ class FlextLdifUtilities(FlextUtilities):
                     )
 
                 stat = file_path.stat()
-                # Read first 1024 bytes to detect encoding
+                # Read first N bytes to detect encoding
                 with Path(file_path).open("rb") as f:
-                    sample = f.read(1024)
+                    sample = f.read(FlextLdifConstants.Encoding.ENCODING_SAMPLE_SIZE)
                 encoding_result = FlextLdifUtilities.EncodingUtilities.detect_encoding(
                     sample
                 )
@@ -553,7 +761,8 @@ class FlextLdifUtilities(FlextUtilities):
                     else "unknown"
                 )
 
-                info = {
+                # Explicitly type as dict[str, object] for FlextResult
+                info: dict[str, object] = {
                     "size": stat.st_size,
                     "modified": stat.st_mtime,
                     "encoding": encoding,

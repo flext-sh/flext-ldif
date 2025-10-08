@@ -21,6 +21,7 @@ from typing import ClassVar, cast
 
 from flext_core import FlextResult, FlextService
 
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.typings import FlextLdifTypes
 
@@ -47,7 +48,7 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
         parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
         result = parser.execute()
         if result.is_success:
-            attrs = result.value["attributes"]
+            attrs = result.value[FlextLdifConstants.DictKeys.ATTRIBUTES]
             classes = result.value["objectclasses"]
 
     """
@@ -162,7 +163,10 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
                     "LDAP schema parsed successfully",
                     extra={
                         "total_attributes": len(
-                            cast("dict[str, object]", data.get("attributes", {}))
+                            cast(
+                                "dict[str, object]",
+                                data.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {}),
+                            )
                         ),
                         "total_objectclasses": len(
                             cast("dict[str, object]", data.get("objectclasses", {}))
@@ -239,7 +243,7 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
                     )
 
             return FlextResult[dict[str, object]].ok({
-                "attributes": attributes,
+                FlextLdifConstants.DictKeys.ATTRIBUTES: attributes,
                 "objectclasses": objectclasses,
                 "source_dn": source_dn,
                 "stats": {

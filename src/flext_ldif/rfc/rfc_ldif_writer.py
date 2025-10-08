@@ -396,7 +396,10 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
 
         """
         try:
-            attributes = cast("dict[str, object]", schema.get("attributes", {}))
+            attributes = cast(
+                "dict[str, object]",
+                schema.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {}),
+            )
             objectclasses = cast("dict[str, object]", schema.get("objectclasses", {}))
             source_dn = cast("str", schema.get("source_dn", "cn=schema"))
 
@@ -475,9 +478,11 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                         "dict[str, object]", dict(entry.attributes.attributes.items())
                     )
                 else:
-                    dn = cast("str", entry.get("dn", ""))
+                    dn = cast("str", entry.get(FlextLdifConstants.DictKeys.DN, ""))
                     entry_attrs: dict[str, object] = {
-                        k: v for k, v in entry.items() if k != "dn"
+                        k: v
+                        for k, v in entry.items()
+                        if k != FlextLdifConstants.DictKeys.DN
                     }
                     attributes_normalized = entry_attrs
 
@@ -497,10 +502,16 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                             if process_result.is_success:
                                 processed = process_result.unwrap()
                                 if isinstance(processed, dict):
-                                    dn = str(processed.get("dn", dn))
+                                    dn = str(
+                                        processed.get(
+                                            FlextLdifConstants.DictKeys.DN, dn
+                                        )
+                                    )
                                     # Extract attributes (everything except dn)
                                     attributes_normalized = {
-                                        k: v for k, v in processed.items() if k != "dn"
+                                        k: v
+                                        for k, v in processed.items()
+                                        if k != FlextLdifConstants.DictKeys.DN
                                     }
 
                 # Write DN
@@ -552,7 +563,7 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
             lines_written = 0
 
             for acl_entry in acls:
-                dn = acl_entry.get("dn", "")
+                dn = acl_entry.get(FlextLdifConstants.DictKeys.DN, "")
                 if not dn:
                     continue
 

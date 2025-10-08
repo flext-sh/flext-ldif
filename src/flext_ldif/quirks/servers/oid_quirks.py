@@ -442,7 +442,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             )
 
             # Check for Oracle OID object classes
-            object_classes = attributes.get("objectClass", [])
+            object_classes = attributes.get(FlextLdifConstants.DictKeys.OBJECTCLASS, [])
             if not isinstance(object_classes, list):
                 object_classes = [object_classes]
 
@@ -475,7 +475,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 # Oracle OID entries are RFC-compliant
                 # Add OID-specific metadata
                 processed_entry: FlextLdifTypes.Dict = {
-                    "dn": entry_dn,
+                    FlextLdifConstants.DictKeys.DN: entry_dn,
                     FlextLdifConstants.DictKeys.SERVER_TYPE: FlextLdifConstants.ServerTypes.OID,
                     FlextLdifConstants.DictKeys.HAS_OID_ACLS: any(
                         attr in attributes
@@ -495,12 +495,12 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 )
 
         def convert_entry_to_rfc(
-            self, _entry_data: FlextLdifTypes.Dict
+            self, entry_data: FlextLdifTypes.Dict
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert Oracle OID entry to RFC-compliant format.
 
             Args:
-                _entry_data: Oracle OID entry data
+                entry_data: Oracle OID entry data
 
             Returns:
                 FlextResult with RFC-compliant entry data
@@ -509,7 +509,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             try:
                 # Oracle OID entries are already RFC-compliant
                 # Remove Oracle-specific operational attributes if needed
-                rfc_data = dict(_entry_data)
+                rfc_data = dict(entry_data)
 
                 # Optional: Remove OID-specific operational attributes
                 # that don't exist in standard LDAP

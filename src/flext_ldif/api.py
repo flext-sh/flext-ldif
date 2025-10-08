@@ -28,6 +28,7 @@ from flext_ldif.acl.service import FlextLdifAclService
 from flext_ldif.client import FlextLdifClient
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.containers import FlextLdifContainer
 from flext_ldif.entry.builder import FlextLdifEntryBuilder
 from flext_ldif.exceptions import FlextLdifExceptions
 from flext_ldif.models import FlextLdifModels
@@ -93,6 +94,17 @@ class FlextLdif(FlextService[dict[str, object]]):
 
     """
 
+    # Private attribute type declarations
+    _container: FlextContainer
+    _bus: FlextBus
+    _dispatcher: FlextDispatcher
+    _registry: FlextRegistry
+    _processors: FlextProcessors
+    _logger: FlextLogger
+    _client: FlextLdifClient
+    _entry_builder: FlextLdifEntryBuilder
+    _schema_builder: FlextLdifSchemaBuilder
+
     # Direct class access for builders and services (no wrappers)
     EntryBuilder: ClassVar[type[FlextLdifEntryBuilder]] = FlextLdifEntryBuilder
     SchemaBuilder: ClassVar[type[FlextLdifSchemaBuilder]] = FlextLdifSchemaBuilder
@@ -154,12 +166,17 @@ class FlextLdif(FlextService[dict[str, object]]):
         self._processors = FlextProcessors()
         self._logger = FlextLogger(__name__)
 
-        # Initialize LDIF-specific components
-        self._client = FlextLdifClient(config)
+        # Initialize flext-ldif dependency injection container
+        self._ldif_container = FlextLdifContainer.get_global_container()
 
-        # Initialize frequently-used services (entry builder used in many methods)
-        self._entry_builder = FlextLdifEntryBuilder()
-        self._schema_builder = FlextLdifSchemaBuilder()
+        # Override config provider if custom config provided
+        if config is not None:
+            self._ldif_container.config.override(config)
+
+        # Initialize LDIF-specific components via dependency injection
+        self._client = self._ldif_container.client()
+        self._entry_builder = self._ldif_container.entry_builder()
+        self._schema_builder = self._ldif_container.schema_builder()
 
         # Register LDIF components with FlextRegistry
         self._register_components()
@@ -272,9 +289,7 @@ class FlextLdif(FlextService[dict[str, object]]):
     def parse(
         self, source: str | Path, server_type: str = "rfc"
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        r"""Parse LDIF from file or content string with FlextContext tracking.
-
-        Uses FlextContext for correlation tracking and FlextExceptions for structured error handling.
+        r"""Parse LDIF from file or content string.
 
         Args:
             source: Either a file path (Path object) or LDIF content string
@@ -284,11 +299,8 @@ class FlextLdif(FlextService[dict[str, object]]):
             FlextResult with list of parsed Entry models
 
         Example:
-            # Parse from string with context tracking
-            with ldif.context.set_correlation_id("parse-123"):
-                result = ldif.parse("dn: cn=test\ncn: test\n")
-                if result.is_success:
-                    entries = result.unwrap()
+            # Parse from string
+            result = ldif.parse("dn: cn=test\ncn: test\n")
 
             # Parse from file
             result = ldif.parse(Path("data.ldif"))
@@ -297,90 +309,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             result = ldif.parse(Path("oid.ldif"), server_type=FlextLdifConstants.ServerTypes.OID)
 
         """
-        # Set correlation ID for this operation
-        correlation_id = (
-            getattr(self.context, "correlation_id", None) or f"parse-{id(source)}"
-        )
-
-        try:
-            # Log operation start
-            self._logger.info(
-                "Starting LDIF parsing operation",
-                extra={
-                    "correlation_id": correlation_id,
-                    "operation": "parse",
-                    "server_type": server_type,
-                    "source_type": "file" if isinstance(source, Path) else "content",
-                },
-            )
-
-            # Execute parsing with client
-            result = self._client.parse_ldif(source, server_type)
-
-            if result.is_success:
-                entries = result.unwrap()
-                # Publish domain event for successful parsing
-                self._bus.publish(
-                    "ldif.parsed",
-                    {
-                        "correlation_id": correlation_id,
-                        "entry_count": len(entries),
-                        "server_type": server_type,
-                        "source_info": str(source)[:100]
-                        if isinstance(source, str)
-                        else str(source),
-                    },
-                )
-
-                self._logger.info(
-                    "LDIF parsing completed successfully",
-                    extra={
-                        "correlation_id": correlation_id,
-                        "entry_count": len(entries),
-                        "server_type": server_type,
-                    },
-                )
-            else:
-                # Log parsing failure
-                self._logger.error(
-                    f"LDIF parsing failed: {result.error}",
-                    extra={
-                        "correlation_id": correlation_id,
-                        "error_code": getattr(result, "error_code", "UNKNOWN_ERROR"),
-                        "server_type": server_type,
-                    },
-                )
-
-            return result
-
-        except Exception as e:
-            # Use FlextExceptions for structured error handling
-            error = FlextLdifExceptions.LdifParseError(
-                f"Unexpected error during LDIF parsing: {e}",
-                correlation_id=correlation_id,
-                context={
-                    "operation": "parse",
-                    "server_type": server_type,
-                    "source_info": str(source)[:100]
-                    if isinstance(source, str)
-                    else str(source),
-                },
-            )
-
-            self._logger.exception(
-                str(error),
-                extra={
-                    "correlation_id": error.correlation_id,
-                    "error_code": error.error_code,
-                    "metadata": error.metadata,
-                },
-            )
-
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
-                str(error),
-                error_code=error.error_code,
-                correlation_id=error.correlation_id,
-            )
+        return self._client.parse_ldif(source, server_type)
 
     def write(
         self,
@@ -787,7 +716,7 @@ class FlextLdif(FlextService[dict[str, object]]):
     def validate_with_schema(
         self,
         entries: list[FlextLdifModels.Entry],
-        schema: dict[str, object],  # noqa: ARG002
+        schema: dict[str, object],
     ) -> FlextResult[FlextLdifModels.LdifValidationResult]:
         """Validate entries against schema definition.
 
@@ -809,7 +738,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             Schema-based validation will be implemented in future version.
 
         """
-        validator = FlextLdifSchemaValidator()
+        validator = self._ldif_container.schema_validator()
         return validator.validate_entries(entries)
 
     # =========================================================================
@@ -834,7 +763,7 @@ class FlextLdif(FlextService[dict[str, object]]):
                 acls = result.unwrap()
 
         """
-        acl_service = FlextLdifAclService()
+        acl_service = self._ldif_container.acl_service()
         return acl_service.extract_acls_from_entry(entry)
 
     def evaluate_acl_rules(
