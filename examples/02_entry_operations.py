@@ -170,7 +170,7 @@ def convert_formats_pipeline() -> None:
                 "sn": ["Dict"],
             }
         ]
-        entries_from_dicts = api.dicts_to_entries(dict_data)  # type: ignore[arg-type]
+        entries_from_dicts = api.dicts_to_entries(dict_data)
         print(f"Converted {len(entries_from_dicts)} dicts to entries")
 
 

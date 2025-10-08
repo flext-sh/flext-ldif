@@ -79,7 +79,7 @@ class FlextLdifConstants(FlextConstants):
     PERFORMANCE_MIN_CHUNK_SIZE: Final[int] = 1000  # Minimum chunk size for performance
     MIN_ANALYTICS_CACHE_SIZE: Final[int] = 100
     MAX_ANALYTICS_CACHE_SIZE: Final[int] = 10000
-    MIN_PRODUCTION_ENTRIES: Final[int] = 1000
+    MIN_ENTRIES: Final[int] = 1000
     MIN_MEMORY_MB: Final[int] = 64  # Minimum memory limit in MB
     MAX_MEMORY_MB: Final[int] = 8192  # Maximum memory limit in MB
     ENCODING_CONFIDENCE_THRESHOLD: Final[float] = (

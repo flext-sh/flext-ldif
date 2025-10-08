@@ -228,7 +228,7 @@ class FlextLdif(FlextService[dict[str, object]]):
                     "metadata": error.metadata,
                 },
             )
-            raise error
+            raise error from e
 
         # Log initialization with structured context
         self._logger.info(
@@ -787,7 +787,7 @@ class FlextLdif(FlextService[dict[str, object]]):
     def validate_with_schema(
         self,
         entries: list[FlextLdifModels.Entry],
-        schema: dict[str, object],
+        schema: dict[str, object],  # noqa: ARG002
     ) -> FlextResult[FlextLdifModels.LdifValidationResult]:
         """Validate entries against schema definition.
 

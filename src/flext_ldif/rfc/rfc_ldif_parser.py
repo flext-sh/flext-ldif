@@ -98,7 +98,7 @@ class FlextLdifRfcLdifParser(FlextService[dict[str, object]]):
                 parse_changes = self._params.get("parse_changes", False)
 
                 if self.logger is not None:
-                    self.logger.info(  # type: ignore[attr-defined]
+                    self.logger.info(
                         "Parsing LDIF content string (RFC 2849)",
                         extra={
                             "content_length": (
@@ -131,7 +131,7 @@ class FlextLdifRfcLdifParser(FlextService[dict[str, object]]):
                 }
 
                 if self.logger is not None:
-                    self.logger.info(  # type: ignore[attr-defined]
+                    self.logger.info(
                         "LDIF content parsed successfully",
                         extra={
                             "total_entries": len(entries),
@@ -157,7 +157,7 @@ class FlextLdifRfcLdifParser(FlextService[dict[str, object]]):
             encoding = self._params.get("encoding", "utf-8")
 
             if self.logger is not None:
-                self.logger.info(  # type: ignore
+                self.logger.info(
                     f"Parsing LDIF file (RFC 2849): {file_path}",
                     extra={
                         "file_path": str(file_path),
@@ -179,7 +179,7 @@ class FlextLdifRfcLdifParser(FlextService[dict[str, object]]):
             file_data = file_parse_result.value
 
             if self.logger is not None:
-                self.logger.info(  # type: ignore
+                self.logger.info(
                     "LDIF parsed successfully",
                     extra={
                         "total_entries": len(
@@ -199,7 +199,7 @@ class FlextLdifRfcLdifParser(FlextService[dict[str, object]]):
         except Exception as e:
             error_msg = f"Failed to execute RFC LDIF parser: {e}"
             if self.logger is not None:
-                self.logger.exception(error_msg)  # type: ignore[attr-defined]
+                self.logger.exception(error_msg)
             return FlextResult[dict[str, object]].fail(error_msg)
 
     def parse_content(

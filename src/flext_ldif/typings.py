@@ -36,6 +36,8 @@ class FlextLdifTypes(FlextTypes):
     # BASIC LDIF TYPES - Explicit definitions for type checker compatibility
     # =========================================================================
 
+    type BoolDict = dict[str, bool]
+
     # =========================================================================
     # LDIF ENTRY TYPES - Complex LDIF entry handling types
     # =========================================================================
