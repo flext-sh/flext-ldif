@@ -88,17 +88,17 @@ class FlextLdifConfig(FlextConfig):
     )
 
     max_workers: int = Field(
-        default=FlextLdifConstants.Processing.PERFORMANCE_MIN_WORKERS,
+        default=FlextLdifConstants.PERFORMANCE_MIN_WORKERS,
         ge=1,
-        le=FlextLdifConstants.Processing.MAX_WORKERS_LIMIT,
+        le=FlextLdifConstants.MAX_WORKERS_LIMIT,
         description="Maximum number of worker threads",
     )
 
     # Memory and Performance Configuration - Fix default value
     memory_limit_mb: int = Field(
-        default=FlextLdifConstants.Processing.MIN_MEMORY_MB,
-        ge=FlextLdifConstants.Processing.MIN_MEMORY_MB,
-        le=FlextLdifConstants.Processing.MAX_MEMORY_MB,
+        default=FlextLdifConstants.MIN_MEMORY_MB,
+        ge=FlextLdifConstants.MIN_MEMORY_MB,
+        le=FlextLdifConstants.MAX_MEMORY_MB,
         description="Memory limit in MB",
     )
 
@@ -113,7 +113,7 @@ class FlextLdifConfig(FlextConfig):
     )
 
     parallel_threshold: int = Field(
-        default=FlextLdifConstants.Processing.SMALL_ENTRY_COUNT_THRESHOLD,
+        default=FlextLdifConstants.SMALL_ENTRY_COUNT_THRESHOLD,
         ge=1,
         description="Threshold for enabling parallel processing",
     )
@@ -126,8 +126,8 @@ class FlextLdifConfig(FlextConfig):
 
     ldif_analytics_cache_size: int = Field(
         default=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
-        ge=FlextLdifConstants.Processing.MIN_ANALYTICS_CACHE_SIZE,
-        le=FlextLdifConstants.Processing.MAX_ANALYTICS_CACHE_SIZE,
+        ge=FlextLdifConstants.MIN_ANALYTICS_CACHE_SIZE,
+        le=FlextLdifConstants.MAX_ANALYTICS_CACHE_SIZE,
         description="Cache size for LDIF analytics",
     )
 
@@ -148,9 +148,9 @@ class FlextLdifConfig(FlextConfig):
     )
 
     ldif_batch_size: int = Field(
-        default=FlextLdifConstants.Processing.DEFAULT_BATCH_SIZE,
+        default=FlextLdifConstants.DEFAULT_BATCH_SIZE,
         ge=1,
-        le=FlextLdifConstants.Processing.MAX_BATCH_SIZE,
+        le=FlextLdifConstants.MAX_BATCH_SIZE,
         description="Batch size for LDIF processing",
     )
 
@@ -199,7 +199,9 @@ class FlextLdifConfig(FlextConfig):
 
     # Server Configuration using FlextLdifConstants for defaults
     server_type: FlextLdifTypes.ServerType = Field(
-        default=FlextLdifConstants.ServerTypes.GENERIC,
+        default=cast(
+            "FlextLdifTypes.ServerType", FlextLdifConstants.ServerTypes.GENERIC
+        ),
         description="Target LDAP server type",
     )
 
@@ -238,10 +240,10 @@ class FlextLdifConfig(FlextConfig):
         if v < 1:
             msg = "max_workers must be at least 1"
             raise ValueError(msg)
-        if v > FlextLdifConstants.Processing.MAX_WORKERS_LIMIT:
+        if v > FlextLdifConstants.MAX_WORKERS_LIMIT:
             msg = (
                 f"max_workers cannot exceed "
-                f"{FlextLdifConstants.Processing.MAX_WORKERS_LIMIT}"
+                f"{FlextLdifConstants.MAX_WORKERS_LIMIT}"
             )
             raise ValueError(msg)
         return v
@@ -310,31 +312,31 @@ class FlextLdifConfig(FlextConfig):
         """Validate LDIF configuration consistency."""
         # Validate performance configuration consistency
         if self.enable_performance_optimizations:
-            if self.max_workers < FlextLdifConstants.Processing.PERFORMANCE_MIN_WORKERS:
+            if self.max_workers < FlextLdifConstants.PERFORMANCE_MIN_WORKERS:
                 msg = (
                     f"Performance mode requires at least "
-                    f"{FlextLdifConstants.Processing.PERFORMANCE_MIN_WORKERS} workers"
+                    f"{FlextLdifConstants.PERFORMANCE_MIN_WORKERS} workers"
                 )
                 raise ValueError(msg)
 
             if (
                 self.ldif_chunk_size
-                < FlextLdifConstants.Processing.PERFORMANCE_MIN_CHUNK_SIZE
+                < FlextLdifConstants.PERFORMANCE_MIN_CHUNK_SIZE
             ):
                 msg = (
                     f"Performance mode requires chunk size >= "
-                    f"{FlextLdifConstants.Processing.PERFORMANCE_MIN_CHUNK_SIZE}"
+                    f"{FlextLdifConstants.PERFORMANCE_MIN_CHUNK_SIZE}"
                 )
                 raise ValueError(msg)
 
         # Validate debug mode consistency
         if (
             self.debug_mode
-            and self.max_workers > FlextLdifConstants.Processing.DEBUG_MAX_WORKERS
+            and self.max_workers > FlextLdifConstants.DEBUG_MAX_WORKERS
         ):
             msg = (
                 f"Debug mode should use <= "
-                f"{FlextLdifConstants.Processing.DEBUG_MAX_WORKERS} workers "
+                f"{FlextLdifConstants.DEBUG_MAX_WORKERS} workers "
                 f"for better debugging"
             )
             raise ValueError(msg)
@@ -389,9 +391,9 @@ class FlextLdifConfig(FlextConfig):
 
         if entry_count < self.parallel_threshold:
             return 1
-        if entry_count < FlextLdifConstants.Processing.MEDIUM_ENTRY_COUNT_THRESHOLD:
+        if entry_count < FlextLdifConstants.MEDIUM_ENTRY_COUNT_THRESHOLD:
             return min(
-                FlextLdifConstants.Processing.MIN_WORKERS_FOR_PARALLEL, self.max_workers
+                FlextLdifConstants.MIN_WORKERS_FOR_PARALLEL, self.max_workers
             )
         return self.max_workers
 
@@ -400,11 +402,11 @@ class FlextLdifConfig(FlextConfig):
         return (
             self.enable_performance_optimizations
             and self.max_workers
-            >= FlextLdifConstants.Processing.PERFORMANCE_MIN_WORKERS
+            >= FlextLdifConstants.PERFORMANCE_MIN_WORKERS
             and self.ldif_chunk_size
-            >= FlextLdifConstants.Processing.PERFORMANCE_MIN_CHUNK_SIZE
+            >= FlextLdifConstants.PERFORMANCE_MIN_CHUNK_SIZE
             and self.memory_limit_mb
-            >= FlextLdifConstants.Processing.PERFORMANCE_MEMORY_MB_THRESHOLD
+            >= FlextLdifConstants.PERFORMANCE_MEMORY_MB_THRESHOLD
         )
 
     def is_development_optimized(self) -> bool:
@@ -412,7 +414,7 @@ class FlextLdifConfig(FlextConfig):
         return (
             self.debug_mode
             and self.verbose_logging
-            and self.max_workers <= FlextLdifConstants.Processing.DEBUG_MAX_WORKERS
+            and self.max_workers <= FlextLdifConstants.DEBUG_MAX_WORKERS
         )
 
 

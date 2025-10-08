@@ -10,11 +10,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any, cast
 
 from flext_core import FlextModels, FlextResult
-from pydantic import ConfigDict, Field, computed_field
+from pydantic import ConfigDict, Field, computed_field, field_validator
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.typings import FlextLdifTypes
@@ -62,10 +61,16 @@ class FlextLdifModels(FlextModels):
 
         value: str = Field(..., description="DN string value")
 
+        @field_validator("value", mode="before")
+        @classmethod
+        def normalize_dn(cls, v: str) -> str:
+            """Normalize DN value to lowercase."""
+            return v.lower().strip()
+
         @property
         def normalized_value(self) -> str:
             """Get normalized DN value."""
-            return self.value.lower().strip()
+            return self.value
 
         @property
         def components(self) -> list[str]:
@@ -173,6 +178,83 @@ class FlextLdifModels(FlextModels):
 
             """
             return self.attributes.get(name) or []
+
+        @classmethod
+        def from_ldif_string(
+            cls, ldif_string: str
+        ) -> FlextResult[FlextLdifModels.Entry]:
+            """Create Entry from LDIF string.
+
+            Args:
+                ldif_string: LDIF formatted string
+
+            Returns:
+                FlextResult with Entry instance
+
+            """
+            try:
+                from flext_ldif.client import FlextLdifClient
+
+                # Use client to parse the LDIF string
+                client = FlextLdifClient()
+                result = client.parse_ldif(ldif_string)
+                if result.is_failure:
+                    return FlextResult[FlextLdifModels.Entry].fail(result.error)
+
+                entries = result.unwrap()
+                if not entries:
+                    return FlextResult[FlextLdifModels.Entry].fail(
+                        "No entries found in LDIF string"
+                    )
+
+                if len(entries) > 1:
+                    return FlextResult[FlextLdifModels.Entry].fail(
+                        "Multiple entries found, expected single entry"
+                    )
+
+                return FlextResult[FlextLdifModels.Entry].ok(entries[0])
+
+            except Exception as e:
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    f"Failed to parse LDIF string: {e}"
+                )
+
+        def to_ldif_string(self, indent: int = 0) -> str:
+            """Convert Entry to LDIF string.
+
+            Args:
+                indent: Number of spaces to indent each line
+
+            Returns:
+                LDIF formatted string
+
+            """
+            try:
+                from flext_ldif.client import FlextLdifClient
+
+                # Use client to write the entry to string
+                client = FlextLdifClient()
+                result = client.write_ldif([self])
+                if result.is_failure:
+                    error_msg = f"Failed to write entry: {result.error}"
+                    raise ValueError(error_msg)
+
+                ldif_content = result.unwrap()
+
+                # Apply indentation if requested
+                if indent > 0:
+                    indent_str = " " * indent
+                    lines = ldif_content.splitlines()
+                    indented_lines = [
+                        indent_str + line if line.strip() else line for line in lines
+                    ]
+                    return "\n".join(indented_lines)
+
+                return ldif_content
+
+            except Exception as e:
+                error_msg = f"Failed to convert entry to LDIF string: {e}"
+                raise ValueError(error_msg) from e
 
     class AttributeValues(FlextModels.Value):
         """LDIF attribute values container."""
@@ -759,28 +841,32 @@ class FlextLdifModels(FlextModels):
     class AnalyticsGeneratedEvent(FlextModels.DomainEvent):
         """Event emitted when analytics are generated."""
 
-        analytics: FlextLdifModels.AnalyticsResult = Field(
-            ..., description="Generated analytics"
-        )
+        entry_count: int = Field(..., description="Number of entries analyzed")
+        statistics: dict[str, object] = Field(..., description="Analytics statistics")
+        timestamp: str = Field(..., description="Event timestamp")
 
     class EntriesWrittenEvent(FlextModels.DomainEvent):
         """Event emitted when entries are written."""
 
-        entries: list[FlextLdifModels.Entry] = Field(..., description="Written entries")
-        output_path: Path | None = Field(default=None, description="Output path")
+        entry_count: int = Field(..., description="Number of entries written")
+        output_path: str = Field(..., description="Output path")
+        format_used: str = Field(..., description="Format used for writing")
+        timestamp: str = Field(..., description="Event timestamp")
 
     class MigrationCompletedEvent(FlextModels.DomainEvent):
         """Event emitted when migration is completed."""
 
-        source_server: str = Field(..., description="Source server type")
-        target_server: str = Field(..., description="Target server type")
-        statistics: FlextLdifTypes.Dict = Field(..., description="Migration statistics")
+        source_entries: int = Field(..., description="Number of source entries")
+        target_entries: int = Field(..., description="Number of target entries")
+        migration_type: str = Field(..., description="Type of migration performed")
+        timestamp: str = Field(..., description="Event timestamp")
 
     class QuirkRegisteredEvent(FlextModels.DomainEvent):
         """Event emitted when a quirk is registered."""
 
-        quirk_type: str = Field(..., description="Type of quirk")
         server_type: str = Field(..., description="Server type")
+        quirk_name: str = Field(..., description="Name of the registered quirk")
+        timestamp: str = Field(..., description="Event timestamp")
 
     # =========================================================================
     # COMPUTED FIELDS - Metadata and Statistics

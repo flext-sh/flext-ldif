@@ -80,9 +80,7 @@ class TestFlextLdifUtilities:
             temp_file.write(b"test content")
 
         try:
-            result = FlextLdifUtilities.FileUtilities.validate_file_path(
-                temp_path, check_writable=True
-            )
+            result = FlextLdifUtilities.FileUtilities.validate_file_path(temp_path)
             assert isinstance(result, FlextResult)
             assert result.is_success
         finally:
@@ -98,9 +96,7 @@ class TestFlextLdifUtilities:
             # Make file read-only
             temp_path.chmod(0o444)
 
-            result = FlextLdifUtilities.FileUtilities.validate_file_path(
-                temp_path, check_writable=True
-            )
+            result = FlextLdifUtilities.FileUtilities.validate_file_path(temp_path)
             assert isinstance(result, FlextResult)
             assert result.is_failure
             assert "not writable" in str(result.error)
@@ -117,9 +113,7 @@ class TestFlextLdifUtilities:
             parent_path.chmod(0o555)
 
             try:
-                result = FlextLdifUtilities.FileUtilities.validate_file_path(
-                    file_path, check_writable=True
-                )
+                result = FlextLdifUtilities.FileUtilities.validate_file_path(file_path)
                 assert isinstance(result, FlextResult)
                 assert result.is_failure
                 assert "not writable" in str(result.error)
@@ -423,7 +417,7 @@ class TestFlextLdifUtilities:
         result = FlextLdifUtilities.DnUtilities.parse_dn_components(dn)
 
         assert result.is_success
-        components = result.unwrap()
+        components = result.unwrap()  # type: ignore[assignment]
         assert len(components) == 4
         assert components[0] == "cn=test"
         assert components[1] == "ou=users"
@@ -436,7 +430,7 @@ class TestFlextLdifUtilities:
         result = FlextLdifUtilities.DnUtilities.parse_dn_components(dn)
 
         assert result.is_success
-        components = result.unwrap()
+        components = result.unwrap()  # type: ignore[assignment]
         assert len(components) == 4
         assert components[0] == r"cn=Smith\, John"
 
@@ -446,7 +440,7 @@ class TestFlextLdifUtilities:
         result = FlextLdifUtilities.DnUtilities.parse_dn_components(dn)
 
         assert result.is_success
-        components = result.unwrap()
+        components = result.unwrap()  # type: ignore[assignment]
         assert len(components) == 4
         assert components[0] == "cn=John Doe"
         assert components[1] == "ou=Engineering Department"
@@ -623,9 +617,7 @@ class TestFlextLdifUtilities:
             file_path = parent_path / "newfile.txt"
 
             # File doesn't exist but parent is writable
-            result = FlextLdifUtilities.FileUtilities.validate_file_path(
-                file_path, check_writable=True
-            )
+            result = FlextLdifUtilities.FileUtilities.validate_file_path(file_path)
             assert result.is_success
             assert result.unwrap() == file_path.resolve()
 
@@ -634,9 +626,7 @@ class TestFlextLdifUtilities:
         nonexistent_parent = Path("/nonexistent/directory")
         file_path = nonexistent_parent / "file.txt"
 
-        result = FlextLdifUtilities.FileUtilities.validate_file_path(
-            file_path, check_writable=True
-        )
+        result = FlextLdifUtilities.FileUtilities.validate_file_path(file_path)
         assert result.is_failure
         assert "Parent directory does not exist" in str(result.error)
 
@@ -694,7 +684,7 @@ class TestFlextLdifUtilities:
         result = FlextLdifUtilities.DnUtilities.parse_dn_components(dn)
 
         assert result.is_success
-        components = result.unwrap()
+        components = result.unwrap()  # type: ignore[assignment]
         assert len(components) == 4
 
     def test_dn_validate_format_all_components_validation(self) -> None:
@@ -713,7 +703,7 @@ class TestFlextLdifUtilities:
 
         # Should succeed, empty components are stripped
         assert result.is_success
-        components = result.unwrap()
+        components = result.unwrap()  # type: ignore[assignment]
         assert len(components) == 4  # Empty component should be ignored
 
     def test_dn_parse_components_only_commas(self) -> None:
@@ -765,7 +755,7 @@ class TestFlextLdifUtilitiesDnUtilities:
         result = FlextLdifUtilities.DnUtilities.parse_dn_components(dn)
 
         assert result.is_success
-        components = result.unwrap()
+        components = result.unwrap()  # type: ignore[assignment]
         assert isinstance(components, list)
         assert len(components) > 0
 
@@ -801,7 +791,7 @@ class TestFlextLdifUtilitiesDnUtilities:
         assert isinstance(components, list)
         assert len(components) > 0
         # Each component should be a tuple of (attribute, value)
-        for comp in components:
+        for comp in components:  # type: ignore[misc]
             assert isinstance(comp, tuple)
             assert len(comp) == 2
 

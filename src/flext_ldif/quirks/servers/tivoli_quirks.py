@@ -49,7 +49,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
 
     def parse_attribute(
         self,
-        _attr_definition: str,
+        attr_definition: str,
     ) -> FlextResult[FlextLdifTypes.Dict]:  # pragma: no cover
         """Parse Tivoli DS attribute definition - STUB."""
         return FlextResult[FlextLdifTypes.Dict].fail(  # pragma: no cover
@@ -63,7 +63,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
 
     def parse_objectclass(
         self,
-        _oc_definition: str,
+        oc_definition: str,
     ) -> FlextResult[FlextLdifTypes.Dict]:  # pragma: no cover
         """Parse Tivoli DS objectClass definition - STUB."""
         return FlextResult[FlextLdifTypes.Dict].fail(  # pragma: no cover
@@ -73,7 +73,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
 
     def convert_attribute_to_rfc(
         self,
-        _attr_data: FlextLdifTypes.Dict,
+        attr_data: FlextLdifTypes.Dict,
     ) -> FlextResult[FlextLdifTypes.Dict]:  # pragma: no cover
         """Convert Tivoli DS attribute to RFC-compliant format - STUB."""
         return FlextResult[FlextLdifTypes.Dict].fail(  # pragma: no cover
@@ -83,7 +83,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
 
     def convert_objectclass_to_rfc(
         self,
-        _oc_data: FlextLdifTypes.Dict,
+        oc_data: FlextLdifTypes.Dict,
     ) -> FlextResult[FlextLdifTypes.Dict]:  # pragma: no cover
         """Convert Tivoli DS objectClass to RFC-compliant format - STUB."""
         return FlextResult[FlextLdifTypes.Dict].fail(  # pragma: no cover
@@ -110,7 +110,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
 
         def parse_acl(
             self,
-            _acl_line: str,
+            acl_line: str,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Parse Tivoli DS ACL definition - STUB."""
             return FlextResult[FlextLdifTypes.Dict].fail(
@@ -120,7 +120,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
 
         def convert_acl_to_rfc(
             self,
-            _acl_data: FlextLdifTypes.Dict,
+            acl_data: FlextLdifTypes.Dict,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert Tivoli DS ACL to RFC-compliant format - STUB."""
             return FlextResult[FlextLdifTypes.Dict].fail(
@@ -130,7 +130,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
 
         def convert_acl_from_rfc(
             self,
-            _acl_data: FlextLdifTypes.Dict,
+            acl_data: FlextLdifTypes.Dict,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert RFC ACL to Tivoli DS-specific format - STUB."""
             return FlextResult[FlextLdifTypes.Dict].fail(
@@ -153,16 +153,16 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
 
         def can_handle_entry(
             self,
-            _entry_dn: str,
-            _attributes: FlextLdifTypes.Dict,
+            entry_dn: str,
+            attributes: FlextLdifTypes.Dict,
         ) -> bool:
             """Check if this quirk should handle the entry - STUB."""
             return False
 
         def process_entry(
             self,
-            _entry_dn: str,
-            _attributes: FlextLdifTypes.Dict,
+            entry_dn: str,
+            attributes: FlextLdifTypes.Dict,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for Tivoli DS format - STUB."""
             return FlextResult[FlextLdifTypes.Dict].fail(
