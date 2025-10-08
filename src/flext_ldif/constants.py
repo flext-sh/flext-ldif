@@ -70,39 +70,33 @@ class FlextLdifConstants(FlextConstants):
     # PROCESSING CONSTANTS
     # =============================================================================
 
-    class Processing:
-        MIN_WORKERS_FOR_PARALLEL: Final[int] = 2
-        MAX_WORKERS_LIMIT: Final[int] = 16  # Maximum allowed workers
-        PERFORMANCE_MIN_WORKERS: Final[int] = (
-            4  # Minimum workers for performance optimization
-        )
-        PERFORMANCE_MIN_CHUNK_SIZE: Final[int] = (
-            1000  # Minimum chunk size for performance
-        )
-        MIN_ANALYTICS_CACHE_SIZE: Final[int] = 100
-        MAX_ANALYTICS_CACHE_SIZE: Final[int] = 10000
-        MIN_PRODUCTION_ENTRIES: Final[int] = 1000
-        MIN_MEMORY_MB: Final[int] = 64  # Minimum memory limit in MB
-        MAX_MEMORY_MB: Final[int] = 8192  # Maximum memory limit in MB
-        ENCODING_CONFIDENCE_THRESHOLD: Final[float] = (
-            0.7  # Minimum confidence for encoding detection
-        )
+    # Processing constants (moved to top level to avoid override issues)
+    MIN_WORKERS_FOR_PARALLEL: Final[int] = 2
+    MAX_WORKERS_LIMIT: Final[int] = 16  # Maximum allowed workers
+    PERFORMANCE_MIN_WORKERS: Final[int] = (
+        4  # Minimum workers for performance optimization
+    )
+    PERFORMANCE_MIN_CHUNK_SIZE: Final[int] = 1000  # Minimum chunk size for performance
+    MIN_ANALYTICS_CACHE_SIZE: Final[int] = 100
+    MAX_ANALYTICS_CACHE_SIZE: Final[int] = 10000
+    MIN_PRODUCTION_ENTRIES: Final[int] = 1000
+    MIN_MEMORY_MB: Final[int] = 64  # Minimum memory limit in MB
+    MAX_MEMORY_MB: Final[int] = 8192  # Maximum memory limit in MB
+    ENCODING_CONFIDENCE_THRESHOLD: Final[float] = (
+        0.7  # Minimum confidence for encoding detection
+    )
 
-        DEFAULT_BATCH_SIZE: Final[int] = 100
-        MAX_BATCH_SIZE: Final[int] = 10000
+    DEFAULT_BATCH_SIZE: Final[int] = 100
+    MAX_BATCH_SIZE: Final[int] = 10000
 
-        # Additional constants for config validation
-        PERFORMANCE_MEMORY_MB_THRESHOLD: Final[int] = (
-            512  # Memory threshold for performance
-        )
-        DEBUG_MAX_WORKERS: Final[int] = 2  # Max workers in debug mode
-        SMALL_ENTRY_COUNT_THRESHOLD: Final[int] = (
-            100  # Threshold for small entry counts
-        )
-        MEDIUM_ENTRY_COUNT_THRESHOLD: Final[int] = (
-            1000  # Threshold for medium entry counts
-        )
-        MIN_ATTRIBUTE_PARTS: Final[int] = 2  # Minimum parts for attribute parsing
+    # Additional constants for config validation
+    PERFORMANCE_MEMORY_MB_THRESHOLD: Final[int] = (
+        512  # Memory threshold for performance
+    )
+    DEBUG_MAX_WORKERS: Final[int] = 2  # Max workers in debug mode
+    SMALL_ENTRY_COUNT_THRESHOLD: Final[int] = 100  # Threshold for small entry counts
+    MEDIUM_ENTRY_COUNT_THRESHOLD: Final[int] = 1000  # Threshold for medium entry counts
+    MIN_ATTRIBUTE_PARTS: Final[int] = 2  # Minimum parts for attribute parsing
 
     # =============================================================================
     # CONFIGURATION DEFAULTS

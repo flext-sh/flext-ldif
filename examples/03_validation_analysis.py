@@ -12,6 +12,8 @@ Original: 246 lines | Optimized: ~130 lines (47% reduction)
 
 from __future__ import annotations
 
+from flext_core import FlextResult
+
 from flext_ldif import FlextLdif
 
 
@@ -44,8 +46,8 @@ def validate_entries_example() -> None:
     result = api.validate_entries(entries).map(
         lambda report: (
             f"Valid: {report.get('is_valid', False)}, "
-            f"Errors: {len(report.get('errors', []))}, "
-            f"Warnings: {len(report.get('warnings', []))}"
+            f"Errors: {len(report.get('errors', [])) if report.get('errors') else 0}, "  # type: ignore[arg-type]
+            f"Warnings: {len(report.get('warnings', [])) if report.get('warnings') else 0}"  # type: ignore[arg-type]
         )
     )
 
@@ -106,9 +108,9 @@ mail: pipeline@example.com
         .flat_map(api.validate_entries)
         .flat_map(
             lambda report: (
-                api.parse(ldif_content).flat_map(api.analyze)
+                api.parse(ldif_content).flat_map(api.analyze)  # type: ignore[return-value]
                 if report.get("is_valid", False)
-                else api.models.FlextResult.failure(f"Validation failed: {report}")
+                else FlextResult[dict[str, object]].fail(f"Validation failed: {report}")
             )
         )
     )
@@ -152,7 +154,7 @@ def validate_and_filter_pipeline() -> None:
             print(f"All {len(entries)} entries are valid")
         else:
             errors = report.get("errors", [])
-            print(f"Found {len(errors)} validation errors")
+            print(f"Found {len(errors) if errors else 0} validation errors")
 
 
 def analyze_by_objectclass_pipeline() -> None:

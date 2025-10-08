@@ -25,7 +25,7 @@ def build_entries_pipeline() -> None:
         sn="Johnson",
         base_dn="ou=People,dc=example,dc=com",
         mail="alice.johnson@example.com",
-        telephone_number="+1-555-0101",
+        additional_attrs={"telephoneNumber": ["+1-555-0101"]},
     )
 
     # Build group - library handles member validation
@@ -144,9 +144,10 @@ def convert_formats_pipeline() -> None:
     print(result.unwrap_or("Conversion failed"))
 
     # Batch conversions - library eliminates manual loops!
-    person = api.build_person_entry(
+    person_result = api.build_person_entry(
         cn="Batch Test", sn="Test", base_dn="ou=People,dc=example,dc=com"
-    ).unwrap_or(None)
+    )
+    person = person_result.unwrap() if person_result.is_success else None
 
     if person:
         # Batch: entries → JSON → entries (round-trip)
@@ -169,7 +170,7 @@ def convert_formats_pipeline() -> None:
                 "sn": ["Dict"],
             }
         ]
-        entries_from_dicts = api.dicts_to_entries(dict_data)
+        entries_from_dicts = api.dicts_to_entries(dict_data)  # type: ignore[arg-type]
         print(f"Converted {len(entries_from_dicts)} dicts to entries")
 
 

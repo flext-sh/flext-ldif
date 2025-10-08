@@ -80,7 +80,7 @@ mail: inspect@example.com
     # Use unwrap_or for safe access with default
     for entry in result.unwrap_or([]):
         print(f"DN: {entry.dn}")
-        print(f"Attributes: {list(entry.attributes.keys())}")
+        print(f"Attributes: {list(entry.attributes.data.keys())}")
 
 
 if __name__ == "__main__":

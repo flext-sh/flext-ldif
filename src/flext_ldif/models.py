@@ -16,7 +16,7 @@ from flext_core import FlextModels, FlextResult
 from pydantic import ConfigDict, Field, computed_field, field_validator
 
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.typings import FlextLdifTypes
+from flext_ldif.exceptions import FlextLdifExceptions
 
 
 class FlextLdifModels(FlextModels):
@@ -237,7 +237,12 @@ class FlextLdifModels(FlextModels):
                 result = client.write_ldif([self])
                 if result.is_failure:
                     error_msg = f"Failed to write entry: {result.error}"
-                    raise ValueError(error_msg)
+                    raise FlextLdifExceptions.LdifProcessingError(
+                        error_msg,
+                        operation="write_entry_to_ldif",
+                        entry_dn=self.dn,
+                        context={"entry_attributes": list(self.attributes.keys())},
+                    )
 
                 ldif_content = result.unwrap()
 
@@ -410,7 +415,7 @@ class FlextLdifModels(FlextModels):
         """Query for validating LDIF entries."""
 
         entries: list[object] = Field(..., description="Entries to validate")
-        schema_config: FlextLdifTypes.Dict | None = Field(
+        schema_config: dict[str, object] | None = Field(
             default=None, description="Schema configuration for validation"
         )
         strict: bool = Field(
@@ -420,8 +425,11 @@ class FlextLdifModels(FlextModels):
     class AnalyzeQuery(FlextModels.Query):
         """Query for analyzing LDIF entries."""
 
-        entries: list[object] = Field(..., description="Entries to analyze")
-        metrics: FlextLdifTypes.Dict | None = Field(
+        ldif_content: str = Field(..., description="LDIF content to analyze")
+        analysis_types: list[str] = Field(
+            ..., description="Types of analysis to perform"
+        )
+        metrics: dict[str, object] | None = Field(
             default=None, description="Metrics configuration"
         )
         include_patterns: bool = Field(
@@ -446,7 +454,7 @@ class FlextLdifModels(FlextModels):
         entries: list[object] = Field(..., description="Entries to migrate")
         source_format: str = Field(..., description="Source LDIF format")
         target_format: str = Field(..., description="Target LDIF format")
-        options: FlextLdifTypes.Dict | None = Field(
+        options: dict[str, object] | None = Field(
             default=None, description="Migration options"
         )
 
@@ -560,17 +568,7 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        def must(self) -> list[str]:
-            """MUST attributes (alias for required_attributes)."""
-            return self.required_attributes
-
-        @computed_field
-        def may(self) -> list[str]:
-            """MAY attributes (alias for optional_attributes)."""
-            return self.optional_attributes
-
-        @computed_field
-        def attribute_summary(self) -> FlextLdifTypes.Dict:
+        def attribute_summary(self) -> dict[str, object]:
             """Summary of attribute requirements."""
             return {
                 "required_count": len(self.required_attributes),
@@ -595,7 +593,7 @@ class FlextLdifModels(FlextModels):
         proxy: bool = Field(default=False, description="Proxy permission")
 
         @computed_field
-        def permissions_summary(self) -> FlextLdifTypes.Dict:
+        def permissions_summary(self) -> dict[str, object]:
             """Summary of granted permissions."""
             granted = [k for k, v in self.__dict__.items() if isinstance(v, bool) and v]
             return {
@@ -825,37 +823,53 @@ class FlextLdifModels(FlextModels):
     class EntryParsedEvent(FlextModels.DomainEvent):
         """Event emitted when an entry is successfully parsed."""
 
-        entry: FlextLdifModels.Entry = Field(..., description="Parsed entry")
-        source: str = Field(..., description="Source of the entry")
+        event_type: str = Field(..., description="Event type")
+        aggregate_id: str = Field(..., description="Aggregate ID")
+        entry_count: int = Field(..., description="Number of entries parsed")
+        source_type: str = Field(..., description="Type of source")
+        format_detected: str = Field(..., description="Detected format")
+        timestamp: str = Field(..., description="Event timestamp")
 
     class EntriesValidatedEvent(FlextModels.DomainEvent):
         """Event emitted when entries are validated."""
 
-        entries: list[FlextLdifModels.Entry] = Field(
-            ..., description="Validated entries"
-        )
-        validation_result: FlextLdifModels.LdifValidationResult = Field(
-            ..., description="Validation result"
-        )
+        event_type: str = Field(..., description="Event type")
+        aggregate_id: str = Field(..., description="Aggregate ID")
+        entry_count: int = Field(..., description="Number of entries validated")
+        is_valid: bool = Field(..., description="Whether validation passed")
+        error_count: int = Field(..., description="Number of validation errors")
+        strict_mode: bool = Field(..., description="Whether strict mode was used")
+        timestamp: str = Field(..., description="Event timestamp")
 
     class AnalyticsGeneratedEvent(FlextModels.DomainEvent):
         """Event emitted when analytics are generated."""
 
+        event_type: str = Field(..., description="Event type")
+        aggregate_id: str = Field(..., description="Aggregate ID")
         entry_count: int = Field(..., description="Number of entries analyzed")
-        statistics: dict[str, object] = Field(..., description="Analytics statistics")
+        statistics: dict[str, int | float] = Field(
+            ..., description="Analytics statistics"
+        )
         timestamp: str = Field(..., description="Event timestamp")
 
     class EntriesWrittenEvent(FlextModels.DomainEvent):
         """Event emitted when entries are written."""
 
+        event_type: str = Field(..., description="Event type")
+        aggregate_id: str = Field(..., description="Aggregate ID")
         entry_count: int = Field(..., description="Number of entries written")
         output_path: str = Field(..., description="Output path")
         format_used: str = Field(..., description="Format used for writing")
+        format_options: dict[str, int] = Field(
+            default_factory=dict, description="Format options"
+        )
         timestamp: str = Field(..., description="Event timestamp")
 
     class MigrationCompletedEvent(FlextModels.DomainEvent):
         """Event emitted when migration is completed."""
 
+        event_type: str = Field(..., description="Event type")
+        aggregate_id: str = Field(..., description="Aggregate ID")
         source_entries: int = Field(..., description="Number of source entries")
         target_entries: int = Field(..., description="Number of target entries")
         migration_type: str = Field(..., description="Type of migration performed")
@@ -864,6 +878,8 @@ class FlextLdifModels(FlextModels):
     class QuirkRegisteredEvent(FlextModels.DomainEvent):
         """Event emitted when a quirk is registered."""
 
+        event_type: str = Field(..., description="Event type")
+        aggregate_id: str = Field(..., description="Aggregate ID")
         server_type: str = Field(..., description="Server type")
         quirk_name: str = Field(..., description="Name of the registered quirk")
         timestamp: str = Field(..., description="Event timestamp")
@@ -903,6 +919,10 @@ class FlextLdifModels(FlextModels):
             "TechnologySpecification",
             "OidSpecification",
             "OudSpecification",
+            "OidSchemaAttribute",
+            "OidSchemaObjectClass",
+            "OidEntryLevelAci",
+            "OidAci",
         ]
         return len(model_types)
 
@@ -999,7 +1019,7 @@ class FlextLdifModels(FlextModels):
         uptime: float = Field(..., description="Service uptime in seconds")
 
     @computed_field
-    def ldif_model_summary(self) -> FlextLdifTypes.Dict:
+    def ldif_model_summary(self) -> dict[str, object]:
         """Computed field providing summary of LDIF model capabilities."""
         return {
             "entry_models": 4,
