@@ -893,3 +893,136 @@ class TestFlextLdifAclService:
         assert result1.is_success == result2.is_success
         if result1.is_success:
             assert result1.value == result2.value
+
+
+class TestFlextLdifAclUtils:
+    """Test suite for FlextLdifAclUtils."""
+
+    def test_create_acl_components_success(self) -> None:
+        """Test successful creation of ACL components."""
+        from flext_ldif.acl.utils import FlextLdifAclUtils
+
+        result = FlextLdifAclUtils.ComponentFactory.create_acl_components()
+
+        assert result.is_success
+        components = result.unwrap()
+        assert len(components) == 3
+
+        target, subject, permissions = components
+        assert isinstance(target, FlextLdifModels.AclTarget)
+        assert isinstance(subject, FlextLdifModels.AclSubject)
+        assert isinstance(permissions, FlextLdifModels.AclPermissions)
+
+    def test_create_acl_components_type_validation(self) -> None:
+        """Test type validation of created ACL components."""
+        from flext_ldif.acl.utils import FlextLdifAclUtils
+
+        result = FlextLdifAclUtils.ComponentFactory.create_acl_components()
+
+        assert result.is_success
+        target, subject, permissions = result.unwrap()
+
+        # Verify each component is the correct type
+        assert type(target).__name__ == "AclTarget"
+        assert type(subject).__name__ == "AclSubject"
+        assert type(permissions).__name__ == "AclPermissions"
+
+    def test_create_unified_acl_success(self) -> None:
+        """Test successful creation of unified ACL."""
+        from flext_ldif.acl.utils import FlextLdifAclUtils
+
+        # Create components first
+        components_result = FlextLdifAclUtils.ComponentFactory.create_acl_components()
+        assert components_result.is_success
+        target, subject, permissions = components_result.unwrap()
+
+        # Create unified ACL
+        result = FlextLdifAclUtils.ComponentFactory.create_unified_acl(
+            name="test_acl",
+            target=target,
+            subject=subject,
+            permissions=permissions,
+            server_type="openldap",
+            raw_acl="to attrs=cn,sn by * read",
+        )
+
+        assert result.is_success
+        unified_acl = result.unwrap()
+        assert isinstance(unified_acl, FlextLdifModels.UnifiedAcl)
+        assert unified_acl.name == "test_acl"
+        assert unified_acl.server_type == "openldap"
+        assert unified_acl.raw_acl == "to attrs=cn,sn by * read"
+
+    def test_create_unified_acl_with_different_server_types(self) -> None:
+        """Test creating unified ACL with different server types."""
+        from flext_ldif.acl.utils import FlextLdifAclUtils
+
+        components_result = FlextLdifAclUtils.ComponentFactory.create_acl_components()
+        assert components_result.is_success
+        target, subject, permissions = components_result.unwrap()
+
+        server_types = ["openldap", "389ds", "ad", "oid", "oud"]
+
+        for server_type in server_types:
+            result = FlextLdifAclUtils.ComponentFactory.create_unified_acl(
+                name=f"{server_type}_acl",
+                target=target,
+                subject=subject,
+                permissions=permissions,
+                server_type=server_type,
+                raw_acl=f"test ACL for {server_type}",
+            )
+
+            assert result.is_success
+            unified_acl = result.unwrap()
+            assert unified_acl.server_type == server_type
+            assert unified_acl.name == f"{server_type}_acl"
+
+    def test_create_unified_acl_type_validation(self) -> None:
+        """Test type validation of created unified ACL."""
+        from flext_ldif.acl.utils import FlextLdifAclUtils
+
+        components_result = FlextLdifAclUtils.ComponentFactory.create_acl_components()
+        assert components_result.is_success
+        target, subject, permissions = components_result.unwrap()
+
+        result = FlextLdifAclUtils.ComponentFactory.create_unified_acl(
+            name="validation_test",
+            target=target,
+            subject=subject,
+            permissions=permissions,
+            server_type="generic",
+            raw_acl="test ACL",
+        )
+
+        assert result.is_success
+        unified_acl = result.unwrap()
+        assert type(unified_acl).__name__ == "UnifiedAcl"
+
+    def test_component_factory_integration(self) -> None:
+        """Test ComponentFactory integration with full ACL creation flow."""
+        from flext_ldif.acl.utils import FlextLdifAclUtils
+
+        # Step 1: Create components
+        components_result = FlextLdifAclUtils.ComponentFactory.create_acl_components()
+        assert components_result.is_success
+
+        # Step 2: Use components to create unified ACL
+        target, subject, permissions = components_result.unwrap()
+
+        unified_acl_result = FlextLdifAclUtils.ComponentFactory.create_unified_acl(
+            name="integration_test",
+            target=target,
+            subject=subject,
+            permissions=permissions,
+            server_type="openldap",
+            raw_acl="to * by * read",
+        )
+
+        assert unified_acl_result.is_success
+        unified_acl = unified_acl_result.unwrap()
+
+        # Verify all components are properly integrated
+        assert unified_acl.target == target
+        assert unified_acl.subject == subject
+        assert unified_acl.permissions == permissions

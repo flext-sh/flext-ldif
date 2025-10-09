@@ -82,8 +82,8 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
         r"(?:OBSOLETE\s+)?"  # Optional OBSOLETE
         r"(?:SUP\s+(?P<sup>[\w\$]+)\s+)?"  # Optional SUP
         r"(?:(?P<kind>STRUCTURAL|AUXILIARY|ABSTRACT)\s+)?"  # Optional kind
-        r"(?:MUST\s+\((?P<must>[^\)]+)\)\s+)?"  # Optional MUST
-        r"(?:MAY\s+\((?P<may>[^\)]+)\)\s+)?"  # Optional MAY
+        r"(?:MUST\s+(?:\((?P<must_list>[^\)]+)\)|(?P<must_single>\w+))\s+)?"  # Optional MUST (single or list)
+        r"(?:MAY\s+(?:\((?P<may_list>[^\)]+)\)|(?P<may_single>\w+))\s+)?"  # Optional MAY (single or list)
         r"\)",  # Closing parenthesis
         re.VERBOSE,
     )
@@ -213,7 +213,9 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
 
                     # Handle line folding (lines starting with space)
                     if line.startswith(" "):
-                        current_line += line[1:]  # Remove leading space
+                        current_line += (
+                            " " + line[1:]
+                        )  # Add space to preserve word boundaries
                         continue
 
                     # Process complete line
@@ -371,16 +373,24 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
 
         # Parse MUST and MAY attribute lists
         must_attrs = []
-        if match.group("must"):
+        if match.group("must_list"):
             must_attrs = [
-                attr.strip() for attr in match.group("must").split("$") if attr.strip()
+                attr.strip()
+                for attr in match.group("must_list").split("$")
+                if attr.strip()
             ]
+        elif match.group("must_single"):
+            must_attrs = [match.group("must_single")]
 
         may_attrs = []
-        if match.group("may"):
+        if match.group("may_list"):
             may_attrs = [
-                attr.strip() for attr in match.group("may").split("$") if attr.strip()
+                attr.strip()
+                for attr in match.group("may_list").split("$")
+                if attr.strip()
             ]
+        elif match.group("may_single"):
+            may_attrs = [match.group("may_single")]
 
         return {
             "oid": match.group("oid"),

@@ -80,12 +80,14 @@ def test_create_and_export_entry() -> None:
 
     # Convert to FlextLdif entry
     api = FlextLdif.get_instance()
-    flext_entry = api.models.Entry(
+    entry_result = api.models.Entry.create(
         dn=ldap_entry.entry_dn,
         attributes={
             attr: list(ldap_entry[attr].values) for attr in ldap_entry.entry_attributes
         },
     )
+    assert entry_result.is_success
+    flext_entry = entry_result.unwrap()
 
     # Write to LDIF
     write_result = api.write([flext_entry])

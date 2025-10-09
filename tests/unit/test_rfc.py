@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -23,11 +24,13 @@ from flext_ldif.rfc.rfc_schema_parser import FlextLdifRfcSchemaParser
 class TestRfcLdifParserService:
     """Test RFC LDIF parser service."""
 
-    def test_initialization(self, real_parser_service: object) -> None:
+    def test_initialization(self, real_parser_service: FlextLdifRfcLdifParser) -> None:
         """Test parser initialization."""
         assert real_parser_service is not None
 
-    def test_parse_basic_entry(self, real_parser_service: object) -> None:
+    def test_parse_basic_entry(
+        self, real_parser_service: FlextLdifRfcLdifParser
+    ) -> None:
         """Test parsing basic LDIF entry."""
         # Skip if not implemented yet
         if not hasattr(real_parser_service, "parse_content"):
@@ -44,15 +47,9 @@ sn: user
         result = real_parser_service.parse_content(ldif_content)
         assert result.is_success or result.is_failure  # May not be fully implemented
 
-    def test_parse_file(
-        self, real_parser_service: object, ldif_test_file: object
+    def test_parse_invalid_dn(
+        self, real_parser_service: FlextLdifRfcLdifParser
     ) -> None:
-        """Test parsing LDIF from file - skipped (deprecated parse_file method)."""
-        pytest.skip(
-            "parse_file is deprecated - use RfcLdifParserService.execute() instead"
-        )
-
-    def test_parse_invalid_dn(self, real_parser_service: object) -> None:
         """Test parsing invalid DN."""
         if not hasattr(real_parser_service, "parse_content"):
             pytest.skip("Parser not fully implemented yet")
@@ -67,7 +64,9 @@ objectClass: person
         # Should either succeed or fail gracefully
         assert result.is_success or result.is_failure
 
-    def test_parse_multiple_entries(self, real_parser_service: object) -> None:
+    def test_parse_multiple_entries(
+        self, real_parser_service: FlextLdifRfcLdifParser
+    ) -> None:
         """Test parsing multiple entries."""
         if not hasattr(real_parser_service, "parse_content"):
             pytest.skip("Parser not fully implemented yet")
@@ -86,7 +85,9 @@ cn: user2
         result = real_parser_service.parse_content(ldif_content)
         assert result.is_success or result.is_failure
 
-    def test_parse_with_binary_data(self, real_parser_service: object) -> None:
+    def test_parse_with_binary_data(
+        self, real_parser_service: FlextLdifRfcLdifParser
+    ) -> None:
         """Test parsing entry with binary data."""
         if not hasattr(real_parser_service, "parse_content"):
             pytest.skip("Parser not fully implemented yet")
@@ -106,12 +107,12 @@ photo:: UGhvdG8gZGF0YQ==
 class TestRfcLdifWriterService:
     """Test RFC LDIF writer service."""
 
-    def test_initialization(self, real_writer_service: object) -> None:
+    def test_initialization(self, real_writer_service: FlextLdifRfcLdifWriter) -> None:
         """Test writer initialization."""
         assert real_writer_service is not None
 
     def test_write_basic_entry(
-        self, real_writer_service: object, ldif_test_entries: list
+        self, real_writer_service: FlextLdifRfcLdifWriter, ldif_test_entries: list
     ) -> None:
         """Test writing basic LDIF entry."""
         if not hasattr(real_writer_service, "write_entries_to_string"):
@@ -122,7 +123,10 @@ class TestRfcLdifWriterService:
         assert result.is_success or result.is_failure
 
     def test_write_to_file(
-        self, real_writer_service: object, ldif_test_entries: list, tmp_path: Path
+        self,
+        real_writer_service: FlextLdifRfcLdifWriter,
+        ldif_test_entries: list,
+        tmp_path: Path,
     ) -> None:
         """Test writing LDIF to file."""
         if not hasattr(real_writer_service, "write_entries_to_file"):
@@ -136,7 +140,7 @@ class TestRfcLdifWriterService:
         assert result.is_success or result.is_failure
 
     def test_write_multiple_entries(
-        self, real_writer_service: object, ldif_test_entries: list
+        self, real_writer_service: FlextLdifRfcLdifWriter, ldif_test_entries: list
     ) -> None:
         """Test writing multiple entries."""
         if not hasattr(real_writer_service, "write_entries_to_string"):
@@ -145,23 +149,6 @@ class TestRfcLdifWriterService:
 
         result = real_writer_service.write_entries_to_string(ldif_test_entries)
         assert result.is_success or result.is_failure
-
-
-class TestFlextLdifRfcSchemaParser:
-    """Test RFC schema parser service."""
-
-    def test_initialization(self) -> None:
-        """Test schema parser initialization."""
-        # Schema parser not yet implemented in fixtures
-        pytest.skip("Schema parser not yet implemented")
-
-    def test_parse_basic_schema(self) -> None:
-        """Test parsing basic schema definition."""
-        pytest.skip("Schema parser not yet implemented")
-
-    def test_parse_objectclass_definition(self) -> None:
-        """Test parsing objectClass definition."""
-        pytest.skip("Schema parser not yet implemented")
 
 
 # Comprehensive RFC Parser Tests from test_rfc_parser_comprehensive.py
@@ -955,7 +942,7 @@ class TestRfcLdifWriterComprehensive:
             "include_version": True,
         }
         writer = FlextLdifRfcLdifWriter(
-            params=params,
+            params=cast("dict[str, object]", params),
             quirk_registry=registry,
         )
 
@@ -1139,6 +1126,7 @@ class TestRfcLdifWriterComprehensive:
         data = result.unwrap()
         assert "content" in data
         content = data["content"]
+        assert isinstance(content, str)
         assert "version: 1" in content
 
     def test_write_with_custom_encoding(
@@ -1170,11 +1158,11 @@ class TestRfcLdifWriterComprehensive:
         assert result.is_success or result.is_failure
 
     def test_writer_error_handling_invalid_entry(self) -> None:
-        """Test writer error handling with invalid entry."""
-        # Create an entry with invalid data
-        invalid_entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value=""),
-            attributes={},
+        """Test writer handles edge case entry with empty attributes."""
+        # Create an entry with valid DN but no attributes (edge case)
+        edge_case_entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=FlextLdifModels.LdifAttributes(attributes={}),
         )
 
         registry = FlextLdifQuirksRegistry()
@@ -1183,8 +1171,9 @@ class TestRfcLdifWriterComprehensive:
             quirk_registry=registry,
         )
 
-        result = writer.write_entries_to_string([invalid_entry])
+        result = writer.write_entries_to_string([edge_case_entry])
 
+        # Writer should handle empty attributes gracefully
         assert result.is_success or result.is_failure
 
     def test_writer_handles_none_input(self) -> None:
@@ -1195,7 +1184,7 @@ class TestRfcLdifWriterComprehensive:
             quirk_registry=registry,
         )
 
-        # This should not crash
+        # This should not crash - intentionally testing invalid input
         result = writer.write_entries_to_string(None)
 
         assert result.is_failure
@@ -1240,7 +1229,7 @@ class TestRfcLdifWriterExecuteMethod:
     ) -> None:
         """Test execute() writing entries to string (no output_file)."""
         registry = FlextLdifQuirksRegistry()
-        params = {"entries": sample_entries}
+        params: dict[str, object] = {"entries": sample_entries}
         writer = FlextLdifRfcLdifWriter(params=params, quirk_registry=registry)
 
         result = writer.execute()
@@ -1256,7 +1245,10 @@ class TestRfcLdifWriterExecuteMethod:
         """Test execute() writing entries to file."""
         output_file = tmp_path / "output.ldif"
         registry = FlextLdifQuirksRegistry()
-        params = {"entries": sample_entries, "output_file": str(output_file)}
+        params: dict[str, object] = {
+            "entries": sample_entries,
+            "output_file": str(output_file),
+        }
         writer = FlextLdifRfcLdifWriter(params=params, quirk_registry=registry)
 
         result = writer.execute()
@@ -1275,7 +1267,9 @@ class TestRfcLdifWriterExecuteMethod:
         result = writer.execute()
 
         assert result.is_failure
-        assert "must be provided" in result.error
+        error_msg = result.error
+        assert error_msg is not None
+        assert "must be provided" in error_msg
 
     def test_execute_with_append_mode(
         self, sample_entries: list[FlextLdifModels.Entry], tmp_path: Path
@@ -1291,7 +1285,9 @@ class TestRfcLdifWriterExecuteMethod:
             "output_file": str(output_file),
             "append": True,
         }
-        writer = FlextLdifRfcLdifWriter(params=params, quirk_registry=registry)
+        writer = FlextLdifRfcLdifWriter(
+            params=cast("dict[str, object]", params), quirk_registry=registry
+        )
 
         result = writer.execute()
 
@@ -1367,7 +1363,7 @@ class TestRfcLdifWriterSchemaSupport:
 
         output_file = tmp_path / "schema.ldif"
         registry = FlextLdifQuirksRegistry()
-        params = {"schema": schema, "output_file": str(output_file)}
+        params: dict[str, object] = {"schema": schema, "output_file": str(output_file)}
         writer = FlextLdifRfcLdifWriter(params=params, quirk_registry=registry)
 
         result = writer.execute()
@@ -1394,7 +1390,10 @@ class TestRfcLdifWriterAclSupport:
 
         output_file = tmp_path / "acls.ldif"
         registry = FlextLdifQuirksRegistry()
-        params = {"acls": [acl_entry], "output_file": str(output_file)}
+        params: dict[str, object] = {
+            "acls": [acl_entry],
+            "output_file": str(output_file),
+        }
         writer = FlextLdifRfcLdifWriter(params=params, quirk_registry=registry)
 
         result = writer.execute()

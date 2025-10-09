@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import base64
 import re
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from flext_core import FlextResult
 from pydantic import Field
@@ -373,7 +373,9 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
                     FlextLdifConstants.DictKeys.SOURCE_FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
                     FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
-                return FlextResult[FlextLdifTypes.Dict].ok(rfc_acl)
+                return FlextResult[FlextLdifTypes.Dict].ok(
+                    cast("FlextLdifTypes.Dict", rfc_acl)
+                )
 
             except Exception as exc:  # pragma: no cover
                 return FlextResult[FlextLdifTypes.Dict].fail(
@@ -386,7 +388,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Repackage RFC ACL payload for Tivoli."""
             try:
-                tivoli_acl = {
+                tivoli_acl: dict[str, object] = {
                     FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
                     FlextLdifConstants.DictKeys.TARGET_FORMAT: "ibm-slapdaccesscontrol",
                     FlextLdifConstants.DictKeys.DATA: acl_data,

@@ -559,18 +559,19 @@ class TestFlextLdifEntryBuilder:
         assert any("    " in line for line in lines)  # Should have 4-space indentation
 
     def test_error_handling_in_entry_creation(self) -> None:
-        """Test that entry creation succeeds even with empty DN."""
+        """Test that entry creation fails with invalid DN per RFC 4514."""
         builder = FlextLdifEntryBuilder()
 
-        # Test that builder allows empty DN (validation is optional)
+        # Test that builder rejects empty DN per RFC 4514 strict validation
         result = builder.build_custom_entry(
-            dn="",  # Empty DN is allowed without validation
+            dn="",  # Empty DN is invalid per RFC 4514
             objectclasses=["top"],
             attributes={"cn": ["test"]},
         )
 
-        # The result succeeds because validation is not enforced
-        assert result.is_success
+        # The result fails because DN validation is strict per RFC 4514
+        assert result.is_failure
+        assert "DN cannot be empty" in str(result.error)
 
     def test_logging_functionality(self) -> None:
         """Test that logging functionality works correctly."""

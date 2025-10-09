@@ -74,8 +74,10 @@ class FlextLdifQuirksRegistry(FlextModels.Entity):
             # Sort by priority (lower number = higher priority)
             self._schema_quirks[server_type].sort(key=lambda q: q.priority)
 
-            if hasattr(self, "logger") and self.logger:
-                self.logger.info(
+            # Logger may not be available in all contexts
+            logger = getattr(self, "logger", None)
+            if logger:
+                logger.info(
                     f"Registered schema quirk for {server_type}",
                     extra={
                         "server_type": server_type,
@@ -111,8 +113,9 @@ class FlextLdifQuirksRegistry(FlextModels.Entity):
             # Sort by priority
             self._acl_quirks[server_type].sort(key=lambda q: q.priority)
 
-            if hasattr(self, "logger") and self.logger:
-                self.logger.info(
+            logger = getattr(self, "logger", None)
+            if logger:
+                logger.info(
                     f"Registered ACL quirk for {server_type}",
                     extra={
                         "server_type": server_type,
@@ -148,8 +151,9 @@ class FlextLdifQuirksRegistry(FlextModels.Entity):
             # Sort by priority
             self._entry_quirks[server_type].sort(key=lambda q: q.priority)
 
-            if hasattr(self, "logger") and self.logger:
-                self.logger.info(
+            logger = getattr(self, "logger", None)
+            if logger:
+                logger.info(
                     f"Registered entry quirk for {server_type}",
                     extra={
                         "server_type": server_type,

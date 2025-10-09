@@ -544,7 +544,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         # Return analytics result as dictionary for consistent API
         return FlextResult[FlextLdifTypes.Dict].ok({
             "total_entries": total_entries,
-            "object_class_distribution": object_class_distribution,
+            "objectclass_distribution": object_class_distribution,
             "patterns_detected": [],
         })
 
@@ -651,6 +651,11 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             self._config = (
                 getattr(self, "_init_config_value", None) or FlextLdifConfig()
             )
+        # Type narrowing: _config is guaranteed non-None after initialization
+        if self._config is None:
+            # This should never happen, but handle it properly for production
+            msg = "Configuration initialization failed unexpectedly"
+            raise RuntimeError(msg)
         return self._config
 
     @property

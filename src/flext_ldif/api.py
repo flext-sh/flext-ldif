@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import ClassVar, override
+from typing import Any, ClassVar, cast, override
 
 from flext_core import (
     FlextBus,
@@ -94,9 +94,9 @@ class FlextLdif(FlextService[dict[str, object]]):
 
     """
 
-    # Private attribute type declarations
+    # Private attributes (initialized in model_post_init)
     _container: FlextContainer
-    _bus: FlextBus
+    _bus: object = None
     _dispatcher: FlextDispatcher
     _registry: FlextRegistry
     _processors: FlextProcessors
@@ -631,7 +631,7 @@ class FlextLdif(FlextService[dict[str, object]]):
 
     def dicts_to_entries(
         self,
-        dicts: list[dict[str, object]],
+        dicts: list[dict[str, Any]],
     ) -> list[FlextLdifModels.Entry]:
         """Convert list of dictionaries to list of entries using FlextProcessors.
 
@@ -722,7 +722,7 @@ class FlextLdif(FlextService[dict[str, object]]):
 
         Args:
             entries: List of entries to validate
-            schema: Schema definition to validate against (not yet implemented)
+            schema: Schema definition to validate against
 
         Returns:
             FlextResult containing validation report
@@ -733,13 +733,80 @@ class FlextLdif(FlextService[dict[str, object]]):
                 schema = schema_result.unwrap()
                 result = api.validate_with_schema(entries, schema)
 
-        Note:
-            Currently validates entries without using schema parameter.
-            Schema-based validation will be implemented in future version.
-
         """
+        # Convert dict schema to SchemaDiscoveryResult with type validation
+        attributes_value = schema.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
+        if not isinstance(attributes_value, dict):
+            return FlextResult[FlextLdifModels.LdifValidationResult].fail(
+                "Schema attributes must be a dictionary"
+            )
+
+        objectclasses_value = schema.get("object_classes", {})
+        if not isinstance(objectclasses_value, dict):
+            return FlextResult[FlextLdifModels.LdifValidationResult].fail(
+                "Schema object classes must be a dictionary"
+            )
+
+        server_type_value = schema.get(
+            FlextLdifConstants.DictKeys.SERVER_TYPE, "generic"
+        )
+        if not isinstance(server_type_value, str):
+            return FlextResult[FlextLdifModels.LdifValidationResult].fail(
+                "Schema server type must be a string"
+            )
+
+        entry_count_value = schema.get("entry_count", 0)
+        if not isinstance(entry_count_value, int):
+            return FlextResult[FlextLdifModels.LdifValidationResult].fail(
+                "Schema entry count must be an integer"
+            )
+
+        schema_discovery = FlextLdifModels.SchemaDiscoveryResult(
+            attributes=attributes_value,
+            objectclasses=objectclasses_value,
+            server_type=server_type_value,
+            entry_count=entry_count_value,
+        )
+
         validator = self._ldif_container.schema_validator()
-        return validator.validate_entries(entries)
+        # Use schema-aware validation for each entry
+        errors: list[str] = []
+        warnings: list[str] = []
+
+        for entry in entries:
+            entry_result = validator.validate_entry_against_schema(
+                entry, schema_discovery
+            )
+            if entry_result.is_failure:
+                errors.extend([f"Entry {entry.dn}: {entry_result.error}"])
+            else:
+                entry_validation = entry_result.unwrap()
+                if isinstance(entry_validation, dict):
+                    if "issues" in entry_validation and isinstance(
+                        entry_validation["issues"], list
+                    ):
+                        errors.extend(entry_validation["issues"])
+                    if "warnings" in entry_validation and isinstance(
+                        entry_validation["warnings"], list
+                    ):
+                        warnings.extend(entry_validation["warnings"])
+
+        # Also run general validation
+        general_result = validator.validate_entries(entries)
+        if general_result.is_failure:
+            return general_result
+
+        general_validation = general_result.unwrap()
+        errors.extend(general_validation.errors)
+        warnings.extend(general_validation.warnings)
+
+        return FlextResult[FlextLdifModels.LdifValidationResult].ok(
+            FlextLdifModels.LdifValidationResult(
+                is_valid=len(errors) == 0,
+                errors=errors,
+                warnings=warnings,
+            )
+        )
 
     # =========================================================================
     # ACL OPERATIONS
@@ -786,13 +853,19 @@ class FlextLdif(FlextService[dict[str, object]]):
                 is_allowed = result.unwrap()
 
         Note:
-            Currently returns success without actual evaluation.
-            Full ACL evaluation will be implemented in future version.
+            ACL evaluation not yet implemented.
+            Raises NotImplementedError for security - fail-safe approach.
+
+        Raises:
+            NotImplementedError: ACL evaluation not yet implemented
 
         """
-        # Placeholder: Full UnifiedAcl evaluation not yet implemented
-        # The service's evaluate_acl_rules works with internal AclRule type
-        return FlextResult[bool].ok(True)
+        # Security: Fail-safe - do NOT allow by default
+        msg = (
+            "UnifiedAcl evaluation not yet implemented. "
+            "Use FlextLdifAclService.evaluate_acl_rules() for internal AclRule types."
+        )
+        raise NotImplementedError(msg)
 
     # =========================================================================
     # PROCESSOR OPERATIONS
@@ -822,9 +895,10 @@ class FlextLdif(FlextService[dict[str, object]]):
             Processor-based batch processing will be implemented in future version.
 
         """
-        entry_dicts = self.entries_to_dicts(entries)
-        # For now, return the dicts without processing
-        return FlextResult[list[dict[str, object]]].ok(entry_dicts)
+        raise NotImplementedError(
+            f"Processor '{processor_name}' not yet implemented. "
+            "Batch processing will be available in future version."
+        )
 
     def process_parallel(
         self,
@@ -850,9 +924,10 @@ class FlextLdif(FlextService[dict[str, object]]):
             Processor-based parallel processing will be implemented in future version.
 
         """
-        entry_dicts = self.entries_to_dicts(entries)
-        # For now, return the dicts without processing
-        return FlextResult[list[dict[str, object]]].ok(entry_dicts)
+        raise NotImplementedError(
+            f"Processor '{processor_name}' not yet implemented. "
+            "Batch processing will be available in future version."
+        )
 
     # =========================================================================
     # INFRASTRUCTURE ACCESS (Properties)
@@ -938,7 +1013,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             ldif.bus.publish("ldif.parsed", {"entry_count": 10})
 
         """
-        return self._bus
+        return cast("FlextBus", self._bus)
 
     @property
     def dispatcher(self) -> FlextDispatcher:

@@ -1,6 +1,10 @@
 """Example 3: Entry Validation and Analysis - Optimized with Railway Pattern.
 
 Demonstrates FlextLdif validation and analytics with minimal code bloat:
+
+NOTE: This example intentionally uses assert statements (S101) for type narrowing
+demonstration. Asserts are acceptable in examples for pedagogical purposes and
+do not represent production error handling patterns.
 - Validating entries against RFC 2849 rules
 - Generating entry statistics and analysis
 - Railway-oriented validation pipelines
@@ -11,6 +15,8 @@ Original: 246 lines | Optimized: ~130 lines (47% reduction)
 """
 
 from __future__ import annotations
+
+from typing import cast
 
 from flext_core import FlextResult
 
@@ -43,15 +49,20 @@ def validate_entries_example() -> None:
     ]
 
     # Validate - library handles RFC 2849 compliance
-    result = api.validate_entries(entries).map(
-        lambda report: (
-            f"Valid: {report.get('is_valid', False)}, "
-            f"Errors: {len(report.get('errors', [])) if report.get('errors') else 0}, "
-            f"Warnings: {len(report.get('warnings', [])) if report.get('warnings') else 0}"
-        )
-    )
+    validation_result = api.validate_entries(entries)
+    if validation_result.is_failure:
+        print("Validation failed")
+        return
 
-    print(result.unwrap_or("Validation failed"))
+    report = validation_result.unwrap()
+    # Type narrowing for dict access
+    assert isinstance(report, dict)
+    result_msg = (
+        f"Valid: {report.get('is_valid', False)}, "
+        f"Errors: {report.get('error_count', 0)}, "
+        f"Warnings: {report.get('warning_count', 0)}"
+    )
+    print(result_msg)
 
 
 def analyze_entries_example() -> None:
@@ -185,7 +196,9 @@ member: cn=Person1,ou=People,dc=example,dc=com
 
     if result.is_success:
         stats = result.unwrap()
-        objectclass_dist = stats.get("objectclass_distribution", {})
+        objectclass_dist = cast(
+            "dict[str, int]", stats.get("objectclass_distribution", {})
+        )
 
         # Parse once, filter multiple times - library handles iteration
         entries = api.parse(ldif_content).unwrap_or([])

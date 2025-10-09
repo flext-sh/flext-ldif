@@ -47,12 +47,6 @@ class TestFlextLdifTypes:
         analytics_class = FlextLdifTypes.Analytics
         assert analytics_class is not None
 
-    def test_ldif_core_nested_class_exists(self) -> None:
-        """Test LdifCore nested class exists in FlextLdifTypes."""
-        assert hasattr(FlextLdifTypes, "LdifCore")
-        ldif_core_class = FlextLdifTypes.LdifCore
-        assert ldif_core_class is not None
-
     def test_writer_nested_class_exists(self) -> None:
         """Test Writer nested class exists in FlextLdifTypes."""
         assert hasattr(FlextLdifTypes, "Writer")

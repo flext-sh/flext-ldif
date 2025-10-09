@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-from importlib.metadata import metadata
+from flext_ldif.constants import FlextLdifConstants
 
-_metadata = metadata("flext-ldif")
-
-__version__ = _metadata["Version"]
-__version_info__ = tuple(
-    int(part) if part.isdigit() else part for part in __version__.split(".")
-)
+# Use constants for FLEXT compliance - ZERO module-level constants
+__version__ = FlextLdifConstants.VERSION
+__version_info__ = FlextLdifConstants.VERSION_INFO
 
 
 class FlextLdifVersion:

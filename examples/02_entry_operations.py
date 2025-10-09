@@ -110,7 +110,7 @@ def entry_model_usage() -> None:
     api = FlextLdif.get_instance()
 
     # Create entry using model (Pydantic v2 validation)
-    entry = api.models.Entry(
+    entry_result = api.models.Entry.create(
         dn="cn=Direct Model,ou=People,dc=example,dc=com",
         attributes={
             "objectClass": ["person"],
@@ -118,6 +118,10 @@ def entry_model_usage() -> None:
             "sn": ["Model"],
         },
     )
+    if entry_result.is_failure:
+        print(f"Failed to create entry: {entry_result.error}")
+        return
+    entry = entry_result.unwrap()
 
     # Railway pattern - use in write operation
     ldif_output = api.write([entry])

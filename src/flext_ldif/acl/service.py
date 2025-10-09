@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import fnmatch
 from datetime import UTC, datetime
-from typing import cast, override
+from typing import override
 
 from flext_core import FlextResult, FlextService
 
@@ -116,8 +116,8 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
 
             """
             try:
-                # Get permissions from context
-                perms = cast("FlextLdifTypes.BoolDict", context.get("permissions", {}))
+                # Get permissions from context - can be dict, list, or str
+                perms = context.get("permissions", {})
 
                 # Handle different permission formats
                 has_perm = False
@@ -208,7 +208,8 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
 
             """
             try:
-                target_dn = context.get("target_dn", "")
+                target_dn_obj = context.get("target_dn", "")
+                target_dn = str(target_dn_obj) if target_dn_obj else ""
 
                 # Handle different target formats
                 if not target_dn and not self._target_dn:
@@ -264,8 +265,9 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
             """
             try:
                 # Get current time or from context
-                current_time_str = context.get("current_time")
-                if current_time_str:
+                current_time_obj = context.get("current_time")
+                if current_time_obj:
+                    current_time_str = str(current_time_obj)
                     current_time = datetime.fromisoformat(current_time_str)
                 else:
                     current_time = datetime.now(UTC)

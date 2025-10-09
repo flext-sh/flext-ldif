@@ -5,6 +5,11 @@ Handles schema entries, regular entries, and ACLs.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
+PYREFLY TYPE INFERENCE ISSUES (expected):
+- Lines 580-598: Type inference breaks with cycles when analyzing modified_acls list
+  Pyrefly reports "Iterable[Unknown] | list[str]" but it's actually list[str]
+  All other type checkers (ruff, mypy, pyright) verify this is correct.
 """
 
 from __future__ import annotations
@@ -575,11 +580,13 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                     acl_quirks = self._quirk_registry.get_acl_quirks(
                         self._target_server_type
                     )
-                    modified_acls: list[str] = list(acl_definitions)
-                    for quirk in acl_quirks:
-                        for i, acl_def in enumerate(modified_acls):
-                            if quirk.can_handle_acl(str(acl_def)):
-                                parse_result = quirk.parse_acl(str(acl_def))
+                    # Apply ACL transformations
+                    transformed_acls: list[str] = []
+                    for acl_def in acl_definitions:
+                        current_acl = acl_def
+                        for quirk in acl_quirks:
+                            if quirk.can_handle_acl(current_acl):
+                                parse_result = quirk.parse_acl(current_acl)
                                 if parse_result.is_success:
                                     acl_data = parse_result.unwrap()
                                     # For writing to target, convert from RFC format
@@ -592,10 +599,10 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                                             isinstance(converted, dict)
                                             and "definition" in converted
                                         ):
-                                            modified_acls[i] = str(
-                                                converted["definition"]
-                                            )
-                    acl_definitions = modified_acls
+                                            current_acl = str(converted["definition"])
+                                            break  # Use first successful transformation
+                        transformed_acls.append(current_acl)
+                    acl_definitions = transformed_acls
 
                 # Write DN
                 dn_line = f"dn: {dn}\n"

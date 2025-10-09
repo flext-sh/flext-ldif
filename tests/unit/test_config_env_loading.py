@@ -48,7 +48,8 @@ class TestEnvVariableLoading:
         )
         assert config.ldif_chunk_size == FlextLdifConstants.DEFAULT_BATCH_SIZE
         assert (
-            config.max_workers == FlextLdifConstants.Processing.PERFORMANCE_MIN_WORKERS
+            config.max_workers
+            == FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_WORKERS
         )
 
     def test_env_variable_override(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -173,7 +174,7 @@ class TestEnvVariableLoading:
         assert (
             config.model_config["env_prefix"] == "FLEXT_"
         )  # Combined with ldif_ field names = FLEXT_LDIF_*
-        assert config.model_config["env_nested_delimiter"] == "__"
+        assert config.model_config.get("env_nested_delimiter") == "__"
 
     def test_extra_fields_ignored(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test extra environment variables are ignored (extra='ignore')."""

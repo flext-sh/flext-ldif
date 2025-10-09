@@ -834,7 +834,7 @@ class TestFlextLdifInfrastructureComprehensive:
         """Test accessing processors."""
         ldif = FlextLdif()
 
-        processors = ldif.processors()
+        processors = ldif.processors
         assert processors is not None
 
 

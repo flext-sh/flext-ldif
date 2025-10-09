@@ -40,9 +40,10 @@ class TestValidators:
         if validations["has_object_class"] and entry.attributes:
             attr_values = entry.get_attribute("objectClass")
             # Convert AttributeValues to list of strings
-            object_classes_list: FlextTypes.StringList = (
-                attr_values.values if attr_values else []
-            )
+            if attr_values and isinstance(attr_values, list):
+                object_classes_list: FlextTypes.StringList = attr_values
+            else:
+                object_classes_list = []
             if "person" in object_classes_list:
                 validations["person_has_cn"] = "cn" in entry.attributes
                 validations["person_has_sn"] = "sn" in entry.attributes
