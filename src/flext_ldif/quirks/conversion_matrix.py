@@ -13,15 +13,18 @@ This creates an N×N translation matrix with only 2×N implementations
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
+# Expected issues:
+# - ANN401: source_quirk/target_quirk are dynamically typed quirk objects
+#   (different implementations per server type, no common base class yet)
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Literal
 
-from flext_core.types import FlextResult
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.types import FlextLdifTypes
+from flext_core import FlextResult
 
+from flext_ldif.quirks.dn_case_registry import DnCaseRegistry
+from flext_ldif.typings import FlextLdifTypes
 
 DataType = Literal["attribute", "objectclass", "acl", "entry"]
 
@@ -32,6 +35,13 @@ class QuirksConversionMatrix:
     This class provides a unified interface for converting LDAP data between
     different server quirks (OUD, OID, OpenLDAP, etc.) using RFC standards
     as the universal intermediate representation.
+
+    The conversion pipeline ensures DN case consistency through a registry:
+    1. Parse source format
+    2. Extract and register DNs with canonical case
+    3. Convert source → RFC (with DN metadata)
+    4. Convert RFC → target (normalizing DN references)
+    5. Validate DN consistency for OUD targets
 
     Examples:
         >>> from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
@@ -48,13 +58,21 @@ class QuirksConversionMatrix:
         ...     oid_attr = result.unwrap()
 
     Attributes:
-        None - Stateless facade
+        dn_registry: DN case registry for tracking canonical DN case
+
     """
+
+    # Constants
+    MAX_ERRORS_TO_SHOW = 5
+
+    def __init__(self) -> None:
+        """Initialize conversion matrix with DN case registry."""
+        self.dn_registry = DnCaseRegistry()
 
     def convert(
         self,
-        source_quirk: Any,
-        target_quirk: Any,
+        source_quirk: object,
+        target_quirk: object,
         data_type: DataType,
         data: str | FlextLdifTypes.Dict,
     ) -> FlextResult[str | FlextLdifTypes.Dict]:
@@ -62,9 +80,12 @@ class QuirksConversionMatrix:
 
         This method orchestrates the complete conversion pipeline:
         1. Parse source format (if string input)
-        2. Convert source → RFC
-        3. Convert RFC → target
-        4. Write target format (if string output requested)
+        2. Extract and register DNs with canonical case
+        3. Convert source → RFC (with DN metadata)
+        4. Convert RFC → target
+        5. Normalize DN references to canonical case
+        6. Write target format (if string output requested)
+        7. Validate DN consistency for OUD targets
 
         Args:
             source_quirk: Source quirk instance (e.g., OUD, OID)
@@ -86,26 +107,77 @@ class QuirksConversionMatrix:
             ... orclVersion: 90600
             ... '''
             >>> result = matrix.convert(oud, oid, "entry", oud_entry_ldif)
+
         """
         if data_type == "attribute":
             return self._convert_attribute(source_quirk, target_quirk, data)
-        elif data_type == "objectclass":
+        if data_type == "objectclass":
             return self._convert_objectclass(source_quirk, target_quirk, data)
-        elif data_type == "acl":
+        if data_type == "acl":
             return self._convert_acl(source_quirk, target_quirk, data)
-        elif data_type == "entry":
+        if data_type == "entry":
             return self._convert_entry(source_quirk, target_quirk, data)
-        else:
-            return FlextResult[str | FlextLdifTypes.Dict].fail(
-                f"Invalid data_type '{data_type}'. Must be one of: attribute, objectclass, acl, entry"
-            )
+        return FlextResult[str | FlextLdifTypes.Dict].fail(
+            f"Invalid data_type '{data_type}'. Must be one of: attribute, objectclass, acl, entry"
+        )
+
+    def _extract_and_register_dns(self, data: FlextLdifTypes.Dict, data_type: DataType) -> None:
+        """Extract DNs from data and register with canonical case.
+
+        This method extracts DNs from various data types and registers them
+        with the DN registry to ensure case consistency.
+
+        Args:
+            data: Dictionary containing potential DN references
+            data_type: Type of data being processed
+
+        """
+        # Entry DN
+        if "dn" in data and isinstance(data["dn"], str):
+            self.dn_registry.register_dn(data["dn"])
+
+        # Group memberships
+        for field in ["member", "uniqueMember", "owner"]:
+            if field in data:
+                value = data[field]
+                if isinstance(value, str):
+                    self.dn_registry.register_dn(value)
+                elif isinstance(value, list):
+                    for item in value:
+                        if isinstance(item, str):
+                            self.dn_registry.register_dn(item)
+
+        # ACL by clauses (if present in parsed ACL data)
+        if data_type == "acl" and "by_clauses" in data:
+            by_clauses = data["by_clauses"]
+            if isinstance(by_clauses, list):
+                for clause in by_clauses:
+                    if isinstance(clause, dict) and "subject" in clause:
+                        subject = clause["subject"]
+                        # Extract DN from LDAP URL format: ldap:///cn=...,dc=...
+                        if isinstance(subject, str) and "ldap:///" in subject:
+                            dn_part = subject.split("ldap:///", 1)[1].split("?", 1)[0]
+                            if dn_part:
+                                self.dn_registry.register_dn(dn_part)
+
+    def _normalize_dns_in_data(self, data: FlextLdifTypes.Dict) -> FlextResult[FlextLdifTypes.Dict]:
+        """Normalize DN references in data to use canonical case.
+
+        Args:
+            data: Dictionary with potential DN references
+
+        Returns:
+            FlextResult with normalized data
+
+        """
+        return self.dn_registry.normalize_dn_references(data)
 
     def _convert_attribute(
         self,
-        source_quirk: Any,
-        target_quirk: Any,
+        source_quirk: object,
+        target_quirk: object,
         data: str | FlextLdifTypes.Dict,
-    ) -> FlextResult[str]:
+    ) -> FlextResult[str | FlextLdifTypes.Dict]:
         """Convert attribute from source to target quirk via RFC.
 
         Pipeline: parse → to_rfc → from_rfc → write
@@ -113,9 +185,9 @@ class QuirksConversionMatrix:
         try:
             # Step 1: Parse source format (if string)
             if isinstance(data, str):
-                parse_result = source_quirk.parse_attribute(data)
+                parse_result = source_quirk.parse_attribute(data)  # type: ignore[attr-defined]
                 if parse_result.is_failure:
-                    return FlextResult[str].fail(
+                    return FlextResult[str | FlextLdifTypes.Dict].fail(
                         f"Failed to parse source attribute: {parse_result.error}"
                     )
                 source_data = parse_result.unwrap()
@@ -123,39 +195,39 @@ class QuirksConversionMatrix:
                 source_data = data
 
             # Step 2: Convert source → RFC
-            to_rfc_result = source_quirk.convert_attribute_to_rfc(source_data)
+            to_rfc_result = source_quirk.convert_attribute_to_rfc(source_data)  # type: ignore[attr-defined]
             if to_rfc_result.is_failure:
-                return FlextResult[str].fail(
+                return FlextResult[str | FlextLdifTypes.Dict].fail(
                     f"Failed to convert source→RFC: {to_rfc_result.error}"
                 )
             rfc_data = to_rfc_result.unwrap()
 
             # Step 3: Convert RFC → target
-            from_rfc_result = target_quirk.convert_attribute_from_rfc(rfc_data)
+            from_rfc_result = target_quirk.convert_attribute_from_rfc(rfc_data)  # type: ignore[attr-defined]
             if from_rfc_result.is_failure:
-                return FlextResult[str].fail(
+                return FlextResult[str | FlextLdifTypes.Dict].fail(
                     f"Failed to convert RFC→target: {from_rfc_result.error}"
                 )
             target_data = from_rfc_result.unwrap()
 
             # Step 4: Write target format
-            write_result = target_quirk.write_attribute_to_rfc(target_data)
+            write_result = target_quirk.write_attribute_to_rfc(target_data)  # type: ignore[attr-defined]
             if write_result.is_failure:
-                return FlextResult[str].fail(
+                return FlextResult[str | FlextLdifTypes.Dict].fail(
                     f"Failed to write target format: {write_result.error}"
                 )
 
             return write_result
 
         except Exception as e:
-            return FlextResult[str].fail(f"Attribute conversion failed: {e}")
+            return FlextResult[str | FlextLdifTypes.Dict].fail(f"Attribute conversion failed: {e}")
 
     def _convert_objectclass(
         self,
-        source_quirk: Any,
-        target_quirk: Any,
+        source_quirk: object,
+        target_quirk: object,
         data: str | FlextLdifTypes.Dict,
-    ) -> FlextResult[str]:
+    ) -> FlextResult[str | FlextLdifTypes.Dict]:
         """Convert objectClass from source to target quirk via RFC.
 
         Pipeline: parse → to_rfc → from_rfc → write
@@ -163,9 +235,9 @@ class QuirksConversionMatrix:
         try:
             # Step 1: Parse source format (if string)
             if isinstance(data, str):
-                parse_result = source_quirk.parse_objectclass(data)
+                parse_result = source_quirk.parse_objectclass(data)  # type: ignore[attr-defined]
                 if parse_result.is_failure:
-                    return FlextResult[str].fail(
+                    return FlextResult[str | FlextLdifTypes.Dict].fail(
                         f"Failed to parse source objectClass: {parse_result.error}"
                     )
                 source_data = parse_result.unwrap()
@@ -173,42 +245,42 @@ class QuirksConversionMatrix:
                 source_data = data
 
             # Step 2: Convert source → RFC
-            to_rfc_result = source_quirk.convert_objectclass_to_rfc(source_data)
+            to_rfc_result = source_quirk.convert_objectclass_to_rfc(source_data)  # type: ignore[attr-defined]
             if to_rfc_result.is_failure:
-                return FlextResult[str].fail(
+                return FlextResult[str | FlextLdifTypes.Dict].fail(
                     f"Failed to convert source→RFC: {to_rfc_result.error}"
                 )
             rfc_data = to_rfc_result.unwrap()
 
             # Step 3: Convert RFC → target
-            from_rfc_result = target_quirk.convert_objectclass_from_rfc(rfc_data)
+            from_rfc_result = target_quirk.convert_objectclass_from_rfc(rfc_data)  # type: ignore[attr-defined]
             if from_rfc_result.is_failure:
-                return FlextResult[str].fail(
+                return FlextResult[str | FlextLdifTypes.Dict].fail(
                     f"Failed to convert RFC→target: {from_rfc_result.error}"
                 )
             target_data = from_rfc_result.unwrap()
 
             # Step 4: Write target format
-            write_result = target_quirk.write_objectclass_to_rfc(target_data)
+            write_result = target_quirk.write_objectclass_to_rfc(target_data)  # type: ignore[attr-defined]
             if write_result.is_failure:
-                return FlextResult[str].fail(
+                return FlextResult[str | FlextLdifTypes.Dict].fail(
                     f"Failed to write target format: {write_result.error}"
                 )
 
             return write_result
 
         except Exception as e:
-            return FlextResult[str].fail(f"ObjectClass conversion failed: {e}")
+            return FlextResult[str | FlextLdifTypes.Dict].fail(f"ObjectClass conversion failed: {e}")
 
     def _convert_acl(
         self,
-        source_quirk: Any,
-        target_quirk: Any,
+        source_quirk: object,
+        target_quirk: object,
         data: str | FlextLdifTypes.Dict,
-    ) -> FlextResult[str]:
+    ) -> FlextResult[str | FlextLdifTypes.Dict]:
         """Convert ACL from source to target quirk via RFC.
 
-        Pipeline: parse → to_rfc → from_rfc → write
+        Pipeline: parse → extract DNs → to_rfc → from_rfc → normalize DNs → write
         """
         try:
             # Access ACL quirk components
@@ -216,58 +288,69 @@ class QuirksConversionMatrix:
             target_acl_quirk = getattr(target_quirk, "acl", None)
 
             if source_acl_quirk is None:
-                return FlextResult[str].fail("Source quirk does not have ACL support")
+                return FlextResult[str | FlextLdifTypes.Dict].fail("Source quirk does not have ACL support")
             if target_acl_quirk is None:
-                return FlextResult[str].fail("Target quirk does not have ACL support")
+                return FlextResult[str | FlextLdifTypes.Dict].fail("Target quirk does not have ACL support")
 
             # Step 1: Parse source format (if string)
             if isinstance(data, str):
                 parse_result = source_acl_quirk.parse_acl(data)
                 if parse_result.is_failure:
-                    return FlextResult[str].fail(
+                    return FlextResult[str | FlextLdifTypes.Dict].fail(
                         f"Failed to parse source ACL: {parse_result.error}"
                     )
                 source_data = parse_result.unwrap()
             else:
                 source_data = data
 
-            # Step 2: Convert source → RFC
+            # Step 2: Extract and register DNs
+            self._extract_and_register_dns(source_data, "acl")
+
+            # Step 3: Convert source → RFC
             to_rfc_result = source_acl_quirk.convert_acl_to_rfc(source_data)
             if to_rfc_result.is_failure:
-                return FlextResult[str].fail(
+                return FlextResult[str | FlextLdifTypes.Dict].fail(
                     f"Failed to convert source→RFC: {to_rfc_result.error}"
                 )
             rfc_data = to_rfc_result.unwrap()
 
-            # Step 3: Convert RFC → target
+            # Step 4: Convert RFC → target
             from_rfc_result = target_acl_quirk.convert_acl_from_rfc(rfc_data)
             if from_rfc_result.is_failure:
-                return FlextResult[str].fail(
+                return FlextResult[str | FlextLdifTypes.Dict].fail(
                     f"Failed to convert RFC→target: {from_rfc_result.error}"
                 )
             target_data = from_rfc_result.unwrap()
 
-            # Step 4: Write target format
-            write_result = target_acl_quirk.write_acl_to_rfc(target_data)
+            # Step 5: Normalize DN references to canonical case
+            normalize_result = self._normalize_dns_in_data(target_data)
+            if normalize_result.is_failure:
+                return FlextResult[str | FlextLdifTypes.Dict].fail(
+                    f"Failed to normalize DN references: {normalize_result.error}"
+                )
+            normalized_data = normalize_result.unwrap()
+
+            # Step 6: Write target format
+            write_result = target_acl_quirk.write_acl_to_rfc(normalized_data)
             if write_result.is_failure:
-                return FlextResult[str].fail(
+                return FlextResult[str | FlextLdifTypes.Dict].fail(
                     f"Failed to write target format: {write_result.error}"
                 )
 
             return write_result
 
         except Exception as e:
-            return FlextResult[str].fail(f"ACL conversion failed: {e}")
+            return FlextResult[str | FlextLdifTypes.Dict].fail(f"ACL conversion failed: {e}")
 
     def _convert_entry(
         self,
-        source_quirk: Any,
-        target_quirk: Any,
+        source_quirk: object,
+        target_quirk: object,
         data: str | FlextLdifTypes.Dict,
-    ) -> FlextResult[str]:
+    ) -> FlextResult[str | FlextLdifTypes.Dict]:
         """Convert entry from source to target quirk via RFC.
 
-        Pipeline: parse → to_rfc → from_rfc → write
+        Pipeline: parse → extract DNs → to_rfc → from_rfc → normalize DNs → write
         """
         try:
             # Access Entry quirk components
@@ -275,58 +358,69 @@ class QuirksConversionMatrix:
             target_entry_quirk = getattr(target_quirk, "entry", None)
 
             if source_entry_quirk is None:
-                return FlextResult[str].fail("Source quirk does not have Entry support")
+                return FlextResult[str | FlextLdifTypes.Dict].fail("Source quirk does not have Entry support")
             if target_entry_quirk is None:
-                return FlextResult[str].fail("Target quirk does not have Entry support")
+                return FlextResult[str | FlextLdifTypes.Dict].fail("Target quirk does not have Entry support")
 
             # Step 1: Parse source format (if string)
             if isinstance(data, str):
                 # For entry, we need to parse LDIF - use basic parser first
                 # This is a simplified approach; real implementation may need full LDIF parsing
-                return FlextResult[str].fail(
+                return FlextResult[str | FlextLdifTypes.Dict].fail(
                     "String input for entry conversion not yet supported - pass parsed dict"
                 )
-            else:
-                source_data = data
+            source_data = data
 
-            # Step 2: Convert source → RFC
+            # Step 2: Extract and register DNs
+            self._extract_and_register_dns(source_data, "entry")
+
+            # Step 3: Convert source → RFC
             to_rfc_result = source_entry_quirk.convert_entry_to_rfc(source_data)
             if to_rfc_result.is_failure:
-                return FlextResult[str].fail(
+                return FlextResult[str | FlextLdifTypes.Dict].fail(
                     f"Failed to convert source→RFC: {to_rfc_result.error}"
                 )
             rfc_data = to_rfc_result.unwrap()
 
-            # Step 3: Convert RFC → target
+            # Step 4: Convert RFC → target
             from_rfc_result = target_entry_quirk.convert_entry_from_rfc(rfc_data)
             if from_rfc_result.is_failure:
-                return FlextResult[str].fail(
+                return FlextResult[str | FlextLdifTypes.Dict].fail(
                     f"Failed to convert RFC→target: {from_rfc_result.error}"
                 )
             target_data = from_rfc_result.unwrap()
 
-            # Step 4: Write target format
-            write_result = target_entry_quirk.write_entry_to_ldif(target_data)
+            # Step 5: Normalize DN references to canonical case
+            normalize_result = self._normalize_dns_in_data(target_data)
+            if normalize_result.is_failure:
+                return FlextResult[str | FlextLdifTypes.Dict].fail(
+                    f"Failed to normalize DN references: {normalize_result.error}"
+                )
+            normalized_data = normalize_result.unwrap()
+
+            # Step 6: Write target format
+            write_result = target_entry_quirk.write_entry_to_ldif(normalized_data)
             if write_result.is_failure:
-                return FlextResult[str].fail(
+                return FlextResult[str | FlextLdifTypes.Dict].fail(
                     f"Failed to write target format: {write_result.error}"
                 )
 
             return write_result
 
         except Exception as e:
-            return FlextResult[str].fail(f"Entry conversion failed: {e}")
+            return FlextResult[str | FlextLdifTypes.Dict].fail(f"Entry conversion failed: {e}")
 
     def batch_convert(
         self,
-        source_quirk: Any,
-        target_quirk: Any,
+        source_quirk: object,
+        target_quirk: object,
         data_type: DataType,
         data_list: list[str | FlextLdifTypes.Dict],
     ) -> FlextResult[list[str | FlextLdifTypes.Dict]]:
         """Convert multiple items from source to target quirk via RFC.
 
         This is a convenience method that applies convert() to a list of items.
+        DN registry is shared across all conversions to ensure case consistency.
 
         Args:
             source_quirk: Source quirk instance
@@ -343,6 +437,7 @@ class QuirksConversionMatrix:
             >>> if result.is_success:
             ...     converted = result.unwrap()
             ...     print(f"Converted {len(converted)} attributes")
+
         """
         try:
             converted = []
@@ -356,9 +451,9 @@ class QuirksConversionMatrix:
                     errors.append(f"Item {idx}: {result.error}")
 
             if errors:
-                error_msg = f"Batch conversion completed with {len(errors)} errors:\n" + "\n".join(errors[:5])
-                if len(errors) > 5:
-                    error_msg += f"\n... and {len(errors) - 5} more errors"
+                error_msg = f"Batch conversion completed with {len(errors)} errors:\n" + "\n".join(errors[:self.MAX_ERRORS_TO_SHOW])
+                if len(errors) > self.MAX_ERRORS_TO_SHOW:
+                    error_msg += f"\n... and {len(errors) - self.MAX_ERRORS_TO_SHOW} more errors"
                 return FlextResult[list[str | FlextLdifTypes.Dict]].fail(error_msg)
 
             return FlextResult[list[str | FlextLdifTypes.Dict]].ok(converted)
@@ -368,7 +463,43 @@ class QuirksConversionMatrix:
                 f"Batch conversion failed: {e}"
             )
 
-    def get_supported_conversions(self, quirk: Any) -> dict[str, bool]:
+    def validate_oud_conversion(self) -> FlextResult[bool]:
+        """Validate DN case consistency for OUD target conversion.
+
+        This should be called after batch conversions to OUD to ensure
+        no DN case conflicts exist that would cause OUD to reject the data.
+
+        Returns:
+            FlextResult[bool]: Validation result with any inconsistencies in metadata
+
+        Examples:
+            >>> matrix = QuirksConversionMatrix()
+            >>> # ... perform conversions ...
+            >>> result = matrix.validate_oud_conversion()
+            >>> if result.unwrap():
+            ...     print("DN consistency validated for OUD")
+            >>> else:
+            ...     print(f"Warning: {result.metadata['warning']}")
+
+        """
+        return self.dn_registry.validate_oud_consistency()
+
+    def reset_dn_registry(self) -> None:
+        """Clear DN registry for new conversion session.
+
+        Call this between independent conversion operations to avoid
+        DN case pollution from previous conversions.
+
+        Examples:
+            >>> matrix = QuirksConversionMatrix()
+            >>> # ... convert some entries ...
+            >>> matrix.reset_dn_registry()  # Start fresh
+            >>> # ... convert different entries ...
+
+        """
+        self.dn_registry.clear()
+
+    def get_supported_conversions(self, quirk: object) -> dict[str, bool]:
         """Check which data types a quirk supports for conversion.
 
         Args:
@@ -382,6 +513,7 @@ class QuirksConversionMatrix:
             >>> supported = matrix.get_supported_conversions(oud)
             >>> print(supported)
             {'attribute': True, 'objectclass': True, 'acl': True, 'entry': True}
+
         """
         support = {
             "attribute": False,
@@ -409,4 +541,4 @@ class QuirksConversionMatrix:
         return support
 
 
-__all__ = ["QuirksConversionMatrix", "DataType"]
+__all__ = ["DataType", "QuirksConversionMatrix"]

@@ -367,6 +367,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         Example:
             Input: {"oid": "2.16.840.1.113894.1.1.1", "name": "orclguid", "syntax": "1.3.6.1.4.1.1466.115.121.1.15"}
             Output: "( 2.16.840.1.113894.1.1.1 NAME 'orclguid' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+
         """
         try:
             # Check if we have metadata with original format for perfect round-trip
@@ -374,7 +375,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 metadata = attr_data["_metadata"]
                 if isinstance(metadata, FlextLdifModels.QuirkMetadata) and metadata.original_format:
                     return FlextResult[str].ok(metadata.original_format)
-                elif isinstance(metadata, dict) and "original_format" in metadata:
+                if isinstance(metadata, dict) and "original_format" in metadata:
                     return FlextResult[str].ok(str(metadata["original_format"]))
 
             # Build RFC 4512 attribute definition from scratch
@@ -457,6 +458,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         Example:
             Input: {"oid": "2.16.840.1.113894.2.1.1", "name": "orclContainer", "kind": "STRUCTURAL", "must": ["cn"], "may": ["description"]}
             Output: "( 2.16.840.1.113894.2.1.1 NAME 'orclContainer' STRUCTURAL MUST cn MAY description )"
+
         """
         try:
             # Check if we have metadata with original format for perfect round-trip
@@ -464,7 +466,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 metadata = oc_data["_metadata"]
                 if isinstance(metadata, FlextLdifModels.QuirkMetadata) and metadata.original_format:
                     return FlextResult[str].ok(metadata.original_format)
-                elif isinstance(metadata, dict) and "original_format" in metadata:
+                if isinstance(metadata, dict) and "original_format" in metadata:
                     return FlextResult[str].ok(str(metadata["original_format"]))
 
             # Build RFC 4512 objectClass definition from scratch
@@ -498,7 +500,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 parts.append(str(oc_data["kind"]))
 
             # Add MUST attributes (optional)
-            if "must" in oc_data and oc_data["must"]:
+            if oc_data.get("must"):
                 must_attrs = oc_data["must"]
                 if isinstance(must_attrs, list) and len(must_attrs) > 1:
                     # Multiple required attributes: "MUST ( cn $ sn )"
@@ -510,7 +512,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     parts.append(f"MUST {must_attrs}")
 
             # Add MAY attributes (optional)
-            if "may" in oc_data and oc_data["may"]:
+            if oc_data.get("may"):
                 may_attrs = oc_data["may"]
                 if isinstance(may_attrs, list) and len(may_attrs) > 1:
                     # Multiple optional attributes: "MAY ( description $ seeAlso )"
@@ -532,6 +534,53 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
         except Exception as e:
             return FlextResult[str].fail(f"Failed to write OID objectClass to RFC: {e}")
+
+    def extract_schemas_from_ldif(
+        self, ldif_content: str
+    ) -> FlextResult[FlextLdifTypes.Dict]:
+        """Extract and parse all schema definitions from LDIF content.
+
+        Strategy pattern: OID-specific approach to extract attributeTypes and objectClasses
+        from cn=schema LDIF entries, handling OID's format variations.
+
+        Args:
+            ldif_content: Raw LDIF content containing schema definitions
+
+        Returns:
+            FlextResult with dict containing 'attributes' and 'objectclasses' lists
+
+        """
+        try:
+            attributes = []
+            objectclasses = []
+
+            for raw_line in ldif_content.split('\n'):
+                line = raw_line.strip()
+                
+                # OID uses case-insensitive attribute names in LDIF
+                # Match: attributeTypes:, attributetypes:, or any case variation
+                if line.lower().startswith('attributetypes:'):
+                    attr_def = line.split(':', 1)[1].strip()
+                    result = self.parse_attribute(attr_def)
+                    if result.is_success:
+                        attributes.append(result.unwrap())
+                
+                # Match: objectClasses:, objectclasses:, or any case variation
+                elif line.lower().startswith('objectclasses:'):
+                    oc_def = line.split(':', 1)[1].strip()
+                    result = self.parse_objectclass(oc_def)
+                    if result.is_success:
+                        objectclasses.append(result.unwrap())
+
+            return FlextResult[FlextLdifTypes.Dict].ok({
+                "attributes": attributes,
+                "objectclasses": objectclasses
+            })
+
+        except Exception as e:
+            return FlextResult[FlextLdifTypes.Dict].fail(
+                f"OID schema extraction failed: {e}"
+            )
 
     def convert_attribute_from_rfc(
         self, rfc_data: FlextLdifTypes.Dict
@@ -773,6 +822,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             Example:
                 Input: {"type": "standard", "target": "entry", "by_clauses": [...]}
                 Output: "orclaci: access to entry by * (browse)"
+
             """
             try:
                 # Check if we have metadata with original format for perfect round-trip
@@ -780,7 +830,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     metadata = acl_data["_metadata"]
                     if isinstance(metadata, FlextLdifModels.QuirkMetadata) and metadata.original_format:
                         return FlextResult[str].ok(metadata.original_format)
-                    elif isinstance(metadata, dict) and "original_format" in metadata:
+                    if isinstance(metadata, dict) and "original_format" in metadata:
                         return FlextResult[str].ok(str(metadata["original_format"]))
 
                 # Build OID ACL from scratch
@@ -827,6 +877,75 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
             except Exception as e:
                 return FlextResult[str].fail(f"Failed to write OID ACL to RFC: {e}")
+
+        def extract_acls_from_ldif(self, ldif_content: str) -> FlextResult[list[FlextLdifTypes.Dict]]:
+            """Strategy pattern: OID-specific approach to extract ACLs from LDIF entries.
+
+            OID ACLs use:
+            - orclaci: for OID standard ACLs
+            - orclentrylevelaci: for entry-level ACLs
+
+            Args:
+                ldif_content: LDIF content containing ACL definitions
+
+            Returns:
+                FlextResult containing list of parsed ACL dictionaries
+
+            Examples:
+                >>> ldif_text = '''
+                ... dn: cn=OracleContext,dc=example,dc=com
+                ... orclaci: access to entry by * (browse)
+                ... orclentrylevelaci: access to attr=userPassword by self (write)
+                ... '''
+                >>> result = oid_quirk.acl.extract_acls_from_ldif(ldif_text)
+                >>> acls = result.unwrap()
+                >>> len(acls)
+                2
+
+            """
+            try:
+                acls = []
+                current_acl: list[str] = []
+                in_multiline_acl = False
+
+                for line in ldif_content.split("\n"):
+                    stripped = line.strip()
+
+                    # Detect OID ACL start (orclaci: or orclentrylevelaci:)
+                    if stripped.lower().startswith("orclaci:") or stripped.lower().startswith(
+                        "orclentrylevelaci:"
+                    ):
+                        # Parse previous ACL if exists
+                        if current_acl:
+                            acl_text = "\n".join(current_acl)
+                            result = self.parse_acl(acl_text)
+                            if result.is_success:
+                                acls.append(result.unwrap())
+                            current_acl = []
+
+                        current_acl.append(stripped)
+                        # Check if ACL continues on next line (doesn't end with complete structure)
+                        in_multiline_acl = not stripped.rstrip().endswith(")")
+
+                    # Continuation line for multiline ACL
+                    elif in_multiline_acl and stripped:
+                        current_acl.append(stripped)
+                        if stripped.rstrip().endswith(")"):
+                            in_multiline_acl = False
+
+                # Parse any remaining ACL
+                if current_acl:
+                    acl_text = "\n".join(current_acl)
+                    result = self.parse_acl(acl_text)
+                    if result.is_success:
+                        acls.append(result.unwrap())
+
+                return FlextResult[list[FlextLdifTypes.Dict]].ok(acls)
+
+            except Exception as e:
+                return FlextResult[list[FlextLdifTypes.Dict]].fail(
+                    f"Failed to extract OID ACLs from LDIF: {e}"
+                )
 
     class EntryQuirk(FlextLdifQuirksBaseEntryQuirk):
         """Oracle OID entry quirk (nested).
@@ -1006,7 +1125,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         def write_entry_to_ldif(
             self, entry_data: FlextLdifTypes.Dict
         ) -> FlextResult[str]:
-            """Write OID entry data to standard LDIF string format.
+            r"""Write OID entry data to standard LDIF string format.
 
             Converts parsed entry dictionary to LDIF format string.
             Handles Oracle-specific attributes like orclaci, orclguid, etc.
@@ -1019,7 +1138,8 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
             Example:
                 Input: {"dn": "cn=test,dc=example,dc=com", "cn": ["test"], "objectClass": ["person"]}
-                Output: "dn: cn=test,dc=example,dc=com\\ncn: test\\nobjectClass: person\\n"
+                Output: "dn: cn=test,dc=example,dc=com\ncn: test\nobjectClass: person\n"
+
             """
             try:
                 # Check for required DN field
@@ -1032,7 +1152,6 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 # Get attribute ordering from metadata if available
                 attr_order = None
                 if "_metadata" in entry_data:
-                    from flext_ldif.models import FlextLdifModels
                     metadata = entry_data["_metadata"]
                     if isinstance(metadata, FlextLdifModels.QuirkMetadata):
                         attr_order = metadata.extensions.get("attribute_order")
@@ -1040,37 +1159,34 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                         attr_order = metadata.get("extensions", {}).get("attribute_order")
 
                 # Determine attribute iteration order
+                # Define excluded keys as a set for efficient membership testing
+                excluded_keys = {
+                    FlextLdifConstants.DictKeys.DN,
+                    "_metadata",
+                    FlextLdifConstants.DictKeys.SERVER_TYPE,
+                    FlextLdifConstants.DictKeys.HAS_OID_ACLS,
+                }
+
                 if attr_order:
                     # Use preserved ordering
                     attrs_to_process = [
                         (key, entry_data[key])
                         for key in attr_order
-                        if key in entry_data and key not in [
-                            FlextLdifConstants.DictKeys.DN,
-                            "_metadata",
-                            FlextLdifConstants.DictKeys.SERVER_TYPE,
-                            FlextLdifConstants.DictKeys.HAS_OID_ACLS
-                        ]
+                        if key in entry_data and key not in excluded_keys
                     ]
                 else:
                     # Default ordering: filter out special keys
                     attrs_to_process = [
                         (key, value)
                         for key, value in entry_data.items()
-                        if key not in [
-                            FlextLdifConstants.DictKeys.DN,
-                            "_metadata",
-                            FlextLdifConstants.DictKeys.SERVER_TYPE,
-                            FlextLdifConstants.DictKeys.HAS_OID_ACLS
-                        ]
+                        if key not in excluded_keys
                     ]
 
                 # Write attributes
                 for attr_name, attr_value in attrs_to_process:
                     # Handle both list and single values
                     if isinstance(attr_value, list):
-                        for value in attr_value:
-                            ldif_lines.append(f"{attr_name}: {value}")
+                        ldif_lines.extend(f"{attr_name}: {value}" for value in attr_value)
                     else:
                         ldif_lines.append(f"{attr_name}: {attr_value}")
 
@@ -1081,6 +1197,155 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
             except Exception as e:
                 return FlextResult[str].fail(f"Failed to write OID entry to LDIF: {e}")
+
+        def extract_entries_from_ldif(
+            self, ldif_content: str
+        ) -> FlextResult[list[FlextLdifTypes.Dict]]:
+            """Strategy pattern: OID-specific approach to extract entries from LDIF.
+
+            Handles:
+            - DN parsing with OID-specific contexts (cn=OracleContext, etc.)
+            - Continuation lines (lines starting with space)
+            - Multi-valued attributes
+            - Base64 encoded values (:: marker)
+            - OID-specific objectClasses and attributes
+
+            Args:
+                ldif_content: LDIF content containing directory entries
+
+            Returns:
+                FlextResult containing list of parsed entry dictionaries
+
+            Examples:
+                >>> ldif_text = '''
+                ... dn: cn=OracleContext,dc=example,dc=com
+                ... objectClass: orclContext
+                ... orclVersion: 90600
+                ... cn: OracleContext
+                ...
+                ... dn: cn=users,cn=OracleContext,dc=example,dc=com
+                ... objectClass: organizationalUnit
+                ... cn: users
+                ... '''
+                >>> result = oid_quirk.entry.extract_entries_from_ldif(ldif_text)
+                >>> entries = result.unwrap()
+                >>> len(entries)
+                2
+
+            """
+            try:
+                entries = []
+                current_entry: FlextLdifTypes.Dict = {}
+                current_attr: str | None = None
+                current_values: list[str] = []
+
+                for line in ldif_content.split("\n"):
+                    # Empty line indicates end of entry
+                    if not line.strip():
+                        if current_entry and "dn" in current_entry:
+                            # Save last attribute if exists
+                            if current_attr and current_values:
+                                if current_attr in current_entry:
+                                    existing_value = current_entry[current_attr]
+                                    if isinstance(existing_value, list):
+                                        existing_value.extend(current_values)
+                                    else:
+                                        current_entry[current_attr] = [
+                                            existing_value,
+                                            *current_values,
+                                        ]
+                                else:
+                                    current_entry[current_attr] = (
+                                        current_values if len(current_values) > 1 else current_values[0]
+                                    )
+
+                            # Process entry
+                            dn = str(current_entry.pop("dn"))
+                            result = self.process_entry(dn, current_entry)
+                            if result.is_success:
+                                entries.append(result.unwrap())
+
+                            # Reset for next entry
+                            current_entry = {}
+                            current_attr = None
+                            current_values = []
+                        continue
+
+                    # Skip comments
+                    if line.startswith("#"):
+                        continue
+
+                    # Continuation line (starts with space)
+                    if line.startswith(" ") and current_attr:
+                        if current_values:
+                            # Append continuation to last value
+                            current_values[-1] += line[1:]
+                        continue
+
+                    # New attribute line
+                    if ":" in line:
+                        # Save previous attribute
+                        if current_attr and current_values:
+                            if current_attr in current_entry:
+                                existing_value = current_entry[current_attr]
+                                if isinstance(existing_value, list):
+                                    existing_value.extend(current_values)
+                                else:
+                                    current_entry[current_attr] = [
+                                        existing_value,
+                                        *current_values,
+                                    ]
+                            else:
+                                current_entry[current_attr] = (
+                                    current_values if len(current_values) > 1 else current_values[0]
+                                )
+                            current_values = []
+
+                        # Parse new attribute
+                        if "::" in line:
+                            # Base64 encoded value
+                            parts = line.split("::", 1)
+                            attr_name = parts[0].strip().lower()
+                            attr_value = parts[1].strip() if len(parts) > 1 else ""
+                            # Note: Real implementation should decode base64
+                            # For now, preserve the marker for downstream processing
+                            attr_value = f"base64:{attr_value}"
+                        else:
+                            parts = line.split(":", 1)
+                            attr_name = parts[0].strip().lower()
+                            attr_value = parts[1].strip() if len(parts) > 1 else ""
+
+                        current_attr = attr_name
+                        current_values = [attr_value]
+
+                # Handle last entry if file doesn't end with blank line
+                if current_entry and "dn" in current_entry:
+                    if current_attr and current_values:
+                        if current_attr in current_entry:
+                            existing_value = current_entry[current_attr]
+                            if isinstance(existing_value, list):
+                                existing_value.extend(current_values)
+                            else:
+                                current_entry[current_attr] = [
+                                    existing_value,
+                                    *current_values,
+                                ]
+                        else:
+                            current_entry[current_attr] = (
+                                current_values if len(current_values) > 1 else current_values[0]
+                            )
+
+                    dn = str(current_entry.pop("dn"))
+                    result = self.process_entry(dn, current_entry)
+                    if result.is_success:
+                        entries.append(result.unwrap())
+
+                return FlextResult[list[FlextLdifTypes.Dict]].ok(entries)
+
+            except Exception as e:
+                return FlextResult[list[FlextLdifTypes.Dict]].fail(
+                    f"Failed to extract OID entries from LDIF: {e}"
+                )
 
 
 __all__ = [

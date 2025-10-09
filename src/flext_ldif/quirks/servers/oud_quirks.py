@@ -552,6 +552,53 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 f"RFC→OUD objectClass conversion failed: {e}"
             )
 
+    def extract_schemas_from_ldif(
+        self, ldif_content: str
+    ) -> FlextResult[FlextLdifTypes.Dict]:
+        """Extract and parse all schema definitions from LDIF content.
+
+        Strategy pattern: OUD-specific approach to extract attributeTypes and objectClasses
+        from cn=schema LDIF entries, handling OUD's case variations.
+
+        Args:
+            ldif_content: Raw LDIF content containing schema definitions
+
+        Returns:
+            FlextResult with dict containing 'attributes' and 'objectclasses' lists
+
+        """
+        try:
+            attributes = []
+            objectclasses = []
+
+            for line in ldif_content.split('\n'):
+                line = line.strip()
+                
+                # OUD uses case-insensitive attribute names in LDIF
+                # Match: attributeTypes:, attributetypes:, or any case variation
+                if line.lower().startswith('attributetypes:'):
+                    attr_def = line.split(':', 1)[1].strip()
+                    result = self.parse_attribute(attr_def)
+                    if result.is_success:
+                        attributes.append(result.unwrap())
+                
+                # Match: objectClasses:, objectclasses:, or any case variation
+                elif line.lower().startswith('objectclasses:'):
+                    oc_def = line.split(':', 1)[1].strip()
+                    result = self.parse_objectclass(oc_def)
+                    if result.is_success:
+                        objectclasses.append(result.unwrap())
+
+            return FlextResult[FlextLdifTypes.Dict].ok({
+                "attributes": attributes,
+                "objectclasses": objectclasses
+            })
+
+        except Exception as e:
+            return FlextResult[FlextLdifTypes.Dict].fail(
+                f"OUD schema extraction failed: {e}"
+            )
+
     class AclQuirk(FlextLdifQuirksBaseAclQuirk):
         """Oracle OUD ACL quirk (nested).
 
@@ -694,8 +741,9 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                         oudacl_data["bind_rules"] = bind_rules
 
                 # Preserve original format in metadata with extensions
-                from flext_ldif.models import FlextLdifModels
                 from typing import Any
+
+                from flext_ldif.models import FlextLdifModels
                 metadata_extensions: dict[str, Any] = {}
                 if line_breaks:
                     metadata_extensions["line_breaks"] = line_breaks
@@ -909,6 +957,68 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             except Exception as e:
                 return FlextResult[str].fail(f"Failed to write ACL to RFC: {e}")
 
+        def extract_acls_from_ldif(
+            self, ldif_content: str
+        ) -> FlextResult[list[FlextLdifTypes.Dict]]:
+            """Extract and parse all ACL definitions from LDIF content.
+
+            Strategy pattern: OUD-specific approach to extract ACIs from LDIF entries.
+
+            Args:
+                ldif_content: Raw LDIF content containing ACL definitions
+
+            Returns:
+                FlextResult with list of parsed ACL dictionaries
+
+            """
+            try:
+                acls = []
+                current_aci = []
+                in_multiline_aci = False
+
+                for line in ldif_content.split('\n'):
+                    stripped = line.strip()
+                    
+                    # Detect ACI start (case-insensitive)
+                    if stripped.lower().startswith('aci:'):
+                        if current_aci:
+                            # Parse accumulated multiline ACI
+                            aci_text = '\n'.join(current_aci)
+                            result = self.parse_acl(aci_text)
+                            if result.is_success:
+                                acls.append(result.unwrap())
+                            current_aci = []
+                        
+                        current_aci.append(stripped)
+                        # Check if this ACI continues on next lines (no closing parenthesis)
+                        in_multiline_aci = not stripped.rstrip().endswith(')')
+                    
+                    elif in_multiline_aci and stripped:
+                        # Continuation of multiline ACI
+                        current_aci.append(stripped)
+                        if stripped.rstrip().endswith(')'):
+                            in_multiline_aci = False
+                    
+                    # Also handle ds-cfg format
+                    elif stripped.lower().startswith('ds-cfg-'):
+                        result = self.parse_acl(stripped)
+                        if result.is_success:
+                            acls.append(result.unwrap())
+
+                # Parse any remaining ACI
+                if current_aci:
+                    aci_text = '\n'.join(current_aci)
+                    result = self.parse_acl(aci_text)
+                    if result.is_success:
+                        acls.append(result.unwrap())
+
+                return FlextResult[list[FlextLdifTypes.Dict]].ok(acls)
+
+            except Exception as e:
+                return FlextResult[list[FlextLdifTypes.Dict]].fail(
+                    f"OUD ACL extraction failed: {e}"
+                )
+
     class EntryQuirk(FlextLdifQuirksBaseEntryQuirk):
         """Oracle OUD entry quirk (nested).
 
@@ -977,8 +1087,9 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 processed_entry.update(attributes)
 
                 # Preserve metadata for DN quirks and attribute ordering
-                from flext_ldif.models import FlextLdifModels
                 from typing import Any
+
+                from flext_ldif.models import FlextLdifModels
                 metadata_extensions: dict[str, Any] = {}
 
                 # Detect DN spaces quirk (spaces after commas)
@@ -1128,6 +1239,114 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
             except Exception as e:
                 return FlextResult[str].fail(f"Failed to write entry to LDIF: {e}")
+
+        def extract_entries_from_ldif(
+            self, ldif_content: str
+        ) -> FlextResult[list[FlextLdifTypes.Dict]]:
+            """Extract and parse all directory entries from LDIF content.
+
+            Strategy pattern: OUD-specific approach to extract entries from LDIF.
+
+            Args:
+                ldif_content: Raw LDIF content containing directory entries
+
+            Returns:
+                FlextResult with list of parsed entry dictionaries
+
+            """
+            try:
+                entries = []
+                current_entry: FlextLdifTypes.Dict = {}
+                current_attr: str | None = None
+                current_values: list[str] = []
+
+                for line in ldif_content.split('\n'):
+                    # Empty line indicates end of entry
+                    if not line.strip():
+                        if current_entry:
+                            # Save any pending attribute
+                            if current_attr and current_values:
+                                if len(current_values) == 1:
+                                    current_entry[current_attr] = current_values[0]
+                                else:
+                                    current_entry[current_attr] = current_values
+                                current_attr = None
+                                current_values = []
+                            
+                            # Process complete entry
+                            if "dn" in current_entry:
+                                dn = str(current_entry.pop("dn"))
+                                result = self.process_entry(dn, current_entry)
+                                if result.is_success:
+                                    entries.append(result.unwrap())
+                            
+                            current_entry = {}
+                        continue
+                    
+                    # Skip comments
+                    if line.startswith('#'):
+                        continue
+                    
+                    # Continuation line (starts with space)
+                    if line.startswith(' ') and current_attr:
+                        # Append to current attribute value
+                        if current_values:
+                            current_values[-1] += line[1:]  # Remove leading space
+                        continue
+                    
+                    # New attribute line
+                    if ':' in line:
+                        # Save previous attribute
+                        if current_attr and current_values:
+                            if len(current_values) == 1:
+                                current_entry[current_attr] = current_values[0]
+                            else:
+                                current_entry[current_attr] = current_values
+                        
+                        # Parse new attribute
+                        attr_name, attr_value = line.split(':', 1)
+                        attr_name = attr_name.strip()
+                        attr_value = attr_value.strip()
+                        
+                        # Handle base64 encoding (::)
+                        if attr_value.startswith(':'):
+                            attr_value = attr_value[1:].strip()
+                            # Note: Not decoding base64 here, just storing raw
+                        
+                        # Check if this attribute already exists (multi-valued)
+                        if attr_name in current_entry:
+                            # Convert to list if needed
+                            existing = current_entry[attr_name]
+                            if not isinstance(existing, list):
+                                current_entry[attr_name] = [existing, attr_value]
+                            else:
+                                existing.append(attr_value)
+                            current_attr = None
+                            current_values = []
+                        else:
+                            current_attr = attr_name
+                            current_values = [attr_value]
+
+                # Process final entry
+                if current_entry:
+                    if current_attr and current_values:
+                        if len(current_values) == 1:
+                            current_entry[current_attr] = current_values[0]
+                        else:
+                            current_entry[current_attr] = current_values
+                    
+                    if "dn" in current_entry:
+                        dn = str(current_entry.pop("dn"))
+                        result = self.process_entry(dn, current_entry)
+                        if result.is_success:
+                            entries.append(result.unwrap())
+
+                return FlextResult[list[FlextLdifTypes.Dict]].ok(entries)
+
+            except Exception as e:
+                return FlextResult[list[FlextLdifTypes.Dict]].fail(
+                    f"OUD entry extraction failed: {e}"
+                )
 
 
 __all__ = ["FlextLdifQuirksServersOud"]

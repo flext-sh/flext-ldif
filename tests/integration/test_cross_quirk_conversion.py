@@ -6,15 +6,20 @@ Tests conversion between different LDAP server quirk types:
 - Write with target quirk (e.g., OUD)
 - Validate conversion accuracy
 
+Also tests the QuirksConversionMatrix facade for universal translation.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.quirks.conversion_matrix import QuirksConversionMatrix
 from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
 from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
 from tests.fixtures.loader import FlextLdifFixtures
@@ -150,7 +155,7 @@ class TestOidToOudAclConversion:
         # Parse with OID ACL quirk
         parse_result = oid_acl_quirk.parse_acl(oid_acl)
         assert parse_result.is_success, f"OID ACL parse failed: {parse_result.error}"
-        parsed_data = parse_result.unwrap()
+        parsed_data = cast(dict[str, object], parse_result.unwrap())
 
         # Verify parsed data structure
         assert parsed_data["type"] == "standard"  # orclaci uses "standard" type
@@ -266,8 +271,147 @@ class TestOidToOudIntegrationConversion:
                 break
 
 
+class TestQuirksConversionMatrixFacade:
+    """Test QuirksConversionMatrix facade for universal translation."""
+
+    @pytest.fixture
+    def matrix(self) -> QuirksConversionMatrix:
+        """Create conversion matrix instance."""
+        return QuirksConversionMatrix()
+
+    @pytest.fixture
+    def oud(self) -> FlextLdifQuirksServersOud:
+        """Create OUD quirk instance."""
+        return FlextLdifQuirksServersOud(
+            server_type=FlextLdifConstants.ServerTypes.OUD
+        )
+
+    @pytest.fixture
+    def oid(self) -> FlextLdifQuirksServersOid:
+        """Create OID quirk instance."""
+        return FlextLdifQuirksServersOid(
+            server_type=FlextLdifConstants.ServerTypes.OID
+        )
+
+    def test_matrix_instantiation(self, matrix: QuirksConversionMatrix) -> None:
+        """Test that conversion matrix can be instantiated."""
+        assert matrix is not None
+
+    def test_get_supported_conversions(
+        self, matrix: QuirksConversionMatrix, oud: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test checking supported conversions."""
+        supported = matrix.get_supported_conversions(oud)
+
+        # Schema support should be detected
+        assert supported["attribute"] is True
+        assert supported["objectclass"] is True
+
+        # ACL and Entry are nested classes, not directly accessible
+        # So they appear as not supported in this check
+        assert supported["acl"] is False  # Nested class pattern
+        assert supported["entry"] is False  # Nested class pattern
+
+    def test_convert_attribute_oud_to_oid(
+        self,
+        matrix: QuirksConversionMatrix,
+        oud: FlextLdifQuirksServersOud,
+        oid: FlextLdifQuirksServersOid,
+    ) -> None:
+        """Test converting attribute via matrix facade."""
+        oud_attr = (
+            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' "
+            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
+        )
+
+        result = matrix.convert(oud, oid, "attribute", oud_attr)
+
+        assert result.is_success, f"Conversion failed: {result.error}"
+        oid_attr = result.unwrap()
+        assert "2.16.840.1.113894.1.1.1" in oid_attr
+        assert "orclGUID" in oid_attr
+
+    def test_convert_objectclass_oid_to_oud(
+        self,
+        matrix: QuirksConversionMatrix,
+        oud: FlextLdifQuirksServersOud,
+        oid: FlextLdifQuirksServersOid,
+    ) -> None:
+        """Test converting objectClass via matrix facade."""
+        oid_oc = (
+            "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' "
+            "SUP top STRUCTURAL MUST cn )"
+        )
+
+        result = matrix.convert(oid, oud, "objectclass", oid_oc)
+
+        assert result.is_success, f"Conversion failed: {result.error}"
+        oud_oc = result.unwrap()
+        assert "2.16.840.1.113894.1.2.1" in oud_oc
+        assert "orclContext" in oud_oc
+
+    def test_batch_convert_attributes(
+        self,
+        matrix: QuirksConversionMatrix,
+        oud: FlextLdifQuirksServersOud,
+        oid: FlextLdifQuirksServersOid,
+    ) -> None:
+        """Test batch conversion via matrix facade."""
+        oud_attrs = [
+            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )",
+            "( 2.16.840.1.113894.1.1.2 NAME 'orclDBName' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+        ]
+
+        result = matrix.batch_convert(oud, oid, "attribute", oud_attrs)
+
+        assert result.is_success, f"Batch conversion failed: {result.error}"
+        oid_attrs = result.unwrap()
+        assert len(oid_attrs) == 2
+        assert "orclGUID" in oid_attrs[0]
+        assert "orclDBName" in oid_attrs[1]
+
+    def test_bidirectional_conversion(
+        self,
+        matrix: QuirksConversionMatrix,
+        oud: FlextLdifQuirksServersOud,
+        oid: FlextLdifQuirksServersOid,
+    ) -> None:
+        """Test bidirectional conversion OUD ↔ OID."""
+        original = (
+            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' "
+            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
+        )
+
+        # OUD → OID
+        oid_result = matrix.convert(oud, oid, "attribute", original)
+        assert oid_result.is_success
+        oid_attr = oid_result.unwrap()
+
+        # OID → OUD
+        oud_result = matrix.convert(oid, oud, "attribute", oid_attr)
+        assert oud_result.is_success
+        roundtrip = oud_result.unwrap()
+
+        # Validate semantic equivalence
+        assert "2.16.840.1.113894.1.1.1" in roundtrip
+        assert "orclGUID" in roundtrip
+
+    def test_invalid_data_type(
+        self,
+        matrix: QuirksConversionMatrix,
+        oud: FlextLdifQuirksServersOud,
+        oid: FlextLdifQuirksServersOid,
+    ) -> None:
+        """Test error handling for invalid data type."""
+        result = matrix.convert(oud, oid, "invalid", "test")  # type: ignore[arg-type]
+
+        assert result.is_failure
+        assert "Invalid data_type" in result.error
+
+
 __all__ = [
     "TestOidToOudAclConversion",
     "TestOidToOudIntegrationConversion",
     "TestOidToOudSchemaConversion",
+    "TestQuirksConversionMatrixFacade",
 ]

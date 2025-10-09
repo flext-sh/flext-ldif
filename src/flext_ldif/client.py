@@ -549,34 +549,52 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         })
 
     def filter_by_objectclass(
-        self, entries: list[FlextLdifModels.Entry], objectclass: str
+        self,
+        entries: list[FlextLdifModels.Entry],
+        objectclass: str | tuple[str, ...],
+        required_attributes: list[str] | None = None,
+        mode: str = "include",
+        mark_excluded: bool = False,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Filter entries by object class.
+        """Filter entries by object class with optional required attributes.
+
+        Enhanced version that supports:
+        - Multiple objectClasses (tuple)
+        - Required attribute validation
+        - Include/exclude modes
+        - Exclusion metadata marking
 
         Args:
             entries: List of LDIF entries to filter
-            objectclass: Object class to filter by
+            objectclass: Single objectClass string or tuple of objectClasses
+            required_attributes: Optional list of required attributes (all must be present)
+            mode: "include" to keep matching entries, "exclude" to remove them
+            mark_excluded: If True, mark excluded entries with metadata
 
         Returns:
             FlextResult containing filtered entries
 
+        Example:
+            >>> # Simple filtering (backward compatible)
+            >>> result = client.filter_by_objectclass(entries, "inetOrgPerson")
+            >>>
+            >>> # Advanced filtering with required attributes
+            >>> result = client.filter_by_objectclass(
+            ...     entries,
+            ...     objectclass=("inetOrgPerson", "person"),
+            ...     required_attributes=["cn", "sn", "mail"]
+            ... )
+
         """
-        try:
-            filtered = [
-                entry
-                for entry in entries
-                if objectclass.lower()
-                in [
-                    obj_class.lower()
-                    for obj_class in (
-                        entry.get_attribute(FlextLdifConstants.DictKeys.OBJECTCLASS)
-                        or []
-                    )
-                ]
-            ]
-            return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
-        except Exception as e:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(f"Filter failed: {e}")
+        from flext_ldif.filters import FlextLdifFilters
+
+        return FlextLdifFilters.filter_entries_by_objectclass(
+            entries=entries,
+            objectclass=objectclass,
+            required_attributes=required_attributes,
+            mode=mode,
+            mark_excluded=mark_excluded,
+        )
 
     def filter_persons(
         self, entries: list[FlextLdifModels.Entry]
@@ -591,6 +609,223 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
         """
         return self.filter_by_objectclass(entries, "person")
+
+    def filter_by_dn_pattern(
+        self,
+        entries: list[FlextLdifModels.Entry],
+        pattern: str,
+        mode: str = "include",
+        mark_excluded: bool = True,
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Filter entries by DN wildcard pattern.
+
+        Uses fnmatch for pattern matching. Supports wildcards:
+        - * (matches any sequence of characters)
+        - ? (matches any single character)
+        - [seq] (matches any character in seq)
+        - [!seq] (matches any character not in seq)
+
+        Args:
+            entries: List of LDIF entries to filter
+            pattern: DN wildcard pattern (e.g., "*,ou=users,dc=example,dc=com")
+            mode: "include" to keep matching entries, "exclude" to remove them
+            mark_excluded: If True, mark excluded entries with metadata
+
+        Returns:
+            FlextResult containing filtered entries
+
+        Example:
+            >>> result = client.filter_by_dn_pattern(
+            ...     entries,
+            ...     pattern="*,dc=ctbc,dc=com",
+            ...     mode="include"
+            ... )
+
+        """
+        from flext_ldif.filters import FlextLdifFilters
+
+        return FlextLdifFilters.filter_entries_by_dn(
+            entries=entries,
+            pattern=pattern,
+            mode=mode,
+            mark_excluded=mark_excluded,
+        )
+
+    def filter_schema_by_oid(
+        self,
+        schema_items: list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass],
+        oid_whitelist: list[str],
+        mark_excluded: bool = True,
+    ) -> FlextResult[list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]]:
+        """Filter schema attributes/objectClasses by OID pattern whitelist.
+
+        Uses fnmatch for OID pattern matching. Only items matching whitelist patterns
+        are included. Supports wildcards in OID patterns (e.g., "1.3.6.1.4.1.111.*").
+
+        Args:
+            schema_items: List of schema attributes or objectClasses
+            oid_whitelist: List of OID patterns to whitelist (e.g., ["1.3.6.1.4.1.111.*"])
+            mark_excluded: If True, mark excluded items with metadata
+
+        Returns:
+            FlextResult containing filtered schema items
+
+        Example:
+            >>> result = client.filter_schema_by_oid(
+            ...     schema_attributes,
+            ...     oid_whitelist=["1.3.6.1.4.1.111.*", "2.16.840.1.113894.*"]
+            ... )
+
+        """
+        from flext_ldif.filters import FlextLdifFilters
+
+        try:
+            filtered: list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass] = []
+
+            for item in schema_items:
+                oid = item.oid if hasattr(item, "oid") else ""
+
+                # Check if OID matches any whitelist pattern
+                matches = FlextLdifFilters.matches_oid_pattern(oid, oid_whitelist)
+
+                if matches:
+                    filtered.append(item)
+                elif mark_excluded:
+                    # Mark as excluded and include in results
+                    criteria = FlextLdifModels.FilterCriteria(
+                        filter_type="oid_pattern",
+                        whitelist=oid_whitelist,
+                        mode="include",
+                    )
+
+                    # Create or update metadata
+                    from datetime import UTC, datetime
+                    exclusion_info = FlextLdifModels.ExclusionInfo(
+                        excluded=True,
+                        exclusion_reason=f"OID not in whitelist: {oid}",
+                        filter_criteria=criteria,
+                        timestamp=datetime.now(UTC).isoformat(),
+                    )
+
+                    if item.metadata is None:
+                        item.metadata = FlextLdifModels.QuirkMetadata(
+                            extensions={"exclusion_info": exclusion_info.model_dump()}
+                        )
+                    else:
+                        item.metadata.extensions["exclusion_info"] = exclusion_info.model_dump()
+
+                    filtered.append(item)
+
+            return FlextResult[
+                list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]
+            ].ok(filtered)
+
+        except Exception as e:
+            return FlextResult[
+                list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]
+            ].fail(f"Failed to filter schema by OID: {e}")
+
+    def filter_by_attributes(
+        self,
+        entries: list[FlextLdifModels.Entry],
+        attributes: list[str],
+        mode: str = "include",
+        match_all: bool = False,
+        mark_excluded: bool = True,
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Filter entries by attribute presence.
+
+        Args:
+            entries: List of LDIF entries to filter
+            attributes: List of attribute names to check
+            mode: "include" to keep entries with attributes, "exclude" to remove them
+            match_all: If True, entry must have ALL attributes; if False, ANY attribute
+            mark_excluded: If True, mark excluded entries with metadata
+
+        Returns:
+            FlextResult containing filtered entries
+
+        Example:
+            >>> result = client.filter_by_attributes(
+            ...     entries,
+            ...     attributes=["orclguid", "modifytimestamp"],
+            ...     mode="exclude"  # Remove entries with these attributes
+            ... )
+
+        """
+        from flext_ldif.filters import FlextLdifFilters
+
+        return FlextLdifFilters.filter_entries_by_attributes(
+            entries=entries,
+            attributes=attributes,
+            mode=mode,
+            match_all=match_all,
+            mark_excluded=mark_excluded,
+        )
+
+    def categorize_entries(
+        self,
+        entries: list[FlextLdifModels.Entry],
+        user_objectclasses: tuple[str, ...] = ("inetOrgPerson", "person", "organizationalPerson"),
+        group_objectclasses: tuple[str, ...] = ("groupOfNames", "groupOfUniqueNames", "posixGroup"),
+        container_objectclasses: tuple[str, ...] = ("organizationalUnit", "organization", "domain"),
+    ) -> FlextResult[FlextLdifModels.CategorizedEntries]:
+        """Categorize entries into users, groups, containers, and uncategorized.
+
+        Categorizes entries based on their objectClass attributes. Checks categories
+        in priority order: users first, then groups, then containers. Any entry not
+        matching these categories is marked as uncategorized.
+
+        Args:
+            entries: List of LDIF entries to categorize
+            user_objectclasses: Tuple of user objectClass names
+            group_objectclasses: Tuple of group objectClass names
+            container_objectclasses: Tuple of container objectClass names
+
+        Returns:
+            FlextResult containing CategorizedEntries with entries organized by category
+
+        Example:
+            >>> from client-a_oud_mig.constants import client-aOudMigConstants
+            >>> result = client.categorize_entries(
+            ...     entries,
+            ...     user_objectclasses=client-aOudMigConstants.USER_CLASSES,
+            ...     group_objectclasses=client-aOudMigConstants.GROUP_CLASSES,
+            ...     container_objectclasses=client-aOudMigConstants.ORG_UNIT_CLASSES
+            ... )
+
+        """
+        from flext_ldif.filters import FlextLdifFilters
+
+        try:
+            categorized = FlextLdifModels.CategorizedEntries.create_empty()
+
+            for entry in entries:
+                category = FlextLdifFilters.categorize_entry(
+                    entry,
+                    user_objectclasses=user_objectclasses,
+                    group_objectclasses=group_objectclasses,
+                    container_objectclasses=container_objectclasses,
+                )
+
+                if category == "user":
+                    categorized.users.append(entry)
+                elif category == "group":
+                    categorized.groups.append(entry)
+                elif category == "container":
+                    categorized.containers.append(entry)
+                else:
+                    categorized.uncategorized.append(entry)
+
+            # Update summary counts
+            categorized.update_summary()
+
+            return FlextResult[FlextLdifModels.CategorizedEntries].ok(categorized)
+
+        except Exception as e:
+            return FlextResult[FlextLdifModels.CategorizedEntries].fail(
+                f"Failed to categorize entries: {e}"
+            )
 
     # =========================================================================
     # QUIRKS MANAGEMENT

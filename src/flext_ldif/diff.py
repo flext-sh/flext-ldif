@@ -517,7 +517,7 @@ class FlextLdifDiff(BaseModel):
             normalized["target"] = f"attr:{acl['targetattr']}"
 
         # Extract permissions/operations
-        permissions = set()
+        permissions: set[str] = set()
         if "by_clauses" in acl:
             by_clauses = acl["by_clauses"]
             if isinstance(by_clauses, list):
