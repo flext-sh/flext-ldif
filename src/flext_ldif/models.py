@@ -21,6 +21,8 @@ from typing import TYPE_CHECKING, Any, cast
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+from datetime import UTC
+
 from flext_core import FlextModels, FlextResult
 from pydantic import ConfigDict, Field, ValidationInfo, computed_field, field_validator
 
@@ -62,6 +64,73 @@ class FlextLdifModels(FlextModels):
     )
 
     # =========================================================================
+    # QUIRK METADATA - Universal Metadata Support for All Quirks
+    # =========================================================================
+
+    class QuirkMetadata(FlextModels.Value):
+        """Universal metadata container for quirk-specific data preservation.
+
+        This model supports ANY quirk type and prevents data loss during RFC conversion.
+        Quirks can store original format, timestamps, extensions, and custom data.
+
+        Example:
+            metadata = QuirkMetadata(
+                original_format="( 2.16.840.1.113894... )",
+                quirk_type="oud",
+                extensions={"line_breaks": [45, 90], "dn_spaces": True}
+            )
+
+        """
+
+        original_format: str | None = Field(
+            default=None,
+            description="Original string format before parsing (for perfect round-trip)"
+        )
+        quirk_type: str | None = Field(
+            default=None,
+            description="Quirk type that generated this metadata (oud, oid, openldap, etc.)"
+        )
+        parsed_timestamp: str | None = Field(
+            default=None,
+            description="Timestamp when data was parsed (ISO 8601 format)"
+        )
+        extensions: dict[str, Any] = Field(
+            default_factory=dict,
+            description="Quirk-specific extensions (line_breaks, dn_spaces, attribute_order, etc.)"
+        )
+        custom_data: dict[str, Any] = Field(
+            default_factory=dict,
+            description="Additional custom data for future quirks"
+        )
+
+        @classmethod
+        def create_for_quirk(
+            cls,
+            quirk_type: str,
+            original_format: str | None = None,
+            **extensions: Any
+        ) -> FlextLdifModels.QuirkMetadata:
+            """Factory method to create metadata for a specific quirk.
+
+            Args:
+                quirk_type: Type of quirk (oud, oid, openldap, etc.)
+                original_format: Original string format
+                **extensions: Quirk-specific extension data
+
+            Returns:
+                QuirkMetadata instance
+
+            """
+            from datetime import datetime
+
+            return cls(
+                quirk_type=quirk_type,
+                original_format=original_format,
+                parsed_timestamp=datetime.now(UTC).isoformat(),
+                extensions=extensions
+            )
+
+    # =========================================================================
     # CORE DOMAIN MODELS - Fundamental LDIF Entities
     # =========================================================================
 
@@ -69,6 +138,10 @@ class FlextLdifModels(FlextModels):
         """Distinguished Name value object."""
 
         value: str = Field(..., description="DN string value")
+        metadata: FlextLdifModels.QuirkMetadata | None = Field(
+            default=None,
+            description="Quirk-specific metadata for preserving original format"
+        )
 
         @field_validator("value", mode="before")
         @classmethod
@@ -120,6 +193,10 @@ class FlextLdifModels(FlextModels):
         )
         attributes: FlextLdifModels.LdifAttributes = Field(
             ..., description="Entry attributes container"
+        )
+        metadata: FlextLdifModels.QuirkMetadata | None = Field(
+            default=None,
+            description="Quirk-specific metadata for preserving original entry format"
         )
 
         @field_validator("dn", mode="before")
@@ -500,6 +577,10 @@ class FlextLdifModels(FlextModels):
         attributes: dict[str, FlextLdifModels.AttributeValues] = Field(
             default_factory=dict, description="Attribute name to values mapping"
         )
+        metadata: FlextLdifModels.QuirkMetadata | None = Field(
+            default=None,
+            description="Quirk-specific metadata for preserving attribute ordering and formats"
+        )
 
         @property
         def data(self) -> dict[str, list[str]]:
@@ -785,6 +866,10 @@ class FlextLdifModels(FlextModels):
         oid: str = Field(default="", description="Attribute OID")
         description: str = Field(default="", description="Attribute description")
         syntax: str = Field(default="", description="Attribute syntax")
+        metadata: FlextLdifModels.QuirkMetadata | None = Field(
+            default=None,
+            description="Quirk-specific metadata for preserving original schema format"
+        )
 
     class BaseSchemaObjectClass(FlextModels.Value):
         """Base class for schema object classes."""
@@ -823,6 +908,10 @@ class FlextLdifModels(FlextModels):
         )
         superior: str | list[str] | None = Field(
             default=None, description="Superior object classes"
+        )
+        metadata: FlextLdifModels.QuirkMetadata | None = Field(
+            default=None,
+            description="Quirk-specific metadata for preserving original objectClass format"
         )
 
         @classmethod
@@ -1030,6 +1119,10 @@ class FlextLdifModels(FlextModels):
         scope: str = Field(default="subtree", description="ACL scope")
         server_type: str = Field(..., description="Server type this ACL is for")
         raw_acl: str = Field(default="", description="Raw ACL string")
+        metadata: FlextLdifModels.QuirkMetadata | None = Field(
+            default=None,
+            description="Quirk-specific metadata for preserving original ACL format (multi-line, indentation, etc.)"
+        )
 
         @classmethod
         def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:

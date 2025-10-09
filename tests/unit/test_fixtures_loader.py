@@ -176,6 +176,67 @@ class TestFlextLdifFixturesOID:
         assert metadata.line_count > 0
 
 
+class TestFlextLdifFixturesOUD:
+    """Test FlextLdifFixtures.OUD convenience class."""
+
+    def test_oud_loader_initialization(self) -> None:
+        """Test OUD loader can be initialized."""
+        oud = FlextLdifFixtures.OUD()
+        assert oud is not None
+
+    def test_oud_schema(self) -> None:
+        """Test loading schema via OUD convenience class."""
+        oud = FlextLdifFixtures.OUD()
+        schema = oud.schema()
+
+        assert schema
+        assert "attributeTypes:" in schema
+        assert "objectClasses:" in schema
+        assert "2.16.840.1.113894" in schema  # Oracle namespace
+
+    def test_oud_acl(self) -> None:
+        """Test loading ACL via OUD convenience class."""
+        oud = FlextLdifFixtures.OUD()
+        acl = oud.acl()
+
+        assert acl
+        assert "aci:" in acl
+        assert "OracleContext" in acl
+        # Verify worst-case scenarios are present
+        assert "cn=OracleDASGroupPriv, cn=Groups" in acl  # Spaces in DN
+        assert "orclprivilegegroup" in acl  # Mixed case
+
+    def test_oud_entries(self) -> None:
+        """Test loading entries via OUD convenience class."""
+        oud = FlextLdifFixtures.OUD()
+        entries = oud.entries()
+
+        assert entries
+        assert "dn:" in entries
+        assert "objectclass:" in entries.lower()
+        assert "orclContainer" in entries or "orclPrivilegeGroup" in entries
+
+    def test_oud_integration(self) -> None:
+        """Test loading integration fixtures via OUD convenience class."""
+        oud = FlextLdifFixtures.OUD()
+        integration = oud.integration()
+
+        assert integration
+        assert "dn:" in integration
+        assert "OracleContext" in integration
+        assert "aci:" in integration
+
+    def test_oud_all(self) -> None:
+        """Test loading all fixtures via OUD convenience class."""
+        oud = FlextLdifFixtures.OUD()
+        all_fixtures = oud.all()
+
+        # OUD has schema, acl, entries, and integration
+        assert len(all_fixtures) >= 3
+        assert FlextLdifFixtures.FixtureType.SCHEMA in all_fixtures
+        assert FlextLdifFixtures.FixtureType.ACL in all_fixtures or FlextLdifFixtures.FixtureType.INTEGRATION in all_fixtures
+
+
 class TestFlextLdifFixturesPytestIntegration:
     """Test pytest fixture integration."""
 

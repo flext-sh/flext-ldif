@@ -17,14 +17,14 @@ from typing import Final, cast
 
 from flext_core import FlextProcessors, FlextResult, FlextUtilities
 
-# Configure logger for utilities
-logger = logging.getLogger(__name__)
-
 # MANDATORY ldap3 imports - flext-ldif OWNS ldap3 wrapping
 from ldap3.utils.dn import parse_dn
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.typings import FlextLdifTypes
+
+# Configure logger for utilities
+logger = logging.getLogger(__name__)
 
 
 class FlextLdifUtilities(FlextUtilities):

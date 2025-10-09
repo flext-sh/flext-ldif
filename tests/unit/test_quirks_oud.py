@@ -10,13 +10,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from tests.fixtures.loader import FlextLdifFixtures
 
-from flext_core import FlextResult
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
 from flext_ldif.typings import FlextLdifTypes
-from tests.fixtures.loader import FlextLdifFixtures
 
 
 class TestOudSchemaQuirks:
@@ -674,9 +672,366 @@ class TestOudQuirksIntegration:
         assert aci_count >= 10, f"Expected at least 10 ACIs, found {aci_count}"
 
 
+class TestOudSchemaRoundTrip:
+    """Test suite for OUD schema write operations and round-trip validation."""
+
+    @pytest.fixture
+    def oud_quirk(self) -> FlextLdifQuirksServersOud:
+        """Create OUD schema quirk instance."""
+        return FlextLdifQuirksServersOud(server_type=FlextLdifConstants.ServerTypes.OUD)
+
+    @pytest.fixture
+    def oud_fixtures(self) -> FlextLdifFixtures.OUD:
+        """Create OUD fixture loader."""
+        return FlextLdifFixtures.OUD()
+
+    def test_write_attribute_to_rfc(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test writing attribute data to RFC 4512 format."""
+        attr_data: FlextLdifTypes.Dict = {
+            "oid": "2.16.840.1.113894.1.1.1",
+            "name": "orclGUID",
+            "desc": "Oracle GUID",
+            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
+            "equality": "caseIgnoreMatch",
+        }
+
+        result = oud_quirk.write_attribute_to_rfc(attr_data)
+        assert result.is_success, f"Failed to write attribute: {result.error}"
+
+        rfc_string = result.unwrap()
+        assert "( 2.16.840.1.113894.1.1.1" in rfc_string
+        assert "NAME 'orclGUID'" in rfc_string
+        assert "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15" in rfc_string
+
+    def test_write_attribute_with_metadata(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test writing attribute with metadata for perfect round-trip."""
+        from flext_ldif.models import FlextLdifModels
+
+        original_format = "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+        attr_data: FlextLdifTypes.Dict = {
+            "oid": "2.16.840.1.113894.1.1.1",
+            "name": "orclGUID",
+            "_metadata": FlextLdifModels.QuirkMetadata(
+                original_format=original_format,
+                quirk_type="oud"
+            )
+        }
+
+        result = oud_quirk.write_attribute_to_rfc(attr_data)
+        assert result.is_success
+
+        # Should return exact original format when metadata present
+        rfc_string = result.unwrap()
+        assert rfc_string == original_format
+
+    def test_roundtrip_attribute_parse_write_parse(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test complete round-trip: parse → write → parse for attribute."""
+        original_attr = (
+            "( 2.16.840.1.113894.1.1.1 NAME 'orclVersion' "
+            "DESC 'Oracle version number' "
+            "EQUALITY integerMatch "
+            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 "
+            "SINGLE-VALUE )"
+        )
+
+        # Step 1: Parse original
+        parse1_result = oud_quirk.parse_attribute(original_attr)
+        assert parse1_result.is_success
+        parsed1 = parse1_result.unwrap()
+
+        # Step 2: Write to RFC
+        write_result = oud_quirk.write_attribute_to_rfc(parsed1)
+        assert write_result.is_success
+        written_rfc = write_result.unwrap()
+
+        # Step 3: Parse again
+        parse2_result = oud_quirk.parse_attribute(written_rfc)
+        assert parse2_result.is_success
+        parsed2 = parse2_result.unwrap()
+
+        # Validate: second parse should match first parse
+        assert parsed1["oid"] == parsed2["oid"]
+        assert parsed1["name"] == parsed2["name"]
+        assert parsed1.get("single_value") == parsed2.get("single_value")
+
+    def test_write_objectclass_to_rfc(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test writing objectClass data to RFC 4512 format."""
+        oc_data: FlextLdifTypes.Dict = {
+            "oid": "2.16.840.1.113894.2.1.1",
+            "name": "orclContext",
+            "desc": "Oracle Context",
+            "sup": "top",
+            "kind": "STRUCTURAL",
+            "must": ["cn"],
+            "may": ["description", "orclVersion"],
+        }
+
+        result = oud_quirk.write_objectclass_to_rfc(oc_data)
+        assert result.is_success, f"Failed to write objectClass: {result.error}"
+
+        rfc_string = result.unwrap()
+        assert "( 2.16.840.1.113894.2.1.1" in rfc_string
+        assert "NAME 'orclContext'" in rfc_string
+        assert "STRUCTURAL" in rfc_string
+        assert "MUST cn" in rfc_string
+
+    def test_roundtrip_objectclass_parse_write_parse(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test complete round-trip: parse → write → parse for objectClass."""
+        original_oc = (
+            "( 2.16.840.1.113894.2.1.1 NAME 'orclContext' "
+            "DESC 'Oracle Context' "
+            "SUP top STRUCTURAL "
+            "MUST cn "
+            "MAY ( description $ orclVersion ) )"
+        )
+
+        # Step 1: Parse original
+        parse1_result = oud_quirk.parse_objectclass(original_oc)
+        assert parse1_result.is_success
+        parsed1 = parse1_result.unwrap()
+
+        # Step 2: Write to RFC
+        write_result = oud_quirk.write_objectclass_to_rfc(parsed1)
+        assert write_result.is_success
+        written_rfc = write_result.unwrap()
+
+        # Step 3: Parse again
+        parse2_result = oud_quirk.parse_objectclass(written_rfc)
+        assert parse2_result.is_success
+        parsed2 = parse2_result.unwrap()
+
+        # Validate: second parse should match first parse
+        assert parsed1["oid"] == parsed2["oid"]
+        assert parsed1["name"] == parsed2["name"]
+        assert parsed1["kind"] == parsed2["kind"]
+
+
+class TestOudAclRoundTrip:
+    """Test suite for OUD ACL write operations and round-trip validation."""
+
+    @pytest.fixture
+    def acl_quirk(self) -> FlextLdifQuirksServersOud.AclQuirk:
+        """Create OUD ACL quirk instance."""
+        return FlextLdifQuirksServersOud.AclQuirk(
+            server_type=FlextLdifConstants.ServerTypes.OUD
+        )
+
+    @pytest.fixture
+    def oud_fixtures(self) -> FlextLdifFixtures.OUD:
+        """Create OUD fixture loader."""
+        return FlextLdifFixtures.OUD()
+
+    def test_write_simple_acl_to_rfc(
+        self, acl_quirk: FlextLdifQuirksServersOud.AclQuirk
+    ) -> None:
+        """Test writing simple ACL data to ACI format."""
+        acl_data: FlextLdifTypes.Dict = {
+            "targetattr": "*",
+            "version": "3.0",
+            "acl_name": "Test ACL",
+            "permissions": [{"action": "allow", "operations": ["read", "search"]}],
+            "bind_rules": [{"type": "userdn", "value": "ldap:///anyone"}],
+        }
+
+        result = acl_quirk.write_acl_to_rfc(acl_data)
+        assert result.is_success, f"Failed to write ACL: {result.error}"
+
+        aci_string = result.unwrap()
+        assert '(targetattr="*")' in aci_string
+        assert 'acl "Test ACL"' in aci_string
+        assert "allow" in aci_string
+
+    def test_write_multiline_acl_with_metadata(
+        self, acl_quirk: FlextLdifQuirksServersOud.AclQuirk
+    ) -> None:
+        """Test writing multi-line ACL with metadata preservation."""
+        from flext_ldif.models import FlextLdifModels
+
+        original_multiline = (
+            '(targetattr="*")(version 3.0; acl "Multi ACL";\n'
+            '      allow (read,search) groupdn="ldap:///cn=Group1,dc=example,dc=com";\n'
+            '      allow (write) groupdn="ldap:///cn=Group2,dc=example,dc=com";)'
+        )
+
+        acl_data: FlextLdifTypes.Dict = {
+            "targetattr": "*",
+            "_metadata": FlextLdifModels.QuirkMetadata(
+                original_format=original_multiline,
+                quirk_type="oud",
+                extensions={"is_multiline": True, "line_breaks": [50, 120]}
+            )
+        }
+
+        result = acl_quirk.write_acl_to_rfc(acl_data)
+        assert result.is_success
+
+        # Should return exact original format when metadata present
+        aci_string = result.unwrap()
+        assert aci_string == original_multiline
+
+    def test_roundtrip_acl_parse_write_parse(
+        self, acl_quirk: FlextLdifQuirksServersOud.AclQuirk
+    ) -> None:
+        """Test complete round-trip: parse → write → parse for ACL."""
+        original_aci = (
+            'aci: (targetattr="*")(version 3.0; '
+            'acl "Anonymous read access"; '
+            'allow (read,search,compare) userdn="ldap:///anyone";)'
+        )
+
+        # Step 1: Parse original
+        parse1_result = acl_quirk.parse_acl(original_aci)
+        assert parse1_result.is_success
+        parsed1 = parse1_result.unwrap()
+
+        # Step 2: Write to RFC (returns ACI format)
+        write_result = acl_quirk.write_acl_to_rfc(parsed1)
+        assert write_result.is_success
+        written_aci = write_result.unwrap()
+
+        # Step 3: Parse again (need to re-add "aci: " prefix for parsing)
+        if not written_aci.startswith("aci:"):
+            written_aci = f"aci: {written_aci}"
+
+        parse2_result = acl_quirk.parse_acl(written_aci)
+        assert parse2_result.is_success
+        parsed2 = parse2_result.unwrap()
+
+        # Validate: essential data preserved
+        assert parsed1.get("targetattr") == parsed2.get("targetattr")
+        assert parsed1.get("acl_name") == parsed2.get("acl_name")
+
+
+class TestOudEntryRoundTrip:
+    """Test suite for OUD entry write operations and round-trip validation."""
+
+    @pytest.fixture
+    def entry_quirk(self) -> FlextLdifQuirksServersOud.EntryQuirk:
+        """Create OUD entry quirk instance."""
+        return FlextLdifQuirksServersOud.EntryQuirk(
+            server_type=FlextLdifConstants.ServerTypes.OUD
+        )
+
+    @pytest.fixture
+    def oud_fixtures(self) -> FlextLdifFixtures.OUD:
+        """Create OUD fixture loader."""
+        return FlextLdifFixtures.OUD()
+
+    def test_write_simple_entry_to_ldif(
+        self, entry_quirk: FlextLdifQuirksServersOud.EntryQuirk
+    ) -> None:
+        """Test writing simple entry data to LDIF format."""
+        entry_data: FlextLdifTypes.Dict = {
+            FlextLdifConstants.DictKeys.DN: "cn=test,dc=example,dc=com",
+            "cn": ["test"],
+            "objectClass": ["top", "person"],
+            "sn": ["Test User"],
+        }
+
+        result = entry_quirk.write_entry_to_ldif(entry_data)
+        assert result.is_success, f"Failed to write entry: {result.error}"
+
+        ldif_string = result.unwrap()
+        assert "dn: cn=test,dc=example,dc=com" in ldif_string
+        assert "cn: test" in ldif_string
+        assert "objectClass: top" in ldif_string
+
+    def test_write_entry_preserves_attribute_order(
+        self, entry_quirk: FlextLdifQuirksServersOud.EntryQuirk
+    ) -> None:
+        """Test that writing entry preserves attribute ordering from metadata."""
+        from flext_ldif.models import FlextLdifModels
+
+        entry_data: FlextLdifTypes.Dict = {
+            FlextLdifConstants.DictKeys.DN: "cn=test,dc=example,dc=com",
+            "cn": ["test"],
+            "objectClass": ["person"],
+            "sn": ["User"],
+            "_metadata": FlextLdifModels.QuirkMetadata(
+                quirk_type="oud",
+                extensions={"attribute_order": ["cn", "objectClass", "sn"]}
+            )
+        }
+
+        result = entry_quirk.write_entry_to_ldif(entry_data)
+        assert result.is_success
+
+        ldif_string = result.unwrap()
+        lines = ldif_string.strip().split("\n")
+
+        # Find attribute positions (skip dn line)
+        cn_idx = next(i for i, l in enumerate(lines) if l.startswith("cn:"))
+        oc_idx = next(i for i, l in enumerate(lines) if l.startswith("objectClass:"))
+        sn_idx = next(i for i, l in enumerate(lines) if l.startswith("sn:"))
+
+        # Verify ordering: cn < objectClass < sn
+        assert cn_idx < oc_idx < sn_idx
+
+    def test_roundtrip_entry_process_write_process(
+        self, entry_quirk: FlextLdifQuirksServersOud.EntryQuirk
+    ) -> None:
+        """Test complete round-trip: process → write → parse → process for entry."""
+        original_dn = "cn=OracleContext,dc=example,dc=com"
+        original_attrs: dict[str, object] = {
+            "cn": ["OracleContext"],
+            "objectClass": ["top", "orclContext"],
+            "orclVersion": ["90600"],
+        }
+
+        # Step 1: Process entry
+        process1_result = entry_quirk.process_entry(original_dn, original_attrs)
+        assert process1_result.is_success
+        processed1 = process1_result.unwrap()
+
+        # Step 2: Write to LDIF
+        write_result = entry_quirk.write_entry_to_ldif(processed1)
+        assert write_result.is_success
+        written_ldif = write_result.unwrap()
+
+        # Step 3: Parse LDIF back to entry dict (simple parsing)
+        lines = written_ldif.strip().split("\n")
+        parsed_dn = None
+        parsed_attrs: dict[str, list[str]] = {}
+
+        for line in lines:
+            if line.startswith("dn:"):
+                parsed_dn = line.split(":", 1)[1].strip()
+            elif ":" in line:
+                attr_name, attr_value = line.split(":", 1)
+                attr_name = attr_name.strip()
+                attr_value = attr_value.strip()
+                if attr_name not in parsed_attrs:
+                    parsed_attrs[attr_name] = []
+                parsed_attrs[attr_name].append(attr_value)
+
+        # Step 4: Process again
+        assert parsed_dn is not None
+        process2_result = entry_quirk.process_entry(parsed_dn, parsed_attrs)
+        assert process2_result.is_success
+        processed2 = process2_result.unwrap()
+
+        # Validate: essential data preserved
+        assert processed1[FlextLdifConstants.DictKeys.DN] == processed2[FlextLdifConstants.DictKeys.DN]
+        assert processed1.get("cn") == processed2.get("cn")
+        assert processed1.get("orclVersion") == processed2.get("orclVersion")
+
+
 __all__ = [
-    "TestOudSchemaQuirks",
     "TestOudAclQuirks",
+    "TestOudAclRoundTrip",
     "TestOudEntryQuirks",
+    "TestOudEntryRoundTrip",
     "TestOudQuirksIntegration",
+    "TestOudSchemaQuirks",
+    "TestOudSchemaRoundTrip",
 ]

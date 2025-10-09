@@ -77,32 +77,86 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
     def parse_attribute(self, attr_definition: str) -> FlextResult[FlextLdifTypes.Dict]:
         """Parse Oracle OID attribute definition.
 
+        OID uses RFC 4512 compliant schema format. Parses the definition
+        to extract OID, NAME, DESC, SYNTAX, and other RFC 4512 attributes.
+
         Args:
             attr_definition: AttributeType definition string
+                            (without "attributetypes:" prefix)
 
         Returns:
-            FlextResult with parsed OID attribute data
+            FlextResult with parsed OID attribute data with metadata
 
         """
         try:
-            # Parse OID attribute using FlextLdifModels
-            # This wraps the existing OID parsing logic
-            attr_result = FlextLdifModels.OidSchemaAttribute.from_ldif_line(
-                f"attributetypes: {attr_definition}"
+            # Parse RFC 4512 schema definition (same approach as OUD)
+            parsed_data: FlextLdifTypes.Dict = {}
+
+            # Extract OID (first element after opening parenthesis)
+            oid_match = re.match(r"\(\s*([0-9.]+)", attr_definition)
+            if oid_match:
+                parsed_data["oid"] = oid_match.group(1)
+
+            # Extract NAME (single or multiple)
+            name_match = re.search(r"NAME\s+(?:\(\s*)?'([^']+)'", attr_definition)
+            if name_match:
+                parsed_data["name"] = name_match.group(1)
+
+            # Extract DESC
+            desc_match = re.search(r"DESC\s+'([^']+)'", attr_definition)
+            if desc_match:
+                parsed_data["desc"] = desc_match.group(1)
+
+            # Extract SYNTAX
+            syntax_match = re.search(
+                r"SYNTAX\s+'?([0-9.]+)(?:\{(\d+)\})?'?", attr_definition
+            )
+            if syntax_match:
+                parsed_data["syntax"] = syntax_match.group(1)
+                if syntax_match.group(2):
+                    parsed_data["syntax_length"] = syntax_match.group(2)
+
+            # Extract EQUALITY
+            equality_match = re.search(r"EQUALITY\s+(\w+)", attr_definition)
+            if equality_match:
+                parsed_data["equality"] = equality_match.group(1)
+
+            # Extract SUBSTR
+            substr_match = re.search(r"SUBSTR\s+(\w+)", attr_definition)
+            if substr_match:
+                parsed_data["substr"] = substr_match.group(1)
+
+            # Extract ORDERING
+            ordering_match = re.search(r"ORDERING\s+(\w+)", attr_definition)
+            if ordering_match:
+                parsed_data["ordering"] = ordering_match.group(1)
+
+            # Check for SINGLE-VALUE
+            parsed_data["single_value"] = "SINGLE-VALUE" in attr_definition
+
+            # Check for NO-USER-MODIFICATION
+            parsed_data["no_user_mod"] = "NO-USER-MODIFICATION" in attr_definition
+
+            # Extract SUP (superior attribute)
+            sup_match = re.search(r"SUP\s+(\w+)", attr_definition)
+            if sup_match:
+                parsed_data["sup"] = sup_match.group(1)
+
+            # Extract USAGE
+            usage_match = re.search(r"USAGE\s+(\w+)", attr_definition)
+            if usage_match:
+                parsed_data["usage"] = usage_match.group(1)
+
+            # Add OID server type metadata
+            parsed_data[FlextLdifConstants.DictKeys.SERVER_TYPE] = "oid"
+
+            # Add metadata for perfect round-trip preservation
+            parsed_data["_metadata"] = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                quirk_type="oid",
+                original_format=attr_definition.strip()
             )
 
-            if attr_result.is_success:
-                attr_obj = attr_result.value
-                # Convert to dict for quirk system
-                return FlextResult[FlextLdifTypes.Dict].ok(
-                    attr_obj.model_dump()
-                    if hasattr(attr_obj, FlextLdifConstants.DictKeys.MODEL_DUMP)
-                    else {}
-                )
-
-            return FlextResult[FlextLdifTypes.Dict].fail(
-                attr_result.error or "Failed to parse OID attribute"
-            )
+            return FlextResult[FlextLdifTypes.Dict].ok(parsed_data)
 
         except Exception as e:
             return FlextResult[FlextLdifTypes.Dict].fail(
@@ -124,32 +178,87 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
     def parse_objectclass(self, oc_definition: str) -> FlextResult[FlextLdifTypes.Dict]:
         """Parse Oracle OID objectClass definition.
 
+        OID uses RFC 4512 compliant schema format. Parses the definition
+        to extract OID, NAME, DESC, SUP, KIND, MUST, and MAY attributes.
+
         Args:
             oc_definition: ObjectClass definition string
+                          (without "objectclasses:" prefix)
 
         Returns:
-            FlextResult with parsed OID objectClass data
+            FlextResult with parsed OID objectClass data with metadata
 
         """
         try:
-            # Parse OID objectClass using FlextLdifModels
-            # This wraps the existing OID parsing logic
-            oc_result = FlextLdifModels.OidSchemaObjectClass.from_ldif_line(
-                f"objectclasses: {oc_definition}"
+            # Parse RFC 4512 objectClass definition (same approach as OUD)
+            parsed_data: FlextLdifTypes.Dict = {}
+
+            # Extract OID (first element after opening parenthesis)
+            oid_match = re.match(r"\(\s*([0-9.]+)", oc_definition)
+            if oid_match:
+                parsed_data["oid"] = oid_match.group(1)
+
+            # Extract NAME (single or multiple)
+            name_match = re.search(r"NAME\s+(?:\(\s*)?'([^']+)'", oc_definition)
+            if name_match:
+                parsed_data["name"] = name_match.group(1)
+
+            # Extract DESC
+            desc_match = re.search(r"DESC\s+'([^']+)'", oc_definition)
+            if desc_match:
+                parsed_data["desc"] = desc_match.group(1)
+
+            # Extract SUP (superior objectClass)
+            sup_match = re.search(
+                r"SUP\s+(?:\(\s*([\w\s$]+)\s*\)|(\w+))", oc_definition
+            )
+            if sup_match:
+                sup_value = sup_match.group(1) or sup_match.group(2)
+                sup_value = sup_value.strip()
+                # Handle multiple superior classes like "organization $ organizationalUnit"
+                if "$" in sup_value:
+                    parsed_data["sup"] = [s.strip() for s in sup_value.split("$")]
+                else:
+                    parsed_data["sup"] = sup_value
+
+            # Determine kind (STRUCTURAL, AUXILIARY, ABSTRACT)
+            if "STRUCTURAL" in oc_definition:
+                parsed_data["kind"] = "STRUCTURAL"
+            elif "AUXILIARY" in oc_definition:
+                parsed_data["kind"] = "AUXILIARY"
+            elif "ABSTRACT" in oc_definition:
+                parsed_data["kind"] = "ABSTRACT"
+
+            # Extract MUST attributes
+            must_match = re.search(
+                r"MUST\s+\(\s*([^)]+)\s*\)|MUST\s+(\w+)", oc_definition
+            )
+            if must_match:
+                must_value = must_match.group(1) or must_match.group(2)
+                if "$" in must_value:
+                    parsed_data["must"] = [m.strip() for m in must_value.split("$")]
+                else:
+                    parsed_data["must"] = [must_value.strip()]
+
+            # Extract MAY attributes
+            may_match = re.search(r"MAY\s+\(\s*([^)]+)\s*\)|MAY\s+(\w+)", oc_definition)
+            if may_match:
+                may_value = may_match.group(1) or may_match.group(2)
+                if "$" in may_value:
+                    parsed_data["may"] = [m.strip() for m in may_value.split("$")]
+                else:
+                    parsed_data["may"] = [may_value.strip()]
+
+            # Add OID server type metadata
+            parsed_data[FlextLdifConstants.DictKeys.SERVER_TYPE] = "oid"
+
+            # Add metadata for perfect round-trip preservation
+            parsed_data["_metadata"] = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                quirk_type="oid",
+                original_format=oc_definition.strip()
             )
 
-            if oc_result.is_success:
-                oc_obj = oc_result.value
-                # Convert to dict for quirk system
-                return FlextResult[FlextLdifTypes.Dict].ok(
-                    oc_obj.model_dump()
-                    if hasattr(oc_obj, FlextLdifConstants.DictKeys.MODEL_DUMP)
-                    else {}
-                )
-
-            return FlextResult[FlextLdifTypes.Dict].fail(
-                oc_result.error or "Failed to parse OID objectClass"
-            )
+            return FlextResult[FlextLdifTypes.Dict].ok(parsed_data)
 
         except Exception as e:
             return FlextResult[FlextLdifTypes.Dict].fail(
@@ -241,6 +350,239 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 f"OID→RFC conversion failed: {e}"
             )
 
+    def write_attribute_to_rfc(
+        self, attr_data: FlextLdifTypes.Dict
+    ) -> FlextResult[str]:
+        """Write OID attribute data to RFC 4512 compliant string format.
+
+        Converts parsed attribute dictionary back to RFC 4512 schema definition format.
+        If metadata contains original_format, uses it for perfect round-trip.
+
+        Args:
+            attr_data: Parsed OID attribute data dictionary
+
+        Returns:
+            FlextResult with RFC 4512 formatted attribute definition string
+
+        Example:
+            Input: {"oid": "2.16.840.1.113894.1.1.1", "name": "orclguid", "syntax": "1.3.6.1.4.1.1466.115.121.1.15"}
+            Output: "( 2.16.840.1.113894.1.1.1 NAME 'orclguid' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+        """
+        try:
+            # Check if we have metadata with original format for perfect round-trip
+            if "_metadata" in attr_data:
+                metadata = attr_data["_metadata"]
+                if isinstance(metadata, FlextLdifModels.QuirkMetadata) and metadata.original_format:
+                    return FlextResult[str].ok(metadata.original_format)
+                elif isinstance(metadata, dict) and "original_format" in metadata:
+                    return FlextResult[str].ok(str(metadata["original_format"]))
+
+            # Build RFC 4512 attribute definition from scratch
+            parts = []
+
+            # Start with OID (required)
+            if "oid" not in attr_data:
+                return FlextResult[str].fail("Missing required 'oid' field")
+            parts.append(f"( {attr_data['oid']}")
+
+            # Add NAME (required)
+            if "name" in attr_data:
+                parts.append(f"NAME '{attr_data['name']}'")
+
+            # Add DESC (optional)
+            if "desc" in attr_data:
+                parts.append(f"DESC '{attr_data['desc']}'")
+
+            # Add SUP (optional)
+            if "sup" in attr_data:
+                parts.append(f"SUP {attr_data['sup']}")
+
+            # Add EQUALITY (optional)
+            if "equality" in attr_data:
+                parts.append(f"EQUALITY {attr_data['equality']}")
+
+            # Add ORDERING (optional)
+            if "ordering" in attr_data:
+                parts.append(f"ORDERING {attr_data['ordering']}")
+
+            # Add SUBSTR (optional)
+            if "substr" in attr_data:
+                parts.append(f"SUBSTR {attr_data['substr']}")
+
+            # Add SYNTAX (optional but common)
+            if "syntax" in attr_data:
+                syntax_str = str(attr_data['syntax'])
+                if "syntax_length" in attr_data:
+                    syntax_str += f"{{{attr_data['syntax_length']}}}"
+                parts.append(f"SYNTAX {syntax_str}")
+
+            # Add SINGLE-VALUE flag (optional)
+            if attr_data.get("single_value", False):
+                parts.append("SINGLE-VALUE")
+
+            # Add NO-USER-MODIFICATION flag (optional)
+            if attr_data.get("no_user_mod", False):
+                parts.append("NO-USER-MODIFICATION")
+
+            # Add USAGE (optional)
+            if "usage" in attr_data:
+                parts.append(f"USAGE {attr_data['usage']}")
+
+            # Add X-ORIGIN (optional)
+            if "x_origin" in attr_data:
+                parts.append(f"X-ORIGIN '{attr_data['x_origin']}'")
+
+            # Close the definition
+            rfc_string = " ".join(parts) + " )"
+
+            return FlextResult[str].ok(rfc_string)
+
+        except Exception as e:
+            return FlextResult[str].fail(f"Failed to write OID attribute to RFC: {e}")
+
+    def write_objectclass_to_rfc(
+        self, oc_data: FlextLdifTypes.Dict
+    ) -> FlextResult[str]:
+        """Write OID objectClass data to RFC 4512 compliant string format.
+
+        Converts parsed objectClass dictionary back to RFC 4512 schema definition format.
+        If metadata contains original_format, uses it for perfect round-trip.
+
+        Args:
+            oc_data: Parsed OID objectClass data dictionary
+
+        Returns:
+            FlextResult with RFC 4512 formatted objectClass definition string
+
+        Example:
+            Input: {"oid": "2.16.840.1.113894.2.1.1", "name": "orclContainer", "kind": "STRUCTURAL", "must": ["cn"], "may": ["description"]}
+            Output: "( 2.16.840.1.113894.2.1.1 NAME 'orclContainer' STRUCTURAL MUST cn MAY description )"
+        """
+        try:
+            # Check if we have metadata with original format for perfect round-trip
+            if "_metadata" in oc_data:
+                metadata = oc_data["_metadata"]
+                if isinstance(metadata, FlextLdifModels.QuirkMetadata) and metadata.original_format:
+                    return FlextResult[str].ok(metadata.original_format)
+                elif isinstance(metadata, dict) and "original_format" in metadata:
+                    return FlextResult[str].ok(str(metadata["original_format"]))
+
+            # Build RFC 4512 objectClass definition from scratch
+            parts = []
+
+            # Start with OID (required)
+            if "oid" not in oc_data:
+                return FlextResult[str].fail("Missing required 'oid' field")
+            parts.append(f"( {oc_data['oid']}")
+
+            # Add NAME (required)
+            if "name" in oc_data:
+                parts.append(f"NAME '{oc_data['name']}'")
+
+            # Add DESC (optional)
+            if "desc" in oc_data:
+                parts.append(f"DESC '{oc_data['desc']}'")
+
+            # Add SUP (optional)
+            if "sup" in oc_data:
+                sup_value = oc_data["sup"]
+                if isinstance(sup_value, list):
+                    # Multiple superior classes: "SUP ( org $ orgUnit )"
+                    sup_str = " $ ".join(sup_value)
+                    parts.append(f"SUP ( {sup_str} )")
+                else:
+                    parts.append(f"SUP {sup_value}")
+
+            # Add KIND (STRUCTURAL, AUXILIARY, ABSTRACT)
+            if "kind" in oc_data:
+                parts.append(str(oc_data["kind"]))
+
+            # Add MUST attributes (optional)
+            if "must" in oc_data and oc_data["must"]:
+                must_attrs = oc_data["must"]
+                if isinstance(must_attrs, list) and len(must_attrs) > 1:
+                    # Multiple required attributes: "MUST ( cn $ sn )"
+                    must_str = " $ ".join(must_attrs)
+                    parts.append(f"MUST ( {must_str} )")
+                elif isinstance(must_attrs, list) and len(must_attrs) == 1:
+                    parts.append(f"MUST {must_attrs[0]}")
+                else:
+                    parts.append(f"MUST {must_attrs}")
+
+            # Add MAY attributes (optional)
+            if "may" in oc_data and oc_data["may"]:
+                may_attrs = oc_data["may"]
+                if isinstance(may_attrs, list) and len(may_attrs) > 1:
+                    # Multiple optional attributes: "MAY ( description $ seeAlso )"
+                    may_str = " $ ".join(may_attrs)
+                    parts.append(f"MAY ( {may_str} )")
+                elif isinstance(may_attrs, list) and len(may_attrs) == 1:
+                    parts.append(f"MAY {may_attrs[0]}")
+                else:
+                    parts.append(f"MAY {may_attrs}")
+
+            # Add X-ORIGIN (optional)
+            if "x_origin" in oc_data:
+                parts.append(f"X-ORIGIN '{oc_data['x_origin']}'")
+
+            # Close the definition
+            rfc_string = " ".join(parts) + " )"
+
+            return FlextResult[str].ok(rfc_string)
+
+        except Exception as e:
+            return FlextResult[str].fail(f"Failed to write OID objectClass to RFC: {e}")
+
+    def convert_attribute_from_rfc(
+        self, rfc_data: FlextLdifTypes.Dict
+    ) -> FlextResult[FlextLdifTypes.Dict]:
+        """Convert RFC-compliant attribute to OID-specific format.
+
+        Args:
+            rfc_data: RFC-compliant attribute data
+
+        Returns:
+            FlextResult with OID attribute data
+
+        """
+        try:
+            # Oracle OID uses RFC-compliant schema format
+            # Just ensure OID server type is set
+            oid_data = dict(rfc_data)
+            oid_data[FlextLdifConstants.DictKeys.SERVER_TYPE] = FlextLdifConstants.ServerTypes.OID
+
+            return FlextResult[FlextLdifTypes.Dict].ok(oid_data)
+
+        except Exception as e:
+            return FlextResult[FlextLdifTypes.Dict].fail(
+                f"RFC→OID attribute conversion failed: {e}"
+            )
+
+    def convert_objectclass_from_rfc(
+        self, rfc_data: FlextLdifTypes.Dict
+    ) -> FlextResult[FlextLdifTypes.Dict]:
+        """Convert RFC-compliant objectClass to OID-specific format.
+
+        Args:
+            rfc_data: RFC-compliant objectClass data
+
+        Returns:
+            FlextResult with OID objectClass data
+
+        """
+        try:
+            # Oracle OID uses RFC-compliant schema format
+            # Just ensure OID server type is set
+            oid_data = dict(rfc_data)
+            oid_data[FlextLdifConstants.DictKeys.SERVER_TYPE] = FlextLdifConstants.ServerTypes.OID
+
+            return FlextResult[FlextLdifTypes.Dict].ok(oid_data)
+
+        except Exception as e:
+            return FlextResult[FlextLdifTypes.Dict].fail(
+                f"RFC→OID objectClass conversion failed: {e}"
+            )
+
     class AclQuirk(FlextLdifQuirksBaseAclQuirk):
         """Oracle OID ACL quirk (nested).
 
@@ -281,47 +623,76 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifTypes.Dict]:
             """Parse Oracle OID ACL definition.
 
+            Parses orclaci and orclentrylevelaci formats from real OID fixtures:
+            - orclaci: access to entry/attr=(...) [filter=(...)] by <subject> (<perms>) [by ...]
+            - orclentrylevelaci: access to entry by <subject> [added_object_constraint=(...)] (<perms>)
+
             Args:
                 acl_line: ACL definition line
 
             Returns:
-                FlextResult with parsed OID ACL data
+                FlextResult with parsed OID ACL data with metadata
 
             """
             try:
                 # Determine ACL type
                 is_entry_level = acl_line.startswith("orclentrylevelaci:")
+                acl_content = acl_line.split(":", 1)[1].strip() if ":" in acl_line else acl_line
 
-                # Parse using existing OID ACI parser models
-                acl_obj: FlextLdifModels.OidEntryLevelAci | FlextLdifModels.OidAci
-                if is_entry_level:
-                    entry_result = FlextLdifModels.OidEntryLevelAci.from_ldif_line(
-                        acl_line
-                    )
-                    if entry_result.is_failure:
-                        return FlextResult[FlextLdifTypes.Dict].fail(entry_result.error)
-                    acl_obj = entry_result.value
-                else:
-                    standard_result = FlextLdifModels.OidAci.from_ldif_line(acl_line)
-                    if standard_result.is_failure:
-                        return FlextResult[FlextLdifTypes.Dict].fail(
-                            standard_result.error
-                        )
-                    acl_obj = standard_result.value
-
-                return FlextResult[FlextLdifTypes.Dict].ok({
+                acl_data: FlextLdifTypes.Dict = {
                     FlextLdifConstants.DictKeys.TYPE: (
                         FlextLdifConstants.DictKeys.ENTRY_LEVEL
                         if is_entry_level
                         else FlextLdifConstants.DictKeys.STANDARD
                     ),
                     FlextLdifConstants.DictKeys.RAW: acl_line,
-                    FlextLdifConstants.DictKeys.PARSED: (
-                        acl_obj.model_dump()
-                        if hasattr(acl_obj, FlextLdifConstants.DictKeys.MODEL_DUMP)
-                        else {}
-                    ),
-                })
+                    FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.OID_ACL,
+                }
+
+                # Extract target (entry or attr)
+                if "access to entry" in acl_content:
+                    acl_data["target"] = "entry"
+                elif "access to attr=" in acl_content:
+                    attr_match = re.search(r"access to attr=\(([^)]+)\)", acl_content)
+                    if attr_match:
+                        acl_data["target"] = "attr"
+                        acl_data["target_attrs"] = attr_match.group(1)
+
+                # Extract filter (if present)
+                filter_match = re.search(r"filter=(\([^)]+(?:\([^)]*\))*[^)]*\))", acl_content)
+                if filter_match:
+                    acl_data["filter"] = filter_match.group(1)
+
+                # Extract added_object_constraint (for orclentrylevelaci)
+                constraint_match = re.search(
+                    r"added_object_constraint=(\([^)]+(?:\([^)]*\))*[^)]*\))", acl_content
+                )
+                if constraint_match:
+                    acl_data["added_object_constraint"] = constraint_match.group(1)
+
+                # Extract "by" clauses with subjects and permissions
+                # Pattern: by <subject> (<permissions>)
+                by_clauses = []
+                by_pattern = r'by\s+(group="[^"]+"|\*|[^\s(]+)\s+\(([^)]+)\)'
+                for match in re.finditer(by_pattern, acl_content):
+                    subject = match.group(1).strip()
+                    permissions = match.group(2).strip()
+
+                    by_clauses.append({
+                        "subject": subject,
+                        "permissions": [p.strip() for p in permissions.split(",")]
+                    })
+
+                if by_clauses:
+                    acl_data["by_clauses"] = by_clauses
+
+                # Add metadata for perfect round-trip preservation
+                acl_data["_metadata"] = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                    quirk_type="oid",
+                    original_format=acl_line
+                )
+
+                return FlextResult[FlextLdifTypes.Dict].ok(acl_data)
 
             except Exception as e:
                 return FlextResult[FlextLdifTypes.Dict].fail(
@@ -384,6 +755,78 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 return FlextResult[FlextLdifTypes.Dict].fail(
                     f"RFC→OID ACL conversion failed: {e}"
                 )
+
+        def write_acl_to_rfc(
+            self, acl_data: FlextLdifTypes.Dict
+        ) -> FlextResult[str]:
+            """Write OID ACL data to Oracle ACL string format.
+
+            Converts parsed ACL dictionary back to OID ACL format string.
+            If metadata contains original_format, uses it for perfect round-trip.
+
+            Args:
+                acl_data: Parsed OID ACL data dictionary
+
+            Returns:
+                FlextResult with OID ACL formatted string
+
+            Example:
+                Input: {"type": "standard", "target": "entry", "by_clauses": [...]}
+                Output: "orclaci: access to entry by * (browse)"
+            """
+            try:
+                # Check if we have metadata with original format for perfect round-trip
+                if "_metadata" in acl_data:
+                    metadata = acl_data["_metadata"]
+                    if isinstance(metadata, FlextLdifModels.QuirkMetadata) and metadata.original_format:
+                        return FlextResult[str].ok(metadata.original_format)
+                    elif isinstance(metadata, dict) and "original_format" in metadata:
+                        return FlextResult[str].ok(str(metadata["original_format"]))
+
+                # Build OID ACL from scratch
+                parts = []
+
+                # Determine ACL type prefix
+                is_entry_level = acl_data.get(FlextLdifConstants.DictKeys.TYPE) == FlextLdifConstants.DictKeys.ENTRY_LEVEL
+                acl_prefix = "orclentrylevelaci:" if is_entry_level else "orclaci:"
+
+                # Build access clause
+                access_parts = ["access to"]
+
+                # Add target
+                target = acl_data.get("target", "entry")
+                if target == "attr" and "target_attrs" in acl_data:
+                    access_parts.append(f"attr=({acl_data['target_attrs']})")
+                else:
+                    access_parts.append("entry")
+
+                # Add filter (if present)
+                if "filter" in acl_data:
+                    access_parts.append(f"filter={acl_data['filter']}")
+
+                # Add added_object_constraint (for orclentrylevelaci)
+                if "added_object_constraint" in acl_data:
+                    access_parts.append(f"added_object_constraint={acl_data['added_object_constraint']}")
+
+                parts.append(" ".join(access_parts))
+
+                # Add "by" clauses
+                by_clauses_raw = acl_data.get("by_clauses", [])
+                by_clauses = by_clauses_raw if isinstance(by_clauses_raw, list) else []
+                for by_clause in by_clauses:
+                    subject = by_clause.get("subject", "*")
+                    permissions = by_clause.get("permissions", [])
+                    perms_str = ",".join(permissions)
+                    parts.append(f"by {subject} ({perms_str})")
+
+                # Combine all parts
+                acl_content = " ".join(parts)
+                acl_string = f"{acl_prefix} {acl_content}"
+
+                return FlextResult[str].ok(acl_string)
+
+            except Exception as e:
+                return FlextResult[str].fail(f"Failed to write OID ACL to RFC: {e}")
 
     class EntryQuirk(FlextLdifQuirksBaseEntryQuirk):
         """Oracle OID entry quirk (nested).
@@ -450,10 +893,13 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 str(oc).lower().startswith("orcl") for oc in object_classes
             )
 
-            # Also check DN patterns for OID entries
-            has_oid_dn_pattern = any(
-                pattern in entry_dn.lower()
-                for pattern in ["cn=orcl", "ou=oracle", "dc=oracle"]
+            # Check DN patterns for OID entries - more flexible detection
+            dn_lower = entry_dn.lower()
+            has_oid_dn_pattern = (
+                "oracle" in dn_lower
+                or "orcl" in dn_lower
+                or "ou=oracle" in dn_lower
+                or "dc=oracle" in dn_lower
             )
 
             return has_oid_attrs or has_oid_classes or has_oid_dn_pattern
@@ -531,6 +977,110 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 return FlextResult[FlextLdifTypes.Dict].fail(
                     f"OID entry→RFC conversion failed: {e}"
                 )
+
+        def convert_entry_from_rfc(
+            self, entry_data: FlextLdifTypes.Dict
+        ) -> FlextResult[FlextLdifTypes.Dict]:
+            """Convert RFC-compliant entry to Oracle OID format.
+
+            Args:
+                entry_data: RFC-compliant entry data
+
+            Returns:
+                FlextResult with OID entry data
+
+            """
+            try:
+                # Oracle OID uses RFC-compliant format
+                # Just ensure OID server type is set
+                oid_entry = dict(entry_data)
+                oid_entry[FlextLdifConstants.DictKeys.SERVER_TYPE] = FlextLdifConstants.ServerTypes.OID
+
+                return FlextResult[FlextLdifTypes.Dict].ok(oid_entry)
+
+            except Exception as e:
+                return FlextResult[FlextLdifTypes.Dict].fail(
+                    f"RFC→OID entry conversion failed: {e}"
+                )
+
+        def write_entry_to_ldif(
+            self, entry_data: FlextLdifTypes.Dict
+        ) -> FlextResult[str]:
+            """Write OID entry data to standard LDIF string format.
+
+            Converts parsed entry dictionary to LDIF format string.
+            Handles Oracle-specific attributes like orclaci, orclguid, etc.
+
+            Args:
+                entry_data: Parsed OID entry data dictionary
+
+            Returns:
+                FlextResult with LDIF formatted entry string
+
+            Example:
+                Input: {"dn": "cn=test,dc=example,dc=com", "cn": ["test"], "objectClass": ["person"]}
+                Output: "dn: cn=test,dc=example,dc=com\\ncn: test\\nobjectClass: person\\n"
+            """
+            try:
+                # Check for required DN field
+                if FlextLdifConstants.DictKeys.DN not in entry_data:
+                    return FlextResult[str].fail("Missing required 'dn' field")
+
+                dn = entry_data[FlextLdifConstants.DictKeys.DN]
+                ldif_lines = [f"dn: {dn}"]
+
+                # Get attribute ordering from metadata if available
+                attr_order = None
+                if "_metadata" in entry_data:
+                    from flext_ldif.models import FlextLdifModels
+                    metadata = entry_data["_metadata"]
+                    if isinstance(metadata, FlextLdifModels.QuirkMetadata):
+                        attr_order = metadata.extensions.get("attribute_order")
+                    elif isinstance(metadata, dict):
+                        attr_order = metadata.get("extensions", {}).get("attribute_order")
+
+                # Determine attribute iteration order
+                if attr_order:
+                    # Use preserved ordering
+                    attrs_to_process = [
+                        (key, entry_data[key])
+                        for key in attr_order
+                        if key in entry_data and key not in [
+                            FlextLdifConstants.DictKeys.DN,
+                            "_metadata",
+                            FlextLdifConstants.DictKeys.SERVER_TYPE,
+                            FlextLdifConstants.DictKeys.HAS_OID_ACLS
+                        ]
+                    ]
+                else:
+                    # Default ordering: filter out special keys
+                    attrs_to_process = [
+                        (key, value)
+                        for key, value in entry_data.items()
+                        if key not in [
+                            FlextLdifConstants.DictKeys.DN,
+                            "_metadata",
+                            FlextLdifConstants.DictKeys.SERVER_TYPE,
+                            FlextLdifConstants.DictKeys.HAS_OID_ACLS
+                        ]
+                    ]
+
+                # Write attributes
+                for attr_name, attr_value in attrs_to_process:
+                    # Handle both list and single values
+                    if isinstance(attr_value, list):
+                        for value in attr_value:
+                            ldif_lines.append(f"{attr_name}: {value}")
+                    else:
+                        ldif_lines.append(f"{attr_name}: {attr_value}")
+
+                # Join with newlines and add trailing newline
+                ldif_string = "\n".join(ldif_lines) + "\n"
+
+                return FlextResult[str].ok(ldif_string)
+
+            except Exception as e:
+                return FlextResult[str].fail(f"Failed to write OID entry to LDIF: {e}")
 
 
 __all__ = [

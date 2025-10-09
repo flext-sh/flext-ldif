@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_ldif.quirks.conversion_matrix import QuirksConversionMatrix
 from flext_ldif.quirks.entry_quirks import FlextLdifEntryQuirks
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
@@ -18,4 +19,5 @@ __all__ = [
     "FlextLdifEntryQuirks",
     "FlextLdifQuirksManager",
     "FlextLdifQuirksRegistry",
+    "QuirksConversionMatrix",
 ]
