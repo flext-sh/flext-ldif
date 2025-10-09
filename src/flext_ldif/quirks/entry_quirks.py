@@ -72,7 +72,7 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
         adapted_attrs: dict[str, FlextLdifModels.AttributeValues] = {}
 
         for attr_name, attr_values in entry.attributes.data.items():
-            mapped_name = attribute_mappings.get(attr_name, attr_name)
+            mapped_name = attribute_mappings.get(attr_name, attr_name) or attr_name
 
             adapted_values = self._adapt_attribute_values(
                 attr_name,

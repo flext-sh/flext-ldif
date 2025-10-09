@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import pytest
 from flext_core import FlextTypes
@@ -27,13 +28,16 @@ class TestMigrationPipelineInitialization:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
 
-        params = {
+        params: dict[str, object] = {
             "input_dir": str(input_dir),
             "output_dir": str(output_dir),
         }
 
+        # Type cast for params - explicit dict comprehension
+        params_obj: dict[str, object] = dict(params.items())
+
         pipeline = FlextLdifMigrationPipeline(
-            params=params,
+            params=params_obj,
             source_server_type="oid",
             target_server_type="oud",
         )
@@ -46,14 +50,17 @@ class TestMigrationPipelineInitialization:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
 
-        params = {
+        params: dict[str, object] = {
             "input_dir": str(input_dir),
             "output_dir": str(output_dir),
         }
 
         registry = FlextLdifQuirksRegistry()
+        # Type cast for params - explicit dict comprehension
+        params_obj: dict[str, object] = dict(params.items())
+
         pipeline = FlextLdifMigrationPipeline(
-            params=params,
+            params=params_obj,
             source_server_type="oid",
             target_server_type="oud",
             quirk_registry=registry,
@@ -79,13 +86,16 @@ class TestMigrationPipelineInitialization:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
 
-        params = {
+        params: dict[str, object] = {
             "input_dir": str(input_dir),
             "output_dir": str(output_dir),
         }
 
+        # Type cast for params - explicit dict comprehension
+        params_obj: dict[str, object] = dict(params.items())
+
         pipeline = FlextLdifMigrationPipeline(
-            params=params,
+            params=params_obj,
             source_server_type=source,
             target_server_type=target,
         )
@@ -101,7 +111,7 @@ class TestMigrationPipelineValidation:
         params: FlextTypes.StringDict = {"output_dir": str(tmp_path / "output")}
 
         pipeline = FlextLdifMigrationPipeline(
-            params=params,
+            params=cast("dict[str, object]", params),
             source_server_type="oid",
             target_server_type="oud",
         )
@@ -121,7 +131,7 @@ class TestMigrationPipelineValidation:
         params: FlextTypes.StringDict = {"input_dir": str(input_dir)}
 
         pipeline = FlextLdifMigrationPipeline(
-            params=params,
+            params=cast("dict[str, object]", params),
             source_server_type="oid",
             target_server_type="oud",
         )
@@ -143,8 +153,11 @@ class TestMigrationPipelineValidation:
             "output_dir": str(output_dir),
         }
 
+        # Type cast for params - explicit dict comprehension
+        params_obj: dict[str, object] = dict(params.items())
+
         pipeline = FlextLdifMigrationPipeline(
-            params=params,
+            params=params_obj,
             source_server_type="oid",
             target_server_type="oud",
         )
@@ -174,7 +187,7 @@ class TestMigrationPipelineExecution:
         }
 
         pipeline = FlextLdifMigrationPipeline(
-            params=params,
+            params=cast("dict[str, object]", params),
             source_server_type="oid",
             target_server_type="oud",
         )
@@ -198,7 +211,7 @@ class TestMigrationPipelineExecution:
         }
 
         pipeline = FlextLdifMigrationPipeline(
-            params=params,
+            params=cast("dict[str, object]", params),
             source_server_type="oid",
             target_server_type="oud",
         )
@@ -222,7 +235,7 @@ class TestMigrationPipelineExecution:
         }
 
         pipeline = FlextLdifMigrationPipeline(
-            params=params,
+            params=cast("dict[str, object]", params),
             source_server_type="oid",
             target_server_type="oud",
         )
@@ -242,15 +255,18 @@ class TestDefaultQuirkRegistration:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
 
-        params = {
+        params: dict[str, object] = {
             "input_dir": str(input_dir),
             "output_dir": str(output_dir),
         }
 
         # Create pipeline with OID as source - should trigger registration
         registry = FlextLdifQuirksRegistry()
+        # Type cast for params - explicit dict comprehension
+        params_obj: dict[str, object] = dict(params.items())
+
         pipeline = FlextLdifMigrationPipeline(
-            params=params,
+            params=params_obj,
             source_server_type="oid",
             target_server_type="openldap",
             quirk_registry=registry,
@@ -272,15 +288,18 @@ class TestDefaultQuirkRegistration:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
 
-        params = {
+        params: dict[str, object] = {
             "input_dir": str(input_dir),
             "output_dir": str(output_dir),
         }
 
         # Create pipeline with OUD as target - should trigger registration
         registry = FlextLdifQuirksRegistry()
+        # Type cast for params - explicit dict comprehension
+        params_obj: dict[str, object] = dict(params.items())
+
         pipeline = FlextLdifMigrationPipeline(
-            params=params,
+            params=params_obj,
             source_server_type="openldap",
             target_server_type="oud",
             quirk_registry=registry,
@@ -302,7 +321,7 @@ class TestDefaultQuirkRegistration:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
 
-        params = {
+        params: dict[str, object] = {
             "input_dir": str(input_dir),
             "output_dir": str(output_dir),
         }
@@ -352,13 +371,16 @@ class TestMigrateEntriesMethod:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
 
-        params = {
+        params: dict[str, object] = {
             "input_dir": str(input_dir),
             "output_dir": str(output_dir),
         }
 
+        # Type cast for params - explicit dict comprehension
+        params_obj: dict[str, object] = dict(params.items())
+
         pipeline = FlextLdifMigrationPipeline(
-            params=params,
+            params=params_obj,
             source_server_type="oid",
             target_server_type="oud",
         )
@@ -379,13 +401,16 @@ class TestMigrateEntriesMethod:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
 
-        params = {
+        params: dict[str, object] = {
             "input_dir": str(input_dir),
             "output_dir": str(output_dir),
         }
 
+        # Type cast for params - explicit dict comprehension
+        params_obj: dict[str, object] = dict(params.items())
+
         pipeline = FlextLdifMigrationPipeline(
-            params=params,
+            params=params_obj,
             source_server_type="oid",
             target_server_type="oud",
         )
@@ -414,13 +439,16 @@ class TestMigrateEntriesMethod:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
 
-        params = {
+        params: dict[str, object] = {
             "input_dir": str(input_dir),
             "output_dir": str(output_dir),
         }
 
+        # Type cast for params - explicit dict comprehension
+        params_obj: dict[str, object] = dict(params.items())
+
         pipeline = FlextLdifMigrationPipeline(
-            params=params,
+            params=params_obj,
             source_server_type="oid",
             target_server_type="oud",
         )
@@ -436,8 +464,11 @@ class TestMigrateEntriesMethod:
             for i in range(5)
         ]
 
+        # Type cast for entries - explicit cast to satisfy mypy
+        entries_obj: list[object] = list(entries)
+
         result = pipeline.migrate_entries(
-            entries=entries,
+            entries=entries_obj,
             source_format="oid",
             target_format="oud",
         )
@@ -463,13 +494,16 @@ class TestMigrateEntriesMethod:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
 
-        params = {
+        params: dict[str, object] = {
             "input_dir": str(input_dir),
             "output_dir": str(output_dir),
         }
 
+        # Type cast for params - explicit dict comprehension
+        params_obj: dict[str, object] = dict(params.items())
+
         pipeline = FlextLdifMigrationPipeline(
-            params=params,
+            params=params_obj,
             source_server_type=source,
             target_server_type=target,
         )
@@ -501,7 +535,7 @@ class TestQuirkRegistration:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
 
-        params = {
+        params: dict[str, object] = {
             "input_dir": str(input_dir),
             "output_dir": str(output_dir),
         }
@@ -525,7 +559,7 @@ class TestQuirkRegistration:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
 
-        params = {
+        params: dict[str, object] = {
             "input_dir": str(input_dir),
             "output_dir": str(output_dir),
         }
@@ -549,7 +583,7 @@ class TestQuirkRegistration:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
 
-        params = {
+        params: dict[str, object] = {
             "input_dir": str(input_dir),
             "output_dir": str(output_dir),
         }

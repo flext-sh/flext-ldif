@@ -1,6 +1,10 @@
 """Example 4: Server-Specific Operations and Migration - Optimized with Railway Pattern.
 
 Demonstrates FlextLdif server-specific functionality with minimal code bloat:
+
+NOTE: This example intentionally uses assert statements (S101) for type narrowing
+demonstration. Asserts are acceptable in examples for pedagogical purposes and
+do not represent production error handling patterns.
 - Parsing with server-specific quirks (OID, OUD, OpenLDAP, RFC)
 - Migrating LDIF data between different LDAP servers
 - Server-agnostic migration pipeline
@@ -184,21 +188,30 @@ cn: Pipeline
 sn: Test
 """
 
-    # Railway pattern - parse(OID) → validate → analyze → write(RFC)
-    result = (
-        api.parse(ldif_content, server_type="oid")
-        .flat_map(api.validate_entries)
-        .flat_map(
-            lambda report: (
-                api.parse(ldif_content, server_type="oid").flat_map(api.analyze)
-                if report.get("is_valid", False)
-                else api.models.FlextResult.failure("Validation failed")
-            )
-        )
-        .flat_map(
-            lambda _: api.parse(ldif_content, server_type="oid").flat_map(api.write)
-        )
-    )
+    # Parse and validate
+    parse_result = api.parse(ldif_content, server_type="oid")
+    if parse_result.is_failure:
+        return
+
+    entries = parse_result.unwrap()
+    validation_result = api.validate_entries(entries)
+
+    if validation_result.is_failure:
+        return
+
+    report = validation_result.unwrap()
+    assert isinstance(report, dict)
+
+    if not report.get("is_valid", False):
+        return
+
+    # Analyze
+    analysis_result = api.analyze(entries)
+    if analysis_result.is_failure:
+        return
+
+    # Write result
+    result = api.write(entries)
 
     print(
         f"Pipeline: {len(result.unwrap())} bytes"

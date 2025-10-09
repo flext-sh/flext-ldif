@@ -1,6 +1,10 @@
 """Example 8: Complete LDIF Processing Workflow.
 
 Demonstrates comprehensive FlextLdif integration with direct methods:
+
+NOTE: This example intentionally uses assert statements (S101) for type narrowing
+demonstration. Asserts are acceptable in examples for pedagogical purposes and
+do not represent production error handling patterns.
 - Railway-oriented programming with FlextResult
 - Multi-step processing pipelines using direct API methods
 - Integration of all API functionality (no manual class instantiation!)
@@ -28,6 +32,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from flext_ldif import FlextLdif
+from flext_ldif.models import FlextLdifModels
 
 
 def railway_oriented_composition() -> None:
@@ -142,6 +147,8 @@ member: cn=Alice Johnson,ou=People,dc=example,dc=com
         return
 
     validation_report = validation_result.unwrap()
+    # Type narrowing for dict access
+    assert isinstance(validation_report, dict)
 
     if not validation_report.get("is_valid", False):
         _ = validation_report.get("errors", [])
@@ -218,8 +225,10 @@ mail: migration@example.com
 
     # Step 4: Verify migrated data
     migrated_files = migration_stats.get("output_files", [])
+    assert isinstance(migrated_files, list)
 
     for file_path in migrated_files:
+        assert isinstance(file_path, (str, Path))
         verify_result = api.parse(Path(file_path), server_type="oud")
 
         if verify_result.is_success:
@@ -244,10 +253,13 @@ def entry_building_and_processing_workflow() -> None:
 
     person = person_result.unwrap()
 
+    # Convert DN to string for members list
+    member_dns = [str(person.dn)]
+
     group_result = api.build_group_entry(
         cn="Workflow Group",
         base_dn="ou=Groups,dc=example,dc=com",
-        members=[person.dn],
+        members=member_dns,
     )
 
     if group_result.is_failure:
@@ -316,7 +328,7 @@ def schema_driven_workflow() -> None:
 
     validation_report = validation_result.unwrap()
 
-    if validation_report.get("is_valid", False):
+    if validation_report.is_valid:
         # Step 4: Process validated entries
         write_result = api.write(entries)
 
@@ -368,8 +380,9 @@ def batch_processing_workflow() -> None:
     api = FlextLdif.get_instance()
 
     # Create large dataset
-    entries = [
-        api.models.Entry(
+    entries = []
+    for i in range(20):
+        result = api.models.Entry.create(
             dn=f"cn=BatchUser{i},ou=People,dc=example,dc=com",
             attributes={
                 "objectClass": ["person"],
@@ -377,8 +390,8 @@ def batch_processing_workflow() -> None:
                 "sn": [f"User{i}"],
             },
         )
-        for i in range(20)
-    ]
+        if result.is_success:
+            entries.append(result.unwrap())
 
     # Validate all entries
     validation_result = api.validate_entries(entries)
@@ -400,10 +413,13 @@ def access_all_namespace_classes() -> None:
     api = FlextLdif.get_instance()
 
     # Access Models
-    entry = api.models.Entry(
+    entry_result = api.models.Entry.create(
         dn="cn=test,dc=example,dc=com",
         attributes={"objectClass": ["person"], "cn": ["test"], "sn": ["user"]},
     )
+    if entry_result.is_failure:
+        return
+    entry = entry_result.unwrap()
 
     # Access Constants
     max_line_length = api.constants.Format.MAX_LINE_LENGTH
@@ -423,10 +439,11 @@ def access_all_namespace_classes() -> None:
 
     # Access Utilities
     timestamp = api.utilities.TimeUtilities.get_timestamp()
-    dn_valid = api.utilities.ValidationUtilities.validate_dn_format(entry.dn)
+    # ValidationUtilities doesn't have validate_dn_format, use validate_attribute_name instead
+    attr_valid = api.utilities.ValidationUtilities.validate_attribute_name("cn")
 
-    # Access Processors
-    processor = api.processors.create_processor()
+    # Processors doesn't have create_processor method
+    # processor = api.processors.get_processors()
 
     # Access Config
     encoding = api.config.ldif_encoding
@@ -437,8 +454,7 @@ def access_all_namespace_classes() -> None:
         max_line_length,
         utf8_encoding,
         timestamp,
-        dn_valid,
-        processor,
+        attr_valid,
         encoding,
         max_workers,
     )
@@ -473,16 +489,19 @@ cn: test
         return
 
     validation_report = validation_result.unwrap()
+    # Type narrowing for dict access
+    assert isinstance(validation_report, dict)
 
     if not validation_report.get("is_valid", False):
         # Handle validation errors and attempt recovery by fixing entries
         for entry in entries:
             # Add missing required attribute
-            if (
-                "person" in entry.attributes.get("objectClass", [])
-                and "sn" not in entry.attributes
-            ):
-                entry.attributes["sn"] = ["recovered"]
+            obj_class_values = entry.attributes.get("objectClass", [])
+            assert isinstance(obj_class_values, list)
+            if "person" in obj_class_values and "sn" not in entry.attributes:
+                entry.attributes["sn"] = FlextLdifModels.AttributeValues(
+                    values=["recovered"]
+                )
 
         # Retry validation
         retry_result = api.validate_entries(entries)

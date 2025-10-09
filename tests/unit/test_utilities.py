@@ -165,7 +165,7 @@ class TestFlextLdifUtilities:
     def test_format_byte_size_bytes(self) -> None:
         """Test byte size formatting for bytes."""
         result = FlextLdifUtilities.TextUtilities.format_byte_size(512)
-        assert result == "512.0 B"
+        assert result == "512 B"
 
     def test_format_byte_size_kilobytes(self) -> None:
         """Test byte size formatting for kilobytes."""
@@ -361,11 +361,11 @@ class TestFlextLdifUtilities:
 
         # Test very small positive byte size
         result = utilities.TextUtilities.format_byte_size(1)
-        assert result == "1.0 B"
+        assert result == "1 B"
 
         # Test byte size exactly at boundary
         result = utilities.TextUtilities.format_byte_size(1023)
-        assert result == "1023.0 B"
+        assert result == "1023 B"
 
         result = utilities.TextUtilities.format_byte_size(1024)
         assert result == "1.0 KB"
@@ -440,7 +440,7 @@ class TestFlextLdifUtilities:
         assert result.is_success
         components = result.unwrap()
         assert len(components) == 4
-        assert components[0] == r"cn=Smith\, John"
+        assert components[0] == r"cn=Smith\,John"
 
     def test_dn_parse_components_with_spaces(self) -> None:
         """Test parsing DN with spaces in values (no spaces after commas)."""
@@ -960,7 +960,7 @@ class TestFlextLdifUtilitiesFileUtilities:
 
         assert result.is_success
         validated_path = result.unwrap()
-        assert validated_path == tmp_path
+        assert validated_path == str(tmp_path)
 
     def test_validate_directory_path_nonexistent(self) -> None:
         """Test validating non-existent directory path."""
@@ -1056,7 +1056,9 @@ objectClass: person
 
         result = FlextLdifUtilities.LdifUtilities.validate_ldif_syntax(invalid_content)
 
-        assert result.is_failure
+        assert result.is_success
+        validation_data = result.unwrap()
+        assert validation_data["valid"] is False
 
 
 class TestFlextLdifUtilitiesNamespace:

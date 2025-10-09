@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import base64
 import re
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from flext_core import FlextResult
 from pydantic import Field
@@ -361,7 +361,9 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
                     FlextLdifConstants.DictKeys.SOURCE_FORMAT: FlextLdifConstants.AclFormats.ACI,
                     FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
-                return FlextResult[FlextLdifTypes.Dict].ok(rfc_acl)
+                return FlextResult[FlextLdifTypes.Dict].ok(
+                    cast("FlextLdifTypes.Dict", rfc_acl)
+                )
 
             except Exception as exc:  # pragma: no cover
                 return FlextResult[FlextLdifTypes.Dict].fail(
@@ -379,7 +381,9 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
                     FlextLdifConstants.DictKeys.TARGET_FORMAT: FlextLdifConstants.DictKeys.ACI,
                     FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
-                return FlextResult[FlextLdifTypes.Dict].ok(apache_acl)
+                return FlextResult[FlextLdifTypes.Dict].ok(
+                    cast("FlextLdifTypes.Dict", apache_acl)
+                )
 
             except Exception as exc:  # pragma: no cover
                 return FlextResult[FlextLdifTypes.Dict].fail(

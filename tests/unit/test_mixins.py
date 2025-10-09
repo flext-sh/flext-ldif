@@ -3,7 +3,6 @@
 from collections.abc import Sequence
 from typing import cast
 
-import pytest
 from flext_core import FlextResult, FlextTypes
 from tests.test_support.ldif_data import LdifTestData
 
@@ -70,13 +69,12 @@ class TestFlextLdifAnalyticsMixin:
         assert attr_freq["cn"] == 2
 
     def test_analyze_dn_patterns(self) -> None:
-        """Test analyze_dn_patterns method (lines 248-263)."""
-        # Create entries with various DNs to cover all branches
+        """Test analyze_dn_patterns method - strict RFC compliance."""
+        # Create entries with valid DNs only (strict mode - no fallback)
         entries = [
             type("Entry", (), {"dn": "cn=test1,ou=users,dc=example,dc=com"})(),
             type("Entry", (), {"dn": "cn=test2,ou=users,dc=example,dc=com"})(),
-            type("Entry", (), {"dn": "invalid<>DN"})(),  # Invalid DN - line 261-263
-            type("Entry", (), {"dn": ""})(),  # Empty DN
+            type("Entry", (), {"dn": "cn=test3,ou=groups,dc=example,dc=com"})(),
         ]
 
         result = FlextLdifMixins.AnalyticsMixin.analyze_dn_patterns(entries)
@@ -84,8 +82,11 @@ class TestFlextLdifAnalyticsMixin:
         assert isinstance(result, dict)
         # Valid DNs should contribute to pattern counts
         assert "cn" in result
+        assert result["cn"] == 3
         assert "ou" in result
+        assert result["ou"] == 3
         assert "dc" in result
+        assert result["dc"] == 6  # 2 dc components per DN × 3 entries
 
     def test_analyze_with_result_success(self) -> None:
         """Test analyze_with_result with successful analysis (lines 272-274)."""
@@ -263,20 +264,20 @@ class TestFlextLdifProcessingMixin:
         assert "Test error" in result.error
 
     def test_normalize_dn_components_invalid_dn(self) -> None:
-        """Test normalize_dn_components with invalid DN (error path lines 117-118)."""
-        # Invalid DN that will trigger ValueError and return original
+        """Test normalize_dn_components with invalid DN - strict RFC compliance."""
+        # Invalid DN that will trigger ValueError - NO fallback per RFC compliance
         invalid_dn = "invalid<>DN"
         result = FlextLdifMixins.ProcessingMixin.normalize_dn_components(invalid_dn)
-        assert result.is_success
-        assert result.unwrap() == invalid_dn  # Should return original on error
+        assert result.is_failure  # Strict mode: reject invalid DNs
+        assert "DN normalization failed" in str(result.error)
 
     def test_extract_dn_components_invalid_dn(self) -> None:
-        """Test extract_dn_components with invalid DN (error path lines 132-133)."""
-        # Invalid DN that will trigger ValueError and return empty list
+        """Test extract_dn_components with invalid DN - strict RFC compliance."""
+        # Invalid DN should fail (strict mode - no fallback)
         invalid_dn = "invalid<>DN"
         result = FlextLdifMixins.ProcessingMixin.extract_dn_components(invalid_dn)
-        assert result.is_success
-        assert result.unwrap() == []  # Should return empty list on error
+        assert result.is_failure
+        assert "Failed to extract DN components" in str(result.error)
 
     def test_process_batch_with_result_error(self) -> None:
         """Test process_batch_with_result with error (lines 156-163)."""
@@ -594,13 +595,16 @@ class TestFlextLdifMixinsIntegration:
 
     def test_validate_encoding_with_model(self) -> None:
         """Test validate_encoding using Model validation (lines 86-90)."""
-        # Valid encoding
+        # Valid encoding - returns FlextResult
         result = FlextLdifMixins.ValidationMixin.validate_encoding("utf-8")
-        assert result == "utf-8"
+        assert result.is_success
+        assert result.unwrap() == "utf-8"
 
-        # Invalid encoding should raise ValueError
-        with pytest.raises(ValueError):
-            FlextLdifMixins.ValidationMixin.validate_encoding("invalid-encoding")
+        # Invalid encoding should return failure
+        result_invalid = FlextLdifMixins.ValidationMixin.validate_encoding(
+            "invalid-encoding"
+        )
+        assert result_invalid.is_failure
 
     def test_validate_with_result_success(self) -> None:
         """Test validate_with_result with successful validation (lines 97-99)."""

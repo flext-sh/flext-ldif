@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterator, Sequence
 from typing import cast, override
 
-from flext_core import FlextMixins, FlextResult
+from flext_core import FlextExceptions, FlextMixins, FlextResult
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -174,11 +174,13 @@ class FlextLdifMixins(FlextMixins):
 
             """
             # Use Model normalization - centralized in FlextLdifModels.DistinguishedName
-            # Explicit FlextResult error handling - NO try/except
+            # Explicit FlextResult error handling - NO try/except, NO fallback
             dn_model_result = FlextLdifModels.DistinguishedName.create(value=dn)
             if dn_model_result.is_failure:
-                # Return original DN on validation failure (fallback behavior)
-                return FlextResult[str].ok(dn)
+                # Strict RFC compliance - return error, not original DN
+                return FlextResult[str].fail(
+                    f"DN normalization failed: {dn_model_result.error}"
+                )
 
             dn_model = cast(
                 "FlextLdifModels.DistinguishedName", dn_model_result.unwrap()
@@ -195,11 +197,13 @@ class FlextLdifMixins(FlextMixins):
 
             """
             # Use Model parsing - centralized in FlextLdifModels.DistinguishedName
-            # Explicit FlextResult error handling - NO try/except
+            # Explicit FlextResult error handling - NO try/except, NO fallback
             dn_model_result = FlextLdifModels.DistinguishedName.create(value=dn)
             if dn_model_result.is_failure:
-                # Return empty list on validation failure (fallback behavior)
-                return FlextResult[list[tuple[str, str]]].ok([])
+                # Strict RFC compliance - return error, not empty list
+                return FlextResult[list[tuple[str, str]]].fail(
+                    f"Failed to extract DN components: {dn_model_result.error}"
+                )
 
             dn_model = cast(
                 "FlextLdifModels.DistinguishedName", dn_model_result.unwrap()
@@ -329,14 +333,15 @@ class FlextLdifMixins(FlextMixins):
                 dn = getattr(entry, FlextLdifConstants.DictKeys.DN, "")
                 if isinstance(dn, str):
                     # Use Model parsing - centralized in FlextLdifModels.DistinguishedName
-                    # Explicit FlextResult error handling - NO try/except
+                    # Explicit FlextResult error handling - NO try/except, NO fallback
                     dn_model_result = cast(
                         "FlextResult[FlextLdifModels.DistinguishedName]",
                         FlextLdifModels.DistinguishedName.create(value=dn),
                     )
                     if dn_model_result.is_failure:
-                        # Skip invalid DNs (fallback behavior)
-                        continue
+                        # Strict RFC compliance - invalid DN fails the entire analysis
+                        error_msg = f"Invalid DN in entry during pattern analysis: {dn_model_result.error}"
+                        raise FlextExceptions.ValidationError(error_msg)
 
                     dn_model = dn_model_result.unwrap()
                     for comp in dn_model.components:

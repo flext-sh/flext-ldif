@@ -28,10 +28,17 @@ from __future__ import annotations
 
 import base64
 import os
+from collections.abc import Generator
 from pathlib import Path
 
 import pytest
-from ldap3 import ALL, MODIFY_ADD, MODIFY_REPLACE, Connection, Server
+from ldap3 import (
+    ALL,
+    MODIFY_ADD,
+    MODIFY_REPLACE,
+    Connection,
+    Server,
+)
 
 from flext_ldif import FlextLdif
 
@@ -44,7 +51,7 @@ LDAP_BASE_DN = os.getenv("LDAP_BASE_DN", "dc=flext,dc=local")
 
 
 @pytest.fixture(scope="module")
-def ldap_connection() -> Connection:
+def ldap_connection() -> Generator[Connection]:
     """Create connection to real LDAP server."""
     server = Server(f"{LDAP_HOST}:{LDAP_PORT}", get_info=ALL)
     conn = Connection(
@@ -58,7 +65,7 @@ def ldap_connection() -> Connection:
 
 
 @pytest.fixture
-def clean_test_ou(ldap_connection: Connection) -> str:
+def clean_test_ou(ldap_connection: Connection) -> Generator[str]:
     """Create and clean up test OU."""
     test_ou_dn = f"ou=FlextLdifTests,{LDAP_BASE_DN}"
 
@@ -78,9 +85,12 @@ def clean_test_ou(ldap_connection: Connection) -> str:
                 try:
                     ldap_connection.delete(dn)
                 except Exception:
-                    pass  # Ignore delete errors during cleanup
+                    # Ignore delete errors during cleanup - entries may already be deleted
+                    # or dependencies may prevent deletion. Cleanup should not fail tests.
+                    pass
     except Exception:
-        pass  # OU doesn't exist yet
+        # OU doesn't exist yet - this is expected for first test run
+        pass
 
     # Create test OU (or recreate if deleted above)
     try:
@@ -90,7 +100,8 @@ def clean_test_ou(ldap_connection: Connection) -> str:
             {"ou": "FlextLdifTests"},
         )
     except Exception:
-        pass  # OU already exists
+        # OU already exists - this is expected if previous test didn't clean up
+        pass
 
     yield test_ou_dn
 
@@ -108,9 +119,11 @@ def clean_test_ou(ldap_connection: Connection) -> str:
                 try:
                     ldap_connection.delete(dn)
                 except Exception:
-                    pass  # Ignore cleanup errors
+                    # Ignore cleanup errors - entries may have dependencies or already be deleted
+                    pass
     except Exception:
-        pass  # Cleanup failed, but that's okay
+        # Cleanup failed, but that's okay - test should not fail due to cleanup issues
+        pass
 
 
 @pytest.fixture
@@ -153,13 +166,15 @@ class TestRealLdapExport:
         ldap_entry = ldap_connection.entries[0]
 
         # Convert to FlextLdif entry
-        flext_entry = flext_api.models.Entry(
+        entry_result = flext_api.models.Entry.create(
             dn=ldap_entry.entry_dn,
             attributes={
                 attr: list(ldap_entry[attr].values)
                 for attr in ldap_entry.entry_attributes
             },
         )
+        assert entry_result.is_success
+        flext_entry = entry_result.unwrap()
 
         # Write to LDIF
         write_result = flext_api.write([flext_entry])
@@ -202,15 +217,16 @@ class TestRealLdapExport:
         assert len(ldap_connection.entries) == 5
 
         # Convert to FlextLdif entries
-        flext_entries = [
-            flext_api.models.Entry(
+        flext_entries = []
+        for entry in ldap_connection.entries:
+            result = flext_api.models.Entry.create(
                 dn=entry.entry_dn,
                 attributes={
                     attr: list(entry[attr].values) for attr in entry.entry_attributes
                 },
             )
-            for entry in ldap_connection.entries
-        ]
+            assert result.is_success
+            flext_entries.append(result.unwrap())
 
         # Write to LDIF
         write_result = flext_api.write(flext_entries)
@@ -260,15 +276,16 @@ class TestRealLdapExport:
             attributes=["*"],
         )
 
-        flext_entries = [
-            flext_api.models.Entry(
+        flext_entries = []
+        for entry in ldap_connection.entries:
+            result = flext_api.models.Entry.create(
                 dn=entry.entry_dn,
                 attributes={
                     attr: list(entry[attr].values) for attr in entry.entry_attributes
                 },
             )
-            for entry in ldap_connection.entries
-        ]
+            assert result.is_success
+            flext_entries.append(result.unwrap())
 
         write_result = flext_api.write(flext_entries)
         assert write_result.is_success
@@ -309,13 +326,15 @@ mail: import@example.com
 
         # Import to LDAP
         ldap_connection.add(
-            entry.dn,
-            list(entry.attributes.get("objectClass", [])),
-            {k: v for k, v in entry.attributes.items() if k != "objectClass"},
+            str(entry.dn),
+            entry.get_attribute_values("objectClass"),
+            entry.attributes.to_ldap3(exclude=["objectClass"]),
         )
 
         # Verify import
-        assert ldap_connection.search(entry.dn, "(objectClass=*)", search_scope="BASE")
+        assert ldap_connection.search(
+            str(entry.dn), "(objectClass=*)", search_scope="BASE", attributes=["*"]
+        )
         imported_entry = ldap_connection.entries[0]
         assert imported_entry.cn.value == "Import Test"
         assert imported_entry.mail.value == "import@example.com"
@@ -347,20 +366,22 @@ jpegPhoto:: {encoded_photo}
         entry = entries[0]
 
         # Import to LDAP
-        attrs_dict = {k: v for k, v in entry.attributes.items() if k != "objectClass"}
+        attrs_dict = entry.attributes.to_ldap3(exclude=["objectClass"])
 
-        # Handle binary attribute
+        # Handle binary attribute - ldap3 accepts bytes for binary attributes
         if "jpegPhoto" in attrs_dict:
             attrs_dict["jpegPhoto"] = binary_data
 
         ldap_connection.add(
-            entry.dn,
-            list(entry.attributes.get("objectClass", [])),
+            str(entry.dn),
+            entry.get_attribute_values("objectClass"),
             attrs_dict,
         )
 
         # Verify
-        assert ldap_connection.search(entry.dn, "(objectClass=*)", search_scope="BASE")
+        assert ldap_connection.search(
+            str(entry.dn), "(objectClass=*)", search_scope="BASE", attributes=["*"]
+        )
         imported_entry = ldap_connection.entries[0]
         assert imported_entry.jpegPhoto.value == binary_data
 
@@ -395,13 +416,15 @@ class TestRealLdapRoundtrip:
         ldap_connection.search(original_dn, "(objectClass=*)", attributes=["*"])
         ldap_entry = ldap_connection.entries[0]
 
-        flext_entry = flext_api.models.Entry(
+        entry_result = flext_api.models.Entry.create(
             dn=ldap_entry.entry_dn,
             attributes={
                 attr: list(ldap_entry[attr].values)
                 for attr in ldap_entry.entry_attributes
             },
         )
+        assert entry_result.is_success
+        flext_entry = entry_result.unwrap()
 
         write_result = flext_api.write([flext_entry])
         assert write_result.is_success
@@ -416,14 +439,14 @@ class TestRealLdapRoundtrip:
 
         reimport_entry = parsed_entries[0]
         # Change DN for reimport
-        reimport_attrs = {
-            k: v for k, v in reimport_entry.attributes.items() if k != "objectClass"
-        }
-        reimport_attrs["cn"] = ["Roundtrip Test Copy"]
+        reimport_attrs = reimport_entry.attributes.to_ldap3(exclude=["objectClass"])
+        reimport_attrs["cn"] = "Roundtrip Test Copy"
 
+        obj_class_values = reimport_entry.attributes.get("objectClass", [])
+        assert isinstance(obj_class_values, list)
         ldap_connection.add(
             reimport_dn,
-            list(reimport_entry.attributes.get("objectClass", [])),
+            obj_class_values,
             reimport_attrs,
         )
 
@@ -520,13 +543,15 @@ class TestRealLdapModify:
         ldap_connection.search(entry_dn, "(objectClass=*)", attributes=["*"])
         ldap_entry = ldap_connection.entries[0]
 
-        flext_entry = flext_api.models.Entry(
+        entry_result = flext_api.models.Entry.create(
             dn=ldap_entry.entry_dn,
             attributes={
                 attr: list(ldap_entry[attr].values)
                 for attr in ldap_entry.entry_attributes
             },
         )
+        assert entry_result.is_success
+        flext_entry = entry_result.unwrap()
 
         write_result = flext_api.write([flext_entry])
         assert write_result.is_success
@@ -605,15 +630,16 @@ class TestRealLdapAnalytics:
             attributes=["*"],
         )
 
-        flext_entries = [
-            flext_api.models.Entry(
+        flext_entries = []
+        for entry in ldap_connection.entries:
+            result = flext_api.models.Entry.create(
                 dn=entry.entry_dn,
                 attributes={
                     attr: list(entry[attr].values) for attr in entry.entry_attributes
                 },
             )
-            for entry in ldap_connection.entries
-        ]
+            assert result.is_success
+            flext_entries.append(result.unwrap())
 
         # Analyze
         analysis_result = flext_api.analyze(flext_entries)
@@ -621,7 +647,9 @@ class TestRealLdapAnalytics:
 
         stats = analysis_result.unwrap()
         assert stats.get("total_entries", 0) == 10
-        assert "person" in stats.get("objectclass_distribution", {})
+        obj_class_dist = stats.get("objectclass_distribution", {})
+        assert isinstance(obj_class_dist, dict)
+        assert "person" in obj_class_dist
 
 
 class TestRealLdapFileOperations:
@@ -647,13 +675,15 @@ class TestRealLdapFileOperations:
         ldap_connection.search(person_dn, "(objectClass=*)", attributes=["*"])
         ldap_entry = ldap_connection.entries[0]
 
-        flext_entry = flext_api.models.Entry(
+        entry_result = flext_api.models.Entry.create(
             dn=ldap_entry.entry_dn,
             attributes={
                 attr: list(ldap_entry[attr].values)
                 for attr in ldap_entry.entry_attributes
             },
         )
+        assert entry_result.is_success
+        flext_entry = entry_result.unwrap()
 
         # Write to file
         output_file = tmp_path / "export.ldif"
@@ -694,13 +724,15 @@ mail: import@example.com
 
         # Import to LDAP
         ldap_connection.add(
-            entry.dn,
-            list(entry.attributes.get("objectClass", [])),
-            {k: v for k, v in entry.attributes.items() if k != "objectClass"},
+            str(entry.dn),
+            entry.get_attribute_values("objectClass"),
+            entry.attributes.to_ldap3(exclude=["objectClass"]),
         )
 
         # Verify
-        assert ldap_connection.search(entry.dn, "(objectClass=*)", search_scope="BASE")
+        assert ldap_connection.search(
+            str(entry.dn), "(objectClass=*)", search_scope="BASE", attributes=["*"]
+        )
         imported = ldap_connection.entries[0]
         assert imported.cn.value == "File Import"
 
@@ -727,35 +759,41 @@ class TestRealLdapCRUD:
         person_entry = person_result.unwrap()
 
         # Write to LDAP
+        obj_class_values = person_entry.attributes.get("objectClass", [])
+        assert isinstance(obj_class_values, list)
         ldap_connection.add(
-            person_entry.dn,
-            list(person_entry.attributes.get("objectClass", [])),
-            {k: v for k, v in person_entry.attributes.items() if k != "objectClass"},
+            str(person_entry.dn),
+            obj_class_values,
+            person_entry.attributes.to_ldap3(exclude=["objectClass"]),
         )
 
         # READ: Export from LDAP via LDIF
-        ldap_connection.search(person_entry.dn, "(objectClass=*)", attributes=["*"])
+        ldap_connection.search(
+            str(person_entry.dn), "(objectClass=*)", attributes=["*"]
+        )
         assert len(ldap_connection.entries) == 1
         read_entry = ldap_connection.entries[0]
         assert read_entry.mail.value == "crud@example.com"
 
         # UPDATE: Modify via LDIF
         ldap_connection.modify(
-            person_entry.dn,
+            str(person_entry.dn),
             {"mail": [(MODIFY_REPLACE, ["updated_crud@example.com"])]},
         )
 
         # Verify update
-        ldap_connection.search(person_entry.dn, "(objectClass=*)", attributes=["*"])
+        ldap_connection.search(
+            str(person_entry.dn), "(objectClass=*)", attributes=["*"]
+        )
         updated_entry = ldap_connection.entries[0]
         assert updated_entry.mail.value == "updated_crud@example.com"
 
         # DELETE: Remove entry
-        ldap_connection.delete(person_entry.dn)
+        ldap_connection.delete(str(person_entry.dn))
 
         # Verify deletion
         result = ldap_connection.search(
-            person_entry.dn, "(objectClass=*)", search_scope="BASE"
+            str(person_entry.dn), "(objectClass=*)", search_scope="BASE"
         )
         assert not result or len(ldap_connection.entries) == 0
 
@@ -787,9 +825,9 @@ class TestRealLdapBatchOperations:
         # Write to LDAP in batch
         for entry in entries:
             ldap_connection.add(
-                entry.dn,
-                list(entry.attributes.get("objectClass", [])),
-                {k: v for k, v in entry.attributes.items() if k != "objectClass"},
+                str(entry.dn),
+                entry.get_attribute_values("objectClass"),
+                entry.attributes.to_ldap3(exclude=["objectClass"]),
             )
 
         # Verify all created
@@ -802,15 +840,16 @@ class TestRealLdapBatchOperations:
         assert len(ldap_connection.entries) == 20
 
         # Export all to LDIF
-        flext_entries = [
-            flext_api.models.Entry(
+        flext_entries = []
+        for entry in ldap_connection.entries:
+            result = flext_api.models.Entry.create(
                 dn=entry.entry_dn,
                 attributes={
                     attr: list(entry[attr].values) for attr in entry.entry_attributes
                 },
             )
-            for entry in ldap_connection.entries
-        ]
+            assert result.is_success
+            flext_entries.append(result.unwrap())
 
         # Validate batch
         validation_result = flext_api.validate_entries(flext_entries)
@@ -851,15 +890,16 @@ class TestRealLdapBatchOperations:
             attributes=["*"],
         )
 
-        flext_entries = [
-            flext_api.models.Entry(
+        flext_entries = []
+        for entry in ldap_connection.entries:
+            result = flext_api.models.Entry.create(
                 dn=entry.entry_dn,
                 attributes={
                     attr: list(entry[attr].values) for attr in entry.entry_attributes
                 },
             )
-            for entry in ldap_connection.entries
-        ]
+            assert result.is_success
+            flext_entries.append(result.unwrap())
 
         export_file = tmp_path / "batch_export.ldif"
         write_result = flext_api.write(flext_entries, export_file)
@@ -938,13 +978,15 @@ class TestRealLdapRailwayComposition:
         ldap_connection.search(person_dn, "(objectClass=*)", attributes=["*"])
         ldap_entry = ldap_connection.entries[0]
 
-        flext_entry = flext_api.models.Entry(
+        entry_result = flext_api.models.Entry.create(
             dn=ldap_entry.entry_dn,
             attributes={
                 attr: list(ldap_entry[attr].values)
                 for attr in ldap_entry.entry_attributes
             },
         )
+        assert entry_result.is_success
+        flext_entry = entry_result.unwrap()
 
         # Railway composition: write → parse → validate → analyze
         output_file = tmp_path / "railway.ldif"

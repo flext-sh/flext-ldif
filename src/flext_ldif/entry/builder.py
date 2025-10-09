@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
-from typing import cast, override
+from typing import Any, cast, override
 
 from flext_core import FlextResult, FlextService
 
@@ -257,7 +257,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
             )
 
     def build_entries_from_dict(
-        self, data: list[FlextLdifTypes.Dict]
+        self, data: list[dict[str, Any]]
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Build entries from dictionary data."""
         entries: list[FlextLdifModels.Entry] = []

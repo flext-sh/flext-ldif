@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import logging
 import re
 from datetime import UTC, datetime
 from pathlib import Path
@@ -16,8 +17,11 @@ from typing import Final, cast
 
 from flext_core import FlextProcessors, FlextResult, FlextUtilities
 
+# Configure logger for utilities
+logger = logging.getLogger(__name__)
+
 # MANDATORY ldap3 imports - flext-ldif OWNS ldap3 wrapping
-from ldap3.utils.dn import parse_dn, safe_dn  # type: ignore[import-untyped]
+from ldap3.utils.dn import parse_dn
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.typings import FlextLdifTypes
@@ -94,6 +98,9 @@ class FlextLdifUtilities(FlextUtilities):
                 size /= bytes_per_unit
                 unit_index += 1
 
+            # For bytes, show as integer; for larger units, show with 1 decimal
+            if unit_index == 0:
+                return f"{int(size)} {units[unit_index]}"
             return f"{size:.1f} {units[unit_index]}"
 
     # =========================================================================
@@ -127,18 +134,27 @@ class FlextLdifUtilities(FlextUtilities):
                 return FlextResult[FlextLdifTypes.StringList].fail("DN cannot be empty")
 
             try:
+                # Pre-process: Clean up common non-canonical DN formatting
+                # RFC 4514 canonical form has no extraneous spaces
+                cleaned_dn = dn.strip()
+                # Remove all spaces around commas (handle multiple spaces)
+                cleaned_dn = re.sub(r"\s*,\s*", ",", cleaned_dn)
+                # Remove all spaces around equals signs
+                cleaned_dn = re.sub(r"\s*=\s*", "=", cleaned_dn)
+
                 # Use ldap3.utils.dn.parse_dn for RFC 4514 compliant parsing
                 # parse_dn returns list of (attr, value, separator) tuples
-                parsed = parse_dn(dn)
+                parsed = parse_dn(cleaned_dn)
 
                 if not parsed:
                     return FlextResult[FlextLdifTypes.StringList].fail(
                         "DN has no valid components"
                     )
 
-                # Convert to "attr=value" format for compatibility
+                # Convert to "attr=value" format, stripping spaces from attrs
+                # Note: parse_dn may include leading/trailing spaces in attributes
                 components: FlextLdifTypes.StringList = [
-                    f"{attr}={value}" for attr, value, _ in parsed
+                    f"{attr.strip()}={value}" for attr, value, _ in parsed
                 ]
 
                 return FlextResult[FlextLdifTypes.StringList].ok(components)
@@ -208,7 +224,7 @@ class FlextLdifUtilities(FlextUtilities):
         def normalize_dn(dn: str) -> FlextResult[str]:
             """Normalize DN to canonical form using ldap3.utils.dn.
 
-            Uses ldap3.safe_dn for RFC 4514 compliant normalization.
+            Uses ldap3.parse_dn for RFC 4514 compliant parsing and normalization.
 
             Args:
                 dn: Distinguished Name string to normalize
@@ -223,19 +239,13 @@ class FlextLdifUtilities(FlextUtilities):
                 return FlextResult[str].fail(validation_result.error or "Invalid DN")
 
             try:
-                # Use ldap3.utils.dn.safe_dn for RFC 4514 compliant normalization
-                # safe_dn normalizes the DN to canonical form (returns str)
-                normalized_dn: str = str(
-                    safe_dn(dn)
-                )  # Type assertion for untyped ldap3
-
-                # Additional normalization: lowercase attributes, normalize spaces
+                # Parse DN components using ldap3 for RFC 4514 compliance
                 components_result = FlextLdifUtilities.DnUtilities.parse_dn_components(
-                    normalized_dn
+                    dn
                 )
                 if components_result.is_failure:
                     return FlextResult[str].fail(
-                        components_result.error or "Failed to parse normalized DN"
+                        components_result.error or "Failed to parse DN"
                     )
 
                 components = components_result.unwrap()
@@ -249,6 +259,7 @@ class FlextLdifUtilities(FlextUtilities):
                         f"{attr_normalized}={value_normalized}"
                     )
 
+                # Join without spaces - RFC 4514 canonical form
                 return FlextResult[str].ok(",".join(normalized_components))
             except Exception as e:
                 return FlextResult[str].fail(f"Failed to normalize DN: {e}")
@@ -567,8 +578,8 @@ class FlextLdifUtilities(FlextUtilities):
                     )
                     if ldif_match:
                         return ldif_match.group(1).lower()
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Error during charset pattern matching: {e}")
                 return None
 
             # Nested helper function: Statistical analysis

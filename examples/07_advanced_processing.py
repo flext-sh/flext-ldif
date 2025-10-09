@@ -59,8 +59,9 @@ def parallel_processing() -> None:
     api = FlextLdif.get_instance()
 
     # Create larger dataset for parallel processing benefit
-    entries = [
-        api.models.Entry(
+    entries = []
+    for i in range(10):
+        result = api.models.Entry.create(
             dn=f"cn=User{i},ou=People,dc=example,dc=com",
             attributes={
                 "objectClass": ["person"],
@@ -68,8 +69,8 @@ def parallel_processing() -> None:
                 "sn": [f"User{i}"],
             },
         )
-        for i in range(10)
-    ]
+        if result.is_success:
+            entries.append(result.unwrap())
 
     # Process in parallel - ONE LINE! (was 15+ lines)
     # No processor creation, no manual conversion loops!
@@ -89,7 +90,7 @@ def use_dn_utilities() -> None:
 
     # Parse DN
     dn = "cn=John Doe,ou=People,dc=example,dc=com"
-    parse_result = dn_utils.parse_dn(dn)
+    parse_result = dn_utils.parse_dn_components(dn)
 
     if parse_result.is_success:
         components = parse_result.unwrap()
@@ -97,7 +98,7 @@ def use_dn_utilities() -> None:
         _ = len(components)
 
     # Validate DN
-    validation_result = dn_utils.validate_dn(dn)
+    validation_result = dn_utils.validate_dn_format(dn)
 
     if validation_result.is_success:
         is_valid = validation_result.unwrap()
@@ -122,14 +123,8 @@ def use_text_utilities() -> None:
     size_str = text_utils.format_byte_size(1024 * 1024)  # 1 MB
     _ = size_str
 
-    # Truncate text
-    long_text = "A" * 1000
-    truncated = text_utils.truncate_text(long_text, max_length=100)
-    _ = len(truncated)
-
-    # Format timestamp
-    formatted = text_utils.format_timestamp()
-    _ = formatted
+    # Note: truncate_text and format_timestamp are not available in TextUtilities
+    # Only format_byte_size is available
 
 
 def use_time_utilities() -> None:
@@ -143,9 +138,9 @@ def use_time_utilities() -> None:
     timestamp = time_utils.get_timestamp()
     _ = timestamp
 
-    # Get ISO format timestamp
-    iso_timestamp = time_utils.get_iso_timestamp()
-    _ = iso_timestamp
+    # Get formatted timestamp
+    formatted_timestamp = time_utils.get_formatted_timestamp()
+    _ = formatted_timestamp
 
 
 def use_validation_utilities() -> None:
@@ -155,23 +150,19 @@ def use_validation_utilities() -> None:
     # Access validation utilities
     validation_utils = api.utilities.ValidationUtilities
 
-    # Validate DN format
-    dn = "cn=test,dc=example,dc=com"
-    dn_valid = validation_utils.validate_dn_format(dn)
-    _ = dn_valid
+    # Validate attribute name
+    attr_name = "cn"
+    attr_valid = validation_utils.validate_attribute_name(attr_name)
+    _ = attr_valid
 
     # Validate attribute name
     attr_valid = validation_utils.validate_attribute_name("cn")
     _ = attr_valid
 
-    # Validate entry structure
-    entry = api.models.Entry(
-        dn="cn=test,dc=example,dc=com",
-        attributes={"objectClass": ["person"], "cn": ["test"], "sn": ["user"]},
-    )
-
-    entry_valid = validation_utils.validate_entry_structure(entry)
-    _ = entry_valid
+    # Validate object class name
+    oc_name = "person"
+    oc_valid = validation_utils.validate_object_class_name(oc_name)
+    _ = oc_valid
 
 
 def use_ldif_utilities() -> None:
@@ -181,19 +172,16 @@ def use_ldif_utilities() -> None:
     # Access LDIF utilities
     ldif_utils = api.utilities.LdifUtilities
 
-    # Check if line needs base64 encoding
-    needs_encoding = ldif_utils.needs_base64_encoding("cn: test")
-    _ = needs_encoding
+    # Validate LDIF syntax
+    ldif_content = (
+        "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: user\n"
+    )
+    syntax_result = ldif_utils.validate_ldif_syntax(ldif_content)
+    _ = syntax_result
 
-    # Fold long line (RFC 2849 compliance)
-    long_line = "description: " + "A" * 200
-    folded = ldif_utils.fold_line(long_line)
-    _ = len(folded)
-
-    # Unfold line
-    folded_line = "cn: test\n value"
-    unfolded = ldif_utils.unfold_line(folded_line)
-    _ = unfolded
+    # Count LDIF entries
+    count_result = ldif_utils.count_ldif_entries(ldif_content)
+    _ = count_result
 
 
 def use_encoding_utilities() -> None:
@@ -203,21 +191,10 @@ def use_encoding_utilities() -> None:
     # Access encoding utilities
     encoding_utils = api.utilities.EncodingUtilities
 
-    # Encode to UTF-8
-    encoded = encoding_utils.encode_utf8("test value")
-    _ = encoded
-
-    # Decode from UTF-8
-    decoded = encoding_utils.decode_utf8(b"test value")
-    _ = decoded
-
-    # Base64 encode
-    b64_encoded = encoding_utils.base64_encode("test value")
-    _ = b64_encoded
-
-    # Base64 decode
-    b64_decoded = encoding_utils.base64_decode(b64_encoded)
-    _ = b64_decoded
+    # Detect encoding
+    sample_bytes = b"test value"
+    encoding_result = encoding_utils.detect_encoding(sample_bytes)
+    _ = encoding_result
 
 
 def use_file_utilities() -> None:
@@ -227,22 +204,20 @@ def use_file_utilities() -> None:
     # Access file utilities
     file_utils = api.utilities.FileUtilities
 
-    # Read file safely (with error handling)
+    # Validate file path
     test_file = Path("examples/sample_basic.ldif")
+    path_result = file_utils.validate_file_path(test_file)
+    _ = path_result
 
+    # Get file info
     if test_file.exists():
-        read_result = file_utils.read_file_safe(test_file)
+        info_result = file_utils.get_file_info(test_file)
+        _ = info_result
 
-        if read_result.is_success:
-            content = read_result.unwrap()
-            _ = len(content)
-
-    # Write file safely
-    output_file = Path("examples/util_output.ldif")
-    write_result = file_utils.write_file_safe(output_file, "test content")
-
-    if write_result.is_success:
-        _ = write_result.unwrap()
+    # Ensure file extension
+    output_file = Path("examples/util_output")
+    ensured_path = file_utils.ensure_file_extension(output_file, "ldif")
+    _ = ensured_path
 
 
 def complete_processing_pipeline() -> None:
@@ -265,9 +240,10 @@ sn: User
 
     # Validate using utilities
     for entry in entries:
-        dn_valid = api.utilities.ValidationUtilities.validate_dn_format(entry.dn)
+        # Use DnUtilities for DN validation
+        dn_result = api.utilities.DnUtilities.validate_dn_format(str(entry.dn))
 
-        if not dn_valid:
+        if dn_result.is_failure:
             continue
 
     # Batch process - ONE LINE! (was 15+ lines)
@@ -300,7 +276,7 @@ def access_all_utilities() -> None:
     formatted_size = text_utils.format_byte_size(1024)
 
     # Use DN utility
-    dn_result = dn_utils.validate_dn("cn=test,dc=example,dc=com")
+    dn_result = dn_utils.validate_dn_format("cn=test,dc=example,dc=com")
 
     # All utilities integrated
     _ = (timestamp, formatted_size, dn_result)

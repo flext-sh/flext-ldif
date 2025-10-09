@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Self, override
+from typing import Self, cast, override
 
 from flext_core import FlextResult, FlextService
 
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.typings import FlextLdifTypes
-
-# from flext_ldif.models import FlextLdifModels  # Temporarily removed to fix circular import
 
 
 class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
@@ -28,13 +26,13 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
     _entry_count: int
 
     @override
-    def __init__(self) -> None:
+    def __init__(self, *, server_type: str = "generic") -> None:
         """Initialize schema builder with Phase 1 context enrichment."""
         super().__init__()
         # Logger and container inherited from FlextService via FlextMixins
         self._attributes = {}
         self._object_classes = {}
-        self._server_type = "generic"
+        self._server_type = server_type
         self._entry_count = 0
 
     @property
@@ -65,7 +63,13 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
         return FlextResult[FlextLdifConfig].fail("Use build methods instead")
 
     def add_attribute(
-        self, name: str, description: str, *, single_value: bool = False
+        self,
+        name: str,
+        description: str,
+        *,
+        single_value: bool = False,
+        syntax: str | None = None,
+        **kwargs: object,
     ) -> FlextLdifSchemaBuilder:
         """Add attribute to schema (Fluent Builder pattern).
 
@@ -78,11 +82,14 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
             Self for method chaining
 
         """
-        attr_result = {
+        attr_result: dict[str, object] = {
             "name": name,
             "description": description,
             "single_value": single_value,
         }
+        if syntax:
+            attr_result["syntax"] = syntax
+        attr_result.update(kwargs)
         if attr_result:
             self._attributes[name] = attr_result
         return self
@@ -91,8 +98,12 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
         self,
         name: str,
         description: str,
-        required_attributes: FlextLdifTypes.StringList,
+        required_attributes: FlextLdifTypes.StringList | None = None,
         optional_attributes: FlextLdifTypes.StringList | None = None,
+        *,
+        superior: str | None = None,
+        structural: bool | None = None,
+        **kwargs: object,
     ) -> FlextLdifSchemaBuilder:
         """Add object class to schema (Fluent Builder pattern).
 
@@ -106,12 +117,17 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
             Self for method chaining
 
         """
-        object_class_data = {
+        object_class_data: dict[str, object] = {
             "name": name,
             "description": description,
             "required_attributes": required_attributes,
             "optional_attributes": optional_attributes or [],
         }
+        if superior:
+            object_class_data["superior"] = superior
+        if structural is not None:
+            object_class_data["structural"] = structural
+        object_class_data.update(kwargs)
         self._object_classes[name] = object_class_data
         return self
 
@@ -142,7 +158,7 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
             "entry_count": self._entry_count,
         }
         if result:
-            return FlextResult[dict[str, object]].ok(result)
+            return FlextResult[dict[str, object]].ok(cast("dict[str, object]", result))
         return FlextResult[dict[str, object]].fail("Failed to create schema")
 
     def reset(self) -> Self:

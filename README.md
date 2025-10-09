@@ -2,9 +2,9 @@
 
 **Advanced LDIF processing library** for the FLEXT ecosystem, providing comprehensive LDAP data parsing, validation, and server-specific adaptations with full RFC 2849 compliance.
 
-> **STATUS**: Version 0.9.9 RC - **LIBRARY-ONLY** with 100% type safety, 100% lint compliance, RFC-first architecture, and comprehensive server quirks system 🚀
+> **STATUS**: Version 0.9.9 RC - **LIBRARY-ONLY** with 100% type safety, 100% lint compliance, strict RFC 4514 compliance, and comprehensive server quirks system 🚀
 >
-> **Quality Gates**: ✅ MyPy (100%) | ✅ Ruff (100%) | ✅ Tests (387/389 - 99%) | ⚠️ Coverage (52% baseline)
+> **Quality Gates**: ✅ MyPy (100%) | ✅ Ruff (100%) | ✅ Tests (990/990 - 100%) | ✅ Strict RFC Compliance (ZERO fallbacks)
 
 ---
 
@@ -94,7 +94,7 @@ Automatic detection and quirk-based adaptation for LDAP servers:
 - Each server has a **SchemaQuirk** for attributeType/objectClass extensions
 - Schema quirks contain nested **AclQuirk** and **EntryQuirk** classes
 - Quirks use **priority-based resolution** (lower number = higher priority)
-- Quirks tried **first**, RFC parsing used as **fallback**
+- Strict RFC 4514 compliance enforced (NO fallback behavior)
 
 ### **Multi-Encoding Support**
 

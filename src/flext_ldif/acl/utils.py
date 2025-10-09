@@ -37,9 +37,11 @@ class FlextLdifAclUtils(FlextUtilities):
                 or failure with descriptive error message.
 
             """
-            # Create ACL components using factory methods
-            target_result = FlextLdifModels.AclTarget.create()
-            subject_result = FlextLdifModels.AclSubject.create()
+            # Create ACL components using factory methods with required defaults
+            target_result = FlextLdifModels.AclTarget.create(target_dn="*")
+            subject_result = FlextLdifModels.AclSubject.create(
+                subject_type="*", subject_value="*"
+            )
             perms_result = FlextLdifModels.AclPermissions.create(read=True)
 
             # Railway pattern: early return on first failure

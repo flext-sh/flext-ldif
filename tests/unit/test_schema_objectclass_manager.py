@@ -58,15 +58,12 @@ class TestObjectClassHierarchyResolution:
 
         # Create schema with simple hierarchy
         schema = FlextLdifModels.SchemaDiscoveryResult(
-            object_classes={
-                "person": FlextLdifModels.SchemaObjectClass(
-                    name="person",
-                    oid="2.5.6.6",
-                    superior=["top"],
-                    structural=True,
-                    required_attributes=["cn", "sn"],
-                    optional_attributes=[],
-                ),
+            objectclasses={
+                "person": {
+                    "name": "person",
+                    "oid": "2.5.6.6",
+                    "superior": "top",
+                },
             },
             attributes={},
         )
@@ -84,7 +81,7 @@ class TestObjectClassHierarchyResolution:
 
         # Empty schema
         schema = FlextLdifModels.SchemaDiscoveryResult(
-            object_classes={},
+            objectclasses={},
             attributes={},
         )
 
@@ -103,15 +100,15 @@ class TestRequiredAttributesCollection:
         manager = FlextLdifObjectClassManager()
 
         schema = FlextLdifModels.SchemaDiscoveryResult(
-            object_classes={
-                "person": FlextLdifModels.SchemaObjectClass(
-                    name="person",
-                    oid="2.5.6.6",
-                    superior=["top"],
-                    structural=True,
-                    required_attributes=["cn", "sn"],
-                    optional_attributes=["description"],
-                ),
+            objectclasses={
+                "person": {
+                    "name": "person",
+                    "oid": "2.5.6.6",
+                    "superior": ["top"],
+                    "structural": True,
+                    "required_attributes": ["cn", "sn"],
+                    "optional_attributes": ["description"],
+                },
             },
             attributes={},
         )
@@ -129,23 +126,23 @@ class TestRequiredAttributesCollection:
         manager = FlextLdifObjectClassManager()
 
         schema = FlextLdifModels.SchemaDiscoveryResult(
-            object_classes={
-                "person": FlextLdifModels.SchemaObjectClass(
-                    name="person",
-                    oid="2.5.6.6",
-                    superior=["top"],
-                    structural=True,
-                    required_attributes=["cn", "sn"],
-                    optional_attributes=[],
-                ),
-                "organizationalPerson": FlextLdifModels.SchemaObjectClass(
-                    name="organizationalPerson",
-                    oid="2.5.6.7",
-                    superior=["person"],
-                    structural=True,
-                    required_attributes=["cn", "sn", "ou"],
-                    optional_attributes=[],
-                ),
+            objectclasses={
+                "person": {
+                    "name": "person",
+                    "oid": "2.5.6.6",
+                    "superior": ["top"],
+                    "structural": True,
+                    "required_attributes": ["cn", "sn"],
+                    "optional_attributes": [],
+                },
+                "organizationalPerson": {
+                    "name": "organizationalPerson",
+                    "oid": "2.5.6.7",
+                    "superior": ["person"],
+                    "structural": True,
+                    "required_attributes": ["cn", "sn", "ou"],
+                    "optional_attributes": [],
+                },
             },
             attributes={},
         )
@@ -165,7 +162,7 @@ class TestRequiredAttributesCollection:
         manager = FlextLdifObjectClassManager()
 
         schema = FlextLdifModels.SchemaDiscoveryResult(
-            object_classes={},
+            objectclasses={},
             attributes={},
         )
 
@@ -184,15 +181,15 @@ class TestOptionalAttributesCollection:
         manager = FlextLdifObjectClassManager()
 
         schema = FlextLdifModels.SchemaDiscoveryResult(
-            object_classes={
-                "person": FlextLdifModels.SchemaObjectClass(
-                    name="person",
-                    oid="2.5.6.6",
-                    superior=["top"],
-                    structural=True,
-                    required_attributes=["cn", "sn"],
-                    optional_attributes=["description", "telephoneNumber"],
-                ),
+            objectclasses={
+                "person": {
+                    "name": "person",
+                    "oid": "2.5.6.6",
+                    "superior": ["top"],
+                    "structural": True,
+                    "required_attributes": ["cn", "sn"],
+                    "optional_attributes": ["description", "telephoneNumber"],
+                },
             },
             attributes={},
         )
@@ -210,23 +207,23 @@ class TestOptionalAttributesCollection:
         manager = FlextLdifObjectClassManager()
 
         schema = FlextLdifModels.SchemaDiscoveryResult(
-            object_classes={
-                "person": FlextLdifModels.SchemaObjectClass(
-                    name="person",
-                    oid="2.5.6.6",
-                    superior=["top"],
-                    structural=True,
-                    required_attributes=["cn", "sn"],
-                    optional_attributes=["description"],
-                ),
-                "inetOrgPerson": FlextLdifModels.SchemaObjectClass(
-                    name="inetOrgPerson",
-                    oid="2.16.840.1.113730.3.2.2",
-                    superior=["person"],
-                    structural=False,
-                    required_attributes=[],
-                    optional_attributes=["mail", "displayName"],
-                ),
+            objectclasses={
+                "person": {
+                    "name": "person",
+                    "oid": "2.5.6.6",
+                    "superior": ["top"],
+                    "structural": True,
+                    "required_attributes": ["cn", "sn"],
+                    "optional_attributes": ["description"],
+                },
+                "inetOrgPerson": {
+                    "name": "inetOrgPerson",
+                    "oid": "2.16.840.1.113730.3.2.2",
+                    "superior": ["person"],
+                    "structural": False,
+                    "required_attributes": [],
+                    "optional_attributes": ["mail", "displayName"],
+                },
             },
             attributes={},
         )
@@ -250,15 +247,15 @@ class TestObjectClassCombinationValidation:
         manager = FlextLdifObjectClassManager()
 
         schema = FlextLdifModels.SchemaDiscoveryResult(
-            object_classes={
-                "person": FlextLdifModels.SchemaObjectClass(
-                    name="person",
-                    oid="2.5.6.6",
-                    superior=["top"],
-                    structural=True,
-                    required_attributes=["cn", "sn"],
-                    optional_attributes=[],
-                ),
+            objectclasses={
+                "person": {
+                    "name": "person",
+                    "oid": "2.5.6.6",
+                    "superior": ["top"],
+                    "structural": True,
+                    "required_attributes": ["cn", "sn"],
+                    "optional_attributes": [],
+                },
             },
             attributes={},
         )
@@ -278,23 +275,23 @@ class TestObjectClassCombinationValidation:
         manager = FlextLdifObjectClassManager()
 
         schema = FlextLdifModels.SchemaDiscoveryResult(
-            object_classes={
-                "person": FlextLdifModels.SchemaObjectClass(
-                    name="person",
-                    oid="2.5.6.6",
-                    superior=["top"],
-                    structural=True,
-                    required_attributes=["cn", "sn"],
-                    optional_attributes=[],
-                ),
-                "organizationalUnit": FlextLdifModels.SchemaObjectClass(
-                    name="organizationalUnit",
-                    oid="2.5.6.5",
-                    superior=["top"],
-                    structural=True,
-                    required_attributes=["ou"],
-                    optional_attributes=[],
-                ),
+            objectclasses={
+                "person": {
+                    "name": "person",
+                    "oid": "2.5.6.6",
+                    "superior": ["top"],
+                    "structural": True,
+                    "required_attributes": ["cn", "sn"],
+                    "optional_attributes": [],
+                },
+                "organizationalUnit": {
+                    "name": "organizationalUnit",
+                    "oid": "2.5.6.5",
+                    "superior": ["top"],
+                    "structural": True,
+                    "required_attributes": ["ou"],
+                    "optional_attributes": [],
+                },
             },
             attributes={},
         )
@@ -316,23 +313,23 @@ class TestObjectClassCombinationValidation:
         manager = FlextLdifObjectClassManager()
 
         schema = FlextLdifModels.SchemaDiscoveryResult(
-            object_classes={
-                "person": FlextLdifModels.SchemaObjectClass(
-                    name="person",
-                    oid="2.5.6.6",
-                    superior=["top"],
-                    structural=True,
-                    required_attributes=["cn", "sn"],
-                    optional_attributes=[],
-                ),
-                "inetOrgPerson": FlextLdifModels.SchemaObjectClass(
-                    name="inetOrgPerson",
-                    oid="2.16.840.1.113730.3.2.2",
-                    superior=["person"],
-                    structural=False,  # Auxiliary
-                    required_attributes=[],
-                    optional_attributes=["mail"],
-                ),
+            objectclasses={
+                "person": {
+                    "name": "person",
+                    "oid": "2.5.6.6",
+                    "superior": ["top"],
+                    "structural": True,
+                    "required_attributes": ["cn", "sn"],
+                    "optional_attributes": [],
+                },
+                "inetOrgPerson": {
+                    "name": "inetOrgPerson",
+                    "oid": "2.16.840.1.113730.3.2.2",
+                    "superior": ["person"],
+                    "structural": False,
+                    "required_attributes": [],
+                    "optional_attributes": ["mail"],
+                },
             },
             attributes={},
         )
@@ -351,7 +348,7 @@ class TestObjectClassCombinationValidation:
         manager = FlextLdifObjectClassManager()
 
         schema = FlextLdifModels.SchemaDiscoveryResult(
-            object_classes={},
+            objectclasses={},
             attributes={},
         )
 

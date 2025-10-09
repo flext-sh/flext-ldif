@@ -68,9 +68,18 @@ class FlextLdifSchemaExtractor(FlextService["FlextLdifConfig"]):
                             "single_value": str(len(attr_values) <= 1),
                         }
 
+            # Cast to match SchemaDiscoveryResult type expectations
+            # Type narrowing: dict[str, dict[str, str]] -> dict[str, dict[str, object]]
+            attributes_obj: dict[str, dict[str, object]] = {
+                k: dict(v.items()) for k, v in attributes.items()
+            }
+            object_classes_obj: dict[str, dict[str, object]] = {
+                k: dict(v.items()) for k, v in object_classes.items()
+            }
+
             result = FlextLdifModels.SchemaDiscoveryResult(
-                attributes=attributes,
-                objectclasses=object_classes,
+                attributes=attributes_obj,
+                objectclasses=object_classes_obj,
                 total_attributes=len(attributes),
                 total_objectclasses=len(object_classes),
             )

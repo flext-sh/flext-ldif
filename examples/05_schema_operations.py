@@ -1,6 +1,10 @@
 """Example 5: Schema Building and Validation.
 
 Demonstrates FlextLdif schema-related functionality:
+
+NOTE: This example intentionally uses assert statements (S101) for type narrowing
+demonstration. Asserts are acceptable in examples for pedagogical purposes and
+do not represent production error handling patterns.
 - Building schema definitions with SchemaBuilder
 - Validating entries against schemas with SchemaValidator
 - Creating standard schemas (person, group)
@@ -11,6 +15,8 @@ All functionality accessed through FlextLdif facade.
 """
 
 from __future__ import annotations
+
+from typing import cast
 
 from flext_ldif import FlextLdif
 
@@ -138,7 +144,7 @@ def validate_entries_with_schema() -> None:
     api = FlextLdif.get_instance()
 
     # Create test entries
-    valid_entry = api.models.Entry(
+    valid_result = api.models.Entry.create(
         dn="cn=Valid,ou=People,dc=example,dc=com",
         attributes={
             "objectClass": ["person"],
@@ -146,9 +152,12 @@ def validate_entries_with_schema() -> None:
             "sn": ["User"],
         },
     )
+    if valid_result.is_failure:
+        print(f"Failed to create valid entry: {valid_result.error}")
+        return
 
     # Entry missing required 'sn' attribute
-    invalid_entry = api.models.Entry(
+    invalid_result = api.models.Entry.create(
         dn="cn=Invalid,ou=People,dc=example,dc=com",
         attributes={
             "objectClass": ["person"],
@@ -156,8 +165,11 @@ def validate_entries_with_schema() -> None:
             # Missing 'sn'
         },
     )
+    if invalid_result.is_failure:
+        print(f"Failed to create invalid entry: {invalid_result.error}")
+        return
 
-    entries = [valid_entry, invalid_entry]
+    entries = [valid_result.unwrap(), invalid_result.unwrap()]
 
     # Access SchemaValidator through API
     validator = api.SchemaValidator()
@@ -168,10 +180,10 @@ def validate_entries_with_schema() -> None:
     if validation_result.is_success:
         report = validation_result.unwrap()
 
-        is_valid = report.get("is_valid", False)
-        errors = report.get("errors", [])
-        valid_count = report.get("valid_entries", 0)
-        invalid_count = report.get("invalid_entries", 0)
+        is_valid = report.is_valid
+        errors = report.errors
+        valid_count = len(entries) - len(errors)  # Approximation for example
+        invalid_count = len(errors)  # Approximation for example
 
         _ = (is_valid, errors, valid_count, invalid_count)
 
@@ -180,7 +192,7 @@ def validate_single_entry_against_schema() -> None:
     """Validate a single entry against schema requirements."""
     api = FlextLdif.get_instance()
 
-    entry = api.models.Entry(
+    entry_result = api.models.Entry.create(
         dn="cn=Test,ou=People,dc=example,dc=com",
         attributes={
             "objectClass": ["person", "inetOrgPerson"],
@@ -189,14 +201,32 @@ def validate_single_entry_against_schema() -> None:
             "mail": ["test@example.com"],
         },
     )
+    if entry_result.is_failure:
+        print(f"Failed to create entry: {entry_result.error}")
+        return
+    entry = entry_result.unwrap()
 
     validator = api.SchemaValidator()
 
+    # Create a basic schema for validation
+    schema = api.models.SchemaDiscoveryResult(
+        attributes={
+            "cn": {"name": "cn", "syntax": "1.3.6.1.4.1.1466.115.121.1.15"},
+            "sn": {"name": "sn", "syntax": "1.3.6.1.4.1.1466.115.121.1.15"},
+            "mail": {"name": "mail", "syntax": "1.3.6.1.4.1.1466.115.121.1.26"},
+        },
+        objectclasses={
+            "person": {"name": "person", "must": ["cn", "sn"]},
+            "inetOrgPerson": {"name": "inetOrgPerson", "must": ["cn", "sn"]},
+        },
+    )
+
     # Validate single entry
-    validation_result = validator.validate_entry_against_schema(entry)
+    validation_result = validator.validate_entry_against_schema(entry, schema)
 
     if validation_result.is_success:
         result = validation_result.unwrap()
+        assert isinstance(result, dict)
 
         is_valid = result.get("is_valid", False)
         errors = result.get("errors", [])
@@ -235,7 +265,8 @@ def schema_building_pipeline() -> None:
 
     if validation_result.is_success:
         report = validation_result.unwrap()
-        _ = report.get("is_valid", False)
+        # report is LdifValidationResult, not dict
+        _ = report.is_valid
 
 
 def work_with_schema_models() -> None:
@@ -280,7 +311,7 @@ def reset_and_rebuild_schema() -> None:
 
     if first_schema_result.is_success:
         first_schema = first_schema_result.unwrap()
-        _ = len(first_schema.get("attributes", {}))
+        _ = len(cast("dict", first_schema.get("attributes", {})))
 
     # Reset builder
     builder.reset()
@@ -297,4 +328,4 @@ def reset_and_rebuild_schema() -> None:
     if second_schema_result.is_success:
         second_schema = second_schema_result.unwrap()
         # Second schema only contains attr2
-        _ = len(second_schema.get("attributes", {}))
+        _ = len(cast("dict", second_schema.get("attributes", {})))

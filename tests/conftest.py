@@ -18,6 +18,7 @@ from flext_core import FlextConstants, FlextResult, FlextTypes
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.rfc.rfc_ldif_parser import FlextLdifRfcLdifParser
 from flext_ldif.rfc.rfc_ldif_writer import FlextLdifRfcLdifWriter
+from tests.fixtures.loader import FlextLdifFixtures
 
 from .test_support import FileManager, LdifTestData, RealServiceFactory, TestValidators
 
@@ -610,3 +611,109 @@ class LDIFTestConstants:
 def ldif_test_constants() -> LDIFTestConstants:
     """Provide centralized test constants."""
     return LDIFTestConstants()
+
+
+# ============================================================================
+# LDAP SERVER QUIRKS FIXTURES (FlextLdifFixtures)
+# ============================================================================
+
+
+@pytest.fixture
+def fixtures_loader() -> FlextLdifFixtures.Loader:
+    """Generic fixture loader for all LDAP servers.
+
+    Returns:
+        FlextLdifFixtures.Loader: Generic fixture loader instance
+
+    """
+    from tests.fixtures import FlextLdifFixtures
+
+    return FlextLdifFixtures.Loader()
+
+
+@pytest.fixture
+def oid_fixtures() -> FlextLdifFixtures.OID:
+    """Oracle Internet Directory fixture loader.
+
+    Returns:
+        FlextLdifFixtures.OID: OID-specific fixture loader instance
+
+    Example:
+        def test_oid_schema(oid_fixtures):
+            schema = oid_fixtures.schema()
+            assert "orclUser" in schema
+
+    """
+    from tests.fixtures import FlextLdifFixtures
+
+    return FlextLdifFixtures.OID()
+
+
+@pytest.fixture
+def oid_schema(oid_fixtures: FlextLdifFixtures.OID) -> str:
+    """OID schema fixtures content.
+
+    Returns:
+        str: LDIF content with Oracle OID schema definitions
+
+    """
+    return oid_fixtures.schema()
+
+
+@pytest.fixture
+def oid_acl(oid_fixtures: FlextLdifFixtures.OID) -> str:
+    """OID ACL fixtures content.
+
+    Returns:
+        str: LDIF content with Oracle OID ACL patterns
+
+    """
+    return oid_fixtures.acl()
+
+
+@pytest.fixture
+def oid_entries(oid_fixtures: FlextLdifFixtures.OID) -> str:
+    """OID entry fixtures content.
+
+    Returns:
+        str: LDIF content with anonymized OID user/group entries
+
+    """
+    return oid_fixtures.entries()
+
+
+@pytest.fixture
+def oid_integration(oid_fixtures: FlextLdifFixtures.OID) -> str:
+    """OID integration fixtures content with real quirks.
+
+    Returns:
+        str: LDIF content with complete OID directory structure and real quirks
+
+    """
+    return oid_fixtures.integration()
+
+
+@pytest.fixture
+def oud_fixtures() -> FlextLdifFixtures.OUD:
+    """Oracle Unified Directory fixture loader.
+
+    Returns:
+        FlextLdifFixtures.OUD: OUD-specific fixture loader instance
+
+    """
+    from tests.fixtures import FlextLdifFixtures
+
+    return FlextLdifFixtures.OUD()
+
+
+@pytest.fixture
+def openldap_fixtures() -> FlextLdifFixtures.OpenLDAP:
+    """OpenLDAP fixture loader.
+
+    Returns:
+        FlextLdifFixtures.OpenLDAP: OpenLDAP-specific fixture loader instance
+
+    """
+    from tests.fixtures import FlextLdifFixtures
+
+    return FlextLdifFixtures.OpenLDAP()

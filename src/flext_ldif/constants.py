@@ -122,6 +122,10 @@ class FlextLdifConstants(FlextConstants):
     MEDIUM_ENTRY_COUNT_THRESHOLD: Final[int] = 1000  # Threshold for medium entry counts
     MIN_ATTRIBUTE_PARTS: Final[int] = 2  # Minimum parts for attribute parsing
 
+    # Version constants (moved from version.py for FLEXT compliance)
+    VERSION: Final[str] = "0.9.9"  # Current version
+    VERSION_INFO: Final[tuple[int, int, int]] = (0, 9, 9)  # Version tuple
+
     # Client operation constants
     MAX_PATH_LENGTH_CHECK: Final[int] = 500  # Maximum path length for file operations
 

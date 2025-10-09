@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 from flext_core import FlextResult
 from pydantic import ValidationError
@@ -37,10 +39,12 @@ class TestFlextLdifModels:
             FlextLdifModels.DistinguishedName(value=long_dn)
 
     def test_dn_normalization(self) -> None:
-        """Test DN normalization."""
-        # Test case normalization
+        """Test DN normalization per RFC 4514."""
+        # Test RFC 4514 normalization: lowercase attribute names, preserve values
         dn = FlextLdifModels.DistinguishedName(value="CN=Test,DC=Example,DC=Com")
-        assert dn.value == "CN=Test,DC=Example,DC=Com"  # Should preserve case
+        assert (
+            dn.value == "cn=Test,dc=Example,dc=Com"
+        )  # RFC 4514: lowercase attr names, preserve values
 
     def test_attribute_values_creation(self) -> None:
         """Test AttributeValues model creation."""
@@ -338,12 +342,14 @@ cn: test2
         assert document.entries[1].dn.value == "cn=test2,dc=example,dc=com"
 
     def test_ldif_document_from_string_invalid(self) -> None:
-        """Test creating LdifDocument from invalid string."""
+        """Test creating LdifDocument from non-LDIF string."""
         invalid_ldif = "invalid ldif content"
 
+        # Non-LDIF content is treated as having no entries (not a parsing error)
         result = FlextLdifModels.LdifDocument.from_ldif_string(invalid_ldif)
         assert isinstance(result, FlextResult)
-        assert result.is_failure
+        assert result.is_success
+        assert len(result.unwrap().entries) == 0
 
     def test_ldif_document_from_string_empty(self) -> None:
         """Test creating LdifDocument from empty string."""
@@ -375,10 +381,8 @@ cn: test2
         data = {
             "dn": {"value": "cn=test,dc=example,dc=com"},
             "attributes": {
-                "attributes": {
-                    "cn": {"values": ["test"]},
-                    "objectClass": {"values": ["person"]},
-                }
+                "cn": ["test"],
+                "objectClass": ["person"],
             },
         }
 
@@ -428,9 +432,9 @@ cn: test2
 
     def test_edge_cases(self) -> None:
         """Test edge cases in models."""
-        # Test DN with special characters
-        dn = FlextLdifModels.DistinguishedName(value="cn=test+user,dc=example,dc=com")
-        assert dn.value == "cn=test+user,dc=example,dc=com"
+        # Test DN with special characters (properly escaped per RFC 4514)
+        dn = FlextLdifModels.DistinguishedName(value="cn=test\\+user,dc=example,dc=com")
+        assert dn.value == "cn=test\\+user,dc=example,dc=com"
 
         # Test attributes with special characters
         attrs = FlextLdifModels.LdifAttributes(
@@ -453,31 +457,28 @@ cn: test2
     def test_ldif_processing_result_creation(self) -> None:
         """Test LdifProcessingResult model creation."""
         result = FlextLdifModels.LdifProcessingResult(
-            status="success",
-            entries=[],
+            success=True,
+            entries_processed=10,
             errors=[],
             warnings=[],
-            statistics={"processed": 10},
         )
-        assert result.status == "success"
-        assert result.is_success is True
-        assert result.entry_count == 0
-        assert result.error_count == 0
+        assert result.success is True
+        assert result.entries_processed == 10
+        assert len(result.errors) == 0
+        assert len(result.warnings) == 0
 
     def test_service_status_creation(self) -> None:
         """Test ServiceStatus model creation."""
         status = FlextLdifModels.ServiceStatus(
             service_name="ldif_processor",
             status="healthy",
-            configuration={"max_entries": 1000},
-            statistics={"processed": 500},
-            capabilities=["parse", "validate"],
+            version="0.9.9",
+            uptime=1234.5,
         )
         assert status.service_name == "ldif_processor"
         assert status.status == "healthy"
-        assert status.is_operational is True
-        assert "max_entries" in status.configuration
-        assert status.capabilities == ["parse", "validate"]
+        assert status.version == "0.9.9"
+        assert status.uptime == 1234.5
 
     def test_parse_query_creation(self) -> None:
         """Test ParseQuery model creation."""
@@ -503,10 +504,10 @@ cn: test2
                     attributes=FlextLdifModels.LdifAttributes(attributes={}),
                 )
             ],
-            schema_validation=True,
+            strict=True,
         )
         assert len(query.entries) == 1
-        assert query.schema_validation is True
+        assert query.strict is True
 
     def test_analyze_query_creation(self) -> None:
         """Test AnalyzeQuery model creation."""
@@ -528,12 +529,12 @@ cn: test2
                     attributes=FlextLdifModels.LdifAttributes(attributes={}),
                 )
             ],
-            output_path="/tmp/test.ldif",
-            format_options={"indent": 2},
+            output="/tmp/test.ldif",
+            format="rfc",
         )
         assert len(command.entries) == 1
-        assert command.output_path == "/tmp/test.ldif"
-        assert command.format_options == {"indent": 2}
+        assert command.output == "/tmp/test.ldif"
+        assert command.format == "rfc"
 
     def test_migrate_command_creation(self) -> None:
         """Test MigrateCommand model creation."""
@@ -565,6 +566,8 @@ cn: test2
     def test_entry_parsed_event_creation(self) -> None:
         """Test EntryParsedEvent creation."""
         event = FlextLdifModels.EntryParsedEvent(
+            event_type="entry.parsed",
+            aggregate_id="ldif-parser",
             entry_count=5,
             source_type="file",
             format_detected="rfc",
@@ -579,6 +582,8 @@ cn: test2
     def test_entries_validated_event_creation(self) -> None:
         """Test EntriesValidatedEvent creation."""
         event = FlextLdifModels.EntriesValidatedEvent(
+            event_type="entries.validated",
+            aggregate_id="ldif-validator",
             entry_count=10,
             is_valid=True,
             error_count=0,
@@ -595,6 +600,8 @@ cn: test2
     def test_analytics_generated_event_creation(self) -> None:
         """Test AnalyticsGeneratedEvent creation."""
         event = FlextLdifModels.AnalyticsGeneratedEvent(
+            event_type="analytics.generated",
+            aggregate_id="ldif-analytics",
             entry_count=20,
             statistics={"total_attrs": 100, "unique_dns": 15},
             timestamp="2025-01-01T00:00:00Z",
@@ -607,6 +614,8 @@ cn: test2
     def test_entries_written_event_creation(self) -> None:
         """Test EntriesWrittenEvent creation."""
         event = FlextLdifModels.EntriesWrittenEvent(
+            event_type="entries.written",
+            aggregate_id="ldif-writer",
             entry_count=8,
             output_path="/tmp/output.ldif",
             format_used="rfc",
@@ -621,6 +630,8 @@ cn: test2
     def test_migration_completed_event_creation(self) -> None:
         """Test MigrationCompletedEvent creation."""
         event = FlextLdifModels.MigrationCompletedEvent(
+            event_type="migration.completed",
+            aggregate_id="ldif-migration",
             source_entries=15,
             target_entries=15,
             migration_type="format_conversion",
@@ -635,6 +646,8 @@ cn: test2
     def test_quirk_registered_event_creation(self) -> None:
         """Test QuirkRegisteredEvent creation."""
         event = FlextLdifModels.QuirkRegisteredEvent(
+            event_type="quirk.registered",
+            aggregate_id="ldif-quirks",
             server_type="openldap",
             quirk_name="special_handling",
             timestamp="2025-01-01T00:00:00Z",
@@ -652,8 +665,6 @@ cn: test2
             description="Person object class",
             required_attributes=["cn", "sn"],
             optional_attributes=["telephoneNumber", "seeAlso"],
-            must=["cn", "sn"],
-            may=["telephoneNumber", "seeAlso"],
             structural=True,
         )
         assert obj_class.name == "person"
@@ -661,11 +672,7 @@ cn: test2
         assert obj_class.description == "Person object class"
         assert obj_class.required_attributes == ["cn", "sn"]
         assert obj_class.optional_attributes == ["telephoneNumber", "seeAlso"]
-        assert obj_class.must == ["cn", "sn"]
-        assert obj_class.may == ["telephoneNumber", "seeAlso"]
         assert obj_class.structural is True
-        assert obj_class.attribute_summary["required_count"] == 2
-        assert obj_class.attribute_summary["is_structural"] is True
 
     def test_schema_object_class_create_method(self) -> None:
         """Test SchemaObjectClass.create method."""
@@ -677,6 +684,7 @@ cn: test2
         )
         assert result.is_success
         obj_class = result.value
+        assert isinstance(obj_class, FlextLdifModels.SchemaObjectClass)
         assert obj_class.name == "organizationalUnit"
         assert obj_class.oid == "2.5.6.5"
         assert obj_class.required_attributes == ["ou"]
@@ -684,29 +692,30 @@ cn: test2
     def test_schema_discovery_result_creation(self) -> None:
         """Test SchemaDiscoveryResult model creation."""
         result = FlextLdifModels.SchemaDiscoveryResult(
-            object_classes={
-                "person": FlextLdifModels.SchemaObjectClass(
-                    name="person",
-                    oid="2.5.6.6",
-                    description="Person class",
-                    required_attributes=["cn"],
-                )
+            objectclasses={
+                "person": {
+                    "oid": "2.5.6.6",
+                    "description": "Person class",
+                }
             },
             attributes={
-                "cn": FlextLdifModels.SchemaAttribute(
-                    name="cn",
-                    oid="2.5.4.3",
-                    description="Common name",
-                    syntax="1.3.6.1.4.1.1466.115.121.1.15",
-                )
+                "cn": {
+                    "oid": "2.5.4.3",
+                    "description": "Common name",
+                    "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
+                }
             },
             server_type="openldap",
             entry_count=100,
+            total_attributes=1,
+            total_objectclasses=1,
         )
-        assert len(result.object_classes) == 1
+        assert len(result.objectclasses) == 1
         assert len(result.attributes) == 1
         assert result.server_type == "openldap"
         assert result.entry_count == 100
+        assert result.total_attributes == 1
+        assert result.total_objectclasses == 1
 
     def test_schema_attribute_creation(self) -> None:
         """Test SchemaAttribute model creation."""
@@ -715,15 +724,11 @@ cn: test2
             oid="2.5.4.3",
             description="Common name attribute",
             syntax="1.3.6.1.4.1.1466.115.121.1.15",
-            single_valued=False,
-            user_modifiable=True,
         )
         assert attr.name == "cn"
         assert attr.oid == "2.5.4.3"
         assert attr.description == "Common name attribute"
         assert attr.syntax == "1.3.6.1.4.1.1466.115.121.1.15"
-        assert attr.single_valued is False
-        assert attr.user_modifiable is True
 
 
 class TestFlextLdifModelsEntry:
@@ -745,8 +750,8 @@ class TestFlextLdifModelsEntry:
         assert result.is_success
         entry = result.unwrap()
         assert isinstance(entry, FlextLdifModels.Entry)
-        assert entry.dn == "cn=test,dc=example,dc=com"
-        assert isinstance(entry.attributes, dict)
+        assert entry.dn.value == "cn=test,dc=example,dc=com"
+        assert isinstance(entry.attributes, FlextLdifModels.LdifAttributes)
 
     def test_entry_with_binary_data(self) -> None:
         """Test Entry with binary attribute data."""
@@ -765,7 +770,7 @@ class TestFlextLdifModelsEntry:
         assert result.is_success
         entry = result.unwrap()
         assert isinstance(entry, FlextLdifModels.Entry)
-        assert entry.dn == "cn=test,dc=example,dc=com"
+        assert entry.dn.value == "cn=test,dc=example,dc=com"
 
     def test_entry_validation(self) -> None:
         """Test Entry validation."""
@@ -797,7 +802,7 @@ class TestFlextLdifModelsDistinguishedName:
         result = FlextLdifModels.DistinguishedName.create(dn_string)
 
         assert result.is_success
-        dn = result.unwrap()
+        dn = cast("FlextLdifModels.DistinguishedName", result.unwrap())
         assert isinstance(dn, FlextLdifModels.DistinguishedName)
         assert dn.value == dn_string
 
@@ -808,7 +813,8 @@ class TestFlextLdifModelsDistinguishedName:
         result = FlextLdifModels.DistinguishedName.create(dn_string)
 
         assert result.is_success
-        dn = result.unwrap()
+        dn = cast("FlextLdifModels.DistinguishedName", result.unwrap())
+        assert isinstance(dn, FlextLdifModels.DistinguishedName)
         # Should normalize to lowercase
         assert dn.value == dn_string.lower()
 
@@ -819,10 +825,12 @@ class TestFlextLdifModelsDistinguishedName:
         result = FlextLdifModels.DistinguishedName.create(dn_string)
 
         assert result.is_success
-        dn = result.unwrap()
+        dn = cast("FlextLdifModels.DistinguishedName", result.unwrap())
 
-        # Test computed field access
-        assert hasattr(dn, "dn_components")
+        # Test components field access
+        assert hasattr(dn, "components")
+        assert isinstance(dn.components, list)
+        assert len(dn.components) == 4
 
     def test_invalid_dn(self) -> None:
         """Test invalid DN handling."""
@@ -863,6 +871,7 @@ class TestFlextLdifModelsLdifAttribute:
 
         assert result.is_success
         attr = result.unwrap()
+        assert isinstance(attr, FlextLdifModels.LdifAttribute)
         assert attr.values == ["User"]
 
     def test_empty_values(self) -> None:
@@ -876,6 +885,7 @@ class TestFlextLdifModelsLdifAttribute:
 
         assert result.is_success
         attr = result.unwrap()
+        assert isinstance(attr, FlextLdifModels.LdifAttribute)
         assert attr.values == []
 
 
@@ -885,9 +895,11 @@ class TestFlextLdifModelsLdifAttributes:
     def test_attributes_creation(self) -> None:
         """Test creating an LdifAttributes instance."""
         attrs_data = {
-            "cn": ["Test User"],
-            "sn": ["User"],
-            "objectClass": ["inetOrgPerson", "person"],
+            "cn": FlextLdifModels.AttributeValues(values=["Test User"]),
+            "sn": FlextLdifModels.AttributeValues(values=["User"]),
+            "objectClass": FlextLdifModels.AttributeValues(
+                values=["inetOrgPerson", "person"]
+            ),
         }
 
         result = FlextLdifModels.LdifAttributes.create(attrs_data)
@@ -896,7 +908,7 @@ class TestFlextLdifModelsLdifAttributes:
         attrs = result.unwrap()
         assert isinstance(attrs, FlextLdifModels.LdifAttributes)
         assert "cn" in attrs.attributes
-        assert attrs.attributes["cn"] == ["Test User"]
+        assert attrs.attributes["cn"].values == ["Test User"]
 
     def test_empty_attributes(self) -> None:
         """Test creating empty attributes."""
@@ -904,19 +916,23 @@ class TestFlextLdifModelsLdifAttributes:
 
         assert result.is_success
         attrs = result.unwrap()
+        assert isinstance(attrs, FlextLdifModels.LdifAttributes)
         assert attrs.attributes == {}
 
     def test_attributes_with_options(self) -> None:
         """Test attributes with LDAP options."""
         attrs_data = {
-            "cn": ["Test User"],
-            "userCertificate;binary": ["cert-data"],
+            "cn": FlextLdifModels.AttributeValues(values=["Test User"]),
+            "userCertificate;binary": FlextLdifModels.AttributeValues(
+                values=["cert-data"]
+            ),
         }
 
         result = FlextLdifModels.LdifAttributes.create(attrs_data)
 
         assert result.is_success
         attrs = result.unwrap()
+        assert isinstance(attrs, FlextLdifModels.LdifAttributes)
         assert "userCertificate;binary" in attrs.attributes
 
 
@@ -929,10 +945,10 @@ class TestFlextLdifModelsSchemaObjectClass:
             "name": "inetOrgPerson",
             "oid": "2.16.840.1.113730.3.2.2",
             "description": "Internet Organizational Person",
-            "superiors": ["organizationalPerson"],
-            "kind": "STRUCTURAL",
-            "must": ["cn", "sn", "objectClass"],
-            "may": ["description", "telephoneNumber", "mail"],
+            "superior": "organizationalPerson",
+            "structural": True,
+            "required_attributes": ["cn", "sn", "objectClass"],
+            "optional_attributes": ["description", "telephoneNumber", "mail"],
         }
 
         result = FlextLdifModels.SchemaObjectClass.create(oc_data)
@@ -942,6 +958,8 @@ class TestFlextLdifModelsSchemaObjectClass:
         assert isinstance(oc, FlextLdifModels.SchemaObjectClass)
         assert oc.name == "inetOrgPerson"
         assert oc.oid == "2.16.840.1.113730.3.2.2"
+        assert oc.required_attributes == ["cn", "sn", "objectClass"]
+        assert oc.optional_attributes == ["description", "telephoneNumber", "mail"]
 
     def test_objectclass_validation(self) -> None:
         """Test object class validation."""
@@ -949,7 +967,7 @@ class TestFlextLdifModelsSchemaObjectClass:
         valid_data = {
             "name": "person",
             "oid": "2.5.6.6",
-            "kind": "STRUCTURAL",
+            "structural": True,
         }
 
         result = FlextLdifModels.SchemaObjectClass.create(valid_data)
@@ -959,18 +977,18 @@ class TestFlextLdifModelsSchemaObjectClass:
         """Test computed fields on object class."""
         oc_data = {
             "name": "inetOrgPerson",
-            "must": ["cn", "sn"],
-            "may": ["mail", "telephoneNumber"],
+            "required_attributes": ["cn", "sn"],
+            "optional_attributes": ["mail", "telephoneNumber"],
         }
 
         result = FlextLdifModels.SchemaObjectClass.create(oc_data)
         assert result.is_success
         oc = result.unwrap()
+        assert isinstance(oc, FlextLdifModels.SchemaObjectClass)
 
-        # Test computed fields exist
-        assert hasattr(oc, "required_count")
-        assert hasattr(oc, "optional_count")
-        assert hasattr(oc, "total_attributes")
+        # Test field access
+        assert oc.required_attributes == ["cn", "sn"]
+        assert oc.optional_attributes == ["mail", "telephoneNumber"]
 
 
 class TestFlextLdifModelsAclTarget:
@@ -1073,14 +1091,12 @@ class TestFlextLdifModelsCommands:
 
     def test_parse_query_creation(self) -> None:
         """Test creating a ParseQuery."""
-        query_data = {
-            "source": "dn: cn=test\ncn: test",
-            "format": "rfc",
-            "encoding": "utf-8",
-            "strict": True,
-        }
-
-        query = FlextLdifModels.ParseQuery(**query_data)
+        query = FlextLdifModels.ParseQuery(
+            source="dn: cn=test\ncn: test",
+            format="rfc",
+            encoding="utf-8",
+            strict=True,
+        )
 
         assert query.source == "dn: cn=test\ncn: test"
         assert query.format == "rfc"
@@ -1089,7 +1105,7 @@ class TestFlextLdifModelsCommands:
 
     def test_write_command_creation(self) -> None:
         """Test creating a WriteCommand."""
-        entries = [
+        entries: list[object] = [
             {
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {"cn": ["test"]},
@@ -1109,21 +1125,21 @@ class TestFlextLdifModelsCommands:
 
     def test_analyze_query_creation(self) -> None:
         """Test creating an AnalyzeQuery."""
-        entries = [
-            {
-                "dn": "cn=test,dc=example,dc=com",
-                "attributes": {"cn": ["test"]},
-            }
-        ]
+        ldif_content = """dn: cn=test,dc=example,dc=com
+cn: test
+objectClass: person
+"""
 
         query = FlextLdifModels.AnalyzeQuery(
-            entries=entries,
-            metrics=["object_class_count"],
+            ldif_content=ldif_content,
+            analysis_types=["statistics", "validation"],
+            metrics={"object_class_count": True},
             include_patterns=True,
         )
 
-        assert len(query.entries) == 1
-        assert query.metrics == ["object_class_count"]
+        assert query.ldif_content == ldif_content
+        assert query.analysis_types == ["statistics", "validation"]
+        assert query.metrics == {"object_class_count": True}
         assert query.include_patterns is True
 
 
@@ -1145,16 +1161,19 @@ class TestFlextLdifModelsNamespace:
 
     def test_computed_fields(self) -> None:
         """Test namespace-level computed fields."""
+        # Create an instance to access computed fields
+        models_instance = FlextLdifModels()
+
         # Test that computed fields exist
-        assert hasattr(FlextLdifModels, "active_ldif_models_count")
-        assert hasattr(FlextLdifModels, "ldif_model_summary")
+        assert hasattr(models_instance, "active_ldif_models_count")
+        assert hasattr(models_instance, "ldif_model_summary")
 
         # Test computed field values
-        count = FlextLdifModels.active_ldif_models_count
+        count = models_instance.active_ldif_models_count
         assert isinstance(count, int)
         assert count > 0
 
-        summary = FlextLdifModels.ldif_model_summary
+        summary = models_instance.ldif_model_summary
         assert isinstance(summary, dict)
         assert "entry_models" in summary
         assert "schema_models" in summary
