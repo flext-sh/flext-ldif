@@ -10,18 +10,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+
+# Python 3.13+
+from enum import StrEnum
 from pathlib import Path
 from typing import Final
-
-try:
-    from enum import StrEnum
-except ImportError:
-    # Python < 3.11
-    from enum import Enum
-
-    class StrEnum(str, Enum):
-        """Backport of StrEnum for older Python versions."""
 
 
 class FlextLdifFixtures:
@@ -61,6 +54,8 @@ class FlextLdifFixtures:
         """Types of fixtures available for each server."""
 
         SCHEMA = "schema"
+        ACL = "acl"
+        ENTRIES = "entries"
         INTEGRATION = "integration"
 
     @dataclass(frozen=True)
@@ -295,6 +290,28 @@ class FlextLdifFixtures:
             """
             return self._loader.load(
                 FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.SCHEMA
+            )
+
+        def acl(self) -> str:
+            """Load OID ACL fixtures.
+
+            Returns:
+                str: LDIF content with OID ACL definitions
+
+            """
+            return self._loader.load(
+                FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.ACL
+            )
+
+        def entries(self) -> str:
+            """Load OID entry fixtures.
+
+            Returns:
+                str: LDIF content with OID directory entries
+
+            """
+            return self._loader.load(
+                FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.ENTRIES
             )
 
         def integration(self) -> str:

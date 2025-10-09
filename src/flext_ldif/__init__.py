@@ -83,10 +83,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Final
-
 from flext_core import FlextTypes
 
+from flext_ldif.__version__ import __version__, __version_info__
 from flext_ldif.api import FlextLdif
 from flext_ldif.client import FlextLdifClient
 from flext_ldif.config import FlextLdifConfig
@@ -100,18 +99,10 @@ from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.typings import FlextLdifTypes
-from flext_ldif.version import VERSION, FlextLdifVersion
-
-PROJECT_VERSION: Final[FlextLdifVersion] = VERSION
 
 # Main facade already exported above via: from flext_ldif.api import FlextLdif
 
-__version__: str = VERSION.version
-__version_info__: tuple[int | str, ...] = VERSION.version_info
-
 __all__ = [
-    "PROJECT_VERSION",
-    "VERSION",
     "FlextLdif",
     "FlextLdifClient",
     "FlextLdifConfig",
@@ -122,7 +113,6 @@ __all__ = [
     "FlextLdifModels",
     "FlextLdifQuirksRegistry",
     "FlextLdifTypes",
-    "FlextLdifVersion",
     "FlextTypes",
     "__version__",
     "__version_info__",

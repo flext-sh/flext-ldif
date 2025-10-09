@@ -895,10 +895,8 @@ class FlextLdif(FlextService[dict[str, object]]):
             Processor-based batch processing will be implemented in future version.
 
         """
-        raise NotImplementedError(
-            f"Processor '{processor_name}' not yet implemented. "
-            "Batch processing will be available in future version."
-        )
+        msg = f"Processor '{processor_name}' not yet implemented. Batch processing will be available in future version."
+        raise NotImplementedError(msg)
 
     def process_parallel(
         self,
@@ -924,10 +922,8 @@ class FlextLdif(FlextService[dict[str, object]]):
             Processor-based parallel processing will be implemented in future version.
 
         """
-        raise NotImplementedError(
-            f"Processor '{processor_name}' not yet implemented. "
-            "Batch processing will be available in future version."
-        )
+        msg = f"Processor '{processor_name}' not yet implemented. Batch processing will be available in future version."
+        raise NotImplementedError(msg)
 
     # =========================================================================
     # INFRASTRUCTURE ACCESS (Properties)
