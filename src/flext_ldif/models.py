@@ -8,6 +8,7 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
 Type Checking Notes:
+- ANN401: **extensions uses Any for flexible quirk-specific data
 - pyrefly: import errors for pydantic/dependency_injector (searches wrong site-packages path)
 - pyright: configured with extraPaths to resolve imports (see pyrightconfig.json)
 - mypy: passes with strict mode (0 errors)
@@ -21,13 +22,15 @@ from typing import TYPE_CHECKING, Any, cast
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-from datetime import UTC
+from datetime import UTC, datetime
 
 from flext_core import FlextModels, FlextResult
 from pydantic import ConfigDict, Field, ValidationInfo, computed_field, field_validator
 
+# Import moved inside methods to avoid circular import
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.exceptions import FlextLdifExceptions
+from flext_ldif.utilities import FlextLdifUtilities
 
 
 class FlextLdifModels(FlextModels):
@@ -121,8 +124,6 @@ class FlextLdifModels(FlextModels):
                 QuirkMetadata instance
 
             """
-            from datetime import datetime
-
             return cls(
                 quirk_type=quirk_type,
                 original_format=original_format,
@@ -163,8 +164,6 @@ class FlextLdifModels(FlextModels):
                 ValueError: If DN format is invalid
 
             """
-            from flext_ldif.utilities import FlextLdifUtilities
-
             result = FlextLdifUtilities.DnUtilities.normalize_dn(v)
             if result.is_failure:
                 msg = result.error or "Invalid DN format"
@@ -343,6 +342,7 @@ class FlextLdifModels(FlextModels):
 
             """
             try:
+                # Import here to avoid circular import
                 from flext_ldif.client import FlextLdifClient
 
                 # Use client to parse the LDIF string
@@ -380,6 +380,7 @@ class FlextLdifModels(FlextModels):
 
             """
             try:
+                # Import here to avoid circular import
                 from flext_ldif.client import FlextLdifClient
 
                 # Use client to write the entry to string
@@ -731,6 +732,147 @@ class FlextLdifModels(FlextModels):
                 msg = "Base DN cannot be empty"
                 raise ValueError(msg)
             return v.strip()
+
+    # =========================================================================
+    # FILTERING AND CATEGORIZATION MODELS
+    # =========================================================================
+
+    class FilterCriteria(FlextModels.Value):
+        """Criteria for filtering LDIF entries.
+
+        Supports multiple filter types:
+        - dn_pattern: Wildcard DN pattern matching (e.g., "*,dc=example,dc=com")
+        - oid_pattern: OID pattern matching with wildcard support
+        - objectclass: Filter by objectClass with optional attribute validation
+        - attribute: Filter by attribute presence/absence
+
+        Example:
+            criteria = FilterCriteria(
+                filter_type="dn_pattern",
+                pattern="*,ou=users,dc=ctbc,dc=com",
+                mode="include"
+            )
+
+        """
+
+        filter_type: str = Field(
+            ...,
+            description="Type of filter: dn_pattern, oid_pattern, objectclass, or attribute"
+        )
+        pattern: str | None = Field(
+            default=None,
+            description="Pattern for matching (supports wildcards with fnmatch)"
+        )
+        whitelist: list[str] | None = Field(
+            default=None,
+            description="Whitelist of patterns to include (for OID filtering)"
+        )
+        blacklist: list[str] | None = Field(
+            default=None,
+            description="Blacklist of patterns to exclude"
+        )
+        required_attributes: list[str] | None = Field(
+            default=None,
+            description="Required attributes for objectClass filtering"
+        )
+        mode: str = Field(
+            default="include",
+            description="Filter mode: 'include' to keep matches, 'exclude' to remove matches"
+        )
+
+    class ExclusionInfo(FlextModels.Value):
+        """Metadata for excluded entries/schema items.
+
+        Stored in QuirkMetadata.extensions['exclusion_info'] to track why
+        an entry was excluded during filtering operations.
+
+        Example:
+            exclusion = ExclusionInfo(
+                excluded=True,
+                exclusion_reason="DN outside base context",
+                filter_criteria=FilterCriteria(filter_type="dn_pattern", pattern="*,dc=old,dc=com"),
+                timestamp="2025-10-09T12:34:56Z"
+            )
+
+        """
+
+        excluded: bool = Field(
+            default=False,
+            description="Whether the item is excluded"
+        )
+        exclusion_reason: str | None = Field(
+            default=None,
+            description="Human-readable reason for exclusion"
+        )
+        filter_criteria: FlextLdifModels.FilterCriteria | None = Field(
+            default=None,
+            description="Filter criteria that caused the exclusion"
+        )
+        timestamp: str = Field(
+            ...,
+            description="ISO 8601 timestamp when exclusion was marked"
+        )
+
+    class CategorizedEntries(FlextModels.Value):
+        """Result of entry categorization by objectClass.
+
+        Categorizes LDIF entries into users, groups, containers, and uncategorized
+        based on configurable objectClass sets.
+
+        Example:
+            categorized = CategorizedEntries(
+                users=[user_entry1, user_entry2],
+                groups=[group_entry1],
+                containers=[ou_entry1, ou_entry2],
+                uncategorized=[],
+                summary={"users": 2, "groups": 1, "containers": 2, "uncategorized": 0}
+            )
+
+        """
+
+        model_config = ConfigDict(frozen=False)  # Allow mutation for summary updates
+
+        users: list[FlextLdifModels.Entry] = Field(
+            default_factory=list,
+            description="Entries categorized as users (inetOrgPerson, person, etc.)"
+        )
+        groups: list[FlextLdifModels.Entry] = Field(
+            default_factory=list,
+            description="Entries categorized as groups (groupOfNames, etc.)"
+        )
+        containers: list[FlextLdifModels.Entry] = Field(
+            default_factory=list,
+            description="Entries categorized as containers (organizationalUnit, etc.)"
+        )
+        uncategorized: list[FlextLdifModels.Entry] = Field(
+            default_factory=list,
+            description="Entries that don't match any category"
+        )
+        summary: dict[str, int] = Field(
+            default_factory=dict,
+            description="Summary counts for each category"
+        )
+
+        @classmethod
+        def create_empty(cls) -> FlextLdifModels.CategorizedEntries:
+            """Create empty categorization result."""
+            return cls(
+                users=[],
+                groups=[],
+                containers=[],
+                uncategorized=[],
+                summary={"users": 0, "groups": 0, "containers": 0, "uncategorized": 0}
+            )
+
+        def update_summary(self) -> None:
+            """Update summary counts based on current entries."""
+            self.summary = {
+                "users": len(self.users),
+                "groups": len(self.groups),
+                "containers": len(self.containers),
+                "uncategorized": len(self.uncategorized),
+                "total": len(self.users) + len(self.groups) + len(self.containers) + len(self.uncategorized)
+            }
 
     # =========================================================================
     # CQRS MODELS - Commands and Queries

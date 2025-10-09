@@ -95,6 +95,7 @@ from flext_ldif.containers import (
     flext_ldif_container,
 )
 from flext_ldif.exceptions import FlextLdifExceptions
+from flext_ldif.filters import FlextLdifFilters
 from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
@@ -109,6 +110,7 @@ __all__ = [
     "FlextLdifConstants",
     "FlextLdifContainer",
     "FlextLdifExceptions",
+    "FlextLdifFilters",
     "FlextLdifMigrationPipeline",
     "FlextLdifModels",
     "FlextLdifQuirksRegistry",

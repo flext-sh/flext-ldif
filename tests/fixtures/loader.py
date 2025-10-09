@@ -158,7 +158,7 @@ class FlextLdifFixtures:
             """
             fixtures: dict[FlextLdifFixtures.FixtureType, str] = {}
 
-            for fixture_type in FlextLdifFixtures.FixtureType:
+            for fixture_type in list(FlextLdifFixtures.FixtureType):
                 try:
                     fixtures[fixture_type] = self.load(server_type, fixture_type)
                 except FileNotFoundError:
@@ -197,7 +197,7 @@ class FlextLdifFixtures:
             """
             available: list[FlextLdifFixtures.FixtureType] = []
 
-            for fixture_type in FlextLdifFixtures.FixtureType:
+            for fixture_type in list(FlextLdifFixtures.FixtureType):
                 try:
                     self._get_fixture_path(server_type, fixture_type)
                     available.append(fixture_type)
