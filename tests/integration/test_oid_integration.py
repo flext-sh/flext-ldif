@@ -60,9 +60,7 @@ class TestOidSchemaIntegration:
         # Check for attributetypes attribute
         attrs = schema_entry.attributes.get("attributetypes") or []
         oracle_attr_count = sum(
-            1
-            for attr in attrs
-            if isinstance(attr, str) and "2.16.840.1.113894" in attr
+            1 for attr in attrs if isinstance(attr, str) and "2.16.840.1.113894" in attr
         )
 
         assert oracle_attr_count > 0, "No Oracle attributes found in parsed schema"
@@ -113,7 +111,9 @@ class TestOidEntryIntegration:
 
         # Should have many entries
         min_expected_entries = 100
-        assert len(entries) > min_expected_entries, f"Expected > {min_expected_entries} entries, got {len(entries)}"
+        assert len(entries) > min_expected_entries, (
+            f"Expected > {min_expected_entries} entries, got {len(entries)}"
+        )
 
     def test_oracle_acls_preserved_in_parsing(
         self, api: FlextLdif, integration_fixture: str
@@ -133,7 +133,9 @@ class TestOidEntryIntegration:
         )
 
         assert entries_with_orclaci > 0, "No entries with orclaci found"
-        assert entries_with_orclentrylevelaci > 0, "No entries with orclentrylevelaci found"
+        assert entries_with_orclentrylevelaci > 0, (
+            "No entries with orclentrylevelaci found"
+        )
 
     def test_oracle_attributes_preserved_in_parsing(
         self, api: FlextLdif, integration_fixture: str
@@ -147,11 +149,13 @@ class TestOidEntryIntegration:
         # Count entries with actual Oracle attributes from fixture
         oracle_attr_patterns = [
             "orclisenabled",  # 177 occurrences in fixture
-            "orclpassword",   # 171 occurrences in fixture
+            "orclpassword",  # 171 occurrences in fixture
         ]
 
         for attr_name in oracle_attr_patterns:
-            entries_with_attr = sum(1 for entry in entries if attr_name in entry.attributes)
+            entries_with_attr = sum(
+                1 for entry in entries if attr_name in entry.attributes
+            )
             assert entries_with_attr > 0, f"No entries with {attr_name} found"
 
 
@@ -232,12 +236,10 @@ class TestOidRoundTripIntegration:
 
         # Count ACLs in original
         original_orclaci_count = sum(
-            len(entry.attributes.get("orclaci") or [])
-            for entry in entries_1
+            len(entry.attributes.get("orclaci") or []) for entry in entries_1
         )
         original_entrylevel_count = sum(
-            len(entry.attributes.get("orclentrylevelaci") or [])
-            for entry in entries_1
+            len(entry.attributes.get("orclentrylevelaci") or []) for entry in entries_1
         )
 
         # Write and parse again
@@ -250,12 +252,10 @@ class TestOidRoundTripIntegration:
 
         # Count ACLs after round-trip
         roundtrip_orclaci_count = sum(
-            len(entry.attributes.get("orclaci") or [])
-            for entry in entries_2
+            len(entry.attributes.get("orclaci") or []) for entry in entries_2
         )
         roundtrip_entrylevel_count = sum(
-            len(entry.attributes.get("orclentrylevelaci") or [])
-            for entry in entries_2
+            len(entry.attributes.get("orclentrylevelaci") or []) for entry in entries_2
         )
 
         # Should have same ACL counts

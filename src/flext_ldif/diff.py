@@ -11,57 +11,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any
-
 from flext_core import FlextResult
 from pydantic import BaseModel
 
+from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
 
-
-@dataclass(frozen=True)
-class DiffResult:
-    """Result of a diff operation showing changes between two datasets."""
-
-    added: list[dict[str, Any]]
-    """Items present in target but not in source."""
-
-    removed: list[dict[str, Any]]
-    """Items present in source but not in target."""
-
-    modified: list[dict[str, Any]]
-    """Items present in both but with different values."""
-
-    unchanged: list[dict[str, Any]]
-    """Items that are identical in both datasets."""
-
-    @property
-    def has_changes(self) -> bool:
-        """Check if there are any differences."""
-        return bool(self.added or self.removed or self.modified)
-
-    @property
-    def total_changes(self) -> int:
-        """Total number of changes (added + removed + modified)."""
-        return len(self.added) + len(self.removed) + len(self.modified)
-
-    def summary(self) -> str:
-        """Get human-readable summary of changes."""
-        if not self.has_changes:
-            return "No differences found"
-
-        parts = []
-        if self.added:
-            parts.append(f"{len(self.added)} added")
-        if self.removed:
-            parts.append(f"{len(self.removed)} removed")
-        if self.modified:
-            parts.append(f"{len(self.modified)} modified")
-        if self.unchanged:
-            parts.append(f"{len(self.unchanged)} unchanged")
-
-        return ", ".join(parts)
+# Import DiffResult from models for backward compatibility
+DiffResult = FlextLdifModels.DiffResult
 
 
 class FlextLdifDiff(BaseModel):
@@ -138,7 +95,9 @@ class FlextLdifDiff(BaseModel):
                             "name": target_attr.get("name"),
                             "source": source_attr,
                             "target": target_attr,
-                            "changes": self._get_attribute_changes(source_attr, target_attr),
+                            "changes": self._get_attribute_changes(
+                                source_attr, target_attr
+                            ),
                         })
                     else:
                         unchanged.append({
@@ -212,7 +171,9 @@ class FlextLdifDiff(BaseModel):
                             "name": target_oc.get("name"),
                             "source": source_oc,
                             "target": target_oc,
-                            "changes": self._get_objectclass_changes(source_oc, target_oc),
+                            "changes": self._get_objectclass_changes(
+                                source_oc, target_oc
+                            ),
                         })
                     else:
                         unchanged.append({
@@ -434,7 +395,9 @@ class FlextLdifDiff(BaseModel):
                             "dn": target_entry.get("dn"),
                             "source": source_entry,
                             "target": target_entry,
-                            "changes": self._get_entry_changes(source_entry, target_entry),
+                            "changes": self._get_entry_changes(
+                                source_entry, target_entry
+                            ),
                         })
                     else:
                         unchanged.append({"dn": target_entry.get("dn")})

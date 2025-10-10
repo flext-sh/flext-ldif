@@ -399,14 +399,26 @@ class TestSchemaDiff:
         """Test schema diff with both attributes and objectClasses."""
         source_schema = {
             "attributes": [
-                {"oid": "1.2.3", "name": "attr1", "syntax": "1.3.6.1.4.1.1466.115.121.1.15"}
+                {
+                    "oid": "1.2.3",
+                    "name": "attr1",
+                    "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
+                }
             ],
             "objectclasses": [{"oid": "4.5.6", "name": "oc1", "kind": "STRUCTURAL"}],
         }
         target_schema = {
             "attributes": [
-                {"oid": "1.2.3", "name": "attr1", "syntax": "1.3.6.1.4.1.1466.115.121.1.15"},
-                {"oid": "7.8.9", "name": "attr2", "syntax": "1.3.6.1.4.1.1466.115.121.1.15"},  # New attribute
+                {
+                    "oid": "1.2.3",
+                    "name": "attr1",
+                    "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
+                },
+                {
+                    "oid": "7.8.9",
+                    "name": "attr2",
+                    "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
+                },  # New attribute
             ],
             "objectclasses": [{"oid": "4.5.6", "name": "oc1", "kind": "STRUCTURAL"}],
         }

@@ -82,8 +82,10 @@ class TestOudSchemaQuirks:
         # Extract an Oracle attribute line from schema
         # Looking for orclVersion or similar Oracle attributes
         oracle_attrs = [
-            line for line in schema_content.splitlines()
-            if "2.16.840.1.113894" in line and line.strip().startswith("attributeTypes:")
+            line
+            for line in schema_content.splitlines()
+            if "2.16.840.1.113894" in line
+            and line.strip().startswith("attributeTypes:")
         ]
 
         assert len(oracle_attrs) > 0, "No Oracle attributes found in schema fixtures"
@@ -104,10 +106,7 @@ class TestOudSchemaQuirks:
     ) -> None:
         """Test detection of Oracle OUD objectClasses."""
         # Oracle objectClass
-        oracle_oc = (
-            "( 2.16.840.1.113894.2.1.1 NAME 'orclContext' "
-            "SUP top STRUCTURAL )"
-        )
+        oracle_oc = "( 2.16.840.1.113894.2.1.1 NAME 'orclContext' SUP top STRUCTURAL )"
         assert oud_quirk.can_handle_objectclass(oracle_oc)
 
         # Non-Oracle objectClass
@@ -142,7 +141,8 @@ class TestOudSchemaQuirks:
 
         # Extract Oracle objectClass lines
         oracle_ocs = [
-            line for line in schema_content.splitlines()
+            line
+            for line in schema_content.splitlines()
             if "2.16.840.1.113894" in line and line.strip().startswith("objectClasses:")
         ]
 
@@ -273,7 +273,10 @@ class TestOudAclQuirks:
 
         parsed = result.unwrap()
         assert parsed[FlextLdifConstants.DictKeys.TYPE] == "oud_acl"
-        assert parsed[FlextLdifConstants.DictKeys.FORMAT] == FlextLdifConstants.AclFormats.ACI
+        assert (
+            parsed[FlextLdifConstants.DictKeys.FORMAT]
+            == FlextLdifConstants.AclFormats.ACI
+        )
         assert parsed[FlextLdifConstants.DictKeys.RAW] == simple_aci
 
     def test_parse_complex_aci_with_targetattr(
@@ -295,7 +298,8 @@ class TestOudAclQuirks:
         assert parsed[FlextLdifConstants.DictKeys.RAW] == complex_aci
 
     def test_parse_multiline_aci_from_fixtures(
-        self, acl_quirk: FlextLdifQuirksServersOud.AclQuirk,
+        self,
+        acl_quirk: FlextLdifQuirksServersOud.AclQuirk,
         oud_fixtures: FlextLdifFixtures.OUD,
     ) -> None:
         """Test parsing multi-line ACIs from real OUD integration fixtures."""
@@ -303,7 +307,8 @@ class TestOudAclQuirks:
 
         # Find ACI lines in fixtures
         aci_lines = [
-            line for line in integration_content.splitlines()
+            line
+            for line in integration_content.splitlines()
             if line.strip().startswith("aci:")
         ]
 
@@ -316,13 +321,18 @@ class TestOudAclQuirks:
 
         parsed = result.unwrap()
         assert parsed[FlextLdifConstants.DictKeys.TYPE] == "oud_acl"
-        assert parsed[FlextLdifConstants.DictKeys.FORMAT] == FlextLdifConstants.AclFormats.ACI
+        assert (
+            parsed[FlextLdifConstants.DictKeys.FORMAT]
+            == FlextLdifConstants.AclFormats.ACI
+        )
 
     def test_parse_ds_cfg_acl(
         self, acl_quirk: FlextLdifQuirksServersOud.AclQuirk
     ) -> None:
         """Test parsing ds-cfg- format ACL."""
-        ds_cfg_acl = "ds-cfg-access-control-handler: cn=Access Control Handler,cn=config"
+        ds_cfg_acl = (
+            "ds-cfg-access-control-handler: cn=Access Control Handler,cn=config"
+        )
 
         result = acl_quirk.parse_acl(ds_cfg_acl)
         assert result.is_success
@@ -345,9 +355,18 @@ class TestOudAclQuirks:
         assert result.is_success
 
         rfc_data = result.unwrap()
-        assert rfc_data[FlextLdifConstants.DictKeys.TYPE] == FlextLdifConstants.DictKeys.ACL
-        assert rfc_data[FlextLdifConstants.DictKeys.FORMAT] == FlextLdifConstants.AclFormats.RFC_GENERIC
-        assert rfc_data[FlextLdifConstants.DictKeys.SOURCE_FORMAT] == FlextLdifConstants.AclFormats.OUD_ACL
+        assert (
+            rfc_data[FlextLdifConstants.DictKeys.TYPE]
+            == FlextLdifConstants.DictKeys.ACL
+        )
+        assert (
+            rfc_data[FlextLdifConstants.DictKeys.FORMAT]
+            == FlextLdifConstants.AclFormats.RFC_GENERIC
+        )
+        assert (
+            rfc_data[FlextLdifConstants.DictKeys.SOURCE_FORMAT]
+            == FlextLdifConstants.AclFormats.OUD_ACL
+        )
 
     def test_convert_acl_from_rfc(
         self, acl_quirk: FlextLdifQuirksServersOud.AclQuirk
@@ -364,12 +383,13 @@ class TestOudAclQuirks:
         assert result.is_success
 
         oud_data = result.unwrap()
-        assert oud_data[FlextLdifConstants.DictKeys.FORMAT] == FlextLdifConstants.AclFormats.OUD_ACL
+        assert (
+            oud_data[FlextLdifConstants.DictKeys.FORMAT]
+            == FlextLdifConstants.AclFormats.OUD_ACL
+        )
         assert oud_data[FlextLdifConstants.DictKeys.TARGET_FORMAT] == "ds-cfg"
 
-    def test_acl_roundtrip(
-        self, acl_quirk: FlextLdifQuirksServersOud.AclQuirk
-    ) -> None:
+    def test_acl_roundtrip(self, acl_quirk: FlextLdifQuirksServersOud.AclQuirk) -> None:
         """Test ACL roundtrip: parse → convert to RFC → convert back."""
         original_aci = (
             'aci: (targetattr="*")(version 3.0; '
@@ -393,7 +413,10 @@ class TestOudAclQuirks:
         oud_data = oud_result.unwrap()
 
         # Validate format preserved
-        assert oud_data[FlextLdifConstants.DictKeys.FORMAT] == FlextLdifConstants.AclFormats.OUD_ACL
+        assert (
+            oud_data[FlextLdifConstants.DictKeys.FORMAT]
+            == FlextLdifConstants.AclFormats.OUD_ACL
+        )
 
 
 class TestOudEntryQuirks:
@@ -490,7 +513,8 @@ class TestOudEntryQuirks:
         assert "aci" in processed
 
     def test_process_entry_from_fixtures(
-        self, entry_quirk: FlextLdifQuirksServersOud.EntryQuirk,
+        self,
+        entry_quirk: FlextLdifQuirksServersOud.EntryQuirk,
         oud_fixtures: FlextLdifFixtures.OUD,
     ) -> None:
         """Test processing entries from real OUD integration fixtures."""
@@ -500,8 +524,8 @@ class TestOudEntryQuirks:
         current_dn = None
         current_attrs: dict[str, list[str]] = {}
 
-        for line in integration_content.splitlines():
-            line = line.strip()
+        for raw_line in integration_content.splitlines():
+            line = raw_line.strip()
             if not line or line.startswith("#"):
                 continue
 
@@ -509,7 +533,9 @@ class TestOudEntryQuirks:
                 # Process previous entry if exists
                 if current_dn and current_attrs:
                     result = entry_quirk.process_entry(current_dn, current_attrs)
-                    assert result.is_success, f"Failed to process entry {current_dn}: {result.error}"
+                    assert result.is_success, (
+                        f"Failed to process entry {current_dn}: {result.error}"
+                    )
 
                     processed = result.unwrap()
                     assert processed[FlextLdifConstants.DictKeys.SERVER_TYPE] == "oud"
@@ -629,7 +655,8 @@ class TestOudQuirksIntegration:
 
         # Count entries (lines starting with "dn:")
         entry_count = sum(
-            1 for line in integration_content.splitlines()
+            1
+            for line in integration_content.splitlines()
             if line.strip().startswith("dn:")
         )
 
@@ -644,27 +671,28 @@ class TestOudQuirksIntegration:
 
         # Count Oracle attributes and objectClasses
         oracle_attrs = sum(
-            1 for line in schema_content.splitlines()
+            1
+            for line in schema_content.splitlines()
             if "2.16.840.1.113894" in line and "attributeTypes:" in line
         )
 
         oracle_ocs = sum(
-            1 for line in schema_content.splitlines()
+            1
+            for line in schema_content.splitlines()
             if "2.16.840.1.113894" in line and "objectClasses:" in line
         )
 
         assert oracle_attrs > 0, "No Oracle attributes found in schema fixtures"
         assert oracle_ocs > 0, "No Oracle objectClasses found in schema fixtures"
 
-    def test_parse_aci_from_fixtures(
-        self, oud_fixtures: FlextLdifFixtures.OUD
-    ) -> None:
+    def test_parse_aci_from_fixtures(self, oud_fixtures: FlextLdifFixtures.OUD) -> None:
         """Test parsing ACIs from integration fixtures."""
         integration_content = oud_fixtures.integration()
 
         # Count ACIs
         aci_count = sum(
-            1 for line in integration_content.splitlines()
+            1
+            for line in integration_content.splitlines()
             if line.strip().startswith("aci:")
         )
 
@@ -685,9 +713,7 @@ class TestOudSchemaRoundTrip:
         """Create OUD fixture loader."""
         return FlextLdifFixtures.OUD()
 
-    def test_write_attribute_to_rfc(
-        self, oud_quirk: FlextLdifQuirksServersOud
-    ) -> None:
+    def test_write_attribute_to_rfc(self, oud_quirk: FlextLdifQuirksServersOud) -> None:
         """Test writing attribute data to RFC 4512 format."""
         attr_data: FlextLdifTypes.Dict = {
             "oid": "2.16.840.1.113894.1.1.1",
@@ -716,9 +742,8 @@ class TestOudSchemaRoundTrip:
             "oid": "2.16.840.1.113894.1.1.1",
             "name": "orclGUID",
             "_metadata": FlextLdifModels.QuirkMetadata(
-                original_format=original_format,
-                quirk_type="oud"
-            )
+                original_format=original_format, quirk_type="oud"
+            ),
         }
 
         result = oud_quirk.write_attribute_to_rfc(attr_data)
@@ -868,8 +893,8 @@ class TestOudAclRoundTrip:
             "_metadata": FlextLdifModels.QuirkMetadata(
                 original_format=original_multiline,
                 quirk_type="oud",
-                extensions={"is_multiline": True, "line_breaks": [50, 120]}
-            )
+                extensions={"is_multiline": True, "line_breaks": [50, 120]},
+            ),
         }
 
         result = acl_quirk.write_acl_to_rfc(acl_data)
@@ -959,8 +984,8 @@ class TestOudEntryRoundTrip:
             "sn": ["User"],
             "_metadata": FlextLdifModels.QuirkMetadata(
                 quirk_type="oud",
-                extensions={"attribute_order": ["cn", "objectClass", "sn"]}
-            )
+                extensions={"attribute_order": ["cn", "objectClass", "sn"]},
+            ),
         }
 
         result = entry_quirk.write_entry_to_ldif(entry_data)
@@ -970,9 +995,9 @@ class TestOudEntryRoundTrip:
         lines = ldif_string.strip().split("\n")
 
         # Find attribute positions (skip dn line)
-        cn_idx = next(i for i, l in enumerate(lines) if l.startswith("cn:"))
-        oc_idx = next(i for i, l in enumerate(lines) if l.startswith("objectClass:"))
-        sn_idx = next(i for i, l in enumerate(lines) if l.startswith("sn:"))
+        cn_idx = next(i for i, line in enumerate(lines) if line.startswith("cn:"))
+        oc_idx = next(i for i, line in enumerate(lines) if line.startswith("objectClass:"))
+        sn_idx = next(i for i, line in enumerate(lines) if line.startswith("sn:"))
 
         # Verify ordering: cn < objectClass < sn
         assert cn_idx < oc_idx < sn_idx
@@ -1021,7 +1046,10 @@ class TestOudEntryRoundTrip:
         processed2 = process2_result.unwrap()
 
         # Validate: essential data preserved
-        assert processed1[FlextLdifConstants.DictKeys.DN] == processed2[FlextLdifConstants.DictKeys.DN]
+        assert (
+            processed1[FlextLdifConstants.DictKeys.DN]
+            == processed2[FlextLdifConstants.DictKeys.DN]
+        )
         assert processed1.get("cn") == processed2.get("cn")
         assert processed1.get("orclVersion") == processed2.get("orclVersion")
 

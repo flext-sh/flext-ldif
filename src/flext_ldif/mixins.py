@@ -9,11 +9,11 @@ from __future__ import annotations
 from collections.abc import Callable, Iterator, Sequence
 from typing import cast, override
 
-from flext_core import FlextExceptions, FlextMixins, FlextResult
+from flext_core import FlextExceptions, FlextMixins, FlextResult, FlextTypes
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.typings import FlextLdifTypes, T, U
+from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifMixins(FlextMixins):
@@ -149,14 +149,14 @@ class FlextLdifMixins(FlextMixins):
 
         @classmethod
         def validate_with_result(
-            cls, validator_func: Callable[[T], U], data: T
-        ) -> FlextResult[U]:
+            cls, validator_func: Callable[[FlextTypes.T], FlextTypes.U], data: FlextTypes.T
+        ) -> FlextResult[FlextTypes.U]:
             """Validate data using validator function with FlextResult."""
             try:
                 result = validator_func(data)
-                return FlextResult[U].ok(result)
+                return FlextResult[FlextTypes.U].ok(result)
             except Exception as e:
-                return FlextResult[U].fail(str(e))
+                return FlextResult[FlextTypes.U].fail(str(e))
 
     # =============================================================================
     # PROCESSING MIXINS - Reusable Processing Logic
@@ -222,28 +222,28 @@ class FlextLdifMixins(FlextMixins):
 
         @classmethod
         def process_with_result(
-            cls, processor_func: Callable[[T], U], data: T
-        ) -> FlextResult[U]:
+            cls, processor_func: Callable[[FlextTypes.T], FlextTypes.U], data: FlextTypes.T
+        ) -> FlextResult[FlextTypes.U]:
             """Process data using processor function with FlextResult."""
             try:
                 result = processor_func(data)
-                return FlextResult[U].ok(result)
+                return FlextResult[FlextTypes.U].ok(result)
             except Exception as e:
-                return FlextResult[U].fail(str(e))
+                return FlextResult[FlextTypes.U].fail(str(e))
 
         @classmethod
         def process_batch_with_result(
-            cls, processor_func: Callable[[T], U], data_batch: Sequence[T]
-        ) -> FlextResult[Sequence[U]]:
+            cls, processor_func: Callable[[FlextTypes.T], FlextTypes.U], data_batch: Sequence[FlextTypes.T]
+        ) -> FlextResult[Sequence[FlextTypes.U]]:
             """Process batch of data with FlextResult."""
             try:
-                processed_batch: list[U] = []
+                processed_batch: list[FlextTypes.U] = []
                 for item in data_batch:
                     result = processor_func(item)
                     processed_batch.append(result)
-                return FlextResult[Sequence[U]].ok(processed_batch)
+                return FlextResult[Sequence[FlextTypes.U]].ok(processed_batch)
             except Exception as e:
-                return FlextResult[Sequence[U]].fail(str(e))
+                return FlextResult[Sequence[FlextTypes.U]].fail(str(e))
 
     # =============================================================================
     # TRANSFORMATION MIXINS - Data Transformation Utilities
@@ -288,14 +288,14 @@ class FlextLdifMixins(FlextMixins):
 
         @classmethod
         def transform_with_result(
-            cls, transformer_func: Callable[[T], U], data: T
-        ) -> FlextResult[U]:
+            cls, transformer_func: Callable[[FlextTypes.T], FlextTypes.U], data: FlextTypes.T
+        ) -> FlextResult[FlextTypes.U]:
             """Transform data using transformer function with FlextResult."""
             try:
                 result = transformer_func(data)
-                return FlextResult[U].ok(result)
+                return FlextResult[FlextTypes.U].ok(result)
             except Exception as e:
-                return FlextResult[U].fail(str(e))
+                return FlextResult[FlextTypes.U].fail(str(e))
 
     # =============================================================================
     # ANALYTICS MIXINS - Analytics and Statistics Utilities
@@ -355,8 +355,8 @@ class FlextLdifMixins(FlextMixins):
         @classmethod
         def analyze_with_result(
             cls,
-            analyzer_func: Callable[[Sequence[T]], FlextLdifTypes.Dict],
-            data: Sequence[T],
+            analyzer_func: Callable[[Sequence[FlextTypes.T]], FlextLdifTypes.Dict],
+            data: Sequence[FlextTypes.T],
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Analyze data using analyzer function with FlextResult."""
             try:

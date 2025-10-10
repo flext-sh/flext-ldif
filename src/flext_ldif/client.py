@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
 
@@ -25,6 +26,7 @@ from pydantic import PrivateAttr
 
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.filters import FlextLdifFilters
 from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.base import (
@@ -554,6 +556,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         objectclass: str | tuple[str, ...],
         required_attributes: list[str] | None = None,
         mode: str = "include",
+        *,
         mark_excluded: bool = False,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries by object class with optional required attributes.
@@ -569,7 +572,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             objectclass: Single objectClass string or tuple of objectClasses
             required_attributes: Optional list of required attributes (all must be present)
             mode: "include" to keep matching entries, "exclude" to remove them
-            mark_excluded: If True, mark excluded entries with metadata
+            mark_excluded: If True, mark excluded entries with metadata (keyword-only)
 
         Returns:
             FlextResult containing filtered entries
@@ -582,12 +585,10 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             >>> result = client.filter_by_objectclass(
             ...     entries,
             ...     objectclass=("inetOrgPerson", "person"),
-            ...     required_attributes=["cn", "sn", "mail"]
+            ...     required_attributes=["cn", "sn", "mail"],
             ... )
 
         """
-        from flext_ldif.filters import FlextLdifFilters
-
         return FlextLdifFilters.filter_entries_by_objectclass(
             entries=entries,
             objectclass=objectclass,
@@ -615,6 +616,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         entries: list[FlextLdifModels.Entry],
         pattern: str,
         mode: str = "include",
+        *,
         mark_excluded: bool = True,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries by DN wildcard pattern.
@@ -629,21 +631,17 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             entries: List of LDIF entries to filter
             pattern: DN wildcard pattern (e.g., "*,ou=users,dc=example,dc=com")
             mode: "include" to keep matching entries, "exclude" to remove them
-            mark_excluded: If True, mark excluded entries with metadata
+            mark_excluded: If True, mark excluded entries with metadata (keyword-only)
 
         Returns:
             FlextResult containing filtered entries
 
         Example:
             >>> result = client.filter_by_dn_pattern(
-            ...     entries,
-            ...     pattern="*,dc=ctbc,dc=com",
-            ...     mode="include"
+            ...     entries, pattern="*,dc=ctbc,dc=com", mode="include"
             ... )
 
         """
-        from flext_ldif.filters import FlextLdifFilters
-
         return FlextLdifFilters.filter_entries_by_dn(
             entries=entries,
             pattern=pattern,
@@ -653,10 +651,15 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
     def filter_schema_by_oid(
         self,
-        schema_items: list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass],
+        schema_items: list[
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+        ],
         oid_whitelist: list[str],
+        *,
         mark_excluded: bool = True,
-    ) -> FlextResult[list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]]:
+    ) -> FlextResult[
+        list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]
+    ]:
         """Filter schema attributes/objectClasses by OID pattern whitelist.
 
         Uses fnmatch for OID pattern matching. Only items matching whitelist patterns
@@ -665,7 +668,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         Args:
             schema_items: List of schema attributes or objectClasses
             oid_whitelist: List of OID patterns to whitelist (e.g., ["1.3.6.1.4.1.111.*"])
-            mark_excluded: If True, mark excluded items with metadata
+            mark_excluded: If True, mark excluded items with metadata (keyword-only)
 
         Returns:
             FlextResult containing filtered schema items
@@ -673,14 +676,14 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         Example:
             >>> result = client.filter_schema_by_oid(
             ...     schema_attributes,
-            ...     oid_whitelist=["1.3.6.1.4.1.111.*", "2.16.840.1.113894.*"]
+            ...     oid_whitelist=["1.3.6.1.4.1.111.*", "2.16.840.1.113894.*"],
             ... )
 
         """
-        from flext_ldif.filters import FlextLdifFilters
-
         try:
-            filtered: list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass] = []
+            filtered: list[
+                FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+            ] = []
 
             for item in schema_items:
                 oid = item.oid if hasattr(item, "oid") else ""
@@ -699,7 +702,6 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
                     )
 
                     # Create or update metadata
-                    from datetime import UTC, datetime
                     exclusion_info = FlextLdifModels.ExclusionInfo(
                         excluded=True,
                         exclusion_reason=f"OID not in whitelist: {oid}",
@@ -707,22 +709,38 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
                         timestamp=datetime.now(UTC).isoformat(),
                     )
 
+                    # Create new item with updated metadata (models are frozen)
                     if item.metadata is None:
-                        item.metadata = FlextLdifModels.QuirkMetadata(
+                        new_metadata = FlextLdifModels.QuirkMetadata(
                             extensions={"exclusion_info": exclusion_info.model_dump()}
                         )
                     else:
-                        item.metadata.extensions["exclusion_info"] = exclusion_info.model_dump()
+                        # Preserve existing extensions and add exclusion_info
+                        new_extensions = {**item.metadata.extensions}
+                        new_extensions["exclusion_info"] = exclusion_info.model_dump()
+                        new_metadata = FlextLdifModels.QuirkMetadata(
+                            original_format=item.metadata.original_format,
+                            quirk_type=item.metadata.quirk_type,
+                            parsed_timestamp=item.metadata.parsed_timestamp,
+                            extensions=new_extensions,
+                            custom_data=item.metadata.custom_data,
+                        )
 
-                    filtered.append(item)
+                    # Create new item with updated metadata
+                    updated_item = item.model_copy(update={"metadata": new_metadata})
+                    filtered.append(updated_item)
 
             return FlextResult[
-                list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]
+                list[
+                    FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+                ]
             ].ok(filtered)
 
         except Exception as e:
             return FlextResult[
-                list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]
+                list[
+                    FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+                ]
             ].fail(f"Failed to filter schema by OID: {e}")
 
     def filter_by_attributes(
@@ -730,6 +748,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         entries: list[FlextLdifModels.Entry],
         attributes: list[str],
         mode: str = "include",
+        *,
         match_all: bool = False,
         mark_excluded: bool = True,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
@@ -739,8 +758,8 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             entries: List of LDIF entries to filter
             attributes: List of attribute names to check
             mode: "include" to keep entries with attributes, "exclude" to remove them
-            match_all: If True, entry must have ALL attributes; if False, ANY attribute
-            mark_excluded: If True, mark excluded entries with metadata
+            match_all: If True, entry must have ALL attributes; if False, ANY attribute (keyword-only)
+            mark_excluded: If True, mark excluded entries with metadata (keyword-only)
 
         Returns:
             FlextResult containing filtered entries
@@ -749,12 +768,10 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             >>> result = client.filter_by_attributes(
             ...     entries,
             ...     attributes=["orclguid", "modifytimestamp"],
-            ...     mode="exclude"  # Remove entries with these attributes
+            ...     mode="exclude",  # Remove entries with these attributes
             ... )
 
         """
-        from flext_ldif.filters import FlextLdifFilters
-
         return FlextLdifFilters.filter_entries_by_attributes(
             entries=entries,
             attributes=attributes,
@@ -766,9 +783,21 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
     def categorize_entries(
         self,
         entries: list[FlextLdifModels.Entry],
-        user_objectclasses: tuple[str, ...] = ("inetOrgPerson", "person", "organizationalPerson"),
-        group_objectclasses: tuple[str, ...] = ("groupOfNames", "groupOfUniqueNames", "posixGroup"),
-        container_objectclasses: tuple[str, ...] = ("organizationalUnit", "organization", "domain"),
+        user_objectclasses: tuple[str, ...] = (
+            "inetOrgPerson",
+            "person",
+            "organizationalPerson",
+        ),
+        group_objectclasses: tuple[str, ...] = (
+            "groupOfNames",
+            "groupOfUniqueNames",
+            "posixGroup",
+        ),
+        container_objectclasses: tuple[str, ...] = (
+            "organizationalUnit",
+            "organization",
+            "domain",
+        ),
     ) -> FlextResult[FlextLdifModels.CategorizedEntries]:
         """Categorize entries into users, groups, containers, and uncategorized.
 
@@ -791,12 +820,10 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             ...     entries,
             ...     user_objectclasses=client-aOudMigConstants.USER_CLASSES,
             ...     group_objectclasses=client-aOudMigConstants.GROUP_CLASSES,
-            ...     container_objectclasses=client-aOudMigConstants.ORG_UNIT_CLASSES
+            ...     container_objectclasses=client-aOudMigConstants.ORG_UNIT_CLASSES,
             ... )
 
         """
-        from flext_ldif.filters import FlextLdifFilters
-
         try:
             categorized = FlextLdifModels.CategorizedEntries.create_empty()
 

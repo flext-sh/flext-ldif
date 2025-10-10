@@ -14,7 +14,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Iterator, Mapping, Sequence
-from typing import TypeVar
 
 from flext_core import FlextResult, FlextTypes
 
@@ -24,9 +23,7 @@ from flext_ldif.constants import FlextLdifConstants
 # LDIF-SPECIFIC TYPE VARIABLES - Domain-specific TypeVars for LDIF operations
 # =============================================================================
 
-# Generic TypeVars for mixins and functional operations
-T = TypeVar("T")
-U = TypeVar("U")
+# Generic TypeVars T and U imported from flext-core FlextTypes
 
 
 # LDIF domain TypeVars

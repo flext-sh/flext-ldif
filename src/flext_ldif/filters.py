@@ -18,10 +18,14 @@ import fnmatch
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
+from flext_core import FlextResult
+
 if TYPE_CHECKING:
     from flext_ldif.models import FlextLdifModels
-
-from flext_core import FlextResult
+else:
+    # Import at runtime to avoid circular dependency
+    from flext_ldif import models as _models
+    FlextLdifModels = _models.FlextLdifModels
 
 
 class FlextLdifFilters:
@@ -55,8 +59,7 @@ class FlextLdifFilters:
 
         Example:
             >>> FlextLdifFilters.matches_dn_pattern(
-            ...     "cn=john,ou=users,dc=example,dc=com",
-            ...     "*,ou=users,dc=example,dc=com"
+            ...     "cn=john,ou=users,dc=example,dc=com", "*,ou=users,dc=example,dc=com"
             ... )
             True
 
@@ -78,8 +81,7 @@ class FlextLdifFilters:
 
         Example:
             >>> FlextLdifFilters.matches_oid_pattern(
-            ...     "1.3.6.1.4.1.111.2.3.4",
-            ...     ["1.3.6.1.4.1.111.*"]
+            ...     "1.3.6.1.4.1.111.2.3.4", ["1.3.6.1.4.1.111.*"]
             ... )
             True
 
@@ -95,6 +97,7 @@ class FlextLdifFilters:
         """Mark entry as excluded by adding exclusion metadata.
 
         Creates or updates QuirkMetadata with ExclusionInfo in extensions.
+        Returns a new Entry instance with updated metadata (entries are frozen).
 
         Args:
             entry: Entry to mark as excluded
@@ -102,19 +105,17 @@ class FlextLdifFilters:
             filter_criteria: Optional filter criteria that caused exclusion
 
         Returns:
-            Entry with updated metadata
+            New Entry instance with updated metadata
 
         Example:
             >>> entry = FlextLdifModels.Entry(...)
             >>> marked = FlextLdifFilters.mark_entry_excluded(
             ...     entry,
             ...     "DN outside base context",
-            ...     FilterCriteria(filter_type="dn_pattern", pattern="*,dc=old,dc=com")
+            ...     FilterCriteria(filter_type="dn_pattern", pattern="*,dc=old,dc=com"),
             ... )
 
         """
-        from flext_ldif.models import FlextLdifModels
-
         # Create exclusion info
         exclusion_info = FlextLdifModels.ExclusionInfo(
             excluded=True,
@@ -123,16 +124,25 @@ class FlextLdifFilters:
             timestamp=datetime.now(UTC).isoformat(),
         )
 
-        # Get or create metadata
+        # Create new metadata with exclusion info
         if entry.metadata is None:
-            entry.metadata = FlextLdifModels.QuirkMetadata(
+            new_metadata = FlextLdifModels.QuirkMetadata(
                 extensions={"exclusion_info": exclusion_info.model_dump()}
             )
         else:
-            # Update existing metadata
-            entry.metadata.extensions["exclusion_info"] = exclusion_info.model_dump()
+            # Preserve existing extensions and add exclusion_info
+            new_extensions = {**entry.metadata.extensions}
+            new_extensions["exclusion_info"] = exclusion_info.model_dump()
+            new_metadata = FlextLdifModels.QuirkMetadata(
+                original_format=entry.metadata.original_format,
+                quirk_type=entry.metadata.quirk_type,
+                parsed_timestamp=entry.metadata.parsed_timestamp,
+                extensions=new_extensions,
+                custom_data=entry.metadata.custom_data,
+            )
 
-        return entry
+        # Return new entry with updated metadata (models are frozen)
+        return entry.model_copy(update={"metadata": new_metadata})
 
     @staticmethod
     def is_entry_excluded(entry: FlextLdifModels.Entry) -> bool:
@@ -175,7 +185,9 @@ class FlextLdifFilters:
         return exclusion_info.get("exclusion_reason")
 
     @staticmethod
-    def has_objectclass(entry: FlextLdifModels.Entry, objectclasses: tuple[str, ...]) -> bool:
+    def has_objectclass(
+        entry: FlextLdifModels.Entry, objectclasses: tuple[str, ...]
+    ) -> bool:
         """Check if entry has any of the specified objectClasses.
 
         Case-insensitive comparison.
@@ -247,6 +259,7 @@ class FlextLdifFilters:
         entries: list[FlextLdifModels.Entry],
         pattern: str,
         mode: str = "include",
+        *,
         mark_excluded: bool = True,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries by DN pattern.
@@ -255,14 +268,12 @@ class FlextLdifFilters:
             entries: List of entries to filter
             pattern: DN wildcard pattern
             mode: "include" to keep matches, "exclude" to remove matches
-            mark_excluded: If True, mark excluded entries in metadata
+            mark_excluded: If True, mark excluded entries in metadata (keyword-only)
 
         Returns:
             FlextResult containing filtered entry list
 
         """
-        from flext_ldif.models import FlextLdifModels
-
         try:
             filtered: list[FlextLdifModels.Entry] = []
 
@@ -271,7 +282,9 @@ class FlextLdifFilters:
                 matches = FlextLdifFilters.matches_dn_pattern(dn, pattern)
 
                 # Determine if entry should be included
-                include = (mode == "include" and matches) or (mode == "exclude" and not matches)
+                include = (mode == "include" and matches) or (
+                    mode == "exclude" and not matches
+                )
 
                 if include:
                     filtered.append(entry)
@@ -302,6 +315,7 @@ class FlextLdifFilters:
         objectclass: str | tuple[str, ...],
         required_attributes: list[str] | None = None,
         mode: str = "include",
+        *,
         mark_excluded: bool = True,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries by objectClass with optional required attributes.
@@ -311,14 +325,12 @@ class FlextLdifFilters:
             objectclass: Single objectClass or tuple of objectClasses
             required_attributes: Optional list of required attributes
             mode: "include" to keep matches, "exclude" to remove matches
-            mark_excluded: If True, mark excluded entries in metadata
+            mark_excluded: If True, mark excluded entries in metadata (keyword-only)
 
         Returns:
             FlextResult containing filtered entry list
 
         """
-        from flext_ldif.models import FlextLdifModels
-
         try:
             # Normalize objectclass to tuple
             if isinstance(objectclass, str):
@@ -339,7 +351,9 @@ class FlextLdifFilters:
                 matches = has_class and has_attrs
 
                 # Determine if entry should be included
-                include = (mode == "include" and matches) or (mode == "exclude" and not matches)
+                include = (mode == "include" and matches) or (
+                    mode == "exclude" and not matches
+                )
 
                 if include:
                     filtered.append(entry)
@@ -353,7 +367,9 @@ class FlextLdifFilters:
                     )
                     reason = f"ObjectClass {mode} filter: {','.join(objectclass)}"
                     if required_attributes:
-                        reason += f" (required attributes: {','.join(required_attributes)})"
+                        reason += (
+                            f" (required attributes: {','.join(required_attributes)})"
+                        )
                     marked_entry = FlextLdifFilters.mark_entry_excluded(
                         entry,
                         reason,
@@ -373,6 +389,7 @@ class FlextLdifFilters:
         entries: list[FlextLdifModels.Entry],
         attributes: list[str],
         mode: str = "include",
+        *,
         match_all: bool = False,
         mark_excluded: bool = True,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
@@ -382,15 +399,13 @@ class FlextLdifFilters:
             entries: List of entries to filter
             attributes: List of attribute names to check
             mode: "include" to keep entries with attributes, "exclude" to remove them
-            match_all: If True, entry must have ALL attributes; if False, ANY attribute
-            mark_excluded: If True, mark excluded entries in metadata
+            match_all: If True, entry must have ALL attributes; if False, ANY attribute (keyword-only)
+            mark_excluded: If True, mark excluded entries in metadata (keyword-only)
 
         Returns:
             FlextResult containing filtered entry list
 
         """
-        from flext_ldif.models import FlextLdifModels
-
         try:
             filtered: list[FlextLdifModels.Entry] = []
 
@@ -401,7 +416,9 @@ class FlextLdifFilters:
                     matches = any(entry.has_attribute(attr) for attr in attributes)
 
                 # Determine if entry should be included
-                include = (mode == "include" and matches) or (mode == "exclude" and not matches)
+                include = (mode == "include" and matches) or (
+                    mode == "exclude" and not matches
+                )
 
                 if include:
                     filtered.append(entry)

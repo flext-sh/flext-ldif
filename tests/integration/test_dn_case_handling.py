@@ -13,8 +13,6 @@ import pytest
 
 from flext_ldif.quirks.conversion_matrix import QuirksConversionMatrix
 from flext_ldif.quirks.dn_case_registry import DnCaseRegistry
-from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
-from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
 
 
 class TestDnCaseRegistry:
@@ -25,7 +23,9 @@ class TestDnCaseRegistry:
         """Create fresh DN registry."""
         return DnCaseRegistry()
 
-    def test_register_dn_first_becomes_canonical(self, registry: DnCaseRegistry) -> None:
+    def test_register_dn_first_becomes_canonical(
+        self, registry: DnCaseRegistry
+    ) -> None:
         """Test that first registered DN becomes canonical case."""
         canonical = registry.register_dn("CN=Admin,DC=Example,DC=Com")
         assert canonical == "CN=Admin,DC=Example,DC=Com"
@@ -45,11 +45,22 @@ class TestDnCaseRegistry:
         registry.register_dn("cn=test,dc=example,dc=com")
 
         # All case variants return same canonical
-        assert registry.get_canonical_dn("cn=test,dc=example,dc=com") == "cn=test,dc=example,dc=com"
-        assert registry.get_canonical_dn("CN=Test,DC=Example,DC=Com") == "cn=test,dc=example,dc=com"
-        assert registry.get_canonical_dn("cn=TEST,dc=EXAMPLE,dc=COM") == "cn=test,dc=example,dc=com"
+        assert (
+            registry.get_canonical_dn("cn=test,dc=example,dc=com")
+            == "cn=test,dc=example,dc=com"
+        )
+        assert (
+            registry.get_canonical_dn("CN=Test,DC=Example,DC=Com")
+            == "cn=test,dc=example,dc=com"
+        )
+        assert (
+            registry.get_canonical_dn("cn=TEST,dc=EXAMPLE,dc=COM")
+            == "cn=test,dc=example,dc=com"
+        )
 
-    def test_get_canonical_dn_unknown_returns_none(self, registry: DnCaseRegistry) -> None:
+    def test_get_canonical_dn_unknown_returns_none(
+        self, registry: DnCaseRegistry
+    ) -> None:
         """Test unknown DN returns None."""
         assert registry.get_canonical_dn("cn=unknown,dc=com") is None
 
@@ -74,7 +85,9 @@ class TestDnCaseRegistry:
         assert "CN=Admin,DC=Com" in variants
         assert "cn=ADMIN,dc=COM" in variants
 
-    def test_validate_oud_consistency_single_case(self, registry: DnCaseRegistry) -> None:
+    def test_validate_oud_consistency_single_case(
+        self, registry: DnCaseRegistry
+    ) -> None:
         """Test validation passes with single case variant."""
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
 
@@ -82,7 +95,9 @@ class TestDnCaseRegistry:
         assert result.is_success
         assert result.unwrap() is True
 
-    def test_validate_oud_consistency_multiple_cases(self, registry: DnCaseRegistry) -> None:
+    def test_validate_oud_consistency_multiple_cases(
+        self, registry: DnCaseRegistry
+    ) -> None:
         """Test validation detects multiple case variants."""
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
         registry.register_dn("CN=Admin,DC=Com")
@@ -104,7 +119,7 @@ class TestDnCaseRegistry:
         """Test normalizing single DN field."""
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
 
-        data = {"dn": "CN=Admin,DC=Com", "cn": ["REDACTED_LDAP_BIND_PASSWORD"]}
+        data: dict[str, object] = {"dn": "CN=Admin,DC=Com", "cn": ["REDACTED_LDAP_BIND_PASSWORD"]}
         result = registry.normalize_dn_references(data, ["dn"])
 
         assert result.is_success
@@ -112,14 +127,16 @@ class TestDnCaseRegistry:
         assert normalized["dn"] == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=com"
         assert normalized["cn"] == ["REDACTED_LDAP_BIND_PASSWORD"]  # Non-DN field unchanged
 
-    def test_normalize_dn_references_list_of_dns(self, registry: DnCaseRegistry) -> None:
+    def test_normalize_dn_references_list_of_dns(
+        self, registry: DnCaseRegistry
+    ) -> None:
         """Test normalizing list of DNs (e.g., group members)."""
         registry.register_dn("cn=user1,dc=com")
         registry.register_dn("cn=user2,dc=com")
 
-        data = {
+        data: dict[str, object] = {
             "dn": "cn=group,dc=com",
-            "member": ["CN=User1,DC=Com", "cn=USER2,dc=com"]
+            "member": ["CN=User1,DC=Com", "cn=USER2,dc=com"],
         }
         result = registry.normalize_dn_references(data, ["dn", "member"])
 
@@ -127,9 +144,11 @@ class TestDnCaseRegistry:
         normalized = result.unwrap()
         assert normalized["member"] == ["cn=user1,dc=com", "cn=user2,dc=com"]
 
-    def test_normalize_dn_references_unregistered_dn_unchanged(self, registry: DnCaseRegistry) -> None:
+    def test_normalize_dn_references_unregistered_dn_unchanged(
+        self, registry: DnCaseRegistry
+    ) -> None:
         """Test that unregistered DNs are left unchanged."""
-        data = {"dn": "cn=unknown,dc=com"}
+        data: dict[str, object] = {"dn": "cn=unknown,dc=com"}
         result = registry.normalize_dn_references(data, ["dn"])
 
         assert result.is_success
@@ -166,12 +185,16 @@ class TestConversionMatrixDnHandling:
         """Create conversion matrix."""
         return QuirksConversionMatrix()
 
-    def test_matrix_initializes_with_dn_registry(self, matrix: QuirksConversionMatrix) -> None:
+    def test_matrix_initializes_with_dn_registry(
+        self, matrix: QuirksConversionMatrix
+    ) -> None:
         """Test that matrix has DN registry."""
         assert hasattr(matrix, "dn_registry")
         assert isinstance(matrix.dn_registry, DnCaseRegistry)
 
-    def test_reset_dn_registry_clears_state(self, matrix: QuirksConversionMatrix) -> None:
+    def test_reset_dn_registry_clears_state(
+        self, matrix: QuirksConversionMatrix
+    ) -> None:
         """Test resetting DN registry."""
         matrix.dn_registry.register_dn("cn=test,dc=com")
         assert matrix.dn_registry.has_dn("cn=test,dc=com")
@@ -193,10 +216,10 @@ class TestConversionMatrixDnHandling:
         self, matrix: QuirksConversionMatrix
     ) -> None:
         """Test DN extraction from entry dict."""
-        entry = {
+        entry: dict[str, object] = {
             "dn": "cn=OracleContext,dc=example,dc=com",
             "cn": ["OracleContext"],
-            "objectClass": ["top", "orclContext"]
+            "objectClass": ["top", "orclContext"],
         }
 
         # Manually call extraction (simulates what convert() does)
@@ -209,12 +232,12 @@ class TestConversionMatrixDnHandling:
         self, matrix: QuirksConversionMatrix
     ) -> None:
         """Test DN extraction from group member fields."""
-        entry = {
+        entry: dict[str, object] = {
             "dn": "cn=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com",
             "uniqueMember": [
                 "cn=user1,dc=example,dc=com",
-                "cn=user2,dc=example,dc=com"
-            ]
+                "cn=user2,dc=example,dc=com",
+            ],
         }
 
         matrix._extract_and_register_dns(entry, "entry")
@@ -224,17 +247,15 @@ class TestConversionMatrixDnHandling:
         assert matrix.dn_registry.has_dn("cn=user1,dc=example,dc=com")
         assert matrix.dn_registry.has_dn("cn=user2,dc=example,dc=com")
 
-    def test_normalize_dns_in_entry_data(
-        self, matrix: QuirksConversionMatrix
-    ) -> None:
+    def test_normalize_dns_in_entry_data(self, matrix: QuirksConversionMatrix) -> None:
         """Test DN normalization in entry dict."""
         # Register canonical case
         matrix.dn_registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
 
         # Entry with different case
-        entry = {
+        entry: dict[str, object] = {
             "dn": "cn=group,dc=com",
-            "member": ["CN=Admin,DC=Com"]  # Different case!
+            "member": ["CN=Admin,DC=Com"],  # Different case!
         }
 
         result = matrix._normalize_dns_in_data(entry)
@@ -272,9 +293,7 @@ class TestDnCaseNormalizationScenarios:
         assert result.metadata is not None
         assert "warning" in result.metadata
 
-    def test_hierarchical_dn_references(
-        self, registry: DnCaseRegistry
-    ) -> None:
+    def test_hierarchical_dn_references(self, registry: DnCaseRegistry) -> None:
         """Test DN case consistency in hierarchical structure."""
         # Register parent DN
         registry.register_dn("dc=example,dc=com")
@@ -297,6 +316,6 @@ class TestDnCaseNormalizationScenarios:
 
 __all__ = [
     "TestConversionMatrixDnHandling",
-    "TestDnCaseNormalizationEndToEnd",
+    "TestDnCaseNormalizationScenarios",
     "TestDnCaseRegistry",
 ]

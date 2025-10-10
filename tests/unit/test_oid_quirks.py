@@ -81,8 +81,10 @@ class TestOidSchemaQuirks:
 
         # Extract Oracle attribute lines from schema
         oracle_attrs = [
-            line for line in schema_content.splitlines()
-            if "2.16.840.1.113894" in line and line.strip().startswith("attributetypes:")
+            line
+            for line in schema_content.splitlines()
+            if "2.16.840.1.113894" in line
+            and line.strip().startswith("attributetypes:")
         ]
 
         assert len(oracle_attrs) > 0, "No Oracle attributes found in schema fixtures"
@@ -103,10 +105,7 @@ class TestOidSchemaQuirks:
     ) -> None:
         """Test detection of Oracle OID objectClasses."""
         # Oracle objectClass
-        oracle_oc = (
-            "( 2.16.840.1.113894.2.1.1 NAME 'orclContext' "
-            "SUP top STRUCTURAL )"
-        )
+        oracle_oc = "( 2.16.840.1.113894.2.1.1 NAME 'orclContext' SUP top STRUCTURAL )"
         assert oid_quirk.can_handle_objectclass(oracle_oc)
 
         # Non-Oracle objectClass
@@ -141,7 +140,8 @@ class TestOidSchemaQuirks:
 
         # Extract Oracle objectClass lines
         oracle_ocs = [
-            line for line in schema_content.splitlines()
+            line
+            for line in schema_content.splitlines()
             if "2.16.840.1.113894" in line and line.strip().startswith("objectclasses:")
         ]
 
@@ -220,7 +220,9 @@ class TestOidSchemaQuirks:
 
         # Validate essential fields preserved
         # OID field contains full definition after RFC conversion
-        assert "2.16.840.1.113894.1.1.1" in str(rfc_data.get(FlextLdifConstants.DictKeys.OID, ""))
+        assert "2.16.840.1.113894.1.1.1" in str(
+            rfc_data.get(FlextLdifConstants.DictKeys.OID, "")
+        )
         assert rfc_data.get(FlextLdifConstants.DictKeys.NAME) == "orclguid"
 
 
@@ -253,7 +255,9 @@ class TestOidAclQuirks:
         orclaci = 'orclaci: access to entry by group="cn=Admins,cn=groups,cn=OracleContext" (browse,add,delete)'
         assert acl_quirk.can_handle_acl(orclaci)
 
-        orclentrylevel = "orclentrylevelaci: access to entry by * (browse,noadd,nodelete)"
+        orclentrylevel = (
+            "orclentrylevelaci: access to entry by * (browse,noadd,nodelete)"
+        )
         assert acl_quirk.can_handle_acl(orclentrylevel)
 
         non_oid_acl = "olcAccess: {0}to * by * read"
@@ -265,14 +269,17 @@ class TestOidAclQuirks:
         """Test parsing simple orclaci format."""
         simple_orclaci = (
             'orclaci: access to entry by group="cn=ASPAdmins, cn=groups,cn=OracleContext,dc=network,dc=example" '
-            '(browse,add, delete)'
+            "(browse,add, delete)"
         )
 
         result = acl_quirk.parse_acl(simple_orclaci)
         assert result.is_success, f"Failed to parse orclaci: {result.error}"
 
         parsed = result.unwrap()
-        assert parsed[FlextLdifConstants.DictKeys.TYPE] == FlextLdifConstants.DictKeys.STANDARD
+        assert (
+            parsed[FlextLdifConstants.DictKeys.TYPE]
+            == FlextLdifConstants.DictKeys.STANDARD
+        )
         assert parsed[FlextLdifConstants.DictKeys.RAW] == simple_orclaci
 
     def test_parse_complex_orclaci_with_filter(
@@ -281,17 +288,20 @@ class TestOidAclQuirks:
         """Test parsing complex orclaci with filter and multiple 'by' clauses - WORST CASE."""
         # Worst case: filter + 3 "by" clauses + multiple groups
         complex_orclaci = (
-            'orclaci: access to entry filter=(objectclass=orclNetDescriptionList) '
+            "orclaci: access to entry filter=(objectclass=orclNetDescriptionList) "
             'by group="cn=OracleContextAdmins,cn=Groups,cn=OracleContext,dc=network,dc=example" (browse,add,delete) '
             'by group="cn=OracleNetAdmins,cn=OracleContext,dc=network,dc=example" (browse,add,delete) '
-            'by * (browse,noadd,nodelete)'
+            "by * (browse,noadd,nodelete)"
         )
 
         result = acl_quirk.parse_acl(complex_orclaci)
         assert result.is_success, f"Failed to parse complex orclaci: {result.error}"
 
         parsed = result.unwrap()
-        assert parsed[FlextLdifConstants.DictKeys.TYPE] == FlextLdifConstants.DictKeys.STANDARD
+        assert (
+            parsed[FlextLdifConstants.DictKeys.TYPE]
+            == FlextLdifConstants.DictKeys.STANDARD
+        )
         assert parsed[FlextLdifConstants.DictKeys.RAW] == complex_orclaci
 
     def test_parse_orclaci_with_attr_filter(
@@ -300,21 +310,25 @@ class TestOidAclQuirks:
         """Test parsing orclaci with attr=(*) and filter - WORST CASE."""
         # Worst case: attr=(*) + filter + multiple permissions + extra spaces
         attr_filter_orclaci = (
-            'orclaci: access to attr=(*)  filter=(objectclass=orclNetService) '
+            "orclaci: access to attr=(*)  filter=(objectclass=orclNetService) "
             'by group="cn=OracleContextAdmins,cn=Groups,cn=OracleContext,dc=network,dc=example" '
-            '(read,search,write,selfwrite,compare) '
+            "(read,search,write,selfwrite,compare) "
             'by group="cn=OracleNetAdmins,cn=OracleContext,dc=network,dc=example" (compare,search,read,write) '
-            'by * (read,search,compare,nowrite,noselfwrite)'
+            "by * (read,search,compare,nowrite,noselfwrite)"
         )
 
         result = acl_quirk.parse_acl(attr_filter_orclaci)
         assert result.is_success, f"Failed to parse attr+filter orclaci: {result.error}"
 
         parsed = result.unwrap()
-        assert parsed[FlextLdifConstants.DictKeys.TYPE] == FlextLdifConstants.DictKeys.STANDARD
+        assert (
+            parsed[FlextLdifConstants.DictKeys.TYPE]
+            == FlextLdifConstants.DictKeys.STANDARD
+        )
 
     def test_parse_orclaci_from_fixtures(
-        self, acl_quirk: FlextLdifQuirksServersOid.AclQuirk,
+        self,
+        acl_quirk: FlextLdifQuirksServersOid.AclQuirk,
         oid_fixtures: FlextLdifFixtures.OID,
     ) -> None:
         """Test parsing orclaci from real OID integration fixtures."""
@@ -322,7 +336,8 @@ class TestOidAclQuirks:
 
         # Find orclaci lines in fixtures
         orclaci_lines = [
-            line for line in integration_content.splitlines()
+            line
+            for line in integration_content.splitlines()
             if line.strip().startswith("orclaci:")
         ]
 
@@ -334,7 +349,10 @@ class TestOidAclQuirks:
         assert result.is_success, f"Failed to parse fixture orclaci: {result.error}"
 
         parsed = result.unwrap()
-        assert parsed[FlextLdifConstants.DictKeys.TYPE] == FlextLdifConstants.DictKeys.STANDARD
+        assert (
+            parsed[FlextLdifConstants.DictKeys.TYPE]
+            == FlextLdifConstants.DictKeys.STANDARD
+        )
 
     def test_parse_orclentrylevelaci_with_constraint(
         self, acl_quirk: FlextLdifQuirksServersOid.AclQuirk
@@ -343,17 +361,21 @@ class TestOidAclQuirks:
         # Worst case: added_object_constraint with OR operator
         constraint_aci = (
             'orclentrylevelaci: access to entry by group="cn=OracleNetAdmins,cn=OracleContext,dc=network,dc=example" '
-            'added_object_constraint=(|(objectclass=orclNetService)(objectclass=orclNetServiceAlias)) (add)'
+            "added_object_constraint=(|(objectclass=orclNetService)(objectclass=orclNetServiceAlias)) (add)"
         )
 
         result = acl_quirk.parse_acl(constraint_aci)
         assert result.is_success, f"Failed to parse constraint aci: {result.error}"
 
         parsed = result.unwrap()
-        assert parsed[FlextLdifConstants.DictKeys.TYPE] == FlextLdifConstants.DictKeys.ENTRY_LEVEL
+        assert (
+            parsed[FlextLdifConstants.DictKeys.TYPE]
+            == FlextLdifConstants.DictKeys.ENTRY_LEVEL
+        )
 
     def test_parse_orclentrylevelaci_from_fixtures(
-        self, acl_quirk: FlextLdifQuirksServersOid.AclQuirk,
+        self,
+        acl_quirk: FlextLdifQuirksServersOid.AclQuirk,
         oid_fixtures: FlextLdifFixtures.OID,
     ) -> None:
         """Test parsing orclentrylevelaci from real OID integration fixtures."""
@@ -361,7 +383,8 @@ class TestOidAclQuirks:
 
         # Find orclentrylevelaci lines
         entry_level_lines = [
-            line for line in integration_content.splitlines()
+            line
+            for line in integration_content.splitlines()
             if line.strip().startswith("orclentrylevelaci:")
         ]
 
@@ -370,10 +393,15 @@ class TestOidAclQuirks:
         # Parse first orclentrylevelaci
         first_entry_level = entry_level_lines[0]
         result = acl_quirk.parse_acl(first_entry_level)
-        assert result.is_success, f"Failed to parse fixture entry-level aci: {result.error}"
+        assert result.is_success, (
+            f"Failed to parse fixture entry-level aci: {result.error}"
+        )
 
         parsed = result.unwrap()
-        assert parsed[FlextLdifConstants.DictKeys.TYPE] == FlextLdifConstants.DictKeys.ENTRY_LEVEL
+        assert (
+            parsed[FlextLdifConstants.DictKeys.TYPE]
+            == FlextLdifConstants.DictKeys.ENTRY_LEVEL
+        )
 
     def test_convert_acl_to_rfc(
         self, acl_quirk: FlextLdifQuirksServersOid.AclQuirk
@@ -388,9 +416,18 @@ class TestOidAclQuirks:
         assert result.is_success
 
         rfc_data = result.unwrap()
-        assert rfc_data[FlextLdifConstants.DictKeys.TYPE] == FlextLdifConstants.DictKeys.ACL
-        assert rfc_data[FlextLdifConstants.DictKeys.FORMAT] == FlextLdifConstants.AclFormats.RFC_GENERIC
-        assert rfc_data[FlextLdifConstants.DictKeys.SOURCE_FORMAT] == FlextLdifConstants.AclFormats.OID_ACL
+        assert (
+            rfc_data[FlextLdifConstants.DictKeys.TYPE]
+            == FlextLdifConstants.DictKeys.ACL
+        )
+        assert (
+            rfc_data[FlextLdifConstants.DictKeys.FORMAT]
+            == FlextLdifConstants.AclFormats.RFC_GENERIC
+        )
+        assert (
+            rfc_data[FlextLdifConstants.DictKeys.SOURCE_FORMAT]
+            == FlextLdifConstants.AclFormats.OID_ACL
+        )
 
     def test_convert_acl_from_rfc(
         self, acl_quirk: FlextLdifQuirksServersOid.AclQuirk
@@ -407,16 +444,17 @@ class TestOidAclQuirks:
         assert result.is_success
 
         oid_data = result.unwrap()
-        assert oid_data[FlextLdifConstants.DictKeys.FORMAT] == FlextLdifConstants.AclFormats.OID_ACL
+        assert (
+            oid_data[FlextLdifConstants.DictKeys.FORMAT]
+            == FlextLdifConstants.AclFormats.OID_ACL
+        )
         assert oid_data[FlextLdifConstants.DictKeys.TARGET_FORMAT] == "orclaci"
 
-    def test_acl_roundtrip(
-        self, acl_quirk: FlextLdifQuirksServersOid.AclQuirk
-    ) -> None:
+    def test_acl_roundtrip(self, acl_quirk: FlextLdifQuirksServersOid.AclQuirk) -> None:
         """Test ACL roundtrip: parse → convert to RFC → convert back."""
         original_orclaci = (
             'orclaci: access to entry by group="cn=Admins,cn=Groups,cn=OracleContext" '
-            '(browse,add,delete) by * (browse,noadd,nodelete)'
+            "(browse,add,delete) by * (browse,noadd,nodelete)"
         )
 
         # Parse
@@ -435,7 +473,10 @@ class TestOidAclQuirks:
         oid_data = oid_result.unwrap()
 
         # Validate format preserved
-        assert oid_data[FlextLdifConstants.DictKeys.FORMAT] == FlextLdifConstants.AclFormats.OID_ACL
+        assert (
+            oid_data[FlextLdifConstants.DictKeys.FORMAT]
+            == FlextLdifConstants.AclFormats.OID_ACL
+        )
 
 
 class TestOidEntryQuirks:
@@ -537,7 +578,8 @@ class TestOidEntryQuirks:
         assert "orclentrylevelaci" in processed
 
     def test_process_entry_from_fixtures(
-        self, entry_quirk: FlextLdifQuirksServersOid.EntryQuirk,
+        self,
+        entry_quirk: FlextLdifQuirksServersOid.EntryQuirk,
         oid_fixtures: FlextLdifFixtures.OID,
     ) -> None:
         """Test processing entries from real OID integration fixtures."""
@@ -560,7 +602,9 @@ class TestOidEntryQuirks:
                     if result.is_success:
                         processed_count += 1
                         processed = result.unwrap()
-                        assert processed[FlextLdifConstants.DictKeys.SERVER_TYPE] == "oid"
+                        assert (
+                            processed[FlextLdifConstants.DictKeys.SERVER_TYPE] == "oid"
+                        )
 
                 # Start new entry
                 current_dn = line.split(":", 1)[1].strip()
@@ -574,7 +618,7 @@ class TestOidEntryQuirks:
                 if attr_name not in current_attrs:
                     current_attrs[attr_name] = []
                 # Cast to list since we just initialized it
-                attr_list: list[str] = current_attrs[attr_name]  # type: ignore[assignment]
+                attr_list: list[str] = current_attrs[attr_name]
                 attr_list.append(attr_value)
 
         # Process last entry
@@ -622,7 +666,9 @@ class TestOidEntryQuirks:
 
         rfc_data = result.unwrap()
         # OID operational attributes should be removed in RFC conversion
-        assert rfc_data[FlextLdifConstants.DictKeys.DN] == "cn=test,dc=network,dc=example"
+        assert (
+            rfc_data[FlextLdifConstants.DictKeys.DN] == "cn=test,dc=network,dc=example"
+        )
         assert "orclguid" not in rfc_data
 
     def test_entry_roundtrip(
@@ -681,7 +727,8 @@ class TestOidQuirksIntegration:
 
         # Count entries (lines starting with "dn:")
         entry_count = sum(
-            1 for line in integration_content.splitlines()
+            1
+            for line in integration_content.splitlines()
             if line.strip().startswith("dn:")
         )
 
@@ -696,12 +743,14 @@ class TestOidQuirksIntegration:
 
         # Count Oracle attributes and objectClasses
         oracle_attrs = sum(
-            1 for line in schema_content.splitlines()
+            1
+            for line in schema_content.splitlines()
             if "2.16.840.1.113894" in line and "attributetypes:" in line
         )
 
         oracle_ocs = sum(
-            1 for line in schema_content.splitlines()
+            1
+            for line in schema_content.splitlines()
             if "2.16.840.1.113894" in line and "objectclasses:" in line
         )
 
@@ -716,17 +765,21 @@ class TestOidQuirksIntegration:
 
         # Count ACLs
         orclaci_count = sum(
-            1 for line in integration_content.splitlines()
+            1
+            for line in integration_content.splitlines()
             if line.strip().startswith("orclaci:")
         )
 
         entry_level_count = sum(
-            1 for line in integration_content.splitlines()
+            1
+            for line in integration_content.splitlines()
             if line.strip().startswith("orclentrylevelaci:")
         )
 
         assert orclaci_count > 0, "No orclaci found in integration fixtures"
-        assert entry_level_count > 0, "No orclentrylevelaci found in integration fixtures"
+        assert entry_level_count > 0, (
+            "No orclentrylevelaci found in integration fixtures"
+        )
 
 
 __all__ = [

@@ -98,6 +98,8 @@ from flext_ldif.exceptions import FlextLdifExceptions
 from flext_ldif.filters import FlextLdifFilters
 from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.quirks.conversion_matrix import QuirksConversionMatrix
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.typings import FlextLdifTypes
 
@@ -113,9 +115,11 @@ __all__ = [
     "FlextLdifFilters",
     "FlextLdifMigrationPipeline",
     "FlextLdifModels",
+    "FlextLdifProtocols",
     "FlextLdifQuirksRegistry",
     "FlextLdifTypes",
     "FlextTypes",
+    "QuirksConversionMatrix",
     "__version__",
     "__version_info__",
     "flext_ldif_container",

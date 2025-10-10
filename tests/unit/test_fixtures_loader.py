@@ -234,7 +234,10 @@ class TestFlextLdifFixturesOUD:
         # OUD has schema, acl, entries, and integration
         assert len(all_fixtures) >= 3
         assert FlextLdifFixtures.FixtureType.SCHEMA in all_fixtures
-        assert FlextLdifFixtures.FixtureType.ACL in all_fixtures or FlextLdifFixtures.FixtureType.INTEGRATION in all_fixtures
+        assert (
+            FlextLdifFixtures.FixtureType.ACL in all_fixtures
+            or FlextLdifFixtures.FixtureType.INTEGRATION in all_fixtures
+        )
 
 
 class TestFlextLdifFixturesPytestIntegration:
