@@ -57,12 +57,10 @@ class TestOudSchemaIntegration:
         entries = result.unwrap()
         schema_entry = entries[0]
 
-        # Check for attributeTypes attribute
-        attrs = schema_entry.attributes.get("attributetypes") or []
+        # Check for attributeTypes attribute (note: capital T)
+        attrs = schema_entry.attributes.get("attributeTypes") or []
         oracle_attr_count = sum(
-            1
-            for attr in attrs
-            if isinstance(attr, str) and "2.16.840.1.113894" in attr
+            1 for attr in attrs if isinstance(attr, str) and "2.16.840.1.113894" in attr
         )
 
         assert oracle_attr_count > 0, "No Oracle attributes found in parsed schema"
@@ -77,8 +75,8 @@ class TestOudSchemaIntegration:
         entries = result.unwrap()
         schema_entry = entries[0]
 
-        # Check for objectClasses attribute
-        object_classes = schema_entry.attributes.get("objectclasses") or []
+        # Check for objectClasses attribute (note: capital C)
+        object_classes = schema_entry.attributes.get("objectClasses") or []
         oracle_oc_count = sum(
             1
             for oc in object_classes
@@ -112,9 +110,7 @@ class TestOudAclIntegration:
         # Should have entries with ACLs
         assert len(entries) > 0, "No ACL entries parsed"
 
-    def test_multiline_acis_preserved(
-        self, api: FlextLdif, acl_fixture: str
-    ) -> None:
+    def test_multiline_acis_preserved(self, api: FlextLdif, acl_fixture: str) -> None:
         """Test that multi-line ACIs are preserved during parsing."""
         result = api.parse(acl_fixture)
         assert result.is_success
@@ -122,9 +118,7 @@ class TestOudAclIntegration:
         entries = result.unwrap()
 
         # Count entries with ACI attributes
-        entries_with_aci = sum(
-            1 for entry in entries if "aci" in entry.attributes
-        )
+        entries_with_aci = sum(1 for entry in entries if "aci" in entry.attributes)
 
         assert entries_with_aci > 0, "No entries with aci found"
 
@@ -158,9 +152,7 @@ class TestOudEntryIntegration:
         loader = FlextLdifFixtures.OUD()
         return loader.entries()
 
-    def test_parse_entry_fixture(
-        self, api: FlextLdif, entry_fixture: str
-    ) -> None:
+    def test_parse_entry_fixture(self, api: FlextLdif, entry_fixture: str) -> None:
         """Test parsing complete OUD entry fixture."""
         result = api.parse(entry_fixture)
 
@@ -169,7 +161,9 @@ class TestOudEntryIntegration:
 
         # Should have multiple entries
         min_expected_entries = 10
-        assert len(entries) >= min_expected_entries, f"Expected >= {min_expected_entries} entries, got {len(entries)}"
+        assert len(entries) >= min_expected_entries, (
+            f"Expected >= {min_expected_entries} entries, got {len(entries)}"
+        )
 
     def test_oracle_objectclasses_preserved_in_parsing(
         self, api: FlextLdif, entry_fixture: str
@@ -185,9 +179,16 @@ class TestOudEntryIntegration:
 
         entries_with_oracle_oc = 0
         for entry in entries:
-            objectclasses = entry.attributes.get("objectclass") or entry.attributes.get("objectClass") or []
+            objectclasses = (
+                entry.attributes.get("objectclass")
+                or entry.attributes.get("objectClass")
+                or []
+            )
             for oc in objectclasses:
-                if any(pattern in str(oc).lower() for pattern in [p.lower() for p in oracle_oc_patterns]):
+                if any(
+                    pattern in str(oc).lower()
+                    for pattern in [p.lower() for p in oracle_oc_patterns]
+                ):
                     entries_with_oracle_oc += 1
                     break
 
@@ -232,7 +233,9 @@ class TestOudRoundTripIntegration:
         entries2 = parse2_result.unwrap()
 
         # Validate: Same number of entries
-        assert len(entries1) == len(entries2), f"Entry count mismatch: {len(entries1)} vs {len(entries2)}"
+        assert len(entries1) == len(entries2), (
+            f"Entry count mismatch: {len(entries1)} vs {len(entries2)}"
+        )
 
         # Validate: DNs preserved
         dns1 = {entry.dn.value for entry in entries1}
@@ -252,10 +255,7 @@ class TestOudRoundTripIntegration:
         entries = parse_result.unwrap()
 
         # Find entries with spaces in DN
-        entries_with_dn_spaces = [
-            entry for entry in entries
-            if ", " in entry.dn.value
-        ]
+        entries_with_dn_spaces = [entry for entry in entries if ", " in entry.dn.value]
 
         if len(entries_with_dn_spaces) > 0:
             # Take first entry and round-trip it
@@ -280,8 +280,9 @@ class TestOudRoundTripIntegration:
 
             # Extract RDN components for comparison
             import re
-            original_rdns = re.split(r'\s*,\s*', original_dn)
-            parsed_rdns = re.split(r'\s*,\s*', parsed_dn)
+
+            original_rdns = re.split(r"\s*,\s*", original_dn)
+            parsed_rdns = re.split(r"\s*,\s*", parsed_dn)
 
             assert len(original_rdns) == len(parsed_rdns), "RDN count mismatch"
 
@@ -316,7 +317,7 @@ orclVersion: 90600
         # Check if entry has metadata (may be None for simple entries)
         # Metadata is primarily for quirk-specific preservation
         # For standard entries, metadata may not be present
-        assert hasattr(entry, 'metadata'), "Entry should have metadata attribute"
+        assert hasattr(entry, "metadata"), "Entry should have metadata attribute"
 
 
 __all__ = [

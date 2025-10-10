@@ -95,11 +95,15 @@ class DnCaseRegistry:
 
         Examples:
             >>> registry = DnCaseRegistry()
-            >>> registry.register_dn("CN=Admin,DC=Com")  # First seen - becomes canonical
+            >>> registry.register_dn(
+            ...     "CN=Admin,DC=Com"
+            ... )  # First seen - becomes canonical
             'CN=Admin,DC=Com'
             >>> registry.register_dn("cn=admin,dc=com")  # Returns existing canonical
             'CN=Admin,DC=Com'
-            >>> registry.register_dn("cn=ADMIN,dc=COM", force=True)  # Force new canonical
+            >>> registry.register_dn(
+            ...     "cn=ADMIN,dc=COM", force=True
+            ... )  # Force new canonical
             'cn=ADMIN,dc=COM'
 
         """
@@ -213,7 +217,7 @@ class DnCaseRegistry:
                     "normalized_dn": normalized_dn,
                     "canonical_case": canonical,
                     "variants": list(variants),
-                    "variant_count": len(variants)
+                    "variant_count": len(variants),
                 })
 
         if inconsistencies:
@@ -224,15 +228,16 @@ class DnCaseRegistry:
                 f"{inconsistencies[0]['variant_count']} variants."
             )
             result = FlextResult[bool].ok(False)
-            result.metadata = {"inconsistencies": inconsistencies, "warning": warning_msg}
+            result.metadata = {
+                "inconsistencies": inconsistencies,
+                "warning": warning_msg,
+            }
             return result
 
         return FlextResult[bool].ok(True)
 
     def normalize_dn_references(
-        self,
-        data: FlextLdifTypes.Dict,
-        dn_fields: list[str] | None = None
+        self, data: FlextLdifTypes.Dict, dn_fields: list[str] | None = None
     ) -> FlextResult[FlextLdifTypes.Dict]:
         """Normalize DN references in data to use canonical case.
 
@@ -294,7 +299,9 @@ class DnCaseRegistry:
                     for item in value:
                         if isinstance(item, str):
                             canonical = self.get_canonical_dn(item)
-                            normalized_list.append(canonical if canonical is not None else item)
+                            normalized_list.append(
+                                canonical if canonical is not None else item
+                            )
                         else:
                             normalized_list.append(item)
                     normalized_data[field] = normalized_list

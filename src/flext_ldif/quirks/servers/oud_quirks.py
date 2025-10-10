@@ -9,12 +9,13 @@ Provides OUD-specific quirks for schema, ACL, and entry processing.
 from __future__ import annotations
 
 import re
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from flext_core import FlextResult
 from pydantic import Field
 
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.base import (
     FlextLdifQuirksBaseAclQuirk,
     FlextLdifQuirksBaseEntryQuirk,
@@ -139,10 +140,8 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             parsed_data[FlextLdifConstants.DictKeys.SERVER_TYPE] = "oud"
 
             # Preserve original format in metadata for perfect round-trip
-            from flext_ldif.models import FlextLdifModels
             parsed_data["_metadata"] = FlextLdifModels.QuirkMetadata.create_for_quirk(
-                quirk_type="oud",
-                original_format=attr_definition.strip()
+                quirk_type="oud", original_format=attr_definition.strip()
             )
 
             return FlextResult[FlextLdifTypes.Dict].ok(parsed_data)
@@ -246,10 +245,8 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             parsed_data[FlextLdifConstants.DictKeys.SERVER_TYPE] = "oud"
 
             # Preserve original format in metadata for perfect round-trip
-            from flext_ldif.models import FlextLdifModels
             parsed_data["_metadata"] = FlextLdifModels.QuirkMetadata.create_for_quirk(
-                quirk_type="oud",
-                original_format=oc_definition.strip()
+                quirk_type="oud", original_format=oc_definition.strip()
             )
 
             return FlextResult[FlextLdifTypes.Dict].ok(parsed_data)
@@ -345,9 +342,11 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         try:
             # Check if we have metadata with original format for perfect round-trip
             if "_metadata" in attr_data:
-                from flext_ldif.models import FlextLdifModels
                 metadata = attr_data["_metadata"]
-                if isinstance(metadata, FlextLdifModels.QuirkMetadata) and metadata.original_format:
+                if (
+                    isinstance(metadata, FlextLdifModels.QuirkMetadata)
+                    and metadata.original_format
+                ):
                     return FlextResult[str].ok(metadata.original_format)
                 if isinstance(metadata, dict) and "original_format" in metadata:
                     return FlextResult[str].ok(str(metadata["original_format"]))
@@ -386,7 +385,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
             # Add SYNTAX (optional but common)
             if "syntax" in attr_data:
-                syntax_str = str(attr_data['syntax'])
+                syntax_str = str(attr_data["syntax"])
                 if "syntax_length" in attr_data:
                     syntax_str += f"{{{attr_data['syntax_length']}}}"
                 parts.append(f"SYNTAX {syntax_str}")
@@ -429,9 +428,11 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         try:
             # Check if we have metadata with original format for perfect round-trip
             if "_metadata" in oc_data:
-                from flext_ldif.models import FlextLdifModels
                 metadata = oc_data["_metadata"]
-                if isinstance(metadata, FlextLdifModels.QuirkMetadata) and metadata.original_format:
+                if (
+                    isinstance(metadata, FlextLdifModels.QuirkMetadata)
+                    and metadata.original_format
+                ):
                     return FlextResult[str].ok(metadata.original_format)
                 if isinstance(metadata, dict) and "original_format" in metadata:
                     return FlextResult[str].ok(str(metadata["original_format"]))
@@ -518,7 +519,9 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             # Oracle OUD uses RFC-compliant schema format
             # Just ensure OUD server type is set
             oud_data = dict(rfc_data)
-            oud_data[FlextLdifConstants.DictKeys.SERVER_TYPE] = FlextLdifConstants.ServerTypes.OUD
+            oud_data[FlextLdifConstants.DictKeys.SERVER_TYPE] = (
+                FlextLdifConstants.ServerTypes.OUD
+            )
 
             return FlextResult[FlextLdifTypes.Dict].ok(oud_data)
 
@@ -543,7 +546,9 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             # Oracle OUD uses RFC-compliant schema format
             # Just ensure OUD server type is set
             oud_data = dict(rfc_data)
-            oud_data[FlextLdifConstants.DictKeys.SERVER_TYPE] = FlextLdifConstants.ServerTypes.OUD
+            oud_data[FlextLdifConstants.DictKeys.SERVER_TYPE] = (
+                FlextLdifConstants.ServerTypes.OUD
+            )
 
             return FlextResult[FlextLdifTypes.Dict].ok(oud_data)
 
@@ -571,27 +576,27 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             attributes = []
             objectclasses = []
 
-            for line in ldif_content.split('\n'):
-                line = line.strip()
-                
+            for raw_line in ldif_content.split("\n"):
+                line = raw_line.strip()
+
                 # OUD uses case-insensitive attribute names in LDIF
                 # Match: attributeTypes:, attributetypes:, or any case variation
-                if line.lower().startswith('attributetypes:'):
-                    attr_def = line.split(':', 1)[1].strip()
+                if line.lower().startswith("attributetypes:"):
+                    attr_def = line.split(":", 1)[1].strip()
                     result = self.parse_attribute(attr_def)
                     if result.is_success:
                         attributes.append(result.unwrap())
-                
+
                 # Match: objectClasses:, objectclasses:, or any case variation
-                elif line.lower().startswith('objectclasses:'):
-                    oc_def = line.split(':', 1)[1].strip()
+                elif line.lower().startswith("objectclasses:"):
+                    oc_def = line.split(":", 1)[1].strip()
                     result = self.parse_objectclass(oc_def)
                     if result.is_success:
                         objectclasses.append(result.unwrap())
 
             return FlextResult[FlextLdifTypes.Dict].ok({
                 "attributes": attributes,
-                "objectclasses": objectclasses
+                "objectclasses": objectclasses,
             })
 
         except Exception as e:
@@ -709,7 +714,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
                     # Extract permissions (allow/deny with operations)
                     permission_matches = re.findall(
-                        r'(allow|deny)\s+\(([^)]+)\)', aci_content
+                        r"(allow|deny)\s+\(([^)]+)\)", aci_content
                     )
                     if permission_matches:
                         permissions = []
@@ -717,52 +722,53 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                             ops_list = [
                                 op.strip() for op in ops.split(",") if op.strip()
                             ]
-                            permissions.append({"action": action, "operations": ops_list})
+                            permissions.append({
+                                "action": action,
+                                "operations": ops_list,
+                            })
                         oudacl_data["permissions"] = permissions
 
                     # Extract bind rules (userdn, groupdn, etc.)
-                    bind_rules = []
 
                     # Extract userdn rules
-                    userdn_matches = re.findall(
-                        r'userdn\s*=\s*"([^"]+)"', aci_content
-                    )
-                    for userdn in userdn_matches:
-                        bind_rules.append({"type": "userdn", "value": userdn})
+                    userdn_matches = re.findall(r'userdn\s*=\s*"([^"]+)"', aci_content)
+                    bind_rules = [
+                        {"type": "userdn", "value": userdn} for userdn in userdn_matches
+                    ]
 
                     # Extract groupdn rules
                     groupdn_matches = re.findall(
                         r'groupdn\s*=\s*"([^"]+)"', aci_content
                     )
-                    for groupdn in groupdn_matches:
-                        bind_rules.append({"type": "groupdn", "value": groupdn})
+                    bind_rules.extend(
+                        {"type": "groupdn", "value": groupdn}
+                        for groupdn in groupdn_matches
+                    )
 
                     if bind_rules:
                         oudacl_data["bind_rules"] = bind_rules
 
                 # Preserve original format in metadata with extensions
-                from typing import Any
-
-                from flext_ldif.models import FlextLdifModels
                 metadata_extensions: dict[str, Any] = {}
                 if line_breaks:
                     metadata_extensions["line_breaks"] = line_breaks
                     metadata_extensions["is_multiline"] = True
 
                 # Detect DN spaces quirk (spaces after commas in DNs)
-                if "bind_rules" in oudacl_data:
-                    bind_rules_list = oudacl_data["bind_rules"]
-                    if isinstance(bind_rules_list, list):
-                        for rule in bind_rules_list:
-                            if isinstance(rule, dict) and "value" in rule:
-                                if ", " in str(rule["value"]):  # Space after comma
-                                    metadata_extensions["dn_spaces"] = True
-                                    break
+                if ("bind_rules" in oudacl_data and
+                    isinstance(oudacl_data["bind_rules"], list)):
+                    for rule in oudacl_data["bind_rules"]:
+                        if (isinstance(rule, dict) and "value" in rule and
+                            ", " in str(rule["value"])):  # Space after comma
+                            metadata_extensions["dn_spaces"] = True
+                            break
 
-                oudacl_data["_metadata"] = FlextLdifModels.QuirkMetadata.create_for_quirk(
-                    quirk_type="oud",
-                    original_format=acl_line,
-                    **metadata_extensions
+                oudacl_data["_metadata"] = (
+                    FlextLdifModels.QuirkMetadata.create_for_quirk(
+                        quirk_type="oud",
+                        original_format=acl_line,
+                        **metadata_extensions,
+                    )
                 )
 
                 return FlextResult[FlextLdifTypes.Dict].ok(oudacl_data)
@@ -827,9 +833,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                     f"RFC→OUD ACL conversion failed: {e}"
                 )
 
-        def write_acl_to_rfc(
-            self, acl_data: FlextLdifTypes.Dict
-        ) -> FlextResult[str]:
+        def write_acl_to_rfc(self, acl_data: FlextLdifTypes.Dict) -> FlextResult[str]:
             """Write OUD ACL data to ACI string format with multi-line support.
 
             Converts parsed ACL dictionary back to ACI format string.
@@ -854,9 +858,11 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             try:
                 # Check if we have metadata with original format for perfect round-trip
                 if "_metadata" in acl_data:
-                    from flext_ldif.models import FlextLdifModels
                     metadata = acl_data["_metadata"]
-                    if isinstance(metadata, FlextLdifModels.QuirkMetadata) and metadata.original_format:
+                    if (
+                        isinstance(metadata, FlextLdifModels.QuirkMetadata)
+                        and metadata.original_format
+                    ):
                         return FlextResult[str].ok(metadata.original_format)
                     if isinstance(metadata, dict) and "original_format" in metadata:
                         return FlextResult[str].ok(str(metadata["original_format"]))
@@ -872,7 +878,9 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 # Target attributes
                 if "targetattr" in acl_data:
                     targetattr_op = acl_data.get("targetattr_op", "=")
-                    aci_parts.append(f'(targetattr{targetattr_op}"{acl_data["targetattr"]}")')
+                    aci_parts.append(
+                        f'(targetattr{targetattr_op}"{acl_data["targetattr"]}")'
+                    )
 
                 # Target scope (optional)
                 if "targetscope" in acl_data:
@@ -894,7 +902,9 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                     if isinstance(metadata, FlextLdifModels.QuirkMetadata):
                         is_multiline = metadata.extensions.get("is_multiline", False)
                     elif isinstance(metadata, dict):
-                        is_multiline = metadata.get("extensions", {}).get("is_multiline", False)
+                        is_multiline = metadata.get("extensions", {}).get(
+                            "is_multiline", False
+                        )
 
                 # Build permission rules
                 permission_lines: list[str] = []
@@ -927,7 +937,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                                 ops_str = ",".join(str(op) for op in ops)
                             else:
                                 ops_str = str(ops)
-                            permission_lines.append(f'{action} ({ops_str});')
+                            permission_lines.append(f"{action} ({ops_str});")
 
                 # Format output (multi-line vs single-line)
                 if is_multiline and len(permission_lines) > 1:
@@ -938,8 +948,9 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                         result_lines[0] += f" {aci_parts[1]}"
 
                     # Add permission lines with indentation (6 spaces typical)
-                    for perm_line in permission_lines:
-                        result_lines.append(f"      {perm_line}")
+                    result_lines.extend(
+                        f"      {perm_line}" for perm_line in permission_lines
+                    )
 
                     # Close the ACI
                     result_lines[-1] = result_lines[-1].rstrip(";") + ")"
@@ -976,38 +987,38 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 current_aci = []
                 in_multiline_aci = False
 
-                for line in ldif_content.split('\n'):
+                for line in ldif_content.split("\n"):
                     stripped = line.strip()
-                    
+
                     # Detect ACI start (case-insensitive)
-                    if stripped.lower().startswith('aci:'):
+                    if stripped.lower().startswith("aci:"):
                         if current_aci:
                             # Parse accumulated multiline ACI
-                            aci_text = '\n'.join(current_aci)
+                            aci_text = "\n".join(current_aci)
                             result = self.parse_acl(aci_text)
                             if result.is_success:
                                 acls.append(result.unwrap())
                             current_aci = []
-                        
+
                         current_aci.append(stripped)
                         # Check if this ACI continues on next lines (no closing parenthesis)
-                        in_multiline_aci = not stripped.rstrip().endswith(')')
-                    
+                        in_multiline_aci = not stripped.rstrip().endswith(")")
+
                     elif in_multiline_aci and stripped:
                         # Continuation of multiline ACI
                         current_aci.append(stripped)
-                        if stripped.rstrip().endswith(')'):
+                        if stripped.rstrip().endswith(")"):
                             in_multiline_aci = False
-                    
+
                     # Also handle ds-cfg format
-                    elif stripped.lower().startswith('ds-cfg-'):
+                    elif stripped.lower().startswith("ds-cfg-"):
                         result = self.parse_acl(stripped)
                         if result.is_success:
                             acls.append(result.unwrap())
 
                 # Parse any remaining ACI
                 if current_aci:
-                    aci_text = '\n'.join(current_aci)
+                    aci_text = "\n".join(current_aci)
                     result = self.parse_acl(aci_text)
                     if result.is_success:
                         acls.append(result.unwrap())
@@ -1087,9 +1098,6 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 processed_entry.update(attributes)
 
                 # Preserve metadata for DN quirks and attribute ordering
-                from typing import Any
-
-                from flext_ldif.models import FlextLdifModels
                 metadata_extensions: dict[str, Any] = {}
 
                 # Detect DN spaces quirk (spaces after commas)
@@ -1103,19 +1111,26 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
                 # Detect Oracle-specific objectClasses
                 if "objectClass" in attributes or "objectclass" in attributes:
-                    oc_key = "objectClass" if "objectClass" in attributes else "objectclass"
+                    oc_key = (
+                        "objectClass" if "objectClass" in attributes else "objectclass"
+                    )
                     oc_values = attributes[oc_key]
                     if isinstance(oc_values, list):
                         oracle_ocs: list[Any] = [
-                            oc for oc in oc_values
-                            if any(prefix in str(oc).lower() for prefix in ["orcl", "oracle"])
+                            oc
+                            for oc in oc_values
+                            if any(
+                                prefix in str(oc).lower()
+                                for prefix in ["orcl", "oracle"]
+                            )
                         ]
                         if oracle_ocs:
                             metadata_extensions["oracle_objectclasses"] = oracle_ocs
 
-                processed_entry["_metadata"] = FlextLdifModels.QuirkMetadata.create_for_quirk(
-                    quirk_type="oud",
-                    **metadata_extensions
+                processed_entry["_metadata"] = (
+                    FlextLdifModels.QuirkMetadata.create_for_quirk(
+                        quirk_type="oud", **metadata_extensions
+                    )
                 )
 
                 return FlextResult[FlextLdifTypes.Dict].ok(processed_entry)
@@ -1161,7 +1176,9 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 # Oracle OUD uses RFC-compliant format
                 # Just ensure OUD server type is set
                 oud_entry = dict(entry_data)
-                oud_entry[FlextLdifConstants.DictKeys.SERVER_TYPE] = FlextLdifConstants.ServerTypes.OUD
+                oud_entry[FlextLdifConstants.DictKeys.SERVER_TYPE] = (
+                    FlextLdifConstants.ServerTypes.OUD
+                )
 
                 return FlextResult[FlextLdifTypes.Dict].ok(oud_entry)
 
@@ -1173,7 +1190,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         def write_entry_to_ldif(
             self, entry_data: FlextLdifTypes.Dict
         ) -> FlextResult[str]:
-            """Write OUD entry data to standard LDIF string format.
+            r"""Write OUD entry data to standard LDIF string format.
 
             Converts parsed entry dictionary to LDIF format string.
             Handles Oracle-specific attributes and preserves DN formatting.
@@ -1200,12 +1217,13 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 # Get attribute ordering from metadata if available
                 attr_order = None
                 if "_metadata" in entry_data:
-                    from flext_ldif.models import FlextLdifModels
                     metadata = entry_data["_metadata"]
                     if isinstance(metadata, FlextLdifModels.QuirkMetadata):
                         attr_order = metadata.extensions.get("attribute_order")
                     elif isinstance(metadata, dict):
-                        attr_order = metadata.get("extensions", {}).get("attribute_order")
+                        attr_order = metadata.get("extensions", {}).get(
+                            "attribute_order"
+                        )
 
                 # Determine attribute iteration order
                 if attr_order:
@@ -1213,22 +1231,34 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                     attrs_to_process = [
                         (key, entry_data[key])
                         for key in attr_order
-                        if key in entry_data and key not in [FlextLdifConstants.DictKeys.DN, "_metadata", FlextLdifConstants.DictKeys.SERVER_TYPE]
+                        if key in entry_data
+                        and key
+                        not in {
+                            FlextLdifConstants.DictKeys.DN,
+                            "_metadata",
+                            FlextLdifConstants.DictKeys.SERVER_TYPE,
+                        }
                     ]
                 else:
                     # Default ordering: filter out special keys
                     attrs_to_process = [
                         (key, value)
                         for key, value in entry_data.items()
-                        if key not in [FlextLdifConstants.DictKeys.DN, "_metadata", FlextLdifConstants.DictKeys.SERVER_TYPE]
+                        if key
+                        not in {
+                            FlextLdifConstants.DictKeys.DN,
+                            "_metadata",
+                            FlextLdifConstants.DictKeys.SERVER_TYPE,
+                        }
                     ]
 
                 # Write attributes
                 for attr_name, attr_value in attrs_to_process:
                     # Handle both list and single values
                     if isinstance(attr_value, list):
-                        for value in attr_value:
-                            ldif_lines.append(f"{attr_name}: {value}")
+                        ldif_lines.extend(
+                            f"{attr_name}: {value}" for value in attr_value
+                        )
                     else:
                         ldif_lines.append(f"{attr_name}: {attr_value}")
 
@@ -1260,7 +1290,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 current_attr: str | None = None
                 current_values: list[str] = []
 
-                for line in ldif_content.split('\n'):
+                for line in ldif_content.split("\n"):
                     # Empty line indicates end of entry
                     if not line.strip():
                         if current_entry:
@@ -1272,47 +1302,47 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                                     current_entry[current_attr] = current_values
                                 current_attr = None
                                 current_values = []
-                            
+
                             # Process complete entry
                             if "dn" in current_entry:
                                 dn = str(current_entry.pop("dn"))
                                 result = self.process_entry(dn, current_entry)
                                 if result.is_success:
                                     entries.append(result.unwrap())
-                            
+
                             current_entry = {}
                         continue
-                    
+
                     # Skip comments
-                    if line.startswith('#'):
+                    if line.startswith("#"):
                         continue
-                    
+
                     # Continuation line (starts with space)
-                    if line.startswith(' ') and current_attr:
+                    if line.startswith(" ") and current_attr:
                         # Append to current attribute value
                         if current_values:
                             current_values[-1] += line[1:]  # Remove leading space
                         continue
-                    
+
                     # New attribute line
-                    if ':' in line:
+                    if ":" in line:
                         # Save previous attribute
                         if current_attr and current_values:
                             if len(current_values) == 1:
                                 current_entry[current_attr] = current_values[0]
                             else:
                                 current_entry[current_attr] = current_values
-                        
+
                         # Parse new attribute
-                        attr_name, attr_value = line.split(':', 1)
+                        attr_name, attr_value = line.split(":", 1)
                         attr_name = attr_name.strip()
                         attr_value = attr_value.strip()
-                        
+
                         # Handle base64 encoding (::)
-                        if attr_value.startswith(':'):
+                        if attr_value.startswith(":"):
                             attr_value = attr_value[1:].strip()
                             # Note: Not decoding base64 here, just storing raw
-                        
+
                         # Check if this attribute already exists (multi-valued)
                         if attr_name in current_entry:
                             # Convert to list if needed
@@ -1334,7 +1364,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                             current_entry[current_attr] = current_values[0]
                         else:
                             current_entry[current_attr] = current_values
-                    
+
                     if "dn" in current_entry:
                         dn = str(current_entry.pop("dn"))
                         result = self.process_entry(dn, current_entry)

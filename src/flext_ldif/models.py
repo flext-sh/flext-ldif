@@ -87,31 +87,26 @@ class FlextLdifModels(FlextModels):
 
         original_format: str | None = Field(
             default=None,
-            description="Original string format before parsing (for perfect round-trip)"
+            description="Original string format before parsing (for perfect round-trip)",
         )
         quirk_type: str | None = Field(
             default=None,
-            description="Quirk type that generated this metadata (oud, oid, openldap, etc.)"
+            description="Quirk type that generated this metadata (oud, oid, openldap, etc.)",
         )
         parsed_timestamp: str | None = Field(
-            default=None,
-            description="Timestamp when data was parsed (ISO 8601 format)"
+            default=None, description="Timestamp when data was parsed (ISO 8601 format)"
         )
         extensions: dict[str, Any] = Field(
             default_factory=dict,
-            description="Quirk-specific extensions (line_breaks, dn_spaces, attribute_order, etc.)"
+            description="Quirk-specific extensions (line_breaks, dn_spaces, attribute_order, etc.)",
         )
         custom_data: dict[str, Any] = Field(
-            default_factory=dict,
-            description="Additional custom data for future quirks"
+            default_factory=dict, description="Additional custom data for future quirks"
         )
 
         @classmethod
         def create_for_quirk(
-            cls,
-            quirk_type: str,
-            original_format: str | None = None,
-            **extensions: Any
+            cls, quirk_type: str, original_format: str | None = None, **extensions: Any
         ) -> FlextLdifModels.QuirkMetadata:
             """Factory method to create metadata for a specific quirk.
 
@@ -128,7 +123,7 @@ class FlextLdifModels(FlextModels):
                 quirk_type=quirk_type,
                 original_format=original_format,
                 parsed_timestamp=datetime.now(UTC).isoformat(),
-                extensions=extensions
+                extensions=extensions,
             )
 
     # =========================================================================
@@ -141,7 +136,7 @@ class FlextLdifModels(FlextModels):
         value: str = Field(..., description="DN string value")
         metadata: FlextLdifModels.QuirkMetadata | None = Field(
             default=None,
-            description="Quirk-specific metadata for preserving original format"
+            description="Quirk-specific metadata for preserving original format",
         )
 
         @field_validator("value", mode="before")
@@ -170,6 +165,34 @@ class FlextLdifModels(FlextModels):
                 raise ValueError(msg)
             return result.unwrap()
 
+        @classmethod
+        def create(
+            cls, value: str | dict[str, Any]
+        ) -> FlextResult[FlextLdifModels.DistinguishedName]:
+            """Create DistinguishedName instance with validation, returns FlextResult.
+
+            Args:
+                value: DN string or dict with 'value' key
+
+            Returns:
+                FlextResult containing DistinguishedName instance
+
+            """
+            try:
+                if isinstance(value, str):
+                    instance = cls(value=value)
+                elif isinstance(value, dict):
+                    instance = cls.model_validate(value)
+                else:
+                    return FlextResult[FlextLdifModels.DistinguishedName].fail(
+                        f"Expected string or dict, got {type(value)}"
+                    )
+                return FlextResult[FlextLdifModels.DistinguishedName].ok(instance)
+            except Exception as e:
+                return FlextResult[FlextLdifModels.DistinguishedName].fail(
+                    f"Failed to create DistinguishedName: {e}"
+                )
+
         @computed_field
         @property
         def components(self) -> list[str]:
@@ -195,7 +218,7 @@ class FlextLdifModels(FlextModels):
         )
         metadata: FlextLdifModels.QuirkMetadata | None = Field(
             default=None,
-            description="Quirk-specific metadata for preserving original entry format"
+            description="Quirk-specific metadata for preserving original entry format",
         )
 
         @field_validator("dn", mode="before")
@@ -580,8 +603,46 @@ class FlextLdifModels(FlextModels):
         )
         metadata: FlextLdifModels.QuirkMetadata | None = Field(
             default=None,
-            description="Quirk-specific metadata for preserving attribute ordering and formats"
+            description="Quirk-specific metadata for preserving attribute ordering and formats",
         )
+
+        @classmethod
+        def create(
+            cls,
+            data: dict[str, Any] | FlextLdifModels.LdifAttributes,
+        ) -> FlextResult[FlextLdifModels.LdifAttributes]:
+            """Create LdifAttributes from dictionary or existing instance.
+
+            Args:
+                data: Dictionary of attributes or existing LdifAttributes instance
+
+            Returns:
+                FlextResult[LdifAttributes]: Success with attributes or error
+
+            """
+            if isinstance(data, cls):
+                return FlextResult[FlextLdifModels.LdifAttributes].ok(data)
+
+            try:
+                # Use dict.get() for more Pythonic attribute access
+                attributes = data.get("attributes", data)
+
+                # Convert attribute values to AttributeValues instances
+                processed_attrs: dict[str, FlextLdifModels.AttributeValues] = {}
+                for key, value in attributes.items():
+                    if isinstance(value, FlextLdifModels.AttributeValues):
+                        processed_attrs[key] = value
+                    elif isinstance(value, list):
+                        processed_attrs[key] = FlextLdifModels.AttributeValues(values=value)
+                    else:
+                        processed_attrs[key] = FlextLdifModels.AttributeValues(values=[value])
+
+                return FlextResult[FlextLdifModels.LdifAttributes].ok(cls(attributes=processed_attrs))
+
+            except (KeyError, TypeError, ValueError) as e:
+                return FlextResult[FlextLdifModels.LdifAttributes].fail(
+                    f"LdifAttributesCreationError: {e}",
+                )
 
         @property
         def data(self) -> dict[str, list[str]]:
@@ -757,27 +818,25 @@ class FlextLdifModels(FlextModels):
 
         filter_type: str = Field(
             ...,
-            description="Type of filter: dn_pattern, oid_pattern, objectclass, or attribute"
+            description="Type of filter: dn_pattern, oid_pattern, objectclass, or attribute",
         )
         pattern: str | None = Field(
             default=None,
-            description="Pattern for matching (supports wildcards with fnmatch)"
+            description="Pattern for matching (supports wildcards with fnmatch)",
         )
         whitelist: list[str] | None = Field(
             default=None,
-            description="Whitelist of patterns to include (for OID filtering)"
+            description="Whitelist of patterns to include (for OID filtering)",
         )
         blacklist: list[str] | None = Field(
-            default=None,
-            description="Blacklist of patterns to exclude"
+            default=None, description="Blacklist of patterns to exclude"
         )
         required_attributes: list[str] | None = Field(
-            default=None,
-            description="Required attributes for objectClass filtering"
+            default=None, description="Required attributes for objectClass filtering"
         )
         mode: str = Field(
             default="include",
-            description="Filter mode: 'include' to keep matches, 'exclude' to remove matches"
+            description="Filter mode: 'include' to keep matches, 'exclude' to remove matches",
         )
 
     class ExclusionInfo(FlextModels.Value):
@@ -797,20 +856,16 @@ class FlextLdifModels(FlextModels):
         """
 
         excluded: bool = Field(
-            default=False,
-            description="Whether the item is excluded"
+            default=False, description="Whether the item is excluded"
         )
         exclusion_reason: str | None = Field(
-            default=None,
-            description="Human-readable reason for exclusion"
+            default=None, description="Human-readable reason for exclusion"
         )
         filter_criteria: FlextLdifModels.FilterCriteria | None = Field(
-            default=None,
-            description="Filter criteria that caused the exclusion"
+            default=None, description="Filter criteria that caused the exclusion"
         )
         timestamp: str = Field(
-            ...,
-            description="ISO 8601 timestamp when exclusion was marked"
+            ..., description="ISO 8601 timestamp when exclusion was marked"
         )
 
     class CategorizedEntries(FlextModels.Value):
@@ -834,23 +889,21 @@ class FlextLdifModels(FlextModels):
 
         users: list[FlextLdifModels.Entry] = Field(
             default_factory=list,
-            description="Entries categorized as users (inetOrgPerson, person, etc.)"
+            description="Entries categorized as users (inetOrgPerson, person, etc.)",
         )
         groups: list[FlextLdifModels.Entry] = Field(
             default_factory=list,
-            description="Entries categorized as groups (groupOfNames, etc.)"
+            description="Entries categorized as groups (groupOfNames, etc.)",
         )
         containers: list[FlextLdifModels.Entry] = Field(
             default_factory=list,
-            description="Entries categorized as containers (organizationalUnit, etc.)"
+            description="Entries categorized as containers (organizationalUnit, etc.)",
         )
         uncategorized: list[FlextLdifModels.Entry] = Field(
-            default_factory=list,
-            description="Entries that don't match any category"
+            default_factory=list, description="Entries that don't match any category"
         )
         summary: dict[str, int] = Field(
-            default_factory=dict,
-            description="Summary counts for each category"
+            default_factory=dict, description="Summary counts for each category"
         )
 
         @classmethod
@@ -861,7 +914,7 @@ class FlextLdifModels(FlextModels):
                 groups=[],
                 containers=[],
                 uncategorized=[],
-                summary={"users": 0, "groups": 0, "containers": 0, "uncategorized": 0}
+                summary={"users": 0, "groups": 0, "containers": 0, "uncategorized": 0},
             )
 
         def update_summary(self) -> None:
@@ -871,8 +924,71 @@ class FlextLdifModels(FlextModels):
                 "groups": len(self.groups),
                 "containers": len(self.containers),
                 "uncategorized": len(self.uncategorized),
-                "total": len(self.users) + len(self.groups) + len(self.containers) + len(self.uncategorized)
+                "total": len(self.users)
+                + len(self.groups)
+                + len(self.containers)
+                + len(self.uncategorized),
             }
+
+    class DiffResult(FlextModels.Value):
+        """Result of a diff operation showing changes between two datasets.
+
+        Value object for diff comparison results across LDAP data types:
+        attributes, objectClasses, ACLs, and directory entries.
+
+        Attributes:
+            added: Items present in target but not in source
+            removed: Items present in source but not in target
+            modified: Items present in both but with different values
+            unchanged: Items that are identical in both datasets
+
+        """
+
+        model_config = ConfigDict(frozen=True)
+
+        added: list[dict[str, Any]] = Field(
+            default_factory=list,
+            description="Items present in target but not in source"
+        )
+        removed: list[dict[str, Any]] = Field(
+            default_factory=list,
+            description="Items present in source but not in target"
+        )
+        modified: list[dict[str, Any]] = Field(
+            default_factory=list,
+            description="Items present in both but with different values"
+        )
+        unchanged: list[dict[str, Any]] = Field(
+            default_factory=list,
+            description="Items that are identical in both datasets"
+        )
+
+        @property
+        def has_changes(self) -> bool:
+            """Check if there are any differences."""
+            return bool(self.added or self.removed or self.modified)
+
+        @property
+        def total_changes(self) -> int:
+            """Total number of changes (added + removed + modified)."""
+            return len(self.added) + len(self.removed) + len(self.modified)
+
+        def summary(self) -> str:
+            """Get human-readable summary of changes."""
+            if not self.has_changes:
+                return "No differences found"
+
+            parts = []
+            if self.added:
+                parts.append(f"{len(self.added)} added")
+            if self.removed:
+                parts.append(f"{len(self.removed)} removed")
+            if self.modified:
+                parts.append(f"{len(self.modified)} modified")
+            if self.unchanged:
+                parts.append(f"{len(self.unchanged)} unchanged")
+
+            return ", ".join(parts)
 
     # =========================================================================
     # CQRS MODELS - Commands and Queries
@@ -1010,7 +1126,7 @@ class FlextLdifModels(FlextModels):
         syntax: str = Field(default="", description="Attribute syntax")
         metadata: FlextLdifModels.QuirkMetadata | None = Field(
             default=None,
-            description="Quirk-specific metadata for preserving original schema format"
+            description="Quirk-specific metadata for preserving original schema format",
         )
 
     class BaseSchemaObjectClass(FlextModels.Value):
@@ -1053,7 +1169,7 @@ class FlextLdifModels(FlextModels):
         )
         metadata: FlextLdifModels.QuirkMetadata | None = Field(
             default=None,
-            description="Quirk-specific metadata for preserving original objectClass format"
+            description="Quirk-specific metadata for preserving original objectClass format",
         )
 
         @classmethod
@@ -1263,7 +1379,7 @@ class FlextLdifModels(FlextModels):
         raw_acl: str = Field(default="", description="Raw ACL string")
         metadata: FlextLdifModels.QuirkMetadata | None = Field(
             default=None,
-            description="Quirk-specific metadata for preserving original ACL format (multi-line, indentation, etc.)"
+            description="Quirk-specific metadata for preserving original ACL format (multi-line, indentation, etc.)",
         )
 
         @classmethod

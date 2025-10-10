@@ -1,8 +1,8 @@
 # Getting Started with FLEXT-LDIF
 
-**Version**: 0.9.9 RC | **Updated**: September 17, 2025
+**Version**: 0.9.9 RC | **Updated**: October 10, 2025
 
-This guide provides step-by-step instructions for installing and using FLEXT-LDIF, a Python library for processing LDAP Data Interchange Format (LDIF) files within the FLEXT ecosystem.
+This guide provides step-by-step instructions for installing and using FLEXT-LDIF, an RFC 2849/4512 compliant LDIF processing library with server-specific quirks for the FLEXT ecosystem.
 
 ## Prerequisites
 
@@ -40,15 +40,30 @@ python -c "from flext_ldif import FlextLdif; print('FLEXT-LDIF installed success
 
 ```bash
 # Essential development workflow
-make lint           # Code quality checking with Ruff
-make type-check     # Type safety validation with MyPy
-make test           # Run test suite
-make validate       # Complete validation pipeline
+make lint           # Code quality checking with Ruff (ZERO TOLERANCE)
+make type-check     # Type safety validation with Pyrefly (MyPy successor)
+make test           # Run test suite (990/990 tests passing)
+make validate       # Complete validation pipeline (lint + type + security + test)
 
-# Testing commands
-pytest                          # Full test suite
-pytest -m unit                  # Unit tests only
-pytest --cov=src/flext_ldif     # Coverage report
+# Testing commands (⚠️ CRITICAL: Requires PYTHONPATH=src)
+PYTHONPATH=src pytest                           # Full test suite
+PYTHONPATH=src pytest -m unit                   # Unit tests only
+PYTHONPATH=src pytest --cov=src/flext_ldif      # Coverage report
+PYTHONPATH=src pytest tests/unit/test_oid_quirks.py -v  # Specific test file
+```
+
+### ⚠️ CRITICAL: PYTHONPATH Requirements
+
+**ALL test and script execution requires `PYTHONPATH=src`**:
+
+```bash
+# ✅ CORRECT
+PYTHONPATH=src poetry run pytest tests/unit/test_oid_quirks.py -v
+PYTHONPATH=src poetry run python -c "from flext_ldif import FlextLdif"
+
+# ❌ WRONG - Will fail with import errors
+poetry run pytest tests/unit/test_oid_quirks.py -v
+python -c "from flext_ldif import FlextLdif"
 ```
 
 ## First Steps
@@ -321,7 +336,8 @@ if result.is_success:
 
 - Ensure Python 3.13+ is being used
 - Verify all dependencies are properly installed
-- Run `make type-check` to identify issues
+- Run `make type-check` to identify issues (uses Pyrefly strict mode)
+- Check PYTHONPATH=src is set for all operations
 
 ### Getting Help
 

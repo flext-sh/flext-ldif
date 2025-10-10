@@ -42,9 +42,7 @@ class TestOudToOidSchemaMigration:
         return loader.schema()
 
     def test_migrate_oracle_attribute_oud_to_oid(
-        self,
-        oud_quirk: FlextLdifQuirksServersOud,
-        oid_quirk: FlextLdifQuirksServersOid
+        self, oud_quirk: FlextLdifQuirksServersOud, oid_quirk: FlextLdifQuirksServersOid
     ) -> None:
         """Test migrating Oracle attribute from OUD to OID format."""
         # Sample Oracle attribute from OUD
@@ -81,9 +79,7 @@ class TestOudToOidSchemaMigration:
         assert "1.3.6.1.4.1.1466.115.121.1.15" in oid_attr, "SYNTAX not preserved"
 
     def test_migrate_oracle_objectclass_oud_to_oid(
-        self,
-        oud_quirk: FlextLdifQuirksServersOud,
-        oid_quirk: FlextLdifQuirksServersOid
+        self, oud_quirk: FlextLdifQuirksServersOud, oid_quirk: FlextLdifQuirksServersOid
     ) -> None:
         """Test migrating Oracle objectClass from OUD to OID format."""
         # Sample Oracle objectClass from OUD
@@ -125,14 +121,15 @@ class TestOudToOidSchemaMigration:
         self,
         oud_quirk: FlextLdifQuirksServersOud,
         oid_quirk: FlextLdifQuirksServersOid,
-        oud_schema_fixture: str
+        oud_schema_fixture: str,
     ) -> None:
         """Test migrating multiple Oracle attributes from OUD fixtures to OID."""
         # Extract Oracle attributes from OUD schema fixture
         oracle_attrs = [
             line.split("attributeTypes:", 1)[1].strip()
             for line in oud_schema_fixture.splitlines()
-            if "2.16.840.1.113894" in line and line.strip().startswith("attributeTypes:")
+            if "2.16.840.1.113894" in line
+            and line.strip().startswith("attributeTypes:")
         ]
 
         assert len(oracle_attrs) > 0, "No Oracle attributes found in OUD fixtures"
@@ -185,7 +182,7 @@ class TestOudToOidAclMigration:
     def test_migrate_oud_aci_to_oid_orclaci(
         self,
         oud_acl_quirk: FlextLdifQuirksServersOud.AclQuirk,
-        oid_acl_quirk: FlextLdifQuirksServersOid.AclQuirk
+        oid_acl_quirk: FlextLdifQuirksServersOid.AclQuirk,
     ) -> None:
         """Test migrating OUD ACI to OID orclaci format."""
         # Sample OUD ACI
@@ -202,24 +199,30 @@ class TestOudToOidAclMigration:
 
         # Step 2: Convert OUD ACL to RFC intermediate format
         rfc_result = oud_acl_quirk.convert_acl_to_rfc(oud_parsed)
-        assert rfc_result.is_success, f"OUD ACL→RFC conversion failed: {rfc_result.error}"
+        assert rfc_result.is_success, (
+            f"OUD ACL→RFC conversion failed: {rfc_result.error}"
+        )
         rfc_data = rfc_result.unwrap()
 
         # Step 3: Convert RFC to OID ACL format
         oid_result = oid_acl_quirk.convert_acl_from_rfc(rfc_data)
-        assert oid_result.is_success, f"RFC→OID ACL conversion failed: {oid_result.error}"
+        assert oid_result.is_success, (
+            f"RFC→OID ACL conversion failed: {oid_result.error}"
+        )
         oid_data = oid_result.unwrap()
 
         # Step 4: Write OID ACL format
         write_result = oid_acl_quirk.write_acl_to_rfc(oid_data)
         assert write_result.is_success, f"OID ACL write failed: {write_result.error}"
-        oid_acl = write_result.unwrap()
+        write_result.unwrap()
 
         # Validate: ACL data structure preserved
         assert oid_data is not None
         # Check that essential ACL data is present (format or data)
-        assert (FlextLdifConstants.DictKeys.FORMAT in oid_data or
-                FlextLdifConstants.DictKeys.DATA in oid_data)
+        assert (
+            FlextLdifConstants.DictKeys.FORMAT in oid_data
+            or FlextLdifConstants.DictKeys.DATA in oid_data
+        )
 
 
 class TestOudToOidEntryMigration:
@@ -242,7 +245,7 @@ class TestOudToOidEntryMigration:
     def test_migrate_oracle_context_entry_oud_to_oid(
         self,
         oud_entry_quirk: FlextLdifQuirksServersOud.EntryQuirk,
-        oid_entry_quirk: FlextLdifQuirksServersOid.EntryQuirk
+        oid_entry_quirk: FlextLdifQuirksServersOid.EntryQuirk,
     ) -> None:
         """Test migrating Oracle Context entry from OUD to OID."""
         # Sample Oracle Context entry from OUD
@@ -255,7 +258,9 @@ class TestOudToOidEntryMigration:
 
         # Step 1: Process with OUD entry quirk
         process_result = oud_entry_quirk.process_entry(entry_dn, entry_attrs)
-        assert process_result.is_success, f"OUD entry processing failed: {process_result.error}"
+        assert process_result.is_success, (
+            f"OUD entry processing failed: {process_result.error}"
+        )
         oud_entry = process_result.unwrap()
 
         # Step 2: Convert OUD entry to RFC
@@ -281,7 +286,7 @@ class TestOudToOidEntryMigration:
     def test_migrate_entry_with_dn_spaces(
         self,
         oud_entry_quirk: FlextLdifQuirksServersOud.EntryQuirk,
-        oid_entry_quirk: FlextLdifQuirksServersOid.EntryQuirk
+        oid_entry_quirk: FlextLdifQuirksServersOid.EntryQuirk,
     ) -> None:
         """Test migrating entry with DN spaces quirk from OUD to OID."""
         # OUD entry with spaces after commas in DN
@@ -299,7 +304,7 @@ class TestOudToOidEntryMigration:
 
         # Check metadata captured DN spaces quirk
         if "_metadata" in oud_entry:
-            metadata = oud_entry["_metadata"]
+            oud_entry["_metadata"]
             # Metadata should capture this quirk for recovery
 
         # Convert to RFC and then to OID
@@ -351,7 +356,7 @@ class TestOudToOidFullMigration:
         self,
         oud_entry_quirk: FlextLdifQuirksServersOud.EntryQuirk,
         oid_entry_quirk: FlextLdifQuirksServersOid.EntryQuirk,
-        oud_fixtures: FlextLdifFixtures.OUD
+        oud_fixtures: FlextLdifFixtures.OUD,
     ) -> None:
         """Test migrating multiple OUD entries to OID format preserves data."""
         # Load OUD entries fixture
@@ -362,8 +367,8 @@ class TestOudToOidFullMigration:
         current_dn = None
         current_attrs: dict[str, list[str]] = {}
 
-        for line in entries_content.splitlines():
-            line = line.strip()
+        for raw_line in entries_content.splitlines():
+            line = raw_line.strip()
             if not line or line.startswith("#"):
                 continue
 
@@ -414,17 +419,19 @@ class TestOudToOidFullMigration:
                 oid_ldif = write_result.unwrap()
 
                 # Validate: DN and objectClass preserved
-                assert entry_dn.split(",")[0] in oid_ldif, f"DN RDN not preserved for {entry_dn}"
+                assert entry_dn.split(",")[0] in oid_ldif, (
+                    f"DN RDN not preserved for {entry_dn}"
+                )
                 migrated_count += 1
 
         # At least 80% of entries should migrate successfully
         success_rate = migrated_count / min(len(entries), 5)
-        assert success_rate >= 0.8, f"Low entry migration success rate: {success_rate:.1%}"
+        assert success_rate >= 0.8, (
+            f"Low entry migration success rate: {success_rate:.1%}"
+        )
 
     def test_migration_preserves_metadata(
-        self,
-        oud_quirk: FlextLdifQuirksServersOud,
-        oid_quirk: FlextLdifQuirksServersOid
+        self, oud_quirk: FlextLdifQuirksServersOud, oid_quirk: FlextLdifQuirksServersOid
     ) -> None:
         """Test that migration preserves metadata for data recovery."""
         # Oracle attribute with all features

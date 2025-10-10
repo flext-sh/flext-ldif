@@ -31,16 +31,12 @@ class TestOidToOudSchemaConversion:
     @pytest.fixture
     def oid_quirk(self) -> FlextLdifQuirksServersOid:
         """Create OID quirk instance."""
-        return FlextLdifQuirksServersOid(
-            server_type=FlextLdifConstants.ServerTypes.OID
-        )
+        return FlextLdifQuirksServersOid(server_type=FlextLdifConstants.ServerTypes.OID)
 
     @pytest.fixture
     def oud_quirk(self) -> FlextLdifQuirksServersOud:
         """Create OUD quirk instance."""
-        return FlextLdifQuirksServersOud(
-            server_type=FlextLdifConstants.ServerTypes.OUD
-        )
+        return FlextLdifQuirksServersOud(server_type=FlextLdifConstants.ServerTypes.OUD)
 
     @pytest.fixture
     def oid_schema_fixture(self) -> str:
@@ -74,7 +70,9 @@ class TestOidToOudSchemaConversion:
 
         # Parse RFC format with OUD quirk
         oud_parse_result = oud_quirk.parse_attribute(rfc_format)
-        assert oud_parse_result.is_success, f"OUD parse failed: {oud_parse_result.error}"
+        assert oud_parse_result.is_success, (
+            f"OUD parse failed: {oud_parse_result.error}"
+        )
         oud_data = oud_parse_result.unwrap()
 
         # Verify conversion preserved key fields
@@ -109,7 +107,9 @@ class TestOidToOudSchemaConversion:
 
         # Parse RFC format with OUD quirk
         oud_parse_result = oud_quirk.parse_objectclass(rfc_format)
-        assert oud_parse_result.is_success, f"OUD parse failed: {oud_parse_result.error}"
+        assert oud_parse_result.is_success, (
+            f"OUD parse failed: {oud_parse_result.error}"
+        )
         oud_data = oud_parse_result.unwrap()
 
         # Verify conversion preserved key fields
@@ -155,13 +155,15 @@ class TestOidToOudAclConversion:
         # Parse with OID ACL quirk
         parse_result = oid_acl_quirk.parse_acl(oid_acl)
         assert parse_result.is_success, f"OID ACL parse failed: {parse_result.error}"
-        parsed_data = cast(dict[str, object], parse_result.unwrap())
+        parsed_data = cast("dict[str, object]", parse_result.unwrap())
 
         # Verify parsed data structure
         assert parsed_data["type"] == "standard"  # orclaci uses "standard" type
         assert parsed_data["target"] == "entry"
         assert "_metadata" in parsed_data
-        assert len(parsed_data.get("by_clauses", [])) > 0
+        by_clauses = parsed_data.get("by_clauses", [])
+        assert isinstance(by_clauses, list)
+        assert len(by_clauses) > 0
 
         # Write back to OID format for round-trip
         write_result = oid_acl_quirk.write_acl_to_rfc(parsed_data)
@@ -204,16 +206,12 @@ class TestOidToOudIntegrationConversion:
     @pytest.fixture
     def oid_quirk(self) -> FlextLdifQuirksServersOid:
         """Create OID quirk instance."""
-        return FlextLdifQuirksServersOid(
-            server_type=FlextLdifConstants.ServerTypes.OID
-        )
+        return FlextLdifQuirksServersOid(server_type=FlextLdifConstants.ServerTypes.OID)
 
     @pytest.fixture
     def oud_quirk(self) -> FlextLdifQuirksServersOud:
         """Create OUD quirk instance."""
-        return FlextLdifQuirksServersOud(
-            server_type=FlextLdifConstants.ServerTypes.OUD
-        )
+        return FlextLdifQuirksServersOud(server_type=FlextLdifConstants.ServerTypes.OUD)
 
     @pytest.fixture
     def oid_schema_fixture(self) -> str:
@@ -234,7 +232,8 @@ class TestOidToOudIntegrationConversion:
 
         # Count Oracle attributes in OID fixture
         oid_oracle_attrs = sum(
-            1 for line in oid_schema_fixture.split("\n")
+            1
+            for line in oid_schema_fixture.split("\n")
             if "attributetypes:" in line.lower() and "2.16.840.1.113894" in line
         )
 
@@ -260,7 +259,9 @@ class TestOidToOudIntegrationConversion:
 
                 # Parse with OUD quirk
                 oud_result = oud_quirk.parse_attribute(rfc_result.unwrap())
-                assert oud_result.is_success, "OUD quirk should parse converted attribute"
+                assert oud_result.is_success, (
+                    "OUD quirk should parse converted attribute"
+                )
 
                 # Verify key fields preserved
                 oud_data = oud_result.unwrap()
@@ -282,16 +283,12 @@ class TestQuirksConversionMatrixFacade:
     @pytest.fixture
     def oud(self) -> FlextLdifQuirksServersOud:
         """Create OUD quirk instance."""
-        return FlextLdifQuirksServersOud(
-            server_type=FlextLdifConstants.ServerTypes.OUD
-        )
+        return FlextLdifQuirksServersOud(server_type=FlextLdifConstants.ServerTypes.OUD)
 
     @pytest.fixture
     def oid(self) -> FlextLdifQuirksServersOid:
         """Create OID quirk instance."""
-        return FlextLdifQuirksServersOid(
-            server_type=FlextLdifConstants.ServerTypes.OID
-        )
+        return FlextLdifQuirksServersOid(server_type=FlextLdifConstants.ServerTypes.OID)
 
     def test_matrix_instantiation(self, matrix: QuirksConversionMatrix) -> None:
         """Test that conversion matrix can be instantiated."""
@@ -339,8 +336,7 @@ class TestQuirksConversionMatrixFacade:
     ) -> None:
         """Test converting objectClass via matrix facade."""
         oid_oc = (
-            "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' "
-            "SUP top STRUCTURAL MUST cn )"
+            "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
         )
 
         result = matrix.convert(oid, oud, "objectclass", oid_oc)
@@ -403,9 +399,10 @@ class TestQuirksConversionMatrixFacade:
         oid: FlextLdifQuirksServersOid,
     ) -> None:
         """Test error handling for invalid data type."""
-        result = matrix.convert(oud, oid, "invalid", "test")  # type: ignore[arg-type]
+        result = matrix.convert(oud, oid, "invalid", "test")
 
         assert result.is_failure
+        assert result.error is not None
         assert "Invalid data_type" in result.error
 
 

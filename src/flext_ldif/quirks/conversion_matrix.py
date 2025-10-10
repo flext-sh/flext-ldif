@@ -19,6 +19,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Literal
 
 from flext_core import FlextResult
@@ -121,7 +122,9 @@ class QuirksConversionMatrix:
             f"Invalid data_type '{data_type}'. Must be one of: attribute, objectclass, acl, entry"
         )
 
-    def _extract_and_register_dns(self, data: FlextLdifTypes.Dict, data_type: DataType) -> None:
+    def _extract_and_register_dns(
+        self, data: FlextLdifTypes.Dict, data_type: DataType
+    ) -> None:
         """Extract DNs from data and register with canonical case.
 
         This method extracts DNs from various data types and registers them
@@ -160,7 +163,9 @@ class QuirksConversionMatrix:
                             if dn_part:
                                 self.dn_registry.register_dn(dn_part)
 
-    def _normalize_dns_in_data(self, data: FlextLdifTypes.Dict) -> FlextResult[FlextLdifTypes.Dict]:
+    def _normalize_dns_in_data(
+        self, data: FlextLdifTypes.Dict
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Normalize DN references in data to use canonical case.
 
         Args:
@@ -185,7 +190,7 @@ class QuirksConversionMatrix:
         try:
             # Step 1: Parse source format (if string)
             if isinstance(data, str):
-                parse_result = source_quirk.parse_attribute(data)  # type: ignore[attr-defined]
+                parse_result = source_quirk.parse_attribute(data)
                 if parse_result.is_failure:
                     return FlextResult[str | FlextLdifTypes.Dict].fail(
                         f"Failed to parse source attribute: {parse_result.error}"
@@ -195,7 +200,7 @@ class QuirksConversionMatrix:
                 source_data = data
 
             # Step 2: Convert source → RFC
-            to_rfc_result = source_quirk.convert_attribute_to_rfc(source_data)  # type: ignore[attr-defined]
+            to_rfc_result = source_quirk.convert_attribute_to_rfc(source_data)
             if to_rfc_result.is_failure:
                 return FlextResult[str | FlextLdifTypes.Dict].fail(
                     f"Failed to convert source→RFC: {to_rfc_result.error}"
@@ -203,7 +208,7 @@ class QuirksConversionMatrix:
             rfc_data = to_rfc_result.unwrap()
 
             # Step 3: Convert RFC → target
-            from_rfc_result = target_quirk.convert_attribute_from_rfc(rfc_data)  # type: ignore[attr-defined]
+            from_rfc_result = target_quirk.convert_attribute_from_rfc(rfc_data)
             if from_rfc_result.is_failure:
                 return FlextResult[str | FlextLdifTypes.Dict].fail(
                     f"Failed to convert RFC→target: {from_rfc_result.error}"
@@ -211,7 +216,7 @@ class QuirksConversionMatrix:
             target_data = from_rfc_result.unwrap()
 
             # Step 4: Write target format
-            write_result = target_quirk.write_attribute_to_rfc(target_data)  # type: ignore[attr-defined]
+            write_result = target_quirk.write_attribute_to_rfc(target_data)
             if write_result.is_failure:
                 return FlextResult[str | FlextLdifTypes.Dict].fail(
                     f"Failed to write target format: {write_result.error}"
@@ -220,7 +225,9 @@ class QuirksConversionMatrix:
             return write_result
 
         except Exception as e:
-            return FlextResult[str | FlextLdifTypes.Dict].fail(f"Attribute conversion failed: {e}")
+            return FlextResult[str | FlextLdifTypes.Dict].fail(
+                f"Attribute conversion failed: {e}"
+            )
 
     def _convert_objectclass(
         self,
@@ -235,7 +242,7 @@ class QuirksConversionMatrix:
         try:
             # Step 1: Parse source format (if string)
             if isinstance(data, str):
-                parse_result = source_quirk.parse_objectclass(data)  # type: ignore[attr-defined]
+                parse_result = source_quirk.parse_objectclass(data)
                 if parse_result.is_failure:
                     return FlextResult[str | FlextLdifTypes.Dict].fail(
                         f"Failed to parse source objectClass: {parse_result.error}"
@@ -245,7 +252,7 @@ class QuirksConversionMatrix:
                 source_data = data
 
             # Step 2: Convert source → RFC
-            to_rfc_result = source_quirk.convert_objectclass_to_rfc(source_data)  # type: ignore[attr-defined]
+            to_rfc_result = source_quirk.convert_objectclass_to_rfc(source_data)
             if to_rfc_result.is_failure:
                 return FlextResult[str | FlextLdifTypes.Dict].fail(
                     f"Failed to convert source→RFC: {to_rfc_result.error}"
@@ -253,7 +260,7 @@ class QuirksConversionMatrix:
             rfc_data = to_rfc_result.unwrap()
 
             # Step 3: Convert RFC → target
-            from_rfc_result = target_quirk.convert_objectclass_from_rfc(rfc_data)  # type: ignore[attr-defined]
+            from_rfc_result = target_quirk.convert_objectclass_from_rfc(rfc_data)
             if from_rfc_result.is_failure:
                 return FlextResult[str | FlextLdifTypes.Dict].fail(
                     f"Failed to convert RFC→target: {from_rfc_result.error}"
@@ -261,7 +268,7 @@ class QuirksConversionMatrix:
             target_data = from_rfc_result.unwrap()
 
             # Step 4: Write target format
-            write_result = target_quirk.write_objectclass_to_rfc(target_data)  # type: ignore[attr-defined]
+            write_result = target_quirk.write_objectclass_to_rfc(target_data)
             if write_result.is_failure:
                 return FlextResult[str | FlextLdifTypes.Dict].fail(
                     f"Failed to write target format: {write_result.error}"
@@ -270,7 +277,9 @@ class QuirksConversionMatrix:
             return write_result
 
         except Exception as e:
-            return FlextResult[str | FlextLdifTypes.Dict].fail(f"ObjectClass conversion failed: {e}")
+            return FlextResult[str | FlextLdifTypes.Dict].fail(
+                f"ObjectClass conversion failed: {e}"
+            )
 
     def _convert_acl(
         self,
@@ -288,9 +297,13 @@ class QuirksConversionMatrix:
             target_acl_quirk = getattr(target_quirk, "acl", None)
 
             if source_acl_quirk is None:
-                return FlextResult[str | FlextLdifTypes.Dict].fail("Source quirk does not have ACL support")
+                return FlextResult[str | FlextLdifTypes.Dict].fail(
+                    "Source quirk does not have ACL support"
+                )
             if target_acl_quirk is None:
-                return FlextResult[str | FlextLdifTypes.Dict].fail("Target quirk does not have ACL support")
+                return FlextResult[str | FlextLdifTypes.Dict].fail(
+                    "Target quirk does not have ACL support"
+                )
 
             # Step 1: Parse source format (if string)
             if isinstance(data, str):
@@ -340,7 +353,9 @@ class QuirksConversionMatrix:
             return write_result
 
         except Exception as e:
-            return FlextResult[str | FlextLdifTypes.Dict].fail(f"ACL conversion failed: {e}")
+            return FlextResult[str | FlextLdifTypes.Dict].fail(
+                f"ACL conversion failed: {e}"
+            )
 
     def _convert_entry(
         self,
@@ -358,9 +373,13 @@ class QuirksConversionMatrix:
             target_entry_quirk = getattr(target_quirk, "entry", None)
 
             if source_entry_quirk is None:
-                return FlextResult[str | FlextLdifTypes.Dict].fail("Source quirk does not have Entry support")
+                return FlextResult[str | FlextLdifTypes.Dict].fail(
+                    "Source quirk does not have Entry support"
+                )
             if target_entry_quirk is None:
-                return FlextResult[str | FlextLdifTypes.Dict].fail("Target quirk does not have Entry support")
+                return FlextResult[str | FlextLdifTypes.Dict].fail(
+                    "Target quirk does not have Entry support"
+                )
 
             # Step 1: Parse source format (if string)
             if isinstance(data, str):
@@ -408,14 +427,16 @@ class QuirksConversionMatrix:
             return write_result
 
         except Exception as e:
-            return FlextResult[str | FlextLdifTypes.Dict].fail(f"Entry conversion failed: {e}")
+            return FlextResult[str | FlextLdifTypes.Dict].fail(
+                f"Entry conversion failed: {e}"
+            )
 
     def batch_convert(
         self,
         source_quirk: object,
         target_quirk: object,
         data_type: DataType,
-        data_list: list[str | FlextLdifTypes.Dict],
+        data_list: Sequence[str | FlextLdifTypes.Dict],
     ) -> FlextResult[list[str | FlextLdifTypes.Dict]]:
         """Convert multiple items from source to target quirk via RFC.
 
@@ -451,9 +472,14 @@ class QuirksConversionMatrix:
                     errors.append(f"Item {idx}: {result.error}")
 
             if errors:
-                error_msg = f"Batch conversion completed with {len(errors)} errors:\n" + "\n".join(errors[:self.MAX_ERRORS_TO_SHOW])
+                error_msg = (
+                    f"Batch conversion completed with {len(errors)} errors:\n"
+                    + "\n".join(errors[: self.MAX_ERRORS_TO_SHOW])
+                )
                 if len(errors) > self.MAX_ERRORS_TO_SHOW:
-                    error_msg += f"\n... and {len(errors) - self.MAX_ERRORS_TO_SHOW} more errors"
+                    error_msg += (
+                        f"\n... and {len(errors) - self.MAX_ERRORS_TO_SHOW} more errors"
+                    )
                 return FlextResult[list[str | FlextLdifTypes.Dict]].fail(error_msg)
 
             return FlextResult[list[str | FlextLdifTypes.Dict]].ok(converted)
@@ -523,14 +549,22 @@ class QuirksConversionMatrix:
         }
 
         # Check schema support
-        if hasattr(quirk, "parse_attribute") and hasattr(quirk, "convert_attribute_to_rfc"):
+        if hasattr(quirk, "parse_attribute") and hasattr(
+            quirk, "convert_attribute_to_rfc"
+        ):
             support["attribute"] = True
-        if hasattr(quirk, "parse_objectclass") and hasattr(quirk, "convert_objectclass_to_rfc"):
+        if hasattr(quirk, "parse_objectclass") and hasattr(
+            quirk, "convert_objectclass_to_rfc"
+        ):
             support["objectclass"] = True
 
         # Check ACL support
         acl_quirk = getattr(quirk, "acl", None)
-        if acl_quirk and hasattr(acl_quirk, "parse_acl") and hasattr(acl_quirk, "convert_acl_to_rfc"):
+        if (
+            acl_quirk
+            and hasattr(acl_quirk, "parse_acl")
+            and hasattr(acl_quirk, "convert_acl_to_rfc")
+        ):
             support["acl"] = True
 
         # Check Entry support

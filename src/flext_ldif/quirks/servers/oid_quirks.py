@@ -152,8 +152,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
             # Add metadata for perfect round-trip preservation
             parsed_data["_metadata"] = FlextLdifModels.QuirkMetadata.create_for_quirk(
-                quirk_type="oid",
-                original_format=attr_definition.strip()
+                quirk_type="oid", original_format=attr_definition.strip()
             )
 
             return FlextResult[FlextLdifTypes.Dict].ok(parsed_data)
@@ -254,8 +253,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
             # Add metadata for perfect round-trip preservation
             parsed_data["_metadata"] = FlextLdifModels.QuirkMetadata.create_for_quirk(
-                quirk_type="oid",
-                original_format=oc_definition.strip()
+                quirk_type="oid", original_format=oc_definition.strip()
             )
 
             return FlextResult[FlextLdifTypes.Dict].ok(parsed_data)
@@ -373,7 +371,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             # Check if we have metadata with original format for perfect round-trip
             if "_metadata" in attr_data:
                 metadata = attr_data["_metadata"]
-                if isinstance(metadata, FlextLdifModels.QuirkMetadata) and metadata.original_format:
+                if (
+                    isinstance(metadata, FlextLdifModels.QuirkMetadata)
+                    and metadata.original_format
+                ):
                     return FlextResult[str].ok(metadata.original_format)
                 if isinstance(metadata, dict) and "original_format" in metadata:
                     return FlextResult[str].ok(str(metadata["original_format"]))
@@ -412,7 +413,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
             # Add SYNTAX (optional but common)
             if "syntax" in attr_data:
-                syntax_str = str(attr_data['syntax'])
+                syntax_str = str(attr_data["syntax"])
                 if "syntax_length" in attr_data:
                     syntax_str += f"{{{attr_data['syntax_length']}}}"
                 parts.append(f"SYNTAX {syntax_str}")
@@ -464,7 +465,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             # Check if we have metadata with original format for perfect round-trip
             if "_metadata" in oc_data:
                 metadata = oc_data["_metadata"]
-                if isinstance(metadata, FlextLdifModels.QuirkMetadata) and metadata.original_format:
+                if (
+                    isinstance(metadata, FlextLdifModels.QuirkMetadata)
+                    and metadata.original_format
+                ):
                     return FlextResult[str].ok(metadata.original_format)
                 if isinstance(metadata, dict) and "original_format" in metadata:
                     return FlextResult[str].ok(str(metadata["original_format"]))
@@ -554,27 +558,27 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             attributes = []
             objectclasses = []
 
-            for raw_line in ldif_content.split('\n'):
+            for raw_line in ldif_content.split("\n"):
                 line = raw_line.strip()
-                
+
                 # OID uses case-insensitive attribute names in LDIF
                 # Match: attributeTypes:, attributetypes:, or any case variation
-                if line.lower().startswith('attributetypes:'):
-                    attr_def = line.split(':', 1)[1].strip()
+                if line.lower().startswith("attributetypes:"):
+                    attr_def = line.split(":", 1)[1].strip()
                     result = self.parse_attribute(attr_def)
                     if result.is_success:
                         attributes.append(result.unwrap())
-                
+
                 # Match: objectClasses:, objectclasses:, or any case variation
-                elif line.lower().startswith('objectclasses:'):
-                    oc_def = line.split(':', 1)[1].strip()
+                elif line.lower().startswith("objectclasses:"):
+                    oc_def = line.split(":", 1)[1].strip()
                     result = self.parse_objectclass(oc_def)
                     if result.is_success:
                         objectclasses.append(result.unwrap())
 
             return FlextResult[FlextLdifTypes.Dict].ok({
                 "attributes": attributes,
-                "objectclasses": objectclasses
+                "objectclasses": objectclasses,
             })
 
         except Exception as e:
@@ -598,7 +602,9 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             # Oracle OID uses RFC-compliant schema format
             # Just ensure OID server type is set
             oid_data = dict(rfc_data)
-            oid_data[FlextLdifConstants.DictKeys.SERVER_TYPE] = FlextLdifConstants.ServerTypes.OID
+            oid_data[FlextLdifConstants.DictKeys.SERVER_TYPE] = (
+                FlextLdifConstants.ServerTypes.OID
+            )
 
             return FlextResult[FlextLdifTypes.Dict].ok(oid_data)
 
@@ -623,7 +629,9 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             # Oracle OID uses RFC-compliant schema format
             # Just ensure OID server type is set
             oid_data = dict(rfc_data)
-            oid_data[FlextLdifConstants.DictKeys.SERVER_TYPE] = FlextLdifConstants.ServerTypes.OID
+            oid_data[FlextLdifConstants.DictKeys.SERVER_TYPE] = (
+                FlextLdifConstants.ServerTypes.OID
+            )
 
             return FlextResult[FlextLdifTypes.Dict].ok(oid_data)
 
@@ -686,7 +694,9 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             try:
                 # Determine ACL type
                 is_entry_level = acl_line.startswith("orclentrylevelaci:")
-                acl_content = acl_line.split(":", 1)[1].strip() if ":" in acl_line else acl_line
+                acl_content = (
+                    acl_line.split(":", 1)[1].strip() if ":" in acl_line else acl_line
+                )
 
                 acl_data: FlextLdifTypes.Dict = {
                     FlextLdifConstants.DictKeys.TYPE: (
@@ -708,13 +718,16 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                         acl_data["target_attrs"] = attr_match.group(1)
 
                 # Extract filter (if present)
-                filter_match = re.search(r"filter=(\([^)]+(?:\([^)]*\))*[^)]*\))", acl_content)
+                filter_match = re.search(
+                    r"filter=(\([^)]+(?:\([^)]*\))*[^)]*\))", acl_content
+                )
                 if filter_match:
                     acl_data["filter"] = filter_match.group(1)
 
                 # Extract added_object_constraint (for orclentrylevelaci)
                 constraint_match = re.search(
-                    r"added_object_constraint=(\([^)]+(?:\([^)]*\))*[^)]*\))", acl_content
+                    r"added_object_constraint=(\([^)]+(?:\([^)]*\))*[^)]*\))",
+                    acl_content,
                 )
                 if constraint_match:
                     acl_data["added_object_constraint"] = constraint_match.group(1)
@@ -729,7 +742,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
                     by_clauses.append({
                         "subject": subject,
-                        "permissions": [p.strip() for p in permissions.split(",")]
+                        "permissions": [p.strip() for p in permissions.split(",")],
                     })
 
                 if by_clauses:
@@ -737,8 +750,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
                 # Add metadata for perfect round-trip preservation
                 acl_data["_metadata"] = FlextLdifModels.QuirkMetadata.create_for_quirk(
-                    quirk_type="oid",
-                    original_format=acl_line
+                    quirk_type="oid", original_format=acl_line
                 )
 
                 return FlextResult[FlextLdifTypes.Dict].ok(acl_data)
@@ -805,9 +817,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     f"RFC→OID ACL conversion failed: {e}"
                 )
 
-        def write_acl_to_rfc(
-            self, acl_data: FlextLdifTypes.Dict
-        ) -> FlextResult[str]:
+        def write_acl_to_rfc(self, acl_data: FlextLdifTypes.Dict) -> FlextResult[str]:
             """Write OID ACL data to Oracle ACL string format.
 
             Converts parsed ACL dictionary back to OID ACL format string.
@@ -828,7 +838,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 # Check if we have metadata with original format for perfect round-trip
                 if "_metadata" in acl_data:
                     metadata = acl_data["_metadata"]
-                    if isinstance(metadata, FlextLdifModels.QuirkMetadata) and metadata.original_format:
+                    if (
+                        isinstance(metadata, FlextLdifModels.QuirkMetadata)
+                        and metadata.original_format
+                    ):
                         return FlextResult[str].ok(metadata.original_format)
                     if isinstance(metadata, dict) and "original_format" in metadata:
                         return FlextResult[str].ok(str(metadata["original_format"]))
@@ -837,7 +850,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 parts = []
 
                 # Determine ACL type prefix
-                is_entry_level = acl_data.get(FlextLdifConstants.DictKeys.TYPE) == FlextLdifConstants.DictKeys.ENTRY_LEVEL
+                is_entry_level = (
+                    acl_data.get(FlextLdifConstants.DictKeys.TYPE)
+                    == FlextLdifConstants.DictKeys.ENTRY_LEVEL
+                )
                 acl_prefix = "orclentrylevelaci:" if is_entry_level else "orclaci:"
 
                 # Build access clause
@@ -856,7 +872,9 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
                 # Add added_object_constraint (for orclentrylevelaci)
                 if "added_object_constraint" in acl_data:
-                    access_parts.append(f"added_object_constraint={acl_data['added_object_constraint']}")
+                    access_parts.append(
+                        f"added_object_constraint={acl_data['added_object_constraint']}"
+                    )
 
                 parts.append(" ".join(access_parts))
 
@@ -878,7 +896,9 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             except Exception as e:
                 return FlextResult[str].fail(f"Failed to write OID ACL to RFC: {e}")
 
-        def extract_acls_from_ldif(self, ldif_content: str) -> FlextResult[list[FlextLdifTypes.Dict]]:
+        def extract_acls_from_ldif(
+            self, ldif_content: str
+        ) -> FlextResult[list[FlextLdifTypes.Dict]]:
             """Strategy pattern: OID-specific approach to extract ACLs from LDIF entries.
 
             OID ACLs use:
@@ -912,9 +932,9 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     stripped = line.strip()
 
                     # Detect OID ACL start (orclaci: or orclentrylevelaci:)
-                    if stripped.lower().startswith("orclaci:") or stripped.lower().startswith(
-                        "orclentrylevelaci:"
-                    ):
+                    if stripped.lower().startswith(
+                        "orclaci:"
+                    ) or stripped.lower().startswith("orclentrylevelaci:"):
                         # Parse previous ACL if exists
                         if current_acl:
                             acl_text = "\n".join(current_acl)
@@ -1113,7 +1133,9 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 # Oracle OID uses RFC-compliant format
                 # Just ensure OID server type is set
                 oid_entry = dict(entry_data)
-                oid_entry[FlextLdifConstants.DictKeys.SERVER_TYPE] = FlextLdifConstants.ServerTypes.OID
+                oid_entry[FlextLdifConstants.DictKeys.SERVER_TYPE] = (
+                    FlextLdifConstants.ServerTypes.OID
+                )
 
                 return FlextResult[FlextLdifTypes.Dict].ok(oid_entry)
 
@@ -1156,7 +1178,9 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     if isinstance(metadata, FlextLdifModels.QuirkMetadata):
                         attr_order = metadata.extensions.get("attribute_order")
                     elif isinstance(metadata, dict):
-                        attr_order = metadata.get("extensions", {}).get("attribute_order")
+                        attr_order = metadata.get("extensions", {}).get(
+                            "attribute_order"
+                        )
 
                 # Determine attribute iteration order
                 # Define excluded keys as a set for efficient membership testing
@@ -1186,7 +1210,9 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 for attr_name, attr_value in attrs_to_process:
                     # Handle both list and single values
                     if isinstance(attr_value, list):
-                        ldif_lines.extend(f"{attr_name}: {value}" for value in attr_value)
+                        ldif_lines.extend(
+                            f"{attr_name}: {value}" for value in attr_value
+                        )
                     else:
                         ldif_lines.append(f"{attr_name}: {attr_value}")
 
@@ -1256,7 +1282,9 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                                         ]
                                 else:
                                     current_entry[current_attr] = (
-                                        current_values if len(current_values) > 1 else current_values[0]
+                                        current_values
+                                        if len(current_values) > 1
+                                        else current_values[0]
                                     )
 
                             # Process entry
@@ -1297,7 +1325,9 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                                     ]
                             else:
                                 current_entry[current_attr] = (
-                                    current_values if len(current_values) > 1 else current_values[0]
+                                    current_values
+                                    if len(current_values) > 1
+                                    else current_values[0]
                                 )
                             current_values = []
 
@@ -1332,7 +1362,9 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                                 ]
                         else:
                             current_entry[current_attr] = (
-                                current_values if len(current_values) > 1 else current_values[0]
+                                current_values
+                                if len(current_values) > 1
+                                else current_values[0]
                             )
 
                     dn = str(current_entry.pop("dn"))
