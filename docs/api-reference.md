@@ -1,6 +1,6 @@
 # FLEXT-LDIF API Reference
 
-**Version**: 0.9.9 RC | **Updated**: October 1, 2025
+**Version**: 0.9.9 | **Updated**: October 10, 2025
 
 Complete API documentation for FLEXT-LDIF, including all public classes, methods, and integration patterns with the FLEXT ecosystem.
 
@@ -32,6 +32,8 @@ FLEXT-LDIF enforces a **strict RFC-first design** with **mandatory quirks system
 
 - ✅ **Complete Implementations** (4): OpenLDAP 1.x/2.x, OID, OUD
 - ⚠️ **Stub Implementations** (5): AD, Apache DS, 389DS, Novell, Tivoli (ready for enhancement)
+- ✅ **Universal Conversion Matrix**: N×N server conversions via RFC intermediate format
+- ✅ **DN Case Registry**: Canonical DN case tracking for OUD compatibility
 
 ## Core API Classes
 
@@ -281,6 +283,165 @@ def analyze_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[F
         ...     results = analysis.unwrap()
         ...     print(f"Analysis: {results}")
     """
+```
+
+### QuirksConversionMatrix
+
+Universal facade for N×N server conversions using RFC as intermediate format.
+
+```python
+class QuirksConversionMatrix:
+    """Facade for universal quirk-to-quirk conversion via RFC intermediate format.
+
+    Enables seamless conversion between any LDAP server quirks using RFC standards
+    as the universal intermediate representation.
+
+    Attributes:
+        dn_registry: DN case registry for tracking canonical DN case
+
+    """
+
+    def __init__(self) -> None:
+        """Initialize conversion matrix with DN case registry."""
+
+    def convert(
+        self,
+        source_quirk: object,
+        target_quirk: object,
+        data_type: Literal["attribute", "objectclass", "acl", "entry"],
+        data: str | dict[str, Any],
+    ) -> FlextResult[str | dict[str, Any]]:
+        """Convert data from source quirk format to target quirk format via RFC.
+
+        Args:
+            source_quirk: Source quirk instance (e.g., OUD, OID)
+            target_quirk: Target quirk instance (e.g., OUD, OID)
+            data_type: Type of data - "attribute", "objectclass", "acl", or "entry"
+            data: Data to convert (string or dict)
+
+        Returns:
+            FlextResult containing converted data in target quirk format
+
+        """
+
+    def batch_convert(
+        self,
+        source_quirk: object,
+        target_quirk: object,
+        data_type: Literal["attribute", "objectclass", "acl", "entry"],
+        data_batch: Sequence[str | dict[str, Any]],
+    ) -> FlextResult[Sequence[str | dict[str, Any]]]:
+        """Convert batch of data from source to target quirk format via RFC.
+
+        Args:
+            source_quirk: Source quirk instance
+            target_quirk: Target quirk instance
+            data_type: Type of data being converted
+            data_batch: Sequence of data items to convert
+
+        Returns:
+            FlextResult containing sequence of converted data items
+
+        """
+
+    def get_supported_conversions(self) -> dict[str, list[str]]:
+        """Get matrix of supported source→target conversions.
+
+        Returns:
+            Dict mapping source server types to list of target server types
+
+        """
+
+    def validate_oud_conversion(
+        self, converted_data: Sequence[str | dict[str, Any]]
+    ) -> FlextResult[bool]:
+        """Validate converted data for OUD compatibility.
+
+        Args:
+            converted_data: Data converted for OUD target
+
+        Returns:
+            FlextResult[bool]: Success if OUD-compatible, failure with validation errors
+
+        """
+
+    def reset_dn_registry(self) -> None:
+        """Reset DN case registry to initial empty state."""
+```
+
+### DnCaseRegistry
+
+Registry for tracking canonical DN case during conversions.
+
+```python
+class DnCaseRegistry:
+    """Registry for tracking canonical DN case during conversions.
+
+    Maintains a mapping of DNs in normalized form to their canonical case
+    representation. Critical for OUD compatibility during server migrations.
+
+    """
+
+    def __init__(self) -> None:
+        """Initialize empty DN case registry."""
+
+    def register_dn(self, dn: str, *, force: bool = False) -> str:
+        """Register DN and return its canonical case.
+
+        Args:
+            dn: Distinguished Name to register
+            force: Override existing canonical case with this one
+
+        Returns:
+            Canonical case DN string
+
+        """
+
+    def get_canonical_dn(self, dn: str) -> str:
+        """Get canonical case for DN, registering if not seen before.
+
+        Args:
+            dn: Distinguished Name to get canonical case for
+
+        Returns:
+            Canonical case DN string
+
+        """
+
+    def get_stats(self) -> dict[str, int]:
+        """Get registry statistics.
+
+        Returns:
+            Dict with registry statistics (total_dns, total_variants, etc.)
+
+        """
+
+    def validate_oud_consistency(self) -> FlextResult[bool]:
+        """Validate registry for OUD case-sensitive consistency.
+
+        Returns:
+            FlextResult[bool]: Success if no case conflicts, failure with conflicts
+
+        """
+
+    def get_case_variants(self, normalized_dn: str) -> set[str]:
+        """Get all case variants seen for a normalized DN.
+
+        Args:
+            normalized_dn: Normalized DN to get variants for
+
+        Returns:
+            Set of all case variants seen for this DN
+
+        """
+
+    def merge_registry(self, other: DnCaseRegistry) -> None:
+        """Merge another registry into this one.
+
+        Args:
+            other: Registry to merge from
+
+        """
 ```
 
 ## Domain Models

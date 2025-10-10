@@ -1,6 +1,6 @@
 # FLEXT-LDIF Architecture
 
-**Version**: 0.9.9 RC | **Updated**: October 1, 2025
+**Version**: 0.9.9 | **Updated**: October 10, 2025
 
 This document describes the architectural patterns and design decisions of FLEXT-LDIF, focusing on its RFC-first architecture with **ZERO bypass paths**, comprehensive quirks system, and library-only interface.
 
@@ -8,6 +8,9 @@ This document describes the architectural patterns and design decisions of FLEXT
 
 - ✅ **RFC-First Enforcement**: ALL parse/write/validate operations go through RFC parsers + quirks
 - ✅ **Zero Bypass Paths**: No direct usage of parsers/writers without quirk system
+- ✅ **Universal Conversion Matrix**: N×N server conversions via RFC intermediate format
+- ✅ **DN Case Registry**: Canonical DN case tracking for OUD compatibility
+- ✅ **Enhanced Filters**: Advanced entry filtering and transformation utilities
 - ✅ **Library-Only Interface**: NO CLI dependencies, API-only through FlextLdif facade
 - ✅ **MANDATORY quirk_registry**: All RFC parsers/writers REQUIRE quirk_registry parameter
 - ✅ **Generic Transformation**: Source → RFC → Target pipeline works with ANY LDAP server
@@ -43,6 +46,45 @@ FLEXT-LDIF enforces a **strict RFC-first architecture** where ALL LDIF operation
 - Server-specific code isolated in quirk modules
 - Core parsers remain simple, maintainable, and generic
 - Guaranteed consistency: all code paths use same RFC + quirks logic
+
+### Universal Conversion Matrix
+
+The `QuirksConversionMatrix` provides a facade for seamless N×N server conversions using RFC as intermediate format:
+
+**Conversion Pipeline**:
+```
+Source Format → Source.to_rfc() → RFC Format → Target.from_rfc() → Target Format
+```
+
+**Key Features**:
+- **N×N Matrix**: Convert between any server pair with only 2×N implementations
+- **RFC Intermediate**: Uses standards-compliant intermediate representation
+- **DN Case Registry Integration**: Tracks canonical DN case for OUD compatibility
+- **Type Safety**: Full FlextResult error handling and type annotations
+
+**Architecture Benefits**:
+- **Minimal Implementation**: Only need `to_rfc()` and `from_rfc()` methods per server
+- **Standards-Based**: RFC compliance ensures interoperability
+- **Extensible**: Easy to add new server support without matrix changes
+- **Consistent**: All conversions follow the same pipeline pattern
+
+**Integration with DN Case Registry**:
+- **Case Tracking**: Maintains canonical DN case during conversions
+- **OUD Compatibility**: Ensures consistent DN references for case-sensitive targets
+- **Validation**: Validates DN consistency for enterprise deployments
+- **Statistics**: Tracks DN variants and potential conflicts
+
+**Example Architecture**:
+```python
+# Conversion matrix facade
+matrix = QuirksConversionMatrix()
+
+# DN registry for case consistency
+registry = matrix.dn_registry
+
+# Convert with automatic DN case handling
+result = matrix.convert(source_quirk, target_quirk, "attribute", data)
+```
 
 ### Service-Oriented Architecture
 

@@ -32,22 +32,77 @@ FLEXT-LDIF provides LDIF (LDAP Data Interchange Format) processing capabilities 
 
 ## 🚀 Advanced Features
 
-### **RFC-First Design with Extensible Quirks System**
+### **RFC-First Design with Universal Conversion Matrix**
 
-FLEXT-LDIF is built on a **generic RFC-compliant foundation** with a powerful **quirks system** for server-specific extensions:
+FLEXT-LDIF is built on a **generic RFC-compliant foundation** with a powerful **universal conversion matrix** for seamless server-to-server transformations:
 
 **Core Architecture**:
 
 - **RFC 2849 (LDIF Format)** - Standard LDIF parsing foundation
 - **RFC 4512 (Schema)** - Standard LDAP schema parsing foundation
+- **Universal Conversion Matrix** - N×N server conversions via RFC intermediate format
+- **DN Case Registry** - Canonical DN case tracking for OUD compatibility
+- **Enhanced Filters** - Advanced entry filtering and transformation utilities
 - **Quirks System** - Pluggable server-specific extensions that enhance RFC parsing
 - **Generic Transformation** - Source → RFC → Target pipeline works with any server
+
+### **Universal Conversion Matrix**
+
+Seamless conversion between any LDAP server quirks using RFC as intermediate format:
+
+**Conversion Pattern**:
+```
+Source Format → Source.to_rfc() → RFC Format → Target.from_rfc() → Target Format
+```
+
+**Benefits**:
+- **N×N Matrix**: Convert between any server pair with only 2×N implementations
+- **RFC Intermediate**: Uses standards-compliant intermediate representation
+- **DN Consistency**: Tracks canonical DN case for OUD compatibility
+- **Type Safety**: Full type annotations with FlextResult error handling
+
+**Example**:
+```python
+from flext_ldif.quirks.conversion_matrix import QuirksConversionMatrix
+from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
+from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
+
+matrix = QuirksConversionMatrix()
+oud = FlextLdifQuirksServersOud()
+oid = FlextLdifQuirksServersOid()
+
+# Convert OID attribute to OUD format
+oid_attr = "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' ... )"
+result = matrix.convert(oud, oid, "attribute", oid_attr)
+```
+
+### **DN Case Registry**
+
+Ensures DN case consistency during conversions, critical for OUD compatibility:
+
+```python
+from flext_ldif.quirks.dn_case_registry import DnCaseRegistry
+
+registry = DnCaseRegistry()
+
+# Register canonical DN case
+canonical = registry.register_dn("CN=Admin,DC=Example,DC=Com")
+# Returns: "cn=admin,dc=example,dc=com"
+
+# Get canonical case for any variant
+canonical = registry.get_canonical_dn("cn=ADMIN,dc=example,dc=com")
+# Returns: "cn=admin,dc=example,dc=com"
+
+# Validate OUD consistency
+result = registry.validate_oud_consistency()
+```
 
 **Design Philosophy**:
 
 - RFC parsers provide the **baseline** for all LDAP servers
+- Universal matrix enables **any-to-any server conversion** with minimal implementations
+- DN case registry ensures **OUD compatibility** during conversions
 - Quirks **extend and enhance** RFC parsing for server-specific features
-- No server-specific code in core parsers - all extensions via quirks
 - **Works with any LDAP server** - known or unknown
 
 ### **RFC 2849 Compliance (LDIF Format)**
@@ -413,11 +468,14 @@ pytest --cov=src/flext_ldif             # Coverage report
 
 ### **Current Capabilities (v0.9.9)**
 
-- **LDIF Processing**: Basic parsing and validation of LDIF files
-- **Service Architecture**: Five services (parser, validator, writer, repository, analytics)
-- **Type Safety**: Pydantic v2 models with type annotations
-- **Error Handling**: FlextResult patterns for error management
+- **Universal Conversion Matrix**: N×N server conversions via RFC intermediate format
+- **DN Case Registry**: Canonical DN case tracking for OUD compatibility
+- **Enhanced Filters**: Advanced entry filtering and transformation utilities
+- **LDIF Processing**: Full RFC 2849/4512 compliant parsing and validation
+- **Service Architecture**: Modular services with FlextResult error handling
+- **Type Safety**: 100% Pyrefly strict mode compliance
 - **Memory-bound Processing**: Loads entire files into memory for processing
+- **Testing**: 1012/1012 tests passing (100% pass rate)
 
 ### **Known Limitations**
 
