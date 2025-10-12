@@ -129,18 +129,21 @@ Working code examples organized by complexity:
 ### Future Development Goals
 
 **Phase 1 - Production Hardening** (Current):
+
 - Maintain 100% test pass rate and type safety
 - Enhance error messages for quirk-related failures
 - Document server-specific quirk behaviors
 - Expand integration test coverage
 
 **Phase 2 - Performance Optimization**:
+
 - Implement memory usage monitoring and warnings
 - Develop streaming parser for large files (>100MB)
 - Add configurable chunk sizes for memory management
 - Establish performance baselines and benchmarks
 
 **Phase 3 - Feature Enhancement**:
+
 - Enhance 5 stub implementations (AD, Apache DS, 389 DS, Novell, Tivoli)
 - Enhanced ACL transformation capabilities
 - Better schema validation and conflict resolution

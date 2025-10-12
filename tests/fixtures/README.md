@@ -126,7 +126,8 @@ tests/fixtures/
 ### oid_schema_fixtures.ldif
 
 Oracle OID schema definitions including:
-- Oracle namespace attributes (2.16.840.1.113894.*)
+
+- Oracle namespace attributes (2.16.840.1.113894.\*)
 - Custom application attributes
 - Oracle objectClasses (orclUser, orclGroup, orclContainer)
 - DAS configuration classes
@@ -134,6 +135,7 @@ Oracle OID schema definitions including:
 ### oid_acl_fixtures.ldif
 
 Oracle OID ACL patterns including:
+
 - orclaci (standard ACL)
 - orclentrylevelaci (entry-level ACL)
 - BindMode restrictions
@@ -144,6 +146,7 @@ Oracle OID ACL patterns including:
 ### oid_entries_fixtures.ldif
 
 Anonymized OID entries including:
+
 - Users with various password hash types
 - Groups with different objectClass variations
 - Binary attributes and base64 encoding

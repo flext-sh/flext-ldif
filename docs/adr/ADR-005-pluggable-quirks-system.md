@@ -8,6 +8,7 @@
 LDAP servers implement the RFC standards differently, requiring server-specific adaptations. FLEXT-LDIF must support 9+ LDAP server implementations while maintaining a clean, extensible architecture.
 
 Server-specific requirements include:
+
 - **OID**: Oracle-specific schema extensions and operational attributes
 - **OUD**: Case-sensitive DN handling and nested ACL/entry quirks
 - **OpenLDAP**: Custom OID ranges and operational attributes
@@ -18,6 +19,7 @@ Server-specific requirements include:
 - **IBM Tivoli DS**: Enterprise-specific extensions
 
 The challenge was creating an architecture that could:
+
 - Support multiple server implementations without code duplication
 - Allow easy addition of new server support
 - Maintain clean separation between RFC standards and server extensions
@@ -33,6 +35,7 @@ Implement a **pluggable quirks system** with:
 5. **Integration with RFC-first design** as enhancement layer
 
 **Key Components**:
+
 ```python
 class QuirkBase(ABC):
     """Base class for server-specific quirk implementations."""
@@ -57,6 +60,7 @@ class QuirkBase(ABC):
 ```
 
 **Implementation**:
+
 ```python
 # Auto-discovery and registration
 registry = FlextLdifQuirksRegistry()
@@ -75,6 +79,7 @@ result = rfc_parser.parse_with_quirks(
 **Consequences**:
 
 **Positive**:
+
 - **Extensibility**: Easy addition of new server support without core changes
 - **Separation of Concerns**: Server-specific code isolated from RFC standards
 - **Priority Resolution**: Handles conflicting requirements between servers
@@ -82,12 +87,14 @@ result = rfc_parser.parse_with_quirks(
 - **Testability**: Each server implementation can be tested independently
 
 **Negative**:
+
 - **Complexity**: Additional architectural layers and abstractions
 - **Maintenance**: Each server requires separate implementation and testing
 - **Performance**: Indirection through quirk resolution system
 - **Learning Curve**: Developers must understand quirk system design
 
 **Neutral**:
+
 - **Implementation Status**: 4 complete, 5 stub implementations
 - **Incremental Adoption**: New servers can be added as stubs first
 
@@ -103,6 +110,7 @@ result = rfc_parser.parse_with_quirks(
    - **Rejected**: Tightly coupled, harder to test and maintain
 
 **Related ADRs**:
+
 - [ADR-001](ADR-001-rfc-first-design.md) - RFC foundation that quirks enhance
 - [ADR-002](ADR-002-universal-conversion-matrix.md) - Uses quirks for conversions
 
@@ -110,11 +118,13 @@ result = rfc_parser.parse_with_quirks(
 The pluggable quirks system enables FLEXT-LDIF's multi-server support while maintaining clean architecture. Each server gets its own module with complete implementation isolation. The priority system allows fine-tuned control over how different server requirements are resolved.
 
 **Current Implementation Status**:
+
 - ✅ **Complete Implementations**: OID, OUD, OpenLDAP 1.x/2.x (4 servers)
 - ⚠️ **Stub Implementations**: AD, Apache DS, 389 DS, Novell, Tivoli (5 servers)
 - 🔄 **Future Enhancement**: Convert stubs to full implementations based on user requirements
 
 **Architecture Benefits**:
+
 - **Zero Core Changes**: Adding new servers doesn't modify existing code
 - **Independent Testing**: Each server implementation tested separately
 - **Version Compatibility**: Server quirks can be versioned independently

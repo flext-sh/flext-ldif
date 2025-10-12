@@ -8,6 +8,7 @@
 FLEXT-LDIF processes LDAP Data Interchange Format (LDIF) files for multiple LDAP server implementations. The challenge was ensuring standards compliance while supporting server-specific extensions without compromising architectural integrity.
 
 The system needed to:
+
 - Maintain strict RFC 2849 (LDIF) and RFC 4512 (Schema) compliance
 - Support 9+ different LDAP server implementations with varying quirks
 - Provide a consistent, maintainable architecture for current and future server support
@@ -23,6 +24,7 @@ Implement a **RFC-First Design with Zero Bypass Paths** where:
 5. **CQRS pattern** separates parsing from writing operations
 
 **Key Implementation**:
+
 ```python
 # RFC parsers always receive quirk_registry
 parser = RfcLdifParserService(
@@ -39,6 +41,7 @@ result = ldif.parse(file_path)  # No direct parser access
 **Consequences**:
 
 **Positive**:
+
 - **Standards Compliance**: Guaranteed RFC adherence for all operations
 - **Architectural Integrity**: Clear separation between standards and extensions
 - **Maintainability**: Easy to add new server support without core changes
@@ -46,11 +49,13 @@ result = ldif.parse(file_path)  # No direct parser access
 - **Testability**: Clear boundaries between RFC compliance and server extensions
 
 **Negative**:
+
 - **Development Overhead**: All operations must route through facade layers
 - **Performance Impact**: Additional indirection through CQRS handlers
 - **Complexity**: More architectural layers to understand and maintain
 
 **Neutral**:
+
 - **Learning Curve**: Developers must understand RFC-first philosophy
 - **Code Volume**: More classes and interfaces for architectural separation
 
@@ -66,6 +71,7 @@ result = ldif.parse(file_path)  # No direct parser access
    - **Rejected**: Less type-safe and harder to test server-specific logic
 
 **Related ADRs**:
+
 - [ADR-005](ADR-005-pluggable-quirks-system.md) - Implementation details of quirks system
 
 **Notes**:

@@ -20,17 +20,18 @@
 ## Executive Summary
 
 ### System Purpose
+
 FLEXT-LDIF is an enterprise-grade LDIF (LDAP Data Interchange Format) processing library within the FLEXT ecosystem, providing RFC-compliant LDAP data operations with server-specific quirks handling.
 
 ### Key Architectural Principles
 
-| Principle | Description | Rationale |
-|-----------|-------------|-----------|
-| **RFC-First Design** | All operations must go through RFC parsers with quirks system | Ensures standards compliance and extensibility |
-| **Zero Bypass Paths** | No direct parser access - all operations through facade | Maintains architectural integrity |
-| **Universal Conversion Matrix** | N×N server conversions via RFC intermediate format | Enables seamless server migrations |
-| **Railway-Oriented Programming** | FlextCore.Result[T] error handling throughout | Functional error composition |
-| **Library-Only Interface** | No CLI dependencies, pure programmatic API | Ecosystem flexibility |
+| Principle                        | Description                                                   | Rationale                                      |
+| -------------------------------- | ------------------------------------------------------------- | ---------------------------------------------- |
+| **RFC-First Design**             | All operations must go through RFC parsers with quirks system | Ensures standards compliance and extensibility |
+| **Zero Bypass Paths**            | No direct parser access - all operations through facade       | Maintains architectural integrity              |
+| **Universal Conversion Matrix**  | N×N server conversions via RFC intermediate format            | Enables seamless server migrations             |
+| **Railway-Oriented Programming** | FlextCore.Result[T] error handling throughout                 | Functional error composition                   |
+| **Library-Only Interface**       | No CLI dependencies, pure programmatic API                    | Ecosystem flexibility                          |
 
 ### Quality Attributes
 
@@ -81,6 +82,7 @@ Rel(data_sources, flext_ldif, "Provides input LDIF data")
 ### System Boundaries
 
 **In Scope:**
+
 - RFC 2849/4512 compliant LDIF parsing and writing
 - Server-specific quirks handling for 9+ LDAP servers
 - Universal conversion matrix for server migrations
@@ -88,6 +90,7 @@ Rel(data_sources, flext_ldif, "Provides input LDIF data")
 - Advanced filtering and transformation utilities
 
 **Out of Scope:**
+
 - LDAP protocol client operations (handled by flext-ldap)
 - Directory server management
 - Authentication and authorization
@@ -95,12 +98,12 @@ Rel(data_sources, flext_ldif, "Provides input LDIF data")
 
 ### External Interfaces
 
-| Interface | Purpose | Protocol/Format |
-|-----------|---------|-----------------|
-| **LDIF Files** | Input/Output data format | RFC 2849 LDIF |
-| **LDAP Schemas** | Schema definitions | RFC 4512 LDAP Schema |
-| **FLEXT-Core** | Foundation patterns | Python classes/interfaces |
-| **Server Quirks** | Server-specific adaptations | Pluggable quirk classes |
+| Interface         | Purpose                     | Protocol/Format           |
+| ----------------- | --------------------------- | ------------------------- |
+| **LDIF Files**    | Input/Output data format    | RFC 2849 LDIF             |
+| **LDAP Schemas**  | Schema definitions          | RFC 4512 LDAP Schema      |
+| **FLEXT-Core**    | Foundation patterns         | Python classes/interfaces |
+| **Server Quirks** | Server-specific adaptations | Pluggable quirk classes   |
 
 ---
 
@@ -138,6 +141,7 @@ Rel(flext_ldif_lib, python_runtime, "Executes in", "Python 3.13+ environment")
 ### Container Responsibilities
 
 #### Primary Container: FLEXT-LDIF Library
+
 - **Purpose**: Core LDIF processing functionality
 - **Technology**: Python 3.13+ with Pydantic v2
 - **Interfaces**:
@@ -150,6 +154,7 @@ Rel(flext_ldif_lib, python_runtime, "Executes in", "Python 3.13+ environment")
   - External: ldap3, ldif3, pydantic
 
 #### Supporting Containers
+
 - **FLEXT-Core**: Provides architectural patterns and utilities
 - **Application Projects**: Consume LDIF processing capabilities
 - **External Systems**: LDAP servers and data sources
@@ -210,16 +215,19 @@ Rel(models, parsing, "Defines data structures", "Type-safe processing")
 ### Component Relationships
 
 #### Facade Pattern
+
 - **FlextLdif**: Single entry point for all operations
 - **Delegation**: Routes requests to appropriate internal components
 - **Consistency**: Ensures all operations follow RFC-first principles
 
 #### Parsing Layer
+
 - **RFC Compliance**: All parsing starts with RFC 2849/4512 standards
 - **Quirks Enhancement**: Server-specific extensions applied on top of RFC baseline
 - **Type Safety**: Pydantic models ensure data integrity
 
 #### Quirks System
+
 - **Pluggable Architecture**: Server implementations loaded dynamically
 - **Priority Resolution**: Higher priority quirks take precedence
 - **Extensibility**: Easy addition of new server support
@@ -288,6 +296,7 @@ src/flext_ldif/
 ### Design Patterns Applied
 
 #### 1. Facade Pattern
+
 ```python
 class FlextLdif(FlextCore.Service[FlextCore.Types.Dict]):
     """Unified facade for all LDIF operations."""
@@ -298,6 +307,7 @@ class FlextLdif(FlextCore.Service[FlextCore.Types.Dict]):
 ```
 
 #### 2. Strategy Pattern (Quirks System)
+
 ```python
 class QuirkBase(ABC):
     """Base class for server-specific quirk implementations."""
@@ -312,6 +322,7 @@ class QuirkBase(ABC):
 ```
 
 #### 3. Registry Pattern
+
 ```python
 class FlextLdifQuirksRegistry:
     """Auto-discovery registry for quirk implementations."""
@@ -322,6 +333,7 @@ class FlextLdifQuirksRegistry:
 ```
 
 #### 4. Builder Pattern
+
 ```python
 class FlextLdifEntryBuilder:
     """Builder for constructing LDIF entries."""
@@ -367,6 +379,7 @@ Rel(transformation_engine, ldif_files, "Write output", "RFC 2849 format")
 ### Data Models
 
 #### Core Domain Models
+
 ```python
 class Entry(BaseModel):
     """LDIF entry with DN and attributes."""
@@ -395,6 +408,7 @@ class AttributeValues(BaseModel):
 ### Memory Management
 
 **Critical Constraint**: Entire LDIF files loaded into memory
+
 - **Recommended Limit**: 100MB per file
 - **Architecture Impact**: Single-threaded processing
 - **Future Evolution**: Streaming parser planned for Phase 2
@@ -406,16 +420,19 @@ class AttributeValues(BaseModel):
 ### Security Principles
 
 #### 1. Input Validation
+
 - **RFC Compliance**: All parsing follows RFC 2849/4512 standards
 - **Type Safety**: Pydantic models validate all data structures
 - **Schema Validation**: LDAP schema rules enforced during processing
 
 #### 2. Error Handling
+
 - **No Information Leakage**: Errors don't expose internal system details
 - **Controlled Failure**: Graceful degradation with meaningful error messages
 - **Audit Trail**: Structured logging for security events
 
 #### 3. Access Control
+
 - **Library Scope**: No direct system access or privilege escalation
 - **File System Access**: Controlled read/write operations only
 - **Network Security**: No network communications (pure file processing)
@@ -423,12 +440,14 @@ class AttributeValues(BaseModel):
 ### Threat Model
 
 #### Potential Threats
+
 - **Malformed LDIF**: Invalid syntax causing parsing failures
 - **Large File Attacks**: Memory exhaustion via oversized files
 - **Schema Injection**: Malformed schema definitions
 - **Path Traversal**: File system access outside intended directories
 
 #### Mitigation Strategies
+
 - **Input Sanitization**: RFC-compliant parsing rejects invalid syntax
 - **Memory Limits**: 100MB file size recommendation with warnings
 - **Schema Validation**: Strict schema rule enforcement
@@ -441,12 +460,14 @@ class AttributeValues(BaseModel):
 ### Performance Characteristics
 
 #### Current Performance Profile
+
 - **Memory Usage**: O(n) where n = file size (loaded entirely into memory)
 - **CPU Usage**: Single-threaded processing, CPU-bound for large files
 - **File Size Limit**: 100MB recommended maximum
 - **Processing Speed**: ~10-50 MB/s depending on complexity
 
 #### Performance Constraints
+
 ```python
 # Memory usage scales linearly with file size
 file_size_mb = ldif_file.stat().st_size / (1024 * 1024)
@@ -457,12 +478,14 @@ if file_size_mb > 100:
 ### Reliability Characteristics
 
 #### High Reliability Features
+
 - **100% Test Coverage**: 1012/1012 tests passing
 - **Type Safety**: Pyrefly strict mode compliance
 - **Error Recovery**: FlextCore.Result-based error handling
 - **Validation**: Comprehensive input/output validation
 
 #### Reliability Metrics
+
 - **Test Pass Rate**: 100% (1012/1012)
 - **Type Check Compliance**: 100%
 - **Code Quality**: 100% linting compliance
@@ -471,11 +494,13 @@ if file_size_mb > 100:
 ### Scalability Characteristics
 
 #### Current Limitations
+
 - **Memory-Bound**: Cannot process files larger than available RAM
 - **Single-Threaded**: No parallel processing capabilities
 - **File-Based**: No streaming or chunked processing
 
 #### Scalability Roadmap
+
 - **Phase 2**: Implement streaming parser for large files
 - **Phase 3**: Add configurable chunk sizes and memory management
 - **Future**: Multi-threaded processing for high-throughput scenarios
@@ -483,12 +508,14 @@ if file_size_mb > 100:
 ### Maintainability Characteristics
 
 #### Code Quality Metrics
+
 - **Cyclomatic Complexity**: Low (focus on simple, testable functions)
 - **Coupling**: Loose coupling through dependency injection
 - **Cohesion**: High cohesion within modules
 - **Testability**: 100% coverage enables confident refactoring
 
 #### Architectural Maintainability
+
 - **Modular Design**: Clear separation of concerns
 - **Pluggable Extensions**: Easy addition of new server quirks
 - **Configuration Management**: Environment-based configuration
@@ -509,11 +536,13 @@ if file_size_mb > 100:
 **Decision**: [Chosen solution and rationale]
 
 **Consequences**:
+
 - **Positive**: [Benefits of the decision]
 - **Negative**: [Drawbacks and risks]
 - **Mitigation**: [How to address negative consequences]
 
 **Alternatives Considered**:
+
 - [Alternative 1]: [Why not chosen]
 - [Alternative 2]: [Why not chosen]
 
@@ -524,6 +553,7 @@ if file_size_mb > 100:
 ## Evolution & Roadmap
 
 ### Current Status (v0.9.9)
+
 ✅ **Production Ready**: Complete RFC compliance with server quirks
 ✅ **Universal Conversion**: N×N server migration capabilities
 ✅ **Type Safety**: 100% Pyrefly strict mode compliance
@@ -531,18 +561,21 @@ if file_size_mb > 100:
 ⚠️ **Memory Constraints**: 100MB file size limit
 
 ### Phase 1: Production Hardening (Current)
+
 - [x] Maintain 100% test pass rate and type safety
 - [x] Enhance error messages for quirk-related failures
 - [x] Document server-specific quirk behaviors
 - [x] Expand integration test coverage
 
 ### Phase 2: Performance Optimization (Next)
+
 - [ ] Implement memory usage monitoring and warnings
 - [ ] Develop streaming parser for large files (>100MB)
 - [ ] Add configurable chunk sizes for memory management
 - [ ] Establish performance baselines and benchmarks
 
 ### Phase 3: Feature Enhancement (Future)
+
 - [ ] Enhance 5 stub implementations (AD, Apache DS, 389 DS, Novell, Tivoli)
 - [ ] Enhanced ACL transformation capabilities
 - [ ] Better schema validation and conflict resolution
