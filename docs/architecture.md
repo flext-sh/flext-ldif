@@ -52,29 +52,34 @@ FLEXT-LDIF enforces a **strict RFC-first architecture** where ALL LDIF operation
 The `QuirksConversionMatrix` provides a facade for seamless N×N server conversions using RFC as intermediate format:
 
 **Conversion Pipeline**:
+
 ```
 Source Format → Source.to_rfc() → RFC Format → Target.from_rfc() → Target Format
 ```
 
 **Key Features**:
+
 - **N×N Matrix**: Convert between any server pair with only 2×N implementations
 - **RFC Intermediate**: Uses standards-compliant intermediate representation
 - **DN Case Registry Integration**: Tracks canonical DN case for OUD compatibility
 - **Type Safety**: Full FlextCore.Result error handling and type annotations
 
 **Architecture Benefits**:
+
 - **Minimal Implementation**: Only need `to_rfc()` and `from_rfc()` methods per server
 - **Standards-Based**: RFC compliance ensures interoperability
 - **Extensible**: Easy to add new server support without matrix changes
 - **Consistent**: All conversions follow the same pipeline pattern
 
 **Integration with DN Case Registry**:
+
 - **Case Tracking**: Maintains canonical DN case during conversions
 - **OUD Compatibility**: Ensures consistent DN references for case-sensitive targets
 - **Validation**: Validates DN consistency for enterprise deployments
 - **Statistics**: Tracks DN variants and potential conflicts
 
 **Example Architecture**:
+
 ```python
 # Conversion matrix facade
 matrix = QuirksConversionMatrix()

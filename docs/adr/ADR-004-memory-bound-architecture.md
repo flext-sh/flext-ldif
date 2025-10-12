@@ -8,6 +8,7 @@
 FLEXT-LDIF processes LDIF files containing directory data that can range from small configuration files to large enterprise directory exports. The system needs to handle files efficiently while maintaining type safety and RFC compliance.
 
 Key requirements:
+
 - Support enterprise-scale directory operations
 - Maintain 100% type safety with Pydantic models
 - Ensure RFC compliance for all parsing operations
@@ -15,6 +16,7 @@ Key requirements:
 - Support both small files (KB) and large files (GB)
 
 Available implementation approaches:
+
 - **Streaming Parser**: Process files incrementally without full memory load
 - **Memory-Bound Parser**: Load entire file into memory for processing
 - **Hybrid Approach**: Stream parsing with memory checkpoints
@@ -23,12 +25,14 @@ Available implementation approaches:
 Implement a **memory-bound processing architecture** that loads entire LDIF files into memory during processing.
 
 **Key Design Decisions**:
+
 1. **Complete File Loading**: Use `content.splitlines()` to load entire file into memory
 2. **File Size Warnings**: Recommend 100MB limit with explicit warnings
 3. **Single-Threaded Processing**: Focus on correctness over parallelism
 4. **Memory Usage Transparency**: Document memory requirements clearly
 
 **Implementation**:
+
 ```python
 # Memory-bound file processing
 def parse_ldif_file(self, file_path: Path) -> FlextCore.Result[list[Entry]]:
@@ -51,6 +55,7 @@ def parse_ldif_file(self, file_path: Path) -> FlextCore.Result[list[Entry]]:
 **Consequences**:
 
 **Positive**:
+
 - **Simplicity**: Straightforward implementation and debugging
 - **Type Safety**: Full Pydantic validation on complete data structures
 - **RFC Compliance**: Easy to ensure complete parsing compliance
@@ -58,12 +63,14 @@ def parse_ldif_file(self, file_path: Path) -> FlextCore.Result[list[Entry]]:
 - **Correctness**: Complete file context available for validation
 
 **Negative**:
+
 - **Memory Limits**: Cannot process files larger than available RAM
 - **Scalability**: Not suitable for very large enterprise directories
 - **Resource Usage**: High memory consumption during processing
 - **Error Recovery**: All-or-nothing processing (no partial recovery)
 
 **Neutral**:
+
 - **Current Use Cases**: Suitable for typical directory migration scenarios
 - **Clear Limitations**: Well-documented constraints guide usage
 
@@ -83,12 +90,14 @@ def parse_ldif_file(self, file_path: Path) -> FlextCore.Result[list[Entry]]:
    - **Platform Dependencies**: Memory mapping behavior varies by OS
 
 **Related ADRs**:
+
 - [ADR-006](ADR-006-streaming-parser-future.md) - Future streaming parser implementation
 
 **Notes**:
 The memory-bound architecture is appropriate for the current use case of directory migrations where files are typically under 100MB. The clear memory limits and warnings guide users to appropriate file sizes. Future versions will implement streaming parsers for larger files while maintaining the same API.
 
 **Current Limits**:
+
 - **Recommended Maximum**: 100MB per file
 - **Absolute Maximum**: Limited by available system RAM
 - **Monitoring**: File size warnings but no automatic chunking

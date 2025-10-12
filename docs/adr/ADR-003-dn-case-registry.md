@@ -25,6 +25,7 @@ Implement a **DN Case Registry** that:
 4. **Integrates with conversion matrix** for seamless operation
 
 **Key Components**:
+
 ```python
 class DnCaseRegistry:
     """Tracks canonical DN case for migration consistency."""
@@ -40,6 +41,7 @@ class DnCaseRegistry:
 ```
 
 **Implementation**:
+
 ```python
 # During conversion pipeline
 registry = DnCaseRegistry()
@@ -59,6 +61,7 @@ result = registry.validate_oud_consistency()
 **Consequences**:
 
 **Positive**:
+
 - **OUD Compatibility**: Ensures consistent DN case for case-sensitive operations
 - **Migration Safety**: Prevents runtime failures due to case mismatches
 - **Automatic Resolution**: No manual DN case management required
@@ -66,12 +69,14 @@ result = registry.validate_oud_consistency()
 - **Standards Compliant**: Works with RFC 4514 DN syntax rules
 
 **Negative**:
+
 - **Memory Overhead**: Maintains DN registry during conversion
 - **Processing Overhead**: Additional lookups during conversion pipeline
 - **State Management**: Must track registry state across conversion operations
 - **Complexity**: Additional architectural component to maintain
 
 **Neutral**:
+
 - **First-Seen-Wins Policy**: Simple, predictable case resolution
 - **Normalized Storage**: Efficient DN comparison using case-insensitive keys
 
@@ -87,6 +92,7 @@ result = registry.validate_oud_consistency()
    - **Rejected**: Would cause runtime failures and poor user experience
 
 **Related ADRs**:
+
 - [ADR-002](ADR-002-universal-conversion-matrix.md) - Integration with conversion pipeline
 - [ADR-004](ADR-004-memory-bound-architecture.md) - Memory usage implications
 
@@ -94,6 +100,7 @@ result = registry.validate_oud_consistency()
 The DN case registry is critical for OUD migrations from case-insensitive sources like OID. It ensures that all DN references in migrated data use consistent case, preventing the runtime failures that would occur in OUD's case-sensitive environment.
 
 **Implementation Details**:
+
 - Uses normalized DN (lowercase, no spaces) as registry keys
 - First-seen DN establishes canonical case for all variants
 - Integrated into universal conversion matrix pipeline

@@ -51,17 +51,20 @@ FLEXT-LDIF is built on a **generic RFC-compliant foundation** with a powerful **
 Seamless conversion between any LDAP server quirks using RFC as intermediate format:
 
 **Conversion Pattern**:
+
 ```
 Source Format → Source.to_rfc() → RFC Format → Target.from_rfc() → Target Format
 ```
 
 **Benefits**:
+
 - **N×N Matrix**: Convert between any server pair with only 2×N implementations
 - **RFC Intermediate**: Uses standards-compliant intermediate representation
 - **DN Consistency**: Tracks canonical DN case for OUD compatibility
 - **Type Safety**: Full type annotations with FlextCore.Result error handling
 
 **Example**:
+
 ```python
 from flext_ldif.quirks.conversion_matrix import QuirksConversionMatrix
 from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
@@ -170,12 +173,12 @@ Automatic detection and quirk-based adaptation for LDAP servers:
 
 ### **FLEXT-Core Integration Status**
 
-| Pattern             | Status      | Description                                      |
-| ------------------- | ----------- | ------------------------------------------------ |
-| **FlextCore.Result[T]**  | 🟢 Complete | Operations return FlextCore.Result for error handling |
-| **FlextCore.Service**    | 🟢 Complete | Service-oriented architecture with LDIF services |
-| **FlextCore.Container**  | 🟢 Complete | Dependency injection for service orchestration   |
-| **Domain Patterns** | 🟢 Complete | LDIF Entry, DN, and Attribute domain models      |
+| Pattern                 | Status      | Description                                           |
+| ----------------------- | ----------- | ----------------------------------------------------- |
+| **FlextCore.Result[T]** | 🟢 Complete | Operations return FlextCore.Result for error handling |
+| **FlextCore.Service**   | 🟢 Complete | Service-oriented architecture with LDIF services      |
+| **FlextCore.Container** | 🟢 Complete | Dependency injection for service orchestration        |
+| **Domain Patterns**     | 🟢 Complete | LDIF Entry, DN, and Attribute domain models           |
 
 > **Integration**: Uses flext-core patterns with memory-bound processing
 

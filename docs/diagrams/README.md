@@ -10,25 +10,28 @@ This directory contains architecture diagrams for FLEXT-LDIF using modern diagra
 
 Following the [C4 Model](https://c4model.com/) for visualising software architecture:
 
-| Level | Diagram | Purpose | Scope |
-|-------|---------|---------|-------|
-| **Level 1** | System Context | System in its environment | External systems and users |
-| **Level 2** | Container | High-level components | Applications and data stores |
-| **Level 3** | Component | Component relationships | Services and libraries |
-| **Level 4** | Code | Implementation details | Classes and relationships |
+| Level       | Diagram        | Purpose                   | Scope                        |
+| ----------- | -------------- | ------------------------- | ---------------------------- |
+| **Level 1** | System Context | System in its environment | External systems and users   |
+| **Level 2** | Container      | High-level components     | Applications and data stores |
+| **Level 3** | Component      | Component relationships   | Services and libraries       |
+| **Level 4** | Code           | Implementation details    | Classes and relationships    |
 
 ### Diagram Categories
 
 #### 📋 System Context Diagrams
+
 - **[system-context.puml](system-context.puml)**: C4 Level 1 - System in its environment
 - Shows external systems, users, and high-level interactions
 
 #### 🏗️ Architecture Diagrams
+
 - **[container-architecture.puml](container-architecture.puml)**: C4 Level 2 - Container architecture
 - **[component-architecture.puml](component-architecture.puml)**: C4 Level 3 - Component relationships
 - **[data-flow-architecture.puml](data-flow-architecture.puml)**: Data flow and processing pipeline
 
 #### 🔒 Security & Quality Diagrams
+
 - **[security-architecture.puml](security-architecture.puml)**: Security architecture and threat model
 - **[quality-attributes.puml](quality-attributes.puml)**: Quality attributes and cross-cutting concerns
 
@@ -63,8 +66,8 @@ Install the PlantUML extension for live preview:
 
 ```json
 {
-    "plantuml.server": "http://localhost:8080",
-    "plantuml.render": "PlantUMLServer"
+  "plantuml.server": "http://localhost:8080",
+  "plantuml.render": "PlantUMLServer"
 }
 ```
 
@@ -78,7 +81,7 @@ name: Render Architecture Diagrams
 on:
   push:
     paths:
-      - 'docs/diagrams/*.puml'
+      - "docs/diagrams/*.puml"
 jobs:
   render:
     runs-on: ubuntu-latest
