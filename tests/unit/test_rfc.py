@@ -1381,7 +1381,7 @@ class TestRfcLdifWriterAclSupport:
 
     def test_execute_with_acl_entries(self, tmp_path: Path) -> None:
         """Test execute() writing ACL entries."""
-        acl_entry = FlextLdifModels.UnifiedAcl(
+        acl_entry = FlextLdifModels.Acl(
             name="test_acl",
             target=FlextLdifModels.AclTarget(target_dn="dc=example,dc=com"),
             subject=FlextLdifModels.AclSubject(

@@ -838,9 +838,6 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
                 else:
                     categorized.uncategorized.append(entry)
 
-            # Update summary counts
-            categorized.update_summary()
-
             return FlextCore.Result[FlextLdifModels.CategorizedEntries].ok(categorized)
 
         except Exception as e:

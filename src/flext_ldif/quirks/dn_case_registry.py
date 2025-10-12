@@ -20,7 +20,6 @@ from flext_core import FlextCore
 
 from flext_ldif.typings import FlextLdifTypes
 
-# Type alias for DN string
 type DN = str
 
 

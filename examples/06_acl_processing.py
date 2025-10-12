@@ -264,7 +264,7 @@ aci: (target="ldap:///ou=Pipeline,dc=example,dc=com")(targetattr="*")(version 3.
 
     acl_result.unwrap()
 
-    # Evaluate ACLs - need to convert UnifiedAcl to AclRule and provide context
+    # Evaluate ACLs - need to convert Acl to AclRule and provide context
     # For this example, skip evaluation as it requires proper type conversion
     # eval_result = acl_service.evaluate_acl_rules(acls, {"user": "anonymous"})
     eval_result = FlextCore.Result[bool].ok(True)  # Placeholder for example

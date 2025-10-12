@@ -411,7 +411,7 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
 
     def extract_acls_from_entry(
         self, entry: FlextLdifModels.Entry, server_type: str | None = None
-    ) -> FlextCore.Result[list[FlextLdifModels.UnifiedAcl]]:
+    ) -> FlextCore.Result[list[FlextLdifModels.Acl]]:
         """Extract ACLs from LDIF entry using composite pattern.
 
         Args:
@@ -423,7 +423,7 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
 
         """
         if entry is None:
-            return FlextCore.Result[list[FlextLdifModels.UnifiedAcl]].fail(
+            return FlextCore.Result[list[FlextLdifModels.Acl]].fail(
                 "Invalid entry: Entry is None"
             )
 
@@ -432,27 +432,27 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
         )
         if acl_attr_result.is_failure:
             error_msg = acl_attr_result.error or "Unknown ACL attribute error"
-            return FlextCore.Result[list[FlextLdifModels.UnifiedAcl]].fail(error_msg)
+            return FlextCore.Result[list[FlextLdifModels.Acl]].fail(error_msg)
 
         acl_attribute = acl_attr_result.value
         acl_values: FlextLdifTypes.StringList = entry.get_attribute(acl_attribute) or []
 
         if not acl_values:
-            return FlextCore.Result[list[FlextLdifModels.UnifiedAcl]].ok([])
+            return FlextCore.Result[list[FlextLdifModels.Acl]].ok([])
 
-        acls: list[FlextLdifModels.UnifiedAcl] = []
+        acls: list[FlextLdifModels.Acl] = []
         for acl_value in acl_values:
-            parse_result: FlextCore.Result[FlextLdifModels.UnifiedAcl] = (
+            parse_result: FlextCore.Result[FlextLdifModels.Acl] = (
                 self._parse_acl_with_rules(acl_value, server_type or "generic")
             )
             if parse_result.is_success:
                 acls.append(parse_result.value)
 
-        return FlextCore.Result[list[FlextLdifModels.UnifiedAcl]].ok(acls)
+        return FlextCore.Result[list[FlextLdifModels.Acl]].ok(acls)
 
     def _parse_acl_with_rules(
         self, acl_string: str, server_type: str
-    ) -> FlextCore.Result[FlextLdifModels.UnifiedAcl]:
+    ) -> FlextCore.Result[FlextLdifModels.Acl]:
         """Parse ACL string using composite rule pattern.
 
         Args:
@@ -469,7 +469,7 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
         perms = FlextLdifModels.AclPermissions(read=True)
 
         # Create unified ACL directly
-        acl = FlextLdifModels.UnifiedAcl(
+        acl = FlextLdifModels.Acl(
             name="parsed_acl",
             target=target,
             subject=subject,
@@ -477,7 +477,7 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
             server_type=server_type,
             raw_acl=acl_string,
         )
-        return FlextCore.Result[FlextLdifModels.UnifiedAcl].ok(acl)
+        return FlextCore.Result[FlextLdifModels.Acl].ok(acl)
 
     def evaluate_acl_rules(
         self, rules: list[AclRule], context: FlextLdifTypes.Dict
