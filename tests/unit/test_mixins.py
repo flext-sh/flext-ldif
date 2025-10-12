@@ -3,7 +3,7 @@
 from collections.abc import Sequence
 from typing import cast
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextCore
 from tests.test_support.ldif_data import LdifTestData
 
 from flext_ldif.mixins import FlextLdifMixins
@@ -91,7 +91,7 @@ class TestFlextLdifAnalyticsMixin:
     def test_analyze_with_result_success(self) -> None:
         """Test analyze_with_result with successful analysis (lines 272-274)."""
 
-        def analyzer(data: Sequence[int]) -> FlextTypes.Dict:
+        def analyzer(data: Sequence[int]) -> FlextCore.Types.Dict:
             return {"sum": sum(data), "count": len(data)}
 
         result = FlextLdifMixins.AnalyticsMixin.analyze_with_result(
@@ -106,7 +106,7 @@ class TestFlextLdifAnalyticsMixin:
     def test_analyze_with_result_error(self) -> None:
         """Test analyze_with_result with error (lines 272, 275-276)."""
 
-        def error_analyzer(data: Sequence[int]) -> FlextTypes.Dict:
+        def error_analyzer(data: Sequence[int]) -> FlextCore.Types.Dict:
             error_msg = "Analysis error"
             raise ValueError(error_msg)
 
@@ -595,7 +595,7 @@ class TestFlextLdifMixinsIntegration:
 
     def test_validate_encoding_with_model(self) -> None:
         """Test validate_encoding using Model validation (lines 86-90)."""
-        # Valid encoding - returns FlextResult
+        # Valid encoding - returns FlextCore.Result
         result = FlextLdifMixins.ValidationMixin.validate_encoding("utf-8")
         assert result.is_success
         assert result.unwrap() == "utf-8"
@@ -663,10 +663,10 @@ class TestFlextLdifMixinsIntegration:
         data = [1, 2, 3, 4, 5]
         data_iter = iter(data)
 
-        def processor(x: object) -> FlextResult[object]:
+        def processor(x: object) -> FlextCore.Result[object]:
             if isinstance(x, int) and x > 0:
-                return FlextResult[object].ok(x * 2)
-            return FlextResult[object].fail("Invalid value")
+                return FlextCore.Result[object].ok(x * 2)
+            return FlextCore.Result[object].fail("Invalid value")
 
         results = list(
             FlextLdifMixins.IteratorMixin.process_iterator_with_result(

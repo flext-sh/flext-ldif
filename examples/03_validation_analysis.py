@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_core import FlextResult
+from flext_core import FlextCore
 
 from flext_ldif import FlextLdif
 
@@ -55,8 +55,10 @@ def validate_entries_example() -> None:
         return
 
     report = validation_result.unwrap()
-    # Type narrowing for dict access
-    assert isinstance(report, dict)
+    # Type validation for dict access
+    if not isinstance(report, dict):
+        print(f"ERROR: Expected dict report, got {type(report)}")
+        return
     result_msg = (
         f"Valid: {report.get('is_valid', False)}, "
         f"Errors: {report.get('error_count', 0)}, "
@@ -121,7 +123,9 @@ mail: pipeline@example.com
             lambda report: (
                 api.parse(ldif_content).flat_map(api.analyze)
                 if report.get("is_valid", False)
-                else FlextResult[dict[str, object]].fail(f"Validation failed: {report}")
+                else FlextCore.Result[FlextCore.Types.Dict].fail(
+                    f"Validation failed: {report}"
+                )
             )
         )
     )
@@ -165,7 +169,9 @@ def validate_and_filter_pipeline() -> None:
             print(f"All {len(entries)} entries are valid")
         else:
             errors = report.get("errors", [])
-            errors_list: list[object] = errors if isinstance(errors, list) else []
+            errors_list: FlextCore.Types.List = (
+                errors if isinstance(errors, list) else []
+            )
             print(f"Found {len(errors_list)} validation errors")
 
 

@@ -367,7 +367,9 @@ jpegPhoto:: {encoded_photo}
         entry = entries[0]
 
         # Import to LDAP
-        attrs_dict = cast("dict[str, Any]", entry.attributes.to_ldap3(exclude=["objectClass"]))
+        attrs_dict = cast(
+            "dict[str, Any]", entry.attributes.to_ldap3(exclude=["objectClass"])
+        )
 
         # Handle binary attribute - ldap3 accepts bytes for binary attributes
         if "jpegPhoto" in attrs_dict:
@@ -957,7 +959,7 @@ class TestRealLdapConfigurationFromEnv:
 
 
 class TestRealLdapRailwayComposition:
-    """Test railway-oriented FlextResult composition with real LDAP."""
+    """Test railway-oriented FlextCore.Result composition with real LDAP."""
 
     def test_railway_parse_validate_write_cycle(
         self,
@@ -966,7 +968,7 @@ class TestRealLdapRailwayComposition:
         flext_api: FlextLdif,
         tmp_path: Path,
     ) -> None:
-        """Test complete FlextResult railway composition."""
+        """Test complete FlextCore.Result railway composition."""
         # Create LDAP data
         person_dn = f"cn=Railway Test,{clean_test_ou}"
         ldap_connection.add(

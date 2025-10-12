@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 from typing import TypeVar
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextCore
 
 from flext_ldif.models import FlextLdifModels
 
@@ -21,7 +21,7 @@ class TestValidators:
     """Validators for testing LDIF functionality."""
 
     @staticmethod
-    def validate_ldif_entry(entry: FlextLdifModels.Entry) -> FlextTypes.BoolDict:
+    def validate_ldif_entry(entry: FlextLdifModels.Entry) -> FlextCore.Types.BoolDict:
         """Validate a real LDIF entry object."""
         validations = {
             "has_dn": bool(entry.dn and str(entry.dn).strip()),
@@ -41,7 +41,7 @@ class TestValidators:
             attr_values = entry.get_attribute("objectClass")
             # Convert AttributeValues to list of strings
             if attr_values and isinstance(attr_values, list):
-                object_classes_list: FlextTypes.StringList = attr_values
+                object_classes_list: FlextCore.Types.StringList = attr_values
             else:
                 object_classes_list = []
             if "person" in object_classes_list:
@@ -78,8 +78,8 @@ class TestValidators:
         return bool(re.match(attr_pattern, attr_name))
 
     @staticmethod
-    def validate_result_success(result: FlextResult[T]) -> FlextTypes.Dict:
-        """Validate FlextResult success characteristics using flext-core patterns."""
+    def validate_result_success(result: FlextCore.Result[T]) -> FlextCore.Types.Dict:
+        """Validate FlextCore.Result success characteristics using flext-core patterns."""
         has_value = False
         value_type_name = None
         if result.is_success:
@@ -103,8 +103,8 @@ class TestValidators:
         }
 
     @staticmethod
-    def validate_result_failure(result: FlextResult[T]) -> FlextTypes.Dict:
-        """Validate FlextResult failure characteristics using flext-core patterns."""
+    def validate_result_failure(result: FlextCore.Result[T]) -> FlextCore.Types.Dict:
+        """Validate FlextCore.Result failure characteristics using flext-core patterns."""
         return {
             "is_failure": result.is_failure,
             "has_error": result.error is not None,
@@ -122,7 +122,7 @@ class TestValidators:
         }
 
     @staticmethod
-    def validate_ldif_content(content: str) -> FlextTypes.Dict:
+    def validate_ldif_content(content: str) -> FlextCore.Types.Dict:
         """Validate raw LDIF content format."""
         if not content:
             return {"is_valid": False, "reason": "Empty or non-string content"}
@@ -168,7 +168,7 @@ class TestValidators:
     def validate_file_operations(
         file_path: Path,
         expected_content: str,
-    ) -> FlextTypes.BoolDict:
+    ) -> FlextCore.Types.BoolDict:
         """Validate file operations for LDIF files."""
         validations = {
             "file_exists": file_path.exists(),
@@ -195,9 +195,9 @@ class TestValidators:
     @classmethod
     def validate_parsing_result(
         cls,
-        result: FlextResult[list[FlextLdifModels.Entry]],
+        result: FlextCore.Result[list[FlextLdifModels.Entry]],
         expected_count: int,
-    ) -> FlextTypes.Dict:
+    ) -> FlextCore.Types.Dict:
         """Validate parsing result comprehensively."""
         base_validation = cls.validate_result_success(result)
 
@@ -242,8 +242,8 @@ class TestValidators:
         assert validation["dn_format_valid"], f"Invalid DN format: {entry.dn}"
 
     @staticmethod
-    def assert_successful_result(result: FlextResult[T]) -> None:
-        """Assert that a FlextResult is successful (for use in tests)."""
+    def assert_successful_result(result: FlextCore.Result[T]) -> None:
+        """Assert that a FlextCore.Result is successful (for use in tests)."""
         validation = TestValidators.validate_result_success(result)
 
         assert validation["is_success"], f"Result failed: {result.error}"
@@ -252,9 +252,9 @@ class TestValidators:
 
     @staticmethod
     def validate_flext_result_composition(
-        results: list[FlextResult[object]],
-    ) -> FlextTypes.Dict:
-        """Validate FlextResult composition patterns."""
+        results: list[FlextCore.Result[object]],
+    ) -> FlextCore.Types.Dict:
+        """Validate FlextCore.Result composition patterns."""
         successes = [r for r in results if r.is_success]
         failures = [r for r in results if r.is_failure]
 
@@ -272,9 +272,9 @@ class TestValidators:
 
     @staticmethod
     def validate_flext_result_chain(
-        results: list[FlextResult[object]],
-    ) -> FlextTypes.Dict:
-        """Validate FlextResult chain operations."""
+        results: list[FlextCore.Result[object]],
+    ) -> FlextCore.Types.Dict:
+        """Validate FlextCore.Result chain operations."""
         if not results:
             return {
                 "is_valid_chain": True,
@@ -303,9 +303,9 @@ class TestValidators:
 
     @staticmethod
     def assert_flext_result_composition(
-        results: list[FlextResult[object]], expected_success_rate: float = 1.0
+        results: list[FlextCore.Result[object]], expected_success_rate: float = 1.0
     ) -> None:
-        """Assert FlextResult composition meets expectations."""
+        """Assert FlextCore.Result composition meets expectations."""
         composition = TestValidators.validate_flext_result_composition(results)
 
         success_rate_value = composition["success_rate"]
@@ -325,9 +325,9 @@ class TestValidators:
 
     @staticmethod
     def assert_flext_result_chain(
-        results: list[FlextResult[object]], *, expect_all_success: bool = True
+        results: list[FlextCore.Result[object]], *, expect_all_success: bool = True
     ) -> None:
-        """Assert FlextResult chain operations."""
+        """Assert FlextCore.Result chain operations."""
         chain_info = TestValidators.validate_flext_result_chain(results)
 
         if expect_all_success:

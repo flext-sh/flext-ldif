@@ -18,7 +18,7 @@ from __future__ import annotations
 import re
 from typing import ClassVar
 
-from flext_core import FlextResult
+from flext_core import FlextCore
 from pydantic import Field
 
 from flext_ldif.constants import FlextLdifConstants
@@ -74,7 +74,9 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         """
         return bool(self.ORACLE_OID_PATTERN.search(attr_definition))
 
-    def parse_attribute(self, attr_definition: str) -> FlextResult[FlextLdifTypes.Dict]:
+    def parse_attribute(
+        self, attr_definition: str
+    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
         """Parse Oracle OID attribute definition.
 
         OID uses RFC 4512 compliant schema format. Parses the definition
@@ -85,7 +87,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                             (without "attributetypes:" prefix)
 
         Returns:
-            FlextResult with parsed OID attribute data with metadata
+            FlextCore.Result with parsed OID attribute data with metadata
 
         """
         try:
@@ -155,10 +157,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 quirk_type="oid", original_format=attr_definition.strip()
             )
 
-            return FlextResult[FlextLdifTypes.Dict].ok(parsed_data)
+            return FlextCore.Result[FlextLdifTypes.Dict].ok(parsed_data)
 
         except Exception as e:
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextCore.Result[FlextLdifTypes.Dict].fail(
                 f"OID attribute parsing failed: {e}"
             )
 
@@ -174,7 +176,9 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         """
         return bool(self.ORACLE_OID_PATTERN.search(oc_definition))
 
-    def parse_objectclass(self, oc_definition: str) -> FlextResult[FlextLdifTypes.Dict]:
+    def parse_objectclass(
+        self, oc_definition: str
+    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
         """Parse Oracle OID objectClass definition.
 
         OID uses RFC 4512 compliant schema format. Parses the definition
@@ -185,7 +189,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                           (without "objectclasses:" prefix)
 
         Returns:
-            FlextResult with parsed OID objectClass data with metadata
+            FlextCore.Result with parsed OID objectClass data with metadata
 
         """
         try:
@@ -256,23 +260,23 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 quirk_type="oid", original_format=oc_definition.strip()
             )
 
-            return FlextResult[FlextLdifTypes.Dict].ok(parsed_data)
+            return FlextCore.Result[FlextLdifTypes.Dict].ok(parsed_data)
 
         except Exception as e:
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextCore.Result[FlextLdifTypes.Dict].fail(
                 f"OID objectClass parsing failed: {e}"
             )
 
     def convert_attribute_to_rfc(
         self, attr_data: FlextLdifTypes.Dict
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
         """Convert OID attribute to RFC-compliant format.
 
         Args:
             attr_data: OID attribute data
 
         Returns:
-            FlextResult with RFC-compliant attribute data
+            FlextCore.Result with RFC-compliant attribute data
 
         """
         try:
@@ -296,23 +300,23 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 ),
             }
 
-            return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
+            return FlextCore.Result[FlextLdifTypes.Dict].ok(rfc_data)
 
         except Exception as e:
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextCore.Result[FlextLdifTypes.Dict].fail(
                 f"OID→RFC conversion failed: {e}"
             )
 
     def convert_objectclass_to_rfc(
         self, oc_data: FlextLdifTypes.Dict
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
         """Convert OID objectClass to RFC-compliant format.
 
         Args:
             oc_data: OID objectClass data
 
         Returns:
-            FlextResult with RFC-compliant objectClass data
+            FlextCore.Result with RFC-compliant objectClass data
 
         """
         try:
@@ -341,16 +345,16 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 ),
             }
 
-            return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
+            return FlextCore.Result[FlextLdifTypes.Dict].ok(rfc_data)
 
         except Exception as e:
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextCore.Result[FlextLdifTypes.Dict].fail(
                 f"OID→RFC conversion failed: {e}"
             )
 
     def write_attribute_to_rfc(
         self, attr_data: FlextLdifTypes.Dict
-    ) -> FlextResult[str]:
+    ) -> FlextCore.Result[str]:
         """Write OID attribute data to RFC 4512 compliant string format.
 
         Converts parsed attribute dictionary back to RFC 4512 schema definition format.
@@ -360,7 +364,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             attr_data: Parsed OID attribute data dictionary
 
         Returns:
-            FlextResult with RFC 4512 formatted attribute definition string
+            FlextCore.Result with RFC 4512 formatted attribute definition string
 
         Example:
             Input: {"oid": "2.16.840.1.113894.1.1.1", "name": "orclguid", "syntax": "1.3.6.1.4.1.1466.115.121.1.15"}
@@ -375,16 +379,16 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     isinstance(metadata, FlextLdifModels.QuirkMetadata)
                     and metadata.original_format
                 ):
-                    return FlextResult[str].ok(metadata.original_format)
+                    return FlextCore.Result[str].ok(metadata.original_format)
                 if isinstance(metadata, dict) and "original_format" in metadata:
-                    return FlextResult[str].ok(str(metadata["original_format"]))
+                    return FlextCore.Result[str].ok(str(metadata["original_format"]))
 
             # Build RFC 4512 attribute definition from scratch
             parts = []
 
             # Start with OID (required)
             if "oid" not in attr_data:
-                return FlextResult[str].fail("Missing required 'oid' field")
+                return FlextCore.Result[str].fail("Missing required 'oid' field")
             parts.append(f"( {attr_data['oid']}")
 
             # Add NAME (required)
@@ -437,14 +441,16 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             # Close the definition
             rfc_string = " ".join(parts) + " )"
 
-            return FlextResult[str].ok(rfc_string)
+            return FlextCore.Result[str].ok(rfc_string)
 
         except Exception as e:
-            return FlextResult[str].fail(f"Failed to write OID attribute to RFC: {e}")
+            return FlextCore.Result[str].fail(
+                f"Failed to write OID attribute to RFC: {e}"
+            )
 
     def write_objectclass_to_rfc(
         self, oc_data: FlextLdifTypes.Dict
-    ) -> FlextResult[str]:
+    ) -> FlextCore.Result[str]:
         """Write OID objectClass data to RFC 4512 compliant string format.
 
         Converts parsed objectClass dictionary back to RFC 4512 schema definition format.
@@ -454,7 +460,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             oc_data: Parsed OID objectClass data dictionary
 
         Returns:
-            FlextResult with RFC 4512 formatted objectClass definition string
+            FlextCore.Result with RFC 4512 formatted objectClass definition string
 
         Example:
             Input: {"oid": "2.16.840.1.113894.2.1.1", "name": "orclContainer", "kind": "STRUCTURAL", "must": ["cn"], "may": ["description"]}
@@ -469,16 +475,16 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     isinstance(metadata, FlextLdifModels.QuirkMetadata)
                     and metadata.original_format
                 ):
-                    return FlextResult[str].ok(metadata.original_format)
+                    return FlextCore.Result[str].ok(metadata.original_format)
                 if isinstance(metadata, dict) and "original_format" in metadata:
-                    return FlextResult[str].ok(str(metadata["original_format"]))
+                    return FlextCore.Result[str].ok(str(metadata["original_format"]))
 
             # Build RFC 4512 objectClass definition from scratch
             parts = []
 
             # Start with OID (required)
             if "oid" not in oc_data:
-                return FlextResult[str].fail("Missing required 'oid' field")
+                return FlextCore.Result[str].fail("Missing required 'oid' field")
             parts.append(f"( {oc_data['oid']}")
 
             # Add NAME (required)
@@ -534,14 +540,16 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             # Close the definition
             rfc_string = " ".join(parts) + " )"
 
-            return FlextResult[str].ok(rfc_string)
+            return FlextCore.Result[str].ok(rfc_string)
 
         except Exception as e:
-            return FlextResult[str].fail(f"Failed to write OID objectClass to RFC: {e}")
+            return FlextCore.Result[str].fail(
+                f"Failed to write OID objectClass to RFC: {e}"
+            )
 
     def extract_schemas_from_ldif(
         self, ldif_content: str
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
         """Extract and parse all schema definitions from LDIF content.
 
         Strategy pattern: OID-specific approach to extract attributeTypes and objectClasses
@@ -551,7 +559,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             ldif_content: Raw LDIF content containing schema definitions
 
         Returns:
-            FlextResult with dict containing 'attributes' and 'objectclasses' lists
+            FlextCore.Result with dict containing 'attributes' and 'objectclasses' lists
 
         """
         try:
@@ -576,26 +584,26 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     if result.is_success:
                         objectclasses.append(result.unwrap())
 
-            return FlextResult[FlextLdifTypes.Dict].ok({
+            return FlextCore.Result[FlextLdifTypes.Dict].ok({
                 "attributes": attributes,
                 "objectclasses": objectclasses,
             })
 
         except Exception as e:
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextCore.Result[FlextLdifTypes.Dict].fail(
                 f"OID schema extraction failed: {e}"
             )
 
     def convert_attribute_from_rfc(
         self, rfc_data: FlextLdifTypes.Dict
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
         """Convert RFC-compliant attribute to OID-specific format.
 
         Args:
             rfc_data: RFC-compliant attribute data
 
         Returns:
-            FlextResult with OID attribute data
+            FlextCore.Result with OID attribute data
 
         """
         try:
@@ -606,23 +614,23 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifConstants.ServerTypes.OID
             )
 
-            return FlextResult[FlextLdifTypes.Dict].ok(oid_data)
+            return FlextCore.Result[FlextLdifTypes.Dict].ok(oid_data)
 
         except Exception as e:
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextCore.Result[FlextLdifTypes.Dict].fail(
                 f"RFC→OID attribute conversion failed: {e}"
             )
 
     def convert_objectclass_from_rfc(
         self, rfc_data: FlextLdifTypes.Dict
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
         """Convert RFC-compliant objectClass to OID-specific format.
 
         Args:
             rfc_data: RFC-compliant objectClass data
 
         Returns:
-            FlextResult with OID objectClass data
+            FlextCore.Result with OID objectClass data
 
         """
         try:
@@ -633,10 +641,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifConstants.ServerTypes.OID
             )
 
-            return FlextResult[FlextLdifTypes.Dict].ok(oid_data)
+            return FlextCore.Result[FlextLdifTypes.Dict].ok(oid_data)
 
         except Exception as e:
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextCore.Result[FlextLdifTypes.Dict].fail(
                 f"RFC→OID objectClass conversion failed: {e}"
             )
 
@@ -677,7 +685,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             """
             return acl_line.startswith(("orclaci:", "orclentrylevelaci:"))
 
-        def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifTypes.Dict]:
+        def parse_acl(self, acl_line: str) -> FlextCore.Result[FlextLdifTypes.Dict]:
             """Parse Oracle OID ACL definition.
 
             Parses orclaci and orclentrylevelaci formats from real OID fixtures:
@@ -688,7 +696,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 acl_line: ACL definition line
 
             Returns:
-                FlextResult with parsed OID ACL data with metadata
+                FlextCore.Result with parsed OID ACL data with metadata
 
             """
             try:
@@ -753,23 +761,23 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     quirk_type="oid", original_format=acl_line
                 )
 
-                return FlextResult[FlextLdifTypes.Dict].ok(acl_data)
+                return FlextCore.Result[FlextLdifTypes.Dict].ok(acl_data)
 
             except Exception as e:
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextCore.Result[FlextLdifTypes.Dict].fail(
                     f"OID ACL parsing failed: {e}"
                 )
 
         def convert_acl_to_rfc(
             self, acl_data: FlextLdifTypes.Dict
-        ) -> FlextResult[FlextLdifTypes.Dict]:
+        ) -> FlextCore.Result[FlextLdifTypes.Dict]:
             """Convert OID ACL to RFC-compliant format.
 
             Args:
                 acl_data: OID ACL data
 
             Returns:
-                FlextResult with RFC-compliant ACL data
+                FlextCore.Result with RFC-compliant ACL data
 
             """
             try:
@@ -782,23 +790,23 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
 
-                return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
+                return FlextCore.Result[FlextLdifTypes.Dict].ok(rfc_data)
 
             except Exception as e:
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextCore.Result[FlextLdifTypes.Dict].fail(
                     f"OID ACL→RFC conversion failed: {e}"
                 )
 
         def convert_acl_from_rfc(
             self, acl_data: FlextLdifTypes.Dict
-        ) -> FlextResult[FlextLdifTypes.Dict]:
+        ) -> FlextCore.Result[FlextLdifTypes.Dict]:
             """Convert RFC ACL to OID-specific format.
 
             Args:
                 acl_data: RFC-compliant ACL data
 
             Returns:
-                FlextResult with OID ACL data
+                FlextCore.Result with OID ACL data
 
             """
             try:
@@ -810,14 +818,16 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
 
-                return FlextResult[FlextLdifTypes.Dict].ok(oid_data)
+                return FlextCore.Result[FlextLdifTypes.Dict].ok(oid_data)
 
             except Exception as e:
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextCore.Result[FlextLdifTypes.Dict].fail(
                     f"RFC→OID ACL conversion failed: {e}"
                 )
 
-        def write_acl_to_rfc(self, acl_data: FlextLdifTypes.Dict) -> FlextResult[str]:
+        def write_acl_to_rfc(
+            self, acl_data: FlextLdifTypes.Dict
+        ) -> FlextCore.Result[str]:
             """Write OID ACL data to Oracle ACL string format.
 
             Converts parsed ACL dictionary back to OID ACL format string.
@@ -827,7 +837,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 acl_data: Parsed OID ACL data dictionary
 
             Returns:
-                FlextResult with OID ACL formatted string
+                FlextCore.Result with OID ACL formatted string
 
             Example:
                 Input: {"type": "standard", "target": "entry", "by_clauses": [...]}
@@ -842,9 +852,11 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                         isinstance(metadata, FlextLdifModels.QuirkMetadata)
                         and metadata.original_format
                     ):
-                        return FlextResult[str].ok(metadata.original_format)
+                        return FlextCore.Result[str].ok(metadata.original_format)
                     if isinstance(metadata, dict) and "original_format" in metadata:
-                        return FlextResult[str].ok(str(metadata["original_format"]))
+                        return FlextCore.Result[str].ok(
+                            str(metadata["original_format"])
+                        )
 
                 # Build OID ACL from scratch
                 parts = []
@@ -891,14 +903,16 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 acl_content = " ".join(parts)
                 acl_string = f"{acl_prefix} {acl_content}"
 
-                return FlextResult[str].ok(acl_string)
+                return FlextCore.Result[str].ok(acl_string)
 
             except Exception as e:
-                return FlextResult[str].fail(f"Failed to write OID ACL to RFC: {e}")
+                return FlextCore.Result[str].fail(
+                    f"Failed to write OID ACL to RFC: {e}"
+                )
 
         def extract_acls_from_ldif(
             self, ldif_content: str
-        ) -> FlextResult[list[FlextLdifTypes.Dict]]:
+        ) -> FlextCore.Result[list[FlextLdifTypes.Dict]]:
             """Strategy pattern: OID-specific approach to extract ACLs from LDIF entries.
 
             OID ACLs use:
@@ -909,7 +923,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 ldif_content: LDIF content containing ACL definitions
 
             Returns:
-                FlextResult containing list of parsed ACL dictionaries
+                FlextCore.Result containing list of parsed ACL dictionaries
 
             Examples:
                 >>> ldif_text = '''
@@ -925,7 +939,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             """
             try:
                 acls = []
-                current_acl: list[str] = []
+                current_acl: FlextCore.Types.StringList = []
                 in_multiline_acl = False
 
                 for line in ldif_content.split("\n"):
@@ -960,10 +974,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     if result.is_success:
                         acls.append(result.unwrap())
 
-                return FlextResult[list[FlextLdifTypes.Dict]].ok(acls)
+                return FlextCore.Result[list[FlextLdifTypes.Dict]].ok(acls)
 
             except Exception as e:
-                return FlextResult[list[FlextLdifTypes.Dict]].fail(
+                return FlextCore.Result[list[FlextLdifTypes.Dict]].fail(
                     f"Failed to extract OID ACLs from LDIF: {e}"
                 )
 
@@ -996,7 +1010,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         def can_handle_entry(
             self,
             entry_dn: str,
-            attributes: dict[str, object],
+            attributes: FlextCore.Types.Dict,
         ) -> bool:
             """Check if this quirk should handle the entry.
 
@@ -1044,8 +1058,8 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             return has_oid_attrs or has_oid_classes or has_oid_dn_pattern
 
         def process_entry(
-            self, entry_dn: str, attributes: dict[str, object]
-        ) -> FlextResult[FlextLdifTypes.Dict]:
+            self, entry_dn: str, attributes: FlextCore.Types.Dict
+        ) -> FlextCore.Result[FlextLdifTypes.Dict]:
             """Process entry for Oracle OID format.
 
             Args:
@@ -1053,7 +1067,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 attributes: Entry attributes
 
             Returns:
-                FlextResult with processed entry data
+                FlextCore.Result with processed entry data
 
             """
             try:
@@ -1072,23 +1086,23 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 }
                 processed_entry.update(attributes)
 
-                return FlextResult[FlextLdifTypes.Dict].ok(processed_entry)
+                return FlextCore.Result[FlextLdifTypes.Dict].ok(processed_entry)
 
             except Exception as e:
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextCore.Result[FlextLdifTypes.Dict].fail(
                     f"OID entry processing failed: {e}"
                 )
 
         def convert_entry_to_rfc(
             self, entry_data: FlextLdifTypes.Dict
-        ) -> FlextResult[FlextLdifTypes.Dict]:
+        ) -> FlextCore.Result[FlextLdifTypes.Dict]:
             """Convert Oracle OID entry to RFC-compliant format.
 
             Args:
                 entry_data: Oracle OID entry data
 
             Returns:
-                FlextResult with RFC-compliant entry data
+                FlextCore.Result with RFC-compliant entry data
 
             """
             try:
@@ -1110,23 +1124,23 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 for attr in oid_operational_attrs:
                     rfc_data.pop(attr, None)
 
-                return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
+                return FlextCore.Result[FlextLdifTypes.Dict].ok(rfc_data)
 
             except Exception as e:
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextCore.Result[FlextLdifTypes.Dict].fail(
                     f"OID entry→RFC conversion failed: {e}"
                 )
 
         def convert_entry_from_rfc(
             self, entry_data: FlextLdifTypes.Dict
-        ) -> FlextResult[FlextLdifTypes.Dict]:
+        ) -> FlextCore.Result[FlextLdifTypes.Dict]:
             """Convert RFC-compliant entry to Oracle OID format.
 
             Args:
                 entry_data: RFC-compliant entry data
 
             Returns:
-                FlextResult with OID entry data
+                FlextCore.Result with OID entry data
 
             """
             try:
@@ -1137,16 +1151,16 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     FlextLdifConstants.ServerTypes.OID
                 )
 
-                return FlextResult[FlextLdifTypes.Dict].ok(oid_entry)
+                return FlextCore.Result[FlextLdifTypes.Dict].ok(oid_entry)
 
             except Exception as e:
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextCore.Result[FlextLdifTypes.Dict].fail(
                     f"RFC→OID entry conversion failed: {e}"
                 )
 
         def write_entry_to_ldif(
             self, entry_data: FlextLdifTypes.Dict
-        ) -> FlextResult[str]:
+        ) -> FlextCore.Result[str]:
             r"""Write OID entry data to standard LDIF string format.
 
             Converts parsed entry dictionary to LDIF format string.
@@ -1156,7 +1170,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 entry_data: Parsed OID entry data dictionary
 
             Returns:
-                FlextResult with LDIF formatted entry string
+                FlextCore.Result with LDIF formatted entry string
 
             Example:
                 Input: {"dn": "cn=test,dc=example,dc=com", "cn": ["test"], "objectClass": ["person"]}
@@ -1166,7 +1180,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             try:
                 # Check for required DN field
                 if FlextLdifConstants.DictKeys.DN not in entry_data:
-                    return FlextResult[str].fail("Missing required 'dn' field")
+                    return FlextCore.Result[str].fail("Missing required 'dn' field")
 
                 dn = entry_data[FlextLdifConstants.DictKeys.DN]
                 ldif_lines = [f"dn: {dn}"]
@@ -1219,14 +1233,16 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 # Join with newlines and add trailing newline
                 ldif_string = "\n".join(ldif_lines) + "\n"
 
-                return FlextResult[str].ok(ldif_string)
+                return FlextCore.Result[str].ok(ldif_string)
 
             except Exception as e:
-                return FlextResult[str].fail(f"Failed to write OID entry to LDIF: {e}")
+                return FlextCore.Result[str].fail(
+                    f"Failed to write OID entry to LDIF: {e}"
+                )
 
         def extract_entries_from_ldif(
             self, ldif_content: str
-        ) -> FlextResult[list[FlextLdifTypes.Dict]]:
+        ) -> FlextCore.Result[list[FlextLdifTypes.Dict]]:
             """Strategy pattern: OID-specific approach to extract entries from LDIF.
 
             Handles:
@@ -1240,7 +1256,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 ldif_content: LDIF content containing directory entries
 
             Returns:
-                FlextResult containing list of parsed entry dictionaries
+                FlextCore.Result containing list of parsed entry dictionaries
 
             Examples:
                 >>> ldif_text = '''
@@ -1263,7 +1279,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 entries = []
                 current_entry: FlextLdifTypes.Dict = {}
                 current_attr: str | None = None
-                current_values: list[str] = []
+                current_values: FlextCore.Types.StringList = []
 
                 for line in ldif_content.split("\n"):
                     # Empty line indicates end of entry
@@ -1372,10 +1388,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     if result.is_success:
                         entries.append(result.unwrap())
 
-                return FlextResult[list[FlextLdifTypes.Dict]].ok(entries)
+                return FlextCore.Result[list[FlextLdifTypes.Dict]].ok(entries)
 
             except Exception as e:
-                return FlextResult[list[FlextLdifTypes.Dict]].fail(
+                return FlextCore.Result[list[FlextLdifTypes.Dict]].fail(
                     f"Failed to extract OID entries from LDIF: {e}"
                 )
 

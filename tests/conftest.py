@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-from flext_core import FlextConstants, FlextResult, FlextTypes
+from flext_core import FlextCore
 
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.rfc.rfc_ldif_parser import FlextLdifRfcLdifParser
@@ -74,10 +74,10 @@ def set_test_environment() -> Generator[None]:
 
 # LDIF processing fixtures - optimized with real services
 @pytest.fixture
-def ldif_processor_config() -> FlextTypes.Dict:
+def ldif_processor_config() -> FlextCore.Types.Dict:
     """LDIF processor configuration for testing."""
     return {
-        "encoding": FlextConstants.Mixins.DEFAULT_ENCODING,
+        "encoding": FlextCore.Constants.Mixins.DEFAULT_ENCODING,
         "strict_parsing": True,
         "max_entries": 10000,
         "validate_dn": True,
@@ -211,7 +211,7 @@ def real_writer_service(
 
 
 @pytest.fixture
-def integration_services() -> FlextTypes.Dict:
+def integration_services() -> FlextCore.Types.Dict:
     """Complete service set for integration testing."""
     return RealServiceFactory.services_for_integration_test()
 
@@ -220,7 +220,7 @@ def integration_services() -> FlextTypes.Dict:
 @pytest.fixture
 def assert_result_success(
     flext_matchers: LocalTestMatchers,
-) -> Callable[[FlextResult[object]], None]:
+) -> Callable[[FlextCore.Result[object]], None]:
     """Fixture providing result success assertion."""
     return flext_matchers.assert_result_success
 
@@ -228,7 +228,7 @@ def assert_result_success(
 @pytest.fixture
 def assert_result_failure(
     flext_matchers: LocalTestMatchers,
-) -> Callable[[FlextResult[object]], None]:
+) -> Callable[[FlextCore.Result[object]], None]:
     """Fixture providing result failure assertion."""
     return flext_matchers.assert_result_failure
 
@@ -236,11 +236,11 @@ def assert_result_failure(
 # Enhanced flext-core result validation fixtures
 @pytest.fixture
 def validate_flext_result_success() -> Callable[
-    [FlextResult[object]], FlextTypes.BoolDict
+    [FlextCore.Result[object]], FlextCore.Types.BoolDict
 ]:
-    """Validate FlextResult success characteristics using flext-core patterns."""
+    """Validate FlextCore.Result success characteristics using flext-core patterns."""
 
-    def validator(result: FlextResult[object]) -> FlextTypes.BoolDict:
+    def validator(result: FlextCore.Result[object]) -> FlextCore.Types.BoolDict:
         return {
             "is_success": result.is_success,
             "has_value": result.is_success and result.value is not None,
@@ -254,11 +254,11 @@ def validate_flext_result_success() -> Callable[
 
 @pytest.fixture
 def validate_flext_result_failure() -> Callable[
-    [FlextResult[object]], FlextTypes.BoolDict
+    [FlextCore.Result[object]], FlextCore.Types.BoolDict
 ]:
-    """Validate FlextResult failure characteristics using flext-core patterns."""
+    """Validate FlextCore.Result failure characteristics using flext-core patterns."""
 
-    def validator(result: FlextResult[object]) -> FlextTypes.BoolDict:
+    def validator(result: FlextCore.Result[object]) -> FlextCore.Types.BoolDict:
         return {
             "is_failure": result.is_failure,
             "has_error": result.error is not None,
@@ -272,11 +272,11 @@ def validate_flext_result_failure() -> Callable[
 
 @pytest.fixture
 def flext_result_composition_helper() -> Callable[
-    [list[FlextResult[object]]], FlextTypes.Dict
+    [list[FlextCore.Result[object]]], FlextCore.Types.Dict
 ]:
-    """Helper for testing FlextResult composition patterns."""
+    """Helper for testing FlextCore.Result composition patterns."""
 
-    def helper(results: list[FlextResult[object]]) -> FlextTypes.Dict:
+    def helper(results: list[FlextCore.Result[object]]) -> FlextCore.Types.Dict:
         successes = [r for r in results if r.is_success]
         failures = [r for r in results if r.is_failure]
 
@@ -295,7 +295,7 @@ def flext_result_composition_helper() -> Callable[
 
 # Schema validation fixtures
 @pytest.fixture
-def ldap_schema_config() -> FlextTypes.Dict:
+def ldap_schema_config() -> FlextCore.Types.Dict:
     """LDAP schema configuration for validation."""
     return {
         "validate_object_classes": True,
@@ -320,7 +320,7 @@ def ldap_schema_config() -> FlextTypes.Dict:
 
 # Entry transformation fixtures
 @pytest.fixture
-def transformation_rules() -> FlextTypes.Dict:
+def transformation_rules() -> FlextCore.Types.Dict:
     """Provide transformation rules for LDIF processing."""
 
     def _transform_mail(x: str | float | None) -> str:
@@ -353,7 +353,7 @@ def transformation_rules() -> FlextTypes.Dict:
 
 # Filter fixtures
 @pytest.fixture
-def ldif_filters() -> FlextTypes.Dict:
+def ldif_filters() -> FlextCore.Types.Dict:
     """LDIF entry filters for testing."""
     return {
         "include_object_classes": ["inetOrgPerson", "groupOfNames"],
@@ -368,7 +368,7 @@ def ldif_filters() -> FlextTypes.Dict:
 
 # Statistics fixtures
 @pytest.fixture
-def expected_ldif_stats() -> FlextTypes.Dict:
+def expected_ldif_stats() -> FlextCore.Types.Dict:
     """Provide expected LDIF processing statistics."""
     return {
         "total_entries": 4,
@@ -406,7 +406,7 @@ objectClass: person
 
 # Performance fixtures
 @pytest.fixture
-def large_ldif_config() -> FlextTypes.Dict:
+def large_ldif_config() -> FlextCore.Types.Dict:
     """Provide configuration for large LDIF processing tests."""
     return {
         "batch_size": 1000,
@@ -423,20 +423,20 @@ class LocalTestMatchers:
     """Local test matchers to replace FlextTestsMatchers."""
 
     @staticmethod
-    def assert_result_success(result: FlextResult[object]) -> None:
-        """Assert that a FlextResult is successful."""
+    def assert_result_success(result: FlextCore.Result[object]) -> None:
+        """Assert that a FlextCore.Result is successful."""
         assert result.is_success, f"Expected success but got failure: {result.error}"
 
     @staticmethod
-    def assert_result_failure(result: FlextResult[object]) -> None:
-        """Assert that a FlextResult is a failure."""
+    def assert_result_failure(result: FlextCore.Result[object]) -> None:
+        """Assert that a FlextCore.Result is a failure."""
         assert result.is_failure, f"Expected failure but got success: {result.value}"
 
 
 class LocalTestDomains:
     """Local test domains to replace FlextTestsDomains."""
 
-    def create_configuration(self, **kwargs: object) -> FlextTypes.Dict:
+    def create_configuration(self, **kwargs: object) -> FlextCore.Types.Dict:
         """Create a test configuration dictionary."""
         return kwargs
 
@@ -455,19 +455,19 @@ def flext_matchers() -> LocalTestMatchers:
 
 # LDIF-specific test data using FlextTests patterns
 @pytest.fixture
-def ldif_test_entries() -> list[FlextTypes.Dict]:
+def ldif_test_entries() -> list[FlextCore.Types.Dict]:
     """Generate LDIF test entries using FlextTests domain patterns."""
     # Create realistic LDIF entries using domain patterns
     # Create test users using FlextTestsDomains patterns
-    users: list[FlextTypes.StringDict] = [
+    users: list[FlextCore.Types.StringDict] = [
         {"name": "Test User 1", "email": "user1@example.com"},
         {"name": "Test User 2", "email": "user2@example.com"},
         {"name": "Test User 3", "email": "user3@example.com"},
     ]
-    entries: list[FlextTypes.Dict] = []
+    entries: list[FlextCore.Types.Dict] = []
 
     for i, user in enumerate(users):
-        entry: FlextTypes.Dict = {
+        entry: FlextCore.Types.Dict = {
             "dn": f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com",
             "attributes": {
                 "objectClass": ["inetOrgPerson", "person"],
@@ -486,7 +486,7 @@ def ldif_test_entries() -> list[FlextTypes.Dict]:
         entries.append(entry)
 
     # Add a group entry
-    group_entry: FlextTypes.Dict = {
+    group_entry: FlextCore.Types.Dict = {
         "dn": "cn=testgroup,ou=groups,dc=example,dc=com",
         "attributes": {
             "objectClass": ["groupOfNames"],
@@ -501,9 +501,9 @@ def ldif_test_entries() -> list[FlextTypes.Dict]:
 
 
 @pytest.fixture
-def ldif_test_content(ldif_test_entries: list[FlextTypes.Dict]) -> str:
+def ldif_test_content(ldif_test_entries: list[FlextCore.Types.Dict]) -> str:
     """Generate LDIF content string from test entries."""
-    content_lines: FlextTypes.StringList = []
+    content_lines: FlextCore.Types.StringList = []
 
     for entry in ldif_test_entries:
         content_lines.append(f"dn: {entry['dn']}")
@@ -511,13 +511,13 @@ def ldif_test_content(ldif_test_entries: list[FlextTypes.Dict]) -> str:
         assert isinstance(attributes, dict), "attributes must be a dictionary"
 
         # Cast to proper type for type checker
-        typed_attributes = cast("dict[str, FlextTypes.StringList]", attributes)
+        typed_attributes = cast("dict[str, FlextCore.Types.StringList]", attributes)
 
         # Process attributes - all values are lists of strings based on actual structure
         for attr_key, attr_values in typed_attributes.items():
             attr_name: str = str(attr_key)
             # Based on actual code structure, all attribute values are lists
-            # attr_values is already typed as FlextTypes.StringList from the cast above
+            # attr_values is already typed as FlextCore.Types.StringList from the cast above
             content_lines.extend(
                 f"{attr_name}: {value_item!s}" for value_item in attr_values
             )
@@ -527,7 +527,7 @@ def ldif_test_content(ldif_test_entries: list[FlextTypes.Dict]) -> str:
 
 
 @pytest.fixture
-def ldif_error_scenarios() -> FlextTypes.StringDict:
+def ldif_error_scenarios() -> FlextCore.Types.StringDict:
     """Error scenarios for LDIF processing tests."""
     return {
         "invalid_dn": "dn: invalid-dn-format\nobjectClass: person\n",
@@ -546,7 +546,7 @@ def ldif_error_scenarios() -> FlextTypes.StringDict:
 
 
 @pytest.fixture
-def ldif_performance_config(flext_domains: LocalTestDomains) -> FlextTypes.Dict:
+def ldif_performance_config(flext_domains: LocalTestDomains) -> FlextCore.Types.Dict:
     """Performance testing configuration using FlextTests patterns."""
     config = flext_domains.create_configuration(
         batch_size=1000,

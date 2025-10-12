@@ -12,49 +12,53 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextExceptions, FlextResult
+from flext_core import FlextCore
 
 
-class FlextLdifExceptions(FlextExceptions):
-    """LDIF-specific exceptions extending FlextExceptions.
+class FlextLdifExceptions(FlextCore.Exceptions):
+    """LDIF-specific exceptions extending FlextCore.Exceptions.
 
     Provides LDIF domain-specific exception classes for all LDIF processing
     error scenarios while maintaining compatibility with flext-core
     exception hierarchy.
 
-    All LDIF exceptions inherit from FlextExceptions specialized base classes
+    All LDIF exceptions inherit from FlextCore.Exceptions specialized base classes
     and include proper error codes, context, correlation tracking, and
     standardized helper methods for context management.
     """
 
     # =========================================================================
-    # FACTORY METHODS - Create FlextResult.fail() with specific exceptions
+    # FACTORY METHODS - Create FlextCore.Result.fail() with specific exceptions
     # =========================================================================
 
     @staticmethod
-    def validation_error(message: str) -> FlextResult[object]:
+    def validation_error(message: str) -> FlextCore.Result[object]:
         """Create validation error result."""
-        return FlextResult[object].fail(message, error_code="LDIF_VALIDATION_ERROR")
+        return FlextCore.Result[object].fail(
+            message, error_code="LDIF_VALIDATION_ERROR"
+        )
 
     @staticmethod
-    def parse_error(message: str) -> FlextResult[object]:
+    def parse_error(message: str) -> FlextCore.Result[object]:
         """Create parse error result."""
-        return FlextResult[object].fail(message, error_code="LDIF_PARSE_ERROR")
+        return FlextCore.Result[object].fail(message, error_code="LDIF_PARSE_ERROR")
 
     @staticmethod
-    def processing_error(message: str) -> FlextResult[object]:
+    def processing_error(message: str) -> FlextCore.Result[object]:
         """Create processing error result."""
-        return FlextResult[object].fail(message, error_code="LDIF_PROCESSING_ERROR")
+        return FlextCore.Result[object].fail(
+            message, error_code="LDIF_PROCESSING_ERROR"
+        )
 
     @staticmethod
-    def file_error(message: str) -> FlextResult[object]:
+    def file_error(message: str) -> FlextCore.Result[object]:
         """Create file error result."""
-        return FlextResult[object].fail(message, error_code="LDIF_FILE_ERROR")
+        return FlextCore.Result[object].fail(message, error_code="LDIF_FILE_ERROR")
 
     @staticmethod
     def _extract_common_kwargs(
-        kwargs: dict[str, object],
-    ) -> tuple[dict[str, object], str | None, str | None]:
+        kwargs: FlextCore.Types.Dict,
+    ) -> tuple[FlextCore.Types.Dict, str | None, str | None]:
         """Extract common keyword arguments from kwargs."""
         context = kwargs.get("context", {})
         correlation_id = kwargs.get("correlation_id")
@@ -67,90 +71,98 @@ class FlextLdifExceptions(FlextExceptions):
 
     @staticmethod
     def _build_context(
-        base_context: dict[str, object], **ldif_fields: object
-    ) -> dict[str, object]:
+        base_context: FlextCore.Types.Dict, **ldif_fields: object
+    ) -> FlextCore.Types.Dict:
         """Build context with LDIF-specific fields."""
         context = base_context.copy()
         context.update(ldif_fields)
         return context
 
     @staticmethod
-    def configuration_error(message: str) -> FlextResult[object]:
+    def configuration_error(message: str) -> FlextCore.Result[object]:
         """Create configuration error result."""
-        return FlextResult[object].fail(message, error_code="LDIF_CONFIGURATION_ERROR")
+        return FlextCore.Result[object].fail(
+            message, error_code="LDIF_CONFIGURATION_ERROR"
+        )
 
     @staticmethod
-    def connection_error(message: str) -> FlextResult[object]:
+    def connection_error(message: str) -> FlextCore.Result[object]:
         """Create connection error result."""
-        return FlextResult[object].fail(message, error_code="LDIF_CONNECTION_ERROR")
+        return FlextCore.Result[object].fail(
+            message, error_code="LDIF_CONNECTION_ERROR"
+        )
 
     @staticmethod
-    def timeout_error(message: str) -> FlextResult[object]:
+    def timeout_error(message: str) -> FlextCore.Result[object]:
         """Create timeout error result."""
-        return FlextResult[object].fail(message, error_code="LDIF_TIMEOUT_ERROR")
+        return FlextCore.Result[object].fail(message, error_code="LDIF_TIMEOUT_ERROR")
 
     @staticmethod
-    def authentication_error(message: str) -> FlextResult[object]:
+    def authentication_error(message: str) -> FlextCore.Result[object]:
         """Create authentication error result."""
-        return FlextResult[object].fail(message, error_code="LDIF_AUTHENTICATION_ERROR")
+        return FlextCore.Result[object].fail(
+            message, error_code="LDIF_AUTHENTICATION_ERROR"
+        )
 
     @staticmethod
-    def error(message: str) -> FlextResult[object]:
+    def error(message: str) -> FlextCore.Result[object]:
         """Create generic error result."""
-        return FlextResult[object].fail(message, error_code="LDIF_ERROR")
+        return FlextCore.Result[object].fail(message, error_code="LDIF_ERROR")
 
     @staticmethod
-    def entry_error(message: str) -> FlextResult[object]:
+    def entry_error(message: str) -> FlextCore.Result[object]:
         """Create entry error result."""
-        return FlextResult[object].fail(message, error_code="LDIF_ENTRY_ERROR")
+        return FlextCore.Result[object].fail(message, error_code="LDIF_ENTRY_ERROR")
 
     @staticmethod
-    def dn_validation_error(message: str) -> FlextResult[object]:
+    def dn_validation_error(message: str) -> FlextCore.Result[object]:
         """Create DN validation error result."""
-        return FlextResult[object].fail(message, error_code="DN_VALIDATION_ERROR")
+        return FlextCore.Result[object].fail(message, error_code="DN_VALIDATION_ERROR")
 
     @staticmethod
-    def attribute_validation_error(message: str) -> FlextResult[object]:
+    def attribute_validation_error(message: str) -> FlextCore.Result[object]:
         """Create attribute validation error result."""
-        return FlextResult[object].fail(
+        return FlextCore.Result[object].fail(
             message, error_code="ATTRIBUTE_VALIDATION_ERROR"
         )
 
     @staticmethod
-    def encoding_error(message: str) -> FlextResult[object]:
+    def encoding_error(message: str) -> FlextCore.Result[object]:
         """Create encoding error result."""
-        return FlextResult[object].fail(message, error_code="ENCODING_ERROR")
+        return FlextCore.Result[object].fail(message, error_code="ENCODING_ERROR")
 
     @staticmethod
-    def url_validation_error(message: str) -> FlextResult[object]:
+    def url_validation_error(message: str) -> FlextCore.Result[object]:
         """Create URL validation error result."""
-        return FlextResult[object].fail(message, error_code="URL_VALIDATION_ERROR")
+        return FlextCore.Result[object].fail(message, error_code="URL_VALIDATION_ERROR")
 
     @staticmethod
-    def schema_validation_error(message: str) -> FlextResult[object]:
+    def schema_validation_error(message: str) -> FlextCore.Result[object]:
         """Create schema validation error result."""
-        return FlextResult[object].fail(message, error_code="SCHEMA_VALIDATION_ERROR")
+        return FlextCore.Result[object].fail(
+            message, error_code="SCHEMA_VALIDATION_ERROR"
+        )
 
     @staticmethod
-    def objectclass_error(message: str) -> FlextResult[object]:
+    def objectclass_error(message: str) -> FlextCore.Result[object]:
         """Create objectClass error result."""
-        return FlextResult[object].fail(message, error_code="OBJECTCLASS_ERROR")
+        return FlextCore.Result[object].fail(message, error_code="OBJECTCLASS_ERROR")
 
     @staticmethod
-    def ldif_format_error(message: str) -> FlextResult[object]:
+    def ldif_format_error(message: str) -> FlextCore.Result[object]:
         """Create LDIF format error result."""
-        return FlextResult[object].fail(message, error_code="LDIF_FORMAT_ERROR")
+        return FlextCore.Result[object].fail(message, error_code="LDIF_FORMAT_ERROR")
 
     @staticmethod
-    def rfc_compliance_error(message: str) -> FlextResult[object]:
+    def rfc_compliance_error(message: str) -> FlextCore.Result[object]:
         """Create RFC compliance error result."""
-        return FlextResult[object].fail(message, error_code="RFC_COMPLIANCE_ERROR")
+        return FlextCore.Result[object].fail(message, error_code="RFC_COMPLIANCE_ERROR")
 
     # =========================================================================
     # EXCEPTION CLASSES
     # =========================================================================
 
-    class LdifValidationError(FlextExceptions.BaseError):
+    class LdifValidationError(FlextCore.Exceptions.BaseError):
         """LDIF data validation failure.
 
         Raised when LDIF data validation fails.
@@ -197,7 +209,7 @@ class FlextLdifExceptions(FlextExceptions):
                 correlation_id=correlation_id,
             )
 
-    class LdifParseError(FlextExceptions.BaseError):
+    class LdifParseError(FlextCore.Exceptions.BaseError):
         """LDIF parsing failure.
 
         Raised when LDIF parsing operation fails.
@@ -244,7 +256,7 @@ class FlextLdifExceptions(FlextExceptions):
                 correlation_id=correlation_id,
             )
 
-    class LdifProcessingError(FlextExceptions.BaseError):
+    class LdifProcessingError(FlextCore.Exceptions.BaseError):
         """LDIF processing operation failure.
 
         Raised when LDIF processing operation fails.
@@ -291,7 +303,7 @@ class FlextLdifExceptions(FlextExceptions):
                 correlation_id=correlation_id,
             )
 
-    class LdifFileError(FlextExceptions.BaseError):
+    class LdifFileError(FlextCore.Exceptions.BaseError):
         """LDIF file operation failure.
 
         Raised when LDIF file operations fail.
@@ -338,7 +350,7 @@ class FlextLdifExceptions(FlextExceptions):
                 correlation_id=correlation_id,
             )
 
-    class LdifConfigurationError(FlextExceptions.BaseError):
+    class LdifConfigurationError(FlextCore.Exceptions.BaseError):
         """LDIF configuration error.
 
         Raised when LDIF configuration is invalid or missing.
@@ -385,7 +397,7 @@ class FlextLdifExceptions(FlextExceptions):
                 correlation_id=correlation_id,
             )
 
-    class LdifDnValidationError(FlextExceptions.BaseError):
+    class LdifDnValidationError(FlextCore.Exceptions.BaseError):
         """LDIF DN validation failure.
 
         Raised when Distinguished Name validation fails.
@@ -428,7 +440,7 @@ class FlextLdifExceptions(FlextExceptions):
                 correlation_id=correlation_id,
             )
 
-    class LdifAttributeValidationError(FlextExceptions.BaseError):
+    class LdifAttributeValidationError(FlextCore.Exceptions.BaseError):
         """LDIF attribute validation failure.
 
         Raised when LDIF attribute validation fails.
@@ -475,7 +487,7 @@ class FlextLdifExceptions(FlextExceptions):
                 correlation_id=correlation_id,
             )
 
-    class LdifEncodingError(FlextExceptions.BaseError):
+    class LdifEncodingError(FlextCore.Exceptions.BaseError):
         """LDIF encoding/decoding failure.
 
         Raised when LDIF encoding or decoding fails.
@@ -518,7 +530,7 @@ class FlextLdifExceptions(FlextExceptions):
                 correlation_id=correlation_id,
             )
 
-    class LdifUrlValidationError(FlextExceptions.BaseError):
+    class LdifUrlValidationError(FlextCore.Exceptions.BaseError):
         """LDIF URL validation failure.
 
         Raised when LDIF URL validation fails (for URL-encoded entries).
@@ -561,7 +573,7 @@ class FlextLdifExceptions(FlextExceptions):
                 correlation_id=correlation_id,
             )
 
-    class LdifSchemaValidationError(FlextExceptions.BaseError):
+    class LdifSchemaValidationError(FlextCore.Exceptions.BaseError):
         """LDIF schema validation failure.
 
         Raised when LDIF schema validation fails.
@@ -604,7 +616,7 @@ class FlextLdifExceptions(FlextExceptions):
                 correlation_id=correlation_id,
             )
 
-    class LdifObjectClassError(FlextExceptions.BaseError):
+    class LdifObjectClassError(FlextCore.Exceptions.BaseError):
         """LDIF objectClass error.
 
         Raised when objectClass validation or processing fails.
@@ -647,7 +659,7 @@ class FlextLdifExceptions(FlextExceptions):
                 correlation_id=correlation_id,
             )
 
-    class LdifFormatError(FlextExceptions.BaseError):
+    class LdifFormatError(FlextCore.Exceptions.BaseError):
         """LDIF format error.
 
         Raised when LDIF format is invalid or doesn't conform to RFC 2849.
@@ -690,7 +702,7 @@ class FlextLdifExceptions(FlextExceptions):
                 correlation_id=correlation_id,
             )
 
-    class LdifRfcComplianceError(FlextExceptions.BaseError):
+    class LdifRfcComplianceError(FlextCore.Exceptions.BaseError):
         """LDIF RFC compliance error.
 
         Raised when LDIF doesn't comply with RFC 2849 standard.
@@ -733,7 +745,7 @@ class FlextLdifExceptions(FlextExceptions):
                 correlation_id=correlation_id,
             )
 
-    class LdifEntryError(FlextExceptions.BaseError):
+    class LdifEntryError(FlextCore.Exceptions.BaseError):
         """LDIF entry processing error.
 
         Raised when LDIF entry processing fails.

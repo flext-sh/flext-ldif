@@ -10,7 +10,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import FlextProtocols, FlextResult
+from flext_core import FlextCore
 
 from flext_ldif.typings import FlextLdifTypes
 
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from flext_ldif.models import FlextLdifModels
 
 
-class FlextLdifProtocols(FlextProtocols):
+class FlextLdifProtocols(FlextCore.Protocols):
     """Unified LDIF protocols following FLEXT domain extension pattern.
 
     This class consolidates LDIF processing protocols while explicitly
@@ -45,12 +45,12 @@ class FlextLdifProtocols(FlextProtocols):
     # Explicitly re-export foundation protocols for unified access.
     # This maintains backward compatibility while providing clean namespace access.
 
-    Foundation = FlextProtocols.Foundation
-    Domain = FlextProtocols.Domain
-    Application = FlextProtocols.Application
-    Infrastructure = FlextProtocols.Infrastructure
-    Extensions = FlextProtocols.Extensions
-    Commands = FlextProtocols.Commands
+    Foundation = FlextCore.Protocols.Foundation
+    Domain = FlextCore.Protocols.Domain
+    Application = FlextCore.Protocols.Application
+    Infrastructure = FlextCore.Protocols.Infrastructure
+    Extensions = FlextCore.Protocols.Extensions
+    Commands = FlextCore.Protocols.Commands
 
     # =========================================================================
     # LDIF-SPECIFIC PROTOCOLS
@@ -94,7 +94,7 @@ class FlextLdifProtocols(FlextProtocols):
                 """Check if entry is a person entry."""
                 ...
 
-            def validate_business_rules(self: object) -> FlextResult[bool]:
+            def validate_business_rules(self: object) -> FlextCore.Result[bool]:
                 """Validate entry against business rules."""
                 ...
 
@@ -104,27 +104,31 @@ class FlextLdifProtocols(FlextProtocols):
 
             def parse_ldif_file(
                 self, path: Path, encoding: str = "utf-8"
-            ) -> FlextResult[list[FlextLdifModels.Entry]]:
+            ) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
                 """Parse LDIF file into entries."""
                 ...
 
             def parse_content(
                 self, content: str
-            ) -> FlextResult[list[FlextLdifModels.Entry]]:
+            ) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
                 """Parse LDIF content string into entries."""
                 ...
 
-            def parse(self, content: str) -> FlextResult[list[FlextLdifModels.Entry]]:
+            def parse(
+                self, content: str
+            ) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
                 """Parse LDIF content string into entries (alias for parse_content)."""
                 ...
 
             def validate_entries(
                 self, entries: list[FlextLdifModels.Entry]
-            ) -> FlextResult[list[FlextLdifModels.Entry]]:
+            ) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
                 """Validate LDIF entries and return validated entries."""
                 ...
 
-            def write(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
+            def write(
+                self, entries: list[FlextLdifModels.Entry]
+            ) -> FlextCore.Result[str]:
                 """Write entries to LDIF string."""
                 ...
 
@@ -132,13 +136,13 @@ class FlextLdifProtocols(FlextProtocols):
                 self,
                 entries: list[FlextLdifModels.Entry],
                 transformer: Callable[[FlextLdifModels.Entry], FlextLdifModels.Entry],
-            ) -> FlextResult[list[FlextLdifModels.Entry]]:
+            ) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
                 """Transform entries using transformer function."""
                 ...
 
             def analyze_entries(
                 self, entries: list[FlextLdifModels.Entry]
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+            ) -> FlextCore.Result[FlextLdifTypes.Dict]:
                 """Analyze entries and provide statistics."""
                 ...
 
@@ -146,13 +150,15 @@ class FlextLdifProtocols(FlextProtocols):
         class ValidatorProtocol(Protocol):
             """Protocol for LDIF validators with strict mode support."""
 
-            def validate_entry(self, entry: FlextLdifModels.Entry) -> FlextResult[bool]:
+            def validate_entry(
+                self, entry: FlextLdifModels.Entry
+            ) -> FlextCore.Result[bool]:
                 """Validate a single LDIF entry."""
                 ...
 
             def validate_entries(
                 self, entries: list[FlextLdifModels.Entry], *, strict: bool = False
-            ) -> FlextResult[FlextLdifModels.LdifValidationResult]:
+            ) -> FlextCore.Result[FlextLdifModels.LdifValidationResult]:
                 """Validate multiple LDIF entries with optional strict mode."""
                 ...
 
@@ -166,13 +172,13 @@ class FlextLdifProtocols(FlextProtocols):
 
             def write_entries_to_string(
                 self, entries: list[FlextLdifModels.Entry]
-            ) -> FlextResult[str]:
+            ) -> FlextCore.Result[str]:
                 """Write entries to LDIF format string."""
                 ...
 
             def write_entries_to_file(
                 self, entries: list[FlextLdifModels.Entry], file_path: str
-            ) -> FlextResult[bool]:
+            ) -> FlextCore.Result[bool]:
                 """Write entries to LDIF file."""
                 ...
 
@@ -182,7 +188,7 @@ class FlextLdifProtocols(FlextProtocols):
 
             def analyze_entries(
                 self, entries: list[FlextLdifModels.Entry]
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+            ) -> FlextCore.Result[FlextLdifTypes.Dict]:
                 """Analyze LDIF entries and generate analytics."""
                 ...
 
@@ -204,7 +210,7 @@ class FlextLdifProtocols(FlextProtocols):
         class ParserStrategyProtocol(Protocol):
             """Protocol for parser encoding detection strategies."""
 
-            def detect(self, content: bytes) -> FlextResult[str]:
+            def detect(self, content: bytes) -> FlextCore.Result[str]:
                 """Detect encoding from content."""
                 ...
 
@@ -224,7 +230,7 @@ class FlextLdifProtocols(FlextProtocols):
                 """Add attribute to schema."""
                 ...
 
-            def build(self: object) -> FlextResult[object]:
+            def build(self: object) -> FlextCore.Result[object]:
                 """Build final schema."""
                 ...
 
@@ -232,7 +238,7 @@ class FlextLdifProtocols(FlextProtocols):
         class AclRuleProtocol(Protocol):
             """Protocol for ACL rules (Composite pattern)."""
 
-            def evaluate(self, context: FlextLdifTypes.Dict) -> FlextResult[bool]:
+            def evaluate(self, context: FlextLdifTypes.Dict) -> FlextCore.Result[bool]:
                 """Evaluate ACL rule against context."""
                 ...
 
@@ -244,7 +250,7 @@ class FlextLdifProtocols(FlextProtocols):
         class ServerAdapterProtocol(Protocol):
             """Protocol for server-specific adapters."""
 
-            def adapt(self, entry: object) -> FlextResult[object]:
+            def adapt(self, entry: object) -> FlextCore.Result[object]:
                 """Adapt entry for specific server type."""
                 ...
 
@@ -256,7 +262,7 @@ class FlextLdifProtocols(FlextProtocols):
         class ValidatorPluginProtocol(Protocol):
             """Protocol for custom validator plugins."""
 
-            def validate(self, data: object) -> FlextResult[bool]:
+            def validate(self, data: object) -> FlextCore.Result[bool]:
                 """Validate data against custom rules."""
                 ...
 
@@ -274,7 +280,7 @@ class FlextLdifProtocols(FlextProtocols):
                 source_format: str,
                 target_format: str,
                 quirks: FlextLdifTypes.List,
-            ) -> FlextResult[list[FlextLdifModels.Entry]]:
+            ) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
                 """Migrate LDIF entries between formats."""
                 ...
 
@@ -282,17 +288,17 @@ class FlextLdifProtocols(FlextProtocols):
         class QuirkRegistryProtocol(Protocol):
             """Protocol for quirk registry."""
 
-        def register_schema_quirk(self, _quirk: object) -> FlextResult[None]:
+        def register_schema_quirk(self, _quirk: object) -> FlextCore.Result[None]:
             """Register a schema quirk handler."""
-            return FlextResult[None].fail("Not implemented")
+            return FlextCore.Result[None].fail("Not implemented")
 
-        def register_acl_quirk(self, _quirk: object) -> FlextResult[None]:
+        def register_acl_quirk(self, _quirk: object) -> FlextCore.Result[None]:
             """Register an ACL quirk handler."""
-            return FlextResult[None].fail("Not implemented")
+            return FlextCore.Result[None].fail("Not implemented")
 
-        def register_entry_quirk(self, _quirk: object) -> FlextResult[None]:
+        def register_entry_quirk(self, _quirk: object) -> FlextCore.Result[None]:
             """Register an entry quirk handler."""
-            return FlextResult[None].fail("Not implemented")
+            return FlextCore.Result[None].fail("Not implemented")
 
     # =========================================================================
     # BACKWARD COMPATIBILITY ALIASES

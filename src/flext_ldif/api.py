@@ -13,16 +13,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, ClassVar, cast, override
 
-from flext_core import (
-    FlextBus,
-    FlextContainer,
-    FlextDispatcher,
-    FlextLogger,
-    FlextProcessors,
-    FlextRegistry,
-    FlextResult,
-    FlextService,
-)
+from flext_core import FlextCore
 
 from flext_ldif.acl.service import FlextLdifAclService
 from flext_ldif.client import FlextLdifClient
@@ -34,23 +25,22 @@ from flext_ldif.exceptions import FlextLdifExceptions
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.schema.builder import FlextLdifSchemaBuilder
 from flext_ldif.schema.validator import FlextLdifSchemaValidator
-from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdif(FlextService[dict[str, object]]):
+class FlextLdif(FlextCore.Service[FlextCore.Types.Dict]):
     r"""Unified LDIF processing facade with complete Flext ecosystem integration.
 
-    This service inherits from FlextService and integrates the complete Flext ecosystem:
-    - FlextContainer: Dependency injection and service management
-    - FlextLogger: Structured logging with correlation tracking
-    - FlextContext: Request context and correlation ID management
-    - FlextConfig: Configuration management with validation
-    - FlextBus: Event publishing for domain events
-    - FlextDispatcher: Message dispatching for CQRS patterns
-    - FlextRegistry: Component registration and discovery
-    - FlextProcessors: Batch and parallel processing utilities
-    - FlextExceptions: Structured error handling with correlation
-    - FlextProtocols: Type-safe interfaces and contracts
+    This service inherits from FlextCore.Service and integrates the complete Flext ecosystem:
+    - FlextCore.Container: Dependency injection and service management
+    - FlextCore.Logger: Structured logging with correlation tracking
+    - FlextCore.Context: Request context and correlation ID management
+    - FlextCore.Config: Configuration management with validation
+    - FlextCore.Bus: Event publishing for domain events
+    - FlextCore.Dispatcher: Message dispatching for CQRS patterns
+    - FlextCore.Registry: Component registration and discovery
+    - FlextCore.Processors: Batch and parallel processing utilities
+    - FlextCore.Exceptions: Structured error handling with correlation
+    - FlextCore.Protocols: Type-safe interfaces and contracts
 
     Provides unified access to:
     - RFC-compliant LDIF parsing and writing (RFC 2849/4512)
@@ -95,12 +85,12 @@ class FlextLdif(FlextService[dict[str, object]]):
     """
 
     # Private attributes (initialized in model_post_init)
-    _container: FlextContainer
+    _container: FlextCore.Container
     _bus: object = None
-    _dispatcher: FlextDispatcher
-    _registry: FlextRegistry
-    _processors: FlextProcessors
-    _logger: FlextLogger
+    _dispatcher: FlextCore.Dispatcher
+    _registry: FlextCore.Registry
+    _processors: FlextCore.Processors
+    _logger: FlextCore.Logger
     _client: FlextLdifClient
     _entry_builder: FlextLdifEntryBuilder
     _schema_builder: FlextLdifSchemaBuilder
@@ -141,15 +131,15 @@ class FlextLdif(FlextService[dict[str, object]]):
         """Initialize LDIF facade with complete Flext ecosystem integration.
 
         Integrates all Flext components for comprehensive infrastructure support:
-        - FlextContainer: Global dependency injection container
-        - FlextLogger: Structured logging with correlation tracking
-        - FlextContext: Request context and correlation ID management
-        - FlextConfig: Configuration management with validation
-        - FlextBus: Event publishing for domain events
-        - FlextDispatcher: Message dispatching for CQRS patterns
-        - FlextRegistry: Component registration and discovery
-        - FlextProcessors: Batch and parallel processing utilities
-        - FlextExceptions: Structured error handling with correlation
+        - FlextCore.Container: Global dependency injection container
+        - FlextCore.Logger: Structured logging with correlation tracking
+        - FlextCore.Context: Request context and correlation ID management
+        - FlextCore.Config: Configuration management with validation
+        - FlextCore.Bus: Event publishing for domain events
+        - FlextCore.Dispatcher: Message dispatching for CQRS patterns
+        - FlextCore.Registry: Component registration and discovery
+        - FlextCore.Processors: Batch and parallel processing utilities
+        - FlextCore.Exceptions: Structured error handling with correlation
 
         Args:
             config: Optional LDIF configuration. If not provided,
@@ -159,12 +149,12 @@ class FlextLdif(FlextService[dict[str, object]]):
         super().__init__()
 
         # Initialize Flext ecosystem components
-        self._container = FlextContainer.get_global()
-        self._bus = FlextBus()
-        self._dispatcher = FlextDispatcher()
-        self._registry = FlextRegistry(dispatcher=self._dispatcher)
-        self._processors = FlextProcessors()
-        self._logger = FlextLogger(__name__)
+        self._container = cast("FlextCore.Container", FlextCore.Container.get_global())
+        self._bus = FlextCore.Bus()
+        self._dispatcher = FlextCore.Dispatcher()
+        self._registry = FlextCore.Registry(dispatcher=self._dispatcher)
+        self._processors = FlextCore.Processors()
+        self._logger = FlextCore.Logger(__name__)
 
         # Initialize flext-ldif dependency injection container
         self._ldif_container = FlextLdifContainer.get_global_container()
@@ -178,14 +168,14 @@ class FlextLdif(FlextService[dict[str, object]]):
         self._entry_builder = self._ldif_container.entry_builder()
         self._schema_builder = self._ldif_container.schema_builder()
 
-        # Register LDIF components with FlextRegistry
+        # Register LDIF components with FlextCore.Registry
         self._register_components()
 
         # Other services instantiated on-demand in methods that use them
         # This reduces memory footprint for unused services
 
     def _register_components(self) -> None:
-        """Register LDIF components with FlextRegistry for dependency injection."""
+        """Register LDIF components with FlextCore.Registry for dependency injection."""
         try:
             # Register core LDIF services
             self._registry.register(
@@ -217,7 +207,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             )
 
             self._logger.debug(
-                "LDIF components registered with FlextRegistry",
+                "LDIF components registered with FlextCore.Registry",
                 extra={
                     "correlation_id": getattr(self.context, "correlation_id", None),
                     "registered_components": [
@@ -231,7 +221,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             )
 
         except Exception as e:
-            # Use FlextExceptions for error handling
+            # Use FlextCore.Exceptions for error handling
             error = FlextLdifExceptions.LdifConfigurationError(
                 f"Failed to register LDIF components: {e}",
                 correlation_id=getattr(self.context, "correlation_id", None),
@@ -254,15 +244,15 @@ class FlextLdif(FlextService[dict[str, object]]):
                 "service_type": "LDIF Processing Facade",
                 "correlation_id": getattr(self.context, "correlation_id", None),
                 "flext_components": [
-                    "FlextContainer",
-                    "FlextLogger",
-                    "FlextContext",
-                    "FlextBus",
-                    "FlextDispatcher",
-                    "FlextRegistry",
-                    "FlextProcessors",
-                    "FlextExceptions",
-                    "FlextProtocols",
+                    "FlextCore.Container",
+                    "FlextCore.Logger",
+                    "FlextCore.Context",
+                    "FlextCore.Bus",
+                    "FlextCore.Dispatcher",
+                    "FlextCore.Registry",
+                    "FlextCore.Processors",
+                    "FlextCore.Exceptions",
+                    "FlextCore.Protocols",
                 ],
                 "ldif_features": [
                     "rfc_2849_parsing",
@@ -277,18 +267,18 @@ class FlextLdif(FlextService[dict[str, object]]):
         )
 
     @override
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Execute facade self-check and return status.
 
         Returns:
-            FlextResult containing facade status and configuration
+            FlextCore.Result containing facade status and configuration
 
         """
         return self._client.execute()
 
     def parse(
         self, source: str | Path, server_type: str = "rfc"
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
         r"""Parse LDIF from file or content string.
 
         Args:
@@ -296,7 +286,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             server_type: Server type for quirk selection ("rfc", "oid", "oud", etc.)
 
         Returns:
-            FlextResult with list of parsed Entry models
+            FlextCore.Result with list of parsed Entry models
 
         Example:
             # Parse from string
@@ -315,7 +305,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         self,
         entries: list[FlextLdifModels.Entry],
         output_path: Path | None = None,
-    ) -> FlextResult[str]:
+    ) -> FlextCore.Result[str]:
         """Write entries to LDIF format string or file.
 
         Args:
@@ -323,7 +313,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             output_path: Optional path to write LDIF file. If None, returns LDIF string.
 
         Returns:
-            FlextResult containing LDIF content as string (if output_path is None)
+            FlextCore.Result containing LDIF content as string (if output_path is None)
             or success message (if output_path provided)
 
         Example:
@@ -340,14 +330,14 @@ class FlextLdif(FlextService[dict[str, object]]):
 
     def validate_entries(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Validate LDIF entries against RFC and business rules.
 
         Args:
             entries: List of entries to validate
 
         Returns:
-            FlextResult containing validation report with details
+            FlextCore.Result containing validation report with details
 
         Example:
             result = ldif.validate_entries(entries)
@@ -368,7 +358,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         *,
         process_schema: bool = True,
         process_entries: bool = True,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Migrate LDIF data between different LDAP server types.
 
         Args:
@@ -380,7 +370,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             process_entries: Whether to process entry files
 
         Returns:
-            FlextResult containing migration statistics and output files
+            FlextCore.Result containing migration statistics and output files
 
         Example:
             result = ldif.migrate(
@@ -407,14 +397,14 @@ class FlextLdif(FlextService[dict[str, object]]):
 
     def analyze(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Analyze LDIF entries and generate statistics.
 
         Args:
             entries: List of entries to analyze
 
         Returns:
-            FlextResult containing analysis statistics
+            FlextCore.Result containing analysis statistics
 
         Example:
             result = ldif.analyze(entries)
@@ -428,7 +418,7 @@ class FlextLdif(FlextService[dict[str, object]]):
 
     def filter_by_objectclass(
         self, entries: list[FlextLdifModels.Entry], objectclass: str
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
         """Filter entries by object class.
 
         Args:
@@ -436,21 +426,21 @@ class FlextLdif(FlextService[dict[str, object]]):
             objectclass: Object class to filter by
 
         Returns:
-            FlextResult containing filtered entries
+            FlextCore.Result containing filtered entries
 
         """
         return self._client.filter_by_objectclass(entries, objectclass)
 
     def filter_persons(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
         """Filter entries to get only person entries.
 
         Args:
             entries: List of LDIF entries to filter
 
         Returns:
-            FlextResult containing person entries
+            FlextCore.Result containing person entries
 
         """
         return self.filter_by_objectclass(entries, "person")
@@ -467,8 +457,8 @@ class FlextLdif(FlextService[dict[str, object]]):
         uid: str | None = None,
         mail: str | None = None,
         given_name: str | None = None,
-        additional_attrs: dict[str, list[str]] | None = None,
-    ) -> FlextResult[FlextLdifModels.Entry]:
+        additional_attrs: dict[str, FlextCore.Types.StringList] | None = None,
+    ) -> FlextCore.Result[FlextLdifModels.Entry]:
         """Build a person entry with common attributes.
 
         Args:
@@ -481,7 +471,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             additional_attrs: Additional attributes (optional)
 
         Returns:
-            FlextResult containing the built Entry
+            FlextCore.Result containing the built Entry
 
         Example:
             result = api.build_person_entry(
@@ -500,10 +490,10 @@ class FlextLdif(FlextService[dict[str, object]]):
         self,
         cn: str,
         base_dn: str,
-        members: list[str] | None = None,
+        members: FlextCore.Types.StringList | None = None,
         description: str | None = None,
-        additional_attrs: dict[str, list[str]] | None = None,
-    ) -> FlextResult[FlextLdifModels.Entry]:
+        additional_attrs: dict[str, FlextCore.Types.StringList] | None = None,
+    ) -> FlextCore.Result[FlextLdifModels.Entry]:
         """Build a group entry with members.
 
         Args:
@@ -514,7 +504,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             additional_attrs: Additional attributes (optional)
 
         Returns:
-            FlextResult containing the built Entry
+            FlextCore.Result containing the built Entry
 
         Example:
             result = api.build_group_entry(
@@ -533,8 +523,8 @@ class FlextLdif(FlextService[dict[str, object]]):
         ou: str,
         base_dn: str,
         description: str | None = None,
-        additional_attrs: dict[str, list[str]] | None = None,
-    ) -> FlextResult[FlextLdifModels.Entry]:
+        additional_attrs: dict[str, FlextCore.Types.StringList] | None = None,
+    ) -> FlextCore.Result[FlextLdifModels.Entry]:
         """Build an organizational unit entry.
 
         Args:
@@ -544,7 +534,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             additional_attrs: Additional attributes (optional)
 
         Returns:
-            FlextResult containing the built Entry
+            FlextCore.Result containing the built Entry
 
         Example:
             result = api.build_organizational_unit(
@@ -560,8 +550,8 @@ class FlextLdif(FlextService[dict[str, object]]):
     def build_custom_entry(
         self,
         dn: str,
-        attributes: dict[str, list[str]],
-    ) -> FlextResult[FlextLdifModels.Entry]:
+        attributes: dict[str, FlextCore.Types.StringList],
+    ) -> FlextCore.Result[FlextLdifModels.Entry]:
         """Build a custom entry with arbitrary attributes.
 
         Args:
@@ -569,7 +559,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             attributes: Dictionary of attribute names to value lists
 
         Returns:
-            FlextResult containing the built Entry
+            FlextCore.Result containing the built Entry
 
         Example:
             result = api.build_custom_entry(
@@ -584,14 +574,14 @@ class FlextLdif(FlextService[dict[str, object]]):
     def entry_to_dict(
         self,
         entry: FlextLdifModels.Entry,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Convert entry to dictionary format.
 
         Args:
             entry: Entry model to convert
 
         Returns:
-            FlextResult containing dictionary representation
+            FlextCore.Result containing dictionary representation
 
         Example:
             result = api.entry_to_dict(entry)
@@ -608,7 +598,7 @@ class FlextLdif(FlextService[dict[str, object]]):
     def entries_to_dicts(
         self,
         entries: list[FlextLdifModels.Entry],
-    ) -> list[dict[str, object]]:
+    ) -> list[FlextCore.Types.Dict]:
         """Convert list of entries to list of dictionaries.
 
         Args:
@@ -633,7 +623,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         self,
         dicts: list[dict[str, Any]],
     ) -> list[FlextLdifModels.Entry]:
-        """Convert list of dictionaries to list of entries using FlextProcessors.
+        """Convert list of dictionaries to list of entries using FlextCore.Processors.
 
         Args:
             dicts: List of entry dictionaries
@@ -654,14 +644,14 @@ class FlextLdif(FlextService[dict[str, object]]):
     def entries_to_json(
         self,
         entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[str]:
+    ) -> FlextCore.Result[str]:
         """Convert list of entries to JSON string.
 
         Args:
             entries: List of Entry models
 
         Returns:
-            FlextResult containing JSON string
+            FlextCore.Result containing JSON string
 
         Example:
             result = api.entries_to_json(entries)
@@ -674,14 +664,14 @@ class FlextLdif(FlextService[dict[str, object]]):
     def json_to_entries(
         self,
         json_str: str,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
         """Convert JSON string to list of entries.
 
         Args:
             json_str: JSON string representation of entries
 
         Returns:
-            FlextResult containing list of Entry models
+            FlextCore.Result containing list of Entry models
 
         Example:
             result = api.json_to_entries(json_str)
@@ -695,11 +685,11 @@ class FlextLdif(FlextService[dict[str, object]]):
     # SCHEMA BUILDER OPERATIONS
     # =========================================================================
 
-    def build_person_schema(self) -> FlextResult[dict[str, object]]:
+    def build_person_schema(self) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Build standard person schema definition.
 
         Returns:
-            FlextResult containing person schema
+            FlextCore.Result containing person schema
 
         Example:
             result = api.build_person_schema()
@@ -716,8 +706,8 @@ class FlextLdif(FlextService[dict[str, object]]):
     def validate_with_schema(
         self,
         entries: list[FlextLdifModels.Entry],
-        schema: dict[str, object],
-    ) -> FlextResult[FlextLdifModels.LdifValidationResult]:
+        schema: FlextCore.Types.Dict,
+    ) -> FlextCore.Result[FlextLdifModels.LdifValidationResult]:
         """Validate entries against schema definition.
 
         Args:
@@ -725,7 +715,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             schema: Schema definition to validate against
 
         Returns:
-            FlextResult containing validation report
+            FlextCore.Result containing validation report
 
         Example:
             schema_result = api.build_person_schema()
@@ -737,13 +727,13 @@ class FlextLdif(FlextService[dict[str, object]]):
         # Convert dict schema to SchemaDiscoveryResult with type validation
         attributes_value = schema.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
         if not isinstance(attributes_value, dict):
-            return FlextResult[FlextLdifModels.LdifValidationResult].fail(
+            return FlextCore.Result[FlextLdifModels.LdifValidationResult].fail(
                 "Schema attributes must be a dictionary"
             )
 
         objectclasses_value = schema.get("object_classes", {})
         if not isinstance(objectclasses_value, dict):
-            return FlextResult[FlextLdifModels.LdifValidationResult].fail(
+            return FlextCore.Result[FlextLdifModels.LdifValidationResult].fail(
                 "Schema object classes must be a dictionary"
             )
 
@@ -751,13 +741,13 @@ class FlextLdif(FlextService[dict[str, object]]):
             FlextLdifConstants.DictKeys.SERVER_TYPE, "generic"
         )
         if not isinstance(server_type_value, str):
-            return FlextResult[FlextLdifModels.LdifValidationResult].fail(
+            return FlextCore.Result[FlextLdifModels.LdifValidationResult].fail(
                 "Schema server type must be a string"
             )
 
         entry_count_value = schema.get("entry_count", 0)
         if not isinstance(entry_count_value, int):
-            return FlextResult[FlextLdifModels.LdifValidationResult].fail(
+            return FlextCore.Result[FlextLdifModels.LdifValidationResult].fail(
                 "Schema entry count must be an integer"
             )
 
@@ -770,8 +760,8 @@ class FlextLdif(FlextService[dict[str, object]]):
 
         validator = self._ldif_container.schema_validator()
         # Use schema-aware validation for each entry
-        errors: list[str] = []
-        warnings: list[str] = []
+        errors: FlextCore.Types.StringList = []
+        warnings: FlextCore.Types.StringList = []
 
         for entry in entries:
             entry_result = validator.validate_entry_against_schema(
@@ -800,7 +790,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         errors.extend(general_validation.errors)
         warnings.extend(general_validation.warnings)
 
-        return FlextResult[FlextLdifModels.LdifValidationResult].ok(
+        return FlextCore.Result[FlextLdifModels.LdifValidationResult].ok(
             FlextLdifModels.LdifValidationResult(
                 is_valid=len(errors) == 0,
                 errors=errors,
@@ -815,14 +805,14 @@ class FlextLdif(FlextService[dict[str, object]]):
     def extract_acls(
         self,
         entry: FlextLdifModels.Entry,
-    ) -> FlextResult[list[FlextLdifModels.UnifiedAcl]]:
+    ) -> FlextCore.Result[list[FlextLdifModels.UnifiedAcl]]:
         """Extract ACL rules from entry.
 
         Args:
             entry: Entry to extract ACLs from
 
         Returns:
-            FlextResult containing list of ACL rules
+            FlextCore.Result containing list of ACL rules
 
         Example:
             result = api.extract_acls(entry)
@@ -836,8 +826,8 @@ class FlextLdif(FlextService[dict[str, object]]):
     def evaluate_acl_rules(
         self,
         acls: list[FlextLdifModels.UnifiedAcl],
-        context: dict[str, object] | None = None,
-    ) -> FlextResult[bool]:
+        context: FlextCore.Types.Dict | None = None,
+    ) -> FlextCore.Result[bool]:
         """Evaluate ACL rules and return evaluation result.
 
         Args:
@@ -845,7 +835,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             context: Evaluation context (not yet implemented)
 
         Returns:
-            FlextResult containing evaluation result (True if allowed)
+            FlextCore.Result containing evaluation result (True if allowed)
 
         Example:
             result = api.evaluate_acl_rules(acls)
@@ -875,15 +865,15 @@ class FlextLdif(FlextService[dict[str, object]]):
         self,
         processor_name: str,
         entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[list[dict[str, object]]]:
-        """Process entries in batch mode using FlextProcessors.
+    ) -> FlextCore.Result[list[FlextCore.Types.Dict]]:
+        """Process entries in batch mode using FlextCore.Processors.
 
         Args:
             processor_name: Name of processor to use (not yet implemented)
             entries: List of entries to process
 
         Returns:
-            FlextResult containing processed results
+            FlextCore.Result containing processed results
 
         Example:
             result = api.process_batch("transform", entries)
@@ -902,15 +892,15 @@ class FlextLdif(FlextService[dict[str, object]]):
         self,
         processor_name: str,
         entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[list[dict[str, object]]]:
-        """Process entries in parallel mode using FlextProcessors.
+    ) -> FlextCore.Result[list[FlextCore.Types.Dict]]:
+        """Process entries in parallel mode using FlextCore.Processors.
 
         Args:
             processor_name: Name of processor to use (not yet implemented)
             entries: List of entries to process
 
         Returns:
-            FlextResult containing processed results
+            FlextCore.Result containing processed results
 
         Example:
             result = api.process_parallel("validate", entries)
@@ -972,25 +962,11 @@ class FlextLdif(FlextService[dict[str, object]]):
         return FlextLdifConstants
 
     @property
-    def utilities(self) -> type[FlextLdifUtilities]:
-        """Access to LDIF utility functions.
+    def container(self) -> FlextCore.Container:
+        """Access to global FlextCore.Container for dependency injection.
 
         Returns:
-            FlextLdifUtilities class containing all utility methods
-
-        Example:
-            timestamp = ldif.utilities.TimeUtilities.get_timestamp()
-            size = ldif.utilities.TextUtilities.format_byte_size(1024)
-
-        """
-        return FlextLdifUtilities
-
-    @property
-    def container(self) -> FlextContainer:
-        """Access to global FlextContainer for dependency injection.
-
-        Returns:
-            Global FlextContainer singleton instance
+            Global FlextCore.Container singleton instance
 
         Example:
             service = ldif.container.resolve("my_service")
@@ -999,24 +975,24 @@ class FlextLdif(FlextService[dict[str, object]]):
         return self._container
 
     @property
-    def bus(self) -> FlextBus:
-        """Access to FlextBus for event publishing.
+    def bus(self) -> FlextCore.Bus:
+        """Access to FlextCore.Bus for event publishing.
 
         Returns:
-            FlextBus instance for publishing domain events
+            FlextCore.Bus instance for publishing domain events
 
         Example:
             ldif.bus.publish("ldif.parsed", {"entry_count": 10})
 
         """
-        return cast("FlextBus", self._bus)
+        return cast("FlextCore.Bus", self._bus)
 
     @property
-    def dispatcher(self) -> FlextDispatcher:
-        """Access to FlextDispatcher for message dispatching.
+    def dispatcher(self) -> FlextCore.Dispatcher:
+        """Access to FlextCore.Dispatcher for message dispatching.
 
         Returns:
-            FlextDispatcher instance for CQRS message routing
+            FlextCore.Dispatcher instance for CQRS message routing
 
         Example:
             result = ldif.dispatcher.dispatch(command)
@@ -1025,11 +1001,11 @@ class FlextLdif(FlextService[dict[str, object]]):
         return self._dispatcher
 
     @property
-    def registry(self) -> FlextRegistry:
-        """Access to FlextRegistry for component management.
+    def registry(self) -> FlextCore.Registry:
+        """Access to FlextCore.Registry for component management.
 
         Returns:
-            FlextRegistry instance for component registration and discovery
+            FlextCore.Registry instance for component registration and discovery
 
         Example:
             component = ldif.registry.get("my_component")
@@ -1038,11 +1014,11 @@ class FlextLdif(FlextService[dict[str, object]]):
         return self._registry
 
     @property
-    def processors(self) -> FlextProcessors:
-        """Access to FlextProcessors for batch and parallel processing.
+    def processors(self) -> FlextCore.Processors:
+        """Access to FlextCore.Processors for batch and parallel processing.
 
         Returns:
-            FlextProcessors instance for processing utilities
+            FlextCore.Processors instance for processing utilities
 
         Example:
             result = ldif.processors.process_batch(entries, processor_func)

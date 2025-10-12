@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_core import FlextConfig, FlextConstants
+from flext_core import FlextCore
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
@@ -16,18 +16,18 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifConfig(FlextConfig):
-    """Advanced Pydantic 2 Settings class for flext-ldif using FlextConfig as configuration source.
+class FlextLdifConfig(FlextCore.Config):
+    """Advanced Pydantic 2 Settings class for flext-ldif using FlextCore.Config as configuration source.
 
-    Leverages FlextConfig's newer features:
-    - Centralized configuration management through FlextConfig
+    Leverages FlextCore.Config's newer features:
+    - Centralized configuration management through FlextCore.Config
     - Enhanced singleton pattern with proper lifecycle management
     - Integrated environment variable handling
     - Advanced validation and type safety
     - Automatic dependency injection integration
     - Built-in configuration validation and consistency checks
 
-    All flext-ldif specific configuration flows through FlextConfig,
+    All flext-ldif specific configuration flows through FlextCore.Config,
     eliminating duplication and ensuring consistency across the FLEXT ecosystem.
     """
 
@@ -36,14 +36,14 @@ class FlextLdifConfig(FlextConfig):
         case_sensitive=False,
         extra="ignore",
         # Pydantic 2.11+ Settings - Must include env_file (not inherited from parent)
-        env_file=FlextConstants.Platform.ENV_FILE_DEFAULT,
-        env_file_encoding=FlextConstants.Mixins.DEFAULT_ENCODING,
-        env_nested_delimiter=FlextConstants.Platform.ENV_NESTED_DELIMITER,
+        env_file=FlextCore.Constants.Platform.ENV_FILE_DEFAULT,
+        env_file_encoding=FlextCore.Constants.Mixins.DEFAULT_ENCODING,
+        env_nested_delimiter=FlextCore.Constants.Platform.ENV_NESTED_DELIMITER,
         validate_assignment=True,
         str_strip_whitespace=True,
         json_schema_extra={
             "title": "FLEXT LDIF Configuration",
-            "description": "Enterprise LDIF processing using FlextConfig as source",
+            "description": "Enterprise LDIF processing using FlextCore.Config as source",
         },
     )
 
@@ -78,7 +78,7 @@ class FlextLdifConfig(FlextConfig):
     # Processing Configuration using FlextLdifConstants for defaults
     ldif_max_entries: int = Field(
         default=FlextLdifConstants.ConfigDefaults.LDIF_MAX_ENTRIES,
-        ge=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
+        ge=FlextCore.Constants.Performance.BatchProcessing.DEFAULT_SIZE,
         le=FlextLdifConstants.MAX_ENTRIES_ABSOLUTE,
         description="Maximum number of entries to process",
     )
@@ -94,7 +94,7 @@ class FlextLdifConfig(FlextConfig):
         default=FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_WORKERS,
         ge=FlextLdifConstants.LdifProcessing.MIN_WORKERS,
         le=FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT,
-        description="Maximum number of worker threads (inherited from FlextConfig, uses FLEXT_MAX_WORKERS)",
+        description="Maximum number of worker threads (inherited from FlextCore.Config, uses FLEXT_MAX_WORKERS)",
     )
 
     # Memory and Performance Configuration - Fix default value
@@ -348,7 +348,7 @@ class FlextLdifConfig(FlextConfig):
         return self
 
     # =========================================================================
-    # UTILITY METHODS - Enhanced with FlextConfig integration
+    # UTILITY METHODS - Enhanced with FlextCore.Config integration
     # =========================================================================
 
     def get_effective_encoding(self) -> str:

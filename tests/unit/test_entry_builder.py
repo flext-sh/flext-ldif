@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 
-from flext_core import FlextTypes
+from flext_core import FlextCore
 
 from flext_ldif.entry.builder import FlextLdifEntryBuilder
 
@@ -395,7 +395,7 @@ class TestFlextLdifEntryBuilder:
         """Test building entries from valid dictionary data."""
         builder = FlextLdifEntryBuilder()
 
-        data: list[FlextTypes.Dict] = [
+        data: list[FlextCore.Types.Dict] = [
             {
                 "dn": "cn=user1,dc=example,dc=com",
                 "attributes": {
@@ -426,7 +426,7 @@ class TestFlextLdifEntryBuilder:
         """Test building entries from dictionary with missing DN."""
         builder = FlextLdifEntryBuilder()
 
-        data: list[FlextTypes.Dict] = [
+        data: list[FlextCore.Types.Dict] = [
             {"attributes": {"objectClass": ["person"], "cn": ["User 1"]}}
         ]
 
@@ -441,7 +441,7 @@ class TestFlextLdifEntryBuilder:
         """Test building entries from dictionary with non-dict attributes."""
         builder = FlextLdifEntryBuilder()
 
-        data: list[FlextTypes.Dict] = [
+        data: list[FlextCore.Types.Dict] = [
             {"dn": "cn=user1,dc=example,dc=com", "attributes": "not a dict"}
         ]
 
@@ -457,7 +457,7 @@ class TestFlextLdifEntryBuilder:
         """Test building entries from dictionary with mixed value types."""
         builder = FlextLdifEntryBuilder()
 
-        data: list[FlextTypes.Dict] = [
+        data: list[FlextCore.Types.Dict] = [
             {
                 "dn": "cn=user1,dc=example,dc=com",
                 "attributes": {

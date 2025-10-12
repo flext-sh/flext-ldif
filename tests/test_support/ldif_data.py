@@ -10,7 +10,7 @@ import base64
 from pathlib import Path
 from typing import NamedTuple
 
-from flext_core import FlextTypes
+from flext_core import FlextCore
 
 
 class LdifSample(NamedTuple):
@@ -260,7 +260,7 @@ missing required attributes like cn, sn
     @staticmethod
     def large_dataset(num_entries: int = 100) -> LdifSample:
         """Generate large LDIF dataset for performance testing."""
-        entries: FlextTypes.StringList = []
+        entries: FlextCore.Types.StringList = []
         for i in range(num_entries):
             entry = f"""dn: uid=user{i:04d},ou=people,dc=example,dc=com
 objectClass: inetOrgPerson

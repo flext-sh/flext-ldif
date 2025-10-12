@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_core import FlextCore
 from tests.fixtures.loader import FlextLdifFixtures
 
 from flext_ldif.constants import FlextLdifConstants
@@ -507,7 +508,7 @@ class TestOidEntryQuirks:
         """Test entry handling detection."""
         # OID entry quirk handles entries with Oracle attributes
         entry_dn = "cn=OracleContext,dc=network,dc=example"
-        attributes: dict[str, object] = {
+        attributes: FlextCore.Types.Dict = {
             "cn": ["OracleContext"],
             "objectClass": ["top", "orclContext"],
         }
@@ -519,7 +520,7 @@ class TestOidEntryQuirks:
     ) -> None:
         """Test processing basic OID entry."""
         entry_dn = "cn=test,dc=network,dc=example"
-        attributes: dict[str, object] = {
+        attributes: FlextCore.Types.Dict = {
             "cn": ["test"],
             "objectClass": ["person"],
             "orclguid": ["12345678-1234-1234-1234-123456789012"],
@@ -538,7 +539,7 @@ class TestOidEntryQuirks:
     ) -> None:
         """Test processing Oracle Context entry with Oracle-specific attributes."""
         entry_dn = "cn=OracleContext,dc=network,dc=example"
-        attributes: dict[str, object] = {
+        attributes: FlextCore.Types.Dict = {
             "cn": ["OracleContext"],
             "objectClass": ["top", "orclContext"],
             "orclguid": ["12345678-1234-1234-1234-123456789012"],
@@ -557,7 +558,7 @@ class TestOidEntryQuirks:
     ) -> None:
         """Test processing entry with multiple ACL attributes - WORST CASE."""
         entry_dn = "cn=OracleContext,dc=network,dc=example"
-        attributes: dict[str, object] = {
+        attributes: FlextCore.Types.Dict = {
             "cn": ["OracleContext"],
             "objectClass": ["top", "orclContext"],
             "orclaci": [
@@ -587,7 +588,7 @@ class TestOidEntryQuirks:
 
         # Parse entries from LDIF content
         current_dn = None
-        current_attrs: dict[str, object] = {}
+        current_attrs: FlextCore.Types.Dict = {}
         processed_count = 0
 
         for raw_line in integration_content.splitlines():
@@ -618,7 +619,7 @@ class TestOidEntryQuirks:
                 if attr_name not in current_attrs:
                     current_attrs[attr_name] = []
                 # Cast to list since we just initialized it
-                attr_list: list[str] = current_attrs[attr_name]
+                attr_list: FlextCore.Types.StringList = current_attrs[attr_name]
                 attr_list.append(attr_value)
 
         # Process last entry
@@ -634,7 +635,7 @@ class TestOidEntryQuirks:
     ) -> None:
         """Test preservation of Oracle-specific attributes."""
         entry_dn = "cn=Products,cn=OracleContext,dc=network,dc=example"
-        attributes: dict[str, object] = {
+        attributes: FlextCore.Types.Dict = {
             "cn": ["Products"],
             "objectClass": ["top", "orclContainer"],
             "orclguid": ["12345678-1234-1234-1234-123456789012"],
@@ -676,7 +677,7 @@ class TestOidEntryQuirks:
     ) -> None:
         """Test entry roundtrip: process → convert to RFC → back."""
         original_dn = "cn=OracleContext,dc=network,dc=example"
-        original_attrs: dict[str, object] = {
+        original_attrs: FlextCore.Types.Dict = {
             "cn": ["OracleContext"],
             "objectClass": ["top", "orclContext"],
             "orclguid": ["12345678-1234-1234-1234-123456789012"],

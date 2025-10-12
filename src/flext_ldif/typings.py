@@ -5,7 +5,7 @@ Follows FLEXT standards:
 - Domain-specific complex types only
 - No simple aliases to primitive types
 - Python 3.13+ syntax
-- Extends FlextTypes properly
+- Extends FlextCore.Types properly
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterator, Mapping, Sequence
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextCore
 
 from flext_ldif.constants import FlextLdifConstants
 
@@ -23,11 +23,11 @@ from flext_ldif.constants import FlextLdifConstants
 # LDIF-SPECIFIC TYPE VARIABLES - Domain-specific TypeVars for LDIF operations
 # =============================================================================
 
-# Generic TypeVars T and U imported from flext-core FlextTypes
+# Generic TypeVars T and U imported from flext-core FlextCore.Types
 
 
 # LDIF domain TypeVars
-class FlextLdifTypes(FlextTypes):
+class FlextLdifTypes(FlextCore.Types):
     """LDIF-specific type definitions extending FlextLdifTypes.
 
     Domain-specific type system for LDIF processing operations.
@@ -38,7 +38,7 @@ class FlextLdifTypes(FlextTypes):
     # =========================================================================
     # LDIF ENTRY TYPES - Complex LDIF entry handling types
     # =========================================================================
-    # REMOVED: Simple type aliases like BoolDict - use FlextTypes.Dict directly
+    # REMOVED: Simple type aliases like BoolDict - use FlextCore.Types.Dict directly
 
     class Entry:
         """LDIF entry complex types."""
@@ -50,13 +50,13 @@ class FlextLdifTypes(FlextTypes):
             str, FlextLdifTypes.StringList | dict[str, FlextLdifTypes.JsonValue]
         ]
         type EntryValidation = dict[
-            str, bool | FlextLdifTypes.StringList | dict[str, object]
+            str, bool | FlextLdifTypes.StringList | FlextCore.Types.Dict
         ]
         type EntryTransformation = list[dict[str, str | object]]
         type EntryMetadata = dict[
             str, str | int | bool | dict[str, FlextLdifTypes.JsonValue]
         ]
-        type EntryProcessing = dict[str, str | bool | list[dict[str, object]]]
+        type EntryProcessing = dict[str, str | bool | list[FlextCore.Types.Dict]]
         type EntryCreateData = Mapping[str, object]
 
     # =========================================================================
@@ -70,11 +70,11 @@ class FlextLdifTypes(FlextTypes):
             str, bool | str | int | dict[str, FlextLdifTypes.ConfigValue]
         ]
         type ParsingContext = dict[
-            str, str | int | bool | FlextLdifTypes.StringList | dict[str, object]
+            str, str | int | bool | FlextLdifTypes.StringList | FlextCore.Types.Dict
         ]
-        type ParsingResult = dict[str, list[dict[str, object]] | bool | str]
+        type ParsingResult = dict[str, list[FlextCore.Types.Dict] | bool | str]
         type ParsingValidation = dict[
-            str, bool | str | FlextLdifTypes.StringList | dict[str, object]
+            str, bool | str | FlextLdifTypes.StringList | FlextCore.Types.Dict
         ]
         type ParsingMetrics = dict[
             str, int | float | bool | dict[str, FlextLdifTypes.JsonValue]
@@ -96,7 +96,7 @@ class FlextLdifTypes(FlextTypes):
             | dict[str, FlextLdifTypes.ConfigValue],
         ]
         type ValidationRules = list[
-            dict[str, str | bool | FlextLdifTypes.StringList | dict[str, object]]
+            dict[str, str | bool | FlextLdifTypes.StringList | FlextCore.Types.Dict]
         ]
         type LdifValidationResult = dict[
             str,
@@ -106,9 +106,9 @@ class FlextLdifTypes(FlextTypes):
             | dict[str, FlextLdifTypes.JsonValue],
         ]
         type ValidationContext = dict[
-            str, str | bool | FlextLdifTypes.StringList | dict[str, object]
+            str, str | bool | FlextLdifTypes.StringList | FlextCore.Types.Dict
         ]
-        type ValidationReport = dict[str, int | bool | list[dict[str, object]]]
+        type ValidationReport = dict[str, int | bool | list[FlextCore.Types.Dict]]
         type BusinessRules = list[dict[str, str | bool | Callable[[object], bool]]]
 
     # =========================================================================
@@ -119,13 +119,13 @@ class FlextLdifTypes(FlextTypes):
         """LDIF processing complex types."""
 
         type ProcessingConfiguration = dict[
-            str, FlextLdifTypes.ConfigValue | dict[str, object]
+            str, FlextLdifTypes.ConfigValue | FlextCore.Types.Dict
         ]
         type ProcessingPipeline = list[
-            dict[str, str | Callable[[object], FlextResult[object]]]
+            dict[str, str | Callable[[object], FlextCore.Result[object]]]
         ]
         type ProcessingState = dict[
-            str, str | int | bool | FlextLdifTypes.List | dict[str, object]
+            str, str | int | bool | FlextLdifTypes.List | FlextCore.Types.Dict
         ]
         type ProcessingMetrics = dict[
             str, int | float | dict[str, FlextLdifTypes.JsonValue]
@@ -149,18 +149,18 @@ class FlextLdifTypes(FlextTypes):
             str, int | float | bool | dict[str, FlextLdifTypes.JsonValue]
         ]
         type StatisticalAnalysis = dict[str, float | int | dict[str, int | float]]
-        type AnalyticsReport = dict[str, str | int | float | list[dict[str, object]]]
+        type AnalyticsReport = dict[str, str | int | float | list[FlextCore.Types.Dict]]
         type TrendAnalysis = dict[str, list[dict[str, int | float | str]]]
         type PerformanceMetrics = dict[
             str, float | int | bool | FlextLdifTypes.FloatDict
         ]
 
-    # REMOVED: Simple dict[str, object] aliases - use FlextTypes.Dict directly
+    # REMOVED: Simple FlextCore.Types.Dict aliases - use FlextCore.Types.Dict directly
     # LdifStatistics, ServiceDict, ManagementDict, ConfigDict, StatusDict, ResultDict,
     # ProcessingDict, ValidationDict, AnalysisDict, ReportDict, EntryDict, AttributesDict,
     # MetadataDict, ContextDict, HealthDict, MetricsDict, StatisticsDict, InfoDict,
     # QuirksDict, AclDict, SchemaDict, ParserDict, ProcessorDict
-    # ALL replaced with FlextTypes.Dict for direct usage
+    # ALL replaced with FlextCore.Types.Dict for direct usage
 
     # =========================================================================
     # LDIF WRITING TYPES - Complex LDIF output generation types
@@ -173,7 +173,7 @@ class FlextLdifTypes(FlextTypes):
             str, str | bool | int | dict[str, FlextLdifTypes.ConfigValue]
         ]
         type OutputFormat = dict[
-            str, str | bool | FlextLdifTypes.StringList | dict[str, object]
+            str, str | bool | FlextLdifTypes.StringList | FlextCore.Types.Dict
         ]
         type WritingContext = dict[
             str, str | bool | dict[str, FlextLdifTypes.JsonValue]
@@ -193,13 +193,13 @@ class FlextLdifTypes(FlextTypes):
             str, str | int | bool | dict[str, FlextLdifTypes.ConfigValue]
         ]
         type ServerCompatibility = dict[
-            str, bool | FlextLdifTypes.StringList | dict[str, object]
+            str, bool | FlextLdifTypes.StringList | FlextCore.Types.Dict
         ]
         type SchemaMapping = dict[
             str, str | FlextLdifTypes.StringList | dict[str, FlextLdifTypes.JsonValue]
         ]
         type AttributeMapping = dict[
-            str, str | FlextLdifTypes.StringList | dict[str, object]
+            str, str | FlextLdifTypes.StringList | FlextCore.Types.Dict
         ]
         type ServerOptimization = dict[
             str, bool | int | dict[str, FlextLdifTypes.ConfigValue]
@@ -218,17 +218,17 @@ class FlextLdifTypes(FlextTypes):
     class Functional:
         """Functional programming complex types for LDIF operations."""
 
-        type ProcessorFunction = Callable[[object], FlextResult[object]]
-        type ValidatorFunction = Callable[[object], FlextResult[bool]]
+        type ProcessorFunction = Callable[[object], FlextCore.Result[object]]
+        type ValidatorFunction = Callable[[object], FlextCore.Result[bool]]
         type TransformerFunction = Callable[[object], object]
         type AnalyzerFunction = Callable[
-            [Sequence[object]], FlextResult[dict[str, FlextLdifTypes.JsonValue]]
+            [Sequence[object]], FlextCore.Result[dict[str, FlextLdifTypes.JsonValue]]
         ]
-        type WriterFunction = Callable[[Sequence[object]], FlextResult[str]]
+        type WriterFunction = Callable[[Sequence[object]], FlextCore.Result[str]]
         type FilterFunction = Callable[[object], bool]
 
-        type CompositionPipeline = list[Callable[[object], FlextResult[object]]]
-        type ValidationPipeline = list[Callable[[object], FlextResult[bool]]]
+        type CompositionPipeline = list[Callable[[object], FlextCore.Result[object]]]
+        type ValidationPipeline = list[Callable[[object], FlextCore.Result[bool]]]
         type TransformationPipeline = list[Callable[[object], object]]
 
     # =========================================================================
@@ -239,25 +239,25 @@ class FlextLdifTypes(FlextTypes):
         """Streaming and iterator complex types for large LDIF processing."""
 
         type EntryIterator = Iterator[dict[str, FlextLdifTypes.JsonValue]]
-        type ValidationIterator = Iterator[FlextResult[bool]]
-        type ProcessingIterator = Iterator[FlextResult[dict[str, object]]]
+        type ValidationIterator = Iterator[FlextCore.Result[bool]]
+        type ProcessingIterator = Iterator[FlextCore.Result[FlextCore.Types.Dict]]
         type StreamingConfiguration = dict[
             str, int | bool | dict[str, FlextLdifTypes.ConfigValue]
         ]
-        type ChunkingStrategy = dict[str, int | str | bool | dict[str, object]]
+        type ChunkingStrategy = dict[str, int | str | bool | FlextCore.Types.Dict]
         type MemoryManagement = dict[
             str, int | bool | float | dict[str, FlextLdifTypes.ConfigValue]
         ]
 
     # =========================================================================
-    # LDIF PROJECT TYPES - Domain-specific project types extending FlextTypes
+    # LDIF PROJECT TYPES - Domain-specific project types extending FlextCore.Types
     # =========================================================================
 
-    class Project(FlextTypes.Project):
-        """LDIF-specific project types extending FlextTypes.Project.
+    class Project(FlextCore.Types.Project):
+        """LDIF-specific project types extending FlextCore.Types.Project.
 
         Adds LDIF/directory data processing-specific project types while inheriting
-        generic types from FlextTypes. Follows domain separation principle:
+        generic types from FlextCore.Types. Follows domain separation principle:
         LDIF domain owns directory data processing-specific types.
         """
 

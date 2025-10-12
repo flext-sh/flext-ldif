@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from typing import cast, override
 
-from flext_core import FlextResult, FlextService
+from flext_core import FlextCore
 
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifSchemaExtractor(FlextService["FlextLdifConfig"]):
+class FlextLdifSchemaExtractor(FlextCore.Service["FlextLdifConfig"]):
     """Schema extraction service for LDIF entries."""
 
     @override
@@ -20,26 +20,26 @@ class FlextLdifSchemaExtractor(FlextService["FlextLdifConfig"]):
         super().__init__()
 
     @override
-    def execute(self) -> FlextResult[FlextLdifConfig]:
+    def execute(self) -> FlextCore.Result[FlextLdifConfig]:
         """Execute schema extractor service."""
-        return FlextResult[FlextLdifConfig].fail(
+        return FlextCore.Result[FlextLdifConfig].fail(
             "Use extract_from_entries() method instead"
         )
 
     def extract_from_entries(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
+    ) -> FlextCore.Result[FlextLdifModels.SchemaDiscoveryResult]:
         """Extract schema from LDIF entries.
 
         Args:
             entries: List of LDIF entries to analyze
 
         Returns:
-            FlextResult containing discovered schema
+            FlextCore.Result containing discovered schema
 
         """
         if not entries:
-            return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(
+            return FlextCore.Result[FlextLdifModels.SchemaDiscoveryResult].fail(
                 "No entries provided for schema extraction"
             )
 
@@ -69,11 +69,11 @@ class FlextLdifSchemaExtractor(FlextService["FlextLdifConfig"]):
                         }
 
             # Cast to match SchemaDiscoveryResult type expectations
-            # Type narrowing: dict[str, dict[str, str]] -> dict[str, dict[str, object]]
-            attributes_obj: dict[str, dict[str, object]] = {
+            # Type narrowing: dict[str, dict[str, str]] -> dict[str, FlextCore.Types.Dict]
+            attributes_obj: dict[str, FlextCore.Types.Dict] = {
                 k: dict(v.items()) for k, v in attributes.items()
             }
-            object_classes_obj: dict[str, dict[str, object]] = {
+            object_classes_obj: dict[str, FlextCore.Types.Dict] = {
                 k: dict(v.items()) for k, v in object_classes.items()
             }
 
@@ -90,27 +90,27 @@ class FlextLdifSchemaExtractor(FlextService["FlextLdifConfig"]):
                     f"{len(object_classes)} objectClasses from {len(entries)} entries"
                 )
 
-            return FlextResult[FlextLdifModels.SchemaDiscoveryResult].ok(result)
+            return FlextCore.Result[FlextLdifModels.SchemaDiscoveryResult].ok(result)
 
         except Exception as e:
-            return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(
+            return FlextCore.Result[FlextLdifModels.SchemaDiscoveryResult].fail(
                 f"Schema extraction failed: {e}"
             )
 
     def extract_attribute_usage(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[FlextLdifTypes.NestedDict]:
+    ) -> FlextCore.Result[FlextLdifTypes.NestedDict]:
         """Extract attribute usage statistics from entries.
 
         Args:
             entries: List of LDIF entries to analyze
 
         Returns:
-            FlextResult containing attribute usage statistics
+            FlextCore.Result containing attribute usage statistics
 
         """
         if not entries:
-            return FlextResult[FlextLdifTypes.NestedDict].ok({})
+            return FlextCore.Result[FlextLdifTypes.NestedDict].ok({})
 
         usage_stats: FlextLdifTypes.NestedDict = {}
 
@@ -133,7 +133,7 @@ class FlextLdifSchemaExtractor(FlextService["FlextLdifConfig"]):
                 if value_count > 1:
                     stats["single_valued"] = False
 
-        return FlextResult[FlextLdifTypes.NestedDict].ok(usage_stats)
+        return FlextCore.Result[FlextLdifTypes.NestedDict].ok(usage_stats)
 
 
 __all__ = ["FlextLdifSchemaExtractor"]

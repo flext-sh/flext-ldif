@@ -24,7 +24,7 @@ FLEXT-LDIF provides LDIF (LDAP Data Interchange Format) processing capabilities 
 
 ### **Integration Points**
 
-- **[flext-core](../flext-core/README.md)** → Foundation patterns (FlextResult, FlextContainer)
+- **[flext-core](../flext-core/README.md)** → Foundation patterns (FlextCore.Result, FlextCore.Container)
 - **[algar-oud-mig](../algar-oud-mig/README.md)** → Oracle Unified Directory migration project
 - **Projects requiring LDIF processing** → Directory data operations
 
@@ -59,7 +59,7 @@ Source Format → Source.to_rfc() → RFC Format → Target.from_rfc() → Targe
 - **N×N Matrix**: Convert between any server pair with only 2×N implementations
 - **RFC Intermediate**: Uses standards-compliant intermediate representation
 - **DN Consistency**: Tracks canonical DN case for OUD compatibility
-- **Type Safety**: Full type annotations with FlextResult error handling
+- **Type Safety**: Full type annotations with FlextCore.Result error handling
 
 **Example**:
 ```python
@@ -172,9 +172,9 @@ Automatic detection and quirk-based adaptation for LDAP servers:
 
 | Pattern             | Status      | Description                                      |
 | ------------------- | ----------- | ------------------------------------------------ |
-| **FlextResult[T]**  | 🟢 Complete | Operations return FlextResult for error handling |
-| **FlextService**    | 🟢 Complete | Service-oriented architecture with LDIF services |
-| **FlextContainer**  | 🟢 Complete | Dependency injection for service orchestration   |
+| **FlextCore.Result[T]**  | 🟢 Complete | Operations return FlextCore.Result for error handling |
+| **FlextCore.Service**    | 🟢 Complete | Service-oriented architecture with LDIF services |
+| **FlextCore.Container**  | 🟢 Complete | Dependency injection for service orchestration   |
 | **Domain Patterns** | 🟢 Complete | LDIF Entry, DN, and Attribute domain models      |
 
 > **Integration**: Uses flext-core patterns with memory-bound processing
@@ -472,7 +472,7 @@ pytest --cov=src/flext_ldif             # Coverage report
 - **DN Case Registry**: Canonical DN case tracking for OUD compatibility
 - **Enhanced Filters**: Advanced entry filtering and transformation utilities
 - **LDIF Processing**: Full RFC 2849/4512 compliant parsing and validation
-- **Service Architecture**: Modular services with FlextResult error handling
+- **Service Architecture**: Modular services with FlextCore.Result error handling
 - **Type Safety**: 100% Pyrefly strict mode compliance
 - **Memory-bound Processing**: Loads entire files into memory for processing
 - **Testing**: 1012/1012 tests passing (100% pass rate)
@@ -533,8 +533,8 @@ See TODO.md for detailed development priorities.
 
 ### **FLEXT-Core Compliance**
 
-- [x] Operations return FlextResult[T] for error handling
-- [x] Services use FlextContainer for dependency injection
+- [x] Operations return FlextCore.Result[T] for error handling
+- [x] Services use FlextCore.Container for dependency injection
 - [x] Type annotations with Python 3.13+ syntax
 - [x] Pydantic v2 models for data validation
 - [x] Integration with flext-core patterns

@@ -6,12 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult, FlextUtilities
+from flext_core import FlextCore
 
 from flext_ldif.models import FlextLdifModels
 
 
-class FlextLdifAclUtils(FlextUtilities):
+class FlextLdifAclUtils(FlextCore.Utilities):
     """Unified ACL utilities with shared helper methods for ACL processing.
 
     This namespace class provides common ACL component creation and validation
@@ -23,7 +23,7 @@ class FlextLdifAclUtils(FlextUtilities):
         """Factory for creating and validating ACL components with railway pattern."""
 
         @staticmethod
-        def create_acl_components() -> FlextResult[
+        def create_acl_components() -> FlextCore.Result[
             tuple[
                 FlextLdifModels.AclTarget,
                 FlextLdifModels.AclSubject,
@@ -33,7 +33,7 @@ class FlextLdifAclUtils(FlextUtilities):
             """Create ACL components with proper validation using railway pattern.
 
             Returns:
-                FlextResult containing tuple of (target, subject, permissions) on success,
+                FlextCore.Result containing tuple of (target, subject, permissions) on success,
                 or failure with descriptive error message.
 
             """
@@ -46,17 +46,17 @@ class FlextLdifAclUtils(FlextUtilities):
 
             # Railway pattern: early return on first failure
             if target_result.is_failure:
-                return FlextResult.fail(
+                return FlextCore.Result.fail(
                     f"Failed to create AclTarget: {target_result.error}"
                 )
 
             if subject_result.is_failure:
-                return FlextResult.fail(
+                return FlextCore.Result.fail(
                     f"Failed to create AclSubject: {subject_result.error}"
                 )
 
             if perms_result.is_failure:
-                return FlextResult.fail(
+                return FlextCore.Result.fail(
                     f"Failed to create AclPermissions: {perms_result.error}"
                 )
 
@@ -66,17 +66,21 @@ class FlextLdifAclUtils(FlextUtilities):
             permissions = perms_result.unwrap()
 
             if not isinstance(target, FlextLdifModels.AclTarget):
-                return FlextResult.fail("Created object is not an AclTarget instance")
+                return FlextCore.Result.fail(
+                    "Created object is not an AclTarget instance"
+                )
 
             if not isinstance(subject, FlextLdifModels.AclSubject):
-                return FlextResult.fail("Created object is not an AclSubject instance")
+                return FlextCore.Result.fail(
+                    "Created object is not an AclSubject instance"
+                )
 
             if not isinstance(permissions, FlextLdifModels.AclPermissions):
-                return FlextResult.fail(
+                return FlextCore.Result.fail(
                     "Created object is not an AclPermissions instance"
                 )
 
-            return FlextResult.ok((target, subject, permissions))
+            return FlextCore.Result.ok((target, subject, permissions))
 
         @staticmethod
         def create_unified_acl(
@@ -86,7 +90,7 @@ class FlextLdifAclUtils(FlextUtilities):
             permissions: FlextLdifModels.AclPermissions,
             server_type: str,
             raw_acl: str,
-        ) -> FlextResult[FlextLdifModels.UnifiedAcl]:
+        ) -> FlextCore.Result[FlextLdifModels.UnifiedAcl]:
             """Create unified ACL with proper validation using railway pattern.
 
             Args:
@@ -98,7 +102,7 @@ class FlextLdifAclUtils(FlextUtilities):
                 raw_acl: Original raw ACL string
 
             Returns:
-                FlextResult containing UnifiedAcl on success, failure otherwise.
+                FlextCore.Result containing UnifiedAcl on success, failure otherwise.
 
             """
             acl_result = FlextLdifModels.UnifiedAcl.create(
@@ -111,15 +115,17 @@ class FlextLdifAclUtils(FlextUtilities):
             )
 
             if acl_result.is_failure:
-                return FlextResult.fail(
+                return FlextCore.Result.fail(
                     f"Failed to create UnifiedAcl: {acl_result.error}"
                 )
 
             unified_acl = acl_result.unwrap()
             if not isinstance(unified_acl, FlextLdifModels.UnifiedAcl):
-                return FlextResult.fail("Created object is not a UnifiedAcl instance")
+                return FlextCore.Result.fail(
+                    "Created object is not a UnifiedAcl instance"
+                )
 
-            return FlextResult.ok(unified_acl)
+            return FlextCore.Result.ok(unified_acl)
 
 
 __all__ = ["FlextLdifAclUtils"]

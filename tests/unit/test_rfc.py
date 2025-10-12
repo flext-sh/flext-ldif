@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import cast
 
 import pytest
+from flext_core import FlextCore
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
@@ -942,7 +943,7 @@ class TestRfcLdifWriterComprehensive:
             "include_version": True,
         }
         writer = FlextLdifRfcLdifWriter(
-            params=cast("dict[str, object]", params),
+            params=cast("FlextCore.Types.Dict", params),
             quirk_registry=registry,
         )
 
@@ -1229,7 +1230,7 @@ class TestRfcLdifWriterExecuteMethod:
     ) -> None:
         """Test execute() writing entries to string (no output_file)."""
         registry = FlextLdifQuirksRegistry()
-        params: dict[str, object] = {"entries": sample_entries}
+        params: FlextCore.Types.Dict = {"entries": sample_entries}
         writer = FlextLdifRfcLdifWriter(params=params, quirk_registry=registry)
 
         result = writer.execute()
@@ -1245,7 +1246,7 @@ class TestRfcLdifWriterExecuteMethod:
         """Test execute() writing entries to file."""
         output_file = tmp_path / "output.ldif"
         registry = FlextLdifQuirksRegistry()
-        params: dict[str, object] = {
+        params: FlextCore.Types.Dict = {
             "entries": sample_entries,
             "output_file": str(output_file),
         }
@@ -1286,7 +1287,7 @@ class TestRfcLdifWriterExecuteMethod:
             "append": True,
         }
         writer = FlextLdifRfcLdifWriter(
-            params=cast("dict[str, object]", params), quirk_registry=registry
+            params=cast("FlextCore.Types.Dict", params), quirk_registry=registry
         )
 
         result = writer.execute()
@@ -1363,7 +1364,10 @@ class TestRfcLdifWriterSchemaSupport:
 
         output_file = tmp_path / "schema.ldif"
         registry = FlextLdifQuirksRegistry()
-        params: dict[str, object] = {"schema": schema, "output_file": str(output_file)}
+        params: FlextCore.Types.Dict = {
+            "schema": schema,
+            "output_file": str(output_file),
+        }
         writer = FlextLdifRfcLdifWriter(params=params, quirk_registry=registry)
 
         result = writer.execute()
@@ -1390,7 +1394,7 @@ class TestRfcLdifWriterAclSupport:
 
         output_file = tmp_path / "acls.ldif"
         registry = FlextLdifQuirksRegistry()
-        params: dict[str, object] = {
+        params: FlextCore.Types.Dict = {
             "acls": [acl_entry],
             "output_file": str(output_file),
         }

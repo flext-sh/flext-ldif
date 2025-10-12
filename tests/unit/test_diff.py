@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_core import FlextCore
 
 from flext_ldif.diff import DiffResult, FlextLdifDiff
 
@@ -236,7 +237,7 @@ class TestAclDiff:
 
     def test_added_acl(self, diff_tool: FlextLdifDiff) -> None:
         """Test detection of added ACL."""
-        source_acls: list[dict[str, object]] = []
+        source_acls: list[FlextCore.Types.Dict] = []
         target_acls = [
             {
                 "type": "standard",
@@ -259,7 +260,7 @@ class TestAclDiff:
                 "by_clauses": [{"subject": "*", "permissions": ["browse"]}],
             }
         ]
-        target_acls: list[dict[str, object]] = []
+        target_acls: list[FlextCore.Types.Dict] = []
 
         result = diff_tool.diff_acls(source_acls, target_acls)
         assert result.is_success
@@ -315,7 +316,7 @@ class TestEntryDiff:
 
     def test_added_entry(self, diff_tool: FlextLdifDiff) -> None:
         """Test detection of added entry."""
-        source_entries: list[dict[str, object]] = []
+        source_entries: list[FlextCore.Types.Dict] = []
         target_entries = [
             {
                 "dn": "cn=test,dc=example,dc=com",
@@ -339,7 +340,7 @@ class TestEntryDiff:
                 "objectClass": ["person"],
             }
         ]
-        target_entries: list[dict[str, object]] = []
+        target_entries: list[FlextCore.Types.Dict] = []
 
         result = diff_tool.diff_entries(source_entries, target_entries)
         assert result.is_success

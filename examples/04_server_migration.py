@@ -200,7 +200,9 @@ sn: Test
         return
 
     report = validation_result.unwrap()
-    assert isinstance(report, dict)
+    if not isinstance(report, dict):
+        print(f"ERROR: Expected dict report, got {type(report)}")
+        return
 
     if not report.get("is_valid", False):
         return

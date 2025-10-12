@@ -11,14 +11,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult
+from flext_core import FlextCore
 from pydantic import BaseModel
 
+from flext_ldif.dto_diff import DiffResult
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
-
-# Import DiffResult from models for backward compatibility
-DiffResult = FlextLdifModels.DiffResult
 
 
 class FlextLdifDiff(BaseModel):
@@ -45,7 +43,7 @@ class FlextLdifDiff(BaseModel):
         self,
         source_attrs: list[FlextLdifTypes.Dict],
         target_attrs: list[FlextLdifTypes.Dict],
-    ) -> FlextResult[DiffResult]:
+    ) -> FlextCore.Result[FlextLdifModels.DiffResult]:
         """Compare attribute definitions between two quirk types.
 
         Compares attributes by OID (primary) or NAME (fallback).
@@ -56,7 +54,7 @@ class FlextLdifDiff(BaseModel):
             target_attrs: List of parsed attribute dictionaries from target quirk
 
         Returns:
-            FlextResult[DiffResult] with comparison results
+            FlextCore.Result[FlextLdifModels.DiffResult] with comparison results
 
         Example:
             oid_attrs = [oid_quirk.parse_attribute(attr).unwrap() for attr in oid_attr_defs]
@@ -114,7 +112,7 @@ class FlextLdifDiff(BaseModel):
                         "desc": source_attr.get("desc"),
                     })
 
-            return FlextResult[DiffResult].ok(
+            return FlextCore.Result[FlextLdifModels.DiffResult].ok(
                 DiffResult(
                     added=added,
                     removed=removed,
@@ -124,13 +122,15 @@ class FlextLdifDiff(BaseModel):
             )
 
         except Exception as e:
-            return FlextResult[DiffResult].fail(f"Attribute diff failed: {e}")
+            return FlextCore.Result[FlextLdifModels.DiffResult].fail(
+                f"Attribute diff failed: {e}"
+            )
 
     def diff_objectclasses(
         self,
         source_ocs: list[FlextLdifTypes.Dict],
         target_ocs: list[FlextLdifTypes.Dict],
-    ) -> FlextResult[DiffResult]:
+    ) -> FlextCore.Result[FlextLdifModels.DiffResult]:
         """Compare objectClass definitions between two quirk types.
 
         Compares objectClasses by OID (primary) or NAME (fallback).
@@ -141,7 +141,7 @@ class FlextLdifDiff(BaseModel):
             target_ocs: List of parsed objectClass dictionaries from target quirk
 
         Returns:
-            FlextResult[DiffResult] with comparison results
+            FlextCore.Result[FlextLdifModels.DiffResult] with comparison results
 
         """
         try:
@@ -190,7 +190,7 @@ class FlextLdifDiff(BaseModel):
                         "kind": source_oc.get("kind"),
                     })
 
-            return FlextResult[DiffResult].ok(
+            return FlextCore.Result[FlextLdifModels.DiffResult].ok(
                 DiffResult(
                     added=added,
                     removed=removed,
@@ -200,13 +200,15 @@ class FlextLdifDiff(BaseModel):
             )
 
         except Exception as e:
-            return FlextResult[DiffResult].fail(f"ObjectClass diff failed: {e}")
+            return FlextCore.Result[FlextLdifModels.DiffResult].fail(
+                f"ObjectClass diff failed: {e}"
+            )
 
     def diff_schemas(
         self,
         source_schema: FlextLdifTypes.Dict,
         target_schema: FlextLdifTypes.Dict,
-    ) -> FlextResult[DiffResult]:
+    ) -> FlextCore.Result[FlextLdifModels.DiffResult]:
         """Compare complete schemas (attributes + objectClasses) between quirks.
 
         Provides high-level schema comparison including both attributes and objectClasses.
@@ -216,7 +218,7 @@ class FlextLdifDiff(BaseModel):
             target_schema: Parsed schema dict with 'attributes' and 'objectclasses' keys
 
         Returns:
-            FlextResult[DiffResult] with combined comparison results
+            FlextCore.Result[DiffResult] with combined comparison results
 
         """
         try:
@@ -269,7 +271,7 @@ class FlextLdifDiff(BaseModel):
                 {"type": "attribute", **item} for item in attr_diff.unchanged
             ] + [{"type": "objectclass", **item} for item in oc_diff.unchanged]
 
-            return FlextResult[DiffResult].ok(
+            return FlextCore.Result[FlextLdifModels.DiffResult].ok(
                 DiffResult(
                     added=combined_added,
                     removed=combined_removed,
@@ -279,13 +281,15 @@ class FlextLdifDiff(BaseModel):
             )
 
         except Exception as e:
-            return FlextResult[DiffResult].fail(f"Schema diff failed: {e}")
+            return FlextCore.Result[FlextLdifModels.DiffResult].fail(
+                f"Schema diff failed: {e}"
+            )
 
     def diff_acls(
         self,
         source_acls: list[FlextLdifTypes.Dict],
         target_acls: list[FlextLdifTypes.Dict],
-    ) -> FlextResult[DiffResult]:
+    ) -> FlextCore.Result[FlextLdifModels.DiffResult]:
         """Compare ACL definitions between two quirk types.
 
         Compares ACLs semantically, understanding that different quirks
@@ -296,7 +300,7 @@ class FlextLdifDiff(BaseModel):
             target_acls: List of parsed ACL dictionaries from target quirk
 
         Returns:
-            FlextResult[DiffResult] with comparison results
+            FlextCore.Result[FlextLdifModels.DiffResult] with comparison results
 
         """
         try:
@@ -336,7 +340,7 @@ class FlextLdifDiff(BaseModel):
                 if sig not in target_map:
                     removed.append(source_acl)
 
-            return FlextResult[DiffResult].ok(
+            return FlextCore.Result[FlextLdifModels.DiffResult].ok(
                 DiffResult(
                     added=added,
                     removed=removed,
@@ -346,13 +350,15 @@ class FlextLdifDiff(BaseModel):
             )
 
         except Exception as e:
-            return FlextResult[DiffResult].fail(f"ACL diff failed: {e}")
+            return FlextCore.Result[FlextLdifModels.DiffResult].fail(
+                f"ACL diff failed: {e}"
+            )
 
     def diff_entries(
         self,
         source_entries: list[FlextLdifTypes.Dict],
         target_entries: list[FlextLdifTypes.Dict],
-    ) -> FlextResult[DiffResult]:
+    ) -> FlextCore.Result[FlextLdifModels.DiffResult]:
         """Compare directory entries between two quirk types.
 
         Compares entries by DN, identifying added, removed, and modified entries.
@@ -362,7 +368,7 @@ class FlextLdifDiff(BaseModel):
             target_entries: List of parsed entry dictionaries from target quirk
 
         Returns:
-            FlextResult[DiffResult] with comparison results
+            FlextCore.Result[FlextLdifModels.DiffResult] with comparison results
 
         """
         try:
@@ -410,7 +416,7 @@ class FlextLdifDiff(BaseModel):
                         "objectClass": source_entry.get("objectClass"),
                     })
 
-            return FlextResult[DiffResult].ok(
+            return FlextCore.Result[FlextLdifModels.DiffResult].ok(
                 DiffResult(
                     added=added,
                     removed=removed,
@@ -420,7 +426,9 @@ class FlextLdifDiff(BaseModel):
             )
 
         except Exception as e:
-            return FlextResult[DiffResult].fail(f"Entry diff failed: {e}")
+            return FlextCore.Result[FlextLdifModels.DiffResult].fail(
+                f"Entry diff failed: {e}"
+            )
 
     # Private helper methods
 
@@ -434,7 +442,7 @@ class FlextLdifDiff(BaseModel):
 
     def _get_attribute_changes(
         self, attr1: FlextLdifTypes.Dict, attr2: FlextLdifTypes.Dict
-    ) -> list[str]:
+    ) -> FlextCore.Types.StringList:
         """Get list of changed fields between two attributes."""
         changes = []
         keys_to_compare = ["name", "desc", "syntax", "equality", "single_value", "sup"]
@@ -454,7 +462,7 @@ class FlextLdifDiff(BaseModel):
 
     def _get_objectclass_changes(
         self, oc1: FlextLdifTypes.Dict, oc2: FlextLdifTypes.Dict
-    ) -> list[str]:
+    ) -> FlextCore.Types.StringList:
         """Get list of changed fields between two objectClasses."""
         changes = []
         keys_to_compare = ["name", "desc", "kind", "sup", "must", "may"]
@@ -555,7 +563,7 @@ class FlextLdifDiff(BaseModel):
 
     def _get_entry_changes(
         self, entry1: FlextLdifTypes.Dict, entry2: FlextLdifTypes.Dict
-    ) -> list[str]:
+    ) -> FlextCore.Types.StringList:
         """Get list of changed attributes between two entries."""
         changes = []
         all_keys = set(entry1.keys()) | set(entry2.keys())

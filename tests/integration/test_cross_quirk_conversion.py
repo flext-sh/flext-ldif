@@ -17,6 +17,7 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
+from flext_core import FlextCore
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.conversion_matrix import QuirksConversionMatrix
@@ -155,7 +156,7 @@ class TestOidToOudAclConversion:
         # Parse with OID ACL quirk
         parse_result = oid_acl_quirk.parse_acl(oid_acl)
         assert parse_result.is_success, f"OID ACL parse failed: {parse_result.error}"
-        parsed_data = cast("dict[str, object]", parse_result.unwrap())
+        parsed_data = cast("FlextCore.Types.Dict", parse_result.unwrap())
 
         # Verify parsed data structure
         assert parsed_data["type"] == "standard"  # orclaci uses "standard" type

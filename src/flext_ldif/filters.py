@@ -16,16 +16,11 @@ from __future__ import annotations
 
 import fnmatch
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
 
-from flext_core import FlextResult
+from flext_core import FlextCore
 
-if TYPE_CHECKING:
-    from flext_ldif.models import FlextLdifModels
-else:
-    # Import at runtime to avoid circular dependency
-    from flext_ldif import models as _models
-    FlextLdifModels = _models.FlextLdifModels
+# Import models from unified namespace
+from flext_ldif.models import FlextLdifModels
 
 
 class FlextLdifFilters:
@@ -67,7 +62,7 @@ class FlextLdifFilters:
         return fnmatch.fnmatch(dn.lower(), pattern.lower())
 
     @staticmethod
-    def matches_oid_pattern(oid: str, patterns: list[str]) -> bool:
+    def matches_oid_pattern(oid: str, patterns: FlextCore.Types.StringList) -> bool:
         """Check if OID matches any pattern in list.
 
         Uses fnmatch for pattern matching. Supports wildcards in OID patterns.
@@ -90,10 +85,10 @@ class FlextLdifFilters:
 
     @staticmethod
     def mark_entry_excluded(
-        entry: FlextLdifModels.Entry,
+        entry: Entry,
         reason: str,
-        filter_criteria: FlextLdifModels.FilterCriteria | None = None,
-    ) -> FlextLdifModels.Entry:
+        filter_criteria: FilterCriteria | None = None,
+    ) -> Entry:
         """Mark entry as excluded by adding exclusion metadata.
 
         Creates or updates QuirkMetadata with ExclusionInfo in extensions.
@@ -108,7 +103,7 @@ class FlextLdifFilters:
             New Entry instance with updated metadata
 
         Example:
-            >>> entry = FlextLdifModels.Entry(...)
+            >>> entry = Entry(...)
             >>> marked = FlextLdifFilters.mark_entry_excluded(
             ...     entry,
             ...     "DN outside base context",
@@ -117,7 +112,7 @@ class FlextLdifFilters:
 
         """
         # Create exclusion info
-        exclusion_info = FlextLdifModels.ExclusionInfo(
+        exclusion_info = ExclusionInfo(
             excluded=True,
             exclusion_reason=reason,
             filter_criteria=filter_criteria,
@@ -145,7 +140,7 @@ class FlextLdifFilters:
         return entry.model_copy(update={"metadata": new_metadata})
 
     @staticmethod
-    def is_entry_excluded(entry: FlextLdifModels.Entry) -> bool:
+    def is_entry_excluded(entry: Entry) -> bool:
         """Check if entry is marked as excluded.
 
         Args:
@@ -165,7 +160,7 @@ class FlextLdifFilters:
         return exclusion_info.get("excluded", False)
 
     @staticmethod
-    def get_exclusion_reason(entry: FlextLdifModels.Entry) -> str | None:
+    def get_exclusion_reason(entry: Entry) -> str | None:
         """Get exclusion reason from entry metadata.
 
         Args:
@@ -185,9 +180,7 @@ class FlextLdifFilters:
         return exclusion_info.get("exclusion_reason")
 
     @staticmethod
-    def has_objectclass(
-        entry: FlextLdifModels.Entry, objectclasses: tuple[str, ...]
-    ) -> bool:
+    def has_objectclass(entry: Entry, objectclasses: tuple[str, ...]) -> bool:
         """Check if entry has any of the specified objectClasses.
 
         Case-insensitive comparison.
@@ -211,7 +204,7 @@ class FlextLdifFilters:
 
     @staticmethod
     def has_required_attributes(
-        entry: FlextLdifModels.Entry, required_attributes: list[str]
+        entry: Entry, required_attributes: FlextCore.Types.StringList
     ) -> bool:
         """Check if entry has all required attributes.
 
@@ -227,7 +220,7 @@ class FlextLdifFilters:
 
     @staticmethod
     def categorize_entry(
-        entry: FlextLdifModels.Entry,
+        entry: Entry,
         user_objectclasses: tuple[str, ...],
         group_objectclasses: tuple[str, ...],
         container_objectclasses: tuple[str, ...],
@@ -261,7 +254,7 @@ class FlextLdifFilters:
         mode: str = "include",
         *,
         mark_excluded: bool = True,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
         """Filter entries by DN pattern.
 
         Args:
@@ -271,7 +264,7 @@ class FlextLdifFilters:
             mark_excluded: If True, mark excluded entries in metadata (keyword-only)
 
         Returns:
-            FlextResult containing filtered entry list
+            FlextCore.Result containing filtered entry list
 
         """
         try:
@@ -290,7 +283,7 @@ class FlextLdifFilters:
                     filtered.append(entry)
                 elif mark_excluded:
                     # Mark as excluded and include in results
-                    criteria = FlextLdifModels.FilterCriteria(
+                    criteria = FilterCriteria(
                         filter_type="dn_pattern",
                         pattern=pattern,
                         mode=mode,
@@ -302,10 +295,10 @@ class FlextLdifFilters:
                     )
                     filtered.append(marked_entry)
 
-            return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
+            return FlextCore.Result[list[Entry]].ok(filtered)
 
         except Exception as e:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
+            return FlextCore.Result[list[Entry]].fail(
                 f"Failed to filter entries by DN: {e}"
             )
 
@@ -313,11 +306,11 @@ class FlextLdifFilters:
     def filter_entries_by_objectclass(
         entries: list[FlextLdifModels.Entry],
         objectclass: str | tuple[str, ...],
-        required_attributes: list[str] | None = None,
+        required_attributes: FlextCore.Types.StringList | None = None,
         mode: str = "include",
         *,
         mark_excluded: bool = True,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
         """Filter entries by objectClass with optional required attributes.
 
         Args:
@@ -328,7 +321,7 @@ class FlextLdifFilters:
             mark_excluded: If True, mark excluded entries in metadata (keyword-only)
 
         Returns:
-            FlextResult containing filtered entry list
+            FlextCore.Result containing filtered entry list
 
         """
         try:
@@ -359,7 +352,7 @@ class FlextLdifFilters:
                     filtered.append(entry)
                 elif mark_excluded:
                     # Mark as excluded and include in results
-                    criteria = FlextLdifModels.FilterCriteria(
+                    criteria = FilterCriteria(
                         filter_type="objectclass",
                         pattern=",".join(objectclass),
                         required_attributes=required_attributes,
@@ -377,22 +370,22 @@ class FlextLdifFilters:
                     )
                     filtered.append(marked_entry)
 
-            return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
+            return FlextCore.Result[list[Entry]].ok(filtered)
 
         except Exception as e:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
+            return FlextCore.Result[list[Entry]].fail(
                 f"Failed to filter entries by objectClass: {e}"
             )
 
     @staticmethod
     def filter_entries_by_attributes(
         entries: list[FlextLdifModels.Entry],
-        attributes: list[str],
+        attributes: FlextCore.Types.StringList,
         mode: str = "include",
         *,
         match_all: bool = False,
         mark_excluded: bool = True,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
         """Filter entries by attribute presence.
 
         Args:
@@ -403,7 +396,7 @@ class FlextLdifFilters:
             mark_excluded: If True, mark excluded entries in metadata (keyword-only)
 
         Returns:
-            FlextResult containing filtered entry list
+            FlextCore.Result containing filtered entry list
 
         """
         try:
@@ -424,7 +417,7 @@ class FlextLdifFilters:
                     filtered.append(entry)
                 elif mark_excluded:
                     # Mark as excluded and include in results
-                    criteria = FlextLdifModels.FilterCriteria(
+                    criteria = FilterCriteria(
                         filter_type="attribute",
                         pattern=",".join(attributes),
                         mode=mode,
@@ -437,10 +430,10 @@ class FlextLdifFilters:
                     )
                     filtered.append(marked_entry)
 
-            return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
+            return FlextCore.Result[list[Entry]].ok(filtered)
 
         except Exception as e:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
+            return FlextCore.Result[list[Entry]].fail(
                 f"Failed to filter entries by attributes: {e}"
             )
 

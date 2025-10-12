@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_core import FlextCore
 
 from flext_ldif.quirks.dn_case_registry import DnCaseRegistry
 
@@ -403,7 +404,7 @@ class TestDnReferenceNormalization:
 
     def test_normalize_single_dn_field(self, registry: DnCaseRegistry) -> None:
         """Test normalizing single DN field."""
-        data: dict[str, object] = {"dn": "CN=Admin,DC=Com", "cn": ["admin"]}
+        data: FlextCore.Types.Dict = {"dn": "CN=Admin,DC=Com", "cn": ["admin"]}
         result = registry.normalize_dn_references(data, ["dn"])
 
         assert result.is_success
@@ -413,7 +414,7 @@ class TestDnReferenceNormalization:
 
     def test_normalize_list_of_dns(self, registry: DnCaseRegistry) -> None:
         """Test normalizing list of DNs (e.g., group members)."""
-        data: dict[str, object] = {
+        data: FlextCore.Types.Dict = {
             "dn": "cn=group,dc=com",
             "member": ["CN=User1,DC=Com", "cn=USER2,dc=com"],
         }
@@ -425,7 +426,7 @@ class TestDnReferenceNormalization:
 
     def test_normalize_multiple_dn_fields(self, registry: DnCaseRegistry) -> None:
         """Test normalizing multiple DN fields."""
-        data: dict[str, object] = {
+        data: FlextCore.Types.Dict = {
             "dn": "CN=Admin,DC=Com",
             "manager": "cn=USER1,dc=com",
             "secretary": "cn=USER2,dc=com",
@@ -442,7 +443,7 @@ class TestDnReferenceNormalization:
         self, registry: DnCaseRegistry
     ) -> None:
         """Test that unregistered DNs are left unchanged."""
-        data: dict[str, object] = {"dn": "cn=unknown,dc=com"}
+        data: FlextCore.Types.Dict = {"dn": "cn=unknown,dc=com"}
         result = registry.normalize_dn_references(data, ["dn"])
 
         assert result.is_success
@@ -453,7 +454,7 @@ class TestDnReferenceNormalization:
         self, registry: DnCaseRegistry
     ) -> None:
         """Test that None dn_fields uses default DN fields."""
-        data: dict[str, object] = {
+        data: FlextCore.Types.Dict = {
             "dn": "CN=Admin,DC=Com",
             "member": ["cn=USER1,dc=com"],
             "owner": "cn=USER2,dc=com",
@@ -468,7 +469,7 @@ class TestDnReferenceNormalization:
 
     def test_normalize_missing_fields_unchanged(self, registry: DnCaseRegistry) -> None:
         """Test that missing fields don't cause errors."""
-        data: dict[str, object] = {"cn": ["admin"]}
+        data: FlextCore.Types.Dict = {"cn": ["admin"]}
         result = registry.normalize_dn_references(data, ["dn", "member"])
 
         assert result.is_success
@@ -479,7 +480,7 @@ class TestDnReferenceNormalization:
         self, registry: DnCaseRegistry
     ) -> None:
         """Test normalizing mix of registered and unregistered DNs."""
-        data: dict[str, object] = {
+        data: FlextCore.Types.Dict = {
             "dn": "cn=group,dc=com",
             "member": [
                 "CN=User1,DC=Com",  # Registered
@@ -643,7 +644,7 @@ class TestEdgeCases:
         """Test normalization handles non-string, non-list values."""
         registry = DnCaseRegistry()
         registry.register_dn("cn=admin,dc=com")
-        data: dict[str, object] = {"dn": "cn=admin,dc=com", "someField": 123}
+        data: FlextCore.Types.Dict = {"dn": "cn=admin,dc=com", "someField": 123}
         result = registry.normalize_dn_references(data, ["dn", "someField"])
 
         assert result.is_success
