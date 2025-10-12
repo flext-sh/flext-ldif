@@ -15,10 +15,11 @@ Architecture:
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 from flext_core import FlextCore
 
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.quirks.servers import (
     FlextLdifQuirksServersOid,
@@ -28,12 +29,6 @@ from flext_ldif.rfc.rfc_ldif_parser import FlextLdifRfcLdifParser
 from flext_ldif.rfc.rfc_ldif_writer import FlextLdifRfcLdifWriter
 from flext_ldif.rfc.rfc_schema_parser import FlextLdifRfcSchemaParser
 from flext_ldif.typings import FlextLdifTypes
-
-if TYPE_CHECKING:
-    from flext_ldif.config import FlextLdifConfig
-
-    FlextCore.ServiceType = type[FlextCore.Service[FlextLdifConfig]]
-from flext_ldif.constants import FlextLdifConstants
 
 
 class FlextLdifMigrationPipeline(FlextCore.Service[FlextLdifTypes.Dict]):

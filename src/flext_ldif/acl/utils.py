@@ -90,7 +90,7 @@ class FlextLdifAclUtils(FlextCore.Utilities):
             permissions: FlextLdifModels.AclPermissions,
             server_type: str,
             raw_acl: str,
-        ) -> FlextCore.Result[FlextLdifModels.UnifiedAcl]:
+        ) -> FlextCore.Result[FlextLdifModels.Acl]:
             """Create unified ACL with proper validation using railway pattern.
 
             Args:
@@ -102,10 +102,10 @@ class FlextLdifAclUtils(FlextCore.Utilities):
                 raw_acl: Original raw ACL string
 
             Returns:
-                FlextCore.Result containing UnifiedAcl on success, failure otherwise.
+                FlextCore.Result containing Acl on success, failure otherwise.
 
             """
-            acl_result = FlextLdifModels.UnifiedAcl.create(
+            acl_result = FlextLdifModels.Acl.create(
                 name=name,
                 target=target,
                 subject=subject,
@@ -116,14 +116,12 @@ class FlextLdifAclUtils(FlextCore.Utilities):
 
             if acl_result.is_failure:
                 return FlextCore.Result.fail(
-                    f"Failed to create UnifiedAcl: {acl_result.error}"
+                    f"Failed to create Acl: {acl_result.error}"
                 )
 
             unified_acl = acl_result.unwrap()
-            if not isinstance(unified_acl, FlextLdifModels.UnifiedAcl):
-                return FlextCore.Result.fail(
-                    "Created object is not a UnifiedAcl instance"
-                )
+            if not isinstance(unified_acl, FlextLdifModels.Acl):
+                return FlextCore.Result.fail("Created object is not a Acl instance")
 
             return FlextCore.Result.ok(unified_acl)
 

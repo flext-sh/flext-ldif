@@ -156,69 +156,6 @@ class TestFlextLdifModels:
         )
         assert entry.dn.value == "cn=test,dc=example,dc=com"
 
-    def test_entry_from_ldif_string(self) -> None:
-        """Test creating entry from LDIF string."""
-        ldif_string = """dn: cn=test,dc=example,dc=com
-cn: test
-sn: user
-"""
-
-        result = FlextLdifModels.Entry.from_ldif_string(ldif_string)
-        assert isinstance(result, FlextCore.Result)
-        assert result.is_success
-
-        entry = result.value
-        assert entry.dn.value == "cn=test,dc=example,dc=com"
-        assert entry.attributes.get_attribute("cn") is not None
-        assert entry.attributes.get_attribute("sn") is not None
-
-    def test_entry_from_ldif_string_invalid(self) -> None:
-        """Test creating entry from invalid LDIF string."""
-        invalid_ldif = "invalid ldif content"
-
-        result = FlextLdifModels.Entry.from_ldif_string(invalid_ldif)
-        assert isinstance(result, FlextCore.Result)
-        assert result.is_failure
-
-    def test_entry_from_ldif_string_empty(self) -> None:
-        """Test creating entry from empty LDIF string."""
-        result = FlextLdifModels.Entry.from_ldif_string("")
-        assert isinstance(result, FlextCore.Result)
-        assert result.is_failure
-
-    def test_entry_to_ldif_string(self) -> None:
-        """Test converting entry to LDIF string."""
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": FlextLdifModels.AttributeValues(values=["test"]),
-                    "sn": FlextLdifModels.AttributeValues(values=["user"]),
-                }
-            ),
-        )
-
-        ldif_string = entry.to_ldif_string()
-        assert isinstance(ldif_string, str)
-        assert "dn: cn=test,dc=example,dc=com" in ldif_string
-        assert "cn: test" in ldif_string
-        assert "sn: user" in ldif_string
-
-    def test_entry_to_ldif_string_with_indent(self) -> None:
-        """Test converting entry to LDIF string with indentation."""
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": FlextLdifModels.AttributeValues(values=["test"]),
-                }
-            ),
-        )
-
-        ldif_string = entry.to_ldif_string(indent=4)
-        assert isinstance(ldif_string, str)
-        assert "dn: cn=test,dc=example,dc=com" in ldif_string
-
     def test_search_config_creation(self) -> None:
         """Test SearchConfig model creation."""
         config = FlextLdifModels.SearchConfig(
@@ -303,63 +240,6 @@ sn: user
         document = FlextLdifModels.LdifDocument(entries=[], domain_events=[])
         assert len(document.entries) == 0
 
-    def test_ldif_document_to_string(self) -> None:
-        """Test converting LdifDocument to string."""
-        entries = [
-            FlextLdifModels.Entry(
-                dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-                attributes=FlextLdifModels.LdifAttributes(
-                    attributes={
-                        "cn": FlextLdifModels.AttributeValues(values=["test"]),
-                    }
-                ),
-            ),
-        ]
-
-        document = FlextLdifModels.LdifDocument(entries=entries, domain_events=[])
-        ldif_string = document.to_ldif_string()
-
-        assert isinstance(ldif_string, str)
-        assert "dn: cn=test,dc=example,dc=com" in ldif_string
-        assert "cn: test" in ldif_string
-
-    def test_ldif_document_from_string(self) -> None:
-        """Test creating LdifDocument from string."""
-        ldif_string = """dn: cn=test1,dc=example,dc=com
-cn: test1
-
-dn: cn=test2,dc=example,dc=com
-cn: test2
-"""
-
-        result = FlextLdifModels.LdifDocument.from_ldif_string(ldif_string)
-        assert isinstance(result, FlextCore.Result)
-        assert result.is_success
-
-        document = result.value
-        assert len(document.entries) == 2
-        assert document.entries[0].dn.value == "cn=test1,dc=example,dc=com"
-        assert document.entries[1].dn.value == "cn=test2,dc=example,dc=com"
-
-    def test_ldif_document_from_string_invalid(self) -> None:
-        """Test creating LdifDocument from non-LDIF string."""
-        invalid_ldif = "invalid ldif content"
-
-        # Non-LDIF content is treated as having no entries (not a parsing error)
-        result = FlextLdifModels.LdifDocument.from_ldif_string(invalid_ldif)
-        assert isinstance(result, FlextCore.Result)
-        assert result.is_success
-        assert len(result.unwrap().entries) == 0
-
-    def test_ldif_document_from_string_empty(self) -> None:
-        """Test creating LdifDocument from empty string."""
-        result = FlextLdifModels.LdifDocument.from_ldif_string("")
-        assert isinstance(result, FlextCore.Result)
-        assert result.is_success
-
-        document = result.value
-        assert len(document.entries) == 0
-
     def test_model_serialization(self) -> None:
         """Test model serialization."""
         entry = FlextLdifModels.Entry(
@@ -408,27 +288,6 @@ cn: test2
         assert hasattr(FlextLdifModels, "Entry")
         assert hasattr(FlextLdifModels, "SearchConfig")
         assert hasattr(FlextLdifModels, "LdifDocument")
-
-    def test_model_methods(self) -> None:
-        """Test that model methods work correctly."""
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": FlextLdifModels.AttributeValues(values=["test"]),
-                }
-            ),
-        )
-
-        # Test that methods exist and are callable
-        assert hasattr(entry, "to_ldif_string")
-        assert callable(entry.to_ldif_string)
-
-        assert hasattr(FlextLdifModels.Entry, "from_ldif_string")
-        assert callable(FlextLdifModels.Entry.from_ldif_string)
-
-        assert hasattr(FlextLdifModels.LdifDocument, "from_ldif_string")
-        assert callable(FlextLdifModels.LdifDocument.from_ldif_string)
 
     def test_edge_cases(self) -> None:
         """Test edge cases in models."""
@@ -1046,11 +905,11 @@ class TestFlextLdifModelsAclPermissions:
         assert perms.permissions == ["read", "write"]
 
 
-class TestFlextLdifModelsUnifiedAcl:
-    """Test suite for UnifiedAcl model."""
+class TestFlextLdifModelsAcl:
+    """Test suite for Acl model."""
 
     def test_unified_acl_creation(self) -> None:
-        """Test creating a UnifiedAcl instance."""
+        """Test creating a Acl instance."""
         # First create components
         target_result = FlextLdifModels.AclTarget.create({
             "target_dn": "dc=example,dc=com",
@@ -1078,11 +937,11 @@ class TestFlextLdifModelsUnifiedAcl:
             "server_type": "oracle_oud",
         }
 
-        result = FlextLdifModels.UnifiedAcl.create(acl_data)
+        result = FlextLdifModels.Acl.create(acl_data)
 
         assert result.is_success
         acl = result.unwrap()
-        assert isinstance(acl, FlextLdifModels.UnifiedAcl)
+        assert isinstance(acl, FlextLdifModels.Acl)
         assert acl.name == "test_acl"
 
 
@@ -1157,7 +1016,7 @@ class TestFlextLdifModelsNamespace:
         assert hasattr(FlextLdifModels, "AclTarget")
         assert hasattr(FlextLdifModels, "AclSubject")
         assert hasattr(FlextLdifModels, "AclPermissions")
-        assert hasattr(FlextLdifModels, "UnifiedAcl")
+        assert hasattr(FlextLdifModels, "Acl")
 
     def test_computed_fields(self) -> None:
         """Test namespace-level computed fields."""

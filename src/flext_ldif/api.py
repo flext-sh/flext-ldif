@@ -805,7 +805,7 @@ class FlextLdif(FlextCore.Service[FlextCore.Types.Dict]):
     def extract_acls(
         self,
         entry: FlextLdifModels.Entry,
-    ) -> FlextCore.Result[list[FlextLdifModels.UnifiedAcl]]:
+    ) -> FlextCore.Result[list[FlextLdifModels.Acl]]:
         """Extract ACL rules from entry.
 
         Args:
@@ -825,7 +825,7 @@ class FlextLdif(FlextCore.Service[FlextCore.Types.Dict]):
 
     def evaluate_acl_rules(
         self,
-        acls: list[FlextLdifModels.UnifiedAcl],
+        acls: list[FlextLdifModels.Acl],
         context: FlextCore.Types.Dict | None = None,
     ) -> FlextCore.Result[bool]:
         """Evaluate ACL rules and return evaluation result.
@@ -852,7 +852,7 @@ class FlextLdif(FlextCore.Service[FlextCore.Types.Dict]):
         """
         # Security: Fail-safe - do NOT allow by default
         msg = (
-            "UnifiedAcl evaluation not yet implemented. "
+            "Acl evaluation not yet implemented. "
             "Use FlextLdifAclService.evaluate_acl_rules() for internal AclRule types."
         )
         raise NotImplementedError(msg)

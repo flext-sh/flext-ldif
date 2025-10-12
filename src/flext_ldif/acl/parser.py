@@ -34,7 +34,7 @@ class FlextLdifAclParser(FlextCore.Service[FlextLdifTypes.Dict]):
 
     def parse_openldap_acl(
         self, acl_string: str
-    ) -> FlextCore.Result[FlextLdifModels.UnifiedAcl]:
+    ) -> FlextCore.Result[FlextLdifModels.Acl]:
         """Parse OpenLDAP olcAccess ACL format.
 
         Args:
@@ -50,7 +50,7 @@ class FlextLdifAclParser(FlextCore.Service[FlextLdifTypes.Dict]):
         perms = FlextLdifModels.AclPermissions(read=True)
 
         # Create unified ACL directly
-        acl = FlextLdifModels.UnifiedAcl(
+        acl = FlextLdifModels.Acl(
             name="openldap_acl",
             target=target,
             subject=subject,
@@ -58,11 +58,9 @@ class FlextLdifAclParser(FlextCore.Service[FlextLdifTypes.Dict]):
             server_type=FlextLdifConstants.LdapServers.OPENLDAP,
             raw_acl=acl_string,
         )
-        return FlextCore.Result[FlextLdifModels.UnifiedAcl].ok(acl)
+        return FlextCore.Result[FlextLdifModels.Acl].ok(acl)
 
-    def parse_389ds_acl(
-        self, acl_string: str
-    ) -> FlextCore.Result[FlextLdifModels.UnifiedAcl]:
+    def parse_389ds_acl(self, acl_string: str) -> FlextCore.Result[FlextLdifModels.Acl]:
         """Parse 389DS ACI format.
 
         Args:
@@ -78,7 +76,7 @@ class FlextLdifAclParser(FlextCore.Service[FlextLdifTypes.Dict]):
         perms = FlextLdifModels.AclPermissions(read=True)
 
         # Create unified ACL directly
-        acl = FlextLdifModels.UnifiedAcl(
+        acl = FlextLdifModels.Acl(
             name="389ds_acl",
             target=target,
             subject=subject,
@@ -86,13 +84,13 @@ class FlextLdifAclParser(FlextCore.Service[FlextLdifTypes.Dict]):
             server_type=FlextLdifConstants.LdapServers.DS_389,
             raw_acl=acl_string,
         )
-        return FlextCore.Result[FlextLdifModels.UnifiedAcl].ok(acl)
+        return FlextCore.Result[FlextLdifModels.Acl].ok(acl)
 
     def parse_oracle_acl(
         self,
         acl_string: str,
         server_type: str = FlextLdifConstants.LdapServers.ORACLE_OID,
-    ) -> FlextCore.Result[FlextLdifModels.UnifiedAcl]:
+    ) -> FlextCore.Result[FlextLdifModels.Acl]:
         """Parse Oracle OID/OUD ACL format.
 
         Args:
@@ -109,7 +107,7 @@ class FlextLdifAclParser(FlextCore.Service[FlextLdifTypes.Dict]):
         perms = FlextLdifModels.AclPermissions(read=True)
 
         # Create unified ACL directly
-        acl = FlextLdifModels.UnifiedAcl(
+        acl = FlextLdifModels.Acl(
             name="oracle_acl",
             target=target,
             subject=subject,
@@ -117,11 +115,11 @@ class FlextLdifAclParser(FlextCore.Service[FlextLdifTypes.Dict]):
             server_type=server_type,
             raw_acl=acl_string,
         )
-        return FlextCore.Result[FlextLdifModels.UnifiedAcl].ok(acl)
+        return FlextCore.Result[FlextLdifModels.Acl].ok(acl)
 
     def parse_acl(
         self, acl_string: str, server_type: str
-    ) -> FlextCore.Result[FlextLdifModels.UnifiedAcl]:
+    ) -> FlextCore.Result[FlextLdifModels.Acl]:
         """Parse ACL string based on server type.
 
         Args:
@@ -144,7 +142,7 @@ class FlextLdifAclParser(FlextCore.Service[FlextLdifTypes.Dict]):
         }:
             return self.parse_oracle_acl(acl_string, server_type)
 
-        return FlextCore.Result[FlextLdifModels.UnifiedAcl].fail(
+        return FlextCore.Result[FlextLdifModels.Acl].fail(
             f"Unsupported server type: {server_type}"
         )
 

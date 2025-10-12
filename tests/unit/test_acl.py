@@ -302,7 +302,7 @@ class TestFlextLdifAclParser:
         assert isinstance(acl.permissions, FlextLdifModels.AclPermissions)
 
     def test_unified_acl_structure(self) -> None:
-        """Test that UnifiedAcl structure is correct."""
+        """Test that Acl structure is correct."""
         parser = FlextLdifAclParser()
 
         acl_string = "to attrs=cn by * read"
@@ -311,7 +311,7 @@ class TestFlextLdifAclParser:
         assert result.is_success
         acl = result.value
 
-        # Check UnifiedAcl structure
+        # Check Acl structure
         assert hasattr(acl, "name")
         assert hasattr(acl, "target")
         assert hasattr(acl, "subject")
@@ -958,7 +958,7 @@ class TestFlextLdifAclUtils:
 
         assert result.is_success
         unified_acl = result.unwrap()
-        assert isinstance(unified_acl, FlextLdifModels.UnifiedAcl)
+        assert isinstance(unified_acl, FlextLdifModels.Acl)
         assert unified_acl.name == "test_acl"
         assert unified_acl.server_type == "openldap"
         assert unified_acl.raw_acl == "to attrs=cn,sn by * read"
@@ -1007,7 +1007,7 @@ class TestFlextLdifAclUtils:
 
         assert result.is_success
         unified_acl = result.unwrap()
-        assert type(unified_acl).__name__ == "UnifiedAcl"
+        assert type(unified_acl).__name__ == "Acl"
 
     def test_component_factory_integration(self) -> None:
         """Test ComponentFactory integration with full ACL creation flow."""
