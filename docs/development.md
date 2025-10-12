@@ -61,7 +61,7 @@ class _ParserHelper:
         self._content = content
         self._lines = content.splitlines()  # Loads all lines into memory
 
-    def parse(self) -> Iterator[tuple[str, dict[str, FlextTypes.StringList]]]:
+    def parse(self) -> Iterator[tuple[str, dict[str, FlextCore.Types.StringList]]]:
         """Parse LDIF content and yield (dn, attributes) tuples."""
         # Process all lines already in memory
         pass
@@ -106,18 +106,18 @@ result = api.parse_file("small_directory.ldif")
 
 ```python
 # LDIF-specific validation
-def validate_ldif_structure(entries: list[FlextLdifModels.Entry]) -> FlextResult[None]:
+def validate_ldif_structure(entries: list[FlextLdifModels.Entry]) -> FlextCore.Result[None]:
     """Validate LDIF entries for common issues."""
     for entry in entries:
         # Check DN format
         if not entry.dn.value:
-            return FlextResult[None].fail("Empty DN found")
+            return FlextCore.Result[None].fail("Empty DN found")
 
         # Check required attributes
         if "objectClass" not in entry.attributes.data:
-            return FlextResult[None].fail(f"Missing objectClass in {entry.dn.value}")
+            return FlextCore.Result[None].fail(f"Missing objectClass in {entry.dn.value}")
 
-    return FlextResult[None].ok(None)
+    return FlextCore.Result[None].ok(None)
 ```
 
 #### Memory-Conscious Processing
@@ -201,24 +201,24 @@ def test_memory_usage():
 
 ```python
 # Good: Process small files directly
-def process_small_ldif(file_path: str) -> FlextResult[FlextTypes.Dict]:
+def process_small_ldif(file_path: str) -> FlextCore.Result[FlextCore.Types.Dict]:
     """Process LDIF files under 100MB."""
     api = FlextLdif()
     return api.parse_file(file_path)
 
 # Consider: External tools for large files
-def process_large_ldif(file_path: str) -> FlextResult[FlextTypes.Dict]:
+def process_large_ldif(file_path: str) -> FlextCore.Result[FlextCore.Types.Dict]:
     """Process large LDIF files using external tools."""
     # Use grep, awk, or other streaming tools
     # Then process results with FLEXT-LDIF
     pass
 
 # Monitor: Memory usage for production systems
-def process_with_monitoring(file_path: str) -> FlextResult[FlextTypes.Dict]:
+def process_with_monitoring(file_path: str) -> FlextCore.Result[FlextCore.Types.Dict]:
     """Process LDIF with memory monitoring."""
     file_size = os.path.getsize(file_path)
     if file_size > 100 * 1024 * 1024:  # 100MB
-        return FlextResult[FlextTypes.Dict].fail("File too large for current implementation")
+        return FlextCore.Result[FlextCore.Types.Dict].fail("File too large for current implementation")
 
     return process_small_ldif(file_path)
 ```
@@ -280,9 +280,9 @@ top -p $(pgrep -f python)
 
 For FLEXT ecosystem integration patterns, see [flext-core documentation](../../flext-core/CLAUDE.md). FLEXT-LDIF follows standard patterns for:
 
-- FlextResult error handling
-- FlextContainer dependency injection
-- FlextService architecture
+- FlextCore.Result error handling
+- FlextCore.Container dependency injection
+- FlextCore.Service architecture
 - Type safety with Pydantic v2
 
 Focus on LDIF-specific concerns:

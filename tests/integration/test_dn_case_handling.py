@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_core import FlextCore
 
 from flext_ldif.quirks.conversion_matrix import QuirksConversionMatrix
 from flext_ldif.quirks.dn_case_registry import DnCaseRegistry
@@ -119,7 +120,7 @@ class TestDnCaseRegistry:
         """Test normalizing single DN field."""
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
 
-        data: dict[str, object] = {"dn": "CN=Admin,DC=Com", "cn": ["REDACTED_LDAP_BIND_PASSWORD"]}
+        data: FlextCore.Types.Dict = {"dn": "CN=Admin,DC=Com", "cn": ["REDACTED_LDAP_BIND_PASSWORD"]}
         result = registry.normalize_dn_references(data, ["dn"])
 
         assert result.is_success
@@ -134,7 +135,7 @@ class TestDnCaseRegistry:
         registry.register_dn("cn=user1,dc=com")
         registry.register_dn("cn=user2,dc=com")
 
-        data: dict[str, object] = {
+        data: FlextCore.Types.Dict = {
             "dn": "cn=group,dc=com",
             "member": ["CN=User1,DC=Com", "cn=USER2,dc=com"],
         }
@@ -148,7 +149,7 @@ class TestDnCaseRegistry:
         self, registry: DnCaseRegistry
     ) -> None:
         """Test that unregistered DNs are left unchanged."""
-        data: dict[str, object] = {"dn": "cn=unknown,dc=com"}
+        data: FlextCore.Types.Dict = {"dn": "cn=unknown,dc=com"}
         result = registry.normalize_dn_references(data, ["dn"])
 
         assert result.is_success
@@ -216,7 +217,7 @@ class TestConversionMatrixDnHandling:
         self, matrix: QuirksConversionMatrix
     ) -> None:
         """Test DN extraction from entry dict."""
-        entry: dict[str, object] = {
+        entry: FlextCore.Types.Dict = {
             "dn": "cn=OracleContext,dc=example,dc=com",
             "cn": ["OracleContext"],
             "objectClass": ["top", "orclContext"],
@@ -232,7 +233,7 @@ class TestConversionMatrixDnHandling:
         self, matrix: QuirksConversionMatrix
     ) -> None:
         """Test DN extraction from group member fields."""
-        entry: dict[str, object] = {
+        entry: FlextCore.Types.Dict = {
             "dn": "cn=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com",
             "uniqueMember": [
                 "cn=user1,dc=example,dc=com",
@@ -253,7 +254,7 @@ class TestConversionMatrixDnHandling:
         matrix.dn_registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
 
         # Entry with different case
-        entry: dict[str, object] = {
+        entry: FlextCore.Types.Dict = {
             "dn": "cn=group,dc=com",
             "member": ["CN=Admin,DC=Com"],  # Different case!
         }

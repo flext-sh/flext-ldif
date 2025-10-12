@@ -10,18 +10,18 @@ The library features:
     - Server-specific quirks system (OID, OUD, OpenLDAP, etc.)
     - Generic server-agnostic migration pipeline
     - Type-safe Pydantic v2 models with validation
-    - CQRS pattern with FlextDispatcher and FlextRegistry
-    - FlextProcessors integration for batch and parallel processing
-    - Railway-oriented error handling with FlextResult
+    - CQRS pattern with FlextCore.Dispatcher and FlextCore.Registry
+    - FlextCore.Processors integration for batch and parallel processing
+    - Railway-oriented error handling with FlextCore.Result
 
 Full flext-core 1.0.0 Integration:
-    - FlextResult for monadic error composition
-    - FlextDispatcher for CQRS orchestration
-    - FlextRegistry for handler registration
-    - FlextProcessors for data transformations
-    - FlextContainer for dependency injection
-    - FlextBus for domain event emission
-    - FlextLogger for structured logging
+    - FlextCore.Result for monadic error composition
+    - FlextCore.Dispatcher for CQRS orchestration
+    - FlextCore.Registry for handler registration
+    - FlextCore.Processors for data transformations
+    - FlextCore.Container for dependency injection
+    - FlextCore.Bus for domain event emission
+    - FlextCore.Logger for structured logging
 
 Args:
     None
@@ -83,8 +83,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextTypes
-
 from flext_ldif.__version__ import __version__, __version_info__
 from flext_ldif.api import FlextLdif
 from flext_ldif.client import FlextLdifClient
@@ -106,6 +104,7 @@ from flext_ldif.typings import FlextLdifTypes
 # Main facade already exported above via: from flext_ldif.api import FlextLdif
 
 __all__ = [
+    "FlextCore.Types",
     "FlextLdif",
     "FlextLdifClient",
     "FlextLdifConfig",
@@ -118,7 +117,6 @@ __all__ = [
     "FlextLdifProtocols",
     "FlextLdifQuirksRegistry",
     "FlextLdifTypes",
-    "FlextTypes",
     "QuirksConversionMatrix",
     "__version__",
     "__version_info__",

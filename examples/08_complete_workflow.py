@@ -2,10 +2,10 @@
 
 Demonstrates comprehensive FlextLdif integration with direct methods:
 
-NOTE: This example intentionally uses assert statements (S101) for type narrowing
-demonstration. Asserts are acceptable in examples for pedagogical purposes and
-do not represent production error handling patterns.
-- Railway-oriented programming with FlextResult
+NOTE: This example uses proper error handling instead of assert statements.
+All type validations are done with explicit checks and appropriate error messages,
+representing production-ready error handling patterns.
+- Railway-oriented programming with FlextCore.Result
 - Multi-step processing pipelines using direct API methods
 - Integration of all API functionality (no manual class instantiation!)
 - Real-world LDIF processing scenarios
@@ -36,7 +36,7 @@ from flext_ldif.models import FlextLdifModels
 
 
 def railway_oriented_composition() -> None:
-    """Demonstrate railway-oriented programming with FlextResult composition.
+    """Demonstrate railway-oriented programming with FlextCore.Result composition.
 
     Shows elegant chaining of operations with automatic error propagation.
     Uses .env configuration automatically via FlextLdifConfig.
@@ -52,7 +52,7 @@ mail: railway@example.com
 """
 
     # Railway-oriented composition - errors propagate automatically
-    # Each operation returns FlextResult, enabling fluent chaining
+    # Each operation returns FlextCore.Result, enabling fluent chaining
     result = (
         api.parse(ldif_content)
         .flat_map(lambda entries: api.validate_entries(entries).map(lambda _: entries))
@@ -147,8 +147,10 @@ member: cn=Alice Johnson,ou=People,dc=example,dc=com
         return
 
     validation_report = validation_result.unwrap()
-    # Type narrowing for dict access
-    assert isinstance(validation_report, dict)
+    # Type validation for dict access
+    if not isinstance(validation_report, dict):
+        print(f"ERROR: Expected dict validation_report, got {type(validation_report)}")
+        return
 
     if not validation_report.get("is_valid", False):
         _ = validation_report.get("errors", [])
@@ -225,10 +227,14 @@ mail: migration@example.com
 
     # Step 4: Verify migrated data
     migrated_files = migration_stats.get("output_files", [])
-    assert isinstance(migrated_files, list)
+    if not isinstance(migrated_files, list):
+        print(f"ERROR: Expected list migrated_files, got {type(migrated_files)}")
+        return
 
     for file_path in migrated_files:
-        assert isinstance(file_path, (str, Path))
+        if not isinstance(file_path, (str, Path)):
+            print(f"ERROR: Expected str/Path file_path, got {type(file_path)}")
+            continue
         verify_result = api.parse(Path(file_path), server_type="oud")
 
         if verify_result.is_success:
@@ -489,15 +495,21 @@ cn: test
         return
 
     validation_report = validation_result.unwrap()
-    # Type narrowing for dict access
-    assert isinstance(validation_report, dict)
+    # Type validation for dict access
+    if not isinstance(validation_report, dict):
+        print(f"ERROR: Expected dict validation_report, got {type(validation_report)}")
+        return
 
     if not validation_report.get("is_valid", False):
         # Handle validation errors and attempt recovery by fixing entries
         for entry in entries:
             # Add missing required attribute
             obj_class_values = entry.attributes.get("objectClass", [])
-            assert isinstance(obj_class_values, list)
+            if not isinstance(obj_class_values, list):
+                print(
+                    f"ERROR: Expected list obj_class_values, got {type(obj_class_values)}"
+                )
+                continue
             if "person" in obj_class_values and "sn" not in entry.attributes:
                 entry.attributes["sn"] = FlextLdifModels.AttributeValues(
                     values=["recovered"]

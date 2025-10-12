@@ -1,0 +1,74 @@
+@startuml FLEXT-LDIF Data Flow Architecture
+
+title FLEXT-LDIF Data Flow and Processing Pipeline
+
+skinparam backgroundColor #FEFEFE
+skinparam sequenceParticipant underline
+
+participant "LDIF File" as File
+participant "FlextLdifClient" as Client
+participant "FlextLdif Facade" as Facade
+participant "RfcLdifParserService" as Parser
+participant "QuirkRegistry" as Registry
+participant "ServerQuirks" as Quirks
+participant "DnCaseRegistry" as DnRegistry
+participant "Domain Models" as Models
+participant "ValidationService" as Validator
+participant "TransformationService" as Transformer
+participant "Output LDIF" as Output
+
+== File Input Phase ==
+File -> Client: Read file with encoding detection
+Client -> Facade: Return file content stream
+
+== Parsing Phase ==
+Facade -> Parser: Parse content with RFC compliance
+Parser -> Registry: Get server-specific quirks
+Registry -> Quirks: Load appropriate quirk implementation
+
+Parser -> Parser: Apply RFC 2849 parsing rules
+Parser -> Quirks: Apply server-specific enhancements
+Parser -> DnRegistry: Register canonical DN cases
+
+Parser -> Models: Create validated domain objects
+Models -> Validator: Validate against RFC rules
+Validator -> Facade: Return validation results
+
+== Processing Phase ==
+Facade -> Transformer: Apply transformations/filters
+Transformer -> DnRegistry: Ensure DN case consistency
+Transformer -> Models: Update domain objects
+
+== Output Phase ==
+Facade -> Client: Request output generation
+Client -> Parser: Generate RFC-compliant output
+Parser -> Quirks: Apply target server formatting
+Parser -> Client: Write formatted LDIF file
+
+Client -> Output: Write final LDIF file
+
+== Error Handling ==
+note over Validator, Transformer
+    All operations use FlextCore.Result[T]
+    Railway-oriented error composition
+    Graceful failure with detailed error messages
+end note
+
+== Memory Management ==
+note over File, Client
+    Memory-bound architecture:
+    - Loads entire file into memory
+    - Recommended limit: 100MB
+    - Single-threaded processing
+    - Future: Streaming parser planned
+end note
+
+== Server Conversion ==
+note over Quirks, DnRegistry
+    Universal Conversion Matrix:
+    Source → RFC → Target pipeline
+    DN case tracking for OUD compatibility
+    9+ server implementations supported
+end note
+
+@enduml

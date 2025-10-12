@@ -1,0 +1,187 @@
+@startuml FLEXT-LDIF Quality Attributes
+
+title FLEXT-LDIF Quality Attributes and Cross-Cutting Concerns
+
+skinparam backgroundColor #FEFEFE
+skinparam rectangle {
+    BackgroundColor #E6F3FF
+    BorderColor #0066CC
+    BorderThickness 2
+}
+
+rectangle "Performance" as Performance {
+    rectangle "Current Profile" as CurrentPerf {
+        - Memory-bound processing
+        - Single-threaded execution
+        - ~10-50 MB/s processing speed
+        - 100MB recommended file limit
+    }
+
+    rectangle "Constraints" as PerfConstraints {
+        - Linear memory scaling O(n)
+        - No parallel processing
+        - CPU-bound for large files
+        - Memory exhaustion risk >100MB
+    }
+
+    rectangle "Future Optimizations" as FuturePerf {
+        - Streaming parser (Phase 2)
+        - Configurable chunk sizes
+        - Performance benchmarks
+        - Memory usage monitoring
+    }
+}
+
+rectangle "Reliability" as Reliability {
+    rectangle "Current Status" as CurrentReliability {
+        - 1012/1012 tests passing
+        - 100% type safety compliance
+        - Railway-oriented error handling
+        - Graceful failure modes
+    }
+
+    rectangle "Error Handling" as ErrorHandling {
+        - FlextCore.Result[T] composition
+        - No exception-based flow control
+        - Detailed error messages
+        - Fail-safe defaults
+    }
+
+    rectangle "Testing Coverage" as Testing {
+        - Unit test coverage: 100%
+        - Integration tests: Comprehensive
+        - RFC compliance validation
+        - Server quirk testing
+    }
+}
+
+rectangle "Scalability" as Scalability {
+    rectangle "Current Limits" as CurrentScale {
+        - File size: ≤100MB recommended
+        - Memory usage: O(n) scaling
+        - Processing: Single-threaded
+        - Concurrency: Not supported
+    }
+
+    rectangle "Scalability Patterns" as ScalePatterns {
+        - Stateless processing
+        - Idempotent operations
+        - Composable transformations
+        - Batch processing support
+    }
+
+    rectangle "Future Scaling" as FutureScale {
+        - Streaming architecture
+        - Multi-threaded processing
+        - Distributed processing
+        - Cloud-native deployment
+    }
+}
+
+rectangle "Maintainability" as Maintainability {
+    rectangle "Code Quality" as CodeQuality {
+        - Pyrefly strict mode: 100%
+        - Ruff linting: 100% compliance
+        - Type annotations: Complete
+        - Documentation: Comprehensive
+    }
+
+    rectangle "Architecture" as Architecture {
+        - Modular design
+        - Pluggable extensions
+        - Clear separation of concerns
+        - Domain-driven design
+    }
+
+    rectangle "Evolvability" as Evolvability {
+        - Server quirk extensibility
+        - Configuration-driven behavior
+        - Backward compatibility
+        - Versioned APIs
+    }
+}
+
+rectangle "Security" as Security {
+    rectangle "Input Validation" as InputSecurity {
+        - RFC compliance enforcement
+        - Type safety validation
+        - Content sanitization
+        - No external input trust
+    }
+
+    rectangle "Processing Security" as ProcessingSecurity {
+        - Memory usage controls
+        - No information leakage
+        - Controlled error messages
+        - File system isolation
+    }
+
+    rectangle "Data Protection" as DataProtection {
+        - In-memory processing only
+        - No persistent storage
+        - Secure temporary handling
+        - Privacy-aware operations
+    }
+}
+
+rectangle "Usability" as Usability {
+    rectangle "API Design" as APIDesign {
+        - Unified facade interface
+        - Railway-oriented programming
+        - Clear error messages
+        - Comprehensive documentation
+    }
+
+    rectangle "Developer Experience" as DevEx {
+        - Type hints everywhere
+        - Clear naming conventions
+        - Extensive examples
+        - Tooling integration
+    }
+
+    rectangle "Operational Usability" as OpsUsability {
+        - Memory usage transparency
+        - Performance characteristics clear
+        - Configuration validation
+        - Monitoring integration ready
+    }
+}
+
+Performance --> Scalability : Performance limits scalability
+Reliability --> Maintainability : Testing enables maintenance
+Security --> Reliability : Security practices improve reliability
+Usability --> Maintainability : Good design reduces maintenance burden
+
+note right of CurrentPerf
+    **Current Performance Characteristics**
+    - Memory usage: O(file_size)
+    - Processing: Single-threaded
+    - Speed: 10-50 MB/s
+    - Limit: 100MB recommended
+end note
+
+note right of CurrentReliability
+    **Reliability Metrics**
+    - Tests: 1012/1012 passing
+    - Type Safety: 100% compliance
+    - Error Handling: Railway-oriented
+    - Failures: Graceful with context
+end note
+
+note right of CodeQuality
+    **Quality Standards**
+    - Linting: 100% Ruff compliance
+    - Types: 100% Pyrefly strict mode
+    - Tests: 100% coverage
+    - Documentation: Complete API docs
+end note
+
+note right of InputSecurity
+    **Security Approach**
+    - Defense in depth
+    - RFC compliance as security
+    - Type safety validation
+    - Memory usage controls
+end note
+
+@enduml

@@ -13,11 +13,11 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from flext_core import FlextModels, FlextResult, FlextTypes
+from flext_core import FlextCore
 from pydantic import Field
 
 
-class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
+class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextCore.Models.Value):
     """Base class for schema quirks.
 
     Schema quirks extend RFC 4512 schema parsing with server-specific features.
@@ -49,14 +49,16 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
         """
 
     @abstractmethod
-    def parse_attribute(self, attr_definition: str) -> FlextResult[FlextTypes.Dict]:
+    def parse_attribute(
+        self, attr_definition: str
+    ) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Parse server-specific attribute definition.
 
         Args:
             attr_definition: AttributeType definition string
 
         Returns:
-            FlextResult with parsed attribute data
+            FlextCore.Result with parsed attribute data
 
         """
 
@@ -73,47 +75,49 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
         """
 
     @abstractmethod
-    def parse_objectclass(self, oc_definition: str) -> FlextResult[FlextTypes.Dict]:
+    def parse_objectclass(
+        self, oc_definition: str
+    ) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Parse server-specific objectClass definition.
 
         Args:
             oc_definition: ObjectClass definition string
 
         Returns:
-            FlextResult with parsed objectClass data
+            FlextCore.Result with parsed objectClass data
 
         """
 
     @abstractmethod
     def convert_attribute_to_rfc(
-        self, attr_data: FlextTypes.Dict
-    ) -> FlextResult[FlextTypes.Dict]:
+        self, attr_data: FlextCore.Types.Dict
+    ) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Convert server-specific attribute to RFC-compliant format.
 
         Args:
             attr_data: Server-specific attribute data
 
         Returns:
-            FlextResult with RFC-compliant attribute data
+            FlextCore.Result with RFC-compliant attribute data
 
         """
 
     @abstractmethod
     def convert_objectclass_to_rfc(
-        self, oc_data: FlextTypes.Dict
-    ) -> FlextResult[FlextTypes.Dict]:
+        self, oc_data: FlextCore.Types.Dict
+    ) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Convert server-specific objectClass to RFC-compliant format.
 
         Args:
             oc_data: Server-specific objectClass data
 
         Returns:
-            FlextResult with RFC-compliant objectClass data
+            FlextCore.Result with RFC-compliant objectClass data
 
         """
 
 
-class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
+class FlextLdifQuirksBaseAclQuirk(ABC, FlextCore.Models.Value):
     """Base class for ACL quirks.
 
     ACL quirks extend RFC 4516 ACL parsing with server-specific formats.
@@ -141,47 +145,47 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
         """
 
     @abstractmethod
-    def parse_acl(self, acl_line: str) -> FlextResult[FlextTypes.Dict]:
+    def parse_acl(self, acl_line: str) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Parse server-specific ACL definition.
 
         Args:
             acl_line: ACL definition line
 
         Returns:
-            FlextResult with parsed ACL data
+            FlextCore.Result with parsed ACL data
 
         """
 
     @abstractmethod
     def convert_acl_to_rfc(
-        self, acl_data: FlextTypes.Dict
-    ) -> FlextResult[FlextTypes.Dict]:
+        self, acl_data: FlextCore.Types.Dict
+    ) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Convert server-specific ACL to RFC-compliant format.
 
         Args:
             acl_data: Server-specific ACL data
 
         Returns:
-            FlextResult with RFC-compliant ACL data
+            FlextCore.Result with RFC-compliant ACL data
 
         """
 
     @abstractmethod
     def convert_acl_from_rfc(
-        self, acl_data: FlextTypes.Dict
-    ) -> FlextResult[FlextTypes.Dict]:
+        self, acl_data: FlextCore.Types.Dict
+    ) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Convert RFC-compliant ACL to server-specific format.
 
         Args:
             acl_data: RFC-compliant ACL data
 
         Returns:
-            FlextResult with server-specific ACL data
+            FlextCore.Result with server-specific ACL data
 
         """
 
 
-class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
+class FlextLdifQuirksBaseEntryQuirk(ABC, FlextCore.Models.Value):
     """Base class for entry processing quirks.
 
     Entry quirks handle server-specific entry attributes and transformations.
@@ -197,7 +201,7 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
     priority: int = Field(default=100, description="Quirk priority")
 
     @abstractmethod
-    def can_handle_entry(self, entry_dn: str, attributes: FlextTypes.Dict) -> bool:
+    def can_handle_entry(self, entry_dn: str, attributes: FlextCore.Types.Dict) -> bool:
         """Check if this quirk can handle the entry.
 
         Args:
@@ -211,8 +215,8 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def process_entry(
-        self, entry_dn: str, attributes: FlextTypes.Dict
-    ) -> FlextResult[FlextTypes.Dict]:
+        self, entry_dn: str, attributes: FlextCore.Types.Dict
+    ) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Process entry with server-specific logic.
 
         Args:
@@ -220,21 +224,21 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
             attributes: Entry attributes
 
         Returns:
-            FlextResult with processed entry data
+            FlextCore.Result with processed entry data
 
         """
 
     @abstractmethod
     def convert_entry_to_rfc(
-        self, entry_data: FlextTypes.Dict
-    ) -> FlextResult[FlextTypes.Dict]:
+        self, entry_data: FlextCore.Types.Dict
+    ) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Convert server-specific entry to RFC-compliant format.
 
         Args:
             entry_data: Server-specific entry data
 
         Returns:
-            FlextResult with RFC-compliant entry data
+            FlextCore.Result with RFC-compliant entry data
 
         """
 

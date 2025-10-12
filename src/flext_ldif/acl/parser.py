@@ -8,40 +8,40 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextResult, FlextService
+from flext_core import FlextCore
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
+class FlextLdifAclParser(FlextCore.Service[FlextLdifTypes.Dict]):
     """Multi-server ACL parser for different LDAP implementations."""
 
     @override
     def __init__(self) -> None:
         """Initialize ACL parser with Phase 1 context enrichment."""
         super().__init__()
-        # Logger and container inherited from FlextService via FlextMixins
+        # Logger and container inherited from FlextCore.Service via FlextCore.Mixins
 
     @override
-    def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
+    def execute(self) -> FlextCore.Result[FlextLdifTypes.Dict]:
         """Execute parser service."""
-        return FlextResult[FlextLdifTypes.Dict].ok({
+        return FlextCore.Result[FlextLdifTypes.Dict].ok({
             "service": FlextLdifAclParser,
             "status": "ready",
         })
 
     def parse_openldap_acl(
         self, acl_string: str
-    ) -> FlextResult[FlextLdifModels.UnifiedAcl]:
+    ) -> FlextCore.Result[FlextLdifModels.UnifiedAcl]:
         """Parse OpenLDAP olcAccess ACL format.
 
         Args:
             acl_string: OpenLDAP ACL string
 
         Returns:
-            FlextResult containing unified ACL
+            FlextCore.Result containing unified ACL
 
         """
         # Create ACL components directly - Pydantic handles validation
@@ -58,18 +58,18 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
             server_type=FlextLdifConstants.LdapServers.OPENLDAP,
             raw_acl=acl_string,
         )
-        return FlextResult[FlextLdifModels.UnifiedAcl].ok(acl)
+        return FlextCore.Result[FlextLdifModels.UnifiedAcl].ok(acl)
 
     def parse_389ds_acl(
         self, acl_string: str
-    ) -> FlextResult[FlextLdifModels.UnifiedAcl]:
+    ) -> FlextCore.Result[FlextLdifModels.UnifiedAcl]:
         """Parse 389DS ACI format.
 
         Args:
             acl_string: 389DS ACI string
 
         Returns:
-            FlextResult containing unified ACL
+            FlextCore.Result containing unified ACL
 
         """
         # Create ACL components directly - Pydantic handles validation
@@ -86,13 +86,13 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
             server_type=FlextLdifConstants.LdapServers.DS_389,
             raw_acl=acl_string,
         )
-        return FlextResult[FlextLdifModels.UnifiedAcl].ok(acl)
+        return FlextCore.Result[FlextLdifModels.UnifiedAcl].ok(acl)
 
     def parse_oracle_acl(
         self,
         acl_string: str,
         server_type: str = FlextLdifConstants.LdapServers.ORACLE_OID,
-    ) -> FlextResult[FlextLdifModels.UnifiedAcl]:
+    ) -> FlextCore.Result[FlextLdifModels.UnifiedAcl]:
         """Parse Oracle OID/OUD ACL format.
 
         Args:
@@ -100,7 +100,7 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
             server_type: Oracle server type (OID or OUD)
 
         Returns:
-            FlextResult containing unified ACL
+            FlextCore.Result containing unified ACL
 
         """
         # Create ACL components directly - Pydantic handles validation
@@ -117,11 +117,11 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
             server_type=server_type,
             raw_acl=acl_string,
         )
-        return FlextResult[FlextLdifModels.UnifiedAcl].ok(acl)
+        return FlextCore.Result[FlextLdifModels.UnifiedAcl].ok(acl)
 
     def parse_acl(
         self, acl_string: str, server_type: str
-    ) -> FlextResult[FlextLdifModels.UnifiedAcl]:
+    ) -> FlextCore.Result[FlextLdifModels.UnifiedAcl]:
         """Parse ACL string based on server type.
 
         Args:
@@ -129,7 +129,7 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
             server_type: LDAP server type
 
         Returns:
-            FlextResult containing unified ACL
+            FlextCore.Result containing unified ACL
 
         """
         if server_type == FlextLdifConstants.LdapServers.OPENLDAP:
@@ -144,7 +144,7 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
         }:
             return self.parse_oracle_acl(acl_string, server_type)
 
-        return FlextResult[FlextLdifModels.UnifiedAcl].fail(
+        return FlextCore.Result[FlextLdifModels.UnifiedAcl].fail(
             f"Unsupported server type: {server_type}"
         )
 

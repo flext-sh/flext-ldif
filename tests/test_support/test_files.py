@@ -14,7 +14,7 @@ from pathlib import Path
 from types import TracebackType
 from typing import Self
 
-from flext_core import FlextTypes
+from flext_core import FlextCore
 
 from .ldif_data import LdifSample, LdifTestData
 
@@ -134,7 +134,7 @@ class FileManager:
 
     def create_file_set(
         self,
-        samples: FlextTypes.StringDict,
+        samples: FlextCore.Types.StringDict,
         directory: Path | None = None,
     ) -> dict[str, Path]:
         """Create multiple files from content dictionary."""
@@ -182,7 +182,7 @@ class FileManager:
     @contextmanager
     def temporary_files(
         cls,
-        samples: FlextTypes.StringDict,
+        samples: FlextCore.Types.StringDict,
     ) -> Generator[dict[str, Path]]:
         """Context manager for temporary files."""
         with cls() as manager:
@@ -197,7 +197,7 @@ class FileManager:
             files = manager.create_all_samples()
             yield files
 
-    def get_file_info(self, file_path: Path) -> FlextTypes.Dict:
+    def get_file_info(self, file_path: Path) -> FlextCore.Types.Dict:
         """Get information about a test file."""
         if not file_path.exists():
             return {"exists": False}

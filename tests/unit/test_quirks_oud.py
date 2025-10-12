@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_core import FlextCore
 from tests.fixtures.loader import FlextLdifFixtures
 
 from flext_ldif.constants import FlextLdifConstants
@@ -447,7 +448,7 @@ class TestOudEntryQuirks:
         """Test entry handling detection."""
         # OUD entry quirk handles all entries for OUD target
         entry_dn = "cn=OracleContext,dc=example,dc=com"
-        attributes: dict[str, object] = {
+        attributes: FlextCore.Types.Dict = {
             "cn": ["OracleContext"],
             "objectClass": ["top", "orclContext"],
         }
@@ -459,7 +460,7 @@ class TestOudEntryQuirks:
     ) -> None:
         """Test processing basic OUD entry."""
         entry_dn = "cn=test,dc=example,dc=com"
-        attributes: dict[str, object] = {
+        attributes: FlextCore.Types.Dict = {
             "cn": ["test"],
             "objectClass": ["person"],
         }
@@ -477,7 +478,7 @@ class TestOudEntryQuirks:
     ) -> None:
         """Test processing Oracle Context entry with Oracle-specific attributes."""
         entry_dn = "cn=OracleContext,dc=example,dc=com"
-        attributes: dict[str, object] = {
+        attributes: FlextCore.Types.Dict = {
             "cn": ["OracleContext"],
             "objectClass": ["top", "orclContext", "orclContextAux82"],
             "orclVersion": ["90600"],
@@ -496,7 +497,7 @@ class TestOudEntryQuirks:
     ) -> None:
         """Test processing entry with ACL attribute."""
         entry_dn = "cn=OracleContext,dc=example,dc=com"
-        attributes: dict[str, object] = {
+        attributes: FlextCore.Types.Dict = {
             "cn": ["OracleContext"],
             "objectClass": ["top", "orclContext"],
             "aci": [
@@ -522,7 +523,7 @@ class TestOudEntryQuirks:
 
         # Parse entries from LDIF content
         current_dn = None
-        current_attrs: dict[str, list[str]] = {}
+        current_attrs: dict[str, FlextCore.Types.StringList] = {}
 
         for raw_line in integration_content.splitlines():
             line = raw_line.strip()
@@ -563,7 +564,7 @@ class TestOudEntryQuirks:
     ) -> None:
         """Test preservation of Oracle-specific attributes."""
         entry_dn = "cn=OracleDBSecurity,cn=Products,cn=OracleContext,dc=example,dc=com"
-        attributes: dict[str, object] = {
+        attributes: FlextCore.Types.Dict = {
             "cn": ["OracleDBSecurity"],
             "objectClass": ["top", "orclContainer", "orclDBSecConfig"],
             "orclDBOIDAuthentication": ["PASSWORD"],
@@ -603,7 +604,7 @@ class TestOudEntryQuirks:
     ) -> None:
         """Test entry roundtrip: process → convert to RFC → back."""
         original_dn = "cn=OracleContext,dc=example,dc=com"
-        original_attrs: dict[str, object] = {
+        original_attrs: FlextCore.Types.Dict = {
             "cn": ["OracleContext"],
             "objectClass": ["top", "orclContext"],
             "orclVersion": ["90600"],
@@ -996,7 +997,9 @@ class TestOudEntryRoundTrip:
 
         # Find attribute positions (skip dn line)
         cn_idx = next(i for i, line in enumerate(lines) if line.startswith("cn:"))
-        oc_idx = next(i for i, line in enumerate(lines) if line.startswith("objectClass:"))
+        oc_idx = next(
+            i for i, line in enumerate(lines) if line.startswith("objectClass:")
+        )
         sn_idx = next(i for i, line in enumerate(lines) if line.startswith("sn:"))
 
         # Verify ordering: cn < objectClass < sn
@@ -1007,7 +1010,7 @@ class TestOudEntryRoundTrip:
     ) -> None:
         """Test complete round-trip: process → write → parse → process for entry."""
         original_dn = "cn=OracleContext,dc=example,dc=com"
-        original_attrs: dict[str, object] = {
+        original_attrs: FlextCore.Types.Dict = {
             "cn": ["OracleContext"],
             "objectClass": ["top", "orclContext"],
             "orclVersion": ["90600"],
@@ -1026,7 +1029,7 @@ class TestOudEntryRoundTrip:
         # Step 3: Parse LDIF back to entry dict (simple parsing)
         lines = written_ldif.strip().split("\n")
         parsed_dn = None
-        parsed_attrs: dict[str, list[str]] = {}
+        parsed_attrs: dict[str, FlextCore.Types.StringList] = {}
 
         for line in lines:
             if line.startswith("dn:"):

@@ -60,7 +60,7 @@ Source Format → Source.to_rfc() → RFC Format → Target.from_rfc() → Targe
 - **N×N Matrix**: Convert between any server pair with only 2×N implementations
 - **RFC Intermediate**: Uses standards-compliant intermediate representation
 - **DN Case Registry Integration**: Tracks canonical DN case for OUD compatibility
-- **Type Safety**: Full FlextResult error handling and type annotations
+- **Type Safety**: Full FlextCore.Result error handling and type annotations
 
 **Architecture Benefits**:
 - **Minimal Implementation**: Only need `to_rfc()` and `from_rfc()` methods per server
@@ -91,17 +91,17 @@ result = matrix.convert(source_quirk, target_quirk, "attribute", data)
 FLEXT-LDIF implements a service-oriented architecture with clear separation of concerns:
 
 - **Single Responsibility**: Each service handles one aspect of LDIF processing
-- **Dependency Injection**: Services are managed through FlextContainer
-- **Railway-Oriented Programming**: All operations return FlextResult for composable error handling
+- **Dependency Injection**: Services are managed through FlextCore.Container
+- **Railway-Oriented Programming**: All operations return FlextCore.Result for composable error handling
 - **Type Safety**: Complete type annotations with Pydantic v2 models
 
 ### FLEXT Integration Patterns
 
 The library integrates deeply with FLEXT ecosystem patterns:
 
-- **FlextResult**: Monadic error handling eliminates exceptions in business logic
-- **FlextContainer**: Global dependency injection container for service management
-- **FlextLogger**: Structured logging with context propagation
+- **FlextCore.Result**: Monadic error handling eliminates exceptions in business logic
+- **FlextCore.Container**: Global dependency injection container for service management
+- **FlextCore.Logger**: Structured logging with context propagation
 - **Domain Models**: Pydantic-based models following DDD patterns
 
 ## System Overview - RFC-First Architecture
@@ -140,9 +140,9 @@ graph TB
     end
 
     subgraph "Infrastructure Layer"
-        Container[FlextContainer<br/>DI Container]
-        Logger[FlextLogger]
-        Result[FlextResult]
+        Container[FlextCore.Container<br/>DI Container]
+        Logger[FlextCore.Logger]
+        Result[FlextCore.Result]
     end
 
     API --> ParseHandler
@@ -179,7 +179,7 @@ graph TB
 3. **RFC Service Layer**: RFC parsers/writers that ALWAYS use quirk_registry (MANDATORY)
 4. **Quirks System**: Priority-based quirks for server-specific extensions
 5. **Domain Layer**: Pydantic v2 models with type annotations
-6. **Infrastructure Layer**: flext-core patterns (FlextResult, FlextContainer, FlextLogger)
+6. **Infrastructure Layer**: flext-core patterns (FlextCore.Result, FlextCore.Container, FlextCore.Logger)
 
 ## CQRS Handler Architecture
 
@@ -200,11 +200,11 @@ FLEXT-LDIF uses CQRS (Command Query Responsibility Segregation) pattern in `src/
 class ParseQueryHandler(FlextMessageHandler):
     """Handles LDIF parsing queries through RFC parser."""
 
-    def handle(self, message: FlextLdifModels.ParseQuery) -> FlextResult[list]:
+    def handle(self, message: FlextLdifModels.ParseQuery) -> FlextCore.Result[list]:
         # ✅ CORRECT: Gets RFC parser from container
         parser_result = self._container.get("rfc_parser")
         if parser_result.is_failure:
-            return FlextResult[list].fail("RFC parser not registered")
+            return FlextCore.Result[list].fail("RFC parser not registered")
 
         parser = parser_result.unwrap()
 
@@ -238,11 +238,11 @@ class ParseQueryHandler(FlextMessageHandler):
 class WriteCommandHandler(FlextMessageHandler):
     """Handles LDIF writing commands through RFC writer."""
 
-    def handle(self, message: FlextLdifModels.WriteCommand) -> FlextResult[str]:
+    def handle(self, message: FlextLdifModels.WriteCommand) -> FlextCore.Result[str]:
         # ✅ CORRECT: Gets RFC writer from container
         writer_result = self._container.get("rfc_writer")
         if writer_result.is_failure:
-            return FlextResult[str].fail("RFC writer not registered")
+            return FlextCore.Result[str].fail("RFC writer not registered")
 
         writer = writer_result.unwrap()
 
@@ -257,11 +257,11 @@ class WriteCommandHandler(FlextMessageHandler):
 class SchemaQueryHandler(FlextMessageHandler):
     """Handles schema parsing queries through RFC schema parser."""
 
-    def handle(self, message: FlextLdifModels.SchemaQuery) -> FlextResult[FlextTypes.Dict]:
+    def handle(self, message: FlextLdifModels.SchemaQuery) -> FlextCore.Result[FlextCore.Types.Dict]:
         # ✅ CORRECT: Gets RFC schema parser from container
         parser_result = self._container.get("rfc_schema_parser")
         if parser_result.is_failure:
-            return FlextResult[FlextTypes.Dict].fail("RFC schema parser not registered")
+            return FlextCore.Result[FlextCore.Types.Dict].fail("RFC schema parser not registered")
 
         parser = parser_result.unwrap()
 
@@ -307,8 +307,8 @@ class FlextLdif:
     """Unified LDIF Processing API with nested operation handlers."""
 
     def __init__(self, config: FlextLdifModels.Config | None = None) -> None:
-        self.logger = FlextLogger(__name__)
-        self._container = FlextContainer.get_global()
+        self.logger = FlextCore.Logger(__name__)
+        self._container = FlextCore.Container.get_global()
         self._config = config or FlextLdifModels.Config()
 
         # Nested operation handlers
@@ -321,7 +321,7 @@ class FlextLdif:
 
 - Unified interface hiding service complexity
 - Nested operation handlers for logical organization
-- Dependency injection through FlextContainer
+- Dependency injection through FlextCore.Container
 - Configuration management with defaults
 
 ### Service Architecture
@@ -334,10 +334,10 @@ Handles RFC 2849 compliant LDIF parsing:
 class FlextLdifParserService:
     """RFC 2849 compliant LDIF parser."""
 
-    def parse_string(self, content: str) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def parse_string(self, content: str) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
         """Parse LDIF string content into structured entries."""
         # Implementation uses ldif3 library internally
-        # Returns FlextResult for composable error handling
+        # Returns FlextCore.Result for composable error handling
 ```
 
 **Responsibilities**:
@@ -355,7 +355,7 @@ Provides comprehensive LDIF entry validation:
 class FlextLdifValidatorService:
     """LDIF entry validation service."""
 
-    def validate_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[bool]:
+    def validate_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextCore.Result[bool]:
         """Validate LDIF entries against business rules."""
         # Validates DN structure, attribute formats, object classes
         # Configurable validation rules
@@ -376,7 +376,7 @@ Generates RFC 2849 compliant LDIF output:
 class FlextLdifWriterService:
     """LDIF writer service for generating compliant output."""
 
-    def write_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
+    def write_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextCore.Result[str]:
         """Generate LDIF string from structured entries."""
         # Handles line folding, base64 encoding when necessary
         # Ensures RFC 2849 compliance
@@ -404,33 +404,33 @@ sequenceDiagram
 
     Client->>API: parse_file(path)
     API->>Parser: parse_file(path)
-    Parser-->>API: FlextResult[entries]
-    API-->>Client: FlextResult[entries]
+    Parser-->>API: FlextCore.Result[entries]
+    API-->>Client: FlextCore.Result[entries]
 
     Client->>API: validate_entries(entries)
     API->>Validator: validate_entries(entries)
-    Validator-->>API: FlextResult[bool]
-    API-->>Client: FlextResult[bool]
+    Validator-->>API: FlextCore.Result[bool]
+    API-->>Client: FlextCore.Result[bool]
 
     Client->>API: filter_persons(entries)
     API->>Repository: filter_by_objectclass(entries, "person")
-    Repository-->>API: FlextResult[filtered_entries]
-    API-->>Client: FlextResult[filtered_entries]
+    Repository-->>API: FlextCore.Result[filtered_entries]
+    API-->>Client: FlextCore.Result[filtered_entries]
 
     Client->>API: write_file(entries, path)
     API->>Writer: write_entries(entries)
-    Writer-->>API: FlextResult[ldif_string]
+    Writer-->>API: FlextCore.Result[ldif_string]
     API->>Writer: save_to_file(ldif_string, path)
-    Writer-->>API: FlextResult[bool]
-    API-->>Client: FlextResult[bool]
+    Writer-->>API: FlextCore.Result[bool]
+    API-->>Client: FlextCore.Result[bool]
 ```
 
 ### Railway-Oriented Error Handling
 
-All operations use FlextResult for composable error handling:
+All operations use FlextCore.Result for composable error handling:
 
 ```python
-def process_ldif_pipeline(file_path: Path) -> FlextResult[FlextTypes.Dict]:
+def process_ldif_pipeline(file_path: Path) -> FlextCore.Result[FlextCore.Types.Dict]:
     """Complete LDIF processing pipeline using railway patterns."""
     api = FlextLdif()
 
@@ -469,12 +469,12 @@ class FlextLdifModels:
     class Entry(BaseModel):
         """LDIF entry domain entity."""
         dn: str = Field(..., description="Distinguished Name")
-        attributes: dict[str, FlextTypes.StringList] = Field(
+        attributes: dict[str, FlextCore.Types.StringList] = Field(
             default_factory=dict,
             description="Entry attributes"
         )
 
-        def get_object_classes(self) -> FlextTypes.StringList:
+        def get_object_classes(self) -> FlextCore.Types.StringList:
             """Get object class values."""
             return self.attributes.get('objectClass', [])
 
@@ -489,7 +489,7 @@ class FlextLdifModels:
         """Factory for creating domain entities."""
 
         @staticmethod
-        def create(data: FlextTypes.Dict | str, attributes: dict[str, FlextTypes.StringList] | None = None) -> Entry:
+        def create(data: FlextCore.Types.Dict | str, attributes: dict[str, FlextCore.Types.StringList] | None = None) -> Entry:
             """Create LDIF entry with validation."""
             return FlextLdifModels.Entry(dn=dn, attributes=attributes)
 ```
@@ -501,13 +501,13 @@ Complete type annotations using Python 3.13+ features:
 ```python
 # Type aliases for Python 3.13+ generic syntax
 if TYPE_CHECKING:
-    type FlextResultEntries = FlextResult[list[FlextLdifModels.Entry]]
-    type FlextResultStr = FlextResult[str]
-    type FlextResultBool = FlextResult[bool]
+    type FlextCore.ResultEntries = FlextCore.Result[list[FlextLdifModels.Entry]]
+    type FlextCore.ResultStr = FlextCore.Result[str]
+    type FlextCore.ResultBool = FlextCore.Result[bool]
 else:
-    FlextResultEntries = FlextResult
-    FlextResultStr = FlextResult
-    FlextResultBool = FlextResult
+    FlextCore.ResultEntries = FlextCore.Result
+    FlextCore.ResultStr = FlextCore.Result
+    FlextCore.ResultBool = FlextCore.Result
 ```
 
 ## Configuration Architecture
@@ -549,8 +549,8 @@ api = FlextLdif(config=config)
 
 - Service-oriented design with clear separation
 - FlextLdif unified interface with nested handlers
-- Complete FlextResult integration
-- Dependency injection through FlextContainer
+- Complete FlextCore.Result integration
+- Dependency injection through FlextCore.Container
 
 **✅ Service Layer**:
 
@@ -568,8 +568,8 @@ api = FlextLdif(config=config)
 
 **✅ Integration Layer**:
 
-- FlextContainer dependency injection
-- FlextLogger structured logging
+- FlextCore.Container dependency injection
+- FlextCore.Logger structured logging
 - Complete type safety with MyPy compliance
 
 ### Known Limitations
@@ -767,7 +767,7 @@ graph TB
 - ✅ Nested AclQuirk (103 lines, lines 170-272)
 - ✅ Nested EntryQuirk (91 lines, lines 274-364)
 - ✅ Priority: 15 (medium priority)
-- ⚠️ All methods return `FlextResult.fail("not yet implemented")`
+- ⚠️ All methods return `FlextCore.Result.fail("not yet implemented")`
 
 #### 6-9. Additional Stubs
 
@@ -782,8 +782,8 @@ graph TB
 def can_handle_attribute(self, definition: str) -> bool:
     return False  # Stub - not implemented
 
-def parse_attribute(self, definition: str) -> FlextResult[FlextTypes.Dict]:
-    return FlextResult[FlextTypes.Dict].fail(
+def parse_attribute(self, definition: str) -> FlextCore.Result[FlextCore.Types.Dict]:
+    return FlextCore.Result[FlextCore.Types.Dict].fail(
         "AD attribute parsing not yet implemented. "
         "Contributions welcome: https://github.com/flext-sh/flext/issues"
     )
@@ -807,12 +807,12 @@ class OidSchemaQuirk:
     class OidEntryQuirk:
         """Nested entry quirk for OID."""
         def can_handle_entry(self, dn: str, attributes: dict) -> bool: ...
-        def convert_entry_to_rfc(self, entry: dict) -> FlextResult[FlextTypes.Dict]: ...
+        def convert_entry_to_rfc(self, entry: dict) -> FlextCore.Result[FlextCore.Types.Dict]: ...
 
     class OidAclQuirk:
         """Nested ACL quirk for OID."""
         def can_handle_acl(self, acl_string: str) -> bool: ...
-        def parse_acl(self, acl_string: str) -> FlextResult[FlextTypes.Dict]: ...
+        def parse_acl(self, acl_string: str) -> FlextCore.Result[FlextCore.Types.Dict]: ...
 ```
 
 ### Priority-Based Resolution
@@ -829,7 +829,7 @@ Quirks use priority-based resolution:
 The RFC schema parser tries quirks first, then falls back to RFC:
 
 ```python
-def _parse_attribute_type(self, definition: str) -> FlextTypes.Dict | None:
+def _parse_attribute_type(self, definition: str) -> FlextCore.Types.Dict | None:
     # Try quirks first if available and server_type specified
     if self._quirk_registry and self._server_type:
         schema_quirks = self._quirk_registry.get_schema_quirks(self._server_type)
@@ -917,7 +917,7 @@ def migrate_entries(
     entries: list,
     source_format: str,
     target_format: str,
-) -> FlextResult[list]:
+) -> FlextCore.Result[list]:
     """Migrate entries using Source → RFC → Target pipeline."""
 
     # Get source and target quirks from registry
@@ -948,7 +948,7 @@ def migrate_entries(
 
         migrated_entries.append(target_entry)
 
-    return FlextResult[list].ok(migrated_entries)
+    return FlextCore.Result[list].ok(migrated_entries)
 ```
 
 **Verified Implementation** (lines 46-48 in migration_pipeline.py):
@@ -981,8 +981,8 @@ class AdSchemaQuirk:
     def can_handle_attribute(self, definition: str) -> bool:
         return False  # TODO: Implement AD detection
 
-    def parse_attribute(self, definition: str) -> FlextResult[FlextTypes.Dict]:
-        return FlextResult[FlextTypes.Dict].fail("AD attribute parsing not implemented")
+    def parse_attribute(self, definition: str) -> FlextCore.Result[FlextCore.Types.Dict]:
+        return FlextCore.Result[FlextCore.Types.Dict].fail("AD attribute parsing not implemented")
 ```
 
 ### Quirk Protocol Interface
@@ -995,9 +995,9 @@ class SchemaQuirkProtocol(Protocol):
     priority: int
 
     def can_handle_attribute(self, definition: str) -> bool: ...
-    def parse_attribute(self, definition: str) -> FlextResult[FlextTypes.Dict]: ...
+    def parse_attribute(self, definition: str) -> FlextCore.Result[FlextCore.Types.Dict]: ...
     def can_handle_objectclass(self, definition: str) -> bool: ...
-    def parse_objectclass(self, definition: str) -> FlextResult[FlextTypes.Dict]: ...
+    def parse_objectclass(self, definition: str) -> FlextCore.Result[FlextCore.Types.Dict]: ...
 ```
 
 This ensures consistent interface across all server implementations.

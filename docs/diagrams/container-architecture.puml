@@ -1,0 +1,80 @@
+@startuml FLEXT-LDIF Container Architecture
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title FLEXT-LDIF Container Architecture (C4 Level 2)
+
+Container_Boundary(flext_ecosystem, "FLEXT Ecosystem") {
+    Container(flext_core, "FLEXT-Core", "Python", "Foundation patterns and utilities", "Provides FlextCore.Result[T], FlextCore.Container, FlextCore.Models")
+
+    Container_Boundary(flext_ldif, "FLEXT-LDIF Library") {
+        Container(api_facade, "FlextLdif Facade", "Python Class", "Unified API entry point for all operations")
+        Container(ldif_client, "FlextLdifClient", "Python Class", "File I/O operations and encoding detection")
+        Container(conversion_matrix, "QuirksConversionMatrix", "Python Class", "Universal N×N server conversion facade")
+        Container(dn_registry, "DnCaseRegistry", "Python Class", "Canonical DN case tracking")
+
+        Container_Boundary(rfc_parsing, "RFC Parsing Layer") {
+            Container(ldif_parser, "RfcLdifParser", "Python Service", "RFC 2849 LDIF parsing with quirks")
+            Container(schema_parser, "RfcSchemaParser", "Python Service", "RFC 4512 schema parsing with quirks")
+        }
+
+        Container_Boundary(quirks_system, "Quirks System") {
+            Container(quirk_registry, "QuirkRegistry", "Python Class", "Auto-discovery of server quirk implementations")
+            Container(server_quirks, "Server Quirks", "Python Classes", "9 server-specific quirk implementations")
+        }
+
+        Container_Boundary(domain_models, "Domain Models") {
+            Container(entry_model, "Entry Model", "Pydantic", "LDIF entry representation")
+            Container(dn_model, "DN Model", "Pydantic", "Distinguished Name parsing and validation")
+            Container(schema_models, "Schema Models", "Pydantic", "LDAP schema element representations")
+        }
+    }
+
+    Container(client-a_oud_mig, "client-a-oud-mig", "Python Application", "Oracle directory migration project")
+    Container(flext_api, "flext-api", "Python Framework", "REST API framework with LDIF processing")
+    Container(flext_ldap, "flext-ldap", "Python Library", "LDAP client operations library")
+}
+
+Container_Ext(ldap_servers, "LDAP Directory Servers", "LDAP v3", "OID, OUD, OpenLDAP, Active Directory, etc.")
+Container_Ext(ldif_files, "LDIF Data Files", "File System", "RFC 2849 compliant LDIF files")
+Container_Ext(python_runtime, "Python Runtime", "CPython 3.13+", "Execution environment with dependencies")
+
+Rel(api_facade, ldif_client, "Delegates I/O", "Path objects, encoding detection")
+Rel(api_facade, conversion_matrix, "Uses for conversions", "Server migration operations")
+Rel(api_facade, rfc_parsing, "Uses for parsing", "RFC compliance with quirks")
+
+Rel(conversion_matrix, dn_registry, "Tracks case consistency", "OUD compatibility during conversions")
+Rel(conversion_matrix, server_quirks, "Uses server implementations", "Source/target format conversions")
+
+Rel(rfc_parsing, quirk_registry, "Applies server quirks", "Server-specific enhancements")
+Rel(rfc_parsing, domain_models, "Produces validated", "Type-safe domain objects")
+
+Rel(quirks_system, server_quirks, "Manages implementations", "Auto-discovery and instantiation")
+
+Rel(client-a_oud_mig, api_facade, "Uses for", "Oracle directory migrations")
+Rel(flext_api, api_facade, "Integrates for", "LDIF processing in APIs")
+Rel(flext_ldap, api_facade, "Uses for", "LDIF export/import operations")
+
+Rel(flext_ldif, flext_core, "Depends on", "Foundation patterns and utilities")
+Rel(flext_ldif, python_runtime, "Executes in", "Python 3.13+ environment")
+Rel(flext_ldif, ldif_files, "Reads/Writes", "RFC 2849 compliant files")
+Rel(flext_ldif, ldap_servers, "Processes data for/from", "Various LDAP server formats")
+
+note right of conversion_matrix
+    **Universal Conversion Matrix**
+    N×N server conversions via RFC intermediate format
+    Only 2×N implementations needed
+end note
+
+note right of dn_registry
+    **DN Case Registry**
+    Tracks canonical DN case for OUD compatibility
+    First-seen-wins policy
+end note
+
+note right of server_quirks
+    **Server Support Status**
+    ✅ Complete: OID, OUD, OpenLDAP 1.x/2.x
+    ⚠️ Stubs: AD, Apache DS, 389 DS, Novell, Tivoli
+end note
+
+@enduml

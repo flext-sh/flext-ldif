@@ -1,0 +1,108 @@
+@startuml FLEXT-LDIF Component Architecture
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title FLEXT-LDIF Component Architecture (C4 Level 3)
+
+Container_Boundary(flext_ldif_lib, "FLEXT-LDIF Library") {
+
+    Component(api_facade, "FlextLdif Facade", "Python Class", "Unified API entry point", "Provides clean, consistent interface")
+
+    Component_Boundary(client_layer, "Client Layer") {
+        Component(ldif_client, "FlextLdifClient", "Python Class", "File I/O operations", "Handles encoding detection, file access")
+        Component(config_client, "Config Client", "Python Class", "Configuration management", "Manages runtime configuration")
+    }
+
+    Component_Boundary(conversion_layer, "Conversion Layer") {
+        Component(conversion_matrix, "QuirksConversionMatrix", "Python Class", "Universal conversion facade", "N×N server conversions")
+        Component(dn_registry, "DnCaseRegistry", "Python Class", "DN case tracking", "OUD compatibility assurance")
+        Component(batch_processor, "BatchProcessor", "Python Class", "Batch operations", "Efficient bulk conversions")
+    }
+
+    Component_Boundary(parsing_layer, "Parsing Layer") {
+        Component(ldif_parser_svc, "RfcLdifParserService", "Python Service", "LDIF parsing", "RFC 2849 + quirks")
+        Component(schema_parser_svc, "RfcSchemaParserService", "Python Service", "Schema parsing", "RFC 4512 + quirks")
+        Component(acl_parser_svc, "AclParserService", "Python Service", "ACL parsing", "Access control syntax")
+        Component(line_parser, "LineParser", "Python Class", "Line-by-line parsing", "Handles continuations, comments")
+        Component(base64_decoder, "Base64Decoder", "Python Class", "Base64 handling", "RFC 2849 :: syntax")
+    }
+
+    Component_Boundary(quirks_layer, "Quirks System") {
+        Component(quirk_registry, "FlextLdifQuirksRegistry", "Python Class", "Quirk discovery", "Auto-loads server implementations")
+        Component(quirk_base, "QuirkBase", "Abstract Class", "Standard interface", "to_rfc(), from_rfc() methods")
+
+        Component_Boundary(server_implementations, "Server Implementations") {
+            Component(oid_quirks, "OidQuirks", "Python Class", "Oracle Internet Directory", "Complete implementation")
+            Component(oud_quirks, "OudQuirks", "Python Class", "Oracle Unified Directory", "Complete implementation")
+            Component(openldap_quirks, "OpenLdapQuirks", "Python Class", "OpenLDAP 2.x", "Complete implementation")
+            Component(openldap1_quirks, "OpenLdap1Quirks", "Python Class", "OpenLDAP 1.x", "Complete implementation")
+            Component(ad_stub, "ActiveDirectoryStub", "Python Class", "Active Directory", "Stub implementation")
+            Component(apache_stub, "ApacheDsStub", "Python Class", "Apache Directory Server", "Stub implementation")
+            Component(ds389_stub, "Ds389Stub", "Python Class", "389 Directory Server", "Stub implementation")
+            Component(novell_stub, "NovellStub", "Python Class", "Novell eDirectory", "Stub implementation")
+            Component(tivoli_stub, "TivoliStub", "Python Class", "IBM Tivoli DS", "Stub implementation")
+        }
+    }
+
+    Component_Boundary(model_layer, "Domain Models") {
+        Component(entry_model, "Entry", "Pydantic Model", "LDIF entry", "Dn, attributes, changetype")
+        Component(dn_model, "DistinguishedName", "Pydantic Model", "DN parsing", "RFC 4514 compliance")
+        Component(attribute_model, "AttributeValues", "Pydantic Model", "Attribute values", "Multi-valued, typed")
+        Component(schema_models, "Schema Models", "Pydantic Models", "LDAP schema", "Attributes, objectClasses")
+        Component(config_model, "Config Models", "Pydantic Models", "Configuration", "Validation and typing")
+    }
+
+    Component_Boundary(service_layer, "Service Layer") {
+        Component(validation_svc, "ValidationService", "Python Service", "Data validation", "RFC compliance checking")
+        Component(transformation_svc, "TransformationService", "Python Service", "Data transformation", "Filtering, conversion")
+        Component(filter_svc, "FilterService", "Python Service", "Entry filtering", "Pattern matching, selection")
+        Component(analytics_svc, "AnalyticsService", "Python Service", "Data analytics", "Statistics, reporting")
+        Component(repository_svc, "RepositoryService", "Python Service", "Data persistence", "In-memory storage")
+    }
+
+    Component_Boundary(infrastructure, "Infrastructure") {
+        Component(container_mgmt, "FlextLdifContainer", "Python Class", "Dependency injection", "Service registration")
+        Component(logging, "Structured Logging", "Python Integration", "Context tracking", "FLEXT ecosystem logging")
+        Component(error_handling, "FlextCore.Result[T]", "Type System", "Railway-oriented programming", "Functional error composition")
+    }
+}
+
+Rel(api_facade, client_layer, "Delegates to", "File operations, configuration")
+Rel(api_facade, conversion_layer, "Uses for", "Server conversions")
+Rel(api_facade, parsing_layer, "Uses for", "Data parsing")
+Rel(api_facade, service_layer, "Uses for", "Business operations")
+
+Rel(conversion_layer, quirks_layer, "Uses server", "implementations for conversions")
+Rel(conversion_layer, dn_registry, "Maintains", "case consistency")
+
+Rel(parsing_layer, quirks_layer, "Applies server", "quirks as enhancements")
+Rel(parsing_layer, model_layer, "Produces", "validated domain objects")
+
+Rel(quirks_layer, server_implementations, "Manages", "server-specific logic")
+Rel(service_layer, model_layer, "Operates on", "domain objects")
+
+Rel(infrastructure, flext_ldif_lib, "Provides foundation", "for all components")
+
+note right of conversion_matrix
+    **Universal Conversion Matrix**
+    - N×N server conversions
+    - RFC intermediate format
+    - Only 2×N implementations needed
+    - DN case consistency tracking
+end note
+
+note right of quirk_registry
+    **Pluggable Quirks System**
+    - Auto-discovery of implementations
+    - Priority-based resolution
+    - Zero core code changes for new servers
+    - Complete isolation of server logic
+end note
+
+note right of server_implementations
+    **Server Implementation Status**
+    ✅ Complete: OID, OUD, OpenLDAP 1.x/2.x
+    ⚠️ Stub: Ready for full implementation
+    🔄 Future: Enhanced based on user requirements
+end note
+
+@enduml

@@ -46,7 +46,7 @@ src/flext_ldif/
 
 ### FLEXT Ecosystem Integration
 
-- **flext-core**: Foundation patterns and FlextResult error handling
+- **flext-core**: Foundation patterns and FlextCore.Result error handling
 - **flext-observability**: Monitoring and tracing integration
 - **Type Safety**: MyPy strict mode adoption; aiming for 95%+ coverage
 
@@ -85,7 +85,7 @@ src/flext_ldif/
 
 ### Enterprise Standards
 
-- **Error Handling**: FlextResult pattern for railway-oriented programming
+- **Error Handling**: FlextCore.Result pattern for railway-oriented programming
 - **Configuration**: Environment variable support with validation
 - **Logging**: Structured logging with correlation IDs and trace context
 - **Performance**: Memory-efficient processing with configurable limits

@@ -21,7 +21,7 @@ from flext_ldif.models import FlextLdifModels
 
 
 def create_test_entry(
-    dn_str: str, attributes: dict[str, list[str]]
+    dn_str: str, attributes: dict[str, flext_core.Types.StringList]
 ) -> FlextLdifModels.Entry:
     """Helper function to create test entries with proper attribute wrapping.
 
@@ -132,7 +132,7 @@ class TestOidPatternMatching:
     def test_empty_patterns(self) -> None:
         """Test with empty pattern list."""
         oid = "1.3.6.1.4.1.111.2.3"
-        patterns: list[str] = []
+        patterns: flext_core.Types.StringList = []
         assert not FlextLdifFilters.matches_oid_pattern(oid, patterns)
 
 
@@ -147,7 +147,9 @@ class TestEntryExclusionMarking:
             {"cn": ["test"], "objectClass": ["person"]},
         )
 
-    def test_mark_entry_excluded_basic(self, sample_entry: FlextLdifModels.Entry) -> None:
+    def test_mark_entry_excluded_basic(
+        self, sample_entry: FlextLdifModels.Entry
+    ) -> None:
         """Test basic exclusion marking."""
         marked = FlextLdifFilters.mark_entry_excluded(
             sample_entry, "Test exclusion reason"
@@ -184,7 +186,9 @@ class TestEntryExclusionMarking:
             quirk_type="schema",
             extensions={"custom": "data"},
         )
-        entry_with_metadata = sample_entry.model_copy(update={"metadata": existing_metadata})
+        entry_with_metadata = sample_entry.model_copy(
+            update={"metadata": existing_metadata}
+        )
 
         marked = FlextLdifFilters.mark_entry_excluded(
             entry_with_metadata, "Test reason"
@@ -217,7 +221,10 @@ class TestHasObjectClass:
         """Create entry with multiple objectClasses."""
         return create_test_entry(
             "cn=test,dc=example,dc=com",
-            {"cn": ["test"], "objectClass": ["person", "inetOrgPerson", "organizationalPerson"]},
+            {
+                "cn": ["test"],
+                "objectClass": ["person", "inetOrgPerson", "organizationalPerson"],
+            },
         )
 
     def test_has_single_objectclass(
@@ -272,7 +279,9 @@ class TestHasRequiredAttributes:
         self, sample_entry: FlextLdifModels.Entry
     ) -> None:
         """Test when entry has all required attributes."""
-        assert FlextLdifFilters.has_required_attributes(sample_entry, ["cn", "sn", "mail"])
+        assert FlextLdifFilters.has_required_attributes(
+            sample_entry, ["cn", "sn", "mail"]
+        )
 
     def test_missing_required_attribute(
         self, sample_entry: FlextLdifModels.Entry
@@ -290,7 +299,9 @@ class TestHasRequiredAttributes:
 class TestCategorizeEntry:
     """Test entry categorization logic."""
 
-    def _create_entry(self, objectclasses: list[str]) -> FlextLdifModels.Entry:
+    def _create_entry(
+        self, objectclasses: flext_core.Types.StringList
+    ) -> FlextLdifModels.Entry:
         """Helper to create entry with specified objectClasses."""
         return create_test_entry(
             "cn=test,dc=example,dc=com",
@@ -414,7 +425,9 @@ class TestFilterEntriesByDn:
         assert len(filtered) == 4  # All entries returned
 
         # Check that excluded entries are marked
-        excluded_count = sum(1 for e in filtered if FlextLdifFilters.is_entry_excluded(e))
+        excluded_count = sum(
+            1 for e in filtered if FlextLdifFilters.is_entry_excluded(e)
+        )
         assert excluded_count == 2  # REDACTED_LDAP_BIND_PASSWORD1 and group1 are marked excluded
 
 
@@ -502,7 +515,11 @@ class TestFilterEntriesByAttributes:
     def sample_entries(self) -> list[FlextLdifModels.Entry]:
         """Create sample entries with different attributes."""
         test_data = [
-            {"cn": ["user1"], "mail": ["user1@example.com"], "telephoneNumber": ["123"]},
+            {
+                "cn": ["user1"],
+                "mail": ["user1@example.com"],
+                "telephoneNumber": ["123"],
+            },
             {"cn": ["user2"], "mail": ["user2@example.com"]},
             {"cn": ["user3"], "telephoneNumber": ["456"]},
             {"cn": ["user4"]},

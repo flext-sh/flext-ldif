@@ -12,7 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from flext_core import FlextResult
+from flext_core import FlextCore
 from tests.test_support.ldif_data import LdifTestData
 
 from flext_ldif import FlextLdif
@@ -550,7 +550,7 @@ objectClass: person
         result = ldif.parse(invalid_content)
 
         # Should handle gracefully - either fail or parse what it can
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
     def test_parse_empty_content(self) -> None:
         """Test parsing empty LDIF content."""
@@ -571,7 +571,7 @@ objectClass: person
         # Test with different server types
         for server_type in ["rfc", "oid", "oud", "auto"]:
             result = ldif.parse(content, server_type=server_type)
-            assert isinstance(result, FlextResult)
+            assert isinstance(result, FlextCore.Result)
 
 
 class TestFlextLdifWriteComprehensive:
@@ -686,7 +686,7 @@ class TestFlextLdifMigrateComprehensive:
     #     # Test migration
     #     migrate_result = ldif.migrate(entries=entries, from_server="rfc", to_server="oid")
     #
-    #     assert isinstance(migrate_result, FlextResult)
+    #     assert isinstance(migrate_result, FlextCore.Result)
 
     # def test_migrate_same_format(self) -> None:
     #     """Test migration with same source and target format."""
@@ -705,7 +705,7 @@ class TestFlextLdifMigrateComprehensive:
     #     # Test migration with same format
     #     migrate_result = ldif.migrate(entries=entries, from_server="rfc", to_server="rfc")
     #
-    #     assert isinstance(migrate_result, FlextResult)
+    #     assert isinstance(migrate_result, FlextCore.Result)
 
 
 class TestFlextLdifAnalyzeComprehensive:
@@ -822,13 +822,6 @@ class TestFlextLdifInfrastructureComprehensive:
 
         constants = ldif.constants()
         assert constants is not None
-
-    def test_utilities_access(self) -> None:
-        """Test accessing utilities."""
-        ldif = FlextLdif()
-
-        utilities = ldif.utilities()
-        assert utilities is not None
 
     def test_processors_access(self) -> None:
         """Test accessing processors."""

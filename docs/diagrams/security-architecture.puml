@@ -1,0 +1,154 @@
+@startuml FLEXT-LDIF Security Architecture
+
+title FLEXT-LDIF Security Architecture and Threat Model
+
+skinparam backgroundColor #FEFEFE
+skinparam packageBackgroundColor #E6F3FF
+skinparam packageBorderColor #0066CC
+
+package "Security Boundaries" as Boundaries {
+
+    package "Input Validation Layer" as InputValidation {
+        class "RFC Compliance Validation" as RFCValidation {
+            +validate_rfc_2849_syntax()
+            +validate_rfc_4512_schema()
+            +validate_rfc_4514_dn_format()
+            +reject_malformed_content()
+        }
+
+        class "Type Safety Enforcement" as TypeSafety {
+            +pydantic_model_validation()
+            +strict_type_checking()
+            +immutable_domain_objects()
+            +no_type_ignores_allowed()
+        }
+
+        class "Content Sanitization" as Sanitization {
+            +base64_decoding_validation()
+            +url_reference_validation()
+            +attribute_value_validation()
+            +dn_component_validation()
+        }
+    }
+
+    package "Processing Security" as ProcessingSecurity {
+        class "Memory Management" as MemoryMgmt {
+            +file_size_limits(100MB)
+            +no_external_memory_alloc()
+            +controlled_resource_usage()
+            +graceful_oom_handling()
+        }
+
+        class "Error Handling" as ErrorHandling {
+            +no_information_leakage()
+            +controlled_error_messages()
+            +audit_trail_logging()
+            +fail_safe_defaults()
+        }
+
+        class "Access Control" as AccessControl {
+            +file_system_isolation()
+            +no_network_operations()
+            +read_write_restrictions()
+            +path_traversal_protection()
+        }
+    }
+
+    package "Data Protection" as DataProtection {
+        class "Encryption Handling" as Encryption {
+            +base64_content_protection()
+            +no_cleartext_secrets()
+            +secure_temporary_files()
+            +memory_clearing()
+        }
+
+        class "Privacy Protection" as Privacy {
+            +no_data_persistence()
+            +in_memory_processing_only()
+            +no_external_logging()
+            +controlled_output_formats()
+        }
+    }
+}
+
+package "Threat Mitigation" as Threats {
+
+    class "Input Threats" <<Mitigation>> {
+        Malformed LDIF files
+        Oversized files (DoS)
+        Invalid encodings
+        Schema injection
+    }
+
+    class "Processing Threats" <<Mitigation>> {
+        Memory exhaustion
+        Path traversal
+        Information disclosure
+        Resource exhaustion
+    }
+
+    class "Output Threats" <<Mitigation>> {
+        Data leakage
+        Format corruption
+        Encoding issues
+        Privacy violations
+    }
+}
+
+package "Security Monitoring" as Monitoring {
+    class "Security Logging" as SecLogging {
+        +anomaly_detection()
+        +threat_pattern_analysis()
+        +audit_trail_maintenance()
+        +incident_response_prep()
+    }
+
+    class "Compliance Tracking" as Compliance {
+        +rfc_compliance_verification()
+        +security_standard_adherence()
+        +vulnerability_scanning()
+        +patch_management()
+    }
+}
+
+InputValidation --> Threats : Mitigates input threats
+ProcessingSecurity --> Threats : Mitigates processing threats
+DataProtection --> Threats : Mitigates data threats
+
+InputValidation --> Monitoring : Security event logging
+ProcessingSecurity --> Monitoring : Anomaly detection
+DataProtection --> Monitoring : Compliance verification
+
+note right of RFCValidation
+    **RFC Compliance Security**
+    - Strict syntax validation
+    - No fallback parsing modes
+    - Reject invalid constructs
+    - Prevent parser confusion attacks
+end note
+
+note right of MemoryMgmt
+    **Memory Security**
+    - 100MB file size limit
+    - No streaming (controlled memory usage)
+    - No external process spawning
+    - Resource exhaustion prevention
+end note
+
+note right of AccessControl
+    **Access Control**
+    - File system operations only
+    - No network communications
+    - Controlled read/write access
+    - Path validation and sanitization
+end note
+
+note right of ErrorHandling
+    **Error Security**
+    - No stack trace exposure
+    - Controlled error messages
+    - Structured logging only
+    - Fail-safe error recovery
+end note
+
+@enduml

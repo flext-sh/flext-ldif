@@ -209,14 +209,14 @@ migration_api = FlextLdif(config=create_migration_config())
 from pydantic import ValidationError
 from flext_ldif import FlextLdifModels
 
-def validate_configuration(config_dict: dict) -> FlextResult[FlextLdifModels.Config]:
+def validate_configuration(config_dict: dict) -> FlextCore.Result[FlextLdifModels.Config]:
     """Validate configuration with detailed error handling."""
     try:
         config = FlextLdifModels.Config(**config_dict)
-        return FlextResult[FlextLdifModels.Config].ok(config)
+        return FlextCore.Result[FlextLdifModels.Config].ok(config)
     except ValidationError as e:
         error_details = "; ".join([f"{err['loc'][0]}: {err['msg']}" for err in e.errors()])
-        return FlextResult[FlextLdifModels.Config].fail(f"Configuration validation failed: {error_details}")
+        return FlextCore.Result[FlextLdifModels.Config].fail(f"Configuration validation failed: {error_details}")
 
 # Validate configuration before use
 config_data = {
@@ -311,14 +311,14 @@ api = FlextLdif(config=ConfigurationProfiles.enterprise())
 
 ## Integration with FLEXT Configuration
 
-### FlextContainer Integration
+### FlextCore.Container Integration
 
 ```python
-from flext_core import FlextContainer
+from flext_core import FlextCore
 from flext_ldif import FlextLdifConfig
 
 # Register configuration in container
-container = FlextContainer.get_global()
+container = FlextCore.Container.get_global()
 config = FlextLdifModels.Config(max_entries=100000)
 
 registration_result = container.register("ldif_config", config)
@@ -335,11 +335,11 @@ if config_result.is_success:
 ### Configuration Logging
 
 ```python
-from flext_core import FlextLogger
+from flext_core import FlextCore
 
 def log_configuration(config: FlextLdifModels.Config) -> None:
     """Log configuration settings for debugging."""
-    logger = FlextLogger(__name__)
+    logger = FlextCore.Logger(__name__)
 
     logger.info("LDIF configuration initialized", extra={
         'max_entries': config.max_entries,
@@ -380,7 +380,7 @@ config_dict = {
 Validate configuration at application startup:
 
 ```python
-def initialize_application_config() -> FlextResult[FlextLdif]:
+def initialize_application_config() -> FlextCore.Result[FlextLdif]:
     """Initialize application with validated configuration."""
     try:
         config = FlextLdifModels.Config(
@@ -388,9 +388,9 @@ def initialize_application_config() -> FlextResult[FlextLdif]:
             strict_validation=os.getenv('STRICT_VALIDATION', '').lower() == 'true'
         )
         api = FlextLdif(config=config)
-        return FlextResult[FlextLdif].ok(api)
+        return FlextCore.Result[FlextLdif].ok(api)
     except Exception as e:
-        return FlextResult[FlextLdif].fail(f"Configuration initialization failed: {e}")
+        return FlextCore.Result[FlextLdif].fail(f"Configuration initialization failed: {e}")
 ```
 
 ### 3. Use Environment-Specific Profiles

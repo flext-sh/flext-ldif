@@ -19,11 +19,11 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Final, Literal
 
-from flext_core import FlextConstants
+from flext_core import FlextCore
 
 
-class FlextLdifConstants(FlextConstants):
-    """LDIF domain constants extending flext-core FlextConstants.
+class FlextLdifConstants(FlextCore.Constants):
+    """LDIF domain constants extending flext-core FlextCore.Constants.
 
     Contains ONLY constant values, no implementations.
     """
@@ -186,7 +186,7 @@ class FlextLdifConstants(FlextConstants):
     # UTILITY CONSTANTS
     # =============================================================================
 
-    # Utilities constants are inherited from parent FlextConstants
+    # Utilities constants are inherited from parent FlextCore.Constants
 
     # =============================================================================
     # VALIDATION CONSTANTS

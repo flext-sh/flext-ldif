@@ -1,0 +1,45 @@
+@startuml FLEXT-LDIF System Context Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title FLEXT-LDIF System Context (C4 Level 1)
+
+Person(user, "LDAP Administrator", "Manages LDAP directory data and performs server migrations")
+Person(developer, "Application Developer", "Integrates LDIF processing into FLEXT applications")
+
+System(flext_ldif, "FLEXT-LDIF", "RFC-compliant LDIF processing library with server-specific quirks system")
+
+System_Ext(flext_core, "FLEXT-Core", "Foundation library providing FlextCore.Result, FlextCore.Container, FlextCore.Models")
+System_Ext(ldap_servers, "LDAP Directory Servers", "OID, OUD, OpenLDAP, Active Directory, Apache DS, 389 DS, Novell, Tivoli")
+System_Ext(flext_projects, "FLEXT Projects", "client-a-oud-mig, flext-api, flext-ldap, flext-web, flext-auth")
+System_Ext(data_sources, "Data Sources", "LDIF files, LDAP exports, directory dumps, API responses")
+
+System_Ext(cloud_infrastructure, "Cloud Infrastructure", "AWS, Azure, GCP directory services")
+System_Ext(enterprise_systems, "Enterprise Systems", "HR systems, identity management, access control")
+
+Rel(user, flext_ldif, "Uses for", "LDIF processing and server migrations")
+Rel(developer, flext_ldif, "Integrates via", "FlextLdif facade API")
+
+Rel(flext_ldif, flext_core, "Depends on", "FlextCore.Result[T], FlextCore.Container, FlextCore.Models")
+Rel(flext_ldif, ldap_servers, "Processes data for/from", "RFC 2849/4512 compliant operations")
+Rel(flext_ldif, flext_projects, "Provides LDIF processing", "capabilities to ecosystem")
+Rel(flext_ldif, data_sources, "Reads/Writes", "LDIF format files and streams")
+
+Rel(flext_projects, flext_ldif, "Use for", "directory data operations")
+Rel(cloud_infrastructure, flext_ldif, "Provides", "cloud directory services integration")
+Rel(enterprise_systems, flext_ldif, "Exchanges data via", "LDIF-based integration")
+
+Rel_Back(flext_ldif, enterprise_systems, "Provides", "standards-compliant directory data")
+
+note right of flext_ldif : **Key Capabilities:**
+- RFC 2849/4512 compliance
+- 9+ server quirk support
+- Universal conversion matrix
+- Memory-bound processing
+- Type-safe operations
+
+note right of user : **Primary Users:**
+- Directory REDACTED_LDAP_BIND_PASSWORDistrators
+- DevOps engineers
+- Integration developers
+
+@enduml

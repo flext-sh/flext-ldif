@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from flext_core import FlextResult
+from flext_core import FlextCore
 from pydantic import ValidationError
 
 from flext_ldif.models import FlextLdifModels
@@ -164,7 +164,7 @@ sn: user
 """
 
         result = FlextLdifModels.Entry.from_ldif_string(ldif_string)
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
         assert result.is_success
 
         entry = result.value
@@ -177,13 +177,13 @@ sn: user
         invalid_ldif = "invalid ldif content"
 
         result = FlextLdifModels.Entry.from_ldif_string(invalid_ldif)
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
         assert result.is_failure
 
     def test_entry_from_ldif_string_empty(self) -> None:
         """Test creating entry from empty LDIF string."""
         result = FlextLdifModels.Entry.from_ldif_string("")
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
         assert result.is_failure
 
     def test_entry_to_ldif_string(self) -> None:
@@ -333,7 +333,7 @@ cn: test2
 """
 
         result = FlextLdifModels.LdifDocument.from_ldif_string(ldif_string)
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
         assert result.is_success
 
         document = result.value
@@ -347,14 +347,14 @@ cn: test2
 
         # Non-LDIF content is treated as having no entries (not a parsing error)
         result = FlextLdifModels.LdifDocument.from_ldif_string(invalid_ldif)
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
         assert result.is_success
         assert len(result.unwrap().entries) == 0
 
     def test_ldif_document_from_string_empty(self) -> None:
         """Test creating LdifDocument from empty string."""
         result = FlextLdifModels.LdifDocument.from_ldif_string("")
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
         assert result.is_success
 
         document = result.value
@@ -400,7 +400,7 @@ cn: test2
             )
 
     def test_model_inheritance(self) -> None:
-        """Test that models properly inherit from FlextModels."""
+        """Test that models properly inherit from FlextCore.Models."""
         # Test that all models are properly structured
         assert hasattr(FlextLdifModels, "DistinguishedName")
         assert hasattr(FlextLdifModels, "AttributeValues")
@@ -839,7 +839,7 @@ class TestFlextLdifModelsDistinguishedName:
         result = FlextLdifModels.DistinguishedName.create(invalid_dn)
 
         # Should still create but mark as invalid
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
 
 
 class TestFlextLdifModelsLdifAttribute:
@@ -1105,7 +1105,7 @@ class TestFlextLdifModelsCommands:
 
     def test_write_command_creation(self) -> None:
         """Test creating a WriteCommand."""
-        entries: list[object] = [
+        entries: FlextCore.Types.List = [
             {
                 "dn": "cn=test,dc=example,dc=com",
                 "attributes": {"cn": ["test"]},

@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult
+from flext_core import FlextCore
 
 from flext_ldif.typings import FlextLdifTypes
 
@@ -44,7 +44,7 @@ class DnCaseRegistry:
         >>>
         >>> # Validate for OUD (no case conflicts)
         >>> result = registry.validate_oud_consistency()
-        >>> # Returns: FlextResult[bool]
+        >>> # Returns: FlextCore.Result[bool]
 
     Attributes:
         _registry: Dict mapping normalized DN → canonical DN
@@ -183,7 +183,7 @@ class DnCaseRegistry:
         normalized = self._normalize_dn(dn)
         return self._case_variants.get(normalized, set())
 
-    def validate_oud_consistency(self) -> FlextResult[bool]:
+    def validate_oud_consistency(self) -> FlextCore.Result[bool]:
         """Validate DN case consistency for OUD conversion.
 
         OUD requires that all references to the same DN use the exact same case.
@@ -191,7 +191,7 @@ class DnCaseRegistry:
         cause problems when converting to OUD.
 
         Returns:
-            FlextResult[bool]:
+            FlextCore.Result[bool]:
                 - Success with True if all DNs have consistent case
                 - Success with False if inconsistencies found (with warnings in metadata)
                 - Failure if validation cannot be performed
@@ -208,7 +208,7 @@ class DnCaseRegistry:
             >>> result.unwrap()  # False - multiple case variants
 
         """
-        inconsistencies: list[dict[str, object]] = []
+        inconsistencies: list[FlextCore.Types.Dict] = []
 
         for normalized_dn, variants in self._case_variants.items():
             if len(variants) > 1:
@@ -227,18 +227,20 @@ class DnCaseRegistry:
                 f"Example: {inconsistencies[0]['canonical_case']} has "
                 f"{inconsistencies[0]['variant_count']} variants."
             )
-            result = FlextResult[bool].ok(False)
+            result = FlextCore.Result[bool].ok(False)
             result.metadata = {
                 "inconsistencies": inconsistencies,
                 "warning": warning_msg,
             }
             return result
 
-        return FlextResult[bool].ok(True)
+        return FlextCore.Result[bool].ok(True)
 
     def normalize_dn_references(
-        self, data: FlextLdifTypes.Dict, dn_fields: list[str] | None = None
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+        self,
+        data: FlextLdifTypes.Dict,
+        dn_fields: FlextCore.Types.StringList | None = None,
+    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
         """Normalize DN references in data to use canonical case.
 
         This method searches through a dictionary and normalizes any DN values
@@ -251,7 +253,7 @@ class DnCaseRegistry:
                       If None, uses default DN fields
 
         Returns:
-            FlextResult containing normalized data dictionary
+            FlextCore.Result containing normalized data dictionary
 
         Examples:
             >>> registry = DnCaseRegistry()
@@ -306,10 +308,10 @@ class DnCaseRegistry:
                             normalized_list.append(item)
                     normalized_data[field] = normalized_list
 
-            return FlextResult[FlextLdifTypes.Dict].ok(normalized_data)
+            return FlextCore.Result[FlextLdifTypes.Dict].ok(normalized_data)
 
         except Exception as e:
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextCore.Result[FlextLdifTypes.Dict].fail(
                 f"Failed to normalize DN references: {e}"
             )
 
