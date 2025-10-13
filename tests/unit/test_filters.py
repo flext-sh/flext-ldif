@@ -15,13 +15,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_core import FlextCore
 
 from flext_ldif.filters import FlextLdifFilters
 from flext_ldif.models import FlextLdifModels
 
 
 def create_test_entry(
-    dn_str: str, attributes: dict[str, flext_core.Types.StringList]
+    dn_str: str, attributes: dict[str, FlextCore.Types.StringList]
 ) -> FlextLdifModels.Entry:
     """Helper function to create test entries with proper attribute wrapping.
 
@@ -132,7 +133,7 @@ class TestOidPatternMatching:
     def test_empty_patterns(self) -> None:
         """Test with empty pattern list."""
         oid = "1.3.6.1.4.1.111.2.3"
-        patterns: flext_core.Types.StringList = []
+        patterns: FlextCore.Types.StringList = []
         assert not FlextLdifFilters.matches_oid_pattern(oid, patterns)
 
 
@@ -300,7 +301,7 @@ class TestCategorizeEntry:
     """Test entry categorization logic."""
 
     def _create_entry(
-        self, objectclasses: flext_core.Types.StringList
+        self, objectclasses: FlextCore.Types.StringList
     ) -> FlextLdifModels.Entry:
         """Helper to create entry with specified objectClasses."""
         return create_test_entry(

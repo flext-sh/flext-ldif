@@ -1,9 +1,19 @@
 """Example 7: Advanced Processing with Processors and Utilities.
 
+⚠️ DEPRECATED: This example uses the old utilities.py API which has been removed.
+This file needs updating to use the new service-based architecture:
+- Use services.DnService for DN operations
+- Use services.ValidationService for validation
+- Use client methods for LDIF/encoding operations
+
+For updated examples, see:
+- examples/01_basic_usage.py (parse, write, validate)
+- examples/02_dn_operations.py (DN parsing with services)
+
 Demonstrates FlextLdif advanced functionality:
 - Batch processing with direct API methods (no manual setup!)
 - Parallel processing for performance (simplified)
-- Utility functions (DN, text, time, validation, encoding, file)
+- Utility functions (DN, text, time, validation, encoding, file) [DEPRECATED]
 - Processing pipelines (streamlined)
 
 All functionality accessed through FlextLdif facade using direct methods.

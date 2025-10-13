@@ -6,8 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 from flext_core import FlextCore
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
@@ -188,10 +186,7 @@ class FlextLdifConfig(FlextCore.Config):
 
     # Validation Configuration using FlextLdifConstants for defaults
     validation_level: FlextLdifTypes.ValidationLevel = Field(
-        default=cast(
-            "FlextLdifTypes.ValidationLevel",
-            FlextLdifConstants.LiteralTypes.VALIDATION_LEVELS[0],
-        ),  # "strict"
+        default="strict",  # First value from FlextLdifConstants.LiteralTypes.VALIDATION_LEVELS
         description="Validation strictness level",
     )
 
@@ -202,9 +197,7 @@ class FlextLdifConfig(FlextCore.Config):
 
     # Server Configuration using FlextLdifConstants for defaults
     server_type: FlextLdifTypes.ServerType = Field(
-        default=cast(
-            "FlextLdifTypes.ServerType", FlextLdifConstants.ServerTypes.GENERIC
-        ),
+        default="generic",  # Literal value for type safety (matches FlextLdifConstants.ServerTypes.GENERIC)
         description="Target LDAP server type",
     )
 

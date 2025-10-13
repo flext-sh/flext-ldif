@@ -1,5 +1,12 @@
 """Example 8: Complete LDIF Processing Workflow.
 
+⚠️ DEPRECATED: Lines 447-449 use the old utilities.py API which has been removed.
+These utility calls need updating to use the new service-based architecture:
+- Replace TimeUtilities with direct datetime calls
+- Replace ValidationUtilities with services.ValidationService
+
+Most of this example still works, only the utility access needs updating.
+
 Demonstrates comprehensive FlextLdif integration with direct methods:
 
 NOTE: This example uses proper error handling instead of assert statements.
@@ -10,7 +17,7 @@ representing production-ready error handling patterns.
 - Integration of all API functionality (no manual class instantiation!)
 - Real-world LDIF processing scenarios
 - Error handling and recovery patterns
-- Access to all namespace classes
+- Access to all namespace classes [UTILITIES DEPRECATED]
 - Configuration via .env environment variables
 
 This example shows how to combine all FlextLdif features
