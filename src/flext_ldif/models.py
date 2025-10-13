@@ -18,7 +18,7 @@ Type Checking Notes:
 from __future__ import annotations
 
 from flext_core import FlextCore
-from pydantic import Field, computed_field
+from pydantic import Field, field_validator
 
 
 class FlextLdifModels(FlextCore.Models):
@@ -37,11 +37,43 @@ class FlextLdifModels(FlextCore.Models):
     class DistinguishedName(FlextCore.Models.Value):
         """Distinguished Name value object."""
 
-        value: str = Field(..., description="DN string value")
+        value: str = Field(..., description="DN string value", min_length=1, max_length=2048)
         metadata: dict[str, str] | None = Field(
             default=None,
             description="Quirk-specific metadata for preserving original format",
         )
+
+        @field_validator("value", mode="before")
+        @classmethod
+        def normalize_dn(cls, v: str) -> str:
+            r"""Normalize DN value using RFC 4514 compliant normalization via ldap3.
+
+            Uses ldap3.utils.dn.safe_dn() for proper RFC 4514 normalization:
+            - Handles escaped characters (\\, \\2C, etc.)
+            - Handles quoted values ("Smith, John")
+            - Handles special characters (+, =, <, >, #, ;)
+            - Handles UTF-8 encoding
+            - Lowercases attribute names
+            - Preserves case in attribute values
+
+            Args:
+                v: DN string to normalize
+
+            Returns:
+                Normalized DN string per RFC 4514
+
+            Raises:
+                ValueError: If DN format is invalid per RFC 4514
+
+            """
+            try:
+                from ldap3.utils.dn import safe_dn
+
+                # Use ldap3 for RFC 4514 compliant normalization
+                return safe_dn(v)
+            except Exception as e:
+                error_msg = f"Invalid DN format (RFC 4514): {e}"
+                raise ValueError(error_msg) from e
 
     class AttributeName(FlextCore.Models.Value):
         """LDIF attribute name value object."""
@@ -350,21 +382,6 @@ class FlextLdifModels(FlextCore.Models):
             default_factory=list, description="Entries that don't match any category"
         )
 
-        @computed_field  # type: ignore[misc]
-        @property
-        def summary(self) -> dict[str, int]:
-            """Summary counts for each category - automatically computed."""
-            return {
-                "users": len(self.users),
-                "groups": len(self.groups),
-                "containers": len(self.containers),
-                "uncategorized": len(self.uncategorized),
-                "total": len(self.users)
-                + len(self.groups)
-                + len(self.containers)
-                + len(self.uncategorized),
-            }
-
     class SchemaDiscoveryResult(FlextCore.Models.Value):
         """Result of schema discovery operations."""
 
@@ -376,22 +393,6 @@ class FlextLdifModels(FlextCore.Models):
             default_factory=dict,
             description="Discovered object classes with their metadata",
         )
-
-        @computed_field  # type: ignore[misc]
-        @property
-        def total_attributes(self) -> int:
-            """Total number of attributes discovered - automatically computed."""
-            return len(self.attributes)
-
-        @computed_field  # type: ignore[misc]
-        @property
-        def total_objectclasses(self) -> int:
-            """Total number of object classes discovered - automatically computed."""
-            return len(self.objectclasses)
-
-        def has_schema_data(self) -> bool:
-            """Check if schema contains any data."""
-            return bool(self.attributes or self.objectclasses)
 
     class SchemaAttribute(FlextCore.Models.Value):
         """LDAP schema attribute definition model.
@@ -449,12 +450,82 @@ class FlextLdifModels(FlextCore.Models):
             description="Quirk-specific metadata for preserving original entry format",
         )
 
+        @classmethod
+        def create(
+            cls,
+            dn: str | FlextLdifModels.DistinguishedName,
+            attributes: dict[str, FlextCore.Types.StringList]
+            | FlextLdifModels.LdifAttributes,
+            metadata: FlextLdifModels.QuirkMetadata | None = None,
+        ) -> FlextCore.Result[FlextLdifModels.Entry]:
+            """Create a new Entry instance with validation.
+
+            Args:
+                dn: Distinguished Name for the entry
+                attributes: Entry attributes as dict or LdifAttributes
+                metadata: Optional quirk metadata
+
+            Returns:
+                FlextCore.Result with Entry instance or validation error
+
+            """
+            try:
+                # Use model_validate to ensure Pydantic handles default_factory fields
+                # Entity fields (id, version, created_at, updated_at, domain_events) have defaults
+                entry_data = {
+                    "dn": dn,
+                    "attributes": attributes,
+                    "metadata": metadata,
+                }
+                return FlextCore.Result[FlextLdifModels.Entry].ok(
+                    cls.model_validate(entry_data)
+                )
+            except Exception as e:
+                return FlextCore.Result[FlextLdifModels.Entry].fail(
+                    f"Failed to create Entry: {e}"
+                )
+
+        def get_attribute_values(
+            self, attribute_name: str
+        ) -> FlextCore.Types.StringList:
+            """Get all values for a specific attribute.
+
+            Args:
+                attribute_name: Name of the attribute to retrieve
+
+            Returns:
+                List of attribute values, empty list if attribute doesn't exist
+
+            """
+            attr_values = self.attributes.attributes.get(attribute_name)
+            return attr_values.values if attr_values else []
+
+        def has_attribute(self, attribute_name: str) -> bool:
+            """Check if entry has a specific attribute.
+
+            Args:
+                attribute_name: Name of the attribute to check
+
+            Returns:
+                True if attribute exists with at least one value, False otherwise
+
+            """
+            attr_values = self.attributes.attributes.get(attribute_name)
+            return attr_values is not None and len(attr_values.values) > 0
+
     class AttributeValues(FlextCore.Models.Value):
         """LDIF attribute values container."""
 
         values: FlextCore.Types.StringList = Field(
             default_factory=list, description="Attribute values"
         )
+
+        @property
+        def single_value(self) -> str | None:
+            """Get single value if there's exactly one value, None otherwise."""
+            if len(self.values) == 1:
+                return self.values[0]
+            return None
 
     class LdifAttributes(FlextCore.Models.Value):
         """LDIF attributes container with dict-like interface."""
@@ -467,42 +538,13 @@ class FlextLdifModels(FlextCore.Models):
             description="Quirk-specific metadata for preserving attribute ordering and formats",
         )
 
-        def to_ldap3(
-            self, exclude: FlextCore.Types.StringList | None = None
-        ) -> dict[str, str | FlextCore.Types.StringList]:
-            """Convert attributes to ldap3 format (strings for single values, lists for multi).
-
-            Args:
-                exclude: List of attribute names to exclude (e.g., ["objectClass"])
-
-            Returns:
-                Dictionary with single-valued attributes as strings and multi-valued as lists
-
-            """
-            exclude_set: set[str] | set[object] = set(exclude) if exclude else set()
-            result: dict[str, str | FlextCore.Types.StringList] = {}
-
-            for name, attr_values in self.attributes.items():
-                if name not in exclude_set:
-                    values = attr_values.values
-                    result[name] = values[0] if len(values) == 1 else values
-
-            return result
-
-        def add_attribute(
-            self, name: str, value: str | FlextCore.Types.StringList
-        ) -> None:
-            """Add attribute value(s)."""
-            if isinstance(value, str):
-                value = [value]
-            if name in self.attributes:
-                self.attributes[name].values.extend(value)
-            else:
-                self.attributes[name] = FlextLdifModels.AttributeValues(values=value)
-
-        def remove_attribute(self, name: str) -> None:
-            """Remove attribute by name."""
-            self.attributes.pop(name, None)
+        def get(
+            self, key: str, default: FlextCore.Types.StringList | None = None
+        ) -> FlextCore.Types.StringList | None:
+            """Dict-like get method for backward compatibility."""
+            if key in self.attributes:
+                return self.attributes[key].values
+            return default
 
     class EntryParsedEvent(FlextCore.Models.DomainEvent):
         """Event emitted when an entry is successfully parsed."""

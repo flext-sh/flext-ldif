@@ -14,9 +14,11 @@ from __future__ import annotations
 from flext_core import FlextCore
 from pydantic import BaseModel
 
-from flext_ldif.dto_diff import DiffResult
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
+
+# Alias for convenient access
+DiffResult = FlextLdifModels.DiffResult
 
 
 class FlextLdifDiff(BaseModel):

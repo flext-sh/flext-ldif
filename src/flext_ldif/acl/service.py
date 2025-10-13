@@ -435,7 +435,9 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
             return FlextCore.Result[list[FlextLdifModels.Acl]].fail(error_msg)
 
         acl_attribute = acl_attr_result.value
-        acl_values: FlextLdifTypes.StringList = entry.get_attribute(acl_attribute) or []
+        acl_values: FlextLdifTypes.StringList = (
+            entry.attributes.get_attribute(acl_attribute) or []
+        )
 
         if not acl_values:
             return FlextCore.Result[list[FlextLdifModels.Acl]].ok([])

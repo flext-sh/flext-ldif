@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     EntryQuirkType = FlextLdifQuirksBaseEntryQuirk
 
 
-class FlextLdifQuirksRegistry(FlextCore.Models.Entity):
+class FlextLdifQuirksRegistry:
     """Centralized registry for LDIF/LDAP quirks.
 
     Manages discovery, registration, and composition of server-specific quirks.
@@ -45,11 +45,15 @@ class FlextLdifQuirksRegistry(FlextCore.Models.Entity):
         registry.register_quirk(FlextLdifQuirksServersOid(server_type="oid"))
         quirks = registry.get_quirks_for_server("oid")
 
+    Note:
+        This is a regular Python class (not a Pydantic model) to avoid
+        complications with forward references and model validation for
+        internal registry state.
+
     """
 
     def __init__(self) -> None:
-        """Initialize quirk registry."""
-        super().__init__()
+        """Initialize quirk registry with empty registries."""
         self._schema_quirks: dict[str, list[SchemaQuirkType]] = {}
         self._acl_quirks: dict[str, list[AclQuirkType]] = {}
         self._entry_quirks: dict[str, list[EntryQuirkType]] = {}

@@ -90,7 +90,8 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         # Initialize private attributes that parent's __init__ may access
         self._config = getattr(self, "_init_config_value", None) or FlextLdifConfig()
         self._container = cast("FlextCore.Container", FlextCore.Container.get_global())
-        self._context = FlextCore.Context({"config": self._config})
+        # Convert config to dict for JSON-serializable FlextCore.Context
+        self._context = FlextCore.Context({"config": self._config.model_dump()})
         self._bus = FlextCore.Bus()
         self._handlers = {}
 
@@ -527,8 +528,9 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         total_entries = len(entries)
 
         for entry in entries:
-            object_classes = entry.attributes.get(
-                FlextLdifConstants.DictKeys.OBJECTCLASS, []
+            object_classes = (
+                entry.attributes.get_attribute(FlextLdifConstants.DictKeys.OBJECTCLASS)
+                or []
             )
             if object_classes:
                 for obj_class in object_classes:
@@ -845,6 +847,148 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
                 f"Failed to categorize entries: {e}"
             )
 
+    def detect_encoding(self, content: bytes) -> FlextCore.Result[str]:
+        """Detect encoding of LDIF content bytes.
+
+        Attempts UTF-8 first (RFC 2849 standard), falls back to latin-1
+        as a universal fallback (all byte sequences are valid latin-1).
+
+        Args:
+            content: Raw bytes to detect encoding from
+
+        Returns:
+            FlextCore.Result containing detected encoding name ("utf-8" or "latin-1")
+
+        Example:
+            >>> with open("data.ldif", "rb") as f:
+            ...     raw_bytes = f.read()
+            >>> result = client.detect_encoding(raw_bytes)
+            >>> encoding = result.unwrap()  # "utf-8" or "latin-1"
+
+        """
+        try:
+            # Try UTF-8 first (RFC 2849 standard encoding)
+            try:
+                content.decode("utf-8")
+                return FlextCore.Result[str].ok("utf-8")
+            except UnicodeDecodeError:
+                # Fall back to latin-1 (universal fallback - all bytes valid)
+                return FlextCore.Result[str].ok("latin-1")
+        except Exception as e:
+            return FlextCore.Result[str].fail(f"Failed to detect encoding: {e}")
+
+    def normalize_encoding(
+        self, content: str, target_encoding: str = "utf-8"
+    ) -> FlextCore.Result[str]:
+        """Normalize text content to target encoding.
+
+        Encodes content to target encoding and decodes back to ensure
+        all characters are representable in target encoding.
+
+        Args:
+            content: Text content to normalize
+            target_encoding: Target encoding (default: "utf-8")
+
+        Returns:
+            FlextCore.Result containing normalized content string
+
+        Example:
+            >>> result = client.normalize_encoding(content, "utf-8")
+            >>> normalized = result.unwrap()
+
+        """
+        try:
+            # Encode to target encoding and decode back (ensures valid representation)
+            normalized = content.encode(target_encoding).decode(target_encoding)
+            return FlextCore.Result[str].ok(normalized)
+        except UnicodeEncodeError as e:
+            return FlextCore.Result[str].fail(
+                f"Content contains characters not representable in {target_encoding}: {e}"
+            )
+        except Exception as e:
+            return FlextCore.Result[str].fail(
+                f"Failed to normalize encoding to {target_encoding}: {e}"
+            )
+
+    def validate_ldif_syntax(self, content: str) -> FlextCore.Result[bool]:
+        r"""Validate basic LDIF syntax structure.
+
+        Performs basic validation checking for:
+        - Presence of at least one "dn:" line (RFC 2849 requirement)
+        - Non-empty content
+
+        Note: This is a basic syntax check. For full RFC 2849 validation,
+        use parse_ldif() which performs comprehensive parsing.
+
+        Args:
+            content: LDIF content string to validate
+
+        Returns:
+            FlextCore.Result containing True if valid basic syntax, False otherwise
+
+        Example:
+            >>> ldif_content = "dn: cn=test,dc=example,dc=com\\ncn: test\\n"
+            >>> result = client.validate_ldif_syntax(ldif_content)
+            >>> is_valid = result.unwrap()  # True
+
+        """
+        try:
+            # Check non-empty
+            if not content or not content.strip():
+                return FlextCore.Result[bool].ok(False)
+
+            # Check for at least one "dn:" line (RFC 2849 requirement)
+            # LDIF entries MUST start with "dn:" per RFC 2849
+            if "dn:" not in content.lower():
+                return FlextCore.Result[bool].ok(False)
+
+            return FlextCore.Result[bool].ok(True)
+
+        except Exception as e:
+            return FlextCore.Result[bool].fail(
+                f"Failed to validate LDIF syntax: {e}"
+            )
+
+    def count_ldif_entries(self, content: str) -> FlextCore.Result[int]:
+        r"""Count number of LDIF entries in content.
+
+        Counts entries by counting empty lines between entries.
+        RFC 2849 specifies that entries are separated by blank lines.
+
+        Args:
+            content: LDIF content string
+
+        Returns:
+            FlextCore.Result containing entry count
+
+        Example:
+            >>> ldif_content = (
+            ...     "dn: cn=test1,dc=example,dc=com\\n"
+            ...     "cn: test1\\n\\n"
+            ...     "dn: cn=test2,dc=example,dc=com\\n"
+            ...     "cn: test2\\n"
+            ... )
+            >>> result = client.count_ldif_entries(ldif_content)
+            >>> count = result.unwrap()  # 2
+
+        """
+        try:
+            if not content or not content.strip():
+                return FlextCore.Result[int].ok(0)
+
+            # Count entries by counting "dn:" lines (RFC 2849: each entry starts with dn:)
+            dn_count = content.lower().count("dn:")
+
+            # Ensure at least 1 entry if content exists
+            count = max(1, dn_count) if content.strip() else 0
+
+            return FlextCore.Result[int].ok(count)
+
+        except Exception as e:
+            return FlextCore.Result[int].fail(
+                f"Failed to count LDIF entries: {e}"
+            )
+
     # =========================================================================
     # QUIRKS MANAGEMENT
     # =========================================================================
@@ -929,7 +1073,8 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
     def context(self) -> FlextCore.Context:
         """Access to execution context with lazy initialization."""
         if self._context is None:
-            self._context = FlextCore.Context({"config": self.config})
+            # Convert config to dict for JSON-serializable FlextCore.Context
+            self._context = FlextCore.Context({"config": self.config.model_dump()})
         return self._context
 
     @property

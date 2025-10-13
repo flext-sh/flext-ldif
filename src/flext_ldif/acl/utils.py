@@ -37,12 +37,16 @@ class FlextLdifAclUtils(FlextCore.Utilities):
                 or failure with descriptive error message.
 
             """
-            # Create ACL components using factory methods with required defaults
-            target_result = FlextLdifModels.AclTarget.create(target_dn="*")
-            subject_result = FlextLdifModels.AclSubject.create(
-                subject_type="*", subject_value="*"
+            # Create ACL components using direct instantiation
+            target_result = FlextCore.Result.ok(
+                FlextLdifModels.AclTarget(target_dn="*")
             )
-            perms_result = FlextLdifModels.AclPermissions.create(read=True)
+            subject_result = FlextCore.Result.ok(
+                FlextLdifModels.AclSubject(subject_type="*", subject_value="*")
+            )
+            perms_result = FlextCore.Result.ok(
+                FlextLdifModels.AclPermissions(read=True)
+            )
 
             # Railway pattern: early return on first failure
             if target_result.is_failure:
@@ -84,34 +88,25 @@ class FlextLdifAclUtils(FlextCore.Utilities):
 
         @staticmethod
         def create_unified_acl(
-            name: str,
             target: FlextLdifModels.AclTarget,
             subject: FlextLdifModels.AclSubject,
             permissions: FlextLdifModels.AclPermissions,
-            server_type: str,
-            raw_acl: str,
         ) -> FlextCore.Result[FlextLdifModels.Acl]:
             """Create unified ACL with proper validation using railway pattern.
 
             Args:
-                name: ACL name identifier
                 target: ACL target component
                 subject: ACL subject component
                 permissions: ACL permissions component
-                server_type: LDAP server type
-                raw_acl: Original raw ACL string
 
             Returns:
                 FlextCore.Result containing Acl on success, failure otherwise.
 
             """
-            acl_result = FlextLdifModels.Acl.create(
-                name=name,
-                target=target,
-                subject=subject,
-                permissions=permissions,
-                server_type=server_type,
-                raw_acl=raw_acl,
+            acl_result = FlextCore.Result.ok(
+                FlextLdifModels.Acl(
+                    target=target, subject=subject, permissions=permissions
+                )
             )
 
             if acl_result.is_failure:

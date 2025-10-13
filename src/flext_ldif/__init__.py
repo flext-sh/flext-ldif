@@ -92,10 +92,43 @@ from flext_ldif.containers import (
     FlextLdifContainer,
     flext_ldif_container,
 )
+from flext_ldif.cqrs import (
+    AnalyzeEntriesQuery,
+    AnalyzeEntriesQueryHandler,
+    BuildGroupEntryCommand,
+    BuildGroupEntryCommandHandler,
+    BuildOrganizationalUnitCommand,
+    BuildOrganizationalUnitCommandHandler,
+    BuildPersonEntryCommand,
+    BuildPersonEntryCommandHandler,
+    ConvertEntriesToDictsQuery,
+    ConvertEntriesToDictsQueryHandler,
+    ConvertEntryToDictQuery,
+    ConvertEntryToDictQueryHandler,
+    ExtractAclsQuery,
+    ExtractAclsQueryHandler,
+    FilterEntriesQuery,
+    FilterEntriesQueryHandler,
+    MigrateLdifCommand,
+    MigrateLdifCommandHandler,
+    ParseLdifCommand,
+    ParseLdifCommandHandler,
+    ValidateEntriesQuery,
+    ValidateEntriesQueryHandler,
+    WriteLdifCommand,
+    WriteLdifCommandHandler,
+)
+from flext_ldif.events import (
+    LdifMigratedEvent,
+    LdifParsedEvent,
+    LdifValidatedEvent,
+    LdifWrittenEvent,
+)
 from flext_ldif.exceptions import FlextLdifExceptions
 from flext_ldif.filters import FlextLdifFilters
 from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.processors import LdifBatchProcessor, LdifParallelProcessor
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.quirks.conversion_matrix import QuirksConversionMatrix
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
@@ -104,7 +137,22 @@ from flext_ldif.typings import FlextLdifTypes
 # Main facade already exported above via: from flext_ldif.api import FlextLdif
 
 __all__ = [
-    "FlextCore.Types",
+    "AnalyzeEntriesQuery",
+    "AnalyzeEntriesQueryHandler",
+    "BuildGroupEntryCommand",
+    "BuildGroupEntryCommandHandler",
+    "BuildOrganizationalUnitCommand",
+    "BuildOrganizationalUnitCommandHandler",
+    "BuildPersonEntryCommand",
+    "BuildPersonEntryCommandHandler",
+    "ConvertEntriesToDictsQuery",
+    "ConvertEntriesToDictsQueryHandler",
+    "ConvertEntryToDictQuery",
+    "ConvertEntryToDictQueryHandler",
+    "ExtractAclsQuery",
+    "ExtractAclsQueryHandler",
+    "FilterEntriesQuery",
+    "FilterEntriesQueryHandler",
     "FlextLdif",
     "FlextLdifClient",
     "FlextLdifConfig",
@@ -117,7 +165,21 @@ __all__ = [
     "FlextLdifProtocols",
     "FlextLdifQuirksRegistry",
     "FlextLdifTypes",
+    "LdifBatchProcessor",
+    "LdifMigratedEvent",
+    "LdifParallelProcessor",
+    "LdifParsedEvent",
+    "LdifValidatedEvent",
+    "LdifWrittenEvent",
+    "MigrateLdifCommand",
+    "MigrateLdifCommandHandler",
+    "ParseLdifCommand",
+    "ParseLdifCommandHandler",
     "QuirksConversionMatrix",
+    "ValidateEntriesQuery",
+    "ValidateEntriesQueryHandler",
+    "WriteLdifCommand",
+    "WriteLdifCommandHandler",
     "__version__",
     "__version_info__",
     "flext_ldif_container",
