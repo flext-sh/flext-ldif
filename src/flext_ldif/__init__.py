@@ -85,6 +85,7 @@ from __future__ import annotations
 
 from flext_ldif.__version__ import __version__, __version_info__
 from flext_ldif.api import FlextLdif
+from flext_ldif.categorized_pipeline import FlextLdifCategorizedMigrationPipeline
 from flext_ldif.client import FlextLdifClient
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
@@ -132,6 +133,7 @@ from flext_ldif.processors import LdifBatchProcessor, LdifParallelProcessor
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.quirks.conversion_matrix import QuirksConversionMatrix
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
+from flext_ldif.schema_whitelist import FlextLdifSchemaWhitelistService
 from flext_ldif.typings import FlextLdifTypes
 
 # Main facade already exported above via: from flext_ldif.api import FlextLdif
@@ -154,6 +156,7 @@ __all__ = [
     "FilterEntriesQuery",
     "FilterEntriesQueryHandler",
     "FlextLdif",
+    "FlextLdifCategorizedMigrationPipeline",
     "FlextLdifClient",
     "FlextLdifConfig",
     "FlextLdifConstants",
@@ -164,6 +167,7 @@ __all__ = [
     "FlextLdifModels",
     "FlextLdifProtocols",
     "FlextLdifQuirksRegistry",
+    "FlextLdifSchemaWhitelistService",
     "FlextLdifTypes",
     "LdifBatchProcessor",
     "LdifMigratedEvent",

@@ -235,6 +235,50 @@ class FlextLdifProtocols(FlextCore.Protocols):
                 ...
 
         @runtime_checkable
+        class EntryBuilderProtocol(Protocol):
+            """Protocol for entry builders."""
+
+            def build_person_entry(
+                self,
+                cn: str,
+                sn: str,
+                base_dn: str,
+                uid: str | None = None,
+                mail: str | None = None,
+                given_name: str | None = None,
+                additional_attrs: dict[str, list[str]] | None = None,
+            ) -> FlextCore.Result[FlextLdifModels.Entry]:
+                """Build person entry."""
+                ...
+
+            def build_group_entry(
+                self,
+                cn: str,
+                base_dn: str,
+                members: list[str] | None = None,
+                description: str | None = None,
+                additional_attrs: dict[str, list[str]] | None = None,
+            ) -> FlextCore.Result[FlextLdifModels.Entry]:
+                """Build group entry."""
+                ...
+
+            def build_organizational_unit_entry(
+                self,
+                ou: str,
+                base_dn: str,
+                description: str | None = None,
+                additional_attrs: dict[str, list[str]] | None = None,
+            ) -> FlextCore.Result[FlextLdifModels.Entry]:
+                """Build organizational unit entry."""
+                ...
+
+            def convert_entry_to_dict(
+                self, entry: FlextLdifModels.Entry
+            ) -> FlextCore.Result[FlextCore.Types.Dict]:
+                """Convert entry to dictionary."""
+                ...
+
+        @runtime_checkable
         class AclRuleProtocol(Protocol):
             """Protocol for ACL rules (Composite pattern)."""
 
@@ -312,6 +356,7 @@ class FlextLdifProtocols(FlextCore.Protocols):
     LdifAnalyticsProtocol = Ldif.AnalyticsProtocol
     ParserStrategyProtocol = Ldif.ParserStrategyProtocol
     SchemaBuilderProtocol = Ldif.SchemaBuilderProtocol
+    EntryBuilderProtocol = Ldif.EntryBuilderProtocol
     AclRuleProtocol = Ldif.AclRuleProtocol
     ServerAdapterProtocol = Ldif.ServerAdapterProtocol
     ValidatorPluginProtocol = Ldif.ValidatorPluginProtocol

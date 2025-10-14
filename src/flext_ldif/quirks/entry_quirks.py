@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast, override
+from typing import override
 
 from flext_core import FlextCore
 
@@ -43,6 +43,12 @@ class FlextLdifEntryQuirks(FlextCore.Service[FlextCore.Types.Dict]):
     ) -> FlextCore.Result[FlextLdifModels.Entry]:
         """Adapt entry for specific server type.
 
+        Performs the following adaptations:
+        1. Strip operational attributes from source server
+        2. Apply attribute name mappings
+        3. Transform attribute values
+        4. Add required objectClasses
+
         Args:
             entry: Entry to adapt
             target_server: Target server type
@@ -61,22 +67,45 @@ class FlextLdifEntryQuirks(FlextCore.Service[FlextCore.Types.Dict]):
 
         rules = quirks_result.value
 
+        # Get operational attributes for SOURCE server (from quirks manager)
+        # We strip operational attrs from source, not add them for target
+        source_server = self._quirks.server_type
+        operational_attrs = self._get_operational_attrs(source_server)
+
         # Create adapted entry data - FlextCore.Result handles errors explicitly
         adapted_data: FlextCore.Types.Dict = {
-            FlextLdifConstants.DictKeys.DN: entry.dn.value,
+            FlextLdifConstants.DictKeys.DN: entry.dn,  # Keep as DistinguishedName object
             FlextLdifConstants.DictKeys.ATTRIBUTES: {},
         }
 
+        # Type narrow attribute_mappings
         attribute_mappings_raw = rules.get("attribute_mappings", {})
-        attribute_mappings = cast("FlextLdifTypes.StringDict", attribute_mappings_raw)
+        if not isinstance(attribute_mappings_raw, dict):
+            return FlextCore.Result[FlextLdifModels.Entry].fail(
+                f"attribute_mappings must be dict, got {type(attribute_mappings_raw).__name__}"
+            )
+        attribute_mappings: FlextLdifTypes.StringDict = attribute_mappings_raw
         adapted_attrs: dict[str, FlextLdifModels.AttributeValues] = {}
 
-        for attr_name, attr_values in entry.attributes.data.items():
+        # Strip operational attributes FIRST, then apply transformations
+        operational_attrs_lower = {attr.lower() for attr in operational_attrs}
+
+        for attr_name, attr_values in entry.attributes.attributes.items():
+            # Skip operational attributes (case-insensitive check)
+            if attr_name.lower() in operational_attrs_lower:
+                if self.logger is not None:
+                    self.logger.debug(
+                        f"Stripped operational attribute '{attr_name}' from {entry.dn.value}"
+                    )
+                continue
+
+            # Apply attribute name mapping
             mapped_name = attribute_mappings.get(attr_name, attr_name) or attr_name
 
+            # Transform attribute values
             adapted_values = self._adapt_attribute_values(
                 attr_name,
-                attr_values,
+                attr_values.values,
                 target_server or FlextLdifConstants.LdapServers.GENERIC,
             )
 
@@ -84,13 +113,23 @@ class FlextLdifEntryQuirks(FlextCore.Service[FlextCore.Types.Dict]):
                 values=adapted_values
             )
 
-        adapted_data[FlextLdifConstants.DictKeys.ATTRIBUTES] = adapted_attrs
+        # Convert adapted_attrs to LdifAttributes (Entry.create needs proper format)
+        ldif_attributes = FlextLdifModels.LdifAttributes(attributes=adapted_attrs)
+
+        # Type narrowing: Extract DN with proper type (stored on line 77 as DistinguishedName)
+        dn_value: object = adapted_data[FlextLdifConstants.DictKeys.DN]
+        if not isinstance(dn_value, (FlextLdifModels.DistinguishedName, str)):
+            return FlextCore.Result[FlextLdifModels.Entry].fail(
+                f"Invalid DN type in adapted_data: {type(dn_value).__name__}"
+            )
+        # Type narrowed: dn_value is now FlextLdifModels.DistinguishedName | str
+        adapted_dn: FlextLdifModels.DistinguishedName | str = dn_value
 
         # Create adapted entry - FlextCore.Result pattern with explicit error handling
         adapted_entry_result: FlextCore.Result[FlextLdifModels.Entry] = (
             FlextLdifModels.Entry.create(
-                dn=adapted_data[FlextLdifConstants.DictKeys.DN],
-                attributes=adapted_data[FlextLdifConstants.DictKeys.ATTRIBUTES],
+                dn=adapted_dn,
+                attributes=ldif_attributes,
             )
         )
         if adapted_entry_result.is_failure:
@@ -127,7 +166,10 @@ class FlextLdifEntryQuirks(FlextCore.Service[FlextCore.Types.Dict]):
 
         if attr_name.lower() == "objectclass":
             required_classes_raw = rules.get("required_object_classes", [])
-            required_classes = cast("FlextLdifTypes.StringList", required_classes_raw)
+            # Type narrow with default for non-list types
+            required_classes: FlextLdifTypes.StringList = (
+                required_classes_raw if isinstance(required_classes_raw, list) else []
+            )
             for required_class in required_classes:
                 if required_class not in adapted_values:
                     adapted_values.append(required_class)
@@ -184,15 +226,16 @@ class FlextLdifEntryQuirks(FlextCore.Service[FlextCore.Types.Dict]):
             if isinstance(dn_issues, list):
                 issues.extend(dn_issues)
 
-        obj_classes_raw: object = (
-            entry.get_attribute(FlextLdifConstants.DictKeys.OBJECTCLASS) or []
+        obj_classes_raw: object = entry.get_attribute_values(
+            FlextLdifConstants.DictKeys.OBJECTCLASS
         )
         obj_classes: FlextLdifTypes.StringList = (
             obj_classes_raw if isinstance(obj_classes_raw, list) else []
         )
+        # Type narrow with default for non-list types
         required_classes_raw = rules.get("required_object_classes", [])
-        required_classes: FlextLdifTypes.StringList = cast(
-            "FlextLdifTypes.StringList", required_classes_raw
+        required_classes: FlextLdifTypes.StringList = (
+            required_classes_raw if isinstance(required_classes_raw, list) else []
         )
 
         issues.extend(
@@ -201,9 +244,10 @@ class FlextLdifEntryQuirks(FlextCore.Service[FlextCore.Types.Dict]):
             if required_class not in obj_classes
         )
 
+        # Type narrow with default for non-list types
         special_attrs_raw = rules.get("special_attributes", [])
-        special_attrs: FlextLdifTypes.StringList = cast(
-            "FlextLdifTypes.StringList", special_attrs_raw
+        special_attrs: FlextLdifTypes.StringList = (
+            special_attrs_raw if isinstance(special_attrs_raw, list) else []
         )
         warnings.extend(
             f"Missing recommended attribute: {special_attr}"
@@ -235,14 +279,18 @@ class FlextLdifEntryQuirks(FlextCore.Service[FlextCore.Types.Dict]):
             return {"valid": True, "issues": []}
 
         rules = quirks_result.value
+
+        # Type narrow with default for non-list types
         dn_patterns_raw = rules.get("dn_patterns", [])
         dn_patterns: FlextLdifTypes.StringList = (
-            cast("FlextLdifTypes.StringList", dn_patterns_raw)
-            if isinstance(dn_patterns_raw, list)
-            else []
+            dn_patterns_raw if isinstance(dn_patterns_raw, list) else []
         )
+
+        # Type narrow with default for non-bool types
         case_sensitive_raw = rules.get("dn_case_sensitive", False)
-        case_sensitive = cast("bool", case_sensitive_raw)
+        case_sensitive: bool = (
+            case_sensitive_raw if isinstance(case_sensitive_raw, bool) else False
+        )
 
         issues: FlextLdifTypes.StringList = []
 
@@ -275,6 +323,51 @@ class FlextLdifEntryQuirks(FlextCore.Service[FlextCore.Types.Dict]):
                 issues.append(f"Unknown DN attribute for {server_type}: {attr_name}")
 
         return {"valid": len(issues) == 0, "issues": issues}
+
+    def _get_operational_attrs(self, server_type: str) -> list[str]:
+        """Get operational attributes for specific server type.
+
+        Combines COMMON operational attributes with server-specific ones.
+
+        Args:
+            server_type: Source LDAP server type (case-insensitive)
+
+        Returns:
+            List of operational attribute names to strip
+
+        """
+        # Start with common operational attributes
+        operational_attrs = set(FlextLdifConstants.OperationalAttributes.COMMON)
+
+        # Normalize server type for matching (case-insensitive)
+        server_lower = server_type.lower()
+
+        # Add server-specific operational attributes
+        # Check more specific patterns first to avoid substring matches
+        if "openldap" in server_lower:
+            operational_attrs |= (
+                FlextLdifConstants.OperationalAttributes.OPENLDAP_SPECIFIC
+            )
+        elif "oracle_oid" in server_lower or server_lower == "oid":
+            operational_attrs |= FlextLdifConstants.OperationalAttributes.OID_SPECIFIC
+        elif "oracle_oud" in server_lower or server_lower == "oud":
+            operational_attrs |= FlextLdifConstants.OperationalAttributes.OUD_SPECIFIC
+        elif "389" in server_lower or "ds_389" in server_lower:
+            operational_attrs |= (
+                FlextLdifConstants.OperationalAttributes.DS_389_SPECIFIC
+            )
+        elif "active_directory" in server_lower or server_lower == "ad":
+            operational_attrs |= FlextLdifConstants.OperationalAttributes.AD_SPECIFIC
+        elif "novell" in server_lower or "edirectory" in server_lower:
+            operational_attrs |= (
+                FlextLdifConstants.OperationalAttributes.NOVELL_SPECIFIC
+            )
+        elif "ibm" in server_lower or "tivoli" in server_lower:
+            operational_attrs |= (
+                FlextLdifConstants.OperationalAttributes.IBM_TIVOLI_SPECIFIC
+            )
+
+        return list(operational_attrs)
 
 
 __all__ = ["FlextLdifEntryQuirks"]

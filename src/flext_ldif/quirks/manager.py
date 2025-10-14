@@ -184,8 +184,8 @@ class FlextLdifQuirksManager(FlextCore.Service[FlextLdifTypes.Dict]):
             return FlextCore.Result[str].ok(FlextLdifConstants.LdapServers.GENERIC)
 
         for entry in entries:
-            object_classes_raw: object = (
-                entry.get_attribute(FlextLdifConstants.DictKeys.OBJECTCLASS) or []
+            object_classes_raw: object = entry.get_attribute_values(
+                FlextLdifConstants.DictKeys.OBJECTCLASS
             )
             object_classes: FlextLdifTypes.StringList = (
                 object_classes_raw if isinstance(object_classes_raw, list) else []

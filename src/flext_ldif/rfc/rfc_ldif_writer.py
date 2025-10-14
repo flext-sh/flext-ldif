@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING, TextIO, cast
+from typing import TYPE_CHECKING, TextIO
 
 from flext_core import FlextCore
 
@@ -94,12 +94,26 @@ class FlextLdifRfcLdifWriter(FlextCore.Service[FlextCore.Types.Dict]):
 
         """
         try:
-            # Check parameters
-            output_file_str = self._params.get("output_file", "")
-            entries = self._params.get("entries", [])
-            schema = self._params.get("schema", {})
-            acls = self._params.get("acls", [])
+            # Check parameters with type narrowing
+            output_file_raw: object = self._params.get("output_file", "")
+            entries_raw: object = self._params.get("entries", [])
+            schema_raw: object = self._params.get("schema", {})
+            acls_raw: object = self._params.get("acls", [])
             append_mode = self._params.get("append", False)
+
+            # Type narrow parameters
+            output_file_str: str = (
+                output_file_raw if isinstance(output_file_raw, str) else ""
+            )
+            entries: list[FlextCore.Types.Dict | FlextLdifModels.Entry] = (
+                entries_raw if isinstance(entries_raw, list) else []
+            )
+            schema: FlextCore.Types.Dict = (
+                schema_raw if isinstance(schema_raw, dict) else {}
+            )
+            acls: list[FlextCore.Types.Dict] = (
+                acls_raw if isinstance(acls_raw, list) else []
+            )
 
             if not entries and not schema and not acls:
                 return FlextCore.Result[FlextCore.Types.Dict].fail(
@@ -110,8 +124,8 @@ class FlextLdifRfcLdifWriter(FlextCore.Service[FlextCore.Types.Dict]):
             write_to_file = bool(output_file_str)
 
             if write_to_file:
-                # File-based writing
-                output_file = Path(cast("str", output_file_str))
+                # File-based writing (output_file_str already type-narrowed to str)
+                output_file = Path(output_file_str)
 
                 # Create output directory if needed
                 output_file.parent.mkdir(parents=True, exist_ok=True)
@@ -120,18 +134,15 @@ class FlextLdifRfcLdifWriter(FlextCore.Service[FlextCore.Types.Dict]):
                 total_entries = 0
                 total_lines = 0
 
-                with output_file.open(mode, encoding="utf-8") as f_handle:
-                    f = cast("TextIO", f_handle)
+                with output_file.open(mode, encoding="utf-8") as f:
                     # Write version header (RFC 2849)
                     if not append_mode:
                         f.write("version: 1\n")
                         total_lines += 1
 
-                    # Write schema entries if provided
+                    # Write schema entries if provided (schema already type-narrowed)
                     if schema:
-                        schema_result = self._write_schema_entries(
-                            f, cast("FlextCore.Types.Dict", schema)
-                        )
+                        schema_result = self._write_schema_entries(f, schema)
                         if schema_result.is_failure:
                             return FlextCore.Result[FlextCore.Types.Dict].fail(
                                 schema_result.error
@@ -151,15 +162,9 @@ class FlextLdifRfcLdifWriter(FlextCore.Service[FlextCore.Types.Dict]):
                             else 0
                         )
 
-                    # Write regular entries if provided
+                    # Write regular entries if provided (entries already type-narrowed)
                     if entries:
-                        entries_result = self._write_entries(
-                            f,
-                            cast(
-                                "list[FlextCore.Types.Dict | FlextLdifModels.Entry]",
-                                entries,
-                            ),
-                        )
+                        entries_result = self._write_entries(f, entries)
                         if entries_result.is_failure:
                             return FlextCore.Result[FlextCore.Types.Dict].fail(
                                 entries_result.error
@@ -179,11 +184,9 @@ class FlextLdifRfcLdifWriter(FlextCore.Service[FlextCore.Types.Dict]):
                             else 0
                         )
 
-                    # Write ACL entries if provided
+                    # Write ACL entries if provided (acls already type-narrowed)
                     if acls:
-                        acls_result = self._write_acl_entries(
-                            f, cast("list[FlextCore.Types.Dict]", acls)
-                        )
+                        acls_result = self._write_acl_entries(f, acls)
                         if acls_result.is_failure:
                             return FlextCore.Result[FlextCore.Types.Dict].fail(
                                 acls_result.error
@@ -226,11 +229,9 @@ class FlextLdifRfcLdifWriter(FlextCore.Service[FlextCore.Types.Dict]):
             output.write("version: 1\n")
             total_lines += 1
 
-            # Write schema entries if provided
+            # Write schema entries if provided (schema already type-narrowed)
             if schema:
-                schema_result = self._write_schema_entries(
-                    output, cast("FlextCore.Types.Dict", schema)
-                )
+                schema_result = self._write_schema_entries(output, schema)
                 if schema_result.is_failure:
                     return FlextCore.Result[FlextCore.Types.Dict].fail(
                         schema_result.error
@@ -246,12 +247,9 @@ class FlextLdifRfcLdifWriter(FlextCore.Service[FlextCore.Types.Dict]):
                     int(lines_written) if isinstance(lines_written, (int, str)) else 0
                 )
 
-            # Write regular entries if provided
+            # Write regular entries if provided (entries already type-narrowed)
             if entries:
-                entries_result = self._write_entries(
-                    output,
-                    cast("list[FlextCore.Types.Dict | FlextLdifModels.Entry]", entries),
-                )
+                entries_result = self._write_entries(output, entries)
                 if entries_result.is_failure:
                     return FlextCore.Result[FlextCore.Types.Dict].fail(
                         entries_result.error
@@ -267,11 +265,9 @@ class FlextLdifRfcLdifWriter(FlextCore.Service[FlextCore.Types.Dict]):
                     int(lines_written) if isinstance(lines_written, (int, str)) else 0
                 )
 
-            # Write ACL entries if provided
+            # Write ACL entries if provided (acls already type-narrowed)
             if acls:
-                acls_result = self._write_acl_entries(
-                    output, cast("list[FlextCore.Types.Dict]", acls)
-                )
+                acls_result = self._write_acl_entries(output, acls)
                 if acls_result.is_failure:
                     return FlextCore.Result[FlextCore.Types.Dict].fail(
                         acls_result.error
@@ -335,9 +331,9 @@ class FlextLdifRfcLdifWriter(FlextCore.Service[FlextCore.Types.Dict]):
                 output.write(dn_line + "\n")
 
                 # Write attributes
-                for attr_name, attr_values in entry.attributes.data.items():
-                    # attr_values is FlextCore.Types.StringList
-                    for value in attr_values:
+                for attr_name, attr_values in entry.attributes.attributes.items():
+                    # attr_values is AttributeValues, need to access .values property
+                    for value in attr_values.values:
                         attr_line = f"{attr_name}: {value}"
                         output.write(attr_line + "\n")
 
@@ -380,9 +376,9 @@ class FlextLdifRfcLdifWriter(FlextCore.Service[FlextCore.Types.Dict]):
                     f.write(dn_line + "\n")
 
                     # Write attributes
-                    for attr_name, attr_values in entry.attributes.data.items():
-                        # attr_values is FlextCore.Types.StringList
-                        for value in attr_values:
+                    for attr_name, attr_values in entry.attributes.attributes.items():
+                        # attr_values is AttributeValues, need to access .values property
+                        for value in attr_values.values:
                             attr_line = f"{attr_name}: {value}"
                             f.write(attr_line + "\n")
 
@@ -409,14 +405,23 @@ class FlextLdifRfcLdifWriter(FlextCore.Service[FlextCore.Types.Dict]):
 
         """
         try:
-            attributes = cast(
-                "FlextCore.Types.Dict",
-                schema.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {}),
+            # Type narrow schema fields
+            attributes_raw: object = schema.get(
+                FlextLdifConstants.DictKeys.ATTRIBUTES, {}
             )
-            objectclasses = cast(
-                "FlextCore.Types.Dict", schema.get("objectclasses", {})
+            attributes: FlextCore.Types.Dict = (
+                attributes_raw if isinstance(attributes_raw, dict) else {}
             )
-            source_dn = cast("str", schema.get("source_dn", "cn=schema"))
+
+            objectclasses_raw: object = schema.get("objectclasses", {})
+            objectclasses: FlextCore.Types.Dict = (
+                objectclasses_raw if isinstance(objectclasses_raw, dict) else {}
+            )
+
+            source_dn_raw: object = schema.get("source_dn", "cn=schema")
+            source_dn: str = (
+                source_dn_raw if isinstance(source_dn_raw, str) else "cn=schema"
+            )
 
             entries_written = 0
             lines_written = 0
@@ -491,12 +496,15 @@ class FlextLdifRfcLdifWriter(FlextCore.Service[FlextCore.Types.Dict]):
                 if isinstance(entry, FlextLdifModels.Entry):
                     dn = entry.dn.value
                     # Convert Entry attributes to dict format for processing
-                    attributes_normalized: FlextCore.Types.Dict = cast(
-                        "FlextCore.Types.Dict",
-                        dict(entry.attributes.attributes.items()),
+                    # dict() builtin already returns correct type
+                    attributes_normalized: FlextCore.Types.Dict = dict(
+                        entry.attributes.attributes.items()
                     )
                 else:
-                    dn = cast("str", entry.get(FlextLdifConstants.DictKeys.DN, ""))
+                    # Type narrow DN from dict.get()
+                    dn_raw: object = entry.get(FlextLdifConstants.DictKeys.DN, "")
+                    dn: str = dn_raw if isinstance(dn_raw, str) else ""
+
                     entry_attrs: FlextCore.Types.Dict = {
                         k: v
                         for k, v in entry.items()

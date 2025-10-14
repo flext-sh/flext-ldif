@@ -110,6 +110,7 @@ class TestDnCaseRegistry:
         # Check metadata
         assert result.metadata is not None
         metadata = result.metadata
+        assert isinstance(metadata, dict)
         assert "inconsistencies" in metadata
         assert "warning" in metadata
         inconsistencies = metadata["inconsistencies"]
@@ -292,6 +293,7 @@ class TestDnCaseNormalizationScenarios:
         assert result.is_success
         assert result.unwrap() is False  # Has inconsistencies
         assert result.metadata is not None
+        assert isinstance(result.metadata, dict)
         assert "warning" in result.metadata
 
     def test_hierarchical_dn_references(self, registry: DnCaseRegistry) -> None:

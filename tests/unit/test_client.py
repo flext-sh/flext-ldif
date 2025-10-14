@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -26,9 +26,8 @@ def mock_client() -> FlextLdifClient:
     Bypasses the pre-existing initialization issues to test utility methods in isolation.
     """
     with patch.object(FlextLdifClient, "model_post_init", return_value=None):
-        client = object.__new__(FlextLdifClient)
         # Initialize only what's needed for utility methods (nothing)
-        return client
+        return object.__new__(FlextLdifClient)
 
 
 class TestDetectEncoding:
@@ -44,7 +43,9 @@ class TestDetectEncoding:
         assert result.is_success
         assert result.unwrap() == "utf-8"
 
-    def test_detect_latin1_encoding_fallback(self, mock_client: FlextLdifClient) -> None:
+    def test_detect_latin1_encoding_fallback(
+        self, mock_client: FlextLdifClient
+    ) -> None:
         """Test fallback to latin-1 for non-UTF-8 content."""
         client = mock_client
         # Create bytes that are invalid UTF-8 but valid latin-1
@@ -66,7 +67,9 @@ class TestDetectEncoding:
         # Empty bytes should decode as UTF-8
         assert result.unwrap() == "utf-8"
 
-    def test_detect_encoding_ascii_compatible(self, mock_client: FlextLdifClient) -> None:
+    def test_detect_encoding_ascii_compatible(
+        self, mock_client: FlextLdifClient
+    ) -> None:
         """Test ASCII content (UTF-8 compatible)."""
         client = mock_client
         ascii_content = b"dn: cn=test,dc=example,dc=com\n"
@@ -76,7 +79,9 @@ class TestDetectEncoding:
         assert result.is_success
         assert result.unwrap() == "utf-8"
 
-    def test_detect_encoding_unicode_characters(self, mock_client: FlextLdifClient) -> None:
+    def test_detect_encoding_unicode_characters(
+        self, mock_client: FlextLdifClient
+    ) -> None:
         """Test UTF-8 with various Unicode characters."""
         client = mock_client
         unicode_content = "dn: cn=日本語テスト,dc=example,dc=com\n".encode()
@@ -113,7 +118,9 @@ class TestNormalizeEncoding:
         normalized = result.unwrap()
         assert normalized == content
 
-    def test_normalize_encoding_default_utf8(self, mock_client: FlextLdifClient) -> None:
+    def test_normalize_encoding_default_utf8(
+        self, mock_client: FlextLdifClient
+    ) -> None:
         """Test normalization with default UTF-8 encoding."""
         client = mock_client
         content = "dn: cn=test,dc=example,dc=com\n"
@@ -123,7 +130,9 @@ class TestNormalizeEncoding:
         assert result.is_success
         assert result.unwrap() == content
 
-    def test_normalize_encoding_invalid_characters(self, mock_client: FlextLdifClient) -> None:
+    def test_normalize_encoding_invalid_characters(
+        self, mock_client: FlextLdifClient
+    ) -> None:
         """Test normalization failure with invalid characters for target encoding."""
         client = mock_client
         # Unicode characters not representable in ASCII
@@ -169,7 +178,9 @@ class TestValidateLdifSyntax:
         assert result.is_success
         assert result.unwrap() is True
 
-    def test_validate_valid_multiple_entries(self, mock_client: FlextLdifClient) -> None:
+    def test_validate_valid_multiple_entries(
+        self, mock_client: FlextLdifClient
+    ) -> None:
         """Test validation of valid multiple entry LDIF."""
         client = mock_client
         ldif_content = (
@@ -237,7 +248,9 @@ class TestValidateLdifSyntax:
     def test_validate_dn_with_special_chars(self, mock_client: FlextLdifClient) -> None:
         """Test validation with DN containing special characters."""
         client = mock_client
-        ldif_content = r"dn: cn=Smith\, John,ou=People,dc=example,dc=com" + "\ncn: Smith, John\n"
+        ldif_content = (
+            r"dn: cn=Smith\, John,ou=People,dc=example,dc=com" + "\ncn: Smith, John\n"
+        )
 
         result = client.validate_ldif_syntax(ldif_content)
 
@@ -358,8 +371,7 @@ class TestCountLdifEntries:
         client = mock_client
         # Generate 100 entries
         entries = [
-            f"dn: cn=test{i},dc=example,dc=com\ncn: test{i}\n\n"
-            for i in range(100)
+            f"dn: cn=test{i},dc=example,dc=com\ncn: test{i}\n\n" for i in range(100)
         ]
         ldif_content = "".join(entries)
 

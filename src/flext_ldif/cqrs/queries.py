@@ -9,8 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any
-
 from pydantic import BaseModel, Field
 
 
@@ -33,7 +31,7 @@ class ValidateEntriesQuery(BaseModel):
     """
 
     entries: list  # FlextLdifModels.Entry - avoid circular import
-    schema_definition: dict[str, Any] | None = Field(
+    schema_definition: dict[str, object] | None = Field(
         default=None,
         description="Optional schema definition for validation",
     )
@@ -113,7 +111,7 @@ class ExtractAclsQuery(BaseModel):
 
     """
 
-    entry: Any  # FlextLdifModels.Entry - avoid circular import
+    entry: object  # FlextLdifModels.Entry - avoid circular import
 
 
 class ConvertEntryToDictQuery(BaseModel):
@@ -132,7 +130,7 @@ class ConvertEntryToDictQuery(BaseModel):
 
     """
 
-    entry: Any  # FlextLdifModels.Entry
+    entry: object  # FlextLdifModels.Entry
 
 
 class ConvertEntriesToDictsQuery(BaseModel):

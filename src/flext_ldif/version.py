@@ -5,8 +5,8 @@ from __future__ import annotations
 from flext_ldif.constants import FlextLdifConstants
 
 # Use constants for FLEXT compliance - ZERO module-level constants
-__version__ = FlextLdifConstants.VERSION
-__version_info__ = FlextLdifConstants.VERSION_INFO
+__version__ = FlextLdifConstants.LDIF_VERSION
+__version_info__ = FlextLdifConstants.LDIF_VERSION_INFO
 
 
 class FlextLdifVersion:

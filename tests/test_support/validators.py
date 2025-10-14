@@ -29,7 +29,7 @@ class TestValidators:
                 entry.attributes and len(entry.attributes.attributes) > 0
             ),
             "has_object_class": (
-                "objectClass" in entry.attributes if entry.attributes else False
+                entry.attributes and "objectClass" in entry.attributes.attributes
             ),
             "dn_format_valid": bool(
                 entry.dn and "=" in str(entry.dn) and "," in str(entry.dn),
@@ -45,11 +45,13 @@ class TestValidators:
             else:
                 object_classes_list = []
             if "person" in object_classes_list:
-                validations["person_has_cn"] = "cn" in entry.attributes
-                validations["person_has_sn"] = "sn" in entry.attributes
+                validations["person_has_cn"] = "cn" in entry.attributes.attributes
+                validations["person_has_sn"] = "sn" in entry.attributes.attributes
 
             if "inetOrgPerson" in object_classes_list:
-                validations["inet_org_person_valid"] = "mail" in entry.attributes
+                validations["inet_org_person_valid"] = (
+                    "mail" in entry.attributes.attributes
+                )
 
         return validations
 

@@ -10,12 +10,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, TypeVar
 
 from flext_core import FlextCore
 
 if TYPE_CHECKING:
     from flext_ldif.models import FlextLdifModels
+
+# Generic type variable for processor return types
+T = TypeVar("T")
 
 
 class LdifBatchProcessor:
@@ -40,22 +43,23 @@ class LdifBatchProcessor:
             batch_size: Number of entries per batch (default: 100)
 
         """
+        super().__init__()
         self._batch_size = batch_size
         self._processors = FlextCore.Processors()
 
     def process_batch(
         self,
         entries: list[FlextLdifModels.Entry],
-        func: Callable[[FlextLdifModels.Entry], Any],
-    ) -> FlextCore.Result[list[Any]]:
+        func: Callable[[FlextLdifModels.Entry], T],
+    ) -> FlextCore.Result[list[T]]:
         """Process entries in batches.
 
         Args:
             entries: List of LDIF entries to process
-            func: Function to apply to each entry
+            func: Function to apply to each entry (generic return type T)
 
         Returns:
-            FlextCore.Result containing list of processed results
+            FlextCore.Result containing list of processed results of type T
 
         Example:
             def validate_entry(entry):
@@ -65,18 +69,16 @@ class LdifBatchProcessor:
 
         """
         try:
-            results: list[Any] = []
+            results: list[T] = []
             for i in range(0, len(entries), self._batch_size):
                 batch = entries[i : i + self._batch_size]
                 batch_results = [func(entry) for entry in batch]
                 results.extend(batch_results)
 
-            return FlextCore.Result[list[Any]].ok(results)
+            return FlextCore.Result[list[T]].ok(results)
 
         except Exception as e:
-            return FlextCore.Result[list[Any]].fail(
-                f"Batch processing failed: {e}"
-            )
+            return FlextCore.Result[list[T]].fail(f"Batch processing failed: {e}")
 
 
 class LdifParallelProcessor:
@@ -101,22 +103,23 @@ class LdifParallelProcessor:
             max_workers: Maximum number of parallel workers (default: 4)
 
         """
+        super().__init__()
         self._max_workers = max_workers
         self._processors = FlextCore.Processors()
 
     def process_parallel(
         self,
         entries: list[FlextLdifModels.Entry],
-        func: Callable[[FlextLdifModels.Entry], Any],
-    ) -> FlextCore.Result[list[Any]]:
+        func: Callable[[FlextLdifModels.Entry], T],
+    ) -> FlextCore.Result[list[T]]:
         """Process entries in parallel.
 
         Args:
             entries: List of LDIF entries to process
-            func: Function to apply to each entry
+            func: Function to apply to each entry (generic return type T)
 
         Returns:
-            FlextCore.Result containing list of processed results
+            FlextCore.Result containing list of processed results of type T
 
         Example:
             def transform_entry(entry):
@@ -130,12 +133,10 @@ class LdifParallelProcessor:
             # For now, use sequential processing as FlextCore.Processors
             # interface is not fully defined
             results = [func(entry) for entry in entries]
-            return FlextCore.Result[list[Any]].ok(results)
+            return FlextCore.Result[list[T]].ok(results)
 
         except Exception as e:
-            return FlextCore.Result[list[Any]].fail(
-                f"Parallel processing failed: {e}"
-            )
+            return FlextCore.Result[list[T]].fail(f"Parallel processing failed: {e}")
 
 
 __all__ = [

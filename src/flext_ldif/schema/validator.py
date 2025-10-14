@@ -107,7 +107,7 @@ class FlextLdifSchemaValidator(FlextCore.Service[FlextLdifTypes.Dict]):
         """
         warnings: FlextLdifTypes.StringList = [
             f"Attribute '{attr_name}' not in discovered schema"
-            for attr_name in entry.attributes.data
+            for attr_name in entry.attributes.attributes
             if attr_name not in schema.attributes
         ]
 
@@ -145,7 +145,7 @@ class FlextLdifSchemaValidator(FlextCore.Service[FlextLdifTypes.Dict]):
 
         """
         issues: FlextLdifTypes.StringList = []
-        entry_attrs = set(entry.attributes.data.keys())
+        entry_attrs = set(entry.attributes.attributes.keys())
         entry_object_classes: FlextLdifTypes.StringList = entry.get_attribute_values(
             FlextLdifConstants.DictKeys.OBJECTCLASS
         )

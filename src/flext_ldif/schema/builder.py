@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Self, cast, override
+from typing import Self, override
 
 from flext_core import FlextCore
 
@@ -151,16 +151,15 @@ class FlextLdifSchemaBuilder(FlextCore.Service[FlextLdifConfig]):
             FlextCore.Result containing built schema
 
         """
-        result = {
+        # Type narrowing: result is already FlextCore.Types.Dict (dict[str, object])
+        result: FlextCore.Types.Dict = {
             FlextLdifConstants.DictKeys.ATTRIBUTES: self._attributes,
             "object_classes": self._object_classes,
             FlextLdifConstants.DictKeys.SERVER_TYPE: self._server_type,
             "entry_count": self._entry_count,
         }
         if result:
-            return FlextCore.Result[FlextCore.Types.Dict].ok(
-                cast("FlextCore.Types.Dict", result)
-            )
+            return FlextCore.Result[FlextCore.Types.Dict].ok(result)
         return FlextCore.Result[FlextCore.Types.Dict].fail("Failed to create schema")
 
     def reset(self) -> Self:

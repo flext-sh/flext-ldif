@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import cast, override
+from typing import override
 
 from flext_core import FlextCore
 
@@ -48,7 +48,7 @@ class FlextLdifSchemaExtractor(FlextCore.Service["FlextLdifConfig"]):
             object_classes: dict[str, dict[str, str]] = {}
 
             for entry in entries:
-                for attr_name, attr_values in entry.attributes.data.items():
+                for attr_name, attr_values in entry.attributes.attributes.items():
                     if attr_name.lower() == "objectclass":
                         # Handle object classes specially
                         for oc_name in attr_values:
@@ -65,7 +65,7 @@ class FlextLdifSchemaExtractor(FlextCore.Service["FlextLdifConfig"]):
                             "oid": f"1.3.6.1.4.1.{hash(attr_name) % 1000000}",
                             "description": "Discovered from LDIF entries",
                             "syntax": "1.3.6.1.4.1.1466.115.121.1.15",  # Directory String
-                            "single_value": str(len(attr_values) <= 1),
+                            "single_value": str(len(attr_values.values) <= 1),
                         }
 
             # Cast to match SchemaDiscoveryResult type expectations
@@ -115,7 +115,7 @@ class FlextLdifSchemaExtractor(FlextCore.Service["FlextLdifConfig"]):
         usage_stats: FlextLdifTypes.NestedDict = {}
 
         for entry in entries:
-            for attr_name, attr_values in entry.attributes.data.items():
+            for attr_name, attr_values in entry.attributes.attributes.items():
                 if attr_name not in usage_stats:
                     usage_stats[attr_name] = {
                         "count": 0,
@@ -124,10 +124,21 @@ class FlextLdifSchemaExtractor(FlextCore.Service["FlextLdifConfig"]):
                     }
 
                 stats = usage_stats[attr_name]
-                stats["count"] = cast("int", stats["count"]) + 1
 
-                value_count = len(attr_values)
-                if value_count > cast("int", stats["max_values"]):
+                # Type narrow count to int before incrementing
+                count_raw = stats["count"]
+                if not isinstance(count_raw, int):
+                    count_raw = 0  # Default to 0 if not int
+                stats["count"] = count_raw + 1
+
+                value_count = len(attr_values.values)
+
+                # Type narrow max_values to int before comparison
+                max_values_raw = stats["max_values"]
+                if not isinstance(max_values_raw, int):
+                    max_values_raw = 0  # Default to 0 if not int
+
+                if value_count > max_values_raw:
                     stats["max_values"] = value_count
 
                 if value_count > 1:

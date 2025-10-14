@@ -1205,7 +1205,8 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     FlextLdifConstants.DictKeys.HAS_OID_ACLS,
                 }
 
-                if attr_order:
+                # Type narrowing: ensure attr_order is list before iteration
+                if attr_order is not None and isinstance(attr_order, list):
                     # Use preserved ordering
                     attrs_to_process = [
                         (key, entry_data[key])

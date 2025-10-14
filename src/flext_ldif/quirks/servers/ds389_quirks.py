@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import base64
 import re
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from flext_core import FlextCore
 from pydantic import Field
@@ -383,15 +383,14 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextCore.Result[FlextLdifTypes.Dict]:
             """Wrap 389 DS ACL into a generic RFC representation."""
             try:
-                rfc_acl = {
+                # Type narrowing: rfc_acl is already FlextLdifTypes.Dict (dict[str, object])
+                rfc_acl: FlextLdifTypes.Dict = {
                     FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
                     FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
                     FlextLdifConstants.DictKeys.SOURCE_FORMAT: FlextLdifConstants.AclFormats.DS389_ACL,
                     FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
-                return FlextCore.Result[FlextLdifTypes.Dict].ok(
-                    cast("FlextLdifTypes.Dict", rfc_acl)
-                )
+                return FlextCore.Result[FlextLdifTypes.Dict].ok(rfc_acl)
 
             except Exception as exc:  # pragma: no cover
                 return FlextCore.Result[FlextLdifTypes.Dict].fail(
@@ -404,14 +403,13 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextCore.Result[FlextLdifTypes.Dict]:
             """Repackage RFC ACL payload for 389 DS."""
             try:
-                ds_acl = {
+                # Type narrowing: ds_acl is already FlextLdifTypes.Dict (dict[str, object])
+                ds_acl: FlextLdifTypes.Dict = {
                     FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.DS389_ACL,
                     FlextLdifConstants.DictKeys.TARGET_FORMAT: FlextLdifConstants.DictKeys.ACI,
                     FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
-                return FlextCore.Result[FlextLdifTypes.Dict].ok(
-                    cast("FlextLdifTypes.Dict", ds_acl)
-                )
+                return FlextCore.Result[FlextLdifTypes.Dict].ok(ds_acl)
 
             except Exception as exc:  # pragma: no cover
                 return FlextCore.Result[FlextLdifTypes.Dict].fail(

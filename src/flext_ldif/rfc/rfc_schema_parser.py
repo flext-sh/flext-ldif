@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from flext_core import FlextCore
 
@@ -127,14 +127,33 @@ class FlextLdifRfcSchemaParser(FlextCore.Service[FlextCore.Types.Dict]):
                     "file_path parameter is required"
                 )
 
-            file_path = Path(cast("str", file_path_str))
+            # Type narrow file_path to string
+            if not isinstance(file_path_str, str):
+                return FlextCore.Result[FlextCore.Types.Dict].fail(
+                    f"file_path must be string, got {type(file_path_str).__name__}"
+                )
+
+            file_path = Path(file_path_str)
             if not file_path.exists():
                 return FlextCore.Result[FlextCore.Types.Dict].fail(
                     f"Schema file not found: {file_path}"
                 )
 
-            parse_attributes = self._params.get("parse_attributes", True)
-            parse_objectclasses = self._params.get("parse_objectclasses", True)
+            # Type narrow parse_attributes to bool
+            parse_attributes_raw = self._params.get("parse_attributes", True)
+            if not isinstance(parse_attributes_raw, bool):
+                return FlextCore.Result[FlextCore.Types.Dict].fail(
+                    f"parse_attributes must be bool, got {type(parse_attributes_raw).__name__}"
+                )
+            parse_attributes: bool = parse_attributes_raw
+
+            # Type narrow parse_objectclasses to bool
+            parse_objectclasses_raw = self._params.get("parse_objectclasses", True)
+            if not isinstance(parse_objectclasses_raw, bool):
+                return FlextCore.Result[FlextCore.Types.Dict].fail(
+                    f"parse_objectclasses must be bool, got {type(parse_objectclasses_raw).__name__}"
+                )
+            parse_objectclasses: bool = parse_objectclasses_raw
 
             if self.logger is not None:
                 self.logger.info(
@@ -149,8 +168,8 @@ class FlextLdifRfcSchemaParser(FlextCore.Service[FlextCore.Types.Dict]):
             # Parse schema file
             parse_result = self._parse_schema_file(
                 file_path,
-                parse_attributes=cast("bool", parse_attributes),
-                parse_objectclasses=cast("bool", parse_objectclasses),
+                parse_attributes=parse_attributes,
+                parse_objectclasses=parse_objectclasses,
             )
 
             if parse_result.is_failure:
@@ -159,18 +178,22 @@ class FlextLdifRfcSchemaParser(FlextCore.Service[FlextCore.Types.Dict]):
             data = parse_result.value
 
             if self.logger is not None:
+                # Type narrow for logging
+                attributes_raw = data.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
+                attributes_dict: FlextCore.Types.Dict = (
+                    attributes_raw if isinstance(attributes_raw, dict) else {}
+                )
+
+                objectclasses_raw = data.get("objectclasses", {})
+                objectclasses_dict: FlextCore.Types.Dict = (
+                    objectclasses_raw if isinstance(objectclasses_raw, dict) else {}
+                )
+
                 self.logger.info(
                     "LDAP schema parsed successfully",
                     extra={
-                        "total_attributes": len(
-                            cast(
-                                "FlextCore.Types.Dict",
-                                data.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {}),
-                            )
-                        ),
-                        "total_objectclasses": len(
-                            cast("FlextCore.Types.Dict", data.get("objectclasses", {}))
-                        ),
+                        "total_attributes": len(attributes_dict),
+                        "total_objectclasses": len(objectclasses_dict),
                     },
                 )
 

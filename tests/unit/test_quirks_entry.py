@@ -114,12 +114,12 @@ class TestEntryAdaptation:
         adapted_entry = adapted_result.unwrap()
 
         # AD should lowercase userPrincipalName and sAMAccountName
-        upn = adapted_entry.get_attribute("userPrincipalName")
+        upn = adapted_entry.get_attribute_values("userPrincipalName")
         assert upn is not None
         assert isinstance(upn, list)
         assert upn[0] == "test@example.com"
 
-        sam = adapted_entry.get_attribute("sAMAccountName")
+        sam = adapted_entry.get_attribute_values("sAMAccountName")
         assert sam is not None
         assert isinstance(sam, list)
         assert sam[0] == "testuser"
@@ -201,7 +201,7 @@ class TestAttributeValueAdaptation:
         adapted_entry = adapted_result.unwrap()
 
         # Should have required object classes added
-        obj_classes = adapted_entry.get_attribute("objectClass")
+        obj_classes = adapted_entry.get_attribute_values("objectClass")
         assert obj_classes is not None
         assert isinstance(obj_classes, list)
         assert "top" in obj_classes
@@ -228,11 +228,11 @@ class TestAttributeValueAdaptation:
         assert adapted_result.is_success
         adapted_entry = adapted_result.unwrap()
 
-        upn = adapted_entry.get_attribute("userPrincipalName")
+        upn = adapted_entry.get_attribute_values("userPrincipalName")
         assert upn is not None
         assert upn[0] == "uppercase@domain.com"
 
-        sam = adapted_entry.get_attribute("sAMAccountName")
+        sam = adapted_entry.get_attribute_values("sAMAccountName")
         assert sam is not None
         assert sam[0] == "uppercase"
 
@@ -258,8 +258,8 @@ class TestAttributeValueAdaptation:
         adapted_entry = adapted_result.unwrap()
 
         # Regular attributes should remain unchanged
-        assert adapted_entry.get_attribute("sn") == ["Test User"]
-        assert adapted_entry.get_attribute("mail") == ["test@example.com"]
+        assert adapted_entry.get_attribute_values("sn") == ["Test User"]
+        assert adapted_entry.get_attribute_values("mail") == ["test@example.com"]
 
     def test_adapt_attribute_values_invalid_server(self) -> None:
         """Test attribute value adaptation with invalid server type."""
@@ -539,7 +539,7 @@ class TestCompleteEntryWorkflow:
         validation_result.unwrap()  # Ensure no exceptions
 
         # After adaptation, object classes should be added (even if DN has warnings)
-        obj_classes = adapted_entry.get_attribute("objectClass")
+        obj_classes = adapted_entry.get_attribute_values("objectClass")
         assert obj_classes is not None
         assert "top" in obj_classes
         assert "ads-directoryService" in obj_classes
@@ -676,11 +676,11 @@ class TestEdgeCases:
         adapted_entry = adapted_result.unwrap()
 
         # All values should be preserved
-        cn = adapted_entry.get_attribute("cn")
+        cn = adapted_entry.get_attribute_values("cn")
         assert cn is not None
         assert len(cn) == 2
 
-        mail = adapted_entry.get_attribute("mail")
+        mail = adapted_entry.get_attribute_values("mail")
         assert mail is not None
         assert len(mail) == 2
 

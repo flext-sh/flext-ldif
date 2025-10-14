@@ -152,11 +152,33 @@ class FlextLdifFilters:
         if entry.metadata is None:
             return False
 
-        exclusion_info: object | None = entry.metadata.extensions.exclusion_info
-        if exclusion_info is None:
+        # Type guard: entry.metadata is not None (pyrefly compliant)
+        if entry.metadata is None:
             return False
 
-        return exclusion_info.excluded
+        # Get exclusion_info dict from extensions (stored via model_dump())
+        exclusion_info_raw: object | None = entry.metadata.extensions.get(
+            "exclusion_info"
+        )
+        if exclusion_info_raw is None:
+            return False
+
+        # Type narrowing: exclusion_info is a dict from model_dump()
+        if not isinstance(exclusion_info_raw, dict):
+            return False
+
+        exclusion_info: dict[str, object] = exclusion_info_raw
+
+        # Get excluded field from dict (type-safe access)
+        excluded_value: object | None = exclusion_info.get("excluded")
+        if excluded_value is None:
+            return False
+
+        # Type narrowing: excluded must be bool
+        if not isinstance(excluded_value, bool):
+            return False
+
+        return excluded_value
 
     @staticmethod
     def get_exclusion_reason(entry: FlextLdifModels.Entry) -> str | None:
@@ -172,11 +194,33 @@ class FlextLdifFilters:
         if entry.metadata is None:
             return None
 
-        exclusion_info: object | None = entry.metadata.extensions.get("exclusion_info")
-        if exclusion_info is None:
+        # Type guard: entry.metadata is not None (pyrefly compliant)
+        if entry.metadata is None:
             return None
 
-        return exclusion_info.get("exclusion_reason")
+        # Get exclusion_info dict from extensions (stored via model_dump())
+        exclusion_info_raw: object | None = entry.metadata.extensions.get(
+            "exclusion_info"
+        )
+        if exclusion_info_raw is None:
+            return None
+
+        # Type narrowing: exclusion_info is a dict from model_dump()
+        if not isinstance(exclusion_info_raw, dict):
+            return None
+
+        exclusion_info: dict[str, object] = exclusion_info_raw
+
+        # Get exclusion_reason field from dict (type-safe access)
+        reason_value: object | None = exclusion_info.get("exclusion_reason")
+        if reason_value is None:
+            return None
+
+        # Type narrowing: reason must be str
+        if not isinstance(reason_value, str):
+            return None
+
+        return reason_value
 
     @staticmethod
     def has_objectclass(

@@ -9,8 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 from dependency_injector import containers, providers
 
 from flext_ldif.acl.parser import FlextLdifAclParser
@@ -114,21 +112,20 @@ class FlextLdifContainer(containers.DeclarativeContainer):
             Dictionary mapping service names to provider instances.
 
         """
+        # All provider attributes are already providers.Provider instances
+        # Type annotations ensure correctness without needing cast()
+        # Note: Specific provider types (Singleton/Factory) are subtypes of Provider
         return {
-            "config": cast("providers.Provider[object]", self.config),
-            "client": cast("providers.Provider[object]", self.client),
-            "entry_builder": cast("providers.Provider[object]", self.entry_builder),
-            "schema_builder": cast("providers.Provider[object]", self.schema_builder),
-            "schema_validator": cast(
-                "providers.Provider[object]", self.schema_validator
-            ),
-            "acl_parser": cast("providers.Provider[object]", self.acl_parser),
-            "acl_service": cast("providers.Provider[object]", self.acl_service),
-            "quirks_registry": cast("providers.Provider[object]", self.quirks_registry),
-            "quirks_manager": cast("providers.Provider[object]", self.quirks_manager),
-            "migration_pipeline": cast(
-                "providers.Provider[object]", self.migration_pipeline
-            ),
+            "config": self.config,
+            "client": self.client,
+            "entry_builder": self.entry_builder,
+            "schema_builder": self.schema_builder,
+            "schema_validator": self.schema_validator,
+            "acl_parser": self.acl_parser,
+            "acl_service": self.acl_service,
+            "quirks_registry": self.quirks_registry,
+            "quirks_manager": self.quirks_manager,
+            "migration_pipeline": self.migration_pipeline,
         }
 
     def initialize_services(self) -> None:

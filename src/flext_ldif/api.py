@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, ClassVar, cast, override
+from typing import ClassVar, override
 
 from flext_core import FlextCore
 
@@ -149,7 +149,14 @@ class FlextLdif(FlextCore.Service[FlextCore.Types.Dict]):
         super().__init__()
 
         # Initialize Flext ecosystem components
-        self._container = cast("FlextCore.Container", FlextCore.Container.get_global())
+        # Type narrow container from get_global() which may return None or subclass
+        container_raw = FlextCore.Container.get_global()
+        if not isinstance(container_raw, FlextCore.Container):
+            # Create new global container if none exists or wrong type
+            self._container = FlextCore.Container()
+        else:
+            # Type narrowed: container_raw is FlextCore.Container
+            self._container = container_raw
         self._bus = FlextCore.Bus()
         self._dispatcher = FlextCore.Dispatcher()
         self._registry = FlextCore.Registry(dispatcher=self._dispatcher)
@@ -621,7 +628,7 @@ class FlextLdif(FlextCore.Service[FlextCore.Types.Dict]):
 
     def dicts_to_entries(
         self,
-        dicts: list[dict[str, Any]],
+        dicts: list[dict[str, object]],
     ) -> list[FlextLdifModels.Entry]:
         """Convert list of dictionaries to list of entries using FlextCore.Processors.
 
@@ -985,7 +992,11 @@ class FlextLdif(FlextCore.Service[FlextCore.Types.Dict]):
             ldif.bus.publish("ldif.parsed", {"entry_count": 10})
 
         """
-        return cast("FlextCore.Bus", self._bus)
+        # Type narrow _bus to FlextCore.Bus (initialized in __init__)
+        if not isinstance(self._bus, FlextCore.Bus):
+            # Fallback: create new Bus if somehow not initialized
+            self._bus = FlextCore.Bus()
+        return self._bus
 
     @property
     def dispatcher(self) -> FlextCore.Dispatcher:

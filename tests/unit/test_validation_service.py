@@ -129,7 +129,7 @@ class TestValidateAttributeName:
     def test_reject_non_string_attribute_name(self) -> None:
         """Test rejection of non-string attribute name."""
         service = ValidationService()
-        result = service.validate_attribute_name(123)  # type: ignore[arg-type]
+        result = service.validate_attribute_name(123)
 
         assert result.is_success
         assert result.unwrap() is False
@@ -137,7 +137,16 @@ class TestValidateAttributeName:
     def test_validate_common_ldap_attributes(self) -> None:
         """Test validation of common LDAP attribute names."""
         service = ValidationService()
-        common_attrs = ["cn", "sn", "ou", "dc", "uid", "mail", "givenName", "telephoneNumber"]
+        common_attrs = [
+            "cn",
+            "sn",
+            "ou",
+            "dc",
+            "uid",
+            "mail",
+            "givenName",
+            "telephoneNumber",
+        ]
 
         for attr in common_attrs:
             result = service.validate_attribute_name(attr)
@@ -200,8 +209,14 @@ class TestValidateObjectClassName:
         """Test validation of common LDAP object class names."""
         service = ValidationService()
         common_classes = [
-            "top", "person", "organizationalPerson", "inetOrgPerson",
-            "groupOfNames", "organizationalUnit", "domain", "country"
+            "top",
+            "person",
+            "organizationalPerson",
+            "inetOrgPerson",
+            "groupOfNames",
+            "organizationalUnit",
+            "domain",
+            "country",
         ]
 
         for oc in common_classes:
@@ -274,7 +289,7 @@ class TestValidateAttributeValue:
     def test_reject_non_string_attribute_value(self) -> None:
         """Test rejection of non-string attribute value."""
         service = ValidationService()
-        result = service.validate_attribute_value(123)  # type: ignore[arg-type]
+        result = service.validate_attribute_value(123)
 
         assert result.is_success
         assert result.unwrap() is False
@@ -318,7 +333,7 @@ class TestValidateDnComponent:
     def test_reject_dn_component_with_non_string_value(self) -> None:
         """Test rejection of DN component with non-string value."""
         service = ValidationService()
-        result = service.validate_dn_component("cn", 123)  # type: ignore[arg-type]
+        result = service.validate_dn_component("cn", 123)
 
         assert result.is_success
         assert result.unwrap() is False
