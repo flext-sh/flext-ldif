@@ -158,7 +158,13 @@ class FlextLdifFixtures:
             """
             fixtures: dict[FlextLdifFixtures.FixtureType, str] = {}
 
-            for fixture_type in FlextLdifFixtures.FixtureType.__members__.values():
+            fixture_types = [
+                FlextLdifFixtures.FixtureType.SCHEMA,
+                FlextLdifFixtures.FixtureType.ACL,
+                FlextLdifFixtures.FixtureType.ENTRIES,
+                FlextLdifFixtures.FixtureType.INTEGRATION,
+            ]
+            for fixture_type in fixture_types:
                 try:
                     fixtures[fixture_type] = self.load(server_type, fixture_type)
                 except FileNotFoundError:
@@ -176,7 +182,18 @@ class FlextLdifFixtures:
             """
             available: list[FlextLdifFixtures.ServerType] = []
 
-            for server_type in FlextLdifFixtures.ServerType.__members__.values():
+            server_types = [
+                FlextLdifFixtures.ServerType.OID,
+                FlextLdifFixtures.ServerType.OUD,
+                FlextLdifFixtures.ServerType.OPENLDAP,
+                FlextLdifFixtures.ServerType.OPENLDAP1,
+                FlextLdifFixtures.ServerType.DS389,
+                FlextLdifFixtures.ServerType.APACHE,
+                FlextLdifFixtures.ServerType.NOVELL,
+                FlextLdifFixtures.ServerType.TIVOLI,
+                FlextLdifFixtures.ServerType.AD,
+            ]
+            for server_type in server_types:
                 server_dir = self.fixtures_root / server_type.value
                 if server_dir.exists() and server_dir.is_dir():
                     available.append(server_type)
@@ -330,7 +347,7 @@ class FlextLdifFixtures:
             """Load all OID fixtures.
 
             Returns:
-                dict: All available OID fixtures
+                dict[str, object]: All available OID fixtures
 
             """
             return self._loader.load_all(FlextLdifFixtures.ServerType.OID)

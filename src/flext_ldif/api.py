@@ -731,7 +731,7 @@ class FlextLdif(FlextCore.Service[FlextCore.Types.Dict]):
                 result = api.validate_with_schema(entries, schema)
 
         """
-        # Convert dict schema to SchemaDiscoveryResult with type validation
+        # Convert dict[str, object] schema to SchemaDiscoveryResult with type validation
         attributes_value = schema.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
         if not isinstance(attributes_value, dict):
             return FlextCore.Result[FlextLdifModels.LdifValidationResult].fail(

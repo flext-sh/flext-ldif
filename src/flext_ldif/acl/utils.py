@@ -88,16 +88,22 @@ class FlextLdifAclUtils(FlextCore.Utilities):
 
         @staticmethod
         def create_unified_acl(
+            name: str,
             target: FlextLdifModels.AclTarget,
             subject: FlextLdifModels.AclSubject,
             permissions: FlextLdifModels.AclPermissions,
+            server_type: str,
+            raw_acl: str,
         ) -> FlextCore.Result[FlextLdifModels.Acl]:
             """Create unified ACL with proper validation using railway pattern.
 
             Args:
+                name: ACL name
                 target: ACL target component
                 subject: ACL subject component
                 permissions: ACL permissions component
+                server_type: Server type (openldap, oid, etc.)
+                raw_acl: Original ACL string
 
             Returns:
                 FlextCore.Result containing Acl on success, failure otherwise.
@@ -105,7 +111,12 @@ class FlextLdifAclUtils(FlextCore.Utilities):
             """
             acl_result = FlextCore.Result.ok(
                 FlextLdifModels.Acl(
-                    target=target, subject=subject, permissions=permissions
+                    name=name,
+                    target=target,
+                    subject=subject,
+                    permissions=permissions,
+                    server_type=server_type,
+                    raw_acl=raw_acl,
                 )
             )
 

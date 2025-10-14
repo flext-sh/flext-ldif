@@ -404,7 +404,9 @@ class TestOudToOidFullMigration:
             # Step 1: Process with OUD
             oud_result = oud_entry_quirk.process_entry(entry_dn, entry_attrs)
             if not oud_result.is_success:
-                failures.append(f"OUD process failed for {entry_dn}: {oud_result.error}")
+                failures.append(
+                    f"OUD process failed for {entry_dn}: {oud_result.error}"
+                )
                 continue
 
             # Step 2: Convert OUD → RFC → OID

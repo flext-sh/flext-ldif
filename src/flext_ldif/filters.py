@@ -156,20 +156,20 @@ class FlextLdifFilters:
         if entry.metadata is None:
             return False
 
-        # Get exclusion_info dict from extensions (stored via model_dump())
+        # Get exclusion_info dict[str, object] from extensions (stored via model_dump())
         exclusion_info_raw: object | None = entry.metadata.extensions.get(
             "exclusion_info"
         )
         if exclusion_info_raw is None:
             return False
 
-        # Type narrowing: exclusion_info is a dict from model_dump()
+        # Type narrowing: exclusion_info is a dict[str, object] from model_dump()
         if not isinstance(exclusion_info_raw, dict):
             return False
 
         exclusion_info: dict[str, object] = exclusion_info_raw
 
-        # Get excluded field from dict (type-safe access)
+        # Get excluded field from dict[str, object] (type-safe access)
         excluded_value: object | None = exclusion_info.get("excluded")
         if excluded_value is None:
             return False
@@ -198,20 +198,20 @@ class FlextLdifFilters:
         if entry.metadata is None:
             return None
 
-        # Get exclusion_info dict from extensions (stored via model_dump())
+        # Get exclusion_info dict[str, object] from extensions (stored via model_dump())
         exclusion_info_raw: object | None = entry.metadata.extensions.get(
             "exclusion_info"
         )
         if exclusion_info_raw is None:
             return None
 
-        # Type narrowing: exclusion_info is a dict from model_dump()
+        # Type narrowing: exclusion_info is a dict[str, object] from model_dump()
         if not isinstance(exclusion_info_raw, dict):
             return None
 
         exclusion_info: dict[str, object] = exclusion_info_raw
 
-        # Get exclusion_reason field from dict (type-safe access)
+        # Get exclusion_reason field from dict[str, object] (type-safe access)
         reason_value: object | None = exclusion_info.get("exclusion_reason")
         if reason_value is None:
             return None

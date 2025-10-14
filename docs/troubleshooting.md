@@ -454,7 +454,7 @@ def debug_railway_chain(file_path: str) -> FlextCore.Result[list]:
 ### Health Check Utility
 
 ```python
-def run_health_check() -> dict:
+def run_health_check() -> dict[str, object]:
     """Run comprehensive health check for FLEXT-LDIF."""
     results = {
         'status': 'healthy',
@@ -581,7 +581,7 @@ def enable_debug_mode() -> FlextLdif:
 When creating support requests, include:
 
 ```python
-def generate_support_info() -> dict:
+def generate_support_info() -> dict[str, object]:
     """Generate information for support requests."""
     import sys
     import platform

@@ -14,10 +14,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.quirks.conversion_matrix import QuirksConversionMatrix
+from flext_ldif.quirks.conversion_matrix import DataType, QuirksConversionMatrix
 from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
 from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
 from tests.fixtures.loader import FlextLdifFixtures
@@ -397,7 +399,7 @@ class TestQuirksConversionMatrixFacade:
         oid: FlextLdifQuirksServersOid,
     ) -> None:
         """Test error handling for invalid data type."""
-        result = matrix.convert(oud, oid, "invalid", "test")
+        result = matrix.convert(oud, oid, cast("DataType", "invalid"), "test")
 
         assert result.is_failure
         assert result.error is not None

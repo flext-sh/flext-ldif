@@ -227,7 +227,7 @@ def validate_single_entry_against_schema() -> None:
     if validation_result.is_success:
         result = validation_result.unwrap()
         if not isinstance(result, dict):
-            print(f"ERROR: Expected dict result, got {type(result)}")
+            print(f"ERROR: Expected dict[str, object] result, got {type(result)}")
             return
 
         is_valid = result.get("is_valid", False)

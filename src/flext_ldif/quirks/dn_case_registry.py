@@ -17,13 +17,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextCore
+from pydantic import ConfigDict
 
 from flext_ldif.typings import FlextLdifTypes
 
 type DN = str
 
 
-class DnCaseRegistry:
+class DnCaseRegistry(FlextCore.Models.Value):
     """Registry for tracking canonical DN case during conversions.
 
     This class maintains a mapping of DNs in normalized form (lowercase, no spaces)
@@ -51,8 +52,12 @@ class DnCaseRegistry:
 
     """
 
+    # Allow mutation for internal state management
+    model_config = ConfigDict(frozen=False)
+
     def __init__(self) -> None:
         """Initialize empty DN case registry."""
+        super().__init__()
         self._registry: dict[str, str] = {}
         self._case_variants: dict[str, set[str]] = {}
 

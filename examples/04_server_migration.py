@@ -62,7 +62,7 @@ objectClass: subschema
 cn: schema
 """
 
-    # Railway pattern with dict comprehension - auto error handling
+    # Railway pattern with dict[str, object] comprehension - auto error handling
     results = {
         server: len(api.parse(ldif_content, server_type=server).unwrap_or([]))
         for server in ["rfc", "oid", "oud", "openldap"]
@@ -201,7 +201,7 @@ sn: Test
 
     report = validation_result.unwrap()
     if not isinstance(report, dict):
-        print(f"ERROR: Expected dict report, got {type(report)}")
+        print(f"ERROR: Expected dict[str, object] report, got {type(report)}")
         return
 
     if not report.get("is_valid", False):

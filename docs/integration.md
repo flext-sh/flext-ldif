@@ -170,7 +170,7 @@ class client-aOUDMigrationService:
         # LDIF-specific group entry transformations
         return group_entries
 
-    def _generate_migration_report(self, processed_data: dict) -> dict:
+    def _generate_migration_report(self, processed_data: dict) -> dict[str, object]:
         """Generate LDIF migration processing report."""
         return {
             'ldif_migration_summary': {
@@ -184,7 +184,7 @@ class client-aOUDMigrationService:
             'processed_data': processed_data
         }
 
-    def _log_ldif_completion(self, report: dict) -> dict:
+    def _log_ldif_completion(self, report: dict) -> dict[str, object]:
         """Log LDIF migration processing completion."""
         self.logger.info("OUD LDIF processing completed", extra={
             'ldif_summary': report['ldif_migration_summary'],
@@ -237,7 +237,7 @@ class LdifAPIService(FlextAPIService):
             })
         )
 
-    def _serialize_ldif_entry(self, entry) -> dict:
+    def _serialize_ldif_entry(self, entry) -> dict[str, object]:
         """Serialize LDIF entry for API response."""
         return {
             'dn': entry.dn,
@@ -424,7 +424,7 @@ def robust_ldif_processing(content: str) -> FlextCore.Result[FlextCore.Types.Dic
 Use LDIF-specific entry type methods:
 
 ```python
-def categorize_ldif_entries(entries) -> dict:
+def categorize_ldif_entries(entries) -> dict[str, object]:
     """Categorize LDIF entries by type."""
     categories = {
         'persons': [e for e in entries if e.is_person()],

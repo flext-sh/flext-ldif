@@ -1026,7 +1026,7 @@ class TestOudEntryRoundTrip:
         assert write_result.is_success
         written_ldif = write_result.unwrap()
 
-        # Step 3: Parse LDIF back to entry dict (simple parsing)
+        # Step 3: Parse LDIF back to entry dict[str, object] (simple parsing)
         lines = written_ldif.strip().split("\n")
         parsed_dn = None
         parsed_attrs: dict[str, FlextCore.Types.StringList] = {}

@@ -513,7 +513,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextCore.Result[FlextLdifTypes.Dict]:
             """Strip Tivoli metadata before RFC processing."""
             try:
-                normalized_entry = dict(entry_data)
+                normalized_entry = dict[str, object](entry_data)
                 normalized_entry.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
                 return FlextCore.Result[FlextLdifTypes.Dict].ok(normalized_entry)
 

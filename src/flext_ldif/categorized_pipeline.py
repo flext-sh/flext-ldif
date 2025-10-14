@@ -88,26 +88,67 @@ class FlextLdifCategorizedMigrationPipeline(FlextCore.Service[FlextCore.Types.Di
             5. Return comprehensive statistics
 
         """
-        # Phase 2: Implementation will be completed incrementally
-        # For now, placeholder that validates structure
-
-        # Create output directories
+        # Step 1: Create output directories
         create_result = self._create_output_directories()
         if create_result.is_failure:
             return FlextCore.Result[FlextCore.Types.Dict].fail(
                 f"Failed to create output directories: {create_result.error}"
             )
 
-        # Placeholder result
-        result_dict: FlextCore.Types.Dict = {
-            "total_entries": 0,
-            "categorized_counts": {},
-            "output_directories": {},
-            "source_server": self._source_server,
-            "target_server": self._target_server,
-        }
+        # Step 2: Parse all entries from input directory
+        parse_result = self._parse_entries()
+        if parse_result.is_failure:
+            # Return empty result with error for empty input (not a failure case)
+            if "No LDIF files found" in str(parse_result.error):
+                result_dict: FlextCore.Types.Dict = {
+                    "total_entries": 0,
+                    "categorized_counts": {},
+                    "written_counts": {},
+                    "rejection_count": 0,
+                    "rejection_rate": 0.0,
+                    "rejection_reasons": [],
+                    "output_directories": {},
+                    "source_server": self._source_server,
+                    "target_server": self._target_server,
+                }
+                return FlextCore.Result[FlextCore.Types.Dict].ok(result_dict)
+            return FlextCore.Result[FlextCore.Types.Dict].fail(
+                f"Failed to parse entries: {parse_result.error}"
+            )
 
-        return FlextCore.Result[FlextCore.Types.Dict].ok(result_dict)
+        entries = parse_result.unwrap()
+
+        # Step 3: Categorize entries using rules
+        categorize_result = self._categorize_entries(entries)
+        if categorize_result.is_failure:
+            return FlextCore.Result[FlextCore.Types.Dict].fail(
+                f"Failed to categorize entries: {categorize_result.error}"
+            )
+
+        categorized = categorize_result.unwrap()
+
+        # Step 4: Transform entries per category (quirks)
+        transform_result = self._transform_categories(categorized)
+        if transform_result.is_failure:
+            return FlextCore.Result[FlextCore.Types.Dict].fail(
+                f"Failed to transform categories: {transform_result.error}"
+            )
+
+        transformed_categorized = transform_result.unwrap()
+
+        # Step 5: Write to structured output directories
+        write_result = self._write_categorized_output(transformed_categorized)
+        if write_result.is_failure:
+            return FlextCore.Result[FlextCore.Types.Dict].fail(
+                f"Failed to write output: {write_result.error}"
+            )
+
+        written_counts = write_result.unwrap()
+
+        # Step 6: Generate comprehensive statistics
+        statistics = self._generate_statistics(transformed_categorized, written_counts)
+
+        return FlextCore.Result[FlextCore.Types.Dict].ok(statistics)
 
     def _create_output_directories(self) -> FlextCore.Result[None]:
         """Create structured output directories.
@@ -477,7 +518,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextCore.Service[FlextCore.Types.Di
             categorized: Dictionary mapping category to entry list
 
         Returns:
-            FlextCore.Result containing dict of category to count written
+            FlextCore.Result containing dict[str, object] of category to count written
 
         """
         written_counts: dict[str, int] = {}

@@ -21,7 +21,7 @@ class TestValidators:
     """Validators for testing LDIF functionality."""
 
     @staticmethod
-    def validate_ldif_entry(entry: FlextLdifModels.Entry) -> FlextCore.Types.BoolDict:
+    def validate_ldif_entry(entry: FlextLdifModels.Entry) -> dict[str, bool]:
         """Validate a real LDIF entry object."""
         validations = {
             "has_dn": bool(entry.dn and str(entry.dn).strip()),
@@ -38,7 +38,7 @@ class TestValidators:
 
         # Check for required attributes based on objectClass
         if validations["has_object_class"] and entry.attributes:
-            attr_values = entry.get_attribute("objectClass")
+            attr_values = entry.get_attribute_values("objectClass")
             # Convert AttributeValues to list of strings
             if attr_values and isinstance(attr_values, list):
                 object_classes_list: FlextCore.Types.StringList = attr_values

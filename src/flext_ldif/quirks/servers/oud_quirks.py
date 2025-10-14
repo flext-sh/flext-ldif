@@ -524,7 +524,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         try:
             # Oracle OUD uses RFC-compliant schema format
             # Just ensure OUD server type is set
-            oud_data = dict(rfc_data)
+            oud_data = dict[str, object](rfc_data)
             oud_data[FlextLdifConstants.DictKeys.SERVER_TYPE] = (
                 FlextLdifConstants.ServerTypes.OUD
             )
@@ -551,7 +551,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         try:
             # Oracle OUD uses RFC-compliant schema format
             # Just ensure OUD server type is set
-            oud_data = dict(rfc_data)
+            oud_data = dict[str, object](rfc_data)
             oud_data[FlextLdifConstants.DictKeys.SERVER_TYPE] = (
                 FlextLdifConstants.ServerTypes.OUD
             )
@@ -575,7 +575,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             ldif_content: Raw LDIF content containing schema definitions
 
         Returns:
-            FlextCore.Result with dict containing 'attributes' and 'objectclasses' lists
+            FlextCore.Result with dict[str, object] containing 'attributes' and 'objectclasses' lists
 
         """
         try:
@@ -1090,7 +1090,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             return True
 
         def process_entry(
-            self, entry_dn: str, attributes: FlextCore.Types.Dict
+            self, entry_dn: str, attributes: dict[str, list[str]] | FlextCore.Types.Dict
         ) -> FlextCore.Result[FlextLdifTypes.Dict]:
             """Process entry for OUD format with metadata preservation.
 
@@ -1189,7 +1189,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             try:
                 # Oracle OUD uses RFC-compliant format
                 # Just ensure OUD server type is set
-                oud_entry = dict(entry_data)
+                oud_entry = dict[str, object](entry_data)
                 oud_entry[FlextLdifConstants.DictKeys.SERVER_TYPE] = (
                     FlextLdifConstants.ServerTypes.OUD
                 )

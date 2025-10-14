@@ -55,6 +55,7 @@ class ParseLdifCommandHandler:
             processor: Object implementing ProcessorProtocol interface
 
         """
+        super().__init__()
         self._processor = processor
 
     def handle(
@@ -98,6 +99,7 @@ class WriteLdifCommandHandler:
             processor: Object implementing ProcessorProtocol interface
 
         """
+        super().__init__()
         self._processor = processor
 
     def handle(self, command: WriteLdifCommand) -> FlextCore.Result[str]:
@@ -142,6 +144,7 @@ class MigrateLdifCommandHandler:
             migration_pipeline: Object implementing MigrationPipelineProtocol
 
         """
+        super().__init__()
         self._migration_pipeline = migration_pipeline
 
     def handle(
@@ -188,6 +191,7 @@ class BuildPersonEntryCommandHandler:
             entry_builder: Object implementing EntryBuilderProtocol interface
 
         """
+        super().__init__()
         self._entry_builder = entry_builder
 
     def handle(
@@ -220,6 +224,7 @@ class BuildGroupEntryCommandHandler:
             entry_builder: Object implementing EntryBuilderProtocol interface
 
         """
+        super().__init__()
         self._entry_builder = entry_builder
 
     def handle(
@@ -250,6 +255,7 @@ class BuildOrganizationalUnitCommandHandler:
             entry_builder: Object implementing EntryBuilderProtocol interface
 
         """
+        super().__init__()
         self._entry_builder = entry_builder
 
     def handle(
@@ -277,6 +283,7 @@ class ValidateEntriesQueryHandler:
             processor: Object implementing ProcessorProtocol interface
 
         """
+        super().__init__()
         self._processor = processor
 
     def handle(
@@ -284,7 +291,7 @@ class ValidateEntriesQueryHandler:
     ) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Handle validate entries query.
 
-        Application Logic: Validate entries and return dict with results.
+        Application Logic: Validate entries and return dict[str, object] with results.
         """
         # Note: ProcessorProtocol.validate_entries returns list[Entry]
         # We need to adapt this to return a Dict with validation info
@@ -316,6 +323,7 @@ class AnalyzeEntriesQueryHandler:
             processor: Object implementing ProcessorProtocol interface
 
         """
+        super().__init__()
         self._processor = processor
 
     def handle(
@@ -333,6 +341,7 @@ class FilterEntriesQueryHandler:
 
     def __init__(self) -> None:
         """Initialize handler (no dependencies)."""
+        super().__init__()
 
     def handle(
         self, query: FilterEntriesQuery
@@ -362,6 +371,7 @@ class ExtractAclsQueryHandler:
 
     def __init__(self) -> None:
         """Initialize handler (no dependencies yet)."""
+        super().__init__()
 
     def handle(
         self, query: ExtractAclsQuery
@@ -388,12 +398,13 @@ class ConvertEntryToDictQueryHandler:
             entry_builder: Object implementing EntryBuilderProtocol interface
 
         """
+        super().__init__()
         self._entry_builder = entry_builder
 
     def handle(
         self, query: ConvertEntryToDictQuery
     ) -> FlextCore.Result[FlextCore.Types.Dict]:
-        """Handle convert entry to dict query."""
+        """Handle convert entry to dict[str, object] query."""
         return self._entry_builder.convert_entry_to_dict(query.entry)
 
 
@@ -412,6 +423,7 @@ class ConvertEntriesToDictsQueryHandler:
             entry_builder: Object implementing EntryBuilderProtocol interface
 
         """
+        super().__init__()
         self._entry_builder = entry_builder
 
     def handle(

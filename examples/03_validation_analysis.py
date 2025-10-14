@@ -55,9 +55,9 @@ def validate_entries_example() -> None:
         return
 
     report = validation_result.unwrap()
-    # Type validation for dict access
+    # Type validation for dict[str, object] access
     if not isinstance(report, dict):
-        print(f"ERROR: Expected dict report, got {type(report)}")
+        print(f"ERROR: Expected dict[str, object] report, got {type(report)}")
         return
     result_msg = (
         f"Valid: {report.get('is_valid', False)}, "

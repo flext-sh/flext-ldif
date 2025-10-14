@@ -713,12 +713,10 @@ class TestFlextLdifAclService:
         service = FlextLdifAclService()
 
         # Create a simple entry without ACL attributes
-        entry_data: FlextCore.Types.Dict = {
-            "dn": "cn=testuser,dc=example,dc=com",
-            "attributes": {"objectClass": ["person"], "cn": ["testuser"]},
-        }
-
-        entry_result = FlextLdifModels.Entry.create(entry_data)
+        entry_result = FlextLdifModels.Entry.create(
+            dn="cn=testuser,dc=example,dc=com",
+            attributes={"objectClass": ["person"], "cn": ["testuser"]},
+        )
         assert entry_result.is_success
         entry = entry_result.value
 

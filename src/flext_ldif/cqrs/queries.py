@@ -9,7 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from pydantic import BaseModel, Field
+
+if TYPE_CHECKING:
+    from flext_ldif.models import FlextLdifModels
 
 
 class ValidateEntriesQuery(BaseModel):
@@ -30,7 +35,7 @@ class ValidateEntriesQuery(BaseModel):
 
     """
 
-    entries: list  # FlextLdifModels.Entry - avoid circular import
+    entries: list[FlextLdifModels.Entry]
     schema_definition: dict[str, object] | None = Field(
         default=None,
         description="Optional schema definition for validation",
@@ -53,7 +58,7 @@ class AnalyzeEntriesQuery(BaseModel):
 
     """
 
-    entries: list  # FlextLdifModels.Entry
+    entries: list[FlextLdifModels.Entry]
 
 
 class FilterEntriesQuery(BaseModel):
@@ -82,7 +87,7 @@ class FilterEntriesQuery(BaseModel):
 
     """
 
-    entries: list  # FlextLdifModels.Entry
+    entries: list[FlextLdifModels.Entry]
     objectclass: str | None = Field(
         default=None,
         description="Optional object class to filter by",
@@ -111,7 +116,7 @@ class ExtractAclsQuery(BaseModel):
 
     """
 
-    entry: object  # FlextLdifModels.Entry - avoid circular import
+    entry: FlextLdifModels.Entry  # FlextLdifModels.Entry
 
 
 class ConvertEntryToDictQuery(BaseModel):
@@ -130,7 +135,7 @@ class ConvertEntryToDictQuery(BaseModel):
 
     """
 
-    entry: object  # FlextLdifModels.Entry
+    entry: FlextLdifModels.Entry  # FlextLdifModels.Entry
 
 
 class ConvertEntriesToDictsQuery(BaseModel):
@@ -149,7 +154,7 @@ class ConvertEntriesToDictsQuery(BaseModel):
 
     """
 
-    entries: list  # FlextLdifModels.Entry
+    entries: list[FlextLdifModels.Entry]
 
 
 __all__ = [

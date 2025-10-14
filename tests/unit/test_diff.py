@@ -8,6 +8,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 from flext_core import FlextCore
 
@@ -64,7 +66,10 @@ class TestAttributeDiff:
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
         }
 
-        result = diff_tool.diff_attributes([attr1], [attr2])
+        result = diff_tool.diff_attributes(
+            cast("list[FlextCore.Types.Dict]", [attr1]),
+            cast("list[FlextCore.Types.Dict]", [attr2]),
+        )
         assert result.is_success
         diff = result.unwrap()
         assert not diff.has_changes
@@ -81,7 +86,10 @@ class TestAttributeDiff:
             }
         ]
 
-        result = diff_tool.diff_attributes(source_attrs, target_attrs)
+        result = diff_tool.diff_attributes(
+            cast("list[FlextCore.Types.Dict]", source_attrs),
+            cast("list[FlextCore.Types.Dict]", target_attrs),
+        )
         assert result.is_success
         diff = result.unwrap()
         assert len(diff.added) == 1
@@ -99,7 +107,10 @@ class TestAttributeDiff:
         ]
         target_attrs: list[dict[str, str]] = []
 
-        result = diff_tool.diff_attributes(source_attrs, target_attrs)
+        result = diff_tool.diff_attributes(
+            cast("list[FlextCore.Types.Dict]", source_attrs),
+            cast("list[FlextCore.Types.Dict]", target_attrs),
+        )
         assert result.is_success
         diff = result.unwrap()
         assert len(diff.removed) == 1
@@ -124,7 +135,10 @@ class TestAttributeDiff:
             }
         ]
 
-        result = diff_tool.diff_attributes(source_attrs, target_attrs)
+        result = diff_tool.diff_attributes(
+            cast("list[FlextCore.Types.Dict]", source_attrs),
+            cast("list[FlextCore.Types.Dict]", target_attrs),
+        )
         assert result.is_success
         diff = result.unwrap()
         assert len(diff.modified) == 1

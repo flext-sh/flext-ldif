@@ -559,7 +559,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             ldif_content: Raw LDIF content containing schema definitions
 
         Returns:
-            FlextCore.Result with dict containing 'attributes' and 'objectclasses' lists
+            FlextCore.Result with dict[str, object] containing 'attributes' and 'objectclasses' lists
 
         """
         try:
@@ -609,7 +609,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         try:
             # Oracle OID uses RFC-compliant schema format
             # Just ensure OID server type is set
-            oid_data = dict(rfc_data)
+            oid_data = dict[str, object](rfc_data)
             oid_data[FlextLdifConstants.DictKeys.SERVER_TYPE] = (
                 FlextLdifConstants.ServerTypes.OID
             )
@@ -636,7 +636,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         try:
             # Oracle OID uses RFC-compliant schema format
             # Just ensure OID server type is set
-            oid_data = dict(rfc_data)
+            oid_data = dict[str, object](rfc_data)
             oid_data[FlextLdifConstants.DictKeys.SERVER_TYPE] = (
                 FlextLdifConstants.ServerTypes.OID
             )
@@ -1108,7 +1108,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             try:
                 # Oracle OID entries are already RFC-compliant
                 # Remove Oracle-specific operational attributes if needed
-                rfc_data = dict(entry_data)
+                rfc_data = dict[str, object](entry_data)
 
                 # Optional: Remove OID-specific operational attributes
                 # that don't exist in standard LDAP
@@ -1146,7 +1146,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             try:
                 # Oracle OID uses RFC-compliant format
                 # Just ensure OID server type is set
-                oid_entry = dict(entry_data)
+                oid_entry = dict[str, object](entry_data)
                 oid_entry[FlextLdifConstants.DictKeys.SERVER_TYPE] = (
                     FlextLdifConstants.ServerTypes.OID
                 )

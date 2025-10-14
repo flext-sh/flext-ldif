@@ -468,20 +468,19 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
             FlextCore.Result containing unified ACL with composite rules
 
         """
-        # Parameters are reserved for future server-specific parsing
-        _ = acl_string  # Reserved for future use
-        _ = server_type  # Reserved for future use
-
         # Create ACL components directly - Pydantic handles validation
         target = FlextLdifModels.AclTarget(target_dn="*", attributes=[])
         subject = FlextLdifModels.AclSubject(subject_type="*", subject_value="*")
         perms = FlextLdifModels.AclPermissions(read=True)
 
-        # Create unified ACL directly
+        # Create unified ACL directly with required fields
         acl = FlextLdifModels.Acl(
+            name="parsed_acl",
             target=target,
             subject=subject,
             permissions=perms,
+            server_type=server_type,
+            raw_acl=acl_string,
         )
         return FlextCore.Result[FlextLdifModels.Acl].ok(acl)
 
