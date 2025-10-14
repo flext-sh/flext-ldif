@@ -23,8 +23,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Literal, cast
 
-from flext_core import FlextCore
-
 from flext_ldif.quirks.base import (
     FlextLdifQuirksBaseAclQuirk,
     FlextLdifQuirksBaseSchemaQuirk,
@@ -251,7 +249,8 @@ class QuirksConversionMatrix:
                     f"Failed to write target format: {write_result.error}"
                 )
 
-            return write_result
+            # Cast Result[str] to Result[str | Dict] for return type compatibility
+            return cast("FlextCore.Result[str | FlextLdifTypes.Dict]", write_result)
 
         except Exception as e:
             return FlextCore.Result[str | FlextLdifTypes.Dict].fail(
@@ -326,7 +325,8 @@ class QuirksConversionMatrix:
                     f"Failed to write target format: {write_result.error}"
                 )
 
-            return write_result
+            # Cast Result[str] to Result[str | Dict] for return type compatibility
+            return cast("FlextCore.Result[str | FlextLdifTypes.Dict]", write_result)
 
         except Exception as e:
             return FlextCore.Result[str | FlextLdifTypes.Dict].fail(
@@ -414,7 +414,8 @@ class QuirksConversionMatrix:
                     f"Failed to write target format: {write_result.error}"
                 )
 
-            return write_result
+            # Cast Result[str] to Result[str | Dict] for return type compatibility
+            return cast("FlextCore.Result[str | FlextLdifTypes.Dict]", write_result)
 
         except Exception as e:
             return FlextCore.Result[str | FlextLdifTypes.Dict].fail(

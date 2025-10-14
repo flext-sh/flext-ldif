@@ -16,8 +16,6 @@ All functionality accessed through FlextLdif facade.
 
 from __future__ import annotations
 
-from typing import cast
-
 from flext_ldif import FlextLdif
 
 
@@ -226,9 +224,6 @@ def validate_single_entry_against_schema() -> None:
 
     if validation_result.is_success:
         result = validation_result.unwrap()
-        if not isinstance(result, dict):
-            print(f"ERROR: Expected dict[str, object] result, got {type(result)}")
-            return
 
         is_valid = result.get("is_valid", False)
         errors = result.get("errors", [])
@@ -313,7 +308,7 @@ def reset_and_rebuild_schema() -> None:
 
     if first_schema_result.is_success:
         first_schema = first_schema_result.unwrap()
-        _ = len(cast("dict", first_schema.get("attributes", {})))
+        _ = len(first_schema.get("attributes", {}))
 
     # Reset builder
     builder.reset()
@@ -330,4 +325,4 @@ def reset_and_rebuild_schema() -> None:
     if second_schema_result.is_success:
         second_schema = second_schema_result.unwrap()
         # Second schema only contains attr2
-        _ = len(cast("dict", second_schema.get("attributes", {})))
+        _ = len(second_schema.get("attributes", {}))

@@ -20,6 +20,7 @@ def test_ldap_connection() -> None:
     )
 
     assert conn.bound
+    assert server.info is not None
     assert "dc=flext,dc=local" in server.info.naming_contexts
 
     conn.unbind()

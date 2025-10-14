@@ -194,10 +194,6 @@ class ValidationService(FlextCore.Service[FlextCore.Types.Dict]):
 
         """
         try:
-            # Check type
-            if not isinstance(value, str):
-                return FlextCore.Result[bool].ok(False)
-
             # Allow empty values (valid in LDAP)
             if not value:
                 return FlextCore.Result[bool].ok(True)
@@ -219,7 +215,7 @@ class ValidationService(FlextCore.Service[FlextCore.Types.Dict]):
     def validate_dn_component(
         self,
         attr: str,
-        value: str,
+        value: str,  # noqa: ARG002
     ) -> FlextCore.Result[bool]:
         """Validate DN component (attribute=value pair).
 
@@ -244,8 +240,6 @@ class ValidationService(FlextCore.Service[FlextCore.Types.Dict]):
                 return FlextCore.Result[bool].ok(False)
 
             # Validate value (DN values can be empty)
-            if not isinstance(value, str):
-                return FlextCore.Result[bool].ok(False)
 
             return FlextCore.Result[bool].ok(True)
 

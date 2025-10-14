@@ -22,9 +22,10 @@ No manual processor creation or conversion loops required.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from pathlib import Path
 
-from flext_ldif import FlextLdif
+from flext_ldif import DnService, FlextLdif, ValidationService
 
 
 def basic_batch_processing() -> None:
@@ -93,14 +94,12 @@ def parallel_processing() -> None:
 
 def use_dn_utilities() -> None:
     """Use DN (Distinguished Name) utilities."""
-    api = FlextLdif.get_instance()
-
-    # Access DN utilities
-    dn_utils = api.utilities.DnUtilities
+    # Use DN service directly
+    dn_service = DnService()
 
     # Parse DN
     dn = "cn=John Doe,ou=People,dc=example,dc=com"
-    parse_result = dn_utils.parse_dn_components(dn)
+    parse_result = dn_service.parse_components(dn)
 
     if parse_result.is_success:
         components = parse_result.unwrap()
@@ -108,14 +107,14 @@ def use_dn_utilities() -> None:
         _ = len(components)
 
     # Validate DN
-    validation_result = dn_utils.validate_dn_format(dn)
+    validation_result = dn_service.validate_format(dn)
 
     if validation_result.is_success:
         is_valid = validation_result.unwrap()
         _ = is_valid
 
     # Normalize DN
-    normalize_result = dn_utils.normalize_dn(dn)
+    normalize_result = dn_service.normalize(dn)
 
     if normalize_result.is_success:
         normalized = normalize_result.unwrap()
@@ -124,109 +123,109 @@ def use_dn_utilities() -> None:
 
 def use_text_utilities() -> None:
     """Use text formatting utilities."""
-    api = FlextLdif.get_instance()
+    # Text utilities functionality moved to standard library or removed
+    # Format byte size using standard approach
+    size_bytes: float = 1024 * 1024  # 1 MB
+    for unit in ["", "K", "M", "G", "T"]:
+        if size_bytes < 1024.0:
+            size_str = f"{size_bytes:.1f} {unit}B"
+            break
+        size_bytes /= 1024.0
+    else:
+        size_str = f"{size_bytes:.1f} PB"
 
-    # Access text utilities
-    text_utils = api.utilities.TextUtilities
-
-    # Format byte size
-    size_str = text_utils.format_byte_size(1024 * 1024)  # 1 MB
     _ = size_str
-
-    # Note: truncate_text and format_timestamp are not available in TextUtilities
-    # Only format_byte_size is available
 
 
 def use_time_utilities() -> None:
     """Use time/timestamp utilities."""
-    api = FlextLdif.get_instance()
-
-    # Access time utilities
-    time_utils = api.utilities.TimeUtilities
-
-    # Get current timestamp
-    timestamp = time_utils.get_timestamp()
+    # Get current timestamp using standard library
+    timestamp = datetime.now(UTC).timestamp()
     _ = timestamp
 
-    # Get formatted timestamp
-    formatted_timestamp = time_utils.get_formatted_timestamp()
+    # Get formatted timestamp using standard library
+    formatted_timestamp = datetime.now(UTC).isoformat()
     _ = formatted_timestamp
 
 
 def use_validation_utilities() -> None:
     """Use validation utilities."""
-    api = FlextLdif.get_instance()
-
-    # Access validation utilities
-    validation_utils = api.utilities.ValidationUtilities
+    # Use validation service directly
+    validation_service = ValidationService()
 
     # Validate attribute name
     attr_name = "cn"
-    attr_valid = validation_utils.validate_attribute_name(attr_name)
+    attr_valid = validation_service.validate_attribute_name(attr_name)
     _ = attr_valid
 
     # Validate attribute name
-    attr_valid = validation_utils.validate_attribute_name("cn")
+    attr_valid = validation_service.validate_attribute_name("cn")
     _ = attr_valid
 
     # Validate object class name
     oc_name = "person"
-    oc_valid = validation_utils.validate_object_class_name(oc_name)
+    oc_valid = validation_service.validate_objectclass_name(oc_name)
     _ = oc_valid
 
 
 def use_ldif_utilities() -> None:
     """Use LDIF-specific utilities."""
+    # LDIF utilities functionality moved to main API
     api = FlextLdif.get_instance()
 
-    # Access LDIF utilities
-    ldif_utils = api.utilities.LdifUtilities
-
-    # Validate LDIF syntax
+    # Validate LDIF syntax using API
     ldif_content = (
         "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: user\n"
     )
-    syntax_result = ldif_utils.validate_ldif_syntax(ldif_content)
-    _ = syntax_result
+    syntax_result = api.parse(ldif_content)
+    _ = syntax_result.is_success
 
-    # Count LDIF entries
-    count_result = ldif_utils.count_ldif_entries(ldif_content)
-    _ = count_result
+    # Count LDIF entries using API
+    if syntax_result.is_success:
+        entries = syntax_result.unwrap()
+        _ = len(entries)
 
 
 def use_encoding_utilities() -> None:
     """Use encoding utilities."""
-    api = FlextLdif.get_instance()
-
-    # Access encoding utilities
-    encoding_utils = api.utilities.EncodingUtilities
-
-    # Detect encoding
+    # Simple encoding detection using standard library
     sample_bytes = b"test value"
-    encoding_result = encoding_utils.detect_encoding(sample_bytes)
-    _ = encoding_result
+    # Try UTF-8 first, fallback to other encodings
+    try:
+        sample_bytes.decode("utf-8")
+        encoding = "utf-8"
+    except UnicodeDecodeError:
+        try:
+            sample_bytes.decode("latin-1")
+            encoding = "latin-1"
+        except UnicodeDecodeError:
+            encoding = "unknown"
+    _ = encoding
 
 
 def use_file_utilities() -> None:
     """Use file operation utilities."""
-    api = FlextLdif.get_instance()
-
-    # Access file utilities
-    file_utils = api.utilities.FileUtilities
-
-    # Validate file path
+    # Use standard library for file operations
     test_file = Path("examples/sample_basic.ldif")
-    path_result = file_utils.validate_file_path(test_file)
-    _ = path_result
 
-    # Get file info
+    # Validate file path using standard library
+    _ = test_file.exists() and test_file.is_file()
+
+    # Get file info using standard library
     if test_file.exists():
-        info_result = file_utils.get_file_info(test_file)
-        _ = info_result
+        stat = test_file.stat()
+        _ = {
+            "size": stat.st_size,
+            "modified": stat.st_mtime,
+            "is_file": test_file.is_file(),
+        }
 
-    # Ensure file extension
+    # Ensure file extension using standard library
     output_file = Path("examples/util_output")
-    ensured_path = file_utils.ensure_file_extension(output_file, "ldif")
+    if not output_file.suffix:
+        ensured_path = output_file.with_suffix(".ldif")
+    else:
+        ensured_path = output_file
     _ = ensured_path
 
 
@@ -248,10 +247,11 @@ sn: User
 
     entries = parse_result.unwrap()
 
-    # Validate using utilities
+    # Validate using services
     for entry in entries:
-        # Use DnUtilities for DN validation
-        dn_result = api.utilities.DnUtilities.validate_dn_format(str(entry.dn))
+        # Use DnService for DN validation
+        dn_service = DnService()
+        dn_result = dn_service.validate_format(str(entry.dn))
 
         if dn_result.is_failure:
             continue
@@ -272,21 +272,25 @@ sn: User
 
 def access_all_utilities() -> None:
     """Demonstrate access to all utility classes."""
-    api = FlextLdif.get_instance()
-
-    # All utility classes available through api.utilities
-    time_utils = api.utilities.TimeUtilities
-    text_utils = api.utilities.TextUtilities
-    dn_utils = api.utilities.DnUtilities
+    # Use services and standard library for utility functions
+    time_utils = datetime.now(UTC)
+    dn_service = DnService()
 
     # Use timestamp utility
-    timestamp = time_utils.get_timestamp()
+    timestamp = time_utils.timestamp()
 
     # Use text utility
-    formatted_size = text_utils.format_byte_size(1024)
+    size_bytes: float = 1024
+    for unit in ["", "K", "M", "G", "T"]:
+        if size_bytes < 1024.0:
+            formatted_size = f"{size_bytes:.1f} {unit}B"
+            break
+        size_bytes /= 1024.0
+    else:
+        formatted_size = f"{size_bytes:.1f} PB"
 
     # Use DN utility
-    dn_result = dn_utils.validate_dn_format("cn=test,dc=example,dc=com")
+    dn_result = dn_service.validate_format("cn=test,dc=example,dc=com")
 
     # All utilities integrated
     _ = (timestamp, formatted_size, dn_result)

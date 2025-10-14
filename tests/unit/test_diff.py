@@ -14,7 +14,7 @@ from typing import cast
 import pytest
 from flext_core import FlextCore
 
-from flext_ldif.diff import DiffResult, FlextLdifDiff
+from flext_ldif.diff import FlextLdifDiff
 from flext_ldif.models import FlextLdifModels
 
 
@@ -23,14 +23,16 @@ class TestDiffResultDataclass:
 
     def test_empty_diff_has_no_changes(self) -> None:
         """Test that empty diff reports no changes."""
-        result = DiffResult(added=[], removed=[], modified=[], unchanged=[])
+        result = FlextLdifModels.DiffResult(
+            added=[], removed=[], modified=[], unchanged=[]
+        )
         assert not result.has_changes
         assert result.total_changes == 0
         assert result.summary() == "No differences found"
 
     def test_diff_with_changes(self) -> None:
         """Test diff result with changes."""
-        result = DiffResult(
+        result = FlextLdifModels.DiffResult(
             added=[FlextLdifModels.DiffItem(key="oid_1.2.3", value={"oid": "1.2.3"})],
             removed=[FlextLdifModels.DiffItem(key="oid_4.5.6", value={"oid": "4.5.6"})],
             modified=[
@@ -148,7 +150,11 @@ class TestAttributeDiff:
         assert result.is_success
         diff = result.unwrap()
         assert len(diff.modified) == 1
-        assert "desc:" in diff.modified[0].value["changes"][0]
+        modified_item = diff.modified[0]
+        value_dict = modified_item.value
+        changes_list = value_dict.get("changes", [])
+        if isinstance(changes_list, list) and len(changes_list) > 0:
+            assert "desc:" in str(changes_list[0])
 
 
 class TestObjectClassDiff:
@@ -180,7 +186,7 @@ class TestObjectClassDiff:
 
         result = diff_tool.diff_objectclasses(
             cast("list[FlextCore.Types.Dict]", [oc1]),
-            cast("list[FlextCore.Types.Dict]", [oc2])
+            cast("list[FlextCore.Types.Dict]", [oc2]),
         )
         assert result.is_success
         diff = result.unwrap()
@@ -200,7 +206,7 @@ class TestObjectClassDiff:
 
         result = diff_tool.diff_objectclasses(
             cast("list[FlextCore.Types.Dict]", source_ocs),
-            cast("list[FlextCore.Types.Dict]", target_ocs)
+            cast("list[FlextCore.Types.Dict]", target_ocs),
         )
         assert result.is_success
         diff = result.unwrap()
@@ -228,7 +234,7 @@ class TestObjectClassDiff:
 
         result = diff_tool.diff_objectclasses(
             cast("list[FlextCore.Types.Dict]", source_ocs),
-            cast("list[FlextCore.Types.Dict]", target_ocs)
+            cast("list[FlextCore.Types.Dict]", target_ocs),
         )
         assert result.is_success
         diff = result.unwrap()
@@ -260,7 +266,7 @@ class TestAclDiff:
 
         result = diff_tool.diff_acls(
             cast("list[FlextCore.Types.Dict]", [acl1]),
-            cast("list[FlextCore.Types.Dict]", [acl2])
+            cast("list[FlextCore.Types.Dict]", [acl2]),
         )
         assert result.is_success
         diff = result.unwrap()
@@ -279,8 +285,7 @@ class TestAclDiff:
         ]
 
         result = diff_tool.diff_acls(
-            source_acls,
-            cast("list[FlextCore.Types.Dict]", target_acls)
+            source_acls, cast("list[FlextCore.Types.Dict]", target_acls)
         )
         assert result.is_success
         diff = result.unwrap()
@@ -298,8 +303,7 @@ class TestAclDiff:
         target_acls: list[FlextCore.Types.Dict] = []
 
         result = diff_tool.diff_acls(
-            cast("list[FlextCore.Types.Dict]", source_acls),
-            target_acls
+            cast("list[FlextCore.Types.Dict]", source_acls), target_acls
         )
         assert result.is_success
         diff = result.unwrap()
@@ -320,7 +324,7 @@ class TestAclDiff:
 
         result = diff_tool.diff_acls(
             cast("list[FlextCore.Types.Dict]", [acl1]),
-            cast("list[FlextCore.Types.Dict]", [acl2])
+            cast("list[FlextCore.Types.Dict]", [acl2]),
         )
         assert result.is_success
         diff = result.unwrap()
@@ -351,7 +355,7 @@ class TestEntryDiff:
 
         result = diff_tool.diff_entries(
             cast("list[FlextCore.Types.Dict]", [entry1]),
-            cast("list[FlextCore.Types.Dict]", [entry2])
+            cast("list[FlextCore.Types.Dict]", [entry2]),
         )
         assert result.is_success
         diff = result.unwrap()
@@ -370,8 +374,7 @@ class TestEntryDiff:
         ]
 
         result = diff_tool.diff_entries(
-            source_entries,
-            cast("list[FlextCore.Types.Dict]", target_entries)
+            source_entries, cast("list[FlextCore.Types.Dict]", target_entries)
         )
         assert result.is_success
         diff = result.unwrap()
@@ -390,8 +393,7 @@ class TestEntryDiff:
         target_entries: list[FlextCore.Types.Dict] = []
 
         result = diff_tool.diff_entries(
-            cast("list[FlextCore.Types.Dict]", source_entries),
-            target_entries
+            cast("list[FlextCore.Types.Dict]", source_entries), target_entries
         )
         assert result.is_success
         diff = result.unwrap()
@@ -416,12 +418,16 @@ class TestEntryDiff:
 
         result = diff_tool.diff_entries(
             cast("list[FlextCore.Types.Dict]", source_entries),
-            cast("list[FlextCore.Types.Dict]", target_entries)
+            cast("list[FlextCore.Types.Dict]", target_entries),
         )
         assert result.is_success
         diff = result.unwrap()
         assert len(diff.modified) == 1
-        assert "mail:" in diff.modified[0].value["changes"][0]
+        modified_item = diff.modified[0]
+        value_dict = modified_item.value
+        changes_list = value_dict.get("changes", [])
+        if isinstance(changes_list, list) and len(changes_list) > 0:
+            assert "mail:" in str(changes_list[0])
 
     def test_dn_normalization(self, diff_tool: FlextLdifDiff) -> None:
         """Test that DN normalization handles case and spaces."""
@@ -436,7 +442,7 @@ class TestEntryDiff:
 
         result = diff_tool.diff_entries(
             cast("list[FlextCore.Types.Dict]", [entry1]),
-            cast("list[FlextCore.Types.Dict]", [entry2])
+            cast("list[FlextCore.Types.Dict]", [entry2]),
         )
         assert result.is_success
         diff = result.unwrap()
@@ -482,7 +488,7 @@ class TestSchemaDiff:
 
         result = diff_tool.diff_schemas(
             cast("FlextCore.Types.Dict", source_schema),
-            cast("FlextCore.Types.Dict", target_schema)
+            cast("FlextCore.Types.Dict", target_schema),
         )
         assert result.is_success
         diff = result.unwrap()

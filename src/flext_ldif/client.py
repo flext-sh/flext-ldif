@@ -102,15 +102,6 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         self._handlers = {}
 
         # Ensure components are initialized
-        if self._container is None:
-            msg = "FlextCore.Container must be initialized"
-            raise RuntimeError(msg)
-        if self._context is None:
-            msg = "FlextCore.Context must be initialized"
-            raise RuntimeError(msg)
-        if self._bus is None:
-            msg = "FlextCore.Bus must be initialized"
-            raise RuntimeError(msg)
 
         # Register services in container for DI
         self._setup_services()
@@ -244,35 +235,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
                 logger.error(f"Failed to register schema quirk: {schema_result.error}")
                 continue
 
-            # Register nested ACL quirk if it exists
-            if hasattr(schema_quirk, "AclQuirk"):
-                try:
-                    acl_quirk = schema_quirk.AclQuirk(
-                        server_type=schema_quirk.server_type,
-                        priority=schema_quirk.priority,
-                    )
-                    acl_result = registry.register_acl_quirk(acl_quirk)
-                    if acl_result.is_failure:
-                        logger.error(
-                            f"Failed to register ACL quirk: {acl_result.error}"
-                        )
-                except Exception:
-                    logger.exception("Failed to instantiate ACL quirk")
-
-            # Register nested Entry quirk if it exists
-            if hasattr(schema_quirk, "EntryQuirk"):
-                try:
-                    entry_quirk = schema_quirk.EntryQuirk(
-                        server_type=schema_quirk.server_type,
-                        priority=schema_quirk.priority,
-                    )
-                    entry_result = registry.register_entry_quirk(entry_quirk)
-                    if entry_result.is_failure:
-                        logger.error(
-                            f"Failed to register entry quirk: {entry_result.error}"
-                        )
-                except Exception:
-                    logger.exception("Failed to instantiate entry quirk")
+            # Note: Schema quirks don't have nested ACL/Entry quirks in base implementation
 
         logger.info(
             f"Registered {len(complete_quirks)} complete quirks and {len(stub_quirks)} stub quirks"
@@ -357,11 +320,8 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
                 f"Failed to get RFC writer: {writer_result.error}"
             )
 
-        # Type narrow writer from unwrap()
-        writer_obj: object = writer_result.unwrap()
-        if not isinstance(writer_obj, FlextLdifRfcLdifWriter):
-            return FlextCore.Result[str].fail("RFC writer has unexpected type")
-        writer: FlextLdifRfcLdifWriter = writer_obj
+        # Writer is already correctly typed from unwrap()
+        writer = writer_result.unwrap()
 
         # Write to string first
         content_result = writer.write_entries_to_string(entries)
@@ -750,10 +710,6 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
                         )
                     else:
                         # Preserve existing extensions and add exclusion_info
-                        # Type narrowing: item.metadata is guaranteed non-None here
-                        if item.metadata is None:
-                            msg = "Metadata unexpectedly None after check"
-                            raise RuntimeError(msg)
                         new_extensions = {**item.metadata.extensions}
                         new_extensions["exclusion_info"] = exclusion_info.model_dump()
                         new_metadata = FlextLdifModels.QuirkMetadata(
@@ -1102,10 +1058,6 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
                 getattr(self, "_init_config_value", None) or FlextLdifConfig()
             )
         # Type narrowing: _config is guaranteed non-None after initialization
-        if self._config is None:
-            # This should never happen, but handle it properly for production
-            msg = "Configuration initialization failed unexpectedly"
-            raise RuntimeError(msg)
         return self._config
 
     @property
@@ -1129,6 +1081,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         if self._context is None:
             # Convert config to dict[str, object] for JSON-serializable FlextCore.Context
             self._context = FlextCore.Context({"config": self.config.model_dump()})
+        # Context is guaranteed non-None after initialization
         return self._context
 
     @property
@@ -1137,9 +1090,6 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         if self._bus is None:
             self._bus = FlextCore.Bus()
         # Type narrowing: _bus is guaranteed to be FlextCore.Bus after initialization
-        if not isinstance(self._bus, FlextCore.Bus):
-            msg = "Bus initialization failed unexpectedly"
-            raise TypeError(msg)
         return self._bus
 
 

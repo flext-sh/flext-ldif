@@ -17,9 +17,6 @@ from flext_core import FlextCore
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
 
-# Alias for convenient access
-DiffResult = FlextLdifModels.DiffResult
-
 
 class FlextLdifDiff:
     """LDIF diff utility for semantic comparison across any quirk types.
@@ -135,7 +132,7 @@ class FlextLdifDiff:
                     )
 
             return FlextCore.Result[FlextLdifModels.DiffResult].ok(
-                DiffResult(
+                FlextLdifModels.DiffResult(
                     added=added,
                     removed=removed,
                     modified=modified,
@@ -233,7 +230,7 @@ class FlextLdifDiff:
                     )
 
             return FlextCore.Result[FlextLdifModels.DiffResult].ok(
-                DiffResult(
+                FlextLdifModels.DiffResult(
                     added=added,
                     removed=removed,
                     modified=modified,
@@ -346,7 +343,7 @@ class FlextLdifDiff:
             ]
 
             return FlextCore.Result[FlextLdifModels.DiffResult].ok(
-                DiffResult(
+                FlextLdifModels.DiffResult(
                     added=combined_added,
                     removed=combined_removed,
                     modified=combined_modified,
@@ -422,7 +419,7 @@ class FlextLdifDiff:
                     removed.append(FlextLdifModels.DiffItem(key=sig, value=source_acl))
 
             return FlextCore.Result[FlextLdifModels.DiffResult].ok(
-                DiffResult(
+                FlextLdifModels.DiffResult(
                     added=added,
                     removed=removed,
                     modified=modified,
@@ -517,7 +514,7 @@ class FlextLdifDiff:
                     )
 
             return FlextCore.Result[FlextLdifModels.DiffResult].ok(
-                DiffResult(
+                FlextLdifModels.DiffResult(
                     added=added,
                     removed=removed,
                     modified=modified,
@@ -678,4 +675,4 @@ class FlextLdifDiff:
         return changes
 
 
-__all__ = ["DiffResult", "FlextLdifDiff"]
+__all__ = ["FlextLdifDiff"]

@@ -16,6 +16,7 @@ from typing import Final
 import pytest
 from flext_core import FlextCore
 
+from flext_ldif.filters import matches_oid_pattern
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
 from flext_ldif.schema_whitelist import FlextLdifSchemaWhitelistService
 
@@ -38,7 +39,6 @@ objectClasses: ( 2.16.840.1.113894.1.2.1.1 NAME 'orclUser' DESC 'Oracle User' SU
 
 SAMPLE_MIXED_LDIF: Final[str] = SAMPLE_ATTRIBUTE_LDIF + "\n" + SAMPLE_OBJECTCLASS_LDIF
 
-# Default whitelist rules for testing
 DEFAULT_WHITELIST_RULES: Final[FlextCore.Types.Dict] = {
     "allowed_attribute_oids": [
         "2.5.4.*",  # Standard LDAP attributes
@@ -343,68 +343,74 @@ class TestOidPatternMatching:
         self, temp_schema_file: Path, whitelist_rules: FlextCore.Types.Dict
     ) -> None:
         """Test exact OID matching."""
-        service = FlextLdifSchemaWhitelistService(
+        FlextLdifSchemaWhitelistService(
             schema_file=temp_schema_file,
             whitelist_rules=whitelist_rules,
         )
 
-        matches = service._matches_oid_pattern("2.5.4.3", ["2.5.4.3", "2.5.4.4"])
+        from flext_ldif.filters import matches_oid_pattern
+
+        matches = matches_oid_pattern("2.5.4.3", ["2.5.4.3", "2.5.4.4"])
         assert matches is True
 
     def test_matches_oid_pattern_wildcard_match(
         self, temp_schema_file: Path, whitelist_rules: FlextCore.Types.Dict
     ) -> None:
         """Test wildcard OID pattern matching."""
-        service = FlextLdifSchemaWhitelistService(
+        FlextLdifSchemaWhitelistService(
             schema_file=temp_schema_file,
             whitelist_rules=whitelist_rules,
         )
 
-        matches = service._matches_oid_pattern("2.5.4.3", ["2.5.4.*"])
+        matches = matches_oid_pattern("2.5.4.3", ["2.5.4.*"])
         assert matches is True
 
-        matches = service._matches_oid_pattern("2.5.4.999", ["2.5.4.*"])
+        matches = matches_oid_pattern("2.5.4.999", ["2.5.4.*"])
         assert matches is True
 
     def test_matches_oid_pattern_no_match(
         self, temp_schema_file: Path, whitelist_rules: FlextCore.Types.Dict
     ) -> None:
         """Test OID pattern no match."""
-        service = FlextLdifSchemaWhitelistService(
+        FlextLdifSchemaWhitelistService(
             schema_file=temp_schema_file,
             whitelist_rules=whitelist_rules,
         )
 
-        matches = service._matches_oid_pattern("9.9.9.9", ["2.5.4.*", "2.5.6.*"])
+        matches = matches_oid_pattern("9.9.9.9", ["2.5.4.*", "2.5.6.*"])
         assert matches is False
 
     def test_matches_oid_pattern_partial_wildcard(
         self, temp_schema_file: Path, whitelist_rules: FlextCore.Types.Dict
     ) -> None:
         """Test partial wildcard OID pattern matching."""
-        service = FlextLdifSchemaWhitelistService(
+        FlextLdifSchemaWhitelistService(
             schema_file=temp_schema_file,
             whitelist_rules=whitelist_rules,
         )
 
+        from flext_ldif.filters import matches_oid_pattern
+
         # 2.5.4.3 should NOT match 2.5.* because it requires full prefix
-        matches = service._matches_oid_pattern("2.5.4.3", ["2.5.*"])
+        matches = matches_oid_pattern("2.5.4.3", ["2.5.*"])
         assert matches is True
 
         # But 2.6.4.3 should NOT match 2.5.*
-        matches = service._matches_oid_pattern("2.6.4.3", ["2.5.*"])
+        matches = matches_oid_pattern("2.6.4.3", ["2.5.*"])
         assert matches is False
 
     def test_matches_oid_pattern_empty_patterns(
         self, temp_schema_file: Path, whitelist_rules: FlextCore.Types.Dict
     ) -> None:
         """Test OID pattern matching with empty patterns list."""
-        service = FlextLdifSchemaWhitelistService(
+        FlextLdifSchemaWhitelistService(
             schema_file=temp_schema_file,
             whitelist_rules=whitelist_rules,
         )
 
-        matches = service._matches_oid_pattern("2.5.4.3", [])
+        from flext_ldif.filters import matches_oid_pattern
+
+        matches = matches_oid_pattern("2.5.4.3", [])
         assert matches is False
 
 

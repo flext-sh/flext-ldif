@@ -36,10 +36,10 @@ Configuration:
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from pathlib import Path
 
-from flext_ldif import FlextLdif
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdif, ValidationService
 
 
 def railway_oriented_composition() -> None:
@@ -154,12 +154,6 @@ member: cn=Alice Johnson,ou=People,dc=example,dc=com
         return
 
     validation_report = validation_result.unwrap()
-    # Type validation for dict[str, object] access
-    if not isinstance(validation_report, dict):
-        print(
-            f"ERROR: Expected dict[str, object] validation_report, got {type(validation_report)}"
-        )
-        return
 
     if not validation_report.get("is_valid", False):
         _ = validation_report.get("errors", [])
@@ -452,10 +446,11 @@ def access_all_namespace_classes() -> None:
     # Access Mixins
     # validator = api.mixins.ValidationMixin()
 
-    # Access Utilities
-    timestamp = api.utilities.TimeUtilities.get_timestamp()
-    # ValidationUtilities doesn't have validate_dn_format, use validate_attribute_name instead
-    attr_valid = api.utilities.ValidationUtilities.validate_attribute_name("cn")
+    # Access Utilities (updated to use services)
+    timestamp = datetime.now(UTC).timestamp()
+    # Use ValidationService instead of ValidationUtilities
+    validation_service = ValidationService()
+    attr_valid = validation_service.validate_attribute_name("cn")
 
     # Processors doesn't have create_processor method
     # processor = api.processors.get_processors()
@@ -504,12 +499,6 @@ cn: test
         return
 
     validation_report = validation_result.unwrap()
-    # Type validation for dict[str, object] access
-    if not isinstance(validation_report, dict):
-        print(
-            f"ERROR: Expected dict[str, object] validation_report, got {type(validation_report)}"
-        )
-        return
 
     if not validation_report.get("is_valid", False):
         # Handle validation errors and attempt recovery by fixing entries
@@ -521,10 +510,8 @@ cn: test
                     f"ERROR: Expected list obj_class_values, got {type(obj_class_values)}"
                 )
                 continue
-            if "person" in obj_class_values and "sn" not in entry.attributes:
-                entry.attributes["sn"] = FlextLdifModels.AttributeValues(
-                    values=["recovered"]
-                )
+            if "person" in obj_class_values and "sn" not in entry.attributes.attributes:
+                entry.attributes.add_attribute("sn", "recovered")
 
         # Retry validation
         retry_result = api.validate_entries(entries)

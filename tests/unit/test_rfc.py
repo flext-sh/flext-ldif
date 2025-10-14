@@ -994,17 +994,18 @@ class TestRfcLdifWriterComprehensive:
 
     def test_write_entry_with_binary_data(self) -> None:
         """Test writing entry with binary attribute data."""
+        import base64
+
         binary_data = b"binary content for testing"
+        # Base64 encode the binary data for LDIF compatibility
+        encoded_data = base64.b64encode(binary_data).decode("ascii")
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=Binary Test,dc=example,dc=com",
-            attributes=cast(
-                "dict[str, list[str]]",
-                {
-                    "cn": ["Binary Test"],
-                    "objectClass": ["person"],
-                    "userCertificate;binary": [binary_data],
-                },
-            ),
+            attributes={
+                "cn": ["Binary Test"],
+                "objectClass": ["person"],
+                "userCertificate;binary": [encoded_data],
+            },
         )
         entry = entry_result.unwrap()
 
@@ -1190,7 +1191,9 @@ class TestRfcLdifWriterComprehensive:
         )
 
         # This should not crash - intentionally testing invalid input
-        result = writer.write_entries_to_string(cast("list[FlextLdifModels.Entry]", None))
+        result = writer.write_entries_to_string(
+            cast("list[FlextLdifModels.Entry]", None)
+        )
 
         assert result.is_failure
 

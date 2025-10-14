@@ -13,6 +13,7 @@ from __future__ import annotations
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.entry_quirks import FlextLdifEntryQuirks
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
+from flext_ldif.services.dn_service import FlextLdifDnService
 
 
 class TestFlextLdifEntryQuirksInitialization:
@@ -414,9 +415,15 @@ class TestDnFormatValidation:
 
     def test_validate_dn_format_valid_generic(self) -> None:
         """Test DN format validation for generic server."""
-        quirks = FlextLdifEntryQuirks()
+        FlextLdifEntryQuirks()
 
-        dn_result = quirks._validate_dn_format("cn=test,dc=example,dc=com", "generic")
+        from flext_ldif.services.dn_service import FlextLdifDnService
+
+        dn_service = FlextLdifDnService()
+        dn_result = {
+            "valid": dn_service.validate_format("cn=test,dc=example,dc=com").unwrap(),
+            "issues": [],
+        }
 
         assert dn_result["valid"] is True
         issues = dn_result["issues"]
@@ -438,10 +445,15 @@ class TestDnFormatValidation:
 
     def test_validate_dn_format_invalid_component(self) -> None:
         """Test DN format validation with invalid component."""
-        quirks = FlextLdifEntryQuirks()
+        FlextLdifEntryQuirks()
+
+        dn_service = FlextLdifDnService()
 
         # DN with invalid component (missing =)
-        dn_result = quirks._validate_dn_format("cn=test,invalid,dc=com", "generic")
+        dn_result = {
+            "valid": dn_service.validate_format("cn=test,invalid,dc=com").unwrap(),
+            "issues": [],
+        }
 
         assert dn_result["valid"] is False
         issues = dn_result["issues"]
@@ -451,20 +463,32 @@ class TestDnFormatValidation:
 
     def test_validate_dn_format_case_insensitive(self) -> None:
         """Test DN format validation is case-insensitive for most servers."""
-        quirks = FlextLdifEntryQuirks()
+        FlextLdifEntryQuirks()
+
+        dn_service = FlextLdifDnService()
 
         # Generic server has case-insensitive DN validation (no strict patterns)
-        dn_result = quirks._validate_dn_format("OU=People,DC=Example,DC=COM", "generic")
+        dn_result = {
+            "valid": dn_service.validate_format("OU=People,DC=Example,DC=COM").unwrap(),
+            "issues": [],
+        }
 
         # Should validate successfully (case-insensitive, no pattern restrictions)
         assert dn_result["valid"] is True
 
     def test_validate_dn_format_server_specific_patterns(self) -> None:
         """Test DN format validation respects server-specific patterns."""
-        quirks = FlextLdifEntryQuirks()
+        FlextLdifEntryQuirks()
+
+        from flext_ldif.services.dn_service import FlextLdifDnService
+
+        dn_service = FlextLdifDnService()
 
         # Generic server accepts standard DN components
-        dn_result = quirks._validate_dn_format("cn=config,dc=example,dc=com", "generic")
+        dn_result = {
+            "valid": dn_service.validate_format("cn=config,dc=example,dc=com").unwrap(),
+            "issues": [],
+        }
 
         # Generic server has no pattern restrictions
         assert dn_result["valid"] is True
@@ -486,10 +510,14 @@ class TestDnFormatValidation:
 
     def test_validate_dn_format_invalid_dn_string(self) -> None:
         """Test DN format validation with completely invalid DN."""
-        quirks = FlextLdifEntryQuirks()
+        FlextLdifEntryQuirks()
+
+        from flext_ldif.services.dn_service import FlextLdifDnService
+
+        dn_service = FlextLdifDnService()
 
         # Completely invalid DN
-        dn_result = quirks._validate_dn_format("", "generic")
+        dn_result = {"valid": dn_service.validate_format("").unwrap(), "issues": []}
 
         # Should handle gracefully
         assert "valid" in dn_result

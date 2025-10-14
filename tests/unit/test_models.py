@@ -465,18 +465,19 @@ class TestFlextLdifModelsEntry:
 
     def test_entry_with_binary_data(self) -> None:
         """Test Entry with binary attribute data."""
+        import base64
+
         binary_data = b"binary content"
+        # Base64 encode the binary data for LDIF compatibility
+        encoded_data = base64.b64encode(binary_data).decode("ascii")
 
         result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
-            attributes=cast(
-                "dict[str, list[str]]",
-                {
-                    "objectClass": ["inetOrgPerson"],
-                    "cn": ["Test User"],
-                    "userCertificate;binary": [binary_data],
-                },
-            ),
+            attributes={
+                "objectClass": ["inetOrgPerson"],
+                "cn": ["Test User"],
+                "userCertificate;binary": [encoded_data],
+            },
         )
 
         assert result.is_success
@@ -511,7 +512,7 @@ class TestFlextLdifModelsDistinguishedName:
         result = FlextLdifModels.DistinguishedName.create(dn_string)
 
         assert result.is_success
-        dn = cast("FlextLdifModels.DistinguishedName", result.unwrap())
+        dn = result.unwrap()
         assert isinstance(dn, FlextLdifModels.DistinguishedName)
         assert dn.value == dn_string
 
@@ -527,7 +528,7 @@ class TestFlextLdifModelsDistinguishedName:
         result = FlextLdifModels.DistinguishedName.create(dn_string)
 
         assert result.is_success
-        dn = cast("FlextLdifModels.DistinguishedName", result.unwrap())
+        dn = result.unwrap()
         assert isinstance(dn, FlextLdifModels.DistinguishedName)
         # Domain model preserves DN as-is (validation only, no normalization)
         assert dn.value == dn_string
@@ -539,7 +540,7 @@ class TestFlextLdifModelsDistinguishedName:
         result = FlextLdifModels.DistinguishedName.create(dn_string)
 
         assert result.is_success
-        dn = cast("FlextLdifModels.DistinguishedName", result.unwrap())
+        dn = result.unwrap()
 
         # Test components field access
         assert hasattr(dn, "components")
@@ -616,7 +617,6 @@ class TestFlextLdifModelsSchemaObjectClass:
             "name": "inetOrgPerson",
             "oid": "2.16.840.1.113730.3.2.2",
             "description": "Internet Organizational Person",
-            "superior": "organizationalPerson",
             "structural": True,
             "required_attributes": ["cn", "sn", "objectClass"],
             "optional_attributes": ["description", "telephoneNumber", "mail"],
@@ -717,7 +717,6 @@ class TestFlextLdifModelsAclPermissions:
         """Test creating an AclPermissions instance."""
         perms_data = {
             "permissions": ["read", "write"],
-            "scope": "entry",
         }
 
         result = FlextLdifModels.AclPermissions.create(
